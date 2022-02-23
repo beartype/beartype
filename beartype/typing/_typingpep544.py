@@ -11,45 +11,180 @@ This private submodule implements a :func:`beartype.beartype``-compatible
 :class:`typing.Protocol` that can lead to significant performance improvements.
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: *UHOH.* Turns out caching protocols fail to support a standard use case
-#of subscription by non-type variables satisfying a type variable. See also:
-#    https://github.com/beartype/beartype/pull/86#issuecomment-1042681735
-
 # ....................{ IMPORTS                           }....................
 from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_8,
     IS_PYTHON_AT_LEAST_3_9,
 )
 
 # ....................{ PEP 544                           }....................
-# If the active Python interpreter targets Python >= 3.8 and thus supports PEP
-# 544...
+# OMG, what is this thing, and why is it here?
+
+_CAN_SUPPORT_PEP_544 = False
+
+# More specifically, why use this weird guard in addition to that
+# IS_PYTHON_AT_LEAST_3_7 check below? Why not just create (and rely) on a
+# dependency on typing-extensions when installing into Python 3.7? E.G.:
+#
+#     'install_requires': ('typing-extensions>=3.10;python_version<"3.8"'),
+#
+# Great questions! Thanks for asking!
+#
+# It turns out there is a principled reason and practical reason. Actually,
+# there is a practical reason in line with principles, which we'll attempt to
+# pass off as principle (which isn't very principled of us, but oh well).
+#
+# The practical reason is that (at least as of this writing) this file is
+# ultimately imported from setup.py. This creates a potential circular
+# dependency/bootstrapping problem. An installer evaluates setup.py to discover
+# dependencies, but if this module is loaded in the process, and it requires
+# that those dependencies are already available, installation breaks.
+#
+# Specifically, for Python 3.7, this module relies on typing-extensions for
+# defining Protocol, but that probably isn't available at installation time. So
+# we give up if we don't have it (just like we would do for Python 3.6).
+#
+# If we're robust enough to survive without a definition of Protocol at install
+# time, we can certainly survive without it at runtime, too. In fact, we already
+# do for Python 3.6. This means we don't require a strict dependency at all,
+# which beartype hopes never to impose. Instead, we can leave that decision up
+# to whomever is doing the installing. Further, the mechanism that person would
+# almost certainly use to signal a need for access to Protocol in 3.7 is to
+# install typing-extensions, which is the very same behavior that enables
+# beartype to have it here. This maintains the appearance of an elegant design,
+# when really all we were trying to do avoid the circular dependency at
+# installation. #AccidentalGeniusForTheWin
+#
+# FIXME: We can remove nearly all gating in this module upon retiring support
+# for Python 3.7 (and IS_PYTHON_AT_LEAST_3_7). At that point, no checks are
+# necessary because all Python versions will support PEP 544.
+
+if IS_PYTHON_AT_LEAST_3_7:
+    from typing import TypeVar
+
+    # FIXME: Move this defintion (and the TypeVar import) nearer to the _TT
+    # defintion below when retiring IS_PYTHON_AT_LEAST_3_7.
+    _T_co = TypeVar("_T_co", covariant=True)
+    '''
+    Arbitrary covariant type variable.
+    '''
+
+    # Non-caching protocols to be overridden by caching equivalents below (and
+    # other requirements from various sources, depending on runtime
+    # environment).
+    if IS_PYTHON_AT_LEAST_3_8:
+        # FIXME: Remove the above gate and cosolidate with the logic below when
+        # retiring IS_PYTHON_AT_LEAST_3_7.
+        _CAN_SUPPORT_PEP_544 = True
+
+        from typing import EXCLUDED_ATTRIBUTES  # type: ignore[attr-defined]
+        from typing import (
+            Protocol as _ProtocolSlow,
+            SupportsAbs as _SupportsAbsSlow,
+            SupportsBytes as _SupportsBytesSlow,
+            SupportsComplex as _SupportsComplexSlow,
+            SupportsFloat as _SupportsFloatSlow,
+            SupportsIndex as _SupportsIndexSlow,
+            SupportsInt as _SupportsIntSlow,
+            SupportsRound as _SupportsRoundSlow,
+            runtime_checkable,
+        )
+    else:  # not IS_PYTHON_AT_LEAST_3_8, i.e., >=3.7 and <3.8
+        # FIXME: Remove this whole branch when retiring IS_PYTHON_AT_LEAST_3_7.
+        try:
+            from typing_extensions import (  # type: ignore[misc]
+                Protocol as _ProtocolSlow,
+                SupportsIndex as _SupportsIndexSlow,
+                runtime_checkable,
+            )
+        except ImportError:
+            pass
+        else:
+            _CAN_SUPPORT_PEP_544 = True
+
+            from abc import abstractmethod
+            from typing import Iterable, Union
+
+            # These are [gulp] copied directly from _get_protocol_attrs in
+            # <https://github.com/python/typing/blob/master/typing_extensions/src/typing_extensions.py>.
+            # Why? Because typing-extensions doesn't (yet?) define
+            # EXCLUDED_ATTRIBUTES and Python 3.7's typing module has no concept
+            # of them.
+            EXCLUDED_ATTRIBUTES = (
+                '__abstractmethods__', '__annotations__', '__weakref__',
+                '_is_protocol', '_is_runtime_protocol', '__dict__',
+                '__args__', '__slots__',
+                '__next_in_mro__', '__parameters__', '__origin__',
+                '__orig_bases__', '__extra__', '__tree_hash__',
+                '__doc__', '__subclasshook__', '__init__', '__new__',
+                '__module__', '_MutableMapping__marker', '_gorg'
+            )
+
+            # Why redefine all of these? Because there's no concept of
+            # @runtime_checkable in Python 3.7. Further, to avoid metaclass
+            # conflicts, we need each to derive from typing_extensions.Protocol.
+            # Why typing_extensions doesn't provide @runtime_checkable versions
+            # (like it does for SupportsIndex) is beyond me.
+
+            @runtime_checkable
+            class _SupportsAbsSlow(_ProtocolSlow[_T_co]):  # type: ignore[no-redef]
+                __slots__: Union[str, Iterable[str]] = ()
+                @abstractmethod
+                def __abs__(self) -> _T_co:
+                    pass
+
+            @runtime_checkable
+            class _SupportsBytesSlow(_ProtocolSlow):  # type: ignore[no-redef]
+                __slots__: Union[str, Iterable[str]] = ()
+                @abstractmethod
+                def __bytes__(self) -> bytes:
+                    pass
+
+            @runtime_checkable
+            class _SupportsComplexSlow(_ProtocolSlow):  # type: ignore[no-redef]
+                __slots__: Union[str, Iterable[str]] = ()
+                @abstractmethod
+                def __complex__(self) -> complex:
+                    pass
+
+            @runtime_checkable
+            class _SupportsFloatSlow(_ProtocolSlow):  # type: ignore[no-redef]
+                __slots__: Union[str, Iterable[str]] = ()
+                @abstractmethod
+                def __float__(self) -> float:
+                    pass
+
+            @runtime_checkable
+            class _SupportsIntSlow(_ProtocolSlow):  # type: ignore[no-redef]
+                __slots__: Union[str, Iterable[str]] = ()
+                @abstractmethod
+                def __int__(self) -> int:
+                    pass
+
+            @runtime_checkable
+            class _SupportsRoundSlow(_ProtocolSlow[_T_co]):  # type: ignore[no-redef]
+                __slots__: Union[str, Iterable[str]] = ()
+                @abstractmethod
+                def __round__(self, ndigits: int = 0) -> _T_co:
+                    pass
+
+# If the active Python interpreter supports PEP 544...
 #
 # This is one of those cases where one pines for a module-scope return
 # statement. (I seem to remember a bug/feature request about that somewhere,
 # but couldn't find it after a brief search.)
-if IS_PYTHON_AT_LEAST_3_8:
+#
+# FIXME: Remove this gate and consolidate with the above logic when retiring
+# IS_PYTHON_AT_LEAST_3_7.
+if _CAN_SUPPORT_PEP_544:
     # ..................{ IMPORTS                           }..................
     from beartype._util.cache.utilcachecall import callable_cached
     from typing import (  # type: ignore[attr-defined]
-        EXCLUDED_ATTRIBUTES,
         TYPE_CHECKING,
         Any,
         Generic,
-        TypeVar,
         Union,
-        runtime_checkable,
-
-        # Non-caching protocols to be overridden by caching equivalents below.
-        Protocol as _ProtocolSlow,
-        SupportsAbs as _SupportsAbsSlow,
-        SupportsBytes as _SupportsBytesSlow,
-        SupportsComplex as _SupportsComplexSlow,
-        SupportsFloat as _SupportsFloatSlow,
-        SupportsIndex as _SupportsIndexSlow,
-        SupportsInt as _SupportsIntSlow,
-        SupportsRound as _SupportsRoundSlow,
     )
 
     # Note that this branch is intentionally tested first, despite the
@@ -91,13 +226,6 @@ if IS_PYTHON_AT_LEAST_3_8:
     :class:`beartype.typing.Protocol` subclass when passing that protocol to
     the :func:`isinstance` builtin in structural subtyping checks).
     '''
-
-
-    _T_co = TypeVar("_T_co", covariant=True)
-    '''
-    Arbitrary covariant type variable.
-    '''
-
 
     _TT = TypeVar("_TT", bound=type)
     '''
@@ -189,7 +317,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         ) -> _TT:
 
             # See <https://github.com/python/mypy/issues/9282>
-            cls = super().__new__(mcls, name, bases, namespace, **kw)  # type: ignore [misc]
+            cls = super().__new__(mcls, name, bases, namespace, **kw)  # type: ignore[misc]
 
             # Mark this protocol class as a runtime protocol. By default,
             # "typing.Protocol" subclasses are only static-time. Although

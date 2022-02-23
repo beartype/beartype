@@ -10,23 +10,31 @@ This submodule unit tests both the public *and* private API of the private
 :mod:`beartype.typing._typingpep544` subpackage for sanity.
 '''
 
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
+from beartype_test.util.mark.pytskip import (
+    skip_if_python_version_less_than,
+    skip_unless_module,
+)
 
 # ....................{ TESTS                             }....................
-# If the active Python interpreter targets Python < 3.8 and thus fails to
-# support PEP 544, skip all tests declared below.
+# If the active Python interpreter targets Python < 3.7 and thus fails to
+# support PEP 544, skip all tests declared below. For 3.7 in particular, each
+# each test also skips itself if it is unable to load the typing_extensions
+# module.
 
-@skip_if_python_version_less_than('3.8.0')
+@skip_if_python_version_less_than('3.7.0')
 def test_typingpep544_metaclass() -> None:
     '''
     Test the private
     :class:`beartype.typing._typingpep544._CachingProtocolMeta` metaclass.
     '''
+    if IS_PYTHON_AT_LEAST_3_7:
+        skip_unless_module('typing_extensions')
 
     # Defer heavyweight imports.
     from abc import abstractmethod
@@ -55,19 +63,23 @@ def test_typingpep544_metaclass() -> None:
     assert issubclass(type(SupportsRoundFromScratch), _CachingProtocolMeta)
 
 
-@skip_if_python_version_less_than('3.8.0')
+@skip_if_python_version_less_than('3.7.0')
 def test_typingpep544_superclass() -> None:
     '''
     Test the public
     :class:`beartype.typing.Protocol` superclass.
     '''
+    if IS_PYTHON_AT_LEAST_3_7:
+        skip_unless_module('typing_extensions')
+        from typing_extensions import Protocol as ProtocolSlow
+    else:
+        from typing import Protocol as ProtocolSlow
 
     # Defer heavyweight imports.
     from beartype.typing import (
         Protocol as ProtocolFast,
         TypeVar,
     )
-    from typing import Protocol as ProtocolSlow
     from pytest import raises
 
     # Arbitrary type variable.
@@ -79,7 +91,11 @@ def test_typingpep544_superclass() -> None:
     # Assert that the representation of a caching protocol parametrized by one
     # or more type variables contains the representation of a non-caching
     # protocol parametrized by those same variables.
-    assert repr(ProtocolSlow[_T_co]) in repr(ProtocolFast[_T_co])
+    slow_repr = repr(ProtocolSlow[_T_co])
+    slow_repr = slow_repr[slow_repr.rindex('.') :]
+    fast_repr = repr(ProtocolFast[_T_co])
+    fast_repr = fast_repr[fast_repr.rindex('.') :]
+    assert slow_repr == fast_repr
 
     # Assert that attempting to directly subscript the caching protocol
     # superclass by a non-type variable raises the expected exception.
@@ -87,12 +103,14 @@ def test_typingpep544_superclass() -> None:
         ProtocolFast[str]
 
 
-@skip_if_python_version_less_than('3.8.0')
+@skip_if_python_version_less_than('3.7.0')
 def test_typingpep544_subclass() -> None:
     '''
     Test expected behaviour of user-defined subclasses of the public
     :class:`beartype.typing.Protocol` superclass.
     '''
+    if IS_PYTHON_AT_LEAST_3_7:
+        skip_unless_module('typing_extensions')
 
     # Defer heavyweight imports.
     from abc import abstractmethod
@@ -126,7 +144,7 @@ def test_typingpep544_subclass() -> None:
     assert runtime_checkable(SupportsHiddenBuds) is SupportsHiddenBuds
 
 
-@skip_if_python_version_less_than('3.8.0')
+@skip_if_python_version_less_than('3.7.0')
 def test_typingpep544_protocols_typing() -> None:
     '''
     Test the public retinue of ``beartype.typing.Supports*`` protocols with
@@ -134,6 +152,8 @@ def test_typingpep544_protocols_typing() -> None:
     :class:`beartype.typing.Protocol` subclass *and* the private
     :class:`beartype.typing._typingpep544._CachingProtocolMeta` metaclass.
     '''
+    if IS_PYTHON_AT_LEAST_3_7:
+        skip_unless_module('typing_extensions')
 
     # Defer heavyweight imports.
     from decimal import Decimal
@@ -202,7 +222,7 @@ def test_typingpep544_protocols_typing() -> None:
         int, float, bool, Decimal, Fraction, target_t=SupportsRound)
 
 # ....................{ TESTS ~ custom                    }....................
-@skip_if_python_version_less_than('3.8.0')
+@skip_if_python_version_less_than('3.7.0')
 def test_typingpep544_protocol_custom_direct() -> None:
     '''
     Test the core operation of the public :class:`beartype.typing.Protocol`
@@ -210,6 +230,8 @@ def test_typingpep544_protocol_custom_direct() -> None:
     directly subclassing :class:`beartype.typing.Protocol` under the
     :func:`beartype.beartype` decorator.
     '''
+    if IS_PYTHON_AT_LEAST_3_7:
+        skip_unless_module('typing_extensions')
 
     # Defer heavyweight imports.
     from abc import abstractmethod
@@ -273,7 +295,7 @@ def test_typingpep544_protocol_custom_direct() -> None:
         _lies_all_lies(OneFish())
 
 
-@skip_if_python_version_less_than('3.8.0')
+@skip_if_python_version_less_than('3.7.0')
 def test_typingpep544_protocol_custom_indirect() -> None:
     '''
     Test the core operation of the public :class:`beartype.typing.Protocol`
@@ -281,6 +303,8 @@ def test_typingpep544_protocol_custom_indirect() -> None:
     indirectly subclassing :class:`beartype.typing.Protocol` under the
     :func:`beartype.beartype` decorator.
     '''
+    if IS_PYTHON_AT_LEAST_3_7:
+        skip_unless_module('typing_extensions')
 
     # Defer heavyweight imports.
     from abc import abstractmethod
