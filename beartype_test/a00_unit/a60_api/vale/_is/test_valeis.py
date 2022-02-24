@@ -24,31 +24,38 @@ def test_api_vale_is_pass() -> None:
     '''
 
     # Defer heavyweight imports.
+    from beartype import beartype
     from beartype.vale import Is
     from beartype.vale._core._valecore import BeartypeValidator
     from collections.abc import Mapping
 
+    # Undecorated non-lambda function suitable for subscripting the
+    # "beartype.vale.Is" factory with.
     def _is_quoted(text):
-        '''
-        Non-lambda function suitable for subscripting the
-        :mod:`beartype.vale.Is` factory with.
-        '''
-
         return '"' in text or "'" in text
 
+    # Decorated non-lambda function suitable for subscripting the
+    # "beartype.vale.Is" factory with, exercising an edge case with respect to
+    # callable parameter validation in that factory.
+    @beartype
+    def _is_exclamatory(text: str):
+        return '!' in text
+
     # Validators produced by subscripting this factory with lambda functions
-    # satisfying the data validator API.
+    # satisfying the expected API.
     IsLengthy = Is[lambda text: len(text) > 30]
     IsSentence = Is[lambda text: text and text[-1] == '.']
 
-    # Validator produced by subscripting this factory with a non-lambda
-    # function satisfying the data validator API.
+    # Validator produced by subscripting this factory with non-lambda functions
+    # satisfying the expected API.
     IsQuoted = Is[_is_quoted]
+    IsExclamatory = Is[_is_exclamatory]
 
     # Assert these validators satisfy the expected API.
     assert isinstance(IsLengthy, BeartypeValidator)
     assert isinstance(IsSentence, BeartypeValidator)
     assert isinstance(IsQuoted, BeartypeValidator)
+    assert isinstance(IsExclamatory, BeartypeValidator)
 
     # Assert these validators perform the expected validation.
     assert IsLengthy.is_valid('Plunged in the battery-smoke') is False
@@ -57,6 +64,8 @@ def test_api_vale_is_pass() -> None:
     assert IsSentence.is_valid('Theirs but to do and die.') is True
     assert IsQuoted.is_valid('Theirs not to reason why,') is False
     assert IsQuoted.is_valid('"Forward, the Light Brigade!"') is True
+    assert IsExclamatory.is_valid('Thou art the path of that unresting sound—') is False
+    assert IsExclamatory.is_valid('"Dizzy Ravine! and when I gaze on thee"') is True
 
     # Assert one such validator provides both non-empty code and code locals.
     assert isinstance(IsLengthy._is_valid_code, str)

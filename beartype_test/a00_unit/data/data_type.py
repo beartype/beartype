@@ -195,6 +195,16 @@ def function():
     pass
 
 
+@contextmanager
+def context_manager_factory(obj: object) -> ContextManager[object]:
+    '''
+    Create and return a new **identity context manager** (i.e., context
+    manager trivially yielding the passed object).
+    '''
+
+    yield obj
+
+# ....................{ CALLABLES ~ sync : decorator      }....................
 def decorator(func: Callable) -> Callable:
     '''
     **Identity decorator** (i.e., decorator returning the passed callable
@@ -209,14 +219,26 @@ def decorator(func: Callable) -> Callable:
     return func
 
 
-@contextmanager
-def context_manager_factory(obj: object) -> ContextManager[object]:
+def decorator_wrapping(func):
     '''
-    Create and return a new **identity context manager** (i.e., context
-    manager trivially yielding the passed object).
+    **Identity wrapping decorator** (i.e., function returning a closure
+    wrapping the passed callable in the trivial way by simply passing all
+    passed arguments to that callable).
     '''
 
-    yield obj
+    # Defer decorator-specific imports.
+    from functools import wraps
+
+    @wraps(func)
+    def _identity_wrapper(*args, **kwargs):
+        '''
+        **Identity wrapper** (i.e., closure trivially wrapping that callable).
+        '''
+
+        return func(*args, **kwargs)
+
+    # Return this closure.
+    return _identity_wrapper
 
 # ....................{ CALLABLES ~ sync : generator      }....................
 def sync_generator_factory() -> Generator[int, None, None]:

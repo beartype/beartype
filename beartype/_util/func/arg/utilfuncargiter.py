@@ -157,8 +157,6 @@ value assigned to that parameter.
 '''
 
 # ....................{ GENERATORS                        }....................
-#FIXME: Revise codebase usage, please.
-#FIXME: Revise unit tests up, please.
 def iter_func_args(
     # Mandatory parameters.
     func: Callable,
@@ -209,7 +207,7 @@ def iter_func_args(
     **This highly optimized generator function should always be called in lieu
     of the highly unoptimized** :func:`inspect.signature` **function,** which
     implements a similar introspection as this generator with significantly
-    worse space and time consumption.
+    worse space and time consumption. Seriously. *Never* call that anywhere.
 
     Parameters
     ----------
@@ -220,16 +218,16 @@ def iter_func_args(
         in which case this iterator internally defers to the comparatively
         slower :func:`get_func_codeobj` function.
     is_unwrapping: bool, optional
-        ``True`` only if this getter implicitly calls the :func:`unwrap_func`
-        function to unwrap this possibly higher-level wrapper into its possibly
-        lowest-level wrappee *before* returning the code object of that
-        wrappee. Note that doing so incurs worst-case time complexity ``O(n)``
-        for ``n`` the number of lower-level wrappees wrapped by this wrapper.
-        Defaults to ``True`` for robustness. Why? Because this generator *must*
-        always introspect lowest-level wrappees rather than higher-level
-        wrappers. The latter typically do *not* wrap the default values of the
-        former, since this is the default behaviour of the
-        :func:`functools.update_wrapper` function underlying the
+        ``True`` only if this generator implicitly calls the
+        :func:`unwrap_func` function to unwrap this possibly higher-level
+        wrapper into its possibly lowest-level wrappee *before* returning the
+        code object of that wrappee. Note that doing so incurs worst-case time
+        complexity ``O(n)`` for ``n`` the number of lower-level wrappees
+        wrapped by this wrapper. Defaults to ``True`` for robustness. Why?
+        Because this generator *must* always introspect lowest-level wrappees
+        rather than higher-level wrappers. The latter typically do *not* wrap
+        the default values of the former, since this is the default behaviour
+        of the :func:`functools.update_wrapper` function underlying the
         :func:`functools.wrap` decorator underlying all sane decorators. If
         this boolean is set to ``False`` while that callable is actually a
         wrapper, this generator will erroneously misidentify optional as
@@ -248,18 +246,18 @@ def iter_func_args(
     '''
 
     # ..................{ LOCALS ~ noop                     }..................
-    # If unwrapping this callable, do so *BEFORE* querying this callable for
+    # If unwrapping that callable, do so *BEFORE* querying that callable for
     # its code object to avoid desynchronization between the two.
     if is_unwrapping:
         func = unwrap_func(func)
-    # Else, this callable is assumed to have already been unwrapped by the
+    # Else, that callable is assumed to have already been unwrapped by the
     # caller. We should probably assert that, but doing so requires an
     # expensive call to hasattr(). What you gonna do?
 
-    # If passed *NO* code object, query this callable for its code object.
+    # If passed *NO* code object, query that callable for its code object.
     if func_codeobj is None:
         func_codeobj = get_func_codeobj(func)
-    # In any case, this code object is now defined.
+    # In any case, that code object is now defined.
 
     # Bit field of OR-ed binary flags describing this callable.
     func_codeobj_flags = func_codeobj.co_flags

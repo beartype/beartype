@@ -85,6 +85,7 @@ def die_unless_func_args_len_flexible_equal(
     func_args_len_flexible: int,
 
     # Optional parameters.
+    is_unwrapping: bool = True,
     exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> None:
     '''
@@ -98,6 +99,22 @@ def die_unless_func_args_len_flexible_equal(
         Pure-Python callable, frame, or code object to be inspected.
     func_args_len_flexible : int
         Number of flexible parameters to validate this callable as accepting.
+    is_unwrapping: bool, optional
+        ``True`` only if this validator implicitly calls the
+        :func:`unwrap_func` function to unwrap this possibly higher-level
+        wrapper into its possibly lowest-level wrappee *before* returning the
+        code object of that wrappee. Note that doing so incurs worst-case time
+        complexity ``O(n)`` for ``n`` the number of lower-level wrappees
+        wrapped by this wrapper. Defaults to ``True`` for robustness. Why?
+        Because this validator *must* always introspect lowest-level wrappees
+        rather than higher-level wrappers. The latter typically do *not*
+        accurately replicate the signatures of the former. In particular,
+        decorator wrappers typically wrap decorated callables with variadic
+        positional and keyword parameters (e.g., ``def _decorator_wrapper(*args,
+        **kwargs)``). Since neither constitutes a flexible parameter, this
+        validator raises an exception when passed such a wrapper with this
+        boolean set to ``False``. For this reason, only set this boolean to
+        ``False`` if you pretend to know what you're doing.
     exception_cls : type, optional
         Type of exception to be raised if this callable is neither a
         pure-Python function nor method. Defaults to
@@ -121,7 +138,10 @@ def die_unless_func_args_len_flexible_equal(
 
     # Number of flexible parameters accepted by this callable.
     func_args_len_flexible_actual = get_func_args_len_flexible(
-        func=func, exception_cls=exception_cls)
+        func=func,
+        is_unwrapping=is_unwrapping,
+        exception_cls=exception_cls,
+    )
 
     # If this callable accepts more or less than this number of flexible
     # parameters, raise an exception.
