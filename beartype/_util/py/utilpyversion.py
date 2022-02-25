@@ -113,6 +113,14 @@ IS_PYTHON_AT_LEAST_3_7 = IS_PYTHON_AT_LEAST_3_7_2 or version_info >= (3, 7)
 '''
 
 
+#FIXME: After dropping Python 3.7 support, *REMOVE* all code conditionally
+#testing this global.
+IS_PYTHON_3_7 = version_info[:2] == (3, 7)
+'''
+``True`` only if the active Python interpreter targets exactly Python 3.7.
+'''
+
+
 #FIXME: After dropping Python 3.6 support, *REMOVE* all code conditionally
 #testing this global.
 IS_PYTHON_3_6 = not IS_PYTHON_AT_LEAST_3_7

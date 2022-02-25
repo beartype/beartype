@@ -26,6 +26,7 @@ def test_package_import_isolation() -> None:
     This test ensures that the fix cost of the first importation of the
     :mod:`beartype` package itself remains low -- if not ideally negligible.
     '''
+    from beartype._util.py.utilpyversion import IS_PYTHON_3_7
 
     # Defer heavyweight imports.
     from beartype_test.util.cmd.pytcmdrun import (
@@ -58,6 +59,10 @@ def test_package_import_isolation() -> None:
         r'beartype\.vale',
         r'numpy',
     )
+
+    # Add typing_extensions to the prohibition list unless we're inside 3.7
+    if not IS_PYTHON_3_7:
+        _HEAVY_MODULE_NAME_RAW_REGEXES += (r'typing_extensions',)
 
     # Uncompiled regular expressions synthesized from this tuple.
     _HEAVY_MODULE_NAME_RAW_REGEX = '|'.join(_HEAVY_MODULE_NAME_RAW_REGEXES)

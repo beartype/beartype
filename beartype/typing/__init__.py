@@ -85,6 +85,7 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 # "import_typing_attr_or_none('Annotated')").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype._util.py.utilpyversion import (
+    IS_PYTHON_3_7            as _IS_PYTHON_3_7,
     IS_PYTHON_AT_LEAST_3_7   as _IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_7_2 as _IS_PYTHON_AT_LEAST_3_7_2,
     IS_PYTHON_AT_LEAST_3_8   as _IS_PYTHON_AT_LEAST_3_8,
@@ -303,12 +304,17 @@ if TYPE_CHECKING:
         )
 
         if _IS_PYTHON_AT_LEAST_3_8:
-            from typing import (
+            # FIXME: The ignore[attr-defined] is for Python 3.7 because
+            # Mypy doesn't understand IS_PYTHON_AT_LEAST_3_8. That ignore should
+            # be removable when retiring PYTHON_AT_LEAST_3_7.
+            from typing import (  # type: ignore[attr-defined]
                 Protocol as Protocol,
                 SupportsIndex as SupportsIndex,
                 runtime_checkable as runtime_checkable,
             )
-        else:  # not IS_PYTHON_AT_LEAST_3_8, i.e., >=3.7 and <3.8
+        else:
+            assert _IS_PYTHON_3_7
+
             try:
                 from typing_extensions import (  # type: ignore[misc,no-redef]
                     Protocol as Protocol,

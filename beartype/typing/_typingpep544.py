@@ -13,6 +13,7 @@ This private submodule implements a :func:`beartype.beartype``-compatible
 
 # ....................{ IMPORTS                           }....................
 from beartype._util.py.utilpyversion import (
+    IS_PYTHON_3_7,
     IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_8,
     IS_PYTHON_AT_LEAST_3_9,
@@ -79,7 +80,11 @@ if IS_PYTHON_AT_LEAST_3_7:
         _CAN_SUPPORT_PEP_544 = True
 
         from typing import EXCLUDED_ATTRIBUTES  # type: ignore[attr-defined]
-        from typing import (
+
+        # FIXME: The ignore[attr-defined] is for Python 3.7 because Mypy doesn't
+        # understand IS_PYTHON_AT_LEAST_3_8. That ignore should be removable
+        # when retiring PYTHON_AT_LEAST_3_7.
+        from typing import (  # type: ignore[attr-defined]
             Protocol as _ProtocolSlow,
             SupportsAbs as _SupportsAbsSlow,
             SupportsBytes as _SupportsBytesSlow,
@@ -90,8 +95,11 @@ if IS_PYTHON_AT_LEAST_3_7:
             SupportsRound as _SupportsRoundSlow,
             runtime_checkable,
         )
-    else:  # not IS_PYTHON_AT_LEAST_3_8, i.e., >=3.7 and <3.8
-        # FIXME: Remove this whole branch when retiring IS_PYTHON_AT_LEAST_3_7.
+    else:
+        # FIXME: Remove this whole branch when retiring IS_PYTHON_3_7 and
+        # IS_PYTHON_AT_LEAST_3_7.
+        assert IS_PYTHON_3_7
+
         try:
             from typing_extensions import (  # type: ignore[misc]
                 Protocol as _ProtocolSlow,
@@ -176,7 +184,7 @@ if IS_PYTHON_AT_LEAST_3_7:
 # but couldn't find it after a brief search.)
 #
 # FIXME: Remove this gate and consolidate with the above logic when retiring
-# IS_PYTHON_AT_LEAST_3_7.
+# IS_PYTHON_3_7 and IS_PYTHON_AT_LEAST_3_7.
 if _CAN_SUPPORT_PEP_544:
     # ..................{ IMPORTS                           }..................
     from beartype._util.cache.utilcachecall import callable_cached
@@ -614,6 +622,7 @@ if _CAN_SUPPORT_PEP_544:
         '''
         Caching variant of :class:`typing.SupportsAbs`.
         '''
+        __module__: str = 'beartype.typing'
         __slots__: Union[str, Iterable[str]] = ()
 
 
@@ -621,6 +630,7 @@ if _CAN_SUPPORT_PEP_544:
         '''
         Caching variant of :class:`typing.SupportsBytes`.
         '''
+        __module__: str = 'beartype.typing'
         __slots__: Union[str, Iterable[str]] = ()
 
 
@@ -628,6 +638,7 @@ if _CAN_SUPPORT_PEP_544:
         '''
         Caching variant of :class:`typing.SupportsComplex`.
         '''
+        __module__: str = 'beartype.typing'
         __slots__: Union[str, Iterable[str]] = ()
 
 
@@ -635,6 +646,7 @@ if _CAN_SUPPORT_PEP_544:
         '''
         Caching variant of :class:`typing.SupportsFloat`."
         '''
+        __module__: str = 'beartype.typing'
         __slots__: Union[str, Iterable[str]] = ()
 
 
@@ -642,6 +654,7 @@ if _CAN_SUPPORT_PEP_544:
         '''
         Caching variant of :class:`typing.SupportsInt`.
         '''
+        __module__: str = 'beartype.typing'
         __slots__: Union[str, Iterable[str]] = ()
 
 
@@ -649,6 +662,7 @@ if _CAN_SUPPORT_PEP_544:
         '''
         Caching variant of :class:`typing.SupportsIndex`.
         '''
+        __module__: str = 'beartype.typing'
         __slots__: Union[str, Iterable[str]] = ()
 
 
@@ -656,4 +670,5 @@ if _CAN_SUPPORT_PEP_544:
         '''
         Caching variant of :class:`typing.SupportsRound`.
         '''
+        __module__: str = 'beartype.typing'
         __slots__: Union[str, Iterable[str]] = ()

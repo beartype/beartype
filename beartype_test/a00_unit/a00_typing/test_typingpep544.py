@@ -10,7 +10,7 @@ This submodule unit tests both the public *and* private API of the private
 :mod:`beartype.typing._typingpep544` subpackage for sanity.
 '''
 
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
+from beartype._util.py.utilpyversion import IS_PYTHON_3_7
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
@@ -33,7 +33,7 @@ def test_typingpep544_metaclass() -> None:
     Test the private
     :class:`beartype.typing._typingpep544._CachingProtocolMeta` metaclass.
     '''
-    if IS_PYTHON_AT_LEAST_3_7:
+    if IS_PYTHON_3_7:
         skip_unless_module('typing_extensions')
 
     # Defer heavyweight imports.
@@ -69,7 +69,7 @@ def test_typingpep544_superclass() -> None:
     Test the public
     :class:`beartype.typing.Protocol` superclass.
     '''
-    if IS_PYTHON_AT_LEAST_3_7:
+    if IS_PYTHON_3_7:
         skip_unless_module('typing_extensions')
         from typing_extensions import Protocol as ProtocolSlow
     else:
@@ -86,16 +86,19 @@ def test_typingpep544_superclass() -> None:
     _T_co = TypeVar('_T_co', covariant=True)
 
     # Assert that our caching protocol superclass memoizes subscriptions.
+    assert ProtocolFast.__module__ == 'beartype.typing'
     assert ProtocolFast[_T_co] is ProtocolFast[_T_co]
 
     # Assert that the representation of a caching protocol parametrized by one
     # or more type variables contains the representation of a non-caching
     # protocol parametrized by those same variables.
     slow_repr = repr(ProtocolSlow[_T_co])
-    slow_repr = slow_repr[slow_repr.rindex('.') :]
+    slow_protocol_repr = slow_repr[slow_repr.rindex('.') :]
     fast_repr = repr(ProtocolFast[_T_co])
-    fast_repr = fast_repr[fast_repr.rindex('.') :]
-    assert slow_repr == fast_repr
+    fast_protocol_repr = fast_repr[fast_repr.rindex('.') :]
+
+    assert fast_repr.startswith('beartype.typing.Protocol[')
+    assert slow_protocol_repr == fast_protocol_repr
 
     # Assert that attempting to directly subscript the caching protocol
     # superclass by a non-type variable raises the expected exception.
@@ -109,7 +112,7 @@ def test_typingpep544_subclass() -> None:
     Test expected behaviour of user-defined subclasses of the public
     :class:`beartype.typing.Protocol` superclass.
     '''
-    if IS_PYTHON_AT_LEAST_3_7:
+    if IS_PYTHON_3_7:
         skip_unless_module('typing_extensions')
 
     # Defer heavyweight imports.
@@ -152,7 +155,7 @@ def test_typingpep544_protocols_typing() -> None:
     :class:`beartype.typing.Protocol` subclass *and* the private
     :class:`beartype.typing._typingpep544._CachingProtocolMeta` metaclass.
     '''
-    if IS_PYTHON_AT_LEAST_3_7:
+    if IS_PYTHON_3_7:
         skip_unless_module('typing_extensions')
 
     # Defer heavyweight imports.
@@ -180,7 +183,7 @@ def test_typingpep544_protocols_typing() -> None:
         SupportsRound,
     ):
         assert issubclass(type(supports_t), _CachingProtocolMeta)
-
+        assert supports_t.__module__ == 'beartype.typing'
 
     def _assert_isinstance(*types: type, target_t: type) -> None:
 
@@ -230,7 +233,7 @@ def test_typingpep544_protocol_custom_direct() -> None:
     directly subclassing :class:`beartype.typing.Protocol` under the
     :func:`beartype.beartype` decorator.
     '''
-    if IS_PYTHON_AT_LEAST_3_7:
+    if IS_PYTHON_3_7:
         skip_unless_module('typing_extensions')
 
     # Defer heavyweight imports.
@@ -303,7 +306,7 @@ def test_typingpep544_protocol_custom_indirect() -> None:
     indirectly subclassing :class:`beartype.typing.Protocol` under the
     :func:`beartype.beartype` decorator.
     '''
-    if IS_PYTHON_AT_LEAST_3_7:
+    if IS_PYTHON_3_7:
         skip_unless_module('typing_extensions')
 
     # Defer heavyweight imports.

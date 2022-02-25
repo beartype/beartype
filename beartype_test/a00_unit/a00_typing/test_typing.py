@@ -26,7 +26,7 @@ def test_api_typing() -> None:
     import typing as official_typing
     from beartype import typing as beartype_typing
     from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_LEAST_3_7,
+        IS_PYTHON_3_7,
         IS_PYTHON_AT_LEAST_3_8,
         IS_PYTHON_AT_LEAST_3_9,
     )
@@ -116,7 +116,7 @@ def test_api_typing() -> None:
         # Else, this attribute is public and thus unignorable.
     }
 
-    if IS_PYTHON_AT_LEAST_3_7 and _HAZ_TYPING_EXTENSIONS:
+    if IS_PYTHON_3_7 and _HAZ_TYPING_EXTENSIONS:
         # Not really "official", but we'll fake it
         official_typing_attr_name_to_value.update({
             extension_typing_attr_name: getattr(
@@ -143,7 +143,7 @@ def test_api_typing() -> None:
     # submodule.
     TYPING_ATTR_UNEQUAL_NAMES = set()
 
-    if IS_PYTHON_AT_LEAST_3_8 or IS_PYTHON_AT_LEAST_3_7 and _HAZ_TYPING_EXTENSIONS:
+    if IS_PYTHON_AT_LEAST_3_8 or IS_PYTHON_3_7 and _HAZ_TYPING_EXTENSIONS:
         TYPING_ATTR_UNEQUAL_NAMES.update({
             'Protocol',
             'SupportsAbs',
