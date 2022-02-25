@@ -16,6 +16,12 @@ from beartype._util.py.utilpyversion import IS_PYTHON_3_7
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from pytest import skip
+from beartype.typing._typingpep544 import _import_typing_extensions
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_7,
+    IS_PYTHON_AT_LEAST_3_8,
+)
 from beartype_test.util.mark.pytskip import (
     skip_if_python_version_less_than,
     skip_unless_module,
@@ -33,8 +39,8 @@ def test_typingpep544_metaclass() -> None:
     Test the private
     :class:`beartype.typing._typingpep544._CachingProtocolMeta` metaclass.
     '''
-    if IS_PYTHON_3_7:
-        skip_unless_module('typing_extensions')
+    if IS_PYTHON_3_7 and _import_typing_extensions() is None:
+        skip('typing-extensions required to support Protocols in Python 3.7')
 
     # Defer heavyweight imports.
     from abc import abstractmethod
@@ -70,7 +76,9 @@ def test_typingpep544_superclass() -> None:
     :class:`beartype.typing.Protocol` superclass.
     '''
     if IS_PYTHON_3_7:
-        skip_unless_module('typing_extensions')
+        if _import_typing_extensions() is None:
+            skip('typing-extensions required to support Protocols in Python 3.7')
+
         from typing_extensions import Protocol as ProtocolSlow
     else:
         from typing import Protocol as ProtocolSlow
@@ -112,8 +120,8 @@ def test_typingpep544_subclass() -> None:
     Test expected behaviour of user-defined subclasses of the public
     :class:`beartype.typing.Protocol` superclass.
     '''
-    if IS_PYTHON_3_7:
-        skip_unless_module('typing_extensions')
+    if IS_PYTHON_3_7 and _import_typing_extensions() is None:
+        skip('typing-extensions required to support Protocols in Python 3.7')
 
     # Defer heavyweight imports.
     from abc import abstractmethod
@@ -155,8 +163,8 @@ def test_typingpep544_protocols_typing() -> None:
     :class:`beartype.typing.Protocol` subclass *and* the private
     :class:`beartype.typing._typingpep544._CachingProtocolMeta` metaclass.
     '''
-    if IS_PYTHON_3_7:
-        skip_unless_module('typing_extensions')
+    if IS_PYTHON_3_7 and _import_typing_extensions() is None:
+        skip('typing-extensions required to support Protocols in Python 3.7')
 
     # Defer heavyweight imports.
     from decimal import Decimal
@@ -233,8 +241,8 @@ def test_typingpep544_protocol_custom_direct() -> None:
     directly subclassing :class:`beartype.typing.Protocol` under the
     :func:`beartype.beartype` decorator.
     '''
-    if IS_PYTHON_3_7:
-        skip_unless_module('typing_extensions')
+    if IS_PYTHON_3_7 and _import_typing_extensions() is None:
+        skip('typing-extensions required to support Protocols in Python 3.7')
 
     # Defer heavyweight imports.
     from abc import abstractmethod
@@ -306,8 +314,8 @@ def test_typingpep544_protocol_custom_indirect() -> None:
     indirectly subclassing :class:`beartype.typing.Protocol` under the
     :func:`beartype.beartype` decorator.
     '''
-    if IS_PYTHON_3_7:
-        skip_unless_module('typing_extensions')
+    if IS_PYTHON_3_7 and _import_typing_extensions() is None:
+        skip('typing-extensions required to support Protocols in Python 3.7')
 
     # Defer heavyweight imports.
     from abc import abstractmethod
@@ -443,3 +451,22 @@ def test_typingpep544_pep593_integration() -> None:
 
     with raises(BeartypeException):
         _there_can_be_only_one(NotEvenOne())  # type: ignore [arg-type]
+
+# ....................{ TESTS ~ internal                   }....................
+@skip_if_python_version_less_than('3.7.0')
+def test_import_typing_extensions():
+    if IS_PYTHON_AT_LEAST_3_7:
+        skip_unless_module('typing_extensions')
+
+        import os
+        from unittest import mock
+        from beartype.typing._typingpep544 import _import_typing_extensions
+
+        with mock.patch.dict(os.environ, {'_BEARTYPE_PY_3_7_EXCLUDE_TYPING_EXTENSIONS': '1'}):
+            assert _import_typing_extensions() is None
+
+        with mock.patch.dict(os.environ, {'_BEARTYPE_PY_3_7_EXCLUDE_TYPING_EXTENSIONS': ''}):
+            te = _import_typing_extensions()
+            assert te is not None
+            assert hasattr(te, 'Protocol')
+            assert hasattr(te, 'runtime_checkable')

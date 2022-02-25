@@ -12,6 +12,8 @@ This private submodule implements a :func:`beartype.beartype``-compatible
 '''
 
 # ....................{ IMPORTS                           }....................
+from typing import Optional
+from types import ModuleType
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_3_7,
     IS_PYTHON_AT_LEAST_3_7,
@@ -61,6 +63,19 @@ _CAN_SUPPORT_PEP_544 = False
 # for Python 3.7 (and IS_PYTHON_AT_LEAST_3_7). At that point, no checks are
 # necessary because all Python versions will support PEP 544.
 
+def _import_typing_extensions() -> Optional[ModuleType]:
+    import os
+
+    if os.environ.get('_BEARTYPE_PY_3_7_EXCLUDE_TYPING_EXTENSIONS'):
+        return None
+
+    try:
+        import typing_extensions
+    except ImportError:
+        return None
+    else:
+        return typing_extensions
+
 if IS_PYTHON_AT_LEAST_3_7:
     from typing import TypeVar
 
@@ -99,17 +114,13 @@ if IS_PYTHON_AT_LEAST_3_7:
         # FIXME: Remove this whole branch when retiring IS_PYTHON_3_7 and
         # IS_PYTHON_AT_LEAST_3_7.
         assert IS_PYTHON_3_7
+        _typing_extensions = _import_typing_extensions()
 
-        try:
-            from typing_extensions import (  # type: ignore[misc]
-                Protocol as _ProtocolSlow,
-                SupportsIndex as _SupportsIndexSlow,
-                runtime_checkable,
-            )
-        except ImportError:
-            pass
-        else:
+        if _typing_extensions:
             _CAN_SUPPORT_PEP_544 = True
+            _ProtocolSlow = _typing_extensions.Protocol  # type: ignore[misc]
+            _SupportsIndexSlow = _typing_extensions.SupportsIndex  # type: ignore[misc]
+            runtime_checkable = _typing_extensions.runtime_checkable
 
             from abc import abstractmethod
             from typing import Iterable, Union

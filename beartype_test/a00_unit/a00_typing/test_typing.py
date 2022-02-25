@@ -25,18 +25,14 @@ def test_api_typing() -> None:
     # Defer heavyweight imports.
     import typing as official_typing
     from beartype import typing as beartype_typing
+    from beartype.typing._typingpep544 import _import_typing_extensions
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_3_7,
         IS_PYTHON_AT_LEAST_3_8,
         IS_PYTHON_AT_LEAST_3_9,
     )
 
-    try:
-        import typing_extensions
-    except ImportError:
-        _HAZ_TYPING_EXTENSIONS = False
-    else:
-        _HAZ_TYPING_EXTENSIONS = True
+    _typing_extensions = _import_typing_extensions()
 
     # Frozen set of the basenames of all erroneously publicized public
     # attributes of all "typing" modules across all Python versions. Ideally,
@@ -116,11 +112,11 @@ def test_api_typing() -> None:
         # Else, this attribute is public and thus unignorable.
     }
 
-    if IS_PYTHON_3_7 and _HAZ_TYPING_EXTENSIONS:
+    if IS_PYTHON_3_7 and _typing_extensions:
         # Not really "official", but we'll fake it
         official_typing_attr_name_to_value.update({
             extension_typing_attr_name: getattr(
-                typing_extensions, extension_typing_attr_name)
+                _typing_extensions, extension_typing_attr_name)
             for extension_typing_attr_name in (
                 'Protocol',
                 'SupportsIndex',
@@ -143,7 +139,7 @@ def test_api_typing() -> None:
     # submodule.
     TYPING_ATTR_UNEQUAL_NAMES = set()
 
-    if IS_PYTHON_AT_LEAST_3_8 or IS_PYTHON_3_7 and _HAZ_TYPING_EXTENSIONS:
+    if IS_PYTHON_AT_LEAST_3_8 or IS_PYTHON_3_7 and _typing_extensions:
         TYPING_ATTR_UNEQUAL_NAMES.update({
             'Protocol',
             'SupportsAbs',
