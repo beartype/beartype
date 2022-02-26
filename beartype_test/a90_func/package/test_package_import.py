@@ -44,11 +44,19 @@ def test_package_import_isolation() -> None:
     # fully-qualified name of *ANY* heavyweight (sub)module or package whose
     # importation violates our self-imposed constraint of fast importation of
     # our core @beartype.beartype decorator.
+    #
+    # Note that:
+    # * The third-party "typing_extensions" module has been profiled across
+    #   all supported CPython versions to import either faster or only slightly
+    #   slower than the standard "typing" module. In either case, both modules
+    #   implement sufficiently rapidly as to be ignorable with respect to
+    #   importation costs here. See also @posita's stunning profiling work at:
+    #       https://github.com/beartype/beartype/pull/103#discussion_r815027198
     _HEAVY_MODULE_NAME_RAW_REGEXES = (
+        r'beartype\.abby',
         r'beartype\.cave',
         r'beartype\.vale',
         r'numpy',
-        r'typing_extensions',
     )
 
     # Uncompiled regular expressions synthesized from this tuple.

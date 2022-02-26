@@ -107,6 +107,27 @@ import os, sys
 print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${pathname}"
 }
 
+# ....................{ PACKAGES                          }....................
+# If the third-party "pytest_asyncio" package providing the "pytest-asyncio"
+# plugin is installed under the desired Python interpreter, prevent this plugin
+# from emitting senseless deprecation warnings on "pytest" startup resembling:
+#     INTERNALERROR> Traceback (most recent call last):
+#          ...
+#     INTERNALERROR>   File "/usr/lib/python3.8/site-packages/pytest_asyncio/plugin.py", line 186, in pytest_configure
+#     INTERNALERROR>     config.issue_config_time_warning(LEGACY_MODE, stacklevel=2)
+#     INTERNALERROR>   File "/usr/lib/python3.8/site-packages/_pytest/config/__init__.py", line 1321, in issue_config_time_warning
+#     INTERNALERROR>     warnings.warn(warning, stacklevel=stacklevel)
+#     INTERNALERROR> DeprecationWarning: The 'asyncio_mode' default value will change to 'strict' in future, please explicitly use 'asyncio_mode=strict' or 'asyncio_mode=auto' in pytest configuration file.
+#     ^CTraceback (most recent call last):
+#
+# This is *ABSOLUTELY* senseless, because @beartype very intentionally does
+# *NOT* require, reference, or otherwise leverage "pytest-asyncio" anywhere.
+# However, many other third-party packages you may have installed do. Thanks to
+# them, *ALL* "pytest" invocations must now pass this vapid setting to avoid
+# spewing trash across *ALL* "pytest"-driven test sessions. *double facepalm*
+is_package pytest_asyncio &&
+    PYTEST_ARGS=( "${PYTEST_ARGS[@]}" '--asyncio-mode=strict' )
+
 # ....................{ PATHS                             }....................
 # Absolute or relative filename of this script.
 script_filename="$(canonicalize_path "${BASH_SOURCE[0]}")"

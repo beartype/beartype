@@ -47,7 +47,7 @@ from beartype._data.hint.pep.sign.datapepsigncls import (
 # * Declare one new attribute here for each new "typing" attribute added by
 #   that CPython release regardless of whether beartype explicitly supports
 #   that attribute yet. The subsequently called die_unless_hint_pep_supported()
-#   validator will raise exceptions when passed such attributes.
+#   validator will raise exceptions when passed these attributes.
 # * Preserve attributes here that have since been removed from the "typing"
 #   module in that CPython release to ensure their continued usability when
 #   running beartype against older CPython releases.
@@ -66,6 +66,7 @@ HintSignLiteral = _HintSign(name='Literal')
 HintSignOptional = _HintSign(name='Optional')
 HintSignParamSpec = _HintSign(name='ParamSpec')
 HintSignProtocol = _HintSign(name='Protocol')
+HintSignSelf = _HintSign(name='Self')
 HintSignTuple = _HintSign(name='Tuple')
 HintSignType = _HintSign(name='Type')
 HintSignTypeVar = _HintSign(name='TypeVar')

@@ -4,6 +4,36 @@
 # See "LICENSE" for further details.
 
 # ....................{ TODO                              }....................
+#FIXME: [PEP] Add PEP 673 support (i.e., "typing.Self"). Since "typing.Self" is
+#simply a singleton syntactic sugar for "typing.TypeVar('Self', bound={cls})"
+#where {cls} is the class containing the "typing.Self" reference, this can be
+#trivially achieved with a reduction in "beartype._util.hint.utilhintconv"
+#contextually reducing each "typing.Self" type hint in a callable signature to
+#the corresponding "typing.TypeVar('Self', bound={cls})" object: e.g.,
+#    # This canonical PEP 673-specific example...
+#    from typing import Self
+#    class Shape:
+#        def set_scale(self, scale: float) -> Self:
+#            self.scale = scale
+#            return self
+#
+#    # ...is semantically identical to this PEP 673-agnostic example.
+#    from typing import TypeVar
+#    class Shape:
+#        def set_scale(self, scale: float) -> TypeVar('Self', Shape):
+#            self.scale = scale
+#            return self
+#
+#Note that implementing this reduction will require:
+#* Adding a new "cls_scope" (or something) instance variable to our
+#  "beartype._decor._call.BeartypeCall" dataclass, defined as either:
+#  * "None" for non-method callables.
+#  * The type of the class lexically declaring the current method callable.
+#* It would be advisable to cache the "TypeVar" objects produced in this
+#  manner. Or perhaps that's overkill, as the same "utilhintconv" function
+#  performing this reduction *ALSO* currently reduces "TypeVar" objects to
+#  their bounds. So... *shrug*
+
 #FIXME: [OPTIMIZATION] As a useful microoptimization, unroll *ALL* calls to
 #the any() and all() builtins into equivalent "for" loops in our critical path.
 #Since we typically pass these builtins generator comprehensions created and

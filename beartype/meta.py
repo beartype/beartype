@@ -71,8 +71,9 @@ Human-readable name of the license this package is licensed under.
 #   module bundled with the most recent CPython release.
 # * Continuous integration test matrices, including:
 #   * The top-level "tox.ini" file.
-#   * The "jobs/tests/strategy/matrix/python-version" subkey of the
-#     GitHub Actions-specific ".github/workflows/pythonpackage.yml" file.
+#   * The "jobs/tests/strategy/matrix/{tox-env,include/python-version}"
+#     settings of the GitHub Actions-specific
+#     ".github/workflows/python_test.yml" file.
 # * Front-facing documentation (e.g., "README.rst", "doc/md/INSTALL.md").
 #
 # On bumping the minimum required version of Python, consider also documenting
