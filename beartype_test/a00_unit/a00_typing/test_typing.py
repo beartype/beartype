@@ -69,6 +69,7 @@ def test_api_typing() -> None:
         'stdlib_re',
         'sys',
         'types',
+        'warnings',
     ))
 
     # Dictionaries mapping from the basenames of all public attributes declared

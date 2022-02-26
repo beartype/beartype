@@ -90,6 +90,7 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_8   as _IS_PYTHON_AT_LEAST_3_8,
     IS_PYTHON_AT_LEAST_3_9   as _IS_PYTHON_AT_LEAST_3_9,
     IS_PYTHON_AT_LEAST_3_10  as _IS_PYTHON_AT_LEAST_3_10,
+    IS_PYTHON_AT_LEAST_3_11  as _IS_PYTHON_AT_LEAST_3_11,
 )
 
 # ....................{ IMPORTS ~ all                     }....................
@@ -172,6 +173,14 @@ if _IS_PYTHON_AT_LEAST_3_7:
                 TypeGuard as TypeGuard,
                 is_typeddict as is_typeddict,
             )
+
+            # If the active Python interpreter targets Python >= 3.11...
+            if _IS_PYTHON_AT_LEAST_3_11:
+                from typing import (  # type: ignore[attr-defined]
+                    #FIXME: Add once that PEP goes live:
+                    #    Self as Self,
+                    reveal_type as reveal_type,
+                )
 
 # ....................{ PEP ~ 585                         }....................
 # If the active Python interpreter targets Python < 3.9 and thus fails to
