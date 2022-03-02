@@ -26,6 +26,7 @@ def test_package_import_isolation() -> None:
     This test ensures that the fix cost of the first importation of the
     :mod:`beartype` package itself remains low -- if not ideally negligible.
     '''
+    from beartype._util.py.utilpyversion import IS_PYTHON_3_7
 
     # Defer heavyweight imports.
     from beartype_test.util.cmd.pytcmdrun import (

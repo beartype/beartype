@@ -85,6 +85,7 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 # "import_typing_attr_or_none('Annotated')").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype._util.py.utilpyversion import (
+    IS_PYTHON_3_7            as _IS_PYTHON_3_7,
     IS_PYTHON_AT_LEAST_3_7   as _IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_7_2 as _IS_PYTHON_AT_LEAST_3_7_2,
     IS_PYTHON_AT_LEAST_3_8   as _IS_PYTHON_AT_LEAST_3_8,
@@ -159,7 +160,6 @@ if _IS_PYTHON_AT_LEAST_3_7:
             final as final,
             get_args as get_args,
             get_origin as get_origin,
-            runtime_checkable as runtime_checkable,
         )
 
         # If the active Python interpreter targets Python >= 3.10...
@@ -293,22 +293,38 @@ else:
 
 # Try to install our Protocol replacement
 if TYPE_CHECKING:
-    from typing import (
-        SupportsAbs as SupportsAbs,
-        SupportsBytes as SupportsBytes,
-        SupportsComplex as SupportsComplex,
-        SupportsFloat as SupportsFloat,
-        SupportsInt as SupportsInt,
-        SupportsRound as SupportsRound,
-    )
-
-    if _IS_PYTHON_AT_LEAST_3_8:
+    if _IS_PYTHON_AT_LEAST_3_7:
         from typing import (  # type: ignore[attr-defined]
-            Protocol as Protocol,
-            SupportsIndex as SupportsIndex,
+            SupportsAbs as SupportsAbs,
+            SupportsBytes as SupportsBytes,
+            SupportsComplex as SupportsComplex,
+            SupportsFloat as SupportsFloat,
+            SupportsInt as SupportsInt,
+            SupportsRound as SupportsRound,
         )
+
+        if _IS_PYTHON_AT_LEAST_3_8:
+            # FIXME: The ignore[attr-defined] is for Python 3.7 because
+            # Mypy doesn't understand IS_PYTHON_AT_LEAST_3_8. That ignore should
+            # be removable when retiring PYTHON_AT_LEAST_3_7.
+            from typing import (  # type: ignore[attr-defined]
+                Protocol as Protocol,
+                SupportsIndex as SupportsIndex,
+                runtime_checkable as runtime_checkable,
+            )
+        else:
+            assert _IS_PYTHON_3_7
+
+            try:
+                from typing_extensions import (  # type: ignore[misc,no-redef]
+                    Protocol as Protocol,
+                    SupportsIndex as SupportsIndex,
+                    runtime_checkable as runtime_checkable,
+                )
+            except ImportError:
+                pass
 else:  # not TYPE_CHECKING
-    if _IS_PYTHON_AT_LEAST_3_8:
+    try:
         # Import our replacements.
         from beartype.typing._typingpep544 import (
             Protocol as Protocol,
@@ -319,8 +335,9 @@ else:  # not TYPE_CHECKING
             SupportsIndex as SupportsIndex,
             SupportsInt as SupportsInt,
             SupportsRound as SupportsRound,
+            runtime_checkable as runtime_checkable,
         )
-    else:  # not _IS_PYTHON_AT_LEAST_3_8
+    except ImportError:
         # Fallback to the standard library versions.
         from typing import (
             SupportsAbs as SupportsAbs,
