@@ -24,21 +24,26 @@ of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# WARNING: To avoid race conditions during setuptools-based installation, this
+# CAUTION: To avoid accidental importation of optional runtime dependencies
+# (e.g., "typing_extensions") at installation time *BEFORE* the current package
+# manager has installed those dependencies, this module may *NOT* import from
+# any submodules of the current package. This includes *ALL* "beartype._util"
+# submodules, most of which import from "beartype.typing", which conditionally
+# imports optional runtime dependencies under certain contexts.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: To avoid race conditions during setuptools-based installation, this
 # module may import *ONLY* from modules guaranteed to exist at the start of
 # installation. This includes all standard Python and package modules but
 # *NOT* third-party dependencies, which if currently uninstalled will only be
 # installed at some later time in the installation.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# WARNING: To avoid polluting the public module namespace, external attributes
+# CAUTION: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import sys as _sys
-from beartype._util.os.utilostest import is_os_macos as _is_os_macos
-from beartype._util.py.utilpyinterpreter import is_py_pypy as _is_py_pypy
 from typing import Tuple as _Tuple
 
 # See the "beartype.cave" submodule for further commentary.
@@ -335,72 +340,49 @@ requirements strings of the format ``{project_name}
 # * The oldest Python version still supported by @beartype, which typically is
 #   *NOT* supported by newer versions of these dependencies.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def _make_libs_testtime_optional() -> _Tuple[str, ...]:
-    '''
-    Create and return **optional test-time package dependencies** (i.e.,
-    dependencies recommended to test this package with :mod:`tox` as a
-    developer at the command line) as a tuple of :mod:`setuptools`-specific
-    requirements strings of the format ``{project_name} {comparison1}{version1},
-    ...,{comparisonN}{versionN}``.
-    '''
+LIBS_TESTTIME_OPTIONAL = (
+    # Require a reasonably recent version of mypy known to behave well. Less
+    # recent versions are significantly deficient with respect to error
+    # reporting and *MUST* thus be blacklisted.
+    #
+    # Note that PyPy currently fails to support mypy. See also this official
+    # documentation discussing this regrettable incompatibility:
+    #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
+    'mypy >=0.800; platform_python_implementation != "PyPy"',
 
-    # List of unconditional optional test-time package dependencies.
-    libs_testtime_optional = [
-        # Required by our optional "test_sphinx" functional test.
-        'sphinx',
+    # Require NumPy. NumPy has become *EXTREMELY* non-trivial to install under
+    # macOS with "pip", due to the conjunction of multiple issues. These
+    # include:
+    # * NumPy > 1.18.0, whose initial importation now implicitly detects
+    #   whether the BLAS implementation NumPy was linked against is sane and
+    #   raises a "RuntimeError" exception if that implementation is insane:
+    #       RuntimeError: Polyfit sanity test emitted a warning, most
+    #       likely due to using a buggy Accelerate backend. If you
+    #       compiled yourself, more information is available at
+    #       https://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries
+    #       Otherwise report this to the vendor that provided NumPy.
+    #       RankWarning: Polyfit may be poorly conditioned
+    # * Apple's blatantly broken multithreaded implementation of their
+    #   "Accelerate" BLAS replacement, which neither NumPy nor "pip" have *ANY*
+    #   semblance of control over.
+    # * "pip" under PyPy, which for unknown reasons fails to properly install
+    #   NumPy even when the "--force-reinstall" option is explicitly passed to
+    #   "pip". Oddly, passing that option to "pip" under CPython resolves this
+    #   issue -- which is why we only selectively disable NumPy installation
+    #   under macOS + PyPy.
+    #
+    # See also this upstream NumPy issue:
+    #     https://github.com/numpy/numpy/issues/15947
+    'numpy; sys_platform != "darwin" and platform_python_implementation != "PyPy"',
 
-        # Required to exercise beartype validators and thus functionality
-        # requiring beartype validators (e.g., "numpy.typing.NDArray" type
-        # hints) under Python < 3.9.
-        'typing_extensions',
-    ]
+    # Required by our optional "test_sphinx" functional test.
+    'sphinx',
 
-    # If the active Python interpreter is *NOT* PyPy...
-    if not _is_py_pypy():
-        # Require a reasonably recent version of mypy known to behave well.
-        # Less recent versions are significantly deficient with respect to
-        # error reporting and *MUST* thus be blacklisted.
-        #
-        # Note that PyPy currently fails to support mypy. See also this
-        # official documentation discussing this regrettable incompatibility:
-        #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
-        libs_testtime_optional.append('mypy >=0.800')
-
-        # If the current platform is *NOT* macOS...
-        if not _is_os_macos():
-            # Require NumPy. NumPy has become *EXTREMELY* non-trivial to
-            # install under macOS with "pip", due to the conjunction of
-            # multiple issues. These include:
-            # * NumPy > 1.18.0, whose initial importation now implicitly
-            #   detects whether the BLAS implementation NumPy was linked
-            #   against is sane and raises a "RuntimeError" exception if that
-            #   implementation is insane resembling:
-            #       RuntimeError: Polyfit sanity test emitted a warning, most
-            #       likely due to using a buggy Accelerate backend. If you
-            #       compiled yourself, more information is available at
-            #       https://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries
-            #       Otherwise report this to the vendor that provided NumPy.
-            #       RankWarning: Polyfit may be poorly conditioned
-            # * Apple's blatantly broken multithreaded implementation of their
-            #   "Accelerate" BLAS replacement, which neither NumPy nor "pip"
-            #   have *ANY* semblance of control over.
-            # * "pip" under PyPy, which for unknown reasons fails to properly
-            #   install NumPy even when the "--force-reinstall" option is
-            #   explicitly passed to "pip". Oddly, passing that option to "pip"
-            #   under CPython resolves this issue -- which is why we only
-            #   selectively disable NumPy installation under macOS + PyPy.
-            #
-            # See also this upstream NumPy issue:
-            #     https://github.com/numpy/numpy/issues/15947
-            libs_testtime_optional.append('numpy')
-        # Else, the current platform is macOS.
-    # Else, the active Python interpreter is PyPy.
-
-    # Return a tuple coerced from this list.
-    return tuple(libs_testtime_optional)
-
-
-LIBS_TESTTIME_OPTIONAL = _make_libs_testtime_optional()
+    # Required to exercise beartype validators and thus functionality requiring
+    # beartype validators (e.g., "numpy.typing.NDArray" type hints) under
+    # Python < 3.9.
+    'typing_extensions; python_version < "3.9.0"',
+)
 '''
 **Optional developer test-time package dependencies** (i.e., dependencies
 recommended to test this package with :mod:`tox` as a developer at the command

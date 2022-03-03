@@ -15,7 +15,7 @@ format, instrumenting most high-level installation tasks for this package.
 #throughout this codebase, presumably with Sphinx + napoleon.
 #FIXME: Publish generated documentation to readthedocs.org.
 
-# ....................{ KLUDGES                           }....................
+# ....................{ KLUDGES ~ path                    }....................
 # Explicitly register all files and subdirectories of the root directory
 # containing this top-level "setup.py" script to be importable modules and
 # packages (respectively) for the remainder of this Python process if this
@@ -54,6 +54,44 @@ def _register_dir() -> None:
 
 # Kludge us up the bomb.
 _register_dir()
+
+# ....................{ KLUDGES ~ beartype                }....................
+# Explicitly notify the "beartype.__init__" submodule that it is being imported
+# at install time from this script. Doing so prevents that submodule from
+# implicitly importing from *ANY* "beartype" submodule other than the
+# "beartype.meta" submodule, which is the *ONLY* "beartype" submodule
+# guaranteed by sheer force of will to be safely importable at install time.
+# All other "beartype" submodules should be assumed to be unsafe to import
+# below due to potentially importing one or more optional runtime dependencies
+# yet to be installed (e.g., the third-party "typing_extensions" package).
+#
+# Naturally, there exist a countably infinite number of ways to notify the
+# "beartype.__init__" submodule that it is being imported at install time. To
+# minimize the likelihood of a conflict with other Python subsystems or
+# interpreters, we intentionally do *NOT*:
+# * Monkey-patch a module or package in the standard library.
+# * Detect this script in a stack frame on the call stack.
+#
+# Instead, we dynamically populate the standard "sys.modules" list of all
+# previously imported modules with a fake beartype-specific module. The
+# "beartype.__init__" submodule then decides whether to implicitly import from
+# potentially unsafe "beartype" submodules by detecting that fake module.
+
+# Isolate this kludge to a private function for safety.
+def _notify_beartype() -> None:
+
+    # The acid: it burns more than I expected.
+    from sys import modules
+    from types import ModuleType
+
+    # Dynamically create a new fake module. Look. Just do it.
+    fake_module = ModuleType('beartype.__is_installing__', 'This is horrible.')
+
+    # Dynamically register the fake module. Don't look like that.
+    modules['beartype.__is_installing__'] = fake_module
+
+# Setuptools made us do it.
+_notify_beartype()
 
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

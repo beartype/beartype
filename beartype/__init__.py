@@ -21,6 +21,7 @@ constants are commonly inspected (and thus expected) by external automation.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Explicitly list *ALL* public attributes imported below in the
 # "__all__" list global declared below to avoid linter complaints.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: To avoid race conditions during setuptools-based installation, this
 # module may import *ONLY* from modules guaranteed to exist at the start of
 # installation. This includes all standard Python and package submodules but
@@ -28,30 +29,47 @@ constants are commonly inspected (and thus expected) by external automation.
 # installed at some later time in the installation. Likewise, to avoid circular
 # import dependencies, the top-level of this module should avoid importing
 # package submodules where feasible.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# Publicize the private @beartype._decor.beartype decorator as
-# @beartype.beartype, preserving all implementation details as private.
-from beartype._decor.main import beartype
-
-#FIXME: Unit test the existence of:
-#* "beartype.BeartypeStrategy".
-#* "beartype.BeartypeConfiguration".
-# Publicize all top-level configuration attributes required to configure the
-# @beartype.beartype decorator.
-from beartype._decor.conf import (
-    BeartypeConf,
-    BeartypeStrategy,
-)
-
+# ....................{ IMPORTS ~ meta                    }....................
 # For PEP 8 compliance, versions constants expected by external automation are
 # imported under their PEP 8-mandated names.
 from beartype.meta import VERSION as __version__
 from beartype.meta import VERSION_PARTS as __version_info__
+
+# ....................{ IMPORTS ~ non-meta                }....................
+from sys import modules as _modules
+
+# If this submodule is being imported at install time from our top-level
+# "setup.py" script, avoid implicitly importing from *ANY* "beartype" submodule
+# other than the "beartype.meta" submodule. By sheer force of will,
+# "beartype.meta" is the *ONLY* "beartype" submodule guaranteed to be safely
+# importable at install time. All other "beartype" submodules should be assumed
+# to be unsafe due to potentially importing one or more optional runtime
+# dependencies yet to be installed (e.g., "typing_extensions" package). See
+# "setup.py" for further details.
+if 'beartype.__is_installing__' not in _modules:
+    # Publicize the private @beartype._decor.beartype decorator as
+    # @beartype.beartype, preserving all implementation details as private.
+    from beartype._decor.main import beartype
+
+    #FIXME: Unit test the existence of:
+    #* "beartype.BeartypeStrategy".
+    #* "beartype.BeartypeConfiguration".
+    # Publicize all top-level configuration attributes required to configure the
+    # @beartype.beartype decorator.
+    from beartype._decor.conf import (
+        BeartypeConf,
+        BeartypeStrategy,
+    )
+
+# Delete the temporarily imported "sys.modules" global for ultimate safety.
+del _modules
 
 # ....................{ GLOBALS                           }....................
 # Document all global variables imported into this namespace above.
