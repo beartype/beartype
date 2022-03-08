@@ -273,18 +273,18 @@ def test_typingpep544_protocol_custom_direct() -> None:
     # Arbitrary @beartype-decorated callable validating both parameters and
     # returns to be instances of arbitrary classes satisfying this protocol.
     @beartype
-    def _real_like_identity(arg: SupportsFish) -> SupportsFish:
+    def _supports_fish_identity(arg: SupportsFish) -> SupportsFish:
         return arg
 
     # Assert that instances of classes satisfying this protocol *WITHOUT*
     # subclassing this protocol satisfy @beartype validation as expected.
-    assert isinstance(_real_like_identity(OneFish()), SupportsFish)
-    assert isinstance(_real_like_identity(TwoFish()), SupportsFish)
+    assert isinstance(_supports_fish_identity(OneFish()), SupportsFish)
+    assert isinstance(_supports_fish_identity(TwoFish()), SupportsFish)
 
     # Assert that instances of classes violating this protocol violate
     # @beartype validation as expected.
     with raises(BeartypeCallHintParamViolation):
-        _real_like_identity(RedSnapper())  # type: ignore [arg-type]
+        _supports_fish_identity(RedSnapper())  # type: ignore [arg-type]
 
     # Arbitrary @beartype-decorated callable guaranteed to *ALWAYS* raise a
     # violation by returning an object that *NEVER* satisfies its type hint.
@@ -364,18 +364,18 @@ def test_typingpep544_protocol_custom_indirect() -> None:
     # Arbitrary @beartype-decorated callable validating both parameters and
     # returns to be instances of arbitrary classes satisfying this protocol.
     @beartype
-    def _real_like_identity(arg: SupportsCod) -> SupportsCod:
+    def _supports_cod_identity(arg: SupportsCod) -> SupportsCod:
         return arg
 
     # Assert that instances of classes satisfying this protocol *WITHOUT*
     # subclassing this protocol satisfy @beartype validation as expected.
-    assert isinstance(_real_like_identity(OneCod()), SupportsCod)
-    assert isinstance(_real_like_identity(TwoCod()), SupportsCod)
+    assert isinstance(_supports_cod_identity(OneCod()), SupportsCod)
+    assert isinstance(_supports_cod_identity(TwoCod()), SupportsCod)
 
     # Assert that instances of classes violating this protocol violate
     # @beartype validation as expected.
     with raises(BeartypeCallHintParamViolation):
-        _real_like_identity(PacificSnapper())  # type: ignore [arg-type]
+        _supports_cod_identity(PacificSnapper())  # type: ignore [arg-type]
 
     # Arbitrary @beartype-decorated callable guaranteed to *ALWAYS* raise a
     # violation by returning an object that *NEVER* satisfies its type hint.
@@ -387,6 +387,35 @@ def test_typingpep544_protocol_custom_indirect() -> None:
     # instance of a class otherwise satisfying this protocol.
     with raises(BeartypeCallHintReturnViolation):
         _lies_all_lies(OneCod())
+
+
+@skip_if_python_version_less_than('3.7.0')
+def test_parameterized_protocol_as_argument_type() -> None:
+    from abc import abstractmethod
+    from beartype import beartype
+    from beartype.typing import (
+        Iterable,
+        Protocol,
+        TypeVar,
+        Union,
+        runtime_checkable,
+    )
+
+    _T_co = TypeVar('_T_co', covariant=True)
+
+    @runtime_checkable
+    class SupportsAbsToo(Protocol[_T_co]):
+        __slots__: Union[str, Iterable[str]] = ()
+        @abstractmethod
+        def __abs__(self) -> _T_co:
+            pass
+
+    @beartype
+    def myabs(arg: SupportsAbsToo[_T_co]) -> _T_co:
+        return abs(arg)
+
+    assert myabs(-1) == 1
+
 
 # ....................{ TESTS ~ pep 593                   }....................
 # If the active Python interpreter targets Python < 3.9 and thus fails to
