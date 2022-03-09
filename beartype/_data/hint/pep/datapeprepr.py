@@ -303,6 +303,7 @@ HINTS_REPR_IGNORABLE_SHALLOW: FrozenSet[str] = {  # type: ignore[assignment]
     #     True
     #     >>> isinstance(0x696969, t.Protocol)
     #     True
+    "<class 'beartype.typing.Protocol'>",
     "<class 'typing.Protocol'>",
     "<class 'typing_extensions.Protocol'>",
 

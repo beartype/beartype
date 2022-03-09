@@ -72,20 +72,23 @@ def test_typingpep544_superclass() -> None:
     # Arbitrary type variable.
     _T_co = TypeVar('_T_co', covariant=True)
 
+    # Representations of protocols parametrized by one or more type variables.
+    fast_repr = repr(ProtocolFast[_T_co])
+    slow_repr = repr(ProtocolSlow[_T_co])
+
     # Assert that our caching protocol superclass memoizes subscriptions.
     assert ProtocolFast.__module__ == 'beartype.typing'
     assert ProtocolFast[_T_co] is ProtocolFast[_T_co]
 
-    # Assert that the representation of a caching protocol parametrized by one
-    # or more type variables contains the representation of a non-caching
-    # protocol parametrized by those same variables.
-    slow_repr = repr(ProtocolSlow[_T_co])
-    slow_protocol_repr = slow_repr[slow_repr.rindex('.') :]
-    fast_repr = repr(ProtocolFast[_T_co])
-    fast_protocol_repr = fast_repr[fast_repr.rindex('.') :]
-
+    # Assert that the representation of a caching protocol is prefixed by the
+    # expected prefix.
     assert fast_repr.startswith('beartype.typing.Protocol[')
-    assert slow_protocol_repr == fast_protocol_repr
+
+    # Assert that these representation are suffixed by the same "["- and "]
+    # "-delimited strings.
+    fast_repr_suffix = fast_repr[fast_repr.rindex('['):]
+    slow_repr_suffix = slow_repr[slow_repr.rindex('['):]
+    assert fast_repr_suffix == slow_repr_suffix
 
     # Assert that attempting to directly subscript the caching protocol
     # superclass by a non-type variable raises the expected exception.
@@ -107,6 +110,7 @@ def test_typingpep544_subclass() -> None:
         Protocol,
         runtime_checkable
     )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
     # Arbitrary protocol directly subclassing the protocol superclass
     # subscripted by one or more type variables, exercising subtle edge cases.
@@ -115,21 +119,35 @@ def test_typingpep544_subclass() -> None:
         def torpor_of_the_year(self) -> AnyStr:
             pass
 
-    # Arbitrary protocol directly subclassing the above protocol superclass
-    # subscripted by one or more non-type variables satisfying the type
-    # variables subscripting that superclass, exercising subtle edge cases.
-    class SupportsHiddenBuds(SupportsFeebleDreams[str]):
-        @abstractmethod
-        def dreamless_sleep(self) -> str:
-            pass
-
-    # Assert that a caching protocol subclass also memoizes subscriptions.
-    assert SupportsFeebleDreams[str] is SupportsFeebleDreams[str]
-
     # Assert that optionally decorating protocols by the standard
     # @typing.runtime_checkable() decorator reduces to a noop.
     assert runtime_checkable(SupportsFeebleDreams) is SupportsFeebleDreams
-    assert runtime_checkable(SupportsHiddenBuds) is SupportsHiddenBuds
+
+    # If the active Python interpreter targets Python >= 3.8 and thus behaves
+    # sanely with respect to subscription by non-type variables...
+    #
+    # Sadly, this logic fails under Python 3.7. Why? Because the
+    # "typing_extensions.Protocol" superclass erroneously raises an exception
+    # resembling the following when a protocol subclass is subscripted by a
+    # non-type variable satisfying the bounds on the type variable subscripting
+    # the superclass:
+    #     TypeError: Parameters to Protocol[...] must all be type variables.
+    #     Parameter 1 is <class 'str'>
+    if IS_PYTHON_AT_LEAST_3_8:
+        # Assert that a caching protocol subclass also memoizes subscriptions.
+        assert SupportsFeebleDreams[str] is SupportsFeebleDreams[str]
+
+        # Arbitrary protocol directly subclassing the above protocol superclass
+        # subscripted by one or more non-type variables satisfying the type
+        # variables subscripting that superclass, exercising subtle edge cases.
+        class SupportsHiddenBuds(SupportsFeebleDreams[str]):
+            @abstractmethod
+            def dreamless_sleep(self) -> str:
+                pass
+
+        # Assert that optionally decorating protocols by the standard
+        # @typing.runtime_checkable() decorator reduces to a noop.
+        assert runtime_checkable(SupportsHiddenBuds) is SupportsHiddenBuds
 
 
 @skip_unless_pep544()

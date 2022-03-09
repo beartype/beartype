@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
+from beartype._data.datatyping import TypeException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.utilpep484generic import (
     get_hint_pep484_generic_bases_unerased,
@@ -22,7 +23,6 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
     get_hint_pep585_generic_bases_unerased,
     is_hint_pep585_generic,
 )
-from beartype._data.datatyping import TypeException
 from typing import Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.

@@ -460,20 +460,20 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     ----------
         >>> import typing
         >>> from beartype._util.hint.pep.utilpepget import (
-        ...     get_hint_pep_sign)
-        >>> get_hint_pep_sign(typing.Any)
+        ...     get_hint_pep_sign_or_none)
+        >>> get_hint_pep_sign_or_none(typing.Any)
         typing.Any
-        >>> get_hint_pep_sign(typing.Union[str, typing.Sequence[int]])
+        >>> get_hint_pep_sign_or_none(typing.Union[str, typing.Sequence[int]])
         typing.Union
         >>> T = typing.TypeVar('T')
-        >>> get_hint_pep_sign(T)
+        >>> get_hint_pep_sign_or_none(T)
         HintSignTypeVar
         >>> class Genericity(typing.Generic[T]): pass
-        >>> get_hint_pep_sign(Genericity)
+        >>> get_hint_pep_sign_or_none(Genericity)
         HintSignGeneric
         >>> class Duplicity(typing.Iterable[T], typing.Container[T]): pass
-        >>> get_hint_pep_sign(Duplicity)
-        typing.Iterable
+        >>> get_hint_pep_sign_or_none(Duplicity)
+        HintSignGeneric
     '''
 
     # For efficiency, this tester identifies the sign of this type hint with

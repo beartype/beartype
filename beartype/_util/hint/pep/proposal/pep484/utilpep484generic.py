@@ -47,12 +47,12 @@ if IS_PYTHON_AT_LEAST_3_7:
         # abstract base class (ABC), in which case this hint is a user-defined
         # generic.
         #
-        # Note that this test is robust against edge case, as the "typing"
+        # Note that this test is robust against edge cases, as the "typing"
         # module guarantees all user-defined classes subclassing one or more
         # "typing" pseudo-superclasses to subclass the "typing.Generic"
-        # abstract base class (ABC) regardless of whether those classes
-        # originally did so explicitly. How? By type erasure, of course, the
-        # malicious gift that keeps on giving:
+        # abstract base class (ABC) regardless of whether those classes did so
+        # explicitly. How? By type erasure, of course, the malignant gift that
+        # keeps on giving:
         #     >>> import typing as t
         #     >>> class MuhList(t.List): pass
         #     >>> MuhList.__orig_bases__

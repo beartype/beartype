@@ -101,8 +101,6 @@ if IS_PYTHON_AT_LEAST_3_7:
             # Import non-caching protocols to be overridden by caching
             # equivalents below from the external "typing_extensions" module.
             from typing_extensions import (  # type: ignore[misc]
-                Protocol as _ProtocolSlow,
-                SupportsIndex as _SupportsIndexSlow,
                 runtime_checkable,
             )
         # If doing so fails, "typing_extensions" has *NOT* been installed
@@ -114,8 +112,185 @@ if IS_PYTHON_AT_LEAST_3_7:
             _IS_PEP_544_SUPPORTABLE = True
 
             # Defer heavyweight imports.
+            import sys, typing
             from abc import abstractmethod
-            from typing import Iterable, Union
+            from typing import (
+                Generic,
+                Iterable,
+                Union,
+                _GenericAlias,
+                _collect_type_vars,
+                _tp_cache,
+                _type_check,
+            )
+            from typing_extensions import (
+                _PROTO_WHITELIST,
+                _ProtocolMeta,
+                _check_generic,
+                _get_protocol_attrs,
+                _is_callable_members_only,
+                _no_init,
+            )
+
+            class _ProtocolSlow(metaclass=_ProtocolMeta):
+                # There is quite a lot of overlapping code with typing.Generic.
+                # Unfortunately it is hard to avoid this while these live in two different
+                # modules. The duplicated code will be removed when Protocol is moved to typing.
+                """Base class for protocol classes. Protocol classes are defined as::
+
+                    class Proto(Protocol):
+                        def meth(self) -> int:
+                            ...
+
+                Such classes are primarily used with static type checkers that recognize
+                structural subtyping (static duck-typing), for example::
+
+                    class C:
+                        def meth(self) -> int:
+                            return 0
+
+                    def func(x: Proto) -> int:
+                        return x.meth()
+
+                    func(C())  # Passes static type check
+
+                See PEP 544 for details. Protocol classes decorated with
+                @typing_extensions.runtime act as simple-minded runtime protocol that checks
+                only the presence of given attributes, ignoring their type signatures.
+
+                Protocol classes can be generic, they are defined as::
+
+                    class GenProto(Protocol[T]):
+                        def meth(self) -> T:
+                            ...
+                """
+                __slots__ = ()
+                _is_protocol = True
+
+                def __new__(cls, *args, **kwds):
+                    if cls is Protocol:
+                        raise TypeError("Type Protocol cannot be instantiated; "
+                                        "it can only be used as a base class")
+                    return super().__new__(cls)
+
+                @_tp_cache
+                def __class_getitem__(cls, params):
+                    if not isinstance(params, tuple):
+                        params = (params,)
+                    if not params and cls is not Tuple:
+                        raise TypeError(
+                            "Parameter list to {}[...] cannot be empty".format(cls.__qualname__))
+                    msg = "Parameters to generic types must be types."
+                    params = tuple(_type_check(p, msg) for p in params)
+                    if cls is _ProtocolSlow:
+                        # Generic can only be subscripted with unique type variables.
+                        if not all(isinstance(p, TypeVar) for p in params):
+                            i = 0
+                            while isinstance(params[i], TypeVar):
+                                i += 1
+                            raise TypeError(
+                                "Parameters to Protocol[...] must all be type variables."
+                                " Parameter {} is {}".format(i + 1, params[i]))
+                        if len(set(params)) != len(params):
+                            raise TypeError(
+                                "Parameters to Protocol[...] must all be unique")
+                    else:
+                        # Subscripting a regular Generic subclass.
+                        _check_generic(cls, params)
+                    return _GenericAlias(cls, params)
+
+                def __init_subclass__(cls, *args, **kwargs):
+                    tvars = []
+                    # if '__orig_bases__' in cls.__dict__:
+                    #     error = Generic in cls.__orig_bases__
+                    # else:
+                    #     error = Generic in cls.__bases__
+                    # if error:
+                    #     raise TypeError("Cannot inherit from plain Generic")
+                    if '__orig_bases__' in cls.__dict__:
+                        tvars = _collect_type_vars(cls.__orig_bases__)
+                        # Look for Generic[T1, ..., Tn] or Protocol[T1, ..., Tn].
+                        # If found, tvars must be a subset of it.
+                        # If not found, tvars is it.
+                        # Also check for and reject plain Generic,
+                        # and reject multiple Generic[...] and/or Protocol[...].
+                        gvars = None
+                        for base in cls.__orig_bases__:
+                            if (isinstance(base, _GenericAlias) and
+                                    base.__origin__ in (Generic, _ProtocolSlow)):
+                                # for error messages
+                                the_base = 'Generic' if base.__origin__ is Generic else 'Protocol'
+                                if gvars is not None:
+                                    raise TypeError(
+                                        "Cannot inherit from Generic[...]"
+                                        " and/or Protocol[...] multiple types.")
+                                gvars = base.__parameters__
+                        if gvars is None:
+                            gvars = tvars
+                        else:
+                            tvarset = set(tvars)
+                            gvarset = set(gvars)
+                            if not tvarset <= gvarset:
+                                s_vars = ', '.join(str(t) for t in tvars if t not in gvarset)
+                                s_args = ', '.join(str(g) for g in gvars)
+                                raise TypeError("Some type variables ({}) are"
+                                                " not listed in {}[{}]".format(s_vars,
+                                                                               the_base, s_args))
+                            tvars = gvars
+                    cls.__parameters__ = tuple(tvars)
+
+                    # Determine if this is a protocol or a concrete subclass.
+                    if not cls.__dict__.get('_is_protocol', None):
+                        cls._is_protocol = any(b is _ProtocolSlow for b in cls.__bases__)
+
+                    # Set (or override) the protocol subclass hook.
+                    def _proto_hook(other):
+                        if not cls.__dict__.get('_is_protocol', None):
+                            return NotImplemented
+                        if not getattr(cls, '_is_runtime_protocol', False):
+                            if sys._getframe(2).f_globals['__name__'] in ['abc', 'functools']:
+                                return NotImplemented
+                            raise TypeError("Instance and class checks can only be used with"
+                                            " @runtime protocols")
+                        if not _is_callable_members_only(cls):
+                            if sys._getframe(2).f_globals['__name__'] in ['abc', 'functools']:
+                                return NotImplemented
+                            raise TypeError("Protocols with non-method members"
+                                            " don't support issubclass()")
+                        if not isinstance(other, type):
+                            # Same error as for issubclass(1, int)
+                            raise TypeError('issubclass() arg 1 must be a class')
+                        for attr in _get_protocol_attrs(cls):
+                            for base in other.__mro__:
+                                if attr in base.__dict__:
+                                    if base.__dict__[attr] is None:
+                                        return NotImplemented
+                                    break
+                                annotations = getattr(base, '__annotations__', {})
+                                if (isinstance(annotations, typing.Mapping) and
+                                        attr in annotations and
+                                        isinstance(other, _ProtocolMeta) and
+                                        other._is_protocol):
+                                    break
+                            else:
+                                return NotImplemented
+                        return True
+                    if '__subclasshook__' not in cls.__dict__:
+                        cls.__subclasshook__ = _proto_hook
+
+                    # We have nothing more to do for non-protocols.
+                    if not cls._is_protocol:
+                        return
+
+                    # Check consistency of bases.
+                    for base in cls.__bases__:
+                        if not (base in (object, Generic) or
+                                base.__module__ == 'collections.abc' and
+                                base.__name__ in _PROTO_WHITELIST or
+                                isinstance(base, _ProtocolMeta) and base._is_protocol):
+                            raise TypeError('Protocols can only inherit from other'
+                                            ' protocols, got %r' % base)
+                    cls.__init__ = _no_init
 
             # These are [gulp] copied directly from _get_protocol_attrs in
             # <https://github.com/python/typing/blob/master/typing_extensions/src/typing_extensions.py>.
@@ -131,6 +306,8 @@ if IS_PYTHON_AT_LEAST_3_7:
                 '__doc__', '__subclasshook__', '__init__', '__new__',
                 '__module__', '_MutableMapping__marker', '_gorg'
             )
+
+            #FIXME: Redefine SupportsIndex as _SupportsIndexSlow, too. Booo!
 
             # Why redefine all of these? Because there's no concept of
             # @runtime_checkable in Python 3.7. Further, to avoid metaclass
@@ -163,6 +340,14 @@ if IS_PYTHON_AT_LEAST_3_7:
                 __slots__: Union[str, Iterable[str]] = ()
                 @abstractmethod
                 def __float__(self) -> float:
+                    pass
+
+            @runtime_checkable
+            class _SupportsIndexSlow(_ProtocolSlow):  # type: ignore[no-redef]
+                __slots__: Union[str, Iterable[str]] = ()
+
+                @abstractmethod
+                def __index__(self) -> int:
                     pass
 
             @runtime_checkable
@@ -482,7 +667,16 @@ if _IS_PEP_544_SUPPORTABLE:
 
     # ..................{ CLASSES                           }..................
     @runtime_checkable
-    class Protocol(_ProtocolSlow, metaclass=_CachingProtocolMeta):
+    class Protocol(
+        _ProtocolSlow,
+        # Force protocols to be generics. Although the standard
+        # "typing.Protocol" superclass already implicitly subclasses from the
+        # "typing.Generic" superclass, the non-standard
+        # "typing_extensions.Protocol" superclass does *NOT*. Ergo, we force
+        # this to be the case.
+        Generic,
+        metaclass=_CachingProtocolMeta,
+    ):
         '''
         :func:`beartype.beartype`-compatible (i.e., decorated by
         :func:`typing.runtime_checkable`) drop-in replacement for
