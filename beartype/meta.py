@@ -302,7 +302,7 @@ recommended for use with mod:`beartype`.
 
 :mod:`typing_extensions` >= 3.10.0.0 backports all :mod:`typing` attributes
 unavailable under older Python interpreters supported by the
-:func:`beartype.beartype` decorator .
+:func:`beartype.beartype` decorator.
 '''
 
 

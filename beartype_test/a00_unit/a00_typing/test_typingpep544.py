@@ -10,7 +10,6 @@ This submodule unit tests both the public *and* private API of the private
 :mod:`beartype.typing._typingpep544` subpackage for sanity.
 '''
 
-from beartype._util.py.utilpyversion import IS_PYTHON_3_7
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
@@ -18,23 +17,16 @@ from beartype._util.py.utilpyversion import IS_PYTHON_3_7
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test.util.mark.pytskip import (
     skip_if_python_version_less_than,
-    skip_unless_module,
+    skip_unless_pep544,
 )
 
 # ....................{ TESTS                             }....................
-# If the active Python interpreter targets Python < 3.7 and thus fails to
-# support PEP 544, skip all tests declared below. For 3.7 in particular, each
-# each test also skips itself if it is unable to load the typing_extensions
-# module.
-
-@skip_if_python_version_less_than('3.7.0')
+@skip_unless_pep544()
 def test_typingpep544_metaclass() -> None:
     '''
     Test the private
     :class:`beartype.typing._typingpep544._CachingProtocolMeta` metaclass.
     '''
-    if IS_PYTHON_3_7:
-        skip_unless_module('typing_extensions')
 
     # Defer heavyweight imports.
     from abc import abstractmethod
@@ -63,23 +55,18 @@ def test_typingpep544_metaclass() -> None:
     assert issubclass(type(SupportsRoundFromScratch), _CachingProtocolMeta)
 
 
-@skip_if_python_version_less_than('3.7.0')
+@skip_unless_pep544()
 def test_typingpep544_superclass() -> None:
     '''
-    Test the public
-    :class:`beartype.typing.Protocol` superclass.
+    Test the public :class:`beartype.typing.Protocol` superclass.
     '''
-    if IS_PYTHON_3_7:
-        skip_unless_module('typing_extensions')
-        from typing_extensions import Protocol as ProtocolSlow
-    else:
-        from typing import Protocol as ProtocolSlow
 
     # Defer heavyweight imports.
     from beartype.typing import (
         Protocol as ProtocolFast,
         TypeVar,
     )
+    from beartype.typing._typingpep544 import _ProtocolSlow as ProtocolSlow
     from pytest import raises
 
     # Arbitrary type variable.
@@ -106,14 +93,12 @@ def test_typingpep544_superclass() -> None:
         ProtocolFast[str]
 
 
-@skip_if_python_version_less_than('3.7.0')
+@skip_unless_pep544()
 def test_typingpep544_subclass() -> None:
     '''
     Test expected behaviour of user-defined subclasses of the public
     :class:`beartype.typing.Protocol` superclass.
     '''
-    if IS_PYTHON_3_7:
-        skip_unless_module('typing_extensions')
 
     # Defer heavyweight imports.
     from abc import abstractmethod
@@ -147,7 +132,7 @@ def test_typingpep544_subclass() -> None:
     assert runtime_checkable(SupportsHiddenBuds) is SupportsHiddenBuds
 
 
-@skip_if_python_version_less_than('3.7.0')
+@skip_unless_pep544()
 def test_typingpep544_protocols_typing() -> None:
     '''
     Test the public retinue of ``beartype.typing.Supports*`` protocols with
@@ -155,8 +140,6 @@ def test_typingpep544_protocols_typing() -> None:
     :class:`beartype.typing.Protocol` subclass *and* the private
     :class:`beartype.typing._typingpep544._CachingProtocolMeta` metaclass.
     '''
-    if IS_PYTHON_3_7:
-        skip_unless_module('typing_extensions')
 
     # Defer heavyweight imports.
     from decimal import Decimal
@@ -224,8 +207,8 @@ def test_typingpep544_protocols_typing() -> None:
     _assert_isinstance(
         int, float, bool, Decimal, Fraction, target_t=SupportsRound)
 
-# ....................{ TESTS ~ custom                    }....................
-@skip_if_python_version_less_than('3.7.0')
+# ....................{ TESTS ~ custom : direct           }....................
+@skip_unless_pep544()
 def test_typingpep544_protocol_custom_direct() -> None:
     '''
     Test the core operation of the public :class:`beartype.typing.Protocol`
@@ -233,8 +216,6 @@ def test_typingpep544_protocol_custom_direct() -> None:
     directly subclassing :class:`beartype.typing.Protocol` under the
     :func:`beartype.beartype` decorator.
     '''
-    if IS_PYTHON_3_7:
-        skip_unless_module('typing_extensions')
 
     # Defer heavyweight imports.
     from abc import abstractmethod
@@ -298,7 +279,49 @@ def test_typingpep544_protocol_custom_direct() -> None:
         _lies_all_lies(OneFish())
 
 
-@skip_if_python_version_less_than('3.7.0')
+@skip_unless_pep544()
+def test_typingpep544_protocol_custom_direct_typevar() -> None:
+    '''
+    Test the core operation of the public :class:`beartype.typing.Protocol`
+    subclass with respect to user-defined :pep:`544`-compliant protocols
+    directly subclassing :class:`beartype.typing.Protocol` and parametrized by
+    one or more type variables under the :func:`beartype.beartype` decorator.
+    '''
+
+    # Defer heavyweight imports.
+    from abc import abstractmethod
+    from beartype import beartype
+    from beartype.typing import (
+        Iterable,
+        Protocol,
+        TypeVar,
+        Union,
+        runtime_checkable,
+    )
+
+    # Arbitrary type variable.
+    _T_co = TypeVar('_T_co', covariant=True)
+
+    # Arbitrary direct protocol subscripted by this type variable.
+    @runtime_checkable
+    class SupportsAbsToo(Protocol[_T_co]):
+        __slots__: Union[str, Iterable[str]] = ()
+
+        @abstractmethod
+        def __abs__(self) -> _T_co:
+            pass
+
+    # Arbitrary @beartype-decorated callable validating a parameter to be an
+    # instance of arbitrary classes satisfying this protocol.
+    @beartype
+    def myabs(arg: SupportsAbsToo[_T_co]) -> _T_co:
+        return abs(arg)
+
+    # Assert @beartype wrapped this callable with the expected type-checking.
+    assert myabs(-1) == 1
+
+# ....................{ TESTS ~ custom : indirect         }....................
+@skip_unless_pep544()
 def test_typingpep544_protocol_custom_indirect() -> None:
     '''
     Test the core operation of the public :class:`beartype.typing.Protocol`
@@ -306,8 +329,6 @@ def test_typingpep544_protocol_custom_indirect() -> None:
     indirectly subclassing :class:`beartype.typing.Protocol` under the
     :func:`beartype.beartype` decorator.
     '''
-    if IS_PYTHON_3_7:
-        skip_unless_module('typing_extensions')
 
     # Defer heavyweight imports.
     from abc import abstractmethod
@@ -387,35 +408,6 @@ def test_typingpep544_protocol_custom_indirect() -> None:
     # instance of a class otherwise satisfying this protocol.
     with raises(BeartypeCallHintReturnViolation):
         _lies_all_lies(OneCod())
-
-
-@skip_if_python_version_less_than('3.7.0')
-def test_parameterized_protocol_as_argument_type() -> None:
-    from abc import abstractmethod
-    from beartype import beartype
-    from beartype.typing import (
-        Iterable,
-        Protocol,
-        TypeVar,
-        Union,
-        runtime_checkable,
-    )
-
-    _T_co = TypeVar('_T_co', covariant=True)
-
-    @runtime_checkable
-    class SupportsAbsToo(Protocol[_T_co]):
-        __slots__: Union[str, Iterable[str]] = ()
-        @abstractmethod
-        def __abs__(self) -> _T_co:
-            pass
-
-    @beartype
-    def myabs(arg: SupportsAbsToo[_T_co]) -> _T_co:
-        return abs(arg)
-
-    assert myabs(-1) == 1
-
 
 # ....................{ TESTS ~ pep 593                   }....................
 # If the active Python interpreter targets Python < 3.9 and thus fails to

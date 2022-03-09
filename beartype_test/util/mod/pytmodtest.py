@@ -69,6 +69,7 @@ def is_package_typing_extensions() -> bool:
     from beartype.meta import (
         _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS)
     from beartype._util.mod.utilmodtest import is_module_version_at_least
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
     # Return true only if this version of this package is importable.
     return is_module_version_at_least(

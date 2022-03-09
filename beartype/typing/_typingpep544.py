@@ -19,16 +19,15 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_9,
 )
 
-# ....................{ PEP 544                           }....................
-# OMG, what is this thing, and why is it here?
-
-_CAN_SUPPORT_PEP_544 = False
-
-# More specifically, why use this weird guard in addition to that
-# IS_PYTHON_AT_LEAST_3_7 check below? Why not just create (and rely) on a
-# dependency on typing-extensions when installing into Python 3.7? E.G.:
+# ....................{ PEP 544 ~ preamble                }....................
+# True only if the active Python interpreter already implicitly supports PEP
+# 544 out-of-the-box *OR* can be explicitly forced to do so.
 #
-#     'install_requires': ('typing-extensions>=3.10;python_version<"3.8"'),
+# OMG, what is this thing and why is it here? More specifically, why use this
+# weird guard in addition to that IS_PYTHON_AT_LEAST_3_7 check below? Why not
+# just create (and rely) on a dependency on typing-extensions when installing
+# into Python 3.7? For example, we could amend "setup.py" to force:
+#     'install_requires': ('typing-extensions>=3.10;python_version<"3.8"', ...),
 #
 # Great questions! Thanks for asking!
 #
@@ -36,55 +35,49 @@ _CAN_SUPPORT_PEP_544 = False
 # there is a practical reason in line with principles, which we'll attempt to
 # pass off as principle (which isn't very principled of us, but oh well).
 #
-# The practical reason is that (at least as of this writing) this file is
-# ultimately imported from setup.py. This creates a potential circular
-# dependency/bootstrapping problem. An installer evaluates setup.py to discover
-# dependencies, but if this module is loaded in the process, and it requires
-# that those dependencies are already available, installation breaks.
-#
-# Specifically, for Python 3.7, this module relies on typing-extensions for
-# defining Protocol, but that probably isn't available at installation time. So
-# we give up if we don't have it (just like we would do for Python 3.6).
-#
-# If we're robust enough to survive without a definition of Protocol at install
-# time, we can certainly survive without it at runtime, too. In fact, we already
-# do for Python 3.6. This means we don't require a strict dependency at all,
-# which beartype hopes never to impose. Instead, we can leave that decision up
+# The theological reason is that beartype hopes never to impose mandatory
+# dependencies on anyone. Instead, we can leave that decision up
 # to whomever is doing the installing. Further, the mechanism that person would
 # almost certainly use to signal a need for access to Protocol in 3.7 is to
 # install typing-extensions, which is the very same behavior that enables
 # beartype to have it here. This maintains the appearance of an elegant design,
 # when really all we were trying to do avoid the circular dependency at
 # installation. #AccidentalGeniusForTheWin
-#
-# FIXME: We can remove nearly all gating in this module upon retiring support
-# for Python 3.7 (and IS_PYTHON_AT_LEAST_3_7). At that point, no checks are
-# necessary because all Python versions will support PEP 544.
 
+#FIXME: We can remove nearly all gating in this module upon retiring support
+#for Python 3.7 (and IS_PYTHON_AT_LEAST_3_7). At that point, no checks are
+#necessary because all Python versions will support PEP 544.
+_IS_PEP_544_SUPPORTABLE = False
+
+# If the active Python interpreter targets at least Python >= 3.7 and thus does *NOT*
+# implicitly support PEP 544 out-of-the-box, decide whether it can be
+# explicitly forced to do so below.
 if IS_PYTHON_AT_LEAST_3_7:
+    # Defer Python version-specific imports.
     from typing import TypeVar
 
-    # FIXME: Move this defintion (and the TypeVar import) nearer to the _TT
-    # defintion below when retiring IS_PYTHON_AT_LEAST_3_7.
+    #FIXME: Move this definition (and the TypeVar import) nearer to the _TT
+    #definition below when retiring IS_PYTHON_AT_LEAST_3_7.
     _T_co = TypeVar("_T_co", covariant=True)
     '''
     Arbitrary covariant type variable.
     '''
 
-    # Non-caching protocols to be overridden by caching equivalents below (and
-    # other requirements from various sources, depending on runtime
-    # environment).
+    # If the active Python interpreter targets Python >= 3.8 and thus
+    # implicitly supports PEP 544 out-of-the-box...
     if IS_PYTHON_AT_LEAST_3_8:
-        # FIXME: Remove the above gate and cosolidate with the logic below when
-        # retiring IS_PYTHON_AT_LEAST_3_7.
-        _CAN_SUPPORT_PEP_544 = True
+        #FIXME: Remove the above gate and consolidate with the logic below
+        #when retiring IS_PYTHON_AT_LEAST_3_7.
+        _IS_PEP_544_SUPPORTABLE = True
 
-        from typing import EXCLUDED_ATTRIBUTES  # type: ignore[attr-defined]
-
-        # FIXME: The ignore[attr-defined] is for Python 3.7 because Mypy doesn't
-        # understand IS_PYTHON_AT_LEAST_3_8. That ignore should be removable
-        # when retiring PYTHON_AT_LEAST_3_7.
+        #FIXME: The ignore[attr-defined] is for Python 3.7 because Mypy doesn't
+        #understand IS_PYTHON_AT_LEAST_3_8. That ignore should be removable
+        #when retiring PYTHON_AT_LEAST_3_7.
+        # Defer Python version-specific imports, including non-caching
+        # protocols to be overridden by caching equivalents below (and other
+        # requirements from various sources, depending on runtime environment).
         from typing import (  # type: ignore[attr-defined]
+            EXCLUDED_ATTRIBUTES,
             Protocol as _ProtocolSlow,
             SupportsAbs as _SupportsAbsSlow,
             SupportsBytes as _SupportsBytesSlow,
@@ -95,22 +88,32 @@ if IS_PYTHON_AT_LEAST_3_7:
             SupportsRound as _SupportsRoundSlow,
             runtime_checkable,
         )
+    # Else, the active Python interpreter targets only Python >= 3.7 and thus
+    # does *NOT* implicitly support PEP 544 out-of-the-box. In this case,
+    # decide whether it can be explicitly forced to do so below.
     else:
-        # FIXME: Remove this whole branch when retiring IS_PYTHON_3_7 and
-        # IS_PYTHON_AT_LEAST_3_7.
+        #FIXME: Remove this whole branch when retiring IS_PYTHON_3_7 and
+        #IS_PYTHON_AT_LEAST_3_7.
         assert IS_PYTHON_3_7
 
+        # Attempt to...
         try:
+            # Import non-caching protocols to be overridden by caching
+            # equivalents below from the external "typing_extensions" module.
             from typing_extensions import (  # type: ignore[misc]
                 Protocol as _ProtocolSlow,
                 SupportsIndex as _SupportsIndexSlow,
                 runtime_checkable,
             )
+        # If doing so fails, "typing_extensions" has *NOT* been installed
+        # under this interpreter. In this case, silently reduce to a noop.
         except ImportError:
             pass
+        # Else, this interpreter can be forced to support PEP 544.
         else:
-            _CAN_SUPPORT_PEP_544 = True
+            _IS_PEP_544_SUPPORTABLE = True
 
+            # Defer heavyweight imports.
             from abc import abstractmethod
             from typing import Iterable, Union
 
@@ -134,7 +137,6 @@ if IS_PYTHON_AT_LEAST_3_7:
             # conflicts, we need each to derive from typing_extensions.Protocol.
             # Why typing_extensions doesn't provide @runtime_checkable versions
             # (like it does for SupportsIndex) is beyond me.
-
             @runtime_checkable
             class _SupportsAbsSlow(_ProtocolSlow[_T_co]):  # type: ignore[no-redef]
                 __slots__: Union[str, Iterable[str]] = ()
@@ -177,15 +179,16 @@ if IS_PYTHON_AT_LEAST_3_7:
                 def __round__(self, ndigits: int = 0) -> _T_co:
                     pass
 
+# ....................{ PEP 544 ~ main                    }....................
 # If the active Python interpreter supports PEP 544...
 #
 # This is one of those cases where one pines for a module-scope return
 # statement. (I seem to remember a bug/feature request about that somewhere,
 # but couldn't find it after a brief search.)
-#
-# FIXME: Remove this gate and consolidate with the above logic when retiring
-# IS_PYTHON_3_7 and IS_PYTHON_AT_LEAST_3_7.
-if _CAN_SUPPORT_PEP_544:
+
+#FIXME: Remove this gate and consolidate with the above logic when retiring
+#IS_PYTHON_3_7 and IS_PYTHON_AT_LEAST_3_7.
+if _IS_PEP_544_SUPPORTABLE:
     # ..................{ IMPORTS                           }..................
     from beartype._util.cache.utilcachecall import callable_cached
     from typing import (  # type: ignore[attr-defined]
