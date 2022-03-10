@@ -115,49 +115,51 @@ def skip_if_ci():
     return skip_if(is_ci(), reason='Incompatible with CI workflows.')
 
 # ....................{ SKIP ~ pep                        }....................
-def skip_unless_pep544():
-    '''
-    Skip the decorated test or fixture unless the active Python interpreter
-    supports :pep:`544` via the :class:`beartype.typing.Protocol` superclass.
-
-    Specifically, this decorator skips this text or function unless this
-    interpreter targets:
-
-    * Python >= 3.8, which unconditionally supports :pep:`544`.
-    * Python 3.7 *and* the third-party :mod:`typing_extensions` module is
-      importable, in which case the :class:`beartype.typing.Protocol`
-      superclass is a Python 3.7-compatible backport.
-
-    Returns
-    ----------
-    pytest.skipif
-        Decorator skipping this text or fixture if this interpreter is PyPy
-        *or* the identity decorator reducing to a noop otherwise.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.py.utilpyversion import (
-        IS_PYTHON_3_7,
-        IS_PYTHON_AT_LEAST_3_8,
-    )
-    from beartype_test.util.mod.pytmodtest import is_package_typing_extensions
-
-    # True only if the active Python interpreter supports PEP 544. See the
-    # decorator docstring for further details.
-    IS_PEP_544 = (
-        IS_PYTHON_AT_LEAST_3_8 or (
-            IS_PYTHON_3_7 and is_package_typing_extensions()
-        )
-    )
-    # print(f'IS_PEP_544: {IS_PEP_544}')
-    # print(f'IS_PYTHON_3_7: {IS_PYTHON_3_7}')
-    # print(f'te: {is_package_typing_extensions()}')
-
-    # Skip this test unless the active Python interpreter supports PEP 544.
-    return skip_if(
-        not IS_PEP_544,
-        reason=f'Python {_PYTHON_VERSION_STR} lacks PEP 544 support.',
-    )
+#FIXME: Currently unused, but preserved in the likelihood of us requiring
+#similar PEP-specific conditionality at some point.
+# def skip_unless_pep544():
+#     '''
+#     Skip the decorated test or fixture unless the active Python interpreter
+#     supports :pep:`544` via the :class:`beartype.typing.Protocol` superclass.
+#
+#     Specifically, this decorator skips this text or function unless this
+#     interpreter targets:
+#
+#     * Python >= 3.8, which unconditionally supports :pep:`544`.
+#     * Python 3.7 *and* the third-party :mod:`typing_extensions` module is
+#       importable, in which case the :class:`beartype.typing.Protocol`
+#       superclass is a Python 3.7-compatible backport.
+#
+#     Returns
+#     ----------
+#     pytest.skipif
+#         Decorator skipping this text or fixture if this interpreter is PyPy
+#         *or* the identity decorator reducing to a noop otherwise.
+#     '''
+#
+#     # Avoid circular import dependencies.
+#     from beartype._util.py.utilpyversion import (
+#         IS_PYTHON_3_7,
+#         IS_PYTHON_AT_LEAST_3_8,
+#     )
+#     from beartype_test.util.mod.pytmodtest import is_package_typing_extensions
+#
+#     # True only if the active Python interpreter supports PEP 544. See the
+#     # decorator docstring for further details.
+#     IS_PEP_544 = (
+#         IS_PYTHON_AT_LEAST_3_8 or (
+#             IS_PYTHON_3_7 and is_package_typing_extensions()
+#         )
+#     )
+#     # print(f'IS_PEP_544: {IS_PEP_544}')
+#     # print(f'IS_PYTHON_3_7: {IS_PYTHON_3_7}')
+#     # print(f'te: {is_package_typing_extensions()}')
+#
+#     # Skip this test unless the active Python interpreter supports PEP 544.
+#     return skip_if(
+#         not IS_PEP_544,
+#         reason=f'Python {_PYTHON_VERSION_STR} lacks PEP 544 support.',
+#     )
 
 # ....................{ SKIP ~ py                         }....................
 def skip_if_pypy():

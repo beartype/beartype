@@ -15,13 +15,13 @@ This submodule unit tests both the public *and* private API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import (
-    skip_if_python_version_less_than,
-    skip_unless_pep544,
-)
+from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS                             }....................
-@skip_unless_pep544()
+# If the active Python interpreter targets Python < 3.8, this interpreter fails
+# to support PEP 544. In this case, skip all tests declared below.
+
+@skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_metaclass() -> None:
     '''
     Test the private
@@ -55,7 +55,7 @@ def test_typingpep544_metaclass() -> None:
     assert issubclass(type(SupportsRoundFromScratch), _CachingProtocolMeta)
 
 
-@skip_unless_pep544()
+@skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_superclass() -> None:
     '''
     Test the public :class:`beartype.typing.Protocol` superclass.
@@ -96,7 +96,7 @@ def test_typingpep544_superclass() -> None:
         ProtocolFast[str]
 
 
-@skip_unless_pep544()
+@skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_subclass() -> None:
     '''
     Test expected behaviour of user-defined subclasses of the public
@@ -150,7 +150,7 @@ def test_typingpep544_subclass() -> None:
         assert runtime_checkable(SupportsHiddenBuds) is SupportsHiddenBuds
 
 
-@skip_unless_pep544()
+@skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_protocols_typing() -> None:
     '''
     Test the public retinue of ``beartype.typing.Supports*`` protocols with
@@ -226,7 +226,7 @@ def test_typingpep544_protocols_typing() -> None:
         int, float, bool, Decimal, Fraction, target_t=SupportsRound)
 
 # ....................{ TESTS ~ custom : direct           }....................
-@skip_unless_pep544()
+@skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_protocol_custom_direct() -> None:
     '''
     Test the core operation of the public :class:`beartype.typing.Protocol`
@@ -297,7 +297,7 @@ def test_typingpep544_protocol_custom_direct() -> None:
         _lies_all_lies(OneFish())
 
 
-@skip_unless_pep544()
+@skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_protocol_custom_direct_typevar() -> None:
     '''
     Test the core operation of the public :class:`beartype.typing.Protocol`
@@ -339,7 +339,7 @@ def test_typingpep544_protocol_custom_direct_typevar() -> None:
     assert myabs(-1) == 1
 
 # ....................{ TESTS ~ custom : indirect         }....................
-@skip_unless_pep544()
+@skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_protocol_custom_indirect() -> None:
     '''
     Test the core operation of the public :class:`beartype.typing.Protocol`
