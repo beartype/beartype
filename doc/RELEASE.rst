@@ -55,7 +55,7 @@ beartype is releasable to all supported platforms as follows:
 
          $ sudo pip3 install collective.checkdocs
 
-   #. Validate the PyPI-specific compatilibility of `this file <readme_>`__.
+   #. Validate the PyPI-specific compatibility of `this file <readme_>`__.
 
       .. code-block:: shell-session
 
