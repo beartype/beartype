@@ -18,30 +18,14 @@ This private submodule is *not* intended for importation by downstream callers.
 # All "FIXME:" comments for this submodule reside in this package's "__init__"
 # submodule to improve maintainability and readability here.
 
-#FIXME: @TeamSpen210 had a great idea to literally reduce @beartype to a space-
-#and time-efficient noop under "not __debug__" builds:
-#    ...you could move the __debug__ check into beartype.__init__, and then
-#    only import the actual core components if __debug__ is off. Then in
-#    "optimised" mode, most of beartype won't even need to be loaded, probably
-#    just the config if anything.
-
 # ....................{ IMPORTS                           }....................
-from beartype.roar import BeartypeConfException
-from beartype.typing import (
-    TYPE_CHECKING,
-    Dict,
-    Optional,
-    Union,
-)
+from beartype.typing import TYPE_CHECKING
 from beartype._data.datatyping import (
     BeartypeConfedDecorator,
+    BeartypeReturn,
     BeartypeableT,
 )
-from beartype._decor.conf import (
-    BeartypeConf,
-    BeartypeStrategy,
-)
-from beartype._decor._core import beartype_args_mandatory
+from beartype._decor.conf import BeartypeConf
 
 # Intentionally import the standard mypy-friendly @typing.overload decorator
 # rather than a possibly mypy-unfriendly @beartype.typing.overload decorator --
@@ -58,47 +42,100 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # union of multiple types desynchronized from the types of the passed arguments
 # and thus fails to accurately convey the actual public API of that decorator.
 # See also: https://www.python.org/dev/peps/pep-0484/#function-method-overloading
-@overload
+@overload  # type: ignore[misc,no-overload-impl]
 def beartype(obj: BeartypeableT) -> BeartypeableT: ...
 @overload
 def beartype(*, conf: BeartypeConf) -> BeartypeConfedDecorator: ...
 
 # ....................{ DECORATORS                        }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: Synchronize the signature of this decorator with the identity
-# decorator redeclared below.
+# CAUTION: *THE ORDER OF CONDITIONAL STATEMENTS BELOW IS SIGNIFICANT.* Notably,
+# mypy 0.940 erroneously emits this fatal error when the "TYPE_CHECKING or"
+# condition is *NOT* the first condition of this "if" statement:
+#     beartype/_decor/main.py:294: error: Condition can't be inferred, unable
+#     to merge overloads [misc]
+# See also: https://github.com/python/mypy/issues/12335#issuecomment-1065591703
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-def beartype(
-    # Optional positional or keyword parameters.
-    obj: Optional[BeartypeableT] = None,
+# If the active Python interpreter is either...
+if (
+    # Running under an external static type checker -- in which case there is
+    # no benefit to attempting runtime type-checking whatsoever...
+    #
+    # Note that this test is largely pointless. By definition, static type
+    # checkers should *NOT* actually run any code -- merely parse and analyze
+    # that code. Ergo, this boolean constant should *ALWAYS* be false from the
+    # runtime context under which @beartype is only ever run. Nonetheless, this
+    # test is only performed once per process and is thus effectively free.
+    TYPE_CHECKING or
+    # Optimized (e.g., option "-O" was passed to this interpreter) *OR*...
+    not __debug__
+):
+# Then unconditionally disable @beartype-based type-checking across the entire
+# codebase by reducing the @beartype decorator to the identity decorator.
+# Ideally, this would have been implemented at the top rather than bottom of
+# this submodule as a conditional resembling:
+#     if __debug__:
+#         def beartype(func: CallableTypes) -> CallableTypes:
+#             return func
+#         return
+#
+# Tragically, Python fails to support module-scoped "return" statements. *sigh*
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: Synchronize the signature of this identity decorator with the
+# non-identity decorator imported below.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    def beartype(  # type: ignore[no-redef]
+        obj: BeartypeableT,
 
-    # Optional keyword-only parameters.
-    *,
-    conf: BeartypeConf = BeartypeConf(),
-) -> Union[BeartypeableT, BeartypeConfedDecorator]:
+        # Optional keyword-only parameters.
+        *,
+        conf: BeartypeConf = BeartypeConf(),
+    ) -> BeartypeReturn:
+        return obj
+# Else, the active Python interpreter is in a standard runtime state. In this
+# case, define the @beartype decorator in the standard way.
+else:
+    from beartype._decor.cache.decor.cachedecor import beartype
+
+# ....................{ DECORATORS ~ doc                  }....................
+# Document the @beartype decorator with the same documentation regardless of
+# which of the above implementations currently implements that decorator.
+beartype.__doc__ = (
     '''
-    Decorate the passed **beartypeable** (i.e., pure-Python callable or class)
-    with optimal type-checking dynamically generated unique to that
+    Decorate the passed **beartypeable** (i.e., pure-Python callable or
+    class) with optimal type-checking dynamically generated unique to that
     beartypeable under the passed beartype configuration.
 
-    Specifically:
+    This decorator supports two distinct (albeit equally efficient) modes
+    of operation:
 
-    * If the passed object is a callable, this decorator dynamically generates
-      and returns a **runtime type-checker** (i.e., pure-Python function
-      validating all parameters and returns of all calls to the passed
-      pure-Python callable against all PEP-compliant type hints annotating
-      those parameters and returns). The type-checker returned by this
-      decorator is:
+    * **Decoration mode.** The caller activates this mode by passing this
+      decorator a type-checkable object via the ``obj`` parameter; this
+      decorator then creates and returns a new callable wrapping that object
+      with optimal type-checking. Specifically:
 
-      * Optimized uniquely for the passed callable.
-      * Guaranteed to run in ``O(1)`` constant-time with negligible constant
-        factors.
-      * Type-check effectively instantaneously.
-      * Add effectively no runtime overhead to the passed callable.
+      * If this object is a callable, this decorator creates and returns a new
+        **runtime type-checker** (i.e., pure-Python function validating all
+        parameters and returns of all calls to that callable against all
+        PEP-compliant type hints annotating those parameters and returns). The
+        type-checker returned by this decorator is:
 
-    * If the passed object is a class, this decorator iteratively applies
-      itself to all annotated methods of this class by dynamically wrapping
-      each such method with a runtime type-checker (as described above).
+        * Optimized uniquely for the passed callable.
+        * Guaranteed to run in ``O(1)`` constant-time with negligible constant
+          factors.
+        * Type-check effectively instantaneously.
+        * Add effectively no runtime overhead to the passed callable.
+
+      * If the passed object is a class, this decorator iteratively applies
+        itself to all annotated methods of this class by dynamically wrapping
+        each such method with a runtime type-checker (as described previously).
+
+    * **Configuration mode.** The caller activates this mode by passing this
+      decorator a beartype configuration via the ``conf`` parameter; this
+      decorator then creates and returns a new beartype decorator enabling that
+      configuration. That decorator may then be called (in decoration mode) to
+      create and return a new callable wrapping the passed type-checkable
+      object with optimal type-checking configured by that configuration.
 
     If optimizations are enabled by the active Python interpreter (e.g., due to
     option ``-O`` passed to this interpreter), this decorator silently reduces
@@ -121,13 +158,20 @@ def beartype(
 
     Returns
     ----------
-    BeartypeableT
+    BeartypeReturn
         Either:
 
-        * If the passed object is a class, this existing class embellished with
-          dynamically generated type-checking.
-        * If the passed object is a callable, a new callable wrapping that
-          callable with dynamically generated type-checking.
+        * If in decoration mode (i.e., ``obj`` is *not* ``None` while ``conf``
+          is ``None``) *and*:
+
+          * If ``obj`` is a callable, a new callable wrapping that callable
+            with dynamically generated type-checking.
+          * If ``obj`` is a class, this existing class embellished with
+            dynamically generated type-checking.
+
+        * If in configuration mode (i.e., ``obj`` is ``None` while ``conf`` is
+          *not* ``None``), a new beartype decorator enabling this
+          configuration.
 
     Raises
     ----------
@@ -170,188 +214,4 @@ def beartype(
         happened. Please submit an upstream issue with our issue tracker if you
         ever see this. (Thanks and abstruse apologies!)
     '''
-
-    # If this configuration is *NOT* a configuration, raise an exception.
-    if not isinstance(conf, BeartypeConf):
-        raise BeartypeConfException(
-            f'{repr(conf)} not beartype configuration.')
-    # Else, this configuration is a configuration.
-
-    # If passed an object to be decorated, this decorator is in decoration
-    # rather than configuration mode. In this case, decorate this object with
-    # type-checking configured by this configuration.
-    #
-    # Note this branch is typically *ONLY* entered when the "conf" parameter
-    # is *NOT* explicitly passed and thus defaults to the default
-    # configuration. While callers may technically run this decorator in
-    # decoration mode with a non-default configuration, doing so would be both
-    # highly irregular *AND* violate PEP 561-compliance by violating the
-    # decorator overloads declared above. Nonetheless, we're largely permissive
-    # here; callers that are doing this are sufficiently intelligent to be
-    # trusted to violate PEP 561-compliance if they so choose. So... *shrug*
-    if obj is not None:
-        return beartype_args_mandatory(obj, conf)
-    # Else, we were passed *NO* object to be decorated. In this case, this
-    # decorator is in configuration rather than decoration mode.
-
-    # Private decorator (possibly previously generated and cached by a prior
-    # call to this decorator also in configuration mode) generically applying
-    # this configuration to any beartypeable object passed to that decorator
-    # if a prior call to this public decorator has already been passed the same
-    # configuration (and thus generated and cached this private decorator) *OR*
-    # "None" otherwise (i.e., if this is the first call to this public
-    # decorator passed this configuration in configuration mode). Phew!
-    beartype_confed_cached = _bear_conf_to_decor.get(conf)
-
-    # If a prior call to this public decorator has already been passed the same
-    # configuration (and thus generated and cached this private decorator),
-    # return this private decorator for subsequent use in decoration mode.
-    if beartype_confed_cached:
-        return beartype_confed_cached
-    # Else, this is the first call to this public decorator passed this
-    # configuration in configuration mode.
-
-    # If this configuration enables the no-time strategy performing *NO*
-    # type-checking, define only the identity decorator reducing to a noop.
-    if conf.strategy is BeartypeStrategy.O0:
-        #FIXME: This requires augmentation. We can't just return a pure
-        #identity decorator. Instead, we need to return a minimal
-        #quasi-identity decorator that:
-        #* Monkey-patches the passed callable with our "__beartype_wrapped =
-        #  True" (or whatever that is) dunder boolean to prevent repeated
-        #  decorations be non-O(0) @beartype decorations.
-        #* Cache PEP 585-compliant type hints to reduce space costs.
-        def beartype_confed(obj: BeartypeableT) -> BeartypeableT:
-            '''
-            Return the passed **beartypeable** (i.e., pure-Python callable or
-            class) as is *without* type-checking that beartypeable under a
-            beartype configuration enabling the **no-time strategy** (i.e.,
-            :attr:`beartype.BeartypeStrategy.O0`) passed to a prior call to the
-            :func:`beartype.beartype` decorator.
-
-            Parameters
-            ----------
-            obj : BeartypeableT
-                Beartypeable to be preserved as is.
-
-            Returns
-            ----------
-            BeartypeableT
-                This beartypeable unmodified.
-
-            See Also
-            ----------
-            :func:`beartype.beartype`
-                Further details.
-            '''
-
-            return obj
-    # Else, this configuration enables a positive-time strategy performing at
-    # least the minimal amount of type-checking. In this case, define a private
-    # decorator generically applying this configuration to any beartypeable
-    # object passed to this decorator.
-    else:
-        def beartype_confed(obj: BeartypeableT) -> BeartypeableT:
-            '''
-            Decorate the passed **beartypeable** (i.e., pure-Python callable or
-            class) with optimal type-checking dynamically generated unique to
-            that beartypeable under the beartype configuration passed to a
-            prior call to the :func:`beartype.beartype` decorator.
-
-            Parameters
-            ----------
-            obj : BeartypeableT
-                Beartypeable to be decorated.
-
-            Returns
-            ----------
-            BeartypeableT
-                Either:
-
-                * If the passed object is a class, this existing class
-                  embellished with dynamically generated type-checking.
-                * If the passed object is a callable, a new callable wrapping
-                  that callable with dynamically generated type-checking.
-
-            See Also
-            ----------
-            :func:`beartype.beartype`
-                Further details.
-            '''
-
-            # Decorate this object with type-checking configured by this
-            # configuration.
-            return beartype_args_mandatory(obj, conf)
-
-    # Cache this private decorator against this configuration.
-    _bear_conf_to_decor[conf] = beartype_confed
-
-    # Return this private decorator.
-    return beartype_confed
-
-# ....................{ OPTIMIZATION                      }....................
-# If the active Python interpreter is either...
-if (
-    # Optimized (e.g., option "-O" was passed to this interpreter) *OR*...
-    not __debug__ or
-    # Running under an external static type checker -- in which case there is
-    # no benefit to attempting runtime type-checking whatsoever...
-    #
-    # Note that this test is largely pointless. By definition, static type
-    # checkers should *NOT* actually run any code -- merely parse and analyze
-    # that code. Ergo, this boolean constant should *ALWAYS* be false from the
-    # runtime context under which @beartype is only ever run. Nonetheless, this
-    # test is only performed once per process and is thus effectively free.
-    TYPE_CHECKING
-):
-# Then unconditionally disable @beartype-based type-checking across the entire
-# codebase by reducing the @beartype decorator to the identity decorator.
-# Ideally, this would have been implemented at the top rather than bottom of
-# this submodule as a conditional resembling:
-#     if __debug__:
-#         def beartype(func: CallableTypes) -> CallableTypes:
-#             return func
-#         return
-#
-# Tragically, Python fails to support module-scoped "return" statements. *sigh*
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: Synchronize the signature of this decorator with the actual
-# decorator declared above.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    def beartype(  # type: ignore[no-redef]
-        obj: BeartypeableT,
-
-        # Optional keyword-only parameters.
-        *,
-        conf: BeartypeConf = BeartypeConf(),
-    ) -> BeartypeableT:
-        '''
-        Identity decorator.
-
-        This decorator currently reduces to a noop, as the active Python
-        interpreter is optimized (e.g., option ``-O`` was passed to this
-        interpreter at execution time).
-        '''
-
-        return obj
-
-# ....................{ SINGLETONS                        }....................
-_bear_conf_to_decor: Dict[BeartypeConf, BeartypeConfedDecorator] = {}
-'''
-Non-thread-safe **beartype decorator cache.**
-
-This cache is implemented as a singleton dictionary mapping from each
-**beartype configuration** (i.e., self-caching dataclass encapsulating all
-flags, options, settings, and other metadata configuring the current decoration
-of the decorated callable or class) to the corresponding **configured beartype
-decorator** (i.e., closure created and returned from the
-:func:`beartype.beartype` decorator when passed a beartype configuration via
-the optional ``conf`` parameter rather than an object to be decorated via
-the optional ``obj`` parameter).
-
-Caveats
-----------
-**This cache is not thread-safe.** Although rendering this cache thread-safe
-would be trivial, doing so would needlessly reduce efficiency. This cache is
-merely a runtime optimization and thus need *not* be thread-safe.
-'''
+)

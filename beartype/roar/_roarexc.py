@@ -597,7 +597,7 @@ class _BeartypeDecorBeartypistryException(BeartypeDecorException):
 
     This exception is raised at decoration time from the
     :func:`beartype.beartype` decorator when erroneously accessing the
-    **beartypistry** (i.e., :class:`beartype._decor._cache.cachetype.bear_typistry`
+    **beartypistry** (i.e., :class:`beartype._decor.cache._cachetype.bear_typistry`
     singleton).
 
     This private exception denotes a critical internal issue and should thus

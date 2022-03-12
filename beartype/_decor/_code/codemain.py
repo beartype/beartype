@@ -33,7 +33,7 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
 )
 from beartype.typing import NoReturn
-from beartype._decor._cache.cachetype import (
+from beartype._decor.cache._cachetype import (
     bear_typistry,
     register_typistry_forwardref,
 )

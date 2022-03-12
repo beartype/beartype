@@ -57,15 +57,6 @@ checkers (e.g., :mod:`mypy`) and type-aware IDEs (e.g., VSCode) that the
 # ....................{ HINTS ~ callable ~ late           }....................
 # Callable-specific type hints *NOT* required by subsequent type hints below.
 
-BeartypeConfedDecorator = Callable[[BeartypeableT], BeartypeableT]
-'''
-PEP-compliant type hint matching a **configured beartype decorator** (i.e.,
-closure created and returned from the :func:`beartype.beartype` decorator when
-passed a beartype configuration via the optional ``conf`` parameter rather than
-an arbitrary object to be decorated via the optional ``obj`` parameter).
-'''
-
-
 Codeobjable = Union[Callable, CodeType, FrameType, GeneratorType]
 '''
 PEP-compliant type hint matching a **codeobjable** (i.e., pure-Python object
@@ -79,6 +70,23 @@ Specifically, this hint matches:
 * Pure-Python callables, including generators (but *not* C-based callables,
   which lack code objects).
 * Pure-Python callable stack frames.
+'''
+
+# ....................{ HINTS ~ callable ~ late : decor   }....................
+BeartypeConfedDecorator = Callable[[BeartypeableT], BeartypeableT]
+'''
+PEP-compliant type hint matching a **configured beartype decorator** (i.e.,
+closure created and returned from the :func:`beartype.beartype` decorator when
+passed a beartype configuration via the optional ``conf`` parameter rather than
+an arbitrary object to be decorated via the optional ``obj`` parameter).
+'''
+
+
+BeartypeReturn = Union[BeartypeableT, BeartypeConfedDecorator]
+'''
+PEP-compliant type hint matching any possible value returned by any invocation
+of the :func:`beartype.beartype` decorator, including calls to that decorator
+in both configuration and decoration modes.
 '''
 
 # ....................{ HINTS ~ iterable                  }....................

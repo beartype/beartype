@@ -10,11 +10,6 @@ during the lifecycle of the active Python process).
 '''
 
 # ....................{ TODO                              }....................
-#FIXME: [CRITICAL DEFECT] The functionality below imports @beartype.beartype,
-#which under "-O" reduces to a noop. Woops. Instead, the functionality below
-#should import our private top-level @beartype._decor.main.whatevah decorator
-#and internally depend upon that instead. *sweat pours down forehead*
-
 #FIXME: Optimize us up, please. See this discussion for voluminous details:
 #    https://github.com/beartype/beartype/issues/87#issuecomment-1020856517
 #FIXME: Fortuitously, implementing is_bearable() in terms of the existing
@@ -70,12 +65,20 @@ during the lifecycle of the active Python process).
 #perspective, which means we should make this happen.
 
 # ....................{ IMPORTS                           }....................
-from beartype import BeartypeConf, beartype
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: This submodule intentionally does *not* import the
+# @beartype.beartype decorator. Why? Because that decorator conditionally
+# reduces to a noop under certain contexts (e.g., `python3 -O` optimization),
+# whereas the API defined by this submodule is expected to unconditionally
+# operate as expected regardless of the current context.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype import BeartypeConf
 from beartype.roar import (
     BeartypeAbbyHintViolation,
     BeartypeCallHintReturnViolation,
 )
 from beartype.typing import Callable
+from beartype._decor.cache.decor.cachedecor import beartype
 from beartype._util.hint.utilhinttest import die_unless_hint
 
 # ....................{ PRIVATE ~ constants               }....................
