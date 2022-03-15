@@ -8,7 +8,7 @@
 
 This private submodule defines all core high-level logic underlying the
 :func:`beartype.beartype` decorator, whose implementation in the parent
-:mod:`beartype._decor.cache.decor.cachedecor` submodule is a thin wrapper
+:mod:`beartype._decor.cache.cachedecor` submodule is a thin wrapper
 efficiently memoizing closures internally created and returned by that
 decorator. In turn, those closures directly defer to this submodule.
 

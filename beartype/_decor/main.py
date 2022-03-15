@@ -95,7 +95,8 @@ if (
 # Else, the active Python interpreter is in a standard runtime state. In this
 # case, define the @beartype decorator in the standard way.
 else:
-    from beartype._decor.cache.decor.cachedecor import beartype
+    # This is where @beartype *REALLY* lives. Grep here for all the goods.
+    from beartype._decor.cache.cachedecor import beartype
 
 # ....................{ DECORATORS ~ doc                  }....................
 # Document the @beartype decorator with the same documentation regardless of

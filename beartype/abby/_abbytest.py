@@ -78,7 +78,7 @@ from beartype.roar import (
     BeartypeCallHintReturnViolation,
 )
 from beartype.typing import Callable
-from beartype._decor.cache.decor.cachedecor import beartype
+from beartype._decor.cache.cachedecor import beartype
 from beartype._util.hint.utilhinttest import die_unless_hint
 
 # ....................{ PRIVATE ~ constants               }....................

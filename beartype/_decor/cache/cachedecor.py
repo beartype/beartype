@@ -32,7 +32,7 @@ from beartype._data.datatyping import (
     BeartypeReturn,
     BeartypeableT,
 )
-from beartype._decor.cache.decor._cachedecor import beartype_args_mandatory
+from beartype._decor._core import beartype_args_mandatory
 from beartype._decor.conf import (
     BeartypeConf,
     BeartypeStrategy,
