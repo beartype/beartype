@@ -32,40 +32,23 @@ PYTHON_ARGS=( command python3 -X dev )
 # PYTHON_ARGS=( command python3.10 -X dev )
 # PYTHON_ARGS=( command pypy3.7 -X dev )
 
-# Array of all arguments to be passed to "python3" below. Dismantled, this is:
-#
-# * "--color=yes", unconditionally enable colour output to guarantee color
-#   under piped pagers (e.g., "less").
-# * "--maxfail=1", halt testing on the first failure for interactive tests.
-#   Permitting multiple failures complicates failure output, especially when
-#   every failure after the first is a result of the same underlying issue.
-#   When testing non-interactively, testing is typically *NOT* halted on the
-#   first failure. Hence, this option is confined to this script rather than
-#   added to our general-purpose "pytest.ini" configuration.
-# * ".", notifying pytest of the relative dirname of the root directory for
-#   this project. On startup, pytest internally:
-#   * Sets its "rootdir" property to this dirname in absolute form.
-#   * Sets its "inifile" property to the concatenation of this dirname
-#     with the basename "pytest.ini" if that top-level configuration file
-#     exists.
-#   * Prints the initial values of these properties to stdout.
-#   *THIS IS ESSENTIAL.* If *NOT* explicitly passed this dirname as an
-#   argument, pytest may fail to set these properties to the expected
-#   pathnames. For unknown reasons (presumably unresolved pytest issues),
-#   pytest instead sets "rootdir" to the absolute dirname of the current user's
-#   home directory and "inifile" to "None". Since no user's home directory
-#   contains a "pytest.ini" file, pytest then prints errors resembling:
-#      $ ./test -k test_sim_export --export-sim-conf-dir ~/tmp/yolo
-#      running test
-#      Running py.test with arguments: ['--capture=no', '--maxfail=1', '-k', 'test_sim_export', '--export-sim-conf-dir', '/home/leycec/tmp/yolo']
-#      usage: setup.py [options] [file_or_dir] [file_or_dir] [...]
-#      setup.py: error: unrecognized arguments: --export-sim-conf-dir
-#        inifile: None
-#        rootdir: /home/leycec
-#   See the following official documentation for further details, entitled
-#   "Initialization: determining rootdir and inifile":
-#       https://docs.pytest.org/en/latest/customize.html
-PYTEST_ARGS=( pytest '--color=yes' '--maxfail=1' "${@}" )
+# Array of all arguments to be passed to "python3" below.
+PYTEST_ARGS=(
+    pytest
+
+    # Enable colour output to ensure colour under piped pagers (e.g., "less").
+    '--color=yes'
+
+    # Halt testing on the first failure for interactive tests. Permitting
+    # multiple failures complicates failure output, especially when every
+    # failure after the first is a result of the same underlying issue. When
+    # testing non-interactively, testing is typically *NOT* halted on the first
+    # failure. Hence, this option is confined to this script rather than added
+    # to our general-purpose "pytest.ini" configuration.
+    '--maxfail=1'
+
+    "${@}"
+)
 # echo "pytest args: ${PYTEST_ARGS[*]}"
 
 # ....................{ FUNCTIONS                         }....................
@@ -130,15 +113,15 @@ is_package pytest_asyncio &&
 
 # ....................{ PATHS                             }....................
 # Absolute or relative filename of this script.
-script_filename="$(canonicalize_path "${BASH_SOURCE[0]}")"
+SCRIPT_FILENAME="$(canonicalize_path "${BASH_SOURCE[0]}")"
 
 # Absolute or relative dirname of the directory directly containing this
 # script, equivalent to the top-level directory for this project.
-script_dirname="$(dirname "${script_filename}")"
+SCRIPT_DIRNAME="$(dirname "${SCRIPT_FILENAME}")"
 
 # ....................{ MAIN                              }....................
 # Temporarily change the current working directory to that of this project.
-pushd "${script_dirname}" >/dev/null
+pushd "${SCRIPT_DIRNAME}" >/dev/null
 
 # If the third-party "coverage" package is installed under the desired Python
 # interpreter *AND* the "-k" option was *NOT* passed, then measure coverage
@@ -151,6 +134,33 @@ pushd "${script_dirname}" >/dev/null
 if is_package coverage && [[ ! " ${PYTEST_ARGS[*]} " =~ " -k " ]]; then
     # If run this project's pytest-based test suite with all passed arguments
     # (while measuring coverage) succeeds, generate a terminal coverage report.
+    #
+    # Note that the last argument passed to "pytest" *MUST* be ".". Why?
+    # Because "." notifies pytest of the relative dirname of the root directory
+    # for this project. On startup, pytest internally:
+    # * Sets its "rootdir" property to this dirname in absolute form.
+    # * Sets its "inifile" property to the concatenation of this dirname
+    #   with the basename "pytest.ini" if that top-level configuration file
+    #   exists.
+    # * Prints the initial values of these properties to stdout.
+    #
+    # *THIS IS ESSENTIAL.* If *NOT* explicitly passed this dirname as an
+    # argument, pytest may fail to set these properties to the expected
+    # pathnames. For unknown reasons (presumably unresolved pytest issues),
+    # pytest instead sets "rootdir" to the absolute dirname of the current
+    # user's home directory and "inifile" to "None". Since no user's home
+    # directory contains a "pytest.ini" file, pytest then prints errors ala:
+    #    $ ./pytest -k test_sim_export --export-sim-conf-dir ~/tmp/yolo
+    #    running test
+    #    Running py.test with arguments: ['--capture=no', '--maxfail=1', '-k', 'test_sim_export', '--export-sim-conf-dir', '/home/leycec/tmp/yolo']
+    #    usage: setup.py [options] [file_or_dir] [file_or_dir] [...]
+    #    setup.py: error: unrecognized arguments: --export-sim-conf-dir
+    #      inifile: None
+    #      rootdir: /home/leycec
+    #
+    # See the following official documentation for further details, entitled
+    # "Initialization: determining rootdir and inifile":
+    #     https://docs.pytest.org/en/latest/customize.html
     "${PYTHON_ARGS[@]}" -m \
         coverage run -m "${PYTEST_ARGS[@]}" . &&
     "${PYTHON_ARGS[@]}" -m \

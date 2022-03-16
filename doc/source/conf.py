@@ -32,8 +32,9 @@
 # See also:
 # * https://samnicholls.net/2016/06/15/how-to-sphinx-readthedocs
 #   The "Make autodoc actually work" is the canonical writeup on this kludge.
-import os, sys
-sys.path.insert(0, os.path.abspath('../../'))
+# import os, sys
+# sys.path.insert(0, os.path.abspath('../../'))
+# print(f'sys.path: {sys.path}')
 
 # ....................{ IMPORTS                           }....................
 # Sphinx defaults to hardcoding version specifiers. Since this is insane, we
@@ -42,7 +43,6 @@ sys.path.insert(0, os.path.abspath('../../'))
 #   "Inferring Release Number from Git Tags", detailing a clever one-liner
 #   harvesting this specifier from the most recent git tag.
 from beartype.meta import AUTHORS, COPYRIGHT, NAME, VERSION
-from beartype.roar import BeartypeDependencyOptionalMissingWarning
 from beartype._util.mod.utilmodtest import is_module
 from warnings import warn
 
@@ -147,7 +147,6 @@ else:
             'Optional Sphinx extension "sphinx_rtd_theme" not found; '
             'falling back to default Sphinx HTML theme.'
         ),
-        BeartypeDependencyOptionalMissingWarning
     )
 
 # ....................{ EXTENSIONS ~ conf : autodoc       }....................
