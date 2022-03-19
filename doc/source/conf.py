@@ -11,6 +11,10 @@
 #   List of all options supported in this file.
 
 # ....................{ TODO                              }....................
+#FIXME: [EXTENSION] Add "sphinx-notfound-page" support to enable us to provide
+#a sane 404 page for non-existent pages. In fact, we already appear to have a
+#"404.rst" document. Well, isn't that noice.
+
 #FIXME: Add one or more pytest-based functional tests exercising this
 #configuration. This is slightly less trivial than I'd like, largely as the
 #Sphinx team has yet to properly document their "sphinx.testing" system. See

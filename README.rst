@@ -123,7 +123,11 @@ developed Python versions <Python status_>`__, `all Python package managers
     Beartype `powers quality assurance across the Python ecosystem <beartype
     dependents_>`__.
 
-    |icon-graspologic| |icon-hydrazen| |icon-pycrisp| |icon-sentipy|
+.. #FIXME: Replace with grateful sponsorship notice. **YUP!**
+.. #FIXME: Preserved to demonstrate how exactly to go about this. Once we
+.. # actually receive a sponsor at this tier, please remove this placeholder as
+.. # well as the icon links below. kthx
+.. #    |icon-graspologic| |icon-hydrazen| |icon-pycrisp| |icon-sentipy|
 
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
@@ -1307,7 +1311,7 @@ existing validators, fueling reuse and preserving DRY_:
 Validator Caveats
 ~~~~~~~~~~~~~~~~~
 
-.. # FIXME: Coerce this into a proper reST note box when Sphinxifying this.
+.. #FIXME: Coerce this into a proper reST note box when Sphinxifying this.
 
 **‼ Validators require:**
 
@@ -2298,7 +2302,7 @@ Features
 
 Let's chart current and future compliance with Python's `typing`_ landscape:
 
-.. # FIXME: Span category cells across multiple rows.
+.. #FIXME: Span category cells across multiple rows.
 
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 | category           | feature                                 | versions partially supporting | versions fully supporting |
