@@ -20,6 +20,10 @@
 # this project against all installed Python interpreters and is thus suitable
 # as a full-blown correctness check (e.g., before submitting pull requests).
 
+# ....................{ PREAMBLE                          }....................
+# Enable strictness for sanity.
+set -e
+
 # ....................{ ARRAYS                            }....................
 # Array of all arguments with which to invoke Python. Dismantled, this is:
 # * "-X dev", enabling the Python Development Mode (PDM). See also commentary

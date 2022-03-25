@@ -13,6 +13,10 @@
 # canonical ${BASH_SOURCE} string global, reliably providing the absolute
 # pathnames of this script and hence this script's directory.
 
+# ....................{ PREAMBLE                          }....................
+# Enable strictness for sanity.
+set -e
+
 # ....................{ ARRAYS                            }....................
 # Array of all shell words with which to invoke "sphinx-build" below.
 #
@@ -65,19 +69,36 @@ SPHINX_BUILD_ARGS=(
     # Enable "nit-picky mode," generating one warning for each broken reference
     # (e.g., interdocument or intrasection link).
     -n
+
+    #FIXME: Comment and uncomment this as needed. Notably:
+    #* Uncomment this when locally debugging.
+    #* Comment this before commiting to Git.
+    # Unconditionally rebuild *EVERY* target output documentation regardless of
+    # whether the source input files providing that documentation have been
+    # modified or not. By default, Sphinx only conditionally rebuilds target
+    # documentation whose underlying source files have since been modified.
+    -a
 )
 # echo "sphinx-build args: ${SPHINX_BUILD_ARGS[*]}"
 
 # ....................{ FUNCTIONS                         }....................
 # str canonicalize_path(str pathname)
 #
-# Canonicalize the passed pathname. The "readlink" command's GNU-specific "-f"
-# option would be preferable but is unsupported by macOS's NetBSD-specific
-# version of "readlink". Instead, just defer to Python for portability.
+# Canonicalize the passed pathname.
 function canonicalize_path() {
-    python -c "
+    # Validate and localize all passed arguments.
+    (( $# == 1 )) || {
+        echo 'Expected exactly one argument.' 1>&2
+        return 1
+    }
+    local pathname="${1}"
+
+    # The "readlink" command's GNU-specific "-f" option would be preferable but
+    # is unsupported by macOS's NetBSD-specific version of "readlink". Instead,
+    # just defer to Python for portability.
+    command python3 -c "
 import os, sys
-print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${1}"
+print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${pathname}"
 }
 
 # ....................{ PATHS                             }....................

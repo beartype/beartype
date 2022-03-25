@@ -26,18 +26,31 @@
 # human-readable persective as its output is significantly more readable than
 # that captured by that functional test.
 
-# ....................{ PATHS                             }....................
+# ....................{ PREAMBLE                          }....................
+# Enable strictness for sanity.
+set -e
+
+# ....................{ FUNCTIONS                         }....................
 # str canonicalize_path(str pathname)
 #
-# Canonicalize the passed pathname. The "readlink" command's GNU-specific "-f"
-# option would be preferable but is unsupported by macOS's NetBSD-specific
-# version of "readlink". Instead, just defer to Python for portability.
+# Canonicalize the passed pathname.
 function canonicalize_path() {
+    # Validate and localize all passed arguments.
+    (( $# == 1 )) || {
+        echo 'Expected exactly one argument.' 1>&2
+        return 1
+    }
+    local pathname="${1}"
+
+    # The "readlink" command's GNU-specific "-f" option would be preferable but
+    # is unsupported by macOS's NetBSD-specific version of "readlink". Instead,
+    # just defer to Python for portability.
     command python3 -c "
 import os, sys
-print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${1}"
+print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${pathname}"
 }
 
+# ....................{ PATHS                             }....................
 # Absolute or relative filename of this script.
 script_filename="$(canonicalize_path "${BASH_SOURCE[0]}")"
 

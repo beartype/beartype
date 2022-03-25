@@ -13,9 +13,17 @@
 # ....................{ TODO                              }....................
 #FIXME: [EXTENSION] Add "sphinx-notfound-page" support to enable us to provide
 #a sane 404 page for non-existent pages. In fact, we already appear to have a
-#"404.rst" document. Well, isn't that noice.
+#"404.rst" document. Well, isn't that noice. Because we can't be bothered to
+#configure this at the moment, note that:
+#* We've temporarily moved "404.rst" into the parent subdirectory, where it
+#  has absolutely no effect (but at least does *NOT* induce fatal errors).
+#* We'll need to move "404.rst" back into this subdirectory first.
 
-#FIXME: Add one or more pytest-based functional tests exercising this
+#FIXME: [THEME] Consider switching to the nascent PyData Sphinx theme, now
+#widely leveraged across the data science sphere (e.g., NumPy, SciPy):
+#    https://github.com/pydata/pydata-sphinx-theme
+
+#FIXME: [QA] Add one or more pytest-based functional tests exercising this
 #configuration. This is slightly less trivial than I'd like, largely as the
 #Sphinx team has yet to properly document their "sphinx.testing" system. See
 #this pending issue for working code examples:
@@ -24,9 +32,6 @@
 #At the least, we probably need to add the following line to our top-level
 #"conftest.py" file:
 #    pytest_plugins = 'sphinx.testing.fixtures'
-#FIXME: Additionally, we should similarly add a single pytest-based functional
-#test exercising the correctness of our top-level "README.rst" file -- ideally
-#by invoking "checkdocs" somehow if conditionally available.
 
 # ....................{ IMPORTS ~ kludge                  }....................
 # If extensions (or modules to document with autodoc) are in another directory,
