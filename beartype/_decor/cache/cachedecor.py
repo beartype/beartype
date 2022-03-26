@@ -43,8 +43,8 @@ from beartype._decor.conf import (
 # CAUTION: Synchronize the signature of this non-identity decorator with the
 # identity decorator defined by the "beartype._decor.main" submodule.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: Documentation for this decorator intentionally resides in the
-# the "beartype._decor.main" submodule.
+# CAUTION: Documentation for this decorator intentionally resides in the parent
+# "beartype._decor.main" submodule.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def beartype(
     # Optional positional or keyword parameters.

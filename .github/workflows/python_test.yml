@@ -12,15 +12,11 @@
 #   Well-authored blog post strongly inspiring this configuration.
 
 # ....................{ TODO                              }....................
-#FIXME: Add support for caching "pip" downloads across runs. Currently,
-#unresolved issues in GitHub Actions prevents sane caching of "pip" downloads.
-#Naturally, horrifying hacks circumventing these issues do exist but are
-#presumably worse than these issues. See also this pertinent comment:
+#FIXME: [CACHING] Add support for caching "pip" downloads across runs.
+#Currently, unresolved issues in GitHub Actions prevents sane caching of "pip"
+#downloads. Naturally, horrifying hacks circumventing these issues do exist but
+#are presumably worse than these issues. See also this pertinent comment:
 #    https://github.com/actions/cache/issues/342#issuecomment-673371329
-
-#FIXME: Consider adding support for Bandit, a security linter. Bandit's
-#probably useless here, as we're thoroughly unrelated to web apps. Still, it
-#probably can't hurt and might even help us somewhen. *shrug*
 
 # ....................{ METADATA                          }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -172,10 +168,10 @@ jobs:
     # ..................{ VARIABLES                         }..................
     # External shell environment variables exposed to commands run below.
     env:
-      # Prevent Python from buffering and hence failing to log output in the
-      # unlikely (but feasible) event of catastrophic failure from either the
-      # active Python process or OS kernel.
-      PYTHONUNBUFFERED: True
+      # Prevent "pip" from wasting precious continuous integration (CI) minutes
+      # deciding whether it should be upgrading. We're *NOT* upgrading you,
+      # "pip". Accept this and let us test faster.
+      PIP_NO_PIP_VERSION_CHECK: 1
 
       # Map from the current item of the "tox-env" list defined above to the
       # ${TOXENV} environment variable recognized by "tox".

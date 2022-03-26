@@ -79,7 +79,7 @@ SPHINX_BUILD_ARGS=(
     # documentation whose underlying source files have since been modified.
     -a
 )
-# echo "sphinx-build args: ${SPHINX_BUILD_ARGS[*]}"
+echo "Running: ${SPHINX_BUILD_ARGS[*]}"
 
 # ....................{ FUNCTIONS                         }....................
 # str canonicalize_path(str pathname)

@@ -41,9 +41,9 @@
 # See also:
 # * https://samnicholls.net/2016/06/15/how-to-sphinx-readthedocs
 #   The "Make autodoc actually work" is the canonical writeup on this kludge.
-# import os, sys
+import os, sys
 # sys.path.insert(0, os.path.abspath('../../'))
-# print(f'sys.path: {sys.path}')
+print(f'sys.path (from "doc/source/conf.py"): {sys.path}')
 
 # ....................{ IMPORTS                           }....................
 # Sphinx defaults to hardcoding version specifiers. Since this is insane, we
