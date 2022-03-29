@@ -16,20 +16,13 @@
 |beartype-banner|
 =================
 
-|ci-badge| |codecov-badge| |rtd-badge|
-
-.. parsed-literal::
-
-   Look for the bare necessities,
-     the simple bare necessities.
-   Forget about your worries and your strife.
-                           — `The Jungle Book`_.
+|codecov-badge| |ci-badge| |rtd-badge|
 
 **Beartype** is an `open-source <beartype license_>`__ `PEP-compliant
 <Compliance_>`__ `constant-time <Timings_>`__ `pure-Python runtime type checker
-<Usage_>`__ emphasizing efficiency, portability, and thrilling puns. Beartype
-is `gratefully funded by our family of breathtaking GitHub Sponsors: <beartype
-sponsorship_>`__:
+<Usage_>`__ emphasizing efficiency, simplicity, and thrilling puns. The `Bear
+Team <beartype organization_>`__ gratefully thanks `our family of breathtaking
+GitHub Sponsors <beartype sponsorship_>`__:
 
 .. #FIXME: Preserved to demonstrate how exactly to go about this. Once we
 .. # actually receive a sponsor at this tier, please remove this placeholder as
@@ -37,9 +30,6 @@ sponsorship_>`__:
 .. #    |icon-for-glorious-sponsor|
 
 * **Your iconic URL here.** Let us bestow you with eyeballs.
-
-    :superscript:`Sponsor at the Mama Bear tier or higher to supersize your
-    dreams.`
 
 .. code-block:: bash
 
@@ -71,42 +61,48 @@ sponsorship_>`__:
      File "<string>", line 30, in quote_wiggum
      File "/home/springfield/beartype/lib/python3.9/site-packages/beartype/_decor/_code/_pep/_error/errormain.py", line 220, in raise_pep_call_exception
        raise exception_cls(
-   beartype.roar.BeartypeCallHintPepParamException: @beartyped
+   beartype.roar.BeartypeCallHintParamViolation: @beartyped
    quote_wiggum() parameter lines=[b'Oh, my God! A horrible plane
    crash!', b'Hey, everybody! Get a load of thi...'] violates type hint
    list[str], as list item 0 value b'Oh, my God! A horrible plane crash!'
    not str.
 
-   # Squash bugs by refining type hints with beartype validators.
-   >>> from beartype.vale import Is   # <--- factory making new validators
-   >>> from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   # ..................{            + VALIDATORS            }..................
+   # Squash bugs by refining type hints with validators.
+   >>> from beartype.vale import Is  # <---- validator factory
+   >>> from typing import Annotated  # <---------------- if Python ≥ 3.9.0
    # >>> from typing_extensions import Annotated   # <-- if Python < 3.9.0
 
-   # Define validators by combining type hints with lambda functions.
-   # This validator accepts any non-empty list of strings.
-   >>> ListOfSomeStrings = Annotated[list[str], Is[lambda lst: bool(lst)]]
+   # Validators are type hints constrained by lambda functions.
+   >>> ListOfStrings = Annotated[  # <----- type hint matching non-empty list of strings
+   ...     list[str],  # <----------------- type hint matching possibly empty list of strings
+   ...     Is[lambda lst: bool(lst)]  # <-- lambda matching non-empty object
+   ... ]
 
    # Annotate @beartype-decorated callables with validators.
    >>> @beartype
-   ... def quote_wiggum_safer(lines: ListOfSomeStrings) -> None:
+   ... def quote_wiggum_safer(lines: ListOfStrings) -> None:
    ...     print('“{}”\n\t— Police Chief Wiggum'.format("\n ".join(lines)))
 
    # Call those callables with invalid parameters.
    >>> quote_wiggum_safer([])
-   beartype.roar.BeartypeCallHintPepParamException: @beartyped
+   beartype.roar.BeartypeCallHintParamViolation: @beartyped
    quote_wiggum_safer() parameter lines=[] violates type hint
    typing.Annotated[list[str], Is[lambda lst: bool(lst)]], as value []
    violates validator Is[lambda lst: bool(lst)].
 
-   # Lastly, type-check anything against any type hint... anytime.
-   >>> from beartype.abby import is_bearable
-
-   # Decide whether an object satisfies a type hint – just like
-   # isinstance() or issubclass() but for type hints. Power erupts.
+   # ..................{             @ ANYWHERE             }..................
+   # Type-check anything against any type hint – anywhere, anytime.
+   >>> from beartype.abby import (
+   ...     is_bearable,  # <-------- like "isinstance(...)"
+   ...     die_if_unbearable,  # <-- like "assert isinstance(...)"
+   ... )
    >>> is_bearable(['The', 'goggles', 'do', 'nothing.'], list[str])
    True
-   >>> is_bearable([0xCAFEBEEF, 0x8BADF00D], ListOfSomeStrings)
-   False
+   >>> die_if_unbearable([0xCAFEBEEF, 0x8BADF00D], ListOfStrings)
+   beartype.roar.BeartypeAbbyHintViolation: Object [3405692655, 2343432205]
+   violates type hint typing.Annotated[list[str], Is[lambda lst: bool(lst)]],
+   as list index 0 item 3405692655 not instance of str.
 
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by
@@ -116,6 +112,13 @@ abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by
 constant factors <Timings_>`__. If the prior sentence was unreadable jargon,
 `see our friendly and approachable FAQ for a human-readable synopsis
 <Frequently Asked Questions (FAQ)_>`__.
+
+.. parsed-literal::
+
+   Look for the bare necessities,
+     the simple bare necessities.
+   Forget about your worries and your strife.
+                           — `The Jungle Book`_.
 
 Beartype is `portably implemented <beartype codebase_>`__ in `Python 3
 <Python_>`__, `continuously stress-tested <beartype tests_>`__ via `GitHub
@@ -4580,6 +4583,8 @@ rather than Python runtime) include:
    https://github.com/beartype/beartype/issues/7
 .. _beartype codebase:
    https://github.com/beartype/beartype/tree/main/beartype
+.. _beartype organization:
+   https://github.com/beartype
 .. _beartype profiler:
    https://github.com/beartype/beartype/blob/main/bin/profile.bash
 .. _beartype pulls:
