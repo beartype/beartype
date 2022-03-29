@@ -27,20 +27,19 @@
 
 **Beartype** is an `open-source <beartype license_>`__ `PEP-compliant
 <Compliance_>`__ `constant-time <Timings_>`__ `pure-Python runtime type checker
-<Usage_>`__ emphasizing efficiency, portability, and thrilling puns.
-
-Beartype is `gratefully funded by our family of breathtaking GitHub Sponsors:
-<beartype sponsorship_>`__:
+<Usage_>`__ emphasizing efficiency, portability, and thrilling puns. Beartype
+is `gratefully funded by our family of breathtaking GitHub Sponsors: <beartype
+sponsorship_>`__:
 
 .. #FIXME: Preserved to demonstrate how exactly to go about this. Once we
 .. # actually receive a sponsor at this tier, please remove this placeholder as
 .. # well as the icon links below. kthx
 .. #    |icon-for-glorious-sponsor|
 
-* **Your iconic URL here.** You proudly deserve it.
+* **Your iconic URL here.** Let us bestow you with eyeballs.
 
     :superscript:`Sponsor at the Mama Bear tier or higher to supersize your
-    dreams! Feed the bear.`
+    dreams.`
 
 .. code-block:: bash
 
