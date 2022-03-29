@@ -16,27 +16,36 @@
 |beartype-banner|
 =================
 
-|ci-badge| |codecov-badge|
-
-.. #FIXME: Add "|rtd-badge|" back above *AFTER* resolving Sphinx build issues.
+|ci-badge| |codecov-badge| |rtd-badge|
 
 .. parsed-literal::
 
    Look for the bare necessities,
      the simple bare necessities.
    Forget about your worries and your strife.
-
                            — `The Jungle Book`_.
 
-**Beartype** is an open-source pure-Python `PEP-compliant <Compliance_>`__
-`constant-time <Timings_>`__ `runtime type checker <Usage_>`__ emphasizing
-efficiency, portability, and thrilling puns.
+**Beartype** is an `open-source <beartype license_>`__ `PEP-compliant
+<Compliance_>`__ `constant-time <Timings_>`__ `pure-Python runtime type checker
+<Usage_>`__ emphasizing efficiency, portability, and thrilling puns.
+
+Beartype is `gratefully funded by our family of breathtaking GitHub Sponsors:
+<beartype sponsorship_>`__:
+
+.. #FIXME: Preserved to demonstrate how exactly to go about this. Once we
+.. # actually receive a sponsor at this tier, please remove this placeholder as
+.. # well as the icon links below. kthx
+.. #    |icon-for-glorious-sponsor|
+
+* **Your iconic URL here.** You proudly deserve it.
+
+    :superscript:`Sponsor at the Mama Bear tier or higher to supersize your
+    dreams! Feed the bear.`
 
 .. code-block:: bash
 
    # Install beartype.
    $ pip3 install beartype
-
    # So let's do this.
    $ python3
 
@@ -70,8 +79,7 @@ efficiency, portability, and thrilling puns.
    not str.
 
    # Squash bugs by refining type hints with beartype validators.
-   # Import the requisite machinery.
-   >>> from beartype.vale import Is
+   >>> from beartype.vale import Is   # <--- factory making new validators
    >>> from typing import Annotated   # <--------------- if Python ≥ 3.9.0
    # >>> from typing_extensions import Annotated   # <-- if Python < 3.9.0
 
@@ -92,7 +100,6 @@ efficiency, portability, and thrilling puns.
    violates validator Is[lambda lst: bool(lst)].
 
    # Lastly, type-check anything against any type hint... anytime.
-   # Import the is_bearable() tester.
    >>> from beartype.abby import is_bearable
 
    # Decide whether an object satisfies a type hint – just like
@@ -122,12 +129,6 @@ developed Python versions <Python status_>`__, `all Python package managers
 
     Beartype `powers quality assurance across the Python ecosystem <beartype
     dependents_>`__.
-
-.. #FIXME: Replace with grateful sponsorship notice. **YUP!**
-.. #FIXME: Preserved to demonstrate how exactly to go about this. Once we
-.. # actually receive a sponsor at this tier, please remove this placeholder as
-.. # well as the icon links below. kthx
-.. #    |icon-graspologic| |icon-hydrazen| |icon-pycrisp| |icon-sentipy|
 
 .. # ------------------( TABLE OF CONTENTS                  )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
@@ -223,7 +224,7 @@ All this magic and possibly more can be yours with:
 
   .. code-block:: md
 
-     YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.rtfd.io)!
+     YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.readthedocs.io)!
 
 * **reStructuredText**:
 
@@ -234,14 +235,14 @@ All this magic and possibly more can be yours with:
      .. # See https://docutils.sourceforge.io/docs/ref/rst/directives.html#image
      .. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
         :align: top
-        :target: https://beartype.rtfd.io
+        :target: https://beartype.readthedocs.io
         :alt: bear-ified
 
 * **Raw HTML**:
 
   .. code-block:: html
 
-     YummySoft is now <a href="https://beartype.rtfd.io"><img
+     YummySoft is now <a href="https://beartype.readthedocs.io"><img
        src="https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg"
        alt="bear-ified"
        style="vertical-align: middle;"></a>!
@@ -4494,13 +4495,13 @@ rather than Python runtime) include:
 
 .. # ------------------( IMAGES                             )------------------
 .. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.png
-   :target: https://beartype.rtfd.io
+   :target: https://beartype.readthedocs.io
    :alt: beartype —[ the bare-metal type checker ]—
 
 .. # ------------------( IMAGES ~ badge                     )------------------
 .. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
    :align: top
-   :target: https://beartype.rtfd.io
+   :target: https://beartype.readthedocs.io
    :alt: bear-ified
 .. |ci-badge| image:: https://github.com/beartype/beartype/workflows/test/badge.svg
    :target: https://github.com/beartype/beartype/actions?workflow=test
@@ -4513,18 +4514,7 @@ rather than Python runtime) include:
    :alt: beartype Read The Docs (RTD) status
 
 .. # ------------------( IMAGES ~ downstream                )------------------
-.. |icon-graspologic| image:: https://user-images.githubusercontent.com/217028/138580730-dcb3ee22-6372-4a2d-93bf-d1a3c97e67cf.png
-   :target: https://github.com/microsoft/graspologic
-   :alt: Graspologic: Python package for graph statistical algorithms
-.. |icon-hydrazen| image:: https://user-images.githubusercontent.com/217028/139522423-d987d484-425b-4e70-a0e7-7390593471f1.png
-   :target: https://github.com/mit-ll-responsible-ai/hydra-zen
-   :alt: Hydra-Zen: Reproducible Pythonic CLI<->config APIs via Hydra
-.. |icon-pycrisp| image:: https://user-images.githubusercontent.com/217028/138580797-1f09f0b4-bced-4651-82c9-6dae50afe883.png
-   :target: https://gitlab.com/pycrisp/pycrisp
-   :alt: PyCrisp: Typed Python interactions with the Crisp API
-.. |icon-sentipy| image:: https://user-images.githubusercontent.com/217028/138581059-6e3218d0-2a2e-42b7-b15c-7e2759fa2399.png
-   :target: https://github.com/sentimentinvestor/sentipy
-   :alt: SentiPy: Typed Python interactions with the Sentiment Investor API
+.. # Insert links to GitHub Sponsors funding at the icon level here, please!
 
 .. # ------------------( LINKS ~ beartype : funding         )------------------
 .. _BETSE:
@@ -4541,6 +4531,8 @@ rather than Python runtime) include:
    https://www.alleninstitute.org/what-we-do/frontiers-group
 .. _Tufts University:
    https://www.tufts.edu
+.. _beartype sponsorship:
+   https://github.com/sponsors/leycec
 
 .. # ------------------( LINKS ~ beartype : local           )------------------
 .. _beartype license:

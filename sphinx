@@ -66,9 +66,14 @@ SPHINX_BUILD_ARGS=(
     # the first warning.
     --keep-going
 
+    #FIXME: Temporarily disabled until we either resolve exactly why the Sphinx
+    #"autodoc" extension is failing to generate *ANY* working references or
+    #(more likely) ditch "autodoc" for something sane based on AST parsing.
+    #Currently, "autodoc" fails to generate working references for even
+    #standard pure-Python modules guaranteed to exist (e.g., "typing").
     # Enable "nit-picky mode," generating one warning for each broken reference
     # (e.g., interdocument or intrasection link).
-    -n
+    #-n
 
     #FIXME: Comment and uncomment this as needed. Notably:
     #* Uncomment this when locally debugging.
