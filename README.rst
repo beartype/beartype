@@ -113,13 +113,6 @@ constant factors <Timings_>`__. If the prior sentence was unreadable jargon,
 `see our friendly and approachable FAQ for a human-readable synopsis
 <Frequently Asked Questions (FAQ)_>`__.
 
-.. parsed-literal::
-
-   Look for the bare necessities,
-     the simple bare necessities.
-   Forget about your worries and your strife.
-                           — `The Jungle Book`_.
-
 Beartype is `portably implemented <beartype codebase_>`__ in `Python 3
 <Python_>`__, `continuously stress-tested <beartype tests_>`__ via `GitHub
 Actions`_ **+** tox_ **+** pytest_ **+** Codecov_, and `permissively
@@ -253,6 +246,13 @@ Let a soothing pastel bear give your users the reassuring **OK** sign.
 
 Overview
 ========
+
+.. parsed-literal::
+
+   Look for the bare necessities,
+     the simple bare necessities.
+   Forget about your worries and your strife.
+                           — `The Jungle Book`_.
 
 Beartype is a novel first line of defense. In Python's vast arsenal of
 `software quality assurance (SQA) <SQA_>`__, beartype holds the `shield wall`_

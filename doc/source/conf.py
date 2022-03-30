@@ -11,6 +11,10 @@
 #   List of all options supported in this file.
 
 # ....................{ TODO                              }....................
+#FIXME: [EXTENSION] Add "intersphinx" support to enable us to cross-reference
+#standard modules (e.g., "typing"). Yes, this absolutely should be builtin.
+#Naturally, that means it isn't. See also:
+#    https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
 #FIXME: [EXTENSION] Add "sphinx-notfound-page" support to enable us to provide
 #a sane 404 page for non-existent pages. In fact, we already appear to have a
 #"404.rst" document. Well, isn't that noice. Because we can't be bothered to
@@ -79,6 +83,30 @@ extensions = [
     # Builtin extensions unconditionally available under *ALL* reasonably
     # modern versions of Sphinx uniquely prefixed by "sphinx.ext.".
 
+    # Automatically create one explicit globally cross-referenceable target
+    # "{/document/basename}:{section_title}" for each section titled
+    # "{section_title}" of each document residing at "{/document/basename}". By
+    # default, Sphinx insanely requires targets to be manually prepended before
+    # all sections to be cross-referenced elsewhere.
+    'sphinx.ext.autosectionlabel',
+
+    # Builtin extension autogenerating reStructuredText documentation from
+    # class, callable, and variable docstrings embedded in Python modules
+    # formatted according to either NumPy or Google style.
+    #
+    # Note this effectively requires 'sphinx.ext.autodoc' to be listed as well.
+    'sphinx.ext.napoleon',
+
+    # Builtin extension rendering "math::" directives into HTML-only JavaScript
+    # via the third-party MathJax library.
+    'sphinx.ext.mathjax',
+
+    # Builtin extension autogenerating reStructuredText documentation listing
+    # each of this project's Python modules and linking external references to
+    # those modules to these listings.
+    'sphinx.ext.viewcode',
+
+    # ..................{ BUILTIN ~ autodoc                 }..................
     #FIXME: Actually, we probably just want to use the third-party Sphinx
     #AutoAPI extension instead at:
     #    https://github.com/readthedocs/sphinx-autoapi
@@ -112,22 +140,6 @@ extensions = [
     # with a single compact HTML markup tag) the documentation it generates.
     'sphinx.ext.autosummary',
 
-    # Builtin extension autogenerating reStructuredText documentation from
-    # class, callable, and variable docstrings embedded in Python modules
-    # formatted according to either NumPy or Google style.
-    #
-    # Note this effectively requires 'sphinx.ext.autodoc' to be listed as well.
-    'sphinx.ext.napoleon',
-
-    # Builtin extension rendering "math::" directives into HTML-only JavaScript
-    # via the third-party MathJax library.
-    'sphinx.ext.mathjax',
-
-    # Builtin extension autogenerating reStructuredText documentation listing
-    # each of this project's Python modules and linking external references to
-    # those modules to these listings.
-    'sphinx.ext.viewcode',
-
     # ..................{ THIRD-PARTY                       }..................
     # Third-party Sphinx extensions required to be externally installed. For
     # usability, this block should typically be empty. Third-party Sphinx
@@ -158,7 +170,7 @@ else:
         ),
     )
 
-# ....................{ EXTENSIONS ~ conf : autodoc       }....................
+# ....................{ EXTENSIONS ~ autodoc              }....................
 # 'sphinx.ext.autodoc'-specific settings. See also:
 #     https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 
@@ -167,7 +179,18 @@ else:
 # descriptions) of those callables. Note this requires Sphinx >= 4.1.
 autodoc_typehints = 'both'
 
-# ....................{ EXTENSIONS ~ conf : napoleon      }....................
+# ....................{ EXTENSIONS ~ autosectionlabel     }....................
+# 'sphinx.ext.autosectionlabel'-specific settings. See also:
+#     https://www.sphinx-doc.org/en/master/usage/extensions/autosectionlabel.html
+
+# Instruct "autosectionlabel" to uniquify created targets by prefixing
+# section titles with document pathnames in these targets. By default, this
+# extension ambiguously creates targets as section titles; that simplistic
+# scheme fails when two or more documents share the same section titles, a
+# common use case that's effectively infeasible to prohibit.
+autosectionlabel_prefix_document = True
+
+# ....................{ EXTENSIONS ~ napoleon             }....................
 # 'sphinx.ext.napoleon'-specific settings. See also:
 #     https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
 
