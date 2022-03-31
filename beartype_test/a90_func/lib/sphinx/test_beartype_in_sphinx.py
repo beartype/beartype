@@ -4,10 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-**Project-wide functional Sphinx tests.**
+**Project-wide functional beartype-in-Sphinx tests.**
 
-This submodule functionally tests the this project's behaviour with respect to
-the third-party :mod:`sphinx` package.
+This submodule functionally tests the :func:`beartype.beartype` decorator to
+conditionally reduce to a noop when the active Python interpreter is building
+documentation for the third-party :mod:`sphinx` package.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -15,22 +16,21 @@ the third-party :mod:`sphinx` package.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import (
-    skip_if_python_version_greater_than_or_equal_to,
-    skip_unless_package,
-)
+from beartype_test.util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS                             }....................
-#FIXME: Remove the Python >= 3.10 skip *AFTER* Sphinx resolves this issue:
-#    https://github.com/sphinx-doc/sphinx/issues/9820
-@skip_if_python_version_greater_than_or_equal_to('3.10.0')
+#FIXME: *NON-IDEAL.* This test manually invokes Sphinx internals. Instead, this
+#test should be fundamentally refactored from the ground up to leverage the
+#public (and increasingly documented) "sphinx.testing" subpackage.
 @skip_unless_package('sphinx')
-def test_sphinx(tmp_path) -> None:
+def test_beartype_in_sphinx(tmp_path) -> None:
     '''
-    Functional test testing this project's behaviour with respect to the
-    third-party :mod:`sphinx` package by externally running that package
-    against a minimal-length Sphinx document tree exercising all hopefully
-    resolved edge cases.
+    Functional test validating that the :func:`beartype.beartype` decorator
+    conditionally reduces to a noop when the active Python interpreter is
+    building documentation for the third-party :mod:`sphinx` package.
+
+    To do so, this test externally runs the ``sphinx-build`` command against a
+    minimal-length Sphinx document tree exercising all known edge cases.
 
     Parameters
     ----------
@@ -47,7 +47,7 @@ def test_sphinx(tmp_path) -> None:
     from beartype_test.util.cmd.pytcmdexit import is_success
     from beartype_test.util.path.pytpathtest import (
         get_test_func_data_lib_sphinx_dir)
-    from sys import modules as module_imported_names
+    from sys import modules as modules_imported_name
 
     # Entry-point (i.e., pure-Python function accepting a list of zero or more
     # command-line arguments) underlying the external "sphinx-build" command.
@@ -123,4 +123,4 @@ def test_sphinx(tmp_path) -> None:
     # beartype._util.mod.lib.utilsphinx.is_sphinx_autodocing() tester
     # internally called by that decorator from an O(n) test with non-negligible
     # constants to an O(1) test with negligible constants.
-    del module_imported_names[_SPHINX_AUTODOC_SUBPACKAGE_NAME]
+    del modules_imported_name[_SPHINX_AUTODOC_SUBPACKAGE_NAME]

@@ -27,6 +27,7 @@ root directory."
 '''
 
 # ....................{ IMPORTS                           }....................
+from pytest import fixture
 import os, sys
 
 # ....................{ HOOKS ~ session : start           }....................

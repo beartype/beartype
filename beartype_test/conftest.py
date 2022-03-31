@@ -3,7 +3,6 @@
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
-
 '''
 :mod:`pytest` **global test configuration** (i.e., early-time configuration
 guaranteed to be run by :mod:`pytest` *after* passed command-line arguments are

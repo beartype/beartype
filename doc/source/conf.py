@@ -36,6 +36,11 @@
 #At the least, we probably need to add the following line to our top-level
 #"conftest.py" file:
 #    pytest_plugins = 'sphinx.testing.fixtures'
+#FIXME: Sadly, nothing has been done to document "sphinx.testing" as of 2022
+#Q2. We intuit from perambulating over the "sphinx.testing.fixtures" submodule
+#that either the higher-level app() or lower-level make_app() fixtures should
+#suffice for our use case. How do we actually configure these fixtures to
+#correctly crawl over our specific documentation structure, however?
 
 # ....................{ IMPORTS ~ kludge                  }....................
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -162,9 +167,14 @@ if is_module('sphinx_rtd_theme'):
 # Else, this theme extension is unavailable. In this case, fallback to the
 # Sphinx's default HTML theme *AND*...
 else:
+    #FIXME: Convert this back into a warning by calling warn() *AFTER* deciding
+    #how to do so safely. The core issue is that we convert warnings into
+    #failures during testing; ergo, we need to install the Python package
+    #providing this theme during testing. We can't be bothered at the moment.
     # Emit a non-fatal warning informing end users of this fallback.
-    warn(
+    print(
         (
+            'WARNING: '
             'Optional Sphinx extension "sphinx_rtd_theme" not found; '
             'falling back to default Sphinx HTML theme.'
         ),

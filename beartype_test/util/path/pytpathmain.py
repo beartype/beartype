@@ -65,6 +65,32 @@ def get_main_package_dir() -> Path:
     # Terrifying terseness!
     return DirRelative(get_main_dir(), PACKAGE_NAME)
 
+# ....................{ GETTERS ~ dir : sphinx            }....................
+@callable_cached
+def get_main_sphinx_dir() -> Path:
+    '''
+    :mod:`Path` encapsulating the absolute dirname of the **top-level Sphinx
+    documentation tree** (i.e., directory containing both the input and output
+    subdirectories leveraged by Sphinx to build documentation for this project)
+    if found *or* raise an exception otherwise.
+    '''
+
+    # Immense propensity!
+    return DirRelative(get_main_dir(), 'doc')
+
+
+@callable_cached
+def get_main_sphinx_source_dir() -> Path:
+    '''
+    :mod:`Path` encapsulating the absolute dirname of the **source Sphinx
+    documentation tree** (i.e., directory containing the input subdirectory
+    leveraged by Sphinx to build documentation for this project) if found *or*
+    raise an exception otherwise.
+    '''
+
+    # Immense propensity!
+    return DirRelative(get_main_sphinx_dir(), 'source')
+
 # ....................{ GETTERS ~ file                    }....................
 @callable_cached
 def get_main_mypy_config_file() -> Path:
