@@ -418,8 +418,7 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     if hint_bases is not None:
         return hint_bases
     # Else, this generic erased *NONE* of its superclasses. These superclasses
-    # *MUST* by definition be unerased and thus safely returnable as is. In
-    # this case...
+    # *MUST* by definition be unerased and thus safely returnable as is.
 
     # Unerased superclasses of this generic defined by the method resolution
     # order (MRO) for this generic.
@@ -428,7 +427,7 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     # Substring prefixing all exceptions raised below.
     EXCEPTION_STR_PREFIX = (
         f'PEP 484 generic {repr(hint)} '
-        f'method resolution order {repr(hint_bases)}'
+        f'method resolution order {repr(hint_bases)} '
     )
 
     # If this MRO lists strictly less than four classes, raise an exception.
@@ -439,20 +438,20 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     # * The "object" root superclass.
     if len(hint_bases) < 4:
         raise BeartypeDecorHintPep484Exception(
-            f'{EXCEPTION_STR_PREFIX} lists less than four classes.')
+            f'{EXCEPTION_STR_PREFIX}lists less than four classes.')
     # Else, this MRO lists at least four classes.
     #
     # If any class listed by this MRO fails to comply with the above
     # expectations, raise an exception.
     elif hint_bases[0] != hint:
         raise BeartypeDecorHintPep484Exception(
-            f'{EXCEPTION_STR_PREFIX} first item not {hint}.')
-    elif hint_bases[-2] != Generic:
-        raise BeartypeDecorHintPep484Exception(
-            f'{EXCEPTION_STR_PREFIX} second-to-last item not {Generic}.')
+            f'{EXCEPTION_STR_PREFIX}first item not {hint}.')
     elif hint_bases[-1] != object:
         raise BeartypeDecorHintPep484Exception(
-            f'{EXCEPTION_STR_PREFIX} last item not {object}.')
+            f'{EXCEPTION_STR_PREFIX}last item not {object}.')
+    elif hint_bases[-2] != Generic:
+        raise BeartypeDecorHintPep484Exception(
+            f'{EXCEPTION_STR_PREFIX}second-to-last item not {Generic}.')
     # Else, all classes listed by this MRO comply with the above expectations.
 
     # Return a slice of this tuple preserving *ONLY* the non-ignorable

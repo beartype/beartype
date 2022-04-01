@@ -76,8 +76,8 @@ from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,
 )
-from beartype_test.a00_unit.data.hint.util.data_hintmetatyping import (
-    make_hints_metadata_typing)
+from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
+    make_hints_pep_metadata)
 from collections import abc as collections_abc
 from typing import (
     Any,
@@ -349,8 +349,8 @@ def add_data(data_module: 'ModuleType') -> None:
         # exercised independently with special-purposed unit tests.
 
         # Unsubscripted "Any" singleton.
-        make_hints_metadata_typing(
-            typing_attr_basename='Any',
+        make_hints_pep_metadata(
+            typing_attr_basenames=('Any',),
             hint_metadata=dict(
                 pep_sign=HintSignAny,
                 is_ignorable=True,

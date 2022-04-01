@@ -10,9 +10,9 @@ classes encapsulating sample type hints instantiated by the
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype.typing import Optional
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from collections.abc import Iterable
-from typing import Optional
 
 # ....................{ PRIVATE                           }....................
 _EXCEPTION_STR_MATCH_REGEXES_MANDATORY = (
@@ -206,11 +206,12 @@ class HintNonpepMetadata(object):
     # ..................{ INITIALIZERS                      }..................
     def __init__(
         self,
+        *,
 
-        # Mandatory parameters.
+        # Mandatory keyword-only parameters.
         hint: object,
 
-        # Optional parameters.
+        # Optional keyword-only parameters.
         is_ignorable: bool = False,
         is_supported: bool = True,
         piths_meta: 'Iterable[HintPithSatisfiedMetadata]' = (),
@@ -255,38 +256,6 @@ class HintPepMetadata(HintNonpepMetadata):
 
     Attributes
     ----------
-    is_args : Optional[bool]
-        ``True`` only if this hint is subscripted by one or more **arguments**
-        (i.e., PEP-compliant type hints that are *not* type variables) and/or
-        **type variables** (i.e., :class:`typing.TypeVar` instances). Defaults
-        to ``True`` only if the machine-readable representation of this hint
-        contains one or more ``"["`` delimiters.
-    is_pep585_builtin : bool
-        ``True`` only if this hint is a `PEP 585`-compliant builtin. If
-        ``True``, then :attr:`is_type_typing` *must* be ``False``. Defaults to
-        the negation of :attr:`is_pep585_generic` if non-``None`` *or*
-        ``False`` otherwise (i.e., if :attr:`is_pep585_generic` is ``None``).
-    is_pep585_generic : bool
-        ``True`` only if this hint is a `PEP 585`-compliant generic. If
-        ``True``, then :attr:`is_type_typing` *must* be ``False``. Defaults to
-        the negation of :attr:`is_pep585_generic` if non-``None`` *or*
-        ``False`` otherwise (i.e., if :attr:`is_pep585_generic` is ``None``).
-    is_typevars : bool
-        ``True`` only if this hint is subscripted by one or more **type
-        variables** (i.e., :class:`typing.TypeVar` instances). Defaults to
-        ``False``.
-    is_type_typing : Optional[bool]
-        ``True`` only if this hint's class is defined by the :mod:`typing`
-        module. If ``True``, then :attr:`is_pep585_builtin` and
-        :attr:`is_pep585_generic` *must* both be ``False``. Defaults to
-        either:
-
-        * If either :attr:`is_pep585_builtin` *or* :attr:`is_pep585_generic`
-          are ``True``, ``False``.
-        * Else, ``True``.
-    is_typing : Optional[bool]
-        ``True`` only if this hint itself is defined by the :mod:`typing`
-        module. Defaults to :attr:`is_type_typing`.
     pep_sign : HintSign
         **Sign** (i.e., arbitrary object uniquely identifying this
         PEP-compliant type hint) if this hint is uniquely identified by such a
@@ -296,6 +265,44 @@ class HintPepMetadata(HintNonpepMetadata):
 
         * :class:`typing.NamedTuple` reducing to :class:`tuple`.
         * :class:`typing.TypedDict` reducing to :class:`dict`.
+    is_args : bool, optional
+        ``True`` only if this hint is subscripted by one or more **arguments**
+        (i.e., PEP-compliant type hints that are *not* type variables) and/or
+        **type variables** (i.e., :class:`typing.TypeVar` instances). Defaults
+        to ``True`` only if the machine-readable representation of this hint
+        contains one or more "[" delimiters.
+    is_pep585_builtin : bool, optional
+        ``True`` only if this hint is a `PEP 585`-compliant builtin. If
+        ``True``, then :attr:`is_type_typing` *must* be ``False``. Defaults to
+        the negation of :attr:`is_pep585_generic` if non-``None`` *or*
+        ``False`` otherwise (i.e., if :attr:`is_pep585_generic` is ``None``).
+    is_pep585_generic : bool, optional
+        ``True`` only if this hint is a `PEP 585`-compliant generic. If
+        ``True``, then :attr:`is_type_typing` *must* be ``False``. Defaults to
+        the negation of :attr:`is_pep585_generic` if non-``None`` *or*
+        ``False`` otherwise (i.e., if :attr:`is_pep585_generic` is ``None``).
+    is_typevars : bool, optional
+        ``True`` only if this hint is subscripted by one or more **type
+        variables** (i.e., :class:`typing.TypeVar` instances). Defaults to
+        ``False``.
+    is_type_typing : bool, optional
+        ``True`` only if this hint's class is defined by the :mod:`typing`
+        module. If ``True``, then :attr:`is_pep585_builtin` and
+        :attr:`is_pep585_generic` *must* both be ``False``. Defaults to
+        either:
+
+        * If either :attr:`is_pep585_builtin` *or* :attr:`is_pep585_generic`
+          are ``True``, ``False``.
+        * Else, ``True``.
+    is_typing : bool, optional
+        ``True`` only if this hint itself is defined by the :mod:`typing`
+        module. Defaults to :attr:`is_type_typing`.
+    isinstanceable_type : Optional[type]
+        **Origin type** (i.e., non-:mod:`typing` class such that *all* objects
+        satisfying this hint are instances of this class) originating this hint
+        if this hint originates from a non-:mod:`typing` class *or* ``None``
+        otherwise (i.e., if this hint does *not* originate from such a class).
+        Defaults to ``None``.
     generic_type : Optional[type]
         Subscripted origin type associated with this hint if any *or* ``None``
         otherwise (i.e., if this hint is associated with *no* such type).
@@ -303,12 +310,6 @@ class HintPepMetadata(HintNonpepMetadata):
 
         * If this hint is subscripted, :attr:`isinstanceable_type`.
         * Else, ``None``.
-    isinstanceable_type : Optional[type]
-        **Origin type** (i.e., non-:mod:`typing` class such that *all* objects
-        satisfying this hint are instances of this class) originating this hint
-        if this hint originates from a non-:mod:`typing` class *or* ``None``
-        otherwise (i.e., if this hint does *not* originate from such a class).
-        Defaults to ``None``.
 
     All remaining keyword arguments are passed as is to the superclass
     :meth:`HintNonpepMetadata.__init__` method.
@@ -317,14 +318,15 @@ class HintPepMetadata(HintNonpepMetadata):
     # ..................{ INITIALIZERS                      }..................
     def __init__(
         self,
+        *,
 
-        # Mandatory parameters.
+        # Mandatory keyword-only parameters.
         pep_sign: HintSign,
 
-        # Optional parameters.
+        # Optional keyword-only parameters.
         is_args: Optional[bool] = None,
-        is_pep585_builtin: Optional[bool] = False,
-        is_pep585_generic: Optional[bool] = False,
+        is_pep585_builtin: Optional[bool] = None,
+        is_pep585_generic: Optional[bool] = None,
         is_typevars: bool = False,
         is_type_typing: Optional[bool] = None,
         is_typing: Optional[bool] = None,
@@ -341,29 +343,32 @@ class HintPepMetadata(HintNonpepMetadata):
         # Initialize our superclass with all passed keyword arguments.
         super().__init__(**kwargs)
 
+        # Machine-readable representation of this hint.
+        hint_repr = repr(self.hint)
+
         # Conditionally default all unpassed parameters.
         if is_args is None:
             # Default this parameter to true only if the machine-readable
-            # representation of this hint contains "[" (e.g., "List[str]").
-            is_args = '[' in repr(self.hint)
+            # representation of this hint contains "[": e.g., "List[str]".
+            is_args = '[' in hint_repr
         if is_pep585_builtin is None:
-            # Default this parameter to either...
+            # Default this parameter to true only if...
             is_pep585_builtin = (
-                # If "is_pep585_generic" is non-"None", the negation of that;
-                not is_pep585_generic
-                if is_pep585_generic is not None else
-                # Else, false.
-                False
+                # This hint originates from an origin type *AND*...
+                isinstanceable_type is not None and
+                # The machine-readable representation of this hint is prefixed
+                # by the unqualified name of this origin type (e.g., "list[str]
+                # " is prefixed by "list"), suggesting this hint to be a PEP
+                # 585-compliant builtin.
+                hint_repr.startswith(isinstanceable_type.__name__)
             )
+            # print(f'is_pep585_builtin: {is_pep585_builtin}')
+            # print(f'hint_repr: {hint_repr}')
+            # print(f'isinstanceable_type.__name__: {isinstanceable_type.__name__}')
         if is_pep585_generic is None:
-            # Default this parameter to either...
-            is_pep585_generic = (
-                # If "is_pep585_builtin" is non-"None", the negation of that;
-                not is_pep585_builtin
-                if is_pep585_builtin is not None else
-                # Else, false.
-                False
-            )
+            # Default this parameter to false, because we can't think of
+            # anything better.
+            is_pep585_generic = False
         if is_type_typing is None:
             # Default this parameter to the negation of all PEP 585-compliant
             # boolean parameters. By definition, PEP 585-compliant type hints

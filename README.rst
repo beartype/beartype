@@ -29,7 +29,8 @@ GitHub Sponsors <beartype sponsorship_>`__:
 .. # well as the icon links below. kthx
 .. #    |icon-for-glorious-sponsor|
 
-* **Your iconic URL here.** Let us bestow you with eyeballs.
+* **Your iconic URL here.** `Let us bestow you with eyeballs <beartype
+  sponsorship_>`__.
 
 .. code-block:: bash
 

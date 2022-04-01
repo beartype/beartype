@@ -27,21 +27,6 @@
 #widely leveraged across the data science sphere (e.g., NumPy, SciPy):
 #    https://github.com/pydata/pydata-sphinx-theme
 
-#FIXME: [QA] Add one or more pytest-based functional tests exercising this
-#configuration. This is slightly less trivial than I'd like, largely as the
-#Sphinx team has yet to properly document their "sphinx.testing" system. See
-#this pending issue for working code examples:
-#    https://github.com/sphinx-doc/sphinx/issues/7008
-#
-#At the least, we probably need to add the following line to our top-level
-#"conftest.py" file:
-#    pytest_plugins = 'sphinx.testing.fixtures'
-#FIXME: Sadly, nothing has been done to document "sphinx.testing" as of 2022
-#Q2. We intuit from perambulating over the "sphinx.testing.fixtures" submodule
-#that either the higher-level app() or lower-level make_app() fixtures should
-#suffice for our use case. How do we actually configure these fixtures to
-#correctly crawl over our specific documentation structure, however?
-
 # ....................{ IMPORTS ~ kludge                  }....................
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the

@@ -8,6 +8,11 @@ Project-wide :pep:`544`-compliant **type hint test data.**
 '''
 
 # ....................{ TODO                              }....................
+#FIXME: Generalize this submodule to transparently test all hints against both
+#the "typing.Protocol" *AND* "beartype.typing.Protocol" superclasses. Doing so
+#will, in turn, require defining a new "HintPepMetadata.hints" instance
+#variable required to be a sequence of one or more hints.
+
 #FIXME: Test user-defined multiple-inherited protocols (i.e., user-defined
 #classes directly subclassing the "typing.Protocol" ABC and one or more other
 #superclasses) once @beartype supports these protocols as well.
@@ -36,6 +41,12 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # If the active Python interpreter targets less than Python < 3.8, this
     # interpreter fails to support PEP 544. In this case, reduce to a noop.
+    #
+    # Note that we intentionally avoid testing against the
+    # "typing_extensions.Protocol" superclass. Why? Because that superclass is
+    # horribly broken under Python 3.7 and thus *CANNOT* be supported by
+    # beartype. This is why we only support a proper subset of
+    # "typing_extensions" attributes, folks.
     if not IS_PYTHON_AT_LEAST_3_8:
         return
     # Else, the active Python interpreter targets at least Python >= 3.8 and
@@ -45,6 +56,12 @@ def add_data(data_module: 'ModuleType') -> None:
     # Defer Python >= 3.8-specific imports.
     import pathlib
     from abc import abstractmethod
+    from beartype.typing import (
+        Any,
+        AnyStr,
+        TypeVar,
+        runtime_checkable,
+    )
     from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
@@ -53,9 +70,9 @@ def add_data(data_module: 'ModuleType') -> None:
     )
     from beartype_test.util.mod.pytmodtest import (
         is_package_beartype_vale_usable)
+
+    #FIXME: Generalize to iteratively import from "beartype.typing" as well.
     from typing import (
-        Any,
-        AnyStr,
         BinaryIO,
         IO,
         Protocol,
@@ -66,8 +83,6 @@ def add_data(data_module: 'ModuleType') -> None:
         SupportsInt,
         SupportsRound,
         TextIO,
-        TypeVar,
-        runtime_checkable,
     )
 
     # Type variables.

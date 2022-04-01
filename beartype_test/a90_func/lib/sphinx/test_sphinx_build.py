@@ -47,26 +47,7 @@ def test_sphinx_build(make_app, tmp_path) -> None:
 
     # Defer heavyweight imports.
     from beartype_test.util.path.pytpathmain import get_main_sphinx_source_dir
-
-    #FIXME: *THIS IS INSANE.* File an upstream Sphinx issue concerning this.
-    #The sphinx.testing.util.SphinxTestApp.__init__() method appears to be
-    #fundamentally broken, due to this logic:
-    #    # This *CANNOT* possibly ever work anywhere. Why? Because the
-    #    # pathlib.Path.makedirs() method is guaranteed to be undefined.
-    #    # Instead, the code below should be calling the comparable
-    #    # pathlib.Path.mkdir() method that *DOES* actually exist everywhere.
-    #    outdir = builddir.joinpath(buildername)
-    #    outdir.makedirs(exist_ok=True)
-    #    doctreedir = builddir.joinpath('doctrees')
-    #    doctreedir.makedirs(exist_ok=True)
-    #FIXME: Refactor this using the "monkeypatch" fixture, please.
-
-    # Monkey-patch the non-existent pathlib.Path.makedirs() method (internally
-    # called by the sphinx.testing.util.SphinxTestApp.__init__() method
-    # implicitly called below) to be an alias of the existing
-    # pathlib.Path.mkdir() method.
-    from pathlib import Path
-    Path.makedirs = Path.mkdir
+    from sphinx.testing.path import path
 
     #FIXME: Pass "parallel=CPUS_LEN" as well, where "CPUS_LEN" is the number of
     #CPU cores available to the active Python interpreter. We can't be bothered
@@ -79,9 +60,14 @@ def test_sphinx_build(make_app, tmp_path) -> None:
     sphinx_build = make_app(
         buildername='html',
         srcdir=str(get_main_sphinx_source_dir()),
-        # Absolute or relative dirname of a test-specific temporary directory
-        # to which Sphinx will emit ignorable rendered documentation files.
-        builddir=tmp_path,
+        # "sphinx.testing"-specific path object encapsulating the absolute or
+        # relative dirname of a test-specific temporary directory to which
+        # Sphinx will emit ignorable rendered documentation files.
+        #
+        # Yes, this is *INSANE.* Sphinx should *ABSOLUTELY* be leveraging the
+        # portable and standard "pathlib.Path" class rather than attempting to
+        # roll its own non-standard (and thus probably non-portable) class.
+        builddir=path(str(tmp_path)),
         # Instruct Sphinx to cache as little as possible.
         freshenv=True,
     )
