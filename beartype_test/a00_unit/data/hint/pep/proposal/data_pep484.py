@@ -76,8 +76,6 @@ from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,
 )
-from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
-    make_hints_pep_metadata)
 from collections import abc as collections_abc
 from typing import (
     Any,
@@ -342,20 +340,19 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ TUPLES                            }..................
     # Add PEP 484-specific test type hints to this dictionary global.
-    data_module.HINTS_PEP_META.extend(
+    data_module.HINTS_PEP_META.extend((
         # ................{ UNSUBSCRIPTED                     }................
         # Note that the PEP 484-compliant unsubscripted "NoReturn" type hint is
         # permissible *ONLY* as a return annotation and *MUST* thus be
         # exercised independently with special-purposed unit tests.
 
         # Unsubscripted "Any" singleton.
-        make_hints_pep_metadata(
-            typing_attr_basenames=('Any',),
-            hint_metadata=dict(
-                pep_sign=HintSignAny,
-                is_ignorable=True,
-            ),
-        ) + (
+        HintPepMetadata(
+            hint=Any,
+            pep_sign=HintSignAny,
+            is_ignorable=True,
+        ),
+
         # Unsubscripted "ByteString" singleton. Bizarrely, note that:
         # * "collections.abc.ByteString" is subscriptable under PEP 585.
         # * "typing.ByteString" is *NOT* subscriptable under PEP 484.

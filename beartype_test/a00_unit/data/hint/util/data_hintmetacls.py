@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **type hint metadata class hierarchy** (i.e., hierarchy of
+Testing-specific **type hint metadata class hierarchy** (i.e., hierarchy of
 classes encapsulating sample type hints instantiated by the
 :mod:`beartype_test.a00_unit.data.hint` submodules).
 '''

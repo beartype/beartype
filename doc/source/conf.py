@@ -22,6 +22,9 @@
 #* We've temporarily moved "404.rst" into the parent subdirectory, where it
 #  has absolutely no effect (but at least does *NOT* induce fatal errors).
 #* We'll need to move "404.rst" back into this subdirectory first.
+#FIXME: [EXTENSION] Add "readthedocs-sphinx-search" support to enable real-time
+#search-as-you-type[-into-a-search-bar] functionality. The demo's quite
+#impressive, as expected of an official ReadTheDocs extension. Let's go!
 
 #FIXME: [THEME] Consider switching to the nascent PyData Sphinx theme, now
 #widely leveraged across the data science sphere (e.g., NumPy, SciPy):

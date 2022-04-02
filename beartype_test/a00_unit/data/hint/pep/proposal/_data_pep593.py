@@ -8,10 +8,9 @@ Project-wide :pep:`593`-compliant **type hint test data.**
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
-    is_hints_pep_metadata,
+from beartype_test.a00_unit.data.hint.util.data_typingattrutil import (
+    is_typing_attrs,
     iter_typing_attrs,
-    make_hints_pep_metadata,
 )
 
 # ....................{ ADDERS                            }....................
@@ -28,7 +27,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # If *NO* typing module declares an "Annotated" factory, the active Python
     # interpreter fails to support PEP 593. In this case, reduce to a noop.
-    if not is_hints_pep_metadata('Annotated'):
+    if not is_typing_attrs('Annotated'):
         # print('Ignoring "Annotated"...')
         return
     # print('Testing "Annotated"...')
@@ -64,47 +63,6 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata,
         HintPithSatisfiedMetadata,
         HintPithUnsatisfiedMetadata,
-    )
-
-    # ..................{ TUPLES                            }..................
-    # Add PEP 593-specific test type hints to this tuple global.
-    data_module.HINTS_PEP_META.extend(
-        # ................{ ANNOTATED                         }................
-        # Hashable annotated of an isinstanceable type annotated by an arbitrary
-        # hashable object.
-        make_hints_pep_metadata(
-            typing_attr_basenames=('Annotated',),
-            hint_maker=lambda Annotated: Annotated[str, int],
-            hint_metadata=dict(
-                pep_sign=HintSignAnnotated,
-                piths_meta=(
-                    # String constant.
-                    HintPithSatisfiedMetadata(
-                        'Towards a timely, wines‐enticing gate'),
-                    # List of string constants.
-                    HintPithUnsatisfiedMetadata([
-                        'Of languished anger’s sap‐spated rushings',]),
-                ),
-            ),
-        ) +
-
-        # Annotated of a "typing" type.
-        make_hints_pep_metadata(
-            typing_attr_basenames=('Annotated',),
-            hint_maker=lambda Annotated: Annotated[List[str], int],
-            hint_metadata=dict(
-                pep_sign=HintSignAnnotated,
-                piths_meta=(
-                    # List of string constants.
-                    HintPithSatisfiedMetadata([
-                        'MINERVA‐unnerving, verve‐sapping enervations',
-                        'Of a magik-stoned Shinto rivery',
-                    ]),
-                    # String constant.
-                    HintPithUnsatisfiedMetadata('Of a Spicily sated',),
-                ),
-            ),
-        )
     )
 
     # ..................{ VALIDATORS ~ is                   }..................
@@ -151,8 +109,8 @@ def add_data(data_module: 'ModuleType') -> None:
     SORDIDLY_FLABBY_WRMCASTINGS.this_mobbed_triste_of = [
         'An atomical caroller', 'carousing Thanatos', '(nucl‐eating',]
 
-    # ..................{ TYPING                            }..................
-    # For each "Annotated" factory declared by a typing module...
+    # ..................{ FACTORIES                         }..................
+    # For each "Annotated" type hint factory importable from a typing module...
     for Annotated in iter_typing_attrs('Annotated'):
         # ................{ ANNOTATED                         }................
         # Annotated of an isinstanceable type annotated by one beartype-specific
@@ -179,12 +137,43 @@ def add_data(data_module: 'ModuleType') -> None:
             Union[str, List[int], NewType('MetaType', Annotated[object, 53])],
         ))
 
-        # ................{ VALIDATORS ~ tuples               }................
+        # ................{ TUPLES                            }................
         # Add PEP 593-specific test type hints to this tuple global.
         data_module.HINTS_PEP_META.extend((
+            # ..............{ ANNOTATED                         }..............
+            # Hashable annotated of an isinstanceable type annotated by an
+            # arbitrary hashable object.
+            HintPepMetadata(
+                hint=Annotated[str, int],
+                pep_sign=HintSignAnnotated,
+                piths_meta=(
+                    # String constant.
+                    HintPithSatisfiedMetadata(
+                        'Towards a timely, wines‐enticing gate'),
+                    # List of string constants.
+                    HintPithUnsatisfiedMetadata([
+                        'Of languished anger’s sap‐spated rushings',]),
+                ),
+            ),
+
+            # Annotated of a "typing" type.
+            HintPepMetadata(
+                hint=Annotated[List[str], int],
+                pep_sign=HintSignAnnotated,
+                piths_meta=(
+                    # List of string constants.
+                    HintPithSatisfiedMetadata([
+                        'MINERVA‐unnerving, verve‐sapping enervations',
+                        'Of a magik-stoned Shinto rivery',
+                    ]),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata('Of a Spicily sated',),
+                ),
+            ),
+
             # ..............{ ANNOTATED ~ beartype : is         }..............
-            # Annotated of an isinstanceable type annotated by one beartype-specific
-            # validator defined as a lambda function.
+            # Annotated of an isinstanceable type annotated by one
+            # beartype-specific validator defined as a lambda function.
             HintPepMetadata(
                 hint=AnnotatedStrIsLength,
                 pep_sign=HintSignAnnotated,

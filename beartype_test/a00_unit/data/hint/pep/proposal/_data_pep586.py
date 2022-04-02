@@ -8,9 +8,9 @@ Project-wide :pep:`586`-compliant **type hint test data.**
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
-    is_hints_pep_metadata,
-    make_hints_pep_metadata,
+from beartype_test.a00_unit.data.hint.util.data_typingattrutil import (
+    is_typing_attrs,
+    iter_typing_attrs,
 )
 from enum import Enum
 
@@ -37,7 +37,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # If *NO* typing module declares a "Literal" factory, the active Python
     # interpreter fails to support PEP 586. In this case, reduce to a noop.
-    if not is_hints_pep_metadata('Literal'):
+    if not is_typing_attrs('Literal'):
         # print('Ignoring "Literal"...')
         return
     # print('Testing "Literal"...')
@@ -52,19 +52,20 @@ def add_data(data_module: 'ModuleType') -> None:
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+        HintPepMetadata,
         HintPithSatisfiedMetadata,
         HintPithUnsatisfiedMetadata,
     )
 
-    # ..................{ TUPLES                            }..................
-    # Add PEP 586-specific test type hints to this tuple global.
-    data_module.HINTS_PEP_META.extend(
-        # ................{ LITERALS                          }................
-        # Literal "None" singleton. Look, this is ridiculous. What can you do?
-        make_hints_pep_metadata(
-            typing_attr_basenames=('Literal',),
-            hint_maker=lambda Literal: Literal[None],
-            hint_metadata=dict(
+    # ..................{ FACTORIES                         }..................
+    # For each "Literal" type hint factory importable from a typing module...
+    for Literal in iter_typing_attrs('Literal'):
+        # Add PEP 586-specific test type hints to this tuple global.
+        data_module.HINTS_PEP_META.extend((
+            # ..............{ LITERALS                          }..............
+            # Literal "None" singleton. Look, this is ridiculous. What you do?
+            HintPepMetadata(
+                hint=Literal[None],
                 pep_sign=HintSignLiteral,
                 # "typing_extensions.Literal" type hints define a non-standard
                 # "__values__" rather than standard "__args__" dunder tuple
@@ -87,13 +88,10 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                 ),
             ),
-        ) +
 
-        # Literal arbitrary boolean. (Not that there are many of those...)
-        make_hints_pep_metadata(
-            typing_attr_basenames=('Literal',),
-            hint_maker=lambda Literal: Literal[True],
-            hint_metadata=dict(
+            # Literal arbitrary boolean. (Not that there are many of those...)
+            HintPepMetadata(
+                hint=Literal[True],
                 pep_sign=HintSignLiteral,
                 is_args=IS_PYTHON_AT_LEAST_3_7,
                 piths_meta=(
@@ -121,13 +119,10 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                 ),
             ),
-        ) +
 
-        # Literal arbitrary integer.
-        make_hints_pep_metadata(
-            typing_attr_basenames=('Literal',),
-            hint_maker=lambda Literal: Literal[0x2a],
-            hint_metadata=dict(
+            # Literal arbitrary integer.
+            HintPepMetadata(
+                hint=Literal[0x2a],
                 pep_sign=HintSignLiteral,
                 is_args=IS_PYTHON_AT_LEAST_3_7,
                 piths_meta=(
@@ -155,14 +150,11 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                 ),
             ),
-        ) +
 
-        # Literal arbitrary byte string.
-        make_hints_pep_metadata(
-            typing_attr_basenames=('Literal',),
-            hint_maker=lambda Literal: Literal[
-                b"Worthy, 'vain truthiness of (very invective-elected)"],
-            hint_metadata=dict(
+            # Literal arbitrary byte string.
+            HintPepMetadata(
+                hint=Literal[
+                    b"Worthy, 'vain truthiness of (very invective-elected)"],
                 pep_sign=HintSignLiteral,
                 is_args=IS_PYTHON_AT_LEAST_3_7,
                 piths_meta=(
@@ -197,13 +189,10 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                 ),
             ),
-        ) +
 
-        # Literal arbitrary Unicode string.
-        make_hints_pep_metadata(
-            typing_attr_basenames=('Literal',),
-            hint_maker=lambda Literal: Literal['Thanklessly classed, nominal'],
-            hint_metadata=dict(
+            # Literal arbitrary Unicode string.
+            HintPepMetadata(
+                hint=Literal['Thanklessly classed, nominal'],
                 pep_sign=HintSignLiteral,
                 is_args=IS_PYTHON_AT_LEAST_3_7,
                 piths_meta=(
@@ -234,21 +223,21 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                 ),
             ),
-        ) +
 
-        # Literal arbitrary enumeration member.
-        make_hints_pep_metadata(
-            typing_attr_basenames=('Literal',),
-            hint_maker=lambda Literal: Literal[
-                _MasterlessDecreeVenomlessWhich.NOMENCLATURE_WEATHER_VANES_OF],
-            hint_metadata=dict(
+            # Literal arbitrary enumeration member.
+            HintPepMetadata(
+                hint=Literal[
+                    _MasterlessDecreeVenomlessWhich.
+                    NOMENCLATURE_WEATHER_VANES_OF
+                ],
                 pep_sign=HintSignLiteral,
                 is_args=IS_PYTHON_AT_LEAST_3_7,
                 piths_meta=(
                     # Enumeration member accessed by the same syntax.
                     HintPithSatisfiedMetadata(
                         _MasterlessDecreeVenomlessWhich.
-                        NOMENCLATURE_WEATHER_VANES_OF),
+                        NOMENCLATURE_WEATHER_VANES_OF
+                    ),
                     # Enumeration member accessed by different syntax but
                     # semantically equal to the same enumeration member.
                     HintPithSatisfiedMetadata(
@@ -257,7 +246,8 @@ def add_data(data_module: 'ModuleType') -> None:
                     HintPithUnsatisfiedMetadata(
                         pith=(
                             _MasterlessDecreeVenomlessWhich.
-                            NOMINALLY_UNSWAIN_AUTODIDACTIC_IDIOCRACY_LESS_A),
+                            NOMINALLY_UNSWAIN_AUTODIDACTIC_IDIOCRACY_LESS_A
+                        ),
                         # Match that the exception message raised for this
                         # object embeds the representation of the expected
                         # literal.
@@ -276,15 +266,12 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                 ),
             ),
-        ) +
 
-        # ................{ LITERALS ~ nested                 }................
-        # List of literal arbitrary Unicode strings.
-        make_hints_pep_metadata(
-            typing_attr_basenames=('Literal',),
-            hint_maker=lambda Literal: List[Literal[
-                'ç‐omically gnomical whitebellied burden’s empathy of']],
-            hint_metadata=dict(
+            # ..............{ LITERALS ~ nested                 }..............
+            # List of literal arbitrary Unicode strings.
+            HintPepMetadata(
+                hint=List[Literal[
+                    'ç‐omically gnomical whitebellied burden’s empathy of']],
                 pep_sign=HintSignList,
                 isinstanceable_type=list,
                 piths_meta=(
@@ -323,21 +310,21 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                 ),
             ),
-        ) +
 
-        # ................{ LITERALS ~ union                  }................
-        # Literal union of two or more arbitrary literal objects.
-        make_hints_pep_metadata(
-            typing_attr_basenames=('Literal',),
-            hint_maker=lambda Literal: Literal[
-                None,
-                True,
-                0x2a,
-                b"Worthy, 'vain truthiness of (very invective-elected)",
-                'Thanklessly classed, nominal',
-                _MasterlessDecreeVenomlessWhich.NOMENCLATURE_WEATHER_VANES_OF,
-            ],
-            hint_metadata=dict(
+            # ..............{ LITERALS ~ union                  }..............
+            # Literal union of two or more arbitrary literal objects.
+            HintPepMetadata(
+                hint=Literal[
+                    None,
+                    True,
+                    0x2a,
+                    b"Worthy, 'vain truthiness of (very invective-elected)",
+                    'Thanklessly classed, nominal',
+                    (
+                        _MasterlessDecreeVenomlessWhich.
+                        NOMENCLATURE_WEATHER_VANES_OF
+                    ),
+                ],
                 pep_sign=HintSignLiteral,
                 is_args=IS_PYTHON_AT_LEAST_3_7,
                 piths_meta=(
@@ -350,7 +337,9 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                     HintPithSatisfiedMetadata('Thanklessly classed, nominal'),
                     HintPithSatisfiedMetadata(
-                        _MasterlessDecreeVenomlessWhich.NOMENCLATURE_WEATHER_VANES_OF),
+                        _MasterlessDecreeVenomlessWhich.
+                        NOMENCLATURE_WEATHER_VANES_OF
+                    ),
                     # Arbitrary object of the same type as one or more literal
                     # objects subscripting this literal union but unequal to
                     # any objects subscripting this literal union.
@@ -386,5 +375,4 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                 ),
             ),
-        )
-    )
+        ))
