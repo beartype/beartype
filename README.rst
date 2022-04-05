@@ -287,8 +287,8 @@ overhead <Timings_>`__. Unlike static type checkers:
 * Beartype operates exclusively at the fine-grained callable level of
   pure-Python functions and methods via the standard decorator design pattern.
   This renders beartype natively compatible with *all* interpreters and
-  compilers targeting the Python language – including PyPy_, Numba_, Nuitka_,
-  and (wait for it) CPython_ itself.
+  compilers targeting the Python language – including Brython_, PyPy_, Numba_,
+  Nuitka_, and (wait for it) CPython_ itself.
 * Beartype enjoys deterministic Turing-complete access to the actual callables,
   objects, and types being type-checked. This enables beartype to solve dynamic
   problems decidable only at runtime – including type-checking of arbitrary
@@ -4745,6 +4745,8 @@ rather than Python runtime) include:
    https://github.com/microsoft/pylance-release
 
 .. # ------------------( LINKS ~ py : interpreter           )------------------
+.. _Brython:
+   https://brython.info
 .. _CPython:
    https://github.com/python/cpython
 .. _Nuitka:

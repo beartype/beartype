@@ -46,12 +46,12 @@ def test_is_hint_pep589() -> None:
 
     # Defer heavyweight imports.
     from beartype._util.hint.pep.proposal.utilpep589 import is_hint_pep589
-    from beartype_test.util.mod.pytmodimport import (
-        import_module_typing_any_attr_or_none_safe)
+    from beartype_test.util.mod.pytmodtyping import (
+        import_typing_attr_or_none_safe)
 
     # "typing.TypedDict" superclass imported from either the "typing" or
     # "typing_extensions" modules if importable *OR* "None" otherwise.
-    TypedDict = import_module_typing_any_attr_or_none_safe('TypedDict')
+    TypedDict = import_typing_attr_or_none_safe('TypedDict')
 
     # If this superclass exists...
     if TypedDict is not None:

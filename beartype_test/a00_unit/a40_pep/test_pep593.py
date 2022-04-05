@@ -28,14 +28,14 @@ def test_die_unless_hint_pep593() -> None:
     from beartype.roar import BeartypeDecorHintPep593Exception
     from beartype._util.hint.pep.proposal.utilpep593 import (
         die_unless_hint_pep593)
-    from beartype_test.util.mod.pytmodimport import (
-        import_module_typing_any_attr_or_none_safe)
+    from beartype_test.util.mod.pytmodtyping import (
+        import_typing_attr_or_none_safe)
     from pytest import raises
     from typing import Optional
 
     # "typing.Annotated" type hint factory imported from either the "typing" or
     # "typing_extensions" modules if importable *OR* "None" otherwise.
-    Annotated = import_module_typing_any_attr_or_none_safe('Annotated')
+    Annotated = import_typing_attr_or_none_safe('Annotated')
 
     # If this factory exists, assert this validator avoids raising exceptions
     # for a type hint subscripting this factory.
@@ -59,14 +59,14 @@ def test_get_hint_pep593_metadata() -> None:
     from beartype.roar import BeartypeDecorHintPep593Exception
     from beartype._util.hint.pep.proposal.utilpep593 import (
         get_hint_pep593_metadata)
-    from beartype_test.util.mod.pytmodimport import (
-        import_module_typing_any_attr_or_none_safe)
+    from beartype_test.util.mod.pytmodtyping import (
+        import_typing_attr_or_none_safe)
     from pytest import raises
     from typing import Optional
 
     # "typing.Annotated" type hint factory imported from either the "typing" or
     # "typing_extensions" modules if importable *OR* "None" otherwise.
-    Annotated = import_module_typing_any_attr_or_none_safe('Annotated')
+    Annotated = import_typing_attr_or_none_safe('Annotated')
 
     # If this factory exists, assert this getter returns the expected tuple for
     # an arbitrary PEP 593-compliant type hint.
@@ -94,14 +94,14 @@ def test_get_hint_pep593_metahint() -> None:
     from beartype.roar import BeartypeDecorHintPep593Exception
     from beartype._util.hint.pep.proposal.utilpep593 import (
         get_hint_pep593_metahint)
-    from beartype_test.util.mod.pytmodimport import (
-        import_module_typing_any_attr_or_none_safe)
+    from beartype_test.util.mod.pytmodtyping import (
+        import_typing_attr_or_none_safe)
     from pytest import raises
     from typing import Optional
 
     # "typing.Annotated" type hint factory imported from either the "typing" or
     # "typing_extensions" modules if importable *OR* "None" otherwise.
-    Annotated = import_module_typing_any_attr_or_none_safe('Annotated')
+    Annotated = import_typing_attr_or_none_safe('Annotated')
 
     # If this factory exists, assert this getter returns the expected
     # PEP-compliant type hint for an arbitrary PEP 593-compliant type hint.

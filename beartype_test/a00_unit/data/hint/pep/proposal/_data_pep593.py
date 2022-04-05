@@ -8,7 +8,7 @@ Project-wide :pep:`593`-compliant **type hint test data.**
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype_test.a00_unit.data.hint.util.data_typingattrutil import (
+from beartype_test.util.mod.pytmodtyping import (
     is_typing_attrs,
     iter_typing_attrs,
 )

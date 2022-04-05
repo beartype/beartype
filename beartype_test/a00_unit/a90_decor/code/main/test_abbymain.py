@@ -37,7 +37,7 @@ def test_api_abby_die_if_unbearable_pass() -> None:
     from beartype.roar import BeartypeAbbyHintViolation
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithUnsatisfiedMetadata)
-    from beartype_test.util.hint.pythint import iter_hints_piths_meta
+    from beartype_test.a00_unit.data.hint.util.data_hintmetautil import iter_hints_piths_meta
     from pytest import raises
 
     # For each predefined type hint and associated metadata...
@@ -85,7 +85,7 @@ def test_api_abby_is_bearable_pass() -> None:
     from beartype.abby import is_bearable
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithUnsatisfiedMetadata)
-    from beartype_test.util.hint.pythint import iter_hints_piths_meta
+    from beartype_test.a00_unit.data.hint.util.data_hintmetautil import iter_hints_piths_meta
 
     # For each predefined type hint and associated metadata...
     for hint_pith_meta in iter_hints_piths_meta():

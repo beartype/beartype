@@ -8,8 +8,8 @@ Project-wide :pep:`589`-compliant **type hint test data.**
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype_test.util.mod.pytmodimport import (
-    import_module_typing_any_attr_or_none_safe)
+from beartype_test.util.mod.pytmodtyping import (
+    import_typing_attr_or_none_safe)
 
 # ....................{ ADDERS                            }....................
 def add_data(data_module: 'ModuleType') -> None:
@@ -25,7 +25,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # "TypedDict" type hint factory imported from either the "typing" or
     # "typing_extensions" modules if importable *OR* "None" otherwise.
-    TypedDict = import_module_typing_any_attr_or_none_safe('TypedDict')
+    TypedDict = import_typing_attr_or_none_safe('TypedDict')
 
     # If this factory is unimportable, the active Python interpreter fails to
     # support PEP 589. In this case, reduce to a noop.

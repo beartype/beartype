@@ -51,7 +51,7 @@ def test_codemain() -> None:
     )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithUnsatisfiedMetadata)
-    from beartype_test.util.hint.pythint import iter_hints_piths_meta
+    from beartype_test.a00_unit.data.hint.util.data_hintmetautil import iter_hints_piths_meta
     from beartype_test.util.pytroar import raises_uncached
     from re import search
 

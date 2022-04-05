@@ -191,13 +191,13 @@ def test_api_vale_decor_fail() -> None:
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintPep593Exception
     from beartype.vale import Is
-    from beartype_test.util.mod.pytmodimport import (
-        import_module_typing_any_attr_or_none_safe)
+    from beartype_test.util.mod.pytmodtyping import (
+        import_typing_attr_or_none_safe)
     from pytest import raises
 
     # "typing.Annotated" type hint factory imported from either the "typing" or
     # "typing_extensions" modules if importable *OR* "None" otherwise.
-    Annotated = import_module_typing_any_attr_or_none_safe('Annotated')
+    Annotated = import_typing_attr_or_none_safe('Annotated')
 
     # If this factory is unimportable, the active Python interpreter fails to
     # support PEP 593. In this case, reduce to a noop.

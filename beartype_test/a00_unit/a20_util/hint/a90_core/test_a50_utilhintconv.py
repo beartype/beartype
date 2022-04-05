@@ -107,8 +107,8 @@ def test_reduce_hint() -> None:
         T_BOUNDED,
         T_CONSTRAINED,
     )
-    from beartype_test.util.mod.pytmodimport import (
-        import_module_typing_any_attr_or_none_safe)
+    from beartype_test.util.mod.pytmodtyping import (
+        import_typing_attr_or_none_safe)
     from beartype_test.util.mod.pytmodtest import (
         is_package_numpy,
         is_package_numpy_typing_ndarray_deep,
@@ -172,7 +172,7 @@ def test_reduce_hint() -> None:
     # ..................{ PEP 593                           }..................
     # "typing.Annotated" type hint factory imported from either the "typing" or
     # "typing_extensions" modules if importable *OR* "None" otherwise.
-    Annotated = import_module_typing_any_attr_or_none_safe('Annotated')
+    Annotated = import_typing_attr_or_none_safe('Annotated')
 
     # If the "typing.Annotated" type hint factory is importable, the active
     # Python interpreter supports PEP 593. In this case...
