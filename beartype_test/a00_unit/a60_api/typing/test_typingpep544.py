@@ -31,10 +31,9 @@ def test_typingpep544_metaclass() -> None:
     # Defer heavyweight imports.
     from abc import abstractmethod
     from beartype.typing import (
-        Iterable,
+        Any,
         Protocol,
         TypeVar,
-        Union,
         runtime_checkable,
     )
     from beartype.typing._typingpep544 import _CachingProtocolMeta
@@ -45,7 +44,7 @@ def test_typingpep544_metaclass() -> None:
     # Can we really have it all?!
     @runtime_checkable  # <-- unnecessary at runtime, but Mypy is confused without it
     class SupportsRoundFromScratch(Protocol[_T_co]):
-        __slots__: Union[str, Iterable[str]] = ()
+        __slots__: Any = ()
         @abstractmethod
         def __round__(self, ndigits: int = 0) -> _T_co:
             pass
@@ -310,10 +309,9 @@ def test_typingpep544_protocol_custom_direct_typevar() -> None:
     from abc import abstractmethod
     from beartype import beartype
     from beartype.typing import (
-        Iterable,
+        Any,
         Protocol,
         TypeVar,
-        Union,
         runtime_checkable,
     )
 
@@ -323,7 +321,7 @@ def test_typingpep544_protocol_custom_direct_typevar() -> None:
     # Arbitrary direct protocol subscripted by this type variable.
     @runtime_checkable
     class SupportsAbsToo(Protocol[_T_co]):
-        __slots__: Union[str, Iterable[str]] = ()
+        __slots__: Any = ()
 
         @abstractmethod
         def __abs__(self) -> _T_co:

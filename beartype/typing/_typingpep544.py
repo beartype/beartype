@@ -47,7 +47,6 @@ if IS_PYTHON_AT_LEAST_3_8:
         SupportsInt as _SupportsIntSlow,
         SupportsRound as _SupportsRoundSlow,
         TypeVar,
-        Union,
         runtime_checkable,
     )
 
@@ -55,13 +54,11 @@ if IS_PYTHON_AT_LEAST_3_8:
     # resulting negation. Why? Because mypy quietly defecates all over itself
     # if the order of these two branches is reversed. It's as bad as it sounds.
     if not IS_PYTHON_AT_LEAST_3_9:
-        from typing import Dict, Iterable, Tuple, Type  # type: ignore[misc]
+        from typing import Dict, Tuple, Type  # type: ignore[misc]
     # Else, the active Python interpreter targets Python >= 3.9 and thus
     # supports PEP 585. In this case, embrace non-deprecated PEP 585-compliant
     # type hints.
     else:
-        from collections.abc import Iterable
-
         Dict = dict  # type: ignore[misc]
         Tuple = tuple  # type: ignore[assignment]
         Type = type  # type: ignore[assignment]
@@ -98,7 +95,7 @@ if IS_PYTHON_AT_LEAST_3_8:
     '''
 
 
-    _TT = TypeVar("_TT", bound=type)
+    _TT = TypeVar("_TT", bound="_CachingProtocolMeta")
     '''
     Arbitrary type variable bound (i.e., confined) to classes.
     '''
@@ -188,7 +185,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         ) -> _TT:
 
             # See <https://github.com/python/mypy/issues/9282>
-            cls = super().__new__(mcls, name, bases, namespace, **kw)  # type: ignore[misc]
+            cls = super().__new__(mcls, name, bases, namespace, **kw)
 
             # Mark this protocol class as a runtime protocol. By default,
             # "typing.Protocol" subclasses are only static-time. Although
@@ -215,7 +212,7 @@ if IS_PYTHON_AT_LEAST_3_8:
             #     'beartype.typing._typingpep544.SupportsAbs'>
             #
             # We lie to tell the truth.
-            cls._is_protocol = True
+            cls._is_protocol = True  # type: ignore[attr-defined]
 
             # Prefixing this class member with "_abc_" is necessary to prevent
             # it from being considered part of the Protocol. See also:
@@ -384,7 +381,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         '''
 
         # ................{ CLASS VARIABLES                   }................
-        __slots__: Union[str, Iterable[str]] = ()
+        __slots__: Any = ()
 
         # ................{ DUNDERS                           }................
         @callable_cached
@@ -495,7 +492,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         Caching variant of :class:`typing.SupportsAbs`.
         '''
         __module__: str = 'beartype.typing'
-        __slots__: Union[str, Iterable[str]] = ()
+        __slots__: Any = ()
 
 
     class SupportsBytes(_SupportsBytesSlow, Protocol):
@@ -503,7 +500,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         Caching variant of :class:`typing.SupportsBytes`.
         '''
         __module__: str = 'beartype.typing'
-        __slots__: Union[str, Iterable[str]] = ()
+        __slots__: Any = ()
 
 
     class SupportsComplex(_SupportsComplexSlow, Protocol):
@@ -511,7 +508,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         Caching variant of :class:`typing.SupportsComplex`.
         '''
         __module__: str = 'beartype.typing'
-        __slots__: Union[str, Iterable[str]] = ()
+        __slots__: Any = ()
 
 
     class SupportsFloat(_SupportsFloatSlow, Protocol):
@@ -519,7 +516,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         Caching variant of :class:`typing.SupportsFloat`."
         '''
         __module__: str = 'beartype.typing'
-        __slots__: Union[str, Iterable[str]] = ()
+        __slots__: Any = ()
 
 
     class SupportsInt(_SupportsIntSlow, Protocol):
@@ -527,7 +524,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         Caching variant of :class:`typing.SupportsInt`.
         '''
         __module__: str = 'beartype.typing'
-        __slots__: Union[str, Iterable[str]] = ()
+        __slots__: Any = ()
 
 
     class SupportsIndex(_SupportsIndexSlow, Protocol):
@@ -535,7 +532,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         Caching variant of :class:`typing.SupportsIndex`.
         '''
         __module__: str = 'beartype.typing'
-        __slots__: Union[str, Iterable[str]] = ()
+        __slots__: Any = ()
 
 
     class SupportsRound(_SupportsRoundSlow[_T_co], Protocol, Generic[_T_co]):
@@ -543,4 +540,4 @@ if IS_PYTHON_AT_LEAST_3_8:
         Caching variant of :class:`typing.SupportsRound`.
         '''
         __module__: str = 'beartype.typing'
-        __slots__: Union[str, Iterable[str]] = ()
+        __slots__: Any = ()
