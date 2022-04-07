@@ -70,19 +70,9 @@ def add_data(data_module: 'ModuleType') -> None:
     )
     from beartype_test.util.mod.pytmodtest import (
         is_package_beartype_vale_usable)
-
-    #FIXME: Generalize to iteratively import from "beartype.typing" as well.
-    from typing import (
-        BinaryIO,
-        IO,
-        Protocol,
-        SupportsAbs,
-        SupportsBytes,
-        SupportsFloat,
-        SupportsIndex,
-        SupportsInt,
-        SupportsRound,
-        TextIO,
+    from beartype_test.util.mod.pytmodtyping import (
+        TYPING_MODULE_NAMES_STANDARD,
+        iter_typing_attrs,
     )
 
     # Type variables.
@@ -128,27 +118,7 @@ def add_data(data_module: 'ModuleType') -> None:
             HintPithUnsatisfiedMetadata(
                 pith=open_file_text, is_pith_factory=True))
 
-    # ..................{ PROTOCOLS                         }..................
-    # User-defined protocol parametrized by *NO* type variables declaring
-    # arbitrary concrete and abstract methods.
-    @runtime_checkable
-    class ProtocolCustomUntypevared(Protocol):
-        def alpha(self) -> str:
-            return 'Of a Spicily sated'
-
-        @abstractmethod
-        def omega(self) -> str: pass
-
-    # User-defined protocol parametrized by a type variable declaring arbitrary
-    # concrete and abstract methods.
-    @runtime_checkable
-    class ProtocolCustomTypevared(Protocol[T]):
-        def alpha(self) -> str:
-            return 'Gainfully ungiving criticisms, schismatizing Ŧheo‐'
-
-        @abstractmethod
-        def omega(self) -> str: pass
-
+    # ..................{ PROTOCOLS ~ structural            }..................
     # User-defined class structurally (i.e., implicitly) satisfying *WITHOUT*
     # explicitly subclassing this user-defined protocol.
     class ProtocolCustomStructural(object):
@@ -174,304 +144,430 @@ def add_data(data_module: 'ModuleType') -> None:
         def __int__(self) -> int:
             return 42
 
-    # ..................{ SETS                              }..................
-    # Add PEP 544-specific shallowly ignorable test type hints to that set
-    # global.
-    data_module.HINTS_PEP_IGNORABLE_SHALLOW.update((
-        # Note that ignoring the "typing.Protocol" superclass is vital here.
-        # For unknown and presumably uninteresting reasons, *ALL* possible
-        # objects satisfy this superclass. Ergo, this superclass is synonymous
-        # with the "object" root superclass: e.g.,
-        #     >>> import typing as t
-        #     >>> isinstance(object(), t.Protocol)
-        #     True
-        #     >>> isinstance('wtfbro', t.Protocol)
-        #     True
-        #     >>> isinstance(0x696969, t.Protocol)
-        #     True
-        Protocol,
-    ))
+    # ..................{ ATTRS ~ protocol                  }..................
+    # For each "Protocol" superclass importable from a standard typing
+    # module...
+    #
+    # Note this iteration intentionally excludes the non-standard third-party
+    # "typing_extensions.Protocol" superclass, whose runtime behaviour has been
+    # shown to diverge significantly from that of standard implementations.
+    for Protocol in iter_typing_attrs(
+        typing_attr_basename='Protocol',
+        typing_module_names=TYPING_MODULE_NAMES_STANDARD,
+    ):
+        # User-defined protocol parametrized by *NO* type variables declaring
+        # arbitrary concrete and abstract methods.
+        @runtime_checkable
+        class ProtocolCustomUntypevared(Protocol):
+            def alpha(self) -> str:
+                return 'Of a Spicily sated'
 
-    # Add PEP 544-specific deeply ignorable test type hints to that set global.
-    data_module.HINTS_PEP_IGNORABLE_DEEP.update((
-        # Parametrizations of the "typing.Protocol" abstract base class (ABC).
-        Protocol[S, T],
-    ))
+            @abstractmethod
+            def omega(self) -> str: pass
 
-    # ..................{ TUPLES                            }..................
-    # Add PEP 544-specific test type hints to this dictionary global.
-    data_module.HINTS_PEP_META.extend((
-        # ................{ GENERICS ~ io : unsubscripted     }................
-        # Unsubscripted "IO" abstract base class (ABC).
-        HintPepMetadata(
-            hint=IO,
-            pep_sign=HintSignGeneric,
-            generic_type=IO,
-            is_typevars=True,
-            piths_meta=(
-                # Open read-only text file handle to this submodule.
-                HintPithSatisfiedMetadata(
-                    pith=open_file_text, is_pith_factory=True),
-                # Open read-only binary file handle to this submodule.
-                HintPithSatisfiedMetadata(
-                    pith=open_file_binary, is_pith_factory=True),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    'To piously magistrate, dis‐empower, and'),
-            ),
-        ),
+        # User-defined protocol parametrized by a type variable declaring
+        # arbitrary concrete and abstract methods.
+        @runtime_checkable
+        class ProtocolCustomTypevared(Protocol[T]):
+            def alpha(self) -> str:
+                return 'Gainfully ungiving criticisms, schismatizing Ŧheo‐'
 
-        # Unsubscripted "BinaryIO" abstract base class (ABC).
-        HintPepMetadata(
-            hint=BinaryIO,
-            pep_sign=HintSignGeneric,
-            generic_type=BinaryIO,
-            piths_meta=binaryio_piths_meta,
-        ),
+            @abstractmethod
+            def omega(self) -> str: pass
 
-        # Unsubscripted "TextIO" abstract base class (ABC).
-        HintPepMetadata(
-            hint=TextIO,
-            pep_sign=HintSignGeneric,
-            generic_type=TextIO,
-            piths_meta=(
-                # Open read-only text file handle to this submodule.
-                HintPithSatisfiedMetadata(
-                    pith=open_file_text, is_pith_factory=True),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    'Statistician’s anthemed meme athame'),
-                # Open read-only binary file handle to this submodule.
-                HintPithUnsatisfiedMetadata(
-                    pith=open_file_binary, is_pith_factory=True),
-            ),
-        ),
+        # ................{ SETS                              }................
+        # Add PEP 544-specific shallowly ignorable test type hints to that set
+        # global.
+        data_module.HINTS_PEP_IGNORABLE_SHALLOW.update((
+            # Note that ignoring the "typing.Protocol" superclass is vital
+            # here. For unknown and presumably uninteresting reasons, *ALL*
+            # possible objects satisfy this superclass. Ergo, this superclass
+            # is synonymous with the "object" root superclass: e.g.,
+            #     >>> import typing as t
+            #     >>> isinstance(object(), t.Protocol)
+            #     True
+            #     >>> isinstance('wtfbro', t.Protocol)
+            #     True
+            #     >>> isinstance(0x696969, t.Protocol)
+            #     True
+            Protocol,
+        ))
 
-        # ................{ GENERICS ~ io : subscripted       }................
-        # All possible subscriptions of the "IO" abstract base class (ABC).
-        HintPepMetadata(
-            hint=IO[Any],
-            pep_sign=HintSignGeneric,
-            generic_type=IO,
-            piths_meta=(
-                # Open read-only binary file handle to this submodule.
-                HintPithSatisfiedMetadata(
-                    pith=open_file_binary, is_pith_factory=True),
-                # Open read-only text file handle to this submodule.
-                HintPithSatisfiedMetadata(
-                    pith=open_file_text, is_pith_factory=True),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Stoicly Anti‐heroic, synthetic'),
-            ),
-        ),
-        HintPepMetadata(
-            hint=IO[bytes],
-            pep_sign=HintSignGeneric,
-            generic_type=IO,
-            piths_meta=binaryio_piths_meta,
-        ),
-        HintPepMetadata(
-            hint=IO[str],
-            pep_sign=HintSignGeneric,
-            generic_type=IO,
-            piths_meta=(
-                # Open read-only text file handle to this submodule.
-                HintPithSatisfiedMetadata(
-                    pith=open_file_text, is_pith_factory=True),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    'Thism‐predestined City’s pestilentially '
-                    'celestial dark of'
+        # Add PEP 544-specific deeply ignorable test type hints to that set.
+        data_module.HINTS_PEP_IGNORABLE_DEEP.update((
+            # Parametrizations of the "typing.Protocol" abstract base class.
+            Protocol[S, T],
+        ))
+
+        # ................{ TUPLES                            }................
+        # Add PEP 544-specific test type hints to this dictionary global.
+        data_module.HINTS_PEP_META.extend((
+            # ..............{ PROTOCOLS ~ user                  }..............
+            # Despite appearances, protocols implicitly subclass
+            # "typing.Generic" and thus do *NOT* transparently reduce to
+            # standard types.
+            #
+            # Note that the "data_pep484" submodule already exercises
+            # predefined "typing" protocols (e.g., "typing.SupportsInt"), which
+            # were technically introduced with PEP 484 and thus available since
+            # Python >= 3.4 or so.
+
+            # User-defined protocol parametrized by *NO* type variables.
+            HintPepMetadata(
+                hint=ProtocolCustomUntypevared,
+                pep_sign=HintSignGeneric,
+                generic_type=ProtocolCustomUntypevared,
+                is_type_typing=False,
+                piths_meta=(
+                    HintPithSatisfiedMetadata(protocol_custom_structural),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata('For durance needs.'),
                 ),
-                # Open read-only binary file handle to this submodule.
-                HintPithUnsatisfiedMetadata(
-                    pith=open_file_binary, is_pith_factory=True),
             ),
-        ),
 
-        # Parametrization of the "IO" abstract base class (ABC).
-        HintPepMetadata(
-            hint=IO[AnyStr],
-            pep_sign=HintSignGeneric,
-            generic_type=IO,
-            is_typevars=True,
-            piths_meta=(
-                # Open read-only binary file handle to this submodule.
-                HintPithSatisfiedMetadata(
-                    pith=open_file_binary, is_pith_factory=True),
-                # Open read-only text file handle to this submodule.
-                HintPithSatisfiedMetadata(
-                    pith=open_file_text, is_pith_factory=True),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Starkness'),
-            ),
-        ),
-
-        # ................{ PROTOCOLS ~ supports              }................
-        # Unsubscripted "SupportsAbs" abstract base class (ABC).
-        HintPepMetadata(
-            hint=SupportsAbs,
-            pep_sign=HintSignGeneric,
-            generic_type=SupportsAbs,
-            # Oddly, some but *NOT* all "typing.Supports*" ABCs are
-            # parametrized by type variables. *shrug*
-            is_typevars=True,
-            piths_meta=(
-                # Integer constant.
-                HintPithSatisfiedMetadata(777),  # <-- what can this mean!?!?!?
-                # String constant.
-                HintPithUnsatisfiedMetadata('Scour Our flowering'),
-            ),
-        ),
-
-        # Unsubscripted "SupportsBytes" abstract base class (ABC).
-        HintPepMetadata(
-            hint=SupportsBytes,
-            pep_sign=HintSignGeneric,
-            generic_type=SupportsBytes,
-            piths_meta=(
-                # Platform-agnostic filesystem path object constant.
-                #
-                # Note that exceedingly few stdlib types actually define the
-                # __bytes__() dunder method. Among the few include classes
-                # defined by the "pathlib" module, which is why we instantiate
-                # such an atypical class here. See also:
-                #     https://stackoverflow.com/questions/45522536/where-can-the-bytes-method-be-found
-                HintPithSatisfiedMetadata(
-                    pith=lambda: pathlib.Path('/'),
-                    is_context_manager=True,
-                    is_pith_factory=True,
+            # User-defined protocol parametrized by a type variable.
+            HintPepMetadata(
+                hint=ProtocolCustomTypevared,
+                pep_sign=HintSignGeneric,
+                generic_type=ProtocolCustomTypevared,
+                is_typevars=True,
+                is_type_typing=False,
+                piths_meta=(
+                    HintPithSatisfiedMetadata(protocol_custom_structural),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata('Machist-'),
                 ),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    'Fond suburb’s gibbet‐ribbed castrati'),
             ),
-        ),
 
-        #FIXME: Uncomment after we determine whether or not any stdlib classes
-        #actually define the __complex__() dunder method. There don't appear to
-        #be any, suggesting that the only means of testing this would be to
-        #define a new custom "ProtocolSupportsComplex" class as we do above for
-        #the "ProtocolSupportsInt" class. *shrug*
-        # # Unsubscripted "SupportsComplex" abstract base class (ABC).
-        # SupportsComplex: HintPepMetadata(
-        #     pep_sign=Generic,
-        #     piths_meta=(
-        #         # Integer constant.
-        #         108,
-        #         # String constant.
-        #         HintPithUnsatisfiedMetadata('Fondled ΘuroƂorus-'),
-        #     ),
-        # ),
-
-        # Unsubscripted "SupportsFloat" abstract base class (ABC).
-        HintPepMetadata(
-            hint=SupportsFloat,
-            pep_sign=HintSignGeneric,
-            generic_type=SupportsFloat,
-            piths_meta=(
-                # Integer constant.
-                HintPithSatisfiedMetadata(92),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Be’yond a'),
+            # User-defined protocol parametrized by a type variable, itself
+            # parametrized by the same type variables in the same order.
+            HintPepMetadata(
+                hint=ProtocolCustomTypevared[T],
+                pep_sign=HintSignGeneric,
+                generic_type=ProtocolCustomTypevared,
+                is_typevars=True,
+                is_typing=False,
+                piths_meta=(
+                    HintPithSatisfiedMetadata(protocol_custom_structural),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata(
+                        'Black and white‐bit, bilinear linaements'),
+                ),
             ),
-        ),
+        ))
 
-        # Unsubscripted "SupportsIndex" abstract base class (ABC) first
-        # introduced by Python 3.8.0.
-        HintPepMetadata(
-            hint=SupportsIndex,
-            pep_sign=HintSignGeneric,
-            generic_type=SupportsIndex,
-            piths_meta=(
-                # Integer constant.
-                HintPithSatisfiedMetadata(29),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Self-ishly'),
+    # ..................{ ATTRS ~ io                        }..................
+    # For each "IO" protocol importable from a standard typing module...
+    for IO in iter_typing_attrs(
+        typing_attr_basename='IO',
+        typing_module_names=TYPING_MODULE_NAMES_STANDARD,
+    ):
+        # Add PEP 544-specific test type hints to this dictionary global.
+        data_module.HINTS_PEP_META.extend((
+            # ..............{ GENERICS ~ io : unsubscripted     }..............
+            # Unsubscripted "IO" abstract base class (ABC).
+            HintPepMetadata(
+                hint=IO,
+                pep_sign=HintSignGeneric,
+                generic_type=IO,
+                is_typevars=True,
+                piths_meta=(
+                    # Open read-only text file handle to this submodule.
+                    HintPithSatisfiedMetadata(
+                        pith=open_file_text, is_pith_factory=True),
+                    # Open read-only binary file handle to this submodule.
+                    HintPithSatisfiedMetadata(
+                        pith=open_file_binary, is_pith_factory=True),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata(
+                        'To piously magistrate, dis‐empower, and'),
+                ),
             ),
-        ),
 
-        # Unsubscripted "SupportsInt" abstract base class (ABC).
-        HintPepMetadata(
-            hint=SupportsInt,
-            pep_sign=HintSignGeneric,
-            generic_type=SupportsInt,
-            piths_meta=(
-                # Floating-point number constant.
-                HintPithSatisfiedMetadata(25.78),
-                # Structurally subtyped instance.
-                HintPithSatisfiedMetadata(ProtocolSupportsInt()),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    'Ungentlemanly self‐righteously, and'),
+            # ..............{ GENERICS ~ io : subscripted       }..............
+            # All possible subscriptions of the "IO" abstract base class (ABC).
+            HintPepMetadata(
+                hint=IO[Any],
+                pep_sign=HintSignGeneric,
+                generic_type=IO,
+                piths_meta=(
+                    # Open read-only binary file handle to this submodule.
+                    HintPithSatisfiedMetadata(
+                        pith=open_file_binary, is_pith_factory=True),
+                    # Open read-only text file handle to this submodule.
+                    HintPithSatisfiedMetadata(
+                        pith=open_file_text, is_pith_factory=True),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata(
+                        'Stoicly Anti‐heroic, synthetic'),
+                ),
             ),
-        ),
-
-        # Unsubscripted "SupportsRound" abstract base class (ABC).
-        HintPepMetadata(
-            hint=SupportsRound,
-            pep_sign=HintSignGeneric,
-            generic_type=SupportsRound,
-            # Oddly, some but *NOT* all "typing.Supports*" ABCs are
-            # parametrized by type variables. *shrug*
-            is_typevars=True,
-            piths_meta=(
-                # Floating-point number constant.
-                HintPithSatisfiedMetadata(87.52),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Our Fathers vowed, indulgently,'),
+            HintPepMetadata(
+                hint=IO[bytes],
+                pep_sign=HintSignGeneric,
+                generic_type=IO,
+                piths_meta=binaryio_piths_meta,
             ),
-        ),
-
-        # ................{ PROTOCOLS ~ user                  }................
-        # Despite appearances, protocols implicitly subclass "typing.Generic"
-        # and thus do *NOT* transparently reduce to standard types.
-        #
-        # Note that the "data_pep484" submodule already exercises
-        # predefined "typing" protocols (e.g., "typing.SupportsInt"), which
-        # were technically introduced with PEP 484 and thus available since
-        # Python >= 3.4 or so.
-
-        # User-defined protocol parametrized by *NO* type variables.
-        HintPepMetadata(
-            hint=ProtocolCustomUntypevared,
-            pep_sign=HintSignGeneric,
-            generic_type=ProtocolCustomUntypevared,
-            is_type_typing=False,
-            piths_meta=(
-                HintPithSatisfiedMetadata(protocol_custom_structural),
-                # String constant.
-                HintPithUnsatisfiedMetadata('For durance needs.'),
+            HintPepMetadata(
+                hint=IO[str],
+                pep_sign=HintSignGeneric,
+                generic_type=IO,
+                piths_meta=(
+                    # Open read-only text file handle to this submodule.
+                    HintPithSatisfiedMetadata(
+                        pith=open_file_text, is_pith_factory=True),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata(
+                        'Thism‐predestined City’s pestilentially '
+                        'celestial dark of'
+                    ),
+                    # Open read-only binary file handle to this submodule.
+                    HintPithUnsatisfiedMetadata(
+                        pith=open_file_binary, is_pith_factory=True),
+                ),
             ),
-        ),
 
-        # User-defined protocol parametrized by a type variable.
-        HintPepMetadata(
-            hint=ProtocolCustomTypevared,
-            pep_sign=HintSignGeneric,
-            generic_type=ProtocolCustomTypevared,
-            is_typevars=True,
-            is_type_typing=False,
-            piths_meta=(
-                HintPithSatisfiedMetadata(protocol_custom_structural),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Machist-'),
+            # Parametrization of the "IO" abstract base class (ABC).
+            HintPepMetadata(
+                hint=IO[AnyStr],
+                pep_sign=HintSignGeneric,
+                generic_type=IO,
+                is_typevars=True,
+                piths_meta=(
+                    # Open read-only binary file handle to this submodule.
+                    HintPithSatisfiedMetadata(
+                        pith=open_file_binary, is_pith_factory=True),
+                    # Open read-only text file handle to this submodule.
+                    HintPithSatisfiedMetadata(
+                        pith=open_file_text, is_pith_factory=True),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata('Starkness'),
+                ),
             ),
-        ),
+        ))
 
-        # User-defined protocol parametrized by a type variable, itself
-        # parametrized by the same type variables in the same order.
-        HintPepMetadata(
-            hint=ProtocolCustomTypevared[T],
-            pep_sign=HintSignGeneric,
-            generic_type=ProtocolCustomTypevared,
-            is_typevars=True,
-            is_typing=False,
-            piths_meta=(
-                HintPithSatisfiedMetadata(protocol_custom_structural),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    'Black and white‐bit, bilinear linaements'),
+    # ..................{ ATTRS ~ binaryio                  }..................
+    # For each "BinaryIO" protocol importable from a standard typing module...
+    for BinaryIO in iter_typing_attrs(
+        typing_attr_basename='BinaryIO',
+        typing_module_names=TYPING_MODULE_NAMES_STANDARD,
+    ):
+        # Add PEP 544-specific test type hints to this dictionary global.
+        data_module.HINTS_PEP_META.extend((
+            # ..............{ GENERICS ~ io : unsubscripted     }..............
+            # Unsubscripted "BinaryIO" abstract base class (ABC).
+            HintPepMetadata(
+                hint=BinaryIO,
+                pep_sign=HintSignGeneric,
+                generic_type=BinaryIO,
+                piths_meta=binaryio_piths_meta,
             ),
-        ),
-    ))
+        ))
+
+    # ..................{ ATTRS ~ textio                    }..................
+    # For each "TextIO" protocol importable from a standard typing module...
+    for TextIO in iter_typing_attrs(
+        typing_attr_basename='TextIO',
+        typing_module_names=TYPING_MODULE_NAMES_STANDARD,
+    ):
+        # Add PEP 544-specific test type hints to this dictionary global.
+        data_module.HINTS_PEP_META.extend((
+            # ..............{ GENERICS ~ io : unsubscripted     }..............
+            # Unsubscripted "TextIO" abstract base class (ABC).
+            HintPepMetadata(
+                hint=TextIO,
+                pep_sign=HintSignGeneric,
+                generic_type=TextIO,
+                piths_meta=(
+                    # Open read-only text file handle to this submodule.
+                    HintPithSatisfiedMetadata(
+                        pith=open_file_text, is_pith_factory=True),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata(
+                        'Statistician’s anthemed meme athame'),
+                    # Open read-only binary file handle to this submodule.
+                    HintPithUnsatisfiedMetadata(
+                        pith=open_file_binary, is_pith_factory=True),
+                ),
+            ),
+        ))
+
+    # ..................{ ATTRS ~ supportsabs               }..................
+    # For each "SupportsAbs" protocol importable from a standard typing
+    # module...
+    for SupportsAbs in iter_typing_attrs(
+        typing_attr_basename='SupportsAbs',
+        typing_module_names=TYPING_MODULE_NAMES_STANDARD,
+    ):
+        # Add PEP 544-specific test type hints to this dictionary global.
+        data_module.HINTS_PEP_META.extend((
+            # ..............{ PROTOCOLS ~ supports              }..............
+            # Unsubscripted "SupportsAbs" abstract base class (ABC).
+            HintPepMetadata(
+                hint=SupportsAbs,
+                pep_sign=HintSignGeneric,
+                generic_type=SupportsAbs,
+                # Oddly, some but *NOT* all "typing.Supports*" ABCs are
+                # parametrized by type variables. *shrug*
+                is_typevars=True,
+                piths_meta=(
+                    # Integer constant.
+                    HintPithSatisfiedMetadata(777),  # <-- what can this mean!?!?!?
+                    # String constant.
+                    HintPithUnsatisfiedMetadata('Scour Our flowering'),
+                ),
+            ),
+        ))
+
+    # ..................{ ATTRS ~ supportsbytes             }..................
+    # For each "SupportsBytes" protocol importable from a standard typing
+    # module...
+    for SupportsBytes in iter_typing_attrs(
+        typing_attr_basename='SupportsBytes',
+        typing_module_names=TYPING_MODULE_NAMES_STANDARD,
+    ):
+        # Add PEP 544-specific test type hints to this dictionary global.
+        data_module.HINTS_PEP_META.extend((
+            # ..............{ PROTOCOLS ~ supports              }..............
+            # Unsubscripted "SupportsBytes" abstract base class (ABC).
+            HintPepMetadata(
+                hint=SupportsBytes,
+                pep_sign=HintSignGeneric,
+                generic_type=SupportsBytes,
+                piths_meta=(
+                    # Platform-agnostic filesystem path object constant.
+                    #
+                    # Note that exceedingly few stdlib types actually define
+                    # the __bytes__() dunder method. Among the few include
+                    # classes defined by the "pathlib" module, which is why we
+                    # instantiate such an atypical class here. See also:
+                    #     https://stackoverflow.com/questions/45522536/where-can-the-bytes-method-be-found
+                    HintPithSatisfiedMetadata(
+                        pith=lambda: pathlib.Path('/'),
+                        is_context_manager=True,
+                        is_pith_factory=True,
+                    ),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata(
+                        'Fond suburb’s gibbet‐ribbed castrati'),
+                ),
+            ),
+        ))
+
+    #FIXME: Uncomment after we determine whether or not any stdlib classes
+    #actually define the __complex__() dunder method. There don't appear to
+    #be any, suggesting that the only means of testing this would be to
+    #define a new custom "ProtocolSupportsComplex" class as we do above for
+    #the "ProtocolSupportsInt" class. *shrug*
+    # # Unsubscripted "SupportsComplex" abstract base class (ABC).
+    # SupportsComplex: HintPepMetadata(
+    #     pep_sign=Generic,
+    #     piths_meta=(
+    #         # Integer constant.
+    #         108,
+    #         # String constant.
+    #         HintPithUnsatisfiedMetadata('Fondled ΘuroƂorus-'),
+    #     ),
+    # ),
+
+    # ..................{ ATTRS ~ supportsfloat             }..................
+    # For each "SupportsFloat" protocol importable from a standard typing
+    # module...
+    for SupportsFloat in iter_typing_attrs(
+        typing_attr_basename='SupportsFloat',
+        typing_module_names=TYPING_MODULE_NAMES_STANDARD,
+    ):
+        # Add PEP 544-specific test type hints to this dictionary global.
+        data_module.HINTS_PEP_META.extend((
+            # ..............{ PROTOCOLS ~ supports              }..............
+            # Unsubscripted "SupportsFloat" abstract base class (ABC).
+            HintPepMetadata(
+                hint=SupportsFloat,
+                pep_sign=HintSignGeneric,
+                generic_type=SupportsFloat,
+                piths_meta=(
+                    # Integer constant.
+                    HintPithSatisfiedMetadata(92),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata('Be’yond a'),
+                ),
+            ),
+        ))
+
+    # ..................{ ATTRS ~ supportsindex             }..................
+    # For each "SupportsIndex" protocol importable from a standard typing
+    # module...
+    for SupportsIndex in iter_typing_attrs(
+        typing_attr_basename='SupportsIndex',
+        typing_module_names=TYPING_MODULE_NAMES_STANDARD,
+    ):
+        # Add PEP 544-specific test type hints to this dictionary global.
+        data_module.HINTS_PEP_META.extend((
+            # ..............{ PROTOCOLS ~ supports              }..............
+            # Unsubscripted "SupportsIndex" abstract base class (ABC) first
+            # introduced by Python 3.8.0.
+            HintPepMetadata(
+                hint=SupportsIndex,
+                pep_sign=HintSignGeneric,
+                generic_type=SupportsIndex,
+                piths_meta=(
+                    # Integer constant.
+                    HintPithSatisfiedMetadata(29),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata('Self-ishly'),
+                ),
+            ),
+        ))
+
+    # ..................{ ATTRS ~ supportsint               }..................
+    # For each "SupportsInt" protocol importable from a standard typing
+    # module...
+    for SupportsInt in iter_typing_attrs(
+        typing_attr_basename='SupportsInt',
+        typing_module_names=TYPING_MODULE_NAMES_STANDARD,
+    ):
+        # Add PEP 544-specific test type hints to this dictionary global.
+        data_module.HINTS_PEP_META.extend((
+            # ..............{ PROTOCOLS ~ supports              }..............
+            HintPepMetadata(
+                hint=SupportsInt,
+                pep_sign=HintSignGeneric,
+                generic_type=SupportsInt,
+                piths_meta=(
+                    # Floating-point number constant.
+                    HintPithSatisfiedMetadata(25.78),
+                    # Structurally subtyped instance.
+                    HintPithSatisfiedMetadata(ProtocolSupportsInt()),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata(
+                        'Ungentlemanly self‐righteously, and'),
+                ),
+            ),
+        ))
+
+    # ..................{ ATTRS ~ supportsround             }..................
+    # For each "SupportsRound" protocol importable from a standard typing
+    # module...
+    for SupportsRound in iter_typing_attrs(
+        typing_attr_basename='SupportsRound',
+        typing_module_names=TYPING_MODULE_NAMES_STANDARD,
+    ):
+        # Add PEP 544-specific test type hints to this dictionary global.
+        data_module.HINTS_PEP_META.extend((
+            # ..............{ PROTOCOLS ~ supports              }..............
+            HintPepMetadata(
+                hint=SupportsRound,
+                pep_sign=HintSignGeneric,
+                generic_type=SupportsRound,
+                # Oddly, some but *NOT* all "typing.Supports*" ABCs are
+                # parametrized by type variables. *shrug*
+                is_typevars=True,
+                piths_meta=(
+                    # Floating-point number constant.
+                    HintPithSatisfiedMetadata(87.52),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata(
+                        'Our Fathers vowed, indulgently,'),
+                ),
+            ),
+        ))

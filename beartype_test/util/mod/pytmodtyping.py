@@ -16,10 +16,24 @@ from beartype.typing import (
 )
 from beartype._util.mod.utilmodimport import import_module_attr_or_none
 
-# ....................{ PRIVATE                           }....................
-_TYPING_MODULE_NAMES = (
+# ....................{ CONSTANTS                         }....................
+TYPING_MODULE_NAMES_STANDARD = (
     'beartype.typing',
     'typing',
+)
+'''
+Tuple of the fully-qualified names of all **standard typing modules** (i.e.,
+modules whose public APIs *exactly* conform to that of the standard
+:mod:`typing` module).
+
+This tuple includes both the standard :mod:`typing` module and comparatively
+more standard :mod:`beartype.typing` submodule while excluding the third-party
+:mod:`typing_extensions` module, whose runtime behaviour often significantly
+diverges in non-standard fashion from that of the aforementioned modules.
+'''
+
+
+TYPING_MODULE_NAMES_ALL = TYPING_MODULE_NAMES_STANDARD + (
     'typing_extensions',
 )
 '''
@@ -57,7 +71,7 @@ def iter_typing_attrs(
     typing_attr_basename: str,
 
     # Optional parameters.
-    typing_module_names: Tuple[str] = _TYPING_MODULE_NAMES,
+    typing_module_names: Tuple[str] = TYPING_MODULE_NAMES_ALL,
 ) -> Iterable[object]:
     '''
     Generator iteratively yielding all attributes with the passed basename
@@ -72,7 +86,8 @@ def iter_typing_attrs(
         typing module.
     typing_module_names: Tuple[str]
         Tuple of the fully-qualified names of all typing modules to dynamically
-        import this attribute from. Defaults to :data:`_TYPING_MODULE_NAMES`.
+        import this attribute from. Defaults to
+        :data:`TYPING_MODULE_NAMES_ALL`.
 
     Yields
     ----------

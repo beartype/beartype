@@ -55,7 +55,7 @@ def _register_dir() -> None:
 # Kludge us up the bomb.
 _register_dir()
 
-# ....................{ KLUDGES ~ beartype                }....................
+# ....................{ KLUDGES ~ init                    }....................
 # Explicitly notify the "beartype.__init__" submodule that it is being imported
 # at install time from this script. Doing so prevents that submodule from
 # implicitly importing from *ANY* "beartype" submodule other than the
