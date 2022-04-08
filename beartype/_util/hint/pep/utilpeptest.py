@@ -24,7 +24,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED,
     HINT_SIGNS_TYPE_MIMIC,
 )
-from beartype._data.mod.datamod import TYPING_MODULE_NAMES
+from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
     is_hint_pep484_ignorable_or_none,
 )
@@ -314,6 +314,42 @@ def warn_if_hint_pep_deprecated(
     # equivalent PEP 585-compliant type hint (e.g., "list[int]"). In this case,
     # emit a non-fatal PEP 585-specific deprecation warning.
     if hint_bare_repr in HINTS_PEP484_REPR_PREFIX_DEPRECATED:
+        #FIXME: Resolve issue #73 by additionally passing the "stacklevel"
+        #keyword parameter. Doing so will probably require:
+        #* Refactoring this function to accept an *OPTIONAL*
+        #  "warning_stack_level" parameter. Why optional? Because this
+        #  parameter is only reliably decidable under Python interpreters
+        #  defining the implementation-specific sys._getframe() function, which
+        #  is admittedly all of them everyone cares about. Nonetheless, do this
+        #  right. If non-"None", conditionally pass this level below as:
+        #      stacklevel=(
+        #          warning_stack_level
+        #          if warning_stack_level is not None else
+        #          1  # <-- the official default value for this parameter
+        #      ),
+        #* Refactoring all callers of this function to pass that parameter.
+        #  Here's where things get dicey, however. Passing this parameter
+        #  reliably (so, *NOT* just hard-coding a magic number somewhere and
+        #  praying devoutly for the best) will require computing the distance
+        #  between the current function and the first external third-party
+        #  non-@beartype scope on the call stack. So, maybe we want to actually
+        #  *NOT* refactor this function to accept an *OPTIONAL*
+        #  "warning_stack_level" parameter but instead locally define
+        #  "warning_stack_level" based on an iterative O(n) search up the
+        #  stack? That's obviously non-ideal -- but still absolutely preferable
+        #  to the current untenable situation of emitting unreadable warnings.
+        #
+        #Okay. So, scrap everything above. Let's instead:
+        #* Define a new warn_safe() wrapper function (somewhere in
+        #  "beartype._util", clearly) that automatically decides the
+        #  appropriate "stacklevel" by iterating up the call stack to compute
+        #  the distance between the current function and the first external
+        #  third-party non-@beartype scope. We perform similar iteration when
+        #  resolving PEP 563-based deferred annotations, so that would probably
+        #  be the first place to clean inspiration. That code is rock solid and
+        #  well-tested. Things get non-trivial fast here, sadly. *sigh*
+        #
+        #See also: https://docs.python.org/3/library/warnings.html#warnings.warn
         warn(
             (
                 f'PEP 484 type hint {repr(hint)} deprecated by PEP 585 '

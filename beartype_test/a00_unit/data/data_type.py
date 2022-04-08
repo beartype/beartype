@@ -12,7 +12,7 @@ cases on behalf of higher-level unit test submodules.
 
 # ....................{ IMPORTS                           }....................
 import builtins
-from beartype._data.mod.datamod import BUILTINS_MODULE_NAME
+from beartype._data.mod.datamodpy import BUILTINS_MODULE_NAME
 from contextlib import contextmanager
 from sys import exc_info, implementation
 from typing import (

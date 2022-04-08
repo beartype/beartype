@@ -353,7 +353,7 @@ def _init() -> None:
 
     # ..................{ EXTERNALS                         }..................
     # Defer initialization-specific imports.
-    from beartype._data.mod.datamod import TYPING_MODULE_NAMES
+    from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES
 
     # Permit redefinition of these globals below.
     global \

@@ -12,33 +12,10 @@ attributes with arbitrary names dynamically imported from typing modules).
 from beartype.typing import (
     Any,
     Iterable,
-    Tuple,
 )
 from beartype._util.mod.utilmodimport import import_module_attr_or_none
-
-# ....................{ CONSTANTS                         }....................
-TYPING_MODULE_NAMES_STANDARD = (
-    'beartype.typing',
-    'typing',
-)
-'''
-Tuple of the fully-qualified names of all **standard typing modules** (i.e.,
-modules whose public APIs *exactly* conform to that of the standard
-:mod:`typing` module).
-
-This tuple includes both the standard :mod:`typing` module and comparatively
-more standard :mod:`beartype.typing` submodule while excluding the third-party
-:mod:`typing_extensions` module, whose runtime behaviour often significantly
-diverges in non-standard fashion from that of the aforementioned modules.
-'''
-
-
-TYPING_MODULE_NAMES_ALL = TYPING_MODULE_NAMES_STANDARD + (
-    'typing_extensions',
-)
-'''
-Tuple of the fully-qualified names of all quasi-standard typing modules.
-'''
+from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES
+from collections.abc import Iterable as IterableABC
 
 # ....................{ TESTERS                           }....................
 def is_typing_attrs(typing_attr_basename: str) -> bool:
@@ -66,12 +43,13 @@ def is_typing_attrs(typing_attr_basename: str) -> bool:
     return bool(tuple(iter_typing_attrs(typing_attr_basename)))
 
 # ....................{ ITERATORS                         }....................
+#FIXME: Generalize to also accept an iterable of typing attribute basenames.
 def iter_typing_attrs(
     # Mandatory parameters.
     typing_attr_basename: str,
 
     # Optional parameters.
-    typing_module_names: Tuple[str] = TYPING_MODULE_NAMES_ALL,
+    typing_module_names: Iterable[str] = TYPING_MODULE_NAMES,
 ) -> Iterable[object]:
     '''
     Generator iteratively yielding all attributes with the passed basename
@@ -84,10 +62,10 @@ def iter_typing_attrs(
     typing_attr_basename : str
         Unqualified name of the attribute to be dynamically imported from each
         typing module.
-    typing_module_names: Tuple[str]
-        Tuple of the fully-qualified names of all typing modules to dynamically
-        import this attribute from. Defaults to
-        :data:`TYPING_MODULE_NAMES_ALL`.
+    typing_module_names: Iterable[str]
+        Iterable of the fully-qualified names of all typing modules to
+        dynamically import this attribute from. Defaults to
+        :data:`TYPING_MODULE_NAMES`.
 
     Yields
     ----------
@@ -96,8 +74,8 @@ def iter_typing_attrs(
     '''
     assert isinstance(typing_attr_basename, str), (
         f'{typing_attr_basename} not string.')
-    assert isinstance(typing_module_names, tuple), (
-        f'{repr(typing_module_names)} not tuple.')
+    assert isinstance(typing_module_names, IterableABC), (
+        f'{repr(typing_module_names)} not iterable.')
     assert typing_module_names, '"typing_module_names" empty.'
     assert all(
         isinstance(typing_attr_basename, str)

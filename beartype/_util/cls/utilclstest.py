@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilTypeException
 from beartype._cave._cavefast import TestableTypes as TestableTypesTuple
 from beartype._data.cls.datacls import TYPES_BUILTIN_FAKE
-from beartype._data.mod.datamod import BUILTINS_MODULE_NAME
+from beartype._data.mod.datamodpy import BUILTINS_MODULE_NAME
 from beartype._data.datatyping import (
     TypeException,
     TypeOrTupleTypes,

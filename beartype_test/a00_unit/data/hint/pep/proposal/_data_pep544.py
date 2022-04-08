@@ -63,6 +63,7 @@ def add_data(data_module: 'ModuleType') -> None:
         runtime_checkable,
     )
     from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
+    from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES_STANDARD
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
         HintPithSatisfiedMetadata,
@@ -70,10 +71,7 @@ def add_data(data_module: 'ModuleType') -> None:
     )
     from beartype_test.util.mod.pytmodtest import (
         is_package_beartype_vale_usable)
-    from beartype_test.util.mod.pytmodtyping import (
-        TYPING_MODULE_NAMES_STANDARD,
-        iter_typing_attrs,
-    )
+    from beartype_test.util.mod.pytmodtyping import iter_typing_attrs
 
     # Type variables.
     S = TypeVar('S')
