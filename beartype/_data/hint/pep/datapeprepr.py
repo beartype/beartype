@@ -280,33 +280,6 @@ HINTS_REPR_IGNORABLE_SHALLOW: FrozenSet[str] = {  # type: ignore[assignment]
     # return values. This is literally the "beartype.cave.AnyType" type.
     "<class 'object'>",
 
-    # ..................{ PEP 484                           }..................
-    # The "Generic" superclass imposes no constraints and is thus also
-    # semantically synonymous with the ignorable PEP-noncompliant
-    # "beartype.cave.AnyType" and hence "object" types. Since PEP
-    # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
-    #     singleton including "typing.Generic" semantically expands to that
-    #     singelton subscripted by an implicit "Any" argument, "Generic"
-    #     semantically expands to the implicit "Generic[Any]" singleton.
-    "<class 'typing.Generic'>",
-    "<class 'typing_extensions.Generic'>",
-
-    # ..................{ PEP 544                           }..................
-    # Note that ignoring the "typing.Protocol" superclass is vital here. For
-    # unknown and presumably uninteresting reasons, *ALL* possible objects
-    # satisfy this superclass. Ergo, this superclass is synonymous with the
-    # "object" root superclass: e.g.,
-    #     >>> import typing as t
-    #     >>> isinstance(object(), t.Protocol)
-    #     True
-    #     >>> isinstance('wtfbro', t.Protocol)
-    #     True
-    #     >>> isinstance(0x696969, t.Protocol)
-    #     True
-    "<class 'beartype.typing.Protocol'>",
-    "<class 'typing.Protocol'>",
-    "<class 'typing_extensions.Protocol'>",
-
     # ..................{ PEP 604                           }..................
     # The low-level C-based "types.UnionType" class underlying PEP
     # 604-compliant |-style unions (e.g., "int | float") imposes no constraints
@@ -474,8 +447,10 @@ def _init() -> None:
         ))
 
     # ..................{ HINTS ~ ignorable                 }..................
-    # Set of the unqualified names of all shallowly ignorable typing
-    # attributes.
+    # Set of the unqualified names of all shallowly ignorable typing non-class
+    # attributes. Since classes and non-class attributes have incommensurate
+    # machine-readable representations, these two types of attributes *MUST* be
+    # isolated to distinct sets. See "_HINT_TYPING_CLASSNAMES_IGNORABLE" below.
     _HINT_TYPING_ATTR_NAMES_IGNORABLE = {
         # ................{ PEP 484                           }................
         # The "Any" singleton is semantically synonymous with the ignorable
@@ -524,6 +499,32 @@ def _init() -> None:
         'Union',
     }
 
+    # Set of the unqualified names of all shallowly ignorable typing classes.
+    _HINT_TYPING_CLASSNAMES_IGNORABLE = {
+        # The "Generic" superclass imposes no constraints and is thus also
+        # semantically synonymous with the ignorable PEP-noncompliant
+        # "beartype.cave.AnyType" and hence "object" types. Since PEP
+        # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
+        #     singleton including "typing.Generic" semantically expands to that
+        #     singelton subscripted by an implicit "Any" argument, "Generic"
+        #     semantically expands to the implicit "Generic[Any]" singleton.
+        'Generic',
+
+        # ..................{ PEP 544                           }..................
+        # Note that ignoring the "typing.Protocol" superclass is vital here. For
+        # unknown and presumably uninteresting reasons, *ALL* possible objects
+        # satisfy this superclass. Ergo, this superclass is synonymous with the
+        # "object" root superclass: e.g.,
+        #     >>> import typing as t
+        #     >>> isinstance(object(), t.Protocol)
+        #     True
+        #     >>> isinstance('wtfbro', t.Protocol)
+        #     True
+        #     >>> isinstance(0x696969, t.Protocol)
+        #     True
+        'Protocol',
+    }
+
     # If the active Python interpreter targets Python 3.6...
     #
     # Gods... these are horrible. Thanks for nuthin', Python 3.6.
@@ -544,7 +545,7 @@ def _init() -> None:
         _HINT_TYPING_ATTR_NAMES_IGNORABLE.add('Generic')
 
     # ..................{ CONSTRUCTION                      }..................
-    # For the name of each top-level type hinting module...
+    # For the fully-qualified name of each quasi-standard typing module...
     for typing_module_name in TYPING_MODULE_NAMES:
         # For the name of each sign...
         #
@@ -596,12 +597,19 @@ def _init() -> None:
             HINT_TYPE_NAME_TO_SIGN[
                 f'{typing_module_name}.{typing_attr_name}'] = hint_sign
 
-        # For each shallowly ignorable typing attribute name...
+        # For each shallowly ignorable typing non-class attribute name...
         for typing_attr_name in _HINT_TYPING_ATTR_NAMES_IGNORABLE:
             # Add that attribute relative to this module to this set.
-            # print(f'[datapeprepr] Registering ignorable "{typing_module_name}.{typing_attr_name}"...')
+            # print(f'[datapeprepr] Registering ignorable non-class "{typing_module_name}.{typing_attr_name}"...')
             HINTS_REPR_IGNORABLE_SHALLOW.add(  # type: ignore[attr-defined]
                 f'{typing_module_name}.{typing_attr_name}')
+
+        # For each shallowly ignorable typing classname...
+        for typing_classname in _HINT_TYPING_CLASSNAMES_IGNORABLE:
+            # Add that classname relative to this module to this set.
+            # print(f'[datapeprepr] Registering ignorable class "{typing_module_name}.{typing_attr_name}"...')
+            HINTS_REPR_IGNORABLE_SHALLOW.add(  # type: ignore[attr-defined]
+                f"<class '{typing_module_name}.{typing_classname}'>")
 
         # For each deprecated PEP 484-compliant typing attribute name...
         for typing_attr_name in _HINT_PEP484_TYPING_ATTR_NAMES_DEPRECATED:

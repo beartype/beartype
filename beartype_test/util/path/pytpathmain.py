@@ -39,15 +39,15 @@ def get_main_dir() -> Path:
     # relative to the dirname of the package defining the current module.
     MAIN_DIR = DirRelative(MODULE_PACKAGE_DIR, '../../..')
 
-    # If this project's directory either does not contain a "setup.py" path
-    # *OR* does but this path is not a file, raise an exception. This basic
-    # sanity check improves the likelihood that this project directory is what
-    # we assume it is.
+    # If this project's directory either does not contain a "beartype_test"
+    # subdirectory *OR* does but this path is not a directory, raise an
+    # exception. This basic sanity check improves the likelihood that this
+    # project directory is what we assume it is.
     #
     # Note that we intentionally avoid testing paths *NOT* bundled with release
     # tarballs (e.g., a root ".git/" directory), as doing so would prevent
     # external users and tooling from running tests from release tarballs.
-    FileRelative(MAIN_DIR, 'setup.py')
+    DirRelative(MAIN_DIR, 'beartype_test')
 
     # Return this path.
     return MAIN_DIR

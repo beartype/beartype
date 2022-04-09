@@ -611,11 +611,10 @@ def is_hint_pep_supported(hint: object) -> bool:
 
 # ....................{ TESTERS ~ typing                  }....................
 #FIXME: Replace all hardcoded "'typing" strings throughout the codebase with
-#access of "TYPING_MODULE_NAMES" instead. We only see two remaining in:
-#* beartype/_util/hint/pep/proposal/utilpep544.py
+#access of "TYPING_MODULE_NAMES" instead. We only see one remaining in:
 #* beartype._util.hint.pep.proposal.pep484.utilpep484.py
-#Thankfully, nobody really cares about generalizing these two edge cases to
-#"testing_extensions", so they're mostly fine for various definitions of fine.
+#Thankfully, nobody really cares about generalizing this one edge case to
+#"testing_extensions", so it's mostly fine for various definitions of fine.
 @callable_cached
 def is_hint_pep_typing(hint: object) -> bool:
     '''

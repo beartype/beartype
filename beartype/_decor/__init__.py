@@ -34,11 +34,35 @@
 #  performing this reduction *ALSO* currently reduces "TypeVar" objects to
 #  their bounds. So... *shrug*
 
-#FIXME: [OPTIMIZATION] As a useful microoptimization, unroll *ALL* calls to
-#the any() and all() builtins into equivalent "for" loops in our critical path.
-#Since we typically pass these builtins generator comprehensions created and
-#destroyed on-the-fly, we've profiled these builtins to incur substantially
-#higher runtime costs than equivalent "for" loops. Thanks alot, CPython. *sigh*
+#FIXME: [SPEED] As a useful MACROoptimization, render the entire @beartype
+#toolchain thread-safe upfront rather than doing so piecemeal throughout the
+#toolchain. While the latter certainly works as well, the former is
+#*SUBSTANTIALLY* more efficient due to the non-trivial expense of each
+#threadsafe context manager. To do so:
+#* Simply wrap the body of the implementation of the @beartype decorator in a
+#  context manager locking on a globally declared lock: e.g.,
+#      with lock:
+#          ...
+#  Note that an "RLock" is neither needed nor desired here, as @beartype
+#  *NEVER* invokes itself recursively. A non-reentrant "Lock" suffices.
+#* Rip out all now-redundant "with lock:" expressions throughout the codebase.
+
+#FIXME: [SPEED] As a useful microoptimization, consider memoizing "repr(hint)"
+#calls. We strongly suspect these calls to be a performance bottleneck, because
+#we repeat them so frequently for the same hint throughout the codebase. The
+#best approach to doing so is to:
+#* Define a new memoized "beartype._util.hint.utilhintget" getter: e.g.,
+#      @callable_cached
+#      def get_hint_repr(hint: object) -> str:
+#          return repr(hint)
+#* Globally replace all calls to the repr() builtin throughout the codebase
+#  passed a hint with calls to get_hint_repr() instead.
+
+#FIXME: [SPEED] As a useful microoptimization, unroll *ALL* calls to the any()
+#and all() builtins into equivalent "for" loops in our critical path. Since we
+#typically pass these builtins generator comprehensions created and destroyed
+#on-the-fly, we've profiled these builtins to incur substantially higher
+#runtime costs than equivalent "for" loops. Thanks alot, CPython. *sigh*
 
 #FIXME: [FEATURE] Plugin architecture. The NumPy type hints use case will come
 #up again and again. So, let's get out ahead of that use case rather than

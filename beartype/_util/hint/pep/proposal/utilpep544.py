@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from abc import abstractmethod
 from beartype.roar import BeartypeDecorHintPep544Exception
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES_STANDARD
 from beartype._util.cls.utilclstest import is_type_builtin, is_type_subclass
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from typing import (
@@ -120,17 +121,36 @@ if IS_PYTHON_AT_LEAST_3_8:
     def is_hint_pep544_ignorable_or_none(
         hint: object, hint_sign: HintSign) -> Optional[bool]:
 
-        # Return either:
-        # * If this hint is the "typing.Protocol" superclass directly
-        #   parametrized by one or more type variables (e.g.,
-        #   "typing.Protocol[S, T]"), true. Since this superclass can *ONLY* be
-        #   parametrized by type variables, a simple test suffices.
-        # * Else, "None".
+        # Machine-readable representation of this hint.
+        hint_repr = repr(hint)
+
+        #FIXME: *OPTIMIZE.* Would a compiled regex test be faster? Possibly,
+        #but possibly not. Regexes are notoriously slow -- even when compiled.
+        # For the fully-qualified name of each standard typing module (i.e.,
+        # modules whose "Protocol" superclass strictly conforms with the
+        # runtime behaviour of the standard "typing.Protocol" superclass).
         #
-        # For unknown and uninteresting reasons, *ALL* possible objects satisfy
-        # this superclass. Ergo, this superclass and *ALL* parametrizations of
-        # this superclass are synonymous with the "object" root superclass.
-        return repr(hint).startswith('typing.Protocol[') or None
+        # Note this intentionally omits the "typing_extensions.Protocol"
+        # superclass, which does *NOT* conform with the runtime behaviour of
+        # the standard "typing.Protocol" superclass.
+        for typing_module_name in TYPING_MODULE_NAMES_STANDARD:
+            # If this hint is the "Protocol" superclass directly parametrized
+            # by one or more type variables (e.g., "typing.Protocol[S, T]"),
+            # ignore this superclass by returning true. Since this superclass
+            # can *ONLY* be parametrized by type variables, a trivial string
+            # test suffices.
+            #
+            # For unknown and uninteresting reasons, *ALL* possible objects
+            # satisfy the "Protocol" superclass. Ergo, this superclass and
+            # *ALL* parametrizations of this superclass are synonymous with the
+            # "object" root superclass.
+            if hint_repr.startswith(f'{typing_module_name}.Protocol['):
+                return True
+
+        # Else, this hint is *NOT* the "Protocol" superclass directly
+        # parametrized by one or more type variables. In this case, continue
+        # testing this hint for other kinds of ignorable by returning None.
+        return None
 
 
     def is_hint_pep484_generic_io(hint: object) -> bool:
