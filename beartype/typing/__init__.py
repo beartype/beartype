@@ -182,6 +182,48 @@ if _IS_PYTHON_AT_LEAST_3_7:
                     reveal_type as reveal_type,
                 )
 
+# ....................{ PEP ~ 544                         }....................
+# If this interpreter is either performing static type-checking (e.g., via
+# mypy) *OR* targets Python < 3.8, defer to the standard library versions of
+# the family of "Supports*" protocols available under Python < 3.8.
+if TYPE_CHECKING or not _IS_PYTHON_AT_LEAST_3_8:
+    from typing import (  # type: ignore[attr-defined]
+        SupportsAbs as SupportsAbs,
+        SupportsBytes as SupportsBytes,
+        SupportsComplex as SupportsComplex,
+        SupportsFloat as SupportsFloat,
+        SupportsInt as SupportsInt,
+        SupportsRound as SupportsRound,
+    )
+
+# If this interpreter targets Python >= 3.8 and thus fully supports PEP 544...
+if _IS_PYTHON_AT_LEAST_3_8:
+    # If this interpreter is performing static type-checking, defer to the
+    # standard library versions of all remaining PEP 544 attributes.
+    if TYPE_CHECKING:
+        # FIXME: The ignore[attr-defined] is for Python 3.7 because
+        # Mypy doesn't understand IS_PYTHON_AT_LEAST_3_8. That ignore should
+        # be removable when retiring PYTHON_AT_LEAST_3_7.
+        from typing import (  # type: ignore[attr-defined]
+            Protocol as Protocol,
+            SupportsIndex as SupportsIndex,
+            runtime_checkable as runtime_checkable,
+        )
+    # Else, this interpreter is *NOT* performing static type-checking. In
+    # this case, prefer our optimized PEP 544 attributes.
+    else:
+        from beartype.typing._typingpep544 import (
+            Protocol as Protocol,
+            SupportsAbs as SupportsAbs,
+            SupportsBytes as SupportsBytes,
+            SupportsComplex as SupportsComplex,
+            SupportsFloat as SupportsFloat,
+            SupportsIndex as SupportsIndex,
+            SupportsInt as SupportsInt,
+            SupportsRound as SupportsRound,
+            runtime_checkable as runtime_checkable,
+        )
+
 # ....................{ PEP ~ 585                         }....................
 # If the active Python interpreter targets Python < 3.9 and thus fails to
 # support PEP 585, import *ALL* public attributes of the "typing" module
@@ -290,60 +332,3 @@ else:
     Set = set  # type: ignore[misc]
     Tuple = tuple  # type: ignore[assignment]
     Type = type  # type: ignore[assignment]
-
-# Try to install our Protocol replacement
-if TYPE_CHECKING:
-    if _IS_PYTHON_AT_LEAST_3_7:
-        from typing import (  # type: ignore[attr-defined]
-            SupportsAbs as SupportsAbs,
-            SupportsBytes as SupportsBytes,
-            SupportsComplex as SupportsComplex,
-            SupportsFloat as SupportsFloat,
-            SupportsInt as SupportsInt,
-            SupportsRound as SupportsRound,
-        )
-
-        if _IS_PYTHON_AT_LEAST_3_8:
-            # FIXME: The ignore[attr-defined] is for Python 3.7 because
-            # Mypy doesn't understand IS_PYTHON_AT_LEAST_3_8. That ignore should
-            # be removable when retiring PYTHON_AT_LEAST_3_7.
-            from typing import (  # type: ignore[attr-defined]
-                Protocol as Protocol,
-                SupportsIndex as SupportsIndex,
-                runtime_checkable as runtime_checkable,
-            )
-        else:
-            assert _IS_PYTHON_3_7
-
-            try:
-                from typing_extensions import (  # type: ignore[misc,no-redef]
-                    Protocol as Protocol,
-                    SupportsIndex as SupportsIndex,
-                    runtime_checkable as runtime_checkable,
-                )
-            except ImportError:
-                pass
-else:  # not TYPE_CHECKING
-    try:
-        # Import our replacements.
-        from beartype.typing._typingpep544 import (
-            Protocol as Protocol,
-            SupportsAbs as SupportsAbs,
-            SupportsBytes as SupportsBytes,
-            SupportsComplex as SupportsComplex,
-            SupportsFloat as SupportsFloat,
-            SupportsIndex as SupportsIndex,
-            SupportsInt as SupportsInt,
-            SupportsRound as SupportsRound,
-            runtime_checkable as runtime_checkable,
-        )
-    except ImportError:
-        # Fallback to the standard library versions.
-        from typing import (
-            SupportsAbs as SupportsAbs,
-            SupportsBytes as SupportsBytes,
-            SupportsComplex as SupportsComplex,
-            SupportsFloat as SupportsFloat,
-            SupportsInt as SupportsInt,
-            SupportsRound as SupportsRound,
-        )

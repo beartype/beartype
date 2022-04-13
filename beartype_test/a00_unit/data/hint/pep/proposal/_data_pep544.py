@@ -55,7 +55,10 @@ def add_data(data_module: 'ModuleType') -> None:
     # ..................{ IMPORTS                           }..................
     # Defer Python >= 3.8-specific imports.
     import pathlib
-    from abc import abstractmethod
+    from abc import (
+        ABC,
+        abstractmethod,
+    )
     from beartype.typing import (
         Any,
         AnyStr,
@@ -197,6 +200,33 @@ def add_data(data_module: 'ModuleType') -> None:
             @abstractmethod
             def omega(self) -> str: pass
 
+        # ................{ PROTOCOLS ~ user : abc            }................
+        # User-defined protocol superclass.
+        @runtime_checkable
+        class ProtocolCustomSuperclass(Protocol):
+            instance_variable: int
+
+        # User-defined abstract protocol subclassing both this superclass *AND*
+        # the standard abstract base class (ABC) superclass, exercising a prior
+        # issue with respect to non-trivial protocol hierarchies. See also:
+        #     https://github.com/beartype/beartype/issues/117
+        class ProtocolCustomABC(ProtocolCustomSuperclass, ABC):
+            instance_variable = 42
+
+            def concrete_method(self) -> str:
+                return (
+                    'Lit, Faux-Phonetician Grecian predilection derelictions '
+                    'predi‐sposed to'
+                )
+
+            @abstractmethod
+            def abstract_method(self) -> str: pass
+
+        # User-defined protocol subclass concretely subclassing this ABC.
+        class ProtocolCustomSubclass(ProtocolCustomABC):
+            def abstract_method(self) -> str:
+                return 'Concrete‐shambling,'
+
         # ................{ SETS                              }................
         # Add PEP 544-specific shallowly ignorable test type hints to that set
         # global.
@@ -241,6 +271,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 generic_type=ProtocolCustomUntypevared,
                 is_type_typing=False,
                 piths_meta=(
+                    # Unrelated object satisfying this protocol.
                     HintPithSatisfiedMetadata(protocol_custom_structural),
                     # String constant.
                     HintPithUnsatisfiedMetadata('For durance needs.'),
@@ -255,6 +286,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 is_typevars=True,
                 is_type_typing=False,
                 piths_meta=(
+                    # Unrelated object satisfying this protocol.
                     HintPithSatisfiedMetadata(protocol_custom_structural),
                     # String constant.
                     HintPithUnsatisfiedMetadata('Machist-'),
@@ -270,12 +302,29 @@ def add_data(data_module: 'ModuleType') -> None:
                 is_typevars=True,
                 is_typing=False,
                 piths_meta=(
+                    # Unrelated object satisfying this protocol.
                     HintPithSatisfiedMetadata(protocol_custom_structural),
                     # String constant.
                     HintPithUnsatisfiedMetadata(
                         'Black and white‐bit, bilinear linaements'),
                 ),
             ),
+
+            #FIXME: Uncomment after resolving instantiation issues, please.
+            # # User-defined abstract protocol subclassing the ABC superclass.
+            # HintPepMetadata(
+            #     hint=ProtocolCustomABC,
+            #     pep_sign=HintSignGeneric,
+            #     generic_type=ProtocolCustomABC,
+            #     is_type_typing=False,
+            #     piths_meta=(
+            #         # Unrelated object satisfying this protocol.
+            #         HintPithSatisfiedMetadata(ProtocolCustomSubclass()),
+            #         # String constant.
+            #         HintPithUnsatisfiedMetadata(
+            #             'Conspiratorially oratory‐fawning faces'),
+            #     ),
+            # ),
 
             # ..............{ GENERICS ~ io : unsubscripted     }..............
             # Unsubscripted "IO" abstract base class (ABC).

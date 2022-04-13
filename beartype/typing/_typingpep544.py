@@ -7,8 +7,9 @@
 **Beartype** :pep:`544` **optimization layer.**
 
 This private submodule implements a :func:`beartype.beartype``-compatible
-(i.e., decorated by :func:`typing.runtime_checkable`) drop-in replacement for
-:class:`typing.Protocol` that can lead to significant performance improvements.
+(i.e., decorated by the :func:`typing.runtime_checkable` decorator) drop-in
+replacement for :class:`typing.Protocol` that can lead to significant
+performance improvements.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -32,7 +33,7 @@ if IS_PYTHON_AT_LEAST_3_8:
     # Defer Python version-specific imports, including non-caching
     # protocols to be overridden by caching equivalents below (and other
     # requirements from various sources, depending on runtime environment).
-    from beartype._util.cache.utilcachecall import callable_cached
+    from beartype.typing._typingcache import callable_cached_minimal
     from typing import (  # type: ignore[attr-defined]
         EXCLUDED_ATTRIBUTES,
         TYPE_CHECKING,
@@ -193,14 +194,15 @@ if IS_PYTHON_AT_LEAST_3_8:
             # single private boolean on this class (and thus imposes *NO* space
             # or time burden whatsoever), typing authors unwisely elected to
             # force everyone everywhere to unconditionally mark protocols as
-            # runtime by decorate every runtime protocol by @runtime_checkable.
-            # Since that is demonstrably insane, we pretend they choose wisely.
+            # runtime by decorating every runtime protocol with
+            # @runtime_checkable. Since that is demonstrably insane, we pretend
+            # they choose wisely.
             #
             # To do so, we forcefully enable a private boolean instance
-            # variable widely tested throghout the "typing" module. For unknown
-            # reasons, this line of the typing.Protocol.__init__() method
-            # forcefully disables this boolean despite the "__bases__" tuple of
-            # this protocol class explicitly listing "typing.Protocol":
+            # variable widely tested throughout the "typing" module. For
+            # unknown reasons, this line of the typing.Protocol.__init__()
+            # method forcefully disables this boolean despite the "__bases__"
+            # tuple of this protocol class explicitly listing "typing.Protocol":
             #     cls._is_protocol = any(b is Protocol for b in cls.__bases__)
             #
             # Note that the @runtime_checkable decorator itself *CANNOT* be
@@ -384,7 +386,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         __slots__: Any = ()
 
         # ................{ DUNDERS                           }................
-        @callable_cached
+        @callable_cached_minimal
         def __class_getitem__(cls, item):
 
             # We have to redefine this method because typing.Protocol's version
