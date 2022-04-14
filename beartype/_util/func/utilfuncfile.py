@@ -78,7 +78,7 @@ def get_func_filename_or_none(
     exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 ) -> Optional[str]:
     '''
-    Absolute filename of the file on the local filesystem providing the
+    Absolute filename of the file on the local filesystem containing the
     pure-Python source code for the script or module defining the passed
     callable if that callable is defined on-disk *or* ``None`` otherwise (i.e.,
     if that callable is dynamically defined in-memory by a prior call to the

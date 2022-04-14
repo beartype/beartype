@@ -68,7 +68,7 @@ GitHub Sponsors <beartype sponsorship_>`__:
    list[str], as list item 0 value b'Oh, my God! A horrible plane crash!'
    not str.
 
-   # ..................{            + VALIDATORS            }..................
+   # ..................{ VALIDATORS }..................
    # Squash bugs by refining type hints with validators.
    >>> from beartype.vale import Is  # <---- validator factory
    >>> from typing import Annotated  # <---------------- if Python ≥ 3.9.0
@@ -92,7 +92,7 @@ GitHub Sponsors <beartype sponsorship_>`__:
    typing.Annotated[list[str], Is[lambda lst: bool(lst)]], as value []
    violates validator Is[lambda lst: bool(lst)].
 
-   # ..................{             @ ANYWHERE             }..................
+   # ..................{ @ ANYWHERE }.............................
    # Type-check anything against any type hint – anywhere, anytime.
    >>> from beartype.abby import (
    ...     is_bearable,  # <-------- like "isinstance(...)"

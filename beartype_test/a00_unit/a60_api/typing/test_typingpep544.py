@@ -110,6 +110,7 @@ def test_typingpep544_subclass() -> None:
         runtime_checkable
     )
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+    from pytest import raises
 
     # Arbitrary protocol directly subclassing the protocol superclass
     # subscripted by one or more type variables, exercising subtle edge cases.
@@ -144,9 +145,14 @@ def test_typingpep544_subclass() -> None:
             def dreamless_sleep(self) -> str:
                 pass
 
-        # Assert that optionally decorating protocols by the standard
+        # Assert that optionally decorating abstract protocols by the standard
         # @typing.runtime_checkable() decorator reduces to a noop.
-        assert runtime_checkable(SupportsHiddenBuds) is SupportsHiddenBuds
+        assert runtime_checkable(SupportsFeebleDreams) is SupportsFeebleDreams
+
+        # Assert that attempting to decorate concrete protocol subclasses by
+        # the same decorator raises the expected exception.
+        with raises(TypeError):
+            runtime_checkable(SupportsHiddenBuds)
 
 
 @skip_if_python_version_less_than('3.8.0')

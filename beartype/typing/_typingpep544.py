@@ -123,58 +123,72 @@ if IS_PYTHON_AT_LEAST_3_8:
 
         Motivation
         ----------
-        Although any non-caching protocol can be coerced into a caching
-        protocol through inheritance, the former will remain incompatible with
-        runtime type checkers (including :mod:`beartype`) until explicitly
-        decorated by :func:`typing.runtime_checkable`. As example:
+        By default, :class:`typing.Protocol` subclasses are constrained to only
+        be checkable by static type checkers (e.g., :mod:`mypy`). Checking a
+        protocol with a runtime type checker (e.g., :mod:`beartype`) requires
+        explicitly decorating that protocol with the
+        :func:`typing.runtime_checkable` decorator. Why? We have no idea.
+
+        For unknown (but probably indefensible) reasons, :pep:`544` authors
+        enforced this constraint with a trivial private
+        :class:`typing.Protocol` boolean instance variable imposing *no* space
+        or time burden set only by the optional
+        :func:`typing.runtime_checkable` decorator. Since that's demonstrably
+        insane, we pretend :pep:`544` authors chose wisely by unconditionally
+        decorating *all* :class:`beartype.typing.Protocol` subclasses by that
+        decorator.
+
+        Technically, any non-caching :class:`typing.Protocol` subclass can be
+        effectively coerced into a caching :class:`beartype.typing.Protocol`
+        protocol through inheritance: e.g.,
 
         .. code-block:: python
 
           >>> from abc import abstractmethod
           >>> from typing import Protocol
           >>> from beartype.typing import _CachingProtocolMeta, runtime_checkable
-
           >>> @runtime_checkable
           ... class _MyProtocol(Protocol):  # plain vanilla protocol
-          ...   @abstractmethod
-          ...   def myfunc(self, arg: int) -> str:
-          ...     pass
-
+          ...     @abstractmethod
+          ...     def myfunc(self, arg: int) -> str:
+          ...         pass
           >>> @runtime_checkable  # redundant, but useful for documentation
           ... class MyProtocol(
-          ...   _MyProtocol,
-          ...   Protocol,
-          ...   metaclass=_CachingProtocolMeta,  # caching version
+          ...     _MyProtocol,
+          ...     Protocol,
+          ...     metaclass=_CachingProtocolMeta,  # caching version
           ... ):
-          ...   pass
-
+          ...     pass
           >>> class MyImplementation:
-          ...   def myfunc(self, arg: int) -> str:
-          ...     return str(arg * -2 + 5)
-
+          ...     def myfunc(self, arg: int) -> str:
+          ...         return str(arg * -2 + 5)
           >>> my_thing: MyProtocol = MyImplementation()
           >>> isinstance(my_thing, MyProtocol)
           True
 
-        The easy way to ensure your protocol caches checks and is
-        :func:`typing.runtime_checkable` is to inherit from
-        :class:`beartype.typing.Protocol` instead:
+        Pragmatically, :class:`beartype.typing.Protocol` trivially eliminates
+        *all* of the above fragile boilerplate: e.g.,
 
         .. code-block:: python
 
           >>> from beartype.typing import Protocol
-
           >>> class MyBearProtocol(Protocol):
-          ...   @abstractmethod
-          ...   def myfunc(self, arg: int) -> str:
-          ...     pass
-
+          ...     @abstractmethod
+          ...     def myfunc(self, arg: int) -> str:
+          ...         pass
           >>> my_thing: MyBearProtocol = MyImplementation()
           >>> isinstance(my_thing, MyBearProtocol)
           True
         '''
 
+        # ................{ CLASS VARIABLES                   }................
         _abc_inst_check_cache: Dict[type, bool]
+        '''
+        :func:`isinstance` **cache** (i.e., dictionary mapping from each type
+        of any object previously passed as the first parameter to the
+        :func:`isinstance` builtin whose second parameter was this protocol
+        onto each boolean returned by that call to that builtin).
+        '''
 
         # ................{ DUNDERS                           }................
         def __new__(
@@ -188,33 +202,28 @@ if IS_PYTHON_AT_LEAST_3_8:
             # See <https://github.com/python/mypy/issues/9282>
             cls = super().__new__(mcls, name, bases, namespace, **kw)
 
-            # Mark this protocol class as a runtime protocol. By default,
-            # "typing.Protocol" subclasses are only static-time. Although
-            # marking a protocol class as a runtime protocol only defines a
-            # single private boolean on this class (and thus imposes *NO* space
-            # or time burden whatsoever), typing authors unwisely elected to
-            # force everyone everywhere to unconditionally mark protocols as
-            # runtime by decorating every runtime protocol with
-            # @runtime_checkable. Since that is demonstrably insane, we pretend
-            # they choose wisely.
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # CAUTION: Synchronize this "if" conditional against the standard
+            # "typing" module, which defines the exact same logic in the
+            # Protocol.__init_subclass__() class method.
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # If it is unknown whether this class is an abstract protocol
+            # directly subclassing the "Protocol" superclass *OR* a concrete
+            # subclass of an abstract protocol, decide which applies now. Why?
+            # Because upstream performs the same logic. Since this logic tests
+            # the non-transitive dunder tuple "__bases__" of all *DIRECT*
+            # superclasses of this class rather than the transitive dunder
+            # tuple "__mro__" of all direct and indirect superclasses of this
+            # class, upstream logic erroneously detects abstract protocols as
+            # concrete by unconditionally reducing to:
+            #     cls._is_protocol = False
             #
-            # To do so, we forcefully enable a private boolean instance
-            # variable widely tested throughout the "typing" module. For
-            # unknown reasons, this line of the typing.Protocol.__init__()
-            # method forcefully disables this boolean despite the "__bases__"
-            # tuple of this protocol class explicitly listing "typing.Protocol":
-            #     cls._is_protocol = any(b is Protocol for b in cls.__bases__)
-            #
-            # Note that the @runtime_checkable decorator itself *CANNOT* be
-            # applied to this protocol class. Why? Because that decorator
-            # internally raises this exception if this private boolean instance
-            # variable is false:
-            #     TypeError: @runtime_checkable can be only applied to protocol
-            #     classes, got <class
-            #     'beartype.typing._typingpep544.SupportsAbs'>
-            #
-            # We lie to tell the truth.
-            cls._is_protocol = True  # type: ignore[attr-defined]
+            # Why? Because "beartype.typing.Protocol" subclasses
+            # "typing.Protocol", subclasses of "beartype.typing.Protocol" list
+            # "beartype.typing.Protocol" rather than "typing.Protocol" in their
+            # "__bases__" dunder tuple. Disaster, thy name is "typing"!
+            if not cls.__dict__.get('_is_protocol', False):
+                cls._is_protocol = any(b is Protocol for b in cls.__bases__)  # type: ignore[attr-defined]
 
             # Prefixing this class member with "_abc_" is necessary to prevent
             # it from being considered part of the Protocol. See also:

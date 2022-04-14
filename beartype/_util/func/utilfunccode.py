@@ -44,6 +44,9 @@ This private submodule is *not* intended for importation by downstream callers.
 #3. Introspecting the source code for two or more lambdas defined on the same
 #   line is infeasible, because code objects only record line numbers rather
 #   than both line and column numbers. Well, that's unfortunate.
+#   ^--- Actually, we're *PRETTY* sure that Python 3.11 has finally resolved
+#        this by now recording column numbers with code objects. So, let's
+#        improve the logic below to handle this edge case under Python >= 3.11.
 #FIXME: Contribute get_func_code_or_none() back to this StackOverflow question
 #as a new answer, as this is highly non-trivial, frankly:
 #    https://stackoverflow.com/questions/59498679/how-can-i-get-exactly-the-code-of-a-lambda-function-in-python/64421174#64421174
@@ -255,11 +258,13 @@ if IS_PYTHON_AT_LEAST_3_9:
     # Defer version-specific imports.
     from ast import unparse as ast_unparse  # type: ignore[attr-defined]
 
-    LAMBDA_CODE_FILESIZE_MAX = 1000000
+
+    _LAMBDA_CODE_FILESIZE_MAX = 1000000
     '''
     Maximum size (in bytes) of files to be safely parsed for lambda function
     declarations by the :func:`get_func_code_or_none` getter.
     '''
+
 
     def get_func_code_or_none(
         # Mandatory parameters.
@@ -308,12 +313,12 @@ if IS_PYTHON_AT_LEAST_3_9:
 
                     # If this file exceeds a sane maximum file size, emit a
                     # non-fatal warning and safely ignore this file.
-                    if len(lambda_file_code) >= LAMBDA_CODE_FILESIZE_MAX:
+                    if len(lambda_file_code) >= _LAMBDA_CODE_FILESIZE_MAX:
                         warn(
                             (
                                 f'{prefix_callable(func)}not parsable, '
                                 f'as file size exceeds safe maximum '
-                                f'{LAMBDA_CODE_FILESIZE_MAX}MB.'
+                                f'{_LAMBDA_CODE_FILESIZE_MAX}MB.'
                             ),
                             warning_cls,
                         )
