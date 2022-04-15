@@ -238,17 +238,16 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
 
     Returns
     ----------
-    Tuple[object]
+    tuple
         Tuple of the one or more unerased pseudo-superclasses of this
         :mod:`typing` generic. Specifically:
 
         * If this generic defines an ``__orig_bases__`` dunder instance
-          variable, the value of that variable.
+          variable, the value of that variable as is.
         * Else, the value of the ``__mro__`` dunder instance variable stripped
-          of all ignorable classes conveying no semantic meaning, including:
+          of all ignorable classes conveying *no* semantic meaning, including:
 
           * This generic itself.
-          * The :class:`typing.Generic` superclass.
           * The :class:`object` root superclass.
 
     Raises
@@ -266,6 +265,8 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
           #. The one or more :mod:`typing` objects directly subclassed by this
              generic.
           #. The :class:`typing.Generic` superclass.
+          #. The zero or more non-:mod:`typing` superclasses subsequently
+             subclassed by this generic (e.g., :class:`abc.ABC`).
           #. The :class:`object` root superclass.
 
     See Also
@@ -434,24 +435,31 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     # The MRO for any unerased generic should list at least four classes:
     # * This class itself.
     # * The one or more "typing" objects directly subclassed by this generic.
-    # * The "typing.Generic" superclass.
+    # * The "typing.Generic" superclass. Note that this superclass is typically
+    #   but *NOT* necessarily the second-to-last superclass. Since this ad-hoc
+    #   heuristic is *NOT* an actual constraint, we intentionally avoid
+    #   asserting this to be the case. An example in which "typing.Generic" is
+    #   *NOT* the second-to-last superclass is:
+    #       class ProtocolCustomSuperclass(Protocol): pass
+    #       class ProtocolCustomABC(ProtocolCustomSuperclass, ABC): pass
     # * The "object" root superclass.
     if len(hint_bases) < 4:
         raise BeartypeDecorHintPep484Exception(
-            f'{EXCEPTION_STR_PREFIX}lists less than four classes.')
+            f'{EXCEPTION_STR_PREFIX}lists less than four types.')
     # Else, this MRO lists at least four classes.
     #
     # If any class listed by this MRO fails to comply with the above
     # expectations, raise an exception.
     elif hint_bases[0] != hint:
         raise BeartypeDecorHintPep484Exception(
-            f'{EXCEPTION_STR_PREFIX}first item not {hint}.')
+            f'{EXCEPTION_STR_PREFIX}first type '
+            f'{repr(hint_bases[0])} not {repr(hint)}.'
+        )
     elif hint_bases[-1] != object:
         raise BeartypeDecorHintPep484Exception(
-            f'{EXCEPTION_STR_PREFIX}last item not {object}.')
-    elif hint_bases[-2] != Generic:
-        raise BeartypeDecorHintPep484Exception(
-            f'{EXCEPTION_STR_PREFIX}second-to-last item not {Generic}.')
+            f'{EXCEPTION_STR_PREFIX}last type '
+            f'{repr(hint_bases[-1])} not {repr(object)}.'
+        )
     # Else, all classes listed by this MRO comply with the above expectations.
 
     # Return a slice of this tuple preserving *ONLY* the non-ignorable
@@ -459,6 +467,14 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     # by this getter from the "__orig_bases__", which similarly lists *ONLY*
     # non-ignorable superclasses. Specifically, strip from this tuple:
     # * This class itself.
-    # * The "typing.Generic" superclass.
     # * The "object" root superclass.
-    return hint_bases[1:-2]
+    #
+    # Ideally, the ignorable "(beartype.|)typing.(Generic|Protocol)"
+    # superclasses would also be stripped. Sadly, as exemplified by the above
+    # counter-example, those superclasses are *NOT* guaranteed to occupy the
+    # third- and second-to-last positions (respectively) of this tuple. Ergo,
+    # stripping these superclasses safely would require an inefficient
+    # iterative O(n) search across this tuple for those superclasses. Instead,
+    # we defer ignoring these superclasses to the caller -- which necessarily
+    # already (and hopefully efficiently) ignores ignorable superclasses.
+    return hint_bases[1:-1]

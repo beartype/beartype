@@ -310,21 +310,20 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
 
-            #FIXME: Uncomment after resolving instantiation issues, please.
-            # # User-defined abstract protocol subclassing the ABC superclass.
-            # HintPepMetadata(
-            #     hint=ProtocolCustomABC,
-            #     pep_sign=HintSignGeneric,
-            #     generic_type=ProtocolCustomABC,
-            #     is_type_typing=False,
-            #     piths_meta=(
-            #         # Unrelated object satisfying this protocol.
-            #         HintPithSatisfiedMetadata(ProtocolCustomSubclass()),
-            #         # String constant.
-            #         HintPithUnsatisfiedMetadata(
-            #             'Conspiratorially oratory‐fawning faces'),
-            #     ),
-            # ),
+            # User-defined abstract protocol subclassing the ABC superclass.
+            HintPepMetadata(
+                hint=ProtocolCustomABC,
+                pep_sign=HintSignGeneric,
+                generic_type=ProtocolCustomABC,
+                is_type_typing=False,
+                piths_meta=(
+                    # Unrelated object satisfying this protocol.
+                    HintPithSatisfiedMetadata(ProtocolCustomSubclass()),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata(
+                        'Conspiratorially oratory‐fawning faces'),
+                ),
+            ),
 
             # ..............{ GENERICS ~ io : unsubscripted     }..............
             # Unsubscripted "IO" abstract base class (ABC).
