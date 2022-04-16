@@ -4,27 +4,27 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`-compliant **union type hint exception raisers** (i.e.,
-functions raising human-readable exceptions called by :mod:`beartype`-decorated
-callables on the first invalid parameter or return value failing a type-check
-against the :pep:`484`-compliant union type hint annotating that parameter or
-return).
+**Beartype** :pep:`484`-compliant **union type hint violation describers**
+(i.e., functions returning human-readable strings explaining violations of
+:pep:`484`-compliant union type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
+from beartype._decor._error._errorsleuth import CauseSleuth
+from beartype._decor._error._errortext import represent_pith
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_type_isinstanceable_or_none)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextmunge import (
-    suffix_unless_suffixed, uppercase_char_first)
-from beartype._util.text.utiltextrepr import represent_object
+    suffix_unless_suffixed,
+    uppercase_char_first,
+)
 from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -175,7 +175,7 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> Optional[str]:
     # Else, prior logic appended one or more strings describing these failures.
 
     # Truncated object representation of this pith.
-    pith_repr = represent_object(sleuth.pith)
+    pith_repr = represent_pith(sleuth.pith)
 
     # If prior logic appended one cause, return this cause as a single-line
     # substring intended to be embedded in a longer string.

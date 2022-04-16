@@ -92,6 +92,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.text.utiltextlabel import (
+    label_type,
     prefix_callable_decorated_arg_value,
     prefix_callable_decorated_return_value,
 )
@@ -317,8 +318,9 @@ def raise_pep_call_exception(
         f'suggests this object satisfies this hint. '
         f'Please report this desynchronization failure to '
         f'the beartype issue tracker ({URL_ISSUES}) with '
-        f"this object's representation and "
-        f'accompanying exception traceback:\n{pith_value_repr}'
+        f'the accompanying exception traceback and '
+        f'this {label_type(type)} object\'s representation:\n'
+        f'{pith_value_repr}'
     )
 
 # ....................{ INITIALIZERS                      }....................

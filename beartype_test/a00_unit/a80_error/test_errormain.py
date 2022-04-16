@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hint call-time utility unit tests.**
+**Beartype main error-handling unit tests.**
 
 This submodule unit tests the public API of the private
 :mod:`beartype._decor._error.errormain` submodule.

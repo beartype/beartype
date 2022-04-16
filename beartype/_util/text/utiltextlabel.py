@@ -157,6 +157,9 @@ def label_type(cls: type) -> str:
     # case, return this name as is.
     if '.' not in classname:
         pass
+    # Else, this name contains one or more periods but could still be a
+    # builtin indirectly accessed via the standard "builtins" module.
+    #
     # If this name is that of a builtin type uselessly prefixed by the name of
     # the module declaring all builtin types (e.g., "builtins.list"), reduce
     # this name to the unqualified basename of this type (e.g., "list").

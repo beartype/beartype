@@ -4,20 +4,18 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`484`-compliant :attr:`typing.NoReturn` **type hint exception
-raisers** (i.e., functions raising human-readable exceptions called by
-:mod:`beartype`-decorated callables on the first invalid parameter or return
-value failing a type-check against the :pep:`484`-compliant
-:attr:`typing.NoReturn` type hint annotating that parameter or return).
+**Beartype** :pep:`484`-compliant :attr:`typing.NoReturn` **type hint violation
+describers** (i.e., functions returning human-readable strings explaining
+violations of :pep:`484`-compliant :attr:`typing.NoReturn` type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._data.hint.pep.sign.datapepsigns import HintSignNoReturn
+from beartype._decor._error._errorsleuth import CauseSleuth
+from beartype._decor._error._errortext import represent_pith
 from beartype._util.text.utiltextlabel import prefix_callable
-from beartype._util.text.utiltextrepr import represent_object
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -41,6 +39,6 @@ def get_cause_or_none_noreturn(sleuth: CauseSleuth) -> str:
     # Return a substring describing this failure intended to be embedded in a
     # longer string.
     return (
-        f'"NoReturn"-annotated {prefix_callable(sleuth.func)}'
-        f'returned {represent_object(sleuth.pith)}'
+        f'{prefix_callable(sleuth.func)} with PEP 484 return type hint '
+        f'"typing.NoReturn" returned {represent_pith(sleuth.pith)}'
     )

@@ -4,25 +4,26 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hint call-time utilities** (i.e., callables
-operating on PEP-compliant type hints intended to be called by dynamically
-generated wrapper functions wrapping decorated callables).
+**Beartype** :pep:`484`- and :pep:`585`-compliant **sequence type hint
+violation describers** (i.e., functions returning human-readable strings
+explaining violations of :pep:`484`- and :pep:`585`-compliant sequence type
+hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._decor._error._errortype import (
-    get_cause_or_none_type_instance_origin)
 from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1)
+from beartype._decor._error._errorsleuth import CauseSleuth
+from beartype._decor._error._errortext import represent_pith
+from beartype._decor._error._errortype import (
+    get_cause_or_none_type_instance_origin)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextlabel import label_obj_type
-from beartype._util.text.utiltextrepr import represent_object
 from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -121,7 +122,7 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
         # If this pith is non-empty and thus fails to satisfy this hint...
         if sleuth.pith:
             # Truncated representation of this tuple.
-            pith_repr = represent_object(sleuth.pith)
+            pith_repr = represent_pith(sleuth.pith)
 
             # Return a substring describing this failure.
             return f'tuple {pith_repr} non-empty'
@@ -132,7 +133,7 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
         # satisfy this hint. In this case...
         if len(sleuth.pith) != len(sleuth.hint_childs):
             # Truncated representation of this tuple.
-            pith_repr = represent_object(sleuth.pith)
+            pith_repr = represent_pith(sleuth.pith)
 
             # Return a substring describing this failure.
             return (

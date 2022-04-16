@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hint call-time utilities** (i.e., callables
-operating on PEP-compliant type hints intended to be called by dynamically
-generated wrapper functions wrapping decorated callables).
+**Beartype class type hint violation describers** (i.e., functions returning
+human-readable strings explaining violations of type hints that are standard
+isinstanceable classes rather than PEP-specific objects).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -35,7 +35,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_type_isinstanceable_or_none)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextlabel import label_type
-from beartype._util.text.utiltextrepr import represent_object
+from beartype._decor._error._errortext import represent_pith
 from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -72,7 +72,7 @@ def get_cause_or_none_instance_type(sleuth: CauseSleuth) -> Optional[str]:
     # Return a substring describing this failure intended to be embedded in a
     # longer string.
     return (
-        f'{represent_object(sleuth.pith)} not instance of '
+        f'{represent_pith(sleuth.pith)} not instance of '
         f'{label_type(sleuth.hint)}'
     )
 
@@ -175,7 +175,7 @@ def get_cause_or_none_instance_types_tuple(
     # Return a substring describing this failure intended to be embedded in a
     # longer string.
     return (
-        f'{represent_object(sleuth.pith)} not instance of '
+        f'{represent_pith(sleuth.pith)} not instance of '
         f'{join_delimited_disjunction_types(sleuth.hint)}'
     )
 
@@ -240,6 +240,6 @@ def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
 
     # Return a substring describing this failure.
     return (
-        f'{represent_object(sleuth.pith)} not subclass of '
+        f'{represent_pith(sleuth.pith)} not subclass of '
         f'{hint_superclass_label}'
     )

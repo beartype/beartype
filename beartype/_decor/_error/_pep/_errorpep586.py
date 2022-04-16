@@ -4,11 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`586`-compliant :attr:`typing.Literal` **type hint exception
-raisers** (i.e., functions raising human-readable exceptions called by
-:mod:`beartype`-decorated callables on the first invalid parameter or return
-value failing a type-check against the :pep:`586`-compliant
-:attr:`typing.Literal` type hint annotating that parameter or return).
+**Beartype** :pep:`586`-compliant **type hint violation describers** (i.e.,
+functions returning human-readable strings explaining violations of
+:pep:`586`-compliant :attr:`typing.Literal` type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -19,7 +17,7 @@ from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
 from beartype._util.hint.pep.proposal.utilpep586 import (
     get_hint_pep586_literals)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
-from beartype._util.text.utiltextrepr import represent_object
+from beartype._decor._error._errortext import represent_pith
 from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -96,4 +94,4 @@ def get_cause_or_none_literal(sleuth: CauseSleuth) -> Optional[str]:
         repr(hint_literal) for hint_literal in hint_childs)
 
     # Return a human-readable string describing this failure.
-    return f'{represent_object(sleuth.pith)} != {cause_literals_unsatisfied}.'
+    return f'{represent_pith(sleuth.pith)} != {cause_literals_unsatisfied}.'

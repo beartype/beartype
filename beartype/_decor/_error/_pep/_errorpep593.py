@@ -4,11 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`593`-compliant :class:`typing.Annotated` **type hint
-exception raisers** (i.e., functions raising human-readable exceptions called
-by :mod:`beartype`-decorated callables on the first invalid parameter or return
-value failing a type-check against the :pep:`593`-compliant
-:class:`typing.Annotated` type hint annotating that parameter or return).
+**Beartype** :pep:`593`-compliant **type hint violation describers** (i.e.,
+functions returning human-readable strings explaining violations of
+:pep:`593`-compliant :attr:`typing.Annotated` type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -17,12 +15,12 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
 from beartype._decor._error._errorsleuth import CauseSleuth
+from beartype._decor._error._errortext import represent_pith
 from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
 )
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
-from beartype._util.text.utiltextrepr import represent_object
 from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
@@ -92,7 +90,7 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
 
             # Return a human-readable string describing this failure.
             return (
-                f'{represent_object(sleuth.pith)} violates '
+                f'{represent_pith(sleuth.pith)} violates '
                 f'validator {repr(hint_validator)}:\n'
                 f'{hint_diagnosis}'
             )
