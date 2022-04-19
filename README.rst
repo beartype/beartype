@@ -20,17 +20,18 @@
 
 **Beartype** is an `open-source <beartype license_>`__ `PEP-compliant
 <Compliance_>`__ `constant-time <Timings_>`__ `pure-Python runtime type checker
-<Usage_>`__ emphasizing efficiency, simplicity, and thrilling puns. The `Bear
-Team <beartype organization_>`__ gratefully thanks `our family of breathtaking
-GitHub Sponsors <beartype sponsorship_>`__:
+<Usage_>`__ emphasizing efficiency, usability, and thrilling puns.
 
-.. #FIXME: Preserved to demonstrate how exactly to go about this. Once we
-.. # actually receive a sponsor at this tier, please remove this placeholder as
-.. # well as the icon links below. kthx
+.. #FIXME: Once we actually receive a sponsor at this tier, please remove this
+.. #placeholder as well as the icon links below. kthx
+.. #The `Bear Team <beartype organization_>`__ gratefully thanks `our family of
+.. #breathtaking GitHub Sponsors <beartype sponsorship_>`__:
+.. #
+.. #* **Your iconic URL here.** `Let us bestow you with eyeballs <beartype
+.. #  sponsorship_>`__.
+.. #FIXME: Once we actually receive a sponsor at this tier, please remove this
+.. #placeholder as well as the icon links below. kthx
 .. #    |icon-for-glorious-sponsor|
-
-* **Your iconic URL here.** `Let us bestow you with eyeballs <beartype
-  sponsorship_>`__.
 
 .. code-block:: bash
 
@@ -2631,6 +2632,8 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | `612 <PEP 612_>`__                      | *none*                        | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
+|                    | `613 <PEP 613_>`__                      | *none*                        | *none*                    |
++--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | `647 <PEP 647_>`__                      | *none*                        | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | `673 <PEP 673_>`__                      | *none*                        | *none*                    |
@@ -4867,6 +4870,8 @@ rather than Python runtime) include:
    https://www.python.org/dev/peps/pep-0604
 .. _PEP 612:
    https://www.python.org/dev/peps/pep-0612
+.. _PEP 613:
+   https://www.python.org/dev/peps/pep-0613
 .. _PEP 647:
    https://www.python.org/dev/peps/pep-0647
 .. _PEP 673:

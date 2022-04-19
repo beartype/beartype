@@ -11,6 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from abc import ABCMeta, abstractmethod
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._core._valecore import BeartypeValidator
 from beartype.vale._util._valeutiltext import format_diagnosis_line
@@ -21,11 +22,11 @@ from beartype._util.text.utiltextrepr import represent_object
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SUPERCLASSES                      }....................
-class BeartypeValidatorBinary(BeartypeValidator):
+class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
     '''
-    **Binary beartype validator** (i.e., validator modifying the boolean
-    truthiness returned by the validation performed by a pair of lower-level
-    beartype validators).
+    Abstract base class of all **binary beartype validator** (i.e., validator
+    modifying the boolean truthiness returned by the validation performed by a
+    pair of lower-level beartype validators) subclasses.
 
     Attributes
     ----------
@@ -107,19 +108,8 @@ class BeartypeValidatorBinary(BeartypeValidator):
         self._validator_operand_1 = validator_operand_1
         self._validator_operand_2 = validator_operand_2
 
-# ....................{ SUBCLASSES                        }....................
-class BeartypeValidatorConjunction(BeartypeValidatorBinary):
-    '''
-    **Conjunction beartype validator** (i.e., validator conjunctively
-    evaluating the boolean truthiness returned by the validation performed by a
-    pair of lower-level beartype validators, typically instantiated and
-    returned by the :meth:`BeartypeValidator.__and__` dunder method of the
-    first validator passed the second).
-    '''
-
     # ..................{ GETTERS                           }..................
     #FIXME: Unit test us up, please.
-    #FIXME: This violates DRY with the get_diagnosis() method defined below.
     #FIXME: Overly verbose for conjunctions involving three or more
     #beartype validators. Contemplate compaction schemes, please. Specifically,
     #we need to detect this condition here and then compact based on that:
@@ -173,13 +163,42 @@ class BeartypeValidatorConjunction(BeartypeValidatorBinary):
         # Return these lines concatenated.
         return (
             f'{line_outer_prefix}\n'
-            f'{line_inner_operand_1} &\n'
+            f'{line_inner_operand_1} {self._operator_str}\n'
             f'{line_inner_operand_2}\n'
             f'{line_outer_suffix}'
         )
 
+    # ..................{ ABSTRACT                          }..................
+    # Abstract methods required to be concretely implemented by subclasses.
 
-class BeartypeValidatorDisjunction(BeartypeValidatorBinary):
+    @property
+    @abstractmethod
+    def _operator_str(self) -> str:
+        '''
+        Human-readable string embodying the operation performed by this binary
+        beartype validatory - typically the single-character mathematical sign
+        symbolizing this operation.
+        '''
+
+        pass
+
+# ....................{ SUBCLASSES                        }....................
+class BeartypeValidatorConjunction(BeartypeValidatorBinaryABC):
+    '''
+    **Conjunction beartype validator** (i.e., validator conjunctively
+    evaluating the boolean truthiness returned by the validation performed by a
+    pair of lower-level beartype validators, typically instantiated and
+    returned by the :meth:`BeartypeValidator.__and__` dunder method of the
+    first validator passed the second).
+    '''
+
+    # ..................{ PROPERTIES                        }..................
+    @property
+    def _operator_str(self) -> str:
+        return '&'
+
+
+class BeartypeValidatorDisjunction(BeartypeValidatorBinaryABC):
     '''
     **Disjunction beartype validator** (i.e., validator disjunctively
     evaluating the boolean truthiness returned by the validation performed by a
@@ -188,63 +207,7 @@ class BeartypeValidatorDisjunction(BeartypeValidatorBinary):
     first validator passed the second).
     '''
 
-    # ..................{ GETTERS                           }..................
-    #FIXME: Unit test us up, please.
-    #FIXME: This violates DRY with the get_diagnosis() method defined above.
-    #FIXME: Overly verbose output for disjunctions involving three or more
-    #beartype validators. Contemplate compaction schemes, please. Specifically,
-    #we need to detect this condition here and then compact based on that:
-    #    # If either of these validators are themselves conjunctions...
-    #    if isinstance(self._validator_operand_1, BeartypeValidatorDisjunction):
-    #       ...
-    #    if isinstance(self._validator_operand_2, BeartypeValidatorDisjunction):
-    #       ...
-    def get_diagnosis(
-        self,
-        obj: object,
-        indent_level_outer: str,
-        indent_level_inner: str,
-    ) -> str:
-
-        # Innermost indentation level indented one level deeper than the passed
-        # innermost indentation level.
-        indent_level_inner_nested = indent_level_inner + CODE_INDENT_1
-
-        # Line diagnosing this object against this parent disjunction.
-        line_outer_prefix = format_diagnosis_line(
-            validator_repr='(',
-            indent_level_outer=indent_level_outer,
-            indent_level_inner=indent_level_inner,
-            is_obj_valid=self.is_valid(obj),
-        )
-
-        # Line diagnosing this object against this original first child
-        # validator, with an increased indentation level for readability.
-        line_inner_operand_1 = self._validator_operand_1.get_diagnosis(
-            obj=obj,
-            indent_level_outer=indent_level_outer,
-            indent_level_inner=indent_level_inner_nested,
-        )
-
-        # Line diagnosing this object against this passed second child
-        # validator, with an increased indentation level for readability.
-        line_inner_operand_2 = self._validator_operand_2.get_diagnosis(
-            obj=obj,
-            indent_level_outer=indent_level_outer,
-            indent_level_inner=indent_level_inner_nested,
-        )
-
-        # Line providing the suffixing ")" delimiter for readability.
-        line_outer_suffix = format_diagnosis_line(
-            validator_repr=')',
-            indent_level_outer=indent_level_outer,
-            indent_level_inner=indent_level_inner,
-        )
-
-        # Return these lines concatenated.
-        return (
-            f'{line_outer_prefix}\n'
-            f'{line_inner_operand_1} |\n'
-            f'{line_inner_operand_2}\n'
-            f'{line_outer_suffix}'
-        )
+    # ..................{ PROPERTIES                        }..................
+    @property
+    def _operator_str(self) -> str:
+        return '|'
