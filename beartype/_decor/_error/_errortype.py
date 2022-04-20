@@ -32,7 +32,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
     get_hint_pep484585_subclass_superclass)
 from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_type_isinstanceable_or_none)
+    get_hint_pep_origin_type_isinstanceable_or_none)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextlabel import label_type
 from beartype._decor._error._errortext import represent_pith
@@ -126,11 +126,11 @@ def get_cause_or_none_type_instance_origin(
 
     # Isinstanceable origin type originating this hint if any *OR* "None"
     # otherwise.
-    hint_type_origin_isinstanceable = (
-        get_hint_pep_type_isinstanceable_or_none(sleuth.hint))
+    hint_origin_type_isinstanceable = (
+        get_hint_pep_origin_type_isinstanceable_or_none(sleuth.hint))
 
     # If this hint does *NOT* originate from such a type, raise an exception.
-    if hint_type_origin_isinstanceable is None:
+    if hint_origin_type_isinstanceable is None:
         raise _BeartypeCallHintPepRaiseException(
             f'{sleuth.exception_prefix}type hint '
             f'{repr(sleuth.hint)} not originated from '
@@ -140,7 +140,7 @@ def get_cause_or_none_type_instance_origin(
 
     # Defer to the getter function handling non-"typing" classes. Presto!
     return get_cause_or_none_instance_type(
-        sleuth.permute(hint=hint_type_origin_isinstanceable))
+        sleuth.permute(hint=hint_origin_type_isinstanceable))
 
 # ....................{ GETTERS ~ instance : types        }....................
 def get_cause_or_none_instance_types_tuple(

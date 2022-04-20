@@ -39,7 +39,6 @@ from beartype._data.datatyping import TypeOrTupleTypes
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SUBCLASSES ~ instance             }....................
-#FIXME: Document us up in our top-level "README.rst", please.
 class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
     '''
     **Beartype type instance validator factory** (i.e., object creating and

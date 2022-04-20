@@ -17,6 +17,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
+from beartype.typing import (
+    Callable,
+    Union,
+)
 from beartype.vale._util._valeutiltext import format_diagnosis_line
 from beartype._util.kind.utilkinddict import merge_mappings_two
 from beartype._util.func.arg.utilfuncargtest import (
@@ -25,7 +29,6 @@ from beartype._util.func.arg.utilfuncargtest import (
 )
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.text.utiltextrepr import represent_object
-from typing import Callable, Union
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -207,6 +210,9 @@ class BeartypeValidator(object):
               * The empty string.
         '''
 
+        # Avoid circular import dependencies.
+        from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
+
         # If this validator is either uncallable, a C-based callable, *OR* a
         # pure-Python callable accepting more or less than one parameter, raise
         # an exception.
@@ -377,7 +383,6 @@ class BeartypeValidator(object):
         return self._get_repr
 
     # ..................{ GETTERS                           }..................
-    #FIXME: Call this method from get_cause_or_none_annotated(), please.
     #FIXME: Unit test us up, please -- particularly with respect to non-trivial
     #nested subvalidators.
     def get_diagnosis(
@@ -461,41 +466,10 @@ class BeartypeValidator(object):
         from beartype.vale._core._valecorebinary import (
             BeartypeValidatorConjunction)
 
-        #FIXME: Gradually shift *ALL* of this logic into the
-        #"BeartypeValidatorConjunction" subclass itself.
-        #FIXME: Avoid violating DRY between this and methods defined below.
-        #Indeed, since we already perform this logic in the
-        #BeartypeValidatorBinary.__init__() constructor, avoid doing so here.
-
-        # If the passed object is *NOT* also an instance of this class, raise
-        # an exception.
-        if not isinstance(other, BeartypeValidator):
-            raise BeartypeValeSubscriptionException(
-                f'Beartype validator {repr(self)} second "&" operand '
-                f'{represent_object(other)} not beartype validator '
-                f'(i.e., "beartype.vale.Is*[...]" object).'
-            )
-        # Else, the passed object is also an instance of this class.
-
-        # Lambda function conjunctively performing both validations.
-        is_valid = lambda obj: self.is_valid(obj) and other.is_valid(obj)
-
-        # Generate code conjunctively performing both validations.
-        is_valid_code = f'({self._is_valid_code} and {other._is_valid_code})'
-
-        # Generate locals safely merging the locals required by the code
-        # provided by both this and that validator.
-        is_valid_code_locals = merge_mappings_two(
-            self._is_valid_code_locals, other._is_valid_code_locals)
-
         # Closures for great justice.
         return BeartypeValidatorConjunction(
             validator_operand_1=self,
             validator_operand_2=other,
-            is_valid=is_valid,
-            is_valid_code=is_valid_code,
-            is_valid_code_locals=is_valid_code_locals,  # type: ignore[arg-type]
-            get_repr=lambda: f'{repr(self)} & {repr(other)}',
         )
 
 
@@ -521,46 +495,15 @@ class BeartypeValidator(object):
         from beartype.vale._core._valecorebinary import (
             BeartypeValidatorDisjunction)
 
-        #FIXME: Gradually shift *ALL* of this logic into the
-        #"BeartypeValidatorDisjunction" subclass itself.
-        #FIXME: Avoid violating DRY between this and methods defined above.
-        #Indeed, since we already perform this logic in the
-        #BeartypeValidatorBinary.__init__() constructor, avoid doing so here.
-
-        # If the passed object is *NOT* also an instance of this class, raise
-        # an exception.
-        if not isinstance(other, BeartypeValidator):
-            raise BeartypeValeSubscriptionException(
-                f'Beartype validator {repr(self)} second "|" operand '
-                f'{represent_object(other)} not beartype validator '
-                f'(i.e., "beartype.vale.Is*[...]" object).'
-            )
-        # Else, the passed object is also an instance of this class.
-
-        # Lambda function disjunctively performing both validations.
-        is_valid = lambda obj: self.is_valid(obj) or other.is_valid(obj)
-
-        # Generate code disjunctively performing both validations.
-        is_valid_code = f'({self._is_valid_code} or {other._is_valid_code})'
-
-        # Generate locals safely merging the locals required by the code
-        # provided by both this and that validator.
-        is_valid_code_locals = merge_mappings_two(
-            self._is_valid_code_locals, other._is_valid_code_locals)
-
         # Closures for great justice.
         return BeartypeValidatorDisjunction(
             validator_operand_1=self,
             validator_operand_2=other,
-            is_valid=is_valid,
-            is_valid_code=is_valid_code,
-            is_valid_code_locals=is_valid_code_locals,  # type: ignore[arg-type]
-            get_repr=lambda: f'{repr(self)} | {repr(other)}',
         )
 
 
     #FIXME: Fun optimization: if inverting something that's already been
-    #inverted, return the original "BeartypeValidator" object sans inversion. :p
+    #inverted, return the original "BeartypeValidator" object sans inversion.
     def __invert__(self) -> 'BeartypeValidator':
         '''
         **Negation** (i.e., ``~self``), synthesizing a new
@@ -579,12 +522,4 @@ class BeartypeValidator(object):
             BeartypeValidatorNegation)
 
         # Closures for profound lore.
-        return BeartypeValidatorNegation(
-            validator_operand=self,
-            is_valid=lambda obj: not self.is_valid(obj),
-            # Inverted validator code, defined as the trivial boolean negation
-            # of this validator.
-            is_valid_code=f'(not {self._is_valid_code})',
-            is_valid_code_locals=self._is_valid_code_locals,
-            get_repr=lambda: f'~{repr(self)}',
-        )
+        return BeartypeValidatorNegation(validator_operand=self)

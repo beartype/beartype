@@ -724,7 +724,7 @@ get_hint_pep_origin_or_none.__doc__ = '''
 
     Caveats
     ----------
-    **The high-level** :func:`get_hint_pep_type_isinstanceable_or_none`
+    **The high-level** :func:`get_hint_pep_origin_type_isinstanceable`
     function should always be called in lieu of this low-level function.**
     Whereas the former is guaranteed to return either a class or ``None``, this
     function enjoys no such guarantees and instead returns what the caller can
@@ -763,18 +763,18 @@ get_hint_pep_origin_or_none.__doc__ = '''
     ----------
         >>> import typing
         >>> from beartype._util.hint.pep.utilpepget import (
-        ...     get_hint_pep_origin_type_unsafe_or_none)
+        ...     get_hint_pep_origin_or_none)
         # This is sane.
-        >>> get_hint_pep_origin_type_unsafe_or_none(typing.List)
+        >>> get_hint_pep_origin_or_none(typing.List)
         list
-        >>> get_hint_pep_origin_type_unsafe_or_none(typing.List[int])
+        >>> get_hint_pep_origin_or_none(typing.List[int])
         list
-        >>> get_hint_pep_origin_type_unsafe_or_none(typing.Union)
+        >>> get_hint_pep_origin_or_none(typing.Union)
         None
-        >>> get_hint_pep_origin_type_unsafe_or_none(typing.Union[int])
+        >>> get_hint_pep_origin_or_none(typing.Union[int])
         None
         # This is insane.
-        >>> get_hint_pep_origin_type_unsafe_or_none(typing.Union[int, str])
+        >>> get_hint_pep_origin_or_none(typing.Union[int, str])
         Union
         # This is crazy.
         >>> typing.Union.__origin__
@@ -817,12 +817,12 @@ def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
 
     See Also
     ----------
-    :func:`get_hint_pep_type_isinstanceable_or_none`
+    :func:`get_hint_pep_origin_type_isinstanceable_or_none`
         Related getter.
     '''
 
     # Origin type originating this object if any *OR* "None" otherwise.
-    hint_origin_type = get_hint_pep_type_isinstanceable_or_none(hint)
+    hint_origin_type = get_hint_pep_origin_type_isinstanceable_or_none(hint)
 
     # If this type does *NOT* exist, raise an exception.
     if hint_origin_type is None:
@@ -836,7 +836,7 @@ def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
     return hint_origin_type
 
 
-def get_hint_pep_type_isinstanceable_or_none(
+def get_hint_pep_origin_type_isinstanceable_or_none(
     hint: Any) -> Optional[type]:
     '''
     **Standard origin type** (i.e., isinstanceable class declared by Python's

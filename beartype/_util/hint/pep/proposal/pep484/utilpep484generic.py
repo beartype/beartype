@@ -206,10 +206,10 @@ def get_hint_pep484_generic_base_erased_from_unerased(hint: Any) -> type:
 
     # Erased superclass originating this unerased pseudo-superclass if any *OR*
     # "None" otherwise.
-    hint_type_origin = get_hint_pep_origin_or_none(hint)
+    hint_origin_type = get_hint_pep_origin_or_none(hint)
 
     # If this hint originates from *NO* such superclass, raise an exception.
-    if hint_type_origin is None:
+    if hint_origin_type is None:
         raise BeartypeDecorHintPep484Exception(
             f'Unerased PEP 484 generic or PEP 544 protocol {repr(hint)} '
             f'originates from no erased superclass.'
@@ -217,7 +217,7 @@ def get_hint_pep484_generic_base_erased_from_unerased(hint: Any) -> type:
     # Else, this hint originates from such a superclass.
 
     # Return this superclass.
-    return hint_type_origin
+    return hint_origin_type
 
 
 @callable_cached

@@ -15,6 +15,7 @@ from abc import ABCMeta, abstractmethod
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._core._valecore import BeartypeValidator
 from beartype.vale._util._valeutiltext import format_diagnosis_line
+from beartype._util.kind.utilkinddict import merge_mappings_two
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
 from beartype._util.text.utiltextrepr import represent_object
 
@@ -24,7 +25,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 # ....................{ SUPERCLASSES                      }....................
 class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
     '''
-    Abstract base class of all **binary beartype validator** (i.e., validator
+    Abstract base class of all **beartype binary validator** (i.e., validator
     modifying the boolean truthiness returned by the validation performed by a
     pair of lower-level beartype validators) subclasses.
 
@@ -56,24 +57,20 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
     # ..................{ INITIALIZERS                      }..................
     def __init__(
         self,
-
-        # Mandatory parameters.
         validator_operand_1: BeartypeValidator,
         validator_operand_2: BeartypeValidator,
         *args,
         **kwargs
     ) -> None:
         '''
-        Initialize this validator from the passed metadata.
+        Initialize this higher-level validator from the passed validators.
 
         Parameters
         ----------
         validator_operand_1 : BeartypeValidator
-            First lower-level validator operated upon by this higher-level
-            validator.
+            First validator operated upon by this higher-level validator.
         validator_operand_2 : BeartypeValidator
-            Second lower-level validator operated upon by this higher-level
-            validator.
+            Second validator operated upon by this higher-level validator.
 
         All remaining parameters are passed as is to the superclass
         :meth:`BeartypeValidator.__init__` method.
@@ -85,26 +82,24 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
         '''
 
         # Initialize our superclass with all remaining parameters.
-        super().__init__(*args, **kwargs)
+        super().__init__(  # type: ignore[misc]
+            *args,
+            # Locals safely merging the locals required by the code provided by
+            # both validators.
+            is_valid_code_locals=merge_mappings_two(  # type: ignore[arg-type]
+                validator_operand_1._is_valid_code_locals,
+                validator_operand_2._is_valid_code_locals,
+            ),
+            # Callable accepting no arguments returning a machine-readable
+            # representation of this binary validator.
+            get_repr=lambda: (
+                f'{repr(validator_operand_1)} {self._operator_symbol} '
+                f'{repr(validator_operand_2)}'
+            ),
+            **kwargs
+        )
 
-        #FIXME: Unit test us up, please.
-        # If either of theser operands are *NOT* beartype validators, raise an
-        # exception.
-        if not isinstance(validator_operand_1, BeartypeValidator):
-            raise BeartypeValeSubscriptionException(
-                f'Binary beartype validator {repr(self)} first operand '
-                f'{represent_object(validator_operand_1)} not beartype '
-                f'validator (i.e., "beartype.vale.Is*[...]" object).'
-            )
-        elif not isinstance(validator_operand_2, BeartypeValidator):
-            raise BeartypeValeSubscriptionException(
-                f'Binary beartype validator {repr(self)} second operand '
-                f'{represent_object(validator_operand_2)} not beartype '
-                f'validator (i.e., "beartype.vale.Is*[...]" object).'
-            )
-        # Else, both of these operands are beartype validators.
-
-        # Classify this operand.
+        # Classify all remaining parameters.
         self._validator_operand_1 = validator_operand_1
         self._validator_operand_2 = validator_operand_2
 
@@ -163,7 +158,7 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
         # Return these lines concatenated.
         return (
             f'{line_outer_prefix}\n'
-            f'{line_inner_operand_1} {self._operator_str}\n'
+            f'{line_inner_operand_1} {self._operator_symbol}\n'
             f'{line_inner_operand_2}\n'
             f'{line_outer_suffix}'
         )
@@ -173,7 +168,7 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def _operator_str(self) -> str:
+    def _operator_symbol(self) -> str:
         '''
         Human-readable string embodying the operation performed by this binary
         beartype validatory - typically the single-character mathematical sign
@@ -185,29 +180,151 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
 # ....................{ SUBCLASSES                        }....................
 class BeartypeValidatorConjunction(BeartypeValidatorBinaryABC):
     '''
-    **Conjunction beartype validator** (i.e., validator conjunctively
+    **Beartype conjunction validator** (i.e., validator conjunctively
     evaluating the boolean truthiness returned by the validation performed by a
     pair of lower-level beartype validators, typically instantiated and
     returned by the :meth:`BeartypeValidator.__and__` dunder method of the
     first validator passed the second).
     '''
 
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(
+        self,
+        validator_operand_1: BeartypeValidator,
+        validator_operand_2: BeartypeValidator,
+    ) -> None:
+        '''
+        Initialize this higher-level validator from the passed validators.
+
+        Parameters
+        ----------
+        validator_operand_1 : BeartypeValidator
+            First validator operated upon by this higher-level validator.
+        validator_operand_2 : BeartypeValidator
+            Second validator operated upon by this higher-level validator.
+
+        Raises
+        ----------
+        BeartypeValeSubscriptionException
+            If either of these operands are *not* beartype validators.
+        '''
+
+        # Validate the passed operands as sane.
+        _validate_operands(self, validator_operand_1, validator_operand_2)
+
+        # Initialize our superclass with all remaining parameters.
+        super().__init__(
+            validator_operand_1=validator_operand_1,
+            validator_operand_2=validator_operand_2,
+            # Lambda function conjunctively performing both validations.
+            is_valid=lambda obj: (
+                validator_operand_1.is_valid(obj) and
+                validator_operand_2.is_valid(obj)
+            ),
+            # Code expression conjunctively performing both validations.
+            is_valid_code=(
+                f'({validator_operand_1._is_valid_code} and '
+                f'{validator_operand_2._is_valid_code})'
+            ),
+        )
+
     # ..................{ PROPERTIES                        }..................
     @property
-    def _operator_str(self) -> str:
+    def _operator_symbol(self) -> str:
         return '&'
 
 
 class BeartypeValidatorDisjunction(BeartypeValidatorBinaryABC):
     '''
-    **Disjunction beartype validator** (i.e., validator disjunctively
+    **Beartype disjunction validator** (i.e., validator disjunctively
     evaluating the boolean truthiness returned by the validation performed by a
     pair of lower-level beartype validators, typically instantiated and
     returned by the :meth:`BeartypeValidator.__and__` dunder method of the
     first validator passed the second).
     '''
 
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(
+        self,
+        validator_operand_1: BeartypeValidator,
+        validator_operand_2: BeartypeValidator,
+    ) -> None:
+        '''
+        Initialize this higher-level validator from the passed validators.
+
+        Parameters
+        ----------
+        validator_operand_1 : BeartypeValidator
+            First validator operated upon by this higher-level validator.
+        validator_operand_2 : BeartypeValidator
+            Second validator operated upon by this higher-level validator.
+
+        Raises
+        ----------
+        BeartypeValeSubscriptionException
+            If either of these operands are *not* beartype validators.
+        '''
+
+        # Validate the passed operands as sane.
+        _validate_operands(self, validator_operand_1, validator_operand_2)
+
+        # Initialize our superclass with all remaining parameters.
+        super().__init__(
+            validator_operand_1=validator_operand_1,
+            validator_operand_2=validator_operand_2,
+            # Lambda function disjunctively performing both validations.
+            is_valid=lambda obj: (
+                validator_operand_1.is_valid(obj) or
+                validator_operand_2.is_valid(obj)
+            ),
+            # Code expression disjunctively performing both validations.
+            is_valid_code=(
+                f'({validator_operand_1._is_valid_code} or '
+                f'{validator_operand_2._is_valid_code})'
+            ),
+        )
+
     # ..................{ PROPERTIES                        }..................
     @property
-    def _operator_str(self) -> str:
+    def _operator_symbol(self) -> str:
         return '|'
+
+# ....................{ PRIVATE ~ validators              }....................
+def _validate_operands(
+    self: BeartypeValidatorBinaryABC,
+    validator_operand_1: BeartypeValidator,
+    validator_operand_2: BeartypeValidator,
+) -> None:
+    '''
+    Validate the passed validator operands as sane.
+
+    Parameters
+    ----------
+    self : BeartypeValidatorBinaryABC
+        Beartype binary validator operating upon these operands.
+    validator_operand_1 : BeartypeValidator
+        First validator operated upon by this higher-level validator.
+    validator_operand_2 : BeartypeValidator
+        Second validator operated upon by this higher-level validator.
+
+    Raises
+    ----------
+    BeartypeValeSubscriptionException
+        If either of these operands are *not* beartype validators.
+    '''
+
+    # If either of these operands are *NOT* beartype validators, raise an
+    # exception.
+    if not isinstance(validator_operand_1, BeartypeValidator):
+        raise BeartypeValeSubscriptionException(
+            f'Beartype "{self._operator_symbol}" validator first operand '
+            f'{represent_object(validator_operand_1)} not beartype '
+            f'validator (i.e., "beartype.vale.Is*[...]" object).'
+        )
+    elif not isinstance(validator_operand_2, BeartypeValidator):
+        raise BeartypeValeSubscriptionException(
+            f'Beartype "{self._operator_symbol}" validator second operand '
+            f'{represent_object(validator_operand_2)} not beartype '
+            f'validator (i.e., "beartype.vale.Is*[...]" object).'
+        )
+    # Else, both of these operands are beartype validators.

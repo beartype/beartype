@@ -11,6 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from abc import ABCMeta, abstractmethod
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._core._valecore import BeartypeValidator
 from beartype.vale._util._valeutiltext import format_diagnosis_line
@@ -21,11 +22,11 @@ from beartype._util.text.utiltextrepr import represent_object
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ SUPERCLASSES                      }....................
-class BeartypeValidatorUnary(BeartypeValidator):
+class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
     '''
-    **Unary beartype validator** (i.e., validator modifying the boolean
-    truthiness returned by the validation performed by a single lower-level
-    beartype validator).
+    Abstract base class of all **beartype binary validator** (i.e., validator
+    modifying the boolean truthiness returned by the validation performed by a
+    single lower-level beartype validator) subclasses.
 
     Attributes
     ----------
@@ -50,8 +51,6 @@ class BeartypeValidatorUnary(BeartypeValidator):
     # ..................{ INITIALIZERS                      }..................
     def __init__(
         self,
-
-        # Mandatory parameters.
         validator_operand: BeartypeValidator,
         *args,
         **kwargs
@@ -71,29 +70,16 @@ class BeartypeValidatorUnary(BeartypeValidator):
         '''
 
         # Initialize our superclass with all remaining parameters.
-        super().__init__(*args, **kwargs)
+        super().__init__(  # type: ignore[misc]
+            *args,
+            is_valid_code_locals=validator_operand._is_valid_code_locals,
+            get_repr=lambda: (
+                f'{self._operator_symbol}{repr(validator_operand)}'),
+            **kwargs
+        )
 
-        #FIXME: Unit test us up, please.
-        # If this operand is *NOT* a beartype validator, raise an exception.
-        if not isinstance(validator_operand, BeartypeValidator):
-            raise BeartypeValeSubscriptionException(
-                f'Unary binary validator {repr(self)} operand '
-                f'{represent_object(validator_operand)} not beartype '
-                f'validator (i.e., "beartype.vale.Is*[...]" object).'
-            )
-        # Else, this operand is a beartype validator.
-
-        # Classify this operand.
+        # Classify all remaining passed parameters.
         self._validator_operand = validator_operand
-
-# ....................{ SUBCLASSES                        }....................
-class BeartypeValidatorNegation(BeartypeValidatorUnary):
-    '''
-    **Negation beartype validator** (i.e., validator negating the boolean
-    truthiness returned by the validation performed by a lower-level beartype
-    validator, typically instantiated and returned by the
-    :meth:`BeartypeValidator.__invert__` dunder method of that validator).
-    '''
 
     # ..................{ GETTERS                           }..................
     #FIXME: Unit test us up, please.
@@ -106,7 +92,7 @@ class BeartypeValidatorNegation(BeartypeValidatorUnary):
 
         # Line diagnosing this object against this negated parent validator.
         line_outer_prefix = format_diagnosis_line(
-            validator_repr='~(',
+            validator_repr='(',
             indent_level_outer=indent_level_outer,
             indent_level_inner=indent_level_inner,
             is_obj_valid=self.is_valid(obj),
@@ -129,7 +115,92 @@ class BeartypeValidatorNegation(BeartypeValidatorUnary):
 
         # Return these lines concatenated.
         return (
-            f'{line_outer_prefix}\n'
+            f'{self._operator_symbol}{line_outer_prefix}\n'
             f'{line_inner_operand}\n'
             f'{line_outer_suffix}'
         )
+
+    # ..................{ ABSTRACT                          }..................
+    # Abstract methods required to be concretely implemented by subclasses.
+
+    @property
+    @abstractmethod
+    def _operator_symbol(self) -> str:
+        '''
+        Human-readable string embodying the operation performed by this binary
+        beartype validatory - typically the single-character mathematical sign
+        symbolizing this operation.
+        '''
+
+        pass
+
+# ....................{ SUBCLASSES                        }....................
+class BeartypeValidatorNegation(BeartypeValidatorUnaryABC):
+    '''
+    **Negation beartype validator** (i.e., validator negating the boolean
+    truthiness returned by the validation performed by a lower-level beartype
+    validator, typically instantiated and returned by the
+    :meth:`BeartypeValidator.__invert__` dunder method of that validator).
+    '''
+
+    # ..................{ INITIALIZERS                      }..................
+    def __init__(self, validator_operand: BeartypeValidator) -> None:
+        '''
+        Initialize this higher-level validator from the passed validator.
+
+        Parameters
+        ----------
+        validator_operand : BeartypeValidator
+            Validator operated upon by this higher-level validator.
+
+        Raises
+        ----------
+        BeartypeValeSubscriptionException
+            If this operand is *not* a beartype validator.
+        '''
+
+        # Validate the passed operand as sane.
+        _validate_operand(self, validator_operand)
+
+        # Initialize our superclass with all remaining parameters.
+        super().__init__(
+            validator_operand=validator_operand,
+            is_valid=lambda obj: not validator_operand.is_valid(obj),
+            is_valid_code=f'(not {validator_operand._is_valid_code})',
+        )
+
+    # ..................{ PROPERTIES                        }..................
+    @property
+    def _operator_symbol(self) -> str:
+        return '~'
+
+# ....................{ PRIVATE ~ validators              }....................
+def _validate_operand(
+    self: BeartypeValidatorUnaryABC,
+    validator_operand: BeartypeValidator,
+) -> None:
+    '''
+    Validate the passed validator operand as sane.
+
+    Parameters
+    ----------
+    self : BeartypeValidatorUnaryABC
+        Beartype unary validator operating upon this operand.
+    validator_operand : BeartypeValidator
+        Validator operated upon by this higher-level validator.
+
+    Raises
+    ----------
+    BeartypeValeSubscriptionException
+        If this operand is *not* a beartype validator.
+    '''
+
+    #FIXME: Unit test us up, please.
+    # If this operand is *NOT* a beartype validator, raise an exception.
+    if not isinstance(validator_operand, BeartypeValidator):
+        raise BeartypeValeSubscriptionException(
+            f'Beartype "{self._operator_symbol}" validator operand '
+            f'{represent_object(validator_operand)} not beartype '
+            f'validator (i.e., "beartype.vale.Is*[...]" object).'
+        )
+    # Else, this operand is a beartype validator.

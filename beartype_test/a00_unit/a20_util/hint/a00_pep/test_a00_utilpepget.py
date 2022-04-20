@@ -156,14 +156,14 @@ def test_get_hint_pep_type_isinstanceable() -> None:
 def test_get_hint_pep_type_isinstanceable_or_none() -> None:
     '''
     Test the
-    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_type_isinstanceable_or_none`
+    :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_origin_type_isinstanceable_or_none`
     getter.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintPepException
     from beartype._util.hint.pep.utilpepget import (
-        get_hint_pep_type_isinstanceable_or_none)
+        get_hint_pep_origin_type_isinstanceable_or_none)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
@@ -172,11 +172,11 @@ def test_get_hint_pep_type_isinstanceable_or_none() -> None:
     # Assert this getter returns the expected type origin for all PEP-compliant
     # type hints.
     for hint_pep_meta in HINTS_PEP_META:
-        assert get_hint_pep_type_isinstanceable_or_none(hint_pep_meta.hint) is (
+        assert get_hint_pep_origin_type_isinstanceable_or_none(hint_pep_meta.hint) is (
             hint_pep_meta.isinstanceable_type)
 
     # Assert this getter raises the expected exception for non-PEP-compliant
     # type hints.
     for not_hint_pep in NOT_HINTS_PEP:
         with raises(BeartypeDecorHintPepException):
-            get_hint_pep_type_isinstanceable_or_none(not_hint_pep)
+            get_hint_pep_origin_type_isinstanceable_or_none(not_hint_pep)

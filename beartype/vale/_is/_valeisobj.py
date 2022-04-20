@@ -141,7 +141,8 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
 
     # ..................{ DUNDERS                           }..................
     @callable_cached
-    def __getitem__(self, args: Tuple[str, BeartypeValidator]) -> BeartypeValidator:
+    def __getitem__(
+        self, args: Tuple[str, BeartypeValidator]) -> BeartypeValidator:
         '''
         Create and return a new beartype validator validating object attributes
         with the passed name satisfying the passed validator, suitable for

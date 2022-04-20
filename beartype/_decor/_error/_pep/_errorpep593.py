@@ -77,9 +77,35 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
             )
         # Else, this object is beartype-specific.
 
+        # True only if this pith satisfies this validator.
+        is_pith_valid = False
+
+        #FIXME: *DANGEROUS.* Let's only do this where we absolutely have to; in
+        #all other cases, we should simply perform the raw call to the
+        #is_valid() method *WITHOUT* silently ignoring exceptions. So, when do
+        #we absolutely have to do this? *ONLY WHEN THIS VALIDATOR ORIGINATES
+        #FROM A BINARY VALIDATOR.* Why? Because, in that case, the second
+        #operand validator of that binary validator could be short-circuited
+        #by the first operand validator of that binary validator, in which case
+        #that second validator could have been implemented in such a way as to
+        #expect to only be called when the first such validator succeeds (if a
+        #conjunction binary validator) or fails (if a disjunction binary
+        #validator). Ergo, let's narrow this to only do this for binary
+        #validators, please.
+        #FIXME: Unit test us up, please.
+
+        # Attempt to...
+        try:
+            # Safely decide whether this pith satisfies this validator. 
+            is_pith_valid = hint_validator.is_valid(sleuth.pith)
+        # If calling the is_valid() method of this validator raises an
+        # exception, this is almost certainly due to this validator an ignorable indication
+        except:
+            pass
+
         # If this pith fails to satisfy this validator and is thus the cause of
         # this failure...
-        if not hint_validator.is_valid(sleuth.pith):
+        if not is_pith_valid:
             #FIXME: Unit test this up, please.
             # Human-readable string diagnosing this failure.
             hint_diagnosis = hint_validator.get_diagnosis(

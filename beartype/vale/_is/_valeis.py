@@ -314,9 +314,9 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
         # One one-liner to rule them all and in "pdb" bind them.
         return BeartypeValidator(
             is_valid=is_valid,
-            # Python code snippet call this validator via that parameter,
-            # passed an object to be interpolated into this snippet by
-            # downstream logic.
+            # Python code snippet calling this validator (via this new
+            # parameter), passed an object to be interpolated into this snippet
+            # by downstream logic.
             is_valid_code=f'{is_valid_attr_name}({{obj}})',
             is_valid_code_locals=is_valid_code_locals,
             get_repr=lambda: (
