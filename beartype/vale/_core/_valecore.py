@@ -92,8 +92,8 @@ class BeartypeValidator(object):
     _get_repr : BeartypeValidatorRepresenter
         **Representer** (i.e., either a string *or* caller-defined callable
         accepting no arguments returning a machine-readable representation of
-        this validator). See the :data:`BeartypeValidatorRepresenter` type hint for
-        further details.
+        this validator). See the :data:`BeartypeValidatorRepresenter` type hint
+        for further details.
     _is_valid : BeartypeValidatorTester
         **Validator** (i.e., caller-defined callable accepting a single
         arbitrary object and returning either ``True`` if that object satisfies
@@ -140,6 +140,9 @@ class BeartypeValidator(object):
     # ..................{ INITIALIZERS                      }..................
     def __init__(
         self,
+        *,
+
+        # Mandatory keyword-only parameters.
         is_valid: BeartypeValidatorTester,
         is_valid_code: str,
         is_valid_code_locals: CallableScope,
@@ -383,13 +386,17 @@ class BeartypeValidator(object):
         return self._get_repr
 
     # ..................{ GETTERS                           }..................
-    #FIXME: Unit test us up, please -- particularly with respect to non-trivial
-    #nested subvalidators.
     def get_diagnosis(
         self,
+        *,
+
+        # Mandatory keyword-only parameters.
         obj: object,
         indent_level_outer: str,
         indent_level_inner: str,
+
+        # Optional keyword-only parameters.
+        is_shortcircuited: bool = False,
     ) -> str:
         '''
         Human-readable **validation failure diagnosis** (i.e., substring
@@ -416,12 +423,87 @@ class BeartypeValidator(object):
             **Innermost indentation level** (i.e., zero or more adjacent spaces
             delimiting the human-readable representation of the tri-state
             boolean and validator representation in the returned substring).
+        is_shortcircuited : bool, optional
+            ``True`` only if this lower-level validator is **short-circuited**
+            (i.e., *not* required to be tested against), in which case this
+            method will silently catch and reduce exceptions raised by this
+            validator's :meth:`is_valid` method to ``False``.
+
+            Short-circuiting typically arises from binary validators (e.g.,
+            :class:`beartype.vale._core._valecore.BeartypeValidatorConjunction`)
+            in which a low-level sibling validator, previously tested against
+            by the higher-level binary validator encapsulating both this
+            validator and that sibling validator, has already either fully
+            satisfied *or* failed to satisfy that binary validator; a binary
+            validator explicitly sets this parameter to ``True`` for *all*
+            children validators except the first child validator when the first
+            child validator either fully satisfies *or* fails to satisfy that
+            binary validator.
+
+            This is *not* merely an optimization; this is a design requirement.
+            External users often chain validators together with set operators
+            (e.g., ``&``, ``|``) under the standard expectation of
+            short-circuiting, in which later validators are *not* tested when
+            earlier validators already satisfy requirements. Violating this
+            expectation causes later validators to trivially raise exceptions.
+
+            Without short-circuiting, this otherwise valid example raises a
+            non-human-readable exception. The short-circuited ``IsArrayMatrix``
+            validator expects to be tested *only* when the preceding
+            non-short-circuited ``IsArray2D`` validator fails:
+
+            .. code-block:: python
+
+               >>> import numpy as np
+               >>> from beartype.vale import Is
+               >>> IsArray2D = Is[lambda arr: arr.ndim == 2]
+               >>> IsArrayMatrix = Is[lambda arr: arr.shape[0] == arr.shape[1]]
+               >>> IsArray2DMatrix = IsArray2D & IsArrayMatrix
+               >>> IsArray2DMatrix.get_diagnosis(
+               ...     obj=np.zeros((4,)),
+               ...     indent_level_outer='',
+               ...     indent_level_inner='    ',
+               ... )
+               Traceback (most recent call last):
+                 File "/home/leycec/tmp/mopy.py", line 10, in <module>
+                   print(IsArray2DMatrix.get_diagnosis(
+                 File "/home/leycec/py/beartype/beartype/vale/_core/_valecorebinary.py", line 149, in get_diagnosis
+                   line_inner_operand_2 = self._validator_operand_2.get_diagnosis(
+                 File "/home/leycec/py/beartype/beartype/vale/_core/_valecore.py", line 480, in get_diagnosis
+                   is_obj_valid = self.is_valid(obj)
+                 File "/home/leycec/tmp/mopy.py", line 7, in <lambda>
+                   IsArrayMatrix = Is[lambda arr: arr.shape[0] == arr.shape[1]]
+               IndexError: tuple index out of range
+
+            Defaults to ``False``.
 
         Returns
         ----------
         str
             Substring diagnosing this object against this validator.
         '''
+        assert isinstance(is_shortcircuited, bool), (
+            f'{repr(is_shortcircuited)} not boolean.')
+
+        # True only if the passed object satisfies this validator.
+        is_obj_valid = None
+
+        # If this validator is short-circuited...
+        if is_shortcircuited:
+            # Attempt to decide whether that object satisfies this validator.
+            try:
+                is_obj_valid = self.is_valid(obj)
+            # If doing so raises an exception, this short-circuited validator
+            # was *NOT* intended to be called under short-circuiting. In this
+            # case, silently ignore this exception. See the above discussion.
+            except:
+                pass
+        # Else, this validator is *NOT* short-circuited. In this case, this
+        # validator is *NOT* expected to raise exceptions. Nonetheless, if this
+        # validator does so, ensure that exception is propagated up the call
+        # stack by *NOT* silently ignoring that exception (as above).
+        else:
+            is_obj_valid = self.is_valid(obj)
 
         # Format the validity of this object against this validator for the
         # typical case of a lowest-level beartype validator *NOT* wrapping one
@@ -431,7 +513,7 @@ class BeartypeValidator(object):
             validator_repr=repr(self),
             indent_level_outer=indent_level_outer,
             indent_level_inner=indent_level_inner,
-            is_obj_valid=self.is_valid(obj),
+            is_obj_valid=is_obj_valid,
         )
 
     # ..................{ DUNDERS ~ operator                }..................

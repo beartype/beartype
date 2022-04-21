@@ -52,7 +52,6 @@ class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
     def __init__(
         self,
         validator_operand: BeartypeValidator,
-        *args,
         **kwargs
     ) -> None:
         '''
@@ -69,12 +68,15 @@ class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
             If this operand is *not* itself a beartype validator.
         '''
 
+        # Callable accepting no arguments returning a machine-readable
+        # representation of this binary validator.
+        get_repr = lambda: (
+            f'{self._operator_symbol}{repr(validator_operand)}')
+
         # Initialize our superclass with all remaining parameters.
-        super().__init__(  # type: ignore[misc]
-            *args,
+        super().__init__(
             is_valid_code_locals=validator_operand._is_valid_code_locals,
-            get_repr=lambda: (
-                f'{self._operator_symbol}{repr(validator_operand)}'),
+            get_repr=get_repr,
             **kwargs
         )
 
@@ -85,9 +87,13 @@ class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
     #FIXME: Unit test us up, please.
     def get_diagnosis(
         self,
+        *,
+
+        # Mandatory keyword-only parameters.
         obj: object,
         indent_level_outer: str,
         indent_level_inner: str,
+        **kwargs
     ) -> str:
 
         # Line diagnosing this object against this negated parent validator.
@@ -104,6 +110,7 @@ class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
             obj=obj,
             indent_level_outer=indent_level_outer,
             indent_level_inner=indent_level_inner + CODE_INDENT_1,
+            **kwargs
         )
 
         # Line providing the suffixing ")" delimiter for readability.

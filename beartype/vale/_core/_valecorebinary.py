@@ -59,7 +59,6 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
         self,
         validator_operand_1: BeartypeValidator,
         validator_operand_2: BeartypeValidator,
-        *args,
         **kwargs
     ) -> None:
         '''
@@ -81,21 +80,24 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
             If either of these operands are *not* beartype validators.
         '''
 
+        # Locals safely merging the locals required by the code provided by
+        # both validators.
+        is_valid_code_locals = merge_mappings_two(
+            validator_operand_1._is_valid_code_locals,
+            validator_operand_2._is_valid_code_locals,
+        )
+
+        # Callable accepting no arguments returning a machine-readable
+        # representation of this binary validator.
+        get_repr = lambda: (
+            f'{repr(validator_operand_1)} {self._operator_symbol} '
+            f'{repr(validator_operand_2)}'
+        )
+
         # Initialize our superclass with all remaining parameters.
-        super().__init__(  # type: ignore[misc]
-            *args,
-            # Locals safely merging the locals required by the code provided by
-            # both validators.
-            is_valid_code_locals=merge_mappings_two(  # type: ignore[arg-type]
-                validator_operand_1._is_valid_code_locals,
-                validator_operand_2._is_valid_code_locals,
-            ),
-            # Callable accepting no arguments returning a machine-readable
-            # representation of this binary validator.
-            get_repr=lambda: (
-                f'{repr(validator_operand_1)} {self._operator_symbol} '
-                f'{repr(validator_operand_2)}'
-            ),
+        super().__init__(
+            is_valid_code_locals=is_valid_code_locals,  # type: ignore[arg-type]
+            get_repr=get_repr,
             **kwargs
         )
 
@@ -115,9 +117,15 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
     #       ...
     def get_diagnosis(
         self,
+        *,
+
+        # Mandatory keyword-only parameters.
         obj: object,
         indent_level_outer: str,
         indent_level_inner: str,
+
+        # Optional keyword-only parameters.
+        is_shortcircuited: bool = False,
     ) -> str:
 
         # Innermost indentation level indented one level deeper than the passed
@@ -138,7 +146,18 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
             obj=obj,
             indent_level_outer=indent_level_outer,
             indent_level_inner=indent_level_inner_nested,
+            is_shortcircuited=is_shortcircuited,
         )
+
+        #FIXME: *INSUFFFICIENT.* We need to additionally do something
+        #resembling here:
+        #    if not is_shortcircuited:
+        #        is_shortcircuited = self._is_shortcircuited(obj)
+        #
+        #Of course, that then requires us to:
+        #* Define a new abstract method with signature:
+        #    def _is_shortcircuited(obj: Any) -> bool: pass
+        #* Concretely implement that method in subclasses.
 
         # Line diagnosing this object against this passed second child
         # validator, with an increased indentation level for readability.
@@ -146,6 +165,7 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
             obj=obj,
             indent_level_outer=indent_level_outer,
             indent_level_inner=indent_level_inner_nested,
+            is_shortcircuited=is_shortcircuited,
         )
 
         # Line providing the suffixing ")" delimiter for readability.
