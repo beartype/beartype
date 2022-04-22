@@ -571,8 +571,8 @@ types against either:
 * **Static type checkers** (e.g., mypy_, pyright_) by importing Boto3_ stub
   types from an external third-party dependency (e.g., mypy-boto3_), enabling
   context-aware code completion across compliant IDEs (e.g., PyCharm_, `VSCode
-  Pylance`_). Those types are merely placeholder stubs; they do *not*
-  correspond to actual Boto3_ types and thus break runtime type checkers
+  Pylance <Pylance_>`__). Those types are merely placeholder stubs; they do
+  *not* correspond to actual Boto3_ types and thus break runtime type checkers
   (including ``beartype``) when used as type hints.
 * **Beartype** by fabricating your own `PEP-compliant beartype validators
   <Beartype Validators_>`__, enabling ``beartype`` to validate arbitrary
@@ -639,7 +639,7 @@ Beartype fully supports `typed NumPy arrays <NumPy Type Hints_>`__. Because
 beartype cares.
 
 ...mock types?
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 Beartype fully relies upon the `isinstance() builtin <isinstance_>`__ under the
 hood for its low-level runtime type-checking needs. If you can fool
@@ -662,6 +662,56 @@ an instance of a mock type is an instance of the type it mocks, though?
    Yolo, bro.
 
 This is why we beartype.
+
+...under VSCode?
+~~~~~~~~~~~~~~~~
+
+Beartype fully complies with mypy_, `PEP 561`_, and other community standards
+for statically type-checking dynamic Python code. Modern Integrated Development
+Environments (IDEs) support these standards - including VSCode_, Microsoft's
+free-as-in-beer GigaChad IDE. Just:
+
+* **Enable mypy type-checking.** Mypy_ complies with all typing standards
+  required by beartype. In fact, mypy_ is the *de facto* standard against which
+  all other type checkers (including beartype itself and Microsoft's pyright_)
+  are measured. Just:
+
+  #. `Install mypy <mypy install_>`__.
+  #. `Install the VSCode Mypy extension <VSCode Mypy extension_>`__.
+  #. Rejoice as things mostly lint as expected for once.
+
+* If you additionally use Pylance_, **disable Pylance type-checking.**
+  Pylance_ statically type-checks with pyright_ rather than mypy_. Ugh!
+  Pyright_ openly violates typing standards required by beartype – including
+  `PEP 484`_, the core standard that *everything* calling itself a type-checker
+  had better comply with. [#pyright-failure-1]_ [#pyright-failure-2]_ Just:
+
+  #. Open the *User Settings* dialog.
+  #. Search for ``Type Checking Mode``.
+  #. Browse to ``Python › Analysis: Type Checking Mode``.
+  #. Switch the "default rule set for type checking" to ``off``.
+
+|VSCode-Pylance-type-checking-setting|
+
+:superscript:`Pretend that reads "off" rather than "strict". Pretend we took
+this screenshot.`
+
+Scientists especially want to switch from pyright_ to mypy_. Many scientific
+packages bundle mypy_ plugins describing dynamic runtime behaviour. Since
+pyright_ devs `refuse to implement a comparable plugin API <pyright
+plugins_>`__, Pylance_ fails to type-check many scientific packages.
+
+    Dear Microsoft,
+
+    We embrace you. We just wish you embraced community standards, too.
+
+    — Us
+
+.. [#pyright-failure-1]
+   `See this <pyright PEP violation #1_>`__. You didn't want to, but the
+   clickbait undertow was too strong that day.
+.. [#pyright-failure-2]
+   `See this <pyright PEP violation #2_>`__, too. There goes Tuesday!
 
 Usage
 =====
@@ -4519,6 +4569,10 @@ rather than Python runtime) include:
    :target: https://beartype.readthedocs.io/en/latest/?badge=latest
    :alt: beartype Read The Docs (RTD) status
 
+.. # ------------------( IMAGES ~ screenshot               )------------------
+.. |VSCode-Pylance-type-checking-setting| image:: https://user-images.githubusercontent.com/217028/164616311-c4a24889-0c53-4726-9051-29be7263ee9b.png
+   :alt: Disabling pyright-based VSCode Pylance type-checking
+
 .. # ------------------( IMAGES ~ downstream                )------------------
 .. # Insert links to GitHub Sponsors funding at the icon level here, please!
 
@@ -4744,7 +4798,7 @@ rather than Python runtime) include:
 .. # ------------------( LINKS ~ py : ide                   )------------------
 .. _PyCharm:
    https://en.wikipedia.org/wiki/PyCharm
-.. _VSCode Pylance:
+.. _Pylance:
    https://github.com/microsoft/pylance-release
 
 .. # ------------------( LINKS ~ py : interpreter           )------------------
@@ -5244,18 +5298,34 @@ rather than Python runtime) include:
    https://pyre-check.org
 .. _pytype:
    https://github.com/google/pytype
+
+.. # ------------------( LINKS ~ py : type : static         )------------------
 .. _pyright:
    https://github.com/Microsoft/pyright
+.. _pyright plugins:
+   https://github.com/microsoft/pyright/issues/607#issuecomment-873467941
+.. _pyright PEP violation #1:
+   https://github.com/beartype/beartype/issues/126
+.. _pyright PEP violation #2:
+   https://github.com/beartype/beartype/issues/127
 
 .. # ------------------( LINKS ~ py : type : static : mypy  )------------------
 .. _mypy:
    http://mypy-lang.org
+.. _mypy install:
+   https://mypy.readthedocs.io/en/stable/getting_started.html
 .. _mypy plugin:
    https://mypy.readthedocs.io/en/stable/extending_mypy.html
 
 .. # ------------------( LINKS ~ soft : ide                 )------------------
 .. _Vim:
    https://www.vim.org
+
+.. # ------------------( LINKS ~ soft : ide : vscode        )------------------
+.. _VSCode:
+   https://code.visualstudio.com
+.. _VSCode Mypy extension:
+   https://marketplace.visualstudio.com/items?itemName=matangover.mypy
 
 .. # ------------------( LINKS ~ soft : lang                )------------------
 .. _C:

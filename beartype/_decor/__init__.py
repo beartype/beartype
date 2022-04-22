@@ -4,6 +4,13 @@
 # See "LICENSE" for further details.
 
 # ....................{ TODO                              }....................
+#FIXME: [PEP] Add PEP 613 support (i.e., "typing.TypeAlias"). Thankfully, this
+#is trivial. "typing.TypeAlias" is prohibited in callable definitions and
+#inside the bodies of callables. Ergo, @beartype should just raise a
+#decoration-time exception if any parameter or return is annotated as an
+#explicit "TypeAlias". That constitutes full support for PEP 613 from our
+#side. Good enough! :p
+
 #FIXME: [PEP] Add PEP 673 support (i.e., "typing.Self"). Since "typing.Self" is
 #simply a singleton syntactic sugar for "typing.TypeVar('Self', bound={cls})"
 #where {cls} is the class containing the "typing.Self" reference, this can be
