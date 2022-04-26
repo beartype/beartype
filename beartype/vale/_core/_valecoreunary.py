@@ -134,8 +134,8 @@ class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
     @abstractmethod
     def _operator_symbol(self) -> str:
         '''
-        Human-readable string embodying the operation performed by this binary
-        beartype validatory - typically the single-character mathematical sign
+        Human-readable string embodying the operation performed by this unary
+        validator - typically the single-character mathematical sign
         symbolizing this operation.
         '''
 

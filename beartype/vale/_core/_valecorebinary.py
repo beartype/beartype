@@ -140,8 +140,8 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
             is_obj_valid=self.is_valid(obj),
         )
 
-        # Line diagnosing this object against this original first child
-        # validator, with an increased indentation level for readability.
+        # Line diagnosing this object against this first child validator, with
+        # an increased indentation level for readability.
         line_inner_operand_1 = self._validator_operand_1.get_diagnosis(
             obj=obj,
             indent_level_outer=indent_level_outer,
@@ -149,18 +149,18 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
             is_shortcircuited=is_shortcircuited,
         )
 
-        #FIXME: *INSUFFFICIENT.* We need to additionally do something
-        #resembling here:
-        #    if not is_shortcircuited:
-        #        is_shortcircuited = self._is_shortcircuited(obj)
-        #
-        #Of course, that then requires us to:
-        #* Define a new abstract method with signature:
-        #    def _is_shortcircuited(obj: Any) -> bool: pass
-        #* Concretely implement that method in subclasses.
+        # If this binary validator has *NOT* already been short-circuited,
+        # decide whether this first child validator short-circuits this second
+        # child validator with respect to the passed object.
+        if not is_shortcircuited:
+            is_shortcircuited = self._is_shortcircuited(obj)
+        # Else, this binary validator has already been short-circuited (e.g.,
+        # due to being embedded in a higher-level parent validator that was
+        # short-circuited with respect to the passed object). In this case,
+        # preserve this short-circuiting as is.
 
-        # Line diagnosing this object against this passed second child
-        # validator, with an increased indentation level for readability.
+        # Line diagnosing this object against this second child validator, with
+        # an increased indentation level for readability.
         line_inner_operand_2 = self._validator_operand_2.get_diagnosis(
             obj=obj,
             indent_level_outer=indent_level_outer,
@@ -191,13 +191,43 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
     def _operator_symbol(self) -> str:
         '''
         Human-readable string embodying the operation performed by this binary
-        beartype validatory - typically the single-character mathematical sign
+        validator - typically the single-character mathematical sign
         symbolizing this operation.
         '''
 
         pass
 
-# ....................{ SUBCLASSES                        }....................
+
+    @abstractmethod
+    def _is_shortcircuited(self, obj: object) -> bool:
+        '''
+        ``True`` only if the first child validator short-circuits the second
+        child validator underlying this parent validator with respect to the
+        passed object.
+
+        In this context, "short-circuits" is in the boolean evaluation sense.
+        Specifically, short-circuiting:
+
+        * Occurs when the first child validator either fully satisfies or
+          violates this parent validator with respect to the passed object.
+        * Implies the second child validator to be safely ignorable with
+          respect to the passed object.
+
+        Parameters
+        ----------
+        obj : object
+            Arbitrary object to be diagnosed against this validator.
+
+        Returns
+        ----------
+        bool
+            ``True`` only if this the passed object short-circuits the second
+            child operand validator underlying this parent binary validator.
+        '''
+
+        pass
+
+# ....................{ SUBCLASSES ~ &                    }....................
 class BeartypeValidatorConjunction(BeartypeValidatorBinaryABC):
     '''
     **Beartype conjunction validator** (i.e., validator conjunctively
@@ -254,6 +284,15 @@ class BeartypeValidatorConjunction(BeartypeValidatorBinaryABC):
         return '&'
 
 
+    def _is_shortcircuited(self, obj: object) -> bool:
+
+        # Return true only if the passed object violates this first child
+        # validator. Why? Because if this first child validator is violated,
+        # then this parent validator as a whole is violated; no further
+        # validation of this second child validator is required.
+        return not self._validator_operand_1.is_valid(obj)
+
+# ....................{ SUBCLASSES ~ |                    }....................
 class BeartypeValidatorDisjunction(BeartypeValidatorBinaryABC):
     '''
     **Beartype disjunction validator** (i.e., validator disjunctively
@@ -308,6 +347,15 @@ class BeartypeValidatorDisjunction(BeartypeValidatorBinaryABC):
     @property
     def _operator_symbol(self) -> str:
         return '|'
+
+
+    def _is_shortcircuited(self, obj: object) -> bool:
+
+        # Return true only if the passed object satisfies this first child
+        # validator. Why? Because if this first child validator is satisfied,
+        # then this parent validator as a whole is satisfied; no further
+        # validation of this second child validator is required.
+        return self._validator_operand_1.is_valid(obj)
 
 # ....................{ PRIVATE ~ validators              }....................
 def _validate_operands(

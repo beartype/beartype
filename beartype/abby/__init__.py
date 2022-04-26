@@ -13,6 +13,11 @@ exported by this API are suitable for type-checking arbitrary objects at *any*
 arbitrary time during the lifecycle of the active Python process.
 '''
 
+# ....................{ TODO                              }....................
+#FIXME: Consider creating a synonym of this submodule imported to:
+#"beartype.atanytime", a companion of a new "beartype.allatonce" submodule. The
+#existing "beartype.abby" submodule name should also be preserved as is.
+
 # ....................{ IMPORTS                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
