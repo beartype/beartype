@@ -123,6 +123,7 @@ def test_make_func_pass(capsys) -> None:
 
     # Defer heavyweight imports.
     from beartype._util.func.utilfuncmake import make_func
+    from linecache import cache as linecache_cache
     from typing import Optional
 
     # Arbitrary local referenced in functions created below.
@@ -173,7 +174,7 @@ def it_may_be_that_the_gulfs_will_wash_us_down(
     odyssey = ulysses('Made weak by time and fate, but strong in will')
     assert 'Made weak by time and fate, but strong in will' in odyssey
 
-    # Arbitrary callable accessing no scoped attributes.
+    # Arbitrary debuggable callable accessing no scoped attributes.
     to_strive_to_seek_to_find = make_func(
         func_name='to_strive_to_seek_to_find',
         func_code='''
@@ -200,6 +201,18 @@ def to_strive_to_seek_to_find(and_not_to_yield: str) -> str:
     assert 'line' in standard_captured.out
     assert 'def to_strive_to_seek_to_find(' in standard_captured.out
     assert 'return and_not_to_yield' in standard_captured.out
+
+    # Assert the prior make_func() call cached the expected definition.
+    func_filename = to_strive_to_seek_to_find.__code__.co_filename
+    func_cache = linecache_cache.get(func_filename)
+    assert isinstance(func_cache, tuple)
+    assert len(func_cache) == 4
+    assert isinstance(func_cache[0], int)
+    assert func_cache[1] is None
+    assert func_cache[3] == func_filename
+    func_cache_code = ''.join(func_cache[2])
+    assert 'def to_strive_to_seek_to_find(' in func_cache_code
+    assert 'return and_not_to_yield' in func_cache_code
 
 
 def test_make_func_fail() -> None:

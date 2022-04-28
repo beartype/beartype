@@ -39,8 +39,6 @@ def make_func(
     func_doc: Optional[str] = None,
     func_label:   Optional[str] = None,
     func_wrapped: Optional[Callable] = None,
-
-    #FIXME: Unit test us up, please.
     is_debug: bool = False,
     exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 ) -> Callable:
@@ -85,9 +83,22 @@ def make_func(
         * ``__module__``, the fully-qualified name of this function's module.
 
         Defaults to ``None``.
-    is_debug: bool, optional
-        ``True`` only if this factory prints to standard output the definition
-        (including signature and body) of this function. Defaults to ``False``.
+    is_debug : bool, optional
+        ``True`` only if this function is being debugged. If ``True``, the
+        definition (including signature and body) of this function is:
+
+        * Printed to standard output.
+        * Cached with the standard :mod:`linecache` module under a fake
+          filename uniquely synthesized by this factory for this function.
+          External callers may then subsequently access the definition of this
+          function from that module as:
+
+          .. code-block:: python
+
+             from linecache import cache as linecache_cache
+             func_source = linecache_cache[func.__code__.co_filename]
+
+        Defaults to ``False``.
     exception_cls : type, optional
         Type of exception to raise in the event of a fatal error. Defaults to
         :exc:`_BeartypeUtilCallableException`.
@@ -109,6 +120,8 @@ def make_func(
         * This code snippet is syntactically valid but fails to declare a
           function with this name.
     '''
+
+    # ..................{ VALIDATION ~ pre                  }..................
     assert isinstance(func_name, str), f'{repr(func_name)} not string.'
     assert isinstance(func_code, str), f'{repr(func_code)} not string.'
     assert isinstance(is_debug, bool), f'{repr(is_debug)} not bool.'
@@ -138,46 +151,69 @@ def make_func(
         )
     # Else, that function's name is *NOT* already in this local scope.
 
+    # ..................{ STARTUP ~ filename                }..................
+    # Note that this logic is intentionally performed *BEFORE* munging the
+    # "func_code" string in-place below, as this logic depends upon the unique
+    # ID of that string. Reassignment obliterates that uniqueness.
+
+    # Arbitrary object uniquely associated with this function.
+    func_filename_object: object = None
+
+    # Possibly fully-qualified name of an arbitrary object uniquely associated
+    # with this function.
+    func_filename_name: str = None  # type: ignore[assignment]
+
+    # If this function is a high-level wrapper wrapping a lower-level
+    # wrappee, uniquify the subsequent filename against this wrappee. This
+    # wrappee's fully-qualified name guarantees the uniqueness of this
+    # filename. Ergo, this is the ideal case.
+    if func_wrapped:
+        func_filename_name = get_object_name(func_wrapped)
+        func_filename_object = func_wrapped
+    # Else, this function is *NOT* such a wrapper. In this less ideal case,
+    # fallback to a poor man's uniquification against the unqualified name and
+    # code string underlying this function.
+    else:
+        func_filename_name = func_name
+        func_filename_object = func_code
+
+    # Fake in-memory filename hopefully unique to this function.
+    # Optimistically, a fully-qualified object name and ID *SHOULD* be unique
+    # for the lifetime of the active Python process.
+    func_filename = (
+        f'<@beartype({func_filename_name}) at {id(func_filename_object):#x}>')
+
+    # ..................{ STARTUP ~ code                    }..................
     # Code snippet defining this function, stripped of all leading and trailing
     # whitespace to improve both readability and disambiguity. Since this
     # whitespace is safely ignorable, the original snippet is safely
     # replaceable by this stripped snippet.
     func_code = func_code.strip()
 
-    # If printing the definition of that function, do so.
+    # If debugging this function, print the definition of this function.
     if is_debug:
         print(f'{number_lines(func_code)}')
-    # Else, that definition is left obscured by voracious bitbuckets of time.
+    # Else, leave that definition obscured by the voracious bitbuckets of time.
 
+    # ..................{ CREATION                          }..................
     # Attempt to...
     try:
-        # Declare that function. For obscure and likely uninteresting reasons,
-        # Python fails to capture that function (i.e., expose that function to
-        # this function) when the locals() dictionary is passed; instead, a
-        # unique local dictionary *MUST* be passed.
-
-        # Make up a filename for compilation and possibly the linecache entry
-        # (if we make one). A fully-qualified name and ID *should* be unique
-        # for the life of the process.
-        func_full_name = (
-            get_object_name(func_wrapped)
-            if func_wrapped else
-            func_name
-        )
-        linecache_filename = (
-            f'<@beartype({func_full_name}) at {id(func_wrapped):#x}>')
-
-        # We use the more verbose and obfuscatory compile() builtin instead of
-        # simply calling exec(func_code, func_globals, func_locals) because
-        # exec does not provide a way to set the resulting function object's
-        # .__code__.co_filename read-only attribute. We can use "single"
-        # instead of "exec" if we are willing to accept that func_code is
-        # constrained to a single statement. In casual testing, there is very
-        # little performance difference (with an imperceptibly slight edge
-        # going to "single").
-        func_code_compiled = compile(
-            func_code, linecache_filename, 'exec')
+        # Call the more verbose and obfuscatory compile() builtin instead of
+        # simply calling "exec(func_code, func_globals, func_locals)". Why?
+        # Because the exec() builtin does *NOT* provide a means to set this
+        # function's "__code__.co_filename" read-only attribute.
+        #
+        # Note that we could pass "single" instead of "exec" here if we were
+        # willing to constrain the passed "func_code" to a single statement. In
+        # casual testing, there is very little performance difference between
+        # the two (with an imperceptibly slight edge going to "single").
+        func_code_compiled = compile(func_code, func_filename, 'exec')
         assert func_name not in func_locals
+
+        # Define that function. For obscure and likely uninteresting reasons,
+        # Python fails to capture that function (i.e., expose that function to
+        # this factory) when the locals() dictionary is passed; instead, a
+        # unique local dictionary *MUST* be passed.
         exec(func_code_compiled, func_globals, func_locals)
     # If doing so fails for any reason...
     except Exception as exception:
@@ -195,6 +231,7 @@ def make_func(
             f'{number_lines(func_code)}'
         ) from exception
 
+    # ..................{ VALIDATION ~ post                 }..................
     # If that function's name is *NOT* in this local scope, this code snippet
     # failed to declare that function. In this case, raise an exception.
     if func_name not in func_locals:
@@ -222,6 +259,7 @@ def make_func(
         update_wrapper(wrapper=func, wrapped=func_wrapped)
     # Else, that function is *NOT* such a wrapper.
 
+    # ..................{ CLEANUP                           }..................
     # If that function is documented...
     #
     # Note that function is intentionally documented *AFTER* propagating dunder
@@ -235,21 +273,34 @@ def make_func(
         func.__doc__ = func_doc
     # Else, that function is undocumented.
 
-    # Since we went through the trouble of printing its definition, we might
-    # as well make its compiled version debuggable, too.
+    # If debugging this function...
     if is_debug:
-        linecache_cache[linecache_filename] = (  # type: ignore[assignment]
+        # Render this function debuggable (e.g., via the standard "pdb" module)
+        # by exposing this function's definition to the standard "linecache"
+        # module under the fake filename synthesized above.
+        #
+        # Technically, we *COULD* slightly improve the uniquification of this
+        # filename for the uncommon edge case when this function does *NOT*
+        # wrap a lower-level wrappee (e.g., by embedding the ID of this
+        # function that now exists rather than an arbitrary string object).
+        # Pragmatically, doing so would prevent external callers from trivially
+        # retrieving this function's definition from "linecache". Why? Because
+        # reusing the "func_filename" string embedded in this function as
+        # "func.__code__.co_filename" trivializes this lookup for callers.
+        # Ultimately, sane lookup >>> slightly uniquer filename.
+        linecache_cache[func_filename] = (  # type: ignore[assignment]
             len(func_code),  # type: ignore[assignment]  # Y u gotta b diff'rnt Python 3.7? WHY?!
             None,  # mtime, but should be None to avoid being discarded
             func_code.splitlines(keepends=True),
-            linecache_filename,
+            func_filename,
         )
 
-        # Define and register a cleanup callback for removing func's linecache
-        # entry if func is ever garbage collected.
-        def remove_linecache_entry_for_func():
-            linecache_cache.pop(linecache_filename, None)
-        finalize(func, remove_linecache_entry_for_func)
+        # Define and register a cleanup callback removing that function's
+        # linecache entry called if and when that function is
+        # garbage-collected.
+        def _remove_func_linecache_entry():
+            linecache_cache.pop(func_filename, None)
+        finalize(func, _remove_func_linecache_entry)
 
     # Return that function.
     return func
