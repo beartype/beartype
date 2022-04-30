@@ -8,7 +8,7 @@
 
 This submodule unit tests the subset of the public API of the
 :mod:`beartype.vale` subpackage defined by the private
-:mod:`beartype.vale._is._valeistype` submodule.
+:mod:`beartype.vale._is._valeistype` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................

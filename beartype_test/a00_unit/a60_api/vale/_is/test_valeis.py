@@ -8,7 +8,7 @@
 
 This submodule unit tests the subset of the public API of the
 :mod:`beartype.vale` subpackage defined by the private
-:mod:`beartype.vale._is._valeis` submodule.
+:mod:`beartype.vale._is._valeis` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -25,6 +25,7 @@ def test_api_vale_is_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
+    from beartype._util.func.utilfuncmake import make_func
     from beartype.vale import Is
     from beartype.vale._core._valecore import BeartypeValidator
     from collections.abc import Mapping
@@ -41,19 +42,39 @@ def test_api_vale_is_pass() -> None:
     def _is_exclamatory(text: str):
         return '!' in text
 
+    # Dynamically generated lambda function. To exercise in-memory validators
+    # dynamically defined outside of a standard on-disk module (e.g., "smart"
+    # REPLs like IPython), this function's code is intentionally cached with
+    # the standard "linecache" module.
+    _is_commentary = make_func(
+        func_name='_is_commentary',
+        func_code=(
+            """_is_commentary = lambda text: text and text[-1] == ','"""),
+        is_debug=True,
+    )
+
     # Validators produced by subscripting this factory with lambda functions
-    # satisfying the expected API.
+    # satisfying the expected API defined physically in this on-disk module.
     IsLengthy = Is[lambda text: len(text) > 30]
     IsSentence = Is[lambda text: text and text[-1] == '.']
+
+    # Validators produced by subscripting this factory with lambda functions
+    # satisfying the expected API defined dynamically in-memory.
+    IsCommentary = Is[_is_commentary]
 
     # Validator produced by subscripting this factory with non-lambda functions
     # satisfying the expected API.
     IsQuoted = Is[_is_quoted]
     IsExclamatory = Is[_is_exclamatory]
 
+    # Validator synthesized from the above validators with the domain-specific
+    # language (DSL) supported by those validators.
+    IsLengthyOrUnquotedSentence = IsLengthy | (IsSentence & ~IsQuoted)
+
     # Assert these validators satisfy the expected API.
     assert isinstance(IsLengthy, BeartypeValidator)
     assert isinstance(IsSentence, BeartypeValidator)
+    assert isinstance(IsCommentary, BeartypeValidator)
     assert isinstance(IsQuoted, BeartypeValidator)
     assert isinstance(IsExclamatory, BeartypeValidator)
 
@@ -62,36 +83,37 @@ def test_api_vale_is_pass() -> None:
     assert IsLengthy.is_valid('Right through the line they broke;') is True
     assert IsSentence.is_valid('Theirs not to make reply,') is False
     assert IsSentence.is_valid('Theirs but to do and die.') is True
+    assert IsCommentary.is_valid('Remote, serene, and inaccessible:') is False
+    assert IsCommentary.is_valid(
+        'Power dwells apart in its tranquillity,') is True
     assert IsQuoted.is_valid('Theirs not to reason why,') is False
     assert IsQuoted.is_valid('"Forward, the Light Brigade!"') is True
-    assert IsExclamatory.is_valid('Thou art the path of that unresting sound—') is False
-    assert IsExclamatory.is_valid('"Dizzy Ravine! and when I gaze on thee"') is True
+    assert IsExclamatory.is_valid(
+        'Thou art the path of that unresting sound—') is False
+    assert IsExclamatory.is_valid(
+        '"Dizzy Ravine! and when I gaze on thee"') is True
 
-    # Assert one such validator provides both non-empty code and code locals.
+    # Assert a validator provides both non-empty code and code locals.
     assert isinstance(IsLengthy._is_valid_code, str)
     assert isinstance(IsLengthy._is_valid_code_locals, Mapping)
     assert bool(IsLengthy._is_valid_code)
     assert bool(IsLengthy._is_valid_code_locals)
 
-    # Assert an validator produced by subscripting this factory with a lambda
-    # function satisfying the data validator API has the expected
-    # representation.
+    # Assert a physical lambda-based validator has the expected representation.
     IsLengthyRepr = repr(IsLengthy)
     assert 'len(text) > 30' in IsLengthyRepr
 
-    # Assert an validator produced by subscripting this factory with a
-    # non-lambda function satisfying the data validator API has the expected
-    # representation.
+    # Assert a dynamic lambda-based validator has the expected representation.
+    IsCommentary = repr(IsCommentary)
+    assert "text[-1] == ','" in IsCommentary
+
+    # Assert a non-lambda-based validator has the expected representation.
     IsQuotedRepr = repr(IsQuoted)
     assert '._is_quoted' in IsQuotedRepr
 
     # Assert that repeated accesses of that representation are memoized by
     # efficiently returning the same string.
     assert repr(IsLengthy) is IsLengthyRepr
-
-    # Validator synthesized from the above validators with the domain-specific
-    # language (DSL) supported by those validators.
-    IsLengthyOrUnquotedSentence = IsLengthy | (IsSentence & ~IsQuoted)
 
     # Assert this validator performs the expected validation.
     assert IsLengthyOrUnquotedSentence.is_valid(

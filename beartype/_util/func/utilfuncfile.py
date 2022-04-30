@@ -38,6 +38,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
 from collections.abc import Callable
+from linecache import cache as linecache_cache
 from typing import Optional, Type
 
 # See the "beartype.cave" submodule for further commentary.
@@ -69,13 +70,12 @@ def is_func_file(func: Callable) -> bool:
     return get_func_filename_or_none(func) is not None
 
 # ....................{ GETTERS ~ code : lines            }....................
-#FIXME: Unit test us up.
 def get_func_filename_or_none(
     # Mandatory parameters.
     func: Callable,
 
     # Optional parameters.
-    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
+    # exception_cls: Type[Exception] = _BeartypeUtilCallableException,
 ) -> Optional[str]:
     '''
     Absolute filename of the file on the local filesystem containing the
@@ -130,7 +130,7 @@ def get_func_filename_or_none(
 
     # If the passed callable has *NO* code object and is thus *NOT*
     # pure-Python, that callable was *NOT* defined by a pure-Python source code
-    # file. In this case, return "None"
+    # file. In this case, return "None".
     if not func_codeobj:
         return None
     # Else, that callable is pure-Python.
@@ -149,18 +149,34 @@ def get_func_filename_or_none(
     if not func_filename:
         return None
     # Else, this code object offers that metadata.
-
-    # Return either...
     # print(f'func_filename: {func_filename}')
-    return (
-        # This filename if this filename is actually a filename rather than a
-        # "<"- and ">"-bracketed placeholder string, including:
-        # * "<string>", signifying a callable dynamically declared in-memory.
-        func_filename
-        if not (
-            func_filename[ 0] == '<' and
-            func_filename[-1] == '>'
-        # Else, this filename is a placeholder. In this case, return "None".
-        ) else
-        None
-    )
+
+    # If this filename is a "<"- and ">"-bracketed placeholder string, this
+    # filename is a placeholder signifying this callable to be dynamically
+    # declared in-memory rather than by an on-disk module. In this case...
+    #
+    # Examples of such strings include:
+    # * "<string>", signifying a callable dynamically declared in-memory.
+    # * "<@beartype(...) at 0x...}>', signifying a callable dynamically
+    #   declared in-memory by the beartype._util.func.utilfuncmake.make_func()
+    #   function, possibly cached with the standard "linecache" module.
+    if (
+        func_filename[ 0] == '<' and
+        func_filename[-1] == '>'
+    ):
+        # Return either...
+        return (
+            # If this in-memory callable's source was cached with the standard
+            # "linecache" module, this filename as is;
+            func_filename
+            if func_filename in linecache_cache else
+            # Else, this in-memory callable's source was *NOT* cached with the
+            # "linecache" module and has thus effectively been destroyed. In
+            # this case, "None".
+            None
+        )
+    # Else, this filename if is actually that of an on-disk module.
+
+    # Return this filename as is, regardless of whether this file exists.
+    # Callers are responsible for performing further validation if desired.
+    return func_filename

@@ -16,7 +16,7 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ code                      }....................
+# ....................{ TESTS                             }....................
 def test_is_func_file() -> None:
     '''
     Test usage of the
@@ -30,7 +30,8 @@ def test_is_func_file() -> None:
     def but_now_thy_youngest_dearest_one_has_perished():
         return 'The nursling of thy widowhood, who grew,'
 
-    # Arbitrary pure-Python callable declared in-memory.
+    # Arbitrary pure-Python callable declared in-memory *WITHOUT* being cached
+    # by the standard "linecache" module.
     like_a_pale_flower = eval('lambda: "by some sad maiden cherished,"')
 
     # Assert this tester accepts pure-Python callables declared on-disk.
@@ -41,3 +42,54 @@ def test_is_func_file() -> None:
 
     # Assert this tester rejects C-based callables.
     assert is_func_file(iter) is False
+
+
+def test_get_func_filename_or_none() -> None:
+    '''
+    Test usage of the
+    :func:`beartype._util.func.utilfuncfile.get_func_filename_or_none`
+    function.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.func.utilfuncfile import get_func_filename_or_none
+    from beartype._util.func.utilfuncmake import make_func
+
+    # Arbitrary pure-Python callable declared on-disk.
+    def and_this_the_naked_countenance_of_earth():
+        return 'On which I gaze, even these primeval mountains'
+
+    # Arbitrary pure-Python callable declared in-memory cached by the standard
+    # "linecache" module.
+    like_snakes_that_watch_their_prey = make_func(
+        func_name='like_snakes_that_watch_their_prey',
+        func_code=(
+            """
+            like_snakes_that_watch_their_prey = lambda: (
+                'from their far fountains,')
+            """),
+        is_debug=True,
+    )
+
+    # Arbitrary pure-Python callable declared in-memory *WITHOUT* being cached
+    # by the standard "linecache" module.
+    teach_the_adverting_mind = eval('lambda: "The glaciers creep"')
+
+    # Assert this getter returns "None" when passed a C-based callable.
+    assert get_func_filename_or_none(iter) is None
+
+    # Assert this getter returns the absolute filename of this submodule when
+    # passed an on-disk pure-Python callable defined by this submodule.
+    assert get_func_filename_or_none(
+        and_this_the_naked_countenance_of_earth) == __file__
+
+    # Assert this getter returns the placeholder filename associated with the
+    # code object of a pure-Python callable defined in-memory cached by the
+    # standard "linecache" module.
+    assert get_func_filename_or_none(
+        like_snakes_that_watch_their_prey) == (
+        like_snakes_that_watch_their_prey.__code__.co_filename)
+
+    # Assert this getter returns "None" when passed a pure-Python callable
+    # defined in-memory *NOT* cached by the standard "linecache" module.
+    assert get_func_filename_or_none(teach_the_adverting_mind) is None
