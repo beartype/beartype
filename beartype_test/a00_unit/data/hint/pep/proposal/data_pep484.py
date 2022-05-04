@@ -59,8 +59,6 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_LEAST_3_9,
-    IS_PYTHON_AT_LEAST_3_7,
-    IS_PYTHON_3_6,
 )
 from beartype_test.a00_unit.data.data_type import (
     Class,
@@ -304,7 +302,7 @@ def add_data(data_module: 'ModuleType') -> None:
     #
     # This boolean is true for Python interpreters targeting 3.6 < Python <
     # 3.9, oddly. (We don't make the rules. We simply complain about them.)
-    _IS_ARGS_HIDDEN = _IS_TYPEVARS_HIDDEN and not IS_PYTHON_3_6
+    _IS_ARGS_HIDDEN = _IS_TYPEVARS_HIDDEN
 
     # ..................{ SETS                              }..................
     # Add PEP 484-specific shallowly ignorable test type hints to that set
@@ -393,6 +391,46 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
+        # Unsubscripted "Hashable" attribute.
+        HintPepMetadata(
+            hint=Hashable,
+            pep_sign=HintSignHashable,
+            isinstanceable_type=collections_abc.Hashable,
+            piths_meta=(
+                # String constant.
+                HintPithSatisfiedMetadata(
+                    "Oh, importunate Θ Fortuna'd afforded"),
+                # Tuple of string constants.
+                HintPithSatisfiedMetadata((
+                    'Us vis‐a‐vis conduit fjords',
+                    'Of weal‐th, and well‐heeled,',
+                )),
+                # List of string constants.
+                HintPithUnsatisfiedMetadata([
+                    'Oboes‐obsoleting tines',
+                    'Of language',
+                ]),
+            ),
+        ),
+
+        # Unsubscripted "Sized" attribute.
+        HintPepMetadata(
+            hint=Sized,
+            pep_sign=HintSignSized,
+            isinstanceable_type=collections_abc.Sized,
+            piths_meta=(
+                # String constant.
+                HintPithSatisfiedMetadata('Faire, a'),
+                # Tuple of string constants.
+                HintPithSatisfiedMetadata((
+                    'Farthing scrap',
+                    'Of comfort’s ‘om’‐Enwrapped, rapt appeal — that',
+                )),
+                # Boolean constant.
+                HintPithUnsatisfiedMetadata(False),
+            ),
+        ),
+
         # ................{ UNSUBSCRIPTED ~ forwardref        }................
         # Forward references defined below are *ONLY* intended to shallowly
         # exercise support for types of forward references across the codebase;
@@ -435,9 +473,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignTypeVar,
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
-            # Type variable instances are directly declared by the "typing"
-            # module *ONLY* under Python 3.6.
-            is_typing=IS_PYTHON_3_6,
+            is_typing=False,
             piths_meta=(
                 # Builtin "int" class itself.
                 HintPithSatisfiedMetadata(int),
@@ -477,7 +513,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignTypeVar,
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
-            is_typing=IS_PYTHON_3_6,
+            is_typing=False,
             piths_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata('Prim (or'),
@@ -500,7 +536,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignTypeVar,
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
-            is_typing=IS_PYTHON_3_6,
+            is_typing=False,
             piths_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(0x0B00B135),  # <-- 184594741
@@ -682,11 +718,7 @@ def add_data(data_module: 'ModuleType') -> None:
             pep_sign=HintSignGeneric,
             generic_type=Pep484GenericTypevaredSingle,
             is_typevars=True,
-            # The type of subscripted PEP 484-compliant generics is:
-            # * Under Python >= 3.7.0, "typing".
-            # * Under Python 3.6.x, the module defining those generics.
-            # There's not much we can or should do about this, so we accept it.
-            is_type_typing=IS_PYTHON_AT_LEAST_3_7,
+            is_type_typing=True,
             is_typing=False,
             piths_meta=(
                 # Subclass-specific generic.
@@ -1738,78 +1770,34 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # PEP-compliant type hints conditionally dependent on the major version of
     # Python targeted by the active Python interpreter.
-    if IS_PYTHON_AT_LEAST_3_7:
+    if IS_PYTHON_AT_LEAST_3_9:
         data_module.HINTS_PEP_META.extend((
-            # ..............{ UNSUBSCRIPTED                     }..............
-            # Unsubscripted "Hashable" attribute.
+            # ..............{ GENERICS ~ user                   }..............
+            # Subscripted generic subclassing a single unsubscripted "typing"
+            # type. Note that these types constitute an edge case supported
+            # *ONLY* under Python >= 3.9, which implements these tests in an
+            # ambiguous (albeit efficient) manner effectively indistinguishable
+            # from PEP 585-compliant type hints.
             HintPepMetadata(
-                hint=Hashable,
-                pep_sign=HintSignHashable,
-                isinstanceable_type=collections_abc.Hashable,
+                hint=Pep484GenericUnsubscriptedSingle[str],
+                pep_sign=HintSignGeneric,
+                generic_type=Pep484GenericUnsubscriptedSingle,
+                is_type_typing=False,
                 piths_meta=(
-                    # String constant.
+                    # Subclass-specific generic list of string constants.
                     HintPithSatisfiedMetadata(
-                        "Oh, importunate Θ Fortuna'd afforded"),
-                    # Tuple of string constants.
-                    HintPithSatisfiedMetadata((
-                        'Us vis‐a‐vis conduit fjords',
-                        'Of weal‐th, and well‐heeled,',
-                    )),
+                        Pep484GenericUnsubscriptedSingle((
+                            'Volubly vi‐brant libations',
+                            'To blubber‐lubed Bacchus — hustling',
+                        ))
+                    ),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata('O’ the frock'),
                     # List of string constants.
                     HintPithUnsatisfiedMetadata([
-                        'Oboes‐obsoleting tines',
-                        'Of language',
+                        'O’ Friday’s squealing — Sounding',
+                        'Freedom’s unappealing, Passive delights',
                     ]),
                 ),
             ),
-
-            # Unsubscripted "Sized" attribute.
-            HintPepMetadata(
-                hint=Sized,
-                pep_sign=HintSignSized,
-                isinstanceable_type=collections_abc.Sized,
-                piths_meta=(
-                    # String constant.
-                    HintPithSatisfiedMetadata('Faire, a'),
-                    # Tuple of string constants.
-                    HintPithSatisfiedMetadata((
-                        'Farthing scrap',
-                        'Of comfort’s ‘om’‐Enwrapped, rapt appeal — that',
-                    )),
-                    # Boolean constant.
-                    HintPithUnsatisfiedMetadata(False),
-                ),
-            ),
         ))
-
-        if IS_PYTHON_AT_LEAST_3_9:
-            data_module.HINTS_PEP_META.extend((
-                # ............{ GENERICS ~ user                   }............
-                # Subscripted generic subclassing a single unsubscripted
-                # "typing" type. Note that these types constitute an edge case
-                # supported *ONLY* under Python >= 3.9, which implements these
-                # tests in an ambiguous (albeit efficient) manner effectively
-                # indistinguishable from PEP 585-compliant type hints.
-                HintPepMetadata(
-                    hint=Pep484GenericUnsubscriptedSingle[str],
-                    pep_sign=HintSignGeneric,
-                    generic_type=Pep484GenericUnsubscriptedSingle,
-                    is_type_typing=False,
-                    piths_meta=(
-                        # Subclass-specific generic list of string constants.
-                        HintPithSatisfiedMetadata(
-                            Pep484GenericUnsubscriptedSingle((
-                                'Volubly vi‐brant libations',
-                                'To blubber‐lubed Bacchus — hustling',
-                            ))
-                        ),
-                        # String constant.
-                        HintPithUnsatisfiedMetadata('O’ the frock'),
-                        # List of string constants.
-                        HintPithUnsatisfiedMetadata([
-                            'O’ Friday’s squealing — Sounding',
-                            'Freedom’s unappealing, Passive delights',
-                        ]),
-                    ),
-                ),
-            ))

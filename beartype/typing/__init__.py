@@ -85,8 +85,6 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 # "import_typing_attr_or_none('Annotated')").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype._util.py.utilpyversion import (
-    IS_PYTHON_3_7            as _IS_PYTHON_3_7,
-    IS_PYTHON_AT_LEAST_3_7   as _IS_PYTHON_AT_LEAST_3_7,
     IS_PYTHON_AT_LEAST_3_7_2 as _IS_PYTHON_AT_LEAST_3_7_2,
     IS_PYTHON_AT_LEAST_3_8   as _IS_PYTHON_AT_LEAST_3_8,
     IS_PYTHON_AT_LEAST_3_9   as _IS_PYTHON_AT_LEAST_3_9,
@@ -117,17 +115,16 @@ from typing import (
     Text as Text,
     BinaryIO as BinaryIO,
     ClassVar as ClassVar,
+    ForwardRef as ForwardRef,
     Generic as Generic,
     Hashable as Hashable,
     IO as IO,
     Match as Match,
     NamedTuple as NamedTuple,
-    NewType as NewType,
     NoReturn as NoReturn,
     Optional as Optional,
     Pattern as Pattern,
     Sized as Sized,
-    Text as Text,
     TextIO as TextIO,
     TypeVar as TypeVar,
     Union as Union,
@@ -143,44 +140,38 @@ from typing import (
 # subset of supported Python versions and *NOT* deprecated by a subsequent
 # Python version under their original names.
 
-# If the active Python interpreter targets Python >= 3.7...
-if _IS_PYTHON_AT_LEAST_3_7:
-    from typing import (
-        ForwardRef as ForwardRef,
+# If the active Python interpreter targets Python >= 3.8...
+if _IS_PYTHON_AT_LEAST_3_8:
+    from typing import (  # type: ignore[attr-defined]
+        Final as Final,
+        Literal as Literal,
+        Reversible as Reversible,
+        SupportsIndex as SupportsIndex,
+        TypedDict as TypedDict,
+        final as final,
+        get_args as get_args,
+        get_origin as get_origin,
     )
 
-    # If the active Python interpreter targets Python >= 3.8...
-    if _IS_PYTHON_AT_LEAST_3_8:
+    # If the active Python interpreter targets Python >= 3.10...
+    if _IS_PYTHON_AT_LEAST_3_10:
         from typing import (  # type: ignore[attr-defined]
-            Final as Final,
-            Literal as Literal,
-            Reversible as Reversible,
-            SupportsIndex as SupportsIndex,
-            TypedDict as TypedDict,
-            final as final,
-            get_args as get_args,
-            get_origin as get_origin,
+            Concatenate as Concatenate,
+            ParamSpec as ParamSpec,
+            ParamSpecArgs as ParamSpecArgs,
+            ParamSpecKwargs as ParamSpecKwargs,
+            TypeAlias as TypeAlias,
+            TypeGuard as TypeGuard,
+            is_typeddict as is_typeddict,
         )
 
-        # If the active Python interpreter targets Python >= 3.10...
-        if _IS_PYTHON_AT_LEAST_3_10:
+        # If the active Python interpreter targets Python >= 3.11...
+        if _IS_PYTHON_AT_LEAST_3_11:
             from typing import (  # type: ignore[attr-defined]
-                Concatenate as Concatenate,
-                ParamSpec as ParamSpec,
-                ParamSpecArgs as ParamSpecArgs,
-                ParamSpecKwargs as ParamSpecKwargs,
-                TypeAlias as TypeAlias,
-                TypeGuard as TypeGuard,
-                is_typeddict as is_typeddict,
+                #FIXME: Add once that PEP goes live:
+                #    Self as Self,
+                reveal_type as reveal_type,
             )
-
-            # If the active Python interpreter targets Python >= 3.11...
-            if _IS_PYTHON_AT_LEAST_3_11:
-                from typing import (  # type: ignore[attr-defined]
-                    #FIXME: Add once that PEP goes live:
-                    #    Self as Self,
-                    reveal_type as reveal_type,
-                )
 
 # ....................{ PEP ~ 544                         }....................
 # If this interpreter is either performing static type-checking (e.g., via
@@ -201,9 +192,6 @@ if _IS_PYTHON_AT_LEAST_3_8:
     # If this interpreter is performing static type-checking, defer to the
     # standard library versions of all remaining PEP 544 attributes.
     if TYPE_CHECKING:
-        # FIXME: The ignore[attr-defined] is for Python 3.7 because
-        # Mypy doesn't understand IS_PYTHON_AT_LEAST_3_8. That ignore should
-        # be removable when retiring PYTHON_AT_LEAST_3_7.
         from typing import (  # type: ignore[attr-defined]
             Protocol as Protocol,
             SupportsIndex as SupportsIndex,
@@ -262,11 +250,9 @@ if not _IS_PYTHON_AT_LEAST_3_9:
         List as List,
         Mapping as Mapping,
         MappingView as MappingView,
-        Match as Match,
         MutableMapping as MutableMapping,
         MutableSequence as MutableSequence,
         MutableSet as MutableSet,
-        Pattern as Pattern,
         Reversible as Reversible,
         Set as Set,
         Tuple as Tuple,

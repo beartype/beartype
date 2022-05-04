@@ -31,9 +31,10 @@ set -e
 # *NOT* be explicitly passed to "tox", as the ${PYTHONDEVMODE} shell variable
 # in the "tox.ini" file already enables the PDM.
 PYTHON_ARGS=( command python3 )
-# PYTHON_ARGS=( command python3.6 )
+# PYTHON_ARGS=( command python3.8 )
 # PYTHON_ARGS=( command python3.9 )
 # PYTHON_ARGS=( command python3.10 )
+# PYTHON_ARGS=( command python3.11 )
 # PYTHON_ARGS=( command pypy3.7 )
 
 # ....................{ FUNCTIONS                         }....................

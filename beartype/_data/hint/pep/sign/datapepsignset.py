@@ -238,6 +238,7 @@ HINT_SIGNS_ORIGIN_ISINSTANCEABLE = frozenset((
     HintSignDict,
     HintSignFrozenSet,
     HintSignGenerator,
+    HintSignHashable,
     HintSignItemsView,
     HintSignIterable,
     HintSignIterator,
@@ -254,28 +255,10 @@ HINT_SIGNS_ORIGIN_ISINSTANCEABLE = frozenset((
     HintSignReversible,
     HintSignSequence,
     HintSignSet,
+    HintSignSized,
     HintSignTuple,
     HintSignType,
     HintSignValuesView,
-
-    #FIXME: This likely requires special handling under Python 3.6. Perhaps
-    #simply detect for Python 3.6 and remove them or avoid adding them here?
-
-    # Although the Python 3.6-specific implementation of the "typing" module
-    # *DOES* technically supply these attributes, it does so only
-    # non-deterministically. For unknown reasons (whose underlying cause
-    # appears to be unwise abuse of private fields of the critical stdlib
-    # "abc.ABCMeta" metaclass), the "typing.Hashable" and "typing.Sized"
-    # abstract base classes (ABCs) spontaneously interchange themselves with
-    # the corresponding "collections.abc.Hashable" and "collections.abc.Sized"
-    # ABCs after indeterminate importations and/or reference to these ABCs.
-    #
-    # This is sufficiently concerning that we would ideally drop Python 3.6.
-    # Unfortunately, that would also mean dropping PyPy3 support, which has yet
-    # to stabilize Python 3.7 support. Ergo, we reluctantly preserve Python 3.6
-    # and thus PyPy3 support for the interim.
-    HintSignHashable,
-    HintSignSized,
 ))
 '''
 Frozen set of all signs uniquely identifying PEP-compliant type hints

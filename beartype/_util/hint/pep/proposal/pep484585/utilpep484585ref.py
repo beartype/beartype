@@ -21,7 +21,6 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
 )
 from beartype._util.mod.utilmodimport import import_module_attr
 from beartype._util.mod.utilmodule import get_object_module_name
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._data.datatyping import TypeException
 from typing import Any, Union
 
@@ -51,19 +50,7 @@ harms space and time complexity at runtime with *no* concomitant benefits.
 '''
 
 
-HINT_PEP484585_FORWARDREF_UNION: Any = (
-    # If the active Python interpreter targets Python >= 3.7, include the sane
-    # "typing.ForwardRef" type in this union;
-    Union[str, HINT_PEP484_FORWARDREF_TYPE]
-    if IS_PYTHON_AT_LEAST_3_7 else
-    # Else, the active Python interpreter targets Python 3.6. In this case,
-    # exclude the insane "typing._ForwardRef" type from this union. Naively
-    # including that type here induces fatal runtime exceptions resembling:
-    #     AttributeError: type object '_ForwardRef' has no attribute '_gorg'
-    # Since "Union[str]" literally reduces to simply "str", we prefer the
-    # latter here for clarity.
-    str
-)
+HINT_PEP484585_FORWARDREF_UNION: Any = Union[str, HINT_PEP484_FORWARDREF_TYPE]
 '''
 Union of all :pep:`484`- or :pep:`585`-compliant **forward reference types**
 (i.e., classes of all forward reference objects).

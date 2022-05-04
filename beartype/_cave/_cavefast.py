@@ -1051,30 +1051,24 @@ See Also
 # Regular expression types are also sufficiently obscure to warrant
 # formalization here.
 
-#FIXME: Once Python 3.6 support is dropped, this can be safely reduced to:
-#     RegexCompiledType = re.Pattern
-
 # Yes, this is the only reliable means of obtaining the type of compiled
 # regular expressions. For unknown reasons presumably concerning the archaic
 # nature of Python's regular expression support, this type is *NOT* publicly
 # exposed. While the private "re._pattern_type" attribute does technically
 # provide this type, it does so in a private and hence non-portable manner.
-RegexCompiledType: type = type(_re.compile(r''))
+RegexCompiledType: type = _re.Pattern
 '''
 Type of all **compiled regular expressions** (i.e., objects created and
 returned by the stdlib :func:`re.compile` function).
 '''
 
 
-#FIXME: Once Python 3.6 support is dropped, this can be safely reduced to:
-#     RegexMatchType = re.Match
-
 # Yes, this type is required for type validation at module scope elsewhere.
 # Yes, this is the most time-efficient means of obtaining this type. No, this
 # type is *NOT* directly importable. Although this type's classname is
 # published to be "_sre.SRE_Match", the "_sre" C extension provides no such
 # type for pure-Python importation. So it goes.
-RegexMatchType: type = type(_re.match(r'', ''))
+RegexMatchType: type = _re.Match
 '''
 Type of all **regular expression match objects** (i.e., objects returned by the
 :func:`re.match` function).

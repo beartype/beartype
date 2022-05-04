@@ -153,15 +153,17 @@ def test_add_func_scope_types_pass() -> None:
         types=types, func_scope=func_scope, is_unique=True)
     assert func_scope[types_scope_name] == types
 
-    #FIXME: Disable this until we drop Python 3.6 support. While Python >= 3.7
-    #preserves insertion order for sets, Python < 3.7 does *NOT*.
-    # # Assert that tuples of the same types but in different orders are
-    # # registrable via the same function but reduce to differing objects.
-    # hint_a = (int, str,)
-    # hint_b = (str, int,)
-    # hint_cached_a = _eval_registered_expr(register_typistry_tuple(hint_a))
-    # hint_cached_b = _eval_registered_expr(register_typistry_tuple(hint_b))
-    # assert hint_cached_a != hint_cached_b
+    # Assert this function registers tuples containing the same types in
+    # different orders to differing objects and thus preserving ordering.
+    types_a = (int, str,)
+    types_b = (str, int,)
+    types_scope_name_a = add_func_scope_types(
+        types=types_a, func_scope=func_scope, is_unique=True)
+    types_scope_name_b = add_func_scope_types(
+        types=types_b, func_scope=func_scope, is_unique=True)
+    assert func_scope[types_scope_name_a] == types_a
+    assert func_scope[types_scope_name_b] == types_b
+    assert func_scope[types_scope_name_a] != func_scope[types_scope_name_b]
 
 
 def test_add_func_scope_types_fail() -> None:

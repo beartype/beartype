@@ -53,7 +53,6 @@ def add_data(data_module: 'ModuleType') -> None:
         HintSignAnnotated,
         HintSignList,
     )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
     from beartype_test.a00_unit.data.data_type import (
         Class,
         Subclass,
@@ -172,6 +171,21 @@ def add_data(data_module: 'ModuleType') -> None:
                     ]),
                     # String constant.
                     HintPithUnsatisfiedMetadata('Of a Spicily sated',),
+                ),
+            ),
+
+            # Unhashable annotated of an isinstanceable type annotated by
+            # an unhashable mutable container.
+            HintPepMetadata(
+                hint=Annotated[str, []],
+                pep_sign=HintSignAnnotated,
+                piths_meta=(
+                    # String constant.
+                    HintPithSatisfiedMetadata(
+                        'Papally Ľust‐besmirched Merchet laws'),
+                    # List of string constants.
+                    HintPithUnsatisfiedMetadata([
+                        "Of our ôver‐crowdedly cowed crowd's opinion‐",]),
                 ),
             ),
 
@@ -510,27 +524,3 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
         ))
-
-        # If the active Python interpreter targets Python >= 3.7, the "typing"
-        # module is sufficiently sane to support subscripting the third-party
-        # "typing_extensions.Literal" factory by unhashable objects. Under
-        # Python 3.6, these type hints fail at subscription time with
-        # non-human-readable exceptions resembling:
-        #     TypeError: unhashable type: 'list'
-        if IS_PYTHON_AT_LEAST_3_7:
-            data_module.HINTS_PEP_META.extend((
-                # Unhashable annotated of an isinstanceable type annotated by
-                # an unhashable mutable container.
-                HintPepMetadata(
-                    hint=Annotated[str, []],
-                    pep_sign=HintSignAnnotated,
-                    piths_meta=(
-                        # String constant.
-                        HintPithSatisfiedMetadata(
-                            'Papally Ľust‐besmirched Merchet laws'),
-                        # List of string constants.
-                        HintPithUnsatisfiedMetadata([
-                            "Of our ôver‐crowdedly cowed crowd's opinion‐",]),
-                    ),
-                ),
-            ))

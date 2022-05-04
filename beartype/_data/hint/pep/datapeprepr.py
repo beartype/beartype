@@ -12,6 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype.typing import (
+    Dict,
+    FrozenSet,
+    Set,
+)
 from beartype._data.hint.pep.sign import datapepsigns
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
@@ -79,10 +84,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_9,
     IS_PYTHON_AT_MOST_3_8,
-    IS_PYTHON_AT_LEAST_3_7,
-    IS_PYTHON_3_6,
 )
-from typing import Dict, FrozenSet, Set
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -363,7 +365,7 @@ def _init() -> None:
     #   otherwise insane Python 3.6.x series having actually gotten this right.
     # * Python 3.8.x preserved this bad behaviour.
     # * Python 3.9.0 rectified this issue finally. *sigh*
-    if IS_PYTHON_AT_LEAST_3_7 and IS_PYTHON_AT_MOST_3_8:
+    if IS_PYTHON_AT_MOST_3_8:
         _HINT_TYPING_ATTR_NAME_TO_REPR_PREFIX.update({
             'AsyncContextManager': 'AbstractAsyncContextManager',
             'ContextManager': 'AbstractContextManager',
@@ -376,10 +378,8 @@ def _init() -> None:
     _HINT_TYPE_BASENAMES_TO_SIGN = {
         # ................{ PEP 484                           }................
         # All PEP 484-compliant forward references are necessarily instances of
-        # the same class. Unfortunately, this class was only publicized under
-        # Python >= 3.7 after its initial privatization under Python <= 3.6.
-        ('ForwardRef' if IS_PYTHON_AT_LEAST_3_7 else '_ForwardRef'): (
-            HintSignForwardRef),
+        # the same class.
+        'ForwardRef' : HintSignForwardRef,
 
         # All PEP 484-compliant type variables are necessarily instances of the
         # same class.
@@ -524,25 +524,6 @@ def _init() -> None:
         #     True
         'Protocol',
     }
-
-    # If the active Python interpreter targets Python 3.6...
-    #
-    # Gods... these are horrible. Thanks for nuthin', Python 3.6.
-    if IS_PYTHON_3_6:
-        # Map from the idiosyncratic machine-readable bare representations of
-        # the "typing.Match" and "typing.Pattern" objects, which unlike all
-        # other "typing"-based type hints are *NOT* prefixed by "typing"
-        # (e.g., "Pattern[~AnyStr]" rather than "typing.Pattern").
-        HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN.update({
-            'Match': HintSignMatch,
-            'Pattern': HintSignPattern,
-        })
-
-        # Shallowly ignore the unsubscripted "Generic" superclass whose
-        # idiosyncratic representation under Python 3.6 is "typing.Generic"
-        # rather than "<class 'Generic'>"". Note that logic above already
-        # handles the latter case.
-        _HINT_TYPING_ATTR_NAMES_IGNORABLE.add('Generic')
 
     # ..................{ CONSTRUCTION                      }..................
     # For the fully-qualified name of each quasi-standard typing module...

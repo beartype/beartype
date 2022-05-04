@@ -11,12 +11,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep586Exception
+from beartype.typing import Any
 from beartype._cave._cavefast import EnumMemberType, NoneType
 from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._data.datatyping import TypeException
-from typing import Any
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -143,60 +142,14 @@ def die_unless_hint_pep586(
                 )
 
 # ....................{ GETTERS                           }....................
-# If the active Python interpreter targets Python >= 3.7, define this getter to
-# return the standard "__args__" dunder tuple.
-if IS_PYTHON_AT_LEAST_3_7:
-    def get_hint_pep586_literals(
-        # Mandatory parameters.
-        hint: Any,
+def get_hint_pep586_literals(
+    # Mandatory parameters.
+    hint: Any,
 
-        # Optional parameters.
-        exception_cls: TypeException = BeartypeDecorHintPep586Exception,
-        exception_prefix: str = '',
-    ) -> tuple:
-
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
-
-        # If this hint is *NOT* PEP 586-compliant, raise an exception.
-        if get_hint_pep_sign(hint) is not HintSignLiteral:
-            raise exception_cls(
-                f'{exception_prefix}PEP 586 type hint {repr(hint)} neither '
-                f'"typing.Literal" nor "typing_extensions.Literal".'
-            )
-        # Else, this hint is PEP 586-compliant.
-
-        # Return the standard tuple of all literals subscripting this hint.
-        return hint.__args__
-# Else, the active Python interpreter targets Python 3.6. In this case, define
-# this getter to return the non-standard "__values__" dunder tuple declared by
-# the third-party "typing_extensions.Literal" type hint factory.
-else:
-    def get_hint_pep586_literals(
-        # Mandatory parameters.
-        hint: Any,
-
-        # Optional parameters.
-        exception_cls: TypeException = BeartypeDecorHintPep586Exception,
-        exception_prefix: str = '',
-    ) -> tuple:
-
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
-
-        # If this hint is *NOT* PEP 586-compliant, raise an exception.
-        if get_hint_pep_sign(hint) is not HintSignLiteral:
-            raise exception_cls(
-                f'{exception_prefix}PEP 586 type hint {repr(hint)} neither '
-                f'"typing.Literal" nor "typing_extensions.Literal".'
-            )
-        # Else, this hint is PEP 586-compliant.
-
-        # Return the non-standard tuple of all literals subscripting this hint.
-        return hint.__values__
-
-
-get_hint_pep586_literals.__doc__ = (
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep586Exception,
+    exception_prefix: str = '',
+) -> tuple:
     '''
     Tuple of zero or more literal objects subscripting the passed
     :pep:`586`-compliant type hint (i.e., subscription of either the
@@ -232,5 +185,19 @@ get_hint_pep586_literals.__doc__ = (
     Raises
     ----------
     :exc:`exception_cls`
-        If this object *not* a :pep:`586`-compliant type hint.
-    ''')
+        If this object is *not* a :pep:`586`-compliant type hint.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+
+    # If this hint is *NOT* PEP 586-compliant, raise an exception.
+    if get_hint_pep_sign(hint) is not HintSignLiteral:
+        raise exception_cls(
+            f'{exception_prefix}PEP 586 type hint {repr(hint)} neither '
+            f'"typing.Literal" nor "typing_extensions.Literal".'
+        )
+    # Else, this hint is PEP 586-compliant.
+
+    # Return the standard tuple of all literals subscripting this hint.
+    return hint.__args__

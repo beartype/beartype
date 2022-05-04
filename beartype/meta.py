@@ -86,7 +86,7 @@ Human-readable name of the license this package is licensed under.
 # submodule's docstring above.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-PYTHON_VERSION_MIN = '3.6.0'
+PYTHON_VERSION_MIN = '3.7.0'
 '''
 Human-readable minimum version of Python required by this package as a
 ``.``-delimited string.

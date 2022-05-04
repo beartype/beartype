@@ -14,6 +14,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
+from beartype.typing import (
+    Any,
+    Callable,
+    Optional,
+    Tuple,
+)
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
@@ -29,8 +35,6 @@ from beartype._util.hint.pep.utilpeptest import (
 )
 from beartype._util.hint.utilhintconv import sanify_hint_child
 from beartype._util.hint.utilhinttest import is_hint_ignorable
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
-from typing import Any, Callable, Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -285,20 +289,8 @@ class CauseSleuth(object):
             # Originates from an origin type and may thus be shallowly
             # type-checked against that type *AND is either...
             self.hint_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE and (
-                #FIXME: Ideally, this line should just resemble:
-                #    not is_hint_pep_args(hint_curr)
-                #Unfortunately, unsubscripted type hints under Python 3.6
-                #like "typing.List" are technically subscripted due to
-                #subclassing subscripted superclasses, which is insane. Due
-                #to this insanity, we currently ignore type variables for
-                #purposes of detecting subscription. Since this is awful,
-                #drop this as soon as we drop Python 3.6 support.
                 # Unsubscripted *OR*...
-                not (
-                    is_hint_pep_args(self.hint)
-                    if IS_PYTHON_AT_LEAST_3_7 else
-                    len(self.hint_childs)
-                ) or
+                not is_hint_pep_args(self.hint) or
                 #FIXME: Remove this branch *AFTER* deeply supporting all
                 #hints.
                 # Currently unsupported with deep type-checking...

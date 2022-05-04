@@ -15,7 +15,6 @@ as implemented by the :mod:`beartype.__init__` submodule.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS                             }....................
 def test_api_beartype() -> None:
@@ -33,10 +32,6 @@ def test_api_beartype() -> None:
     assert isinstance(beartype.__version_info__, tuple)
 
 
-# If the active Python interpreter targets Python 3.6 and thus fails to support
-# the PEP 562-compliant __getattr__() module dunder function required to
-# deprecate module attributes, ignore this test.
-@skip_if_python_version_less_than('3.7.0')
 def test_api_deprecations() -> None:
     '''
     Test all deprecated attributes importable from the public APIs of all

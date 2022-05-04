@@ -29,7 +29,7 @@ https://github.com/pytest-dev/pytest-asyncio/blob/master/pytest_asyncio/plugin.p
 
 # ....................{ IMPORTS                           }....................
 from asyncio import (
-    ensure_future,
+    create_task,
     get_event_loop_policy,
     new_event_loop,
     set_event_loop,
@@ -135,19 +135,11 @@ def pytest_pyfunc_call(pyfuncitem: 'Function') -> None:
             # asynchronous coroutine objects on each call.
             test_func_coroutine = test_func(*args, **kwargs)
 
-            #FIXME: Replace this call with the equivalent call to the more
-            #human-readable asyncio.create_task() function once we drop Python
-            #3.6 support, which lacks asyncio.create_task().
-
-            # Asynchronous task scheduling this coroutine to be subsequently
-            # asynchronously run under this event loop.
-            test_func_task = ensure_future(
-                test_func_coroutine, loop=event_loop)
-
-            # Synchronously run this task and thus this coroutine, ignoring the
-            # value returned by this coroutine (if any) while reraising any
-            # exception raised by this coroutine up the call stack to pytest.
-            event_loop.run_until_complete(test_func_task)
+            # Synchronously run a new asynchronous task implicitly scheduled to
+            # run this coroutine, ignoring the value returned by this coroutine
+            # (if any) while reraising any exception raised by this coroutine
+            # up the call stack to pytest.
+            event_loop.run_until_complete(test_func_coroutine)
 
             # Close this event loop.
             event_loop.close()

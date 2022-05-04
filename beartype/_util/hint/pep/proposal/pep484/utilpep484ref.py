@@ -12,23 +12,22 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-import typing
 from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
+from beartype.typing import (
+    Any,
+    ForwardRef,
+)
 from beartype._util.cache.utilcachecall import callable_cached
-from typing import Any
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ HINTS                             }....................
-# Conditionally define the "typing.ForwardRef" superclass depending on the
-# current Python version. This superclass was thankfully publicized under
-# Python >= 3.7 after its initial privatization under Python <= 3.6.
-HINT_PEP484_FORWARDREF_TYPE: Any = (
-    typing.ForwardRef if IS_PYTHON_AT_LEAST_3_7 else
-    typing._ForwardRef  # type: ignore [attr-defined]
-)
+#FIXME: Refactor this now-useless global away, please. Specifically:
+#* Globally replace all references to this global with references to
+#  "beartype.typing.ForwardRef" instead.
+#* Excise this global.
+HINT_PEP484_FORWARDREF_TYPE: Any = ForwardRef
 '''
 :pep:`484`-compliant **forward reference type** (i.e., class of all forward
 reference objects implicitly created by all :mod:`typing` type hint factories

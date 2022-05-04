@@ -12,7 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep484Exception
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
 from typing import Any, Generic
@@ -21,124 +20,8 @@ from typing import Any, Generic
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TESTERS                           }....................
-# If the active Python interpreter targets at least Python >= 3.7.0, implement
-# this function in the standard way.
-#
-# Sadly, Python 3.7.0 broke backward compatibility with the public API of the
-# "typing" module by removing the "typing.GenericMeta" metaclass previously
-# referenced by this function under Python 3.6.
-if IS_PYTHON_AT_LEAST_3_7:
-    def is_hint_pep484_generic(hint: object) -> bool:
-
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-            get_hint_pep484585_generic_type_or_none)
-
-        # If this hint is *NOT* a class, this hint is *NOT* an unsubscripted
-        # generic but could still be a subscripted generic (i.e., generic
-        # subscripted by one or more PEP-compliant child type hints). To
-        # decide, reduce this hint to the object originating this hint if any,
-        # enabling the subsequent test to test whether this origin object is an
-        # unsubscripted generic, which would then imply this hint to be a
-        # subscripted generic. If this strikes you as insane, you're not alone.
-        hint = get_hint_pep484585_generic_type_or_none(hint)
-
-        # Return true only if this hint is a subclass of the "typing.Generic"
-        # abstract base class (ABC), in which case this hint is a user-defined
-        # generic.
-        #
-        # Note that this test is robust against edge cases, as the "typing"
-        # module guarantees all user-defined classes subclassing one or more
-        # "typing" pseudo-superclasses to subclass the "typing.Generic"
-        # abstract base class (ABC) regardless of whether those classes did so
-        # explicitly. How? By type erasure, of course, the malignant gift that
-        # keeps on giving:
-        #     >>> import typing as t
-        #     >>> class MuhList(t.List): pass
-        #     >>> MuhList.__orig_bases__
-        #     (typing.List)
-        #     >>> MuhList.__mro__
-        #     (__main__.MuhList, list, typing.Generic, object)
-        #
-        # Note that:
-        # * This issubclass() call implicitly performs a surprisingly
-        #   inefficient search over the method resolution order (MRO) of all
-        #   superclasses of this hint. In theory, the cost of this search might
-        #   be circumventable by observing that this ABC is expected to reside
-        #   at the second-to-last index of the tuple exposing this MRO far all
-        #   generics by virtue of fragile implementation details violating
-        #   privacy encapsulation. In practice, this codebase is already
-        #   fragile enough.
-        # * The following logic superficially appears to implement the same
-        #   test *WITHOUT* the onerous cost of a search:
-        #       return len(get_hint_pep484_generic_bases_unerased_or_none(hint)) > 0
-        #   Why didn't we opt for that, then? Because this tester is routinely
-        #   passed objects that *CANNOT* be guaranteed to be PEP-compliant.
-        #   Indeed, the high-level is_hint_pep() tester establishing the
-        #   PEP-compliance of arbitrary objects internally calls this
-        #   lower-level tester to do so. Since the
-        #   get_hint_pep484_generic_bases_unerased_or_none() getter internally
-        #   reduces to returning the tuple of the general-purpose
-        #   "__orig_bases__" dunder attribute formalized by PEP 560, testing
-        #   whether that tuple is non-empty or not in no way guarantees this
-        #   object to be a PEP-compliant generic.
-        return is_type_subclass(hint, Generic)  # type: ignore[arg-type]
-# Else, the active Python interpreter targets Python 3.6.x. In this case,
-# implement this function specific to this Python version.
-else:
-    # Import the Python 3.6.x-specific metaclass required by this tester.
-    from typing import GenericMeta  # type: ignore[attr-defined]
-
-    def is_hint_pep484_generic(hint: object) -> bool:
-
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-            get_hint_pep484585_generic_type_or_none)
-        from beartype._util.hint.pep.utilpeptest import (
-            is_hint_pep_type_typing)
-
-        # If this hint is *NOT* a class, reduce this hint to the object
-        # originating this hint if any. See the above tester for details.
-        hint_type = get_hint_pep484585_generic_type_or_none(hint)
-
-        # Return true only if...
-        #
-        # Note that:
-        # * The Python >= 3.7.0-specific implementation of this tester does
-        #   *NOT* apply to Python < 3.7.0, as this metaclass unconditionally
-        #   raises exceptions when user-defined "typing" subclasses internally
-        #   requiring this metaclass are passed to the issubclass() builtin.
-        # * This tester intentionally avoids returning true for *ALL* generics
-        #   (including both those internally defined by the "typing" module and
-        #   those externally defined by third-party callers). Why? Because
-        #   generics internally defined by the "typing" module are effectively
-        #   *NOT* generics and only implemented as such under Python < 3.7.0
-        #   for presumably indefensible low-level reasons -- including:
-        #   * *ALL* callable types (e.g., "typing.Awaitable",
-        #     "typing.Callable", "typing.Coroutine", "typing.Generator").
-        #   * *MOST* container and iterable types (e.g., "typing.Dict",
-        #     "typing.List", "typing.Mapping", "typing.Tuple").
-        #
-        # If this tester returned true for *ALL* generics, downstream callers
-        # would have no means of distinguishing genuine generics from
-        # disingenuous "typing" pseudo-generics.
-        return (
-            # The metaclass of this hint is the "typing.GenericMeta" metaclass
-            # *AND*...
-            isinstance(hint_type, GenericMeta) and
-            # This hint is either...
-            (
-                # A parametrization of the "typing.Generic" class (e.g.,
-                # "Generic[S, T]") *OR*...
-                hint_type is Generic or
-                # A subclass *NOT* defined by the "typing" module. See above.
-                not is_hint_pep_type_typing(hint_type)
-            )
-        )
-
-
-# Docstring for this function regardless of implementation details.
-is_hint_pep484_generic.__doc__ = '''
+def is_hint_pep484_generic(hint: object) -> bool:
+    '''
     ``True`` only if the passed object is a :pep:`484`-compliant **generic**
     (i.e., object that may *not* actually be a class originally subclassing at
     least one PEP-compliant type hint defined by the :mod:`typing` module).
@@ -169,6 +52,60 @@ is_hint_pep484_generic.__doc__ = '''
     bool
         ``True`` only if this object is a :mod:`typing` generic.
     '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+        get_hint_pep484585_generic_type_or_none)
+
+    # If this hint is *NOT* a class, this hint is *NOT* an unsubscripted
+    # generic but could still be a subscripted generic (i.e., generic
+    # subscripted by one or more PEP-compliant child type hints). To
+    # decide, reduce this hint to the object originating this hint if any,
+    # enabling the subsequent test to test whether this origin object is an
+    # unsubscripted generic, which would then imply this hint to be a
+    # subscripted generic. If this strikes you as insane, you're not alone.
+    hint = get_hint_pep484585_generic_type_or_none(hint)
+
+    # Return true only if this hint is a subclass of the "typing.Generic"
+    # abstract base class (ABC), in which case this hint is a user-defined
+    # generic.
+    #
+    # Note that this test is robust against edge cases, as the "typing"
+    # module guarantees all user-defined classes subclassing one or more
+    # "typing" pseudo-superclasses to subclass the "typing.Generic"
+    # abstract base class (ABC) regardless of whether those classes did so
+    # explicitly. How? By type erasure, of course, the malignant gift that
+    # keeps on giving:
+    #     >>> import typing as t
+    #     >>> class MuhList(t.List): pass
+    #     >>> MuhList.__orig_bases__
+    #     (typing.List)
+    #     >>> MuhList.__mro__
+    #     (__main__.MuhList, list, typing.Generic, object)
+    #
+    # Note that:
+    # * This issubclass() call implicitly performs a surprisingly
+    #   inefficient search over the method resolution order (MRO) of all
+    #   superclasses of this hint. In theory, the cost of this search might
+    #   be circumventable by observing that this ABC is expected to reside
+    #   at the second-to-last index of the tuple exposing this MRO far all
+    #   generics by virtue of fragile implementation details violating
+    #   privacy encapsulation. In practice, this codebase is already
+    #   fragile enough.
+    # * The following logic superficially appears to implement the same
+    #   test *WITHOUT* the onerous cost of a search:
+    #       return len(get_hint_pep484_generic_bases_unerased_or_none(hint)) > 0
+    #   Why didn't we opt for that, then? Because this tester is routinely
+    #   passed objects that *CANNOT* be guaranteed to be PEP-compliant.
+    #   Indeed, the high-level is_hint_pep() tester establishing the
+    #   PEP-compliance of arbitrary objects internally calls this
+    #   lower-level tester to do so. Since the
+    #   get_hint_pep484_generic_bases_unerased_or_none() getter internally
+    #   reduces to returning the tuple of the general-purpose
+    #   "__orig_bases__" dunder attribute formalized by PEP 560, testing
+    #   whether that tuple is non-empty or not in no way guarantees this
+    #   object to be a PEP-compliant generic.
+    return is_type_subclass(hint, Generic)  # type: ignore[arg-type]
 
 # ....................{ GETTERS                           }....................
 @callable_cached

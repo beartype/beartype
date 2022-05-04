@@ -102,28 +102,9 @@ which introduced several new public attributes to the :mod:`typing` module
 '''
 
 
-#FIXME: After dropping Python 3.6 support:
-#* Refactor all code conditionally testing this global to be unconditional.
-#* Remove this global.
-#* Remove all decorators resembling:
-#  @skip_if_python_version_less_than('3.7.0')
-IS_PYTHON_AT_LEAST_3_7 = IS_PYTHON_AT_LEAST_3_7_2 or version_info >= (3, 7)
-'''
-``True`` only if the active Python interpreter targets at least Python 3.7.0.
-'''
-
-
 #FIXME: After dropping Python 3.7 support, *REMOVE* all code conditionally
 #testing this global.
 IS_PYTHON_3_7 = version_info[:2] == (3, 7)
 '''
 ``True`` only if the active Python interpreter targets exactly Python 3.7.
-'''
-
-
-#FIXME: After dropping Python 3.6 support, *REMOVE* all code conditionally
-#testing this global.
-IS_PYTHON_3_6 = not IS_PYTHON_AT_LEAST_3_7
-'''
-``True`` only if the active Python interpreter targets exactly Python 3.6.
 '''

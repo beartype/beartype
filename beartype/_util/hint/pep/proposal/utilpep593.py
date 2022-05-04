@@ -11,11 +11,14 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep593Exception
+from beartype.typing import (
+    Any,
+    Optional,
+    Tuple,
+)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._data.datatyping import TypeException
-from typing import Any, Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -189,73 +192,9 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
         return False
 
 # ....................{ GETTERS                           }....................
-# If the active Python interpreter targets Python >= 3.7, define these getters
-# to return standard dunder attributes.
-if IS_PYTHON_AT_LEAST_3_7:
-    #FIXME: Unit test us up, please.
-    def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
-
-        # If this object is *NOT* a metahint, raise an exception.
-        die_unless_hint_pep593(hint)
-        # Else, this object is a metahint.
-
-        # Return the tuple of one or more objects annotating this metahint. By
-        # design, this tuple is guaranteed to be non-empty: e.g.,
-        #     >>> from typing import Annotated
-        #     >>> Annotated[int]
-        #     TypeError: Annotated[...] should be used with at least two
-        #     arguments (a type and an annotation).
-        return hint.__metadata__
-
-
-    #FIXME: Unit test us up, please.
-    def get_hint_pep593_metahint(hint: Any) -> Any:
-
-        # If this object is *NOT* a metahint, raise an exception.
-        die_unless_hint_pep593(hint)
-        # Else, this object is a metahint.
-
-        # Return the PEP-compliant type hint annotated by this metahint.
-        #
-        # Note that most edge-case PEP-compliant type hints store their data in
-        # hint-specific dunder attributes (e.g., "__supertype__" for new type
-        # aliases, "__forward_arg__" for forward references). Some, however,
-        # coopt and misuse standard dunder attributes commonly used for
-        # entirely different purposes. PEP 593-compliant type metahints are the
-        # latter sort, preferring to store their class in the standard
-        # "__origin__" attribute commonly used to store the origin type of type
-        # hints originating from a standard class rather than in a
-        # metahint-specific dunder attribute.
-        return hint.__origin__
-# Else, the active Python interpreter targets Python 3.6. In this case, define
-# this getter to return slices of the non-standard "__args__" dunder attribute
-# declared by the third-party "typing_extensions.Annotated" type hint factory.
-else:
-    def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
-
-        # If this object is *NOT* a metahint, raise an exception.
-        die_unless_hint_pep593(hint)
-        # Else, this object is a metahint.
-
-        # Return the tuple of one or more objects annotating this metahint.
-        # Since this is Python 3.6, this metahint *MUST* be a subscription of
-        # the third-party "typing_extensions.Annotated" type hint factory.
-        # Under Python 3.6, this factory stores this tuple as the second item
-        # of the non-standard "__args__" dunder attribute tuple. (I sigh.)
-        return hint.__args__[1]
-
-
-    def get_hint_pep593_metahint(hint: Any) -> Any:
-
-        # If this object is *NOT* a metahint, raise an exception.
-        die_unless_hint_pep593(hint)
-        # Else, this object is a metahint.
-
-        # Return the PEP-compliant type hint annotated by this metahint.
-        return hint.__args__[0]
-
-
-get_hint_pep593_metadata.__doc__ = '''
+#FIXME: Unit test us up, please.
+def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
+    '''
     Tuple of one or more arbitrary objects annotating the passed
     :pep:`593`-compliant **type metahint** (i.e., subscription of the
     :attr:`typing.Annotated` singleton).
@@ -289,8 +228,22 @@ get_hint_pep593_metadata.__doc__ = '''
         Related getter.
     '''
 
+    # If this object is *NOT* a metahint, raise an exception.
+    die_unless_hint_pep593(hint)
+    # Else, this object is a metahint.
 
-get_hint_pep593_metahint.__doc__ = '''
+    # Return the tuple of one or more objects annotating this metahint. By
+    # design, this tuple is guaranteed to be non-empty: e.g.,
+    #     >>> from typing import Annotated
+    #     >>> Annotated[int]
+    #     TypeError: Annotated[...] should be used with at least two
+    #     arguments (a type and an annotation).
+    return hint.__metadata__
+
+
+#FIXME: Unit test us up, please.
+def get_hint_pep593_metahint(hint: Any) -> Any:
+    '''
     PEP-compliant type hint annotated by the passed :pep:`593`-compliant **type
     metahint** (i.e., subscription of the :attr:`typing.Annotated` singleton).
 
@@ -323,3 +276,20 @@ get_hint_pep593_metahint.__doc__ = '''
     :func:`get_hint_pep593_metadata`
         Related getter.
     '''
+
+    # If this object is *NOT* a metahint, raise an exception.
+    die_unless_hint_pep593(hint)
+    # Else, this object is a metahint.
+
+    # Return the PEP-compliant type hint annotated by this metahint.
+    #
+    # Note that most edge-case PEP-compliant type hints store their data in
+    # hint-specific dunder attributes (e.g., "__supertype__" for new type
+    # aliases, "__forward_arg__" for forward references). Some, however,
+    # coopt and misuse standard dunder attributes commonly used for
+    # entirely different purposes. PEP 593-compliant type metahints are the
+    # latter sort, preferring to store their class in the standard
+    # "__origin__" attribute commonly used to store the origin type of type
+    # hints originating from a standard class rather than in a
+    # metahint-specific dunder attribute.
+    return hint.__origin__

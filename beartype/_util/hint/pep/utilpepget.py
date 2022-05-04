@@ -12,11 +12,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
-import typing
 from beartype.meta import URL_ISSUES
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepSignException,
+)
+from beartype.typing import (
+    Any,
+    Optional,
 )
 from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._data.hint.pep.datapeprepr import (
@@ -29,7 +32,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
     HintSignTypedDict,
-    HintSignTypeVar,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
@@ -44,10 +46,8 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_MOST_3_9,
     IS_PYTHON_AT_LEAST_3_9,
-    IS_PYTHON_AT_LEAST_3_7,
 )
 from beartype._data.datatyping import TupleTypes
-from typing import Any, Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -89,42 +89,14 @@ if IS_PYTHON_AT_LEAST_3_9:
             # Else, return this tuple as is.
             hint_args
         )
-# Else if the active Python interpreter targets Python >= 3.7, implement this
-# getter to directly access the "__args__" dunder attribute.
-elif IS_PYTHON_AT_LEAST_3_7:
+# Else, the active Python interpreter targets Python < 3.9. In this case,
+# implement this getter to directly access the "__args__" dunder attribute.
+else:
     def get_hint_pep_args(hint: object) -> tuple:
 
         # Return the value of the "__args__" dunder attribute if this hint
         # defines this attribute *OR* the empty tuple otherwise.
         return getattr(hint, '__args__', ())
-#FIXME: Drop this like hot lead after dropping Python 3.6 support.
-# Else, the active Python interpreter targets Python 3.6. In this case...
-#
-# Gods... this is horrible. Thanks for nuthin', Python 3.6.
-else:
-    def get_hint_pep_args(hint: object) -> tuple:
-
-        # If this hint is a poorly designed Python 3.6-specific "type alias",
-        # this hint is a subscription of either the "typing.Match" or
-        # "typing.Pattern" objects. In this case, this hint declares a
-        # non-standard "type_var" instance variable whose value is either
-        # "typing.AnyStr", "str", or "bytes". Create and return a new 1-tuple
-        # containing only the value of this variable.
-        if isinstance(hint, typing._TypeAlias):  # type: ignore[attr-defined]
-            return (hint.type_var,)
-
-        # Return the value of the "__args__" dunder attribute if this hint
-        # defines this attribute *OR* the empty tuple otherwise.
-        #
-        # Note this hint is a poorly designed Python 3.6-specific "generic
-        # meta." In this case, this hint declares the standard "__args__"
-        # dunder attribute in a non-standard way. Specifically, the trailing
-        # "or ()" test below is needed to handle undocumented edge cases under
-        # the Python 3.6-specific "typing" implementation:
-        #     >>> import typing as t
-        #     >>> t.Tuple.__args__   # yes, this is total bullocks
-        #     None
-        return getattr(hint, '__args__', ()) or ()
 
 # Document this function regardless of implementation details above.
 get_hint_pep_args.__doc__ = '''
@@ -211,9 +183,10 @@ if IS_PYTHON_AT_LEAST_3_9:
 
         # Return this attribute.
         return hint_pep_typevars
-# Else if the active Python interpreter targets Python >= 3.7, implement
-# this function to directly access the "__parameters__" dunder attribute.
-elif IS_PYTHON_AT_LEAST_3_7:
+# Else, the active Python interpreter targets Python < 3.9. In this case,
+# implement this function to directly access the "__parameters__" dunder
+# attribute.
+else:
     def get_hint_pep_typevars(hint: object) -> TupleTypes:
 
         # Value of the "__parameters__" dunder attribute on this object if this
@@ -227,42 +200,6 @@ elif IS_PYTHON_AT_LEAST_3_7:
         #   subclasses during PEP 560-style type erasure. Finally: they did
         #   something slightly right.
         return getattr(hint, '__parameters__', ())
-#FIXME: Drop this like hot lead after dropping Python 3.6 support.
-# Else, the active Python interpreter targets Python 3.6. In this case...
-#
-# Gods... this is horrible. Thanks for nuthin', Python 3.6.
-else:
-    def get_hint_pep_typevars(hint: object) -> TupleTypes:
-
-        # If this hint is a poorly designed Python 3.6-specific "type alias",
-        # this hint is a subscription of either the "typing.Match" or
-        # "typing.Pattern" objects. In this case, this hint declares a
-        # non-standard "type_var" instance variable whose value is either
-        # "typing.AnyStr", "str", or "bytes". Since only the former is an
-        # actual type variable, however, we further test that condition.
-        if isinstance(hint, typing._TypeAlias):  # type: ignore[attr-defined]
-            # Sign uniquely identifying this hint if any *OR* "None" otherwise.
-            hint_sign = get_hint_pep_sign_or_none(hint.type_var)
-
-            # If this value is a type variable, return a new 1-tuple containing
-            # only this type variable.
-            if hint_sign is HintSignTypeVar:
-                return (hint.type_var,)
-            # Else, this value is *NOT* a type variable. In this case, return
-            # the empty tuple.
-            else:
-                return ()
-
-        # Else, this hint is a poorly designed Python 3.6-specific "generic
-        # meta." In this case, this hint declares the standard
-        # "__parameters__" dunder instance variable in a non-standard way.
-        # Specifically, the trailing "or ()" test below is needed to handle
-        # undocumented edge cases under the Python 3.6-specific implementation
-        # of the "typing" module:
-        #       >>> import typing as t
-        #       >>> t.Union.__parameters__   # yes, this is total bullocks
-        #       None
-        return getattr(hint, '__parameters__', ()) or ()
 
 
 # Document this function regardless of implementation details above.
@@ -655,63 +592,8 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     return None
 
 # ....................{ GETTERS ~ origin                  }....................
-# If the active Python interpreter targets at least Python >= 3.7, implement
-# this function to access the standard "__origin__" dunder instance variable
-# whose value is the origin type originating this hint.
-if IS_PYTHON_AT_LEAST_3_7:
-    def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
-
-        # Return this hint's origin object if any *OR* "None" otherwise.
-        return getattr(hint, '__origin__', None)
-
-#FIXME: Drop this like hot lead after dropping Python 3.6 support.
-# Else, the active Python interpreter targets Python 3.6. In this case...
-#
-# Gods... this is horrible. Thanks for nuthin', Python 3.6.
-else:
-    from beartype._util.utilobject import SENTINEL
-
-    def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
-
-        # If this hint is a poorly designed Python 3.6-specific "type
-        # alias", this hint is a subscription of either the "typing.Match"
-        # or "typing.Pattern" objects. In this case, this hint declares a
-        # non-standard "impl_type" instance variable whose value is either
-        # the "re.Match" or "re.Pattern" class. Return that class.
-        if isinstance(hint, typing._TypeAlias):  # type: ignore[attr-defined]
-            return hint.impl_type
-
-        # This hint's origin object if any *OR* "None" otherwise.
-        #
-        # If this hint is a poorly designed Python 3.6-specific "generic meta,"
-        # this hint declares a non-standard "__extra__" dunder instance
-        # variable whose value is the origin object originating this hint. The
-        # "__origin__" dunder instance variable *DOES* exist under Python 3.6
-        # but is typically the identity class referring to the same "typing"
-        # singleton (e.g., "typing.List" for "typing.List[int]") rather than
-        # the origin type (e.g., "list" for "typing.List[int]") and is thus
-        # completely useless for everything.
-        #
-        # Note that we intentionally avoid defaulting "hint_extra" to "None"
-        # if that attribute is undefined. Under Python 3.6, user-defined PEP
-        # 484-compliant generics define:
-        # * "hint.__extra__" to be "None".
-        # * "hint.__origin__" to be the desired origin.
-        #
-        # Altogether, this means we *MUST* distinguish these two cases with a
-        # sentinel placeholder that is explicitly *NOT* "None".
-        #
-        # Welcome to Typing Hell. We hope you really enjoy pain, because... I
-        # mean, just look around.
-        hint_extra = getattr(hint, '__extra__', SENTINEL)
-        return (
-            hint_extra
-            if hint_extra is not None else
-            getattr(hint, '__origin__', None)
-        )
-
-# Document this function regardless of implementation details above.
-get_hint_pep_origin_or_none.__doc__ = '''
+def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
+    '''
     **Unsafe origin object** (i.e., arbitrary object possibly related to the
     passed PEP-compliant type hint but *not* necessarily a non-:mod:`typing`
     class such that *all* objects satisfying this hint are instances of this
@@ -786,6 +668,9 @@ get_hint_pep_origin_or_none.__doc__ = '''
         >>> typing.Union[int, str].__origin__
         typing.Union
     '''
+
+    # Return this hint's origin object if any *OR* "None" otherwise.
+    return getattr(hint, '__origin__', None)
 
 # ....................{ GETTERS ~ origin : type           }....................
 def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:

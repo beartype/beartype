@@ -17,7 +17,8 @@ from beartype.roar import (
     BeartypeDecorHintPep484Exception,
     BeartypeDecorHintPep585DeprecationWarning,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype.typing import NoReturn
+from beartype._data.datatyping import TypeException
 from beartype._data.hint.pep.datapeprepr import (
     HINTS_PEP484_REPR_PREFIX_DEPRECATED)
 from beartype._data.hint.pep.sign.datapepsignset import (
@@ -25,6 +26,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_TYPE_MIMIC,
 )
 from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
     is_hint_pep484_ignorable_or_none,
 )
@@ -32,14 +34,8 @@ from beartype._util.hint.pep.proposal.utilpep544 import (
     is_hint_pep544_ignorable_or_none)
 from beartype._util.hint.pep.proposal.utilpep593 import (
     is_hint_pep593_ignorable_or_none)
-from beartype._util.mod.utilmodule import (
-    get_object_module_name,
-    get_object_module_name_or_none,
-)
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
+from beartype._util.mod.utilmodule import get_object_module_name_or_none
 from beartype._util.utilobject import get_object_type_unless_type
-from beartype._data.datatyping import TypeException
-from typing import NoReturn
 from warnings import warn
 
 # See the "beartype.cave" submodule for further commentary.
@@ -652,106 +648,8 @@ def is_hint_pep_typing(hint: object) -> bool:
     )
 
 
-# If the active Python interpreter targets at least Python 3.7 and is thus
-# sane enough to support the normal implementation of this tester, do so.
-if IS_PYTHON_AT_LEAST_3_7:
-    def is_hint_pep_type_typing(hint: object) -> bool:
-
-        # This hint if this hint is a class *OR* this hint's class otherwise.
-        hint_type = get_object_type_unless_type(hint)
-        # print(f'pep_type_typing({repr(hint)}): {get_object_module_name(hint_type)}')
-
-        # Return true only if this type is defined by a typing module.
-        #
-        # Note that this implementation could probably be reduced to the
-        # leading portion of the body of the get_hint_pep_sign_or_none()
-        # function testing this object's representation. While certainly more
-        # compact and convenient than the current approach, that refactored
-        # approach would also be considerably more fragile, failure-prone, and
-        # subject to whimsical "improvements" in the already overly hostile
-        # "typing" API. Why? Because the get_hint_pep_sign_or_none() function:
-        # * Parses the machine-readable string returned by the __repr__()
-        #   dunder method of "typing" types. Since that string is *NOT*
-        #   standardized by PEP 484 or any other PEP, "typing" authors remain
-        #   free to violate this pseudo-standard in any manner and at any time
-        #   of their choosing.
-        # * Suffers common edge cases for "typing" types whose __repr__()
-        #   dunder methods fail to comply with the non-standard implemented by
-        #   their sibling types. This includes the common "TypeVar" type.
-        # * Calls this tester function to decide whether the passed object is a
-        #   PEP-compliant type hint or not before subjecting that object to
-        #   further introspection, which would clearly complicate implementing
-        #   this tester function in terms of that getter function.
-        #
-        # In contrast, the current approach only tests the standard
-        # "__module__" dunder attribute and is thus significantly more robust
-        # against whimsical destruction by "typing" authors. Note that there
-        # might exist an alternate means of deciding this boolean, documented
-        # here merely for completeness:
-        #     try:
-        #         isinstance(obj, object)
-        #         return False
-        #     except TypeError as type_error:
-        #         return str(type_error).endswith(
-        #             'cannot be used with isinstance()')
-        #
-        # The above effectively implements an Aikido throw by using the fact
-        # that "typing" types prohibit isinstance() calls against those types.
-        # While clever (and deliciously obnoxious), the above logic:
-        # * Requires catching exceptions in the common case and is thus *MUCH*
-        #   less efficient than the preferable approach implemented here.
-        # * Assumes that *ALL* "typing" types prohibit such calls. Sadly, only
-        #   a proper subset of these types prohibit such calls.
-        # * Assumes that those "typing" types that do prohibit such calls raise
-        #   exceptions with reliable messages across *ALL* Python versions.
-        #
-        # In short, there is no general-purpose clever solution. *sigh*
-        return hint_type.__module__ in TYPING_MODULE_NAMES
-# Else, the active Python interpreter targets exactly Python 3.6. In this case,
-# define this tester to circumvent Python 3.6-specific issues. Notably, the
-# implementation of the "typing" module under this major version harmfully
-# modifies the fully-qualified module names advertised by some but *NOT* all
-# "collections.abc" superclasses to be "typing" rather than "collections.abc".
-# This absolute insanity appears to have something inexplicable to do with
-# internal misuse of the private "collections.abc" caches by this
-# implementation of the "typing" module. Although the exact cause is unclear,
-# the resolution is simply to explicitly test for and reject "collections.abc"
-# superclasses passed to this Python 3.6-specific tester implementation.
-else:
-    def is_hint_pep_type_typing(hint: object) -> bool:
-
-        # This hint if this hint is a class *OR* this hint's class otherwise.
-        hint_type = get_object_type_unless_type(hint)
-        # print(f'pep_type_typing({repr(hint)}): {repr(hint_type)} {repr(get_object_module_name(hint_type))}')
-
-        # Return true only if...
-        return (
-            # This type pretends to be defined by a typing module *AND*...
-            get_object_module_name(hint_type) in TYPING_MODULE_NAMES and
-            # This type is *NOT* actually a superclass defined by the
-            # "collections.abc" submodule. Ideally, we would simply uncomment
-            # the following test:
-            #     not (
-            #         isinstance(hint, type) and
-            #         getattr(collections_abc, hint.__name__, None) is hint
-            #     )
-            #
-            # Insanely, that seemingly sane test returns false positives for
-            # both "typing.Hashable" and "typing.Sized", which appear to be
-            # literally replacing "collections.abc.Hashable" and
-            # "collections.abc.Sized" with themselves... somehow.
-            #
-            # Equally insanely, "typing.Generator" retains a sane
-            # representation when accessed as "typing.Generator" but *NOT* when
-            # accessed as "collections.abc.Generator" -- the latter of which
-            # returns this insane representation. Ergo, we explicitly detect
-            # and reject the latter. We have no idea what's happening here and
-            # can only wish for the hasty death of Python 3.6. So much rage.
-            repr(hint) != "<class 'typing.Generator'>"
-        )
-
-
-is_hint_pep_type_typing.__doc__ = '''
+def is_hint_pep_type_typing(hint: object) -> bool:
+    '''
     ``True`` only if either the passed object is defined by a **typing module**
     (i.e., module officially declaring attributes usable for creating
     PEP-compliant type hints accepted by both static and runtime type checkers)
@@ -775,6 +673,57 @@ is_hint_pep_type_typing.__doc__ = '''
         * If this object is a class, this class is defined by a typing module.
         * Else, the class of this object is defined by a typing module.
     '''
+
+    # This hint if this hint is a class *OR* this hint's class otherwise.
+    hint_type = get_object_type_unless_type(hint)
+    # print(f'pep_type_typing({repr(hint)}): {get_object_module_name(hint_type)}')
+
+    # Return true only if this type is defined by a typing module.
+    #
+    # Note that this implementation could probably be reduced to the
+    # leading portion of the body of the get_hint_pep_sign_or_none()
+    # function testing this object's representation. While certainly more
+    # compact and convenient than the current approach, that refactored
+    # approach would also be considerably more fragile, failure-prone, and
+    # subject to whimsical "improvements" in the already overly hostile
+    # "typing" API. Why? Because the get_hint_pep_sign_or_none() function:
+    # * Parses the machine-readable string returned by the __repr__()
+    #   dunder method of "typing" types. Since that string is *NOT*
+    #   standardized by PEP 484 or any other PEP, "typing" authors remain
+    #   free to violate this pseudo-standard in any manner and at any time
+    #   of their choosing.
+    # * Suffers common edge cases for "typing" types whose __repr__()
+    #   dunder methods fail to comply with the non-standard implemented by
+    #   their sibling types. This includes the common "TypeVar" type.
+    # * Calls this tester function to decide whether the passed object is a
+    #   PEP-compliant type hint or not before subjecting that object to
+    #   further introspection, which would clearly complicate implementing
+    #   this tester function in terms of that getter function.
+    #
+    # In contrast, the current approach only tests the standard
+    # "__module__" dunder attribute and is thus significantly more robust
+    # against whimsical destruction by "typing" authors. Note that there
+    # might exist an alternate means of deciding this boolean, documented
+    # here merely for completeness:
+    #     try:
+    #         isinstance(obj, object)
+    #         return False
+    #     except TypeError as type_error:
+    #         return str(type_error).endswith(
+    #             'cannot be used with isinstance()')
+    #
+    # The above effectively implements an Aikido throw by using the fact
+    # that "typing" types prohibit isinstance() calls against those types.
+    # While clever (and deliciously obnoxious), the above logic:
+    # * Requires catching exceptions in the common case and is thus *MUCH*
+    #   less efficient than the preferable approach implemented here.
+    # * Assumes that *ALL* "typing" types prohibit such calls. Sadly, only
+    #   a proper subset of these types prohibit such calls.
+    # * Assumes that those "typing" types that do prohibit such calls raise
+    #   exceptions with reliable messages across *ALL* Python versions.
+    #
+    # In short, there is no general-purpose clever solution. *sigh*
+    return hint_type.__module__ in TYPING_MODULE_NAMES
 
 # ....................{ TESTERS ~ args                    }....................
 #FIXME: Overkill. Replace directly with a simple test, please.

@@ -100,7 +100,6 @@ jobs:
         # the "[tox]" subsection in "tox.ini") to be tested, which the
         # ${TOXENV} environment variable declared below exposes to "tox".
         tox-env:
-          - py36-coverage
           - py37-coverage
           - py38-coverage
           - py39-coverage
@@ -135,8 +134,6 @@ jobs:
         #   selecting the Python 3.11 pre-release reduces to:
         #     python-version: "3.11.0-alpha - 3.11.0"
         include:
-          - tox-env: py36-coverage
-            python-version: "3.6"
           - tox-env: py37-coverage
             python-version: "3.7"
           - tox-env: py38-coverage

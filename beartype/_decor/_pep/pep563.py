@@ -16,6 +16,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 import __future__
 from beartype.roar import BeartypeDecorHintPep563Exception
+from beartype.typing import (
+    Any,
+    FrozenSet,
+    Optional,
+)
 from beartype._decor._call import BeartypeCall
 from beartype._util.func.utilfuncscope import (
     CallableScope,
@@ -24,10 +29,8 @@ from beartype._util.func.utilfuncscope import (
     is_func_nested,
 )
 from beartype._util.text.utiltextident import is_identifier
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
 from beartype._util.text.utiltextlabel import prefix_callable_decorated_pith
 from sys import modules as sys_modules
-from typing import Any, FrozenSet, Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -100,8 +103,6 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
 
     # If it is *NOT* the case that...
     if not (
-        # The active Python interpreter targets Python >= 3.7 *AND*...
-        IS_PYTHON_AT_LEAST_3_7 and
         # This callable was declared by on on-disk module *AND*...
         func.__module__ is not None and
         # This callable's module defined an "annotations" attribute to be

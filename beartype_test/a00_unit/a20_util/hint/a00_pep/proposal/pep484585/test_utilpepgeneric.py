@@ -70,7 +70,6 @@ def test_get_hint_pep484585_generic_type_or_none() -> None:
                 hint_pep_meta.hint) is hint_pep_meta.generic_type
 
     #FIXME: Uncomment if we ever want to exercise extreme edge cases. *shrug*
-    # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
     # from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     #
     # # Assert this getter returns the expected type origin for all

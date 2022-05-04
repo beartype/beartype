@@ -16,7 +16,6 @@ third-party static type-checkers and hence :pep:`561`.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test.util.mark.pytskip import (
-    skip_if_python_version_less_than,
     skip_if_pypy,
     skip_unless_package,
 )
@@ -26,7 +25,6 @@ from beartype_test.util.mark.pytskip import (
 
 # If the third-party "mypy" package satisfying this minimum version is
 # unavailable, skip this test. Note that:
-#
 # * "mypy" is the reference standard for static type-checking in Python.
 # * Unbelievably, "mypy" violates PEP 8 versioning standards by failing to
 #   define the "mypy.__init__.__version__" attribute, which means that passing
@@ -37,21 +35,14 @@ from beartype_test.util.mark.pytskip import (
 #   @skip_unless_module_attribute decorator. For sanity, we instead currently
 #   accept the importability of the "mypy" package as sufficient, which it
 #   absolutely isn't, but what you gonna do, right?
-
-# Skip this "mypy"-specific functional test unless all of the following apply:
 #
+# Skip this "mypy"-specific functional test unless all of the following apply:
 # * The "mypy" package is unimportable under the active Python interpreter.
 # * The active Python interpreter is *NOT* PyPy. mypy is currently incompatible
 #   with PyPy for inscrutable reasons that should presumably be fixed at some
 #   future point. See also:
 #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
-# * The active Python interpreter targets at least Python >= 3.7. While
-#   supporting "mypy" under Python 3.6 would of course be feasible, doing so is
-#   non-trivial due to the non-standard implementation of the "typing" module
-#   under Python 3.6. Moreover, Python 3.6 is obsolete. Ergo, there's no
-#   tangible benefits to doing so.
 @skip_unless_package('mypy')
-@skip_if_python_version_less_than('3.7.0')
 @skip_if_pypy()
 def test_pep561_mypy() -> None:
     '''

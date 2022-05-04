@@ -50,7 +50,6 @@ def add_data(data_module: 'ModuleType') -> None:
         HintSignList,
         HintSignLiteral,
     )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
         HintPithSatisfiedMetadata,
@@ -67,10 +66,7 @@ def add_data(data_module: 'ModuleType') -> None:
             HintPepMetadata(
                 hint=Literal[None],
                 pep_sign=HintSignLiteral,
-                # "typing_extensions.Literal" type hints define a non-standard
-                # "__values__" rather than standard "__args__" dunder tuple
-                # under Python 3.6 – for unknown and indefensible reasons.
-                is_args=IS_PYTHON_AT_LEAST_3_7,
+                is_args=True,
                 piths_meta=(
                     # "None" singleton defined by the same syntax.
                     HintPithSatisfiedMetadata(None),
@@ -93,7 +89,7 @@ def add_data(data_module: 'ModuleType') -> None:
             HintPepMetadata(
                 hint=Literal[True],
                 pep_sign=HintSignLiteral,
-                is_args=IS_PYTHON_AT_LEAST_3_7,
+                is_args=True,
                 piths_meta=(
                     # Boolean constant defined by the same syntax.
                     HintPithSatisfiedMetadata(True),
@@ -124,7 +120,7 @@ def add_data(data_module: 'ModuleType') -> None:
             HintPepMetadata(
                 hint=Literal[0x2a],
                 pep_sign=HintSignLiteral,
-                is_args=IS_PYTHON_AT_LEAST_3_7,
+                is_args=True,
                 piths_meta=(
                     # Integer constant defined by the same syntax.
                     HintPithSatisfiedMetadata(0x2a),
@@ -156,7 +152,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 hint=Literal[
                     b"Worthy, 'vain truthiness of (very invective-elected)"],
                 pep_sign=HintSignLiteral,
-                is_args=IS_PYTHON_AT_LEAST_3_7,
+                is_args=True,
                 piths_meta=(
                     # Byte string constant defined by the same syntax.
                     HintPithSatisfiedMetadata(
@@ -194,7 +190,7 @@ def add_data(data_module: 'ModuleType') -> None:
             HintPepMetadata(
                 hint=Literal['Thanklessly classed, nominal'],
                 pep_sign=HintSignLiteral,
-                is_args=IS_PYTHON_AT_LEAST_3_7,
+                is_args=True,
                 piths_meta=(
                     # Unicode string constant defined by the same syntax.
                     HintPithSatisfiedMetadata('Thanklessly classed, nominal'),
@@ -231,7 +227,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     NOMENCLATURE_WEATHER_VANES_OF
                 ],
                 pep_sign=HintSignLiteral,
-                is_args=IS_PYTHON_AT_LEAST_3_7,
+                is_args=True,
                 piths_meta=(
                     # Enumeration member accessed by the same syntax.
                     HintPithSatisfiedMetadata(
@@ -326,7 +322,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                 ],
                 pep_sign=HintSignLiteral,
-                is_args=IS_PYTHON_AT_LEAST_3_7,
+                is_args=True,
                 piths_meta=(
                     # Literal objects subscripting this literal union.
                     HintPithSatisfiedMetadata(None),

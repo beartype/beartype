@@ -13,6 +13,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
+from beartype.typing import (
+    Any,
+    Tuple,
+    TypeVar,
+    Union,
+)
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignType,
@@ -26,24 +32,16 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
     get_hint_pep484585_args_1)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     HINT_PEP484585_FORWARDREF_UNION)
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_7
-from typing import Any, Tuple, Type, TypeVar, Union
+from typing import (
+    Type as typing_Type,  # <-- intentional to distinguish from "type" below
+)
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ HINTS ~ private                   }....................
-_HINT_PEP484585_SUBCLASS_ARGS_1_UNION: Any = (
-    # If the active Python interpreter targets Python >= 3.7, include the sane
-    # "typing.TypeVar" type in this union;
-    Union[type, Tuple[type], TypeVar, HINT_PEP484585_FORWARDREF_UNION,]
-    if IS_PYTHON_AT_LEAST_3_7 else
-    # Else, the active Python interpreter targets Python 3.6. In this case,
-    # exclude the insane "typing.TypeVar" type from this union. Naively
-    # including that type here induces fatal runtime exceptions resembling:
-    #     AttributeError: type object 'TypeVar' has no attribute '_gorg'
-    Union[type, Tuple[type], HINT_PEP484585_FORWARDREF_UNION,]
-)
+_HINT_PEP484585_SUBCLASS_ARGS_1_UNION: Any = Union[
+    type, Tuple[type], TypeVar, HINT_PEP484585_FORWARDREF_UNION,]
 '''
 Union of the types of all permissible :pep:`484`- or :pep:`585`-compliant
 **subclass type hint arguments** (i.e., PEP-compliant child type hints
@@ -227,7 +225,7 @@ def reduce_hint_pep484585_subclass_superclass_if_ignorable(
     # others, this hint remains unsubscripted. In the latter case, passing this
     # hint to the subsequent get_hint_pep484585_args_1() would erroneously
     # raise an exception.
-    if hint == Type:
+    if hint is typing_Type:
         return type
     # Else, this hint is *NOT* the unsubscripted PEP 484-compliant subclass
     # type hint.
