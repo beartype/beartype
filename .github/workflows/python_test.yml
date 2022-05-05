@@ -1,33 +1,33 @@
 ---
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 #
-# --------------------( SYNOPSIS                          )--------------------
+# --------------------( SYNOPSIS                           )--------------------
 # GitHub-specific continuous integration (CI) configuration, enabling the usual
 # GitHub Actions workflow for pure-Python packages exercised by "tox".
 #
-# --------------------( SEE ALSO                          )--------------------
+# --------------------( SEE ALSO                           )--------------------
 # * https://hynek.me/articles/python-github-actions
 #   Well-authored blog post strongly inspiring this configuration.
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: [CACHING] Add support for caching "pip" downloads across runs.
 #Currently, unresolved issues in GitHub Actions prevents sane caching of "pip"
 #downloads. Naturally, horrifying hacks circumventing these issues do exist but
 #are presumably worse than these issues. See also this pertinent comment:
 #    https://github.com/actions/cache/issues/342#issuecomment-673371329
 
-# ....................{ METADATA                          }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ METADATA                           }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: Changes to this name *MUST* be manually synchronized with:
 # * The "|GitHub Actions badge|" image URL in our top-level "README.rst".
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # Non-human-readable (i.e., machine-readable) label associated with this
 # GitHub Actions workflow.
 name: test
 
-# ....................{ TRIGGER                           }....................
+# ....................{ TRIGGER                            }....................
 # Confine testing to only...
 #
 # Note that "**" matches all (possibly deeply "/"-nested) branches. See also:
@@ -45,19 +45,19 @@ on:
     branches:
       - main  # '**'
 
-# ....................{ VARIABLES                         }....................
+# ....................{ VARIABLES                          }....................
 # List of private environment variables specific to this configuration and
 # globally set for *ALL* jobs declared below. To avoid conflict with
 # third-party processes, prefix the name of each variable by "_".
 env:
-  #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   # CAUTION: Optional in-flight test-time dependencies (e.g., NumPy, mypy) are
   # intentionally listed in the "beartype.meta.LIBS_TESTTIME_OPTIONAL" global
   # rather than below. "tox" isolates both the package being tested and its
   # dependency tree to virtual environments. Listing in-flight dependencies
   # here would install those dependencies outside those virtual environments,
   # thus reducing to a pointless, expensive, and failure-prone noop.
-  #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   # Whitespace-delimited list of the names of all Python packages to be
   # installed by "pip" below. Although this package has *NO* mandatory runtime
   # dependencies, fully exercising all tests necessitates these pre-flight
@@ -66,13 +66,13 @@ env:
   _PIP_PACKAGE_NAMES: |
     tox
 
-# ....................{ MAIN                              }....................
+# ....................{ MAIN                               }....................
 jobs:
-  # ...................{ TESTS                             }...................
+  # ...................{ TESTS                              }...................
   # Job iteratively exercising our test suite against all Python interpreters
   # supported by this package (and also measuring the coverage of that suite).
   tests:
-    # ..................{ MATRIX                            }..................
+    # ..................{ MATRIX                             }..................
     strategy:
       matrix:
         # List of all platform-specific Docker images to test against,
@@ -90,11 +90,11 @@ jobs:
         #   testing until last.
         platform: [ubuntu-latest, windows-latest, macos-latest]
 
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # WARNING: Changes to this section *MUST* be manually synchronized with:
         # * The "envlist" setting of the "[tox]" subsection in "tox.ini".
         # * The "include" setting below.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # List of all "tox" environments (defined by the "envlist" setting of
         # the "[tox]" subsection in "tox.ini") to be tested, which the
@@ -104,12 +104,7 @@ jobs:
           - py38-coverage
           - py39-coverage
           - py310-coverage
-          #FIXME: Temporarily disabled, as multiple tests are unexpectedly
-          #failing under Python 3.11 (mostly due to being overly naive): e.g.,
-          #    # This fails as Python 3.11 emits "lambda: ...". *facepalm*
-          #    assert get_func_code_or_none(thou_dirge) == (
-          #        "lambda : 'Of the dying year, to which this closing night'")
-          # - py311-coverage
+          - py311-coverage
           - pypy37-coverage
           - pypy38-coverage
 
@@ -142,15 +137,18 @@ jobs:
             python-version: "3.9"
           - tox-env: py310-coverage
             python-version: "3.10"
-          #FIXME: See above, please.
-          # - tox-env: py311-coverage
-          #   python-version: "3.11.0-alpha - 3.11.0"
+          #FIXME: Reduce to simply "3.11" after Python 3.11 goes live.
+          - tox-env: py311-coverage
+            python-version: "3.11.0-alpha - 3.11.0"
           - tox-env: pypy37-coverage
             python-version: "pypy-3.7"
           - tox-env: pypy38-coverage
             python-version: "pypy-3.8"
+          #FIXME: Uncomment after PyPy 3.9 goes live.
+          # - tox-env: pypy39-coverage
+          #   python-version: "pypy-3.9"
 
-    # ..................{ SETTINGS                          }..................
+    # ..................{ SETTINGS                           }..................
     # Arbitrary human-readable description.
     name: "[${{ matrix.platform }}] Python ${{ matrix.python-version }} CI"
 
@@ -162,7 +160,7 @@ jobs:
     # under POSIX-compliant systems).
     timeout-minutes: 10
 
-    # ..................{ VARIABLES                         }..................
+    # ..................{ VARIABLES                          }..................
     # External shell environment variables exposed to commands run below.
     env:
       # Prevent "pip" from wasting precious continuous integration (CI) minutes
@@ -174,7 +172,7 @@ jobs:
       # ${TOXENV} environment variable recognized by "tox".
       TOXENV: "${{ matrix.tox-env }}"
 
-    # ..................{ PROCESS                           }..................
+    # ..................{ PROCESS                            }..................
     steps:
       - name: 'Checking out repository...'
         uses: 'actions/checkout@v2'
