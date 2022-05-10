@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,19 +10,18 @@ This private submodule defines the core private :class:`BeartypeValidator`
 class instantiated by public **beartype validator factories** (i.e., instances
 of concrete subclasses of the private
 :class:`beartype._vale._factory._valeisabc._BeartypeValidatorFactoryABC`
-abstract base class).
+abstract base class (ABC)).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.typing import (
     Callable,
     Union,
 )
 from beartype.vale._util._valeutiltext import format_diagnosis_line
-from beartype._util.kind.utilkinddict import merge_mappings_two
 from beartype._util.func.arg.utilfuncargtest import (
     die_unless_func_args_len_flexible_equal,
     is_func_argless,
@@ -33,7 +32,7 @@ from beartype._util.text.utiltextrepr import represent_object
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ HINTS                             }....................
+# ....................{ HINTS                              }....................
 BeartypeValidatorTester = Callable[[object], bool]
 '''
 PEP-compliant type hint matching a **beartype validator tester** (i.e.,
@@ -70,7 +69,7 @@ representations are particularly slow to generate include:
   declaring that lambda.
 '''
 
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 class BeartypeValidator(object):
     '''
     **Beartype validator** (i.e., object encapsulating a caller-defined
@@ -120,12 +119,12 @@ class BeartypeValidator(object):
         Class docstring for further details.
     '''
 
-    # ..................{ CLASS VARIABLES                   }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # ..................{ CLASS VARIABLES                    }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Subclasses declaring uniquely subclass-specific instance
     # variables *MUST* additionally slot those variables. Subclasses violating
     # this constraint will be usable but unslotted, which defeats our purposes.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently called
     # cache dunder methods. Slotting has been shown to reduce read and write
@@ -137,7 +136,7 @@ class BeartypeValidator(object):
         '_is_valid_code_locals',
     )
 
-    # ..................{ INITIALIZERS                      }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
         *,
@@ -287,7 +286,7 @@ class BeartypeValidator(object):
         self._is_valid_code = is_valid_code
         self._is_valid_code_locals = is_valid_code_locals
 
-    # ..................{ PROPERTIES ~ read-only            }..................
+    # ..................{ PROPERTIES ~ read-only             }..................
     # Properties with no corresponding setter and thus read-only.
 
     @property
@@ -300,7 +299,7 @@ class BeartypeValidator(object):
 
         return self._is_valid
 
-    # ..................{ PROPERTIES ~ writeable            }..................
+    # ..................{ PROPERTIES ~ writeable             }..................
     # Properties with a corresponding setter and thus writeable.
 
     @property
@@ -359,7 +358,7 @@ class BeartypeValidator(object):
         # Set this representer.
         self._get_repr = get_repr
 
-    # ..................{ DUNDERS ~ str                     }..................
+    # ..................{ DUNDERS ~ str                      }..................
     def __repr__(self) -> str:
         '''
         Machine-readable representation of this validator.
@@ -385,7 +384,7 @@ class BeartypeValidator(object):
         # Return this string as is.
         return self._get_repr
 
-    # ..................{ GETTERS                           }..................
+    # ..................{ GETTERS                            }..................
     def get_diagnosis(
         self,
         *,
@@ -516,7 +515,7 @@ class BeartypeValidator(object):
             is_obj_valid=is_obj_valid,
         )
 
-    # ..................{ DUNDERS ~ operator                }..................
+    # ..................{ DUNDERS ~ operator                 }..................
     # Define a domain-specific language (DSL) enabling callers to dynamically
     # synthesize higher-level validators from lower-level validators via
     # overloaded set theoretic operators.

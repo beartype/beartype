@@ -1,31 +1,31 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
 **Beartype functional type-checking API.**
 
-This submodule provides an orthogonal API to that of the
+This subpackage provides an orthogonal API to that of the
 :func:`beartype.beartype` decorator. Whereas that decorator is suitable *only*
 for type-checking callable parameters and returns at call time, the functions
 exported by this API are suitable for type-checking arbitrary objects at *any*
 arbitrary time during the lifecycle of the active Python process.
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: Consider creating a synonym of this submodule imported to:
 #"beartype.atanytime", a companion of a new "beartype.allatonce" submodule. The
 #existing "beartype.abby" submodule name should also be preserved as is.
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# ....................{ IMPORTS                           }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
 from beartype.abby._abbytest import (
     die_if_unbearable as die_if_unbearable,
     is_bearable as is_bearable,
