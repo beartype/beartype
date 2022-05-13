@@ -4,7 +4,12 @@
 # See "LICENSE" for further details.
 
 '''
-**Core beartype all-at-once API.**
+**Beartype all-at-once** :mod:`importlib` **machinery.**
+
+This private submodule integrates high-level :mod:`importlib` machinery required
+to implement :pep:`302`- and :pep:`451`-compliant import hooks with the
+low-level abstract syntax tree (AST) transformation defined by the companion
+:mod:`beartype.claw._clawast` submodule.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -132,20 +137,33 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: Improve module docstring, please.
 
 # ....................{ IMPORTS                            }....................
+from ast import (
+    PyCF_ONLY_AST,
+    fix_missing_locations,
+)
 from beartype.typing import (
+    Dict,
     Iterable,
+    Optional,
     Union,
 )
+from beartype.claw._clawast import _BeartypeNodeTransformer
 from importlib import invalidate_caches
 from importlib.machinery import (
     SOURCE_SUFFIXES,
     FileFinder,
     SourceFileLoader,
 )
+from importlib.util import (
+    cache_from_source,
+    decode_source,
+)
 from sys import (
     path_hooks,
     path_importer_cache,
 )
+from threading import RLock
+from types import CodeType
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -173,7 +191,15 @@ def beartype_package(package_names: Iterable[str]) -> None:
         this function with respect to inscrutable :mod:`importlib` machinery.
     '''
 
-    #FIXME: Validate "package_names", please.
+    #FIXME: Validate "package_names", please. Notably, validate this parameter:
+    #* Is an iterable...
+    #* ...that is non-empty, whose...
+    #* Items are all:
+    #  * Strings that...
+    #  * Are valid unqualified Python identifiers (i.e., str.isidentifier()).
+    #
+    #This is non-trivial. Let's implement this as a series of proper "if"
+    #conditionals raising human-readable exceptions, please.
 
     #FIXME: Pass "package_names" to _BeartypeMetaPathFinder(), please. Uhm...
     #how exactly do we do that, though? *OH. OH, BOY.* The
@@ -196,6 +222,8 @@ def beartype_package(package_names: Iterable[str]) -> None:
     #  That's not necessarily a bad thing, though -- because all that machinery
     #  is insufficient for our needs, anyway! So, we should probably "just do
     #  the right thing" and adopt the fine solution. It's fine, yo.
+    #FIXME: Actually, just do the global thread-safe
+    #"package_basename_to_subpackages" approach for now. See below!
 
     # 2-tuple of the undocumented format expected by the FileFinder.path_hook()
     # class method called below, associating our beartype-specific source file
@@ -203,13 +231,71 @@ def beartype_package(package_names: Iterable[str]) -> None:
     # packages and modules. We didn't do it. Don't blame the bear.
     LOADER_DETAILS = (_BeartypeSourceFileLoader, SOURCE_SUFFIXES)
 
+    # Closure instantiating a new "FileFinder" instance invoking this loader.
+    #
+    # Note that we intentionally ignore mypy complaints here. Why? Because mypy
+    # erroneously believes this method accepts 2-tuples whose first items are
+    # loader *INSTANCES* (e.g., "Tuple[Loader, List[str]]"). In fact, this
+    # method accepts 2-tuples whose first items are loader *TYPES* (e.g.,
+    # "Tuple[Type[Loader], List[str]]"). This is why we can't have nice.
+    loader_factory = FileFinder.path_hook(LOADER_DETAILS)  # type: ignore[arg-type]
+
     # Prepend a new import hook (i.e., factory closure encapsulating this
     # loader) *BEFORE* all other import hooks.
-    path_hooks.insert(0, FileFinder.path_hook(LOADER_DETAILS))
+    path_hooks.insert(0, loader_factory)
 
     # Uncache *ALL* competing loaders cached by prior importations. Just do it!
     path_importer_cache.clear()
     invalidate_caches()
+
+# ....................{ PRIVATE ~ globals                  }....................
+#FIXME: Actually, wouldn't a "trie" be more efficient? Isn't this exact use case
+#what "trie" data structures are for? We have no idea. Nonetheless, it seems
+#likely that the following strategy could yield an optimal outcome. It's not
+#exactly a trie (we don't think); it's simply inspired by the idea:
+#* Currently, we define "_package_names" as a flattened set of package names:
+#      _package_names = {'a.b', 'a.c', 'd'}
+#  This requires worst-case O(n) iteration across the set of "n" package names
+#  to decide whether an arbitrary package name is in the set or not.
+#* Instead, consider refactoring "_package_names" into a nested dictionary whose
+#  keys are package names split on "." delimiters and whose values are either
+#  deeper nested dictionaries of the same format *OR* "None" (implying
+#  termination at the current package name): e.g.,
+#      _package_names = {'a': {'b': None, 'c': None}, 'd': None}
+#  This now requires worst-case O(h) iteration for "h" the height of the nested
+#  dictionary structure to decide whether an arbitrary package name is in the
+#  dictionary or not. Since h <<<<<<<<< n, this should be substantially faster.
+#  Moreover, the naive set-based approach requires inefficient string prefix
+#  testing for each item of the set. In contrast, this smart-alecky
+#  dictionary-based approach requires *ONLY* efficient string equality testing.
+#  Let's do this, fam.
+
+#FIXME: Ideally, the type hint annotating this global would be defined as a
+#recursive type alias ala:
+#    _PackageBasenameToSubpackages = (
+#        Dict[str, Optional['_PackageBasenameToSubpackages']])
+#Sadly, mypy currently fails to support recursive type aliases. Ergo, we
+#currently fallback to a simplistic alternative whose recursion "bottoms out"
+#at the first nested dictionary. See also:
+#    https://github.com/python/mypy/issues/731
+_package_basename_to_subpackages: Dict[str, Optional[dict]] = {}
+'''
+Non-thread-safe mutable dictionary of the fully-qualified names of one or
+more packages to be type-checked by :func:`beartype.beartype`.
+
+Caution
+----------
+**This global is only safely accessible in a thread-safe manner from within a**
+``with _package_basename_to_subpackages_lock:`` **context manager.** Ergo, this
+global is *not* safely accessible outside that context manager.
+'''
+
+
+_package_basename_to_subpackages_lock = RLock()
+'''
+Reentrant reusable thread-safe context manager gating access to the otherwise
+non-thread-safe :data:`_package_names` global.
+'''
 
 # ....................{ PRIVATE ~ classes                  }....................
 #FIXME: *PROBABLY INSUFFICIENT.* For safety, we really only want to apply this
@@ -242,68 +328,110 @@ class _BeartypeSourceFileLoader(SourceFileLoader):
        * Key is the package of that module.
        * Value is that instance of this class.
 
-    Attributes
+    See Also
     ----------
-    package_names : Iterable[str]
-        Iterable of the fully-qualified names of one or more packages to be
-        type-checked by :func:`beartype.beartype`.
+    * The `comparable "typeguard.importhook" submodule <typeguard import
+      hook_>`__ implemented by the incomparable `@agronholm (Alex Grönholm)
+      <agronholm_>`__, whose intrepid solutions strongly inspired this
+      subpackage. `Typeguard's import hook infrastructure <typeguard import
+      hook_>`__ is a significant improvement over the prior state of the art in
+      Python and a genuine marvel of concise, elegant, and portable abstract
+      syntax tree (AST) transformation.
+
+    .. _agronholm:
+       https://github.com/agronholm
+    .. _typeguard import hook:
+       https://github.com/agronholm/typeguard/blob/master/src/typeguard/importhook.py
     '''
 
-    # ..................{ INITIALIZERS                       }..................
-    def __init__(
+    # ..................{ API                                }..................
+    #FIXME: We also need to also:
+    #* Define the find_spec() method, which should:
+    #  * Efficiently test whether the passed "path" is in "_package_names" in a
+    #    *THREAD-SAFE MANNER.*
+    #  * If not, this method should reduce to a noop by returning "None".
+    #  * Else, this method should return the value of calling the superclass
+    #    find_spec() implementation.
+    #  We're fairly certain that suffices. Nonetheless, verify this by
+    #  inspecting the comparable find_spec() implementation at:
+    #      https://stackoverflow.com/a/48671982/2809027
+    #* Monkey-patch the exec_module() method, please. Maybe? Is there truly no
+    #  saner means of doing so? I've confirmed that "importlib" machinery
+    #  elsewhere directly calls "loader.exec_module()", so... we probably have
+    #  no safe alternative. It is what it is. Look! Just do this, fam. \o/
+
+    # Note that we explicitly ignore mypy override complaints here. For unknown
+    # reasons, mypy believes that "importlib.machinery.SourceFileLoader"
+    # subclasses comply with the "importlib.abc.InspectLoader" abstract base
+    # class (ABC). Of course, this is *NOT* the case. Ergo, we entirely ignore
+    # mypy complaints here with respect to signature matching.
+    def source_to_code(  # type: ignore[override]
         self,
 
-        # Mandatory keyword-only parameters.
+        # Mandatory parameters.
+        data: bytes,
+        path: str,
+
+        # Optional keyword-only parameters.
         *,
-        package_names: Iterable[str],
-        **kwargs
-    ) -> None:
+        _optimize: int =-1,
+    ) -> CodeType:
         '''
-        Initialize this loader against the passed package list.
-
-        Parameters
-        ----------
-        package_names : Iterable[str]
-            Iterable of the fully-qualified names of one or more packages to be
-            type-checked by :func:`beartype.beartype`.
-
-        All remaining keyword parameters are passed as is to the
-        :func:`importlib.machinery.FileLoader.__init__` method.
-        '''
-
-        # Initialize the transitive "FileLoader" superclass of our direct
-        # "SourceFileLoader" superclass with all remaining keyword parameters.
-        super().__init__(**kwargs)
-
-        # Classify all subclass-specific parameters.
-        self.package_names = package_names
-
-
-    def get_data(self, path: Union[bytes, str]) -> bytes:
-        '''
-        Plaintext decoded contents of the Python **sourceful Python package or
+        Code object dynamically compiled from the **sourceful Python package or
         module** (i.e., package or module backed by a ``.py``-suffixed source
-        file) with the passed name, transformed in-place by our abstract syntax
-        tree (AST) transformation automatically applying the
-        :func:`beartype.beartype` decorator to all applicable objects of that
-        package or module.
+        file) with the passed undecoded contents and filename, efficiently
+        transformed in-place by our abstract syntax tree (AST) transformation
+        automatically applying the :func:`beartype.beartype` decorator to all
+        applicable objects of that package or module.
 
         Parameters
         ----------
-        path : Union[bytes, str]
-            Absolute or relative filename of the sourceful Python package or
-            module to be decoded.
+        data : bytes
+            **Byte array** (i.e., undecoded list of bytes) of the Python package
+            or module to be decoded and dynamically compiled into a code object.
+        path : str
+            Absolute or relative filename of that Python package or module.
+        _optimize : int, optional
+            **Optimization level** (i.e., numeric integer signifying increasing
+            levels of optimization under which to compile that Python package or
+            module). Defaults to -1, implying the current interpreter-wide
+            optimization level with which the active Python process was
+            initially invoked (e.g., via the ``-o`` command-line option).
 
         Returns
         ----------
-        bytes
-            Plaintext decoded contents of this package or module.
+        CodeType
+            Code object dynamically compiled from that Python package or module.
         '''
 
-        # Plaintext decoded contents of this package or module.
-        module_source = super().get_data(path)
+        # Plaintext decoded contents of that package or module.
+        module_source = decode_source(data)
 
-        #FIXME: Apply our abstract syntax tree (AST) transformation here! \o/
+        # Abstract syntax tree (AST) dynamically parsed from these contents.
+        module_ast = compile(
+            module_source,
+            path,
+            'exec',
+            PyCF_ONLY_AST,
+            dont_inherit=True,
+            optimize=_optimize,
+        )
 
-        # Return these contents.
-        return module_source
+        # Abstract syntax tree (AST) modified by our AST transformation dynamically parsed from these contents.
+        module_ast_beartyped = _BeartypeNodeTransformer().visit(module_ast)
+
+        #FIXME: Document why exactly this call is needed -- if indeed this call
+        #is needed. Is it? Research us up, please.
+        fix_missing_locations(module_ast_beartyped)
+
+        # Code object dynamically compiled from that transformed AST.
+        module_codeobj = compile(
+            module_ast_beartyped,
+            path,
+            'exec',
+            dont_inherit=True,
+            optimize=_optimize,
+        )
+
+        # Return this code object.
+        return module_codeobj

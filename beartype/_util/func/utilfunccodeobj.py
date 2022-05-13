@@ -15,10 +15,22 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.typing import (
+    Any,
+    Optional,
+)
 from beartype._util.func.utilfuncwrap import unwrap_func
-from beartype._data.datatyping import Codeobjable, TypeException
-from types import CodeType, FrameType, FunctionType, GeneratorType, MethodType
-from typing import Any, Optional
+from beartype._data.datatyping import (
+    Codeobjable,
+    TypeException,
+)
+from types import (
+    CodeType,
+    FrameType,
+    FunctionType,
+    GeneratorType,
+    MethodType,
+)
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
