@@ -7,7 +7,7 @@
 **Call stack utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.utilfunc.utilfuncstack` submodule.
+:mod:`beartype._util.utilfunc.utilfuncframe` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -20,11 +20,11 @@ This submodule unit tests the public API of the private
 def test_get_func_stack_frame() -> None:
     '''
     Test the
-    :func:`beartype._util.func.utilfuncstack.get_func_stack_frame` attribute.
+    :func:`beartype._util.func.utilfuncframe.get_frame` attribute.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.func.utilfuncstack import get_func_stack_frame
+    from beartype._util.func.utilfuncframe import get_frame
 
     # Assert this attribute is a callable under both CPython and PyPy.
-    assert callable(get_func_stack_frame) is True
+    assert callable(get_frame) is True

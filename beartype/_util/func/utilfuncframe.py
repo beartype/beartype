@@ -11,10 +11,12 @@ external callables underlying the call to the current callable).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+#FIXME: Rename this submodule to "utilfuncframe", please.
+
 # ....................{ IMPORTS                           }....................
 import sys
-from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype._data.datatyping import TypeException
+# from beartype.roar._roarexc import _BeartypeUtilCallableException
+# from beartype._data.datatyping import TypeException
 from types import FrameType
 from typing import Callable, Iterable, Optional
 
@@ -22,7 +24,7 @@ from typing import Callable, Iterable, Optional
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS                           }....................
-get_func_stack_frame: Optional[Callable[[int,], Optional[FrameType]]] = (
+get_frame: Optional[Callable[[int,], Optional[FrameType]]] = (
     getattr(sys, '_getframe', None))
 '''
 Private low-level :func:`sys._getframe` getter if the active Python interpreter
@@ -59,10 +61,9 @@ CPython resembles:
 
 # ....................{ ITERATORS                         }....................
 #FIXME: Unit test us up, please.
-def iter_func_stack_frames(
+def iter_frames(
     # Optional parameters.
     func_stack_frames_ignore: int = 0,
-    exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> Iterable[FrameType]:
     '''
     Generator yielding one **frame** (i.e., :class:`types.FrameType` instance)
@@ -74,69 +75,60 @@ def iter_func_stack_frames(
 
     * **C-based callable call** (i.e., call of a C-based rather than
       pure-Python callable), this generator yields one frame encapsulating *no*
-      code object. Only pure-Python callables have code objects.
+      code object. Only pure-Python frame objects have code objects.
     * **Class-scoped callable call** (i.e., call of an arbitrary callable
       occurring at class scope rather than from within the body of a callable
       or class, typically due to a method being decorated), this generator
-      yields one frame ``{func_frame}`` such that ``{func_frame}.f_code.co_name
-      == {cls}.__name__`` (i.e., the name of the code object encapsulated by
-      that frame is the unqualified name of the class encapsulating the lexical
-      scope of this call). Actually, we just made all of that up. This is
-      *probably* (but *not* necessarily) the case. Research is warranted.
+      yields one frame ``func_frame`` for that class ``cls`` such that
+      ``func_frame.f_code.co_name == cls.__name__`` (i.e., the name of the code
+      object encapsulated by that frame is the unqualified name of the class
+      encapsulating the lexical scope of this call). Actually, we just made all
+      of that up. That is *probably* (but *not* necessarily) the case. Research
+      is warranted.
     * **Module-scoped callable call** (i.e., call of an arbitrary callable
       occurring at module scope rather than from within the body of a callable
-      or class, typically due to a function being decorated), this generator
-      yields one frame ``{func_frame}`` such that ``{func_frame}.f_code.co_name
-      == '<module>'`` (i.e., the name of the code object encapsulated by that
-      frame is the placeholder string assigned by the active Python interpreter
-      to all scopes encapsulating the top-most lexical scope of a module in the
-      current call stack).
+      or class, typically due to a function or class being decorated), this
+      generator yields one frame ``func_frame`` such that
+      ``func_frame.f_code.co_name == '<module>'`` (i.e., the name of the code
+      object encapsulated by that frame is the placeholder string assigned by
+      the active Python interpreter to all scopes encapsulating the top-most
+      lexical scope of a module in the current call stack).
 
     The above constraints imply that frames yielded by this generator *cannot*
     be assumed to encapsulate code objects. See the "Examples" subsection for
-    a standard logic handling this edge case.
+    standard logic handling this edge case.
 
     Caveats
     ----------
     **This high-level iterator requires the private low-level**
-    :func:`sys._getframe` **getter.** If that getter is undefined, this getter
-    unconditionally treats this callable as module-scoped by returning the
-    empty dictionary rather than raising an exception. Since all standard
-    Python implementations (e.g., CPython, PyPy) define that getter, this
-    should typically *not* be a real-world concern.
+    :func:`sys._getframe` **getter.** If that getter is undefined, this iterator
+    reduces to the empty generator yielding nothing rather than raising an
+    exception. Since all standard Python implementations (e.g., CPython, PyPy)
+    define that getter, this should typically *not* be a real-world concern.
 
     Parameters
     ----------
     func_stack_frames_ignore : int, optional
         Number of frames on the call stack to be ignored (i.e., silently
         incremented past). Defaults to 0.
-    exception_cls : Type[Exception], optional
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`_BeartypeUtilCallableException`.
 
     Returns
     ----------
     Iterable[FrameType]
         Generator yielding one frame for each call on the current call stack.
 
-    Raises
-    ----------
-    exception_cls
-        If ...
-
     See Also
     ----------
-    :func:`get_func_stack_frame`
+    :func:`get_frame`
         Further details on stack frame objects.
 
     Examples
     ----------
         >>> from beartype._util.func.utilfunccodeobj import (
         ...     get_func_codeobj_or_none)
-        >>> from beartype._util.func.utilfuncstack import (
-        ...     iter_func_stack_frames)
+        >>> from beartype._util.func.utilfuncframe import iter_frames
         >>> # For each stack frame on the call stack...
-        ... for func_frame in iter_func_stack_frames():
+        ... for func_frame in iter_frames():
         ...     # Code object underlying this frame's scope if this scope is
         ...     # pure-Python *OR* "None" otherwise.
         ...     func_frame_codeobj = get_func_codeobj_or_none(func_frame)
@@ -146,7 +138,7 @@ def iter_func_stack_frames(
         ...     # next frame in the call stack.
         ...     if func_frame_codeobj is None:
         ...         continue
-        ...     # Else, this code object exists, implying this scope is
+        ...     # Else, this code object exists, implying this scope to be
         ...     # pure-Python.
         ...
         ...     # Fully-qualified name of this scope's module.
@@ -165,13 +157,13 @@ def iter_func_stack_frames(
 
     # If the active Python interpreter fails to declare the private
     # sys._getframe() getter, reduce to the empty generator (i.e., noop).
-    if get_func_stack_frame is None:
+    if get_frame is None:
         yield from ()
     # Else, the active Python interpreter declares the sys._getframe() getter.
 
     # Next non-ignored frame following the last ignored frame, ignoring an
     # additional frame embodying the current call to this iterator.
-    func_frame = get_func_stack_frame(func_stack_frames_ignore + 1)  # type: ignore[misc]
+    func_frame = get_frame(func_stack_frames_ignore + 1)  # type: ignore[misc]
 
     # While at least one frame remains on the call stack...
     while func_frame:

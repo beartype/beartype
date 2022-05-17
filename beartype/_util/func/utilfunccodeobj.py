@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -13,7 +13,7 @@ underlying all pure-Python callables.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype.typing import (
     Any,
@@ -35,7 +35,15 @@ from types import (
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ GETTERS                           }....................
+# ....................{ CONSTANTS                          }....................
+#FIXME: Unit test us up, please.
+FUNC_CODEOBJ_NAME_MODULE = '<module>'
+'''
+String constant unconditionally assigned to the ``co_name`` instance variables
+of the code objects of all pure-Python modules.
+'''
+
+# ....................{ GETTERS                            }....................
 def get_func_codeobj(
     # Mandatory parameters.
     func: Codeobjable,
@@ -142,12 +150,15 @@ def get_func_codeobj_or_none(
     Specifically, if the passed object is a:
 
     * Pure-Python function, this getter returns the code object of that
-      function.
+      function (i.e., ``func.__code__``).
     * Pure-Python bound method wrapping a pure-Python unbound function, this
-      getter returns the code object of the latter.
+      getter returns the code object of the latter (i.e.,
+      ``func.__func__.__code__``).
     * Pure-Python call stack frame, this getter returns the code object of the
-      pure-Python callable encapsulated by that frame.
-    * Code object, this getter returns that code object.
+      pure-Python callable encapsulated by that frame (i.e., ``func.f_code``).
+    * Pure-Python generator, this getter returns the code object of that
+      generator (i.e., ``func.gi_code``).
+    * Code object, this getter returns that code object as is.
     * Any other object, this getter raises an exception.
 
     Caveats

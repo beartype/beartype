@@ -18,7 +18,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # bodies of callables declared below.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from sys import modules as module_imported_names
-from beartype._util.func.utilfuncstack import iter_func_stack_frames
+from beartype._util.func.utilfuncframe import iter_frames
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
@@ -64,7 +64,7 @@ def is_sphinx_autodocing() -> bool:
 
     # For each stack frame on the call stack, ignoring the stack frame
     # encapsulating the call to this tester...
-    for frame in iter_func_stack_frames(func_stack_frames_ignore=1):
+    for frame in iter_frames(func_stack_frames_ignore=1):
         # Fully-qualified name of this scope's module if this scope defines
         # this name *OR* "None" otherwise.
         frame_module_name = frame.f_globals.get('__name__')

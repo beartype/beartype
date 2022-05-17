@@ -169,8 +169,91 @@ from types import CodeType
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ FUNCTIONS                          }....................
+#FIXME: *NOT RIGHT.* Repeated calls of this function from multiple third-party
+#packages currently add multiple closures to "sys.path_hooks", which is insane.
+#Instead:
+#* The first call to this function from anywhere should do what we currently do,
+#  which is to add our "loader_factory" closure to "sys.path_hooks".
+#* Each subsequent call to this function should *DO ABSOLUTELY NOTHING* aside
+#  from adding the passed packages names to our global list of such packages.
+#
+#Thankfully, distinguishing between the two is trivial: if
+#"_package_basename_to_subpackages" is empty, this is the first call to this
+#function and our "loader_factory" closure should be added to "sys.path_hooks".
 #FIXME: Unit test us up, please.
-def beartype_package(package_names: Iterable[str]) -> None:
+#FIXME: Define a comparable removal function named either:
+#* cancel_beartype_on_import(). This is ostensibly the most unambiguous and thus
+#  the best choice of those listed here. Obviously, beartype_on_import_cancel()
+#  is a comparable alternative.
+#* forget_beartype_on_import().
+#* no_beartype_on_import().
+#FIXME: Render the passed "package_names" parameter optional. To do so, we'll
+#need to inspect the call stack to obtain the name of the calling package: e.g.,
+#    from beartype._util.func.utilfunccodeobj import (
+#        FUNC_CODEOBJ_NAME_MODULE,
+#        get_func_codeobj,
+#    )
+#    from beartype._util.func.utilfuncframe import get_frame
+#
+#    def beartype_on_import(package_names: Optional[Iterable[str]]) -> None:
+#        # Note the following logic *CANNOT* reasonably be isolated to a new
+#        # private helper function. Why? Because this logic itself calls existing
+#        # private helper functions assuming the caller to be at the expected
+#        # position on the current call stack.
+#        if package_names is None:
+#            #FIXME: *UNSAFE.* get_frame() raises a "ValueError" exception if
+#            #passed a non-existent frame, which is non-ideal: e.g.,
+#            #    >>> sys._getframe(20)
+#            #    ValueError: call stack is not deep enough
+#            #Since beartype_on_import() is public, that function can
+#            #technically be called directly from a REPL. When it is, a
+#            #human-readable exception should be raised instead. Notably, we
+#            #instead want to:
+#            #* Define new utilfuncframe getters resembling:
+#            #      def get_frame_or_none(ignore_frames: int) -> Optional[FrameType]:
+#            #          try:
+#            #              return get_frame(ignore_frames + 1)
+#            #          except ValueError:
+#            #              return None
+#            #      def get_frame_caller_or_none() -> Optional[FrameType]:
+#            #          return get_frame_or_none(2)
+#            #* Import "get_frame_caller_or_none" above.
+#            #* Refactor this logic here to resemble:
+#            #      frame_caller = get_frame_caller_or_none()
+#            #      if frame_caller is None:
+#            #          raise BeartypeClawRegistrationException(
+#            #              'beartype_on_import() not callable directly from REPL scope.')
+#            frame_caller = get_frame(1)
+#
+#            # Code object underlying this frame's scope if that scope is
+#            # pure-Python *OR* raise an exception otherwise (i.e., if that
+#            # scope is C-based).
+#            frame_caller_codeobj = get_func_codeobj_or_none(frame_caller)
+#
+#            # Unqualified name of that scope.
+#            frame_caller_name = frame_caller_codeobj.co_name
+#
+#            # If that scope is *NOT* the placeholder string assigned by the active Python
+#            # interpreter to all scopes encapsulating the top-most lexical scope of
+#            # a module in the current call stack, that scope is class or
+#            # callable scope rather than module scope. In this case, raise an
+#            # exception.
+#            if frame_caller_name != FUNC_CODEOBJ_NAME_MODULE:
+#                # Fully-qualified name of that scope's module.
+#                frame_module_name = frame_caller.f_globals['__name__']
+#
+#                #FIXME: Raise some sort of new public exception here -- say, a
+#                #new "beartype.roar.BeartypeClawRegistrationException" type.
+#                raise BeartypeClawRegistrationException(
+#                    f'beartype_on_import() not passed the "package_names" '
+#                    f'parameter *AND* not called from module scope '
+#                    f'(i.e., caller scope "{frame_module_name}.{frame_caller_name}" either
+#                    f'class or callable). '
+#                    f'Please either pass the "package_names" parameter or '
+#                    f'call beartype_on_import() from module scope.'
+#                )
+def beartype_package_submodules_when_imported(
+    package_names: Iterable[str]) -> None:
     '''
     Register a new **beartype import path hook** (i.e., callable inserted to the
     front of the standard :mod:`sys.path_hooks` list recursively applying the
@@ -278,10 +361,34 @@ def beartype_package(package_names: Iterable[str]) -> None:
 #currently fallback to a simplistic alternative whose recursion "bottoms out"
 #at the first nested dictionary. See also:
 #    https://github.com/python/mypy/issues/731
+
 _package_basename_to_subpackages: Dict[str, Optional[dict]] = {}
 '''
-Non-thread-safe mutable dictionary of the fully-qualified names of one or
+Non-thread-safe dictionary mapping from the unqualified basename of each package
+or module to be  fully-qualified names of one or
 more packages to be type-checked by :func:`beartype.beartype`.
+
+
+#FIXME: Actually, wouldn't a "trie" be more efficient? Isn't this exact use case
+#what "trie" data structures are for? We have no idea. Nonetheless, it seems
+#likely that the following strategy could yield an optimal outcome. It's not
+#exactly a trie (we don't think); it's simply inspired by the idea:
+#* Currently, we define "_package_names" as a flattened set of package names:
+#      _package_names = {'a.b', 'a.c', 'd'}
+#  This requires worst-case O(n) iteration across the set of "n" package names
+#  to decide whether an arbitrary package name is in the set or not.
+#* Instead, consider refactoring "_package_names" into a nested dictionary whose
+#  keys are package names split on "." delimiters and whose values are either
+#  deeper nested dictionaries of the same format *OR* "None" (implying
+#  termination at the current package name): e.g.,
+#      _package_names = {'a': {'b': None, 'c': None}, 'd': None}
+#  This now requires worst-case O(h) iteration for "h" the height of the nested
+#  dictionary structure to decide whether an arbitrary package name is in the
+#  dictionary or not. Since h <<<<<<<<< n, this should be substantially faster.
+#  Moreover, the naive set-based approach requires inefficient string prefix
+#  testing for each item of the set. In contrast, this smart-alecky
+#  dictionary-based approach requires *ONLY* efficient string equality testing.
+#  Let's do this, fam.
 
 Caution
 ----------

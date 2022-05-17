@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,7 +10,7 @@ possibly nested lexical scopes enclosing arbitrary callables).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.utilobject import get_object_basename_scoped
 from beartype._data.datatyping import TypeException
@@ -21,7 +21,7 @@ from typing import Any, Dict, Optional
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ HINTS                             }....................
+# ....................{ HINTS                              }....................
 CallableScope = Dict[str, Any]
 '''
 PEP-compliant type hint matching a **callable socpe** (i.e., dictionary mapping
@@ -29,7 +29,7 @@ from the name to value of each locally or globally scoped variable accessible
 to a callable).
 '''
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 def is_func_nested(func: Callable) -> bool:
     '''
     ``True`` only if the passed callable is **nested** (i.e., a pure-Python
@@ -119,7 +119,7 @@ def is_func_nested(func: Callable) -> bool:
 #     # * If this callable is C-based, undefined.
 #     return getattr(func, '__closure__', None) is not None
 
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_func_globals(
     # Mandatory parameters.
@@ -199,12 +199,12 @@ def get_func_locals(
 
     This getter returns either:
 
-    * If this callable is **nested** (i.e., is a method *or* is a non-method
+    * If that callable is **nested** (i.e., is a method *or* is a non-method
       callable declared in the body of another callable), a dictionary mapping
       from the name to value of each **locally scoped attribute** (i.e., local
-      attribute declared by a parent callable transitively declaring this
-      callable) accessible to this callable.
-    * Else, the empty dictionary otherwise (i.e., if this callable is a
+      attribute declared by a parent callable transitively declaring that
+      callable) accessible to that callable.
+    * Else, the empty dictionary otherwise (i.e., if that callable is a
       function directly declared by a module).
 
     This getter transparently supports methods, which in Python are lexically
@@ -212,7 +212,7 @@ def get_func_locals(
     variables** (i.e., variables declared from class scope and thus accessible
     as type hints when annotating the methods of that class). When declaring a
     class, Python creates a stack frame for the declaration of that class whose
-    local scope is the set of all class-scope attributes declared in the body
+    local scope is the set of all class-scoped attributes declared in the body
     of that class (including class variables, class methods, static methods,
     and instance methods). When passed any method, this getter finds and
     returns that local scope. When passed the ``MuhClass.muh_method` method
@@ -232,7 +232,7 @@ def get_func_locals(
     ----------
     **This high-level getter requires the private low-level**
     :func:`sys._getframe` **getter.** If that getter is undefined, this getter
-    unconditionally treats this callable as module-scoped by returning the
+    unconditionally treats the passed callable as module-scoped by returning the
     empty dictionary rather than raising an exception. Since all standard
     Python implementations (e.g., CPython, PyPy) define that getter, this
     should typically *not* be a real-world concern.
@@ -240,7 +240,7 @@ def get_func_locals(
     **This high-level getter is inefficient and should thus only be called if
     absolutely necessary.** Specifically, deciding the local scope for any
     callable is an ``O(k)`` operation for ``k`` the distance in call stack
-    frames from the call to the current function to the call to the top-most
+    frames from the call of the current function to the call of the top-most
     parent scope transitively declaring the passed callable in its submodule.
     Ergo, this decision problem should be deferred as long as feasible to
     minimize space and time consumption.
@@ -276,12 +276,15 @@ def get_func_locals(
         f'{func_stack_frames_ignore} negative.')
     # print(f'\n--------- Capturing nested {func.__qualname__}() local scope...')
 
-    # ..................{ IMPORTS                           }..................
+    # ..................{ IMPORTS                            }..................
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
-    from beartype._util.func.utilfuncstack import iter_func_stack_frames
+    from beartype._util.func.utilfunccodeobj import (
+        FUNC_CODEOBJ_NAME_MODULE,
+        get_func_codeobj_or_none,
+    )
+    from beartype._util.func.utilfuncframe import iter_frames
 
-    # ..................{ NOOP                              }..................
+    # ..................{ NOOP                               }..................
     # Fully-qualified name of the module declaring the passed callable if that
     # callable was physically declared by an on-disk module *OR* "None"
     # otherwise (i.e., if that callable was dynamically declared in-memory).
@@ -312,11 +315,11 @@ def get_func_locals(
     # * The passed callable is physically declared on-disk.
     # * The passed callable is nested.
 
-    # ..................{ LOCALS ~ scope                    }..................
+    # ..................{ LOCALS ~ scope                     }..................
     # Local scope of the passed callable to be returned.
     func_scope: CallableScope = {}
 
-    # ..................{ LOCALS ~ scope : name             }..................
+    # ..................{ LOCALS ~ scope : name              }..................
     # Unqualified name of this nested callable.
     func_name_unqualified = func.__name__
 
@@ -405,7 +408,7 @@ def get_func_locals(
         func_scope_name = func_scope_names[-3]
     # print(f'Searching for parent {func_scope_name}() local scope...')
 
-    # ..................{ LOCALS ~ frame                    }..................
+    # ..................{ LOCALS ~ frame                     }..................
     # Code object underlying the parent callable associated with the current
     # stack frame if that callable is pure-Python *OR* "None".
     func_frame_codeobj: Optional[CodeType] = None
@@ -416,7 +419,7 @@ def get_func_locals(
     # Unqualified name of that callable.
     func_frame_name = ''
 
-    # ..................{ SEARCH                            }..................
+    # ..................{ SEARCH                             }..................
     # While at least one frame remains on the call stack, iteratively search up
     # the call stack for a stack frame embodying the parent callable directly
     # declaring this nested callable, whereupon that parent callable's local
@@ -432,7 +435,7 @@ def get_func_locals(
     #     @beartype
     #     def the_stormlight_archive(bruh: str) -> str:
     #         return bruh
-    for func_frame in iter_func_stack_frames(
+    for func_frame in iter_frames(
         # 0-based index of the first non-ignored frame following the last
         # ignored frame, ignoring an additional frame embodying the current
         # call to this getter.
@@ -446,7 +449,7 @@ def get_func_locals(
         # case, silently ignore this scope and proceed to the next frame.
         if func_frame_codeobj is None:
             continue
-        # Else, this code object exists, implying this scope is pure-Python.
+        # Else, this code object exists, implying this scope to be pure-Python.
 
         # Fully-qualified name of that scope's module.
         func_frame_module_name = func_frame.f_globals['__name__']
@@ -463,7 +466,7 @@ def get_func_locals(
         # lexical scope of the parent declaring this nested callable. Why?
         # Because that scope *MUST* necessarily be in the same module as that
         # of this nested callable. In this case, raise an exception.
-        if func_frame_name == '<module>':
+        if func_frame_name == FUNC_CODEOBJ_NAME_MODULE:
             raise exception_cls(
                 f'{get_object_basename_scoped(func)}() parent lexical scope '
                 f'{func_scope_name}() not found on call stack.'
@@ -516,7 +519,7 @@ def get_func_locals(
     # Return the local scope of the passed callable.
     return func_scope
 
-# ....................{ ADDERS                            }....................
+# ....................{ ADDERS                             }....................
 def add_func_scope_attr(
     # Mandatory parameters.
     attr: Any,
@@ -527,11 +530,11 @@ def add_func_scope_attr(
 ) -> str:
     '''
     Add a new **scoped attribute** (i.e., new key-value pair of the passed
-    dictionary mapping from the name to value of each globally or locally
-    scoped attribute externally accessed elsewhere, whose key is a
-    machine-readable name internally generated by this function to uniquely
-    refer to the passed object and whose value is that object) to the passed
-    scope *and* return that name.
+    dictionary mapping from the name to value of each globally or locally scoped
+    attribute externally accessed elsewhere, whose key is a machine-readable
+    name internally generated by this function to uniquely refer to the passed
+    object and whose value is that object) to the passed scope *and* return that
+    name.
 
     Parameters
     ----------
