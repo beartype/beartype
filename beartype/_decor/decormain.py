@@ -20,12 +20,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.typing import TYPE_CHECKING
+from beartype._conf import BeartypeConf
 from beartype._data.datatyping import (
     BeartypeConfedDecorator,
     BeartypeReturn,
     BeartypeableT,
 )
-from beartype._decor.conf import BeartypeConf
 
 # Intentionally import the standard mypy-friendly @typing.overload decorator
 # rather than a possibly mypy-unfriendly @beartype.typing.overload decorator --
@@ -96,7 +96,7 @@ if (
 # case, define the @beartype decorator in the standard way.
 else:
     # This is where @beartype *REALLY* lives. Grep here for all the goods.
-    from beartype._decor.cache.cachedecor import beartype
+    from beartype._decor._cache.cachedecor import beartype
 
 # ....................{ DECORATORS ~ doc                  }....................
 # Document the @beartype decorator with the same documentation regardless of
@@ -153,9 +153,8 @@ beartype.__doc__ = (
         beartypeable object passed to that decorator. Look... It just works.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all flags, options, settings, and other metadata configuring the
-        current decoration of the decorated callable or class). Defaults to
-        ``BeartypeConf()``, the default beartype configuration.
+        all settings configuring type-checking for the passed object). Defaults
+        to ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
 
     Returns
     ----------

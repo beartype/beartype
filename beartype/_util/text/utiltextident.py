@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,11 +10,11 @@ or variable name) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 def is_identifier(text: str) -> bool:
     '''
     ``True`` only if the passed string is the ``.``-delimited concatenation of
@@ -78,8 +78,5 @@ def is_identifier(text: str) -> bool:
         #           return True
         #       except SyntaxError:
         #           return False
-        all(
-            identifier.isidentifier()
-            for identifier in text.split('.')
-        )
+        all(identifier.isidentifier() for identifier in text.split('.'))
     )

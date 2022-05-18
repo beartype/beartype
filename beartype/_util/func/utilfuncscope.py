@@ -335,7 +335,7 @@ def get_func_locals(
     func_name_qualified = func.__qualname__
 
     # Non-empty list of the unqualified names of all parent callables lexically
-    # containing this nested callable (including this nested callable itself).
+    # containing that nested callable (including that nested callable itself).
     #
     # Note that:
     # * The set of all callables embodied by the current runtime call stack is

@@ -33,11 +33,11 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
 )
 from beartype.typing import NoReturn
-from beartype._decor.cache._cachetype import (
+from beartype._decor._cache._cachetype import (
     bear_typistry,
     register_typistry_forwardref,
 )
-from beartype._decor._call import BeartypeCall
+from beartype._decor._decorcall import BeartypeCall
 from beartype._decor._code.codemagic import (
     ARG_NAME_GETRANDBITS,
     ARG_NAME_TYPISTRY,

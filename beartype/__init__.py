@@ -54,14 +54,14 @@ from sys import modules as _modules
 if 'beartype.__is_installing__' not in _modules:
     # Publicize the private @beartype._decor.beartype decorator as
     # @beartype.beartype, preserving all implementation details as private.
-    from beartype._decor.main import beartype
+    from beartype._decor.decormain import beartype
 
     #FIXME: Unit test the existence of:
     #* "beartype.BeartypeStrategy".
     #* "beartype.BeartypeConfiguration".
     # Publicize all top-level configuration attributes required to configure the
     # @beartype.beartype decorator.
-    from beartype._decor.conf import (
+    from beartype._conf import (
         BeartypeConf,
         BeartypeStrategy,
     )

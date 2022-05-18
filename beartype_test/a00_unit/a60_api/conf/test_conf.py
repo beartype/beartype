@@ -7,7 +7,7 @@
 **Beartype configuration unit tests.**
 
 This submodule unit tests the subset of the public API of the :mod:`beartype`
-package defined by the private :mod:`beartype._decor.conf` submodule.
+package defined by the private :mod:`beartype._conf` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................

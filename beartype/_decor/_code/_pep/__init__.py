@@ -1081,7 +1081,7 @@
 #
 #      # It really is that simple, folks. Maybe. Gods, let it be that simple.
 #      config = BeartypeConfigGlobal
-#* Privatize the existing public "beartype._decor.main" submodule to a new
+#* Privatize the existing public "beartype._decor.decormain" submodule to a new
 #  "beartype._decor._template" submodule.
 #* In that submodule:
 #  * Rename the existing @beartype decorator to beartype_template(). That
@@ -1118,7 +1118,7 @@
 #    fastest way, given that we expect keyword arguments. So, we're moving on.
 #    Also, do *NOT* bother with LRU caching here, as the expected size of that
 #    dictionary will almost certainly always be less than 10 and surely 100.
-#* Define a new private "beartype._decor.main" submodule.
+#* Define a new private "beartype._decor.decormain" submodule.
 #* In that submodule:
 #  * Define a new @beartype decorator accepting *ALL* of the *EXACT* same
 #    class variables declared by the "BeartypeConfigGlobal" class as optional

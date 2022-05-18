@@ -860,7 +860,7 @@ def pep_code_check_hint(
                 # ............{ DEEP ~ expression                 }............
                 #FIXME: Unit test that this is behaving as expected. Doing so will
                 #require further generalizations, including:
-                #* In the "beartype._decor.main" submodule:
+                #* In the "beartype._decor.decormain" submodule:
                 #  * Detect when running under tests.
                 #  * When running under tests, define a new
                 #    "func_wrapper.__beartype_wrapper_code" attribute added to
@@ -966,7 +966,7 @@ def pep_code_check_hint(
                 #    * Else, compress the passed uncompressed source string and
                 #      register that compressed string under that module name with
                 #      that dictionary.
-                #* In the "beartype._decor.main" submodule:
+                #* In the "beartype._decor.decormain" submodule:
                 #  * Do... something? Oh, boy. Why didn't we finish this comment?
 
                 # If the active Python interpreter targets Python >= 3.8 and

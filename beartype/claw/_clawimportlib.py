@@ -141,13 +141,22 @@ from ast import (
     PyCF_ONLY_AST,
     fix_missing_locations,
 )
+from beartype.claw._clawast import _BeartypeNodeTransformer
+from beartype.roar import BeartypeClawRegistrationException
 from beartype.typing import (
     Dict,
     Iterable,
     Optional,
     Union,
 )
-from beartype.claw._clawast import _BeartypeNodeTransformer
+from beartype._conf import BeartypeConf
+from beartype._util.func.utilfunccodeobj import (
+    FUNC_CODEOBJ_NAME_MODULE,
+    get_func_codeobj,
+)
+from beartype._util.func.utilfuncframe import get_frame
+from beartype._util.text.utiltextident import is_identifier
+from collections.abc import Iterable as IterableABC
 from importlib import invalidate_caches
 from importlib.machinery import (
     SOURCE_SUFFIXES,
@@ -163,12 +172,130 @@ from sys import (
     path_importer_cache,
 )
 from threading import RLock
-from types import CodeType
+from types import (
+    CodeType,
+    FrameType,
+)
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ FUNCTIONS                          }....................
+# ....................{ PRIVATE ~ globals : packages       }....................
+#FIXME: Ideally, the type hint annotating this global would be defined as a
+#recursive type alias ala:
+#    _PackageBasenameToSubpackages = (
+#        Dict[str, Optional['_PackageBasenameToSubpackages']])
+#Sadly, mypy currently fails to support recursive type aliases. Ergo, we
+#currently fallback to a simplistic alternative whose recursion "bottoms out"
+#at the first nested dictionary. See also:
+#    https://github.com/python/mypy/issues/731
+_PackageBasenameToSubpackages = (
+    Dict[str, Optional[dict]])
+'''
+PEP-compliant type hint matching the recursively nested data structure of the
+private :data:`_package_basename_to_subpackages` global.
+'''
+
+
+#FIXME: Still not quite right. We also want to associate "BeartypeConf" settings
+#with hooked package names. Ergo, we need a companion flat dictionary ala:
+#    _package_name_to_conf = {
+#        'a': BeartypeConf(...),
+#        'a.b': BeartypeConf(...),
+#        'a.c': BeartypeConf(...),
+#        'z': BeartypeConf(...),
+#    }
+#
+#To decide whether a package name is being beartyped, we'll still leverage the
+#"_package_basename_to_subpackages" dictionary for efficiency. Once we've
+#decided that, we'll decide the configuration for that package by iteratively:
+#* If the name of that package is a key of "_package_name_to_conf", use the
+#  associated value as that package's configuration.
+#* Else, strip the rightmost subpackage name from that package name and repeat.
+#
+#Thankfully, note that search is still worst-case O(h) time for "h" the height
+#of the "_package_basename_to_subpackages" dictionary. Phew.
+
+_package_basename_to_subpackages: _PackageBasenameToSubpackages = {}
+'''
+Non-thread-safe dictionary mapping in a recursively nested manner from the
+unqualified basename of each subpackage to be subsequently possibly type-checked
+on first importation by the :func:`beartype.beartype` decorator to either the
+``None`` singleton if that subpackage is to be type-checked *or* a nested
+dictionary satisfying the same structure otherwise (i.e., if that subpackage is
+*not* to be type-checked).
+
+Motivation
+----------
+This dictionary is intentionally structured as a non-trivial nested data
+structure rather than a trivial non-nested flat dictionary. Why? Efficiency.
+Consider this flattened set of package names:
+
+    .. code-block:: python
+
+       _package_names = {'a.b', 'a.c', 'd'}
+
+Deciding whether an arbitrary package name is in that set or not requires
+worst-case ``O(n)`` iteration across the set of ``n`` package names.
+
+Consider instead this nested dictionary whose keys are package names split on
+``.`` delimiters and whose values are either recursively nested dictionaries of
+the same format *or* the ``None`` singleton (terminating the current package
+name):
+
+    .. code-block:: python
+
+       _package_basename_to_subpackages = {
+           'a': {'b': None, 'c': None}, 'd': None}
+
+Deciding whether an arbitrary package name is in this dictionary or not requires
+worst-case ``O(h)`` iteration across the height ``h`` of this dictionary
+(equivalent to the largest number of ``.`` delimiters for any fully-qualified
+package name encapsulated by this dictionary). Since ``h <<<<<<<<<< n``, this
+dictionary provides substantially faster worst-case lookup than that set.
+
+Moreover, in the worst case:
+
+* That set requires one inefficient string prefix test for each item.
+* This dictionary requires *only* one efficient string equality test for each
+  nested key-value pair while descending towards the target package name.
+
+Let's do this, fam.
+
+Caveats
+----------
+**This global is only safely accessible in a thread-safe manner from within a**
+``with _globals_lock:`` **context manager.** Ergo, this global is *not* safely
+accessible outside that context manager.
+
+Examples
+----------
+Instance of this data structure type-checking on import submodules of the root
+``package_z`` package, the child ``package_a.subpackage_k`` submodule, and the
+``package_a.subpackage_b.subpackage_c`` and
+``package_a.subpackage_b.subpackage_d`` submodules:
+
+    >>> _package_basename_to_subpackages = {
+    ...     'package_a': {
+    ...         'subpackage_b': {
+    ...             'subpackage_c': None,
+    ...             'subpackage_d': None,
+    ...         },
+    ...         'subpackage_k': None,
+    ...     },
+    ...     'package_z': None,
+    ... }
+'''
+
+# ....................{ PRIVATE ~ globals : threading      }....................
+_globals_lock = RLock()
+'''
+Reentrant reusable thread-safe context manager gating access to otherwise
+non-thread-safe private globals defined by this submodule (e.g.,
+:data:`_package_basename_to_subpackages`).
+'''
+
+# ....................{ HOOKS                              }....................
 #FIXME: *NOT RIGHT.* Repeated calls of this function from multiple third-party
 #packages currently add multiple closures to "sys.path_hooks", which is insane.
 #Instead:
@@ -182,78 +309,19 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 #function and our "loader_factory" closure should be added to "sys.path_hooks".
 #FIXME: Unit test us up, please.
 #FIXME: Define a comparable removal function named either:
-#* cancel_beartype_on_import(). This is ostensibly the most unambiguous and thus
-#  the best choice of those listed here. Obviously, beartype_on_import_cancel()
-#  is a comparable alternative.
+#* cancel_beartype_submodules_on_import(). This is ostensibly the most
+#  unambiguous and thus the best choice of those listed here. Obviously,
+#  beartype_submodules_on_import_cancel() is a comparable alternative.
 #* forget_beartype_on_import().
 #* no_beartype_on_import().
-#FIXME: Render the passed "package_names" parameter optional. To do so, we'll
-#need to inspect the call stack to obtain the name of the calling package: e.g.,
-#    from beartype._util.func.utilfunccodeobj import (
-#        FUNC_CODEOBJ_NAME_MODULE,
-#        get_func_codeobj,
-#    )
-#    from beartype._util.func.utilfuncframe import get_frame
-#
-#    def beartype_on_import(package_names: Optional[Iterable[str]]) -> None:
-#        # Note the following logic *CANNOT* reasonably be isolated to a new
-#        # private helper function. Why? Because this logic itself calls existing
-#        # private helper functions assuming the caller to be at the expected
-#        # position on the current call stack.
-#        if package_names is None:
-#            #FIXME: *UNSAFE.* get_frame() raises a "ValueError" exception if
-#            #passed a non-existent frame, which is non-ideal: e.g.,
-#            #    >>> sys._getframe(20)
-#            #    ValueError: call stack is not deep enough
-#            #Since beartype_on_import() is public, that function can
-#            #technically be called directly from a REPL. When it is, a
-#            #human-readable exception should be raised instead. Notably, we
-#            #instead want to:
-#            #* Define new utilfuncframe getters resembling:
-#            #      def get_frame_or_none(ignore_frames: int) -> Optional[FrameType]:
-#            #          try:
-#            #              return get_frame(ignore_frames + 1)
-#            #          except ValueError:
-#            #              return None
-#            #      def get_frame_caller_or_none() -> Optional[FrameType]:
-#            #          return get_frame_or_none(2)
-#            #* Import "get_frame_caller_or_none" above.
-#            #* Refactor this logic here to resemble:
-#            #      frame_caller = get_frame_caller_or_none()
-#            #      if frame_caller is None:
-#            #          raise BeartypeClawRegistrationException(
-#            #              'beartype_on_import() not callable directly from REPL scope.')
-#            frame_caller = get_frame(1)
-#
-#            # Code object underlying this frame's scope if that scope is
-#            # pure-Python *OR* raise an exception otherwise (i.e., if that
-#            # scope is C-based).
-#            frame_caller_codeobj = get_func_codeobj_or_none(frame_caller)
-#
-#            # Unqualified name of that scope.
-#            frame_caller_name = frame_caller_codeobj.co_name
-#
-#            # If that scope is *NOT* the placeholder string assigned by the active Python
-#            # interpreter to all scopes encapsulating the top-most lexical scope of
-#            # a module in the current call stack, that scope is class or
-#            # callable scope rather than module scope. In this case, raise an
-#            # exception.
-#            if frame_caller_name != FUNC_CODEOBJ_NAME_MODULE:
-#                # Fully-qualified name of that scope's module.
-#                frame_module_name = frame_caller.f_globals['__name__']
-#
-#                #FIXME: Raise some sort of new public exception here -- say, a
-#                #new "beartype.roar.BeartypeClawRegistrationException" type.
-#                raise BeartypeClawRegistrationException(
-#                    f'beartype_on_import() not passed the "package_names" '
-#                    f'parameter *AND* not called from module scope '
-#                    f'(i.e., caller scope "{frame_module_name}.{frame_caller_name}" either
-#                    f'class or callable). '
-#                    f'Please either pass the "package_names" parameter or '
-#                    f'call beartype_on_import() from module scope.'
-#                )
-def beartype_package_submodules_when_imported(
-    package_names: Iterable[str]) -> None:
+def beartype_submodules_on_import(
+    # Optional parameters.
+    package_names: Optional[Iterable[str]] = None,
+
+    # Optional keyword-only parameters.
+    *,
+    conf: BeartypeConf = BeartypeConf(),
+) -> None:
     '''
     Register a new **beartype import path hook** (i.e., callable inserted to the
     front of the standard :mod:`sys.path_hooks` list recursively applying the
@@ -263,9 +331,16 @@ def beartype_package_submodules_when_imported(
 
     Parameters
     ----------
-    package_names : Iterable[str]
+    package_names : Optional[Iterable[str]]
         Iterable of the fully-qualified names of one or more packages to be
-        type-checked by :func:`beartype.beartype`.
+        type-checked by :func:`beartype.beartype`. Defaults to ``None``, in
+        which case this parameter defaults to a 1-tuple containing only the
+        fully-qualified name of the **calling package** (i.e., external parent
+        package of the submodule directly calling this function).
+    conf : BeartypeConf, optional
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object). Defaults
+        to ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
 
     See Also
     ----------
@@ -274,15 +349,129 @@ def beartype_package_submodules_when_imported(
         this function with respect to inscrutable :mod:`importlib` machinery.
     '''
 
-    #FIXME: Validate "package_names", please. Notably, validate this parameter:
-    #* Is an iterable...
-    #* ...that is non-empty, whose...
-    #* Items are all:
-    #  * Strings that...
-    #  * Are valid unqualified Python identifiers (i.e., str.isidentifier()).
+    # ..................{ PACKAGE NAMES                      }..................
+    # Note the following logic *CANNOT* reasonably be isolated to a new
+    # private helper function. Why? Because this logic itself calls existing
+    # private helper functions assuming the caller to be at the expected
+    # position on the current call stack.
+    if package_names is None:
+        #FIXME: *UNSAFE.* get_frame() raises a "ValueError" exception if
+        #passed a non-existent frame, which is non-ideal: e.g.,
+        #    >>> sys._getframe(20)
+        #    ValueError: call stack is not deep enough
+        #Since beartype_on_import() is public, that function can
+        #technically be called directly from a REPL. When it is, a
+        #human-readable exception should be raised instead. Notably, we
+        #instead want to:
+        #* Define new utilfuncframe getters resembling:
+        #      def get_frame_or_none(ignore_frames: int) -> Optional[FrameType]:
+        #          try:
+        #              return get_frame(ignore_frames + 1)
+        #          except ValueError:
+        #              return None
+        #      def get_frame_caller_or_none() -> Optional[FrameType]:
+        #          return get_frame_or_none(2)
+        #* Import "get_frame_caller_or_none" above.
+        #* Refactor this logic here to resemble:
+        #      frame_caller = get_frame_caller_or_none()
+        #      if frame_caller is None:
+        #          raise BeartypeClawRegistrationException(
+        #              'beartype_submodules_on_import() '
+        #              'not callable directly from REPL scope.'
+        #          )
+        frame_caller: FrameType = get_frame(1)  # type: ignore[assignment,misc]
+
+        # Code object underlying the caller if that caller is pure-Python *OR*
+        # raise an exception otherwise (i.e., if that caller is C-based).
+        frame_caller_codeobj = get_func_codeobj(frame_caller)
+
+        # Unqualified basename of that caller.
+        frame_caller_basename = frame_caller_codeobj.co_name
+
+        # Fully-qualified name of the module defining that caller.
+        frame_caller_module_name = frame_caller.f_globals['__name__']
+
+        #FIXME: Relax this constraint, please. Just iteratively search up the
+        #call stack with iter_frames() until stumbling into a frame satisfying
+        #this condition.
+        # If that name is *NOT* the placeholder string assigned by the active
+        # Python interpreter to all scopes encapsulating the top-most lexical
+        # scope of a module in the current call stack, the caller is a class or
+        # callable rather than a module. In this case, raise an exception.
+        if frame_caller_basename != FUNC_CODEOBJ_NAME_MODULE:
+            raise BeartypeClawRegistrationException(
+                f'beartype_submodules_on_import() '
+                f'neither passed "package_names" nor called from module scope '
+                f'(i.e., caller scope '
+                f'"{frame_caller_module_name}.{frame_caller_basename}" '
+                f'either class or callable). '
+                f'Please either pass "package_names" or '
+                f'call this function from module scope.'
+            )
+
+        # If the fully-qualified name of the module defining that caller
+        # contains *NO* delimiters, that module is a top-level module defined by
+        # *NO* parent package. In this case, raise an exception. Why? Because
+        # this function uselessly and silently reduces to a noop when called by
+        # a top-level module. Why? Because this function registers an import
+        # hook applicable only to subsequently imported submodules of the passed
+        # packages. By definition, a top-level module is *NOT* a package and
+        # thus has *NO* submodules. To prevent confusion, notify the user here.
+        #
+        # Note this is constraint is also implicitly imposed by the subsequent
+        # call to the frame_caller_module_name.rpartition() method: e.g.,
+        #     >>> frame_caller_module_name = 'muh_module'
+        #     >>> frame_caller_module_name.rpartition()
+        #     ('', '', 'muh_module')  # <-- we're now in trouble, folks
+        if '.' not in frame_caller_module_name:
+            raise BeartypeClawRegistrationException(
+                f'beartype_submodules_on_import() '
+                f'neither passed "package_names" nor called by a submodule '
+                f'(i.e., caller module "{frame_caller_module_name}" '
+                f'defined by no parent package).'
+            )
+        # Else, that module is a submodule of some parent package.
+
+        # Fully-qualified name of the parent package defining that submodule,
+        # parsed from the name of that submodule via this standard idiom:
+        #     >>> frame_caller_module_name = 'muh_package.muh_module'
+        #     >>> frame_caller_module_name.rpartition()
+        #     ('muh_package', '.', 'muh_module')
+        frame_caller_package_name = frame_caller_module_name.rpartition()[0]
+
+        # Default this iterable to the 1-tuple referencing only this package.
+        package_names = (frame_caller_package_name,)
+
+    # If this iterable of package names is *NOT* an iterable, raise an
+    # exception.
+    if not isinstance(package_names, IterableABC):
+        raise BeartypeClawRegistrationException(
+            f'Package names {repr(package_names)} not iterable.')
+    # Else, this iterable of package names is an iterable.
     #
-    #This is non-trivial. Let's implement this as a series of proper "if"
-    #conditionals raising human-readable exceptions, please.
+    # If this iterable of package names is empty, raise an exception.
+    elif not package_names:
+        raise BeartypeClawRegistrationException('Package names empty.')
+    # Else, this iterable of package names is non-empty.
+
+    # For each such package name...
+    for package_name in package_names:
+        # If this package name is *NOT* a string, raise an exception.
+        if not isinstance(package_name, str):
+            raise BeartypeClawRegistrationException(
+                f'Package name {repr(package_name)} not string.')
+        # Else, this package name is a string.
+        #
+        # If this package name is *NOT* a valid Python identifier, raise an
+        # exception.
+        elif not is_identifier(package_name):
+            raise BeartypeClawRegistrationException(
+                f'Package name {repr(package_name)} invalid (i.e., not '
+                f'"."-delimited Python identifier).'
+            )
+        # Else, this package name is a valid Python identifier.
+
+    #FIXME: Validate the passed "conf" parameter here, please.
 
     #FIXME: Pass "package_names" to _BeartypeMetaPathFinder(), please. Uhm...
     #how exactly do we do that, though? *OH. OH, BOY.* The
@@ -308,6 +497,7 @@ def beartype_package_submodules_when_imported(
     #FIXME: Actually, just do the global thread-safe
     #"package_basename_to_subpackages" approach for now. See below!
 
+    # ..................{ PATH HOOK                          }..................
     # 2-tuple of the undocumented format expected by the FileFinder.path_hook()
     # class method called below, associating our beartype-specific source file
     # loader with the platform-specific filetypes of all sourceful Python
@@ -330,79 +520,6 @@ def beartype_package_submodules_when_imported(
     # Uncache *ALL* competing loaders cached by prior importations. Just do it!
     path_importer_cache.clear()
     invalidate_caches()
-
-# ....................{ PRIVATE ~ globals                  }....................
-#FIXME: Actually, wouldn't a "trie" be more efficient? Isn't this exact use case
-#what "trie" data structures are for? We have no idea. Nonetheless, it seems
-#likely that the following strategy could yield an optimal outcome. It's not
-#exactly a trie (we don't think); it's simply inspired by the idea:
-#* Currently, we define "_package_names" as a flattened set of package names:
-#      _package_names = {'a.b', 'a.c', 'd'}
-#  This requires worst-case O(n) iteration across the set of "n" package names
-#  to decide whether an arbitrary package name is in the set or not.
-#* Instead, consider refactoring "_package_names" into a nested dictionary whose
-#  keys are package names split on "." delimiters and whose values are either
-#  deeper nested dictionaries of the same format *OR* "None" (implying
-#  termination at the current package name): e.g.,
-#      _package_names = {'a': {'b': None, 'c': None}, 'd': None}
-#  This now requires worst-case O(h) iteration for "h" the height of the nested
-#  dictionary structure to decide whether an arbitrary package name is in the
-#  dictionary or not. Since h <<<<<<<<< n, this should be substantially faster.
-#  Moreover, the naive set-based approach requires inefficient string prefix
-#  testing for each item of the set. In contrast, this smart-alecky
-#  dictionary-based approach requires *ONLY* efficient string equality testing.
-#  Let's do this, fam.
-
-#FIXME: Ideally, the type hint annotating this global would be defined as a
-#recursive type alias ala:
-#    _PackageBasenameToSubpackages = (
-#        Dict[str, Optional['_PackageBasenameToSubpackages']])
-#Sadly, mypy currently fails to support recursive type aliases. Ergo, we
-#currently fallback to a simplistic alternative whose recursion "bottoms out"
-#at the first nested dictionary. See also:
-#    https://github.com/python/mypy/issues/731
-
-_package_basename_to_subpackages: Dict[str, Optional[dict]] = {}
-'''
-Non-thread-safe dictionary mapping from the unqualified basename of each package
-or module to be  fully-qualified names of one or
-more packages to be type-checked by :func:`beartype.beartype`.
-
-
-#FIXME: Actually, wouldn't a "trie" be more efficient? Isn't this exact use case
-#what "trie" data structures are for? We have no idea. Nonetheless, it seems
-#likely that the following strategy could yield an optimal outcome. It's not
-#exactly a trie (we don't think); it's simply inspired by the idea:
-#* Currently, we define "_package_names" as a flattened set of package names:
-#      _package_names = {'a.b', 'a.c', 'd'}
-#  This requires worst-case O(n) iteration across the set of "n" package names
-#  to decide whether an arbitrary package name is in the set or not.
-#* Instead, consider refactoring "_package_names" into a nested dictionary whose
-#  keys are package names split on "." delimiters and whose values are either
-#  deeper nested dictionaries of the same format *OR* "None" (implying
-#  termination at the current package name): e.g.,
-#      _package_names = {'a': {'b': None, 'c': None}, 'd': None}
-#  This now requires worst-case O(h) iteration for "h" the height of the nested
-#  dictionary structure to decide whether an arbitrary package name is in the
-#  dictionary or not. Since h <<<<<<<<< n, this should be substantially faster.
-#  Moreover, the naive set-based approach requires inefficient string prefix
-#  testing for each item of the set. In contrast, this smart-alecky
-#  dictionary-based approach requires *ONLY* efficient string equality testing.
-#  Let's do this, fam.
-
-Caution
-----------
-**This global is only safely accessible in a thread-safe manner from within a**
-``with _package_basename_to_subpackages_lock:`` **context manager.** Ergo, this
-global is *not* safely accessible outside that context manager.
-'''
-
-
-_package_basename_to_subpackages_lock = RLock()
-'''
-Reentrant reusable thread-safe context manager gating access to the otherwise
-non-thread-safe :data:`_package_names` global.
-'''
 
 # ....................{ PRIVATE ~ classes                  }....................
 #FIXME: *PROBABLY INSUFFICIENT.* For safety, we really only want to apply this

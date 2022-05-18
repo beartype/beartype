@@ -6,7 +6,7 @@
 '''
 **Beartype decorator dataclass unit tests.**
 
-This submodule unit tests the :func:`beartype._decor._call` submodule.
+This submodule unit tests the :func:`beartype._decor._decorcall` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -18,13 +18,13 @@ This submodule unit tests the :func:`beartype._decor._call` submodule.
 # ....................{ TESTS                             }....................
 def test_decor_data() -> None:
     '''
-    Test usage of the :func:`beartype._decor._call.BeartypeCall` dataclass.
+    Test usage of the :func:`beartype._decor._decorcall.BeartypeCall` dataclass.
     '''
 
     # Defer heavyweight imports.
     from beartype import BeartypeConf
     from beartype.roar import BeartypeDecorWrappeeException
-    from beartype._decor._call import BeartypeCall
+    from beartype._decor._decorcall import BeartypeCall
     from pytest import raises
 
     # Arbitrary beartype metadata.

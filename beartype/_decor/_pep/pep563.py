@@ -21,7 +21,7 @@ from beartype.typing import (
     FrozenSet,
     Optional,
 )
-from beartype._decor._call import BeartypeCall
+from beartype._decor._decorcall import BeartypeCall
 from beartype._util.func.utilfuncscope import (
     CallableScope,
     get_func_globals,
@@ -78,7 +78,7 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
     Caveats
     ----------
     **This function must be called only directly by the**
-    :meth:`beartype._decor._call.BeartypeCall.reinit` **method**, due to
+    :meth:`beartype._decor._decorcall.BeartypeCall.reinit` **method**, due to
     unavoidably introspecting the current call stack and making fixed
     assumptions about the structure and height of that stack.
 
@@ -322,7 +322,7 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
                         # Ignore additional frames on the call stack embodying:
                         # * The current call to this function.
                         # * The call to the parent
-                        #   beartype._decor._call.BeartypeCall.reinit() method.
+                        #   beartype._decor._decorcall.BeartypeCall.reinit() method.
                         # * The call to the parent @beartype.beartype()
                         #   decorator.
                         func_stack_frames_ignore=3,

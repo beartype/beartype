@@ -72,13 +72,13 @@ during the lifecycle of the active Python process).
 # whereas the API defined by this submodule is expected to unconditionally
 # operate as expected regardless of the current context.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype import BeartypeConf
 from beartype.roar import (
     BeartypeAbbyHintViolation,
     BeartypeCallHintReturnViolation,
 )
 from beartype.typing import Callable
-from beartype._decor.cache.cachedecor import beartype
+from beartype._conf import BeartypeConf
+from beartype._decor._cache.cachedecor import beartype
 from beartype._util.hint.utilhinttest import die_unless_hint
 
 # ....................{ PRIVATE ~ constants               }....................
@@ -115,7 +115,8 @@ def die_if_unbearable(
     hint: object,
 
     # Optional keyword-only parameters.
-    *, conf: BeartypeConf = BeartypeConf(),
+    *,
+    conf: BeartypeConf = BeartypeConf(),
 ) -> None:
     '''
     Raise an exception if the passed arbitrary object violates the passed
@@ -129,9 +130,8 @@ def die_if_unbearable(
         PEP-compliant type hint to test this object against.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all flags, options, settings, and other metadata configuring how this
-        object is type-checked). Defaults to ``BeartypeConf()``, the default
-        beartype configuration.
+        all settings configuring type-checking for the passed object). Defaults
+        to ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
 
     Raises
     ----------
@@ -203,9 +203,8 @@ def is_bearable(
         PEP-compliant type hint to test this object against.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all flags, options, settings, and other metadata configuring how this
-        object is type-checked). Defaults to ``BeartypeConf()``, the default
-        beartype configuration.
+        all settings configuring type-checking for the passed object). Defaults
+        to ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
 
     Returns
     ----------

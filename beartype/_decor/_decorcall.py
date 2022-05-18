@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorWrappeeException
-from beartype._decor.conf import BeartypeConf
+from beartype._conf import BeartypeConf
 from beartype._decor._code.codemagic import (
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
@@ -166,7 +166,7 @@ class BeartypeCall(object):
     # * Specific to the decorated callable and thus *NOT* safely cacheable
     #   across functions applying to different decorated callables.
     # * Already cached via the acquire_object_typed() function called by the
-    #   "beartype._decor.main" submodule.
+    #   "beartype._decor.decormain" submodule.
     #
     # See also:
     #     https://docs.python.org/3/reference/datamodel.html#object.__hash__

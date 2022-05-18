@@ -8,7 +8,7 @@
 
 This private submodule defines all core high-level logic underlying the
 :func:`beartype.beartype` decorator, whose implementation in the parent
-:mod:`beartype._decor.cache.cachedecor` submodule is a thin wrapper
+:mod:`beartype._decor._cache.cachedecor` submodule is a thin wrapper
 efficiently memoizing closures internally created and returned by that
 decorator. In turn, those closures directly defer to this submodule.
 
@@ -26,9 +26,9 @@ from beartype.roar import (
 from beartype._data.cls.datacls import (
     TYPES_BUILTIN_DECORATOR_DESCRIPTOR_FACTORY)
 from beartype._data.datatyping import BeartypeableT
-from beartype._decor.conf import BeartypeConf
+from beartype._conf import BeartypeConf
 from beartype._decor._code.codemain import generate_code
-from beartype._decor._call import BeartypeCall
+from beartype._decor._decorcall import BeartypeCall
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
@@ -72,7 +72,7 @@ def beartype_args_mandatory(
 
     See Also
     ----------
-    :func:`beartype._decor.main.beartype`
+    :func:`beartype._decor.decormain.beartype`
         Memoized parent decorator wrapping this unmemoized child decorator.
     '''
 
