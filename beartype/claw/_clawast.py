@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype all-at-once abstract syntax tree (AST) transformation.**
+**Beartype all-at-once low-level abstract syntax tree (AST) transformation.**
 
 This private submodule defines the low-level abstract syntax tree (AST)
 transformation automatically decorating well-typed third-party packages and

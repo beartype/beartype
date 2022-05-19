@@ -180,6 +180,31 @@ def make_func(
     # Fake in-memory filename hopefully unique to this function.
     # Optimistically, a fully-qualified object name and ID *SHOULD* be unique
     # for the lifetime of the active Python process.
+    #
+    # Specifically, this filename guarantees the uniqueness of the 3-tuple
+    # ``({func_filename}, {func_file_line_number}, {func_name})`` commonly
+    # leveraged by profilers (e.g., "cProfile") to identify arbitrary callables,
+    # where:
+    # * `{func_filename}` is this filename (e.g.,
+    #   `"</home/leycec/py/betse/betse/lib/libs.py:beartype({func_name})>"`).
+    # * `{func_file_line_number}`, is *ALWAYS* 0 and thus *NEVER* unique.
+    # * `{func_name}`, is identical to that of the decorated callable and also
+    #   thus *NEVER* unique.
+    #
+    # Ergo, uniquifying this filename is the *ONLY* means of uniquifying
+    # metadata identifying this wrapper function via runtime inspection. Failure
+    # to do so reduces tracebacks induced by exceptions raised by this wrapper
+    # to non-human-readability, which is less than ideal: e.g.,
+    #
+    #    Traceback (most recent call last):
+    #      File "/home/leycec/py/betsee/betsee/gui/simconf/stack/widget/mixin/guisimconfwdgeditscalar.py", line 313, in _set_alias_to_widget_value_if_sim_conf_open
+    #        widget=self, value_old=self._widget_value_last)
+    #      File "<string>", line 25, in func_beartyped
+    #      File "/home/leycec/py/betsee/betsee/gui/simconf/stack/widget/mixin/guisimconfwdgeditscalar.py", line 409, in __init__
+    #        *args, widget=widget, synopsis=widget.undo_synopsis, **kwargs)
+    #      File "<string>", line 13, in func_beartyped
+    #
+    # See the final traceback line, which is effectively useless.
     func_filename = (
         f'<@beartype({func_filename_name}) at {id(func_filename_object):#x}>')
 

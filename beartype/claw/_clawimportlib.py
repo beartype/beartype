@@ -4,12 +4,14 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype all-at-once** :mod:`importlib` **machinery.**
+**Beartype all-at-once high-level** :mod:`importlib` **machinery.**
 
-This private submodule integrates high-level :mod:`importlib` machinery required
-to implement :pep:`302`- and :pep:`451`-compliant import hooks with the
-low-level abstract syntax tree (AST) transformation defined by the companion
-:mod:`beartype.claw._clawast` submodule.
+This private submodule is the main entry point for this subpackage, defining the
+public-facing :func:`beartype_submodules_on_import` function registering new
+beartype import path hooks. Notably, this submodule integrates high-level
+:mod:`importlib` machinery required to implement :pep:`302`- and
+:pep:`451`-compliant import hooks with the low-level abstract syntax tree (AST)
+transformation defined by the low-level :mod:`beartype.claw._clawast` submodule.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -142,6 +144,7 @@ from ast import (
     fix_missing_locations,
 )
 from beartype.claw._clawast import _BeartypeNodeTransformer
+from beartype.claw._clawpackagenames import register_package_names
 from beartype.roar import BeartypeClawRegistrationException
 from beartype.typing import (
     Dict,
@@ -155,8 +158,6 @@ from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj,
 )
 from beartype._util.func.utilfuncframe import get_frame
-from beartype._util.text.utiltextident import is_identifier
-from collections.abc import Iterable as IterableABC
 from importlib import invalidate_caches
 from importlib.machinery import (
     SOURCE_SUFFIXES,
@@ -180,121 +181,6 @@ from types import (
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ PRIVATE ~ globals : packages       }....................
-#FIXME: Ideally, the type hint annotating this global would be defined as a
-#recursive type alias ala:
-#    _PackageBasenameToSubpackages = (
-#        Dict[str, Optional['_PackageBasenameToSubpackages']])
-#Sadly, mypy currently fails to support recursive type aliases. Ergo, we
-#currently fallback to a simplistic alternative whose recursion "bottoms out"
-#at the first nested dictionary. See also:
-#    https://github.com/python/mypy/issues/731
-_PackageBasenameToSubpackages = (
-    Dict[str, Optional[dict]])
-'''
-PEP-compliant type hint matching the recursively nested data structure of the
-private :data:`_package_basename_to_subpackages` global.
-'''
-
-
-#FIXME: Still not quite right. We also want to associate "BeartypeConf" settings
-#with hooked package names. Ergo, we need a companion flat dictionary ala:
-#    _package_name_to_conf = {
-#        'a': BeartypeConf(...),
-#        'a.b': BeartypeConf(...),
-#        'a.c': BeartypeConf(...),
-#        'z': BeartypeConf(...),
-#    }
-#
-#To decide whether a package name is being beartyped, we'll still leverage the
-#"_package_basename_to_subpackages" dictionary for efficiency. Once we've
-#decided that, we'll decide the configuration for that package by iteratively:
-#* If the name of that package is a key of "_package_name_to_conf", use the
-#  associated value as that package's configuration.
-#* Else, strip the rightmost subpackage name from that package name and repeat.
-#
-#Thankfully, note that search is still worst-case O(h) time for "h" the height
-#of the "_package_basename_to_subpackages" dictionary. Phew.
-
-_package_basename_to_subpackages: _PackageBasenameToSubpackages = {}
-'''
-Non-thread-safe dictionary mapping in a recursively nested manner from the
-unqualified basename of each subpackage to be subsequently possibly type-checked
-on first importation by the :func:`beartype.beartype` decorator to either the
-``None`` singleton if that subpackage is to be type-checked *or* a nested
-dictionary satisfying the same structure otherwise (i.e., if that subpackage is
-*not* to be type-checked).
-
-Motivation
-----------
-This dictionary is intentionally structured as a non-trivial nested data
-structure rather than a trivial non-nested flat dictionary. Why? Efficiency.
-Consider this flattened set of package names:
-
-    .. code-block:: python
-
-       _package_names = {'a.b', 'a.c', 'd'}
-
-Deciding whether an arbitrary package name is in that set or not requires
-worst-case ``O(n)`` iteration across the set of ``n`` package names.
-
-Consider instead this nested dictionary whose keys are package names split on
-``.`` delimiters and whose values are either recursively nested dictionaries of
-the same format *or* the ``None`` singleton (terminating the current package
-name):
-
-    .. code-block:: python
-
-       _package_basename_to_subpackages = {
-           'a': {'b': None, 'c': None}, 'd': None}
-
-Deciding whether an arbitrary package name is in this dictionary or not requires
-worst-case ``O(h)`` iteration across the height ``h`` of this dictionary
-(equivalent to the largest number of ``.`` delimiters for any fully-qualified
-package name encapsulated by this dictionary). Since ``h <<<<<<<<<< n``, this
-dictionary provides substantially faster worst-case lookup than that set.
-
-Moreover, in the worst case:
-
-* That set requires one inefficient string prefix test for each item.
-* This dictionary requires *only* one efficient string equality test for each
-  nested key-value pair while descending towards the target package name.
-
-Let's do this, fam.
-
-Caveats
-----------
-**This global is only safely accessible in a thread-safe manner from within a**
-``with _globals_lock:`` **context manager.** Ergo, this global is *not* safely
-accessible outside that context manager.
-
-Examples
-----------
-Instance of this data structure type-checking on import submodules of the root
-``package_z`` package, the child ``package_a.subpackage_k`` submodule, and the
-``package_a.subpackage_b.subpackage_c`` and
-``package_a.subpackage_b.subpackage_d`` submodules:
-
-    >>> _package_basename_to_subpackages = {
-    ...     'package_a': {
-    ...         'subpackage_b': {
-    ...             'subpackage_c': None,
-    ...             'subpackage_d': None,
-    ...         },
-    ...         'subpackage_k': None,
-    ...     },
-    ...     'package_z': None,
-    ... }
-'''
-
-# ....................{ PRIVATE ~ globals : threading      }....................
-_globals_lock = RLock()
-'''
-Reentrant reusable thread-safe context manager gating access to otherwise
-non-thread-safe private globals defined by this submodule (e.g.,
-:data:`_package_basename_to_subpackages`).
-'''
-
 # ....................{ HOOKS                              }....................
 #FIXME: *NOT RIGHT.* Repeated calls of this function from multiple third-party
 #packages currently add multiple closures to "sys.path_hooks", which is insane.
@@ -308,12 +194,6 @@ non-thread-safe private globals defined by this submodule (e.g.,
 #"_package_basename_to_subpackages" is empty, this is the first call to this
 #function and our "loader_factory" closure should be added to "sys.path_hooks".
 #FIXME: Unit test us up, please.
-#FIXME: Define a comparable removal function named either:
-#* cancel_beartype_submodules_on_import(). This is ostensibly the most
-#  unambiguous and thus the best choice of those listed here. Obviously,
-#  beartype_submodules_on_import_cancel() is a comparable alternative.
-#* forget_beartype_on_import().
-#* no_beartype_on_import().
 def beartype_submodules_on_import(
     # Optional parameters.
     package_names: Optional[Iterable[str]] = None,
@@ -341,6 +221,26 @@ def beartype_submodules_on_import(
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
         to ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
+
+    Raises
+    ----------
+    BeartypeClawRegistrationException
+        If either:
+
+        * The passed ``package_names`` parameter is either:
+
+          * *Not* iterable (i.e., fails to satisfy the
+            :class:`collections.abc.Iterable` protocol).
+          * An empty iterable.
+          * A non-empty iterable containing at least one item that is either:
+
+            * *Not* a string.
+            * The empty string.
+            * A non-empty string that is *not* a valid **package name** (i.e.,
+              ``"."``-delimited concatenation of valid Python identifiers).
+
+        * The passed ``conf`` parameter is *not* a beartype configuration (i.e.,
+          :class:`BeartypeConf` instance).
 
     See Also
     ----------
@@ -442,60 +342,12 @@ def beartype_submodules_on_import(
         # Default this iterable to the 1-tuple referencing only this package.
         package_names = (frame_caller_package_name,)
 
-    # If this iterable of package names is *NOT* an iterable, raise an
-    # exception.
-    if not isinstance(package_names, IterableABC):
-        raise BeartypeClawRegistrationException(
-            f'Package names {repr(package_names)} not iterable.')
-    # Else, this iterable of package names is an iterable.
+    # Register these packages for subsequent lookup during submodule importation
+    # by the beartype import path hook registered below.
     #
-    # If this iterable of package names is empty, raise an exception.
-    elif not package_names:
-        raise BeartypeClawRegistrationException('Package names empty.')
-    # Else, this iterable of package names is non-empty.
-
-    # For each such package name...
-    for package_name in package_names:
-        # If this package name is *NOT* a string, raise an exception.
-        if not isinstance(package_name, str):
-            raise BeartypeClawRegistrationException(
-                f'Package name {repr(package_name)} not string.')
-        # Else, this package name is a string.
-        #
-        # If this package name is *NOT* a valid Python identifier, raise an
-        # exception.
-        elif not is_identifier(package_name):
-            raise BeartypeClawRegistrationException(
-                f'Package name {repr(package_name)} invalid (i.e., not '
-                f'"."-delimited Python identifier).'
-            )
-        # Else, this package name is a valid Python identifier.
-
-    #FIXME: Validate the passed "conf" parameter here, please.
-
-    #FIXME: Pass "package_names" to _BeartypeMetaPathFinder(), please. Uhm...
-    #how exactly do we do that, though? *OH. OH, BOY.* The
-    #FileFinder.path_hook() creates a closure that, when invoked, ultimately
-    #calls the FileFinder._get_spec() method that instantiates our loader in the
-    #bog-standard way ala:
-    #    loader = loader_class(fullname, path)
-    #So, that doesn't leave us with any means of intervening in the process.
-    #We have two options here:
-    #* [CRUDE OPTION] The crude option is to cache all passed package names into
-    #  a new private global thread-safe "_package_names" list, which can only be
-    #  safely accessed by a "threading.{R,}Lock" context manager. Each
-    #  "_BeartypeSourceFileLoader" instance then accesses that global list. This
-    #  isn't necessarily awful. That said...
-    #* [FINE OPTION] The fine option is to do what we probably already want to
-    #  do and adopt the stacking solution described both above and at:
-    #      https://stackoverflow.com/a/48671982/2809027
-    #  This approach requires considerably more work, because we then need to
-    #  completely avoid all existing "importlib" machinery and write our own.
-    #  That's not necessarily a bad thing, though -- because all that machinery
-    #  is insufficient for our needs, anyway! So, we should probably "just do
-    #  the right thing" and adopt the fine solution. It's fine, yo.
-    #FIXME: Actually, just do the global thread-safe
-    #"package_basename_to_subpackages" approach for now. See below!
+    # Note this helper function fully validates these parameters. Ergo, we
+    # intentionally avoid doing so here in this higher-level function.
+    register_package_names(package_names=package_names, conf=conf)
 
     # ..................{ PATH HOOK                          }..................
     # 2-tuple of the undocumented format expected by the FileFinder.path_hook()
