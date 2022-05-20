@@ -132,18 +132,89 @@ def register_package_names(
         # For the fully-qualified name of each package to be registered...
         for package_name in package_names:
             # List of each unqualified basename comprising this name, split from
-            # this fully-qualified name on "." delimiters.
+            # this fully-qualified name on "." delimiters. Note that the
+            # "str.split('.')" and "str.rsplit('.')" calls produce the exact
+            # same lists under all possible edge cases. We arbitrarily call the
+            # former rather than the latter for simplicity and readability.
             package_basenames = package_name.split('.')
 
-            #FIXME: Implement us up, please. Doing so will require...
+            # Current (sub)dictionary of the global package name cache
+            # describing the currently iterated unqualified basename comprising
+            # this package's name, initialized to the root dictionary describing
+            # all top-level packages.
+            package_basename_to_subpackages_curr = (
+                _package_basename_to_subpackages)
+
+            # For each unqualified basename comprising this package's name...
+            for package_basename in package_basenames:
+                # Current subdictionary of the global package name cache
+                # describing this package if this package was already registered
+                # by a previous call to this function *OR* "None" otherwise
+                # (i.e., if this is the first registration of this package).
+                package_subpackages = (
+                    package_basename_to_subpackages_curr.get(package_basename))
+
+                # If this is the first registration of this package, register a
+                # new subdictionary describing this package.
+                #
+                # Note that this test could be obviated away by refactoring our
+                # "_PackageBasenameToSubpackagesDict" subclass from the
+                # "collections.defaultdict" superclass rather than the standard
+                # "dict" class. Since doing so would obscure erroneous attempts
+                # to access non-existing keys, however, this test is preferable
+                # to inviting even *MORE* bugs into this bug-riddled codebase.
+                # Just kidding! There are absolutely no bugs in this codebase.
+                #                                                   *wink*
+                if package_subpackages is None:
+                    package_subpackages = \
+                        package_basename_to_subpackages_curr[package_basename] = \
+                        _PackageBasenameToSubpackagesDict()
+                # Else, this package was already registered by a previous call
+                # to this function.
+
+                # Iterate the currently examined subdictionary one level deeper.
+                package_basename_to_subpackages_curr = package_subpackages
+            # Since the "package_basenames" list contains at least one basename,
+            # the above iteration set the currently examined subdictionary
+            # "package_basename_to_subpackages_curr" to at least one
+            # subdictionary of the global package name cache. Moreover, that
+            # subdictionary is guaranteed to describe the current (sub)package
+            # being registered.
+
+            # If this (sub)package has yet to be registered, register this
+            # (sub)package with this beartype configuration.
+            if  package_basename_to_subpackages_curr.conf_if_registered is None:
+                package_basename_to_subpackages_curr.conf_if_registered = conf
+            # Else, this (sub)package has already been registered by a previous
+            # call to this function. In this case...
+            else:
+                # Beartype configuration previously associated with this
+                # (sub)package by the previous call to this function.
+                conf_curr = (
+                    package_basename_to_subpackages_curr.conf_if_registered)
+
+                # If that call associated this (sub)package with a different
+                # configuration than that passed, raise an exception.
+                if conf_curr is not conf:
+                    raise BeartypeClawRegistrationException(
+                        f'Package name "{package_name}" previously registered '
+                        f'with differing beartype configuration:\n'
+                        f'----------(OLD CONFIGURATION)----------\n'
+                        f'{repr(conf_curr)}\n'
+                        f'----------(NEW CONFIGURATION)----------\n'
+                        f'{repr(conf)}\n'
+                    )
+                # Else, that call associated this (sub)package with the same
+                # configuration to that passed. In this case, silently ignore
+                # this redundant attempt to re-register this (sub)package.
 
 # ....................{ PRIVATE ~ classes                  }....................
 #FIXME: Docstring us up, please.
 class _PackageBasenameToSubpackagesDict(
     Dict[str, Optional['_PackageBasenameToSubpackagesDict']]):
     '''
-    **Package name cache value** (i.e., object suitable for caching as a value
-    of the :data:`_package_basename_to_subpackages` package names cache,
+    **Package name (sub)cache** (i.e., (sub)dictionary suitable for caching as a
+    value of the :data:`_package_basename_to_subpackages` package names cache,
     associating the unqualified basename of a parent package with the
     unqualified basename of each subpackage to be possibly type-checked on first
     importation by :func:`beartype.beartype`) class.
@@ -173,6 +244,21 @@ class _PackageBasenameToSubpackagesDict(
     __slots__ = (
         'conf_if_registered',
     )
+
+    # ..................{ INITIALIZERS                       }..................
+    def __init__(self, *args, **kwargs) -> None:
+        '''
+        Initialize this package name (sub)cache.
+
+        All passed parameters are passed as is to the superclass
+        :meth:`dict.__init__` method.
+        '''
+
+        # Initialize our superclass with all passed parameters.
+        super().__init__(*args, **kwargs)
+
+        # Nullify all subclass-specific parameters for safety.
+        self.conf_if_registered: Optional[BeartypeConf] = None
 
 # ....................{ PRIVATE ~ globals                  }....................
 #FIXME: Revise docstring in accordance with data structure changes, please.
