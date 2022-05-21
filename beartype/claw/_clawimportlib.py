@@ -144,13 +144,14 @@ from ast import (
     fix_missing_locations,
 )
 from beartype.claw._clawast import _BeartypeNodeTransformer
-from beartype.claw._clawpackagenames import register_package_names
+from beartype.claw._clawpackagenames import (
+    is_packages_registered,
+    register_packages,
+)
 from beartype.roar import BeartypeClawRegistrationException
 from beartype.typing import (
-    Dict,
     Iterable,
     Optional,
-    Union,
 )
 from beartype._conf import BeartypeConf
 from beartype._util.func.utilfunccodeobj import (
@@ -158,14 +159,16 @@ from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj,
 )
 from beartype._util.func.utilfuncframe import get_frame
-from importlib import invalidate_caches
+from importlib import (  # type: ignore[attr-defined]
+    _bootstrap_external,
+    invalidate_caches,
+)
 from importlib.machinery import (
     SOURCE_SUFFIXES,
     FileFinder,
     SourceFileLoader,
 )
 from importlib.util import (
-    cache_from_source,
     decode_source,
 )
 from sys import (
@@ -178,21 +181,15 @@ from types import (
     FrameType,
 )
 
+# Original cache_from_source() function defined by the private (*gulp*)
+# "importlib._bootstrap_external" submodule, preserved *BEFORE* temporarily
+# replacing that function with our beartype-specific variant below.
+from importlib.util import cache_from_source as cache_from_source_original
+
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ HOOKS                              }....................
-#FIXME: *NOT RIGHT.* Repeated calls of this function from multiple third-party
-#packages currently add multiple closures to "sys.path_hooks", which is insane.
-#Instead:
-#* The first call to this function from anywhere should do what we currently do,
-#  which is to add our "loader_factory" closure to "sys.path_hooks".
-#* Each subsequent call to this function should *DO ABSOLUTELY NOTHING* aside
-#  from adding the passed packages names to our global list of such packages.
-#
-#Thankfully, distinguishing between the two is trivial: if
-#"_package_basename_to_subpackages" is empty, this is the first call to this
-#function and our "loader_factory" closure should be added to "sys.path_hooks".
 #FIXME: Unit test us up, please.
 def beartype_submodules_on_import(
     # Optional parameters.
@@ -342,14 +339,53 @@ def beartype_submodules_on_import(
         # Default this iterable to the 1-tuple referencing only this package.
         package_names = (frame_caller_package_name,)
 
-    # Register these packages for subsequent lookup during submodule importation
-    # by the beartype import path hook registered below.
-    #
-    # Note this helper function fully validates these parameters. Ergo, we
-    # intentionally avoid doing so here in this higher-level function.
-    register_package_names(package_names=package_names, conf=conf)
-
     # ..................{ PATH HOOK                          }..................
+    # With a submodule-specific thread-safe reentrant lock...
+    with _claw_lock:
+        # True only if the beartype import path hook subsequently added below
+        # has already been added by a prior call to this function under the
+        # active Python interpreter.
+        #
+        # Technically, this condition is also decidable by an iterative search
+        # over the "sys.path_hooks" list for an item that is an instance of our
+        # private "_BeartypeSourceFileLoader" subclass. However, doing so would
+        # impose O(n) time complexity for "n" the size of that list,
+        #
+        # Pragmatically, this condition is trivially decidable by noting that:
+        # * This public function performs the *ONLY* call to the private
+        #   register_packages() function in this codebase.
+        # * The first call of this function under the active Python interpreter:
+        #   * Also performs the first call of the register_packages() function.
+        #   * Also adds our beartype import path hook.
+        #
+        # Ergo, deciding this state in O(1) time complexity reduces to deciding
+        # whether the register_packages() function has been called already.
+        is_path_hook_added = is_packages_registered()
+
+        # Register these packages for subsequent lookup during submodule
+        # importation by the beartype import path hook registered below *AFTER*
+        # deciding whether this function has been called already.
+        #
+        # Note this helper function fully validates these parameters. Ergo, we
+        # intentionally avoid doing so here in this higher-level function.
+        register_packages(package_names=package_names, conf=conf)
+
+        # True only if the beartype import path hook subsequently added below
+        # has already been added by a prior call to this function under the
+        # active Python interpreter.
+        if not is_path_hook_added:
+            _add_path_hook()
+
+
+def _add_path_hook() -> None:
+    '''
+    Add a new **beartype import path hook** (i.e., callable inserted to the
+    front of the standard :mod:`sys.path_hooks` list recursively applying the
+    :func:`beartype.beartype` decorator to all well-typed callables and classes
+    defined by all submodules of all packages with the passed names on the first
+    importation of those submodules).
+    '''
+
     # 2-tuple of the undocumented format expected by the FileFinder.path_hook()
     # class method called below, associating our beartype-specific source file
     # loader with the platform-specific filetypes of all sourceful Python
@@ -431,15 +467,11 @@ class _BeartypeSourceFileLoader(SourceFileLoader):
     #  We're fairly certain that suffices. Nonetheless, verify this by
     #  inspecting the comparable find_spec() implementation at:
     #      https://stackoverflow.com/a/48671982/2809027
-    #* Monkey-patch the exec_module() method, please. Maybe? Is there truly no
-    #  saner means of doing so? I've confirmed that "importlib" machinery
-    #  elsewhere directly calls "loader.exec_module()", so... we probably have
-    #  no safe alternative. It is what it is. Look! Just do this, fam. \o/
 
     # Note that we explicitly ignore mypy override complaints here. For unknown
     # reasons, mypy believes that "importlib.machinery.SourceFileLoader"
     # subclasses comply with the "importlib.abc.InspectLoader" abstract base
-    # class (ABC). Of course, this is *NOT* the case. Ergo, we entirely ignore
+    # class (ABC). Naturally, that is *NOT* the case. Ergo, we entirely ignore
     # mypy complaints here with respect to signature matching.
     def source_to_code(  # type: ignore[override]
         self,
@@ -511,3 +543,79 @@ class _BeartypeSourceFileLoader(SourceFileLoader):
 
         # Return this code object.
         return module_codeobj
+
+
+    #FIXME: Is this monkey-patch strictly necessary? What exactly are the
+    #real-world consequences of *NOT* doing so? Docstring us up, please.
+    def get_code(self, *args, **kwargs) -> Optional[CodeType]:
+        '''
+        Create and return the code object underlying the passed module.
+
+        All passed parameters are passed as is to the superclass method.
+        '''
+
+        # Temporarily replace that function with a beartype-specific variant.
+        # Doing so is strongly inspired by a similar monkey-patch applied by the
+        # external typeguard.importhook.TypeguardLoader.exec_module() method
+        # authored by the incomparable @agronholm (Alex Grönholm), who writes:
+        #     Use a custom optimization marker – the import lock should make
+        #     this monkey patch safe
+        #
+        # We implicitly trust @agronholm to get that right in a popular project
+        # stress-tested across hundreds of open-source projects over the past
+        # several decades. So, we avoid explicit thread-safe locking here.
+        #
+        # Lastly, note there appears to be *NO* other means of safely
+        # implementing this behaviour *WITHOUT* violating Don't Repeat Yourself
+        # (DRY). Specifically, doing so would require duplicating most of the
+        # entirety of the *EXTREMELY* non-trivial nearly 100 line-long
+        # importlib._bootstrap_external.SourceLoader.get_code() method. Since
+        # duplicating non-trivial and fragile code inherently tied to a specific
+        # CPython version is considerably worse than applying a trivial one-line
+        # monkey-patch, first typeguard and now @beartype strongly prefer this
+        # monkey-patch. Did we mention that @agronholm is amazing? Because that
+        # really bears repeating. May the name of Alex Grönholm live eternal!
+        _bootstrap_external.cache_from_source = _cache_from_source_beartype
+
+        # Attempt to defer to the superclass method with all passed parameters.
+        try:
+            return super().get_code(*args, **kwargs)
+        # After doing so (and regardless of whether doing so raises an
+        # exception), restore the original cache_from_source() function.
+        finally:
+            _bootstrap_external.cache_from_source = cache_from_source_original
+
+# ....................{ PRIVATE ~ globals : threading      }....................
+_claw_lock = RLock()
+'''
+Reentrant reusable thread-safe context manager gating access to otherwise
+non-thread-safe private globals defined by both this high-level submodule and
+subsidiary lower-level submodules (particularly, the
+:attr:`beartype.claw._clawpackagenames._package_basename_to_subpackages` cache).
+'''
+
+# ....................{ PRIVATE ~ cachers                  }....................
+#FIXME: Unit test us up, please.
+def _cache_from_source_beartype(*args, **kwargs) -> str:
+    '''
+    Beartype-specific variant of the
+    :func:`importlib._bootstrap_external.cache_from_source` function applying a
+    beartype-specific optimization marker to that function.
+
+    This, in turn, ensures that submodules residing in packages registered by a
+    prior call to the :func:`beartype_submodules_on_import` function are
+    compiled to files with the filetype ``".pyc{optimization}-beartype"``,
+    where ``{optimization}`` is the original ``optimization`` parameter passed
+    to this function call.
+    '''
+
+    # Original optimization parameter passed to this function call if any *OR*
+    # the empty string otherwise.
+    optimization_marker_old = kwargs.get('optimization', '')
+
+    # New optimization parameter applied by this monkey-patch of that function,
+    # uniquifying that parameter with a beartype-specific suffix.
+    kwargs['optimization'] = f'{optimization_marker_old}-beartype'
+
+    # Defer to the implementation of the original cache_from_source() function.
+    return cache_from_source_original(*args, **kwargs)

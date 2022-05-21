@@ -25,10 +25,34 @@ from beartype.typing import (
 from beartype._conf import BeartypeConf
 from beartype._util.text.utiltextident import is_identifier
 from collections.abc import Iterable as IterableABC
-from threading import RLock
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+
+# ....................{ TESTERS                            }....................
+#FIXME: Unit test us up, please.
+def is_packages_registered() -> bool:
+    '''
+    ``True`` only if one or more packages have been previously registered.
+
+    Equivalently, this tester returns ``True`` only if the
+    :func:`register_packages` function has been called at least once under the
+    active Python interpreter.
+
+    Caveats
+    ----------
+    **This function is only safely callable in a thread-safe manner within a**
+    ``with _claw_lock:`` **context manager.** Equivalently, this global is *not*
+    safely accessible outside that manager.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if one or more packages have been previously registered.
+    '''
+
+    # Unleash the beast! Unsaddle the... addled?
+    return bool(_package_basename_to_subpackages)
 
 # ....................{ REGISTRARS                         }....................
 #FIXME: Unit test us up, please.
@@ -38,7 +62,7 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 #  beartype_submodules_on_import_cancel() is a comparable alternative.
 #* forget_beartype_on_import().
 #* no_beartype_on_import().
-def register_package_names(
+def register_packages(
     # Mandatory keyword-only parameters.
     *,
     package_names: Iterable[str],
@@ -51,6 +75,12 @@ def register_package_names(
     :func:`beartype.beartype` decorator to all well-typed callables and classes
     defined by all submodules of all packages with the passed names on the first
     importation of those submodules).
+
+    Caveats
+    ----------
+    **This function is only safely callable in a thread-safe manner within a**
+    ``with _claw_lock:`` **context manager.** Equivalently, this global is *not*
+    safely accessible outside that manager.
 
     Parameters
     ----------
@@ -127,86 +157,84 @@ def register_package_names(
         # Else, this package name is a valid Python identifier.
 
     # ..................{ REGISTRATION                       }..................
-    # With a submodule-specific thread-safe reentrant lock...
-    with _globals_lock:
-        # For the fully-qualified name of each package to be registered...
-        for package_name in package_names:
-            # List of each unqualified basename comprising this name, split from
-            # this fully-qualified name on "." delimiters. Note that the
-            # "str.split('.')" and "str.rsplit('.')" calls produce the exact
-            # same lists under all possible edge cases. We arbitrarily call the
-            # former rather than the latter for simplicity and readability.
-            package_basenames = package_name.split('.')
+    # For the fully-qualified name of each package to be registered...
+    for package_name in package_names:
+        # List of each unqualified basename comprising this name, split from
+        # this fully-qualified name on "." delimiters. Note that the
+        # "str.split('.')" and "str.rsplit('.')" calls produce the exact
+        # same lists under all possible edge cases. We arbitrarily call the
+        # former rather than the latter for simplicity and readability.
+        package_basenames = package_name.split('.')
 
-            # Current (sub)dictionary of the global package name cache
-            # describing the currently iterated unqualified basename comprising
-            # this package's name, initialized to the root dictionary describing
-            # all top-level packages.
-            package_basename_to_subpackages_curr = (
-                _package_basename_to_subpackages)
+        # Current (sub)dictionary of the global package name cache
+        # describing the currently iterated unqualified basename comprising
+        # this package's name, initialized to the root dictionary describing
+        # all top-level packages.
+        package_basename_to_subpackages_curr = (
+            _package_basename_to_subpackages)
 
-            # For each unqualified basename comprising this package's name...
-            for package_basename in package_basenames:
-                # Current subdictionary of the global package name cache
-                # describing this package if this package was already registered
-                # by a previous call to this function *OR* "None" otherwise
-                # (i.e., if this is the first registration of this package).
-                package_subpackages = (
-                    package_basename_to_subpackages_curr.get(package_basename))
+        # For each unqualified basename comprising this package's name...
+        for package_basename in package_basenames:
+            # Current subdictionary of the global package name cache
+            # describing this package if this package was already registered
+            # by a previous call to this function *OR* "None" otherwise
+            # (i.e., if this is the first registration of this package).
+            package_subpackages = (
+                package_basename_to_subpackages_curr.get(package_basename))
 
-                # If this is the first registration of this package, register a
-                # new subdictionary describing this package.
-                #
-                # Note that this test could be obviated away by refactoring our
-                # "_PackageBasenameToSubpackagesDict" subclass from the
-                # "collections.defaultdict" superclass rather than the standard
-                # "dict" class. Since doing so would obscure erroneous attempts
-                # to access non-existing keys, however, this test is preferable
-                # to inviting even *MORE* bugs into this bug-riddled codebase.
-                # Just kidding! There are absolutely no bugs in this codebase.
-                #                                                   *wink*
-                if package_subpackages is None:
-                    package_subpackages = \
-                        package_basename_to_subpackages_curr[package_basename] = \
-                        _PackageBasenameToSubpackagesDict()
-                # Else, this package was already registered by a previous call
-                # to this function.
+            # If this is the first registration of this package, register a
+            # new subdictionary describing this package.
+            #
+            # Note that this test could be obviated away by refactoring our
+            # "_PackageBasenameToSubpackagesDict" subclass from the
+            # "collections.defaultdict" superclass rather than the standard
+            # "dict" class. Since doing so would obscure erroneous attempts
+            # to access non-existing keys, however, this test is preferable
+            # to inviting even *MORE* bugs into this bug-riddled codebase.
+            # Just kidding! There are absolutely no bugs in this codebase.
+            #                                                   *wink*
+            if package_subpackages is None:
+                package_subpackages = \
+                    package_basename_to_subpackages_curr[package_basename] = \
+                    _PackageBasenameToSubpackagesDict()
+            # Else, this package was already registered by a previous call
+            # to this function.
 
-                # Iterate the currently examined subdictionary one level deeper.
-                package_basename_to_subpackages_curr = package_subpackages
-            # Since the "package_basenames" list contains at least one basename,
-            # the above iteration set the currently examined subdictionary
-            # "package_basename_to_subpackages_curr" to at least one
-            # subdictionary of the global package name cache. Moreover, that
-            # subdictionary is guaranteed to describe the current (sub)package
-            # being registered.
+            # Iterate the currently examined subdictionary one level deeper.
+            package_basename_to_subpackages_curr = package_subpackages
+        # Since the "package_basenames" list contains at least one basename,
+        # the above iteration set the currently examined subdictionary
+        # "package_basename_to_subpackages_curr" to at least one
+        # subdictionary of the global package name cache. Moreover, that
+        # subdictionary is guaranteed to describe the current (sub)package
+        # being registered.
 
-            # If this (sub)package has yet to be registered, register this
-            # (sub)package with this beartype configuration.
-            if  package_basename_to_subpackages_curr.conf_if_registered is None:
-                package_basename_to_subpackages_curr.conf_if_registered = conf
-            # Else, this (sub)package has already been registered by a previous
-            # call to this function. In this case...
-            else:
-                # Beartype configuration previously associated with this
-                # (sub)package by the previous call to this function.
-                conf_curr = (
-                    package_basename_to_subpackages_curr.conf_if_registered)
+        # If this (sub)package has yet to be registered, register this
+        # (sub)package with this beartype configuration.
+        if  package_basename_to_subpackages_curr.conf_if_registered is None:
+            package_basename_to_subpackages_curr.conf_if_registered = conf
+        # Else, this (sub)package has already been registered by a previous
+        # call to this function. In this case...
+        else:
+            # Beartype configuration previously associated with this
+            # (sub)package by the previous call to this function.
+            conf_curr = (
+                package_basename_to_subpackages_curr.conf_if_registered)
 
-                # If that call associated this (sub)package with a different
-                # configuration than that passed, raise an exception.
-                if conf_curr is not conf:
-                    raise BeartypeClawRegistrationException(
-                        f'Package name "{package_name}" previously registered '
-                        f'with differing beartype configuration:\n'
-                        f'----------(OLD CONFIGURATION)----------\n'
-                        f'{repr(conf_curr)}\n'
-                        f'----------(NEW CONFIGURATION)----------\n'
-                        f'{repr(conf)}\n'
-                    )
-                # Else, that call associated this (sub)package with the same
-                # configuration to that passed. In this case, silently ignore
-                # this redundant attempt to re-register this (sub)package.
+            # If that call associated this (sub)package with a different
+            # configuration than that passed, raise an exception.
+            if conf_curr is not conf:
+                raise BeartypeClawRegistrationException(
+                    f'Package name "{package_name}" previously registered '
+                    f'with differing beartype configuration:\n'
+                    f'----------(OLD CONFIGURATION)----------\n'
+                    f'{repr(conf_curr)}\n'
+                    f'----------(NEW CONFIGURATION)----------\n'
+                    f'{repr(conf)}\n'
+                )
+            # Else, that call associated this (sub)package with the same
+            # configuration to that passed. In this case, silently ignore
+            # this redundant attempt to re-register this (sub)package.
 
 # ....................{ PRIVATE ~ classes                  }....................
 #FIXME: Docstring us up, please.
@@ -311,8 +339,8 @@ Let's do this, fam.
 Caveats
 ----------
 **This global is only safely accessible in a thread-safe manner from within a**
-``with _globals_lock:`` **context manager.** Ergo, this global is *not* safely
-accessible outside that context manager.
+``with _claw_lock:`` **context manager.** Equivalently, this global is *not*
+safely accessible outside that manager.
 
 Examples
 ----------
@@ -331,12 +359,4 @@ Instance of this data structure type-checking on import submodules of the root
     ...     },
     ...     'package_z': None,
     ... }
-'''
-
-# ....................{ PRIVATE ~ globals : threading      }....................
-_globals_lock = RLock()
-'''
-Reentrant reusable thread-safe context manager gating access to otherwise
-non-thread-safe private globals defined by this submodule (e.g.,
-:data:`_package_basename_to_subpackages`).
 '''
