@@ -17,124 +17,17 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: The New Five-Year Plan 2.0 is to avoid all interaction with the
-#higher-level "sys.meta_path" mechanism entirely. Why? Because pytest leverages
-#that some mechanism for its assertion rewriting. Do we care? *WE CARE,*
-#especially because there appears to be no sensible means of portably stacking
-#our own "MetaPathFinder" (...or whatever) on top of pytest's. Instead, we note
-#the existence of the much less commonly used (but ultimately significantly
-#safer) lower-level "sys.path_hooks" mechanism. Fascinatingly, AST transforms
-#can be implemented by leveraging either. For some reason, everyone *ONLY*
-#leverages the former to transform ASTs. Let's break that trend by instead
-#leveraging the latter to transform ASTs. Specifically:
-#* First, define a new private "_BeartypeSourceLoader(SourceFileLoader)" class
-#  strongly inspired by the *SECOND* example of this exemplary StackOverflow
-#  answer, which is probably the definitive statement on the subject:
-#  https://stackoverflow.com/a/43573798/2809027
-#  Note the use of the concrete "SourceFileLoader" superclass rather than the
-#  less concrete "FileLoader" superclass. Since both typeguard and ideas
-#  explicitly test for "SourceFileLoader" instances, it's almost certain that
-#  that's what we require as well.
-#  The disadvantage of this approach is that it fails to generalize to embedded
-#  Python modules (e.g., in frozen archives or zip files). Of course, *SO DOES*
-#  what "typeguard" and "ideas" are both doing and no one particularly seems to
-#  care there, right? This approach is thus still generally robust enough to
-#  suffice for a first pass.
-#  After getting this simplistic approach working, let's then fully invest in
-#  exhaustively testing that this approach successfully:
-#  * Directly decorates callables declared at:
-#    * Global scope in an on-disk top-level non-package module embedded in our
-#      test suite.
-#    * Class scope in the same module.
-#    * Closure scope in the same module.
-#  * Recursively decorates all callables declared by submodules of an on-disk
-#    top-level package.
-#  * Does *NOT* conflict with pytest's assertion rewriting mechanism. This will
-#    be non-trivial. Can we isolate another pytest process within the main
-#    currently running pytest process? O_o
-#* Next, generalize that class to support stacking. What? Okay, so the core
-#  issue with the prior approach is that it only works with standard Python
-#  modules defined as standard files in standard directories. This assumption
-#  breaks down for Python modules embedded within other files (e.g., as frozen
-#  archives or zip files). The key insight here is given by Iguananaut in this
-#  StackOverflow answer:
-#    https://stackoverflow.com/a/48671982/2809027
-#  This approach "...installs a special hook in sys.path_hooks that acts almost
-#  as a sort of middle-ware between the PathFinder in sys.meta_path, and the
-#  hooks in sys.path_hooks where, rather than just using the first hook that
-#  says 'I can handle this path!' it tries all matching hooks in order, until it
-#  finds one that actually returns a useful ModuleSpec from its find_spec
-#  method."
-#  Note that "hooks" in "sys.path_hooks" are actually *FACTORY FUNCTIONS*,
-#  typically defined by calling the FileFinder.path_hook() class method.
-#  We're unclear whether we want a full "ModuleSpec," however. It seems
-#  preferable to merely search for a working hook in "sys.path_hooks" that
-#  applies to the path. Additionally, if that hook defines a get_source() method
-#  *AND* that method returns a non-empty string (i.e., that is neither "None"
-#  *NOR* the empty string), then we want to munge that string with our AST
-#  transformation. The advantages of this approach are multitude:
-#  * This approach supports pytest, unlike standard "meta_path" approaches.
-#  * This approach supports embedded files, unlike the first approach above. In
-#    particular, note that the standard
-#    "zipimporter.zipimporter(_bootstrap_external._LoaderBasics)" class for
-#    loading Python modules from arbitrary zip files does *NOT* subclass any of
-#    the standard superclasses you might expect it to (e.g.,
-#    "importlib.machinery.SourceFileLoader"). Ergo, a simple inheritance check
-#    fails to suffice. Thankfully, that class *DOES* define a get_source()
-#    method resembling that of SourceFileLoader.get_source().
-#FIXME: I've confirmed by deep inspection of both the standard "importlib"
-#package and the third-party "_pytest.assertion.rewrite" subpackage that the
-#above should (but possible does *NOT*) suffice to properly integrate with
-#pytest. Notably, the
-#_pytest.assertion.rewrite.AssertionRewritingHook.find_spec() class method
-#improperly overwrites the "importlib._bootstrap.ModuleSpec.loader" instance
-#variable with *ITSELF* here:
-#
-#    class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
-#        ...
-#
-#        _find_spec = importlib.machinery.PathFinder.find_spec
-#
-#        def find_spec(
-#            self,
-#            name: str,
-#            path: Optional[Sequence[Union[str, bytes]]] = None,
-#            target: Optional[types.ModuleType] = None,
-#        ) -> Optional[importlib.machinery.ModuleSpec]:
-#            ...
-#
-#            # *SO FAR, SO GOOD.* The "spec.loader" instance variable now refers
-#            # to an instance of our custom "SourceFileLoader" subclass.
-#            spec = self._find_spec(name, path)  # type: ignore
-#            ...
-#
-#            # *EVEN BETTER.* This might save us. See below.
-#            if not self._should_rewrite(name, fn, state):
-#                return None
-#
-#            # And... everything goes to Heck right here. Passing "loader=self"
-#            # completely replaces the loader that Python just helpfully
-#            # provided with this "AssertionRewritingHook" instance, which is
-#            # all manner of wrong.
-#            return importlib.util.spec_from_file_location(
-#                name,
-#                fn,
-#                loader=self,  # <-- *THIS IS THE PROBLEM, BRO.*
-#                submodule_search_locations=spec.submodule_search_locations,
-#            )
-#
-#Ultimately, it's no surprise whatsoever that this brute-force behaviour from
-#pytest conflicts with everyone else in the Python ecosystem. That said, this
-#might still not be an issue. Why? Because the call to self._should_rewrite()
-#*SHOULD* cause "AssertionRewritingHook" to silently reduce to a noop for
-#anything that beartype would care about.
-#
-#If true (which it should be), the above approach *SHOULD* still actually work.
-#So why does pytest conflict with other AST transformation approaches? Because
-#those other approaches also leverage "sys.meta_path" machinery, typically by
-#forcefully prepending their own "MetaPathFinder" instance onto "sys.meta_path",
-#which silently overwrites pytest's "MetaPathFinder" instance. Since we're *NOT*
-#doing that, we should be fine with our approach. *sweat beads brow*
+#FIXME: Unit test us up. Specifically, test that this approach successfully:
+#* Directly decorates callables declared at:
+#  * Global scope in an on-disk top-level non-package module embedded in our
+#    test suite.
+#  * Class scope in the same module.
+#  * Closure scope in the same module.
+#* Recursively decorates all callables declared by submodules of an on-disk
+#  top-level package.
+#* Does *NOT* conflict with pytest's assertion rewriting mechanism. This will
+#  be non-trivial. Can we isolate another pytest process within the main
+#  currently running pytest process? O_o
 
 #FIXME: Improve module docstring, please.
 
@@ -410,11 +303,90 @@ def _add_path_hook() -> None:
     invalidate_caches()
 
 # ....................{ PRIVATE ~ classes                  }....................
-#FIXME: *PROBABLY INSUFFICIENT.* For safety, we really only want to apply this
-#loader to packages in the passed "package_names" list. For all other packages,
-#the relevant method of this loader (which is probably find_spec(), but let's
-#research that further) should return "None". Doing so defers loading to the
-#next loader in "sys.path_hooks".
+#FIXME: Generalize this class to support stacking. What? Okay, so the core
+#issue with the prior approach is that it only works with standard Python
+#modules defined as standard files in standard directories. This assumption
+#breaks down for Python modules embedded within other files (e.g., as frozen
+#archives or zip files). The key insight here is given by Iguananaut in this
+#StackOverflow answer:
+#  https://stackoverflow.com/a/48671982/2809027
+#This approach "...installs a special hook in sys.path_hooks that acts almost
+#as a sort of middle-ware between the PathFinder in sys.meta_path, and the
+#hooks in sys.path_hooks where, rather than just using the first hook that
+#says 'I can handle this path!' it tries all matching hooks in order, until it
+#finds one that actually returns a useful ModuleSpec from its find_spec
+#method."
+#Note that "hooks" in "sys.path_hooks" are actually *FACTORY FUNCTIONS*,
+#typically defined by calling the FileFinder.path_hook() class method.
+#We're unclear whether we want a full "ModuleSpec," however. It seems
+#preferable to merely search for a working hook in "sys.path_hooks" that
+#applies to the path. Additionally, if that hook defines a get_source() method
+#*AND* that method returns a non-empty string (i.e., that is neither "None"
+#*NOR* the empty string), then we want to munge that string with our AST
+#transformation. The advantages of this approach are multitude:
+#* This approach supports pytest, unlike standard "meta_path" approaches.
+#* This approach supports embedded files, unlike the first approach above. In
+#  particular, note that the standard
+#  "zipimporter.zipimporter(_bootstrap_external._LoaderBasics)" class for
+#  loading Python modules from arbitrary zip files does *NOT* subclass any of
+#  the standard superclasses you might expect it to (e.g.,
+#  "importlib.machinery.SourceFileLoader"). Ergo, a simple inheritance check
+#  fails to suffice. Thankfully, that class *DOES* define a get_source()
+#  method resembling that of SourceFileLoader.get_source().
+#FIXME: I've confirmed by deep inspection of both the standard "importlib"
+#package and the third-party "_pytest.assertion.rewrite" subpackage that the
+#above should (but possible does *NOT*) suffice to properly integrate with
+#pytest. Notably, the
+#_pytest.assertion.rewrite.AssertionRewritingHook.find_spec() class method
+#improperly overwrites the "importlib._bootstrap.ModuleSpec.loader" instance
+#variable with *ITSELF* here:
+#
+#    class AssertionRewritingHook(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+#        ...
+#
+#        _find_spec = importlib.machinery.PathFinder.find_spec
+#
+#        def find_spec(
+#            self,
+#            name: str,
+#            path: Optional[Sequence[Union[str, bytes]]] = None,
+#            target: Optional[types.ModuleType] = None,
+#        ) -> Optional[importlib.machinery.ModuleSpec]:
+#            ...
+#
+#            # *SO FAR, SO GOOD.* The "spec.loader" instance variable now refers
+#            # to an instance of our custom "SourceFileLoader" subclass.
+#            spec = self._find_spec(name, path)  # type: ignore
+#            ...
+#
+#            # *EVEN BETTER.* This might save us. See below.
+#            if not self._should_rewrite(name, fn, state):
+#                return None
+#
+#            # And... everything goes to Heck right here. Passing "loader=self"
+#            # completely replaces the loader that Python just helpfully
+#            # provided with this "AssertionRewritingHook" instance, which is
+#            # all manner of wrong.
+#            return importlib.util.spec_from_file_location(
+#                name,
+#                fn,
+#                loader=self,  # <-- *THIS IS THE PROBLEM, BRO.*
+#                submodule_search_locations=spec.submodule_search_locations,
+#            )
+#
+#Ultimately, it's no surprise whatsoever that this brute-force behaviour from
+#pytest conflicts with everyone else in the Python ecosystem. That said, this
+#might still not be an issue. Why? Because the call to self._should_rewrite()
+#*SHOULD* cause "AssertionRewritingHook" to silently reduce to a noop for
+#anything that beartype would care about.
+#
+#If true (which it should be), the above approach *SHOULD* still actually work.
+#So why does pytest conflict with other AST transformation approaches? Because
+#those other approaches also leverage "sys.meta_path" machinery, typically by
+#forcefully prepending their own "MetaPathFinder" instance onto "sys.meta_path",
+#which silently overwrites pytest's "MetaPathFinder" instance. Since we're *NOT*
+#doing that, we should be fine with our approach. *sweat beads brow*
+
 #FIXME: Unit test us up, please.
 class _BeartypeSourceFileLoader(SourceFileLoader):
     '''
@@ -440,6 +412,46 @@ class _BeartypeSourceFileLoader(SourceFileLoader):
        * Key is the package of that module.
        * Value is that instance of this class.
 
+    Motivation
+    ----------
+    This loader was intentionally implemented so as to exclusively leverage the
+    lower-level :attr:`sys.path_hooks` mechanism for declaring import hooks
+    rather than both that *and* the higher-level :attr:`sys.meta_path`
+    mechanism. All prior efforts in the Python ecosystem to transform the
+    abstract syntax trees (ASTs) of modules at importation time via import hooks
+    leverage both mechanisms. This includes:
+
+    * :mod:`pytest`, which rewrites test assertion statements via import hooks
+      leveraging both mechanisms.
+    * :mod:`typeguard`, which implicitly applies the runtime type-checking
+      :func:`typguard.typechecked` decorator via import hooks leveraging both
+      mechanisms.
+    * :mod:`ideas`, which applies arbitrary caller-defined AST transformations
+      via (...wait for it) import hooks leveraging both mechanisms.
+
+    Beartype subverts this long-storied tradition by *only* leveraging the
+    lower-level :attr:`sys.path_hooks` mechanism. Doing so reduces the
+    maintenance burden, code complexity, and inter-package conflicts. The latter
+    point is particularly salient. The AST transformations applied by
+    both :mod:`typeguard` and :mod:`ideas` accidentally conflict with those
+    applied by :mod:`pytest`. Why? Because (in order):
+
+    #. When run as a test suite runner, :mod:`pytest` necessarily runs first and
+       thus prepends its import hook as the new first item of the
+       :attr:`sys.meta_path` list.
+    #. When imported during subsequent unit and/or integration testing under
+       that test suite runner, :mod:`typeguard` and :mod:`ideas` then install
+       their own import hooks as the new first item of the :attr:`sys.meta_path`
+       list. The import hook previously prepended by :mod:`pytest` then becomes
+       the second item  of the :attr:`sys.meta_path` list. Python consults both
+       the :attr:`sys.meta_path` and :attr:`sys.path_hooks` lists in a
+       first-come-first-served manner. The first hook on each list satisfying a
+       request to find and import a module being imported terminates that
+       request; no subsequent hooks are consulted. Both :mod:`typeguard` and
+       :mod:`ideas` fail to iteratively consult subsequent hooks (e.g., with a
+       piggybacking scheme of some sort). Both squelch the hook previously
+       installed by :mod:`pytest` that rewrote assertions. That is bad.
+
     See Also
     ----------
     * The `comparable "typeguard.importhook" submodule <typeguard import
@@ -456,7 +468,13 @@ class _BeartypeSourceFileLoader(SourceFileLoader):
        https://github.com/agronholm/typeguard/blob/master/src/typeguard/importhook.py
     '''
 
-    # ..................{ API                                }..................
+    # ..................{ FINDER API                         }..................
+    # The importlib._bootstrap_external.*Finder API declares the high-level
+    # find_spec() method, which creates and returns either an
+    # "importlib._bootstrap.ModuleSpec" instance if this finder can load the
+    # passed package or module *OR* "None" otherwise, in which case the next
+    # finder on "sys.path_hooks" is consulted.
+
     #FIXME: We also need to also:
     #* Define the find_spec() method, which should:
     #  * Efficiently test whether the passed "path" is in "_package_names" in a
@@ -467,83 +485,25 @@ class _BeartypeSourceFileLoader(SourceFileLoader):
     #  We're fairly certain that suffices. Nonetheless, verify this by
     #  inspecting the comparable find_spec() implementation at:
     #      https://stackoverflow.com/a/48671982/2809027
+    #FIXME: *PROBABLY INSUFFICIENT.* For safety, we really only want to apply
+    #this loader to packages in the passed "package_names" list. For all other
+    #packages, the relevant method of this loader (which is probably
+    #find_spec(), but let's research that further) should return "None". Doing
+    #so defers loading to the next loader in "sys.path_hooks".
 
-    # Note that we explicitly ignore mypy override complaints here. For unknown
-    # reasons, mypy believes that "importlib.machinery.SourceFileLoader"
-    # subclasses comply with the "importlib.abc.InspectLoader" abstract base
-    # class (ABC). Naturally, that is *NOT* the case. Ergo, we entirely ignore
-    # mypy complaints here with respect to signature matching.
-    def source_to_code(  # type: ignore[override]
-        self,
-
-        # Mandatory parameters.
-        data: bytes,
-        path: str,
-
-        # Optional keyword-only parameters.
-        *,
-        _optimize: int =-1,
-    ) -> CodeType:
-        '''
-        Code object dynamically compiled from the **sourceful Python package or
-        module** (i.e., package or module backed by a ``.py``-suffixed source
-        file) with the passed undecoded contents and filename, efficiently
-        transformed in-place by our abstract syntax tree (AST) transformation
-        automatically applying the :func:`beartype.beartype` decorator to all
-        applicable objects of that package or module.
-
-        Parameters
-        ----------
-        data : bytes
-            **Byte array** (i.e., undecoded list of bytes) of the Python package
-            or module to be decoded and dynamically compiled into a code object.
-        path : str
-            Absolute or relative filename of that Python package or module.
-        _optimize : int, optional
-            **Optimization level** (i.e., numeric integer signifying increasing
-            levels of optimization under which to compile that Python package or
-            module). Defaults to -1, implying the current interpreter-wide
-            optimization level with which the active Python process was
-            initially invoked (e.g., via the ``-o`` command-line option).
-
-        Returns
-        ----------
-        CodeType
-            Code object dynamically compiled from that Python package or module.
-        '''
-
-        # Plaintext decoded contents of that package or module.
-        module_source = decode_source(data)
-
-        # Abstract syntax tree (AST) dynamically parsed from these contents.
-        module_ast = compile(
-            module_source,
-            path,
-            'exec',
-            PyCF_ONLY_AST,
-            dont_inherit=True,
-            optimize=_optimize,
-        )
-
-        # Abstract syntax tree (AST) modified by our AST transformation dynamically parsed from these contents.
-        module_ast_beartyped = _BeartypeNodeTransformer().visit(module_ast)
-
-        #FIXME: Document why exactly this call is needed -- if indeed this call
-        #is needed. Is it? Research us up, please.
-        fix_missing_locations(module_ast_beartyped)
-
-        # Code object dynamically compiled from that transformed AST.
-        module_codeobj = compile(
-            module_ast_beartyped,
-            path,
-            'exec',
-            dont_inherit=True,
-            optimize=_optimize,
-        )
-
-        # Return this code object.
-        return module_codeobj
-
+    # ..................{ LOADER API                         }..................
+    # The importlib._bootstrap_external.*Loader API declares the low-level
+    # exec_module() method, which accepts a "importlib._bootstrap.ModuleSpec"
+    # instance created and returned by a prior call to the higher-level
+    # find_spec() method documented above; the exec_module() method then uses
+    # that module spec to create and return a fully imported module object
+    # (i.e., "types.ModuleType" instance). To do so:
+    # * The default exec_module() implementation internally calls the
+    #   lower-level get_code() method returning an in-memory Python code object
+    #   deserialized from the on-disk or in-memory bytes underlying that module.
+    # * The default get_code() implementation internally calls the
+    #   lower-level source_to_code() method returning an in-memory Python code
+    #   object dynamically compiled from the passed in-memory bytes.
 
     #FIXME: Is this monkey-patch strictly necessary? What exactly are the
     #real-world consequences of *NOT* doing so? Docstring us up, please.
@@ -551,7 +511,9 @@ class _BeartypeSourceFileLoader(SourceFileLoader):
         '''
         Create and return the code object underlying the passed module.
 
-        All passed parameters are passed as is to the superclass method.
+        All passed parameters are passed as is to the superclass method, which
+        then calls our lower-level :meth:`source_to_code` subclass method
+        overridden below.
         '''
 
         # Temporarily replace that function with a beartype-specific variant.
@@ -584,6 +546,113 @@ class _BeartypeSourceFileLoader(SourceFileLoader):
         # exception), restore the original cache_from_source() function.
         finally:
             _bootstrap_external.cache_from_source = cache_from_source_original
+
+
+    # Note that we explicitly ignore mypy override complaints here. For unknown
+    # reasons, mypy believes that "importlib.machinery.SourceFileLoader"
+    # subclasses comply with the "importlib.abc.InspectLoader" abstract base
+    # class (ABC). Naturally, that is *NOT* the case. Ergo, we entirely ignore
+    # mypy complaints here with respect to signature matching.
+    def source_to_code(  # type: ignore[override]
+        self,
+
+        # Mandatory parameters.
+        data: bytes,
+        path: str,
+
+        # Optional keyword-only parameters.
+        *,
+        _optimize: int =-1,
+    ) -> CodeType:
+        '''
+        Code object dynamically compiled from the **sourceful Python package or
+        module** (i.e., package or module backed by a ``.py``-suffixed source
+        file) with the passed undecoded contents and filename, efficiently
+        transformed in-place by our abstract syntax tree (AST) transformation
+        automatically applying the :func:`beartype.beartype` decorator to all
+        applicable objects of that package or module.
+
+        The higher-level :meth:`get_code` superclass method internally calls
+        this lower-level subclass method.
+
+        Parameters
+        ----------
+        data : bytes
+            **Byte array** (i.e., undecoded list of bytes) of the Python package
+            or module to be decoded and dynamically compiled into a code object.
+        path : str
+            Absolute or relative filename of that Python package or module.
+        _optimize : int, optional
+            **Optimization level** (i.e., numeric integer signifying increasing
+            levels of optimization under which to compile that Python package or
+            module). Defaults to -1, implying the current interpreter-wide
+            optimization level with which the active Python process was
+            initially invoked (e.g., via the ``-o`` command-line option).
+
+        Returns
+        ----------
+        CodeType
+            Code object dynamically compiled from that Python package or module.
+        '''
+
+        # Plaintext decoded contents of that package or module.
+        module_source = decode_source(data)
+
+        # Abstract syntax tree (AST) dynamically parsed from these contents.
+        module_ast = compile(
+            module_source,
+            path,
+            'exec',
+            PyCF_ONLY_AST,
+            # Prevent these contents from inheriting the effects of any
+            # "from __future__ import" statements in effect in beartype itself.
+            dont_inherit=True,
+            optimize=_optimize,
+        )
+
+        # Abstract syntax tree (AST) modified by our AST transformation dynamically parsed from these contents.
+        module_ast_beartyped = _BeartypeNodeTransformer().visit(module_ast)
+
+        #FIXME: *THIS IS BAD, BRO.* For one thing, this is slow. Recursion is
+        #slow. It's also dangerous. We shouldn't do it more than we have to. Now
+        #we're recursing over the entire AST tree twice: once in our AST
+        #transformation above (which is unavoidable) and again in the call to
+        #fix_missing_locations() here (which probably is avoidable). Instead, we
+        #should fold the logic of fix_missing_locations() directly into our AST
+        #transformation. Specifically, our AST transformation should:
+        #* For each newly generated AST node, non-recursively propagate the line
+        #  and column numbers of that node's parent node onto that node.
+        #FIXME: Fascinating. It would seem that we need to propagate these
+        #*FOUR* attributes: "lineno", "end_lineno", "col_offset", and
+        #"end_col_offset". Note that the "end_"-prefixed attributes may only be
+        #available under newer Python versions. Say, Python ≥ 3.9 or 3.10?
+        #Further research is required, clearly. Fortunately, the implementation
+        #of the ast.fix_missing_locations() function is trivial. It shouldn't be
+        #terribly arduous to embed equivalent functionality in our AST
+        #transformation, assuming we think we know what we're doing. (We don't.)
+
+        # Recursively propagate the line and column numbers of all parent nodes
+        # in this tree to their children that failed to define these numbers
+        # *BEFORE* calling the compile() builtin, which requires these numbers
+        # to be defined on all AST nodes supporting these numbers. All AST nodes
+        # supporting these numbers define these numbers *EXCEPT* those AST nodes
+        # programmatically generated by our AST transformation, which currently
+        # leaves these numbers undefined due to programmer laziness.
+        fix_missing_locations(module_ast_beartyped)
+
+        # Code object dynamically compiled from that transformed AST.
+        module_codeobj = compile(
+            module_ast_beartyped,
+            path,
+            'exec',
+            # Prevent these contents from inheriting the effects of any
+            # "from __future__ import" statements in effect in beartype itself.
+            dont_inherit=True,
+            optimize=_optimize,
+        )
+
+        # Return this code object.
+        return module_codeobj
 
 # ....................{ PRIVATE ~ globals : threading      }....................
 _claw_lock = RLock()
