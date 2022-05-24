@@ -21,6 +21,7 @@ from beartype.typing import (
     Dict,
     Iterable,
     Optional,
+    Union,
 )
 from beartype._conf import BeartypeConf
 from beartype._util.text.utiltextident import is_identifier
@@ -65,7 +66,7 @@ def is_packages_registered() -> bool:
 def register_packages(
     # Mandatory keyword-only parameters.
     *,
-    package_names: Iterable[str],
+    package_names: Union[str, Iterable[str]],
     conf: BeartypeConf,
 ) -> None:
     '''
@@ -84,9 +85,12 @@ def register_packages(
 
     Parameters
     ----------
-    package_names : Optional[Iterable[str]]
-        Iterable of the fully-qualified names of one or more packages to be
-        type-checked by :func:`beartype.beartype`.
+    package_names : Union[str, Iterable[str]]
+        Either:
+
+        * Fully-qualified name of the package to be type-checked.
+        * Iterable of the fully-qualified names of one or more packages to be
+          type-checked.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed packages).
@@ -98,9 +102,11 @@ def register_packages(
 
         * The passed ``package_names`` parameter is either:
 
-          * *Not* iterable (i.e., fails to satisfy the
+          * Neither a string nor an iterable (i.e., fails to satisfy the
             :class:`collections.abc.Iterable` protocol).
-          * An empty iterable.
+          * An empty string or iterable.
+          * A non-empty string that is *not* a valid **package name** (i.e.,
+            ``"."``-delimited concatenation of valid Python identifiers).
           * A non-empty iterable containing at least one item that is either:
 
             * *Not* a string.
@@ -126,10 +132,15 @@ def register_packages(
             f'"beartype.BeartypeConf" instance).'
         )
     # Else, this configuration is a configuration.
-    #
+
+    # If passed only a single package name *NOT* contained in an iterable, wrap
+    # this name in a 1-tuple containing only this name for convenience.
+    if isinstance(package_names, str):
+        package_names = (package_names,)
+
     # If this iterable of package names is *NOT* an iterable, raise an
     # exception.
-    elif not isinstance(package_names, IterableABC):
+    if not isinstance(package_names, IterableABC):
         raise BeartypeClawRegistrationException(
             f'Package names {repr(package_names)} not iterable.')
     # Else, this iterable of package names is an iterable.
