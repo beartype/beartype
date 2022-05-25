@@ -117,7 +117,7 @@ constant factors <Timings_>`__. If the prior sentence was unreadable jargon,
 
 Beartype is `portably implemented <beartype codebase_>`__ in `Python 3
 <Python_>`__, `continuously stress-tested <beartype tests_>`__ via `GitHub
-Actions`_ **+** tox_ **+** pytest_ **+** Codecov_, and `permissively
+Actions`_ **×** tox_ **×** pytest_ **×** Codecov_, and `permissively
 distributed <beartype license_>`__ under the `MIT license`_. Beartype has *no*
 runtime dependencies, `only one test-time dependency <pytest_>`__, and `only
 one documentation-time dependency <Sphinx_>`__. Beartype supports `all actively

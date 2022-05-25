@@ -1,26 +1,26 @@
 ---
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 #
-# --------------------( SYNOPSIS                          )--------------------
+# --------------------( SYNOPSIS                           )--------------------
 # GitHub-specific continuous deployment (CD) configuration, enabling automated
 # publication of both source tarballs and binary wheels in various popular
 # formats to both GitHub itself and PyPI on each push of a tag to the "master"
 # branch of this repository.
 #
-# --------------------( SEE ALSO                          )--------------------
+# --------------------( SEE ALSO                           )--------------------
 # * https://blog.chezo.uno/how-to-release-python-package-from-github-actions-d5a1d8edba6e
 #   Well-authored blog post strongly inspiring this configuration.
 # * https://packaging.python.org/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows
 #   Official PyPA workflow also inspiring this configuration.
 
-# ....................{ METADATA                          }....................
+# ....................{ METADATA                           }....................
 # Non-human-readable (i.e., machine-readable) label associated with this
 # GitHub Actions workflow.
 name: release
 
-# ....................{ TRIGGER                           }....................
+# ....................{ TRIGGER                            }....................
 # Confine deployment to only new tags satisfying a release-specific format.
 on:
   push:
@@ -29,9 +29,9 @@ on:
     tags:
       - 'v*'   # Match "v"-prefixed tags (e.g., "v6.9.6").
 
-# ....................{ MAIN                              }....................
+# ....................{ MAIN                               }....................
 jobs:
-  # ...................{ GITHUB                            }...................
+  # ...................{ GITHUB                             }...................
   # Job publishing a human-readable changelog and codebase tarballs to GitHub
   # for this release.
   release:
@@ -48,7 +48,7 @@ jobs:
           body: ${{ github.event.commits[0].message }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  # ...................{ PYPI                              }...................
+  # ...................{ PYPI                               }...................
   # Job publishing both a static distribution (sdist) and binary wheel to PyPI
   # for this release.
   pypi:

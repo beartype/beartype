@@ -31,6 +31,7 @@ from collections.abc import Iterable as IterableABC
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TESTERS                            }....................
+#FIXME: Rename to is_packages_registered_any() for disambiguity, please.
 #FIXME: Unit test us up, please.
 def is_packages_registered() -> bool:
     '''

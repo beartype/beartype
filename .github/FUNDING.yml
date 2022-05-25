@@ -1,17 +1,17 @@
 ---
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 #
-# --------------------( SYNOPSIS                          )--------------------
+# --------------------( SYNOPSIS                           )--------------------
 # Project-wide GitHub-specific project funding configuration.
 #
-# --------------------( SEE ALSO                          )--------------------
+# --------------------( SEE ALSO                           )--------------------
 # * Official documentation on file format, which is sufficiently deeply nested
 #   that it will absolutely be broken by the time you eventually read this:
 #   https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
 
-# ....................{ PLATFORMS                         }....................
+# ....................{ PLATFORMS                          }....................
 # List of the GitHub usernames of one to four users that have successfully
 # enabled the GitHub Sponsors workflow.
 github: ['leycec']

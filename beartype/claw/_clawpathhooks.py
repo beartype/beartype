@@ -385,6 +385,7 @@ def _add_path_hook() -> None:
     # Uncache *ALL* competing loaders cached by prior importations. Just do it!
     path_importer_cache.clear()
     invalidate_caches()
+
 # ....................{ PRIVATE ~ globals : threading      }....................
 _claw_lock = RLock()
 '''
