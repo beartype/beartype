@@ -4578,9 +4578,9 @@ rather than Python runtime) include:
 
 .. # ------------------( LINKS ~ beartype : funding         )------------------
 .. _BETSE:
-   https://gitlab.com/betse/betse
+   https://github.com/betsee/betse
 .. _BETSEE:
-   https://gitlab.com/betse/betsee
+   https://github.com/betsee/betsee
 .. _Paul Allen:
    https://en.wikipedia.org/wiki/Paul_Allen
 .. _Paul Allen Discovery Center:

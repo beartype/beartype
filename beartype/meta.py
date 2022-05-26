@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -22,26 +22,26 @@ obsolete and insecure versions of CPython that have reached their official End
 of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: To avoid accidental importation of optional runtime dependencies
 # (e.g., "typing_extensions") at installation time *BEFORE* the current package
 # manager has installed those dependencies, this module may *NOT* import from
 # any submodules of the current package. This includes *ALL* "beartype._util"
 # submodules, most of which import from "beartype.typing", which conditionally
 # imports optional runtime dependencies under certain contexts.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: To avoid race conditions during setuptools-based installation, this
 # module may import *ONLY* from modules guaranteed to exist at the start of
 # installation. This includes all standard Python and package modules but
 # *NOT* third-party dependencies, which if currently uninstalled will only be
 # installed at some later time in the installation.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import sys as _sys
 from typing import Tuple as _Tuple
@@ -49,7 +49,7 @@ from typing import Tuple as _Tuple
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ METADATA                          }....................
+# ....................{ METADATA                           }....................
 NAME = 'beartype'
 '''
 Human-readable package name.
@@ -67,8 +67,8 @@ LICENSE = 'MIT'
 Human-readable name of the license this package is licensed under.
 '''
 
-# ....................{ PYTHON ~ version                  }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ PYTHON ~ version                   }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: Changes to this section *MUST* be synchronized with:
 # * Signs declared by the private
 #   "beartype._data.hint.pep.datapepsign" submodule, which *MUST*
@@ -84,7 +84,7 @@ Human-readable name of the license this package is licensed under.
 # On bumping the minimum required version of Python, consider also documenting
 # the justification for doing so in the "Python Version" section of this
 # submodule's docstring above.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 PYTHON_VERSION_MIN = '3.7.0'
 '''
@@ -181,8 +181,8 @@ if _PYTHON_VERSION_PARTS < PYTHON_VERSION_MIN_PARTS:
         f'We feel unbearable sadness for you.'
     )
 
-# ....................{ METADATA ~ version                }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ METADATA ~ version                 }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: When modifying the current version of this package below,
 # consider adhering to the Semantic Versioning schema. Specifically, the
 # version should consist of three "."-delimited integers
@@ -204,7 +204,7 @@ if _PYTHON_VERSION_PARTS < PYTHON_VERSION_MIN_PARTS:
 #
 # When in doubt, increment only the minor version and reset the patch version.
 # For further details, see http://semver.org.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 VERSION = '0.11.0'
 '''
@@ -217,7 +217,7 @@ VERSION_PARTS = _convert_version_str_to_tuple(VERSION)
 Machine-readable package version as a tuple of integers.
 '''
 
-# ....................{ METADATA ~ synopsis               }....................
+# ....................{ METADATA ~ synopsis                }....................
 SYNOPSIS = 'Unbearably fast runtime type checking in pure Python.'
 '''
 Human-readable single-line synopsis of this package.
@@ -225,7 +225,7 @@ Human-readable single-line synopsis of this package.
 By PyPI design, this string must *not* span multiple lines or paragraphs.
 '''
 
-# ....................{ METADATA ~ authors                }....................
+# ....................{ METADATA ~ authors                 }....................
 AUTHOR_EMAIL = 'leycec@gmail.com'
 '''
 Email address of the principal corresponding author (i.e., the principal author
@@ -254,7 +254,7 @@ For the list of all contributors regardless of copyright assignment or
 attribution, see the top-level ``AUTHORS.md`` file.
 '''
 
-# ....................{ METADATA ~ urls                   }....................
+# ....................{ METADATA ~ urls                    }....................
 URL_HOMEPAGE = 'https://github.com/beartype/beartype'
 '''
 URL of this package's homepage.
@@ -279,12 +279,12 @@ URL of this package's issue tracker.
 '''
 
 
-URL_RELEASES = f'{URL_HOMEPAGE}/issues'
+URL_RELEASES = f'{URL_HOMEPAGE}/releases'
 '''
 URL of this package's release list.
 '''
 
-# ....................{ METADATA ~ libs : runtime         }....................
+# ....................{ METADATA ~ libs : runtime          }....................
 _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY = '1.21.0'
 '''
 Minimum optional version of NumPy recommended for use with mod:`beartype`.
@@ -333,13 +333,13 @@ requirements strings of the format ``{project_name}
   ``2020.2.16``, ``0.75a2``).
 '''
 
-# ....................{ METADATA ~ libs : test : optional }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ METADATA ~ libs : test : optional  }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Avoid constraining optional test-time dependencies to version
 # ranges, which commonly fail for edge-case test environments -- including:
 # * The oldest Python version still supported by @beartype, which typically is
 #   *NOT* supported by newer versions of these dependencies.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 LIBS_TESTTIME_OPTIONAL = (
     # Require a reasonably recent version of mypy known to behave well. Less
     # recent versions are significantly deficient with respect to error
@@ -350,6 +350,9 @@ LIBS_TESTTIME_OPTIONAL = (
     #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
     'mypy >=0.800; platform_python_implementation != "PyPy"',
 
+    #FIXME: Consider dropping the 'and platform_python_implementation != "PyPy"'
+    #clause now that "tox.ini" installs NumPy wheels from a third-party vendor
+    #explicitly supporting PyPy.
     # Require NumPy. NumPy has become *EXTREMELY* non-trivial to install under
     # macOS with "pip", due to the conjunction of multiple issues. These
     # include:
@@ -395,7 +398,7 @@ See Also
     Further details.
 '''
 
-# ....................{ METADATA ~ libs : test : mandatory}....................
+# ....................{ METADATA ~ libs : test : mandatory }....................
 LIBS_TESTTIME_MANDATORY_COVERAGE = (
     'coverage >=5.5',
 )
@@ -452,7 +455,7 @@ See Also
     Further details.
 '''
 
-# ....................{ METADATA ~ libs : doc             }....................
+# ....................{ METADATA ~ libs : doc              }....................
 _LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX = '4.1.0'
 '''
 Human-readable minimum version as a ``.``-delimited string of :mod:`sphinx`
@@ -520,7 +523,7 @@ See Also
     Further details.
 '''
 
-# ....................{ METADATA ~ libs : dev             }....................
+# ....................{ METADATA ~ libs : dev              }....................
 LIBS_DEVELOPER_MANDATORY = LIBS_TESTTIME_MANDATORY + LIBS_DOCTIME_MANDATORY
 '''
 **Mandatory developer package dependencies** (i.e., dependencies required to

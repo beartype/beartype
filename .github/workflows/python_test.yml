@@ -112,6 +112,8 @@ jobs:
           # - py311-coverage
           - pypy37-coverage
           - pypy38-coverage
+          #FIXME: Uncomment after PyPy 3.9 goes live.
+          # - pypy39-coverage
 
         # Map each "tox" environment name listed in the "tox-env" list above to
         # the corresponding "python-version" string supported by the

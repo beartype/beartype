@@ -1,4 +1,4 @@
-.. # ------------------( SYNOPSIS                           )------------------
+.. # ------------------( SYNOPSIS                            )------------------
 
 =========
 Releasing
@@ -18,7 +18,7 @@ While technically optional, this procedure reduces the likelihood of
 installation and usage woes by downstream consumers (\ *e.g.,* end users,
 package maintainers) and is thus effectively mandatory.
 
-.. # ------------------( TABLE OF CONTENTS                  )------------------
+.. # ------------------( TABLE OF CONTENTS                   )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
 .. # table of contents heading from the prior paragraph by less than a single
 .. # blank line, hampering this table's readability and aesthetic comeliness.
@@ -33,12 +33,12 @@ package maintainers) and is thus effectively mandatory.
 .. contents:: **Contents**
    :local:
 
-.. # ------------------( DESCRIPTION                        )------------------
+.. # ------------------( DESCRIPTION                         )------------------
 
 Procedure
 ============
 
-beartype is releasable to all supported platforms as follows:
+Beartype is releasable to all supported platforms as follows:
 
 #. (\ *Optional*\ ) **Validate reStructuredText (reST) rendering.** The
    human-readable description for this release derives directly from `the
@@ -514,7 +514,7 @@ three ``.``-delimited integers ``{major}.{minor}.{patch}``, where:
 
 When in doubt, bump only the minor version and reset only the patch version.
 
-.. # ------------------( LINKS ~ beartype                   )------------------
+.. # ------------------( LINKS ~ beartype                    )------------------
 .. _readme:
    https://github.com/beartype/beartype/blob/main/README.rst
 .. _tarballs:
@@ -522,13 +522,13 @@ When in doubt, bump only the minor version and reset only the patch version.
 .. _PyPI beartype:
    https://pypi.python.org/pypi/beartype
 
-.. # ------------------( LINKS ~ beartype : gentoo          )------------------
+.. # ------------------( LINKS ~ beartype : gentoo           )------------------
 .. _Gentoo Linux ebuild:
    https://github.com/leycec/raiagent/tree/master/dev-python/beartype
 .. _raiagent overlay:
    https://github.com/leycec/raiagent
 
-.. # ------------------( LINKS ~ beartype : conda           )------------------
+.. # ------------------( LINKS ~ beartype : conda            )------------------
 .. _Anaconda package:
    https://anaconda.org/conda-forge/beartype
 .. _conda recipe:
@@ -537,7 +537,7 @@ When in doubt, bump only the minor version and reset only the patch version.
 .. _feedstock repository:
    https://github.com/leycec/beartype-feedstock
 
-.. # ------------------( LINKS ~ py                         )------------------
+.. # ------------------( LINKS ~ py                          )------------------
 .. _Semantic Versioning:
    http://semver.org
 .. _twine:
@@ -545,7 +545,7 @@ When in doubt, bump only the minor version and reset only the patch version.
 .. _wheel:
    https://wheel.readthedocs.io
 
-.. # ------------------( LINKS ~ py : conda                 )------------------
+.. # ------------------( LINKS ~ py : conda                  )------------------
 .. _conda-forge:
    https://conda-forge.org
 .. _conda-forge FAQ:
@@ -553,13 +553,13 @@ When in doubt, bump only the minor version and reset only the patch version.
 .. _conda-forge update recipe:
    https://conda-forge.org/docs/conda-forge_gotchas.html#using-a-fork-vs-a-branch-when-updating-a-recipe
 
-.. # ------------------( LINKS ~ py : package               )------------------
+.. # ------------------( LINKS ~ py : package                )------------------
 .. _BETSE:
-   https://gitlab.com/betse/betse
+   https://github.com/betsee/betse
 .. _BETSEE:
-   https://gitlab.com/betse/betsee
+   https://github.com/betsee/betsee
 
-.. # ------------------( LINKS ~ py : pypi                  )------------------
+.. # ------------------( LINKS ~ py : pypi                   )------------------
 .. _Test PyPI:
    https://testpypi.python.org/pypi
 .. _Test PyPI instructions:
@@ -571,6 +571,6 @@ When in doubt, bump only the minor version and reset only the patch version.
 .. _PyPI user:
    https://pypi.python.org/pypi?%3Aaction=register_form
 
-.. # ------------------( LINKS ~ service                    )------------------
+.. # ------------------( LINKS ~ service                     )------------------
 .. _GitHub:
    https://github.com

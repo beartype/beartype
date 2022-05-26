@@ -19,15 +19,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from ast import (
-    PyCF_ONLY_AST,
-    # fix_missing_locations,
-)
+from ast import PyCF_ONLY_AST
 from beartype.claw._clawast import _BeartypeNodeTransformer
-# from beartype.claw._clawpackagenames import (
-#     is_packages_registered,
-#     register_packages,
-# )
+# from beartype.claw._clawpackagenames import is_package_registered
+from beartype.meta import VERSION
 # from beartype.roar import BeartypeClawRegistrationException
 from beartype.typing import (
     Optional,
@@ -332,6 +327,20 @@ class BeartypeSourceFileLoader(SourceFileLoader):
     #  * Else, use that variable to decide whether or not the current module
     #    being loaded should be decorated by @beartype. If so, apply our AST
     #    transformation; else, don't. Simple. Let's do this, fam.
+    #FIXME: *OKAY.* Nearly there. We now have an is_packages_registered()
+    #tester. Great. But we also need the "conf" registered for that package. In
+    #other words:
+    #* Define a new _clawpackagenames.get_package_registered_conf_or_none()
+    #  getter getting that configuration, based on the existing
+    #  is_packages_registered() tester.
+    #* Call get_package_registered_conf_or_none() below in get_code() rather
+    #  than is_packages_registered().
+    #* Cache the returned configuration if non-"None" into a new
+    #  "self._module_conf_if_registered" instance variable. Note this implies we
+    #  no longer require a "self._is_module_beartypeable" instance variable.
+    #* Test "self._module_conf_if_registered" in our source_to_code()
+    #  implementation to decide what to do.
+    #* Consider removing is_packages_registered() entirely, please.
 
     # ..................{ LOADER API                         }..................
     # The importlib._bootstrap_external.*Loader API declares the low-level
@@ -347,38 +356,72 @@ class BeartypeSourceFileLoader(SourceFileLoader):
     #   lower-level source_to_code() method returning an in-memory Python code
     #   object dynamically compiled from the passed in-memory bytes.
 
-    #FIXME: Under the "Motivation" section, additionally document why we're
-    #actually applying this monkey-patch. The reason is that a @beartyped module
-    #should *NEVER* be compiled to the same "__pycache__/*.pyc" file that the
-    #non-@beartyped variant of the same module is compiled to. Clearly, doing so
-    #would invite a conflict. Since @beartype-ing can be trivially enabled and
-    #disabled for any given module by either calling or not calling the public
-    #beartype.claw.beartype_package() function with that module's parent
-    #package, compiling a @beartyped module to the same "__pycache__/*.pyc" file
-    #as the non-@beartyped variant of the same module would erroneously persist
-    #@beartyping to that module -- even after removing the call to the
-    #beartype.claw.beartype_package() function passed that module's parent
-    #package! Clearly, that's awful. That's what @agronholm's ingenious patch is
-    #all about. Wow. We're exceptionally impressed, as always.
-    def get_code(self, *args, **kwargs) -> Optional[CodeType]:
+    def get_code(self, fullname: str) -> Optional[CodeType]:
         '''
-        Create and return the code object underlying the passed module.
+        Create and return the code object underlying the module with the passed
+        name.
 
-        All passed parameters are passed as is to the superclass method, which
-        then calls our lower-level :meth:`source_to_code` subclass method
-        overridden below.
+        This override of the superclass :meth:`SourceLoader.get_code` method
+        internally follows one of two distinct code paths, conditionally
+        depending on whether a parent package transitively containing that
+        module has been previously registered with the
+        :mod:`beartype.claw._clawpackagenames` submodule (e.g., by a call to the
+        :func:`beartype.claw.beartype_package` function). Specifically:
+
+        * If *no* parent package transitively containing that module has been
+          registered, this method fully defers to the superclass
+          :meth:`SourceLoader.get_code` method.
+        * Else, one or more parent packages transitively containing that module
+          have been registered. In this case, this method (in order):
+
+          #. Temporarily monkey-patches (i.e., replaces) the
+             private :func:`importlib._bootstrap_external.cache_from_source`
+             function with our beartype-specific
+             :func:`_cache_from_source_beartype` variant.
+          #. Calls the superclass :meth:`SourceLoader.get_code` method, which:
+
+             #. Calls our override of the lower-level superclass
+                :meth:`SourceLoader.source_to_code` method.
+
+          #. Restores the
+             :func:`importlib._bootstrap_external.cache_from_source` function to
+             its original implementation.
 
         Motivation
         ----------
-        This override of the :meth:`get_code` method temporarily replaces the
-        private :func:`importlib._bootstrap_external.cache_from_source` function
-        with a beartype-specific variant. Doing so is strongly inspired
-        by a similar monkey-patch applied by the external
+        The temporary monkey-patch applied by this method is strongly inspired
+        by a suspiciously similar temporary monkey-patch applied by the external
         :meth:`typeguard.importhook.TypeguardLoader.exec_module` method authored
         by the incomparable @agronholm (Alex Grönholm), who writes:
 
             Use a custom optimization marker – the import lock should make
             this monkey patch safe
+
+        The aforementioned "custom optimization marker" is, in fact, a
+        beartype-specific constant embedded in the filename of the cached Python
+        bytecode file to which that module is byte-compiled. This filename
+        typically resembles
+        ``__pycache__/{module_basename}.{optimization_markers}.pyc``, where:
+
+        * ``{module_basename}`` is the unqualified basename of that module.
+        * ``{optimization_markers}`` is a ``"-"``-delimited string of
+          **optimization markers** (i.e., arbitrary alphanumeric labels
+          uniquifying this bytecode file to various bytecode-specific metadata,
+          including the name and version of the active Python interpreter).
+
+        This monkey-patch suffixing ``{optimization_markers}`` with
+        the substring ``"-beartype-{BEARTYPE_VERSION}"``, which additionally
+        uniquifies the filename of this bytecode file to the abstract syntax
+        tree (AST) transformation applied by this version of :mod:`beartype`.
+        Why? Because external callers can trivially enable and disable that
+        transformation for any module by either calling or not calling the
+        :func:`beartype.claw.beartype_package` function with the name of a
+        package transitively containing that module. Compiling a @beartyped
+        module to the same bytecode file as the non-@beartyped variant of that
+        module would erroneously persist @beartyping to that module -- even
+        *after* removing the relevant call to the
+        :func:`beartype.claw.beartype_package` function! Clearly, that's awful.
+        Enter @agronholm's phenomenal patch, stage left.
 
         We implicitly trust @agronholm to get that right in a popular project
         stress-tested across hundreds of open-source projects over the past
@@ -394,6 +437,10 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         one-line monkey-patch, first typeguard and now @beartype strongly prefer
         this monkey-patch. Did we mention that @agronholm is amazing? Because
         that really bears repeating. May the name of Alex Grönholm live eternal!
+
+        Motivation
+        ----------
+
         '''
 
         # Temporarily replace that function with a beartype-specific variant.
@@ -421,7 +468,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
         # Attempt to defer to the superclass method with all passed parameters.
         try:
-            return super().get_code(*args, **kwargs)
+            return super().get_code(fullname)
         # After doing so (and regardless of whether doing so raises an
         # exception), restore the original cache_from_source() function.
         finally:
@@ -556,7 +603,7 @@ def _cache_from_source_beartype(*args, **kwargs) -> str:
 
     # New optimization parameter applied by this monkey-patch of that function,
     # uniquifying that parameter with a beartype-specific suffix.
-    kwargs['optimization'] = f'{optimization_marker_old}-beartype'
+    kwargs['optimization'] = f'{optimization_marker_old}-beartype-{VERSION}'
 
     # Defer to the implementation of the original cache_from_source() function.
     return cache_from_source_original(*args, **kwargs)

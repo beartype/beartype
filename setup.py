@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,12 +10,12 @@ This submodule conforms to the standard :mod:`setuptools`-based "makefile"
 format, instrumenting most high-level installation tasks for this package.
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: Generate documentation from the NumPy-style docstrings embedded
 #throughout this codebase, presumably with Sphinx + napoleon.
 #FIXME: Publish generated documentation to readthedocs.org.
 
-# ....................{ KLUDGES ~ path                    }....................
+# ....................{ KLUDGES ~ path                     }....................
 # Explicitly register all files and subdirectories of the root directory
 # containing this top-level "setup.py" script to be importable modules and
 # packages (respectively) for the remainder of this Python process if this
@@ -55,7 +55,7 @@ def _register_dir() -> None:
 # Kludge us up the bomb.
 _register_dir()
 
-# ....................{ KLUDGES ~ init                    }....................
+# ....................{ KLUDGES ~ init                     }....................
 # Explicitly notify the "beartype.__init__" submodule that it is being imported
 # at install time from this script. Doing so prevents that submodule from
 # implicitly importing from *ANY* "beartype" submodule other than the
@@ -93,19 +93,18 @@ def _notify_beartype() -> None:
 # Setuptools made us do it.
 _notify_beartype()
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid race conditions during setuptools-based installation, this
 # module may import *ONLY* from packages guaranteed to exist at the start of
 # installation. This includes all standard Python and package submodules but
 # *NOT* third-party dependencies, which if currently uninstalled will only be
 # installed at some later time in the installation.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import setuptools
 from beartype import meta
 
-# ....................{ METADATA ~ seo                    }....................
+# ....................{ METADATA ~ seo                     }....................
 _KEYWORDS = [
     'type checking',
     'type hints',
@@ -127,7 +126,7 @@ These keywords may be arbitrarily selected so as to pretend to improve search
 engine optimization (SEO). In actuality, they do absolutely nothing.
 '''
 
-# ....................{ METADATA ~ seo : classifiers      }....................
+# ....................{ METADATA ~ seo : classifiers       }....................
 # To minimize desynchronization woes, all
 # "Programming Language :: Python :: "-prefixed strings are dynamically
 # appended to this list by the init() function below.
@@ -213,11 +212,11 @@ def _sanitize_classifiers(
     # Return this sanitized list of classifiers.
     return classifiers_sane
 
-# ....................{ OPTIONS                           }....................
+# ....................{ OPTIONS                            }....................
 # Setuptools-specific options. Keywords not explicitly recognized by either
 # setuptools or distutils must be added to the above dictionary instead.
 _SETUP_OPTIONS = {
-    # ..................{ CORE                              }..................
+    # ..................{ CORE                               }..................
     # Self-explanatory metadata. Note that the following metadata keys are
     # instead specified by the "setup.cfg" file:
     #
@@ -232,13 +231,13 @@ _SETUP_OPTIONS = {
     'version':          meta.VERSION,
     'description':      meta.SYNOPSIS,
 
-    # ..................{ AUTHORS                           }..................
+    # ..................{ AUTHORS                            }..................
     'author':           meta.AUTHORS,
     'author_email':     meta.AUTHOR_EMAIL,
     'maintainer':       meta.AUTHORS,
     'maintainer_email': meta.AUTHOR_EMAIL,
 
-    # ..................{ URLS                              }..................
+    # ..................{ URLS                               }..................
     'url':              meta.URL_HOMEPAGE,
     'download_url':     meta.URL_DOWNLOAD,
 
@@ -253,7 +252,7 @@ _SETUP_OPTIONS = {
         # 'Documentation': 'https://beartype.readthedocs.io',
     },
 
-    # ..................{ PYPI                              }..................
+    # ..................{ PYPI                               }..................
     # PyPi-specific meta.
     'classifiers': _sanitize_classifiers(
         python_version_min_parts=meta.PYTHON_VERSION_MIN_PARTS,
@@ -262,7 +261,7 @@ _SETUP_OPTIONS = {
     'keywords': _KEYWORDS,
     'license': meta.LICENSE,
 
-    # ..................{ DEPENDENCIES                      }..................
+    # ..................{ DEPENDENCIES                       }..................
     # Python dependency.
     'python_requires': f'>={meta.PYTHON_VERSION_MIN}',
 
@@ -308,7 +307,7 @@ _SETUP_OPTIONS = {
     # Mandatory testing dependencies.
     'tests_require': meta.LIBS_TESTTIME_MANDATORY_TOX,
 
-    # ..................{ PACKAGES                          }..................
+    # ..................{ PACKAGES                           }..................
     # List of the fully-qualified names of all Python packages (i.e.,
     # directories containing zero or more Python modules) to be installed,
     # including the top-level package and all subpackages of that package. This
@@ -320,22 +319,22 @@ _SETUP_OPTIONS = {
     # * "build", caching both setuptools metadata and a complete copy of this
     #   package, required only by a prior package installation.
     #
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # WARNING: This inspection intentionally omits subdirectories containing no
     # "__init__.py" file, despite the remainder of the Python ecosystem
     # commonly accepting such subdirectories as subpackages.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     'packages': setuptools.find_packages(exclude=(
         f'{meta.PACKAGE_NAME}_test',
         f'{meta.PACKAGE_NAME}_test.*',
         'build',
     )),
 
-    # ..................{ PACKAGES ~ data                   }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # ..................{ PACKAGES ~ data                    }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: *ALL DATA FILES TO BE INSTALLED MUST BE EXPLICITLY MATCHED IN
     # THE TOP-LEVEL "MANIFEST.in" FILE.*
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     #
     # Install all data files (i.e., non-Python files) embedded in the Python
     # package tree for this project which are also explicitly matched by the
@@ -383,5 +382,5 @@ Dictionary unpacked as keyword arguments into the subsequent call of the
 '''
 # print('extras: {}'.format(setup_options['extras_require']))
 
-# ....................{ SETUP                             }....................
+# ....................{ SETUP                              }....................
 setuptools.setup(**_SETUP_OPTIONS)

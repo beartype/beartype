@@ -32,7 +32,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.claw._clawloader import BeartypeSourceFileLoader
 from beartype.claw._clawpackagenames import (
-    is_packages_registered,
+    is_packages_registered_any,
     register_packages,
 )
 from beartype.roar import BeartypeClawRegistrationException
@@ -337,7 +337,7 @@ def beartype_package(
         #
         # Ergo, deciding this state in O(1) time complexity reduces to deciding
         # whether the register_packages() function has been called already.
-        is_path_hook_added = is_packages_registered()
+        is_path_hook_added = is_packages_registered_any()
 
         # Register these packages for subsequent lookup during submodule
         # importation by the beartype import path hook registered below *AFTER*

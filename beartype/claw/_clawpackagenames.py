@@ -31,9 +31,93 @@ from collections.abc import Iterable as IterableABC
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TESTERS                            }....................
-#FIXME: Rename to is_packages_registered_any() for disambiguity, please.
 #FIXME: Unit test us up, please.
-def is_packages_registered() -> bool:
+def is_package_registered(package_name: str) -> bool:
+    '''
+    ``True`` only if either the package with the passed name *or* a parent
+    package of that package has been previously registered by a prior call to
+    the :func:`register_packages` function.
+
+    Caveats
+    ----------
+    **This function is only safely callable in a thread-safe manner within a**
+    ``with _claw_lock:`` **context manager.** Equivalently, this global is *not*
+    safely accessible outside that manager.
+
+    Parameters
+    ----------
+    package_name : str
+        Fully-qualified name of the package to be tested.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if either that package *or* a parent package of that
+        package has been previously registered.
+    '''
+
+    # If a configuration has been registered with the root package cache
+    # globally applicable to *ALL* packages, then an external caller *MUST* have
+    # previously called the public beartype.claw.beartype_all() function. In
+    # this case, *ALL* packages (including the passed package) have been
+    # implicitly registered for @beartyping. Return true!
+    #
+    # Note that this is a microoptimization. Since generators and iteration are
+    # costly in Python, avoiding both negligibly optimizes this common case.
+    if _package_basename_to_subpackages.conf_if_registered is not None:
+        return True
+    # Else, *NO* configuration has been registered with the root package cache.
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize logic below with the register_packages() function.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # List of each unqualified basename comprising this name, split from this
+    # fully-qualified name on "." delimiters. Note that the "str.split('.')" and
+    # "str.rsplit('.')" calls produce the exact same lists under all possible
+    # edge cases. We arbitrarily call the former rather than the latter for
+    # simplicity and readability.
+    package_basenames = package_name.split('.')
+
+    # Current subdictionary of the global package name cache describing the
+    # currently iterated unqualified basename comprising that package's name,
+    # initialized to the root dictionary describing all top-level packages.
+    package_basename_to_subpackages_curr = _package_basename_to_subpackages
+
+    # For each unqualified basename of each parent package transitively
+    # containing this package (as well as that of that package itself)...
+    for package_basename in package_basenames:
+        # Current subdictionary of that cache describing that parent package if
+        # that parent package was registered by a prior call to the
+        # register_packages() function *OR* "None" otherwise (i.e., if that
+        # parent package has yet to be registered).
+        package_subpackages = package_basename_to_subpackages_curr.get(
+            package_basename)
+
+        # If that parent package has yet to be registered, terminate iteration
+        # at that package.
+        if package_subpackages is None:
+            break
+        # Else, that parent package was registered.
+        #
+        # If a configuration has been registered with that parent package, then
+        # an external caller *MUST* have previously called the public
+        # beartype.claw.beartype_package() function with that package. In this
+        # case, return true!
+        elif _package_basename_to_subpackages.conf_if_registered is not None:
+            return True
+        # Else, *NO* configuration has been registered with that parent package.
+
+        # Iterate the currently examined subcache one subpackage deeper.
+        package_basename_to_subpackages_curr = package_subpackages
+
+    # Else, *NO* configuration has been registered with that package. In that
+    # case, return false.
+    return False
+
+
+#FIXME: Unit test us up, please.
+def is_packages_registered_any() -> bool:
     '''
     ``True`` only if one or more packages have been previously registered.
 
@@ -163,39 +247,44 @@ def register_packages(
         # exception.
         elif not is_identifier(package_name):
             raise BeartypeClawRegistrationException(
-                f'Package name "{package_name}" invalid (i.e., not '
-                f'"."-delimited Python identifier).'
+                f'Package name "{package_name}" invalid '
+                f'(i.e., not "."-delimited Python identifier).'
             )
         # Else, this package name is a valid Python identifier.
 
     # ..................{ REGISTRATION                       }..................
     # For the fully-qualified name of each package to be registered...
     for package_name in package_names:
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAUTION: Synchronize with the is_package_registered() tester. The
+        # iteration performed below modifies the global package names cache and
+        # thus *CANNOT* simply defer to the same logic.
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         # List of each unqualified basename comprising this name, split from
         # this fully-qualified name on "." delimiters. Note that the
-        # "str.split('.')" and "str.rsplit('.')" calls produce the exact
-        # same lists under all possible edge cases. We arbitrarily call the
-        # former rather than the latter for simplicity and readability.
+        # "str.split('.')" and "str.rsplit('.')" calls produce the exact same
+        # lists under all possible edge cases. We arbitrarily call the former
+        # rather than the latter for simplicity and readability.
         package_basenames = package_name.split('.')
 
-        # Current (sub)dictionary of the global package name cache
-        # describing the currently iterated unqualified basename comprising
-        # this package's name, initialized to the root dictionary describing
-        # all top-level packages.
-        package_basename_to_subpackages_curr = (
-            _package_basename_to_subpackages)
+        # Current subdictionary of the global package name cache describing the
+        # currently iterated unqualified basename comprising that package's name
+        # initialized to the root dictionary describing all top-level packages.
+        package_basename_to_subpackages_curr = _package_basename_to_subpackages
 
-        # For each unqualified basename comprising this package's name...
+        # # For each unqualified basename comprising the directed path from the
+        # root parent package of that package to that package...
         for package_basename in package_basenames:
-            # Current subdictionary of the global package name cache
-            # describing this package if this package was already registered
-            # by a previous call to this function *OR* "None" otherwise
-            # (i.e., if this is the first registration of this package).
-            package_subpackages = (
-                package_basename_to_subpackages_curr.get(package_basename))
+            # Current subdictionary of that cache describing that parent package
+            # if that parent package was registered by a prior call to the
+            # register_packages() function *OR* "None" otherwise (i.e., if that
+            # parent package has yet to be registered).
+            package_subpackages = package_basename_to_subpackages_curr.get(
+                package_basename)
 
-            # If this is the first registration of this package, register a
-            # new subdictionary describing this package.
+            # If this is the first registration of that parent package, register
+            # a new subcache describing that parent package.
             #
             # Note that this test could be obviated away by refactoring our
             # "_PackageBasenameToSubpackagesDict" subclass from the
@@ -209,31 +298,30 @@ def register_packages(
                 package_subpackages = \
                     package_basename_to_subpackages_curr[package_basename] = \
                     _PackageBasenameToSubpackagesDict()
-            # Else, this package was already registered by a previous call
+            # Else, that parent package was already registered by a prior call
             # to this function.
 
-            # Iterate the currently examined subdictionary one level deeper.
+            # Iterate the currently examined subcache one subpackage deeper.
             package_basename_to_subpackages_curr = package_subpackages
         # Since the "package_basenames" list contains at least one basename,
         # the above iteration set the currently examined subdictionary
-        # "package_basename_to_subpackages_curr" to at least one
-        # subdictionary of the global package name cache. Moreover, that
-        # subdictionary is guaranteed to describe the current (sub)package
-        # being registered.
+        # "package_basename_to_subpackages_curr" to at least one subcache of the
+        # global package name cache. Moreover, that subcache is guaranteed to
+        # describe the current (sub)package being registered.
 
-        # If this (sub)package has yet to be registered, register this
+        # If that (sub)package has yet to be registered, register that
         # (sub)package with this beartype configuration.
         if  package_basename_to_subpackages_curr.conf_if_registered is None:
             package_basename_to_subpackages_curr.conf_if_registered = conf
-        # Else, this (sub)package has already been registered by a previous
+        # Else, that (sub)package has already been registered by a previous
         # call to this function. In this case...
         else:
-            # Beartype configuration previously associated with this
+            # Beartype configuration previously associated with that
             # (sub)package by the previous call to this function.
             conf_curr = (
                 package_basename_to_subpackages_curr.conf_if_registered)
 
-            # If that call associated this (sub)package with a different
+            # If that call associated that (sub)package with a different
             # configuration than that passed, raise an exception.
             if conf_curr is not conf:
                 raise BeartypeClawRegistrationException(
@@ -244,20 +332,25 @@ def register_packages(
                     f'----------(NEW CONFIGURATION)----------\n'
                     f'{repr(conf)}\n'
                 )
-            # Else, that call associated this (sub)package with the same
+            # Else, that call associated that (sub)package with the same
             # configuration to that passed. In this case, silently ignore
-            # this redundant attempt to re-register this (sub)package.
+            # this redundant attempt to re-register that (sub)package.
 
 # ....................{ PRIVATE ~ classes                  }....................
 #FIXME: Docstring us up, please.
 class _PackageBasenameToSubpackagesDict(
     Dict[str, Optional['_PackageBasenameToSubpackagesDict']]):
     '''
-    **Package name (sub)cache** (i.e., (sub)dictionary suitable for caching as a
-    value of the :data:`_package_basename_to_subpackages` package names cache,
-    associating the unqualified basename of a parent package with the
-    unqualified basename of each subpackage to be possibly type-checked on first
-    importation by :func:`beartype.beartype`) class.
+    **(Sub)package name (sub)cache** (i.e., recursively nested dictionary
+    mapping from the unqualified basename of each subpackage of the current
+    package to be type-checked on first importation by the
+    :func:`beartype.beartype` decorator to another instance of this class
+    similarly describing the subsubpackages of that subpackage).
+
+    This (sub)cache is suitable for caching as the values of:
+
+    * The :data:`_package_basename_to_subpackages` global dictionary.
+    * Each (sub)value mapped to by that global dictionary.
 
     Attributes
     ----------
