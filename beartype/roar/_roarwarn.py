@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,19 +12,19 @@ This private submodule publishes a hierarchy of both public and private
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from abc import ABCMeta as _ABCMeta
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ SUPERCLASS                        }....................
+# ....................{ SUPERCLASS                         }....................
 class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype warnings.**
@@ -38,7 +38,7 @@ class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
       the ``doc/Makefile`` file.
     '''
 
-    # ..................{ INITIALIZERS                      }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(self, message: str) -> None:
         '''
         Initialize this exception.
@@ -60,7 +60,33 @@ class BeartypeWarning(UserWarning, metaclass=_ABCMeta):
         # warning. See the docstring for justification.
         self.__class__.__module__ = 'beartype.roar'
 
-# ....................{ DECORATOR ~ hint : pep            }....................
+# ....................{ CLAW                               }....................
+class BeartypeClawWarning(BeartypeWarning):
+    '''
+    Abstract base class of all **beartype import hook warnings.**
+
+    Instances of subclasses of this warning are emitted at module importation
+    time from the import hooks registered by the :func:`beartype.claw`
+    subpackage, typically due to the :func:`beartype.beartype` decorator failing
+    to decorate callables or classes in modules imported by those hooks.
+    '''
+
+    pass
+
+
+class BeartypeClawDecorationWarning(BeartypeClawWarning):
+    '''
+    **Beartype import hook decoration warning.**
+
+    This warning is emitted at module importation time from the import hooks
+    registered by the :func:`beartype.claw` subpackage when the
+    :func:`beartype.beartype` decorator fails to decorate a callable or class
+    declared in a module imported by those hooks.
+    '''
+
+    pass
+
+# ....................{ DECORATOR ~ hint : pep             }....................
 class BeartypeDecorHintPepWarning(BeartypeWarning):
     '''
     Abstract base class of all **beartype decorator PEP-compliant type hint
@@ -104,7 +130,7 @@ class BeartypeDecorHintPepWarning(BeartypeWarning):
 #
 #     pass
 
-# ....................{ DECORATOR ~ hint : pep : deprecate}....................
+# ....................{ DECORATOR ~ hint : pep : deprecate }....................
 class BeartypeDecorHintPepDeprecationWarning(BeartypeDecorHintPepWarning):
     '''
     **Beartype decorator PEP-compliant type hint deprecation warning.**
@@ -145,7 +171,7 @@ class BeartypeDecorHintPep585DeprecationWarning(
 
     pass
 
-# ....................{ DECORATOR ~ hint : non-pep        }....................
+# ....................{ DECORATOR ~ hint : non-pep         }....................
 class BeartypeDecorHintNonpepWarning(BeartypeWarning):
     '''
     Abstract base class of all **beartype decorator PEP-noncompliant type hint
@@ -175,7 +201,7 @@ class BeartypeDecorHintNonpepNumpyWarning(BeartypeDecorHintNonpepWarning):
 
     pass
 
-# ....................{ MODULE                            }....................
+# ....................{ MODULE                             }....................
 class BeartypeModuleWarning(BeartypeWarning):
     '''
     Abstract base class of all **beartype module warnings.**
@@ -215,7 +241,7 @@ class BeartypeModuleUnimportableWarning(BeartypeModuleWarning):
 
     pass
 
-# ....................{ SPHINX                            }....................
+# ....................{ SPHINX                             }....................
 #FIXME: Consider removal.
 # class BeartypeSphinxWarning(BeartypeWarning, metaclass=_ABCMeta):
 #     '''
@@ -228,7 +254,7 @@ class BeartypeModuleUnimportableWarning(BeartypeModuleWarning):
 #
 #     pass
 
-# ....................{ VALE                              }....................
+# ....................{ VALE                               }....................
 class BeartypeValeWarning(BeartypeWarning):
     '''
     Abstract base class of all **beartype data validation warnings.**
@@ -255,7 +281,7 @@ class BeartypeValeLambdaWarning(BeartypeValeWarning):
 
     pass
 
-# ....................{ PRIVATE ~ util                    }....................
+# ....................{ PRIVATE ~ util                     }....................
 class _BeartypeUtilWarning(BeartypeWarning):
     '''
     Abstract base class of all **beartype private utility warnings.**
@@ -268,7 +294,7 @@ class _BeartypeUtilWarning(BeartypeWarning):
 
     pass
 
-# ....................{ PRIVATE ~ util : call             }....................
+# ....................{ PRIVATE ~ util : call              }....................
 class _BeartypeUtilCallableWarning(_BeartypeUtilWarning):
     '''
     **Beartype decorator memoization decorator keyword argument warnings.**

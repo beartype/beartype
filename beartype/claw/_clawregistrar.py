@@ -23,7 +23,10 @@ from beartype.typing import (
     Optional,
     Union,
 )
-from beartype._conf import BeartypeConf
+from beartype._conf import (
+    BeartypeConf,
+    BeartypeConfOrNone,
+)
 from beartype._util.text.utiltextident import is_identifier
 from collections.abc import Iterable as IterableABC
 
@@ -32,11 +35,13 @@ __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
-def is_package_registered(package_name: str) -> bool:
+def get_package_conf_if_registered(package_name: str) -> BeartypeConfOrNone:
     '''
-    ``True`` only if either the package with the passed name *or* a parent
-    package of that package has been previously registered by a prior call to
-    the :func:`register_packages` function.
+    Beartype configuration with which to type-check the package with the passed
+    name if either that package or a parent package of that package has been
+    previously registered by a prior call to the :func:`register_packages`
+    function *or* ``None`` otherwise (i.e., if neither that package nor a parent
+    package of that package has been previously registered by such a call).
 
     Caveats
     ----------
@@ -47,26 +52,19 @@ def is_package_registered(package_name: str) -> bool:
     Parameters
     ----------
     package_name : str
-        Fully-qualified name of the package to be tested.
+        Fully-qualified name of the package to be inspected.
 
     Returns
     ----------
-    bool
-        ``True`` only if either that package *or* a parent package of that
-        package has been previously registered.
-    '''
+    Optional[BeartypeConf]
+        Either:
 
-    # If a configuration has been registered with the root package cache
-    # globally applicable to *ALL* packages, then an external caller *MUST* have
-    # previously called the public beartype.claw.beartype_all() function. In
-    # this case, *ALL* packages (including the passed package) have been
-    # implicitly registered for @beartyping. Return true!
-    #
-    # Note that this is a microoptimization. Since generators and iteration are
-    # costly in Python, avoiding both negligibly optimizes this common case.
-    if _package_basename_to_subpackages.conf_if_registered is not None:
-        return True
-    # Else, *NO* configuration has been registered with the root package cache.
+        * If either that package or a parent package of that package
+          has been previously registered by a prior call to the
+          :func:`register_packages` function, beartype configuration with which
+          to type-check that package.
+        * Else, ``None``.
+    '''
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize logic below with the register_packages() function.
@@ -84,6 +82,14 @@ def is_package_registered(package_name: str) -> bool:
     # initialized to the root dictionary describing all top-level packages.
     package_basename_to_subpackages_curr = _package_basename_to_subpackages
 
+    # Beartype configuration registered with that package, defaulting to the
+    # beartype configuration registered with the root package cache globally
+    # applicable to *ALL* packages if an external caller previously called the
+    # public beartype.claw.beartype_all() function *OR* "None" otherwise (i.e.,
+    # if that function has yet to be called).
+    package_conf_if_registered = (
+        package_basename_to_subpackages_curr.conf_if_registered)
+
     # For each unqualified basename of each parent package transitively
     # containing this package (as well as that of that package itself)...
     for package_basename in package_basenames:
@@ -95,25 +101,28 @@ def is_package_registered(package_name: str) -> bool:
             package_basename)
 
         # If that parent package has yet to be registered, terminate iteration
-        # at that package.
+        # at that parent package.
         if package_subpackages is None:
             break
-        # Else, that parent package was registered.
-        #
-        # If a configuration has been registered with that parent package, then
-        # an external caller *MUST* have previously called the public
-        # beartype.claw.beartype_package() function with that package. In this
-        # case, return true!
-        elif _package_basename_to_subpackages.conf_if_registered is not None:
-            return True
-        # Else, *NO* configuration has been registered with that parent package.
+        # Else, that parent package was previously registered.
+
+        # Beartype configuration registered with either...
+        package_conf_if_registered = (
+            # That parent package if any *OR*...
+            #
+            # Since that parent package is more granular (i.e., unique) than any
+            # transitive parent package of that parent package, the former takes
+            # precedence over the latter where defined.
+            package_subpackages.conf_if_registered or
+            # A transitive parent package of that parent package if any.
+            package_conf_if_registered
+        )
 
         # Iterate the currently examined subcache one subpackage deeper.
         package_basename_to_subpackages_curr = package_subpackages
 
-    # Else, *NO* configuration has been registered with that package. In that
-    # case, return false.
-    return False
+    # Return this beartype configuration if any *OR* "None" otherwise.
+    return package_conf_if_registered
 
 
 #FIXME: Unit test us up, please.

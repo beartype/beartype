@@ -20,26 +20,17 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from ast import PyCF_ONLY_AST
-from beartype.claw._clawast import _BeartypeNodeTransformer
-# from beartype.claw._clawpackagenames import is_package_registered
+from beartype.claw._clawast import BeartypeNodeTransformer
+from beartype.claw._clawregistrar import get_package_conf_if_registered
 from beartype.meta import VERSION
-# from beartype.roar import BeartypeClawRegistrationException
-from beartype.typing import (
-    Optional,
-)
-# from beartype._conf import BeartypeConf
+from beartype.typing import Optional
+from beartype._conf import BeartypeConfOrNone
 from importlib import (  # type: ignore[attr-defined]
     _bootstrap_external,
 )
-from importlib.machinery import (
-    SourceFileLoader,
-)
-from importlib.util import (
-    decode_source,
-)
-from types import (
-    CodeType,
-)
+from importlib.machinery import SourceFileLoader
+from importlib.util import decode_source
+from types import CodeType
 
 # Original cache_from_source() function defined by the private (*gulp*)
 # "importlib._bootstrap_external" submodule, preserved *BEFORE* temporarily
@@ -203,20 +194,34 @@ class BeartypeSourceFileLoader(SourceFileLoader):
        piggybacking scheme of some sort). Both squelch the hook previously
        installed by :mod:`pytest` that rewrote assertions. That is bad.
 
-    Parameters
+    Attributes
     ----------
-    _module_being_loaded_name : Optional[str]
+    _module_conf_if_registered : Optional[BeartypeConf]
         Either:
 
-        * If the :meth:`get_code` method has been externally called to load a
-          module (i.e., create and return the code object underlying that
-          module), the fully-qualified name of that module. This instance
-          variable enables our override of the parent :meth:`get_code` method to
-          communicate this name to the child :meth:`source_to_code` method,
-          which fails to accept and thus otherwise has *no* access to this name.
-          The superclass implementation of the :meth:`get_code` method
-          internally calls our override of the :meth:`source_to_code` method.
+        * If the most recent call to the :meth:`get_code` method loading a
+          module (i.e., creating and return the code object underlying that
+          module) was passed the fully-qualified name of a module with a
+          transitive parent package previously registered by a call to a public
+          :mod:`beartype.claw` import hook factory (e.g.,
+          :func:`beartype.claw.beartype_package`), the beartype configuration
+          with which to type-check that module.
         * Else, ``None``.
+
+        This instance variable enables our override of the parent
+        :meth:`get_code` method to communicate this configuration to the child
+        :meth:`source_to_code` method, which fails to accept and thus has *no*
+        access to this module name. The superclass implementation of the
+        :meth:`get_code` method then internally calls our override of the
+        :meth:`source_to_code` method, which accesses this instance variable to
+        decide whether and how to type-check that module.
+
+        Ordinarily, this approach would be fraught with fragility. For example,
+        what if something *other* than the :meth:`get_code` method calls the
+        :meth:`source_to_code` method? Thankfully, that is *not* a concern.
+        :meth:`source_to_code` is only called by :meth:`get_code` in the
+        :mod:`importlib` codebase. Ergo, :meth:`source_to_code` should ideally
+        have been privatized (e.g., as ``_source_to_code()``).
 
     See Also
     ----------
@@ -248,99 +253,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         super().__init__(*args, **kwargs)
 
         # Nullify all subclass-specific instance variables for safety.
-        self._module_being_loaded_name: Optional[str] = None
-
-    # ..................{ FINDER API                         }..................
-    # The importlib._bootstrap_external.*Finder API declares the high-level
-    # find_spec() method, which creates and returns either an
-    # "importlib._bootstrap.ModuleSpec" instance if this finder can load the
-    # passed package or module *OR* "None" otherwise, in which case the next
-    # finder on "sys.path_hooks" is consulted.
-
-    #FIXME: We also need to also:
-    #* Define the find_spec() method, which should:
-    #  * Efficiently test whether the passed "path" is in "_package_names" in a
-    #    *THREAD-SAFE MANNER.*
-    #  * If not, this method should reduce to a noop by returning "None".
-    #  * Else, this method should return the value of calling the superclass
-    #    find_spec() implementation.
-    #  We're fairly certain that suffices. Nonetheless, verify this by
-    #  inspecting the comparable find_spec() implementation at:
-    #      https://stackoverflow.com/a/48671982/2809027
-    #FIXME: *PROBABLY INSUFFICIENT.* For safety, we really only want to apply
-    #this loader to packages in the passed "package_names" list. For all other
-    #packages, the relevant method of this loader (which is probably
-    #find_spec(), but let's research that further) should return "None". Doing
-    #so defers loading to the next loader in "sys.path_hooks".
-    #FIXME: *AH-HA.* We basically have *NO* means of overriding Finder API
-    #behaviour here, for the obvious reason that the pivotal "FileFinder" class
-    #resides outside the scope of the lower-level "SourceFileLoader" superclass.
-    #Instead:
-    #* Remove this entire "FINDER API" section.
-    #* Fold the desired conditionality into the get_code() and source_to_code()
-    #  methods overridden below. Doing so is mildly complicated by the fact that
-    #  the fully-qualified name of the module to be loaded is passed *ONLY* to
-    #  the parent get_code() method; the child source_to_code() method called by
-    #  the parent get_code() method is *NOT* passed that name. Ordinarily, this
-    #  would scuttle everything. In this case, however, the *ONLY* method
-    #  calling source_to_code() anywhere throughout the "importlib" package is
-    #  get_code(). Ergo, source_to_code() should have been made private (i.e.,
-    #  as _source_to_code()). Of course, that's irrelevant. What's relevant is
-    #  that we can actually do this as follows:
-    #  * In get_code():
-    #    1. Cache the passed "fullname" as a new
-    #       "self._module_being_loaded_name" instance variable (or something).
-    #    2. Call super().get_code().
-    #    3. Nullify that same instance variable for safety.
-    #  * In source_to_code():
-    #    1. If that same instance variable is "None", raise an exception.
-    #    2. Else, use that variable to decide whether or not the current module
-    #       being loaded should be decorated by @beartype. If so, apply our AST
-    #       transformation; else, don't. Simple. Let's do this, fam.
-    #FIXME: *AH-HA*! The prior comment would absolutely work -- but we can do
-    #something even marginally better. Why? Because source_to_code() only needs
-    #to know whether or not it should @beartype the passed module; it doesn't
-    #actually need the name of that module. Ergo, we should:
-    #* Define a new _clawpackagenames.is_package_registered() tester with
-    #  signature resembling:
-    #      def is_package_registered(package_name: str) -> bool:
-    #  As the signature suggests, that tester returns true only if the package
-    #  with the passed name has been previously registered for beartyping. This
-    #  method's implementation will be slightly non-trivial, as it will recurse
-    #  over our global package name cache.
-    #* Rename the "_module_being_loaded_name" instance variable to:
-    #      self._is_module_beartypeable: Optional[bool] = None
-    #* In get_code():
-    #  * Split the parent package name from the passed module "fullname": e.g.,
-    #      package_name = fullname.rpartition('.')[0]
-    #  * Set "_is_module_beartypeable" as follows:
-    #      self._is_module_beartypeable = is_package_registered(package_name)
-    #  * If "_is_module_beartypeable" is True, call super().get_code() as we
-    #    currently do (i.e., embedded in an inefficient try-finally block).
-    #  * Else, call super().get_code() *WITHOUT* inefficiently monkey-patching
-    #    cache_from_source(). This isn't simply an optimization, however. This
-    #    is critical. Why? Because modules *NOT* being @beartyped should be
-    #    compiled to their standard ".pyc" files.
-    #  * In either case, Nullify "_is_module_beartypeable" for safety.
-    #* In source_to_code():
-    #  * If "_is_module_beartypeable" is "None", raise an exception.
-    #  * Else, use that variable to decide whether or not the current module
-    #    being loaded should be decorated by @beartype. If so, apply our AST
-    #    transformation; else, don't. Simple. Let's do this, fam.
-    #FIXME: *OKAY.* Nearly there. We now have an is_packages_registered()
-    #tester. Great. But we also need the "conf" registered for that package. In
-    #other words:
-    #* Define a new _clawpackagenames.get_package_registered_conf_or_none()
-    #  getter getting that configuration, based on the existing
-    #  is_packages_registered() tester.
-    #* Call get_package_registered_conf_or_none() below in get_code() rather
-    #  than is_packages_registered().
-    #* Cache the returned configuration if non-"None" into a new
-    #  "self._module_conf_if_registered" instance variable. Note this implies we
-    #  no longer require a "self._is_module_beartypeable" instance variable.
-    #* Test "self._module_conf_if_registered" in our source_to_code()
-    #  implementation to decide what to do.
-    #* Consider removing is_packages_registered() entirely, please.
+        self._module_conf_if_registered: BeartypeConfOrNone = None
 
     # ..................{ LOADER API                         }..................
     # The importlib._bootstrap_external.*Loader API declares the low-level
@@ -365,7 +278,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         internally follows one of two distinct code paths, conditionally
         depending on whether a parent package transitively containing that
         module has been previously registered with the
-        :mod:`beartype.claw._clawpackagenames` submodule (e.g., by a call to the
+        :mod:`beartype.claw._clawregistrar` submodule (e.g., by a call to the
         :func:`beartype.claw.beartype_package` function). Specifically:
 
         * If *no* parent package transitively containing that module has been
@@ -437,42 +350,68 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         one-line monkey-patch, first typeguard and now @beartype strongly prefer
         this monkey-patch. Did we mention that @agronholm is amazing? Because
         that really bears repeating. May the name of Alex Grönholm live eternal!
-
-        Motivation
-        ----------
-
         '''
 
-        # Temporarily replace that function with a beartype-specific variant.
-        # Doing so is strongly inspired by a similar monkey-patch applied by the
-        # external typeguard.importhook.TypeguardLoader.exec_module() method
-        # authored by the incomparable @agronholm (Alex Grönholm), who writes:
-        #     Use a custom optimization marker – the import lock should make
-        #     this monkey patch safe
-        #
-        # We implicitly trust @agronholm to get that right in a popular project
-        # stress-tested across hundreds of open-source projects over the past
-        # several decades. So, we avoid explicit thread-safe locking here.
-        #
-        # Lastly, note there appears to be *NO* other means of safely
-        # implementing this behaviour *WITHOUT* violating Don't Repeat Yourself
-        # (DRY). Specifically, doing so would require duplicating most of the
-        # entirety of the *EXTREMELY* non-trivial nearly 100 line-long
-        # importlib._bootstrap_external.SourceLoader.get_code() method. Since
-        # duplicating non-trivial and fragile code inherently tied to a specific
-        # CPython version is considerably worse than applying a trivial one-line
-        # monkey-patch, first typeguard and now @beartype strongly prefer this
-        # monkey-patch. Did we mention that @agronholm is amazing? Because that
-        # really bears repeating. May the name of Alex Grönholm live eternal!
-        _bootstrap_external.cache_from_source = _cache_from_source_beartype
+        # Fully-qualified name of the parent package of the module with the
+        # passed fully-qualified name, defined as either...
+        package_name = (
+            # If that module is a submodule of a package, then the expression
+            # "fullname.rpartition('.')[0]" necessarily yields the
+            # fully-qualified name of that package;
+            fullname.rpartition('.')[0] or
 
-        # Attempt to defer to the superclass method with all passed parameters.
-        try:
+            #FIXME: Actually, *IS* it feasible for a top-level module to be
+            #registered as a package? Certainly, our API permits that -- but how
+            #does "importlib" machinery actually import top-level modules? They
+            #don't have packages, but *ALL* "importlib" machinery is based on
+            #containing packages. This is a fascinating edge case, so let's
+            #investigate further if we ever grep up the time.
+
+            # Else, that module is a top-level module with *NO* parent package.
+            # In this case, since the above expression
+            # "fullname.rpartition('.')[0]" erroneously yields the empty string,
+            # fallback to the fully-qualified name of that module as is.
+            # Although unlikely, it is feasible for a top-level module to be
+            # registered as a package by a prior call resembling:
+            #     beartype.claw.beartype_package(fullname)
+            fullname
+        )
+
+        # Beartype configuration with which to type-check that module if the
+        # parent package of that module was previously registered *OR* "None"
+        # otherwise (i.e., if this function preserves that module unmodified).
+        self._module_conf_if_registered = get_package_conf_if_registered(
+            package_name)
+
+        # If that module has *NOT* been registered for type-checking, preserve
+        # that module as is by simply deferring to the superclass method
+        # *WITHOUT* monkey-patching cache_from_source(). This isn't only an
+        # optimization, although it certainly is that as well. This is critical.
+        # Why? Because modules *NOT* being @beartyped should remain compiled
+        # under their standard non-@beartyped bytecode filenames.
+        if self._module_conf_if_registered is None:
             return super().get_code(fullname)
-        # After doing so (and regardless of whether doing so raises an
-        # exception), restore the original cache_from_source() function.
-        finally:
-            _bootstrap_external.cache_from_source = cache_from_source_original
+        # Else, that module has been registered for type-checking. In this
+        # case...
+        #
+        # Note that the logic below requires inefficient exception handling (as
+        # well as a potentially risky monkey-patch) and is thus performed *ONLY*
+        # when absolutely necessary.
+        else:
+            # Temporarily monkey-patch away the cache_from_source() function.
+            #
+            # Note that @agronholm (Alex Grönholm) claims that "the import lock
+            # should make this monkey patch safe." We're trusting you here, man!
+            _bootstrap_external.cache_from_source = _cache_from_source_beartype
+
+            # Attempt to defer to the superclass method.
+            try:
+                return super().get_code(fullname)
+            # After doing so (and regardless of whether doing so raises an
+            # exception), restore the original cache_from_source() function.
+            finally:
+                _bootstrap_external.cache_from_source = (
+                    cache_from_source_original)
 
 
     # Note that we explicitly ignore mypy override complaints here. For unknown
@@ -522,10 +461,17 @@ class BeartypeSourceFileLoader(SourceFileLoader):
             Code object dynamically compiled from that Python package or module.
         '''
 
-        # Plaintext decoded contents of that package or module.
+        # If that module has *NOT* been registered for type-checking, preserve
+        # that module as is by simply deferring to the superclass method.
+        if self._module_conf_if_registered is None:
+            return super().source_to_code(  # type: ignore[call-arg]
+                data=data, path=path, _optimize=_optimize)
+        # Else, that module has been registered for type-checking.
+
+        # Plaintext decoded contents of that module.
         module_source = decode_source(data)
 
-        # Abstract syntax tree (AST) dynamically parsed from these contents.
+        # Abstract syntax tree (AST) parsed from these contents.
         module_ast = compile(
             module_source,
             path,
@@ -538,8 +484,8 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         )
 
         # Abstract syntax tree (AST) modified by our AST transformation
-        # dynamically parsed from these contents.
-        module_ast_beartyped = _BeartypeNodeTransformer().visit(module_ast)
+        # decorating all typed callables and classes by @beartype.
+        module_ast_beartyped = BeartypeNodeTransformer().visit(module_ast)
 
         #FIXME: *THIS IS BAD, BRO.* For one thing, this is slow. Recursion is
         #slow. It's also dangerous. We shouldn't do it more than we have to. Now
@@ -568,7 +514,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # leaves these numbers undefined due to programmer laziness.
         #fix_missing_locations(module_ast_beartyped)
 
-        # Code object dynamically compiled from that transformed AST.
+        # Code object compiled from this transformed AST.
         module_codeobj = compile(
             module_ast_beartyped,
             path,

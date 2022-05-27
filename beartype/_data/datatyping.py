@@ -101,6 +101,12 @@ TypeException = Type[Exception]
 PEP-compliant type hint matching *any* exception class.
 '''
 
+
+TypeWarning = Type[Warning]
+'''
+PEP-compliant type hint matching *any* warning category.
+'''
+
 # ....................{ HINTS ~ type : tuple              }....................
 TupleTypes = Tuple[type, ...]
 '''

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -15,11 +15,12 @@ submodule. This private submodule is *not* intended for direct importation by
 downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeConfException
 from beartype.typing import (
     TYPE_CHECKING,
     Dict,
+    Optional,
 )
 from enum import (
     Enum,
@@ -27,7 +28,7 @@ from enum import (
     unique as die_unless_enum_member_values_unique,
 )
 
-# ....................{ ENUMERATIONS                      }....................
+# ....................{ ENUMERATIONS                       }....................
 #FIXME: Document us up in "README.rst", please.
 @die_unless_enum_member_values_unique
 class BeartypeStrategy(Enum):
@@ -89,7 +90,7 @@ class BeartypeStrategy(Enum):
     Ologn = next_enum_member_value()
     On = next_enum_member_value()
 
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 #FIXME: Document us up in "README.rst", please.
 #FIXME: Refactor to use @dataclass.dataclass once we drop Python 3.7 support.
 class BeartypeConf(object):
@@ -114,8 +115,8 @@ class BeartypeConf(object):
         the decorated callable.
     '''
 
-    # ..................{ CLASS VARIABLES                   }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # ..................{ CLASS VARIABLES                    }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize this slots list with the implementations of:
     # * The __new__() dunder method.
     # * The __eq__() dunder method.
@@ -124,7 +125,7 @@ class BeartypeConf(object):
     # CAUTION: Subclasses declaring uniquely subclass-specific instance
     # variables *MUST* additionally slot those variables. Subclasses violating
     # this constraint will be usable but unslotted, which defeats our purposes.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently called
@@ -141,7 +142,7 @@ class BeartypeConf(object):
         _is_debug: bool
         _strategy: BeartypeStrategy
 
-    # ..................{ INSTANTIATORS                     }..................
+    # ..................{ INSTANTIATORS                      }..................
     # Note that this __new__() dunder method implements the superset of the
     # functionality typically implemented by the __init__() dunder method. Due
     # to Python instantiation semantics, the __init__() dunder method is
@@ -209,9 +210,9 @@ class BeartypeConf(object):
               member.
         '''
 
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize this logic with BeartypeConf.__hash__().
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # Hash of these parameters.
         #
         # Note this logic inlines the body of the BeartypeConf.__hash__()
@@ -260,7 +261,7 @@ class BeartypeConf(object):
         # Return this configuration.
         return self
 
-    # ..................{ PROPERTIES                        }..................
+    # ..................{ PROPERTIES                         }..................
     # Read-only public properties effectively prohibiting mutation of their
     # underlying private attributes.
 
@@ -290,7 +291,7 @@ class BeartypeConf(object):
 
         return self._strategy
 
-    # ..................{ DUNDERS                           }..................
+    # ..................{ DUNDERS                            }..................
     def __eq__(self, other: object) -> bool:
         '''
         **Beartype configuration equality comparator.**
@@ -344,9 +345,9 @@ class BeartypeConf(object):
             Hash of this configuration.
         '''
 
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize this logic with BeartypeConf.__new__().
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # Return the hash of a tuple containing these parameters in an
         # arbitrary (albeit well-defined) order.
         #
@@ -382,7 +383,13 @@ class BeartypeConf(object):
             f')'
         )
 
-# ....................{ PRIVATE ~ globals                 }....................
+# ....................{ HINTS                              }....................
+BeartypeConfOrNone = Optional[BeartypeConf]
+'''
+PEP-compliant type hint matching either a beartype configuration *or* ``None``.
+'''
+
+# ....................{ PRIVATE ~ globals                  }....................
 _BEARTYPE_CONF_HASH_TO_CONF: Dict[int, BeartypeConf] = {}
 '''
 Non-thread-safe **beartype configuration cache** (i.e., dictionary mapping from

@@ -89,6 +89,8 @@ from beartype.roar._roarexc import (
 # Public warning hierarchy.
 from beartype.roar._roarwarn import (
     BeartypeWarning as BeartypeWarning,
+    BeartypeClawWarning as BeartypeClawWarning,
+    BeartypeClawDecorationWarning as BeartypeClawDecorationWarning,
     BeartypeDecorHintPepWarning as BeartypeDecorHintPepWarning,
     BeartypeDecorHintPepDeprecationWarning as BeartypeDecorHintPepDeprecationWarning,
     BeartypeDecorHintPep585DeprecationWarning as BeartypeDecorHintPep585DeprecationWarning,

@@ -31,7 +31,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.claw._clawloader import BeartypeSourceFileLoader
-from beartype.claw._clawpackagenames import (
+from beartype.claw._clawregistrar import (
     is_packages_registered_any,
     register_packages,
 )
@@ -392,5 +392,5 @@ _claw_lock = RLock()
 Reentrant reusable thread-safe context manager gating access to otherwise
 non-thread-safe private globals defined by both this high-level submodule and
 subsidiary lower-level submodules (particularly, the
-:attr:`beartype.claw._clawpackagenames._package_basename_to_subpackages` cache).
+:attr:`beartype.claw._clawregistrar._package_basename_to_subpackages` cache).
 '''

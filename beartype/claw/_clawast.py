@@ -18,29 +18,43 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from ast import (
+    AST,
     NodeTransformer,
 )
 # from beartype.typing import (
 #     Iterable,
 #     Union,
 # )
+from beartype._decor.decorcore import beartype_object_safe
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ PRIVATE ~ classes                  }....................
+# ....................{ CLASSES                            }....................
 #FIXME: Implement us up, please.
 #FIXME: Docstring us up, please.
 #FIXME: Unit test us up, please.
-class _BeartypeNodeTransformer(NodeTransformer):
+class BeartypeNodeTransformer(NodeTransformer):
     '''
-    **Beartype node transformer** (i.e., ...).
+    **Beartype abstract syntax tree (AST) node transformer** (i.e., visitor
+    pattern recursively transforming the AST tree passed to the :meth:`visit`
+    method by decorating all typed callables and classes by the
+    :func:`beartype.beartype` decorator).
 
     Attributes
     ----------
 
     See Also
     ----------
+    * The `comparable "typeguard.importhook" submodule <typeguard import
+      hook_>`__ implemented by the incomparable `@agronholm (Alex Grönholm)
+      <agronholm_>`__.
+
+    .. _agronholm:
+       https://github.com/agronholm
+    .. _typeguard import hook:
+       https://github.com/agronholm/typeguard/blob/master/src/typeguard/importhook.py
     '''
 
     # ..................{ INITIALIZERS                       }..................
@@ -62,3 +76,57 @@ class _BeartypeNodeTransformer(NodeTransformer):
     #
     #     # Classify all subclass-specific parameters.
     #     self.package_names = package_names
+
+# ....................{ PRIVATE ~ copiers                  }....................
+#FIXME: Call us up above, please.
+def _copy_ast_node_code_metadata(
+    ast_node_src: AST, ast_node_trg: AST) -> None:
+    '''
+    Copy all **source code metadata** (i.e., beginning and ending line and
+    column numbers) from the passed source abstract syntax tree (AST) node onto
+    the passed target AST node.
+
+    This function is an efficient alternative to the extremely inefficient
+    (albeit still useful) :func:`ast.fix_missing_locations` function. The
+    tradeoffs are as follows:
+
+    * :func:`ast.fix_missing_locations` is ``O(n)`` time complexity for ``n``
+      the number of AST nodes across the entire AST tree, but requires only a
+      single trivial call and is thus considerably more "plug-and-play" than
+      this function.
+    * This function is ``O(1)`` time complexity irrespective of the size of the
+      AST tree, but requires one still mostly trivial call for each synthetic
+      AST node inserted into the AST tree by the
+      :class:`BeartypeNodeTransformer` above.
+
+    Parameters
+    ----------
+    ast_node_src: AST
+        Source AST node to copy source code metadata from.
+    ast_node_trg: AST
+        Target AST node to copy source code metadata onto.
+
+    See Also
+    ----------
+    :func:`ast.copy_location`
+        Less efficient analogue of this function running in ``O(k)`` time
+        complexity for ``k`` the number of types of source code metadata.
+        Typically, ``k == 4``.
+    '''
+    assert isinstance(ast_node_src, AST), f'{repr(ast_node_src)} not AST node.'
+    assert isinstance(ast_node_trg, AST), f'{repr(ast_node_trg)} not AST node.'
+
+    #FIXME: Note that Python 3.7 (and possibly other versions as well) fails to
+    #define the "end_*" attributes. Ergo, we'll need to conditionalize this
+    #based on the current Python version. To decide which versions exactly this
+    #applies to, omit the "# type: ..." comments and re-run "tox". Mypy knows!
+
+    # Copy all source code metadata from this source to target AST node.
+    ast_node_trg.lineno     = ast_node_src.lineno
+    ast_node_trg.col_offset = ast_node_src.col_offset
+
+    # If the active Python interpreter targets Python >= 3.8, then additionally
+    # copy all source code metadata exposed by Python >= 3.8.
+    if IS_PYTHON_AT_LEAST_3_8:
+        ast_node_trg.end_lineno     = ast_node_src.end_lineno  # type: ignore[attr-defined]
+        ast_node_trg.end_col_offset = ast_node_src.end_col_offset  # type: ignore[attr-defined]

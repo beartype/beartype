@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -21,7 +21,7 @@ despite *not* actually being that decorator (due to being unmemoized).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeConfException
 from beartype.typing import (
     Dict,
@@ -32,20 +32,20 @@ from beartype._data.datatyping import (
     BeartypeReturn,
     BeartypeableT,
 )
-from beartype._decor._decorcore import beartype_args_mandatory
+from beartype._decor.decorcore import beartype_object
 from beartype._conf import (
     BeartypeConf,
     BeartypeStrategy,
 )
 
-# ....................{ DECORATORS                        }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ DECORATORS                         }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Synchronize the signature of this non-identity decorator with the
 # identity decorator defined by the "beartype._decor.decormain" submodule.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Documentation for this decorator intentionally resides in the parent
 # "beartype._decor.decormain" submodule.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 def beartype(
     # Optional positional or keyword parameters.
     obj: Optional[BeartypeableT] = None,
@@ -74,7 +74,7 @@ def beartype(
     # here; callers that are doing this are sufficiently intelligent to be
     # trusted to violate PEP 561-compliance if they so choose. So... *shrug*
     if obj is not None:
-        return beartype_args_mandatory(obj, conf)
+        return beartype_object(obj, conf)
     # Else, we were passed *NO* object to be decorated. In this case, this
     # decorator is in configuration rather than decoration mode.
 
@@ -165,7 +165,7 @@ def beartype(
 
             # Decorate this object with type-checking configured by this
             # configuration.
-            return beartype_args_mandatory(obj, conf)
+            return beartype_object(obj, conf)
 
     # Cache this private decorator against this configuration.
     _bear_conf_to_decor[conf] = beartype_confed
@@ -173,7 +173,7 @@ def beartype(
     # Return this private decorator.
     return beartype_confed
 
-# ....................{ SINGLETONS                        }....................
+# ....................{ SINGLETONS                         }....................
 _bear_conf_to_decor: Dict[BeartypeConf, BeartypeConfedDecorator] = {}
 '''
 Non-thread-safe **beartype decorator cache.**

@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._decor._cache._cachetype import (
+from beartype._decor._cache.cachetype import (
     TYPISTRY_HINT_NAME_TUPLE_PREFIX,
     bear_typistry,
     register_typistry_forwardref,
