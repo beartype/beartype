@@ -20,6 +20,7 @@ from beartype.roar import BeartypeClawRegistrationException
 from beartype.typing import (
     Dict,
     Iterable,
+    Iterator,
     Optional,
     Union,
 )
@@ -29,11 +30,37 @@ from beartype._conf import (
 )
 from beartype._util.text.utiltextident import is_identifier
 from collections.abc import Iterable as IterableABC
+from contextlib import contextmanager
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TESTERS                            }....................
+#FIXME: Unit test us up, please.
+def is_packages_registered_any() -> bool:
+    '''
+    ``True`` only if one or more packages have been previously registered.
+
+    Equivalently, this tester returns ``True`` only if the
+    :func:`register_packages` function has been called at least once under the
+    active Python interpreter.
+
+    Caveats
+    ----------
+    **This function is only safely callable in a thread-safe manner within a**
+    ``with _claw_lock:`` **context manager.** Equivalently, this global is *not*
+    safely accessible outside that manager.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if one or more packages have been previously registered.
+    '''
+
+    # Unleash the beast! Unsaddle the... addled?
+    return bool(_package_basename_to_subpackages)
+
+# ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_package_conf_if_registered(package_name: str) -> BeartypeConfOrNone:
     '''
@@ -76,6 +103,35 @@ def get_package_conf_if_registered(package_name: str) -> BeartypeConfOrNone:
     # edge cases. We arbitrarily call the former rather than the latter for
     # simplicity and readability.
     package_basenames = package_name.split('.')
+
+    # If that package is either the top-level "beartype" package or a subpackage
+    # of that package, silently ignore this dangerous attempt to type-check the
+    # "beartype" package by the @beartype.beartype decorator. Why? Because doing
+    # so is both:
+    #
+    # * Fundamentally unnecessary. The entirety of the "beartype" package
+    #   already religiously guards against type violations with a laborious slew
+    #   of type checks littered throughout the codebase -- including assertions
+    #   of the form "assert isinstance({arg}, {type}), ...". Further decorating
+    #   *ALL* "beartype" callables with automated type-checking only needlessly
+    #   reduces the runtime efficiency of the "beartype" package.
+    # * Fundamentally dangerous, which is the greater concern. For example:
+    #   The beartype.claw._clawast.BeartypeNodeTransformer.visit_Module()
+    #   dynamically inserts a module-scoped import of the
+    #   @beartype._decor.decorcore.beartype_object_safe decorator at the head of
+    #   the module currently being imported. But if the
+    #   "beartype._decor.decorcore" submodule itself is being imported, then
+    #   that importation would destructively induce an infinite circular import!
+    #   Could that ever happen? *YES.* Conceivably, an external caller could
+    #   force reimportation of all modules by emptying the "sys.modules" cache.
+    #
+    # Note this edge case is surprisingly common. The public
+    # beartype.claw.beartype_all() function implicitly registers *ALL* packages
+    # (including "beartype" itself by default) for decoration by @beartype.
+    if package_basenames[0] == 'beartype':
+        return None
+    # Else, that package is neither the top-level "beartype" package *NOR* a
+    # subpackage of that package. In this case, register this package.
 
     # Current subdictionary of the global package name cache describing the
     # currently iterated unqualified basename comprising that package's name,
@@ -123,31 +179,6 @@ def get_package_conf_if_registered(package_name: str) -> BeartypeConfOrNone:
 
     # Return this beartype configuration if any *OR* "None" otherwise.
     return package_conf_if_registered
-
-
-#FIXME: Unit test us up, please.
-def is_packages_registered_any() -> bool:
-    '''
-    ``True`` only if one or more packages have been previously registered.
-
-    Equivalently, this tester returns ``True`` only if the
-    :func:`register_packages` function has been called at least once under the
-    active Python interpreter.
-
-    Caveats
-    ----------
-    **This function is only safely callable in a thread-safe manner within a**
-    ``with _claw_lock:`` **context manager.** Equivalently, this global is *not*
-    safely accessible outside that manager.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if one or more packages have been previously registered.
-    '''
-
-    # Unleash the beast! Unsaddle the... addled?
-    return bool(_package_basename_to_subpackages)
 
 # ....................{ REGISTRARS                         }....................
 #FIXME: Unit test us up, please.
@@ -265,9 +296,9 @@ def register_packages(
     # For the fully-qualified name of each package to be registered...
     for package_name in package_names:
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize with the is_package_registered() tester. The
-        # iteration performed below modifies the global package names cache and
-        # thus *CANNOT* simply defer to the same logic.
+        # CAUTION: Synchronize with the get_package_conf_if_registered() getter.
+        # The iteration performed below modifies the global package names cache
+        # and thus *CANNOT* simply defer to the same logic.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # List of each unqualified basename comprising this name, split from
@@ -344,6 +375,40 @@ def register_packages(
             # Else, that call associated that (sub)package with the same
             # configuration to that passed. In this case, silently ignore
             # this redundant attempt to re-register that (sub)package.
+
+
+#FIXME: Unit test us up, please.
+@contextmanager
+def packages_unregistered() -> Iterator[None]:
+    '''
+    Context manager "unregistering" (i.e., clearing, removing) all previously
+    registered packages from the global package name cache maintained by the
+    :func:`register_packages` function *after* running the caller-defined block
+    of the ``with`` statement executing this context manager.
+
+    Caveats
+    ----------
+    **This context manager is only intended to be invoked by unit and
+    integration tests in our test suite.** Nonetheless, this context manager
+    necessarily violates privacy encapsulation by accessing private submodule
+    globals and is thus declared in this submodule rather than elsewhere.
+
+    **This context manager is non-thread-safe.** Since our test suite is
+    intentionally *not* dangerously parallelized across multiple threads, this
+    caveat is ignorable with respect to testing.
+
+    Yields
+    ----------
+    None
+        This context manager yields *no* values.
+    '''
+
+    # Attempt to run the caller-defined block of the parent "with" statement.
+    try:
+        yield
+    # Clear the global package name cache *AFTER* doing so.
+    finally:
+        _package_basename_to_subpackages.clear()
 
 # ....................{ PRIVATE ~ classes                  }....................
 #FIXME: Docstring us up, please.

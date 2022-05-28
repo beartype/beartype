@@ -203,7 +203,10 @@ def beartype_object_safe(
 
     Warns
     ----------
-    .
+    warning_category
+        If :func:`beartype.beartype` fails to generate a type-checking wrapper
+        for this callable or class by raising a fatal exception, this function
+        coerces that exception into a non-fatal warning describing that error.
 
     See Also
     ----------
@@ -220,6 +223,10 @@ def beartype_object_safe(
         assert isinstance(warning_category, Warning), (
             f'{repr(warning_category)} not warning category.')
 
+        #FIXME: *INSUFFICIENT.* We also *MUST* prefix this message by:
+        #* The fully-qualified name of this beartypeable.
+        #* The line number of this beartypeable in its module (if any).
+
         # Warning message to be emitted, defined as either...
         warning_message = (
             # If this exception is beartype-specific, this exception's message
@@ -235,6 +242,10 @@ def beartype_object_safe(
             # traceback and thus suffices as is.
             format_exc()
         )
+
+        #FIXME: Unconditionally parse this warning message by globally replacing
+        #*EACH* newline (i.e., "\n" substring) in this message with a newline
+        #followed by four spaces (i.e., "\n    ").
 
         # Emit this message under this category.
         warn(warning_message, warning_category)
