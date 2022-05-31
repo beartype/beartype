@@ -34,6 +34,7 @@ from beartype.claw._clawloader import BeartypeSourceFileLoader
 from beartype.claw._clawregistrar import (
     is_packages_registered_any,
     register_packages,
+    register_packages_all,
 )
 from beartype.roar import BeartypeClawRegistrationException
 from beartype.typing import (
@@ -65,7 +66,6 @@ from types import (
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ HOOKS                              }....................
-#FIXME: Implement us up, please.
 #FIXME: Unit test us up, please.
 def beartype_all(
     # Optional keyword-only parameters.
@@ -139,7 +139,46 @@ def beartype_all(
           :class:`BeartypeConf` instance).
     '''
 
-    pass
+    # ..................{ PATH HOOK                          }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with the beartype_all() function.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # With a submodule-specific thread-safe reentrant lock...
+    with _claw_lock:
+        # True only if the beartype import path hook subsequently added below
+        # has already been added by a prior call to this function under the
+        # active Python interpreter.
+        #
+        # Technically, this condition is also decidable by an iterative search
+        # over the "sys.path_hooks" list for an item that is an instance of our
+        # private "_BeartypeSourceFileLoader" subclass. However, doing so would
+        # impose O(n) time complexity for "n" the size of that list,
+        #
+        # Pragmatically, this condition is trivially decidable by noting that:
+        # * This public function performs the *ONLY* call to the private
+        #   register_packages() function in this codebase.
+        # * The first call of this function under the active Python interpreter:
+        #   * Also performs the first call of the register_packages() function.
+        #   * Also adds our beartype import path hook.
+        #
+        # Ergo, deciding this state in O(1) time complexity reduces to deciding
+        # whether the register_packages() function has been called already.
+        is_path_hook_added = is_packages_registered_any()
+
+        # Register *ALL* packages for subsequent lookup during submodule
+        # importation by the beartype import path hook registered below *AFTER*
+        # deciding whether this function has been called already.
+        #
+        # Note this helper function fully validates these parameters. Ergo, we
+        # intentionally avoid doing so here in this higher-level function.
+        register_packages_all(conf=conf)
+
+        # True only if the beartype import path hook subsequently added below
+        # has already been added by a prior call to this function under the
+        # active Python interpreter.
+        if not is_path_hook_added:
+            _add_path_hook()
 
 
 #FIXME: Unit test us up, please.
@@ -317,6 +356,10 @@ def beartype_package(
         package_names = (frame_caller_package_name,)
 
     # ..................{ PATH HOOK                          }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with the beartype_all() function.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     # With a submodule-specific thread-safe reentrant lock...
     with _claw_lock:
         # True only if the beartype import path hook subsequently added below
@@ -361,6 +404,12 @@ def _add_path_hook() -> None:
     :func:`beartype.beartype` decorator to all well-typed callables and classes
     defined by all submodules of all packages with the passed names on the first
     importation of those submodules).
+
+    See Also
+    ----------
+    https://stackoverflow.com/a/43573798/2809027
+        StackOverflow answer strongly inspiring the low-level implementation of
+        this function with respect to inscrutable :mod:`importlib` machinery.
     '''
 
     # 2-tuple of the undocumented format expected by the FileFinder.path_hook()

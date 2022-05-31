@@ -182,6 +182,72 @@ def get_package_conf_if_registered(package_name: str) -> BeartypeConfOrNone:
 
 # ....................{ REGISTRARS                         }....................
 #FIXME: Unit test us up, please.
+def register_packages_all(
+    # Mandatory keyword-only parameters.
+    *,
+    conf: BeartypeConf,
+) -> None:
+    '''
+    Register *all* packages as subject to our **beartype import path hook**
+    (i.e., callable inserted to the front of the standard :mod:`sys.path_hooks`
+    list recursively applying the :func:`beartype.beartype` decorator to all
+    well-typed callables and classes defined by all submodules of all packages
+    with the passed names on the first importation of those submodules).
+
+    Caveats
+    ----------
+    **This function is only safely callable in a thread-safe manner within a**
+    ``with _claw_lock:`` **context manager.** Equivalently, this global is *not*
+    safely accessible outside that manager.
+
+    Parameters
+    ----------
+    conf : BeartypeConf, optional
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed packages).
+
+    Raises
+    ----------
+    BeartypeClawRegistrationException
+        If either:
+
+        * The passed ``conf`` parameter is *not* a beartype configuration (i.e.,
+          :class:`BeartypeConf` instance).
+        * One or more of the packages with the passed names have already been
+          registered by a previous call to this function under a conflicting
+          configuration differing from the passed configuration.
+    '''
+
+    # This configuration is *NOT* a configuration, raise an exception.
+    if not isinstance(conf, BeartypeConf):
+        raise BeartypeClawRegistrationException(
+            f'Beartype configuration {repr(conf)} invalid (i.e., not '
+            f'"beartype.BeartypeConf" instance).'
+        )
+    # Else, this configuration is a configuration.
+
+    # Beartype configuration currently associated with *ALL* packages by a
+    # previous call to this function if any *OR* "None" otherwise (i.e., if this
+    # function has yet to be called under the active Python interpreter).
+    conf_curr = _package_basename_to_subpackages.conf_if_registered
+
+    # If that call associated all packages with a different configuration than
+    # that passed, raise an exception.
+    if conf_curr is not conf:
+        raise BeartypeClawRegistrationException(
+            f'All packages previously registered '
+            f'with differing beartype configuration:\n'
+            f'----------(OLD CONFIGURATION)----------\n'
+            f'{repr(conf_curr)}\n'
+            f'----------(NEW CONFIGURATION)----------\n'
+            f'{repr(conf)}\n'
+        )
+    # Else, that call associated all packages with the same configuration to
+    # that passed. In this case, silently ignore this redundant attempt to
+    # re-register all packages.
+
+
+#FIXME: Unit test us up, please.
 #FIXME: Define a comparable removal function named either:
 #* cancel_beartype_submodules_on_import(). This is ostensibly the most
 #  unambiguous and thus the best choice of those listed here. Obviously,
@@ -241,12 +307,9 @@ def register_packages(
 
         * The passed ``conf`` parameter is *not* a beartype configuration (i.e.,
           :class:`BeartypeConf` instance).
-
-    See Also
-    ----------
-    https://stackoverflow.com/a/43573798/2809027
-        StackOverflow answer strongly inspiring the low-level implementation of
-        this function with respect to inscrutable :mod:`importlib` machinery.
+        * One or more of the packages with the passed names have already been
+          registered by a previous call to this function under a conflicting
+          configuration differing from the passed configuration.
     '''
 
     # ..................{ VALIDATION                         }..................
