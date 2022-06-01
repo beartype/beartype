@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -13,15 +13,15 @@ tests defined in that submodule are sufficiently fragile that *no* other
 submodule should import from this submodule.
 '''
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: For completeness, unit tests test the *EXACT* contents of this file.
 # Changes to this file must thus be synchronized with those tests.
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._util.func.utilfuncmake import make_func
 
-# ....................{ CALLABLES ~ dynamic               }....................
+# ....................{ CALLABLES ~ dynamic                }....................
 of_vapours = make_func(
     func_name='vaulted_with_all_thy_congregated_might',
     func_code='''
@@ -32,7 +32,7 @@ def vaulted_with_all_thy_congregated_might():
 Arbitrary callable dynamically declared in-memory.
 ''')
 
-# ....................{ CALLABLES ~ physical              }....................
+# ....................{ CALLABLES ~ physical               }....................
 def will_be_the_dome():
     '''
     Arbitrary non-lambda function physically declared by this submodule.
@@ -40,7 +40,7 @@ def will_be_the_dome():
 
     return 'of a vast sepulchre'
 
-# ....................{ CALLABLES ~ physical : lambda     }....................
+# ....................{ CALLABLES ~ physical : lambda      }....................
 thou_dirge = lambda: 'Of the dying year, to which this closing night'
 '''
 Arbitrary lambda function physically declared by this submodule.

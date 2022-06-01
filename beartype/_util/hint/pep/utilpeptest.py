@@ -34,7 +34,7 @@ from beartype._util.hint.pep.proposal.utilpep544 import (
     is_hint_pep544_ignorable_or_none)
 from beartype._util.hint.pep.proposal.utilpep593 import (
     is_hint_pep593_ignorable_or_none)
-from beartype._util.mod.utilmodule import get_object_module_name_or_none
+from beartype._util.mod.utilmodget import get_object_module_name_or_none
 from beartype._util.utilobject import get_object_type_unless_type
 from warnings import warn
 

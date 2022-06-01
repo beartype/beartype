@@ -1,23 +1,87 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
-Project-wide **Python module utilities**.
+Project-wide **Python module getter** (i.e., callables dynamically retrieving
+modules and/or attributes in modules) utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilModuleException
+from beartype.typing import Optional
+from inspect import findsource
 from types import ModuleType
-from typing import Optional
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ GETTERS ~ object : name           }....................
+# ....................{ GETTERS ~ object : line            }....................
+def get_object_module_line_number_begin(obj: object) -> int:
+    '''
+    **Line number** (i.e., 1-based index) of the first line of the source code
+    of the module declaring the passed object if this object is either a
+    callable or class *or* raise an exception otherwise (i.e., if this object is
+    neither a callable nor class).
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    int
+        1-based index of the first line of the source code of the module
+        declaring the passed object.
+
+    Raises
+    ----------
+    _BeartypeUtilModuleException
+        If this object is neither a callable nor class.
+    '''
+
+    # If this object is a class, defer to the standard "inspect" module.
+    #
+    # Note that:
+    # * Deciding whether an object is a class is slightly faster than deciding
+    #   whether an object is a callable. The former trivially reduces to a
+    #   single isinstance() call against a single superclass; the latter is
+    #   considerably less trivial. Ergo, this object is tested as a class first.
+    # * Deciding the line number of the first line declaring an arbitrary class
+    #   in its underlying source code module file is highly non-trivial (and in
+    #   fact requires extremely slow AST-based parsing). For maintainability and
+    #   robustness, we defer to the well-tested standard "inspect" module
+    #   despite the performance hit in doing so.
+    if isinstance(obj, type):
+        _, cls_source_line_number_start = findsource(obj)
+        return cls_source_line_number_start
+    # Else, this object is *NOT* a class.
+
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
+
+    # Code object underlying this object if this object is a pure-Python
+    # callable *OR* "None" otherwise.
+    #
+    # Note this is the canonical means of deciding whether an arbitrary object
+    # is a pure-Python callable, as our is_func_python() function demonstrates.
+    func_codeobj = get_func_codeobj_or_none(obj)
+
+    # If this object is a pure-Python callable, return the line number of the
+    # first line declaring this object in its underlying source code file.
+    if func_codeobj is not None:
+        return func_codeobj.co_firstlineno
+    # Else, this object is neither a pure-Python callable *NOR* a class.
+
+    # In this case, raise an exception.
+    raise _BeartypeUtilModuleException(
+        f'{repr(obj)} neither callable nor class.')
+
+# ....................{ GETTERS ~ object : name            }....................
 def get_object_module_name(obj: object) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
@@ -114,7 +178,7 @@ def get_object_type_module_name_or_none(obj: object) -> Optional[str]:
     # Make it so, ensign.
     return get_object_module_name_or_none(get_object_type_unless_type(obj))
 
-# ....................{ GETTERS ~ module : file           }....................
+# ....................{ GETTERS ~ module : file            }....................
 #FIXME: Unit test us up.
 def get_module_filename(module: ModuleType) -> str:
     '''

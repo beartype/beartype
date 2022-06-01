@@ -20,7 +20,7 @@ This submodule unit tests the public API of the private
 def test_import_module_or_none() -> None:
     '''
     Test the
-    :func:`beartype._util.mod.utilmodule.import_module_or_none` function.
+    :func:`beartype._util.mod.utilmodget.import_module_or_none` function.
     '''
 
     # Defer heavyweight imports.
@@ -57,7 +57,7 @@ def test_import_module_or_none() -> None:
 def test_import_module_attr() -> None:
     '''
     Test the
-    :func:`beartype._util.mod.utilmodule.import_module_attr` function.
+    :func:`beartype._util.mod.utilmodget.import_module_attr` function.
     '''
 
     # Defer heavyweight imports.
@@ -84,7 +84,7 @@ def test_import_module_attr() -> None:
 def test_import_module_attr_or_none() -> None:
     '''
     Test the
-    :func:`beartype._util.mod.utilmodule.import_module_attr_or_none` function.
+    :func:`beartype._util.mod.utilmodget.import_module_attr_or_none` function.
     '''
 
     # Defer heavyweight imports.

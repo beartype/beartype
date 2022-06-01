@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,13 +10,13 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.mod.utilmodtest` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ validator                 }....................
+# ....................{ TESTS ~ validator                  }....................
 def test_die_unless_module_attr_name() -> None:
     '''
     Test the :func:`beartype._util.mod.utilmodtest.die_unless_module_attr_name`
@@ -46,7 +46,7 @@ def test_die_unless_module_attr_name() -> None:
     with raises(_BeartypeUtilModuleException):
         die_unless_module_attr_name('Sentient.6')
 
-# ....................{ TESTS ~ tester                    }....................
+# ....................{ TESTS ~ tester                     }....................
 def test_is_module() -> None:
     '''
     Test the :func:`beartype._util.mod.utilmodtest.is_module` tester.

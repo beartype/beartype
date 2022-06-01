@@ -20,7 +20,7 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
     is_hint_pep484_forwardref,
 )
 from beartype._util.mod.utilmodimport import import_module_attr
-from beartype._util.mod.utilmodule import get_object_module_name
+from beartype._util.mod.utilmodget import get_object_module_name
 from beartype._data.datatyping import TypeException
 from typing import Any, Union
 

@@ -253,46 +253,8 @@ def beartype_object_safe(
         obj_name = get_object_name(obj)
 
         #FIXME: Insufficient, because this fails to handle classes. Instead:
-        #* Define a new
-        #  beartype._util.utilobject.get_object_source_line_number_start()
-        #  getter whose implementation should resemble:
-        #      #FIXME: Unit test us up, please.
-        #      def get_object_source_line_number_start(obj: object) -> int:
-        #          # If this beartypeable is a class, defer to the standard
-        #          # "inspect" module.
-        #          #
-        #          # Note that deciding the line number of the first line
-        #          # declaring an arbitrary class in its underlying source code
-        #          # module file is highly non-trivial (and in fact requires
-        #          # extremely slow AST-based parsing). For maintainability,
-        #          # avoid attempting to do so manually ourselves.
-        #          if isinstance(obj, type):
-        #              from inspect import findsource
-        #              _, cls_source_line_number_start = findsource(obj)
-        #              return cls_source_line_number_start
-        #          # Else, this beartype is *NOT* a class.
-        #
-        #          # Code object underlying this beartypeable if this
-        #          # beartypeable is a pure-Python callable *OR* "None"
-        #          # otherwise.
-        #          #
-        #          # Note this is the canonical means of deciding whether an
-        #          # arbitrary object is a pure-Python callable, as our
-        #          # implementation of the is_func_python() demonstrates.
-        #          func_codeobj = get_func_codeobj_or_none(obj)
-        #
-        #          # If this beartypeable is a pure-Python callable, return the
-        #          # line number of the first line declaring this beartypeable
-        #          # in its underlying source code module file.
-        #          if func_codeobj is not None:
-        #              return obj_codeobj.co_firstlineno
-        #          # Else, this beartypeable is neither a pure-Python callable
-        #          # *NOR* a class.
-        #
-        #          # In this case, raise an exception.
-        #          raise BeartypeSomeException('Ugh!')
-        #
-        #* Call that function below.
+        #* Call beartype._util.utilobject.get_object_module_line_number_begin()
+        #  below.
 
         # Code object underlying this beartypeable.
         obj_codeobj = get_func_codeobj(obj)
