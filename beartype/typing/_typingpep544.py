@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,13 +12,13 @@ replacement for :class:`typing.Protocol` that can lead to significant
 performance improvements.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_8,
     IS_PYTHON_AT_LEAST_3_9,
 )
 
-# ....................{ PEP 544                           }....................
+# ....................{ PEP 544                            }....................
 # If the active Python interpreter targets Python >= 3.8 and thus supports PEP
 # 544...
 #
@@ -26,7 +26,7 @@ from beartype._util.py.utilpyversion import (
 # statement. I seem to remember a bug/feature request about that somewhere,
 # but couldn't find it after a brief search.
 if IS_PYTHON_AT_LEAST_3_8:
-    # ..................{ IMPORTS                           }..................
+    # ..................{ IMPORTS                            }..................
     #FIXME: The ignore[attr-defined] is for Python 3.7 because Mypy doesn't
     #understand IS_PYTHON_AT_LEAST_3_8. That ignore should be removable
     #when retiring PYTHON 3.7.
@@ -80,7 +80,7 @@ if IS_PYTHON_AT_LEAST_3_8:
     else:
         _ProtocolMeta = type(_ProtocolSlow)
 
-    # ..................{ CONSTANTs                         }..................
+    # ..................{ CONSTANTS                          }..................
     _PROTOCOL_ATTR_NAMES_IGNORABLE = frozenset(EXCLUDED_ATTRIBUTES)
     '''
     Frozen set of the names all **ignorable non-protocol attributes** (i.e.,
@@ -101,7 +101,7 @@ if IS_PYTHON_AT_LEAST_3_8:
     Arbitrary type variable bound (i.e., confined) to classes.
     '''
 
-    # ..................{ METACLASSES                       }..................
+    # ..................{ METACLASSES                        }..................
     class _CachingProtocolMeta(_ProtocolMeta):
         '''
         **Caching protocol metaclass** (i.e., drop-in replacement for the
@@ -181,7 +181,7 @@ if IS_PYTHON_AT_LEAST_3_8:
           True
         '''
 
-        # ................{ CLASS VARIABLES                   }................
+        # ................{ CLASS VARIABLES                    }................
         _abc_inst_check_cache: Dict[type, bool]
         '''
         :func:`isinstance` **cache** (i.e., dictionary mapping from each type
@@ -190,7 +190,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         onto each boolean returned by that call to that builtin).
         '''
 
-        # ................{ DUNDERS                           }................
+        # ................{ DUNDERS                            }................
         def __new__(
             mcls: Type[_TT],
             name: str,
@@ -202,11 +202,11 @@ if IS_PYTHON_AT_LEAST_3_8:
             # See <https://github.com/python/mypy/issues/9282>
             cls = super().__new__(mcls, name, bases, namespace, **kw)
 
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # CAUTION: Synchronize this "if" conditional against the standard
             # "typing" module, which defines the exact same logic in the
             # Protocol.__init_subclass__() class method.
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # If it is unknown whether this class is an abstract protocol
             # directly subclassing the "Protocol" superclass *OR* a concrete
             # subclass of an abstract protocol, decide which applies now. Why?
@@ -254,10 +254,10 @@ if IS_PYTHON_AT_LEAST_3_8:
 
             # Attempt to...
             try:
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 # CAUTION: This *MUST* remain *SUPER* tight!! Even adding a
                 # mere assertion here can add ~50% to our best-case runtime.
-                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 # Return a pre-cached boolean indicating whether an object of
                 # the same arbitrary type as the object passed to this call
                 # satisfied the same protocol in a prior call of this method.
@@ -348,7 +348,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         # true.
         return True
 
-    # ..................{ CLASSES                           }..................
+    # ..................{ CLASSES                            }..................
     @runtime_checkable
     class Protocol(
         _ProtocolSlow,
@@ -391,10 +391,10 @@ if IS_PYTHON_AT_LEAST_3_8:
            ...   thing.myfunc(0)
         '''
 
-        # ................{ CLASS VARIABLES                   }................
+        # ................{ CLASS VARIABLES                    }................
         __slots__: Any = ()
 
-        # ................{ DUNDERS                           }................
+        # ................{ DUNDERS                            }................
         @callable_cached_minimal
         def __class_getitem__(cls, item):
 
@@ -497,7 +497,7 @@ if IS_PYTHON_AT_LEAST_3_8:
     # representations to comply, this awkward monkey-patch preserves sanity.
     Protocol.__module__ = 'beartype.typing'
 
-    # ..................{ PROTOCOLS                         }..................
+    # ..................{ PROTOCOLS                          }..................
     class SupportsAbs(_SupportsAbsSlow[_T_co], Protocol, Generic[_T_co]):
         '''
         Caching variant of :class:`typing.SupportsAbs`.

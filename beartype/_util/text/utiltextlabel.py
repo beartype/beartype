@@ -11,8 +11,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                           }....................
+from beartype.typing import Optional
 from beartype._util.utilobject import (
-    get_object_basename_scoped,
+    get_object_name,
     get_object_type_name,
 )
 from collections.abc import Callable
@@ -21,7 +22,14 @@ from collections.abc import Callable
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ LABELLERS ~ callable              }....................
-def label_callable(func: Callable) -> str:
+#FIXME: Unit test up the "is_contextualized" boolean, please.
+def label_callable(
+    # Mandatory parameters.
+    func: Callable,
+
+    # Optional parameters.
+    is_contextualized: Optional[bool] = None,
+) -> str:
     '''
     Human-readable label describing the passed **callable** (e.g., function,
     method, property).
@@ -30,6 +38,23 @@ def label_callable(func: Callable) -> str:
     ----------
     func : Callable
         Callable to be labelled.
+    is_contextualized : Optional[bool] = None
+        Either:
+
+        * ``True``, in which case this label is suffixed by additional metadata
+          contextually disambiguating that callable, including:
+
+          * The line number of the first line declaring that callable in its
+            underlying source code module file.
+          * The absolute filename of that file.
+
+        * ``False``, in which case this label is *not* suffixed by such
+          metadata.
+        * ``None``, in which case this label is conditionally suffixed by such
+          metadata only if that callable is a lambda function and thus
+          ambiguously lacks any semblance of an innate context.
+
+        Defaults to ``None``.
 
     Returns
     ----------
@@ -49,6 +74,16 @@ def label_callable(func: Callable) -> str:
         is_func_async_generator,
         is_func_sync_generator,
     )
+    from beartype._util.mod.utilmodget import (
+        get_object_module_line_number_begin)
+
+    # Substring prefixing the string to be returned, typically identifying the
+    # specialized type of that callable if that callable has a specialized type.
+    func_label_prefix = ''
+
+    # Substring suffixing the string to be returned, typically contextualizing
+    # that callable with respect to its on-disk code module file.
+    func_label_suffix = ''
 
     # If the passed callable is a pure-Python lambda function, that callable
     # has *NO* unique fully-qualified name. In this case, return a string
@@ -57,57 +92,61 @@ def label_callable(func: Callable) -> str:
         # Code object underlying this lambda.
         func_codeobj = get_func_codeobj(func)
 
-        # Human-readable label describing this lambda.
-        func_label = (
-            f'Lambda function of '
+        # Substring preceding the string to be returned.
+        func_label_prefix = (
+            f'lambda function of '
             f'{get_func_args_len_flexible(func_codeobj)} argument(s)'
         )
 
-        # Absolute filename of the file defining this lambda if this lambda was
-        # defined on-disk *OR* "None" otherwise (i.e., if this lambda was
-        # defined in-memory).
-        func_filename = get_func_filename_or_none(func)
-
-        # If this lambda was defined on-disk, describe the location of this
-        # lambda in that file.
-        if func_filename:
-            func_label += (
-                f' declared on line {func_codeobj.co_firstlineno} of '
-                f'file "{func_filename}" '
-            )
-
-        # Return this label.
-        return func_label
+        # If the caller failed to request an explicit contextualization, default
+        # to contextualizing this lambda function.
+        if is_contextualized is None:
+            is_contextualized = True
+        # Else, the caller requested an explicit contextualization. In this
+        # case, preserve that contextualization as is.
     # Else, the passed callable is *NOT* a pure-Python lambda function and thus
     # has a unique fully-qualified name.
+    else:
+        # If that callable is a synchronous generator, return this string
+        # prefixed by a substring emphasizing that fact.
+        if is_func_sync_generator(func):
+            func_label_prefix = 'generator '
+        # Else, that callable is *NOT* a synchronous generator.
+        #
+        # If that callable is an asynchronous coroutine, return this string
+        # prefixed by a substring emphasizing that fact.
+        elif is_func_async_coroutine(func):
+            func_label_prefix = 'coroutine '
+        # Else, that callable is *NOT* an asynchronous coroutine.
+        #
+        # If that callable is an asynchronous generator, return this string
+        # prefixed by a substring emphasizing that fact.
+        elif is_func_async_generator(func):
+            func_label_prefix = 'asynchronous generator '
+        # Else, that callable is *NOT* an asynchronous generator.
 
-    # Substring preceding the string to be returned, typically identifying the
-    # specialized type of this callable if this callable has a specialized
-    # type.
-    func_label_prefix = ''
+    # If contextualizing that callable...
+    if is_contextualized:
+        # Absolute filename of the source module file defining that callable if
+        # that callable was defined on-disk *OR* "None" otherwise (i.e., if that
+        # callable was defined in-memory).
+        func_filename = get_func_filename_or_none(func)
 
-    # If that callable is a synchronous generator, return this string prefixed
-    # by a substring emphasizing that fact.
-    if is_func_sync_generator(func):
-        func_label_prefix = 'generator '
-    # Else, that callable is *NOT* a synchronous generator.
-    #
-    # If that callable is an asynchronous coroutine, return this string
-    # prefixed by a substring emphasizing that fact.
-    elif is_func_async_coroutine(func):
-        func_label_prefix = 'coroutine '
-    # Else, that callable is *NOT* an asynchronous coroutine.
-    #
-    # If that callable is an asynchronous generator, return this string
-    # prefixed by a substring emphasizing that fact.
-    elif is_func_async_generator(func):
-        func_label_prefix = 'asynchronous generator '
-    # Else, that callable is *NOT* an asynchronous generator.
+        # Line number of the first line declaring that callable in that file.
+        func_lineno = get_object_module_line_number_begin(func)
 
-    # Return the fully-qualified name of this callable preceded by this prefix.
-    return f'{func_label_prefix}{get_object_basename_scoped(func)}()'
+        # If that callable was defined on-disk, describe the location of that
+        # callable in that file.
+        if func_filename:
+            func_label_suffix += (
+                f' declared on line {func_lineno} of file "{func_filename}" ')
+        # Else, that callable was defined in-memory. In this case, avoid
+        # attempting to uselessly contextualize that callable.
 
-# ....................{ LABELLERS ~ type                  }....................
+    # Return that prefix followed by the fully-qualified name of that callable.
+    return f'{func_label_prefix}{get_object_name(func)}(){func_label_suffix}'
+
+# ....................{ LABELLERS ~ type                   }....................
 def label_obj_type(obj: object) -> str:
     '''
     Human-readable label describing the class of the passed object.
@@ -195,7 +234,7 @@ def label_type(cls: type) -> str:
     # Return this labelled classname.
     return classname
 
-# ....................{ LABELLERS ~ exception             }....................
+# ....................{ LABELLERS ~ exception              }....................
 def label_exception(exception: Exception) -> str:
     '''
     Human-readable label describing the passed exception.
@@ -222,7 +261,7 @@ def label_exception(exception: Exception) -> str:
     # Return this exception's label.
     return f'{exception.__class__.__qualname__}: {str(exception)}'
 
-# ....................{ PREFIXERS ~ callable              }....................
+# ....................{ PREFIXERS ~ callable               }....................
 def prefix_callable(func: Callable) -> str:
     '''
     Human-readable label describing the passed **callable** (e.g., function,
@@ -298,7 +337,7 @@ def prefix_callable_decorated_pith(
         prefix_callable_decorated_arg(func=func, arg_name=pith_name)
     )
 
-# ....................{ PREFIXERS ~ callable : param      }....................
+# ....................{ PREFIXERS ~ callable : param       }....................
 def prefix_callable_decorated_arg(
     func: Callable, arg_name: str) -> str:
     '''
@@ -358,7 +397,7 @@ def prefix_callable_decorated_arg_value(
         f'{arg_name}={represent_object(arg_value)} '
     )
 
-# ....................{ PREFIXERS ~ callable : return     }....................
+# ....................{ PREFIXERS ~ callable : return      }....................
 def prefix_callable_decorated_return(func: Callable) -> str:
     '''
     Human-readable label describing the return of the passed **decorated

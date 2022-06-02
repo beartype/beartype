@@ -45,6 +45,7 @@ from beartype._util.func.lib.utilbeartypefunc import (
 )
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.func.utilfuncmake import make_func
+from beartype._util.mod.utilmodget import get_object_module_line_number_begin
 from beartype._util.utilobject import get_object_name
 from traceback import format_exc
 from warnings import warn
@@ -249,26 +250,33 @@ def beartype_object_safe(
         #*EACH* newline (i.e., "\n" substring) in this message with a newline
         #followed by four spaces (i.e., "\n    ").
 
+        #FIXME: Inadequate, really. Instead defer to the:
+        #* "label_callable(func=obj, is_contextualized=True)" function if this
+        #  object is *NOT* a class.
+        #* "label_class(cls=obj, is_contextualized=True)" function if this
+        #  object is a class. Of course, that function currently accepts to such
+        #  "is_contextualized" parameter. *sigh*
+        #
+        #This suggests we probably just want to define a new higher-level
+        #label_object() function with signature resembling:
+        #    label_object(obj: object, is_contextualized: Optional[bool] = None)
+        #FIXME: Note that we'll want to capitalize the first character of the
+        #string returned by the label_object() function, please.
+
         # Fully-qualified name of this beartypeable.
         obj_name = get_object_name(obj)
 
-        #FIXME: Insufficient, because this fails to handle classes. Instead:
-        #* Call beartype._util.utilobject.get_object_module_line_number_begin()
-        #  below.
-
-        # Code object underlying this beartypeable.
-        obj_codeobj = get_func_codeobj(obj)
-
         # Line number of the first line declaring this beartypeable in its
         # underlying source code module file.
-        obj_lineno = obj_codeobj.co_firstlineno
+        obj_lineno = get_object_module_line_number_begin(obj)
 
-        #FIXME: *INSUFFICIENT.* We also *MUST* prefix this message by:
-        #* The fully-qualified name of this beartypeable.
-        #* The line number of this beartypeable in its module (if any).
+        # Warning message to be emitted.
+        warning_message = (
+            error_message
+        )
 
         # Emit this message under this category.
-        # warn(warning_message, warning_category)
+        warn(warning_message, warning_category)
 
 # ....................{ PRIVATE ~ beartypers               }....................
 def _beartype_func(func: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
