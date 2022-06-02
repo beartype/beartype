@@ -17,6 +17,10 @@
 #downloads. Naturally, horrifying hacks circumventing these issues do exist but
 #are presumably worse than these issues. See also this pertinent comment:
 #    https://github.com/actions/cache/issues/342#issuecomment-673371329
+#FIXME: [CACHING] Huzzah! The "setup-python" action itself now supports
+#out-of-the-box caching. Note that doing so will require a minor of
+#configuration on our part -- but nothing *TOO* tremendous, hopefully. See:
+#    https://github.com/actions/setup-python#caching-packages-dependencies
 
 # ....................{ METADATA                           }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -182,9 +186,9 @@ jobs:
     # ..................{ PROCESS                            }..................
     steps:
       - name: 'Checking out repository...'
-        uses: 'actions/checkout@v2'
+        uses: 'actions/checkout@v3'
       - name: "Installing Python ${{ matrix.python-version }}..."
-        uses: 'actions/setup-python@v2'
+        uses: 'actions/setup-python@v3'
         with:
           python-version: "${{ matrix.python-version }}"
       - name: 'Displaying Python metadata...'
