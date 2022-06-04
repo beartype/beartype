@@ -1,6 +1,6 @@
 from typing import Union, Any, List, Sequence
 from collections import abc
-from beartype.math._mathcls import _is_subclass
+from beartype.math._mathcls import _is_subtype
 from beartype.typing import Protocol
 
 import pytest
@@ -65,5 +65,5 @@ CASES = [
 
 
 @pytest.mark.parametrize("subt, supert, expected_result", CASES)
-def test_is_subclass(subt, supert, expected_result):
-    assert _is_subclass(subt, supert) == expected_result
+def test_is_subtype(subt, supert, expected_result):
+    assert _is_subtype(subt, supert) == expected_result

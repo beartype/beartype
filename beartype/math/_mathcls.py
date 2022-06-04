@@ -40,7 +40,7 @@ from beartype.roar import BeartypeMathException
 from beartype.typing import Iterable, Any
 
 
-def _is_subclass(subt: object, supert: object) -> bool:
+def _is_subtype(subt: object, supert: object) -> bool:
     return TypeHint(subt) <= TypeHint(supert)
 
 
