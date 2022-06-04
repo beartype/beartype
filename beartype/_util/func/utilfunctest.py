@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -13,7 +13,7 @@ various high-level properties of arbitrary callables.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj_or_none)
@@ -31,7 +31,7 @@ from typing import Any
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS                          }....................
 FUNC_NAME_LAMBDA = '<lambda>'
 '''
 Default name of all **pure-Python lambda functions** (i.e., function declared
@@ -53,7 +53,7 @@ AST-based parsing, which comes with its own substantial caveats, concerns,
 edge cases, and false positives. If you must pick your poison, pick this one.
 '''
 
-# ....................{ VALIDATORS                        }....................
+# ....................{ VALIDATORS                         }....................
 #FIXME: Uncomment when needed.
 # def die_unless_func_lambda(
 #     # Mandatory parameters.
@@ -151,7 +151,7 @@ def die_unless_func_python(
             f'the __call__() dunder method).'
         )
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 def is_func_lambda(func: Any) -> bool:
     '''
     ``True`` only if the passed object is a **pure-Python lambda function**
@@ -209,13 +209,14 @@ def is_func_python(func: object) -> bool:
     # C-based callables are associated with *NO* code objects.
     return get_func_codeobj_or_none(func) is not None
 
-# ....................{ TESTERS ~ async                   }....................
+# ....................{ TESTERS ~ async                    }....................
 def is_func_async(func: object) -> bool:
     '''
-    ``True`` only if the passed object is an **asynchronous callable**
-    (i.e., awaitable callable satisfying the :class:`collections.abc.Awaitable`
-    protocol by being declared via the ``async def`` syntax and thus callable
-    *only* when preceded by comparable ``await`` syntax).
+    ``True`` only if the passed object is an **asynchronous callable** (i.e.,
+    awaitable factory callable implicitly creating and returning an awaitable
+    object (i.e., satisfying the :class:`collections.abc.Awaitable` protocol) by
+    being declared via the ``async def`` syntax and thus callable *only* when
+    preceded by comparable ``await`` syntax).
 
     Parameters
     ----------
@@ -272,9 +273,10 @@ def is_func_async(func: object) -> bool:
 
 def is_func_async_coroutine(func: object) -> bool:
     '''
-    ``True`` only if the passed object is an **asynchronous coroutine**
-    (i.e., awaitable callable containing *no* ``yield`` expressions satisfying
-    the :class:`collections.abc.Awaitable` protocol by being declared via the
+    ``True`` only if the passed object is an **asynchronous coroutine factory**
+    (i.e., awaitable callable containing *no* ``yield`` expression implicitly
+    creating and returning an awaitable object (i.e., satisfying the
+    :class:`collections.abc.Awaitable` protocol) by being declared via the
     ``async def`` syntax and thus callable *only* when preceded by comparable
     ``await`` syntax).
 
@@ -309,11 +311,12 @@ def is_func_async_coroutine(func: object) -> bool:
 
 def is_func_async_generator(func: object) -> bool:
     '''
-    ``True`` only if the passed object is an **asynchronous generator**
+    ``True`` only if the passed object is an **asynchronous generator factory**
     (i.e., awaitable callable containing one or more ``yield`` expressions
-    satisfying the :class:`collections.abc.Awaitable` protocol by being
-    declared via the ``async def`` syntax and thus callable *only* when
-    preceded by comparable ``await`` syntax).
+    implicitly creating and returning an awaitable object (i.e., satisfying the
+    :class:`collections.abc.Awaitable` protocol) by being declared via the
+    ``async def`` syntax and thus callable *only* when preceded by comparable
+    ``await`` syntax).
 
     Parameters
     ----------
@@ -343,12 +346,14 @@ def is_func_async_generator(func: object) -> bool:
         func_codeobj.co_flags & CO_ASYNC_GENERATOR != 0
     )
 
-# ....................{ TESTERS ~ sync                    }....................
+# ....................{ TESTERS ~ sync                     }....................
 def is_func_sync_generator(func: object) -> bool:
     '''
-    ``True`` only if the passed object is a **synchronous generator**
+    ``True`` only if the passed object is an **synchronous generator factory**
     (i.e., awaitable callable containing one or more ``yield`` expressions
-    declared with the ``def`` rather than ``async def`` keyword).
+    implicitly creating and returning a generator object (i.e., satisfying the
+    :class:`collections.abc.Generator` protocol) by being declared via the
+    ``def`` rather than ``async def`` syntax).
 
     Parameters
     ----------

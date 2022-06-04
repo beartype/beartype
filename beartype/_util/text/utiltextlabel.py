@@ -22,7 +22,6 @@ from collections.abc import Callable
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ LABELLERS ~ callable              }....................
-#FIXME: Unit test up the "is_contextualized" boolean, please.
 def label_callable(
     # Mandatory parameters.
     func: Callable,

@@ -40,7 +40,7 @@ jobs:
 
     steps:
       - name: "Checking out repository..."
-        uses: 'actions/checkout@v2'
+        uses: 'actions/checkout@v3'
       - name: "Publishing GitHub release..."
         uses: 'ncipollo/release-action@v1'
         with:
