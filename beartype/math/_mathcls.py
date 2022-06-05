@@ -1,5 +1,4 @@
-from abc import abstractmethod
-from collections.abc import Collection as CollectionABC
+from abc import ABC, abstractmethod
 from functools import total_ordering
 
 
@@ -22,7 +21,7 @@ def _is_subtype(subt: object, supert: object) -> bool:
 
 # FIXME: Unit test us up, please!
 @total_ordering
-class TypeHint(CollectionABC):
+class TypeHint(ABC):
     """
     Abstract base class (ABC) of all **totally ordered type hint** (i.e.,
     high-level object encapsulating a low-level type hint augmented with all
@@ -128,9 +127,6 @@ class TypeHint(CollectionABC):
         return tuple(
             TypeHint(unordered_child) for unordered_child in unordered_children
         )
-
-    def __len__(self) -> int:
-        return len(self._hints_child_ordered)
 
     def __iter__(self) -> Iterable["TypeHint"]:
         """
@@ -266,6 +262,9 @@ class _TypeHintSubscripted(TypeHint):
 
     _required_nargs: int = -1
 
+    def __eq__(self, other: object) -> bool:
+        raise NotImplementedError
+
     def _validate(self):
         if self._required_nargs > 0 and len(self._args) != self._required_nargs:
             breakpoint()
@@ -310,15 +309,9 @@ class _TypeHintOriginIsinstanceableArgs1(_TypeHintSubscripted):
 
     _required_nargs: int = 1
 
-    def __eq__(self, other: object) -> bool:
-        raise NotImplementedError
-
 
 class _TypeHintOriginIsinstanceableArgs2(_TypeHintSubscripted):
     _required_nargs: int = 2
-
-    def __eq__(self, other: object) -> bool:
-        raise NotImplementedError
 
 
 class _TypeHintCallable(_TypeHintOriginIsinstanceableArgs2):
@@ -353,9 +346,6 @@ class _TypeHintCallable(_TypeHintOriginIsinstanceableArgs2):
     def return_type(self):
         return self._hints_child_ordered[1]
 
-    def __eq__(self, other: object) -> bool:
-        raise NotImplementedError
-
     def _is_le_branch(self, branch: TypeHint) -> bool:
         # If the branch is not subscripted, then we assume it is subscripted
         # with ``Any``, and we simply check that the origins are compatible.
@@ -387,13 +377,9 @@ class _TypeHintCallable(_TypeHintOriginIsinstanceableArgs2):
 class _TypeHintOriginIsinstanceableArgs3(_TypeHintSubscripted):
     _required_nargs: int = 3
 
-    def __eq__(self, other: object) -> bool:
-        raise NotImplementedError
-
 
 class _TypeHintTuple(_TypeHintSubscripted):
-    def __eq__(self, other: object) -> bool:
-        raise NotImplementedError
+    ...
 
 
 class _TypeHintUnion(_TypeHintSubscripted):
