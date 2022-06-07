@@ -119,6 +119,13 @@ CASES = [
     (t.Union[str, list], t.Union[str, int], False),
     (t.Union[int, str, list], list, False),
     (t.Union[int, str, list], t.Union[int, str], False),
+    # literals
+    (t.Literal[1], int, True),
+    (t.Literal['a'], str, True),
+    (t.Literal[1, 2, '3'], t.Union[int, str], True),
+    (t.Literal[1, 2, '3'], t.Union[list, int], False),
+    (int, t.Literal[1], False),
+    (t.Literal[1, 2], t.Literal[1, 2, 3], True),
     # protocols
     (MuhThing, MuhThingP, True),
     (MuhNutherThing, MuhThingP, False),

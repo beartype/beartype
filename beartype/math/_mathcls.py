@@ -83,6 +83,7 @@ class TypeHint(ABC):
         if TypeHintSubclass is None:
             if (
                 isinstance(hint, type)
+                # FIXME: this is probably too broad.
                 or get_hint_pep_origin_or_none(hint)
                 or getattr(hint, "__module__", "") == "typing"
             ):
@@ -128,9 +129,9 @@ class TypeHint(ABC):
         """Used by subclasses to validate self._args and self._origin"""
         pass
 
-    def _wrap_children(self, unordered_children):
+    def _wrap_children(self, unordered_children: tuple) -> Tuple["TypeHint", ...]:
         """Wrap type hint paremeters in TypeHint instances.
-        
+
         Gives subclasses an opportunity modify
         """
         return tuple(
@@ -351,7 +352,7 @@ class _TypeHintCallable(_TypeHintOriginIsinstanceableArgs2):
         super()._validate()
 
     # FIXME: bring this in line with tuple behavior... maybe get rid of this
-    def _wrap_children(self, unordered_children):
+    def _wrap_children(self, unordered_children: tuple) -> Tuple["TypeHint", ...]:
         argtypes, return_types = unordered_children
         if argtypes is Ellipsis:
             ordered_args = Ellipsis
@@ -476,6 +477,33 @@ class _TypeHintTuple(_TypeHintSubscripted):
         )
 
 
+class _TypeHintLiteral(_TypeHintSubscripted):
+    def _wrap_children(self, _: tuple) -> Tuple["TypeHint", ...]:
+        # the parameters of Literal aren't hints, they're arbitrary values
+        # we don't wrap them.
+        return ()
+
+    @callable_cached
+    def is_subtype(self, other: object) -> bool:
+        other_hint = _die_unless_TypeHint(other)
+
+        # If the other hint is also a literal
+        if isinstance(other_hint, _TypeHintLiteral):
+            # we check that our args are a subset of theirs
+            return all(arg in other_hint._args for arg in self._args)
+
+        # If the other hint is a just an origin
+        if other_hint._is_just_an_origin:
+            # we check that our args instances of that origin
+            return all(isinstance(x, other_hint._origin) for x in self._args)
+
+        return all(TypeHint(type(arg)) <= other_hint for arg in self._args)
+
+    @property
+    def _is_just_an_origin(self) -> bool:
+        return False
+
+
 class _TypeHintUnion(_TypeHintSubscripted):
     """
     **Totally ordered union type hint** (i.e., high-level object encapsulating a
@@ -489,7 +517,7 @@ class _TypeHintUnion(_TypeHintSubscripted):
         return self._hints_child_ordered
 
     @callable_cached
-    def __le__(self, other: object) -> bool:
+    def is_subtype(self, other: object) -> bool:
 
         # If the passed object is *NOT* a totally ordered type hint, raise an
         # exception.
@@ -650,6 +678,7 @@ def _init() -> None:
         _HINT_SIGN_TO_TypeHint[sign] = _TypeHintUnion
     _HINT_SIGN_TO_TypeHint[signs.HintSignTuple] = _TypeHintTuple
     _HINT_SIGN_TO_TypeHint[signs.HintSignCallable] = _TypeHintCallable
+    _HINT_SIGN_TO_TypeHint[signs.HintSignLiteral] = _TypeHintLiteral
 
 
 # Initialize this submodule.
