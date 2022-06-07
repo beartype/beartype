@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,20 +11,26 @@ as skipped depending on whether the conditions signified by the passed
 parameters are satisfied (e.g., the importability of the passed module name).
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import pytest, sys
-from collections.abc import Mapping, Sequence
+from collections.abc import (
+    Mapping,
+    Sequence,
+)
 from types import FunctionType
-from typing import Optional, Type
+from typing import (
+    Optional,
+    Type,
+)
 
 # Sadly, the following imports require private modules and packages.
 from _pytest.runner import Skipped
 
-# ....................{ GLOBALS ~ constants               }....................
+# ....................{ GLOBALS ~ constants                }....................
 _PYTHON_VERSION_TUPLE = sys.version_info[:3]
 '''
 Machine-readable version of the active Python interpreter as a tuple of
@@ -49,7 +55,7 @@ See Also
     Similar logic performed at :mod:`beartype` importation time.
 '''
 
-# ....................{ SKIP                              }....................
+# ....................{ SKIP                               }....................
 skip_if = pytest.mark.skipif
 '''
 Conditionally skip the decorated test or fixture with the passed human-readable
@@ -95,7 +101,7 @@ def skip(reason: str):
 
     return skip_if(True, reason=reason)
 
-# ....................{ SKIP ~ env                        }....................
+# ....................{ SKIP ~ env                         }....................
 def skip_if_ci():
     '''
     Skip the decorated test or fixture if the active Python interpreter is
@@ -114,7 +120,7 @@ def skip_if_ci():
     # Skip this test if the active Python interpreter is CI-hosted.
     return skip_if(is_ci(), reason='Incompatible with CI workflows.')
 
-# ....................{ SKIP ~ pep                        }....................
+# ....................{ SKIP ~ pep                         }....................
 #FIXME: Currently unused, but preserved in the likelihood of us requiring
 #similar PEP-specific conditionality at some point.
 # def skip_unless_pep544():
@@ -161,7 +167,7 @@ def skip_if_ci():
 #         reason=f'Python {_PYTHON_VERSION_STR} lacks PEP 544 support.',
 #     )
 
-# ....................{ SKIP ~ py                         }....................
+# ....................{ SKIP ~ py                          }....................
 def skip_if_pypy():
     '''
     Skip the decorated test or fixture if the active Python interpreter is the
@@ -255,7 +261,7 @@ def skip_if_python_version_less_than(version: str):
         _PYTHON_VERSION_TUPLE < version_tuple,
         reason=f'Python {_PYTHON_VERSION_STR} < {version}.')
 
-# ....................{ SKIP ~ py : module                }....................
+# ....................{ SKIP ~ py : module                 }....................
 def skip_unless_package(
     package_name: str, minimum_version: Optional[str] = None):
     '''
@@ -330,7 +336,7 @@ def skip_unless_module(
         args=(module_name, minimum_version),
     )
 
-# ....................{ SKIP ~ private                    }....................
+# ....................{ SKIP ~ private                     }....................
 def _skip_if_callable_raises_exception(
     # Mandatory parameters.
     exception_type: Type[BaseException],

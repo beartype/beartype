@@ -64,31 +64,38 @@ if IS_PYTHON_AT_LEAST_3_9:
     '''
 
 
+    #FIXME: Implement explicit support for de-flattening "Callable[...]" type
+    #hints both here *AND* below. Note that doing is complicated by the
+    #existence of:
+    #* "typing.ParamSpec[...]" type hints, which we'll now need to explicitly
+    #  detect and handle here. To do so, let's start by identifying "ParamSpec"
+    #  with a sign via their class (in the same way we sign "TypeVar").
+    #* "typing.Concatenate[...]" type hints, which we'll now need to explicitly
+    #  detect and handle here. To do so, let's start by identifying
+    #  "Concatenate" with a sign via their repr() (in the same way we sign most
+    #  type hints).
     def get_hint_pep_args(hint: object) -> tuple:
 
         # Return the value of the "__args__" dunder attribute if this hint
         # defines this attribute *OR* the empty tuple otherwise.
         hint_args = getattr(hint, '__args__', ())
 
-        # Return either...
-        return (
-            # If this hint appears to be unsubscripted but is PEP
-            # 585-compliant, then this hint *WAS* actually subscripted by the
-            # empty tuple (e.g., "tuple[()]"). For unknown reasons, the
-            # "HintGenericSubscriptedType" superclass erroneously reduces the
-            # empty tuple subscripting such hints to... literally nothing.
-            # Since doing so violates orthogonality with equivalent PEP
-            # 484-compliant type hints that do correctly preserve their
-            # arguments (e.g., "Tuple[()]"), we silently coerce PEP
-            # 585-compliant type hints to behave like PEP 484-compliant type
-            # hints by returning a tuple containing only the empty tuple.
-            _HINT_PEP585_ARGS_EMPTY_TUPLE
-            if (
-                not hint_args and isinstance(hint, HintGenericSubscriptedType)
-            ) else
-            # Else, return this tuple as is.
-            hint_args
-        )
+        # If this hint appears to be unsubscripted but is PEP 585-compliant,
+        # then this hint *WAS* actually subscripted by the empty tuple (e.g.,
+        # "tuple[()]"). For unknown reasons, the "HintGenericSubscriptedType"
+        # superclass erroneously reduces the empty tuple subscripting such hints
+        # to... literally nothing. Since doing so violates orthogonality with
+        # equivalent PEP 484-compliant type hints that do correctly preserve
+        # their arguments (e.g., "Tuple[()]"), silently coerce PEP 585-compliant
+        # type hints to behave like PEP 484-compliant type hints by returning a
+        # tuple containing only the empty tuple.
+        if not hint_args and isinstance(hint, HintGenericSubscriptedType):
+            return _HINT_PEP585_ARGS_EMPTY_TUPLE
+        # Else, this hint is either subscripted *OR* is unsubscripted but not
+        # PEP 585-compliant.
+
+        # In this case, return this tuple as is.
+        return hint_args
 # Else, the active Python interpreter targets Python < 3.9. In this case,
 # implement this getter to directly access the "__args__" dunder attribute.
 else:
