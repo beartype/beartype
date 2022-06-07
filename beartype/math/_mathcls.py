@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-from functools import total_ordering
-
+import typing
 
 from beartype._data.hint.pep.sign import datapepsigns as signs
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
@@ -12,7 +11,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_sign_or_none,
 )
 from beartype.roar import BeartypeMathException
-from beartype.typing import Iterable, Any, Dict, Type, Tuple, Union, Literal
+from beartype.typing import Iterable, Any, Dict, Type, Tuple, Tuple
 
 
 def _is_subtype(subt: object, supert: object) -> bool:
@@ -20,7 +19,6 @@ def _is_subtype(subt: object, supert: object) -> bool:
 
 
 # FIXME: Unit test us up, please!
-@total_ordering
 class TypeHint(ABC):
     """
     Abstract base class (ABC) of all **totally ordered type hint** (i.e.,
@@ -65,6 +63,9 @@ class TypeHint(ABC):
         BeartypeDecorHintPepSignException
             If the passed hint is *not* actually a PEP-compliant type hint.
         """
+        # TypeHint(TypeHint(hint)) == TypeHint(hint)
+        if isinstance(hint, TypeHint):
+            return hint
 
         # Sign uniquely identifying this hint if any *OR* return None
         # (i.e., if this hint is *NOT* actually a PEP-compliant type hint).
@@ -78,16 +79,16 @@ class TypeHint(ABC):
         # TODO: this could alternatively force the args to be Any, since
         # If a generic type is used without specifying type parameters,
         # they are assumed to be Any
-        if TypeHintSubclass != _TypeHintCallable and not get_hint_pep_args(hint):
-            TypeHintSubclass = _TypeHintClass
+        if not get_hint_pep_args(hint):
+            if hint in [tuple, typing.Tuple]:  # FIXME: this is a hack
+                TypeHintSubclass = _TypeHintTuple
+            elif TypeHintSubclass != _TypeHintCallable:
+                TypeHintSubclass = _TypeHintClass
 
         # If this hint appears to be currently unsupported...
         if TypeHintSubclass is None:
-            # If this hint is a type, defer to the subclass handling types.
             if isinstance(hint, type):
                 TypeHintSubclass = _TypeHintClass
-            # Else, this hint is *NOT* a type. Ergo, this hint is unsupported.
-            # In this case, raise an exception.
             else:
                 raise BeartypeMathException(
                     f"Type hint {repr(hint)} currently unsupported by "
@@ -109,10 +110,15 @@ class TypeHint(ABC):
             Lower-level unordered type hint to be encapsulated by this
             higher-level totally ordered type hint.
         """
+        # TypeHint(TypeHint(hint)) == TypeHint(hint)
+        if isinstance(hint, TypeHint):
+            return
 
         # Classify all passed parameters. Note that this type hint is guaranteed
         # to be a type hint by validation performed by the __new__() method.
+        # the full type hint passed to the constructor
         self._hint = hint
+        # root type, that may or may not be subscripted
         self._origin: type = get_hint_pep_origin_or_none(hint) or hint
         # Tuple of all low-level unordered child type hints of this hint.
         self._args = get_hint_pep_args(hint)
@@ -121,7 +127,8 @@ class TypeHint(ABC):
         self._hints_child_ordered = self._wrap_children(self._args)
 
     def _validate(self):
-        ...
+        """Used by subclasses to validate self._args and self._origin"""
+        pass
 
     def _wrap_children(self, unordered_children):
         return tuple(
@@ -138,8 +145,34 @@ class TypeHint(ABC):
         """
         yield from self._hints_child_ordered
 
-    @callable_cached
+    def __eq__(self, other: object) -> bool:
+        """Return true if this type hint is equal to the passed object."""
+        comparator = other._hint if isinstance(other, TypeHint) else other
+        return self._hint == comparator
+
     def __le__(self, other: object) -> bool:
+        """Return true if self is a subtype of other."""
+        return self.is_subtype(other)
+
+    def __lt__(self, other: object) -> bool:
+        """Return true if self is a strict subtype of other."""
+        return self.is_subtype(other) and self != other
+
+    def __ge__(self, other: object) -> bool:
+        """Return true if self is a supertype of other."""
+        return self.is_supertype(other)
+
+    def __gt__(self, other: object) -> bool:
+        """Return true if self is a strict supertype of other."""
+        return self.is_supertype(other) and self != other
+
+    def is_supertype(self, other: object) -> bool:
+        """Return true if self is a supertype of other."""
+        other = _die_unless_TypeHint(other)
+        return other.is_subtype(self)
+
+    @callable_cached
+    def is_subtype(self, other: object) -> bool:
         """
         ``True`` only if this totally ordered type hint is **compatible** with
         the passed totally ordered type hint, where compatibility implies that
@@ -161,8 +194,19 @@ class TypeHint(ABC):
         # hint as is otherwise...
         return any(self._is_le_branch(branch) for branch in other_hint.branches)
 
-    def __contains__(self, other: "TypeHint") -> bool:
-        ...
+    @abstractmethod
+    def _is_le_branch(self, branch: "TypeHint") -> bool:
+        """
+        ``True`` only if this totally ordered type hint is **compatible** with
+        the passed branch of another totally ordered type hint passed to the
+        parent call of the :meth:`__le__` dunder method.
+
+        See Also
+        ----------
+        :meth:`__le__`
+            Further details.
+        """
+        pass
 
     @property
     def branches(self) -> Iterable["TypeHint"]:
@@ -188,27 +232,6 @@ class TypeHint(ABC):
     def __repr__(self) -> str:
         return f"<TypeHint: {self._hint}>"
 
-    # FIXME: Implement us up, please!
-    # FIXME: Docstring us up, please!
-    @abstractmethod
-    def __eq__(self, other: object) -> bool:
-        return True
-
-    @abstractmethod
-    def _is_le_branch(self, branch: "TypeHint") -> bool:
-        """
-        ``True`` only if this totally ordered type hint is **compatible** with
-        the passed branch of another totally ordered type hint passed to the
-        parent call of the :meth:`__le__` dunder method.
-
-        See Also
-        ----------
-        :meth:`__le__`
-            Further details.
-        """
-
-        pass
-
 
 class _TypeHintClass(TypeHint):
     """
@@ -217,9 +240,6 @@ class _TypeHintClass(TypeHint):
     """
 
     _hint: type
-
-    def __eq__(self, other: object) -> bool:
-        raise NotImplementedError
 
     def _is_le_branch(self, branch: TypeHint) -> bool:
         # everything is a subclass of Any
@@ -262,12 +282,8 @@ class _TypeHintSubscripted(TypeHint):
 
     _required_nargs: int = -1
 
-    def __eq__(self, other: object) -> bool:
-        raise NotImplementedError
-
     def _validate(self):
         if self._required_nargs > 0 and len(self._args) != self._required_nargs:
-            breakpoint()
             raise BeartypeMathException(
                 f"{type(self)} type must have {self._required_nargs} "
                 f"argument(s). got {len(self._args)}"
@@ -291,9 +307,7 @@ class _TypeHintSubscripted(TypeHint):
             # corresponding branch child hint
             and all(
                 self_child <= branch_child
-                for self_child, branch_child in zip(
-                    self._hints_child_ordered, branch._hints_child_ordered
-                )
+                for self_child, branch_child in zip(self, branch)
             )
         )
 
@@ -343,8 +357,16 @@ class _TypeHintCallable(_TypeHintOriginIsinstanceableArgs2):
         return self._hints_child_ordered[0]
 
     @property
-    def return_type(self):
+    def return_type(self) -> TypeHint:
         return self._hints_child_ordered[1]
+
+    @property
+    def takes_any_args(self) -> bool:
+        return self.arg_types is Ellipsis
+
+    @property
+    def returns_any(self) -> bool:
+        return self.return_type._origin is Any
 
     def _is_le_branch(self, branch: TypeHint) -> bool:
         # If the branch is not subscripted, then we assume it is subscripted
@@ -355,9 +377,9 @@ class _TypeHintCallable(_TypeHintOriginIsinstanceableArgs2):
             return False
         if not issubclass(self._origin, branch._origin):
             return False
-        if branch.arg_types is not Ellipsis and (
+        if not branch.takes_any_args and (
             (
-                self.arg_types is Ellipsis
+                self.takes_any_args
                 or len(self.arg_types) != len(branch.arg_types)
                 or any(
                     self_arg > branch_arg
@@ -367,10 +389,8 @@ class _TypeHintCallable(_TypeHintOriginIsinstanceableArgs2):
         ):
             return False
 
-        if branch.return_type._origin is not Any:
-            if self.return_type._origin is Any:
-                return False
-            return self.return_type <= branch.return_type
+        if not branch.returns_any:
+            return False if self.returns_any else self.return_type <= branch.return_type
         return True
 
 
@@ -379,7 +399,62 @@ class _TypeHintOriginIsinstanceableArgs3(_TypeHintSubscripted):
 
 
 class _TypeHintTuple(_TypeHintSubscripted):
-    ...
+    def _validate(self):
+        if len(self._args) == 0:
+            self._args = (Any, Ellipsis)
+        super()._validate()
+        assert self._args
+
+    @property
+    def is_variable_length(self) -> bool:
+        return self._args[-1] is Ellipsis
+
+    @property
+    def is_any_tuple(self) -> bool:
+        return self._args[0] is Any and self.is_variable_length
+
+    @property
+    def is_empty_tuple(self) -> bool:
+        return len(self._args) == 1 and self._args[0] == ()
+
+    def __len__(self) -> int:
+        if self.is_empty_tuple:
+            return 0
+        if self.is_variable_length:
+            return -1
+        return len(self._args)
+
+    def _is_le_branch(self, branch: TypeHint) -> bool:
+        if not isinstance(branch, _TypeHintTuple):
+            return False
+
+        if branch.is_any_tuple:
+            return True
+        elif self.is_any_tuple:
+            return False
+
+        if branch.is_empty_tuple:
+            return self.is_empty_tuple
+        elif self.is_empty_tuple:
+            return False
+
+        if branch.is_variable_length:
+            branch_type = branch._hints_child_ordered[0]
+            if self.is_variable_length:
+                return branch_type <= self._hints_child_ordered[0]
+            return all(child <= branch_type for child in self)
+
+        if self.is_variable_length:
+            return (
+                branch.is_variable_length
+                and self._hints_child_ordered[0] <= branch._hints_child_ordered[0]
+            )
+
+        if len(self) != len(branch):
+            return False
+        return all(
+            self_child <= branch_child for self_child, branch_child in zip(self, branch)
+        )
 
 
 class _TypeHintUnion(_TypeHintSubscripted):
@@ -389,9 +464,6 @@ class _TypeHintUnion(_TypeHintSubscripted):
     :attr:`typing.Union` and :attr:`typing.Optional` unions *and*
     :pep:`604`-compliant ``|``-delimited type unions).
     """
-
-    def __eq__(self, other: object) -> bool:
-        return super().__eq__(other)
 
     @property
     def branches(self) -> Iterable[TypeHint]:
@@ -502,7 +574,7 @@ attribute with a value equal to 1.
 _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2 = frozenset(
     (
         signs.HintSignAsyncGenerator,
-        # signs.HintSignCallable,  # defined
+        # signs.HintSignCallable,  # defined explicitly below
         signs.HintSignChainMap,
         signs.HintSignDefaultDict,
         signs.HintSignDict,
@@ -529,15 +601,6 @@ _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3 = frozenset(
 """
 Frozen set of all signs uniquely identifying **three-argument PEP-compliant
 type hints** (i.e., type hints subscriptable by exactly three child type hints)
-
-Note that the corresponding types in the typing module will have an `_nparams`
-attribute with a value equal to 3.
-"""
-
-_HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_ANY = frozenset((signs.HintSignTuple,))
-"""
-Frozen set of all signs identifying **arbitrary-argument PEP-compliant
-type hints** (i.e., type hints subscriptable by any number of child type hints)
 
 Note that the corresponding types in the typing module will have an `_nparams`
 attribute with a value equal to 3.

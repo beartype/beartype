@@ -3,14 +3,16 @@ from collections import abc
 from beartype.math._mathcls import (
     _is_subtype,
     _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1,
+    _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2,
+    _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3,
     TypeHint,
 )
-from beartype.typing import Protocol
+import beartype.typing as bt
 
 import pytest
 
 
-class MuhThingP(Protocol):
+class MuhThingP(bt.Protocol):
     def muh_method(self):
         ...
 
@@ -82,14 +84,26 @@ CASES = [
     (t.Callable[[], int], t.Callable[..., t.Any], True),
     (t.Callable[[int, str], t.List[int]], t.Callable, True),
     (t.Callable[[int, str], t.List[int]], t.Callable, True),
-    (t.Callable[[float, t.List[str]], int], t.Callable[[int, t.Sequence[str]], int], True),
+    (
+        t.Callable[[float, t.List[str]], int],
+        t.Callable[[int, t.Sequence[str]], int],
+        True,
+    ),
     (t.Callable[[t.Sequence], int], t.Callable[[list], int], False),
     (t.Callable[[], int], t.Callable[..., None], False),
     (t.Callable[..., t.Any], t.Callable[..., None], False),
     (t.Callable[[float], None], t.Callable[[float, int], None], False),
     # tuples
-    # (tuple, t.Tuple, True),
-    # (tuple, t.Tuple[t.Any, ...], True),
+    (tuple, t.Tuple, True),
+    (t.Tuple, t.Tuple, True),
+    (bt.Tuple, t.Tuple, True),
+    (tuple, t.Tuple[t.Any, ...], True),
+    (t.Tuple[int, str], t.Tuple[int, str], True),
+    (t.Tuple[int, str], t.Tuple[int, str, int], False),
+    (t.Tuple[t.Union[int, str], ...], t.Tuple[int, str], False),
+    (t.Tuple[int, str], t.Tuple[str, ...], False),
+    (t.Tuple[int, str], t.Tuple[t.Union[int, str], ...], True),
+    (t.Tuple[t.Union[int, str], ...], t.Tuple[t.Union[int, str], ...], True),
     # unions
     (int, t.Union[int, str], True),
     (t.Union[int, str], t.Union[list, int, str], True),
@@ -110,9 +124,20 @@ CASES = [
 
 @pytest.mark.parametrize("subt, supert, expected_result", CASES)
 def test_is_subtype(subt, supert, expected_result):
-    assert _is_subtype(subt, supert) == expected_result
+    assert _is_subtype(subt, supert) is expected_result
 
 
-@pytest.mark.parametrize("sign", _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1)
-def test_arg1_nparams(sign):
-    assert getattr(t, sign.name)._nparams == 1
+@pytest.mark.parametrize(
+    "nparams, sign_group",
+    [
+        (1, _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1),
+        (2, _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2),
+        (3, _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3),
+    ],
+)
+def test_arg_nparams(nparams, sign_group):
+    for sign in sign_group:
+        actual = getattr(t, sign.name)._nparams
+        assert (
+            actual == nparams
+        ), f"{sign.name} has {actual} params, should have {nparams}"
