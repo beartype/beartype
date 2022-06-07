@@ -1,4 +1,5 @@
 import typing as t
+import types
 from collections import abc
 from beartype.math._mathcls import (
     _is_subtype,
@@ -93,13 +94,19 @@ CASES = [
     (t.Callable[[], int], t.Callable[..., None], False),
     (t.Callable[..., t.Any], t.Callable[..., None], False),
     (t.Callable[[float], None], t.Callable[[float, int], None], False),
+
+    # (types.FunctionType, t.Callable, True),  # FIXME
+
     # tuples
     (tuple, t.Tuple, True),
     (t.Tuple, t.Tuple, True),
     (bt.Tuple, t.Tuple, True),
     (tuple, t.Tuple[t.Any, ...], True),
+    (tuple, t.Tuple[()], False),
+    (t.Tuple[()], tuple, True),
     (t.Tuple[int, str], t.Tuple[int, str], True),
     (t.Tuple[int, str], t.Tuple[int, str, int], False),
+    (t.Tuple[int, str], t.Tuple[int, t.Union[int, list]], False),
     (t.Tuple[t.Union[int, str], ...], t.Tuple[int, str], False),
     (t.Tuple[int, str], t.Tuple[str, ...], False),
     (t.Tuple[int, str], t.Tuple[t.Union[int, str], ...], True),
