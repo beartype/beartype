@@ -76,18 +76,16 @@ class TypeHint(ABC):
         TypeHintSubclass = _HINT_SIGN_TO_TypeHint.get(hint_sign)
 
         # if a subscriptable type has no args, all we care about is the origin
-        # TODO: this could alternatively force the args to be Any, since
-        # If a generic type is used without specifying type parameters,
-        # they are assumed to be Any
-        if not get_hint_pep_args(hint):
-            if hint in [tuple, typing.Tuple]:  # FIXME: this is a hack
-                TypeHintSubclass = _TypeHintTuple
-            elif TypeHintSubclass != _TypeHintCallable:
-                TypeHintSubclass = _TypeHintClass
+        if TypeHintSubclass and not get_hint_pep_args(hint):
+            TypeHintSubclass = _TypeHintClass
 
         # If this hint appears to be currently unsupported...
         if TypeHintSubclass is None:
-            if isinstance(hint, type):
+            if (
+                isinstance(hint, type)
+                or get_hint_pep_origin_or_none(hint)
+                or getattr(hint, "__module__", "") == "typing"
+            ):
                 TypeHintSubclass = _TypeHintClass
             else:
                 raise BeartypeMathException(
@@ -232,6 +230,16 @@ class TypeHint(ABC):
     def __repr__(self) -> str:
         return f"<TypeHint: {self._hint}>"
 
+    @property
+    def _is_just_an_origin(self) -> bool:
+        """Flag that indicates this hint can be evaluating only using the origin.
+
+        This is useful for parametrized type hints with no arguments or with
+        "Any"-type placeholder arguments, like `Tuple[Any, ...]` or
+        `Callable[..., Any]`.
+        """
+        return True
+
 
 class _TypeHintClass(TypeHint):
     """
@@ -254,14 +262,7 @@ class _TypeHintClass(TypeHint):
             return True
 
         # Return true only if...
-        return (
-            # That branch is also a totally ordered class type hint *AND* ...
-            isinstance(branch, _TypeHintClass)
-            # The low-level unordered type hint encapsulated by this
-            # high-level totally ordered type hint is a subclass of
-            # The low-level unordered type hint encapsulated by the branch
-            and issubclass(self._origin, branch._origin)
-        )
+        return branch._is_just_an_origin and issubclass(self._origin, branch._origin)
 
 
 class _TypeHintSubscripted(TypeHint):
@@ -282,6 +283,10 @@ class _TypeHintSubscripted(TypeHint):
 
     _required_nargs: int = -1
 
+    @property
+    def _is_just_an_origin(self) -> bool:
+        return all(x._origin is Any for x in self._hints_child_ordered)
+
     def _validate(self):
         if self._required_nargs > 0 and len(self._args) != self._required_nargs:
             raise BeartypeMathException(
@@ -292,7 +297,7 @@ class _TypeHintSubscripted(TypeHint):
     def _is_le_branch(self, branch: TypeHint) -> bool:
         # If the branch is not subscripted, then we assume it is subscripted
         # with ``Any``, and we simply check that the origins are compatible.
-        if isinstance(branch, _TypeHintClass):
+        if branch._is_just_an_origin:
             return issubclass(self._origin, branch._origin)
 
         return (
@@ -368,10 +373,14 @@ class _TypeHintCallable(_TypeHintOriginIsinstanceableArgs2):
     def returns_any(self) -> bool:
         return self.return_type._origin is Any
 
+    @property
+    def _is_just_an_origin(self) -> bool:
+        return self.takes_any_args and self.returns_any
+
     def _is_le_branch(self, branch: TypeHint) -> bool:
         # If the branch is not subscripted, then we assume it is subscripted
         # with ``Any``, and we simply check that the origins are compatible.
-        if isinstance(branch, _TypeHintClass):
+        if branch._is_just_an_origin:
             return issubclass(self._origin, branch._origin)
         if not isinstance(branch, _TypeHintCallable):
             return False
@@ -399,44 +408,43 @@ class _TypeHintOriginIsinstanceableArgs3(_TypeHintSubscripted):
 
 
 class _TypeHintTuple(_TypeHintSubscripted):
+    _is_variable_length: bool = False
+    _is_empty_tuple: bool = False
+
     def _validate(self):
         if len(self._args) == 0:
-            self._args = (Any, Ellipsis)
+            self._is_variable_length = True
+            self._args = (Any,)
+        if len(self._args) == 1 and self._args[0] == ():
+            self._is_empty_tuple = True
+            self._args = ()
+        if len(self._args) == 2 and self._args[1] is Ellipsis:
+            self._is_variable_length = True
+            self._args = (self._args[0],)
         super()._validate()
-        assert self._args
 
     @property
     def is_variable_length(self) -> bool:
-        return self._args[-1] is Ellipsis
+        return self._is_variable_length
 
     @property
-    def is_any_tuple(self) -> bool:
-        return self._args[0] is Any and self.is_variable_length
+    def _is_just_an_origin(self) -> bool:
+        return self.is_variable_length and self._args[0] is Any
 
     @property
     def is_empty_tuple(self) -> bool:
-        return len(self._args) == 1 and self._args[0] == ()
-
-    def __len__(self) -> int:
-        if self.is_empty_tuple:
-            return 0
-        if self.is_variable_length:
-            return -1
-        return len(self._args)
+        return self._is_empty_tuple
 
     def _is_le_branch(self, branch: TypeHint) -> bool:
+        if branch._is_just_an_origin:
+            return issubclass(self._origin, branch._origin)
+
         if not isinstance(branch, _TypeHintTuple):
             return False
-
-        if branch.is_any_tuple:
-            return True
-        elif self.is_any_tuple:
+        if self._is_just_an_origin:
             return False
-
         if branch.is_empty_tuple:
             return self.is_empty_tuple
-        elif self.is_empty_tuple:
-            return False
 
         if branch.is_variable_length:
             branch_type = branch._hints_child_ordered[0]
@@ -450,8 +458,9 @@ class _TypeHintTuple(_TypeHintSubscripted):
                 and self._hints_child_ordered[0] <= branch._hints_child_ordered[0]
             )
 
-        if len(self) != len(branch):
+        if len(self._args) != len(branch._args):
             return False
+
         return all(
             self_child <= branch_child for self_child, branch_child in zip(self, branch)
         )

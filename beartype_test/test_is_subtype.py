@@ -8,6 +8,8 @@ from beartype.math._mathcls import (
     _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3,
     TypeHint,
 )
+from beartype.roar import BeartypeMathException
+
 import beartype.typing as bt
 
 import pytest
@@ -94,15 +96,14 @@ CASES = [
     (t.Callable[[], int], t.Callable[..., None], False),
     (t.Callable[..., t.Any], t.Callable[..., None], False),
     (t.Callable[[float], None], t.Callable[[float, int], None], False),
-
     # (types.FunctionType, t.Callable, True),  # FIXME
-
     # tuples
     (tuple, t.Tuple, True),
     (t.Tuple, t.Tuple, True),
     (bt.Tuple, t.Tuple, True),
     (tuple, t.Tuple[t.Any, ...], True),
     (tuple, t.Tuple[()], False),
+    (bt.Tuple[()], t.Tuple[()], True),
     (t.Tuple[()], tuple, True),
     (t.Tuple[int, str], t.Tuple[int, str], True),
     (t.Tuple[int, str], t.Tuple[int, str, int], False),
@@ -132,6 +133,11 @@ CASES = [
 @pytest.mark.parametrize("subt, supert, expected_result", CASES)
 def test_is_subtype(subt, supert, expected_result):
     assert _is_subtype(subt, supert) is expected_result
+
+
+def test_typehint_fail():
+    with pytest.raises(BeartypeMathException):
+        TypeHint(1)
 
 
 @pytest.mark.parametrize(
