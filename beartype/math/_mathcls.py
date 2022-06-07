@@ -153,6 +153,9 @@ class TypeHint(ABC):
         comparator = other._hint if isinstance(other, TypeHint) else other
         return self._hint == comparator
 
+    def __ne__(self, other: object) -> bool:
+        return not self.__eq__(other)
+
     def __le__(self, other: object) -> bool:
         """Return true if self is a subtype of other."""
         return self.is_subtype(other)
