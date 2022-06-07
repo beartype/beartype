@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,7 +11,7 @@ hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.meta import URL_ISSUES
 from beartype.roar import (
     BeartypeDecorHintPepException,
@@ -52,7 +52,7 @@ from beartype._data.datatyping import TupleTypes
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ GETTERS ~ args                    }....................
+# ....................{ GETTERS ~ args                     }....................
 # If the active Python interpreter targets Python >= 3.9, implement this
 # getter to directly access the "__args__" dunder attribute.
 if IS_PYTHON_AT_LEAST_3_9:
@@ -64,31 +64,38 @@ if IS_PYTHON_AT_LEAST_3_9:
     '''
 
 
+    #FIXME: Implement explicit support for de-flattening "Callable[...]" type
+    #hints both here *AND* below. Note that doing is complicated by the
+    #existence of:
+    #* "typing.ParamSpec[...]" type hints, which we'll now need to explicitly
+    #  detect and handle here. To do so, let's start by identifying "ParamSpec"
+    #  with a sign via their class (in the same way we sign "TypeVar").
+    #* "typing.Concatenate[...]" type hints, which we'll now need to explicitly
+    #  detect and handle here. To do so, let's start by identifying
+    #  "Concatenate" with a sign via their repr() (in the same way we sign most
+    #  type hints).
     def get_hint_pep_args(hint: object) -> tuple:
 
         # Return the value of the "__args__" dunder attribute if this hint
         # defines this attribute *OR* the empty tuple otherwise.
         hint_args = getattr(hint, '__args__', ())
 
-        # Return either...
-        return (
-            # If this hint appears to be unsubscripted but is PEP
-            # 585-compliant, then this hint *WAS* actually subscripted by the
-            # empty tuple (e.g., "tuple[()]"). For unknown reasons, the
-            # "HintGenericSubscriptedType" superclass erroneously reduces the
-            # empty tuple subscripting such hints to... literally nothing.
-            # Since doing so violates orthogonality with equivalent PEP
-            # 484-compliant type hints that do correctly preserve their
-            # arguments (e.g., "Tuple[()]"), we silently coerce PEP
-            # 585-compliant type hints to behave like PEP 484-compliant type
-            # hints by returning a tuple containing only the empty tuple.
-            _HINT_PEP585_ARGS_EMPTY_TUPLE
-            if (
-                not hint_args and isinstance(hint, HintGenericSubscriptedType)
-            ) else
-            # Else, return this tuple as is.
-            hint_args
-        )
+        # If this hint appears to be unsubscripted but is PEP 585-compliant,
+        # then this hint *WAS* actually subscripted by the empty tuple (e.g.,
+        # "tuple[()]"). For unknown reasons, the "HintGenericSubscriptedType"
+        # superclass erroneously reduces the empty tuple subscripting such hints
+        # to... literally nothing. Since doing so violates orthogonality with
+        # equivalent PEP 484-compliant type hints that do correctly preserve
+        # their arguments (e.g., "Tuple[()]"), silently coerce PEP 585-compliant
+        # type hints to behave like PEP 484-compliant type hints by returning a
+        # tuple containing only the empty tuple.
+        if not hint_args and isinstance(hint, HintGenericSubscriptedType):
+            return _HINT_PEP585_ARGS_EMPTY_TUPLE
+        # Else, this hint is either subscripted *OR* is unsubscripted but not
+        # PEP 585-compliant.
+
+        # In this case, return this tuple as is.
+        return hint_args
 # Else, the active Python interpreter targets Python < 3.9. In this case,
 # implement this getter to directly access the "__args__" dunder attribute.
 else:
@@ -156,7 +163,7 @@ get_hint_pep_args.__doc__ = '''
         (int, str, typing.Dict[str, str])
     '''
 
-# ....................{ GETTERS ~ typevars                }....................
+# ....................{ GETTERS ~ typevars                 }....................
 # If the active Python interpreter targets Python >= 3.9, implement this
 # function to either directly access the "__parameters__" dunder attribute for
 # type hints that are not PEP 585-compliant generics *OR* to synthetically
@@ -250,7 +257,7 @@ get_hint_pep_typevars.__doc__ = '''
         (T, S)
     '''
 
-# ....................{ GETTERS ~ sign                    }....................
+# ....................{ GETTERS ~ sign                     }....................
 def get_hint_pep_sign(hint: Any) -> HintSign:
     '''
     **Sign** (i.e., :class:`HintSign` instance) uniquely identifying the passed
@@ -422,7 +429,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # underlying all higher-level hint validation functions! Calling the latter
     # here would thus induce infinite recursion, which would be very bad.
     #
-    # ..................{ PHASE ~ classname                 }..................
+    # ..................{ PHASE ~ classname                  }..................
     # This phase attempts to map from the fully-qualified classname of this
     # hint to a sign identifying *ALL* hints that are instances of that class.
     #
@@ -469,7 +476,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
         return hint_sign
     # Else, this hint is *NOT* identifiable by its classname.
 
-    # ..................{ PHASE ~ repr                      }..................
+    # ..................{ PHASE ~ repr                       }..................
     # This phase attempts to map from the unsubscripted machine-readable
     # representation of this hint to a sign identifying *ALL* hints of that
     # representation.
@@ -518,7 +525,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
         # representation.
     # Else, this representation (and thus this hint) is unsubscripted.
 
-    # ..................{ PHASE ~ manual                    }..................
+    # ..................{ PHASE ~ manual                     }..................
     # This phase attempts to manually identify the signs of all hints *NOT*
     # efficiently identifiably by the prior phases.
     #
@@ -587,11 +594,11 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     elif IS_PYTHON_AT_MOST_3_9 and is_hint_pep484_newtype_pre_python310(hint):
         return HintSignNewType
 
-    # ..................{ ERROR                             }..................
+    # ..................{ ERROR                              }..................
     # Else, this hint is unrecognized. In this case, return "None".
     return None
 
-# ....................{ GETTERS ~ origin                  }....................
+# ....................{ GETTERS ~ origin                   }....................
 def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
     '''
     **Unsafe origin object** (i.e., arbitrary object possibly related to the
@@ -672,7 +679,7 @@ def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
     # Return this hint's origin object if any *OR* "None" otherwise.
     return getattr(hint, '__origin__', None)
 
-# ....................{ GETTERS ~ origin : type           }....................
+# ....................{ GETTERS ~ origin : type            }....................
 def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
     '''
     **Isinstanceable origin type** (i.e., class passable as the second argument
