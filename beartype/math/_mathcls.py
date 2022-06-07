@@ -129,6 +129,10 @@ class TypeHint(ABC):
         pass
 
     def _wrap_children(self, unordered_children):
+        """Wrap type hint paremeters in TypeHint instances.
+        
+        Gives subclasses an opportunity modify
+        """
         return tuple(
             TypeHint(unordered_child) for unordered_child in unordered_children
         )
@@ -346,6 +350,7 @@ class _TypeHintCallable(_TypeHintOriginIsinstanceableArgs2):
             self._args = (Ellipsis, Any)
         super()._validate()
 
+    # FIXME: bring this in line with tuple behavior... maybe get rid of this
     def _wrap_children(self, unordered_children):
         argtypes, return_types = unordered_children
         if argtypes is Ellipsis:
@@ -412,6 +417,11 @@ class _TypeHintTuple(_TypeHintSubscripted):
     _is_empty_tuple: bool = False
 
     def _validate(self):
+        """Perform argument validation for a tuple.
+
+        Specifically, remove any PEP-noncompliant type hints from the arguments,
+        and set internal flags accordingly.
+        """
         if len(self._args) == 0:
             self._is_variable_length = True
             self._args = (Any,)
