@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,8 +11,12 @@ and :pep:`585`-compliant generic classes).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
+from beartype.typing import (
+    Optional,
+    Tuple,
+)
 from beartype._data.datatyping import TypeException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.utilpep484generic import (
@@ -23,12 +27,11 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
     get_hint_pep585_generic_bases_unerased,
     is_hint_pep585_generic,
 )
-from typing import Optional, Tuple
 
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 @callable_cached
 def is_hint_pep484585_generic(hint: object) -> bool:
     '''
@@ -93,7 +96,7 @@ def is_hint_pep484585_generic(hint: object) -> bool:
         is_hint_pep585_generic(hint)
     )
 
-# ....................{ GETTERS ~ bases                   }....................
+# ....................{ GETTERS ~ bases                    }....................
 def get_hint_pep484585_generic_bases_unerased(
     # Mandatory parameters.
     hint: object,
@@ -275,7 +278,8 @@ def get_hint_pep484585_generic_bases_unerased(
     #FIXME: Refactor get_hint_pep585_generic_bases_unerased() and
     #get_hint_pep484_generic_bases_unerased() to:
     #* Raise "BeartypeDecorHintPep484585Exception" instead.
-    #* Accept an optional "exception_prefix" parameter, which we should pass here.
+    #* Accept an optional "exception_prefix" parameter, which we should pass
+    #  here.
 
     # Tuple of either...
     #
@@ -309,7 +313,7 @@ def get_hint_pep484585_generic_bases_unerased(
     # Return this tuple of these pseudo-superclasses.
     return hint_pep_generic_bases_unerased
 
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_hint_pep484585_generic_type(
     # Mandatory parameters.
