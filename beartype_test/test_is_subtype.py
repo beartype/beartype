@@ -1,18 +1,18 @@
-import typing as t
 import types
+import typing as t
 from collections import abc
+
+import beartype.typing as bt
+import pytest
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype.math._mathcls import (
-    is_subtype,
     _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1,
     _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2,
     _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3,
     TypeHint,
+    is_subtype,
 )
 from beartype.roar import BeartypeMathException
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-import beartype.typing as bt
-
-import pytest
 
 
 class MuhThingP(bt.Protocol):
@@ -29,11 +29,16 @@ class MuhNutherThing:
     def __len__(self) -> int:
         ...
 
+    def __eq__(self, __o: object) -> bool:
+        raise RuntimeError("You shall not compare me!")
+
 
 class MuhDict(t.TypedDict):
     thing_one: str
     thing_two: int
 
+
+muh_instance = MuhNutherThing()
 
 SUBTYPE_CASES = [
     # things are subclasses of themselves
@@ -134,6 +139,21 @@ SUBTYPE_CASES = [
     (t.List[int], t.Union[str, t.List[t.Union[int, str]]], True),
     # not really types:
     (MuhDict, dict, True),
+    # annotated:
+    (
+        t.Annotated[int, "a note"],
+        int,
+        True,
+    ),  # annotated is subtype of unannotated origin
+    (int, t.Annotated[int, "a note"], False),  # but not vice versa
+    (t.Annotated[list, True], t.Annotated[t.Sequence, True], True),
+    (t.Annotated[list, False], t.Annotated[t.Sequence, True], False),
+    (t.Annotated[list, 0, 0], t.Annotated[list, 0], False),  # must have same num args
+    (
+        t.Annotated[int, muh_instance],  # broken __eq__ doesn't crash
+        t.Annotated[int, muh_instance],
+        False,
+    ),  
 ]
 
 

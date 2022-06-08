@@ -1,16 +1,21 @@
+import contextlib
 from abc import ABC
 
 from beartype._data.hint.pep.sign import datapepsigns as signs
-from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.hint.pep.proposal.utilpep593 import (
+    get_hint_pep593_metadata,
+    get_hint_pep593_metahint,
+)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_origin_or_none,
     get_hint_pep_sign_or_none,
 )
 from beartype.roar import BeartypeMathException
-from beartype.typing import Iterable, Any, Dict, Type, Tuple, Tuple
+from beartype.typing import Any, Dict, Iterable, Tuple, Type
 
 
 def is_subtype(subtype: object, supertype: object) -> bool:
@@ -589,6 +594,67 @@ class _TypeHintLiteral(_TypeHintSubscripted):
         return False
 
 
+class _TypeHintAnnotated(TypeHint):
+    def __init__(self, hint: object) -> None:
+        super().__init__(hint)
+        # Child type hints annotated by these parent "typing.Annotated[...]"
+        # type hints (i.e., the first arguments subscripting these hints).
+        self._metahint = TypeHint(get_hint_pep593_metahint(hint))
+        # Tuples of zero or more arbitrary caller-defined objects annotating by
+        # these parent "typing.Annotated[...]" type hints (i.e., all remaining
+        # arguments subscripting these hints).
+        self._metadata = get_hint_pep593_metadata(hint)
+
+    @property
+    def _is_just_an_origin(self) -> bool:
+        # since Annotated[] must be used with at least two arguments, we are 
+        # never just the origin of the metahint
+        return False
+
+    # FIXME: Define __eq__() in a similar way, probably? Joy is type hints.
+    def _is_le_branch(self, branch: TypeHint) -> bool:
+        if branch._is_just_an_origin:
+            return self._metahint.is_subtype(branch)
+
+        # If that hint is *NOT* a "typing.Annotated[...]" type hint, this hint
+        # *CANNOT* be a subtype of that hint. In this case, return false.
+        if not isinstance(branch, _TypeHintAnnotated):
+            return False
+        # Else, that hint is a "typing.Annotated[...]" type hint.
+
+        # If either...
+        if (
+            # The child type hint annotated by this parent hint does not subtype
+            # the child type hint annotated by that parent hint *OR*...
+            self._metahint > branch._metahint
+            or
+            # These hints are annotated by a differing number of objects...
+            len(self._metadata) != len(branch._metadata)
+        ):
+            # This hint *CANNOT* be a subtype of that hint. Return false.
+            return False
+
+        # Attempt to...
+        #
+        # Note that the following iteration performs equality comparisons on
+        # arbitrary caller-defined objects. Since these comparisons may raise
+        # arbitrary caller-defined exceptions, we silently squelch any such
+        # exceptions that arise by returning false below instead.
+        with contextlib.suppress(Exception):
+            # Return true only if these hints are annotated by equivalent
+            # objects. We avoid testing for a subtype relation here (e.g., with
+            # the "<=" operator), as arbitrary caller-defined objects are *MUCH*
+            # more likely to define a relevant equality comparison than a
+            # relevant less-than-or-equal-to comparison.
+            return all(
+                self_meta == branch_meta
+                for self_meta, branch_meta in zip(self._metadata, branch._metadata)
+            )
+        # Else, one or more objects annotating these hints are incomparable. So,
+        # this hint *CANNOT* be a subtype of that hint. Return false.
+        return False
+
+
 class _TypeHintUnion(_TypeHintSubscripted):
     """
     **partially ordered union type hint** (i.e., high-level object encapsulating a
@@ -739,8 +805,13 @@ attribute with a value equal to 3.
 """
 
 
-# Initialized below by the _init() function.
-_HINT_SIGN_TO_TypeHint: Dict[HintSign, Type[TypeHint]] = {}
+# Futher initialized below by the _init() function.
+_HINT_SIGN_TO_TypeHint: Dict[HintSign, Type[TypeHint]] = {
+    signs.HintSignTuple: _TypeHintTuple,
+    signs.HintSignCallable: _TypeHintCallable,
+    signs.HintSignLiteral: _TypeHintLiteral,
+    signs.HintSignAnnotated: _TypeHintAnnotated,
+}
 """
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
 to the :class:`TypeHint` subclass handling those hints.
@@ -761,9 +832,6 @@ def _init() -> None:
         _HINT_SIGN_TO_TypeHint[sign] = _TypeHintOriginIsinstanceableArgs3
     for sign in HINT_SIGNS_UNION:
         _HINT_SIGN_TO_TypeHint[sign] = _TypeHintUnion
-    _HINT_SIGN_TO_TypeHint[signs.HintSignTuple] = _TypeHintTuple
-    _HINT_SIGN_TO_TypeHint[signs.HintSignCallable] = _TypeHintCallable
-    _HINT_SIGN_TO_TypeHint[signs.HintSignLiteral] = _TypeHintLiteral
 
 
 # Initialize this submodule.
