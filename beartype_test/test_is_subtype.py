@@ -2,14 +2,14 @@ import typing as t
 import types
 from collections import abc
 from beartype.math._mathcls import (
-    _is_subtype,
+    is_subtype,
     _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1,
     _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2,
     _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3,
     TypeHint,
 )
 from beartype.roar import BeartypeMathException
-
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 import beartype.typing as bt
 
 import pytest
@@ -35,7 +35,7 @@ class MuhDict(t.TypedDict):
     thing_two: int
 
 
-CASES = [
+SUBTYPE_CASES = [
     # things are subclasses of themselves
     (list, list, True),
     (list, t.List, True),
@@ -121,9 +121,9 @@ CASES = [
     (t.Union[int, str, list], t.Union[int, str], False),
     # literals
     (t.Literal[1], int, True),
-    (t.Literal['a'], str, True),
-    (t.Literal[1, 2, '3'], t.Union[int, str], True),
-    (t.Literal[1, 2, '3'], t.Union[list, int], False),
+    (t.Literal["a"], str, True),
+    (t.Literal[1, 2, "3"], t.Union[int, str], True),
+    (t.Literal[1, 2, "3"], t.Union[list, int], False),
     (int, t.Literal[1], False),
     (t.Literal[1, 2], t.Literal[1, 2, 3], True),
     # protocols
@@ -137,9 +137,46 @@ CASES = [
 ]
 
 
-@pytest.mark.parametrize("subt, supert, expected_result", CASES)
+@pytest.mark.parametrize("subt, supert, expected_result", SUBTYPE_CASES)
 def test_is_subtype(subt, supert, expected_result):
-    assert _is_subtype(subt, supert) is expected_result
+    """Test all the subtype cases."""
+    assert is_subtype(subt, supert) is expected_result
+
+
+EQUALITY_CASES = [
+    (tuple, t.Tuple),
+    (list, list),
+    (list, t.List),
+    (list, t.List[t.Any]),
+    (tuple, t.Tuple[t.Any, ...]),
+    (abc.Awaitable[abc.Sequence[int]], t.Awaitable[t.Sequence[int]]),
+]
+if IS_PYTHON_AT_LEAST_3_9:
+    EQUALITY_CASES.extend(
+        [
+            (tuple[str, ...], t.Tuple[str, ...]),
+            (list[str], t.List[str]),
+        ]
+    )
+
+
+@pytest.mark.parametrize("type_a, type_b", EQUALITY_CASES)
+def test_type_equality(type_a, type_b):
+    """test that things with the same sign and arguments are equal."""
+    hint_a = TypeHint(type_a)
+    hint_b = TypeHint(type_b)
+    assert hint_a == hint_b
+
+    # smoke test
+    assert hint_a != TypeHint(t.Generator[t.Union[list, str], str, None])
+
+
+def test_type_hint_singleton():
+    """Recreating a type hint with the same input should yield the same type hint."""
+    assert TypeHint(t.List[t.Any]) is TypeHint(t.List[t.Any])
+    assert TypeHint(int) is TypeHint(int)
+
+    # assert TypeHint(t.List) is TypeHint(list)  # alas
 
 
 def test_typehint_fail():
@@ -156,6 +193,7 @@ def test_typehint_fail():
     ],
 )
 def test_arg_nparams(nparams, sign_group):
+    """Make sure that our hint sign groups are consistent with the typing module."""
     for sign in sign_group:
         actual = getattr(t, sign.name)._nparams
         assert (
