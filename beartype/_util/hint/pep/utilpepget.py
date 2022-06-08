@@ -64,16 +64,6 @@ if IS_PYTHON_AT_LEAST_3_9:
     '''
 
 
-    #FIXME: Implement explicit support for de-flattening "Callable[...]" type
-    #hints both here *AND* below. Note that doing is complicated by the
-    #existence of:
-    #* "typing.ParamSpec[...]" type hints, which we'll now need to explicitly
-    #  detect and handle here. To do so, let's start by identifying "ParamSpec"
-    #  with a sign via their class (in the same way we sign "TypeVar").
-    #* "typing.Concatenate[...]" type hints, which we'll now need to explicitly
-    #  detect and handle here. To do so, let's start by identifying
-    #  "Concatenate" with a sign via their repr() (in the same way we sign most
-    #  type hints).
     def get_hint_pep_args(hint: object) -> tuple:
 
         # Return the value of the "__args__" dunder attribute if this hint
