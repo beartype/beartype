@@ -19,6 +19,7 @@ from beartype.typing import (
     Union,
 )
 from beartype._data.datatyping import TypeException
+from beartype._data.hint.pep.sign.datapepsigns import HintSignCallable
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
 # See the "beartype.cave" submodule for further commentary.
@@ -59,10 +60,67 @@ else:
     ``typing.Callable[...]`` or ``collections.abc.Callable[...]`` type hint).
     '''
 
+# ....................{ VALIDATORS                         }....................
+def _die_unless_hint_pep484585_callable(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception unless the passed object is either a :pep:`484`- or
+    :pep:`585`-compliant **callable type hint** (i.e., ``typing.Callable[...]``
+    or ``collections.abc.Callable[...]`` type hint).
+
+    Parameters
+    ----------
+    hint : object
+        Object to be validated.
+    exception_cls : TypeException, optional
+        Type of exception to be raised. Defaults to
+        :exc:`BeartypeDecorHintPep484585Exception`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Raises
+    ----------
+    BeartypeDecorHintPepSignException
+        If this hint is either:
+
+        * PEP-compliant but *not* uniquely identifiable by a sign.
+        * PEP-noncompliant.
+        * *Not* a hint (i.e., neither PEP-compliant nor -noncompliant).
+    :exc:`exception_cls`
+        If this hint is *not* a callable type hint.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+
+    # Sign uniquely identifying this hint if any *OR* raise an exception.
+    hint_sign = get_hint_pep_sign(hint)
+
+    # If this object is *NOT* a callable type hint, raise an exception.
+    if hint_sign is not HintSignCallable:
+        assert issubclass(exception_cls, Exception), (
+            f'{repr(exception_cls)} not exception class.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        raise exception_cls(
+            f'{exception_prefix}type hint {repr(hint)} not '
+            f'PEP 484 or 585 callable type hint '
+            f'(i.e., "typing.Callable[...]" or '
+            f'"collections.abc.Callable[...]").'
+        )
+    # Else, this object is a callable type hint, raise an exception.
+
 # ....................{ GETTERS                            }....................
-#FIXME: Implement a new _die_unless_hint_pep484585_callable() validator, please.
-#FIXME: Implement us up, please.
-#FIXME: Unit test us up, please.
+#FIXME: Unit test us up, please. Note that we should exercise *ALL* edge cases
+#by defining sample type hints doing so in our test suite.
 def get_hint_pep484585_callable_args(
     # Mandatory parameters.
     hint: object,
@@ -96,7 +154,7 @@ def get_hint_pep484585_callable_args(
     ----------
     hint : object
         Callable type hint to be inspected.
-    exception_cls : TypeException
+    exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep484585Exception`.
     exception_prefix : str, optional
@@ -114,4 +172,9 @@ def get_hint_pep484585_callable_args(
         If this hint is *not* a callable type hint.
     '''
 
-    pass
+    # If this hint is *NOT* a callable type hint, raise an exception.
+    _die_unless_hint_pep484585_callable(hint)
+    # Else, this hint is a callable type hint.
+
+    #FIXME: Implement us up, please.
+    return ()

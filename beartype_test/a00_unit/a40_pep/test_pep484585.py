@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,15 +10,15 @@ This submodule unit tests the :func:`beartype.beartype` decorator with respect
 to :pep:`484`- and :pep:`585`-compliant type hints.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
 from beartype_test.util.mark.pytmark import ignore_warnings
 
-# ....................{ TESTS ~ decor : async             }....................
+# ....................{ TESTS ~ decor : async              }....................
 # Prevent pytest from capturing and displaying all expected non-fatal
 # beartype-specific warnings emitted by the @beartype decorator below. Urgh!
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
@@ -234,7 +234,7 @@ async def test_decor_async_generator() -> None:
                 'and we three stared at the show.'
             )
 
-# ....................{ TESTS ~ decor : sync              }....................
+# ....................{ TESTS ~ decor : sync               }....................
 # Prevent pytest from capturing and displaying all expected non-fatal
 # beartype-specific warnings emitted by the @beartype decorator below. Blargh!
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
