@@ -101,7 +101,11 @@ def _die_unless_hint_pep484585_callable(
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
 
     # Sign uniquely identifying this hint if any *OR* raise an exception.
-    hint_sign = get_hint_pep_sign(hint)
+    hint_sign = get_hint_pep_sign(
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
 
     # If this object is *NOT* a callable type hint, raise an exception.
     if hint_sign is not HintSignCallable:

@@ -17,12 +17,17 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ kind : callable             }....................
-def test_get_hint_pep484585_callable_args() -> None:
+# ....................{ TESTS                              }....................
+#FIXME: Exercise get_hint_pep484585_callable_params() here as well, please.
+def test_get_hint_pep484585_callable_args_and_params() -> None:
     '''
-    Test the
-    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585callable.get_hint_pep484585_callable_args`
-    getter.
+    Test both the ``get_hint_pep484585_callable_args`` and
+    ``get_hint_pep484585_callable_params`` declared by the
+    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585callable`
+    submodule.
+
+    Since these getters are inextricably interrelated, this unit test exercises
+    both within the same test to satisfy Don't Repeat Yourself (DRY).
     '''
 
     # Defer heavyweight imports.
@@ -47,11 +52,8 @@ def test_get_hint_pep484585_callable_args() -> None:
             with raises(BeartypeDecorHintPep484585Exception):
                 get_hint_pep484585_callable_args(hint_pep_meta.hint)
 
-    #FIXME: *UGH.* This unhelpfully raises a
-    #"BeartypeDecorHintPepSignException". Let's generalize our low-level
-    #get_hint_pep_sign() getter to accept an optional "exception_cls", please.
-    # # Assert this getter raises the expected exception for non-PEP-compliant
-    # # type hints.
-    # for not_hint_pep in NOT_HINTS_PEP:
-    #     with raises(BeartypeDecorHintPep484585Exception):
-    #         get_hint_pep484585_callable_args(not_hint_pep)
+    # Assert this getter raises the expected exception for non-PEP-compliant
+    # type hints.
+    for not_hint_pep in NOT_HINTS_PEP:
+        with raises(BeartypeDecorHintPep484585Exception):
+            get_hint_pep484585_callable_args(not_hint_pep)
