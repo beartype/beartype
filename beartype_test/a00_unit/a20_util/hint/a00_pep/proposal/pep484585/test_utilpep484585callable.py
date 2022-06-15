@@ -30,6 +30,7 @@ def test_get_hint_pep484585_callable_args_and_params() -> None:
     both within the same test to satisfy Don't Repeat Yourself (DRY).
     '''
 
+    # ..................{ IMPORTS                            }..................
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintPep484585Exception
     from beartype._data.hint.pep.sign.datapepsigns import HintSignCallable
@@ -39,20 +40,24 @@ def test_get_hint_pep484585_callable_args_and_params() -> None:
     from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
     from pytest import raises
 
-    # Assert this getter...
+    # ..................{ GENERIC                            }..................
+    # General-purpose logic generically exercising these getters against all
+    # globally defined type hints.
+
+    # Assert these getters...
     for hint_pep_meta in HINTS_PEP_META:
-        # Returns zero or more arguments for PEP-compliant callable type hints.
+        # Return zero or more arguments for PEP-compliant callable type hints.
         if hint_pep_meta.pep_sign is HintSignCallable:
             hint_callable_args = get_hint_pep484585_callable_args(
                 hint_pep_meta.hint)
             assert isinstance(hint_callable_args, tuple)
-        # Raises an exception for concrete PEP-compliant type hints *NOT*
+        # Raise an exception for concrete PEP-compliant type hints *NOT*
         # defined by the "typing" module.
         else:
             with raises(BeartypeDecorHintPep484585Exception):
                 get_hint_pep484585_callable_args(hint_pep_meta.hint)
 
-    # Assert this getter raises the expected exception for non-PEP-compliant
+    # Assert these getters raise the expected exception for non-PEP-compliant
     # type hints.
     for not_hint_pep in NOT_HINTS_PEP:
         with raises(BeartypeDecorHintPep484585Exception):
