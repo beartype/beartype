@@ -168,8 +168,11 @@ if _IS_PYTHON_AT_LEAST_3_8:
         # If the active Python interpreter targets Python >= 3.11...
         if _IS_PYTHON_AT_LEAST_3_11:
             from typing import (  # type: ignore[attr-defined]
-                #FIXME: Add once that PEP goes live:
+                #FIXME: Add once these PEPs go live:
+                #    LiteralString as LiteralString,
                 #    Self as Self,
+                #    TypeVarTuple as TypeVarTuple,
+                #    dataclass_transform,
                 reveal_type as reveal_type,
             )
 

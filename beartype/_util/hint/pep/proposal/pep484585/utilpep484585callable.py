@@ -289,7 +289,14 @@ def get_hint_pep484585_callable_args(
     hint_param = hint_args[0]
 
     # If this parameter type hint is either...
+    #
+    # Note that we intentionally avoid attempting to efficiently test this
+    # parameter type hint against a set (e.g., "hint_param in {..., ()}"). This
+    # parameter type hint is *NOT* guaranteed to be hashable and thus testable
+    # against a hash-based collection.
     if (
+        # An ellipsis, return an ellipsis.
+        hint_param is ... or
         # The empty tuple, reduce this unlikely (albeit possible) edge case
         # to the empty tuple returned for the more common case of a callable
         # type hint subscripted by an empty list. That is, reduce these two
@@ -298,9 +305,7 @@ def get_hint_pep484585_callable_args(
         #     (bool,)  # <------ this is good
         #     >>> Callable[[()], bool].__args__
         #     ((), bool,)  # <-- this is bad, so pretend this never happens
-        hint_param is _TUPLE_EMPTY or
-        # An ellipsis, return an ellipsis.
-        hint_param is ...
+        hint_param is _TUPLE_EMPTY
     ):
         return hint_param
     # Else, this parameter type hint is neither the empty tuple *NOR* an
@@ -309,17 +314,8 @@ def get_hint_pep484585_callable_args(
     # Sign uniquely identifying this parameter type hint if any *OR* "None".
     hint_sign = get_hint_pep_sign_or_none(hint_param)
 
-    # If this parameter type hint is *NOT* a PEP-compliant parameter type,
-    # this hint is *NOT* be "special" and *MUST* thus be the single
-    # parameter type hint of a nested list: e.g.,
-    #     >>> Callable[[int], bool]
-    #     (int, bool)
-    #
-    # In this case, return the 1-tuple containing exactly this hint.
-    if hint_sign is None:
-        return (hint_param,)
-    # Else, this parameter type hint is a PEP-compliant parameter type
-    # (i.e., uniquely identifiable by a sign).
+    # If this parameter type hint is a PEP-compliant parameter type (i.e.,
+    # uniquely identifiable by a sign), return this hint as is.
     #
     # Note that:
     # * This requires callers to handle all possible categories of
@@ -342,9 +338,11 @@ def get_hint_pep484585_callable_args(
         HintSignParamSpec,
     }:
         return hint_param
+    # Else, this parameter type hint is *NOT* a PEP-compliant parameter type
+    # hint. This hint *CANNOT* be "special" and *MUST* thus be the single
+    # parameter type hint of a nested list: e.g.,
+    #     >>> Callable[[list[int]], bool].__args__
+    #     (list[int], bool)
 
-    #FIXME: Comment us up, please.
-    raise exception_cls(
-        f'{exception_prefix}parameter type hint '
-        f'{repr(hint_param)} unrecognized.'
-    )
+    # In this case, return the 1-tuple containing exactly this hint.
+    return (hint_param,)
