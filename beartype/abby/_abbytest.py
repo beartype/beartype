@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,7 +9,7 @@ objects against PEP-compliant type hints, callable at *any* arbitrary time
 during the lifecycle of the active Python process).
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: Optimize us up, please. See this discussion for voluminous details:
 #    https://github.com/beartype/beartype/issues/87#issuecomment-1020856517
 #FIXME: Fortuitously, implementing is_bearable() in terms of the existing
@@ -64,14 +64,14 @@ during the lifecycle of the active Python process).
 #callables. This would be genuinely useful from the general-purpose
 #perspective, which means we should make this happen.
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: This submodule intentionally does *not* import the
 # @beartype.beartype decorator. Why? Because that decorator conditionally
 # reduces to a noop under certain contexts (e.g., `python3 -O` optimization),
 # whereas the API defined by this submodule is expected to unconditionally
 # operate as expected regardless of the current context.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import (
     BeartypeAbbyHintViolation,
     BeartypeCallHintReturnViolation,
@@ -81,7 +81,7 @@ from beartype._conf import BeartypeConf
 from beartype._decor._cache.cachedecor import beartype
 from beartype._util.hint.utilhinttest import die_unless_hint
 
-# ....................{ PRIVATE ~ constants               }....................
+# ....................{ PRIVATE ~ constants                }....................
 _TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX = (
     '@beartyped _get_type_checker._die_if_unbearable() return ')
 '''
@@ -99,7 +99,7 @@ exception messages raised by *all* **runtime type-checkers** (i.e., functions
 created and returned by the :func: `_get_type_checker` getter).
 '''
 
-# ....................{ PRIVATE ~ hints                   }....................
+# ....................{ PRIVATE ~ hints                    }....................
 _BeartypeTypeChecker = Callable[[object], None]
 '''
 PEP-compliant type hint matching a **runtime type-checker** (i.e., function
@@ -108,7 +108,7 @@ created and returned by the :func:`_get_type_checker` getter, raising a
 function violates a PEP-compliant type hint).
 '''
 
-# ....................{ VALIDATORS                        }....................
+# ....................{ VALIDATORS                         }....................
 def die_if_unbearable(
     # Mandatory flexible parameters.
     obj: object,
@@ -120,7 +120,7 @@ def die_if_unbearable(
 ) -> None:
     '''
     Raise an exception if the passed arbitrary object violates the passed
-    PEP-compliant type hint.
+    PEP-compliant type hint under the passed beartype configuration.
 
     Parameters
     ----------
@@ -135,12 +135,12 @@ def die_if_unbearable(
 
     Raises
     ----------
-    :exc:`BeartypeAbbyHintViolation`
+    BeartypeAbbyHintViolation
         If this object violates this hint.
-    :exc:`BeartypeDecorHintPepUnsupportedException`
+    BeartypeDecorHintPepUnsupportedException
         If this hint is a PEP-compliant type hint currently unsupported by
         the :func:`beartype.beartype` decorator.
-    :exc:`BeartypeDecorHintNonpepException`
+    BeartypeDecorHintNonpepException
         If this hint is neither a:
 
         * Supported PEP-compliant type hint.
@@ -182,7 +182,7 @@ def die_if_unbearable(
     # Else, this closure raised another exception. In this case, percolate this
     # exception back up this call stack.
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 def is_bearable(
     # Mandatory flexible parameters.
     obj: object,
@@ -193,7 +193,7 @@ def is_bearable(
 ) -> bool:
     '''
     ``True`` only if the passed arbitrary object satisfies the passed
-    PEP-compliant type hint.
+    PEP-compliant type hint under the passed beartype configuration.
 
     Parameters
     ----------
@@ -213,10 +213,10 @@ def is_bearable(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintPepUnsupportedException`
+    BeartypeDecorHintPepUnsupportedException
         If this hint is a PEP-compliant type hint currently unsupported by
         the :func:`beartype.beartype` decorator.
-    :exc:`BeartypeDecorHintNonpepException`
+    BeartypeDecorHintNonpepException
         If this hint is neither a:
 
         * Supported PEP-compliant type hint.
@@ -255,7 +255,7 @@ def is_bearable(
     # Return false, since this object violates this hint. (See above.)
     return False
 
-# ....................{ PRIVATE ~ getters                 }....................
+# ....................{ PRIVATE ~ getters                  }....................
 def _get_type_checker(
     hint: object, conf: BeartypeConf) -> _BeartypeTypeChecker:
     '''
@@ -288,10 +288,10 @@ def _get_type_checker(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintPepUnsupportedException`
+    BeartypeDecorHintPepUnsupportedException
         If this hint is a PEP-compliant type hint currently unsupported by
         the :func:`beartype.beartype` decorator.
-    :exc:`BeartypeDecorHintNonpepException`
+    BeartypeDecorHintNonpepException
         If this hint is neither a:
 
         * Supported PEP-compliant type hint.

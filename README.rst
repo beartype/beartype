@@ -93,7 +93,7 @@
    typing.Annotated[list[str], Is[lambda lst: bool(lst)]], as value []
    violates validator Is[lambda lst: bool(lst)].
 
-   # ..................{ @ ANYWHERE }.............................
+   # ..................{ @ ANY TIME }.............................
    # Type-check anything against any type hint – anywhere, anytime.
    >>> from beartype.abby import (
    ...     is_bearable,  # <-------- like "isinstance(...)"
@@ -887,6 +887,110 @@ guide you on your maiden voyage through the misty archipelagos of type hinting:
 .. #
 .. #  * `typing.Union`_, enabling .
 
+.. _beartype.abby:
+
+Beartype At Any Time API
+------------------------
+
+.. parsed-literal::
+
+   Type-check anything against any type hint – at any time.
+
+When the ``isinstance()`` and ``issubclass()`` builtins fail to scale, prefer
+the ``beartype.abby`` functional API enabling you to type-check *anything*
+*anytime* against *any* PEP-compliant type hint.
+
+    ‼
+
+    This API is not-so-optimized, but might be optimized shortly for optimistic
+    definitions of "shortly." Since a slow API that exists is preferable to a
+    fast API that doesn't exist, we hope everyone will bear :superscript:`...kek
+    kek` with the temporary slowdown. This API is more than fast enough for
+    general-purpose use, but cracks might show if you throw it at a tight inner
+    loop. Please file an issue request if your codebase is now concerned.
+
+.. _is_bearable:
+
+*def* beartype.abby.\ **is_bearable**\ (obj: object, hint: object, \*, conf:
+beartype.BeartypeConf = BeartypeConf()) -> bool
+
+    **Type-hint tester,** returning either:
+
+    * ``True`` if the passed arbitrary object ``obj`` satisfies the passed
+      PEP-compliant type hint ``hint`` under the passed beartype configuration
+      ``conf``.
+    * ``False`` otherwise.
+
+    .. code-block:: python
+
+       >>> from beartype.abby import is_bearable
+       >>> from beartype.typing import List, Sequence, Optional, Union
+       >>> is_bearable("Kif, I’m feeling the ‘Captain's itch.’", Optional[str])
+       True
+       >>> is_bearable('I hate these filthy Neutrals, Kif.', Sequence[str])
+       True
+       >>> is_bearable('Stop exploding, you cowards.', Union[List[bool], None])
+       False
+
+    This tester is a strict superset of the ``isinstance()`` builtin and can
+    thus be safely called wherever that builtin is called with the same exact
+    parameters in the same exact order:
+
+    .. code-block:: python
+
+       >>> from beartype.abby import is_bearable
+       >>> is_bearable('I surrender and volunteer for treason.', str)
+       True
+       >>> is_bearable(b'Stop exploding, you cowards.', (str, bytes))
+       True
+       >>> is_bearable('Comets, the icebergs of the sky.', bool | None)
+       False
+
+    This tester is also a *spiritual* superset of the ``issubclass()`` builtin
+    and can thus be safely called wherever that builtin is called by replacing
+    the superclass(es) to be tested against with a ``type[{superclass}]`` or
+    ``typing.Union[type[{superclass1}], ..., type[{superclassN}]]`` type hint:
+
+    .. code-block:: python
+
+       >>> from beartype.abby import is_bearable
+       >>> from beartype.typing import Type, Union
+       >>> from collections.abc import Awaitable, Collection, Iterable
+       >>> is_bearable(str, Type[Iterable])
+       True
+       >>> is_bearable(bytes, Union[Type[Collection], Type[Awaitable]])
+       True
+       >>> is_bearable(bool, Union[Type[str], Type[float]])
+       False
+
+    See ``help(beartype.abby.is_bearable)`` for further details.
+
+.. _die_if_unbearable:
+
+*def* beartype.abby.\ **die_if_unbearable**\ (obj: object, hint: object, \*,
+conf: beartype.BeartypeConf = BeartypeConf()) -> None
+
+    **Type-hint validator,** either:
+
+    * Raising a human-readable exception if the passed arbitrary object ``obj``
+      violates the passed PEP-compliant type hint ``hint`` under the passed
+      beartype configuration ``conf``.
+    * Reducing to a noop otherwise (i.e., if ``obj`` satisfies ``hint`` under
+      ``conf``).
+
+    .. code-block:: python
+
+       >>> from beartype.abby import die_if_unbearable
+       >>> from beartype.typing import List, Sequence, Optional, Union
+       >>> die_if_unbearable("My people ate them all!", Union[List[int], None])
+       BeartypeAbbyHintViolation: Object _if_unbearable() return 'My people ate
+       them all!' violates type hint typing.Optional[list[int]], as str 'My
+       people ate them all!' not list or <protocol "builtins.NoneType">.
+       >>> die_if_unbearable("I'm swelling with patriotic mucus!", Optional[str])
+       >>> die_if_unbearable("I'm not on trial here.", Sequence[str])
+
+    See ``help(beartype.abby.die_if_unbearable)`` for further details.
+
 Beartype Validators
 -------------------
 
@@ -895,7 +999,7 @@ Beartype Validators
    Validate anything with two-line type hints
           designed by you ⇄ built by beartype
 
-When official type hints fail to suffice, design your own PEP-compliant type
+When official type hints fail to scale, design your own PEP-compliant type
 hints with compact two-line **beartype validators:**
 
 .. code-block:: python
@@ -996,10 +1100,14 @@ tradeoffs:
 Wherever you can, prefer declarative validators for efficiency. Everywhere
 else, default to functional validators for generality.
 
+.. _beartype.vale:
+
 Validator API
 ~~~~~~~~~~~~~
 
-*class* beartype.vale.\ **Is**\ [collections.abc.Callable[[typing.Any], bool]]
+.. _Is:
+
+*class* beartype.vale.\ **Is**\ [collections.abc.Callable_\ [[typing.Any_\ ], bool]]
 
     **Functional validator.** A PEP-compliant type hint enforcing any arbitrary
     runtime constraint, created by subscripting (indexing) the ``Is`` type hint
@@ -1025,7 +1133,9 @@ Validator API
 
     See ``help(beartype.vale.Is)`` for further details.
 
-*class* beartype.vale.\ **IsAttr**\ [str, validator]
+.. _IsAttr:
+
+*class* beartype.vale.\ **IsAttr**\ [str, `beartype.vale.* <beartype.vale_>`__\ ]
 
     **Declarative attribute validator.** A PEP-compliant type hint
     enforcing any arbitrary runtime constraint on any named object attribute,
@@ -1078,7 +1188,9 @@ Validator API
 
     See ``help(beartype.vale.IsAttr)`` for further details.
 
-*class* beartype.vale.\ **IsEqual**\ [typing.Any]
+.. _IsEqual:
+
+*class* beartype.vale.\ **IsEqual**\ [typing.Any_\ ]
 
     **Declarative equality validator.** A PEP-compliant type hint enforcing
     equality against any object, created by subscripting (indexing) the
@@ -1135,6 +1247,8 @@ Validator API
     ``beartype.vale.IsEqual``.
 
     See ``help(beartype.vale.IsEqual)`` for further details.
+
+.. _vale.IsInstance:
 
 *class* beartype.vale.\ **IsInstance**\ [type, ...]
 
@@ -1213,6 +1327,8 @@ Validator API
     Everywhere else, default to ``beartype.vale.IsInstance``.
 
     See ``help(beartype.vale.IsInstance)`` for further details.
+
+.. _vale.IsSubclass:
 
 *class* beartype.vale.\ **IsSubclass**\ [type, ...]
 
@@ -2402,21 +2518,21 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | Pyre_                                   | *none*                        | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-| beartype.abby      | is_bearable                             | **0.10.0**\ —\ *current*      | **0.10.0**\ —\ *current*  |
+| beartype.abby_     | is_bearable_                            | **0.10.0**\ —\ *current*      | **0.10.0**\ —\ *current*  |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                    | die_if_unbearable                       | **0.10.0**\ —\ *current*      | **0.10.0**\ —\ *current*  |
+|                    | die_if_unbearable_                      | **0.10.0**\ —\ *current*      | **0.10.0**\ —\ *current*  |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 | beartype.typing    | *all*                                   | **0.10.0**\ —\ *current*      | **0.10.0**\ —\ *current*  |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-| beartype.vale      | Is                                      | **0.7.0**\ —\ *current*       | **0.7.0**\ —\ *current*   |
+| beartype.vale_     | Is_                                     | **0.7.0**\ —\ *current*       | **0.7.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                    | IsAttr                                  | **0.7.0**\ —\ *current*       | **0.7.0**\ —\ *current*   |
+|                    | IsAttr_                                 | **0.7.0**\ —\ *current*       | **0.7.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                    | IsEqual                                 | **0.7.0**\ —\ *current*       | **0.7.0**\ —\ *current*   |
+|                    | IsEqual_                                | **0.7.0**\ —\ *current*       | **0.7.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                    | IsInstance                              | **0.10.0**\ —\ *current*      | **0.10.0**\ —\ *current*  |
+|                    | `IsInstance <vale.IsInstance_>`__       | **0.10.0**\ —\ *current*      | **0.10.0**\ —\ *current*  |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                    | IsSubclass                              | **0.9.0**\ —\ *current*       | **0.9.0**\ —\ *current*   |
+|                    | `IsSubclass <vale.IsSubclass_>`__       | **0.9.0**\ —\ *current*       | **0.9.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 | builtins_          | None_                                   | **0.6.0**\ —\ *current*       | **0.6.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -4651,6 +4767,8 @@ rather than Python runtime) include:
 .. # ------------------( LINKS ~ beartype : remote          )------------------
 .. _beartype:
    https://github.com/beartype/beartype
+.. _beartype issues:
+   https://github.com/beartype/beartype/issues
 .. _beartype 1.0.0:
    https://github.com/beartype/beartype/issues/7
 .. _beartype codebase:
@@ -5002,6 +5120,8 @@ rather than Python runtime) include:
    https://docs.python.org/3/library/stdtypes.html#set-types-set-frozenset
 .. _isinstance:
    https://docs.python.org/3/library/functions.html#isinstance
+.. _issubclass:
+   https://docs.python.org/3/library/functions.html#issubclass
 .. _list:
    https://docs.python.org/3/library/stdtypes.html#lists
 .. _memoryview:
