@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -13,24 +13,21 @@ entire :mod:`beartype` data validation ecosystem.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from abc import ABCMeta, abstractmethod
 from beartype.roar import BeartypeValeSubscriptionException
+from beartype.typing import Any
 from beartype.vale._core._valecore import BeartypeValidator
 from beartype._util.text.utiltextrepr import represent_object
-from typing import Any
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ METACLASSES                       }....................
+# ....................{ METACLASSES                        }....................
 class _BeartypeValidatorFactoryABCMeta(ABCMeta):
     '''
     Metaclass all **beartype validator factory subclasses** (i.e.,
     :class:`_BeartypeValidatorFactoryABC` subclasses).
     '''
 
-    # ..................{ INITIALIZERS                      }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(cls, classname, superclasses, attr_name_to_value) -> None:
         super().__init__(classname, superclasses, attr_name_to_value)
 
@@ -40,9 +37,13 @@ class _BeartypeValidatorFactoryABCMeta(ABCMeta):
         # clarity and usability.
         cls.__module__ = 'beartype.vale'
 
-# ....................{ SUPERCLASSES                      }....................
+# ....................{ SUPERCLASSES                       }....................
+#FIXME: Pyright appears to be extremely confused. It thinks that the
+#"_BeartypeValidatorFactoryABCMeta" metaclass is a "generic" (i.e., subclasses
+#"typing.Generic"), when in fact that metaclass merely subclasses the standard
+#"abc.ABCMeta" metaclass. Consider submitting an upstream pyright issue, please.
 class _BeartypeValidatorFactoryABC(
-    object, metaclass=_BeartypeValidatorFactoryABCMeta):
+    object, metaclass=_BeartypeValidatorFactoryABCMeta):  # pyright: ignore[reportGeneralTypeIssues]
     '''
     Abstract base class of all **beartype validator factory subclasses**
     (i.e., subclasses that, when subscripted (indexed) by subclass-specific
@@ -62,7 +63,7 @@ class _BeartypeValidatorFactoryABC(
         implementation of the abstract :meth:__getitem__` dunder method.
     '''
 
-    # ..................{ INITIALIZERS                      }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(self, basename: str) -> None:
         '''
         Initialize this subclass instance.
@@ -84,7 +85,7 @@ class _BeartypeValidatorFactoryABC(
             f'subscripted by '
         )
 
-    # ..................{ ABSTRACT ~ dunder                 }..................
+    # ..................{ ABSTRACT ~ dunder                  }..................
     @abstractmethod
     def __getitem__(self, *args, **kwargs) -> BeartypeValidator:
         '''
@@ -109,7 +110,7 @@ class _BeartypeValidatorFactoryABC(
 
         pass
 
-    # ..................{ PRIVATE ~ validator               }..................
+    # ..................{ PRIVATE ~ validator                }..................
     #FIXME: Unit test us up, please.
     def _die_unless_getitem_args_1(self, args: Any) -> None:
         '''

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,7 +12,7 @@ supported object introspectors efficiently generating stack-free code).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
 from beartype.vale._util._valeutilsnip import (
@@ -35,10 +35,7 @@ from beartype._util.func.utilfuncscope import (
 from beartype._util.utilobject import get_object_name
 from beartype._data.datatyping import TypeOrTupleTypes
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ SUBCLASSES ~ instance             }....................
+# ....................{ SUBCLASSES ~ instance              }....................
 class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
     '''
     **Beartype type instance validator factory** (i.e., object creating and
@@ -120,7 +117,7 @@ class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
         Further commentary.
     '''
 
-    # ..................{ DUNDERS                           }..................
+    # ..................{ DUNDERS                            }..................
     @callable_cached
     def __getitem__(self, types: TypeOrTupleTypes) -> BeartypeValidator:
         '''
@@ -229,7 +226,7 @@ class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
             get_repr=f'{self._basename}[{types_repr}]',
         )
 
-# ....................{ SUBCLASSES ~ subclass             }....................
+# ....................{ SUBCLASSES ~ subclass              }....................
 class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
     '''
     **Beartype type inheritance validator factory** (i.e., object creating and
@@ -323,7 +320,7 @@ class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
         Further commentary.
     '''
 
-    # ..................{ DUNDERS                           }..................
+    # ..................{ DUNDERS                            }..................
     @callable_cached
     def __getitem__(self, types: TypeOrTupleTypes) -> BeartypeValidator:
         '''
