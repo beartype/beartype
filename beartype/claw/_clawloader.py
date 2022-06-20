@@ -37,9 +37,6 @@ from types import CodeType
 # replacing that function with our beartype-specific variant below.
 from importlib.util import cache_from_source as cache_from_source_original
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ CLASSES                            }....................
 #FIXME: Generalize this class to support stacking. What? Okay, so the core
 #issue with the prior approach is that it only works with standard Python

@@ -35,9 +35,6 @@ from ast import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ CLASSES                            }....................
 #FIXME: Implement us up, please.
 #FIXME: Docstring us up, please.
@@ -223,6 +220,24 @@ class BeartypeNodeTransformer(NodeTransformer):
             # Copy all source code metadata from this AST callable parent node
             # onto this AST decoration child node.
             _copy_node_code_metadata(node_src=node, node_trg=decorate_callable)
+
+            #FIXME: *INSUFFICIENT.* We need to additionally avoid redecorating
+            #callables already explicitly decorated by @beartype, as that
+            #redecoration would erroneously take precedence over the explicit
+            #decoration; the latter should *ALWAYS* take precedence over the
+            #former, however, due to "conf=BeartypeConf(...)" parametrization.
+            #Happily, this should be trivial ala:
+            #    #FIXME: Note that "decorator_node.id == 'beartype'" is probably
+            #    #an insufficient test, as decorators can be trivially renamed
+            #    #or imported under differing names.
+            #    for decorator_node in node.decorator_list:
+            #        if (
+            #            isinstance(decorator_node, Name) and
+            #            decorator_node.id == 'beartype'
+            #        ):
+            #            break
+            #    else:
+            #        node.decorator_list.append(decorate_callable)
 
             # Append this AST decoration child node to the end of the list of
             # all AST decoration child nodes for this AST callable parent node.

@@ -35,7 +35,7 @@ if IS_PYTHON_AT_LEAST_3_8:
     # requirements from various sources, depending on runtime environment).
     from beartype.typing._typingcache import callable_cached_minimal
     from typing import (  # type: ignore[attr-defined]
-        EXCLUDED_ATTRIBUTES,
+        EXCLUDED_ATTRIBUTES,  # pyright: ignore[reportGeneralTypeIssues]
         TYPE_CHECKING,
         Any,
         Generic,
@@ -51,9 +51,14 @@ if IS_PYTHON_AT_LEAST_3_8:
         runtime_checkable,
     )
 
-    # Note that this branch is intentionally tested first, despite the
-    # resulting negation. Why? Because mypy quietly defecates all over itself
-    # if the order of these two branches is reversed. It's as bad as it sounds.
+    # Note that we intentionally:
+    # * Avoid importing these type hint factories from "beartype.typing", as
+    #   that would induce a circular import dependency. Instead, we manually
+    #   import the relevant type hint factories conditionally depending on the
+    #   version of the active Python interpreter. *sigh*
+    # * Test the negation of this condition first. Why? Because mypy quietly
+    #   defecates all over itself if the order of these two branches is
+    #   reversed. Yeah. It's as bad as it sounds.
     if not IS_PYTHON_AT_LEAST_3_9:
         from typing import Dict, Tuple, Type  # type: ignore[misc]
     # Else, the active Python interpreter targets Python >= 3.9 and thus
@@ -192,7 +197,7 @@ if IS_PYTHON_AT_LEAST_3_8:
 
         # ................{ DUNDERS                            }................
         def __new__(
-            mcls: Type[_TT],
+            mcls: Type[_TT],  # pyright: ignore[reportSelfClsParameterName]
             name: str,
             bases: Tuple[type, ...],
             namespace: Dict[str, Any],
@@ -357,7 +362,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         # "typing.Generic" superclass, the non-standard
         # "typing_extensions.Protocol" superclass does *NOT*. Ergo, we force
         # this to be the case.
-        Generic,
+        Generic,  # pyright: ignore
         metaclass=_CachingProtocolMeta,
     ):
         '''
@@ -410,6 +415,11 @@ if IS_PYTHON_AT_LEAST_3_8:
             #   our_gen_alias.__origin__ = cls
             #   return our_gen_alias
 
+            # Superclass __class_getitem__() dunder method, localized for
+            # brevity, efficiency, and (most importantly) to squelch false
+            # positive "errors" from pyright with a single pragma comment.
+            super_class_getitem = super().__class_getitem__  # pyright: ignore[reportGeneralTypeIssues]
+
             # If the superclass typing.Protocol.__class_getitem__() dunder
             # method has been wrapped as expected with caching by the private
             # (and thus *NOT* guaranteed to exist) @typing._tp_cache decorator,
@@ -427,7 +437,7 @@ if IS_PYTHON_AT_LEAST_3_8:
             #   decorator. Calling the decorated closure wrapping that
             #   unwrapped method with memoization would needlessly consume
             #   excess space and time for *NO* additional benefit.
-            if hasattr(super().__class_getitem__, '__wrapped__'):
+            if hasattr(super_class_getitem, '__wrapped__'):
                 # Protocol class to be passed as the "cls" parameter to the
                 # unwrapped superclass typing.Protocol.__class_getitem__()
                 # dunder method. There exist two unique cases corresponding to
@@ -456,15 +466,14 @@ if IS_PYTHON_AT_LEAST_3_8:
                     cls
                 )
 
-                gen_alias = super().__class_getitem__.__wrapped__(
-                    protocol_cls, item)
+                gen_alias = super_class_getitem.__wrapped__(protocol_cls, item)
             # We shouldn't ever be here, but if we are, we're making the
             # assumption that typing.Protocol.__class_getitem__() no longer
             # caches. Heaven help us if that ever uses some proprietary
             # memoization implementation we can't see anymore because it's not
             # based on the standard @functools.wraps decorator.
             else:
-                gen_alias = super().__class_getitem__(item)
+                gen_alias = super_class_getitem(item)
 
             # Switch the origin of this generic alias from its default of
             # "typing.Protocol" to this caching protocol class. If *NOT* done,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,7 +10,7 @@ implementing binary operations on pairs of lower-level beartype validators).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from abc import ABCMeta, abstractmethod
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._core._valecore import BeartypeValidator
@@ -19,10 +19,7 @@ from beartype._util.kind.utilkinddict import merge_mappings_two
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
 from beartype._util.text.utiltextrepr import represent_object
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ SUPERCLASSES                      }....................
+# ....................{ SUPERCLASSES                       }....................
 class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
     '''
     Abstract base class of all **beartype binary validator** (i.e., validator
@@ -39,12 +36,12 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
         validator.
     '''
 
-    # ..................{ CLASS VARIABLES                   }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # ..................{ CLASS VARIABLES                    }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Subclasses declaring uniquely subclass-specific instance
     # variables *MUST* additionally slot those variables. Subclasses violating
     # this constraint will be usable but unslotted, which defeats our purposes.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently called
     # cache dunder methods. Slotting has been shown to reduce read and write
@@ -54,7 +51,7 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
         '_validator_operand_2',
     )
 
-    # ..................{ INITIALIZERS                      }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
         validator_operand_1: BeartypeValidator,
@@ -105,7 +102,7 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
         self._validator_operand_1 = validator_operand_1
         self._validator_operand_2 = validator_operand_2
 
-    # ..................{ GETTERS                           }..................
+    # ..................{ GETTERS                            }..................
     #FIXME: Unit test us up, please.
     #FIXME: Overly verbose for conjunctions involving three or more
     #beartype validators. Contemplate compaction schemes, please. Specifically,
@@ -183,7 +180,7 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
             f'{line_outer_suffix}'
         )
 
-    # ..................{ ABSTRACT                          }..................
+    # ..................{ ABSTRACT                           }..................
     # Abstract methods required to be concretely implemented by subclasses.
 
     @property
@@ -227,7 +224,7 @@ class BeartypeValidatorBinaryABC(BeartypeValidator, metaclass=ABCMeta):
 
         pass
 
-# ....................{ SUBCLASSES ~ &                    }....................
+# ....................{ SUBCLASSES ~ &                     }....................
 class BeartypeValidatorConjunction(BeartypeValidatorBinaryABC):
     '''
     **Beartype conjunction validator** (i.e., validator conjunctively
@@ -237,7 +234,7 @@ class BeartypeValidatorConjunction(BeartypeValidatorBinaryABC):
     first validator passed the second).
     '''
 
-    # ..................{ INITIALIZERS                      }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
         validator_operand_1: BeartypeValidator,
@@ -278,7 +275,7 @@ class BeartypeValidatorConjunction(BeartypeValidatorBinaryABC):
             ),
         )
 
-    # ..................{ PROPERTIES                        }..................
+    # ..................{ PROPERTIES                         }..................
     @property
     def _operator_symbol(self) -> str:
         return '&'
@@ -292,7 +289,7 @@ class BeartypeValidatorConjunction(BeartypeValidatorBinaryABC):
         # validation of this second child validator is required.
         return not self._validator_operand_1.is_valid(obj)
 
-# ....................{ SUBCLASSES ~ |                    }....................
+# ....................{ SUBCLASSES ~ |                     }....................
 class BeartypeValidatorDisjunction(BeartypeValidatorBinaryABC):
     '''
     **Beartype disjunction validator** (i.e., validator disjunctively
@@ -302,7 +299,7 @@ class BeartypeValidatorDisjunction(BeartypeValidatorBinaryABC):
     first validator passed the second).
     '''
 
-    # ..................{ INITIALIZERS                      }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
         validator_operand_1: BeartypeValidator,
@@ -343,7 +340,7 @@ class BeartypeValidatorDisjunction(BeartypeValidatorBinaryABC):
             ),
         )
 
-    # ..................{ PROPERTIES                        }..................
+    # ..................{ PROPERTIES                         }..................
     @property
     def _operator_symbol(self) -> str:
         return '|'
@@ -357,7 +354,7 @@ class BeartypeValidatorDisjunction(BeartypeValidatorBinaryABC):
         # validation of this second child validator is required.
         return self._validator_operand_1.is_valid(obj)
 
-# ....................{ PRIVATE ~ validators              }....................
+# ....................{ PRIVATE ~ validators               }....................
 def _validate_operands(
     self: BeartypeValidatorBinaryABC,
     validator_operand_1: BeartypeValidator,

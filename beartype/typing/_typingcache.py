@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -20,17 +20,33 @@ existence of this submodule.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from functools import wraps
-from typing import Callable, Dict
 
-# ....................{ CONSTANTS                         }....................
-SENTINEL = object()
+# Note that we intentionally:
+# * Avoid importing these type hint factories from "beartype.typing", as that
+#   would induce a circular import dependency. Instead, we manually import the
+#   relevant type hint factories conditionally depending on the version of the
+#   active Python interpreter. *sigh*
+# * Test the negation of this condition first. Why? Because mypy quietly
+#   defecates all over itself if the order of these two branches is reversed.
+#   Yeah. It's as bad as it sounds.
+if not IS_PYTHON_AT_LEAST_3_9:
+    from typing import Callable, Dict  # type: ignore[misc]
+# Else, the active Python interpreter targets Python >= 3.9 and thus supports
+# PEP 585. In this case, embrace non-deprecated PEP 585-compliant type hints.
+else:
+    from collections.abc import Callable
+    Dict = dict  # type: ignore[misc]
+
+# ....................{ CONSTANTS                          }....................
+_SENTINEL = object()
 '''
 Sentinel object of arbitrary value.
 '''
 
-# ....................{ DECORATORS                        }....................
+# ....................{ DECORATORS                         }....................
 def callable_cached_minimal(func: Callable) -> Callable:
     '''
     **Memoize** (i.e., efficiently cache and return all previously returned
@@ -112,12 +128,12 @@ def callable_cached_minimal(func: Callable) -> Callable:
             #
             # Note that this call raises a "TypeError" exception if any item of
             # this flattened tuple is unhashable.
-            exception = params_flat_to_exception_get(params_flat, SENTINEL)
+            exception = params_flat_to_exception_get(params_flat, _SENTINEL)
 
             # If this callable previously raised an exception when called with
             # these parameters, re-raise the same exception.
-            if exception is not SENTINEL:
-                raise exception
+            if exception is not _SENTINEL:
+                raise exception  # pyright: ignore[reportGeneralTypeIssues]
             # Else, this callable either has yet to be called with these
             # parameters *OR* has but failed to raise an exception.
 
@@ -125,11 +141,11 @@ def callable_cached_minimal(func: Callable) -> Callable:
             # passed these parameters *OR* a sentinel placeholder otherwise
             # (i.e., if this callable has yet to be passed these parameters).
             return_value = params_flat_to_return_value_get(
-                params_flat, SENTINEL)
+                params_flat, _SENTINEL)
 
             # If this callable has already been called with these parameters,
             # return the value returned by that prior call.
-            if return_value is not SENTINEL:
+            if return_value is not _SENTINEL:
                 return return_value
             # Else, this callable has yet to be called with these parameters.
 
