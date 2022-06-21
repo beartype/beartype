@@ -16,9 +16,6 @@ from beartype.typing import Optional
 from inspect import findsource
 from types import ModuleType
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ GETTERS ~ object : line            }....................
 def get_object_module_line_number_begin(obj: object) -> int:
     '''

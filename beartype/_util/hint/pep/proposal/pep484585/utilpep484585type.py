@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,7 +11,7 @@ Project-wide :pep:`484`- and :pep:`585`-compliant **dual type hint utilities**
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype.typing import (
     Any,
@@ -36,11 +36,8 @@ from typing import (
     Type as typing_Type,  # <-- intentional to distinguish from "type" below
 )
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ HINTS ~ private                   }....................
-_HINT_PEP484585_SUBCLASS_ARGS_1_UNION: Any = Union[
+# ....................{ HINTS ~ private                    }....................
+_HINT_PEP484585_SUBCLASS_ARGS_1_UNION = Union[
     type, Tuple[type], TypeVar, HINT_PEP484585_FORWARDREF_UNION,]
 '''
 Union of the types of all permissible :pep:`484`- or :pep:`585`-compliant
@@ -48,7 +45,7 @@ Union of the types of all permissible :pep:`484`- or :pep:`585`-compliant
 subscripting (indexing) a subclass type hint).
 '''
 
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 def get_hint_pep484585_subclass_superclass(
     hint: object,
     exception_prefix: str,
@@ -87,22 +84,21 @@ def get_hint_pep484585_subclass_superclass(
         * A :pep:`585`-compliant union of two or more issubclassable classes.
         * A :pep:`484`-compliant type variable constrained to classes (i.e.,
           :class:`typing.TypeVar` instance).
-          (i.e., string).
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintPep3119Exception`
+    BeartypeDecorHintPep3119Exception
         If this superclass subscripting this type hint is *not*
         **issubclassable** (i.e., class whose metaclass defines a
         ``__subclasscheck__()`` dunder method raising an exception).
-    :exc:`BeartypeDecorHintPep484585Exception`
+    BeartypeDecorHintPep484585Exception
         If this hint is either:
 
         * Neither a :pep:`484`- nor :pep:`585`-compliant subclass type hint.
         * A :pep:`484`- or :pep:`585`-compliant subclass type hint subscripted
           by one argument that is neither a class, union of classes, nor
           forward reference to a class.
-    :exc:`BeartypeDecorHintPep585Exception`
+    BeartypeDecorHintPep585Exception
         If this hint is either:
 
         * A :pep:`585`-compliant subclass type hint subscripted by either:
@@ -171,9 +167,9 @@ def get_hint_pep484585_subclass_superclass(
         )
 
     # Return this superclass.
-    return hint_superclass
+    return hint_superclass  # type: ignore[return-value]
 
-# ....................{ REDUCERS                          }....................
+# ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up.
 def reduce_hint_pep484585_subclass_superclass_if_ignorable(
     hint: Any,
@@ -201,7 +197,7 @@ def reduce_hint_pep484585_subclass_superclass_if_ignorable(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintPep484585Exception`
+    BeartypeDecorHintPep484585Exception
         If this hint is neither a :pep:`484`- nor :pep:`585`-compliant subclass
         type hint.
     '''
@@ -256,7 +252,7 @@ def reduce_hint_pep484585_subclass_superclass_if_ignorable(
     # Return this possibly reduced type hint.
     return hint
 
-# ....................{ PRIVATE ~ validators              }....................
+# ....................{ PRIVATE ~ validators               }....................
 def _die_unless_hint_pep484585_subclass(
     hint: object, exception_prefix: str) -> None:
     '''
@@ -274,7 +270,7 @@ def _die_unless_hint_pep484585_subclass(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintPep484585Exception`
+    BeartypeDecorHintPep484585Exception
         If this hint is neither a :pep:`484`- nor :pep:`585`-compliant subclass
         type hint.
     '''

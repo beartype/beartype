@@ -23,7 +23,7 @@ def test_get_hint_pep484585_callable_args_and_params() -> None:
     '''
     Test both the ``get_hint_pep484585_callable_args`` and
     ``get_hint_pep484585_callable_params`` declared by the
-    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585callable`
+    :mod:`beartype._util.hint.pep.proposal.pep484585.utilpep484585callable`
     submodule.
 
     Since these getters are inextricably interrelated, this unit test exercises

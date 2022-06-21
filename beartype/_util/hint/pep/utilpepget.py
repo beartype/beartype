@@ -50,9 +50,6 @@ from beartype._util.py.utilpyversion import (
 )
 from beartype._data.datatyping import TupleTypes
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ GETTERS ~ args                     }....................
 # If the active Python interpreter targets Python >= 3.9, implement this
 # getter to directly access the "__args__" dunder attribute.

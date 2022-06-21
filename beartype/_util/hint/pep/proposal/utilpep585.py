@@ -11,15 +11,15 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep585Exception
+from beartype.typing import (
+    Any,
+    Set,
+)
 from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.utilobject import Iota
 from beartype._data.datatyping import TupleTypes
-from typing import Any, Set
-
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ HINTS                              }....................
 HINT_PEP585_TUPLE_EMPTY = (
@@ -76,7 +76,7 @@ if IS_PYTHON_AT_LEAST_3_9:
 
 
     @callable_cached
-    def is_hint_pep585_generic(hint: object) -> bool:
+    def is_hint_pep585_generic(hint: object) -> bool:  # pyright: ignore[reportGeneralTypeIssues]
 
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (

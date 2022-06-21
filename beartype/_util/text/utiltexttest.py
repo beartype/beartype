@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,9 +10,9 @@ strings satisfy various conditions).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 def is_str_float_or_int(text: str) -> bool:
     '''
     ``True`` only if the passed string is a valid machine-readable
@@ -38,7 +38,7 @@ def is_str_float_or_int(text: str) -> bool:
         ``True`` only if this string is a valid machine-readable representation
         of either an integer or finite floating-point number.
     '''
-    assert isinstance(text, str), '{!r} not string.'.format(text)
+    assert isinstance(text, str), f'{repr(text)} not string.'
 
     # Return true only if this text represents a finite number. See also:
     #     s.lstrip('-').replace('.','',1).replace('e-','',1).replace('e','',1).isdigit()

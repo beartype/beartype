@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,15 +10,15 @@ transforming strings into new derivative strings) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 """
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
+from beartype.typing import Dict
 from beartype._cave._cavefast import NumberType
 from beartype._util.utilobject import get_object_basename_scoped
 from collections.abc import Callable
 from string import punctuation
-from typing import Dict
 
-# ....................{ PRIVATE ~ cache                   }....................
+# ....................{ PRIVATE ~ cache                    }....................
 _MAX_LEN_TO_MAX_CHARS_REGEX: Dict[int, str] = {}
 '''
 Non-thread-safe global dictionary cache mapping from each **maximum length**
@@ -38,7 +38,7 @@ thread-safety has *no* harmful side effects (aside from recompiling a
 previously compiled regular expression in unlikely edge cases).
 '''
 
-# ....................{ PRIVATE ~ frozen                  }....................
+# ....................{ PRIVATE ~ frozen                   }....................
 _CHARS_PUNCTUATION = frozenset(punctuation)
 '''
 Frozen set of all **ASCII punctuation characters** (i.e., non-Unicode
@@ -65,7 +65,7 @@ to these representations either being effectively quoted already *or*
 sufficiently terse as to not benefit from being quoted).
 '''
 
-# ....................{ REPRESENTERS                      }....................
+# ....................{ REPRESENTERS                       }....................
 def represent_object(
     # Mandatory parameters.
     obj: object,
@@ -220,7 +220,7 @@ def represent_object(
     # Return this representation.
     return obj_repr
 
-# ....................{ REPRESENTER ~ callable            }....................
+# ....................{ REPRESENTER ~ callable             }....................
 def represent_func(
     # Mandatory parameters.
     func: Callable,

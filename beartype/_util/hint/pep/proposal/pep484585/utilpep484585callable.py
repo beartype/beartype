@@ -22,9 +22,6 @@ from beartype._data.datatyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignCallable
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ HINTS                              }....................
 # If an external static type checker (e.g., "mypy") is currently subjecting
 # "beartype" to static analysis, reduce this hint to a simplistic facsimile of

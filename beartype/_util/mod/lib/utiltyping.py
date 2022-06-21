@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,16 +11,13 @@ and importing attributes declared at module scope by either the standard
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilModuleException
+from beartype.typing import Any
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._data.datatyping import TypeException
-from typing import Any
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
 def is_typing_attr(
     # Mandatory parameters.
@@ -72,7 +69,7 @@ def is_typing_attr(
     return import_typing_attr_or_none(
         typing_attr_basename, exception_cls) is not None
 
-# ....................{ IMPORTERS                         }....................
+# ....................{ IMPORTERS                          }....................
 def import_typing_attr(
     # Mandatory parameters.
     typing_attr_basename: str,

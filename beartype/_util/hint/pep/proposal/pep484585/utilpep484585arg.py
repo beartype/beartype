@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,16 +11,13 @@ subscripting both :pep:`484`- and :pep:`585`-compliant type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep585Exception
+from beartype.typing import Tuple
 from beartype._util.text.utiltextlabel import prefix_callable_decorated_pith
 from collections.abc import Callable
-from typing import Tuple
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 def get_hint_pep484585_args_1(hint: object, exception_prefix: str) -> object:
     '''
     Argument subscripting the passed :pep:`484`- or :pep:`585`-compliant
@@ -65,7 +62,7 @@ def get_hint_pep484585_args_1(hint: object, exception_prefix: str) -> object:
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintPep585Exception`
+    BeartypeDecorHintPep585Exception
         If this hint is subscripted by either:
 
         * *No* arguments.
@@ -119,7 +116,7 @@ def get_hint_pep484585_args_3(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintPep585Exception`
+    BeartypeDecorHintPep585Exception
         If this hint is subscripted by either:
 
         * *No* arguments.

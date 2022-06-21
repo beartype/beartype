@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,7 +9,7 @@ Project-wide **Python interpreter** utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import (
     _BeartypeUtilPathException,
     _BeartypeUtilPythonException,
@@ -18,10 +18,7 @@ from beartype._util.cache.utilcachecall import callable_cached
 from platform import python_implementation
 from sys import executable as sys_executable
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 @callable_cached
 def is_py_pypy() -> bool:
     '''
@@ -32,7 +29,7 @@ def is_py_pypy() -> bool:
 
     return python_implementation() == 'PyPy'
 
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 def get_interpreter_filename() -> str:
     '''
     Absolute filename of the executable binary underlying the active Python

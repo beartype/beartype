@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,11 +10,10 @@ strings into new strings with generic string operations).
 This private submodule is *not* intended for importation by downstream callers.
 """
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilTextException
 
-
-# ....................{ CASERS                            }....................
+# ....................{ CASERS                             }....................
 def uppercase_char_first(text: str) -> str:
     """
     Uppercase *only* the first character of the passed string.
@@ -39,8 +38,7 @@ def uppercase_char_first(text: str) -> str:
     # For great justice!
     return text[0].upper() + text[1:] if text else ''
 
-
-# ....................{ NUMBERERS                         }....................
+# ....................{ NUMBERERS                          }....................
 def number_lines(text: str) -> str:
     """
     Passed string munged to prefix each line of this string with the 1-based
@@ -65,8 +63,7 @@ def number_lines(text: str) -> str:
             text.splitlines(), start=1)
     )
 
-
-# ....................{ REPLACERS                         }....................
+# ....................{ REPLACERS                          }....................
 def replace_str_substrs(text: str, old: str, new: str) -> str:
     """
     Passed string with all instances of the passed source substring globally
@@ -130,8 +127,7 @@ def replace_str_substrs(text: str, old: str, new: str) -> str:
     # replaced by this target substring.
     return text.replace(old, new)
 
-
-# ....................{ SUFFIXERS                         }....................
+# ....................{ SUFFIXERS                          }....................
 def suffix_unless_suffixed(text: str, suffix: str) -> str:
     """
     Passed string either suffixed by the passed suffix if this string is not

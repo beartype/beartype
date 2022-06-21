@@ -27,9 +27,6 @@ from beartype._util.mod.utilmodimport import import_module_attr
 from beartype._util.mod.utilmodget import get_object_module_name
 from beartype._data.datatyping import TypeException
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ HINTS                              }....................
 HINT_PEP484585_FORWARDREF_TYPES = (str, HINT_PEP484_FORWARDREF_TYPE)
 '''
@@ -53,7 +50,7 @@ harms space and time complexity at runtime with *no* concomitant benefits.
 '''
 
 
-HINT_PEP484585_FORWARDREF_UNION: Any = Union[str, HINT_PEP484_FORWARDREF_TYPE]
+HINT_PEP484585_FORWARDREF_UNION = Union[str, HINT_PEP484_FORWARDREF_TYPE]
 '''
 Union of all :pep:`484`- or :pep:`585`-compliant **forward reference types**
 (i.e., classes of all forward reference objects).
@@ -173,7 +170,7 @@ def get_hint_pep484585_forwardref_classname(
     return (
         # If this hint is a PEP 484-compliant forward reference, the typically
         # unqualified classname referred to by this reference.
-        get_hint_pep484_forwardref_type_basename(hint)
+        get_hint_pep484_forwardref_type_basename(hint)  # pyright: ignore[reportGeneralTypeIssues]
         if is_hint_pep484_forwardref(hint) else
         # Else, this hint is a string. In this case, this string as is.
         hint

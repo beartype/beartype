@@ -16,9 +16,6 @@ from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype._data.datatyping import TypeException
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ VALIDATORS                         }....................
 def die_unless_module_attr_name(
     # Mandatory parameters.
@@ -244,7 +241,7 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
             # Setuptools-specific object describing the current version of the
             # module satisfying this requirement if any *OR* "None" if this
             # requirement cannot be guaranteed to be unsatisfied.
-            module_distribution = get_distribution(module_requirement)
+            module_distribution = get_distribution(module_requirement)  # pyright: ignore[reportGeneralTypeIssues]
         # If setuptools fails to find this requirement, this does *NOT*
         # necessarily imply this requirement to be unimportable as a package.
         # Rather, this only implies this requirement was *NOT* installed as a
