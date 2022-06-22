@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
 from beartype.typing import Dict
+from beartype._data.datatyping import TypeWarning
 from beartype._cave._cavefast import NumberType
 from beartype._util.utilobject import get_object_basename_scoped
 from collections.abc import Callable
@@ -226,7 +227,7 @@ def represent_func(
     func: Callable,
 
     # Optional parameters.
-    warning_cls: type = _BeartypeUtilCallableWarning,
+    warning_cls: TypeWarning = _BeartypeUtilCallableWarning,
 ) -> str:
     '''
     Machine-readable representation of the passed callable.
@@ -244,13 +245,13 @@ def represent_func(
     ----------
     func : Callable
         Callable to be represented.
-    warning_cls : type, optional
+    warning_cls : TypeWarning, optional
         Type of warning to be emitted in the event of a non-fatal error.
         Defaults to :class:`_BeartypeUtilCallableWarning`.
 
     Warns
     ----------
-    warning_cls
+    :class:`warning_cls`
         If this callable is a pure-Python lambda function whose definition is
         *not* parsable from the script or module defining that lambda.
     '''

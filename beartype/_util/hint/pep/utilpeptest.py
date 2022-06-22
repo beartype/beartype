@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,7 +10,7 @@ validating arbitrary objects to be PEP-compliant type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
@@ -38,10 +38,7 @@ from beartype._util.mod.utilmodget import get_object_module_name_or_none
 from beartype._util.utilobject import get_object_type_unless_type
 from warnings import warn
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS                          }....................
 _IS_HINT_PEP_IGNORABLE_TESTERS = (
     is_hint_pep484_ignorable_or_none,
     is_hint_pep544_ignorable_or_none,
@@ -69,7 +66,7 @@ Each such function is expected to return either:
 * If this object is *not* fully compliant with that PEP, ``None``.
 '''
 
-# ....................{ EXCEPTIONS                        }....................
+# ....................{ EXCEPTIONS                         }....................
 def die_if_hint_pep(
     # Mandatory parameters.
     hint: object,
@@ -160,7 +157,7 @@ def die_unless_hint_pep(
         raise exception_cls(
             f'{exception_prefix}type hint {repr(hint)} not PEP-compliant.')
 
-# ....................{ EXCEPTIONS ~ supported            }....................
+# ....................{ EXCEPTIONS ~ supported             }....................
 #FIXME: *DANGER.* This function makes beartype more fragile. Instead, refactor
 #all or most calls to this function into calls to the
 #warn_if_hint_pep_unsupported() function; then, consider excising this as well
@@ -250,7 +247,7 @@ def die_if_hint_pep_unsupported(
             f'currently unsupported by @beartype.'
         )
 
-# ....................{ WARNINGS                          }....................
+# ....................{ WARNINGS                           }....................
 #FIXME: Resurrect support for the passed "warning_prefix" parameter. We've
 #currently disabled this parameter as it's typically just a non-human-readable
 #placeholder substring *NOT* intended to be exposed to end users (e.g.,
@@ -284,7 +281,7 @@ def warn_if_hint_pep_deprecated(
 
     Warns
     ----------
-    :class:`BeartypeDecorHintPep585DeprecationWarning`
+    BeartypeDecorHintPep585DeprecationWarning
         If this hint is a :pep:`484`-compliant type hint deprecated by
         :pep:`585` *and* the active Python interpreter targets Python >= 3.9.
     '''
@@ -431,7 +428,7 @@ def warn_if_hint_pep_deprecated(
 #     # Return true only if this object is a supported PEP-compliant type hint.
 #     return is_hint_pep_supported_test
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 def is_hint_pep(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a **PEP-compliant type hint** (i.e.,
@@ -479,7 +476,7 @@ def is_hint_pep(hint: object) -> bool:
     # a PEP-compliant type hint.
     return get_hint_pep_sign_or_none(hint) is not None
 
-# ....................{ TESTERS ~ ignorable               }....................
+# ....................{ TESTERS ~ ignorable                }....................
 def is_hint_pep_ignorable(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a **deeply ignorable PEP-compliant
@@ -558,7 +555,7 @@ def is_hint_pep_ignorable(hint: object) -> bool:
     # Else, this hint is *NOT* deeply ignorable. In this case, return false.
     return False
 
-# ....................{ TESTERS ~ supported               }....................
+# ....................{ TESTERS ~ supported                }....................
 @callable_cached
 def is_hint_pep_supported(hint: object) -> bool:
     '''
@@ -605,7 +602,7 @@ def is_hint_pep_supported(hint: object) -> bool:
     # Return true only if this sign is supported.
     return hint_sign in HINT_SIGNS_SUPPORTED
 
-# ....................{ TESTERS ~ typing                  }....................
+# ....................{ TESTERS ~ typing                   }....................
 #FIXME: Replace all hardcoded "'typing" strings throughout the codebase with
 #access of "TYPING_MODULE_NAMES" instead. We only see one remaining in:
 #* beartype._util.hint.pep.proposal.pep484.utilpep484.py
@@ -725,7 +722,7 @@ def is_hint_pep_type_typing(hint: object) -> bool:
     # In short, there is no general-purpose clever solution. *sigh*
     return hint_type.__module__ in TYPING_MODULE_NAMES
 
-# ....................{ TESTERS ~ args                    }....................
+# ....................{ TESTERS ~ args                     }....................
 #FIXME: Overkill. Replace directly with a simple test, please.
 #
 #Note that the corresponding unit test should be preserved, as that test is
@@ -770,7 +767,7 @@ def is_hint_pep_args(hint: object) -> bool:
     # Return true only if this hint is subscripted by one or more arguments.
     return bool(get_hint_pep_args(hint))
 
-# ....................{ TESTERS ~ typevars                }....................
+# ....................{ TESTERS ~ typevars                 }....................
 #FIXME: Overkill. Replace directly with a simple test, please.
 #
 #Note that the corresponding unit test should be preserved, as that test is

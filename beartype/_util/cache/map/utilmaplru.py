@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,7 +9,7 @@ Project-wide **Least Recently Used (LRU) cache** utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: The current "CacheLruStrong" implementation is overly low-level and
 #thus fundamentally *THREAD-UNSAFE.* The core issue here is that the current
 #approach encourages callers to perform thread-unsafe logic resembling:
@@ -28,12 +28,12 @@ This private submodule is *not* intended for importation by downstream callers.
 #  provide a common API here -- trivializing switching between different
 #  caching strategies implemented by concrete subclasses.
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCacheLruException
+from beartype.typing import Hashable
 from threading import Lock
-from typing import Hashable
 
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 class CacheLruStrong(dict):
     '''
     **Thread-safe strong Least Recently Used (LRU) cache** (i.e., mapping
@@ -79,7 +79,7 @@ class CacheLruStrong(dict):
         safely ignorable -- even under CPython.
     '''
 
-    # ..................{ CLASS VARIABLES                   }..................
+    # ..................{ CLASS VARIABLES                    }..................
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently called
     # cache dunder methods. Slotting has been shown to reduce read and write
@@ -89,7 +89,7 @@ class CacheLruStrong(dict):
         '_lock',
     )
 
-    # ..................{ DUNDERS                           }..................
+    # ..................{ DUNDERS                            }..................
     def __init__(self, size: int) -> None:
         '''
         Initialize this cache to an empty cache with a capacity of this size.

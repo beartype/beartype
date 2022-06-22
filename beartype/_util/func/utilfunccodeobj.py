@@ -32,9 +32,6 @@ from types import (
     MethodType,
 )
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ CONSTANTS                          }....................
 #FIXME: Unit test us up, please.
 FUNC_CODEOBJ_NAME_MODULE = '<module>'

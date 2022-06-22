@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -29,15 +29,12 @@ example:
   the same length under that length.
 '''
 
-# ....................{ IMPORTS                           }....................
-from beartype._util.cache.pool.utilcachepool import KeyPool
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCachedObjectTypedException
-from typing import Any
+from beartype.typing import Any
+from beartype._util.cache.pool.utilcachepool import KeyPool
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ SINGLETONS ~ private              }....................
+# ....................{ SINGLETONS ~ private               }....................
 _object_typed_pool = KeyPool(item_maker=lambda cls: cls())
 '''
 Thread-safe **typed object pool** (i.e., :class:`KeyPool` singleton caching
@@ -50,7 +47,7 @@ Caveats
 efficiently validate both input *and* output to conform to sane expectations.
 '''
 
-# ....................{ (ACQUIRERS|RELEASERS)             }....................
+# ....................{ (ACQUIRERS|RELEASERS)              }....................
 def acquire_object_typed(cls: type) -> Any:
     '''
     Acquire an arbitrary object of the passed type.
