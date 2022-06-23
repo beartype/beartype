@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -14,11 +14,11 @@ virtuous cycle of code life.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 # All "FIXME:" comments for this submodule reside in this package's "__init__"
 # submodule to improve maintainability and readability here.
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.typing import TYPE_CHECKING
 from beartype._conf import BeartypeConf
 from beartype._data.datatyping import (
@@ -32,10 +32,7 @@ from beartype._data.datatyping import (
 # which, in any case, would be needlessly inefficient and thus bad.
 from typing import overload
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ OVERLOADS                         }....................
+# ....................{ OVERLOADS                          }....................
 # Declare PEP 484-compliant overloads to avoid breaking downstream code
 # statically type-checked by a static type checker (e.g., mypy). The concrete
 # @beartype decorator declared below is permissively annotated as returning a
@@ -47,15 +44,15 @@ def beartype(obj: BeartypeableT) -> BeartypeableT: ...
 @overload
 def beartype(*, conf: BeartypeConf) -> BeartypeConfedDecorator: ...
 
-# ....................{ DECORATORS                        }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ DECORATORS                         }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: *THE ORDER OF CONDITIONAL STATEMENTS BELOW IS SIGNIFICANT.* Notably,
 # mypy 0.940 erroneously emits this fatal error when the "TYPE_CHECKING or"
 # condition is *NOT* the first condition of this "if" statement:
 #     beartype/_decor/main.py:294: error: Condition can't be inferred, unable
 #     to merge overloads [misc]
 # See also: https://github.com/python/mypy/issues/12335#issuecomment-1065591703
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # If the active Python interpreter is either...
 if (
     # Running under an external static type checker -- in which case there is
@@ -80,12 +77,12 @@ if (
 #         return
 #
 # Tragically, Python fails to support module-scoped "return" statements. *sigh*
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Synchronize the signature of this identity decorator with the
 # non-identity decorator imported below.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def beartype(  # type: ignore[no-redef]
-        obj: BeartypeableT,
+        obj: BeartypeableT,  # pyright: ignore[reportInvalidTypeVarUse]
 
         # Optional keyword-only parameters.
         *,
@@ -98,7 +95,7 @@ else:
     # This is where @beartype *REALLY* lives. Grep here for all the goods.
     from beartype._decor._cache.cachedecor import beartype
 
-# ....................{ DECORATORS ~ doc                  }....................
+# ....................{ DECORATORS ~ doc                   }....................
 # Document the @beartype decorator with the same documentation regardless of
 # which of the above implementations currently implements that decorator.
 beartype.__doc__ = (

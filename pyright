@@ -62,6 +62,9 @@ script_dirname="$(dirname "${script_filename}")"
 # Temporarily change the current working directory to that of this project.
 pushd "${script_dirname}" >/dev/null
 
+#FIXME: Note that we *COULD* additionally pass the "--verifytypes" option, which
+#exposes further "pyright" compliants. Let's avoid doing so until someone
+#explicitly requests we do so, please. This has dragged on long enough! *HURK*
 # Statically type-check this project's codebase with all passed arguments.
 command pyright beartype "${@}"
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,13 +10,10 @@ constants simplifying PEP-compliant code generation but *not* themselves code).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from itertools import count
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ CONSTANTS ~ hint : meta           }....................
+# ....................{ CONSTANTS ~ hint : meta            }....................
 # Iterator yielding the next integer incrementation starting at 0, to be safely
 # deleted *AFTER* defining the following 0-based indices via this iterator.
 __hint_meta_index_counter = count(start=0, step=1)

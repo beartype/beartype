@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,7 +10,7 @@ well-known types).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._cave._cavefast import (
     EllipsisType,
     FunctionType,
@@ -21,10 +21,7 @@ from beartype._cave._cavefast import (
     NotImplementedType,
 )
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ SETS                              }....................
+# ....................{ SETS                               }....................
 TYPES_BUILTIN_FAKE = frozenset((
     EllipsisType,
     FunctionType,
@@ -66,7 +63,7 @@ See Also
     as an essential sanity check on that runtime-specific set.
 '''
 
-# ....................{ TUPLES                            }....................
+# ....................{ TUPLES                             }....................
 TYPES_BUILTIN_DECORATOR_DESCRIPTOR_FACTORY = (
     property,
     classmethod,

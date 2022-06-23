@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,10 +11,10 @@ regardless of the Python version targeted by the active Python interpreter).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
-from typing import Union
+# ....................{ IMPORTS                            }....................
+from beartype.typing import Union
 
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 class HintSign(object):
     '''
     **Sign** (i.e., object uniquely identifying PEP-compliant type hints in a
@@ -28,14 +28,14 @@ class HintSign(object):
         this sign (e.g., ``Literal`` for :pep:`586`-compliant type hints).
     '''
 
-    # ..................{ CLASS VARIABLES                   }..................
+    # ..................{ CLASS VARIABLES                    }..................
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = ('name',)
 
-    # ..................{ DUNDERS                           }..................
+    # ..................{ DUNDERS                            }..................
     def __init__(self, name: str) -> None:
         '''
         Initialize this sign.
@@ -61,7 +61,7 @@ class HintSign(object):
         return f'HintSign{self.name}'
         # return f'HintSign({repr(self.name)})'
 
-# ....................{ HINTS                             }....................
+# ....................{ HINTS                              }....................
 HintSignOrType = Union[HintSign, type]
 '''
 PEP-compliant type hint matching either a **sign** (i.e., object uniquely

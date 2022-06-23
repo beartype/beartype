@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -13,7 +13,7 @@ decorator.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 import __future__
 from beartype.roar import BeartypeDecorHintPep563Exception
 from beartype.typing import (
@@ -32,17 +32,14 @@ from beartype._util.text.utiltextident import is_identifier
 from beartype._util.text.utiltextlabel import prefix_callable_decorated_pith
 from sys import modules as sys_modules
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS                          }....................
 _FROZEN_SET_EMPTY: FrozenSet[Any] = frozenset()
 '''
 Empty frozen set, globalized as a mild optimization for the body of the
 :func:`resolve_hints_pep563_if_active` resolver.
 '''
 
-# ....................{ RESOLVERS                         }....................
+# ....................{ RESOLVERS                          }....................
 def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
     '''
     Resolve all :pep:`563`-based **postponed annotations** (i.e., strings that
@@ -97,7 +94,7 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
     assert bear_call.__class__ is BeartypeCall, (
         f'{repr(bear_call)} not @beartype call.')
 
-    # ..................{ DETECTION                         }..................
+    # ..................{ DETECTION                          }..................
     # Localize attributes of this metadata for negligible efficiency gains.
     func = bear_call.func_wrappee
 
@@ -118,7 +115,7 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
     # Else, these hints are postponed under PEP 563. In this case, resolve
     # these hints to their referents.
 
-    # ..................{ LOCALS                            }..................
+    # ..................{ LOCALS                             }..................
     # Global scope for the decorated callable.
     func_globals = get_func_globals(
         func=func, exception_cls=BeartypeDecorHintPep563Exception)
@@ -154,7 +151,7 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
         _FROZEN_SET_EMPTY
     )
 
-    # ..................{ RESOLUTION                        }..................
+    # ..................{ RESOLUTION                         }..................
     # For the parameter name (or "return" for the return value) and
     # corresponding annotation of each of this callable's type hints...
     #
@@ -449,7 +446,7 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
     # )
     func.__annotations__ = func_hints_resolved
 
-# ....................{ PRIVATE ~ resolvers               }....................
+# ....................{ PRIVATE ~ resolvers                }....................
 #FIXME: We currently no longer require this. See above for further commentary.
 # from beartype.roar import BeartypeDecorHintPepException
 # from beartype._util.cache.pool.utilcachepoollistfixed import SIZE_BIG

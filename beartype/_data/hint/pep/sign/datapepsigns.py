@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,18 +12,18 @@ regardless of the Python version targeted by the active Python interpreter).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Attributes imported here at module scope *MUST* be explicitly
 # deleted from this module's namespace below.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype._data.hint.pep.sign.datapepsigncls import (
     HintSign as _HintSign)
 
-# ....................{ SIGNS ~ explicit                  }....................
+# ....................{ SIGNS ~ explicit                   }....................
 # Signs with explicit analogues in the stdlib "typing" module.
 #
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Signs defined by this module are synchronized with the "__all__"
 # list global of the "typing" module bundled with the most recent CPython
 # release. For that reason, these signs are:
@@ -51,7 +51,7 @@ from beartype._data.hint.pep.sign.datapepsigncls import (
 # * Preserve attributes here that have since been removed from the "typing"
 #   module in that CPython release to ensure their continued usability when
 #   running beartype against older CPython releases.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Super-special typing primitives.
 HintSignAnnotated = _HintSign(name='Annotated')
@@ -169,7 +169,7 @@ HintSignTypeGuard = _HintSign(name='TypeGuard')
 HintSignMatch = _HintSign(name='Match')
 HintSignPattern = _HintSign(name='Pattern')
 
-# ....................{ SIGNS ~ implicit                  }....................
+# ....................{ SIGNS ~ implicit                   }....................
 # Signs with *NO* explicit analogues in the stdlib "typing" module but
 # nonetheless standardized by one or more PEPs.
 
@@ -182,14 +182,14 @@ HintSignNone = _HintSign(name='None')
 # class-scoped variable annotations of @dataclass.dataclass-decorated classes.
 HintSignDataclassInitVar = _HintSign(name='DataclassInitVar')
 
-# ....................{ SIGNS ~ implicit : lib            }....................
+# ....................{ SIGNS ~ implicit : lib             }....................
 # Signs identifying PEP-noncompliant third-party type hints published by...
 #
-# ....................{ SIGNS ~ implicit : lib : numpy    }....................
+# ....................{ SIGNS ~ implicit : lib : numpy     }....................
 # ...the "numpy.typing" subpackage.
 HintSignNumpyArray = _HintSign(name='NumpyArray')   # <-- "numpy.typing.NDArray"
 
-# ....................{ CLEANUP                           }....................
+# ....................{ CLEANUP                            }....................
 # Prevent all attributes imported above from polluting this namespace. Why?
 # Logic elsewhere subsequently assumes a one-to-one mapping between the
 # attributes of this namespace and signs.

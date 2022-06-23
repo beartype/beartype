@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,14 +10,11 @@ substrings intended to be embedded in strings explaining type hint violations).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._util.text.utiltextlabel import label_type
 from beartype._util.text.utiltextrepr import represent_object
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ REPRESENTERS                      }....................
+# ....................{ REPRESENTERS                       }....................
 def represent_pith(pith: object) -> str:
     '''
     Human-readable description of the passed **pith** (i.e., arbitrary object

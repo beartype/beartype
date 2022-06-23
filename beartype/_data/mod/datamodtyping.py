@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,11 +10,9 @@ quasi-standard typing modules).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+# ....................{ IMPORTS                            }....................
 
-# ....................{ SETS                              }....................
+# ....................{ SETS                               }....................
 TYPING_MODULE_NAMES_STANDARD = frozenset((
     # Official typing module bundled with the Python stdlib.
     'typing',

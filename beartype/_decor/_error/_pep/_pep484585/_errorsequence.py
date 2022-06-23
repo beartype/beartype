@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,7 +12,8 @@ hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
+from beartype.typing import Optional
 from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1)
@@ -24,12 +25,8 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextlabel import label_obj_type
-from typing import Optional
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ GETTERS ~ sequence                }....................
+# ....................{ GETTERS ~ sequence                 }....................
 def get_cause_or_none_sequence_args_1(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
@@ -175,7 +172,7 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
     # implying this pith to deeply satisfy this hint.
     return None
 
-# ....................{ GETTERS ~ private                 }....................
+# ....................{ GETTERS ~ private                  }....................
 def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,16 +11,13 @@ violations of :pep:`484`-compliant :attr:`typing.NoReturn` type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._data.hint.pep.sign.datapepsigns import HintSignNoReturn
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._decor._error._errortext import represent_pith
 from beartype._util.text.utiltextlabel import prefix_callable
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 def get_cause_or_none_noreturn(sleuth: CauseSleuth) -> str:
     '''
     Human-readable string describing the failure of the decorated callable to

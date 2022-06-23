@@ -23,7 +23,7 @@ from beartype.roar import (
     BeartypeException,
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
-    BeartypeWarning,
+    # BeartypeWarning,
 )
 from beartype._data.cls.datacls import (
     TYPES_BUILTIN_DECORATOR_DESCRIPTOR_FACTORY)
@@ -43,15 +43,11 @@ from beartype._util.func.lib.utilbeartypefunc import (
     is_func_unbeartypeable,
     set_func_beartyped,
 )
-from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.mod.utilmodget import get_object_module_line_number_begin
 from beartype._util.utilobject import get_object_name
 from traceback import format_exc
 from warnings import warn
-
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ DECORATORS                         }....................
 def beartype_object(
@@ -254,8 +250,8 @@ def beartype_object_safe(
         #* "label_callable(func=obj, is_contextualized=True)" function if this
         #  object is *NOT* a class.
         #* "label_class(cls=obj, is_contextualized=True)" function if this
-        #  object is a class. Of course, that function currently accepts to such
-        #  "is_contextualized" parameter. *sigh*
+        #  object is a class. Of course, that function currently accepts no such
+        #  "is_contextualized" parameter. Make it so, please. *sigh*
         #
         #This suggests we probably just want to define a new higher-level
         #label_object() function with signature resembling:
@@ -277,6 +273,10 @@ def beartype_object_safe(
 
         # Emit this message under this category.
         warn(warning_message, warning_category)
+
+    # Return this object unmodified, as @beartype failed to successfully wrap
+    # this object with a type-checking class or callable. So it goes, fam.
+    return obj
 
 # ....................{ PRIVATE ~ beartypers               }....................
 def _beartype_func(func: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
