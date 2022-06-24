@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -49,7 +49,7 @@ Most runners accept the same optional keyword arguments accepted by the
   killed. Defaults to ``None``, in which case this command is run indefinitely.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 # from beartype_test.util.cmd.pytcmdexit import FAILURE_DEFAULT, is_failure
 from collections.abc import Iterable, Mapping
 from os import environ
@@ -59,9 +59,9 @@ from subprocess import (
     # call as subprocess_call,
     check_output as subprocess_check_output,
 )
-from typing import Optional
+from typing import Iterable, Mapping, Optional
 
-# ....................{ GLOBALS                           }....................
+# ....................{ GLOBALS                            }....................
 BUFFER_SIZE_DEFAULT = -1
 '''
 Default subprocess buffer size for the current platform (synonymous with the
@@ -91,19 +91,15 @@ subprocess emits a newline, at which point all output emitted between that
 newline inclusive and the prior newline exclusive is consumed.
 '''
 
-# ....................{ PRIVATE ~ hints                   }....................
-#FIXME: Uncomment after dropping Python <= 3.8.
-_HINT_COMMAND_WORDS = object
-# _HINT_COMMAND_WORDS = Iterable[str]
+# ....................{ PRIVATE ~ hints                    }....................
+_HINT_COMMAND_WORDS = Iterable[str]
 '''
 PEP-compliant type hint matching the ``command_words`` parameter passed to most
 callables declared by this submodule.
 '''
 
 
-#FIXME: Uncomment after dropping Python <= 3.8.
-_HINT_POPEN_KWARGS = object
-# _HINT_POPEN_KWARGS = Mapping[str, object]
+_HINT_POPEN_KWARGS = Mapping[str, object]
 '''
 PEP-compliant type hint matching the return value of the private
 :func:`_init_popen_kwargs` function.
@@ -116,7 +112,7 @@ PEP-compliant type hint matching the ``popen_kwargs`` parameter passed to most
 callables declared by this submodule.
 '''
 
-# ....................{ RUNNERS                           }....................
+# ....................{ RUNNERS                            }....................
 #FIXME: Unit test us up, please.
 def run_python_forward_stderr_return_stdout(
     # Mandatory parameters.
@@ -355,7 +351,7 @@ def run_command_forward_stderr_return_stdout(
 #     # Return this exit status.
 #     return exit_status
 
-# ....................{ PRIVATE                           }....................
+# ....................{ PRIVATE                            }....................
 def _init_popen_kwargs(
     # Mandatory parameters.
     command_words: _HINT_COMMAND_WORDS,
@@ -368,14 +364,14 @@ def _init_popen_kwargs(
     :class:`subprocess.Popen` callable when running the command specified by
     the passed shell words with the passed user-defined keyword arguments.
 
-    `close_fds`
+    Caveats
     ----------
     If the current platform is vanilla Windows *and* none of the ``stdin``,
-    ``stdout``, ``stderr``, or ``close_fds`` arguments are passed, the latter
-    argument will be explicitly set to ``False`` -- causing the command to be
-    run to inherit all file handles (including stdin, stdout, and stderr) from
-    the current process. By default, :class:`subprocess.Popen` documentation
-    insists that:
+    ``stdout``, ``stderr``, or ``close_fds`` parameters are passed, this
+    function defaults the ``close_fds`` parameter if unpassed to ``False``.
+    Doing so causes this command to inherit all file handles (including stdin,
+    stdout, and stderr) from the active Python process. Note that the
+    :class:`subprocess.Popen` docstring insists that:
 
         On Windows, if ``close_fds`` is ``True`` then no handles will be
         inherited by the child process.
@@ -383,7 +379,7 @@ def _init_popen_kwargs(
     The child process will then open new file handles for stdin, stdout, and
     stderr. If the current terminal is a Windows Console, the underlying
     terminal devices and hence file handles will remain the same, in which case
-    this is *not* an issue. If the current terminal is Cygwin-based (e.g.,,
+    this is *not* an issue. If the current terminal is Cygwin-based (e.g.,
     MinTTY), however, the underlying terminal devices and hence file handles
     will differ, in which case this behaviour prevents interaction between the
     current shell and the vanilla Windows command to be run below. In
@@ -445,9 +441,11 @@ def _init_popen_kwargs(
     #support Microsoft-specific CMD.exe and PowerShell environments. For the
     #moment, we assume POSIX-compatibility for sanity.
     # # If this is vanilla Windows, sanitize the "close_fds" argument.
-    # if is_os_windows_vanilla() and not maptest.has_keys(
+    # if is_os_windows_vanilla() and not is_mapping_keys_one_or_more(
     #     mapping=popen_kwargs,
-    #     keys=('stdin', 'stdout', 'stderr', 'close_fds',)):
+    #     #FIXME: Globalize this as a global frozen set for efficiency.
+    #     keys=frozenset(('stdin', 'stdout', 'stderr', 'close_fds')),
+    # ):
     #     popen_kwargs['close_fds'] = False
 
     # Isolate the current set of environment variables to this command,
