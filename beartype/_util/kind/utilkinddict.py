@@ -150,10 +150,10 @@ def die_if_mappings_two_items_collide(
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
-def is_mapping_keys_one_or_more(
+def is_mapping_keys_all(
     mapping: Mapping, keys: AbstractSet[Hashable]) -> bool:
     '''
-    ``True`` only if the passed mapping contains one or more of the passed keys.
+    ``True`` only if the passed mapping contains *all* of the passed keys.
 
     Parameters
     ----------
@@ -165,12 +165,40 @@ def is_mapping_keys_one_or_more(
     Returns
     ----------
     bool
-        ``True`` only if this mapping contains one or more of these keys.
+        ``True`` only if this mapping contains *all* of these keys.
+    '''
+    assert isinstance(mapping, Mapping), f'{repr(mapping)} not mapping.'
+    assert isinstance(keys, Set), f'{repr(keys)} not set.'
+    assert bool(keys), 'Keys empty.'
 
-    Raises
+    # Return true only if this mapping contains *ALL* of these keys,
+    # equivalent to efficiently testing whether this set of one or more keys is
+    # a strict subset of the set of all keys in this mapping.
+    #
+    # Note that we intentionally do *NOT* call the set.issubclass() method here.
+    # Even standard set types that otherwise satisfy the "collections.abc.Set"
+    # protocol do *NOT* necessarily define that method.
+    return keys <= mapping.keys()
+
+
+#FIXME: Unit test us up, please.
+def is_mapping_keys_any(
+    mapping: Mapping, keys: AbstractSet[Hashable]) -> bool:
+    '''
+    ``True`` only if the passed mapping contains *any* (i.e., one or more, at
+    least one) of the passed keys.
+
+    Parameters
     ----------
-    TypeError
-        If one or more of the passed keys are *not* hashable.
+    mapping: Mapping
+        Mapping to be tested.
+    keys: AbstractSet[Hashable]
+        Set of one or more keys to test this mapping against.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this mapping contains *any* of these keys.
     '''
     assert isinstance(mapping, Mapping), f'{repr(mapping)} not mapping.'
     assert isinstance(keys, Set), f'{repr(keys)} not set.'
