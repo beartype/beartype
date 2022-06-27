@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,19 +11,16 @@ functions returning human-readable strings explaining violations of
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
+from beartype.typing import Optional
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
 from beartype._util.hint.pep.proposal.utilpep586 import (
     get_hint_pep586_literals)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from beartype._decor._error._errortext import represent_pith
-from typing import Optional
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 def get_cause_or_none_literal(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object

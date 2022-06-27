@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,7 +9,7 @@ Project-wide :pep:`484`-compliant type hint utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
@@ -17,18 +17,22 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeVar,
 )
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
-from typing import Generic, Optional, Tuple
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+# Intentionally import PEP 484-compliant "typing" type hint factories rather
+# than possibly PEP 585-compliant "beartype.typing" type hint factories.
+from typing import (
+    Generic,
+    Optional,
+    Tuple,
+)
 
-# ....................{ HINTS                             }....................
+# ....................{ HINTS                              }....................
 HINT_PEP484_TUPLE_EMPTY = Tuple[()]
 '''
 :pep:`484`-compliant empty fixed-length tuple type hint.
 '''
 
-# ....................{ TESTERS ~ ignorable               }....................
+# ....................{ TESTERS ~ ignorable                }....................
 def is_hint_pep484_ignorable_or_none(
     hint: object, hint_sign: HintSign) -> Optional[bool]:
     '''

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,13 +10,13 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.utilobject` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ tester                    }....................
+# ....................{ TESTS ~ tester                     }....................
 def test_is_object_hashable() -> None:
     '''
     Test the :func:`beartype._util.utilobject.is_object_hashable` tester.
@@ -35,10 +35,11 @@ def test_is_object_hashable() -> None:
     for object_unhashable in NOT_HINTS_UNHASHABLE:
         assert is_object_hashable(object_unhashable) is False
 
-# ....................{ TESTS ~ getter                    }....................
+# ....................{ TESTS ~ getter                     }....................
 def test_get_object_basename_scoped() -> None:
     '''
-    Test the :func:`beartype._util.utilobject.get_object_basename_scoped` getter.
+    Test the :func:`beartype._util.utilobject.get_object_basename_scoped`
+    getter.
     '''
 
     # Defer heavyweight imports.

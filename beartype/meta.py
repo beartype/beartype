@@ -44,10 +44,7 @@ of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import sys as _sys
-from typing import Tuple as _Tuple
-
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+from beartype.typing import Tuple as _Tuple
 
 # ....................{ METADATA                           }....................
 NAME = 'beartype'

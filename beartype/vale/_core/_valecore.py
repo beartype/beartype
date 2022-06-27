@@ -29,9 +29,6 @@ from beartype._util.func.arg.utilfuncargtest import (
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.text.utiltextrepr import represent_object
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ HINTS                              }....................
 BeartypeValidatorTester = Callable[[object], bool]
 '''

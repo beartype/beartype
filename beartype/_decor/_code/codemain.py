@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -16,7 +16,7 @@ high-level submodule implements *no* support for annotation-based PEPs (e.g.,
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 # All "FIXME:" comments for this submodule reside in this package's "__init__"
 # submodule to improve maintainability and readability here.
 
@@ -27,7 +27,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #* Define a new private "_codereturn" submodule and shift the
 #  _code_check_return() function there.
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeDecorParamNameException,
     BeartypeDecorHintPepException,
@@ -87,10 +87,7 @@ from collections.abc import (
     Iterable,
 )
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ PRIVATE ~ constants               }....................
+# ....................{ PRIVATE ~ constants                }....................
 #FIXME: Remove this set *AFTER* handling these kinds of parameters.
 _PARAM_KINDS_IGNORABLE = frozenset((
     ArgKind.VAR_KEYWORD,
@@ -129,7 +126,7 @@ Python objects (e.g., the ``__annotations__`` dunder dictionary of annotated
 callables).
 '''
 
-# ....................{ GENERATORS                        }....................
+# ....................{ GENERATORS                         }....................
 def generate_code(
     bear_call: BeartypeCall,
 
@@ -261,7 +258,7 @@ def generate_code(
         f'{code_check_return}'
     )
 
-# ....................{ PRIVATE ~ params                  }....................
+# ....................{ PRIVATE ~ params                   }....................
 def _code_check_args(bear_call: BeartypeCall) -> str:
     '''
     Generate a Python code snippet type-checking all annotated parameters of
@@ -292,7 +289,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
     assert bear_call.__class__ is BeartypeCall, (
         f'{repr(bear_call)} not @beartype call.')
 
-    # ..................{ LOCALS ~ func                     }..................
+    # ..................{ LOCALS ~ func                      }..................
     #FIXME: Unit test this up, please. Specifically, unit test:
     #* A callable annotated with only a single return type hint accepting both:
     #  * *NO* parameters.
@@ -318,18 +315,18 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
     # Python code snippet to be returned.
     func_wrapper_code = ''
 
-    # ..................{ LOCALS ~ parameter                }..................
+    # ..................{ LOCALS ~ parameter                 }..................
     #FIXME: Remove this *AFTER* optimizing signature generation, please.
     # True only if this callable possibly accepts one or more positional
     # parameters.
     is_args_positional = False
 
-    # ..................{ LOCALS ~ hint                     }..................
+    # ..................{ LOCALS ~ hint                      }..................
     # Type hint annotating this parameter if any *OR* "_PARAM_HINT_EMPTY"
     # otherwise (i.e., if this parameter is unannotated).
     hint = None
 
-    # ..................{ GENERATE                          }..................
+    # ..................{ GENERATE                           }..................
     #FIXME: Locally remove the "arg_index" local variable (and thus avoid
     #calling the enumerate() builtin here) AFTER* refactoring @beartype to
     #generate callable-specific wrapper signatures.
@@ -487,7 +484,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
     # Return this code.
     return func_wrapper_code
 
-# ....................{ PRIVATE ~ return                  }....................
+# ....................{ PRIVATE ~ return                   }....................
 def _code_check_return(bear_call: BeartypeCall) -> str:
     '''
     Generate a Python code snippet type-checking the annotated return declared
@@ -506,14 +503,14 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintPep484585Exception`
+    BeartypeDecorHintPep484585Exception
         If this callable is either:
 
         * A coroutine *not* annotated by a :attr:`typing.Coroutine` type hint.
         * A generator *not* annotated by a :attr:`typing.Generator` type hint.
         * An asynchronous generator *not* annotated by a
           :attr:`typing.AsyncGenerator` type hint.
-    :exc:`BeartypeDecorHintNonpepException`
+    BeartypeDecorHintNonpepException
         If the type hint annotating this return (if any) of this callable is
         neither:
 
@@ -525,6 +522,11 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
     assert bear_call.__class__ is BeartypeCall, (
         f'{repr(bear_call)} not @beartype call.')
 
+    # Python code snippet to be returned, defaulting to the empty string
+    # implying this callable's return to either be unannotated *OR* annotated by
+    # a safely ignorable type hint.
+    func_wrapper_code = ''
+
     # Type hint annotating this callable's return if any *OR* "SENTINEL"
     # otherwise (i.e., if this return is unannotated).
     #
@@ -535,7 +537,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
 
     # If this return is unannotated, silently reduce to a noop.
     if hint is SENTINEL:
-        return ''
+        return func_wrapper_code
     # Else, this return is annotated.
 
     # Attempt to...
@@ -550,11 +552,6 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
         # accept "Coroutine[None, None, typing.NoReturn]" as expected).
         hint = reduce_hint_pep484585_func_return(
             func=bear_call.func_wrappee, exception_prefix=EXCEPTION_PREFIX)
-
-        # Python code snippet to be returned, defaulting to the empty string
-        # implying this callable's return to either be unannotated *OR*
-        # annotated by a safely ignorable type hint.
-        func_wrapper_code = ''
 
         # If this is the PEP 484-compliant "typing.NoReturn" type hint
         # permitted *ONLY* as a return annotation...
@@ -635,7 +632,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
     # Return this code.
     return func_wrapper_code
 
-# ....................{ PRIVATE ~ return                  }....................
+# ....................{ PRIVATE ~ return                   }....................
 def _make_func_wrapper_signature(
     bear_call: BeartypeCall,
 
@@ -722,7 +719,7 @@ def _make_func_wrapper_signature(
         f'{code_body_init}'
     )
 
-# ....................{ PRIVATE ~ unmemoize               }....................
+# ....................{ PRIVATE ~ unmemoize                }....................
 def _unmemoize_pep_code(
     bear_call: BeartypeCall,
     func_wrapper_code: str,

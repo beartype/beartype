@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,13 +11,13 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.hint.pep.proposal.pep484585.utilpep484585generic` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ kind : generic            }....................
+# ....................{ TESTS ~ testers                    }....................
 def test_is_hint_pep484585_generic() -> None:
     '''
     Test the
@@ -44,7 +44,7 @@ def test_is_hint_pep484585_generic() -> None:
     for not_hint_pep in NOT_HINTS_PEP:
         assert is_hint_pep484585_generic(not_hint_pep) is False
 
-
+# ....................{ TESTS ~ getters                    }....................
 def test_get_hint_pep484585_generic_type_or_none() -> None:
     '''
     Test the
@@ -128,5 +128,4 @@ def test_get_hint_pep484585_generic_bases_unerased() -> None:
     # type hints.
     for not_hint_pep in NOT_HINTS_PEP:
         with raises(BeartypeDecorHintPepException):
-            assert get_hint_pep484585_generic_bases_unerased(
-                not_hint_pep) is None
+            assert get_hint_pep484585_generic_bases_unerased(not_hint_pep)

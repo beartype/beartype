@@ -21,9 +21,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from abc import ABCMeta as _ABCMeta
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ SUPERCLASS                         }....................
 class BeartypeException(Exception, metaclass=_ABCMeta):
     '''

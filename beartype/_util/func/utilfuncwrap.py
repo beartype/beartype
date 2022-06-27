@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,14 +10,11 @@ implemented as a decorator, wrapping a lower-level callable) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
+from beartype.typing import Any
 from collections.abc import Callable
-from typing import Any
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ UNWRAPPERS                        }....................
+# ....................{ UNWRAPPERS                         }....................
 def unwrap_func(func: Any) -> Callable:
     '''
     Lowest-level **wrappee** (i.e., callable wrapped by the passed wrapper

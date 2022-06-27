@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,16 +10,16 @@ callables generically applicable to :pep:`484`-compliant generic classes).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484Exception
+from beartype.typing import (
+    Any,
+    Generic,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
-from typing import Any, Generic
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 def is_hint_pep484_generic(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a :pep:`484`-compliant **generic**
@@ -107,7 +107,7 @@ def is_hint_pep484_generic(hint: object) -> bool:
     #   object to be a PEP-compliant generic.
     return is_type_subclass(hint, Generic)  # type: ignore[arg-type]
 
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 @callable_cached
 def get_hint_pep484_generic_base_erased_from_unerased(hint: Any) -> type:
     '''

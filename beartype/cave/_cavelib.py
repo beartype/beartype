@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -14,18 +14,19 @@ importation (e.g., :mod:`numpy`) despite :mod:`beartype` itself *never*
 requiring those imports. Until resolved, that subpackage is considered tainted.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 from argparse import (
     ArgumentParser,
     _SubParsersAction,
 )
+from beartype.typing import Tuple
 from beartype._cave._cavefast import (
     SequenceMutableType,
     SequenceType,
@@ -33,18 +34,17 @@ from beartype._cave._cavefast import (
     UnavailableType,
     UnavailableTypes,
 )
-from typing import Tuple
 from weakref import (
     ProxyTypes,
     ref,
 )
 
-# ....................{ TYPES ~ lib                       }....................
+# ....................{ TYPES ~ lib                        }....................
 # Types conditionally dependent upon the importability of third-party
 # dependencies. These types are subsequently redefined by try-except blocks
 # below and initially default to "UnavailableType" for simple types.
 
-# ....................{ TYPES ~ lib : numpy               }....................
+# ....................{ TYPES ~ lib : numpy                }....................
 # Conditionally redefined by the "TUPLES ~ init" subsection below.
 _NumpyArrayType: type = UnavailableType
 '''
@@ -64,7 +64,7 @@ Type of all **NumPy scalars** (i.e., instances of the abstract
 :mod:`numpy` is unimportable).
 '''
 
-# ....................{ TYPES ~ stdlib : argparse         }....................
+# ....................{ TYPES ~ stdlib : argparse          }....................
 ArgParserType = ArgumentParser
 '''
 Type of argument parsers parsing all command-line arguments for either
@@ -78,7 +78,7 @@ Type of argument subparser containers parsing subcommands for parent argument
 parsers parsing either top-level commands *or* subcommands of those commands.
 '''
 
-# ....................{ TYPES ~ stdlib : weakref          }....................
+# ....................{ TYPES ~ stdlib : weakref           }....................
 WeakRefCType = ref
 '''
 Type of all **unproxied weak references** (i.e., callable objects yielding
@@ -87,7 +87,7 @@ strong references to their referred objects when called).
 This type matches both the C-based :class:`weakref.ref` class *and* the
 pure-Python :class:`weakref.WeakMethod` class, which subclasses the former.
 '''
-# ....................{ TUPLES ~ stdlib : weakref         }....................
+# ....................{ TUPLES ~ stdlib : weakref          }....................
 WeakRefProxyCTypes = ProxyTypes
 '''
 Tuple of all **C-based weak reference proxy classes** (i.e., classes
@@ -98,7 +98,7 @@ This tuple contains classes matching both callable and uncallable weak
 reference proxies.
 '''
 
-# ....................{ TUPLES ~ version                  }....................
+# ....................{ TUPLES ~ version                   }....................
 # Conditionally expanded by the "TUPLES ~ init" subsection below.
 _VersionComparableTypes: Tuple[type, ...] = (tuple,)
 '''
@@ -122,12 +122,12 @@ ironically, those types supported both under older but *not* newer versions of
 :mod:`setuptools`. This is why we can't have good things.
 '''
 
-# ....................{ TUPLES ~ lib                      }....................
+# ....................{ TUPLES ~ lib                       }....................
 # Types conditionally dependent upon the importability of third-party
 # dependencies. These types are subsequently redefined by try-except blocks
 # below and initially default to "UnavailableTypes" for tuples of simple types.
 
-# ....................{ TUPLES ~ lib : numpy              }....................
+# ....................{ TUPLES ~ lib : numpy               }....................
 # Conditionally expanded by the "TUPLES ~ init" subsection below.
 _SequenceOrNumpyArrayTypes: Tuple[type, ...] = (SequenceType,)
 '''
@@ -171,7 +171,7 @@ See Also
     Further details on the :class:`collections.abc.MutableSequence` mismatch.
 '''
 
-# ....................{ TUPLES ~ lib : setuptools         }....................
+# ....................{ TUPLES ~ lib : setuptools          }....................
 # Conditionally redefined by the "TUPLES ~ init" subsection below.
 _SetuptoolsVersionTypes: Tuple[type, ...] = UnavailableTypes
 '''
@@ -195,7 +195,7 @@ This tuple matches these types if :mod:`pkg_resources` is importable:
     https://www.python.org/dev/peps/pep-0440
 '''
 
-# ....................{ TUPLES ~ init                     }....................
+# ....................{ TUPLES ~ init                      }....................
 # Conditionally define dependency-specific types.
 #
 # Since this submodule is often imported early in application startup, the
@@ -204,12 +204,12 @@ This tuple matches these types if :mod:`pkg_resources` is importable:
 # guaranteed to raise human-readable exceptions on missing mandatory
 # dependencies, their absence here is ignorable.
 
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # If NumPy is importable...
 try:
@@ -247,7 +247,7 @@ try:
 except:
     pass
 
-# ....................{ TUPLES ~ post-init : version      }....................
+# ....................{ TUPLES ~ post-init : version       }....................
 _VersionTypes = (StrType,) + _VersionComparableTypes
 '''
 Tuple of all **version types** (i.e., types suitable for use as parameters to

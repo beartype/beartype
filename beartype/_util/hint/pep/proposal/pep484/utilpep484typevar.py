@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,15 +10,12 @@ callables generically applicable to :pep:`484`-compliant type variables).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484Exception
+from beartype.typing import TypeVar
 from beartype._util.cache.utilcachecall import callable_cached
-from typing import TypeVar
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 @callable_cached
 def get_hint_pep484_typevar_bound_or_none(hint: TypeVar) -> object:
     '''
@@ -88,7 +85,7 @@ def get_hint_pep484_typevar_bound_or_none(hint: TypeVar) -> object:
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintPep484Exception`
+    BeartypeDecorHintPep484Exception
         if this object is *not* a :pep:`484`-compliant type variable.
     '''
 

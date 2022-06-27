@@ -26,7 +26,7 @@ from beartype.meta import VERSION
 from beartype.typing import Optional
 from beartype._conf import BeartypeConfOrNone
 from importlib import (  # type: ignore[attr-defined]
-    _bootstrap_external,
+    _bootstrap_external,  # pyright: ignore[reportGeneralTypeIssues]
 )
 from importlib.machinery import SourceFileLoader
 from importlib.util import decode_source
@@ -36,9 +36,6 @@ from types import CodeType
 # "importlib._bootstrap_external" submodule, preserved *BEFORE* temporarily
 # replacing that function with our beartype-specific variant below.
 from importlib.util import cache_from_source as cache_from_source_original
-
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CLASSES                            }....................
 #FIXME: Generalize this class to support stacking. What? Okay, so the core
@@ -465,7 +462,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # that module as is by simply deferring to the superclass method.
         if self._module_conf_if_registered is None:
             return super().source_to_code(  # type: ignore[call-arg]
-                data=data, path=path, _optimize=_optimize)
+                data=data, path=path, _optimize=_optimize)  # pyright: ignore[reportGeneralTypeIssues]
         # Else, that module has been registered for type-checking.
 
         # Plaintext decoded contents of that module.

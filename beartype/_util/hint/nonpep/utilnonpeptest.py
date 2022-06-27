@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,14 +9,14 @@ Project-wide **PEP-noncompliant type hint** utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: Validate strings to be syntactically valid classnames via a globally
 #scoped compiled regular expression. Raising early exceptions at decoration
 #time is preferable to raising late exceptions at call time.
 #FIXME: Indeed, we now provide such a callable:
 #    from beartype._util.mod.utilmodget import die_unless_module_attr_name
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.pep.utilpep3119 import (
@@ -25,10 +25,7 @@ from beartype._util.cls.pep.utilpep3119 import (
 )
 from beartype._data.datatyping import TypeException
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ VALIDATORS                        }....................
+# ....................{ VALIDATORS                         }....................
 #FIXME: Unit test us up, please.
 def die_if_hint_nonpep(
     # Mandatory parameters.
@@ -68,7 +65,7 @@ def die_if_hint_nonpep(
 
     Raises
     ----------
-    exception_cls
+    :exc:`exception_cls`
         If this object is either:
 
         * An **isinstanceable type** (i.e., standard class passable as the
@@ -146,7 +143,7 @@ def die_unless_hint_nonpep(
 
     Raises
     ----------
-    exception_cls
+    :exc:`exception_cls`
         If this object is neither:
 
         * An **isinstanceable type** (i.e., standard class passable as the
@@ -169,9 +166,9 @@ def die_unless_hint_nonpep(
     # Else, this object is *NOT* a PEP-noncompliant type hint. In this case,
     # subsequent logic raises an exception specific to the passed parameters.
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with the is_hint_nonpep() tester below.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     assert isinstance(exception_cls, type), (
         f'{repr(exception_cls)} not type.')
     assert isinstance(exception_prefix, str), (
@@ -228,7 +225,7 @@ def die_unless_hint_nonpep(
     #         f'(e.g., isinstanceable class or tuple of isinstanceable classes).'
     #     )
 
-# ....................{ VALIDATORS ~ kind                 }....................
+# ....................{ VALIDATORS ~ kind                  }....................
 #FIXME: Unit test us up.
 def die_unless_hint_nonpep_type(
     # Mandatory parameters.
@@ -263,7 +260,7 @@ def die_unless_hint_nonpep_type(
     BeartypeDecorHintPep3119Exception
         If this object is *not* an isinstanceable class (i.e., class passable
         as the second argument to the :func:`isinstance` builtin).
-    exception_cls
+    :exc:`exception_cls`
         If this object is a PEP-compliant type hint.
     '''
 
@@ -347,7 +344,7 @@ def die_unless_hint_nonpep_tuple(
 
     Raises
     ----------
-    exception_cls
+    :exc:`exception_cls`
         If this object is neither:
 
         * A non-:mod:`typing` type (i.e., class *not* defined by the
@@ -377,9 +374,9 @@ def die_unless_hint_nonpep_tuple(
     assert isinstance(exception_prefix, str), (
         f'{repr(exception_prefix)} not string.')
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with the _is_hint_nonpep_tuple() tester.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # If this object is *NOT* a tuple, raise an exception.
     if not isinstance(hint, tuple):
@@ -428,7 +425,7 @@ def die_unless_hint_nonpep_tuple(
                 f'{"neither type nor string" if is_str_valid else "not type"}.'
             )
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 def is_hint_nonpep(
     # Mandatory parameters.
     hint: object,
@@ -477,9 +474,9 @@ def is_hint_nonpep(
     '''
     assert isinstance(is_str_valid, bool), f'{repr(is_str_valid)} not boolean.'
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Return true only if either...
     return (
@@ -498,7 +495,7 @@ def is_hint_nonpep(
         else False
     )
 
-# ....................{ TESTERS ~ private                 }....................
+# ....................{ TESTERS ~ private                  }....................
 @callable_cached
 def _is_hint_nonpep_tuple(
     # Mandatory parameters.
@@ -537,9 +534,9 @@ def _is_hint_nonpep_tuple(
     '''
     assert isinstance(is_str_valid, bool), f'{repr(is_str_valid)} not boolean.'
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Return true only if this object is...
     return (
@@ -576,9 +573,9 @@ def _is_hint_nonpep_type(hint: object) -> bool:
     bool
         ``True`` only if this object is a PEP-noncompliant type.
     '''
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpeptest import is_hint_pep

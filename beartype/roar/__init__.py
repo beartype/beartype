@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -21,8 +21,8 @@ Hear :mod:`beartype` roar as it efficiently checks types, validates data, and
 raids native beehives for organic honey.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To prevent "mypy --no-implicit-reexport" from raising literally
 # hundreds of errors at static analysis time, *ALL* public attributes *MUST* be
 # explicitly reimported under the same names with "{exception_name} as
@@ -31,12 +31,12 @@ raids native beehives for organic honey.
 #     beartype/_cave/_cavefast.py:47: error: Module "beartype.roar" does not
 #     explicitly export attribute "BeartypeCallUnavailableTypeException";
 #     implicit reexport disabled  [attr-defined]
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Public exception hierarchy.
 from beartype.roar._roarexc import (
@@ -103,7 +103,7 @@ from beartype.roar._roarwarn import (
     BeartypeValeLambdaWarning as BeartypeValeLambdaWarning,
 )
 
-# ....................{ DEPRECATIONS                      }....................
+# ....................{ DEPRECATIONS                       }....................
 def __getattr__(attr_deprecated_name: str) -> object:
     '''
     Dynamically retrieve a deprecated attribute with the passed unqualified

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,13 +10,13 @@ This submodule defines hierarchies of :mod:`beartype_test`-specific exceptions
 and warnings emitted by unit and functional tests and fixtures.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from abc import ABCMeta as _ABCMeta
 from beartype.roar import BeartypeException
 from beartype._data.datatyping import TypeException
@@ -26,7 +26,7 @@ from pytest import raises
 # See the "beartype.cave" submodule for further commentary.
 __all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
-# ....................{ CONTEXTS                          }....................
+# ....................{ CONTEXTS                           }....................
 @contextmanager
 def raises_uncached(exception_cls: TypeException) -> 'ExceptionInfo':
     '''
@@ -75,7 +75,7 @@ def raises_uncached(exception_cls: TypeException) -> 'ExceptionInfo':
     # implying an upstream failure in substring concatenation.
     # assert '  ' not in exception_message
 
-# ....................{ SUPERCLASS                        }....................
+# ....................{ SUPERCLASS                         }....................
 class BeartypeTestException(BeartypeException, metaclass=_ABCMeta):
     '''
     Abstract base class of all **beartype test exceptions.**
@@ -85,6 +85,18 @@ class BeartypeTestException(BeartypeException, metaclass=_ABCMeta):
     '''
 
     pass
+
+
+class BeartypeTestPathException(BeartypeTestException):
+    '''
+    **Beartype test path exceptions.**
+
+    This exception is raised at test time from callables and classes defined by
+    the :mod:`beartype_test.util.path` subpackage.
+    '''
+
+    pass
+
 
 
 class BeartypeTestMarkException(BeartypeTestException):

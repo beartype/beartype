@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,8 +11,9 @@ functions returning human-readable strings explaining violations of
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
+from beartype.typing import Optional
 from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
 from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._decor._error._errortext import represent_pith
@@ -21,21 +22,17 @@ from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metahint,
 )
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
-from typing import Optional
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed :pep:`593`-compliant :mod:`beartype`-specific
     **metahint** (i.e., type hint annotating a standard class with one or more
-    :class:`beartype.vale._core._valecore.BeartypeValidator` objects, each produced
-    by subscripting the :class:`beartype.vale.Is` class or a subclass of that
-    class) if this object actually fails to satisfy this hint *or* ``None``
-    otherwise (i.e., if this object satisfies this hint).
+    :class:`beartype.vale._core._valecore.BeartypeValidator` objects, each
+    produced by subscripting the :class:`beartype.vale.Is` class or a subclass
+    of that class) if this object actually fails to satisfy this hint *or*
+    ``None`` otherwise (i.e., if this object satisfies this hint).
 
     Parameters
     ----------

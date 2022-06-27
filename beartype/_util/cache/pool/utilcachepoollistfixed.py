@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,22 +12,19 @@ by the :func:`beartype.beartype` decorator across decoration calls).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: Consider submitting the "FixedList" type as a relevant StackOverflow
 #answer here:
 #    https://stackoverflow.com/questions/10617045/how-to-create-a-fix-size-list-in-python
 #    https://stackoverflow.com/questions/51558015/implementing-efficient-fixed-size-fifo-in-python
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
+from beartype.roar._roarexc import _BeartypeUtilCachedFixedListException
+from beartype.typing import NoReturn
 from beartype._util.cache.pool.utilcachepool import KeyPool
 from beartype._util.text.utiltextrepr import represent_object
-from beartype.roar._roarexc import _BeartypeUtilCachedFixedListException
-from typing import NoReturn
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS                          }....................
 SIZE_BIG = 256
 '''
 Reasonably large length to constrain acquired and released fixed lists to.
@@ -38,7 +35,7 @@ contexts requiring a "reasonably large" list -- where "reasonably" and "large"
 are both subjective but *should* cover 99.9999% of use cases in this codebase.
 '''
 
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 class FixedList(list):
     '''
     **Fixed list** (i.e., :class:`list` constrained to a fixed length defined
@@ -57,14 +54,14 @@ class FixedList(list):
     exception.
     '''
 
-    # ..................{ CLASS VARIABLES                   }..................
+    # ..................{ CLASS VARIABLES                    }..................
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = ()
 
-    # ..................{ INITIALIZER                       }..................
+    # ..................{ INITIALIZER                        }..................
     def __init__(self, size: int) -> None:
         '''
         Initialize this fixed list to the passed length and all items of this
@@ -100,7 +97,7 @@ class FixedList(list):
         #     https://stackoverflow.com/a/10617221/2809027
         super().__init__([None]*size)
 
-    # ..................{ GOOD ~ non-dunders                }..................
+    # ..................{ GOOD ~ non-dunders                 }..................
     # Permit non-dunder methods preserving list length but otherwise requiring
     # overriding.
 
@@ -116,7 +113,7 @@ class FixedList(list):
         # Return this copy.
         return list_copy
 
-    # ..................{ BAD ~ dunders                     }..................
+    # ..................{ BAD ~ dunders                      }..................
     # Prohibit dunder methods modifying list length by overriding these methods
     # to raise exceptions.
 
@@ -134,7 +131,7 @@ class FixedList(list):
         raise _BeartypeUtilCachedFixedListException(
             f'{self._label} not multipliable by {represent_object(value)}.')
 
-    # ..................{ BAD ~ dunders : setitem           }..................
+    # ..................{ BAD ~ dunders : setitem            }..................
     #FIXME: Great idea, if efficiency didn't particularly matter. Since
     #efficiency is the entire raison d'etre of this class, however, this method
     #has been temporarily and probably permanently disabled. Extensive
@@ -225,7 +222,7 @@ class FixedList(list):
     #             f'length {value_len}.'
     #         )
 
-    # ..................{ BAD ~ non-dunders                 }..................
+    # ..................{ BAD ~ non-dunders                  }..................
     # Prohibit non-dunder methods modifying list length by overriding these
     # methods to raise exceptions.
 
@@ -253,7 +250,7 @@ class FixedList(list):
         raise _BeartypeUtilCachedFixedListException(
             f'{self._label} not removable.')
 
-    # ..................{ PRIVATE ~ property                }..................
+    # ..................{ PRIVATE ~ property                 }..................
     # Read-only properties intentionally prohibiting mutation.
 
     @property
@@ -270,7 +267,7 @@ class FixedList(list):
         # One-liners for magnanimous pusillanimousness.
         return f'Fixed list {represent_object(self)}'
 
-# ....................{ PRIVATE ~ factories               }....................
+# ....................{ PRIVATE ~ factories                }....................
 _fixed_list_pool = KeyPool(item_maker=FixedList)
 '''
 Thread-safe **fixed list pool** (i.e., :class:`KeyPool` singleton caching
@@ -283,7 +280,7 @@ Caveats
 efficiently validate both input *and* output to conform to sane expectations.
 '''
 
-# ....................{ (ACQUIRERS|RELEASERS)             }....................
+# ....................{ (ACQUIRERS|RELEASERS)              }....................
 def acquire_fixed_list(size: int) -> FixedList:
     '''
     Acquire an arbitrary **fixed list** (i.e., :class:`list` constrained to a

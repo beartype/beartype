@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,12 +10,12 @@ strings into new strings delimited by passed substring delimiters).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
+from beartype.typing import Iterable as typing_Iterable
 from beartype._data.datatyping import IterableStrs
 from collections.abc import Iterable, Sequence
-from typing import Iterable as typing_Iterable
 
-# ....................{ JOINERS                           }....................
+# ....................{ JOINERS                            }....................
 def join_delimited(
     strs: IterableStrs,
     delimiter_if_two: str,
@@ -63,13 +63,13 @@ def join_delimited(
 
     Examples
     ----------
-    >>> join_delimited(
-    ...     strs=('Fulgrim', 'Perturabo', 'Angron', 'Mortarion'),
-    ...     delimiter_if_two=' and ',
-    ...     delimiter_if_three_or_more_nonlast=', ',
-    ...     delimiter_if_three_or_more_last=', and '
-    ... )
-    'Fulgrim, Perturabo, Angron, and Mortarion'
+        >>> join_delimited(
+        ...     strs=('Fulgrim', 'Perturabo', 'Angron', 'Mortarion'),
+        ...     delimiter_if_two=' and ',
+        ...     delimiter_if_three_or_more_nonlast=', ',
+        ...     delimiter_if_three_or_more_last=', and '
+        ... )
+        'Fulgrim, Perturabo, Angron, and Mortarion'
     '''
     assert isinstance(strs, Iterable) and not isinstance(strs, str), (
         f'{repr(strs)} not non-string iterable.')
@@ -109,7 +109,7 @@ def join_delimited(
     # Return these two substrings, delimited appropriately.
     return f'{strs_nonlast}{delimiter_if_three_or_more_nonlast}{strs_last}'
 
-# ....................{ JOINERS ~ disjunction             }....................
+# ....................{ JOINERS ~ disjunction              }....................
 def join_delimited_disjunction(strs: IterableStrs) -> str:
     '''
     Concatenate the passed iterable of zero or more strings delimited by commas

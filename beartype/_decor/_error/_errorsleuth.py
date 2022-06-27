@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,7 +12,7 @@ associated with this object) classes.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype.typing import (
     Any,
@@ -36,10 +36,7 @@ from beartype._util.hint.pep.utilpeptest import (
 from beartype._util.hint.utilhintconv import sanify_hint_child
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 class CauseSleuth(object):
     '''
     **Type-checking error cause sleuth** (i.e., object recursively fabricating
@@ -94,7 +91,7 @@ class CauseSleuth(object):
         Type hint to validate this object against.
     '''
 
-    # ..................{ CLASS VARIABLES                   }..................
+    # ..................{ CLASS VARIABLES                    }..................
     # Slot *ALL* instance variables defined on this object to both:
     # * Prevent accidental declaration of erroneous instance variables.
     # * Minimize space and time complexity.
@@ -123,11 +120,11 @@ class CauseSleuth(object):
     method, defined as a set to enable efficient membership testing.
     '''
 
-    # ..................{ INITIALIZERS                      }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # ..................{ INITIALIZERS                       }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Whenever adding, deleting, or renaming any parameter accepted by
     # this method, make similar changes to the "_INIT_PARAM_NAMES" set above.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def __init__(
         self,
         func: Callable,
@@ -135,7 +132,7 @@ class CauseSleuth(object):
         hint: Any,
         cause_indent: str,
         exception_prefix: str,
-        random_int: int,
+        random_int: Optional[int],
     ) -> None:
         '''
         Initialize this object.
@@ -162,7 +159,7 @@ class CauseSleuth(object):
         # Classify this hint *AFTER* initializing all parameters above.
         self.hint = hint
 
-    # ..................{ PROPERTIES                        }..................
+    # ..................{ PROPERTIES                         }..................
     @property
     def hint(self) -> Any:
         '''
@@ -194,7 +191,7 @@ class CauseSleuth(object):
         # Classify this hint *AFTER* all other assignments above.
         self._hint = hint
 
-    # ..................{ GETTERS                           }..................
+    # ..................{ GETTERS                            }..................
     def get_cause_or_none(self) -> Optional[str]:
         '''
         Human-readable string describing the failure of this pith to satisfy
@@ -335,7 +332,7 @@ class CauseSleuth(object):
         # returned by this getter.
         return get_cause_or_none(self)
 
-    # ..................{ PERMUTERS                         }..................
+    # ..................{ PERMUTERS                          }..................
     def permute(self, **kwargs) -> 'CauseSleuth':
         '''
         Shallow copy of this object such that each the passed keyword argument

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -14,7 +14,7 @@ from beartype.roar import BeartypeDecorHintPep557Exception
 from beartype._data.datatyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignDataclassInitVar
 
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 def get_hint_pep557_initvar_arg(
     # Mandatory parameters.
     hint: object,

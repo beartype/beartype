@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,16 +11,13 @@ Project-wide :pep:`484`- and :pep:`585`-compliant **dual type hint utilities**
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
     HINT_PEP484_TUPLE_EMPTY)
 from beartype._util.hint.pep.proposal.utilpep585 import (
     HINT_PEP585_TUPLE_EMPTY)
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ TESTERS ~ kind : tuple            }....................
+# ....................{ TESTERS ~ kind : tuple             }....................
 def is_hint_pep484585_tuple_empty(hint: object) -> bool:
     '''
     ``True`` only if the passed object is either a :pep:`484`- or

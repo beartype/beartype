@@ -19,10 +19,8 @@ from beartype.typing import (
     Union,
 )
 from beartype._data.datatyping import TypeException
+from beartype._data.hint.pep.sign.datapepsigns import HintSignCallable
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
-
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ HINTS                              }....................
 # If an external static type checker (e.g., "mypy") is currently subjecting
@@ -59,10 +57,71 @@ else:
     ``typing.Callable[...]`` or ``collections.abc.Callable[...]`` type hint).
     '''
 
+# ....................{ VALIDATORS                         }....................
+def _die_unless_hint_pep484585_callable(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception unless the passed object is either a :pep:`484`- or
+    :pep:`585`-compliant **callable type hint** (i.e., ``typing.Callable[...]``
+    or ``collections.abc.Callable[...]`` type hint).
+
+    Parameters
+    ----------
+    hint : object
+        Object to be validated.
+    exception_cls : TypeException, optional
+        Type of exception to be raised. Defaults to
+        :exc:`BeartypeDecorHintPep484585Exception`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Raises
+    ----------
+    :exc:`exception_cls`
+        If this hint is either:
+
+        * PEP-compliant but *not* uniquely identifiable by a sign.
+        * PEP-noncompliant.
+        * *Not* a hint (i.e., neither PEP-compliant nor -noncompliant).
+        * *Not* a callable type hint (i.e., ``typing.Callable[...]`` or
+          ``collections.abc.Callable[...]``).
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+
+    # Sign uniquely identifying this hint if any *OR* raise an exception.
+    hint_sign = get_hint_pep_sign(
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+
+    # If this object is *NOT* a callable type hint, raise an exception.
+    if hint_sign is not HintSignCallable:
+        assert issubclass(exception_cls, Exception), (
+            f'{repr(exception_cls)} not exception class.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        raise exception_cls(
+            f'{exception_prefix}type hint {repr(hint)} not '
+            f'PEP 484 or 585 callable type hint '
+            f'(i.e., "typing.Callable[...]" or '
+            f'"collections.abc.Callable[...]").'
+        )
+    # Else, this object is a callable type hint, raise an exception.
+
 # ....................{ GETTERS                            }....................
-#FIXME: Implement a new _die_unless_hint_pep484585_callable() validator, please.
-#FIXME: Implement us up, please.
-#FIXME: Unit test us up, please.
+#FIXME: Unit test us up, please. Note that we should exercise *ALL* edge cases
+#by defining sample type hints doing so in our test suite.
 def get_hint_pep484585_callable_args(
     # Mandatory parameters.
     hint: object,
@@ -96,7 +155,7 @@ def get_hint_pep484585_callable_args(
     ----------
     hint : object
         Callable type hint to be inspected.
-    exception_cls : TypeException
+    exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep484585Exception`.
     exception_prefix : str, optional
@@ -114,4 +173,173 @@ def get_hint_pep484585_callable_args(
         If this hint is *not* a callable type hint.
     '''
 
-    pass
+    # Avoid circular import dependencies.
+    from beartype._data.hint.pep.sign.datapepsigns import (
+        HintSignConcatenate,
+        HintSignParamSpec,
+    )
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_args,
+        get_hint_pep_sign_or_none,
+    )
+
+    # If this hint is *NOT* a callable type hint, raise an exception.
+    _die_unless_hint_pep484585_callable(hint)
+    # Else, this hint is a callable type hint.
+
+    # Flattened tuple of the one or more child type hints subscripting this
+    # callable type hint. Presumably for space efficiency reasons, both PEP 484-
+    # *AND* 585-compliant callable type hints implicitly flatten the "__args__"
+    # dunder tuple from the original data structure subscripting those hints.
+    # CPython produces this flattened tuple as the concatenation of:
+    #
+    # * Either:
+    #   * If the first child type originally subscripting this hint was a list,
+    #     all items subscripting the nested list of zero or more parameter type
+    #     hints originally subscripting this hint as is: e.g.,
+    #         >>> Callable[[], bool]
+    #         (bool,)
+    #         >>> Callable[[int, str], bool]
+    #         (int, str, bool)
+    #     This includes a list containing only the empty tuple signifying a
+    #     callable accepting *NO* parameters, in which case that empty tuple is
+    #     preserved as is: e.g.,
+    #         >>> Callable[[()], bool]
+    #         ((), bool)
+    #   * Else, the first child type originally subscripting this hint as is. In
+    #     this case, that child type is required to be either:
+    #     * An ellipsis object (i.e., the "Ellipsis" builtin singleton): e.g.,
+    #         >>> Callable[..., bool]
+    #         (Ellipsis, bool)
+    #     * A PEP 612-compliant parameter specification (i.e.,
+    #       "typing.ParamSpec[...]" type hint): e.g.,
+    #         >>> Callable[ParamSpec('P'), bool]
+    #         (~P, bool)
+    #     * A PEP 612-compliant parameter concatenation (i.e.,
+    #       "typing.Concatenate[...]" type hint): e.g.,
+    #         >>> Callable[Concatenate[str, ParamSpec('P')], bool]
+    #         (typing.Concatenate[str, ~P], bool)
+    # * The return type hint originally subscripting this hint.
+    #
+    # Note that both PEP 484- *AND* 585-compliant callable type hints guarantee
+    # this tuple to contain at least one child type hint. Ergo, we avoid
+    # validating that constraint here: e.g.,
+    #     >>> from typing import Callable
+    #     >>> Callable[()]
+    #     TypeError: Callable must be used as Callable[[arg, ...], result].
+    #     >>> from collections.abc import Callable
+    #     >>> Callable[()]
+    #     TypeError: Callable must be used as Callable[[arg, ...], result].
+    hint_args = get_hint_pep_args(hint)
+
+    # Number of parameter type hints flattened into this tuple, calculated by
+    # excluding the trailing return type hint also flattened into this tuple.
+    #
+    # Note that by the above constraint, this number is guaranteed to be
+    # non-negative: e.g.,
+    #     >>> hint_args_len >= 0
+    #     True
+    hint_params_len = len(hint_args) - 1
+
+    # If this callable type hint was subscripted by *NO* parameter type hints,
+    # return the empty tuple for efficiency.
+    if hint_params_len == 0:
+        return ()
+    # Else, this callable type hint was subscripted by one or more parameter
+    # type hints.
+    #
+    # If this callable type hint was subscripted by two or more parameter type
+    # hints, this callable type hint *CANNOT* have been subscripted by a single
+    # "special" parameter type hint (e.g., ellipsis, parameter specification).
+    # By elimination, the only remaining category of parameter type hint is a
+    # nested list of two or more parameter type hints. In this case, return the
+    # tuple slice containing the parameter type hints omitting the trailing
+    # return type hint.
+    elif hint_params_len >= 2:
+        return hint_args[:-1]
+    # Else, this callable type hint was subscripted by exactly one parameter
+    # type hint... which could be either a nested list of one or more parameter
+    # type hints *OR* a "special" parameter type hint. To differentiate the
+    # former from the latter, we explicitly detect all possible instances of the
+    # latter and only fallback to the former after exhausting the latter.
+
+    # Empty tuple singleton. Yes, we know exactly what you're thinking: "Why
+    # would anyone do this, @leycec? Why not just directly access the empty
+    # tuple singleton as ()?" Because Python insanely requires us to do this
+    # under Python >= 3.8 to detect empty tuples:
+    #     $ python3.7
+    #     >>> () is ()
+    #     True   # <-- yes, this is good
+    #
+    #     $ python3.8
+    #     >>> () is ()
+    #     SyntaxWarning: "is" with a literal. Did you mean "=="?  # <-- WUT
+    #     >>> _TUPLE_EMPTY = ()
+    #     >>> _TUPLE_EMPTY is _TUPLE_EMPTY
+    #     True  # <-- *FACEPALM*
+    #
+    # Note there's no point in globalizing this. Doing so would needlessly
+    # incur a globals lookup cost while saving no space or time.
+    _TUPLE_EMPTY = ()
+
+    # Single parameter type hint subscripting this callable type hint.
+    hint_param = hint_args[0]
+
+    # If this parameter type hint is either...
+    #
+    # Note that we intentionally avoid attempting to efficiently test this
+    # parameter type hint against a set (e.g., "hint_param in {..., ()}"). This
+    # parameter type hint is *NOT* guaranteed to be hashable and thus testable
+    # against a hash-based collection.
+    if (
+        # An ellipsis, return an ellipsis.
+        hint_param is ... or
+        # The empty tuple, reduce this unlikely (albeit possible) edge case
+        # to the empty tuple returned for the more common case of a callable
+        # type hint subscripted by an empty list. That is, reduce these two
+        # cases to the same empty tuple for simplicity: e.g.,
+        #     >>> Callable[[], bool].__args__
+        #     (bool,)  # <------ this is good
+        #     >>> Callable[[()], bool].__args__
+        #     ((), bool,)  # <-- this is bad, so pretend this never happens
+        hint_param is _TUPLE_EMPTY
+    ):
+        return hint_param
+    # Else, this parameter type hint is neither the empty tuple *NOR* an
+    # ellipsis.
+
+    # Sign uniquely identifying this parameter type hint if any *OR* "None".
+    hint_sign = get_hint_pep_sign_or_none(hint_param)
+
+    # If this parameter type hint is a PEP-compliant parameter type (i.e.,
+    # uniquely identifiable by a sign), return this hint as is.
+    #
+    # Note that:
+    # * This requires callers to handle all possible categories of
+    #   PEP-compliant parameter type hints -- including both
+    #   "typing.ParamSpec[...]" and "typing.Concatenate[...]" parameter type
+    #   hints, presumably by (...somewhat redundantly, but what can you do)
+    #   calling the get_hint_pep_sign_or_none() getter themselves.
+    # * Both PEP 484- *AND* 585-compliant callable type hints guarantee
+    #   this parameter type hint to be constrained to the subset of
+    #   PEP-compliant parameter type hints. Arbitrary parameter type hints
+    #   are prohibited. Ergo, we avoid validating that constraint here:
+    #   e.g.,
+    #     >>> from typing import Callable, List
+    #     >>> Callable[List[int], bool]
+    #     TypeError: Callable[args, result]: args must be a list. Got
+    #     typing.List[int]
+    #FIXME: Refactor this set into a proper "datapepsignset" frozen set!
+    if hint_sign in {
+        HintSignConcatenate,
+        HintSignParamSpec,
+    }:
+        return hint_param
+    # Else, this parameter type hint is *NOT* a PEP-compliant parameter type
+    # hint. This hint *CANNOT* be "special" and *MUST* thus be the single
+    # parameter type hint of a nested list: e.g.,
+    #     >>> Callable[[list[int]], bool].__args__
+    #     (list[int], bool)
+
+    # In this case, return the 1-tuple containing exactly this hint.
+    return (hint_param,)

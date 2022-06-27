@@ -28,9 +28,6 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
     is_hint_pep585_generic,
 )
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ TESTERS                            }....................
 @callable_cached
 def is_hint_pep484585_generic(hint: object) -> bool:

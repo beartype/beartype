@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,7 +10,7 @@ objects or types, typically interpolated into error messages) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.typing import Optional
 from beartype._util.utilobject import (
     get_object_name,
@@ -18,10 +18,7 @@ from beartype._util.utilobject import (
 )
 from collections.abc import Callable
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ LABELLERS ~ callable              }....................
+# ....................{ LABELLERS ~ callable               }....................
 def label_callable(
     # Mandatory parameters.
     func: Callable,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,10 +10,10 @@ passed strings, typically prefixes and suffixes satisfying various conditions).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 # from beartype.roar._roarexc import _BeartypeUtilTextException
 
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 #FIXME: Uncomment if ever needed.
 # def get_str_prefix_greedy(text: str, anchor: str) -> str:
 #     '''

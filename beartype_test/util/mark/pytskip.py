@@ -101,7 +101,33 @@ def skip(reason: str):
 
     return skip_if(True, reason=reason)
 
-# ....................{ SKIP ~ env                         }....................
+# ....................{ SKIP ~ command                     }....................
+def skip_unless_command(command_basename: str):
+    '''
+    Skip the decorated test or fixture unless an executable command with the
+    passed basename resides in the current ``${PATH}``.
+
+    Parameters
+    ----------
+    command_basename : str
+        Basename of the command to be searched for.
+
+    Returns
+    ----------
+    pytest.skipif
+        Decorator describing these requirements if unmet *or* the identity
+        decorator reducing to a noop otherwise.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype_test.util.cmd.pytcmdpath import is_pathable
+
+    # Skip this test if *NO* command with this basename resides in the ${PATH}.
+    return skip_if(
+        not is_pathable(command_basename),
+        reason=f'Command "{command_basename}" not found.')
+
+# ....................{ SKIP ~ host                        }....................
 def skip_if_ci():
     '''
     Skip the decorated test or fixture if the active Python interpreter is
@@ -222,7 +248,8 @@ def skip_if_python_version_greater_than_or_equal_to(version: str):
     # Skip this test if the current Python version exceeds this requirement.
     return skip_if(
         _PYTHON_VERSION_TUPLE >= version_tuple,
-        reason=f'Python {_PYTHON_VERSION_STR} >= {version}.')
+        reason=f'Python {_PYTHON_VERSION_STR} >= {version}.'
+    )
 
 
 def skip_if_python_version_less_than(version: str):
@@ -259,7 +286,8 @@ def skip_if_python_version_less_than(version: str):
     # requirement.
     return skip_if(
         _PYTHON_VERSION_TUPLE < version_tuple,
-        reason=f'Python {_PYTHON_VERSION_STR} < {version}.')
+        reason=f'Python {_PYTHON_VERSION_STR} < {version}.'
+    )
 
 # ....................{ SKIP ~ py : module                 }....................
 def skip_unless_package(
@@ -389,9 +417,9 @@ def _skip_if_callable_raises_exception(
     # Validate *AFTER* defaulting these arguments.
     assert isinstance(exception_type, type), (
         f'{repr((exception_type))} not type.')
-    assert callable(func), '{repr()} uncallable.'
-    assert isinstance(args, Sequence), '{repr(args)} not sequence.'
-    assert isinstance(kwargs, Mapping), '{repr(kwargs)} not mapping.'
+    assert callable(func), f'{repr(func)} uncallable.'
+    assert isinstance(args, Sequence), f'{repr(args)} not sequence.'
+    assert isinstance(kwargs, Mapping), f'{repr(kwargs)} not mapping.'
 
     # Attempt to call this callable with these arguments.
     try:

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,7 +12,8 @@ PEP-compliant generic type hint annotating that parameter or return).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
+from beartype.typing import Optional
 from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
 from beartype._decor._error._errortype import (
     get_cause_or_none_instance_type)
@@ -26,12 +27,8 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484generic import (
 from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
 from beartype._util.hint.utilhinttest import is_hint_ignorable
-from typing import Optional
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 def get_cause_or_none_generic(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object

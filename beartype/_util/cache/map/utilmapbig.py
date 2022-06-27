@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,14 +9,16 @@ Project-wide **unbounded cache** utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
-# from beartype.roar._roarexc import _BeartypeUtilCacheException
+# ....................{ IMPORTS                            }....................
+from beartype.typing import (
+    Callable,
+    Dict,
+)
 from beartype._util.utilobject import SENTINEL
 from collections.abc import Hashable
 from threading import Lock
-from typing import Callable, Dict
 
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 #FIXME: Submit back to StackOverflow, preferably under this question:
 #    https://stackoverflow.com/questions/1312331/using-a-global-dictionary-with-threads-in-python
 class CacheUnboundedStrong(object):
@@ -73,7 +75,7 @@ class CacheUnboundedStrong(object):
         safely ignorable -- even under CPython.
     '''
 
-    # ..................{ CLASS VARIABLES                   }..................
+    # ..................{ CLASS VARIABLES                    }..................
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently called
     # @beartype decorations. Slotting has been shown to reduce read and write
@@ -85,7 +87,7 @@ class CacheUnboundedStrong(object):
         '_lock',
     )
 
-    # ..................{ INITIALIZER                       }..................
+    # ..................{ INITIALIZER                        }..................
     def __init__(self) -> None:
         '''
         Initialize this cache to an empty cache.
@@ -97,7 +99,7 @@ class CacheUnboundedStrong(object):
         self._key_to_value_set = self._key_to_value.__setitem__
         self._lock = Lock()
 
-    # ..................{ GETTERS                           }..................
+    # ..................{ GETTERS                            }..................
     def get_value_static(
         self,
 

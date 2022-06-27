@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,18 +11,15 @@ callables).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.typing import Dict
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._data.datatyping import Codeobjable, TypeException
 from collections.abc import Callable
 from inspect import CO_VARARGS, CO_VARKEYWORDS
-from typing import Dict
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ PRIVATE                           }....................
+# ....................{ PRIVATE                            }....................
 _ARGS_DEFAULTS_KWONLY_EMPTY: Dict[str, object] = {}
 '''
 Empty dictionary suitable for use as the default dictionary mapping the name of
@@ -30,7 +27,7 @@ each optional keyword-only parameter accepted by a callable to the default
 value assigned to that parameter.
 '''
 
-# ....................{ VALIDATORS                        }....................
+# ....................{ VALIDATORS                         }....................
 #FIXME: Uncomment as needed.
 # def die_unless_func_argless(
 #     # Mandatory parameters.
@@ -122,7 +119,7 @@ def die_unless_func_args_len_flexible_equal(
 
     Raises
     ----------
-    exception_cls
+    :exc:`exception_cls`
         If this callable either:
 
         * Is *not* callable.
@@ -153,7 +150,7 @@ def die_unless_func_args_len_flexible_equal(
             f'{func_args_len_flexible_actual} != {func_args_len_flexible}.'
         )
 
-# ....................{ TESTERS ~ kind                    }....................
+# ....................{ TESTERS ~ kind                     }....................
 def is_func_argless(
     # Mandatory parameters.
     func: Codeobjable,
@@ -180,7 +177,7 @@ def is_func_argless(
 
     Raises
     ----------
-    exception_cls
+    :exc:`exception_cls`
          If the passed callable is *not* pure-Python.
     '''
 
@@ -202,7 +199,7 @@ def is_func_argless(
         is_func_arg_variadic(func_codeobj)
     )
 
-# ....................{ TESTERS ~ kind : variadic         }....................
+# ....................{ TESTERS ~ kind : variadic          }....................
 def is_func_arg_variadic(func: Codeobjable) -> bool:
     '''
     ``True`` only if the passed pure-Python callable accepts any **variadic
@@ -261,9 +258,9 @@ def is_func_arg_variadic_positional(func: Codeobjable) -> bool:
          If the passed callable is *not* pure-Python.
     '''
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the iter_func_args() iterator.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Code object underlying the passed pure-Python callable unwrapped.
     func_codeobj = get_func_codeobj(func=func, is_unwrapping=True)
@@ -294,9 +291,9 @@ def is_func_arg_variadic_keyword(func: Codeobjable) -> bool:
          If the passed callable is *not* pure-Python.
     '''
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the iter_func_args() iterator.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Code object underlying the passed pure-Python callable unwrapped.
     func_codeobj = get_func_codeobj(func=func, is_unwrapping=True)
@@ -304,7 +301,7 @@ def is_func_arg_variadic_keyword(func: Codeobjable) -> bool:
     # Return true only if this callable declares variadic keyword arguments.
     return func_codeobj.co_flags & CO_VARKEYWORDS != 0
 
-# ....................{ TESTERS ~ name                    }....................
+# ....................{ TESTERS ~ name                     }....................
 #FIXME: *THIS TESTER IS HORRIFYINGLY SLOW*, thanks to a naive implementation
 #deferring to the slow iter_func_args() iterator. A substantially faster
 #get_func_arg_names() getter should be implemented instead and this tester
@@ -343,7 +340,7 @@ def is_func_arg_name(func: Callable, arg_name: str) -> bool:
 
     Raises
     ----------
-    :exc:`_BeartypeUtilCallableException`
+    _BeartypeUtilCallableException
          If the passed callable is *not* pure-Python.
     '''
     assert isinstance(arg_name, str), f'{arg_name} not string.'

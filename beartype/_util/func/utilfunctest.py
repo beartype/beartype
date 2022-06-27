@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.typing import Any
 from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj_or_none)
 from beartype._data.datatyping import (
@@ -26,10 +27,6 @@ from inspect import (
     CO_COROUTINE,
     CO_GENERATOR,
 )
-from typing import Any
-
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ CONSTANTS                          }....................
 FUNC_NAME_LAMBDA = '<lambda>'

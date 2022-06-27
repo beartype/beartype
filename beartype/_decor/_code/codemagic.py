@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,13 +10,10 @@ code generation but *not* themselves code).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ EXCEPTIONS                        }....................
+# ....................{ EXCEPTIONS                         }....................
 EXCEPTION_PREFIX = EXCEPTION_PLACEHOLDER
 '''
 Human-readable substring unconditionally prefixing *all* exception messages
@@ -45,7 +42,7 @@ Human-readable substring describing the current root type hint generically
 exception messages.
 '''
 
-# ....................{ NAMES ~ parameter                 }....................
+# ....................{ NAMES ~ parameter                  }....................
 # To avoid colliding with the names of arbitrary caller-defined parameters, the
 # beartype-specific parameter names *MUST* be prefixed by "__beartype_".
 
@@ -88,7 +85,7 @@ decorator requiring one or more types or tuples of types cached by this
 singleton).
 '''
 
-# ....................{ NAMES ~ locals                    }....................
+# ....................{ NAMES ~ locals                     }....................
 VAR_NAME_PREFIX_PITH = '__beartype_pith_'
 '''
 Substring prefixing all local variables providing a **pith** (i.e., either the

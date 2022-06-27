@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,8 +11,12 @@ utilities** (i.e., callables generically applicable to both :pep:`484`- and
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
+from beartype.typing import (
+    Any,
+    Union,
+)
 from beartype._util.cls.utilclstest import die_unless_type
 from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
     HINT_PEP484_FORWARDREF_TYPE,
@@ -22,12 +26,8 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
 from beartype._util.mod.utilmodimport import import_module_attr
 from beartype._util.mod.utilmodget import get_object_module_name
 from beartype._data.datatyping import TypeException
-from typing import Any, Union
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ HINTS                             }....................
+# ....................{ HINTS                              }....................
 HINT_PEP484585_FORWARDREF_TYPES = (str, HINT_PEP484_FORWARDREF_TYPE)
 '''
 Tuple union of all :pep:`484`- or :pep:`585`-compliant **forward reference
@@ -50,7 +50,7 @@ harms space and time complexity at runtime with *no* concomitant benefits.
 '''
 
 
-HINT_PEP484585_FORWARDREF_UNION: Any = Union[str, HINT_PEP484_FORWARDREF_TYPE]
+HINT_PEP484585_FORWARDREF_UNION = Union[str, HINT_PEP484_FORWARDREF_TYPE]
 '''
 Union of all :pep:`484`- or :pep:`585`-compliant **forward reference types**
 (i.e., classes of all forward reference objects).
@@ -61,7 +61,7 @@ See Also
     Further details.
 '''
 
-# ....................{ VALIDATORS ~ kind : forwardref    }....................
+# ....................{ VALIDATORS                         }....................
 def die_unless_hint_pep484585_forwardref(
     # Mandatory parameters.
     hint: object,
@@ -94,18 +94,22 @@ def die_unless_hint_pep484585_forwardref(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintForwardRefException`
+    BeartypeDecorHintForwardRefException
         If this object is *not* a forward reference type hint.
     '''
 
-    # If this is *NOT* a forward reference type hint, raise an exception.
+    # If this object is *NOT* a forward reference type hint, raise an exception.
     if not isinstance(hint, HINT_PEP484585_FORWARDREF_TYPES):
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
         raise BeartypeDecorHintForwardRefException(
             f'{exception_prefix}type hint {repr(hint)} not forward reference '
             f'(i.e., neither string nor "typing.ForwardRef" instance).'
         )
+    # Else, this object is a forward reference type hint.
 
-# ....................{ GETTERS ~ kind : forwardref       }....................
+# ....................{ GETTERS ~ kind : forwardref        }....................
 #FIXME: Unit test against nested classes.
 #FIXME: Validate that this forward reference string is *NOT* the empty string.
 #FIXME: Validate that this forward reference string is a syntactically valid
@@ -166,7 +170,7 @@ def get_hint_pep484585_forwardref_classname(
     return (
         # If this hint is a PEP 484-compliant forward reference, the typically
         # unqualified classname referred to by this reference.
-        get_hint_pep484_forwardref_type_basename(hint)
+        get_hint_pep484_forwardref_type_basename(hint)  # pyright: ignore[reportGeneralTypeIssues]
         if is_hint_pep484_forwardref(hint) else
         # Else, this hint is a string. In this case, this string as is.
         hint
@@ -228,7 +232,7 @@ def get_hint_pep484585_forwardref_classname_relative_to_object(
         f'{get_object_module_name(obj)}.{forwardref_classname}'
     )
 
-# ....................{ IMPORTERS                         }....................
+# ....................{ IMPORTERS                          }....................
 #FIXME: Unit test us up, please.
 def import_pep484585_forwardref_type_relative_to_object(
     # Mandatory parameters.

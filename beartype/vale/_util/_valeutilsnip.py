@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,14 +12,11 @@ validators).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ INDENTATION                       }....................
+# ....................{ INDENTATION                        }....................
 VALE_CODE_INDENT_1 = f'{{indent}}{CODE_INDENT_1}'
 '''
 Code snippet prefixed by the placeholder substring ``"{indent}"`` (which the
@@ -28,7 +25,7 @@ the indentation level required by the current beartype validator) followed by a
 single level of indentation.
 '''
 
-# ....................{ CHECK ~ factory                   }....................
+# ....................{ CHECK ~ factory                    }....................
 VALE_CODE_CHECK_ISEQUAL_TEST = '''
 {{indent}}# True only if this pith equals this object.
 {{indent}}{{obj}} == {param_name_obj_value}'''
@@ -55,7 +52,7 @@ VALE_CODE_CHECK_ISSUBCLASS_TEST = '''
 type to subclass another arbitrary type.
 '''
 
-# ....................{ CHECK ~ factory : isattr          }....................
+# ....................{ CHECK ~ factory : isattr           }....................
 VALE_CODE_CHECK_ISATTR_TEST = '''(
 {{indent}}    # True only if this pith defines an attribute with this name.
 {{indent}}    {attr_value_expr}
@@ -99,7 +96,7 @@ a local variable whose name *must* be uniquified and formatted by the caller
 into the ``local_name_attr_value`` format variable.
 '''
 
-# ....................{ METHODS                           }....................
+# ....................{ METHODS                            }....................
 # Format methods of the code snippets declared above as a microoptimization.
 
 VALE_CODE_CHECK_ISATTR_TEST_format = VALE_CODE_CHECK_ISATTR_TEST.format

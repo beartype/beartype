@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,14 +10,14 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.kind.utilkinddict` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
 
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS                          }....................
 THE_SONG_OF_HIAWATHA = {
     'By the shore': 'of Gitche Gumee',
     'By the shining': 'Big-Sea-Water',
@@ -148,12 +148,12 @@ Dictionary produced by merging the :data:`FROM_THE_BROW_OF_HIAWATHA`,
 :data:`IN_THE_LODGE_OF_HIAWATHA`, and :data:`FAREWELL_O_HIAWATHA` dictionaries.
 '''
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS ~ validators                 }....................
 def test_die_if_mappings_two_items_collide() -> None:
     '''
     Test the
     :func:`beartype._util.kind.utilkinddict.die_if_mappings_two_items_collide`
-    function.
+    validator.
     '''
 
     # Defer heavyweight imports.
@@ -178,7 +178,57 @@ def test_die_if_mappings_two_items_collide() -> None:
         die_if_mappings_two_items_collide(
             THE_SONG_OF_HIAWATHA, THE_SONG_OF_HIAWATHA_SINGING_IN_THE_SUNSHINE)
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS ~ testers                    }....................
+def test_is_mapping_keys_all() -> None:
+    '''
+    Test the
+    :func:`beartype._util.kind.utilkinddict.is_mapping_keys_all` tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.roar._roarexc import _BeartypeUtilMappingException
+    from beartype._util.kind.utilkinddict import is_mapping_keys_all
+
+    # Assert this tester returns true when passed a mapping containing all keys
+    # in the passed set.
+    assert is_mapping_keys_all(
+        mapping=THE_SONG_OF_HIAWATHA_SINGING_IN_THE_SUNSHINE,
+        keys=THE_SONG_OF_HIAWATHA.keys(),
+    ) is True
+
+    # Assert this tester returns false when passed a mapping *NOT* containing
+    # all keys in the passed set.
+    assert is_mapping_keys_all(
+        mapping=THE_SONG_OF_HIAWATHA_SINGING_IN_THE_SUNSHINE,
+        keys=THE_SONG_OF_HIAWATHA.keys() | {'As the mist',},
+    ) is False
+
+
+def test_is_mapping_keys_any() -> None:
+    '''
+    Test the
+    :func:`beartype._util.kind.utilkinddict.is_mapping_keys_any` tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.roar._roarexc import _BeartypeUtilMappingException
+    from beartype._util.kind.utilkinddict import is_mapping_keys_any
+
+    # Assert this tester returns true when passed a mapping containing any key
+    # in the passed set.
+    assert is_mapping_keys_any(
+        mapping=FAREWELL_O_HIAWATHA,
+        keys={'Thus departed', 'By the shore', 'To the portals'},
+    ) is True
+
+    # Assert this tester returns false when passed a mapping containing *NO* key
+    # in the passed set.
+    assert is_mapping_keys_any(
+        mapping=FAREWELL_O_HIAWATHA,
+        keys={'By the shore', 'To the portals'},
+    ) is False
+
+# ....................{ TESTS ~ updaters                   }....................
 def test_update_mapping() -> None:
     '''
     Test the :func:`beartype._util.kind.utilkinddict.update_mapping` function.
@@ -207,7 +257,7 @@ def test_update_mapping() -> None:
     update_mapping(farewell_o_hiawatha, IN_THE_LODGE_OF_HIAWATHA)
     assert farewell_o_hiawatha == IN_THE_LODGE_OF_HIAWATHA_FAREWELL_O_HIAWATHA
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS ~ mergers                    }....................
 def test_merge_mappings_two() -> None:
     '''
     Test the :func:`beartype._util.kind.utilkinddict.merge_mappings` function

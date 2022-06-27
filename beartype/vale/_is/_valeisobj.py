@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,12 +12,13 @@ supported object introspectors efficiently generating stack-free code).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 # All "FIXME:" comments for this submodule reside in this package's "__init__"
 # submodule to improve maintainability and readability here.
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeValeSubscriptionException
+from beartype.typing import Any, Tuple
 from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
 from beartype.vale._util._valeutilsnip import (
     VALE_CODE_CHECK_ISATTR_TEST_format,
@@ -34,12 +35,8 @@ from beartype._util.func.utilfuncscope import (
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.text.utiltextrepr import represent_object
 from beartype._util.utilobject import SENTINEL
-from typing import Any, Tuple
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ SUBCLASSES ~ attr                 }....................
+# ....................{ SUBCLASSES ~ attr                  }....................
 class _IsAttrFactory(_BeartypeValidatorFactoryABC):
     '''
     **Beartype object attribute validator factory** (i.e., object creating and
@@ -139,7 +136,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
         Further commentary.
     '''
 
-    # ..................{ DUNDERS                           }..................
+    # ..................{ DUNDERS                            }..................
     @callable_cached
     def __getitem__(
         self, args: Tuple[str, BeartypeValidator]) -> BeartypeValidator:

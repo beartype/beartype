@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -14,7 +14,7 @@ entire :mod:`beartype` validation ecosystem.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeValeLambdaWarning
 from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
 from beartype.vale._core._valecore import (
@@ -27,10 +27,7 @@ from beartype._util.func.utilfuncscope import (
 )
 from beartype._util.text.utiltextrepr import represent_func
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ SUBCLASSES                        }....................
+# ....................{ SUBCLASSES                         }....................
 class _IsFactory(_BeartypeValidatorFactoryABC):
     '''
     **Beartype callable validator factory** (i.e., class that, when subscripted
@@ -253,7 +250,7 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
        text.count("'") < 2].
     '''
 
-    # ..................{ DUNDERS                           }..................
+    # ..................{ DUNDERS                            }..................
     def __getitem__(  # type: ignore[override]
         self, is_valid: BeartypeValidatorTester) -> BeartypeValidator:
         '''

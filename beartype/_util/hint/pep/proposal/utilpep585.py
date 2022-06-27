@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,19 +9,19 @@ Project-wide :pep:`585`-compliant type hint utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep585Exception
+from beartype.typing import (
+    Any,
+    Set,
+)
 from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.utilobject import Iota
 from beartype._data.datatyping import TupleTypes
-from typing import Any, Set
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ HINTS                             }....................
+# ....................{ HINTS                              }....................
 HINT_PEP585_TUPLE_EMPTY = (
     tuple[()] if IS_PYTHON_AT_LEAST_3_9 else Iota())  # type: ignore[misc]
 '''
@@ -31,7 +31,7 @@ placeholder object otherwise to guarantee failure when comparing arbitrary
 objects against this object via equality tests.
 '''
 
-# ....................{ VALIDATORS                        }....................
+# ....................{ VALIDATORS                         }....................
 def die_unless_hint_pep585_generic(hint: object) -> None:
     '''
     Raise an exception unless the passed object is a :pep:`585`-compliant
@@ -46,15 +46,16 @@ def die_unless_hint_pep585_generic(hint: object) -> None:
     Raises
     ----------
     BeartypeDecorHintPep585Exception
-        If this hint is *not* a :pep:`585`-compliant generic.
+        If this object is *not* a :pep:`585`-compliant generic.
     '''
 
-    # If this hint is *NOT* a PEP 585-compliant generic, raise an exception
+    # If this object is *NOT* a PEP 585-compliant generic, raise an exception.
     if not is_hint_pep585_generic(hint):
         raise BeartypeDecorHintPep585Exception(
             f'Type hint {repr(hint)} not PEP 585 generic.')
+    # Else, this object is a PEP 585-compliant generic.
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 # If the active Python interpreter targets at least Python >= 3.9 and thus
 # supports PEP 585, correctly declare this function.
 if IS_PYTHON_AT_LEAST_3_9:
@@ -75,7 +76,7 @@ if IS_PYTHON_AT_LEAST_3_9:
 
 
     @callable_cached
-    def is_hint_pep585_generic(hint: object) -> bool:
+    def is_hint_pep585_generic(hint: object) -> bool:  # pyright: ignore[reportGeneralTypeIssues]
 
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
@@ -139,7 +140,7 @@ else:
     def is_hint_pep585_generic(hint: object) -> bool:
         return False
 
-# ....................{ TESTERS ~ doc                     }....................
+# ....................{ TESTERS ~ doc                      }....................
 # Docstring for this function regardless of implementation details.
 is_hint_pep585_builtin.__doc__ = '''
     ``True`` only if the passed object is a C-based :pep:`585`-compliant
@@ -198,7 +199,7 @@ is_hint_pep585_generic.__doc__ = '''
         ``True`` only if this object is a :pep:`585`-compliant generic.
     '''
 
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 def get_hint_pep585_generic_bases_unerased(hint: Any) -> tuple:
     '''
     Tuple of all unerased :pep:`585`-compliant **pseudo-superclasses** (i.e.,

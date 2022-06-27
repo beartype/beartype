@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,7 +11,7 @@ the same list are typically of the same type).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: Conditionally pass "is_debug=True" to the KeyPool.{acquire,release}()
 #methods defined below when the "BeartypeConfig.is_debug" parameter is "True"
 #for the current call to the @beartype decorator, please.
@@ -21,14 +21,17 @@ This private submodule is *not* intended for importation by downstream callers.
 #"self._thread_lock" context manager, we might be able to leverage the GIL by
 #only doing so "if threading.active_count():". Profile us up, please.
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCachedKeyPoolException
+from beartype.typing import (
+    Dict,
+    Union,
+)
 from collections import defaultdict
 from collections.abc import Callable, Hashable
 from threading import Lock
-from typing import Dict, Union
 
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 class KeyPool(object):
     '''
     Thread-safe **key pool** (i.e., object cache implemented as a dictionary of
@@ -71,7 +74,7 @@ class KeyPool(object):
         safely ignorable -- even under CPython.
     '''
 
-    # ..................{ CLASS VARIABLES                   }..................
+    # ..................{ CLASS VARIABLES                    }..................
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently called
     # @beartype decorations. Slotting has been shown to reduce read and write
@@ -83,7 +86,7 @@ class KeyPool(object):
         '_thread_lock',
     )
 
-    # ..................{ INITIALIZER                       }..................
+    # ..................{ INITIALIZER                        }..................
     def __init__(
         self,
         item_maker: Union[type, Callable],
@@ -128,7 +131,7 @@ class KeyPool(object):
         self._pool_item_id_to_is_acquired: Dict[int, bool] = {}
         self._thread_lock = Lock()
 
-    # ..................{ METHODS                           }..................
+    # ..................{ METHODS                            }..................
     def acquire(
         self,
 
@@ -171,7 +174,7 @@ class KeyPool(object):
 
         Raises
         ----------
-        :exc:`TypeError`
+        TypeError
             If this key is unhashable and thus *not* a key.
         '''
 
@@ -266,9 +269,9 @@ class KeyPool(object):
 
         Raises
         ----------
-        :exc:`TypeError`
+        TypeError
             If this key is unhashable (i.e. *not* a key).
-        :exc:`_BeartypeUtilCachedKeyPoolException`
+        _BeartypeUtilCachedKeyPoolException
             If debugging *and* this pool item was not acquired (i.e., returned
             by a prior call to the :meth:`acquire` method), in which case this
             item is ineligible for release.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,7 +11,7 @@ regardless of whether those hints comply with PEP standards or not).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._data.hint.pep.datapeprepr import HINTS_REPR_IGNORABLE_SHALLOW
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.utilnonpeptest import (
@@ -24,10 +24,7 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep_supported,
 )
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ VALIDATORS                        }....................
+# ....................{ VALIDATORS                         }....................
 def die_unless_hint(
     # Mandatory parameters.
     hint: object,
@@ -70,10 +67,10 @@ def die_unless_hint(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintPepUnsupportedException`
+    BeartypeDecorHintPepUnsupportedException
         If this object is a PEP-compliant type hint currently unsupported by
         the :func:`beartype.beartype` decorator.
-    :exc:`BeartypeDecorHintNonpepException`
+    BeartypeDecorHintNonpepException
         If this object is neither a:
 
         * Supported PEP-compliant type hint.
@@ -86,9 +83,9 @@ def die_unless_hint(
     # Else, this object is *NOT* a supported type hint. In this case,
     # subsequent logic raises an exception specific to the passed parameters.
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with is_hint() below.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # If this hint is PEP-compliant, raise an exception only if this hint is
     # currently unsupported by @beartype.
@@ -101,7 +98,7 @@ def die_unless_hint(
     # definition, all PEP-noncompliant type hints are supported by @beartype.
     die_unless_hint_nonpep(hint=hint, exception_prefix=exception_prefix)
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 @callable_cached
 def is_hint(hint: object) -> bool:
     '''
@@ -135,9 +132,9 @@ def is_hint(hint: object) -> bool:
         dictionaries and sets). All supported type hints are hashable.
     '''
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with die_unless_hint() above.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Return true only if...
     return (
@@ -148,7 +145,7 @@ def is_hint(hint: object) -> bool:
         is_hint_nonpep(hint=hint, is_str_valid=True)
     )
 
-# ....................{ TESTERS ~ ignorable               }....................
+# ....................{ TESTERS ~ ignorable                }....................
 @callable_cached
 def is_hint_ignorable(hint: object) -> bool:
     '''

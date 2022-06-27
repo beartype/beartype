@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,7 +11,7 @@ classnames of all type hints annotating callables decorated by the
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeCallHintForwardRefException,
     BeartypeDecorHintForwardRefException,
@@ -25,10 +25,7 @@ from beartype._util.mod.utilmodimport import import_module_attr
 from beartype._util.mod.utilmodtest import die_unless_module_attr_name
 from beartype._util.utilobject import get_object_type_name
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS                          }....................
 TYPISTRY_HINT_NAME_TUPLE_PREFIX = '+'
 '''
 **Beartypistry tuple key prefix** (i.e., substring prefixing the keys of all
@@ -39,7 +36,7 @@ prefix, this prefix suffices to uniquely distinguish key-value pairs whose
 values are types from pairs whose values are tuples.
 '''
 
-# ....................{ CONSTANTS ~ code                  }....................
+# ....................{ CONSTANTS ~ code                   }....................
 _CODE_TYPISTRY_HINT_NAME_TO_HINT_PREFIX = f'{ARG_NAME_TYPISTRY}['
 '''
 Substring prefixing a Python expression mapping from the subsequent string to
@@ -55,7 +52,7 @@ an arbitrary object cached by the beartypistry singleton via the private
 beartypistry parameter.
 '''
 
-# ....................{ REGISTRARS ~ forwardref           }....................
+# ....................{ REGISTRARS ~ forwardref            }....................
 #FIXME: Unit test us up.
 # Note this function intentionally does *NOT* accept an optional "hint_labal"
 # parameter as doing so would conflict with memoization.
@@ -113,7 +110,7 @@ def register_typistry_forwardref(hint_classname: str) -> str:
         f'{_CODE_TYPISTRY_HINT_NAME_TO_HINT_SUFFIX}'
     )
 
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 class Beartypistry(dict):
     '''
     **Beartypistry** (i.e., singleton dictionary mapping from strings uniquely
@@ -144,7 +141,7 @@ class Beartypistry(dict):
       corresponding object on the first attempt to access that reference.
     '''
 
-    # ..................{ DUNDERS                           }..................
+    # ..................{ DUNDERS                            }..................
     def __setitem__(self, hint_name: str, hint: object) -> None:
         '''
         Dunder method explicitly called by the superclass on setting the passed
@@ -363,7 +360,7 @@ class Beartypistry(dict):
         #     self[hint_classname] = hint_class
         return hint_class  # type: ignore[return-value]
 
-# ....................{ SINGLETONS                        }....................
+# ....................{ SINGLETONS                         }....................
 bear_typistry = Beartypistry()
 '''
 **Beartypistry** (i.e., singleton dictionary mapping from the fully-qualified
