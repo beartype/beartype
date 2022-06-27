@@ -449,7 +449,7 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
 # ....................{ PRIVATE ~ resolvers                }....................
 #FIXME: We currently no longer require this. See above for further commentary.
 # from beartype.roar import BeartypeDecorHintPepException
-# from beartype._util.cache.pool.utilcachepoollistfixed import SIZE_BIG
+# from beartype._util.cache.pool.utilcachepoollistfixed import FIXED_LIST_SIZE_MEDIUM
 #
 # def _die_if_hint_repr_exceeds_child_limit(
 #     hint_repr: str, pith_label: str) -> None:
@@ -526,9 +526,9 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
 #
 #     # If this number exceeds the fixed length of the cached fixed list with
 #     # which the @beartype decorator traverses this hint, raise an exception.
-#     if hints_num >= SIZE_BIG:
+#     if hints_num >= FIXED_LIST_SIZE_MEDIUM:
 #         raise BeartypeDecorHintPepException(
 #             f'{pith_label} hint representation "{hint_repr}" '
 #             f'contains {hints_num} subscripted arguments '
-#             f'exceeding maximum limit {SIZE_BIG-1}.'
+#             f'exceeding maximum limit {FIXED_LIST_SIZE_MEDIUM-1}.'
 #         )

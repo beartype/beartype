@@ -84,7 +84,7 @@ from beartype._decor._code._pep._pepsnip import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoollistfixed import (
-    SIZE_BIG,
+    FIXED_LIST_SIZE_MEDIUM,
     acquire_fixed_list,
     release_fixed_list,
 )
@@ -473,9 +473,9 @@ def pep_code_check_hint(
     # number of hints transitively visitable from this root hint. Ergo, *ALL*
     # indexation into this list performed by this BFS is guaranteed to be safe.
     # Ergo, avoid explicitly testing below that the "hints_meta_index_last"
-    # integer maintained by this BFS is strictly less than "SIZE_BIG", as this
+    # integer maintained by this BFS is strictly less than "FIXED_LIST_SIZE_MEDIUM", as this
     # constraint is already guaranteed to be the case.
-    hints_meta = acquire_fixed_list(SIZE_BIG)
+    hints_meta = acquire_fixed_list(FIXED_LIST_SIZE_MEDIUM)
 
     # 0-based index of metadata describing the currently visited hint in the
     # "hints_meta" list.
@@ -575,7 +575,7 @@ def pep_code_check_hint(
         # Create and insert a new tuple of metadata describing this child hint
         # at this index of this list.
         #
-        # Note that this assignment is guaranteed to be safe, as "SIZE_BIG" is
+        # Note that this assignment is guaranteed to be safe, as "FIXED_LIST_SIZE_MEDIUM" is
         # guaranteed to be substantially larger than "hints_meta_index_last".
         hints_meta[hints_meta_index_last] = (
             hint_child,
@@ -1673,39 +1673,57 @@ def pep_code_check_hint(
                     #bedfellows.
 
                     # Reduce this hint to the object originating this generic
-                    # if any. Specifically:
+                    # (if any) by stripping all child type hints subscripting
+                    # this hint from this hint. Why? Because these child type
+                    # hints convey *NO* meaningful semantics and are thus
+                    # safely ignorable. Consider this simple example, in which
+                    # the subscription "[int]" not only conveys *NO* meaningful
+                    # semantics but actually conveys paradoxically conflicting
+                    # semantics contradicting the original generic declaration:
+                    #     class ListOfListsOfStrs(list[list[str]]): pass
+                    #     ListOfListsOfStrs[int]  # <-- *THIS MEANS NOTHING*
+                    #
+                    # Specifically:
                     # * If this hint is an unsubscripted generic (e.g.,
                     #   "typing.IO"), preserve this hint as is. In this case,
                     #   this hint is a standard isinstanceable class.
                     # * If this hint is a subscripted generic (e.g.,
                     #   "typing.IO[str]"), reduce this hint to the object
-                    #   originating this generic (e.g., "typing.IO"). Note that
-                    #   that object is typically but *NOT* necessarily a
-                    #   standard isinstanceable class. If that object is itself
-                    #   an unsubscripted generic, then this hint must have been
-                    #   a subscripted generic. If that strikes you as insane,
-                    #   you're not alone.
+                    #   originating this generic (e.g., "typing.IO").
                     hint_curr = get_hint_pep484585_generic_type(
-                        hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
-
-                    # Tuple of the one or more unerased pseudo-superclasses
-                    # originally listed as superclasses prior to their type
-                    # erasure by this generic.
-                    hint_childs = get_hint_pep484585_generic_bases_unerased(
                         hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
 
                     # Initialize the code type-checking this pith against this
                     # generic to the substring prefixing all such code.
                     func_curr_code = PEP484585_CODE_HINT_GENERIC_PREFIX
 
-                    #FIXME: Consider removing the
-                    #get_hint_pep484_generic_base_erased_from_unerased()
-                    #getter entirely if no longer required.
+                    #FIXME: Refactor *ALMOST* everything below to instead defer
+                    #to our new
+                    #iter_hint_pep484585_generic_bases_unerased_recursive()
+                    #iterator. Note that doing so will probably require
+                    #iteration resembling:
+                    #    for hint_child in (
+                    #        iter_hint_pep484585_generic_bases_unerased_recursive(
+                    #            hint=hint_curr,
+                    #            exception_prefix=_EXCEPTION_PREFIX,
+                    #    )):
+                    #        # Generate and append code type-checking this pith
+                    #        # against this superclass.
+                    #        func_curr_code += (
+                    #            PEP484585_CODE_HINT_GENERIC_CHILD_format(
+                    #                hint_child_placeholder=(_enqueue_hint_child(
+                    #                    # Python expression efficiently
+                    #                    # reusing the value of this
+                    #                    # pith previously assigned to a
+                    #                    # local variable by the prior
+                    #                    # expression.
+                    #                    pith_curr_var_name))))
 
-                    #FIXME: Shift this global into "utilcachepoollistfixed".
-                    #FIXME: Rename the "SIZE_BIG" global to
-                    #"FIXED_LIST_SIZE_LARGE" for orthogonality.
-                    FIXED_LIST_SIZE_MEDIUM = 256
+                    # Tuple of the one or more unerased pseudo-superclasses
+                    # originally listed as superclasses prior to their type
+                    # erasure by this generic.
+                    hint_childs = get_hint_pep484585_generic_bases_unerased(
+                        hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
 
                     # Fixed list of the one or more unerased transitive
                     # pseudo-superclasses originally listed as superclasses
@@ -1793,8 +1811,7 @@ def pep_code_check_hint(
                     # to register its own pseudo-superclasses (one or more of
                     # which could convey meaningful intrinsic semantics with
                     # respect to type-checking) for visitation by this BFS.
-                    hint_bases = acquire_fixed_list(
-                        size=FIXED_LIST_SIZE_MEDIUM)
+                    hint_bases = acquire_fixed_list(size=FIXED_LIST_SIZE_MEDIUM)
 
                     # 0-based index of the currently visited pseudo-superclass
                     # of this list.
@@ -1821,9 +1838,9 @@ def pep_code_check_hint(
 
                         # If this pseudo-superclass is neither...
                         if not (
-                            # A class *OR*...
+                            # A type *OR*...
                             #
-                            # This class is effectively ignorable. Why? Because
+                            # This type is effectively ignorable. Why? Because
                             # the "PEP484585_CODE_HINT_GENERIC_PREFIX" snippet
                             # leveraged above already type-checks this pith
                             # against the generic subclassing this superclass
@@ -1837,11 +1854,13 @@ def pep_code_check_hint(
                         # case...
                         ):
                             #FIXME: Unit test up this branch, please.
-                            #If this pseudo-superclass is...
+                            # If this pseudo-superclass is...
                             if (
                                 # A PEP-compliant generic *AND*...
-                                get_hint_pep_sign(hint_child) is (
-                                    HintSignGeneric) and
+                                (
+                                    get_hint_pep_sign(hint_child) is
+                                    HintSignGeneric
+                                ) and
                                 # Is neither...
                                 not (
                                     # A PEP 585-compliant superclass *NOR*...
@@ -1859,7 +1878,7 @@ def pep_code_check_hint(
                             # pseudo-superclasses for visitation by later
                             # iteration of this inner BFS.
                             #
-                            # See the "hints_bases" for explanatory commentary.
+                            # See "hints_bases" for explanatory commentary.
                                 # Tuple of the one or more parent
                                 # pseudo-superclasses of this child
                                 # pseudo-superclass.
@@ -1885,11 +1904,11 @@ def pep_code_check_hint(
                                 ] = hint_childs
                             # Else, this pseudo-superclass is neither an
                             # ignorable user-defined PEP 484-compliant generic
-                            # *NOR* an ignorable 544-compliant protocol. In
-                            # this case, instruct the outer BFS to generate
+                            # *NOR* an ignorable 544-compliant protocol. In this
+                            # case, instruct the outer BFS to generate
                             # type-checking code for this pseudo-superclass by
-                            # quietly "masquerading" this pseudo-superclass as
-                            # a PEP-compliant child hint of this hint.
+                            # quietly "masquerading" this pseudo-superclass as a
+                            # PEP-compliant child hint of this hint.
                             else:
                                 # Generate and append code type-checking this
                                 # pith against this superclass.

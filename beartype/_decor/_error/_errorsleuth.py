@@ -63,14 +63,8 @@ class CauseSleuth(object):
     hint_childs : Optional[Tuple]
         Either:
 
-        * If this hint is PEP-compliant:
-
-          * If this hint is a generic, tuple of the one or more unerased
-            pseudo-superclasses (i.e., :mod:`typing` objects originally listed
-            as superclasses prior to their implicit type erasure by the
-            :mod:`typing` module) subclassed by this generic.
-          * Else, the possibly empty tuple of all arguments subscripting this
-            hint.
+        * If this hint is PEP-compliant, the possibly empty tuple of all
+          arguments subscripting (indexing) this hint.
 
         * Else, ``None``.
     pith : Any
@@ -175,8 +169,9 @@ class CauseSleuth(object):
         Set the type hint to validate this object against.
         '''
 
-        # Reduce the currently visited hint to a lower-level hint-like object
-        # associated with this hint if this hint satisfies a condition.
+        # Sanitize this hint if unsupported by @beartype in its current form
+        # (e.g., "numpy.typing.NDArray[...]") to another form supported by
+        # @beartype (e.g., "typing.Annotated[numpy.ndarray, beartype.vale.*]").
         hint = sanify_hint_child(
             hint=hint, exception_prefix=self.exception_prefix)
 

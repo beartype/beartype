@@ -34,7 +34,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #    * Else, "None".
 #    Actually... hmm. Perhaps we only need a new local variable
 #    "iterator_nonsequence_names" whose value is a cached "FixedList" of
-#    sufficiently large size (so, "SIZE_BIG"?). We could then simply
+#    sufficiently large size (so, "FIXED_LIST_SIZE_MEDIUM"?). We could then simply
 #    iteratively insert the names of the wrapper-specific new unique local
 #    variables into this list.
 #    Actually... *WAIT.* Is all we need a single counter initialized to, say:
@@ -317,11 +317,11 @@ def raise_pep_call_exception(
     raise _BeartypeCallHintPepRaiseDesynchronizationException(
         f'{exception_prefix}violates type hint {repr(hint)}, '
         f'but utility function raise_pep_call_exception() '
-        f'suggests this object satisfies this hint. '
+        f'erroneously suggests this object satisfies this hint. '
         f'Please report this desynchronization failure to '
         f'the beartype issue tracker ({URL_ISSUES}) with '
         f'the accompanying exception traceback and '
-        f'this {label_type(type)} object\'s representation:\n'
+        f'the representation of this object:\n'
         f'{pith_value_repr}'
     )
 
