@@ -484,8 +484,8 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
 ) -> Iterable:
     '''
     Breadth-first search (BFS) generator iteratively yielding the one or more
-    unerased transitive pseudo-superclasses originally listed as superclasses
-    prior to their type erasure of the passed :pep:`484`- or
+    unignorable unerased transitive pseudo-superclasses originally declared as
+    superclasses prior to their type erasure of the passed :pep:`484`- or
     :pep:`585`-compliant generic.
 
     This generator yields the full tree of all pseudo-superclasses by
@@ -583,8 +583,8 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
     ----------
     Iterable
         Breadth-first search (BFS) generator iteratively yielding the one or
-        more unerased transitive pseudo-superclasses originally listed as
-        superclasses prior to their type erasure of this generic.
+        more unignorable unerased transitive pseudo-superclasses originally
+        declared as superclasses prior to their type erasure of this generic.
 
     Raises
     ----------
@@ -600,7 +600,7 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.utilpep585 import (
         is_hint_pep585_builtin)
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
     from beartype._util.hint.utilhinttest import is_hint_ignorable
 
@@ -611,6 +611,7 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
+    # print(f'generic {hint} hint_bases_direct: {hint_bases_direct}')
 
     # Fixed list of the one or more unerased transitive pseudo-superclasses
     # originally listed as superclasses prior to their type erasure by this
@@ -634,32 +635,31 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
     while hint_bases_index_curr < hint_bases_index_past_last:
         # Currently visited pseudo-superclass.
         hint_base = hint_bases[hint_bases_index_curr]
-        # print(f'generic pseudo-superclass: {repr(hint_base)}')
+        # print(f'generic {hint} base: {repr(hint_base)}')
+
+        # Sign uniquely identifying this pseudo-superclass if any *OR* "None".
+        hint_base_sign = get_hint_pep_sign_or_none(hint_base)
 
         # If this pseudo-superclass is neither...
         if not (
-            # A type *OR*...
+            # A type conveying no meaningful typing semantics *NOR*...
             #
-            # This type is effectively ignorable. Why? Because the
-            # "PEP484585_CODE_HINT_GENERIC_PREFIX" snippet leveraged above
-            # already type-checks this pith against the generic subclassing this
-            # superclass and thus this superclass as well with a trivial
-            # isinstance() call. In this case, skip to the next
-            # pseudo-superclass.
-            isinstance(hint_base, type) or
+            # Note that types conveying no meaningful typing semantics are
+            # effectively ignorable. Why? Because the caller already type-checks
+            # this pith against the generic subclassing this superclass and thus
+            # this superclass as well in an isinstance() call (e.g., in the
+            # "PEP484585_CODE_HINT_GENERIC_PREFIX" snippet leveraged by the
+            # "beartype._decor._code._pep._pephint" submodule).
+            hint_base_sign is None or
             # An ignorable PEP-compliant type hint...
             is_hint_ignorable(hint_base)
-        # Then this pseudo-superclass is unignorable. In this
-        # case...
+        # Then this pseudo-superclass is unignorable. In this case...
         ):
             #FIXME: Unit test up this branch, please.
             # If this pseudo-superclass is...
             if (
                 # A PEP-compliant generic *AND*...
-                (
-                    get_hint_pep_sign(hint_base) is
-                    HintSignGeneric
-                ) and
+                hint_base_sign is HintSignGeneric and
                 # Is neither...
                 not (
                     # A PEP 585-compliant superclass *NOR*...
@@ -705,6 +705,9 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
             else:
                 yield hint_base
         # Else, this pseudo-superclass is ignorable.
+        # else:
+        #     print(f'Ignoring generic {hint} base...')
+        #     print(f'Is generic {hint} base type? {isinstance(hint_base, type)}')
 
         # Nullify the previously visited pseudo-superclass in
         # this list for safety.

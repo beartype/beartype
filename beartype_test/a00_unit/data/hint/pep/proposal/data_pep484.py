@@ -703,43 +703,42 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        #FIXME: Uncomment after worky, please.
-        # # Generic subclassing a single deeply unparametrized "typing" type.
-        # HintPepMetadata(
-        #     hint=_Pep484GenericUntypevaredDeepSingle,
-        #     pep_sign=HintSignGeneric,
-        #     generic_type=_Pep484GenericUntypevaredDeepSingle,
-        #     is_type_typing=False,
-        #     piths_meta=(
-        #         # Subclass-specific generic list of list of string constants.
-        #         HintPithSatisfiedMetadata(
-        #             _Pep484GenericUntypevaredDeepSingle([
-        #                 [
-        #                     'Intravenous‐averse effigy defamations, traversing',
-        #                     'Intramurally venal-izing retro-',
-        #                 ],
-        #                 [
-        #                     'Versions of a ',
-        #                     "Version 2.2.a‐excursioned discursive Morningrise's ravenous ad-",
-        #                 ],
-        #             ])
-        #         ),
-        #         # String constant.
-        #         HintPithUnsatisfiedMetadata('Vent of'),
-        #         # List of string constants.
-        #         HintPithUnsatisfiedMetadata([
-        #             "Ventral‐entrailed rurality's cinder-",
-        #             'Block pluralities of',
-        #         ]),
-        #         # Subclass-specific generic list of string constants.
-        #         HintPithUnsatisfiedMetadata(
-        #             _Pep484GenericUntypevaredDeepSingle([
-        #                 'Block-house stockade stocks, trailer',
-        #                 'Park-entailed central heating, though those',
-        #             ])
-        #         ),
-        #     ),
-        # ),
+        # Generic subclassing a single deeply unparametrized "typing" type.
+        HintPepMetadata(
+            hint=_Pep484GenericUntypevaredDeepSingle,
+            pep_sign=HintSignGeneric,
+            generic_type=_Pep484GenericUntypevaredDeepSingle,
+            is_type_typing=False,
+            piths_meta=(
+                # Subclass-specific generic list of list of string constants.
+                HintPithSatisfiedMetadata(
+                    _Pep484GenericUntypevaredDeepSingle([
+                        [
+                            'Intravenous‐averse effigy defamations, traversing',
+                            'Intramurally venal-izing retro-',
+                        ],
+                        [
+                            'Versions of a ',
+                            "Version 2.2.a‐excursioned discursive Morningrise's ravenous ad-",
+                        ],
+                    ])
+                ),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Vent of'),
+                # List of string constants.
+                HintPithUnsatisfiedMetadata([
+                    "Ventral‐entrailed rurality's cinder-",
+                    'Block pluralities of',
+                ]),
+                # Subclass-specific generic list of string constants.
+                HintPithUnsatisfiedMetadata(
+                    _Pep484GenericUntypevaredDeepSingle([
+                        'Block-house stockade stocks, trailer',
+                        'Park-entailed central heating, though those',
+                    ])
+                ),
+            ),
+        ),
 
         # Generic subclassing a single parametrized "typing" type.
         HintPepMetadata(

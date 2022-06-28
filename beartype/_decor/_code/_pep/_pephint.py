@@ -115,13 +115,11 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
     get_hint_pep484585_args_1)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-    get_hint_pep484585_generic_bases_unerased,
     get_hint_pep484585_generic_type,
+    iter_hint_pep484585_generic_bases_unerased_tree,
 )
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
     get_hint_pep484585_subclass_superclass)
-from beartype._util.hint.pep.proposal.utilpep585 import (
-    is_hint_pep585_builtin)
 from beartype._util.hint.pep.proposal.utilpep586 import (
     die_unless_hint_pep586,
     get_hint_pep586_literals,
@@ -139,7 +137,6 @@ from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
     is_hint_pep,
     is_hint_pep_args,
-    is_hint_pep_typing,
     warn_if_hint_pep_deprecated,
 )
 from beartype._util.hint.utilhintconv import sanify_hint_child
@@ -1697,245 +1694,22 @@ def pep_code_check_hint(
                     # generic to the substring prefixing all such code.
                     func_curr_code = PEP484585_CODE_HINT_GENERIC_PREFIX
 
-                    #FIXME: Refactor *ALMOST* everything below to instead defer
-                    #to our new
-                    #iter_hint_pep484585_generic_bases_unerased_recursive()
-                    #iterator. Note that doing so will probably require
-                    #iteration resembling:
-                    #    for hint_child in (
-                    #        iter_hint_pep484585_generic_bases_unerased_recursive(
-                    #            hint=hint_curr,
-                    #            exception_prefix=_EXCEPTION_PREFIX,
-                    #    )):
-                    #        # Generate and append code type-checking this pith
-                    #        # against this superclass.
-                    #        func_curr_code += (
-                    #            PEP484585_CODE_HINT_GENERIC_CHILD_format(
-                    #                hint_child_placeholder=(_enqueue_hint_child(
-                    #                    # Python expression efficiently
-                    #                    # reusing the value of this
-                    #                    # pith previously assigned to a
-                    #                    # local variable by the prior
-                    #                    # expression.
-                    #                    pith_curr_var_name))))
-
-                    # Tuple of the one or more unerased pseudo-superclasses
-                    # originally listed as superclasses prior to their type
-                    # erasure by this generic.
-                    hint_childs = get_hint_pep484585_generic_bases_unerased(
-                        hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
-
-                    # Fixed list of the one or more unerased transitive
-                    # pseudo-superclasses originally listed as superclasses
-                    # prior to their type erasure by this generic that have yet
-                    # to be visited by the breadth-first search (BFS) over
-                    # these superclasses performed below. This list
-                    # transitively visits both all direct superclasses of this
-                    # generic *AND* all indirect superclasses transitively
-                    # superclassing all direct superclasses of this generic.
-                    #
-                    # As with the comparable "hints_meta" list, this list acts
-                    # as a standard First In First Out (FILO) queue, enabling
-                    # this BFS to be implemented as an efficient imperative
-                    # algorithm rather than an inefficient (and dangerous, due
-                    # to both unavoidable stack exhaustion and avoidable
-                    # infinite recursion) recursive algorithm.
-                    #
-                    # Ideally, neither a BFS nor this list would be necessary.
-                    # Instead, pseudo-superclasses visited by this list would
-                    # be visitable with our existing outer BFS backed by the
-                    # "hints_meta" list. That's how we visit all other nested
-                    # PEP-compliant type hints, right? Unfortunately, that
-                    # simple solution fails to support all possible edge cases.
-                    # Why? Because our code generation algorithm sensibly
-                    # requires that *ONLY* unignorable hints may be enqueued
-                    # onto the "hints_meta" list. Generics confound that
-                    # constraint. Some pseudo-superclasses are paradoxically:
-                    # * Ignorable from the perspective of code generation. *NO*
-                    #   type-checking code should be generated for these
-                    #   pseudo-superclasses, for reasons discussed below.
-                    # * Unignorable from the perspective of algorithm
-                    #   visitation. Although they generate *NO* code, these
-                    #   pseudo-superclasses may themselves subclass other
-                    #   pseudo-superclasses for which type-checking code should
-                    #   be generated and which must thus be visited by our
-                    #   existing outer BFS.
-                    #
-                    # Paradoxical pseudo-superclasses include:
-                    # * User-defined PEP 484-compliant subgenerics (i.e.,
-                    #   user-defined generics subclassing one or more parent
-                    #   user-defined generic superclasses).
-                    # * User-defined PEP 544-compliant subprotocols (i.e.,
-                    #   user-defined protocols subclassing one or more parent
-                    #   user-defined protocol superclasses).
-                    #
-                    # Consider this example PEP 544-compliant subprotocol:
-                    #     >>> import typing as t
-                    #     >>> class UserProtocol(t.Protocol[t.AnyStr]): pass
-                    #     >>> class UserSubprotocol(UserProtocol[str], t.Protocol): pass
-                    #     >>> UserSubprotocol.__orig_bases__
-                    #     (UserProtocol[str], typing.Protocol)
-                    #     >>> UserProtocolUnerased = UserSubprotocol.__orig_bases__[0]
-                    #     >>> UserProtocolUnerased is UserProtocol
-                    #     False
-                    #     >>> isinstance(UserProtocolUnerased, type)
-                    #     False
-                    #
-                    # PEP 585-compliant generics suffer no such issues:
-                    #     >>> from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin
-                    #     >>> class UserGeneric(list[int]): pass
-                    #     >>> class UserSubgeneric(UserGeneric[int]): pass
-                    #     >>> UserSubgeneric.__orig_bases__
-                    #     (UserGeneric[int],)
-                    #     >>> UserGenericUnerased = UserSubgeneric.__orig_bases__[0]
-                    #     >>> isinstance(UserGenericUnerased, type)
-                    #     True
-                    #     >>> UserGenericUnerased.__mro__
-                    #     (UserGeneric, list, object)
-                    #     >>> is_hint_pep585_builtin(UserGenericUnerased)
-                    #     True
-                    #
-                    # Iteratively walking up the unerased inheritance hierarchy
-                    # for any such paradoxical generic or protocol subclass
-                    # (e.g., "UserSubprotocol" but *NOT* "UserSubgeneric")
-                    # would visit a user-defined generic or protocol
-                    # pseudo-superclass subscripted by type variables. Due to
-                    # poorly defined obscurities in the "typing" implementation,
-                    # that pseudo-superclass is *NOT* actually a class but
-                    # rather an instance of a private "typing" class (e.g.,
-                    # "typing._SpecialForm"). This algorithm would then detect
-                    # that pseudo-superclass as neither a generic nor a
-                    # "typing" object and thus raise an exception. Fortunately,
-                    # that pseudo-superclass conveys no meaningful intrinsic
-                    # semantics with respect to type-checking; its only use is
-                    # to register its own pseudo-superclasses (one or more of
-                    # which could convey meaningful intrinsic semantics with
-                    # respect to type-checking) for visitation by this BFS.
-                    hint_bases = acquire_fixed_list(size=FIXED_LIST_SIZE_MEDIUM)
-
-                    # 0-based index of the currently visited pseudo-superclass
-                    # of this list.
-                    hint_bases_index_curr = 0
-
-                    # 0-based index of one *PAST* the last pseudo-superclass of
-                    # this list.
-                    hint_bases_index_past_last = len(hint_childs)
-
-                    # Initialize this list to the one or more direct
-                    # pseudo-superclasses of this generic.
-                    hint_bases[0:hint_bases_index_past_last] = hint_childs
-                    # print(f'generic pseudo-superclasses [initial]: {repr(hint_childs)}')
-
-                    # While the 0-based index of the next visited
-                    # pseudo-superclass does *NOT* exceed that of the last
-                    # pseudo-superclass in this list, there remains one or more
-                    # pseudo-superclasses to be visited in the breadth-first
-                    # search performed by this iteration.
-                    while hint_bases_index_curr < hint_bases_index_past_last:
-                        # Currently visited pseudo-superclass.
-                        hint_child = hint_bases[hint_bases_index_curr]
-                        # print(f'generic pseudo-superclass: {repr(hint_child)}')
-
-                        # If this pseudo-superclass is neither...
-                        if not (
-                            # A type *OR*...
-                            #
-                            # This type is effectively ignorable. Why? Because
-                            # the "PEP484585_CODE_HINT_GENERIC_PREFIX" snippet
-                            # leveraged above already type-checks this pith
-                            # against the generic subclassing this superclass
-                            # and thus this superclass as well with a trivial
-                            # isinstance() call. In this case, skip to the next
-                            # pseudo-superclass.
-                            isinstance(hint_child, type) or
-                            # An ignorable PEP-compliant type hint...
-                            is_hint_ignorable(hint_child)
-                        # Then this pseudo-superclass is unignorable. In this
-                        # case...
-                        ):
-                            #FIXME: Unit test up this branch, please.
-                            # If this pseudo-superclass is...
-                            if (
-                                # A PEP-compliant generic *AND*...
-                                (
-                                    get_hint_pep_sign(hint_child) is
-                                    HintSignGeneric
-                                ) and
-                                # Is neither...
-                                not (
-                                    # A PEP 585-compliant superclass *NOR*...
-                                    is_hint_pep585_builtin(hint_child) and
-                                    # A PEP 484- nor 544-compliant superclass
-                                    # defined by the "typing" module...
-                                    is_hint_pep_typing(hint_child)
-                                )
-                            ):
-                            # Then this pseudo-superclass is a user-defined PEP
-                            # 484-compliant generic or 544-compliant protocol.
-                            # In this case, generate *NO* type-checking code
-                            # for this pseudo-superclass; we only enqueue all
-                            # parent pseudo-superclasses of this
-                            # pseudo-superclasses for visitation by later
-                            # iteration of this inner BFS.
-                            #
-                            # See "hints_bases" for explanatory commentary.
-                                # Tuple of the one or more parent
-                                # pseudo-superclasses of this child
-                                # pseudo-superclass.
-                                hint_childs = (
-                                    get_hint_pep484585_generic_bases_unerased(
-                                        hint=hint_child,
-                                        exception_prefix=_EXCEPTION_PREFIX,
-                                    ))
-
-                                # 0-based index of the last pseudo-superclass
-                                # of this list *BEFORE* adding onto this list.
-                                hint_bases_index_past_last_prev = (
-                                    hint_bases_index_past_last)
-
-                                # 0-based index of the last pseudo-superclass
-                                # of this list *AFTER* adding onto this list.
-                                hint_bases_index_past_last += len(hint_childs)
-
-                                # Enqueue these superclasses onto this list.
-                                hint_bases[
-                                    hint_bases_index_past_last_prev:
-                                    hint_bases_index_past_last
-                                ] = hint_childs
-                            # Else, this pseudo-superclass is neither an
-                            # ignorable user-defined PEP 484-compliant generic
-                            # *NOR* an ignorable 544-compliant protocol. In this
-                            # case, instruct the outer BFS to generate
-                            # type-checking code for this pseudo-superclass by
-                            # quietly "masquerading" this pseudo-superclass as a
-                            # PEP-compliant child hint of this hint.
-                            else:
-                                # Generate and append code type-checking this
-                                # pith against this superclass.
-                                func_curr_code += (
-                                    PEP484585_CODE_HINT_GENERIC_CHILD_format(
-                                        hint_child_placeholder=(
-                                            _enqueue_hint_child(
-                                                # Python expression efficiently
-                                                # reusing the value of this
-                                                # pith previously assigned to a
-                                                # local variable by the prior
-                                                # expression.
-                                                pith_curr_var_name))))
-                        # Else, this pseudo-superclass is ignorable.
-
-                        # Nullify the previously visited pseudo-superclass in
-                        # this list for safety.
-                        hint_bases[hint_bases_index_curr] = None
-
-                        # Increment the 0-based index of the next visited
-                        # pseudo-superclass in this list *BEFORE* visiting that
-                        # pseudo-superclass but *AFTER* performing all other
-                        # logic for the currently visited pseudo-superclass.
-                        hint_bases_index_curr += 1
-
-                    # Release this list.
-                    release_fixed_list(hint_bases)
+                    # For each unignorable unerased transitive pseudo-superclass
+                    # originally declared as a superclass of this generic...
+                    for hint_child in (
+                        iter_hint_pep484585_generic_bases_unerased_tree(
+                            hint=hint_curr,
+                            exception_prefix=_EXCEPTION_PREFIX,
+                    )):
+                        # Generate and append code type-checking this pith
+                        # against this superclass.
+                        func_curr_code += (
+                            PEP484585_CODE_HINT_GENERIC_CHILD_format(
+                                hint_child_placeholder=(_enqueue_hint_child(
+                                    # Python expression efficiently reusing the
+                                    # value of this pith previously assigned to
+                                    # a local variable by the prior expression.
+                                    pith_curr_var_name))))
 
                     # Munge this code to...
                     func_curr_code = (

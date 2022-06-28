@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -7,10 +7,10 @@
 Project-wide :pep:`585`-compliant **type hint test data.**
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
-# ....................{ ADDERS                            }....................
+# ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
     Add :pep:`585`-compliant type hint test data to various global containers
@@ -29,7 +29,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # Else, the active Python interpreter targets at least Python >= 3.9 and
     # thus supports PEP 585.
 
-    # ..................{ IMPORTS                           }..................
+    # ..................{ IMPORTS                            }..................
     # Defer Python >= 3.9-specific imports.
     import re
     from beartype._cave._cavefast import IntType
@@ -74,7 +74,7 @@ def add_data(data_module: 'ModuleType') -> None:
     from re import Match, Pattern
     from typing import Any, TypeVar, Union
 
-    # ..................{ TYPEVARS                          }..................
+    # ..................{ TYPEVARS                           }..................
     S = TypeVar('S')
     '''
     User-defined generic :mod:`typing` type variable.
@@ -86,8 +86,24 @@ def add_data(data_module: 'ModuleType') -> None:
     User-defined generic :mod:`typing` type variable.
     '''
 
-    # ..................{ CLASSES ~ generics : single       }..................
-    class Pep585GenericUntypevaredSingle(list[str]):
+    # ..................{ GENERICS ~ single                  }..................
+    # Note we intentionally do *NOT* declare unsubscripted PEP 585-compliant
+    # generics (e.g., "class _Pep585GenericUnsubscriptedSingle(list):"). Why?
+    # Because PEP 585-compliant generics are necessarily subscripted; when
+    # unsubscripted, the corresponding subclasses are simply standard types.
+
+    class _Pep585GenericTypevaredSingle(list[T]):
+        '''
+        :pep:`585`-compliant user-defined generic subclassing a single
+        parametrized builtin type.
+        '''
+
+        # Redefine this generic's representation for debugging purposes.
+        def __repr__(self) -> str:
+            return f'{self.__class__.__name__}({super().__repr__()})'
+
+
+    class _Pep585GenericUntypevaredShallowSingle(list[str]):
         '''
         :pep:`585`-compliant user-defined generic subclassing a single
         subscripted (but unparametrized) builtin type.
@@ -98,18 +114,17 @@ def add_data(data_module: 'ModuleType') -> None:
             return f'{self.__class__.__name__}({super().__repr__()})'
 
 
-    class Pep585GenericTypevaredSingle(list[S, T]):
+    class _Pep585GenericUntypevaredDeepSingle(list[list[str]]):
         '''
         :pep:`585`-compliant user-defined generic subclassing a single
-        parametrized builtin type.
+        unparametrized :mod:`typing` type, itself subclassing a single
+        unparametrized :mod:`typing` type.
         '''
 
-        # Redefine this generic's representation for debugging purposes.
-        def __repr__(self) -> str:
-            return f'{self.__class__.__name__}({super().__repr__()})'
+        pass
 
-    # ..................{ CLASSES ~ generics : multiple     }..................
-    class Pep585GenericUntypevaredMultiple(
+    # ..................{ GENERICS ~ multiple                }..................
+    class _Pep585GenericUntypevaredMultiple(
         Callable, AbstractContextManager[str], Sequence[str]):
         '''
         :pep:`585`-compliant user-defined generic subclassing multiple
@@ -117,7 +132,7 @@ def add_data(data_module: 'ModuleType') -> None:
         classes (ABCs) *and* an unsubscripted :mod:`collection.abc` ABC.
         '''
 
-        # ................{ INITIALIZERS                      }................
+        # ................{ INITIALIZERS                       }................
         def __init__(self, sequence: tuple) -> None:
             '''
             Initialize this generic from the passed tuple.
@@ -126,7 +141,7 @@ def add_data(data_module: 'ModuleType') -> None:
             assert isinstance(sequence, tuple), f'{repr(sequence)} not tuple.'
             self._sequence = sequence
 
-        # ................{ ABCs                              }................
+        # ................{ ABCs                               }................
         # Define all protocols mandated by ABCs subclassed by this generic.
 
         def __call__(self) -> int:
@@ -154,13 +169,13 @@ def add_data(data_module: 'ModuleType') -> None:
             return self._sequence.reverse()
 
 
-    class Pep585GenericTypevaredShallowMultiple(Iterable[T], Container[T]):
+    class _Pep585GenericTypevaredShallowMultiple(Iterable[T], Container[T]):
         '''
         :pep:`585`-compliant user-defined generic subclassing multiple directly
         parametrized :mod:`collections.abc` abstract base classes (ABCs).
         '''
 
-        # ................{ INITIALIZERS                      }................
+        # ................{ INITIALIZERS                       }................
         def __init__(self, iterable: tuple) -> None:
             '''
             Initialize this generic from the passed tuple.
@@ -169,7 +184,7 @@ def add_data(data_module: 'ModuleType') -> None:
             assert isinstance(iterable, tuple), f'{repr(iterable)} not tuple.'
             self._iterable = iterable
 
-        # ................{ ABCs                              }................
+        # ................{ ABCs                               }................
         # Define all protocols mandated by ABCs subclassed by this generic.
         def __contains__(self, obj: object) -> bool:
             return obj in self._iterable
@@ -178,7 +193,7 @@ def add_data(data_module: 'ModuleType') -> None:
             return iter(self._iterable)
 
 
-    class Pep585GenericTypevaredDeepMultiple(
+    class _Pep585GenericTypevaredDeepMultiple(
         Sized, Iterable[tuple[S, T]], Container[tuple[S, T]]):
         '''
         :pep:`585`-compliant user-defined generic subclassing multiple
@@ -187,7 +202,7 @@ def add_data(data_module: 'ModuleType') -> None:
         :mod:`collections.abc` ABC.
         '''
 
-        # ................{ INITIALIZERS                      }................
+        # ................{ INITIALIZERS                       }................
         def __init__(self, iterable: tuple) -> None:
             '''
             Initialize this generic from the passed tuple.
@@ -196,7 +211,7 @@ def add_data(data_module: 'ModuleType') -> None:
             assert isinstance(iterable, tuple), f'{repr(iterable)} not tuple.'
             self._iterable = iterable
 
-        # ................{ ABCs                              }................
+        # ................{ ABCs                               }................
         # Define all protocols mandated by ABCs subclassed by this generic.
         def __contains__(self, obj: object) -> bool:
             return obj in self._iterable
@@ -207,7 +222,7 @@ def add_data(data_module: 'ModuleType') -> None:
         def __len__(self) -> bool:
             return len(self._iterable)
 
-    # ..................{ PRIVATE ~ forwardref              }..................
+    # ..................{ PRIVATE ~ forwardref               }..................
     _TEST_PEP585_FORWARDREF_CLASSNAME = (
         'beartype_test.a00_unit.data.data_type.Subclass')
     '''
@@ -221,10 +236,10 @@ def add_data(data_module: 'ModuleType') -> None:
     Arbitrary class referred to by :data:`_PEP484_FORWARDREF_CLASSNAME`.
     '''
 
-    # ..................{ MAPPINGS                          }..................
+    # ..................{ MAPPINGS                           }..................
     # Add PEP 585-specific test type hints to this dictionary global.
     data_module.HINTS_PEP_META.extend((
-        # ................{ BYTESTRING                        }................
+        # ................{ BYTESTRING                         }................
         # Byte string of integer constants satisfying the builtin "int" type.
         #
         # Note that *ALL* byte strings necessarily contain only integer
@@ -263,7 +278,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ CALLABLE                          }................
+        # ................{ CALLABLE                           }................
         # Callable accepting no parameters and returning a string.
         HintPepMetadata(
             hint=Callable[[], str],
@@ -278,7 +293,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ CONTEXTMANAGER                    }................
+        # ................{ CONTEXTMANAGER                     }................
         # Context manager yielding strings.
         HintPepMetadata(
             hint=AbstractContextManager[str],
@@ -298,7 +313,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ DICT                              }................
+        # ................{ DICT                               }................
         # Flat dictionary.
         HintPepMetadata(
             hint=dict[int, str],
@@ -335,30 +350,32 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ GENERATOR                         }................
+        # ................{ GENERATOR                          }................
         # Note that testing generators requires creating generators, which
         # require a different syntax to that of standard callables; ergo,
         # generator type hints are tested elsewhere.
 
-        # ................{ GENERICS ~ single                 }................
+        # ................{ GENERICS ~ single                  }................
         # Note that PEP 585-compliant generics are *NOT* explicitly detected as
         # PEP 585-compliant due to idiosyncrasies in the CPython implementation
         # of these generics. Ergo, we intentionally do *NOT* set
         # "is_pep585_builtin=True," below.
 
-        # Generic subclassing a single unparametrized builtin container.
+        # Generic subclassing a single shallowly unparametrized builtin
+        # container type.
         HintPepMetadata(
-            hint=Pep585GenericUntypevaredSingle,
+            hint=_Pep585GenericUntypevaredShallowSingle,
             pep_sign=HintSignGeneric,
-            generic_type=Pep585GenericUntypevaredSingle,
+            generic_type=_Pep585GenericUntypevaredShallowSingle,
             is_pep585_generic=True,
-            is_args=False,
             piths_meta=(
                 # Subclass-specific generic list of string constants.
-                HintPithSatisfiedMetadata(Pep585GenericUntypevaredSingle((
-                    'Forgive our Vocation’s vociferous publications',
-                    'Of',
-                ))),
+                HintPithSatisfiedMetadata(
+                    _Pep585GenericUntypevaredShallowSingle((
+                        'Forgive our Vocation’s vociferous publications',
+                        'Of',
+                    ))
+                ),
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Hourly sybaritical, pub sabbaticals'),
@@ -370,16 +387,54 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # Generic subclassing a single parametrized builtin containerr.
+        # Generic subclassing a single deeply unparametrized builtin container
+        # type.
         HintPepMetadata(
-            hint=Pep585GenericTypevaredSingle,
+            hint=_Pep585GenericUntypevaredDeepSingle,
             pep_sign=HintSignGeneric,
-            generic_type=Pep585GenericTypevaredSingle,
+            generic_type=_Pep585GenericUntypevaredDeepSingle,
+            is_pep585_generic=True,
+            piths_meta=(
+                # Subclass-specific generic list of list of string constants.
+                HintPithSatisfiedMetadata(
+                    _Pep585GenericUntypevaredDeepSingle([
+                        [
+                            'Intravenous‐averse effigy defamations, traversing',
+                            'Intramurally venal-izing retro-',
+                        ],
+                        [
+                            'Versions of a ',
+                            "Version 2.2.a‐excursioned discursive Morningrise's ravenous ad-",
+                        ],
+                    ])
+                ),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Vent of'),
+                # List of string constants.
+                HintPithUnsatisfiedMetadata([
+                    "Ventral‐entrailed rurality's cinder-",
+                    'Block pluralities of',
+                ]),
+                # Subclass-specific generic list of string constants.
+                HintPithUnsatisfiedMetadata(
+                    _Pep585GenericUntypevaredDeepSingle([
+                        'Block-house stockade stocks, trailer',
+                        'Park-entailed central heating, though those',
+                    ])
+                ),
+            ),
+        ),
+
+        # Generic subclassing a single parametrized builtin container type.
+        HintPepMetadata(
+            hint=_Pep585GenericTypevaredSingle,
+            pep_sign=HintSignGeneric,
+            generic_type=_Pep585GenericTypevaredSingle,
             is_pep585_generic=True,
             is_typevars=True,
             piths_meta=(
                 # Subclass-specific generic list of string constants.
-                HintPithSatisfiedMetadata(Pep585GenericTypevaredSingle((
+                HintPithSatisfiedMetadata(_Pep585GenericTypevaredSingle((
                     'Pleasurable, Raucous caucuses',
                     'Within th-in cannon’s cynosure-ensuring refectories',
                 ))),
@@ -397,14 +452,14 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic subclassing a single parametrized builtin container, itself
         # parametrized by the same type variables in the same order.
         HintPepMetadata(
-            hint=Pep585GenericTypevaredSingle[S, T],
+            hint=_Pep585GenericTypevaredSingle[S, T],
             pep_sign=HintSignGeneric,
-            generic_type=Pep585GenericTypevaredSingle,
+            generic_type=_Pep585GenericTypevaredSingle,
             is_pep585_generic=True,
             is_typevars=True,
             piths_meta=(
                 # Subclass-specific generic list of string constants.
-                HintPithSatisfiedMetadata(Pep585GenericTypevaredSingle((
+                HintPithSatisfiedMetadata(_Pep585GenericTypevaredSingle((
                     'Bandage‐managed',
                     'Into Faithless redaction’s didact enactment — crookedly',
                 ))),
@@ -418,18 +473,17 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ GENERICS ~ multiple               }................
+        # ................{ GENERICS ~ multiple                }................
         # Generic subclassing multiple unparametrized "collection.abc" abstract
         # base class (ABCs) *AND* an unsubscripted "collection.abc" ABC.
         HintPepMetadata(
-            hint=Pep585GenericUntypevaredMultiple,
+            hint=_Pep585GenericUntypevaredMultiple,
             pep_sign=HintSignGeneric,
-            generic_type=Pep585GenericUntypevaredMultiple,
+            generic_type=_Pep585GenericUntypevaredMultiple,
             is_pep585_generic=True,
-            is_args=False,
             piths_meta=(
                 # Subclass-specific generic 2-tuple of string constants.
-                HintPithSatisfiedMetadata(Pep585GenericUntypevaredMultiple((
+                HintPithSatisfiedMetadata(_Pep585GenericUntypevaredMultiple((
                     'Into a viscerally Eviscerated eras’ meditative hallways',
                     'Interrupting Soul‐viscous, vile‐ly Viceroy‐insufflating',
                 ))),
@@ -446,15 +500,15 @@ def add_data(data_module: 'ModuleType') -> None:
         # Generic subclassing multiple parametrized "collections.abc" abstract
         # base classes (ABCs).
         HintPepMetadata(
-            hint=Pep585GenericTypevaredShallowMultiple,
+            hint=_Pep585GenericTypevaredShallowMultiple,
             pep_sign=HintSignGeneric,
-            generic_type=Pep585GenericTypevaredShallowMultiple,
+            generic_type=_Pep585GenericTypevaredShallowMultiple,
             is_pep585_generic=True,
             is_typevars=True,
             piths_meta=(
                 # Subclass-specific generic iterable of string constants.
                 HintPithSatisfiedMetadata(
-                    Pep585GenericTypevaredShallowMultiple((
+                    _Pep585GenericTypevaredShallowMultiple((
                         "Of foliage's everliving antestature —",
                         'In us, Leviticus‐confusedly drunk',
                     )),
@@ -468,17 +522,16 @@ def add_data(data_module: 'ModuleType') -> None:
         # "collections.abc" abstract base classes (ABCs) *AND* an
         # unparametrized "collections.abc" ABC.
         HintPepMetadata(
-            hint=Pep585GenericTypevaredDeepMultiple,
+            hint=_Pep585GenericTypevaredDeepMultiple,
             pep_sign=HintSignGeneric,
-            generic_type=Pep585GenericTypevaredDeepMultiple,
+            generic_type=_Pep585GenericTypevaredDeepMultiple,
             is_pep585_generic=True,
             is_typevars=True,
-            is_type_typing=False,
             piths_meta=(
                 # Subclass-specific generic iterable of 2-tuples of string
                 # constants.
                 HintPithSatisfiedMetadata(
-                    Pep585GenericTypevaredDeepMultiple((
+                    _Pep585GenericTypevaredDeepMultiple((
                         (
                             'Inertially tragicomipastoral, pastel ',
                             'anticandour — remanding undemanding',
@@ -496,7 +549,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Nested list of PEP 585-compliant generics.
         HintPepMetadata(
-            hint=list[Pep585GenericUntypevaredMultiple],
+            hint=list[_Pep585GenericUntypevaredMultiple],
             pep_sign=HintSignList,
             isinstanceable_type=list,
             is_pep585_builtin=True,
@@ -504,11 +557,11 @@ def add_data(data_module: 'ModuleType') -> None:
                 # List of subclass-specific generic 2-tuples of string
                 # constants.
                 HintPithSatisfiedMetadata([
-                    Pep585GenericUntypevaredMultiple((
+                    _Pep585GenericUntypevaredMultiple((
                         'Stalling inevit‐abilities)',
                         'For carbined',
                     )),
-                    Pep585GenericUntypevaredMultiple((
+                    _Pep585GenericUntypevaredMultiple((
                         'Power-over (than',
                         'Power-with)',
                     )),
@@ -526,7 +579,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ LIST                              }................
+        # ................{ LIST                               }................
         # List of ignorable objects.
         HintPepMetadata(
             hint=list[object],
@@ -603,7 +656,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ REGEX ~ match                     }................
+        # ................{ REGEX ~ match                      }................
         # Regular expression match of only strings.
         HintPepMetadata(
             hint=Match[str],
@@ -621,7 +674,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ REGEX ~ pattern                   }................
+        # ................{ REGEX ~ pattern                    }................
         # Regular expression pattern of only strings.
         HintPepMetadata(
             hint=Pattern[str],
@@ -637,7 +690,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ SUBCLASS                          }................
+        # ................{ SUBCLASS                           }................
         # Any type, semantically equivalent under PEP 484 to the unsubscripted
         # "Type" singleton.
         HintPepMetadata(
@@ -733,7 +786,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ TUPLE ~ fixed                     }................
+        # ................{ TUPLE ~ fixed                      }................
         # Empty tuple. Yes, this is ridiculous, useless, and non-orthogonal
         # with standard sequence syntax, which supports no comparable notion of
         # an "empty {insert-standard-sequence-here}" (e.g., empty list): e.g.,
@@ -910,7 +963,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ TUPLE ~ variadic                  }................
+        # ................{ TUPLE ~ variadic                   }................
         # Variadic tuple.
         HintPepMetadata(
             hint=tuple[str, ...],
@@ -961,7 +1014,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ UNION ~ nested                    }................
+        # ................{ UNION ~ nested                     }................
         # Nested unions exercising edge cases induced by Python >= 3.8
         # optimizations leveraging PEP 572-style assignment expressions.
 
