@@ -66,7 +66,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNumpyArray,
     # HintSignOptional,
     HintSignOrderedDict,
-    # HintSignParamSpec,
+    HintSignParamSpec,
     # HintSignParamSpecArgs,
     # HintSignProtocol,
     HintSignReversible,
@@ -222,17 +222,17 @@ HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
     #   codebase, we (currently) opt to do so.
     'builtins.str': HintSignForwardRef,
 
-    # Python >= 3.10 implements PEP 484-compliant "typing.NewType" type hints
-    # as instances of that class. Regardless of the current Python version,
+    # Python >= 3.8 implements PEP 557-compliant "dataclasses.InitVar" type
+    # hints as instances of that class.
+    'dataclasses.InitVar': HintSignDataclassInitVar,
+
+    # Python >= 3.10 implements PEP 484-compliant "typing.NewType" type hints as
+    # instances of that class. Regardless of the current Python version,
     # "typing_extensions.NewType" type hints remain implemented in manner of
     # Python < 3.10 -- which is to say, as closures of that function. Ergo, we
     # intentionally omit "typing_extensions.NewType" here. See also:
     #     https://github.com/python/typing/blob/master/typing_extensions/src_py3/typing_extensions.py
     'typing.NewType': HintSignNewType,
-
-    # Python >= 3.8 implements PEP 557-compliant "dataclasses.InitVar" type
-    # hints as instances of that class.
-    'dataclasses.InitVar': HintSignDataclassInitVar,
 
     # ..................{ PEP 604                            }..................
     # PEP 604-compliant |-style unions (e.g., "int | float") are internally
@@ -242,6 +242,11 @@ HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
     # expose equivalent dunder attributes (e.g., "__args__", "__parameters__"),
     # enabling subsequent code generation to conflate the two without issue.
     'types.UnionType': HintSignUnion,
+
+    # ..................{ PEP 612                            }..................
+    # Python >= 3.10 implements PEP 612-compliant "typing.ParamSpec" type hints
+    # as instances of that class.
+    'typing.ParamSpec': HintSignParamSpec,
 }
 '''
 Dictionary mapping from the fully-qualified classnames of all PEP-compliant
