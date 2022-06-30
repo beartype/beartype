@@ -317,7 +317,7 @@ class MinecraftEndTxtUnscrambler(object):
 #was tasked with implementing this API, but they clearly had little to no
 #coherent idea of what they were doing.
 
-# from beartype._util.cache.pool.utilcachepoollistfixed import SIZE_BIG
+# from beartype._util.cache.pool.utilcachepoollistfixed import FIXED_LIST_SIZE_MEDIUM
 # from typing import List, Union
 #
 # # This global is defined below for sanity.
@@ -339,7 +339,7 @@ class MinecraftEndTxtUnscrambler(object):
 #     global _HINT_BIG
 #
 #     # This fixed length subtracted by 1 divided by 3. Just 'cause.
-#     SIZE_LESS_BIG = (SIZE_BIG-1) / 3
+#     SIZE_LESS_BIG = (FIXED_LIST_SIZE_MEDIUM-1) / 3
 #
 #     # Assert the fixed length of the cached fixed lists constraining the number
 #     # of child hints permitted to be transitively nested in any top-level
@@ -367,7 +367,7 @@ class MinecraftEndTxtUnscrambler(object):
 #         ''.join(']]' for _ in range(SIZE_LESS_BIG)),
 #     )
 #
-#     # Dynamically define this global, as "SIZE_BIG" is typically too large to
+#     # Dynamically define this global, as "FIXED_LIST_SIZE_MEDIUM" is typically too large to
 #     # allow this global to be statically defined.
 #     _HINT_BIG = eval(_HINT_BIG_EXPR, globals())
 #

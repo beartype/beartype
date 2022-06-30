@@ -63,14 +63,8 @@ class CauseSleuth(object):
     hint_childs : Optional[Tuple]
         Either:
 
-        * If this hint is PEP-compliant:
-
-          * If this hint is a generic, tuple of the one or more unerased
-            pseudo-superclasses (i.e., :mod:`typing` objects originally listed
-            as superclasses prior to their implicit type erasure by the
-            :mod:`typing` module) subclassed by this generic.
-          * Else, the possibly empty tuple of all arguments subscripting this
-            hint.
+        * If this hint is PEP-compliant, the possibly empty tuple of all
+          arguments subscripting (indexing) this hint.
 
         * Else, ``None``.
     pith : Any
@@ -82,7 +76,7 @@ class CauseSleuth(object):
         the current call to that function) if that function generated such an
         integer *or* ``None`` otherwise (i.e., if that function generated *no*
         such integer). See the same parameter accepted by the higher-level
-        :func:`beartype._decor._error.errormain.raise_pep_call_exception`
+        :func:`beartype._decor._error.errormain.get_beartype_violation`
         function for further details.
 
     Attributes (Private)
@@ -175,8 +169,9 @@ class CauseSleuth(object):
         Set the type hint to validate this object against.
         '''
 
-        # Reduce the currently visited hint to a lower-level hint-like object
-        # associated with this hint if this hint satisfies a condition.
+        # Sanitize this hint if unsupported by @beartype in its current form
+        # (e.g., "numpy.typing.NDArray[...]") to another form supported by
+        # @beartype (e.g., "typing.Annotated[numpy.ndarray, beartype.vale.*]").
         hint = sanify_hint_child(
             hint=hint, exception_prefix=self.exception_prefix)
 
@@ -202,12 +197,12 @@ class CauseSleuth(object):
         ----------
         This getter is intentionally generalized to support objects both
         satisfying and *not* satisfying hints as equally valid use cases. While
-        the parent :func:`.errormain.raise_pep_call_exception` function
+        the parent :func:`.errormain.get_beartype_violation` function
         calling this getter is *always* passed an object *not* satisfying the
         passed hint, this getter is under no such constraints. Why? Because
         this getter is also called to find which of an arbitrary number of
         objects transitively nested in the object passed to
-        :func:`.errormain.raise_pep_call_exception` fails to satisfy the
+        :func:`.errormain.get_beartype_violation` fails to satisfy the
         corresponding hint transitively nested in the hint passed to that
         function.
 

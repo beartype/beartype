@@ -206,7 +206,7 @@ This prefix is intended to be locally suffixed in the
 
 
 PEP_CODE_HINT_ROOT_SUFFIX = f''':
-            {ARG_NAME_RAISE_EXCEPTION}(
+            raise {ARG_NAME_RAISE_EXCEPTION}(
                 func={ARG_NAME_FUNC},
                 pith_name={PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER},
                 pith_value={VAR_NAME_PITH_ROOT},{{random_int_if_any}}

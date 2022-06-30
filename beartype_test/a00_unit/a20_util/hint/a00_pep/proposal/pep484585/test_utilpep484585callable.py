@@ -35,7 +35,8 @@ def test_get_hint_pep484585_callable_args_and_params() -> None:
     from beartype.roar import BeartypeDecorHintPep484585Exception
     from beartype._data.hint.pep.sign.datapepsigns import HintSignCallable
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
-        get_hint_pep484585_callable_args)
+        get_hint_pep484585_callable_args,
+    )
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
     from pytest import raises

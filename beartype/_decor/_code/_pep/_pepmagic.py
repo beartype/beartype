@@ -83,7 +83,7 @@ the :class:`int` or :class:`str` children of that object:
         @{0}! or
         @{1}!
     ):
-        raise __beartype_raise_exception(
+        raise get_beartype_violation(
             func=__beartype_func,
             pith_name=$%PITH_ROOT_NAME/~,
             pith_value=__beartype_pith_root,
@@ -98,7 +98,7 @@ final code memoized by that function might then resemble:
         isinstance(__beartype_pith_root, int) or
         isinstance(__beartype_pith_root, str)
     ):
-        raise __beartype_raise_exception(
+        raise get_beartype_violation(
             func=__beartype_func,
             pith_name=$%PITH_ROOT_NAME/~,
             pith_value=__beartype_pith_root,

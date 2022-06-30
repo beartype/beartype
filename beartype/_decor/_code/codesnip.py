@@ -160,7 +160,7 @@ PEP484_CODE_CHECK_NORETURN = f'''
     # Since this function annotated by "typing.NoReturn" successfully returned
     # a value rather than raising an exception or halting the active Python
     # interpreter, unconditionally raise an exception.
-    {ARG_NAME_RAISE_EXCEPTION}(
+    raise {ARG_NAME_RAISE_EXCEPTION}(
         func={ARG_NAME_FUNC},
         pith_name='return',
         pith_value={VAR_NAME_PITH_ROOT},

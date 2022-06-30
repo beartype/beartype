@@ -25,7 +25,7 @@ from beartype._util.cache.pool.utilcachepool import KeyPool
 from beartype._util.text.utiltextrepr import represent_object
 
 # ....................{ CONSTANTS                          }....................
-SIZE_BIG = 256
+FIXED_LIST_SIZE_MEDIUM = 256
 '''
 Reasonably large length to constrain acquired and released fixed lists to.
 

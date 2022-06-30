@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,13 +11,13 @@ This submodule unit tests high-level functionality of the
 concerns (e.g., PEP-compliance, PEP-noncompliance).
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ fail : arg                }....................
+# ....................{ TESTS ~ fail : arg                 }....................
 def test_decor_arg_name_fail() -> None:
     '''
     Test unsuccessful usage of the :func:`beartype.beartype` decorator for
@@ -37,7 +37,7 @@ def test_decor_arg_name_fail() -> None:
         def jokaero(weaponsmith: str, __beartype_func: str) -> str:
             return weaponsmith + __beartype_func
 
-# ....................{ TESTS ~ fail : arg : call         }....................
+# ....................{ TESTS ~ fail : arg : call          }....................
 def test_decor_arg_call_keyword_unknown_fail() -> None:
     '''
     Test unsuccessful usage of the :func:`beartype.beartype` decorator for
@@ -65,7 +65,7 @@ def test_decor_arg_call_keyword_unknown_fail() -> None:
     assert str(exception.value).endswith(
         "tau() got an unexpected keyword argument 'nicassar'")
 
-# ....................{ TESTS ~ fail : wrappee            }....................
+# ....................{ TESTS ~ fail : wrappee             }....................
 def test_decor_wrappee_type_fail() -> None:
     '''
     Test unsuccessful usage of the :func:`beartype.beartype` decorator for an

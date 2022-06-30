@@ -247,10 +247,10 @@ def sanify_hint_root(
 def sanify_hint_child(hint: object, exception_prefix: str) -> Any:
     '''
     PEP-compliant type hint sanified (i.e., sanitized) from the passed
-    **PEP-compliant child type hint** (i.e., hint transitively
-    subscripting the root type hint annotating a parameter or return of the
-    currently decorated callable) if this hint is reducible *or* this
-    hint as is otherwise (i.e., if this hint is *not* irreducible).
+    **PEP-compliant child type hint** (i.e., hint transitively subscripting the
+    root type hint annotating a parameter or return of the currently decorated
+    callable) if this hint is reducible *or* this hint as is otherwise (i.e., if
+    this hint is *not* irreducible).
 
     Parameters
     ----------

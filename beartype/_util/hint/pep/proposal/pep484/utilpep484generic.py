@@ -242,14 +242,14 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     #        return hint_bases
     #
     #    # Fixed list of all typing super attributes to be returned.
-    #    superattrs = acquire_fixed_list(SIZE_BIG)
+    #    superattrs = acquire_fixed_list(FIXED_LIST_SIZE_MEDIUM)
     #
     #    # 0-based index of the last item of this list.
     #    superattrs_index = 0
     #
     #    # Fixed list of all transitive superclasses originally listed by this
     #    # class iterated in method resolution order (MRO).
-    #    hint_orig_mro = acquire_fixed_list(SIZE_BIG)
+    #    hint_orig_mro = acquire_fixed_list(FIXED_LIST_SIZE_MEDIUM)
     #
     #    # 0-based indices of the current and last items of this list.
     #    hint_orig_mro_index_curr = 0
@@ -279,13 +279,13 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     #
     #            # If this class subclasses more than the maximum number of "typing"
     #            # attributes supported by this function, raise an exception.
-    #            if superattrs_index >= SIZE_BIG:
+    #            if superattrs_index >= FIXED_LIST_SIZE_MEDIUM:
     #                raise BeartypeDecorHintPep560Exception(
     #                    '{} PEP type {!r} subclasses more than '
     #                    '{} "typing" types.'.format(
     #                        exception_prefix,
     #                        hint,
-    #                        SIZE_BIG))
+    #                        FIXED_LIST_SIZE_MEDIUM))
     #        # Else, this superclass is *NOT* a typing attribute. In this case...
     #        else:
     #            # Tuple of all direct superclasses originally listed by this class
@@ -311,7 +311,7 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     #    ----------
     #    BeartypeDecorHintPep560Exception
     #        If this object defines the ``__orig_bases__`` dunder attribute but that
-    #        attribute transitively lists :data:`SIZE_BIG` or more :mod:`typing`
+    #        attribute transitively lists :data:`FIXED_LIST_SIZE_MEDIUM` or more :mod:`typing`
     #        attributes.
     #
     #Specifically:

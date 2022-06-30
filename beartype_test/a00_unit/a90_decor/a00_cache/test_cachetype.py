@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,15 +10,15 @@ This submodule unit tests the
 :attr:`beartype._decor._cache.cachetype.bear_typistry` singleton.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
 from typing import Tuple, Union
 
-# ....................{ TESTS ~ singleton                 }....................
+# ....................{ TESTS ~ singleton                  }....................
 def test_typistry_singleton_pass() -> None:
     '''
     Test successful usage of the
@@ -84,7 +84,7 @@ def test_typistry_singleton_fail() -> None:
     with raises(_BeartypeDecorBeartypistryException):
         bear_typistry['The.ceremony.of.innocence.is.drowned'] = 0xDEADBEEF
 
-# ....................{ PRIVATE ~ utility                 }....................
+# ....................{ PRIVATE ~ utility                  }....................
 #FIXME: Currently unused but preserved purely out of unhealthy paranoia.
 # def _eval_registered_expr(hint_expr: str) -> Union[type, Tuple[type, ...]]:
 #     '''
