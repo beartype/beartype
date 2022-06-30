@@ -12,14 +12,15 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.typing import (
+    Any,
+    Dict,
+    Optional,
+)
 from beartype._util.utilobject import get_object_basename_scoped
 from beartype._data.datatyping import TypeException
 from collections.abc import Callable
 from types import CodeType
-from typing import Any, Dict, Optional
-
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ HINTS                              }....................
 CallableScope = Dict[str, Any]

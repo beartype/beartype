@@ -17,9 +17,6 @@ from beartype._util.func.pep.utilpep484func import (
 from beartype._util.mod.lib.utilsphinx import is_sphinx_autodocing
 from collections.abc import Callable
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
 def is_func_unbeartypeable(func: Callable) -> bool:

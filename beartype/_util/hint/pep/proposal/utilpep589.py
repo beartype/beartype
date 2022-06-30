@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,14 +9,11 @@ Project-wide :pep:`589`-compliant type hint utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.py.utilpyversion import IS_PYTHON_3_8
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 # The implementation of the "typing.TypedDict" attribute substantially varies
 # across Python interpreter *AND* "typing" implementation. Specifically:
 # * The "typing.TypedDict" attribute under Python >= 3.9 is *NOT* actually a

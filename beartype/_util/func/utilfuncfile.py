@@ -35,14 +35,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #    https://stackoverflow.com/questions/59498679/how-can-i-get-exactly-the-code-of-a-lambda-function-in-python/64421174#64421174
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.typing import Optional
 from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
 from collections.abc import Callable
 from linecache import cache as linecache_cache
-from typing import Optional, Type
-
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ TESTERS                            }....................
 def is_func_file(func: Callable) -> bool:

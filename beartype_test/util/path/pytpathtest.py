@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -8,17 +8,17 @@ Test-specific **test suite paths** (i.e., :class:`pathlib.Path` instances
 encapsulating test-specific paths unique to this test suite).
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.meta import PACKAGE_NAME
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype_test.util.path.pytpathlib import DirRelative  #, FileRelative
 from pathlib import Path
 
-# ....................{ GETTERS ~ dir                     }....................
+# ....................{ GETTERS ~ dir                      }....................
 @callable_cached
 def get_test_package_dir() -> Path:
     '''
@@ -34,7 +34,7 @@ def get_test_package_dir() -> Path:
     # Objectionable action!
     return DirRelative(get_main_dir(), f'{PACKAGE_NAME}_test')
 
-# ....................{ GETTERS ~ dir : func              }....................
+# ....................{ GETTERS ~ dir : func               }....................
 @callable_cached
 def get_test_func_subpackage_dir() -> Path:
     '''
@@ -60,7 +60,7 @@ def get_test_func_data_dir() -> Path:
     # Questionable destination!
     return DirRelative(get_test_func_subpackage_dir(), 'data')
 
-# ....................{ GETTERS ~ dir : func : lib        }....................
+# ....................{ GETTERS ~ dir : func : lib         }....................
 @callable_cached
 def get_test_func_data_lib_dir() -> Path:
     '''

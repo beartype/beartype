@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,7 +10,7 @@ implementing unary operations on a single lower-level beartype validator).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from abc import ABCMeta, abstractmethod
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._core._valecore import BeartypeValidator
@@ -18,10 +18,7 @@ from beartype.vale._util._valeutiltext import format_diagnosis_line
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
 from beartype._util.text.utiltextrepr import represent_object
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ SUPERCLASSES                      }....................
+# ....................{ SUPERCLASSES                       }....................
 class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
     '''
     Abstract base class of all **beartype binary validator** (i.e., validator
@@ -34,12 +31,12 @@ class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
         Lower-level validator operated upon by this higher-level validator.
     '''
 
-    # ..................{ CLASS VARIABLES                   }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # ..................{ CLASS VARIABLES                    }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Subclasses declaring uniquely subclass-specific instance
     # variables *MUST* additionally slot those variables. Subclasses violating
     # this constraint will be usable but unslotted, which defeats our purposes.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently called
     # cache dunder methods. Slotting has been shown to reduce read and write
@@ -48,7 +45,7 @@ class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
         '_validator_operand',
     )
 
-    # ..................{ INITIALIZERS                      }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
         validator_operand: BeartypeValidator,
@@ -83,7 +80,7 @@ class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
         # Classify all remaining passed parameters.
         self._validator_operand = validator_operand
 
-    # ..................{ GETTERS                           }..................
+    # ..................{ GETTERS                            }..................
     #FIXME: Unit test us up, please.
     def get_diagnosis(
         self,
@@ -127,7 +124,7 @@ class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
             f'{line_outer_suffix}'
         )
 
-    # ..................{ ABSTRACT                          }..................
+    # ..................{ ABSTRACT                           }..................
     # Abstract methods required to be concretely implemented by subclasses.
 
     @property
@@ -141,7 +138,7 @@ class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
 
         pass
 
-# ....................{ SUBCLASSES                        }....................
+# ....................{ SUBCLASSES                         }....................
 class BeartypeValidatorNegation(BeartypeValidatorUnaryABC):
     '''
     **Negation beartype validator** (i.e., validator negating the boolean
@@ -150,7 +147,7 @@ class BeartypeValidatorNegation(BeartypeValidatorUnaryABC):
     :meth:`BeartypeValidator.__invert__` dunder method of that validator).
     '''
 
-    # ..................{ INITIALIZERS                      }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(self, validator_operand: BeartypeValidator) -> None:
         '''
         Initialize this higher-level validator from the passed validator.
@@ -176,12 +173,12 @@ class BeartypeValidatorNegation(BeartypeValidatorUnaryABC):
             is_valid_code=f'(not {validator_operand._is_valid_code})',
         )
 
-    # ..................{ PROPERTIES                        }..................
+    # ..................{ PROPERTIES                         }..................
     @property
     def _operator_symbol(self) -> str:
         return '~'
 
-# ....................{ PRIVATE ~ validators              }....................
+# ....................{ PRIVATE ~ validators               }....................
 def _validate_operand(
     self: BeartypeValidatorUnaryABC,
     validator_operand: BeartypeValidator,

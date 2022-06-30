@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -72,8 +72,8 @@ this submodule rather than from :mod:`typing` directly: e.g.,
    from beartype.typing import Tuple, List, Dict, Set, FrozenSet, Type
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # *NOT* intended for public importation should be locally imported at module
 # scope *ONLY* under alternate private names (e.g., "import re as _re" rather
@@ -83,7 +83,7 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 # import machinery rather than non-standard dynamic import shenanigans (e.g.,
 # "from typing import Annotated" rather than
 # "import_typing_attr_or_none('Annotated')").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_7_2 as _IS_PYTHON_AT_LEAST_3_7_2,
     IS_PYTHON_AT_LEAST_3_8   as _IS_PYTHON_AT_LEAST_3_8,
@@ -92,8 +92,8 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_11  as _IS_PYTHON_AT_LEAST_3_11,
 )
 
-# ....................{ IMPORTS ~ all                     }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS ~ all                      }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To prevent "mypy --no-implicit-reexport" from raising literally
 # hundreds of errors at static analysis time, *ALL* public attributes *MUST* be
 # explicitly reimported under the same names with "{exception_name} as
@@ -102,7 +102,7 @@ from beartype._util.py.utilpyversion import (
 #     beartype/_cave/_cavefast.py:47: error: Module "beartype.roar" does not
 #     explicitly export attribute "BeartypeCallUnavailableTypeException";
 #     implicit reexport disabled  [attr-defined]
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Import all public attributes of the "typing" module both available under all
 # supported Python versions and *NOT* deprecated by a subsequent Python version
@@ -135,7 +135,7 @@ from typing import (
     overload as overload,
 )
 
-# ....................{ IMPORTS ~ version                 }....................
+# ....................{ IMPORTS ~ version                  }....................
 # Import all public attributes of the "typing" module both available under a
 # subset of supported Python versions and *NOT* deprecated by a subsequent
 # Python version under their original names.
@@ -165,15 +165,20 @@ if _IS_PYTHON_AT_LEAST_3_8:
             is_typeddict as is_typeddict,
         )
 
-        # If the active Python interpreter targets Python >= 3.11...
-        if _IS_PYTHON_AT_LEAST_3_11:
-            from typing import (  # type: ignore[attr-defined]
-                #FIXME: Add once that PEP goes live:
-                #    Self as Self,
-                reveal_type as reveal_type,
-            )
+        #FIXME: Uncomment once these PEPs go live:
+        # # If the active Python interpreter targets Python >= 3.11...
+        # if _IS_PYTHON_AT_LEAST_3_11:
+        #     from typing import (  # type: ignore[attr-defined]
+        #            LiteralString as LiteralString,
+        #            Self as Self,
+        #            TypeVarTuple as TypeVarTuple,
+        #            dataclass_transform,
+        #         #FIXME: Technically, this is already live -- but pyright insists
+        #         #it isn't. We don't particularly feel like fighting that.
+        #            reveal_type as reveal_type,
+        #     )
 
-# ....................{ PEP ~ 544                         }....................
+# ....................{ PEP ~ 544                          }....................
 # If this interpreter is either performing static type-checking (e.g., via
 # mypy) *OR* targets Python < 3.8, defer to the standard library versions of
 # the family of "Supports*" protocols available under Python < 3.8.
@@ -212,7 +217,7 @@ if _IS_PYTHON_AT_LEAST_3_8:
             runtime_checkable as runtime_checkable,
         )
 
-# ....................{ PEP ~ 585                         }....................
+# ....................{ PEP ~ 585                          }....................
 # If the active Python interpreter targets Python < 3.9 and thus fails to
 # support PEP 585, import *ALL* public attributes of the "typing" module
 # deprecated by PEP 585 as their original values.

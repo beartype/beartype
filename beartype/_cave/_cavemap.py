@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -7,7 +7,7 @@
 **Beartype cave-specific abstract base classes (ABCs).**
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: As with the parallel "beartype._cave.abc" submodule, refactor the
 #contents of this private submodule into the newly proposed public
 #"beartype.caver" submodule. To do so:
@@ -25,7 +25,7 @@
 #    ) -> type:
 #    Internally, this function should call make_type() to do so.
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeCaveNoneTypeOrKeyException,
     BeartypeCaveNoneTypeOrMutabilityException,
@@ -34,10 +34,7 @@ from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep)
 from typing import Any, Tuple, Union
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS                          }....................
 _NoneType: type = type(None)
 '''
 Type of the ``None`` singleton, duplicated from the :mod:`beartype.cave`
@@ -50,7 +47,7 @@ _NoneTypes: Tuple[type, ...] = (_NoneType,)
 Tuple of only the type of the ``None`` singleton.
 '''
 
-# ....................{ HINTS                             }....................
+# ....................{ HINTS                              }....................
 _TypeTuple = Tuple[Union[type, str], ...]
 '''
 PEP-compliant type hint matching a **type tuple** (i.e., tuple containing only
@@ -58,7 +55,7 @@ types and forward references to deferred types specified as the fully-qualified
 names of those types).
 '''
 
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 class _NoneTypeOrType(dict):
     '''
     :class:`NoneType` **tuple factory type** (i.e., :class:`dict` subclass,
@@ -67,7 +64,7 @@ class _NoneTypeOrType(dict):
     the ``None`` singleton).
     '''
 
-    # ..................{ DUNDERS                           }..................
+    # ..................{ DUNDERS                            }..................
     def __setitem__(self, key: Any, value: Any) -> None:
         '''
         Dunder method explicitly called by the superclass on setting the passed
@@ -157,7 +154,6 @@ class _NoneTypeOrType(dict):
         if isinstance(hint, type):
             # If this type is "NoneType", reuse the existing "_NoneTypes" tuple
             # containing only this type.
-            # I don't think mypy recognises _NoneType as None, and so gets confused
             if hint is _NoneType:
                 hint_or_none = _NoneTypes
             # Else, this type is *NOT* "NoneType". In this case, instantiate a
@@ -188,7 +184,7 @@ class _NoneTypeOrType(dict):
         #     self[hint] = hint_or_none
         return hint_or_none
 
-# ....................{ SINGLETONS                        }....................
+# ....................{ SINGLETONS                         }....................
 NoneTypeOr: Any = _NoneTypeOrType()
 '''
 **:class:``NoneType`` tuple factory** (i.e., dictionary mapping from arbitrary

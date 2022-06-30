@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,16 +10,13 @@ modules and/or attributes in modules) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.meta import _convert_version_str_to_tuple
 from beartype.roar._roarexc import _BeartypeUtilModuleException
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._data.datatyping import TypeException
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ VALIDATORS                        }....................
+# ....................{ VALIDATORS                         }....................
 def die_unless_module_attr_name(
     # Mandatory parameters.
     module_attr_name: str,
@@ -49,7 +46,7 @@ def die_unless_module_attr_name(
 
     Raises
     ----------
-    exception_cls
+    :exc:`exception_cls`
         If either:
 
         * This name is *not* a string.
@@ -103,7 +100,7 @@ def die_unless_module_attr_name(
     # Else, this string is syntactically valid as a fully-qualified module
     # attribute name.
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 def is_module(module_name: str) -> bool:
     '''
     ``True`` only if the module or C extension with the passed fully-qualified
@@ -126,7 +123,7 @@ def is_module(module_name: str) -> bool:
 
     Warns
     ----------
-    :class:`BeartypeModuleUnimportableWarning`
+    BeartypeModuleUnimportableWarning
         If a module with this name exists *but* that module is unimportable
         due to raising module-scoped exceptions at importation time.
     '''
@@ -244,7 +241,7 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
             # Setuptools-specific object describing the current version of the
             # module satisfying this requirement if any *OR* "None" if this
             # requirement cannot be guaranteed to be unsatisfied.
-            module_distribution = get_distribution(module_requirement)
+            module_distribution = get_distribution(module_requirement)  # pyright: ignore[reportGeneralTypeIssues]
         # If setuptools fails to find this requirement, this does *NOT*
         # necessarily imply this requirement to be unimportable as a package.
         # Rather, this only implies this requirement was *NOT* installed as a
@@ -296,7 +293,7 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
         # Return true only if this requirement is satisfied.
         return module_distribution is not None
 
-# ....................{ TESTERS ~ package                 }....................
+# ....................{ TESTERS ~ package                  }....................
 #FIXME: Unit test us up, please.
 def is_package(package_name: str) -> bool:
     '''

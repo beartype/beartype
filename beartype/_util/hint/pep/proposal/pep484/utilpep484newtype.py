@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,17 +10,14 @@ callables generically applicable to :pep:`484`-compliant types).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484Exception
+from beartype.typing import Any
 from beartype._data.hint.pep.sign.datapepsigns import HintSignNewType
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from types import FunctionType
-from typing import Any
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 # If the active Python interpreter targets Python >= 3.10 and thus defines
 # "typing.NewType" type hints as instances of that class, implement this tester
 # unique to prior Python versions to raise an exception.
@@ -107,7 +104,7 @@ is_hint_pep484_newtype_pre_python310.__doc__ = '''
         :pep:`484`-compliant new type.
     '''
 
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 def get_hint_pep484_newtype_class(hint: Any) -> type:
     '''
     User-defined class aliased by the passed :pep:`484`-compliant **new type**

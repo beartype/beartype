@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,7 +12,7 @@ PEP-compliant type hint annotating that parameter or return).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: Generalizing the "random_int" concept (i.e., the optional "random_int"
 #parameter accepted by the raise_pep_call_exception() function) that enables
 #O(1) rather than O(n) exception handling to containers that do *NOT* provide
@@ -65,13 +65,19 @@ This private submodule is *not* intended for importation by downstream callers.
 #  must be taken here to ensure that this exception handling algorithm visits
 #  containers in the exact same order as visited by our testing algorithm.
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.meta import URL_ISSUES
 from beartype.roar._roarexc import (
     BeartypeCallHintParamViolation,
     BeartypeCallHintReturnViolation,
     _BeartypeCallHintPepRaiseException,
     _BeartypeCallHintPepRaiseDesynchronizationException,
+)
+from beartype.typing import (
+    Callable,
+    Dict,
+    NoReturn,
+    Optional,
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
@@ -99,12 +105,8 @@ from beartype._util.text.utiltextlabel import (
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import represent_object
 from beartype._data.datatyping import TypeException
-from typing import Callable, Dict, NoReturn, Optional
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ MAPPINGS                          }....................
+# ....................{ MAPPINGS                           }....................
 # Initialized with automated inspection below in the _init() function.
 PEP_HINT_SIGN_TO_GET_CAUSE_FUNC: Dict[
     HintSign, Callable[[CauseSleuth], Optional[str]]] = {}
@@ -116,7 +118,7 @@ which is dynamically dispatched by that function to describe type-checking
 failures specific to that unsubscripted :mod:`typing` attribute.,
 '''
 
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS                          }....................
 # Assuming a line length of 80 characters, this magic number truncates
 # arbitrary object representations to 100 lines (i.e., 8000/80), which seems
 # more than reasonable and (possibly) not overly excessive.
@@ -128,7 +130,7 @@ be sufficiently long to assist in identifying type-check failures but not so
 excessively long as to prevent human-readability.
 '''
 
-# ....................{ RAISERS                           }....................
+# ....................{ RAISERS                            }....................
 def raise_pep_call_exception(
     # Mandatory parameters.
     func: Callable,
@@ -323,7 +325,7 @@ def raise_pep_call_exception(
         f'{pith_value_repr}'
     )
 
-# ....................{ INITIALIZERS                      }....................
+# ....................{ INITIALIZERS                       }....................
 def _init() -> None:
     '''
     Initialize this submodule.

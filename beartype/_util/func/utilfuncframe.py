@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,19 +11,16 @@ external callables underlying the call to the current callable).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-#FIXME: Rename this submodule to "utilfuncframe", please.
-
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 import sys
-# from beartype.roar._roarexc import _BeartypeUtilCallableException
-# from beartype._data.datatyping import TypeException
+from beartype.typing import (
+    Callable,
+    Iterable,
+    Optional,
+)
 from types import FrameType
-from typing import Callable, Iterable, Optional
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 get_frame: Optional[Callable[[int,], Optional[FrameType]]] = (
     getattr(sys, '_getframe', None))
 '''
@@ -59,7 +56,7 @@ CPython resembles:
         f_trace         tracing function for this frame, or None
 '''
 
-# ....................{ ITERATORS                         }....................
+# ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.
 def iter_frames(
     # Optional parameters.

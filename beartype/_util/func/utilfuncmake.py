@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,8 +12,12 @@ callables on-the-fly.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.typing import (
+    Optional,
+    Type,
+)
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.text.utiltextlabel import label_exception
 from beartype._util.text.utiltextmunge import number_lines
@@ -21,13 +25,9 @@ from beartype._util.utilobject import get_object_name
 from collections.abc import Callable
 from functools import update_wrapper
 from linecache import cache as linecache_cache  # type: ignore[attr-defined]
-from typing import Optional, Type
 from weakref import finalize
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ MAKERS                            }....................
+# ....................{ MAKERS                             }....................
 def make_func(
     # Mandatory arguments.
     func_name: str,
@@ -110,7 +110,7 @@ def make_func(
 
     Raises
     ----------
-    exception_cls
+    :exc:`exception_cls`
         If either:
 
         * ``func_locals`` contains a key whose value is that of ``func_name``,
@@ -121,7 +121,7 @@ def make_func(
           function with this name.
     '''
 
-    # ..................{ VALIDATION ~ pre                  }..................
+    # ..................{ VALIDATION ~ pre                   }..................
     assert isinstance(func_name, str), f'{repr(func_name)} not string.'
     assert isinstance(func_code, str), f'{repr(func_code)} not string.'
     assert isinstance(is_debug, bool), f'{repr(is_debug)} not bool.'
@@ -151,7 +151,7 @@ def make_func(
         )
     # Else, that function's name is *NOT* already in this local scope.
 
-    # ..................{ STARTUP ~ filename                }..................
+    # ..................{ STARTUP ~ filename                 }..................
     # Note that this logic is intentionally performed *BEFORE* munging the
     # "func_code" string in-place below, as this logic depends upon the unique
     # ID of that string. Reassignment obliterates that uniqueness.
@@ -208,7 +208,7 @@ def make_func(
     func_filename = (
         f'<@beartype({func_filename_name}) at {id(func_filename_object):#x}>')
 
-    # ..................{ STARTUP ~ code                    }..................
+    # ..................{ STARTUP ~ code                     }..................
     # Code snippet defining this function, stripped of all leading and trailing
     # whitespace to improve both readability and disambiguity. Since this
     # whitespace is safely ignorable, the original snippet is safely
@@ -220,7 +220,7 @@ def make_func(
         print(f'{number_lines(func_code)}')
     # Else, leave that definition obscured by the voracious bitbuckets of time.
 
-    # ..................{ CREATION                          }..................
+    # ..................{ CREATION                           }..................
     # Attempt to...
     try:
         # Call the more verbose and obfuscatory compile() builtin instead of
@@ -256,7 +256,7 @@ def make_func(
             f'{number_lines(func_code)}'
         ) from exception
 
-    # ..................{ VALIDATION ~ post                 }..................
+    # ..................{ VALIDATION ~ post                  }..................
     # If that function's name is *NOT* in this local scope, this code snippet
     # failed to declare that function. In this case, raise an exception.
     if func_name not in func_locals:
@@ -284,7 +284,7 @@ def make_func(
         update_wrapper(wrapper=func, wrapped=func_wrapped)
     # Else, that function is *NOT* such a wrapper.
 
-    # ..................{ CLEANUP                           }..................
+    # ..................{ CLEANUP                            }..................
     # If that function is documented...
     #
     # Note that function is intentionally documented *AFTER* propagating dunder
@@ -330,7 +330,7 @@ def make_func(
     # Return that function.
     return func
 
-# ....................{ COPIERS                           }....................
+# ....................{ COPIERS                            }....................
 #FIXME: Consider excising. Although awesome, this is no longer needed.
 # from beartype._util.func.utilfunctest import die_unless_func_python
 # from types import FunctionType

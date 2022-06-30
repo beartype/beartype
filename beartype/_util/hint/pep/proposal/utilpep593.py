@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,7 +9,7 @@ Project-wide :pep:`593`-compliant type hint utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep593Exception
 from beartype.typing import (
     Any,
@@ -20,10 +20,7 @@ from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
 from beartype._data.datatyping import TypeException
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ VALIDATORS                        }....................
+# ....................{ VALIDATORS                         }....................
 #FIXME: Pass "exception_prefix" to all calls of this validator.
 def die_unless_hint_pep593(
     # Mandatory parameters.
@@ -66,7 +63,7 @@ def die_unless_hint_pep593(
             f'"typing_extensions.Annotated[...]").'
         )
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 #FIXME: Unit test us up.
 def is_hint_pep593(hint: Any) -> bool:
     '''
@@ -143,7 +140,7 @@ def is_hint_pep593_ignorable_or_none(
         None
     )
 
-# ....................{ TESTERS ~ beartype                }....................
+# ....................{ TESTERS ~ beartype                 }....................
 def is_hint_pep593_beartype(hint: Any) -> bool:
     '''
     ``True`` only if the first argument subscripting the passed
@@ -191,7 +188,7 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
     except:
         return False
 
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
     '''

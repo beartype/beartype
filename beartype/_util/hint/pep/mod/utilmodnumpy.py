@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,18 +10,19 @@ the third-party :mod:`numpy` package) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: The top-level of this module should avoid importing from third-party
 # optional libraries, both because those libraries cannot be guaranteed to be
 # either installed or importable here *AND* because those imports are likely to
 # be computationally expensive, particularly for imports transitively importing
 # C extensions (e.g., anything from NumPy or SciPy).
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import (
     BeartypeDecorHintNonpepNumpyException,
     BeartypeDecorHintNonpepNumpyWarning,
 )
+from beartype.typing import Any, FrozenSet
 from beartype._data.hint.pep.sign.datapepsigns import HintSignNumpyArray
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.mod.lib.utiltyping import import_typing_attr_or_none
@@ -30,13 +31,9 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_sign_or_none,
 )
 from beartype._util.utilobject import is_object_hashable
-from typing import Any, FrozenSet
 from warnings import warn
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ REDUCERS                          }....................
+# ....................{ REDUCERS                           }....................
 #FIXME: Ideally, this reducer would be memoized. Sadly, the
 #"numpy.typing.NDArray" type hint itself fails to memoize. Memoization here
 #would just consume all available memory. *sigh*
@@ -82,7 +79,7 @@ def reduce_hint_numpy_ndarray(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintNonpepNumpyException`
+    BeartypeDecorHintNonpepNumpyException
         If either:
 
         * The active Python interpreter targets Python < 3.9 and either:
@@ -104,7 +101,7 @@ def reduce_hint_numpy_ndarray(
               :meth:`numpy.dtype.__init__` method.
     '''
 
-    # ..................{ SIGN                              }..................
+    # ..................{ SIGN                               }..................
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.
     hint_sign = get_hint_pep_sign_or_none(hint)
@@ -118,7 +115,7 @@ def reduce_hint_numpy_ndarray(
         )
     # Else, this hint is a typed NumPy array.
 
-    # ..................{ IMPORTS                           }..................
+    # ..................{ IMPORTS                            }..................
     # Defer heavyweight imports until *AFTER* validating this hint to be a
     # typed NumPy array. Why? Because these imports are *ONLY* safely
     # importable if this hint is a typed NumPy array. Why? Because
@@ -168,11 +165,11 @@ def reduce_hint_numpy_ndarray(
     if hint is NDArray:
         return ndarray
 
-    # ..................{ CONSTANTS                         }..................
+    # ..................{ CONSTANTS                          }..................
     # Frozen set of all NumPy scalar data type abstract base classes (ABCs).
     NUMPY_DTYPE_TYPE_ABCS = _get_numpy_dtype_type_abcs()
 
-    # ..................{ ARGS                              }..................
+    # ..................{ ARGS                               }..................
     # Objects subscripting this hint if any *OR* the empty tuple otherwise.
     hint_args = get_hint_pep_args(hint)
 
@@ -216,7 +213,7 @@ def reduce_hint_numpy_ndarray(
     if hint_dtype_like is Any:
         return ndarray
 
-    # ..................{ REDUCTION                         }..................
+    # ..................{ REDUCTION                          }..................
     #FIXME: Safely replace this with "from typing import Annotated" after
     #dropping Python 3.8 support.
     # "typing.Annotated" type hint factory safely imported from whichever of
@@ -314,7 +311,7 @@ def reduce_hint_numpy_ndarray(
     # Return this validator annotating the NumPy array type.
     return typing_annotated[ndarray, hint_validator]
 
-# ....................{ PRIVATE ~ getter                  }....................
+# ....................{ PRIVATE ~ getter                   }....................
 #FIXME: File an upstream NumPy issue politely requesting they publicize either:
 #* An equivalent container listing these types.
 #* Documentation officially listing these types.

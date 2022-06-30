@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,7 +9,7 @@ Project-wide :pep:`586`-compliant type hint utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep586Exception
 from beartype.typing import Any
 from beartype._cave._cavefast import EnumMemberType, NoneType
@@ -17,10 +17,7 @@ from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._data.datatyping import TypeException
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS                          }....................
 _LITERAL_ARG_TYPES = (bool, bytes, int, str, EnumMemberType, NoneType)
 '''
 Tuple of all types of objects permissible as arguments subscripting the
@@ -32,7 +29,7 @@ These types are explicitly listed by :pep:`586` as follows:
     bools, Enum values and None.
 '''
 
-# ....................{ VALIDATORS                        }....................
+# ....................{ VALIDATORS                         }....................
 def die_unless_hint_pep586(
     # Mandatory parameters.
     hint: Any,
@@ -141,7 +138,7 @@ def die_unless_hint_pep586(
                     f'not {hint_literal_types}.'
                 )
 
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 def get_hint_pep586_literals(
     # Mandatory parameters.
     hint: Any,

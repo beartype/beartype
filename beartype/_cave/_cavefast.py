@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -16,10 +16,7 @@ importation (e.g., :mod:`numpy`) despite :mod:`beartype` itself *never*
 requiring those imports. Until resolved, that subpackage is considered tainted.
 '''
 
-# ....................{ TODO                              }....................
-#FIXME: Revise all "README.rst" examples in accordance with recent changes to
-#this submodule. Let's preserve worky, please.
-
+# ....................{ TODO                               }....................
 #FIXME: Add types for all remaining useful "collections.abc" interfaces,
 #including:
 #* "Reversible".
@@ -33,13 +30,13 @@ requiring those imports. Until resolved, that subpackage is considered tainted.
 #* "ByteString". (wut)
 #* Dictionary-specific views (e.g., "MappingView", "ItemsView").
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import functools as _functools
 import numbers as _numbers
@@ -93,7 +90,7 @@ from types import (
     ModuleType as _ModuleType,
 )
 
-# ....................{ IMPORTS ~ conditional             }....................
+# ....................{ IMPORTS ~ conditional              }....................
 #FIXME: Preserve for when we inevitably require similar logic in the future.
 
 # # Attempt to import types unavailable under Python 3.5, all of which should
@@ -108,7 +105,7 @@ from types import (
 # except ImportError:
 #     _Collection = None
 
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 class UnavailableType(object):
     '''
     **Unavailable type** (i.e., type *not* available under the active Python
@@ -135,7 +132,7 @@ class _UnavailableTypesTuple(tuple):
 
     pass
 
-# ....................{ TYPES ~ core                      }....................
+# ....................{ TYPES ~ core                       }....................
 AnyType = object
 '''
 Type of all objects regardless of type.
@@ -161,14 +158,14 @@ Type of all **C- and Python-based modules** (i.e., importable files implemented
 either as C extensions or in pure Python).
 '''
 
-# ....................{ TYPES ~ core : singleton          }....................
-EllipsisType: Any = type(Ellipsis)
+# ....................{ TYPES ~ core : singleton           }....................
+EllipsisType: type = type(Ellipsis)
 '''
 Type of the ``Ellipsis`` singleton.
 '''
 
 
-NoneType: Any = type(None)
+NoneType: type = type(None)
 '''
 Type of the ``None`` singleton.
 
@@ -188,12 +185,12 @@ Depressingly, this type must now be manually redefined everywhere.
 '''
 
 
-NotImplementedType: Any = type(NotImplemented)
+NotImplementedType: type = type(NotImplemented)
 '''
 Type of the ``NotImplemented`` singleton.
 '''
 
-# ....................{ TYPES ~ call                      }....................
+# ....................{ TYPES ~ call                       }....................
 CallablePartialType = _functools.partial
 '''
 Type of all **pure-Python partial callables** (i.e., callables dynamically
@@ -214,7 +211,7 @@ Type of all **code objects** (i.e., C-based objects underlying all pure-Python
 callables to which those callables are compiled for efficiency).
 '''
 
-# ....................{ TYPES ~ call : function           }....................
+# ....................{ TYPES ~ call : function            }....................
 FunctionType = _FunctionType
 '''
 Type of all **pure-Python functions** (i.e., functions implemented in Python
@@ -257,7 +254,7 @@ extensions, official stdlib C extensions, or the active Python interpreter
 itself).
 '''
 
-# ....................{ TYPES ~ call : method : bound     }....................
+# ....................{ TYPES ~ call : method : bound      }....................
 MethodBoundInstanceOrClassType = _MethodType
 '''
 Type of all **pure-Python bound instance and class methods** (i.e., methods
@@ -296,7 +293,7 @@ See Also
     Type of all C-based unbound dunder method wrapper descriptors.
 '''
 
-# ....................{ TYPES ~ call : method : unbound   }....................
+# ....................{ TYPES ~ call : method : unbound    }....................
 # Although Python >= 3.7 now exposes an explicit method wrapper type via the
 # standard "types.ClassMethodDescriptorType" object, this is of no benefit to
 # older versions of Python. Ergo, the type of an arbitrary method descriptor
@@ -354,7 +351,7 @@ See Also
     Type of all C-based unbound dunder method wrapper descriptors.
 '''
 
-# ....................{ TYPES ~ call : method : decorator }....................
+# ....................{ TYPES ~ call : method : decorator  }....................
 MethodDecoratorClassType = classmethod
 '''
 Type of all **C-based unbound class method descriptors** (i.e., non-callable
@@ -412,7 +409,7 @@ Static method objects are *not* callable, as their implementations fail to
 define the ``__call__`` dunder method.
 '''
 
-# ....................{ TYPES ~ call : return : async     }....................
+# ....................{ TYPES ~ call : return : async      }....................
 AsyncGeneratorCType = _AsyncGeneratorType
 '''
 C-based type returned by all **asynchronous pure-Python generators** (i.e.,
@@ -442,7 +439,7 @@ callables are simply callables subject to syntactic sugar, the type of these
 callables is simply :data:`CallableTypes`.
 '''
 
-# ....................{ TYPES ~ call : return : generator }....................
+# ....................{ TYPES ~ call : return : generator  }....................
 GeneratorType = _Generator
 '''
 Type of all **C- and Python-based generator objects** (i.e., iterators
@@ -490,7 +487,7 @@ implementing the :class:`collections.abc.Iterator` protocol, the former only
 applies to generators implicitly created by Python itself.
 '''
 
-# ....................{ TYPES ~ data                      }....................
+# ....................{ TYPES ~ data                       }....................
 ContainerType = _Container
 '''
 Type of all **containers** (i.e., concrete instances of the abstract
@@ -506,9 +503,8 @@ This type ambiguously matches both:
   :class:`collections.abc.Container` abstract base class (ABC)).
 * **Structural container subtypes** (i.e., arbitrary classes implementing the
   abstract ``__contains__`` method declared by that ABC *without* subclassing
-  that ABC), as formalized by `PEP 544 -- Protocols: Structural subtyping
-  (static duck typing) <PEP 544_>`_. Notably, since the **NumPy array type**
-  (i.e., :class:`numpy.ndarray`) defines that method, this type magically
+  that ABC), as formalized by :pep:`544`. Notably, since the **NumPy array
+  type** (i.e., :class:`numpy.ndarray`) defines that method, this type magically
   matches the NumPy array type as well.
 
 Of course, distinguishing between explicit and structural subtypes would
@@ -537,8 +533,6 @@ structural container subtypes as explicit container subtypes:
 
 .. _PEP 20:
    https://www.python.org/dev/peps/pep-0020
-.. _PEP 544:
-   https://www.python.org/dev/peps/pep-0544
 '''
 
 
@@ -652,7 +646,7 @@ See Also
     Further details on structural subtyping.
 '''
 
-# ....................{ TYPES ~ data : mapping            }....................
+# ....................{ TYPES ~ data : mapping             }....................
 HashableType = _Hashable
 '''
 Type of all **hashable objects** (i.e., both concrete and structural instances
@@ -704,7 +698,7 @@ See Also
     Type of all mutable and immutable mappings.
 '''
 
-# ....................{ TYPES ~ data : sequence           }....................
+# ....................{ TYPES ~ data : sequence            }....................
 SequenceType = _Sequence
 '''
 Type of all **mutable** and **immutable sequences** (i.e., both concrete and
@@ -787,7 +781,7 @@ See Also
     Further details on sequences.
 '''
 
-# ....................{ TYPES ~ enum                      }....................
+# ....................{ TYPES ~ enum                       }....................
 # Enumeration types are sufficiently obscure to warrant formalization here.
 
 EnumType = _EnumMeta
@@ -852,7 +846,7 @@ that enumeration's type and should be directly referenced as such: e.g.,
     ...     return str(superlative).lower()
 '''
 
-# ....................{ TYPES ~ hint                      }....................
+# ....................{ TYPES ~ hint                       }....................
 # Define this type as either...
 HintGenericSubscriptedType: Any = (
     # If the active Python interpreter targets at least Python >= 3.9 and thus
@@ -899,7 +893,7 @@ These include:
   detecting :pep:`585`-compliant generic type hints.
 '''
 
-# ....................{ TYPES ~ scalar                    }....................
+# ....................{ TYPES ~ scalar                     }....................
 StrType = str    # Well, isn't that special.
 '''
 Type of all **unencoded Unicode strings** (i.e., instances of the builtin
@@ -932,7 +926,7 @@ objects satisfying the string protocol via structural subtyping -- because
 there is no string protocol. While Python's data model does define a
 ``__str__()`` dunder method called to implicitly convert arbitrary objects into
 strings, that method is called infrequently. As exhibited by the infamously
-rejected `PEP 3140`_ proposal, the :meth:`list.__str__` implementation
+rejected :pep:`3140` proposal, the :meth:`list.__str__` implementation
 stringifies list items by erroneously calling the unrelated ``__repr__()``
 method rather than the expected ``__str__()`` method on those items. Moreover,
 ``__str__()`` fails to cover common string operations such as string
@@ -943,12 +937,9 @@ while trivial, that ABC would then ambiguously match all builtin sequence types
 (e.g., :class:`list`, :class:`tuple`) as string types, which they clearly are
 not. In short, matching only :class:`str` is the *only* unambiguous means of
 matching Unicode string types.
-
-.. _PEP 3140:
-   https://www.python.org/dev/peps/pep-3140
 '''
 
-# ....................{ TYPES ~ scalar : number           }....................
+# ....................{ TYPES ~ scalar : number            }....................
 NumberType = _numbers.Number
 '''
 Type of all **numbers** (i.e., concrete instances of the abstract
@@ -1047,7 +1038,7 @@ See Also
     Further details.
 '''
 
-# ....................{ TYPES ~ stdlib : re               }....................
+# ....................{ TYPES ~ stdlib : re                }....................
 # Regular expression types are also sufficiently obscure to warrant
 # formalization here.
 
@@ -1074,7 +1065,7 @@ Type of all **regular expression match objects** (i.e., objects returned by the
 :func:`re.match` function).
 '''
 
-# ....................{ TUPLES ~ unavailable              }....................
+# ....................{ TUPLES ~ unavailable               }....................
 # Unavailable types are defined *BEFORE* any subsequent types, as the latter
 # commonly leverage the former.
 
@@ -1096,7 +1087,7 @@ Specifically, for any callable parameter or return type annotated with:
 * The empty tuple, :func:`beartype.beartype` raises a fatal exception.
 '''
 
-# ....................{ TUPLES ~ py                       }....................
+# ....................{ TUPLES ~ py                        }....................
 ModuleOrStrTypes = (ModuleType, StrType)
 '''
 Tuple of both the module *and* string type.
@@ -1112,7 +1103,7 @@ Tuple of all **testable types** (i.e., types suitable for use as the second
 parameter passed to the :func:`isinstance` and :func:`issubclass` builtins).
 '''
 
-# ....................{ TUPLES ~ call                     }....................
+# ....................{ TUPLES ~ call                      }....................
 FunctionTypes = (FunctionType, FunctionOrMethodCType,)
 '''
 Tuple of all **function types** (i.e., types whose instances are either
@@ -1126,7 +1117,7 @@ is the set of all function types as well as the ambiguous type of all C-based
 functions and methods.
 '''
 
-# ....................{ TUPLES ~ call : method            }....................
+# ....................{ TUPLES ~ call : method             }....................
 MethodBoundTypes = (
     MethodBoundInstanceOrClassType, MethodBoundInstanceDunderCType)
 '''
@@ -1179,7 +1170,7 @@ is the set of all pure-Python bound and unbound method types as well as the
 ambiguous type of all C-based bound methods and non-method functions.
 '''
 
-# ....................{ TUPLES ~ call : callable          }....................
+# ....................{ TUPLES ~ call : callable           }....................
 # For DRY, this tuple is defined as the set union of all function and method
 # types defined above converted back to a tuple.
 #
@@ -1239,7 +1230,7 @@ as decorators. Since most classes are *not* callable, however, this tuple may
 yield false positives when passed classes.
 '''
 
-# ....................{ TUPLES ~ call : return            }....................
+# ....................{ TUPLES ~ call : return             }....................
 AsyncCTypes = (AsyncGeneratorCType, AsyncCoroutineCType)
 '''
 Tuple of all C-based types returned by all **asynchronous callables** (i.e.,
@@ -1247,7 +1238,7 @@ callables implemented in pure Python whose declaration is preceded by the
 ``async`` keyword).
 '''
 
-# ....................{ TUPLES ~ scalar                   }....................
+# ....................{ TUPLES ~ scalar                    }....................
 BoolOrNumberTypes = (BoolType, NumberType,)
 '''
 Tuple of all **boolean** and **number types** (i.e., classes whose instances
@@ -1264,7 +1255,7 @@ Perl) typically implicitly convert:
 * ``True`` to ``1`` and vice versa.
 '''
 
-# ....................{ TUPLES ~ post-init : container    }....................
+# ....................{ TUPLES ~ post-init : container     }....................
 # Tuples of types assuming the above initialization to have been performed.
 
 MappingOrSequenceTypes = (MappingType, SequenceType)
@@ -1298,7 +1289,7 @@ Tuple of all numeric types *and* all container base classes conforming to (but
 API.
 '''
 
-# ....................{ TUPLES ~ post-init : scalar       }....................
+# ....................{ TUPLES ~ post-init : scalar        }....................
 ScalarTypes = BoolOrNumberTypes + (StrType,)
 '''
 Tuple of all **scalar types** (i.e., classes whose instances are atomic scalar
@@ -1311,7 +1302,7 @@ This tuple matches all:
 * **Textual types** (i.e., types contained in the :class:`StrTypes` tuple).
 '''
 
-# ....................{ TUPLES ~ stdlib                   }....................
+# ....................{ TUPLES ~ stdlib                    }....................
 RegexTypes = (RegexCompiledType, StrType)
 '''
 Tuple of all **regular expression-like types** (i.e., types either defining

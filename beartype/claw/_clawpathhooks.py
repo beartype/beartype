@@ -62,9 +62,6 @@ from types import (
     FrameType,
 )
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ HOOKS                              }....................
 #FIXME: Unit test us up, please.
 def beartype_all(

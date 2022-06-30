@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,7 +11,7 @@ declared throughout this codebase, either for compliance with :pep:`561` or
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.typing import (
     Any,
     Callable,
@@ -27,7 +27,7 @@ from types import (
     GeneratorType,
 )
 
-# ....................{ HINTS ~ callable ~ early          }....................
+# ....................{ HINTS ~ callable ~ early           }....................
 # Callable-specific type hints required by subsequent type hints below.
 
 CallableAny = Callable[..., Any]
@@ -36,7 +36,7 @@ PEP-compliant type hint matching any callable in a manner explicitly matching
 all possible callable signatures.
 '''
 
-# ....................{ HINTS ~ typevar                   }....................
+# ....................{ HINTS ~ typevar                    }....................
 # Type variables required by subsequent type hints below.
 
 BeartypeableT = TypeVar('BeartypeableT', bound=Union[type, CallableAny])
@@ -54,7 +54,7 @@ checkers (e.g., :mod:`mypy`) and type-aware IDEs (e.g., VSCode) that the
   including metaclasses and method-resolution orders (MRO) of those classes.
 '''
 
-# ....................{ HINTS ~ callable ~ late           }....................
+# ....................{ HINTS ~ callable ~ late            }....................
 # Callable-specific type hints *NOT* required by subsequent type hints below.
 
 Codeobjable = Union[Callable, CodeType, FrameType, GeneratorType]
@@ -72,7 +72,7 @@ Specifically, this hint matches:
 * Pure-Python callable stack frames.
 '''
 
-# ....................{ HINTS ~ callable ~ late : decor   }....................
+# ....................{ HINTS ~ callable ~ late : decor    }....................
 BeartypeConfedDecorator = Callable[[BeartypeableT], BeartypeableT]
 '''
 PEP-compliant type hint matching a **configured beartype decorator** (i.e.,
@@ -89,13 +89,13 @@ of the :func:`beartype.beartype` decorator, including calls to that decorator
 in both configuration and decoration modes.
 '''
 
-# ....................{ HINTS ~ iterable                  }....................
+# ....................{ HINTS ~ iterable                   }....................
 IterableStrs = Iterable[str]
 '''
 PEP-compliant type hint matching *any* iterable of zero or more strings.
 '''
 
-# ....................{ HINTS ~ type                      }....................
+# ....................{ HINTS ~ type                       }....................
 TypeException = Type[Exception]
 '''
 PEP-compliant type hint matching *any* exception class.
@@ -107,7 +107,7 @@ TypeWarning = Type[Warning]
 PEP-compliant type hint matching *any* warning category.
 '''
 
-# ....................{ HINTS ~ type : tuple              }....................
+# ....................{ HINTS ~ type : tuple               }....................
 TupleTypes = Tuple[type, ...]
 '''
 PEP-compliant type hint matching a tuple of zero or more classes.

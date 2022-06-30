@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,15 +9,24 @@ Project-wide **dictionary** utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilMappingException
+from beartype.typing import (
+    AbstractSet,
+    Sequence,
+)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.text.utiltextrepr import represent_object
-from collections.abc import Sequence, Mapping, MutableMapping
+from collections.abc import (
+    Sequence as SequenceABC,
+    Hashable,
+    Mapping,
+    MutableMapping,
+    Set,
+)
 # from threading import Lock
-from typing import Sequence as SequenceHint
 
-# ....................{ VALIDATORS                        }....................
+# ....................{ VALIDATORS                         }....................
 def die_if_mappings_two_items_collide(
     mapping_a: Mapping, mapping_b: Mapping) -> None:
     '''
@@ -40,7 +49,7 @@ def die_if_mappings_two_items_collide(
 
     Raises
     ----------
-    :exc:`_BeartypeUtilMappingException`
+    _BeartypeUtilMappingException
         If these mappings contain one or more key-value collisions.
     '''
     assert isinstance(mapping_a, Mapping), f'{repr(mapping_a)} not mapping.'
@@ -139,7 +148,69 @@ def die_if_mappings_two_items_collide(
     # print(exception_message)
     raise _BeartypeUtilMappingException(exception_message)
 
-# ....................{ MERGERS                           }....................
+# ....................{ TESTERS                            }....................
+#FIXME: Unit test us up, please.
+def is_mapping_keys_all(
+    mapping: Mapping, keys: AbstractSet[Hashable]) -> bool:
+    '''
+    ``True`` only if the passed mapping contains *all* of the passed keys.
+
+    Parameters
+    ----------
+    mapping: Mapping
+        Mapping to be tested.
+    keys: AbstractSet[Hashable]
+        Set of one or more keys to test this mapping against.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this mapping contains *all* of these keys.
+    '''
+    assert isinstance(mapping, Mapping), f'{repr(mapping)} not mapping.'
+    assert isinstance(keys, Set), f'{repr(keys)} not set.'
+    assert bool(keys), 'Keys empty.'
+
+    # Return true only if this mapping contains *ALL* of these keys,
+    # equivalent to efficiently testing whether this set of one or more keys is
+    # a strict subset of the set of all keys in this mapping.
+    #
+    # Note that we intentionally do *NOT* call the set.issubclass() method here.
+    # Even standard set types that otherwise satisfy the "collections.abc.Set"
+    # protocol do *NOT* necessarily define that method.
+    return keys <= mapping.keys()
+
+
+#FIXME: Unit test us up, please.
+def is_mapping_keys_any(
+    mapping: Mapping, keys: AbstractSet[Hashable]) -> bool:
+    '''
+    ``True`` only if the passed mapping contains *any* (i.e., one or more, at
+    least one) of the passed keys.
+
+    Parameters
+    ----------
+    mapping: Mapping
+        Mapping to be tested.
+    keys: AbstractSet[Hashable]
+        Set of one or more keys to test this mapping against.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this mapping contains *any* of these keys.
+    '''
+    assert isinstance(mapping, Mapping), f'{repr(mapping)} not mapping.'
+    assert isinstance(keys, Set), f'{repr(keys)} not set.'
+    assert bool(keys), 'Keys empty.'
+
+    # Return true only if this mapping contains one or more of these keys,
+    # equivalent to efficiently testing whether the set intersection between
+    # this set of one or more keys *AND* the set of all keys in this mapping is
+    # a non-empty set.
+    return bool(keys & mapping.keys())
+
+# ....................{ MERGERS                            }....................
 def merge_mappings(*mappings: Mapping) -> Mapping:
     '''
     Safely merge all passed mappings if these mappings contain no **key-value
@@ -256,15 +327,15 @@ def merge_mappings_two(mapping_a: Mapping, mapping_b: Mapping) -> Mapping:
     )
 
 
-def merge_mappings_two_or_more(mappings: SequenceHint[Mapping]) -> Mapping:
+def merge_mappings_two_or_more(mappings: Sequence[Mapping]) -> Mapping:
     '''
     Safely merge the one or more passed mappings if these mappings contain no
     key-value collisions *or* raise an exception otherwise.
 
     Parameters
     ----------
-    mappings: Sequence[Mapping]
-        Sequence of two or more mappings to be safely merged.
+    mappings: SequenceABC[Mapping]
+        SequenceABC of two or more mappings to be safely merged.
 
     Returns
     ----------
@@ -282,7 +353,7 @@ def merge_mappings_two_or_more(mappings: SequenceHint[Mapping]) -> Mapping:
     :func:`die_if_mappings_two_items_collide`
         Further details.
     '''
-    assert isinstance(mappings, Sequence), f'{repr(mappings)} not sequence.'
+    assert isinstance(mappings, SequenceABC), f'{repr(mappings)} not sequence.'
 
     # Number of passed mappings.
     MAPPINGS_LEN = len(mappings)
@@ -316,7 +387,7 @@ def merge_mappings_two_or_more(mappings: SequenceHint[Mapping]) -> Mapping:
     # Return this merged mapping.
     return mapping_merged
 
-# ....................{ UPDATERS                          }....................
+# ....................{ UPDATERS                           }....................
 def update_mapping(mapping_trg: MutableMapping, mapping_src: Mapping) -> None:
     '''
     Safely update in-place the first passed mapping with all key-value pairs of

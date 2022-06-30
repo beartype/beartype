@@ -14,9 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Union
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ MAKERS                             }....................
 def make_hint_pep484_union(hints: tuple) -> object:
     '''
@@ -52,4 +49,4 @@ def make_hint_pep484_union(hints: tuple) -> object:
     assert isinstance(hints, tuple), f'{repr(hints)} not tuple.'
 
     # These are the one-liners of our lives.
-    return Union.__getitem__(hints)
+    return Union.__getitem__(hints)  # pyright: ignore[reportGeneralTypeIssues]

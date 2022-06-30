@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -7,7 +7,7 @@
 **Beartype cave-specific abstract base classes (ABCs).**
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: Refactor this private submodule into a new public "beartype.caver"
 #submodule, so-named as it enables users to externally create new ad-hoc
 #protocols implementing structural subtyping resembling those predefined by
@@ -44,13 +44,10 @@
 #* Shift the "_BoolType" class directly into the "beartype.cave" submodule.
 #* Refactor away this entire submodule.
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from abc import ABCMeta, abstractmethod
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ FUNCTIONS                         }....................
+# ....................{ FUNCTIONS                          }....................
 def _check_methods(C: type, *methods: str):
     '''
     Private utility function called by abstract base classes (ABCs)
@@ -89,7 +86,7 @@ def _check_methods(C: type, *methods: str):
 
     return True
 
-# ....................{ SUPERCLASSES                      }....................
+# ....................{ SUPERCLASSES                       }....................
 class BoolType(object, metaclass=ABCMeta):
     '''
     Type of all **booleans** (i.e., objects defining the ``__bool__()`` dunder
@@ -132,7 +129,7 @@ class BoolType(object, metaclass=ABCMeta):
         Further details on structural subtyping.
     '''
 
-    # ..................{ DUNDERS                           }..................
+    # ..................{ DUNDERS                            }..................
     # This abstract base class (ABC) has been implemented ala standard
     # container ABCs in the private stdlib "_collections_abc" module (e.g., the
     # trivial "_collections_abc.Sized" type).

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,7 +12,7 @@ supported operators efficiently generating stack-free code).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: *Useful optimization.* For "_IsEqualFactory", we can (and should)
 #directly embed the values of builtins when comparing against builtins (e.g.,
 #integers, strings). Specifically, we should only conditionally perform this
@@ -61,6 +61,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                           }....................
 from beartype.roar import BeartypeValeSubscriptionException
+from beartype.typing import Any
 from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
 from beartype.vale._util._valeutilsnip import (
     VALE_CODE_CHECK_ISEQUAL_TEST_format)
@@ -70,12 +71,8 @@ from beartype._util.func.utilfuncscope import (
     CallableScope,
     add_func_scope_attr,
 )
-from typing import Any
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ SUBCLASSES ~ equal                }....................
+# ....................{ SUBCLASSES ~ equal                 }....................
 class _IsEqualFactory(_BeartypeValidatorFactoryABC):
     '''
     **Beartype object equality validator factory** (i.e., object creating and
@@ -184,7 +181,7 @@ class _IsEqualFactory(_BeartypeValidatorFactoryABC):
         Further commentary.
     '''
 
-    # ..................{ DUNDERS                           }..................
+    # ..................{ DUNDERS                            }..................
     @callable_cached
     def __getitem__(self, obj: Any) -> BeartypeValidator:
         '''

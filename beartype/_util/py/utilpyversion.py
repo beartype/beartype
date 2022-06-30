@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,13 +9,10 @@ Project-wide **Python interpreter version utilities**.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from sys import version_info
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ CONSTANTS ~ at least              }....................
+# ....................{ CONSTANTS ~ at least               }....................
 IS_PYTHON_AT_LEAST_4_0 = version_info >= (4, 0)
 '''
 ``True`` only if the active Python interpreter targets at least Python 4.0.0.

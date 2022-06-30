@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,9 +11,10 @@ isinstanceable classes rather than PEP-specific objects).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeCallHintForwardRefException
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
+from beartype.typing import Optional
 from beartype._cave._cavefast import TestableTypes
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
@@ -36,12 +37,8 @@ from beartype._util.hint.pep.utilpepget import (
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextlabel import label_type
 from beartype._decor._error._errortext import represent_pith
-from typing import Optional
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ GETTERS ~ instance : type         }....................
+# ....................{ GETTERS ~ instance : type          }....................
 def get_cause_or_none_instance_type(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
@@ -142,7 +139,7 @@ def get_cause_or_none_type_instance_origin(
     return get_cause_or_none_instance_type(
         sleuth.permute(hint=hint_origin_type_isinstanceable))
 
-# ....................{ GETTERS ~ instance : types        }....................
+# ....................{ GETTERS ~ instance : types         }....................
 def get_cause_or_none_instance_types_tuple(
     sleuth: CauseSleuth) -> Optional[str]:
     '''
@@ -179,7 +176,7 @@ def get_cause_or_none_instance_types_tuple(
         f'{join_delimited_disjunction_types(sleuth.hint)}'
     )
 
-# ....................{ GETTERS ~ subclass : type         }....................
+# ....................{ GETTERS ~ subclass : type          }....................
 def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
@@ -208,7 +205,7 @@ def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
         # Reduce this superclass to the class referred to by this forward
         # reference.
         hint_superclass = import_pep484585_forwardref_type_relative_to_object(
-            hint=hint_superclass,
+            hint=hint_superclass,  # type: ignore[arg-type]
             obj=sleuth.func,
             exception_cls=BeartypeCallHintForwardRefException,
             exception_prefix=sleuth.exception_prefix,

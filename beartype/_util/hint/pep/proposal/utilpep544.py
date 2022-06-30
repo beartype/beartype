@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,14 +9,10 @@ Project-wide :pep:`544`-compliant type hint utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from abc import abstractmethod
 from beartype.roar import BeartypeDecorHintPep544Exception
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES_STANDARD
-from beartype._util.cls.utilclstest import is_type_builtin, is_type_subclass
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-from typing import (
+from beartype.typing import (
     Any,
     BinaryIO,
     Dict,
@@ -24,11 +20,12 @@ from typing import (
     Optional,
     TextIO,
 )
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES_STANDARD
+from beartype._util.cls.utilclstest import is_type_builtin, is_type_subclass
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ PRIVATE ~ mappings                }....................
+# ....................{ PRIVATE ~ mappings                 }....................
 _HINTS_PEP484_IO_GENERIC = frozenset((IO, BinaryIO, TextIO,))
 '''
 Frozen set of all :mod:`typing` **IO generic base class** (i.e., either
@@ -47,9 +44,9 @@ by the :mod:`typing` module) to the associated :mod:`beartype` **IO protocol**
 defined by this submodule).
 '''
 
-# ....................{ PRIVATE ~ classes                 }....................
+# ....................{ PRIVATE ~ classes                  }....................
 # Conditionally initialized by the _init() function below.
-_Pep544IO: Any = None
+_Pep544IO: Any = None  # type: ignore[assignment]
 '''
 :pep:`544`-compliant protocol base class for :class:`_Pep544TextIO` and
 :class:`_Pep544BinaryIO`.
@@ -102,19 +99,19 @@ advertised (or at all)... *and no one ever will.*
 
 
 # Conditionally initialized by the _init() function below.
-_Pep544BinaryIO: Any = None
+_Pep544BinaryIO: Any = None  # type: ignore[assignment]
 '''
 Typed version of the return of open() in binary mode.
 '''
 
 
 # Conditionally initialized by the _init() function below.
-_Pep544TextIO: Any = None
+_Pep544TextIO: Any = None  # type: ignore[assignment]
 '''
 Typed version of the return of open() in text mode.
 '''
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 # If the active Python interpreter targets at least Python >= 3.8 and thus
 # supports PEP 544, define these functions appropriately.
 if IS_PYTHON_AT_LEAST_3_8:
@@ -210,7 +207,7 @@ else:
     def is_hint_pep544_protocol(hint: object) -> bool:
         return False
 
-# ....................{ TESTERS ~ doc                     }....................
+# ....................{ TESTERS ~ doc                      }....................
 is_hint_pep544_ignorable_or_none.__doc__ = '''
     ``True`` only if the passed object is a :pep:`544`-compliant **ignorable
     type hint,** ``False`` only if this object is a :pep:`544`-compliant
@@ -266,9 +263,8 @@ is_hint_pep484_generic_io.__doc__ = '''
     the :mod:`typing` module effectively unusable at runtime due to botched
     implementation details) that is losslessly replaceable with a useful
     :pep:`544`-compliant :mod:`beartype` **IO protocol** (i.e., either
-    :class:`beartype._util.hint.pep.proposal.utilpep544._Pep544IO` itself
-    *or* a subclass of that class defined by this submodule intentionally
-    designed to be usable at runtime).
+    :class:`_Pep544IO` itself *or* a subclass of that class defined by this
+    submodule intentionally designed to be usable at runtime).
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -287,7 +283,7 @@ is_hint_pep484_generic_io.__doc__ = '''
 
     See Also
     ----------
-    :class:`beartype._util.hint.pep.proposal.utilpep544._Pep544IO`
+    :class:`_Pep544IO`
         Further commentary.
     '''
 
@@ -311,18 +307,17 @@ is_hint_pep544_protocol.__doc__ = '''
         ``True`` only if this object is a :pep:`544`-compliant protocol.
     '''
 
-# ....................{ REDUCERS                          }....................
+# ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_generic_io_to_pep544_protocol(
     hint: Any, exception_prefix: str) -> Any:
     '''
     :pep:`544`-compliant :mod:`beartype` **IO protocol** (i.e., either
-    :class:`beartype._util.hint.pep.proposal.utilpep544._Pep544IO`
-    itself *or* a subclass of that class defined by this submodule
-    intentionally designed to be usable at runtime) corresponding to the passed
-    :pep:`484`-compliant :mod:`typing` **IO generic base class** (i.e., either
-    :class:`typing.IO` itself *or* a subclass of :class:`typing.IO` defined by
-    the :mod:`typing` module effectively unusable at runtime due to botched
-    implementation details).
+    :class:`_Pep544IO` itself *or* a subclass of that class defined by this
+    submodule intentionally designed to be usable at runtime) corresponding to
+    the passed :pep:`484`-compliant :mod:`typing` **IO generic base class**
+    (i.e., either :class:`typing.IO` itself *or* a subclass of
+    :class:`typing.IO` defined by the :mod:`typing` module effectively unusable
+    at runtime due to botched implementation details).
 
     This reducer is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -413,13 +408,13 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
     # Return this protocol.
     return pep544_protocol
 
-# ....................{ INITIALIZERS                      }....................
+# ....................{ INITIALIZERS                       }....................
 def _init() -> None:
     '''
     Initialize this submodule.
     '''
 
-    # ..................{ VERSIONS                          }..................
+    # ..................{ VERSIONS                           }..................
     # If the active Python interpreter only targets Python < 3.8 and thus fails
     # to support PEP 544, silently reduce to a noop.
     if not IS_PYTHON_AT_LEAST_3_8:
@@ -427,7 +422,7 @@ def _init() -> None:
     # Else, the active Python interpreter targets Python >= 3.8 and thus
     # supports PEP 593.
 
-    # ..................{ IMPORTS                           }..................
+    # ..................{ IMPORTS                            }..................
     # Defer Python version-specific imports.
     from beartype._util.mod.lib.utiltyping import import_typing_attr_or_none
     from beartype.typing import (
@@ -436,14 +431,14 @@ def _init() -> None:
         Protocol,
     )
 
-    # ..................{ GLOBALS                           }..................
+    # ..................{ GLOBALS                            }..................
     # Global attributes to be redefined below.
     global \
         _Pep544BinaryIO, \
         _Pep544IO, \
         _Pep544TextIO
 
-    # ..................{ PROTOCOLS ~ protocol              }..................
+    # ..................{ PROTOCOLS ~ protocol               }..................
     # Note that these classes are intentionally *NOT* declared at global scope;
     # instead, these classes are declared *ONLY* if the active Python
     # interpreter targets Python >= 3.8.
@@ -556,7 +551,7 @@ def _init() -> None:
 
         @property
         @abstractmethod
-        def buffer(self) -> _Pep544BinaryIO:
+        def buffer(self) -> _Pep544BinaryIO:  # pyright: ignore[reportGeneralTypeIssues]
             pass
 
         @property
@@ -583,7 +578,7 @@ def _init() -> None:
         def __enter__(self) -> '_Pep544TextIO':
             pass
 
-    # ..................{ PROTOCOLS ~ validator             }..................
+    # ..................{ PROTOCOLS ~ validator              }..................
     # PEP-compliant type hint matching file handles opened in binary rather
     # than text mode.
     #
@@ -650,7 +645,7 @@ def _init() -> None:
     # Else, this factory is unimportable. In this case, accept this hint's
     # default ambiguously matching both binary and text files.
 
-    # ..................{ MAPPINGS                          }..................
+    # ..................{ MAPPINGS                           }..................
     # Dictionary mapping from each "typing" IO generic base class to the
     # associated IO protocol defined above.
     #

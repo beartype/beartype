@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,7 +11,7 @@ type hints from one format into another, either permanently or temporarily
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: coerce_hint() should also rewrite unhashable hints to be hashable *IF
 #FEASIBLE.* This isn't always feasible, of course (e.g., "Annotated[[]]",
 #"Literal[[]]"). The one notable place where this *IS* feasible is with PEP
@@ -48,7 +48,11 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #Checkmate, "typing". Checkmate.
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
+from beartype.typing import (
+    Any,
+    Union,
+)
 from beartype._cave._cavefast import NotImplementedType, NoneType
 from beartype._data.func.datafunc import METHOD_NAMES_BINARY_DUNDER
 from beartype._data.hint.pep.sign.datapepsigns import (
@@ -74,12 +78,8 @@ from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.utilhinttest import die_unless_hint
 from collections.abc import Callable, Mapping
-from typing import Any, Union
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ PRIVATE ~ mappings                }....................
+# ....................{ PRIVATE ~ mappings                 }....................
 _HINT_REPR_TO_HINT = CacheUnboundedStrong()
 '''
 **Type hint cache** (i.e., thread-safe cache mapping from the machine-readable
@@ -119,7 +119,7 @@ rather than the :func:`functools.lru_cache` decorator. Why? Because:
   space savings in dropping stale references to unused hints.
 '''
 
-# ....................{ SANIFIERS                         }....................
+# ....................{ SANIFIERS                          }....................
 #FIXME: Unit test us up, please.
 #FIXME: Revise docstring in accordance with recent dramatic improvements.
 def sanify_hint_root(
@@ -271,7 +271,7 @@ def sanify_hint_child(hint: object, exception_prefix: str) -> Any:
     # specifically applicable to child type hints.
     return _reduce_hint(_coerce_hint_any(hint), exception_prefix)
 
-# ....................{ COERCERS                          }....................
+# ....................{ COERCERS                           }....................
 #FIXME: Document mypy-specific coercion in the docstring as well, please.
 def _coerce_hint_root(
     hint: object,
@@ -340,7 +340,7 @@ def _coerce_hint_root(
     assert callable(func), f'{repr(func)} not callable.'
     assert isinstance(pith_name, str), f'{pith_name} not string.'
 
-    # ..................{ MYPY                              }..................
+    # ..................{ MYPY                               }..................
     # If...
     if (
         # This hint annotates the return for the decorated callable *AND*...
@@ -392,9 +392,9 @@ def _coerce_hint_root(
         # instead taken the surprisingly sensible course of silently ignoring
         # this edge case by effectively performing the same type expansion as
         # performed here. *applause*
-        return Union[hint, NotImplementedType]
+        return Union[hint, NotImplementedType]  # pyright: ignore[reportGeneralTypeIssues]
     # Else, this hint is *NOT* the mypy-compliant "NotImplemented" singleton.
-    # ..................{ NON-PEP                           }..................
+    # ..................{ NON-PEP                            }..................
     # If this hint is a PEP-noncompliant tuple union, coerce this union into
     # the equivalent PEP-compliant union subscripted by the same child hints.
     # By definition, PEP-compliant unions are a superset of PEP-noncompliant
@@ -536,7 +536,7 @@ def _coerce_hint_any(hint: object) -> Any:
         * Else, this hint as is unmodified.
     '''
 
-    # ..................{ PEP 585                           }..................
+    # ..................{ PEP 585                            }..................
     # If this hint is PEP 585-compliant (e.g., "list[str]"), this hint is *NOT*
     # self-caching (e.g., "list[str] is not list[str]") and *MUST* thus be
     # explicitly cached here. Failing to do so disables subsequent memoization,
@@ -556,7 +556,7 @@ def _coerce_hint_any(hint: object) -> Any:
     # Return this uncoerced hint as is.
     return hint
 
-# ....................{ REDUCERS                          }....................
+# ....................{ REDUCERS                           }....................
 #FIXME: Improve documentation to list all reductions performed by this reducer.
 #Sadly, this documentation is currently quite out-of-date. What? It happens!
 @callable_cached
@@ -620,7 +620,7 @@ def _reduce_hint(hint: Any, exception_prefix: str) -> object:
     # user-defined classes and builtin types), this is *ALWAYS* detected first.
     if hint_sign is None:
         return hint
-    # ..................{ PEP 484 ~ none                    }..................
+    # ..................{ PEP 484 ~ none                     }..................
     # If this is the PEP 484-compliant "None" singleton, reduce this hint to
     # the type of that singleton. While *NOT* explicitly defined by the
     # "typing" module, PEP 484 explicitly supports this singleton:
@@ -631,7 +631,7 @@ def _reduce_hint(hint: Any, exception_prefix: str) -> object:
     # "return" statement and thus absurdly common. Ergo, detect this early.
     elif hint is None:
         hint = NoneType
-    # ..................{ PEP 484 ~ typevar                 }..................
+    # ..................{ PEP 484 ~ typevar                  }..................
     #FIXME: Remove this *AFTER* deeply type-checking type variables.
     # If this is a PEP 484-compliant type variable...
     #
@@ -652,7 +652,7 @@ def _reduce_hint(hint: Any, exception_prefix: str) -> object:
             # print(f'Reducing non-beartype PEP 593 type hint {repr(hint)}...')
             hint = hint_bound
         # Else, this type variable was parametrized by no bounded constraints.
-    # ..................{ PEP 593                           }..................
+    # ..................{ PEP 593                            }..................
     # If this hint is a PEP 593-compliant metahint...
     #
     # Since metahints form the core backbone of our beartype-specific data
@@ -672,7 +672,7 @@ def _reduce_hint(hint: Any, exception_prefix: str) -> object:
             hint = get_hint_pep593_metahint(hint)
         # Else, this metahint is beartype-specific. In this case, preserve
         # this hint as is for subsequent handling elsewhere.
-    # ..................{ NON-PEP ~ numpy                   }..................
+    # ..................{ NON-PEP ~ numpy                    }..................
     # If this hint is a PEP-noncompliant typed NumPy array (e.g.,
     # "numpy.typing.NDArray[np.float64]"), reduce this hint to the equivalent
     # well-supported beartype validator.
@@ -684,7 +684,7 @@ def _reduce_hint(hint: Any, exception_prefix: str) -> object:
             reduce_hint_numpy_ndarray)
         hint = reduce_hint_numpy_ndarray(
             hint=hint, exception_prefix=exception_prefix)
-    # ..................{ PEP (484|585) ~ subclass          }..................
+    # ..................{ PEP (484|585) ~ subclass           }..................
     # If this hint is a PEP 484-compliant subclass type hint subscripted by an
     # ignorable child type hint (e.g., "object", "typing.Any"), silently ignore
     # this argument by reducing this hint to the "type" superclass. Although
@@ -701,7 +701,7 @@ def _reduce_hint(hint: Any, exception_prefix: str) -> object:
             reduce_hint_pep484585_subclass_superclass_if_ignorable)
         hint = reduce_hint_pep484585_subclass_superclass_if_ignorable(
             hint=hint, exception_prefix=exception_prefix)
-    # ..................{ PEP 589                           }..................
+    # ..................{ PEP 589                            }..................
     #FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
     #shallowly type-checking such hints by reduction to untyped dictionaries
     #remains the sanest temporary work-around.
@@ -727,7 +727,7 @@ def _reduce_hint(hint: Any, exception_prefix: str) -> object:
     # reasonably uncommon and thus detected late.
     elif hint_sign is HintSignTypedDict:
         return Mapping
-    # ..................{ PEP 484 ~ new type                }..................
+    # ..................{ PEP 484 ~ new type                 }..................
     # If this hint is a PEP 484-compliant new type, reduce this hint to the
     # user-defined class aliased by this hint. Although this logic could also
     # be performed elsewhere, doing so here simplifies matters.
@@ -739,7 +739,7 @@ def _reduce_hint(hint: Any, exception_prefix: str) -> object:
         from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
             get_hint_pep484_newtype_class)
         hint = get_hint_pep484_newtype_class(hint)
-    # ..................{ PEP 484 ~ io                      }..................
+    # ..................{ PEP 484 ~ io                       }..................
     # If this hint is a PEP 484-compliant IO generic base class *AND* the
     # active Python interpreter targets Python >= 3.8 and thus supports PEP
     # 544-compliant protocols, reduce this functionally useless hint to the
@@ -755,7 +755,7 @@ def _reduce_hint(hint: Any, exception_prefix: str) -> object:
     elif is_hint_pep484_generic_io(hint):
         hint = reduce_hint_pep484_generic_io_to_pep544_protocol(
             hint=hint, exception_prefix=exception_prefix)
-    # ..................{ PEP 557                           }..................
+    # ..................{ PEP 557                            }..................
     # If this hint is a dataclass-specific initialization-only instance
     # variable (i.e., instance of the PEP 557-compliant "dataclasses.InitVar"
     # class introduced by Python 3.8.0), reduce this functionally useless hint

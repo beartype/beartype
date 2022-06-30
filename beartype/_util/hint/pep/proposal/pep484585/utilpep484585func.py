@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,7 +12,7 @@ callable currently being decorated by :func:`beartype.beartype`).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype._data.hint.pep.sign.datapepsigns import HintSignCoroutine
 from beartype._data.hint.pep.sign.datapepsignset import (
@@ -32,10 +32,7 @@ from beartype._util.text.utiltextlabel import (
 from beartype._data.datatyping import TypeException
 from collections.abc import Callable
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ REDUCERS ~ return                 }....................
+# ....................{ REDUCERS ~ return                  }....................
 def reduce_hint_pep484585_func_return(
     func: Callable, exception_prefix: str) -> object:
     '''
@@ -58,7 +55,7 @@ def reduce_hint_pep484585_func_return(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintPep484585Exception`
+    BeartypeDecorHintPep484585Exception
         If this callable is either:
 
         * A synchronous generator *not* annotated by a type hint identified by
@@ -153,7 +150,7 @@ def reduce_hint_pep484585_func_return(
     # Return this possibly reduced hint.
     return hint
 
-# ....................{ PRIVATE ~ validators              }....................
+# ....................{ PRIVATE ~ validators               }....................
 def _die_of_hint_return_invalid(
     # Mandatory parameters.
     func: Callable,

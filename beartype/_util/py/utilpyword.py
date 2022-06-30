@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,13 +10,10 @@ type ``Py_ssize_t`` under the active Python interpreter) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from sys import maxsize
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ INTEGERS                          }....................
+# ....................{ INTEGERS                           }....................
 SHORT_MAX_32_BIT = 1 << 32
 '''
 Maximum value of **32-bit Python shorts** (i.e., integer variables of internal
@@ -27,7 +24,7 @@ This value is suitable for comparison with :attr:`sys.maxsize`, the maximum
 value of such variables under the active Python interpreter.
 '''
 
-# ....................{ BOOLEANS                          }....................
+# ....................{ BOOLEANS                           }....................
 IS_WORD_SIZE_64 = maxsize > SHORT_MAX_32_BIT
 '''
 ``True`` only if the active Python interpreter is **64-bit** (i.e., was
@@ -46,7 +43,7 @@ best means of testing this portably. Valid but worse alternatives include:
     32-bit executable binary embedded in a so-called "universal binary."
 '''
 
-# ....................{ INTEGERS ~ more                   }....................
+# ....................{ INTEGERS ~ more                    }....................
 WORD_SIZE = 64 if IS_WORD_SIZE_64 else 32
 '''
 Bit length of **Python shorts** (i.e., integer variables of internal type

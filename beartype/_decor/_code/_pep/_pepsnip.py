@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,7 +12,7 @@ PEP-compliant type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._decor._code.codemagic import (
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
@@ -22,7 +22,7 @@ from beartype._decor._code.codemagic import (
 )
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 
-# ....................{ PITH                              }....................
+# ....................{ PITH                               }....................
 PEP_CODE_PITH_ASSIGN_EXPR = '''{pith_curr_var_name} := {pith_curr_expr}'''
 '''
 Python >= 3.8-specific assignment expression assigning the full Python
@@ -47,7 +47,7 @@ See Also
     Related commentary.
 '''
 
-# ....................{ PARAM                             }....................
+# ....................{ PARAM                              }....................
 PARAM_KIND_TO_PEP_CODE_LOCALIZE = {
     # Snippet localizing any positional-only parameter (e.g.,
     # "{posonlyarg}, /") by lookup in the wrapper's "*args" dictionary.
@@ -113,7 +113,7 @@ Dictionary mapping from the type of each callable parameter supported by the
 that callable's next parameter to be type-checked.
 '''
 
-# ....................{ RETURN                            }....................
+# ....................{ RETURN                             }....................
 PEP_CODE_CHECK_RETURN_PREFIX = f'''
     # Call this function with all passed parameters and localize the value
     # returned from this call.
@@ -149,7 +149,7 @@ PEP-compliant code snippet returning from the wrapper function the successfully
 type-checked value returned from the decorated callable.
 '''
 
-# ....................{ HINT ~ placeholder : child        }....................
+# ....................{ HINT ~ placeholder : child         }....................
 PEP_CODE_HINT_CHILD_PLACEHOLDER_PREFIX = '@['
 '''
 Prefix of each **placeholder hint child type-checking substring** (i.e.,
@@ -167,7 +167,7 @@ current pith expression against the currently iterated child hint of the
 currently visited parent hint).
 '''
 
-# ....................{ HINT ~ placeholder : forwardref   }....................
+# ....................{ HINT ~ placeholder : forwardref    }....................
 PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX = '${FORWARDREF:'
 '''
 Prefix of each **placeholder unqualified forward reference classname
@@ -187,7 +187,7 @@ canonicalized into a fully-qualified classname relative to the external
 caller-defined module declaring the currently decorated callable).
 '''
 
-# ....................{ HINT ~ hint : root                }....................
+# ....................{ HINT ~ hint : root                 }....................
 PEP_CODE_HINT_ROOT_PREFIX = '''
         # Type-check this passed parameter or return value against this
         # PEP-compliant type hint.
@@ -243,7 +243,7 @@ generated for the current call to the exception-handling function call embedded
 in the :data:`PEP_CODE_HINT_ROOT_SUFFIX` snippet.
 '''
 
-# ....................{ HINT ~ pep : (484|585) : generic  }....................
+# ....................{ HINT ~ pep : (484|585) : generic   }....................
 PEP484585_CODE_HINT_GENERIC_PREFIX = '''(
 {indent_curr}    # True only if this pith is of this generic type.
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
@@ -293,7 +293,7 @@ snippet type-checking the current pith against *all* subscripted arguments of
 this parent type has been generated.
 '''
 
-# ....................{ HINT ~ pep : (484|585) : sequence }....................
+# ....................{ HINT ~ pep : (484|585) : sequence  }....................
 PEP484585_CODE_HINT_SEQUENCE_ARGS_1 = '''(
 {indent_curr}    # True only if this pith is of this sequence type.
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
@@ -344,7 +344,7 @@ PEP-compliant Python expression yielding the value of a randomly indexed item
 of the current pith (which, by definition, *must* be a standard sequence).
 '''
 
-# ....................{ HINT ~ pep : (484|585) : tuple    }....................
+# ....................{ HINT ~ pep : (484|585) : tuple     }....................
 PEP484585_CODE_HINT_TUPLE_FIXED_PREFIX = '''(
 {indent_curr}    # True only if this pith is a tuple.
 {indent_curr}    isinstance({pith_curr_assign_expr}, tuple) and'''
@@ -424,7 +424,7 @@ PEP-compliant Python expression yielding the value of the currently indexed
 item of the current pith (which, by definition, *must* be a tuple).
 '''
 
-# ....................{ HINT ~ pep : (484|585) : subclass }....................
+# ....................{ HINT ~ pep : (484|585) : subclass  }....................
 PEP484585_CODE_HINT_SUBCLASS = '''(
 {indent_curr}    # True only if this pith is a class *AND*...
 {indent_curr}    isinstance({pith_curr_assign_expr}, type) and
@@ -437,7 +437,7 @@ the subscripted child hint of a :pep:`484`- or :pep:`585`-compliant **subclass
 type hint** (e.g., :attr:`typing.Type`, :class:`type`).
 '''
 
-# ....................{ HINT ~ pep : 484 : instance       }....................
+# ....................{ HINT ~ pep : 484 : instance        }....................
 PEP484_CODE_HINT_INSTANCE = (
     '''isinstance({pith_curr_expr}, {hint_curr_expr})''')
 '''
@@ -446,7 +446,7 @@ current child PEP-compliant type expected to be a trivial non-:mod:`typing`
 type (e.g., :class:`int`, :class:`str`).
 '''
 
-# ....................{ HINT ~ pep : 484 : union          }....................
+# ....................{ HINT ~ pep : 484 : union           }....................
 PEP484_CODE_HINT_UNION_PREFIX = '''('''
 '''
 PEP-compliant code snippet prefixing all code type-checking the current pith
@@ -497,7 +497,7 @@ See Also
     Further details.
 '''
 
-# ....................{ HINT ~ pep : 586                  }....................
+# ....................{ HINT ~ pep : 586                   }....................
 PEP586_CODE_HINT_PREFIX = '''(
 {{indent_curr}}    # True only if this pith is of one of these literal types.
 {{indent_curr}}    isinstance({pith_curr_assign_expr}, {hint_child_types_expr}) and ('''
@@ -538,7 +538,7 @@ snippet type-checking the current pith against *all* subscripted arguments of
 this parent hint has been generated.
 '''
 
-# ....................{ HINT ~ pep : 593                  }....................
+# ....................{ HINT ~ pep : 593                   }....................
 PEP593_CODE_HINT_VALIDATOR_PREFIX = '''(
 {indent_curr}    {hint_child_placeholder} and'''
 '''

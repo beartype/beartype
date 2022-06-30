@@ -22,6 +22,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavefast import HintGenericSubscriptedType
+from beartype._data.datatyping import TypeException
 from beartype._data.hint.pep.datapeprepr import (
     HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN,
     HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN,
@@ -48,9 +49,6 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_9,
 )
 from beartype._data.datatyping import TupleTypes
-
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
 
 # ....................{ GETTERS ~ args                     }....................
 # If the active Python interpreter targets Python >= 3.9, implement this
@@ -248,7 +246,14 @@ get_hint_pep_typevars.__doc__ = '''
     '''
 
 # ....................{ GETTERS ~ sign                     }....................
-def get_hint_pep_sign(hint: Any) -> HintSign:
+def get_hint_pep_sign(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPepSignException,
+    exception_prefix: str = '',
+) -> HintSign:
     '''
     **Sign** (i.e., :class:`HintSign` instance) uniquely identifying the passed
     PEP-compliant type hint if PEP-compliant *or* raise an exception otherwise
@@ -262,6 +267,12 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
     ----------
     hint : object
         Type hint to be inspected.
+    exception_cls : TypeException, optional
+        Type of exception to be raised. Defaults to
+        :exc:`BeartypeDecorHintPepSignException`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
 
     Returns
     ----------
@@ -270,7 +281,7 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
 
     Raises
     ----------
-    BeartypeDecorHintPepSignException
+    :exc:`exception_cls`
         If this hint is either:
 
         * PEP-compliant but *not* uniquely identifiable by a sign.
@@ -288,13 +299,21 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
 
     # If this hint is unrecognized...
     if hint_sign is None:
+        assert issubclass(exception_cls, Exception), (
+            f'{repr(exception_cls)} not exception class.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
         # Avoid circular import dependencies.
         from beartype._util.hint.nonpep.utilnonpeptest import (
             die_if_hint_nonpep)
 
         # If this hint is PEP-noncompliant, raise an exception.
         die_if_hint_nonpep(
-            hint=hint, exception_cls=BeartypeDecorHintPepSignException)
+            hint=hint,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        )
         # Else, this hint is *NOT* PEP-noncompliant. Since this hint was
         # unrecognized, this hint *MUST* necessarily be a PEP-compliant type
         # hint currently unsupported by the @beartype decorator.
@@ -304,8 +323,9 @@ def get_hint_pep_sign(hint: Any) -> HintSign:
         # Note that we intentionally avoid calling the
         # die_if_hint_pep_unsupported() function here, which calls the
         # is_hint_pep_supported() function, which calls this function.
-        raise BeartypeDecorHintPepSignException(
-            f'Type hint {repr(hint)} currently unsupported by beartype. '
+        raise exception_cls(
+            f'{exception_prefix}type hint {repr(hint)} '
+            f'currently unsupported by beartype. '
             f'You suddenly feel encouraged to submit '
             f'a feature request for this hint to our '
             f'friendly issue tracker at:\n\t{URL_ISSUES}'

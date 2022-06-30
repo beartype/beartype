@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,16 +11,13 @@ callables).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.func.utilfuncwrap import unwrap_func
 from beartype._data.datatyping import Codeobjable, TypeException
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 def get_func_args_len_flexible(
     # Mandatory parameters.
     func: Codeobjable,
@@ -65,7 +62,7 @@ def get_func_args_len_flexible(
 
     Raises
     ----------
-    exception_cls
+    :exc:`exception_cls`
          If the passed callable is *not* pure-Python.
     '''
 

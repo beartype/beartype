@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,8 +10,12 @@ currently being decorated by the :func:`beartype.beartype` decorator).**
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorWrappeeException
+from beartype.typing import (
+    Callable,
+    Dict,
+)
 from beartype._conf import BeartypeConf
 from beartype._decor._code.codemagic import (
     ARG_NAME_FUNC,
@@ -23,12 +27,8 @@ from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.func.utilfunctest import is_func_async_coroutine
 from beartype._util.func.utilfuncwrap import unwrap_func
 from types import CodeType
-from typing import Callable, Dict
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 class BeartypeCall(object):
     '''
     **Beartype data** (i.e., object aggregating *all* metadata for the callable
@@ -139,7 +139,7 @@ class BeartypeCall(object):
         this name is obfuscated while still preserving human-readability.
     '''
 
-    # ..................{ CLASS VARIABLES                   }..................
+    # ..................{ CLASS VARIABLES                    }..................
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently
     # called @beartype decorations. Slotting has been shown to reduce read and
@@ -172,7 +172,7 @@ class BeartypeCall(object):
     #     https://docs.python.org/3/reference/datamodel.html#object.__hash__
     __hash__ = None  # type: ignore[assignment]
 
-    # ..................{ INITIALIZERS                      }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(self) -> None:
         '''
         Initialize this metadata by nullifying all instance variables.
@@ -223,7 +223,7 @@ class BeartypeCall(object):
 
         Raises
         ----------
-        :exc:`BeartypeDecorHintPep563Exception`
+        BeartypeDecorHintPep563Exception
             If evaluating a postponed annotation on this callable raises an
             exception (e.g., due to that annotation referring to local state no
             longer accessible from this deferred evaluation).

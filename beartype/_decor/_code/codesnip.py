@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -13,7 +13,7 @@ functions implementing type-checking for decorated callables).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._decor._code.codemagic import (
     ARG_NAME_FUNC,
     ARG_NAME_GETRANDBITS,
@@ -24,10 +24,7 @@ from beartype._decor._code.codemagic import (
 )
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ CODE                              }....................
+# ....................{ CODE                               }....................
 CODE_SIGNATURE = f'''{{func_wrapper_prefix}}def {{func_wrapper_name}}(
     *args,
 {{func_wrapper_params}}{CODE_INDENT_1}**kwargs
@@ -37,7 +34,7 @@ PEP-agnostic code snippet declaring the signature of the wrapper function
 type-checking the decorated callable.
 '''
 
-# ....................{ CODE ~ init                       }....................
+# ....................{ CODE ~ init                        }....................
 CODE_INIT_ARGS_LEN = f'''
     # Localize the number of passed positional arguments for efficiency.
     {VAR_NAME_ARGS_LEN} = len(args)'''
@@ -72,6 +69,7 @@ for callables accepting one or more such arguments.
 #Note that thread concurrency issues are probable ignorable here, but that
 #there's still a great deal of maintenance and refactoring that would need to
 #happen to sanely support this. In other words, ain't happenin' anytime soon.
+
 
 CODE_INIT_RANDOM_INT = f'''
     # Generate and localize a sufficiently large pseudo-random integer for
@@ -135,7 +133,7 @@ https://eli.thegreenplace.net/2018/slow-and-fast-methods-for-generating-random-i
     Authoritative article profiling various :mod:`random` callables.
 '''
 
-# ....................{ CODE ~ return                     }....................
+# ....................{ CODE ~ return                      }....................
 CODE_RETURN_UNCHECKED = f'''
     # Call this function with all passed parameters and return the value
     # returned from this call.

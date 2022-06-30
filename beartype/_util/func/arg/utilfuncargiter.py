@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,7 +10,7 @@ introspectively iterating over parameters accepted by arbitrary callables).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.typing import (
     Dict,
     Iterable,
@@ -30,10 +30,7 @@ from inspect import CO_VARARGS, CO_VARKEYWORDS
 from itertools import count
 from types import CodeType
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ ENUMERATIONS                      }....................
+# ....................{ ENUMERATIONS                       }....................
 @die_unless_enum_member_values_unique
 class ArgKind(Enum):
     '''
@@ -79,7 +76,7 @@ class ArgKind(Enum):
     KEYWORD_ONLY = next_enum_member_value()
     VAR_KEYWORD = next_enum_member_value()
 
-# ....................{ SINGLETONS                        }....................
+# ....................{ SINGLETONS                         }....................
 ArgMandatory = object()
 '''
 Arbitrary sentinel singleton assigned by the
@@ -88,7 +85,7 @@ of all :data:`ArgMeta` instances describing **mandatory parameters** (i.e.,
 parameters that *must* be explicitly passed to their callables).
 '''
 
-# ....................{ HINTS                             }....................
+# ....................{ HINTS                              }....................
 ArgMeta = Tuple[ArgKind, str, object]
 '''
 PEP-compliant type hint matching each 3-tuple ``(arg_kind, arg_name,
@@ -108,7 +105,7 @@ where:
       when unpassed. In this case, this is that default value.
 '''
 
-# ....................{ CONSTANTS ~ index                 }....................
+# ....................{ CONSTANTS ~ index                  }....................
 # Iterator yielding the next integer incrementation starting at 0, to be safely
 # deleted *AFTER* defining the following 0-based indices via this iterator.
 __arg_meta_index_counter = count(start=0, step=1)
@@ -148,7 +145,7 @@ parameter's **default value** specified as either:
 # Delete the above counter for safety and sanity in equal measure.
 del __arg_meta_index_counter
 
-# ....................{ PRIVATE ~ constants               }....................
+# ....................{ PRIVATE ~ constants                }....................
 _ARGS_DEFAULTS_KWONLY_EMPTY: Dict[str, object] = {}
 '''
 Empty dictionary suitable for use as the default dictionary mapping the name of
@@ -156,7 +153,7 @@ each optional keyword-only parameter accepted by a callable to the default
 value assigned to that parameter.
 '''
 
-# ....................{ GENERATORS                        }....................
+# ....................{ GENERATORS                         }....................
 def iter_func_args(
     # Mandatory parameters.
     func: Callable,
@@ -245,7 +242,7 @@ def iter_func_args(
          If that callable is *not* pure-Python.
     '''
 
-    # ..................{ LOCALS ~ noop                     }..................
+    # ..................{ LOCALS ~ noop                      }..................
     # If unwrapping that callable, do so *BEFORE* querying that callable for
     # its code object to avoid desynchronization between the two.
     if is_unwrapping:
@@ -271,10 +268,10 @@ def iter_func_args(
     # that callable.
     args_len_kwonly = func_codeobj.co_kwonlyargcount
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the is_func_arg_variadic_positional() and
     # is_func_arg_variadic_keyword() testers.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # True only if that callable accepts variadic positional or keyword
     # parameters. For efficiency, these tests are inlined from the
     # is_func_arg_variadic_positional() and is_func_arg_variadic_keyword()
@@ -299,7 +296,7 @@ def iter_func_args(
         return
     # Else, that callable accepts one or more parameters.
 
-    # ..................{ LOCALS ~ names                    }..................
+    # ..................{ LOCALS ~ names                     }..................
     # Tuple of the names of all variables localized to that callable.
     #
     # Note that this tuple contains the names of both:
@@ -316,7 +313,7 @@ def iter_func_args(
     # body of that callable. *shrug*
     args_name = func_codeobj.co_varnames
 
-    # ..................{ LOCALS ~ defaults                 }..................
+    # ..................{ LOCALS ~ defaults                  }..................
     # Tuple of the default values assigned to all optional non-keyword-only
     # parameters (i.e., all optional positional-only *AND* optional flexible
     # (i.e., positional or keyword) parameters) accepted by that callable if
@@ -338,7 +335,7 @@ def iter_func_args(
     #     False
     args_defaults_kwonly = func.__kwdefaults__ or _ARGS_DEFAULTS_KWONLY_EMPTY  # type: ignore[attr-defined]
 
-    # ..................{ LOCALS ~ len                      }..................
+    # ..................{ LOCALS ~ len                       }..................
     # Number of both optional and mandatory positional-only parameters accepted
     # by that callable, specified as either...
     args_len_posonly = (
@@ -408,7 +405,7 @@ def iter_func_args(
     # Number of mandatory flexible parameters accepted by that callable.
     args_len_flex_mandatory = args_len_flex - args_len_flex_optional
 
-    # ..................{ INTROSPECTION                     }..................
+    # ..................{ INTROSPECTION                      }..................
     # 0-based index of the first parameter of the currently iterated kind
     # accepted by that callable in the "args_name" tuple.
     args_index_kind_first = 0

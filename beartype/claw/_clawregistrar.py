@@ -32,9 +32,6 @@ from beartype._util.text.utiltextident import is_identifier
 from collections.abc import Iterable as IterableABC
 from contextlib import contextmanager
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
 def is_packages_registered_any() -> bool:

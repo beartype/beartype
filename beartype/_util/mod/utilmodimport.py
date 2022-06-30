@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,21 +10,20 @@ importing modules and/or attributes from modules).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeModuleUnimportableWarning
 from beartype.roar._roarexc import _BeartypeUtilModuleException
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype.typing import (
+    Any,
+    Optional,
+)
 from beartype._data.datatyping import TypeException
 from importlib import import_module as importlib_import_module
 from sys import modules as sys_modules
 from types import ModuleType
-from typing import Any, Optional, Type
 from warnings import warn
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ IMPORTERS                         }....................
+# ....................{ IMPORTERS                          }....................
 #FIXME: Preserved until requisite, which shouldn't be long.
 #FIXME: Unit test us up.
 # def import_module(
@@ -125,7 +124,7 @@ def import_module_or_none(module_name: str) -> Optional[ModuleType]:
     # Inform the caller this module is unimportable.
     return None
 
-# ....................{ IMPORTERS ~ attr                  }....................
+# ....................{ IMPORTERS ~ attr                   }....................
 def import_module_attr(
     # Mandatory parameters.
     module_attr_name: str,

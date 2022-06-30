@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,13 +10,10 @@ string-centric operations on behalf of higher-level beartype validators).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
-from typing import Optional
+# ....................{ IMPORTS                            }....................
+from beartype.typing import Optional
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ FORMATTERS                        }....................
+# ....................{ FORMATTERS                         }....................
 def format_diagnosis_line(
     # Mandatory parameters.
     validator_repr: str,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,7 +11,7 @@ reference type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import (
     Any,
@@ -19,22 +19,19 @@ from beartype.typing import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ HINTS                             }....................
+# ....................{ HINTS                              }....................
 #FIXME: Refactor this now-useless global away, please. Specifically:
 #* Globally replace all references to this global with references to
 #  "beartype.typing.ForwardRef" instead.
 #* Excise this global.
-HINT_PEP484_FORWARDREF_TYPE: Any = ForwardRef
+HINT_PEP484_FORWARDREF_TYPE = ForwardRef
 '''
 :pep:`484`-compliant **forward reference type** (i.e., class of all forward
 reference objects implicitly created by all :mod:`typing` type hint factories
 when subscripted by a string).
 '''
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 def is_hint_pep484_forwardref(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a :pep:`484`-compliant **forward
@@ -67,7 +64,7 @@ def is_hint_pep484_forwardref(hint: object) -> bool:
     # forward reference superclass.
     return isinstance(hint, HINT_PEP484_FORWARDREF_TYPE)
 
-# ....................{ GETTERS                           }....................
+# ....................{ GETTERS                            }....................
 @callable_cached
 def get_hint_pep484_forwardref_type_basename(hint: Any) -> str:
     '''

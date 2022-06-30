@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,21 +10,18 @@ deprecating arbitrary module attributes in a reusable fashion).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid circular import dependencies, avoid importing from *ANY*
 # package-specific submodule either here or in the body of any callable defined
 # by this submodule. This submodule is typically called from the "__init__"
 # submodules of public subpackages.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype.typing import Dict
 from beartype._util.utilobject import SENTINEL
-from typing import Dict
 from warnings import warn
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
-# ....................{ IMPORTERS                         }....................
+# ....................{ IMPORTERS                          }....................
 def deprecate_module_attr(
     attr_deprecated_name: str,
     attr_deprecated_name_to_nondeprecated_name: Dict[str, str],
@@ -69,7 +66,7 @@ def deprecate_module_attr(
 
     Warns
     ----------
-    :class:`DeprecationWarning`
+    DeprecationWarning
         If this attribute is deprecated.
 
     Raises
