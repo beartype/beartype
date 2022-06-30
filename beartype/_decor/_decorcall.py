@@ -21,7 +21,7 @@ from beartype._decor._code.codemagic import (
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
 )
-from beartype._decor._error.errormain import raise_pep_call_exception
+from beartype._decor._error.errormain import get_beartype_violation
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.func.utilfunctest import is_func_async_coroutine
@@ -275,7 +275,7 @@ class BeartypeCall(object):
         self.func_wrapper_locals.clear()
         self.func_wrapper_locals[ARG_NAME_FUNC] = func
         self.func_wrapper_locals[ARG_NAME_RAISE_EXCEPTION] = (
-            raise_pep_call_exception)
+            get_beartype_violation)
 
         # Machine-readable name of the wrapper function to be generated.
         self.func_wrapper_name = func.__name__

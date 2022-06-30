@@ -61,7 +61,7 @@
    Traceback (most recent call last):
      File "<stdin>", line 1, in <module>
      File "<string>", line 30, in quote_wiggum
-     File "/home/springfield/beartype/lib/python3.9/site-packages/beartype/_decor/_code/_pep/_error/errormain.py", line 220, in raise_pep_call_exception
+     File "/home/springfield/beartype/lib/python3.9/site-packages/beartype/_decor/_code/_pep/_error/errormain.py", line 220, in get_beartype_violation
        raise exception_cls(
    beartype.roar.BeartypeCallHintParamViolation: @beartyped
    quote_wiggum() parameter lines=[b'Oh, my God! A horrible plane
@@ -408,7 +408,7 @@ the former as a default behaviour.
    Traceback (most recent call last):
      File "<stdin>", line 6, in <module>
      File "<string>", line 17, in main
-     File "/home/leycec/py/beartype/beartype/_decor/_code/_pep/_error/errormain.py", line 218, in raise_pep_call_exception
+     File "/home/leycec/py/beartype/beartype/_decor/_code/_pep/_error/errormain.py", line 218, in get_beartype_violation
        raise exception_cls(
    beartype.roar.BeartypeCallHintPepReturnException: @beartyped main() return
    'Goodbye, world.' violates type hint <class 'int'>, as value 'Goodbye,
@@ -3901,7 +3901,7 @@ Let's see the wrapper function ``@beartype`` dynamically generated from that:
            # Type-check this passed parameter or return value against this
            # PEP-compliant type hint.
            if not isinstance(__beartype_pith_0, int):
-               __beartype_raise_pep_call_exception(
+               __beartype_get_beartype_violation(
                    func=__beartype_func,
                    pith_name='he_must_be_spoken_for_by_at_least_two',
                    pith_value=__beartype_pith_0,
@@ -3934,7 +3934,7 @@ Let's dismantle this bit by bit:
   currently being type-checked against its associated type hint.
 * ``isinstance(__beartype_pith_0, int)`` tests whether the value passed for
   this parameter satisfies the type hint annotating this parameter.
-* ``__beartype_raise_pep_call_exception()`` raises a human-readable exception
+* ``__beartype_get_beartype_violation()`` raises a human-readable exception
   if this value fails this type-check.
 
 So good so far. But that's easy. Let's delve deeper.
@@ -3978,7 +3978,7 @@ Let's see the wrapper function ``@beartype`` dynamically generated from that:
            # Type-check this passed parameter or return value against this
            # PEP-compliant type hint.
            if not isinstance(__beartype_pith_0, __beartypistry['argparse.ArgumentParser']):
-               __beartype_raise_pep_call_exception(
+               __beartype_get_beartype_violation(
                    func=__beartype_func,
                    pith_name='a_cub_may_be_bought_at_a_price',
                    pith_value=__beartype_pith_0,
@@ -4040,7 +4040,7 @@ Let's see the wrapper function ``@beartype`` dynamically generated from that:
            # Type-check this passed parameter or return value against this
            # PEP-compliant type hint.
            if not isinstance(__beartype_pith_0, list):
-               __beartype_raise_pep_call_exception(
+               __beartype_get_beartype_violation(
                    func=__beartype_func,
                    pith_name='all_the_jungle_is_thine',
                    pith_value=__beartype_pith_0,
@@ -4107,7 +4107,7 @@ Let's see the wrapper function ``@beartype`` dynamically generated from that:
                # both non-empty and deeply satisfies this hint.
                (not __beartype_pith_0 or isinstance(__beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)], str))
            ):
-               __beartype_raise_pep_call_exception(
+               __beartype_get_beartype_violation(
                    func=__beartype_func,
                    pith_name='kill_everything_that_thou_canst',
                    pith_value=__beartype_pith_0,
@@ -4204,7 +4204,7 @@ Let's see the wrapper function ``@beartype`` dynamically generated from that:
                    ))
                ))
            ):
-               __beartype_raise_pep_call_exception(
+               __beartype_get_beartype_violation(
                    func=__beartype_func,
                    pith_name='pull_thorns_from_all_wolves_paws',
                    pith_value=__beartype_pith_0,
@@ -4410,7 +4410,7 @@ perform them at runtime):
    in "cold" code paths guaranteed to raise exceptions. This phase is only
    *conditionally* performed when the first phase fails by:
 
-   * The slow-as-molasses ``raise_pep_call_exception()`` function declared in
+   * The slow-as-molasses ``get_beartype_violation()`` function declared in
      the `"beartype._decor._error.errormain" submodule
      <beartype errormain_>`__, which generates human-readable exceptions after
      performing unmemoized O(n) type-checking of an arbitrary object against a

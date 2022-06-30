@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,17 +10,17 @@ This submodule unit tests the public API of the private
 :mod:`beartype._decor._error.errormain` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                             }....................
-def test_raise_pep_call_exception() -> None:
+# ....................{ TESTS                              }....................
+def test_get_beartype_violation() -> None:
     '''
     Test the
-    :func:`beartype._decor._error.errormain.raise_pep_call_exception`
+    :func:`beartype._decor._error.errormain.get_beartype_violation`
     function.
     '''
 
@@ -32,7 +32,7 @@ def test_raise_pep_call_exception() -> None:
     )
     from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
     from beartype._decor._error.errormain import (
-        raise_pep_call_exception)
+        get_beartype_violation)
     from beartype.typing import (
         List,
         Tuple,
@@ -52,62 +52,62 @@ def test_raise_pep_call_exception() -> None:
 
         return achromatic_voice
 
-    # Assert this function raises the expected exception when passed a
+    # Assert this function returns the expected exception when passed a
     # parameter annotated by a PEP-compliant type hint failing to shallowly
     # satisfy the type of that type hint.
-    with raises(BeartypeCallHintParamViolation):
-        raise_pep_call_exception(
-            func=forest_unknown,
-            pith_name='secret_orchard',
-            pith_value=(
-                'You are in a forest unknown:',
-                'The secret orchard.',
-            ),
-        )
+    violation = get_beartype_violation(
+        func=forest_unknown,
+        pith_name='secret_orchard',
+        pith_value=(
+            'You are in a forest unknown:',
+            'The secret orchard.',
+        ),
+    )
+    assert isinstance(violation, BeartypeCallHintParamViolation)
 
-    # Assert this function raises the expected exception when passed a
+    # Assert this function returns the expected exception when passed a
     # parameter annotated by a PEP-compliant type hint failing to deeply
     # satisfy the type of that type hint.
-    with raises(BeartypeCallHintParamViolation):
-        raise_pep_call_exception(
-            func=forest_unknown,
-            pith_name='secret_orchard',
-            pith_value=[
-                b'I am awaiting the sunrise',
-                b'Gazing modestly through the coldest morning',
-            ],
-        )
+    violation = get_beartype_violation(
+        func=forest_unknown,
+        pith_name='secret_orchard',
+        pith_value=[
+            b'I am awaiting the sunrise',
+            b'Gazing modestly through the coldest morning',
+        ],
+    )
+    assert isinstance(violation, BeartypeCallHintParamViolation)
 
-    # Assert this function raises the expected exception when passed another
+    # Assert this function returns the expected exception when passed another
     # parameter annotated by a PEP-noncompliant type hint failing to shallowly
     # satisfy the type of that type hint.
-    with raises(BeartypeCallHintParamViolation):
-        raise_pep_call_exception(
-            func=forest_unknown,
-            pith_name='to_bid_you_farewell',
-            pith_value=(
-                b'Once it came you lied,'
-                b"Embracing us over autumn's proud treetops."
-            ),
-        )
+    violation = get_beartype_violation(
+        func=forest_unknown,
+        pith_name='to_bid_you_farewell',
+        pith_value=(
+            b'Once it came you lied,'
+            b"Embracing us over autumn's proud treetops."
+        ),
+    )
+    assert isinstance(violation, BeartypeCallHintParamViolation)
 
-    # Assert this function raises the expected exception when returning a
+    # Assert this function returns the expected exception when returning a
     # return value annotated by a PEP-compliant type hint failing to satisfy
     # that type hint.
-    with raises(BeartypeCallHintReturnViolation):
-        raise_pep_call_exception(
-            func=forest_unknown,
-            pith_name='return',
-            pith_value=[
-                'Sunbirds leave their dark recesses.',
-                'Shadows glide the archways.',
-            ],
-        )
+    violation = get_beartype_violation(
+        func=forest_unknown,
+        pith_name='return',
+        pith_value=[
+            'Sunbirds leave their dark recesses.',
+            'Shadows glide the archways.',
+        ],
+    )
+    assert isinstance(violation, BeartypeCallHintReturnViolation)
 
     # Assert this function raises the expected exception when passed an
     # unannotated parameter.
     with raises(_BeartypeCallHintPepRaiseException):
-        raise_pep_call_exception(
+        get_beartype_violation(
             func=forest_unknown,
             pith_name='achromatic_voice',
             pith_value=(
@@ -120,7 +120,7 @@ def test_raise_pep_call_exception() -> None:
     # parameter annotated by an object that is unsupported as a type hint
     # (i.e., is neither PEP-compliant nor -noncompliant).
     with raises(BeartypeDecorHintNonpepException):
-        raise_pep_call_exception(
+        get_beartype_violation(
             func=forest_unknown,
             pith_name='amaranth_symbol',
             pith_value=(

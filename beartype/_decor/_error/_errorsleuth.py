@@ -76,7 +76,7 @@ class CauseSleuth(object):
         the current call to that function) if that function generated such an
         integer *or* ``None`` otherwise (i.e., if that function generated *no*
         such integer). See the same parameter accepted by the higher-level
-        :func:`beartype._decor._error.errormain.raise_pep_call_exception`
+        :func:`beartype._decor._error.errormain.get_beartype_violation`
         function for further details.
 
     Attributes (Private)
@@ -197,12 +197,12 @@ class CauseSleuth(object):
         ----------
         This getter is intentionally generalized to support objects both
         satisfying and *not* satisfying hints as equally valid use cases. While
-        the parent :func:`.errormain.raise_pep_call_exception` function
+        the parent :func:`.errormain.get_beartype_violation` function
         calling this getter is *always* passed an object *not* satisfying the
         passed hint, this getter is under no such constraints. Why? Because
         this getter is also called to find which of an arbitrary number of
         objects transitively nested in the object passed to
-        :func:`.errormain.raise_pep_call_exception` fails to satisfy the
+        :func:`.errormain.get_beartype_violation` fails to satisfy the
         corresponding hint transitively nested in the hint passed to that
         function.
 
