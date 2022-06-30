@@ -29,16 +29,11 @@ class MuhNutherThing:
     def __len__(self) -> int:
         ...
 
-    def __eq__(self, __o: object) -> bool:
-        raise RuntimeError("You shall not compare me!")
-
 
 class MuhDict(t.TypedDict):
     thing_one: str
     thing_two: int
 
-
-muh_instance = MuhNutherThing()
 
 SUBTYPE_CASES = [
     # things are subclasses of themselves
@@ -149,11 +144,6 @@ SUBTYPE_CASES = [
     (t.Annotated[list, True], t.Annotated[t.Sequence, True], True),
     (t.Annotated[list, False], t.Annotated[t.Sequence, True], False),
     (t.Annotated[list, 0, 0], t.Annotated[list, 0], False),  # must have same num args
-    (
-        t.Annotated[int, muh_instance],  # broken __eq__ doesn't crash
-        t.Annotated[int, muh_instance],
-        False,
-    ),  
 ]
 
 
@@ -164,28 +154,32 @@ def test_is_subtype(subt, supert, expected_result):
 
 
 EQUALITY_CASES = [
-    (tuple, t.Tuple),
-    (list, list),
-    (list, t.List),
-    (list, t.List[t.Any]),
-    (tuple, t.Tuple[t.Any, ...]),
-    (abc.Awaitable[abc.Sequence[int]], t.Awaitable[t.Sequence[int]]),
+    (tuple, t.Tuple, True),
+    (list, list, True),
+    (list, t.List, True),
+    (list, t.List[t.Any], True),
+    (t.Union[int, str], t.Union[str, int], True),
+    (t.Union[int, str], t.Union[str, list], False),
+    (tuple, t.Tuple[t.Any, ...], True),
+    (t.Annotated[int, "hi"], t.Annotated[int, "hi"], True),
+    (t.Annotated[int, "hi"], t.Annotated[int, "low"], False),
+    (abc.Awaitable[abc.Sequence[int]], t.Awaitable[t.Sequence[int]], True),
 ]
 if IS_PYTHON_AT_LEAST_3_9:
     EQUALITY_CASES.extend(
         [
-            (tuple[str, ...], t.Tuple[str, ...]),
-            (list[str], t.List[str]),
+            (tuple[str, ...], t.Tuple[str, ...], True),
+            (list[str], t.List[str], True),
         ]
     )
 
 
-@pytest.mark.parametrize("type_a, type_b", EQUALITY_CASES)
-def test_type_equality(type_a, type_b):
+@pytest.mark.parametrize("type_a, type_b, expected", EQUALITY_CASES)
+def test_type_equality(type_a, type_b, expected):
     """test that things with the same sign and arguments are equal."""
     hint_a = TypeHint(type_a)
     hint_b = TypeHint(type_b)
-    assert hint_a == hint_b
+    assert (hint_a == hint_b) is expected
 
     # smoke test
     assert hint_a != TypeHint(t.Generator[t.Union[list, str], str, None])

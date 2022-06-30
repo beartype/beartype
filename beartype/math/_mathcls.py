@@ -607,14 +607,13 @@ class _TypeHintAnnotated(TypeHint):
 
     @property
     def _is_just_an_origin(self) -> bool:
-        # since Annotated[] must be used with at least two arguments, we are 
+        # since Annotated[] must be used with at least two arguments, we are
         # never just the origin of the metahint
         return False
 
-    # FIXME: Define __eq__() in a similar way, probably? Joy is type hints.
     def _is_le_branch(self, branch: TypeHint) -> bool:
         if branch._is_just_an_origin:
-            return self._metahint.is_subtype(branch)
+            return self._metahint <= branch
 
         # If that hint is *NOT* a "typing.Annotated[...]" type hint, this hint
         # *CANNOT* be a subtype of that hint. In this case, return false.
@@ -646,13 +645,19 @@ class _TypeHintAnnotated(TypeHint):
             # the "<=" operator), as arbitrary caller-defined objects are *MUCH*
             # more likely to define a relevant equality comparison than a
             # relevant less-than-or-equal-to comparison.
-            return all(
-                self_meta == branch_meta
-                for self_meta, branch_meta in zip(self._metadata, branch._metadata)
-            )
+            return self._metadata == branch._metadata
         # Else, one or more objects annotating these hints are incomparable. So,
         # this hint *CANNOT* be a subtype of that hint. Return false.
         return False
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, TypeHint):
+            return NotImplemented
+        return (
+            isinstance(other, _TypeHintAnnotated)
+            and self._metahint == other._metahint
+            and self._metadata == other._metadata
+        )
 
 
 class _TypeHintUnion(_TypeHintSubscripted):
@@ -693,14 +698,6 @@ class _TypeHintUnion(_TypeHintSubscripted):
         return True
 
     def _is_le_branch(self, branch: TypeHint) -> bool:
-
-        # FIXME: Is this right? I have no idea. My brain hurts. The API could
-        # probably be cleaned up a bit by:
-        # * Shifting the TypeHint.__le__() method *IMPLEMENTATION* into
-        #  "_TypeHintSubscripted".
-        # * Decorating the TypeHint.__le__() method with @abstractmethod.
-        # * Shifting the TypeHint._is_le_branch() method into
-        #  "_TypeHintSubscripted".
         raise NotImplementedError("_TypeHintUnion._is_le_branch() unsupported.")
 
 
