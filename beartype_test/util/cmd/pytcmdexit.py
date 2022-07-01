@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,11 +10,9 @@ a process terminated successfully or unsuccessfully) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                           }....................
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
+# ....................{ IMPORTS                            }....................
 
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS                          }....................
 SUCCESS = 0
 '''
 Exit status signifying a process to have terminated successfully.
@@ -30,7 +28,7 @@ Although any exit status in the range ``[1, 255]`` signifies failure, this
 particular exit status is the most common and thus preferred default.
 '''
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 def is_success(exit_status: int) -> bool:
     '''
     ``True`` only if the passed exit status signifies success.
