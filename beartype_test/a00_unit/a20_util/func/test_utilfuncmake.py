@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,18 +10,17 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.utilfunc.utilfuncmake` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ GLOBALS                           }....................
+# ....................{ GLOBALS                            }....................
 # Arbitrary global referenced in functions created below.
 AND_SEE_THE_GREAT_ACHILLES = 'whom we knew'
 
-# ....................{ TESTS ~ make                      }....................
+# ....................{ TESTS ~ make                       }....................
 #FIXME: Consider excising. Although awesome, this is no longer needed.
 # def test_copy_func_shallow_pass() -> None:
 #     '''
@@ -103,7 +102,7 @@ AND_SEE_THE_GREAT_ACHILLES = 'whom we knew'
 #         copy_func_shallow(
 #             func=iter, exception_cls=BeartypeDecorWrapperException)
 
-# ....................{ TESTS ~ make                      }....................
+# ....................{ TESTS ~ make                       }....................
 def test_make_func_pass(capsys) -> None:
     '''
     Test successful usage of the
@@ -123,8 +122,8 @@ def test_make_func_pass(capsys) -> None:
 
     # Defer heavyweight imports.
     from beartype._util.func.utilfuncmake import make_func
+    from beartype.typing import Optional
     from linecache import cache as linecache_cache
-    from typing import Optional
 
     # Arbitrary local referenced in functions created below.
     THO_MUCH_IS_TAKEN = 'much abides; and tho’'
@@ -225,6 +224,7 @@ def test_make_func_fail() -> None:
     from beartype.roar import BeartypeDecorWrapperException
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.utilfuncmake import make_func
+    from pytest import raises
 
     # Assert that attempting to create a function whose name collides with that
     # of a caller-defined local variable raises the expected exception.

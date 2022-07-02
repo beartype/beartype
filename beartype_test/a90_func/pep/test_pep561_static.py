@@ -172,8 +172,7 @@ def test_pep561_pyright() -> None:
 
     # Defer heavyweight imports.
     from beartype.meta import PACKAGE_NAME
-    # from beartype._util.py.utilpyversion import get_python_version_major_minor
-    # from beartype_test.util.path.pytpathmain import get_main_package_dir
+    from beartype._util.py.utilpyversion import get_python_version_major_minor
     from beartype_test.util.cmd.pytcmdrun import run_command_forward_output
 
     # List of all shell words with which to run the external "pyright" command.
@@ -186,13 +185,9 @@ def test_pep561_pyright() -> None:
         #so until someone explicitly requests we do so, please. This has dragged
         #on long enough, people!
 
-        #FIXME: *YIKES.* "pyright" raises an extreme number of unexpected errors
-        #when passing this option, which is horrifying. See "This has dragged
-        #on long enough, people!", above. For now, let's just redundantly run
-        #"pyright" against its default Python version -- whatever that is. Gah!
         # # Major and minor version of the active Python interpreter, ignoring the
         # # patch version of this interpreter.
-        # '--pythonversion', get_python_version_major_minor(),
+        '--pythonversion', get_python_version_major_minor(),
 
         # Relative basename of this project's top-level package. Ideally, the
         # absolute dirname of this package would instead be passed as:
