@@ -1,4 +1,3 @@
-import types
 import typing as t
 from collections import abc
 
@@ -34,6 +33,8 @@ class MuhDict(t.TypedDict):
     thing_one: str
     thing_two: int
 
+T = t.TypeVar("T")
+P = t.ParamSpec("P")
 
 SUBTYPE_CASES = [
     # things are subclasses of themselves
@@ -96,6 +97,7 @@ SUBTYPE_CASES = [
     (t.Callable[[], int], t.Callable[..., None], False),
     (t.Callable[..., t.Any], t.Callable[..., None], False),
     (t.Callable[[float], None], t.Callable[[float, int], None], False),
+
     # (types.FunctionType, t.Callable, True),  # FIXME
     # tuples
     (tuple, t.Tuple, True),
@@ -119,6 +121,9 @@ SUBTYPE_CASES = [
     (t.Union[str, list], t.Union[str, int], False),
     (t.Union[int, str, list], list, False),
     (t.Union[int, str, list], t.Union[int, str], False),
+    (int, t.Optional[int], True),
+    (t.Optional[int], int, False),
+    (list, t.Optional[t.Sequence], True),
     # literals
     (t.Literal[1], int, True),
     (t.Literal["a"], str, True),
@@ -213,3 +218,13 @@ def test_arg_nparams(nparams, sign_group):
         assert (
             actual == nparams
         ), f"{sign.name} has {actual} params, should have {nparams}"
+
+
+def test_callable_takes_args():
+    assert TypeHint(t.Callable[[], t.Any]).takes_no_args is True
+    assert TypeHint(t.Callable[[int], t.Any]).takes_no_args is False
+    assert TypeHint(t.Callable[..., t.Any]).takes_no_args is False
+
+    assert TypeHint(t.Callable[..., t.Any]).takes_any_args is True
+    assert TypeHint(t.Callable[[int], t.Any]).takes_any_args is False
+    assert TypeHint(t.Callable[[], t.Any]).takes_any_args is False

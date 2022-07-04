@@ -14,8 +14,11 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_or_none,
     get_hint_pep_sign_or_none,
 )
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
+    get_hint_pep484585_callable_args,
+)
 from beartype.roar import BeartypeMathException
-from beartype.typing import Any, Dict, Iterable, Tuple, Type
+from beartype.typing import Any, Dict, Iterable, Tuple, Type, ParamSpec
 
 
 def is_subtype(subtype: object, supertype: object) -> bool:
@@ -425,46 +428,48 @@ class _TypeHintOriginIsinstanceableArgs2(_TypeHintSubscripted):
     _required_nargs: int = 2
 
 
-class _TypeHintCallable(_TypeHintOriginIsinstanceableArgs2):
-    _required_nargs: int = 2
+class _TypeHintCallable(_TypeHintSubscripted):
 
     def _validate(self):
-        # temporary workaround for https://github.com/beartype/beartype/issues/137
-        from typing import get_args
-
-        self._args = get_args(self._hint)
-
+        """Perform argument validation for a callable."""
+        self._takes_any_args = False
         if len(self._args) == 0:
-            self._args = (Ellipsis, Any)
+            # e.g. `Callable` without any arguments
+            # this may be unreachable, (since a bare Callable will go to _TypeHintClass)
+            # but it's here for completeness and safety.
+            self._takes_any_args = True
+            self._args = (Any,)  # returns any
+        else:
+            self._call_args = get_hint_pep484585_callable_args(self._hint)
+            if isinstance(self._call_args, ParamSpec):
+                raise NotImplementedError("ParamSpec not yet implemented.")
+
+            if self._call_args is Ellipsis:
+                # e.g. `Callable[..., Any]`
+                self._takes_any_args = True
+                self._call_args = ()  # Ellipsis in not a type, so strip it here.
+            self._args = self._call_args + (self._args[-1],)
         super()._validate()
 
-    # FIXME: bring this in line with tuple behavior... maybe get rid of this
-    def _wrap_children(self, unordered_children: tuple) -> Tuple["TypeHint", ...]:
-        argtypes, return_types = unordered_children
-        if argtypes is Ellipsis:
-            ordered_args = Ellipsis
-        else:
-            ordered_args = tuple(TypeHint(child) for child in argtypes)
-        return (ordered_args, TypeHint(return_types))
-
-    # the return type hint is a lie... but typing Ellipsis is annoying
-    # it should be Union[Literal[Ellipsis], Tuple[TypeHint, ...]]
-    # but Ellipsis is not valid as a type hint.
     @property
     def arg_types(self) -> Tuple[TypeHint, ...]:
-        return self._hints_child_ordered[0]
+        return self._hints_child_ordered[:-1]
 
     @property
     def return_type(self) -> TypeHint:
-        return self._hints_child_ordered[1]
+        return self._hints_child_ordered[-1]
 
     @property
     def takes_any_args(self) -> bool:
-        return self.arg_types is Ellipsis
+        return self._takes_any_args
+
+    @property
+    def takes_no_args(self) -> bool:
+        return not self.arg_types and not self.takes_any_args
 
     @property
     def returns_any(self) -> bool:
-        return self.return_type._origin is Any
+        return self._args[-1] is Any
 
     @property
     def _is_just_an_origin(self) -> bool:
@@ -513,10 +518,10 @@ class _TypeHintTuple(_TypeHintSubscripted):
         if len(self._args) == 0:
             self._is_variable_length = True
             self._args = (Any,)
-        if len(self._args) == 1 and self._args[0] == ():
+        elif len(self._args) == 1 and self._args[0] == ():
             self._is_empty_tuple = True
             self._args = ()
-        if len(self._args) == 2 and self._args[1] is Ellipsis:
+        elif len(self._args) == 2 and self._args[1] is Ellipsis:
             self._is_variable_length = True
             self._args = (self._args[0],)
         super()._validate()
