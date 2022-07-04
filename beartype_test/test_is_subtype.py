@@ -33,6 +33,10 @@ class MuhDict(t.TypedDict):
     thing_one: str
     thing_two: int
 
+class MuhTuple(t.NamedTuple):
+    thing_one: str
+    thing_two: int
+
 T = t.TypeVar("T")
 P = t.ParamSpec("P")
 
@@ -139,6 +143,7 @@ SUBTYPE_CASES = [
     (t.List[int], t.Union[str, t.List[t.Union[int, str]]], True),
     # not really types:
     (MuhDict, dict, True),
+    (MuhTuple, tuple, True),
     # annotated:
     (
         t.Annotated[int, "a note"],

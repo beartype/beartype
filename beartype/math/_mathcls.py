@@ -1,6 +1,6 @@
 import contextlib
 from abc import ABC
-
+import warnings
 from beartype._data.hint.pep.sign import datapepsigns as signs
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
@@ -17,8 +17,25 @@ from beartype._util.hint.pep.utilpepget import (
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
     get_hint_pep484585_callable_args,
 )
+from beartype._util.cls.pep.utilpep3119 import (
+    die_unless_type_issubclassable,
+)
 from beartype.roar import BeartypeMathException
-from beartype.typing import Any, Dict, Iterable, Tuple, Type, ParamSpec
+from beartype.typing import (
+    Any,
+    Union,
+    Dict,
+    Iterable,
+    Tuple,
+    Type,
+    ParamSpec,
+    Literal,
+    TypedDict,
+    NamedTuple,
+)
+from beartype._util.hint.pep.proposal.utilpep589 import is_hint_pep589
+
+SUBCLASSABLE_EXCEPTIONS = {Any, Union, Literal}
 
 
 def is_subtype(subtype: object, supertype: object) -> bool:
@@ -145,7 +162,22 @@ class TypeHint(ABC):
         self._hint_sign = get_hint_pep_sign_or_none(hint)
 
         # root type, that may or may not be subscripted
-        self._origin: type = get_hint_pep_origin_or_none(hint) or hint
+        self._origin: type = get_hint_pep_origin_or_none(hint) or hint  # type: ignore
+        if (
+            self._origin not in SUBCLASSABLE_EXCEPTIONS
+            and not is_hint_pep589(self._origin)
+            and not isinstance(self, _TypeHintAnnotated)
+        ):
+            try:
+                die_unless_type_issubclassable(self._origin)
+            except Exception as e:
+                warnings.warn(
+                    f"Here be dragons! Type hint {self._hint!r} with origin "
+                    f"{self._origin!r} is not subclassable. Type comparison may fail. "
+                    "Please open an issue at github.com/beartype/beartype/issues/new "
+                    "if you encounter this warning."
+                )
+
         # Tuple of all low-level unordered child type hints of this hint.
         self._args = get_hint_pep_args(hint)
         self._validate()
@@ -429,7 +461,6 @@ class _TypeHintOriginIsinstanceableArgs2(_TypeHintSubscripted):
 
 
 class _TypeHintCallable(_TypeHintSubscripted):
-
     def _validate(self):
         """Perform argument validation for a callable."""
         self._takes_any_args = False
