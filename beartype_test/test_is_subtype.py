@@ -103,6 +103,8 @@ SUBTYPE_CASES = [
     (t.Callable[[], int], t.Callable[..., None], False),
     (t.Callable[..., t.Any], t.Callable[..., None], False),
     (t.Callable[[float], None], t.Callable[[float, int], None], False),
+    (t.Callable[[], int], t.Sequence[int], False),
+    (t.Callable[[int, str], int], t.Callable[[int, str], t.Any], True),
     # (types.FunctionType, t.Callable, True),  # FIXME
     # tuples
     (tuple, t.Tuple, True),
@@ -119,6 +121,8 @@ SUBTYPE_CASES = [
     (t.Tuple[int, str], t.Tuple[str, ...], False),
     (t.Tuple[int, str], t.Tuple[t.Union[int, str], ...], True),
     (t.Tuple[t.Union[int, str], ...], t.Tuple[t.Union[int, str], ...], True),
+    (t.Tuple[int], t.Dict[str, int], False),
+    (t.Tuple[t.Any, ...], t.Tuple[str, int], False),
     # unions
     (int, t.Union[int, str], True),
     (t.Union[int, str], t.Union[list, int, str], True),
@@ -151,6 +155,7 @@ SUBTYPE_CASES = [
     (t.Annotated[list, True], t.Annotated[t.Sequence, True], True),
     (t.Annotated[list, False], t.Annotated[t.Sequence, True], False),
     (t.Annotated[list, 0, 0], t.Annotated[list, 0], False),  # must have same num args
+    (t.Annotated[t.List[int], "metadata"], t.List[int], True),
 ]
 
 
@@ -169,6 +174,7 @@ EQUALITY_CASES = [
     (t.Union[int, str], t.Union[str, list], False),
     (tuple, t.Tuple[t.Any, ...], True),
     (t.Annotated[int, "hi"], t.Annotated[int, "hi"], True),
+    (t.Annotated[int, "hi"], t.Annotated[int, "low"], False),
     (t.Annotated[int, "hi"], t.Annotated[int, "low"], False),
     (abc.Awaitable[abc.Sequence[int]], t.Awaitable[t.Sequence[int]], True),
 ]
@@ -191,11 +197,16 @@ def test_type_equality(type_a, type_b, expected):
     # smoke test
     assert hint_a != TypeHint(t.Generator[t.Union[list, str], str, None])
 
+    assert hint_a != "notahint"
+    with pytest.raises(TypeError, match="not supported between"):
+        hint_a <= "notahint"
+
 
 def test_type_hint_singleton():
     """Recreating a type hint with the same input should yield the same type hint."""
     assert TypeHint(t.List[t.Any]) is TypeHint(t.List[t.Any])
     assert TypeHint(int) is TypeHint(int)
+    assert TypeHint(TypeHint(int)) is TypeHint(int)
 
     # alas, this is not true:
     assert TypeHint(t.List) is not TypeHint(list)
@@ -232,3 +243,60 @@ def test_callable_takes_args():
     assert TypeHint(t.Callable[..., t.Any]).takes_any_args is True
     assert TypeHint(t.Callable[[int], t.Any]).takes_any_args is False
     assert TypeHint(t.Callable[[], t.Any]).takes_any_args is False
+
+
+def test_empty_tuple():
+    assert TypeHint(t.Tuple[()]).is_empty_tuple
+
+
+def test_hint_iterable():
+    assert list(TypeHint(t.Union[int, str])) == [TypeHint(int), TypeHint(str)]
+    assert not list(TypeHint(int))
+
+
+def test_hint_ordered_comparison():
+    a = TypeHint(t.Callable[[], list])
+    b = TypeHint(t.Callable[..., t.Sequence[t.Any]])
+
+    assert a <= b
+    assert a < b
+    assert a != b
+    assert not a > b
+    assert not a >= b
+
+    with pytest.raises(TypeError, match="not supported between"):
+        a <= 1
+    with pytest.raises(TypeError, match="not supported between"):
+        a < 1
+    with pytest.raises(TypeError, match="not supported between"):
+        a >= 1
+    with pytest.raises(TypeError, match="not supported between"):
+        a > 1
+
+
+def test_hint_repr():
+    annotation = t.Callable[[], list]
+    hint = TypeHint(annotation)
+    assert repr(annotation) in repr(hint)
+
+
+def test_types_that_are_just_origins():
+    assert TypeHint(t.Callable)._is_just_an_origin
+    assert TypeHint(t.Callable[..., t.Any])._is_just_an_origin
+    assert TypeHint(t.Tuple)._is_just_an_origin
+    assert TypeHint(t.Tuple[t.Any, ...])._is_just_an_origin
+    assert TypeHint(int)._is_just_an_origin
+
+
+def test_invalid_subtype_comparison():
+    hint = TypeHint(t.Callable[[], list])
+    with pytest.raises(
+        BeartypeMathException, match="not a 'beartype.math.TypeHint' instance"
+    ):
+        hint.is_subtype(int)
+
+
+def test_callable_param_spec():
+    # TODO
+    with pytest.raises(NotImplementedError):
+        TypeHint(t.Callable[t.ParamSpec("P"), t.TypeVar("T")])
