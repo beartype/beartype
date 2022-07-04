@@ -20,10 +20,23 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_or_none,
     get_hint_pep_sign_or_none,
 )
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_8,
+    IS_PYTHON_AT_LEAST_3_10,
+)
 from beartype.roar import BeartypeMathException
-from beartype.typing import Any, Dict, Iterable, Literal, ParamSpec, Tuple, Type, Union
+from beartype.typing import Any, Dict, Iterable, Tuple, Type, Union
 
-SUBCLASSABLE_EXCEPTIONS = {Any, Union, Literal}
+if IS_PYTHON_AT_LEAST_3_10:
+    from beartype.typing import ParamSpec as _ParamSpec
+else:
+    _ParamSpec = None  # type: ignore # noqa
+
+SUBCLASSABLE_EXCEPTIONS = {Any, Union}
+if IS_PYTHON_AT_LEAST_3_8:
+    from beartype.typing import Literal
+
+    SUBCLASSABLE_EXCEPTIONS.add(Literal)
 
 
 def is_subtype(subtype: object, supertype: object) -> bool:
@@ -486,7 +499,7 @@ class _TypeHintCallable(_TypeHintSubscripted):
             self._args = (Any,)  # returns any
         else:
             self._call_args = get_hint_pep484585_callable_args(self._hint)
-            if isinstance(self._call_args, ParamSpec):
+            if IS_PYTHON_AT_LEAST_3_10 and isinstance(self._call_args, _ParamSpec):
                 raise NotImplementedError("ParamSpec not yet implemented.")
 
             if self._call_args is Ellipsis:
