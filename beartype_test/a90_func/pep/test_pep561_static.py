@@ -18,6 +18,7 @@ third-party static type-checkers and hence :pep:`561`.
 from beartype_test.util.mark.pytskip import (
     skip_if_pypy,
     skip_unless_package,
+    skip_unless_pathable,
 )
 
 # ....................{ TESTS                              }....................
@@ -114,110 +115,93 @@ def test_pep561_mypy() -> None:
     assert mypy_stdout.startswith('Success: ')
 
 
-#FIXME: *OH, BOY.* We thought "pyright" itself officially published the
-#"pyright" Python package shim. Nope. It's some unrelated other dude:
-#    https://github.com/RobertCraigie/pyright-python
+#FIXME: Integrate with our continuous integration (CI) workflow. Doing so is
+#probably trivial, given the official advice at:
+#    https://github.com/microsoft/pyright/blob/main/docs/ci-integration.md
 #
-#Even that would be fine, except that the "pyright" Python package shim does
-#fundamentally unsafe things we absolutely do *NOT* want like online "npm"-based
-#auto-installation of the "pyright" JavaScript package if currently not
-#installed. Needless to say, this is ludicrous. We're *NOT* going there.
-#Instead, we'll need to refactor this test to:
-#* Be skipped if the "pyright" command is *NOT* in the current ${PATH}.
-#* Internally call that command (e.g., by invoking subprocess.run()).
-#
-#I'm definitely displeased with the lack of native Python support here, people.
+#Specifically:
+#* Additionally decorate the test below by @skip_if_ci(). Under CI, we'll
+#  instead leverage yet another third-party GitHub Action. Gaah!
+#* Add the following to the job section of ".github/workflows/python_test.yml":
+#  #FIXME: This requires some configuration to pass the appropriate
+#  #'--pythonversion' option and "beartype" dirname, please.
+#  - uses: jakebailey/pyright-action@v1
 
-# # If the third-party "pyright" package is unavailable, skip this test. Note
-# # that:
-# # * "pyright" is the most popular static type-checker for Python, mostly due to
-# #   "pylance" (i.e., the most popular Python language plugin for VSCode, itself
-# #   the most popular integrated development environment (IDE)) both bundling
-# #   *AND* enabling "pyright" by default.
-# # * "pyright" is implemented in pure-TypeScript (i.e., JavaScript augmented with
-# #   type hints transpiling down to pure-JavaScript at compilation time).
-# # * This package is merely a thin shim around the pure-TypeScript core of
-# #   "pyright" simplifying the external invocation of "pyright" from Python.
-# @skip_unless_package('pyright')
-# def test_pep561_pyright() -> None:
-#     '''
-#     Functional test testing this project's compliance with :pep:`561` by
-#     externally running :mod:`pyright` (i.e., the most popular third-party static
-#     type checker as of this test) against this project's top-level package.
-#
-#     See Also
-#     ----------
-#     :mod:`pytest_pyright`
-#         Third-party :mod:`pytest` plugin automating this integration. Since this
-#         integration is trivial *and* since :mod:`beartype` assiduously avoids
-#         *all* mandatory dependencies, we perform this integration manually.
-#         Moreover, this plugin:
-#
-#         * Internally violates privacy encapsulation in
-#           :mod:`pytest` by widely importing private :mod:`pytest` attributes.
-#         * Explicitly admonishes downstream dependencies *not* to depend upon
-#           this plugin:
-#
-#             This project was created for internal use within another project of
-#             mine, support will be minimal.
-#     '''
-#
-#     # Defer heavyweight imports.
-#     from beartype_test.util.path.pytpathmain import (
-#         get_main_package_dir,
-#     )
-#     from pyright import api
-#
-#     #FIXME: Note that we *COULD* additionally pass the "--verifytypes" option,
-#     #which exposes further "pyright" compliants. Let's avoid doing so until
-#     #someone explicitly requests we do so, please. This has dragged on enough!
-#     # List of all command-line options (i.e., "-"-prefixed strings) to be
-#     # effectively passed to the external "pyright" command.
-#     #
-#     # Note this iterable *MUST* be defined as a list rather than tuple. If a
-#     # tuple, the function called below raises an exception. Hot garbage!
-#     PYRIGHT_OPTIONS = []
-#
-#     # List of all command-line arguments (i.e., non-options) to be effectively
-#     # passed to the external "pyright" command.
-#     #
-#     # Note this iterable *MUST* be defined as a list rather than tuple. If a
-#     # tuple, the function called below raises an exception. Steaming trash!
-#     PYRIGHT_ARGUMENTS = [
-#         # Absolute dirname of this project's top-level package.
-#         str(get_main_package_dir()),
-#     ]
-#
-#     # Tuple of all command-line options to be effectively passed to the
-#     # external "pyright" command.
-#     #
-#     # Note that we intentionally do *NOT* assert that call to have exited with
-#     # a successful exit code. Although pyright does exit with success on local
-#     # developer machines, it inexplicably does *NOT* under remote GitHub
-#     # Actions-based continuous integration despite "pyright_stderr" being empty.
-#     # Ergo, we conveniently ignore the former in favour of the latter.
-#     pyright_stdout, pyright_stderr, _ = api.run(PYRIGHT_OPTIONS + PYRIGHT_ARGUMENTS)
-#     # pyright_stdout, pyright_stderr, pyright_exit = api.run(PYRIGHT_OPTIONS + PYRIGHT_ARGUMENTS)
-#
-#     # Assert "pyright" to have emitted *NO* warnings or errors to "stderr".
-#     #
-#     # Note that "pyright" predominantly emits both warnings and errors to "stdout"
-#     # rather than "stderr", despite this contravening sane POSIX semantics.
-#     # They did this because some guy complained about not being able to
-#     # trivially grep "pyright" output, regardless of the fact that redirecting
-#     # stderr to stdout is a trivial shell fragment (e.g., "2>&1"), but let's
-#     # break everything just because some guy can't shell. See also:
-#     #     https://github.com/python/pyright/issues/1051
-#     assert not pyright_stderr
-#
-#     # Assert "pyright" to have emitted *NO* warnings or errors to "stdout".
-#     # Unfortunately, doing so is complicated by the failure of "pyright" to
-#     # conform to sane POSIX semantics. Specifically:
-#     # * If "pyright" succeeds, "pyright" emits to "stdout" a single line resembling:
-#     #       Success: no issues found in 83 source files
-#     # * If "pyright" fails, "pyright" emits to "stdout" *ANY* other line(s).
-#     #
-#     # Ergo, asserting this string to start with "Success:" suffices. Note this
-#     # assertion depends on "pyright" internals and is thus fragile, but that we
-#     # have *NO* sane alternative.
-#     assert pyright_stdout.startswith('Success: ')
+# If the external third-party "pyright" command is *NOT* pathable (i.e., an
+# executable command residing in the ${PATH} of the local filesystem), skip this
+# test. Note that:
+# * "pyright" is the most popular static type-checker for Python, mostly due to
+#   "pylance" (i.e., the most popular Python language plugin for VSCode, itself
+#   the most popular integrated development environment (IDE)) both bundling
+#   *AND* enabling "pyright" by default.
+# * "pyright" is implemented in pure-TypeScript (i.e., JavaScript augmented with
+#   type hints transpiling down to pure-JavaScript at compilation time).
+# * There exists a largely unrelated "pyright" Python package shim unofficially
+#   published at:
+#    https://github.com/RobertCraigie/pyright-python
+#   Sadly, that package does fundamentally unsafe things like:
+#   * Violating privacy encapsulation of "pytest", repeatedly.
+#   * Performing online "npm"-based auto-installation of the "pyright"
+#     JavaScript package if currently not installed. Currently, there exists
+#     *NO* means of disabling that dubious behavior.
+#   Ergo, we resoundingly ignore that high-level package in favour of the
+#   low-level "pyright" command. Such is quality assurance. It always hurts.
+@skip_unless_pathable('pyright')
+def test_pep561_pyright() -> None:
+    '''
+    Functional test testing this project's compliance with :pep:`561` by
+    externally running :mod:`pyright` (i.e., the most popular third-party static
+    type checker as of this test) against this project's top-level package.
+
+    See Also
+    ----------
+    :mod:`pytest_pyright`
+        Third-party :mod:`pytest` plugin automating this integration. Since this
+        integration is trivial *and* since :mod:`beartype` assiduously avoids
+        *all* mandatory dependencies, we perform this integration manually.
+        Moreover, this plugin:
+
+        * Internally violates privacy encapsulation in
+          :mod:`pytest` by widely importing private :mod:`pytest` attributes.
+        * Explicitly admonishes downstream dependencies *not* to depend upon
+          this plugin:
+
+            This project was created for internal use within another project of
+            mine, support will be minimal.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.meta import PACKAGE_NAME
+    from beartype._util.py.utilpyversion import get_python_version_major_minor
+    from beartype_test.util.cmd.pytcmdrun import run_command_forward_output
+
+    # List of all shell words with which to run the external "pyright" command.
+    PYRIGHT_ARGS = (
+        # Basename of the external "pyright" command to be run.
+        'pyright',
+
+        #FIXME: Note that we *COULD* additionally pass the "--verifytypes"
+        #option, which exposes further "pyright" compliants. Let's avoid doing
+        #so until someone explicitly requests we do so, please. This has dragged
+        #on long enough, people!
+
+        # # Major and minor version of the active Python interpreter, ignoring the
+        # # patch version of this interpreter.
+        '--pythonversion', get_python_version_major_minor(),
+
+        # Relative basename of this project's top-level package. Ideally, the
+        # absolute dirname of this package would instead be passed as:
+        #     str(get_main_package_dir())
+        #
+        # Doing so succeeds when manually running tests via our top-level
+        # "pytest" script but fails when automatically running tests via the
+        # "tox" command, presumably due to "pyright" failing to recognize that
+        # that dirname encapsulates a Python package. *sigh*
+        PACKAGE_NAME,
+    )
+
+    # Run the external "pyright" command in the current ${PATH} with these
+    # options and arguments,  raising an exception on subprocess failure while
+    # forwarding all standard output and error output by this subprocess to the
+    # standard output and error file handles of the active Python process.
+    run_command_forward_output(command_words=PYRIGHT_ARGS)

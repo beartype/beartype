@@ -102,10 +102,11 @@ def skip(reason: str):
     return skip_if(True, reason=reason)
 
 # ....................{ SKIP ~ command                     }....................
-def skip_unless_command(command_basename: str):
+def skip_unless_pathable(command_basename: str):
     '''
-    Skip the decorated test or fixture unless an executable command with the
-    passed basename resides in the current ``${PATH}``.
+    Skip the decorated test or fixture unless the passed **pathable** (i.e.,
+    executable command with the passed basename residing in the current
+    ``${PATH}``) exists on the local filesystem.
 
     Parameters
     ----------
@@ -125,7 +126,8 @@ def skip_unless_command(command_basename: str):
     # Skip this test if *NO* command with this basename resides in the ${PATH}.
     return skip_if(
         not is_pathable(command_basename),
-        reason=f'Command "{command_basename}" not found.')
+        reason=f'Command "{command_basename}" not found.'
+    )
 
 # ....................{ SKIP ~ host                        }....................
 def skip_if_ci():

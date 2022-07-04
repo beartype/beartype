@@ -179,9 +179,9 @@ if _IS_PYTHON_AT_LEAST_3_8:
         #     )
 
 # ....................{ PEP ~ 544                          }....................
-# If this interpreter is either performing static type-checking (e.g., via
-# mypy) *OR* targets Python < 3.8, defer to the standard library versions of
-# the family of "Supports*" protocols available under Python < 3.8.
+# If this interpreter is either performing static type-checking (e.g., via mypy)
+# *OR* targets Python < 3.8, defer to the standard library versions of the
+# family of "Supports*" protocols available under Python < 3.8.
 if TYPE_CHECKING or not _IS_PYTHON_AT_LEAST_3_8:
     from typing import (  # type: ignore[attr-defined]
         SupportsAbs as SupportsAbs,
@@ -202,8 +202,8 @@ if _IS_PYTHON_AT_LEAST_3_8:
             SupportsIndex as SupportsIndex,
             runtime_checkable as runtime_checkable,
         )
-    # Else, this interpreter is *NOT* performing static type-checking. In
-    # this case, prefer our optimized PEP 544 attributes.
+    # Else, this interpreter is *NOT* performing static type-checking. In this
+    # case, prefer our optimized PEP 544 attributes.
     else:
         from beartype.typing._typingpep544 import (
             Protocol as Protocol,
@@ -218,16 +218,17 @@ if _IS_PYTHON_AT_LEAST_3_8:
         )
 
 # ....................{ PEP ~ 585                          }....................
-# If the active Python interpreter targets Python < 3.9 and thus fails to
-# support PEP 585, import *ALL* public attributes of the "typing" module
-# deprecated by PEP 585 as their original values.
+# If this interpreter is either performing static type-checking (e.g., via mypy)
+# *OR* targets Python < 3.9 and thus fails to support PEP 585, import *ALL*
+# public attributes of the "typing" module deprecated by PEP 585 as their
+# original values.
 #
 # This is intentionally performed *BEFORE* the corresponding "else:" branch
 # below handling the Python >= 3.9 case. Why? Because mypy. If the order of
 # these two branches is reversed, mypy emits errors under Python < 3.9 when
 # attempting to subscript any of the builtin types (e.g., "Tuple"): e.g.,
 #     error: "tuple" is not subscriptable  [misc]
-if not _IS_PYTHON_AT_LEAST_3_9:
+if TYPE_CHECKING or not _IS_PYTHON_AT_LEAST_3_9:
     from typing import (
         AbstractSet as AbstractSet,
         AsyncContextManager as AsyncContextManager,

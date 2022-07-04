@@ -105,3 +105,13 @@ IS_PYTHON_3_7 = version_info[:2] == (3, 7)
 '''
 ``True`` only if the active Python interpreter targets exactly Python 3.7.
 '''
+
+# ....................{ GETTERS                            }....................
+def get_python_version_major_minor() -> str:
+    '''
+    ``"."``-delimited major and minor version of the active Python interpreter
+    (e.g., ``3.11``, ``3.7``), excluding the patch version of this interpreter.
+    '''
+
+    # Heroic one-liners are an inspiration to us all.
+    return f'{version_info[0]}.{version_info[1]}'
