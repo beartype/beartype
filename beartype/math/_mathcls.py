@@ -133,10 +133,7 @@ class TypeHint(ABC):
 
         # If this hint appears to be currently unsupported...
         if TypeHintSubclass is None:
-            if (
-                isinstance(hint, type)
-                or getattr(hint, "__module__", "") == "typing"
-            ):
+            if isinstance(hint, type) or getattr(hint, "__module__", "") == "typing":
                 TypeHintSubclass = _TypeHintClass
             else:
                 raise BeartypeMathException(
