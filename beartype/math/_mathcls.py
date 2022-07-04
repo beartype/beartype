@@ -1,16 +1,13 @@
 import contextlib
-import warnings
 from abc import ABC
 
 from beartype._data.hint.pep.sign import datapepsigns as signs
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cls.pep.utilpep3119 import die_unless_type_issubclassable
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
     get_hint_pep484585_callable_args,
 )
-from beartype._util.hint.pep.proposal.utilpep589 import is_hint_pep589
 from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
@@ -20,23 +17,14 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_or_none,
     get_hint_pep_sign_or_none,
 )
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_8,
-    IS_PYTHON_AT_LEAST_3_10,
-)
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from beartype.roar import BeartypeMathException
-from beartype.typing import Any, Dict, Iterable, Tuple, Type, Union
+from beartype.typing import Any, Dict, Iterable, Tuple, Type
 
 if IS_PYTHON_AT_LEAST_3_10:
     from beartype.typing import ParamSpec as _ParamSpec
 else:
     _ParamSpec = None  # type: ignore # noqa
-
-SUBCLASSABLE_EXCEPTIONS = {Any, Union}
-if IS_PYTHON_AT_LEAST_3_8:
-    from beartype.typing import Literal
-
-    SUBCLASSABLE_EXCEPTIONS.add(Literal)
 
 
 def is_subtype(subtype: object, supertype: object) -> bool:
@@ -182,20 +170,6 @@ class TypeHint(ABC):
 
         # root type, that may or may not be subscripted
         self._origin: type = get_hint_pep_origin_or_none(hint) or hint  # type: ignore
-        if (
-            self._origin not in SUBCLASSABLE_EXCEPTIONS
-            and not isinstance(self, _TypeHintAnnotated)
-            and not is_hint_pep589(self._hint)
-        ):
-            try:
-                die_unless_type_issubclassable(self._origin)
-            except Exception:  # pragma: no cover
-                warnings.warn(
-                    f"Here be dragons! Type hint {self._hint!r} with origin "
-                    f"{self._origin!r} is not subclassable. Type comparison may fail. "
-                    "Please open an issue at github.com/beartype/beartype/issues/new "
-                    "if you encounter this warning."
-                )
 
         # Tuple of all low-level unordered child type hints of this hint.
         self._args = get_hint_pep_args(hint)
