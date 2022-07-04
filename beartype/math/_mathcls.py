@@ -1,10 +1,16 @@
 import contextlib
-from abc import ABC
 import warnings
+from abc import ABC
+
 from beartype._data.hint.pep.sign import datapepsigns as signs
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cls.pep.utilpep3119 import die_unless_type_issubclassable
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
+    get_hint_pep484585_callable_args,
+)
+from beartype._util.hint.pep.proposal.utilpep589 import is_hint_pep589
 from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
@@ -14,26 +20,8 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_or_none,
     get_hint_pep_sign_or_none,
 )
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
-    get_hint_pep484585_callable_args,
-)
-from beartype._util.cls.pep.utilpep3119 import (
-    die_unless_type_issubclassable,
-)
 from beartype.roar import BeartypeMathException
-from beartype.typing import (
-    Any,
-    Union,
-    Dict,
-    Iterable,
-    Tuple,
-    Type,
-    ParamSpec,
-    Literal,
-    TypedDict,
-    NamedTuple,
-)
-from beartype._util.hint.pep.proposal.utilpep589 import is_hint_pep589
+from beartype.typing import Any, Dict, Iterable, Literal, ParamSpec, Tuple, Type, Union
 
 SUBCLASSABLE_EXCEPTIONS = {Any, Union, Literal}
 
@@ -54,11 +42,19 @@ def is_subtype(subtype: object, supertype: object) -> bool:
     -------
     bool
         ``True`` if ``subtype`` is a subtype of ``supertype``.
+    
+    Examples
+    --------
+    >>> is_subtype(int, int)
+    True
+    >>> is_subtype(Callable[[], list], Callable[..., Sequence[Any]])
+    True
+    >>> is_subtype(Callable[[], list], Callable[..., Sequence[int]])
+    False
     """
     return TypeHint(subtype) <= TypeHint(supertype)
 
 
-# FIXME: Unit test us up, please!
 class TypeHint(ABC):
     """
     Abstract base class (ABC) of all **partially ordered type hint** (i.e.,
@@ -124,8 +120,7 @@ class TypeHint(ABC):
         if TypeHintSubclass is None:
             if (
                 isinstance(hint, type)
-                # FIXME: this is probably too broad.
-                or get_hint_pep_origin_or_none(hint)
+                or get_hint_pep_origin_or_none(hint)  # XXX: this might be too broad?
                 or getattr(hint, "__module__", "") == "typing"
             ):
                 TypeHintSubclass = _TypeHintClass
@@ -165,8 +160,8 @@ class TypeHint(ABC):
         self._origin: type = get_hint_pep_origin_or_none(hint) or hint  # type: ignore
         if (
             self._origin not in SUBCLASSABLE_EXCEPTIONS
-            and not is_hint_pep589(self._origin)
             and not isinstance(self, _TypeHintAnnotated)
+            and not is_hint_pep589(self._hint)
         ):
             try:
                 die_unless_type_issubclassable(self._origin)

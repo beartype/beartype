@@ -33,9 +33,11 @@ class MuhDict(t.TypedDict):
     thing_one: str
     thing_two: int
 
+
 class MuhTuple(t.NamedTuple):
     thing_one: str
     thing_two: int
+
 
 T = t.TypeVar("T")
 P = t.ParamSpec("P")
@@ -101,7 +103,6 @@ SUBTYPE_CASES = [
     (t.Callable[[], int], t.Callable[..., None], False),
     (t.Callable[..., t.Any], t.Callable[..., None], False),
     (t.Callable[[float], None], t.Callable[[float, int], None], False),
-
     # (types.FunctionType, t.Callable, True),  # FIXME
     # tuples
     (tuple, t.Tuple, True),
@@ -145,11 +146,7 @@ SUBTYPE_CASES = [
     (MuhDict, dict, True),
     (MuhTuple, tuple, True),
     # annotated:
-    (
-        t.Annotated[int, "a note"],
-        int,
-        True,
-    ),  # annotated is subtype of unannotated origin
+    (t.Annotated[int, "a note"], int, True),  # annotated is subtype of unannotated
     (int, t.Annotated[int, "a note"], False),  # but not vice versa
     (t.Annotated[list, True], t.Annotated[t.Sequence, True], True),
     (t.Annotated[list, False], t.Annotated[t.Sequence, True], False),
@@ -200,7 +197,9 @@ def test_type_hint_singleton():
     assert TypeHint(t.List[t.Any]) is TypeHint(t.List[t.Any])
     assert TypeHint(int) is TypeHint(int)
 
-    # assert TypeHint(t.List) is TypeHint(list)  # alas
+    # alas, this is not true:
+    assert TypeHint(t.List) is not TypeHint(list)
+    # leaving here for future reference, and so we know if we've fixed it.
 
 
 def test_typehint_fail():
