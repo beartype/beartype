@@ -300,3 +300,12 @@ def test_callable_param_spec():
     # TODO
     with pytest.raises(NotImplementedError):
         TypeHint(t.Callable[t.ParamSpec("P"), t.TypeVar("T")])
+
+
+def test_generic():
+    # TODO
+    class MyGeneric(t.Generic[T]):
+        ...
+
+    with pytest.raises(BeartypeMathException, match="currently unsupported by class"):
+        TypeHint(MyGeneric[int])

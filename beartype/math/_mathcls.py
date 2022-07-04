@@ -135,7 +135,6 @@ class TypeHint(ABC):
         if TypeHintSubclass is None:
             if (
                 isinstance(hint, type)
-                or get_hint_pep_origin_or_none(hint)  # XXX: this might be too broad?
                 or getattr(hint, "__module__", "") == "typing"
             ):
                 TypeHintSubclass = _TypeHintClass
