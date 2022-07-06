@@ -143,26 +143,26 @@ from typing import (
 # If the active Python interpreter targets Python >= 3.8...
 if _IS_PYTHON_AT_LEAST_3_8:
     from typing import (  # type: ignore[attr-defined]
-        Final as Final,
-        Literal as Literal,
-        Reversible as Reversible,
-        SupportsIndex as SupportsIndex,
-        TypedDict as TypedDict,
-        final as final,
-        get_args as get_args,
-        get_origin as get_origin,
+        Final as Final,  # pyright: ignore[reportGeneralTypeIssues]
+        Literal as Literal,  # pyright: ignore[reportGeneralTypeIssues]
+        Reversible as Reversible,  # pyright: ignore[reportGeneralTypeIssues]
+        SupportsIndex as SupportsIndex,  # pyright: ignore[reportGeneralTypeIssues]
+        TypedDict as TypedDict,  # pyright: ignore[reportGeneralTypeIssues]
+        final as final,  # pyright: ignore[reportGeneralTypeIssues]
+        get_args as get_args,  # pyright: ignore[reportGeneralTypeIssues]
+        get_origin as get_origin,  # pyright: ignore[reportGeneralTypeIssues]
     )
 
     # If the active Python interpreter targets Python >= 3.10...
     if _IS_PYTHON_AT_LEAST_3_10:
         from typing import (  # type: ignore[attr-defined]
-            Concatenate as Concatenate,
-            ParamSpec as ParamSpec,
-            ParamSpecArgs as ParamSpecArgs,
-            ParamSpecKwargs as ParamSpecKwargs,
-            TypeAlias as TypeAlias,
-            TypeGuard as TypeGuard,
-            is_typeddict as is_typeddict,
+            Concatenate as Concatenate,  # pyright: ignore[reportGeneralTypeIssues]
+            ParamSpec as ParamSpec,  # pyright: ignore[reportGeneralTypeIssues]
+            ParamSpecArgs as ParamSpecArgs,  # pyright: ignore[reportGeneralTypeIssues]
+            ParamSpecKwargs as ParamSpecKwargs,  # pyright: ignore[reportGeneralTypeIssues]
+            TypeAlias as TypeAlias,  # pyright: ignore[reportGeneralTypeIssues]
+            TypeGuard as TypeGuard,  # pyright: ignore[reportGeneralTypeIssues]
+            is_typeddict as is_typeddict,  # pyright: ignore[reportGeneralTypeIssues]
         )
 
         #FIXME: Uncomment once these PEPs go live:
@@ -198,9 +198,9 @@ if _IS_PYTHON_AT_LEAST_3_8:
     # standard library versions of all remaining PEP 544 attributes.
     if TYPE_CHECKING:
         from typing import (  # type: ignore[attr-defined]
-            Protocol as Protocol,
-            SupportsIndex as SupportsIndex,
-            runtime_checkable as runtime_checkable,
+            Protocol as Protocol,  # pyright: ignore[reportGeneralTypeIssues]
+            SupportsIndex as SupportsIndex,  # pyright: ignore[reportGeneralTypeIssues]
+            runtime_checkable as runtime_checkable,  # pyright: ignore[reportGeneralTypeIssues]
         )
     # Else, this interpreter is *NOT* performing static type-checking. In this
     # case, prefer our optimized PEP 544 attributes.

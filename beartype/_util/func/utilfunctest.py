@@ -120,7 +120,7 @@ def die_unless_func_python(
 
     Raises
     ----------
-    exception_cls
+    :exc:`exception_cls`
          If this callable has *no* code object and is thus *not* pure-Python.
 
     See Also

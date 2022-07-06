@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`3119`-compliant **class tester** (i.e., callable testing
-various properties of arbitrary classes first standardized by :pep:`3119`)
-utilities.
+Project-wide :pep:`3119`-compliant **class detectors** (i.e., callables
+validating and testing various properties of arbitrary classes standardized by
+:pep:`3119`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -18,7 +18,7 @@ from beartype._data.datatyping import (
     TypeOrTupleTypes,
 )
 
-# ....................{ VALIDATORS ~ instance             }....................
+# ....................{ VALIDATORS ~ instance              }....................
 def die_unless_type_isinstanceable(
     # Mandatory parameters.
     cls: type,
@@ -96,7 +96,7 @@ def die_unless_type_isinstanceable(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintPep3119Exception`
+    BeartypeDecorHintPep3119Exception
         If this object is *not* an isinstanceable class.
 
     See Also
@@ -116,9 +116,9 @@ def die_unless_type_isinstanceable(
     )
     # Else, this object is a class.
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the is_type_isinstanceable() tester.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # If this class is *NOT* isinstanceable, raise an exception.
     try:
         isinstance(None, cls)  # type: ignore[arg-type]
@@ -193,7 +193,7 @@ def die_unless_type_or_types_isinstanceable(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintPep3119Exception`
+    BeartypeDecorHintPep3119Exception
         If this object is neither:
 
         * An isinstanceable class.
@@ -224,9 +224,9 @@ def die_unless_type_or_types_isinstanceable(
     # Else, this object *MUST* (by process of elimination and the above
     # validation) be a tuple of classes. In this case...
     else:
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize with the is_type_isinstanceable() tester.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # If this tuple of classes is *NOT* isinstanceable, raise an exception.
         try:
             isinstance(None, type_or_types)  # type: ignore[arg-type]
@@ -258,7 +258,7 @@ def die_unless_type_or_types_isinstanceable(
             # raised an exception above), we nonetheless do so for safety.
             raise exception_cls(f'{exception_message}.') from exception
 
-# ....................{ VALIDATORS ~ subclass             }....................
+# ....................{ VALIDATORS ~ subclass              }....................
 def die_unless_type_issubclassable(
     # Mandatory parameters.
     cls: type,
@@ -336,7 +336,7 @@ def die_unless_type_issubclassable(
 
     Raises
     ----------
-    :exc:`BeartypeDecorHintPep3119Exception`
+    BeartypeDecorHintPep3119Exception
         If this object is *not* an issubclassable class.
     '''
 
@@ -351,9 +351,9 @@ def die_unless_type_issubclassable(
     )
     # Else, this hint is a class.
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the is_type_issubclassable() tester.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     try:
         issubclass(type, cls)  # type: ignore[arg-type]
     except Exception as exception:
@@ -433,9 +433,9 @@ def die_unless_type_or_types_issubclassable(
     # Else, this object *MUST* (by process of elimination and the above
     # validation) be a tuple of classes. In this case...
     else:
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize with the is_type_issubclassable() tester.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # If this tuple of classes is *NOT* issubclassable, raise an exception.
         try:
             issubclass(type, type_or_types)  # type: ignore[arg-type]
@@ -467,7 +467,7 @@ def die_unless_type_or_types_issubclassable(
             # raised an exception above), we nonetheless do so for safety.
             raise exception_cls(f'{exception_message}.') from exception
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 def is_type_isinstanceable(cls: object) -> bool:
     '''
     ``True`` only if the passed object is either an **isinstanceable class**
@@ -489,13 +489,13 @@ def is_type_isinstanceable(cls: object) -> bool:
     :func:`isinstance` builtin raises an exception. If that call raises *no*
     exception, this class is probably but *not* necessarily isinstanceable.
     Since the metaclass of this class could define an ``__instancecheck__()``
-    dunder method to conditionally raise exceptions except when passed the
-    ``None`` singleton, there exists *no* means of ascertaining whether a class
-    is fully isinstanceable in the general case. Since most classes that are
-    *not* isinstanceable are unconditionally isinstanceable (i.e., the
-    metaclasses of those classes define an ``__instancecheck__()`` dunder
-    method to unconditionally raise exceptions), this distinction is generally
-    meaningless in the real world. This test thus generally suffices.
+    dunder method to conditionally raise exceptions *except* when passed the
+    ``None`` singleton, there exists *no* perfect means of deciding whether an
+    arbitrary class is fully isinstanceable in the general sense. Since most
+    classes that are *not* isinstanceable are unconditionally isinstanceable
+    (i.e., the metaclasses of those classes define an ``__instancecheck__()``
+    dunder method to unconditionally raise exceptions), this distinction is
+    generally meaningless in the real world. This test thus generally suffices.
 
     Parameters
     ----------
@@ -521,9 +521,9 @@ def is_type_isinstanceable(cls: object) -> bool:
         return False
     # Else, this object is a class.
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with die_unless_type_isinstanceable().
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Attempt to pass this class as the second parameter to the isinstance()
     # builtin to decide whether or not this class is safely usable as a
     # standard class or not.
@@ -569,13 +569,13 @@ def is_type_issubclassable(cls: object) -> bool:
     *no* exception, this class is probably but *not* necessarily
     issubclassable. Since the metaclass of this class could define a
     ``__subclasscheck__()`` dunder method to conditionally raise exceptions
-    except when passed the :class:`type` superclass, there exists *no* means of
-    ascertaining whether a class is fully issubclassable in the general case.
-    Since most classes that are *not* issubclassable are unconditionally
-    issubclassable (i.e., the metaclasses of those classes define an
-    ``__subclasscheck__()`` dunder method to unconditionally raise exceptions),
-    this distinction is generally meaningless in the real world. This test thus
-    generally suffices.
+    *except* when passed the :class:`type` superclass, there exists *no* perfect
+    means of deciding whether an arbitrary class is fully issubclassable in the
+    general sense. Since most classes that are *not* issubclassable are
+    unconditionally issubclassable (i.e., the metaclasses of those classes
+    define an ``__subclasscheck__()`` dunder method to unconditionally raise
+    exceptions), this distinction is generally meaningless in the real world.
+    This test thus generally suffices.
 
     Parameters
     ----------

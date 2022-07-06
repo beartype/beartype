@@ -155,30 +155,46 @@ class NonIssubclassableClass(object, metaclass=NonIssubclassableMetaclass):
 # decorators and thus generator-based coroutines. See also:
 #     https://docs.python.org/3/library/asyncio-task.html#asyncio.coroutine
 
-async def async_generator_factory() -> AsyncGenerator[None, None]:
-    '''
-    Arbitrary pure-Python asynchronous generator factory function.
-    '''
-
-    yield
-
-
-async def async_coroutine_factory() -> Coroutine[None, None, None]:
+async def async_coroutine_factory(text: str) -> Coroutine[None, None, str]:
     '''
     Arbitrary pure-Python asynchronous non-generator coroutine factory
     function.
     '''
 
-    pass
+    # Defer function-specific imports.
+    from asyncio import sleep
+
+    # Asynchronously switch to another scheduled asynchronous callable (if any).
+    await sleep(0)
+
+    # Return an arbitrary string.
+    return f'{text}Yet not a city, but a flood of ruin'
+
+
+async def async_generator_factory(text: str) -> AsyncGenerator[str, None]:
+    '''
+    Arbitrary pure-Python asynchronous generator factory function.
+    '''
+
+    # Defer function-specific imports.
+    from asyncio import sleep
+
+    # Asynchronously switch to another scheduled asynchronous callable (if any).
+    await sleep(0)
+
+    # Yield an arbitrary string.
+    yield f'{text}Rolls its perpetual stream; vast pines are strewing'
 
 # ....................{ CALLABLES ~ async : instance      }....................
-async_generator = async_generator_factory()
+async_generator = async_generator_factory(
+    "Its destin'd path, or in the mangled soil")
 '''
 Arbitrary pure-Python asynchronous generator.
 '''
 
 
-async_coroutine = async_coroutine_factory()
+async_coroutine = async_coroutine_factory(
+    "Branchless and shatter'd stand; the rocks, drawn down")
 '''
 Arbitrary pure-Python asynchronous non-generator coroutine.
 '''

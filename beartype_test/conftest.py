@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -20,16 +20,15 @@ https://github.com/pytest-dev/pytest-asyncio/blob/master/pytest_asyncio/plugin.p
     and unmerged pull requests, and just generally exhibits code smells.
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: Consider refactoring the pytest_pyfunc_call() hook defined below into:
 #* A pull request against pytest itself. Pytest absolutely requires support for
 #  asynchronous test functions. This is 2021, people.
 #* A new competing "pytest-async" plugin. This is substantially easier but less
 #  ideal, as pytest *REALLY* both wants and needs this functionality.
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from asyncio import (
-    create_task,
     get_event_loop_policy,
     new_event_loop,
     set_event_loop,
@@ -38,7 +37,7 @@ from functools import wraps
 from inspect import iscoroutinefunction
 from pytest import hookimpl
 
-# ....................{ HOOKS ~ configure                 }....................
+# ....................{ HOOKS ~ configure                  }....................
 @hookimpl(hookwrapper=True, tryfirst=True)
 def pytest_pyfunc_call(pyfuncitem: 'Function') -> None:
     '''

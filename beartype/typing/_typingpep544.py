@@ -44,7 +44,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         SupportsBytes as _SupportsBytesSlow,
         SupportsComplex as _SupportsComplexSlow,
         SupportsFloat as _SupportsFloatSlow,
-        SupportsIndex as _SupportsIndexSlow,
+        SupportsIndex as _SupportsIndexSlow,  # pyright: ignore[reportGeneralTypeIssues]
         SupportsInt as _SupportsIntSlow,
         SupportsRound as _SupportsRoundSlow,
         TypeVar,

@@ -185,8 +185,8 @@ def test_pep561_pyright() -> None:
         #so until someone explicitly requests we do so, please. This has dragged
         #on long enough, people!
 
-        # # Major and minor version of the active Python interpreter, ignoring the
-        # # patch version of this interpreter.
+        # Major and minor version of the active Python interpreter, ignoring the
+        # patch version of this interpreter.
         '--pythonversion', get_python_version_major_minor(),
 
         # Relative basename of this project's top-level package. Ideally, the
