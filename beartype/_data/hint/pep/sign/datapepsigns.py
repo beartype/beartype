@@ -97,7 +97,7 @@ HintSignAsyncIterator = _HintSign(name='Iterator')
 HintSignAsyncIterable = _HintSign(name='Iterable')
 HintSignCoroutine = _HintSign(name='Coroutine')
 HintSignCollection = _HintSign(name='Collection')
-HintSignAsyncGenerator = _HintSign(name='Generator')
+HintSignAsyncGenerator = _HintSign(name='AsyncGenerator')
 HintSignAsyncContextManager = _HintSign(name='ContextManager')
 
 # Structural checks, a.k.a. protocols.
