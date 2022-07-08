@@ -19,7 +19,7 @@ This submodule unit tests the public API of the public
 # ....................{ TODO                               }....................
 
 # ....................{ IMPORTS                            }....................
-from beartype_test.util.mark.pytskip import skip
+from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
 from pytest import fixture
 
 #FIXME: Isolate to tests below, please.
@@ -232,7 +232,7 @@ def subhint_superhint_is_cases() -> 'Iterable[Tuple[object, object, bool]]':
 
 # ....................{ TESTS ~ testers                    }....................
 #FIXME: Resolve, please. It looks like Python 3.7 and 3.8 are failing hard.
-@skip('Currently known to be broken. *sigh*')
+@skip_if_python_version_less_than('3.9.0')
 def test_is_subhint(
     subhint_superhint_is_cases: 'Iterable[Tuple[object, object, bool]]'):
     '''
