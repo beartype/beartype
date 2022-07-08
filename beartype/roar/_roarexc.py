@@ -616,7 +616,7 @@ class BeartypeMathException(BeartypeException):
     Abstract base class of all **beartype math exceptions.**
 
     Instances of subclasses of this exception are raised at call time from the
-    callables and classes published by the :func:`beartype.math` subpackage.
+    callables and classes published by the :func:`beartype.door` subpackage.
     '''
 
     pass

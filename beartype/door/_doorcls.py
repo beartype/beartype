@@ -1,6 +1,21 @@
-import contextlib
-from abc import ABC
+#!/usr/bin/env python3
+# --------------------( LICENSE                            )--------------------
+# Copyright (c) 2014-2022 Beartype authors.
+# See "LICENSE" for further details.
 
+'''
+**Beartype Decidedly Object-Orientedly Recursive (DOOR) class hierarchy** (i.e.,
+object-oriented type hint class hierarchy, encapsulating the crude
+non-object-oriented type hint API standardized by the :mod:`typing` module).
+
+This private submodule is *not* intended for importation by downstream callers.
+'''
+
+# ....................{ TODO                               }....................
+#FIXME: Split into submodules for maintainability, please. \o/
+
+# ....................{ IMPORTS                            }....................
+from abc import ABC
 from beartype._data.hint.pep.sign import datapepsigns as signs
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
@@ -20,80 +35,89 @@ from beartype._util.hint.pep.utilpepget import (
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from beartype.roar import BeartypeMathException
 from beartype.typing import Any, Dict, Iterable, Tuple, Type
+from contextlib import suppress
 
 if IS_PYTHON_AT_LEAST_3_10:
     from beartype.typing import ParamSpec as _ParamSpec
 else:
     _ParamSpec = None  # type: ignore # noqa
 
+# ....................{ TESTERS                            }....................
+#FIXME: Shift into a new "_doortest" submodule, please.
+def is_subhint(subhint: object, superhint: object) -> bool:
+    '''
+    ``True`` only if the passed subhint is a subhint of the passed superhint.
 
-def is_subtype(subtype: object, supertype: object) -> bool:
-    """Return True if ``subtype`` is a subtype of ``supertype``.
-
-    This supports PEP-compliant type hints, as well as types.
+    This tester supports *all* types and *most* PEP-compliant type hints.
 
     Parameters
     ----------
-    subtype : object
+    subhint : object
         Any PEP-compliant type hint or type.
-    supertype : object
+    superhint : object
         Any PEP-compliant type hint or type.
 
     Returns
     -------
     bool
-        ``True`` if ``subtype`` is a subtype of ``supertype``.
+        ``True`` only if this subhint is a subhint of this superhint.
 
     Examples
     --------
-    >>> from beartype.math import is_subtype
-    >>> is_subtype(int, int)
-    True
-    >>> is_subtype(Callable[[], list], Callable[..., Sequence[Any]])
-    True
-    >>> is_subtype(Callable[[], list], Callable[..., Sequence[int]])
-    False
-    """
-    return TypeHint(subtype).is_subtype(TypeHint(supertype))
+        >>> from beartype.door import is_subhint
+        >>> is_subhint(int, int)
+        True
+        >>> is_subhint(Callable[[], list], Callable[..., Sequence[Any]])
+        True
+        >>> is_subhint(Callable[[], list], Callable[..., Sequence[int]])
+        False
+    '''
 
+    return TypeHint(subhint).is_subhint(TypeHint(superhint))
 
+# ....................{ SUPERCLASSES                       }....................
 class TypeHint(ABC):
-    """
+    '''
     Abstract base class (ABC) of all **partially ordered type hint** (i.e.,
     high-level object encapsulating a low-level type hint augmented with all
     rich comparison ordering methods).
 
-    Instances of this class are partially ordered with respect to one another.
-    Equivalently, instances of this class support all binary comparators (i.e.,
-    ``==``, ``!=``, ``<``, ``<=``, ``>``, and ``>=``) according such that for
-    any three instances ``a``, ``b`, and ``c`` of this class:
+    Type hints are partially ordered with respect to one another. Equivalently,
+    type hints support all binary comparators (i.e., ``==``, ``!=``, ``<``,
+    ``<=``, ``>``, and ``>=``) according such that for any three instances
+    ``a``, ``b`, and ``c`` of this class:
 
-    * ``a ≤ a`` (i.e., reflexivity).
-    * If ``a ≤ b`` and ``b ≤ c``, then ``a ≤ c`` (i.e., transitivity).
-    * If ``a ≤ b`` and ``b ≤ a``, then ``a == b`` (i.e., antisymmetry).
-    * Either ``a ≤ b`` or ``b ≤ a`` (i.e., totality).
+    * ``a ≤ a`` (i.e., **reflexivity**).
+    * If ``a ≤ b`` and ``b ≤ c``, then ``a ≤ c`` (i.e., **transitivity**).
+    * If ``a ≤ b`` and ``b ≤ a``, then ``a == b`` (i.e., **antisymmetry**).
 
-    Instances of this class are thus usable in algorithms and data structures
-    requiring a partial ordering across their input.
+    Type hints are thus usable in algorithms and data structures requiring a
+    partial ordering across their input.
+
+    Caveats
+    --------
+    **Type hints are not totally ordered.** Like unordered sets, type hints do
+    *not* satisfy **totality** (i.e., either ``a ≤ b`` or ``b ≤ a`` is *not*
+    necessarily the case).
 
     Examples
     --------
-    >>> from beartype.math import TypeHint
-    >>> hint_a = TypeHint(Callable[[str], list])
-    >>> hint_b = TypeHint(Callable[Union[int, str], Sequence[Any]])
-    >>> hint_a <= hint_b
-    True
-    >>> hint_a > hint_b
-    False
-    >>> hint_a.is_subtype(hint_b)
-    True
-    >>> list(hint_b)
-    [TypeHint(typing.Union[int, str]), TypeHint(typing.Sequence[typing.Any])]
-    """
+        >>> from beartype.door import TypeHint
+        >>> hint_a = TypeHint(Callable[[str], list])
+        >>> hint_b = TypeHint(Callable[Union[int, str], Sequence[Any]])
+        >>> hint_a <= hint_b
+        True
+        >>> hint_a > hint_b
+        False
+        >>> hint_a.is_subhint(hint_b)
+        True
+        >>> list(hint_b)
+        [TypeHint(typing.Union[int, str]), TypeHint(typing.Sequence[typing.Any])]
+    '''
 
     @callable_cached
     def __new__(cls, hint: object) -> "TypeHint":
-        """
+        '''
         Factory constructor magically instantiating and returning an instance of
         the private concrete subclass of this public abstract base class (ABC)
         appropriate for handling the passed low-level unordered type hint.
@@ -115,7 +139,7 @@ class TypeHint(ABC):
             If this class does *not* currently support the passed hint.
         BeartypeDecorHintPepSignException
             If the passed hint is *not* actually a PEP-compliant type hint.
-        """
+        '''
         # TypeHint(TypeHint(hint)) is TypeHint(hint)
         if isinstance(hint, TypeHint):
             return hint
@@ -126,7 +150,7 @@ class TypeHint(ABC):
 
         # Private concrete subclass of this ABC handling this hint if any *OR*
         # "None" otherwise (i.e., if no such subclass has been authored yet).
-        TypeHintSubclass = _HINT_SIGN_TO_TypeHint.get(hint_sign)
+        TypeHintSubclass = HINT_SIGN_TO_TYPEHINT.get(hint_sign)
 
         # if a subscriptable type has no args, all we care about is the origin
         if TypeHintSubclass and not get_hint_pep_args(hint):
@@ -139,7 +163,7 @@ class TypeHint(ABC):
             else:
                 raise BeartypeMathException(
                     f"Type hint {repr(hint)} currently unsupported by "
-                    f'class "beartype.math.TypeHint".'
+                    f'class "beartype.door.TypeHint".'
                 )
         # Else, this hint is supported.
 
@@ -147,7 +171,7 @@ class TypeHint(ABC):
         return super().__new__(TypeHintSubclass)
 
     def __init__(self, hint: object) -> None:
-        """
+        '''
         Initialize this high-level partially ordered type hint against the
         passed low-level unordered type hint.
 
@@ -156,7 +180,7 @@ class TypeHint(ABC):
         hint : object
             Lower-level unordered type hint to be encapsulated by this
             higher-level partially ordered type hint.
-        """
+        '''
         # TypeHint(TypeHint(hint)) == TypeHint(hint)
         if isinstance(hint, TypeHint):
             return
@@ -178,21 +202,21 @@ class TypeHint(ABC):
         self._hints_child_ordered = self._wrap_children(self._args)
 
     def _validate(self):
-        """Used by subclasses to validate self._args and self._origin"""
+        '''Used by subclasses to validate self._args and self._origin'''
         pass
 
     def _wrap_children(self, unordered_children: tuple) -> Tuple["TypeHint", ...]:
-        """Wrap type hint paremeters in TypeHint instances.
+        '''Wrap type hint paremeters in TypeHint instances.
 
         Gives subclasses an opportunity modify
-        """
+        '''
         return tuple(
             TypeHint(unordered_child) for unordered_child in unordered_children
         )
 
     @callable_cached
-    def is_subtype(self, other: object) -> bool:
-        """
+    def is_subhint(self, other: object) -> bool:
+        '''
         ``True`` only if this partially ordered type hint is **compatible** with
         the passed partially ordered type hint, where compatibility implies that
         the unordered type hint encapsulated by this partially ordered type hint
@@ -202,25 +226,25 @@ class TypeHint(ABC):
 
         This method is memoized and thus enjoys ``O(1)`` amortized worst-case
         time complexity across all calls to this method.
-        """
+        '''
 
         # If the passed object is *NOT* a partially ordered type hint, raise an
         # exception.
-        other_hint = _die_unless_TypeHint(other)
+        other_hint = die_unless_typehint(other)
         # Else, that object is a partially ordered type hint.
 
         # For each branch of the passed union if that hint is a union *OR* that
         # hint as is otherwise...
         return any(self._is_le_branch(branch) for branch in other_hint.branches)
 
-    def is_supertype(self, other: object) -> bool:
-        """Return true if self is a supertype of other."""
-        other = _die_unless_TypeHint(other)
-        return other.is_subtype(self)
+    def is_superhint(self, other: object) -> bool:
+        '''Return true if self is a superhint of other.'''
+        other = die_unless_typehint(other)
+        return other.is_subhint(self)
 
     @property
     def branches(self) -> Iterable["TypeHint"]:
-        """
+        '''
         Immutable iterable of all **branches** (i.e., high-level partially ordered
         type hints encapsulating all low-level unordered child type hints
         subscripting (indexing) the low-level unordered parent type hint
@@ -233,20 +257,20 @@ class TypeHint(ABC):
         :pep:`604`-compliant unions (e.g., :attr:`typing.Union`,
         :attr:`typing.Optional`, and ``|``-delimited type objects) to be handled
         transparently *without* special cases in subclass implementations.
-        """
+        '''
 
         # Default to returning the 1-tuple containing only this instance, as
         # *ALL* subclasses except "_HintTypeUnion" require this default.
         return (self,)
 
     def __iter__(self) -> Iterable["TypeHint"]:
-        """
+        '''
         Immutable iterable of all **children** (i.e., high-level partially ordered
         type hints encapsulating all low-level unordered child type hints
         subscripting (indexing) the low-level unordered parent type hint
         encapsulated by this high-level partially ordered parent type hint) of
         this partially ordered parent type hint.
-        """
+        '''
         yield from self._hints_child_ordered
 
     def __hash__(self) -> int:
@@ -287,34 +311,34 @@ class TypeHint(ABC):
         return not self.__eq__(other)
 
     def __le__(self, other: object) -> bool:
-        """Return true if self is a subtype of other."""
+        '''Return true if self is a subhint of other.'''
         if not isinstance(other, TypeHint):
             return NotImplemented
-        return self.is_subtype(other)
+        return self.is_subhint(other)
 
     def __lt__(self, other: object) -> bool:
-        """Return true if self is a strict subtype of other."""
+        '''Return true if self is a strict subhint of other.'''
         if not isinstance(other, TypeHint):
             return NotImplemented
-        return self.is_subtype(other) and self != other
+        return self.is_subhint(other) and self != other
 
     def __ge__(self, other: object) -> bool:
-        """Return true if self is a supertype of other."""
+        '''Return true if self is a superhint of other.'''
         if not isinstance(other, TypeHint):
             return NotImplemented
-        return self.is_supertype(other)
+        return self.is_superhint(other)
 
     def __gt__(self, other: object) -> bool:
-        """Return true if self is a strict supertype of other."""
+        '''Return true if self is a strict superhint of other.'''
         if not isinstance(other, TypeHint):
             return NotImplemented
-        return self.is_supertype(other) and self != other
+        return self.is_superhint(other) and self != other
 
     # not using abstractclass here because we use `TypeHint(stuff)`` everywhere...
     # the __new__ method makes sure to instantiate the correct subclass, but
     # mypy doesn't know that.
     def _is_le_branch(self, branch: "TypeHint") -> bool:
-        """
+        '''
         ``True`` only if this partially ordered type hint is **compatible** with
         the passed branch of another partially ordered type hint passed to the
         parent call of the :meth:`__le__` dunder method.
@@ -323,7 +347,7 @@ class TypeHint(ABC):
         ----------
         :meth:`__le__`
             Further details.
-        """
+        '''
         raise NotImplementedError(
             "Subclasses must implement this method."
         )  # pragma: no cover
@@ -336,7 +360,7 @@ class TypeHint(ABC):
     # mypy doesn't know that.
     @property
     def _is_just_an_origin(self) -> bool:
-        """Flag that indicates this hint can be evaluating only using the origin.
+        '''Flag that indicates this hint can be evaluating only using the origin.
 
         This is useful for parametrized type hints with no arguments or with
         "Any"-type placeholder arguments, like `Tuple[Any, ...]` or
@@ -353,23 +377,48 @@ class TypeHint(ABC):
         ```
 
         In this case, using `_is_just_an_origin` lets us simplify the comparison.
-        """
+        '''
         raise NotImplementedError(
             "Subclasses must implement this method."
         )  # pragma: no cover
 
+# ....................{ TESTERS ~ more                     }....................
+#FIXME: Shift into a new "_doortest" submodule, please.
+def die_unless_typehint(obj: object) -> TypeHint:
+    '''
+    Raise an exception unless the passed object is a **partially ordered type
+    hint** (i.e., :class:`TypeHint` instance).
 
+    Parameters
+    ----------
+    obj : object
+        Arbitrary object to be validated.
+
+    Raises
+    ----------
+    BeartypeMathException
+        If this object is *not* a partially ordered type hint.
+    '''
+
+    # If this object is *NOT* a partially ordered type hint, raise an exception.
+    if not isinstance(obj, TypeHint):
+        raise BeartypeMathException(
+            f"{repr(obj)} is not a 'beartype.door.TypeHint' instance.",
+        )
+    return obj
+
+# ....................{ SUBCLASSES                         }....................
 class _TypeHintClass(TypeHint):
-    """
-    **partially ordered class type hint** (i.e., high-level object encapsulating a
-    low-level PEP-compliant type hint that is, in fact, a simple class).
-    """
+    '''
+    **Partially ordered class type hint** (i.e., high-level object encapsulating
+    a low-level PEP-compliant type hint that is, in fact, a simple class).
+    '''
 
     _hint: type
 
     @property
     def _is_just_an_origin(self) -> bool:
-        """Plain types are their origin."""
+        '''Plain types are their origin.'''
         return True
 
     def _is_le_branch(self, branch: TypeHint) -> bool:
@@ -385,12 +434,13 @@ class _TypeHintClass(TypeHint):
             return True
 
         # Return true only if...
-        return branch._is_just_an_origin and issubclass(self._origin, branch._origin)
+        return branch._is_just_an_origin and issubclass(
+            self._origin, branch._origin)
 
 
 class _TypeHintSubscripted(TypeHint):
-    """
-    **partially ordered subscripted type hint** (i.e., high-level object
+    '''
+    **Partially ordered subscripted type hint** (i.e., high-level object
     encapsulating a low-level parent type hint subscripted (indexed) by one or
     more equally low-level children type hints).
 
@@ -402,7 +452,7 @@ class _TypeHintSubscripted(TypeHint):
     _hints_child_ordered : tuple[TypeHint]
         Tuple of all high-level partially ordered children type hints of this
         high-level partially ordered parent type hint.
-    """
+    '''
 
     _required_nargs: int = -1
 
@@ -446,13 +496,13 @@ class _TypeHintSubscripted(TypeHint):
 
 
 class _TypeHintOriginIsinstanceableArgs1(_TypeHintSubscripted):
-    """
+    '''
     **partially ordered single-argument isinstanceable type hint** (i.e.,
     high-level object encapsulating a low-level PEP-compliant type hint
     subscriptable by only one child type hint originating from an
     isinstanceable class such that *all* objects satisfying that hint are
     instances of that class).
-    """
+    '''
 
     _required_nargs: int = 1
 
@@ -463,7 +513,10 @@ class _TypeHintOriginIsinstanceableArgs2(_TypeHintSubscripted):
 
 class _TypeHintCallable(_TypeHintSubscripted):
     def _validate(self):
-        """Perform argument validation for a callable."""
+        '''
+        Perform argument validation for a callable.
+        '''
+
         self._takes_any_args = False
         if len(self._args) == 0:  # pragma: no cover
             # e.g. `Callable` without any arguments
@@ -473,7 +526,8 @@ class _TypeHintCallable(_TypeHintSubscripted):
             self._args = (Any,)  # returns any
         else:
             self._call_args = get_hint_pep484585_callable_args(self._hint)
-            if IS_PYTHON_AT_LEAST_3_10 and isinstance(self._call_args, _ParamSpec):
+            if IS_PYTHON_AT_LEAST_3_10 and isinstance(
+                self._call_args, _ParamSpec):
                 raise NotImplementedError("ParamSpec not yet implemented.")
 
             if self._call_args is Ellipsis:
@@ -529,14 +583,19 @@ class _TypeHintCallable(_TypeHintSubscripted):
                 or len(self.arg_types) != len(branch.arg_types)
                 or any(
                     self_arg > branch_arg
-                    for self_arg, branch_arg in zip(self.arg_types, branch.arg_types)
+                    for self_arg, branch_arg in zip(
+                        self.arg_types, branch.arg_types)
                 )
             )
         ):
             return False
 
         if not branch.returns_any:
-            return False if self.returns_any else self.return_type <= branch.return_type
+            return (
+                False
+                if self.returns_any else
+                self.return_type <= branch.return_type
+            )
         return True
 
 
@@ -549,11 +608,11 @@ class _TypeHintTuple(_TypeHintSubscripted):
     _is_empty_tuple: bool = False
 
     def _validate(self):
-        """Perform argument validation for a tuple.
+        '''Perform argument validation for a tuple.
 
         Specifically, remove any PEP-noncompliant type hints from the arguments,
         and set internal flags accordingly.
-        """
+        '''
         if len(self._args) == 0:  # pragma: no cover
             # e.g. `Tuple` without any arguments
             # this may be unreachable, (since a bare Tuple will go to _TypeHintClass)
@@ -624,8 +683,8 @@ class _TypeHintLiteral(_TypeHintSubscripted):
         return ()
 
     @callable_cached
-    def is_subtype(self, other: object) -> bool:
-        other_hint = _die_unless_TypeHint(other)
+    def is_subhint(self, other: object) -> bool:
+        other_hint = die_unless_typehint(other)
 
         # If the other hint is also a literal
         if isinstance(other_hint, _TypeHintLiteral):
@@ -663,22 +722,22 @@ class _TypeHintAnnotated(TypeHint):
 
     def _is_le_branch(self, branch: TypeHint) -> bool:
         # If the other type is not annotated, we ignore annotations on this
-        # one and just check that the metahint is a subtype of the other.
+        # one and just check that the metahint is a subhint of the other.
         # e.g. Annotated[t.List[int], 'meta'] <= List[int]
         if not isinstance(branch, _TypeHintAnnotated):
-            return self._metahint.is_subtype(branch)
+            return self._metahint.is_subhint(branch)
 
         # Else, that hint is a "typing.Annotated[...]" type hint.
         # If either...
         if (
-            # The child type hint annotated by this parent hint does not subtype
+            # The child type hint annotated by this parent hint does not subhint
             # the child type hint annotated by that parent hint *OR*...
             self._metahint > branch._metahint
             or
             # These hints are annotated by a differing number of objects...
             len(self._metadata) != len(branch._metadata)
         ):
-            # This hint *CANNOT* be a subtype of that hint. Return false.
+            # This hint *CANNOT* be a subhint of that hint. Return false.
             return False
 
         # Attempt to...
@@ -687,16 +746,16 @@ class _TypeHintAnnotated(TypeHint):
         # arbitrary caller-defined objects. Since these comparisons may raise
         # arbitrary caller-defined exceptions, we silently squelch any such
         # exceptions that arise by returning false below instead.
-        with contextlib.suppress(Exception):
+        with suppress(Exception):
             # Return true only if these hints are annotated by equivalent
-            # objects. We avoid testing for a subtype relation here (e.g., with
+            # objects. We avoid testing for a subhint relation here (e.g., with
             # the "<=" operator), as arbitrary caller-defined objects are *MUCH*
             # more likely to define a relevant equality comparison than a
             # relevant less-than-or-equal-to comparison.
             return self._metadata == branch._metadata
 
         # Else, one or more objects annotating these hints are incomparable. So,
-        # this hint *CANNOT* be a subtype of that hint. Return false.
+        # this hint *CANNOT* be a subhint of that hint. Return false.
         return False  # pragma: no cover
 
     def __eq__(self, other: object) -> bool:
@@ -710,23 +769,23 @@ class _TypeHintAnnotated(TypeHint):
 
 
 class _TypeHintUnion(_TypeHintSubscripted):
-    """
-    **partially ordered union type hint** (i.e., high-level object encapsulating a
-    low-level PEP-compliant union type hint, including both :pep:`484`-compliant
-    :attr:`typing.Union` and :attr:`typing.Optional` unions *and*
-    :pep:`604`-compliant ``|``-delimited type unions).
-    """
+    '''
+    **Partially ordered union type hint** (i.e., high-level object encapsulating
+    a low-level PEP-compliant union type hint, including both
+    :pep:`484`-compliant :attr:`typing.Union` and :attr:`typing.Optional` unions
+    *and* :pep:`604`-compliant ``|``-delimited type unions).
+    '''
 
     @property
     def branches(self) -> Iterable[TypeHint]:
         return self._hints_child_ordered
 
     @callable_cached
-    def is_subtype(self, other: object) -> bool:
+    def is_subhint(self, other: object) -> bool:
 
         # If the passed object is *NOT* a partially ordered type hint, raise an
         # exception.
-        other_hint = _die_unless_TypeHint(other)
+        other_hint = die_unless_typehint(other)
 
         # If that hint is *NOT* a partially ordered union type hint, return false.
         if not isinstance(other_hint, _TypeHintUnion):
@@ -751,134 +810,115 @@ class _TypeHintUnion(_TypeHintSubscripted):
             "_TypeHintUnion._is_le_branch() unsupported."
         )  # pragma: no cover
 
+# ....................{ DICTS                              }....................
+#FIXME: Shift into a new "_doordata" submodule, please. Note that doing so
+#requires as a prerequisite that we first split this submodule into smaller
+#submodules, which "_doordata" will then import individually from as needed.
 
-def _die_unless_TypeHint(obj: object) -> TypeHint:
-    """
-    Raise an exception unless the passed object is a **partially ordered type
-    hint** (i.e., :class:`TypeHint` instance).
-
-    Parameters
-    ----------
-    obj : object
-        Arbitrary object to be validated.
-
-    Raises
-    ----------
-    BeartypeMathException
-        If this object is *not* a partially ordered type hint.
-    """
-
-    # If this object is *NOT* a partially ordered type hint, raise an exception.
-    if not isinstance(obj, TypeHint):
-        raise BeartypeMathException(
-            f"{repr(obj)} is not a 'beartype.math.TypeHint' instance.",
-        )
-    return obj
-
-
-_HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1 = frozenset(
-    (
-        signs.HintSignAbstractSet,
-        signs.HintSignAsyncContextManager,
-        signs.HintSignAsyncIterable,
-        signs.HintSignAsyncIterator,
-        signs.HintSignAwaitable,
-        signs.HintSignCollection,
-        signs.HintSignContainer,
-        signs.HintSignContextManager,
-        signs.HintSignCounter,
-        signs.HintSignDeque,
-        signs.HintSignFrozenSet,
-        signs.HintSignIterable,
-        signs.HintSignIterator,
-        signs.HintSignKeysView,
-        signs.HintSignList,
-        signs.HintSignMatch,
-        signs.HintSignMappingView,
-        signs.HintSignMutableSequence,
-        signs.HintSignMutableSet,
-        signs.HintSignPattern,
-        signs.HintSignReversible,
-        signs.HintSignSequence,
-        signs.HintSignSet,
-        signs.HintSignType,
-        signs.HintSignValuesView,
-    )
-)
-
-"""
-Frozen set of all signs uniquely identifying **single-argument PEP-compliant
-type hints** (i.e., type hints subscriptable by only one child type hint)
-originating from an **isinstanceable origin type** (i.e., isinstanceable class
-such that *all* objects satisfying this hint are instances of this class).
-
-Note that the corresponding types in the typing module will have an `_nparams`
-attribute with a value equal to 1.
-"""
-
-_HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2 = frozenset(
-    (
-        signs.HintSignAsyncGenerator,
-        # signs.HintSignCallable,  # defined explicitly below
-        signs.HintSignChainMap,
-        signs.HintSignDefaultDict,
-        signs.HintSignDict,
-        signs.HintSignItemsView,
-        signs.HintSignMapping,
-        signs.HintSignMutableMapping,
-        signs.HintSignOrderedDict,
-    )
-)
-"""
-Frozen set of all signs uniquely identifying **two-argument PEP-compliant
-type hints** (i.e., type hints subscriptable by exactly two child type hints)
-
-Note that the corresponding types in the typing module will have an `_nparams`
-attribute with a value equal to 2.
-"""
-
-_HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3 = frozenset(
-    (
-        signs.HintSignCoroutine,
-        signs.HintSignGenerator,
-    )
-)
-"""
-Frozen set of all signs uniquely identifying **three-argument PEP-compliant
-type hints** (i.e., type hints subscriptable by exactly three child type hints)
-
-Note that the corresponding types in the typing module will have an `_nparams`
-attribute with a value equal to 3.
-"""
-
-
-# Futher initialized below by the _init() function.
-_HINT_SIGN_TO_TypeHint: Dict[HintSign, Type[TypeHint]] = {
+# Further initialized below by the _init() function.
+HINT_SIGN_TO_TYPEHINT: Dict[HintSign, Type[TypeHint]] = {
     signs.HintSignTuple: _TypeHintTuple,
     signs.HintSignCallable: _TypeHintCallable,
     signs.HintSignLiteral: _TypeHintLiteral,
     signs.HintSignAnnotated: _TypeHintAnnotated,
 }
-"""
+'''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
 to the :class:`TypeHint` subclass handling those hints.
-"""
+'''
+
+# ....................{ PRIVATE ~ frozensets               }....................
+# Note that the following frozensets are externally imported by unit tests and
+# thus intentionally declared as globals rather isolated to the _init() function
+# defined below.
+
+#FIXME: Shift into a new "_doordata" submodule, please.
+_HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1 = frozenset((
+    signs.HintSignAbstractSet,
+    signs.HintSignAsyncContextManager,
+    signs.HintSignAsyncIterable,
+    signs.HintSignAsyncIterator,
+    signs.HintSignAwaitable,
+    signs.HintSignCollection,
+    signs.HintSignContainer,
+    signs.HintSignContextManager,
+    signs.HintSignCounter,
+    signs.HintSignDeque,
+    signs.HintSignFrozenSet,
+    signs.HintSignIterable,
+    signs.HintSignIterator,
+    signs.HintSignKeysView,
+    signs.HintSignList,
+    signs.HintSignMatch,
+    signs.HintSignMappingView,
+    signs.HintSignMutableSequence,
+    signs.HintSignMutableSet,
+    signs.HintSignPattern,
+    signs.HintSignReversible,
+    signs.HintSignSequence,
+    signs.HintSignSet,
+    signs.HintSignType,
+    signs.HintSignValuesView,
+))
+'''
+Frozen set of all signs uniquely identifying **single-argument PEP-compliant
+type hints** (i.e., type hints subscriptable by only one child type hint)
+originating from an **isinstanceable origin type** (i.e., isinstanceable class
+such that *all* objects satisfying this hint are instances of this class).
+
+Note that the corresponding types in the typing module will have an ``_nparams``
+attribute with a value equal to 1.
+'''
 
 
+_HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2 = frozenset((
+    signs.HintSignAsyncGenerator,
+    # signs.HintSignCallable,  # defined explicitly below
+    signs.HintSignChainMap,
+    signs.HintSignDefaultDict,
+    signs.HintSignDict,
+    signs.HintSignItemsView,
+    signs.HintSignMapping,
+    signs.HintSignMutableMapping,
+    signs.HintSignOrderedDict,
+))
+'''
+Frozen set of all signs uniquely identifying **two-argument PEP-compliant
+type hints** (i.e., type hints subscriptable by exactly two child type hints)
+
+Note that the corresponding types in the typing module will have an ``_nparams``
+attribute with a value equal to 2.
+'''
+
+
+_HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3 = frozenset((
+    signs.HintSignCoroutine,
+    signs.HintSignGenerator,
+))
+'''
+Frozen set of all signs uniquely identifying **three-argument PEP-compliant
+type hints** (i.e., type hints subscriptable by exactly three child type hints)
+
+Note that the corresponding types in the typing module will have an ``_nparams``
+attribute with a value equal to 3.
+'''
+
+# ....................{ PRIVATE ~ initializers             }....................
+#FIXME: Shift into a new "_doordata" submodule, please.
 def _init() -> None:
-    """
+    '''
     Initialize this submodule.
-    """
+    '''
 
-    # Fully initialize the "_HINT_SIGN_TO_TypeHint" dictionary declared above.
+    # Fully initialize the "HINT_SIGN_TO_TYPEHINT" dictionary declared above.
     for sign in _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1:
-        _HINT_SIGN_TO_TypeHint[sign] = _TypeHintOriginIsinstanceableArgs1
+        HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintOriginIsinstanceableArgs1
     for sign in _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2:
-        _HINT_SIGN_TO_TypeHint[sign] = _TypeHintOriginIsinstanceableArgs2
+        HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintOriginIsinstanceableArgs2
     for sign in _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3:
-        _HINT_SIGN_TO_TypeHint[sign] = _TypeHintOriginIsinstanceableArgs3
+        HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintOriginIsinstanceableArgs3
     for sign in HINT_SIGNS_UNION:
-        _HINT_SIGN_TO_TypeHint[sign] = _TypeHintUnion
+        HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintUnion
 
 
 # Initialize this submodule.
