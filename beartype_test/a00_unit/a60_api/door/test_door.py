@@ -19,26 +19,21 @@ This submodule unit tests the public API of the public
 # ....................{ TODO                               }....................
 
 # ....................{ IMPORTS                            }....................
-from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
+from beartype_test.util.mark.pytskip import (
+    skip,
+    skip_if_python_version_less_than,
+)
 from pytest import fixture
-
-#FIXME: Isolate to tests below, please.
-# from beartype.door._doorcls import (
-#     _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1,
-#     _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2,
-#     _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3,
-#     TypeHint,
-#     is_subhint,
-# )
-# from beartype.roar import BeartypeMathException
 
 # ....................{ FIXTURES                           }....................
 #FIXME: Consider shifting into a new "conftest" plugin of this subpackage.
 @fixture(scope='session')
-def subhint_superhint_is_cases() -> 'Iterable[Tuple[object, object, bool]]':
+def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
     '''
-    Session-scoped fixture returning an iterable efficiently cached across *all*
-    tests requiring this fixture.
+    Session-scoped fixture returning an iterable of **hint subhint cases**
+    (i.e., 3-tuples ``(subhint, superhint, is_subhint)`` describing the subhint
+    relations between two PEP-compliant type hints), efficiently cached across
+    all tests requiring this fixture.
 
     This iterable is intentionally defined by the return of this fixture rather
     than as a global constant of this submodule. Why? Because the former safely
@@ -66,12 +61,34 @@ def subhint_superhint_is_cases() -> 'Iterable[Tuple[object, object, bool]]':
         IS_PYTHON_AT_LEAST_3_9,
         IS_PYTHON_AT_LEAST_3_8,
     )
-    from collections import abc
-    import typing as t
+    from collections.abc import (
+        Collection as CollectionABC,
+        Sequence as SequenceABC,
+    )
 
-    # # ..................{ TYPEVARS                           }..................
-    # T = t.TypeVar('T')
-    # P = t.ParamSpec('P')
+    # Intentionally import from "typing" rather than "beartype.typing" to
+    # guarantee PEP 484-compliant type hints.
+    from typing import (
+        Any,
+        Awaitable,
+        ByteString,
+        Callable,
+        Collection,
+        DefaultDict,
+        Dict,
+        Hashable,
+        Iterable,
+        List,
+        Mapping,
+        Optional,
+        Reversible,
+        Sequence,
+        Sized,
+        Tuple,
+        TypedDict,
+        NamedTuple,
+        Union,
+    )
 
     # ..................{ CLASSES                            }..................
     class MuhThing:
@@ -84,35 +101,35 @@ def subhint_superhint_is_cases() -> 'Iterable[Tuple[object, object, bool]]':
             ...
 
 
-    class MuhDict(t.TypedDict):
+    class MuhDict(TypedDict):
         thing_one: str
         thing_two: int
 
 
-    class MuhTuple(t.NamedTuple):
+    class MuhTuple(NamedTuple):
         thing_one: str
         thing_two: int
 
     # ..................{ LISTS                              }..................
-    SUBHINT_SUPERHINT_IS_CASES = [
+    HINT_SUBHINT_CASES = [
         # things are subclasses of themselves
         (list, list, True),
-        (list, t.List, True),
+        (list, List, True),
         # a few standard, ordered types
-        (t.Sequence, t.List, False),
-        (t.Sequence, list, False),
-        (t.List, t.Sequence, True),
-        (list, t.Sequence, True),
-        (list, abc.Sequence, True),
-        (list, abc.Collection, True),
+        (Sequence, List, False),
+        (Sequence, list, False),
+        (List, Sequence, True),
+        (list, Sequence, True),
+        (list, SequenceABC, True),
+        (list, CollectionABC, True),
         # a few types that take no params
-        (str, t.Hashable, True),
-        (MuhNutherThing, t.Sized, True),
-        (bytes, t.ByteString, True),
+        (str, Hashable, True),
+        (MuhNutherThing, Sized, True),
+        (bytes, ByteString, True),
         # everything is a subtype of Any
-        (t.Any, t.Any, True),
-        (MuhThing, t.Any, True),
-        (t.Union[int, MuhThing], t.Any, True),
+        (Any, Any, True),
+        (MuhThing, Any, True),
+        (Union[int, MuhThing], Any, True),
         # numeric tower
         (float, int, True),
         (complex, int, True),
@@ -121,190 +138,313 @@ def subhint_superhint_is_cases() -> 'Iterable[Tuple[object, object, bool]]':
         (float, complex, False),
         # subscripted types
         # lists,
-        (t.List[int], t.List[int], True),
-        (t.List[int], t.Sequence[int], True),
-        (t.Sequence[int], t.Iterable[int], True),
-        (t.Iterable[int], t.Sequence[int], False),
-        (t.Sequence[int], t.Reversible[int], True),
-        (t.Sequence[int], t.Reversible[str], False),
-        (t.Collection[int], t.Sized, True),
-        (t.List[int], t.List, True),  # if the super is un-subscripted, assume t.Any
-        (t.List[int], t.List[t.Any], True),
-        (t.Awaitable, t.Awaitable[str], False),
-        (t.List[int], t.List[str], False),
+        (List[int], List[int], True),
+        (List[int], Sequence[int], True),
+        (Sequence[int], Iterable[int], True),
+        (Iterable[int], Sequence[int], False),
+        (Sequence[int], Reversible[int], True),
+        (Sequence[int], Reversible[str], False),
+        (Collection[int], Sized, True),
+        (List[int], List, True),  # if the super is un-subscripted, assume Any
+        (List[int], List[Any], True),
+        (Awaitable, Awaitable[str], False),
+        (List[int], List[str], False),
         # maps
-        (dict, t.Dict, True),
-        (t.Dict[str, int], t.Dict, True),
-        (dict, t.Dict[str, int], False),
+        (dict, Dict, True),
+        (Dict[str, int], Dict, True),
+        (dict, Dict[str, int], False),
         (
-            t.DefaultDict[str, t.Sequence[int]],
-            t.Mapping[t.Union[str, int], t.Iterable[t.Union[int, str]]],
+            DefaultDict[str, Sequence[int]],
+            Mapping[Union[str, int], Iterable[Union[int, str]]],
             True,
         ),
         # callable
-        (t.Callable, t.Callable[..., t.Any], True),
-        (t.Callable[[], int], t.Callable[..., t.Any], True),
-        (t.Callable[[int, str], t.List[int]], t.Callable, True),
-        (t.Callable[[int, str], t.List[int]], t.Callable, True),
+        (Callable, Callable[..., Any], True),
+        (Callable[[], int], Callable[..., Any], True),
+        (Callable[[int, str], List[int]], Callable, True),
+        (Callable[[int, str], List[int]], Callable, True),
         (
-            t.Callable[[float, t.List[str]], int],
-            t.Callable[[int, t.Sequence[str]], int],
+            Callable[[float, List[str]], int],
+            Callable[[int, Sequence[str]], int],
             True,
         ),
-        (t.Callable[[t.Sequence], int], t.Callable[[list], int], False),
-        (t.Callable[[], int], t.Callable[..., None], False),
-        (t.Callable[..., t.Any], t.Callable[..., None], False),
-        (t.Callable[[float], None], t.Callable[[float, int], None], False),
-        (t.Callable[[], int], t.Sequence[int], False),
-        (t.Callable[[int, str], int], t.Callable[[int, str], t.Any], True),
-        # (types.FunctionType, t.Callable, True),  # FIXME
+        (Callable[[Sequence], int], Callable[[list], int], False),
+        (Callable[[], int], Callable[..., None], False),
+        (Callable[..., Any], Callable[..., None], False),
+        (Callable[[float], None], Callable[[float, int], None], False),
+        (Callable[[], int], Sequence[int], False),
+        (Callable[[int, str], int], Callable[[int, str], Any], True),
+        # (types.FunctionType, Callable, True),  # FIXME
         # tuples
-        (tuple, t.Tuple, True),
-        (t.Tuple, t.Tuple, True),
-        (bt.Tuple, t.Tuple, True),
-        (tuple, t.Tuple[t.Any, ...], True),
-        (tuple, t.Tuple[()], False),
-        (bt.Tuple[()], t.Tuple[()], True),
-        (t.Tuple[()], tuple, True),
-        (t.Tuple[int, str], t.Tuple[int, str], True),
-        (t.Tuple[int, str], t.Tuple[int, str, int], False),
-        (t.Tuple[int, str], t.Tuple[int, t.Union[int, list]], False),
-        (t.Tuple[t.Union[int, str], ...], t.Tuple[int, str], False),
-        (t.Tuple[int, str], t.Tuple[str, ...], False),
-        (t.Tuple[int, str], t.Tuple[t.Union[int, str], ...], True),
-        (t.Tuple[t.Union[int, str], ...], t.Tuple[t.Union[int, str], ...], True),
-        (t.Tuple[int], t.Dict[str, int], False),
-        (t.Tuple[t.Any, ...], t.Tuple[str, int], False),
+        (tuple, Tuple, True),
+        (Tuple, Tuple, True),
+        (tuple, Tuple[Any, ...], True),
+        (tuple, Tuple[()], False),
+        (Tuple[()], tuple, True),
+        (Tuple[int, str], Tuple[int, str], True),
+        (Tuple[int, str], Tuple[int, str, int], False),
+        (Tuple[int, str], Tuple[int, Union[int, list]], False),
+        (Tuple[Union[int, str], ...], Tuple[int, str], False),
+        (Tuple[int, str], Tuple[str, ...], False),
+        (Tuple[int, str], Tuple[Union[int, str], ...], True),
+        (Tuple[Union[int, str], ...], Tuple[Union[int, str], ...], True),
+        (Tuple[int], Dict[str, int], False),
+        (Tuple[Any, ...], Tuple[str, int], False),
         # unions
-        (int, t.Union[int, str], True),
-        (t.Union[int, str], t.Union[list, int, str], True),
-        (t.Union[str, int], t.Union[int, str, list], True),  # order doesn't matter
-        (t.Union[str, list], t.Union[str, int], False),
-        (t.Union[int, str, list], list, False),
-        (t.Union[int, str, list], t.Union[int, str], False),
-        (int, t.Optional[int], True),
-        (t.Optional[int], int, False),
-        (list, t.Optional[t.Sequence], True),
-        # literals
-        (t.Literal[1], int, True),
-        (t.Literal["a"], str, True),
-        (t.Literal[1, 2, "3"], t.Union[int, str], True),
-        (t.Literal[1, 2, "3"], t.Union[list, int], False),
-        (int, t.Literal[1], False),
-        (t.Literal[1, 2], t.Literal[1, 2, 3], True),
+        (int, Union[int, str], True),
+        (Union[int, str], Union[list, int, str], True),
+        (Union[str, int], Union[int, str, list], True),  # order doesn't matter
+        (Union[str, list], Union[str, int], False),
+        (Union[int, str, list], list, False),
+        (Union[int, str, list], Union[int, str], False),
+        (int, Optional[int], True),
+        (Optional[int], int, False),
+        (list, Optional[Sequence], True),
         # moar nestz
-        (t.List[int], t.Union[str, t.List[t.Union[int, str]]], True),
+        (List[int], Union[str, List[Union[int, str]]], True),
         # not really types:
         (MuhDict, dict, True),
         (MuhTuple, tuple, True),
     ]
 
     # If the active Python interpreter targets Python >= 3.8 and thus supports
-    # PEP 544...
+    # PEP 544 and 586...
     if IS_PYTHON_AT_LEAST_3_8:
+        # Intentionally import from "beartype.typing" rather than "typing" to
+        # guarantee PEP 544-compliant caching protocol type hints.
+        from beartype.typing import (
+            Literal,
+            Protocol,
+        )
+
         # Arbitrary caching @beartype protocol.
-        class MuhThingP(bt.Protocol):
+        class MuhThingP(Protocol):
             def muh_method(self):
                 ...
 
-        # Append cases exercising subhint protocol relations.
-        SUBHINT_SUPERHINT_IS_CASES.extend((
+        # Append cases exercising version-specific relations.
+        HINT_SUBHINT_CASES.extend((
+            # PEP 544-compliant type hints.
             (MuhThing, MuhThingP, True),
             (MuhNutherThing, MuhThingP, False),
             (MuhThingP, MuhThing, False),
+            # PEP 586-compliant type hints.
+            (Literal[1], int, True),
+            (Literal["a"], str, True),
+            (Literal[1, 2, "3"], Union[int, str], True),
+            (Literal[1, 2, "3"], Union[list, int], False),
+            (int, Literal[1], False),
+            (Literal[1, 2], Literal[1, 2, 3], True),
         ))
 
         # If the active Python interpreter targets Python >= 3.9 and thus
-        # supports PEP 593...
+        # supports PEP 585 and 593...
         if IS_PYTHON_AT_LEAST_3_9:
-            # Append cases exercising subhint annotated relations.
-            SUBHINT_SUPERHINT_IS_CASES.extend((
-                (t.Annotated[int, "a note"], int, True),  # annotated is subtype of unannotated
-                (int, t.Annotated[int, "a note"], False),  # but not vice versa
-                (t.Annotated[list, True], t.Annotated[t.Sequence, True], True),
-                (t.Annotated[list, False], t.Annotated[t.Sequence, True], False),
-                (t.Annotated[list, 0, 0], t.Annotated[list, 0], False),  # must have same num args
-                (t.Annotated[t.List[int], "metadata"], t.List[int], True),
+            from beartype.typing import Annotated
+
+            # Append cases exercising version-specific relations.
+            HINT_SUBHINT_CASES.extend((
+                # PEP 585-compliant type hints.
+                (tuple, Tuple, True),
+                (tuple[()], Tuple[()], True),
+                # PEP 593-compliant type hints.
+                (Annotated[int, "a note"], int, True),  # annotated is subtype of unannotated
+                (int, Annotated[int, "a note"], False),  # but not vice versa
+                (Annotated[list, True], Annotated[Sequence, True], True),
+                (Annotated[list, False], Annotated[Sequence, True], False),
+                (Annotated[list, 0, 0], Annotated[list, 0], False),  # must have same num args
+                (Annotated[List[int], "metadata"], List[int], True),
             ))
 
     # Return this mutable list coerced into an immutable tuple for safety.
-    return tuple(SUBHINT_SUPERHINT_IS_CASES)
+    return tuple(HINT_SUBHINT_CASES)
+
+
+@fixture(scope='session')
+def hint_equality_cases() -> 'Iterable[Tuple[object, object, bool]]':
+    '''
+    Session-scoped fixture returning an iterable of **hint equality cases**
+    (i.e., 3-tuples ``(hint_a, hint_b, is_equal)`` describing the equality
+    relations between two PEP-compliant type hints), efficiently cached across
+    all tests requiring this fixture.
+
+    This iterable is intentionally defined by the return of this fixture rather
+    than as a global constant of this submodule. Why? Because the former safely
+    defers all heavyweight imports required to define this iterable to the call
+    of the first unit test requiring this fixture, whereas the latter unsafely
+    performs those imports at pytest test collection time.
+
+    Returns
+    --------
+    Iterable[Tuple[object, object, bool]]
+        Iterable of one or more 3-tuples ``(hint_a, hint_b, is_equal)``,
+        where:
+
+        * ``hint_a`` is the PEP-compliant type hint to be passed as the first
+          parameter to the :meth:`beartype.door.TypeHint.__equals__` tester.
+        * ``hint_b`` is the PEP-compliant type hint to be passed as the second
+          parameter to the :meth:`beartype.door.TypeHint.__equals__` tester.
+        * ``is_equal`` is ``True`` only if these hints are equal according to
+          that tester.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_LEAST_3_9,
+    )
+
+    # Intentionally import from "typing" rather than "beartype.typing" to
+    # guarantee PEP 484-compliant type hints.
+    from typing import (
+        Any,
+        List,
+        Tuple,
+        Union,
+    )
+
+    # ..................{ LISTS                              }..................
+    HINT_EQUALITY_CASES = [
+        (tuple, Tuple, True),
+        (list, list, True),
+        (list, List, True),
+        (list, List[Any], True),
+        (Union[int, str], Union[str, int], True),
+        (Union[int, str], Union[str, list], False),
+        (tuple, Tuple[Any, ...], True),
+    ]
+
+    # If the active Python interpreter targets Python >= 3.9 and thus supports
+    # both PEP 585 and 593...
+    if IS_PYTHON_AT_LEAST_3_9:
+        from beartype.typing import Annotated
+        from collections.abc import (
+            Awaitable as AwaitableABC,
+            Sequence as SequenceABC,
+        )
+
+        # Append cases exercising version-specific relations.
+        HINT_EQUALITY_CASES.extend((
+            # PEP 585-compliant type hints.
+            (tuple[str, ...], Tuple[str, ...], True),
+            (list[str], List[str], True),
+            (AwaitableABC[SequenceABC[int]], AwaitableABC[SequenceABC[int]], True),
+
+            # PEP 593-compliant type hints.
+            (Annotated[int, "hi"], Annotated[int, "hi"], True),
+            (Annotated[int, "hi"], Annotated[int, "low"], False),
+            (Annotated[int, "hi"], Annotated[int, "low"], False),
+        ))
+
+    # Return this mutable list coerced into an immutable tuple for safety.
+    return tuple(HINT_EQUALITY_CASES)
 
 # ....................{ TESTS ~ testers                    }....................
-#FIXME: Resolve, please. It looks like Python 3.7 and 3.8 are failing hard.
+#FIXME: Resolve, please. It looks like Python 3.7 and 3.8 are failing hard here.
 @skip_if_python_version_less_than('3.9.0')
 def test_is_subhint(
-    subhint_superhint_is_cases: 'Iterable[Tuple[object, object, bool]]'):
+    hint_subhint_cases: 'Iterable[Tuple[object, object, bool]]') -> None:
     '''
     Test the :func:`beartype.door.is_subhint` tester.
 
     Parameters
     ----------
-    subhint_superhint_is_cases : Iterable[Tuple[object, object, bool]]
-        Iterable of one or more 3-tuples ``(subhint, superhint,
-        is_subhint)`` as defined by :func:`subhint_superhint_is_cases`.
+    hint_subhint_cases : Iterable[Tuple[object, object, bool]]
+        Iterable of one or more 3-tuples ``(subhint, superhint, is_subhint)``,
+        declared by the :func:`hint_subhint_cases` fixture.
     '''
 
     # Defer heavyweight imports.
     from beartype.door import is_subhint
 
     # For each subhint relation to be tested...
-    for subhint, superhint, IS_SUBHINT in subhint_superhint_is_cases:
-        # Assert this tester returns the expected boolean.
+    for subhint, superhint, IS_SUBHINT in hint_subhint_cases:
+        # Assert this tester returns the expected boolean for these hints.
         assert is_subhint(subhint, superhint) is IS_SUBHINT
+
+# ....................{ TESTS ~ class : dunders            }....................
+def test_typehint_new() -> None:
+    '''
+    Test the :meth:`beartype.door.TypeHint.__new__` factory method.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.door import TypeHint
+
+    # Intentionally import from "typing" rather than "beartype.typing" to
+    # guarantee PEP 484-compliant type hints.
+    from typing import (
+        Any,
+        List,
+    )
+
+    # Assert that recreating a type hint against identical input yields the same
+    # previously memoized type hint.
+    assert TypeHint(List[Any]) is TypeHint(List[Any])
+    assert TypeHint(int) is TypeHint(int)
+    assert TypeHint(TypeHint(int)) is TypeHint(int)
+
+    #FIXME: Consider reducing these two type hints to the same type hint.
+    # Assert that recreating a type hint against non-identical but semantically
+    # equivalent input sadly yields a different type hint.
+    assert TypeHint(List) is not TypeHint(list)
+
+
+#FIXME: Resolve, please. It looks like Python 3.7 and 3.8 are failing hard here.
+@skip_if_python_version_less_than('3.9.0')
+def test_typehint_equals(
+    hint_equality_cases: 'Iterable[Tuple[object, object, bool]]') -> None:
+    '''
+    Test the :meth:`beartype.door.TypeHint.__equals__` tester.
+
+    Parameters
+    ----------
+    hint_equality_cases : Iterable[Tuple[object, object, bool]]
+        Iterable of one or more 3-tuples ``(hint_a, hint_b, is_equal)``,
+        declared by the :func:`hint_subhint_cases` fixture.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.door import TypeHint
+
+    # Intentionally import from "typing" rather than "beartype.typing" to
+    # guarantee PEP 484-compliant type hints.
+    from typing import (
+        Generator,
+        Union,
+    )
+
+    # Arbitrary hint guaranteed to be unequal to every other hint listed in the
+    # "hint_equality_cases" iterable.
+    typehint_unequal = TypeHint(Generator[Union[list, str], str, None])
+
+    # Arbitrary non-hint object.
+    nonhint = b'Of insects, beasts, and birds, becomes its spoil;'
+
+    # For each equality relation to be tested...
+    for hint_a, hint_b, IS_EQUAL in hint_equality_cases:
+        # "TypeHint" instances encapsulating these hints.
+        typehint_a = TypeHint(hint_a)
+        typehint_b = TypeHint(hint_b)
+
+        # Assert this tester returns the expected boolean for these hints.
+        is_equal = (typehint_a == typehint_b)
+        assert is_equal is IS_EQUAL
+
+        # Assert this tester returns the expected boolean for each such hint and
+        # another arbitrary hint guaranteed to be unequal to these hints. In
+        # other words, this performs a smoke test.
+        assert typehint_a != typehint_unequal
+        assert typehint_b != typehint_unequal
+
+        # Assert this tester returns the expected boolean for each such hint and
+        # an arbitrary non-hint. In other words, this performs a smoke test.
+        assert typehint_a != nonhint
+        assert typehint_b != nonhint
 
 
 #FIXME: Currently disabled due to failing tests under at least Python 3.7 and
 #3.8. See also relevant commentary at:
 #    https://github.com/beartype/beartype/pull/136#issuecomment-1175841494
-# EQUALITY_CASES = [
-#     (tuple, t.Tuple, True),
-#     (list, list, True),
-#     (list, t.List, True),
-#     (list, t.List[t.Any], True),
-#     (t.Union[int, str], t.Union[str, int], True),
-#     (t.Union[int, str], t.Union[str, list], False),
-#     (tuple, t.Tuple[t.Any, ...], True),
-#     (t.Annotated[int, "hi"], t.Annotated[int, "hi"], True),
-#     (t.Annotated[int, "hi"], t.Annotated[int, "low"], False),
-#     (t.Annotated[int, "hi"], t.Annotated[int, "low"], False),
-#     (abc.Awaitable[abc.Sequence[int]], t.Awaitable[t.Sequence[int]], True),
-# ]
-# if IS_PYTHON_AT_LEAST_3_9:
-#     EQUALITY_CASES.extend(
-#         [
-#             (tuple[str, ...], t.Tuple[str, ...], True),
-#             (list[str], t.List[str], True),
-#         ]
-#     )
-#
-#
-# @pytest.mark.parametrize("type_a, type_b, expected", EQUALITY_CASES)
-# def test_type_equality(type_a, type_b, expected):
-#     """test that things with the same sign and arguments are equal."""
-#     hint_a = TypeHint(type_a)
-#     hint_b = TypeHint(type_b)
-#     assert (hint_a == hint_b) is expected
-#
-#     # smoke test
-#     assert hint_a != TypeHint(t.Generator[t.Union[list, str], str, None])
-#
-#     assert hint_a != "notahint"
-#     with pytest.raises(TypeError, match="not supported between"):
-#         hint_a <= "notahint"
-#
-#
-# def test_type_hint_singleton():
-#     """Recreating a type hint with the same input should yield the same type hint."""
-#     assert TypeHint(t.List[t.Any]) is TypeHint(t.List[t.Any])
-#     assert TypeHint(int) is TypeHint(int)
-#     assert TypeHint(TypeHint(int)) is TypeHint(int)
-#
-#     # alas, this is not true:
-#     assert TypeHint(t.List) is not TypeHint(list)
-#     # leaving here for future reference, and so we know if we've fixed it.
-#
-#
 # def test_typehint_fail():
 #     with pytest.raises(BeartypeMathException):
 #         TypeHint(1)
