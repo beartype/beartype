@@ -115,7 +115,7 @@ class BeartypeCaveNoneTypeOrMutabilityException(
 
     pass
 
-# ....................{ CONF                               }....................
+# ....................{ API ~ conf                         }....................
 class BeartypeConfException(BeartypeException):
     '''
     **Beartype configuration exception.**
@@ -124,6 +124,32 @@ class BeartypeConfException(BeartypeException):
     the :class:`beartype.BeartypeConf` class *or* passing an object that is not
     an instance of that class as the ``conf`` parameter to the
     :func:`beartype.beartype` decorator.
+    '''
+
+    pass
+
+# ....................{ API ~ door                         }....................
+class BeartypeDoorException(BeartypeException):
+    '''
+    Abstract base class of all **beartype Decidedly Object-Oriented
+    Runtime-checking (DOOR) exceptions.**
+
+    Instances of subclasses of this exception are raised at call time from the
+    callables and classes published by the :func:`beartype.door` subpackage.
+    '''
+
+    pass
+
+
+class BeartypeDoorNonpepException(BeartypeDoorException):
+    '''
+    **Beartype Decidedly Object-Oriented Runtime-checking (DOOR)
+    PEP-noncompliant type hint exception.**
+
+    This exception is raised by the :func:`beartype.door.TypeHint.__init__`
+    constructor on receiving a **invalid PEP-noncompliant type hint** (i.e.,
+    type hint failing to comply with PEP standards currently supported by the
+    :mod:`beartype.door` API).
     '''
 
     pass
@@ -606,17 +632,6 @@ class BeartypeValeSubscriptionException(BeartypeValeException):
     * Apply the ``&`` or ``|`` operators to *any* subscriptions of these
       classes and *any* other objects (e.g.,
       ``beartype.vale.Is[lambda obj: True]] & 'If it seems bad, it is.'``).
-    '''
-
-    pass
-
-
-class BeartypeMathException(BeartypeException):
-    '''
-    Abstract base class of all **beartype math exceptions.**
-
-    Instances of subclasses of this exception are raised at call time from the
-    callables and classes published by the :func:`beartype.door` subpackage.
     '''
 
     pass

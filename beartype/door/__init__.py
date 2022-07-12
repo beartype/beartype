@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Decidedly Object-Orientedly Recursive (DOOR) API.**
+**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) API.**
 
 This subpackage provides an object-oriented type hint class hierarchy,
 encapsulating the crude non-object-oriented type hint declarative API
@@ -23,5 +23,7 @@ standardized by the :mod:`typing` module.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.door._doorcls import (
     TypeHint as TypeHint,
+)
+from beartype.door._doortest import (
     is_subhint as is_subhint,
 )

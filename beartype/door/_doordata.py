@@ -4,8 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Decidedly Object-Orientedly Recursive (DOOR) data** (i.e., global
-constants internally required throughout the :mod:`beartype.door` subpackage).
+**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) data** (i.e.,
+global constants internally required throughout the :mod:`beartype.door`
+subpackage).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

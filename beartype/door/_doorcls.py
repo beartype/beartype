@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Decidedly Object-Orientedly Recursive (DOOR) class hierarchy** (i.e.,
-object-oriented type hint class hierarchy, encapsulating the crude
+**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) class hierarchy**
+(i.e., object-oriented type hint class hierarchy, encapsulating the crude
 non-object-oriented type hint API standardized by the :mod:`typing` module).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -16,6 +16,18 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from abc import ABC
+from beartype.door._doortest import die_unless_typehint
+from beartype.roar import (
+    BeartypeDoorException,
+    BeartypeDoorNonpepException,
+)
+from beartype.typing import (
+    Any,
+    Dict,
+    Iterable,
+    Tuple,
+    Type,
+)
 from beartype._data.hint.pep.sign import datapepsigns as signs
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
@@ -33,8 +45,6 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_sign_or_none,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
-from beartype.roar import BeartypeMathException
-from beartype.typing import Any, Dict, Iterable, Tuple, Type
 from contextlib import suppress
 
 if IS_PYTHON_AT_LEAST_3_10:
@@ -42,40 +52,8 @@ if IS_PYTHON_AT_LEAST_3_10:
 else:
     _ParamSpec = None  # type: ignore # noqa
 
-# ....................{ TESTERS                            }....................
-#FIXME: Shift into a new "_doortest" submodule, please.
-def is_subhint(subhint: object, superhint: object) -> bool:
-    '''
-    ``True`` only if the passed subhint is a subhint of the passed superhint.
-
-    This tester supports *all* types and *most* PEP-compliant type hints.
-
-    Parameters
-    ----------
-    subhint : object
-        Any PEP-compliant type hint or type.
-    superhint : object
-        Any PEP-compliant type hint or type.
-
-    Returns
-    -------
-    bool
-        ``True`` only if this subhint is a subhint of this superhint.
-
-    Examples
-    --------
-        >>> from beartype.door import is_subhint
-        >>> is_subhint(int, int)
-        True
-        >>> is_subhint(Callable[[], list], Callable[..., Sequence[Any]])
-        True
-        >>> is_subhint(Callable[[], list], Callable[..., Sequence[int]])
-        False
-    '''
-
-    return TypeHint(subhint).is_subhint(TypeHint(superhint))
-
 # ....................{ SUPERCLASSES                       }....................
+#FIXME: Document all public and private attributes of this class, please.
 class TypeHint(ABC):
     '''
     Abstract base class (ABC) of all **partially ordered type hint** (i.e.,
@@ -113,10 +91,19 @@ class TypeHint(ABC):
         True
         >>> list(hint_b)
         [TypeHint(typing.Union[int, str]), TypeHint(typing.Sequence[typing.Any])]
+
+    Attributes (Private)
+    --------
+    _args : Tuple[object, ...]
+        Tuple of all zero or more low-level child type hints of this hint.
+    _args_wrapped : Tuple[TypeHint, ...]
+        Tuple of all zero or more high-level child **type hint wrappers** (i.e.,
+        :class:`TypeHint` instance) of this hint.
     '''
 
+    # ..................{ DUNDERS                            }..................
     @callable_cached
-    def __new__(cls, hint: object) -> "TypeHint":
+    def __new__(cls, hint: object) -> 'TypeHint':
         '''
         Factory constructor magically instantiating and returning an instance of
         the private concrete subclass of this public abstract base class (ABC)
@@ -135,12 +122,16 @@ class TypeHint(ABC):
 
         Raises
         ----------
-        BeartypeMathException
+        BeartypeDoorNonpepException
             If this class does *not* currently support the passed hint.
         BeartypeDecorHintPepSignException
             If the passed hint is *not* actually a PEP-compliant type hint.
         '''
-        # TypeHint(TypeHint(hint)) is TypeHint(hint)
+
+        # If this low-level type hint is already a high-level type hint wrapper,
+        # return this wrapper as is. This guarantees the following constraint:
+        #     >>> TypeHint(TypeHint(hint)) is TypeHint(hint)
+        #     True
         if isinstance(hint, TypeHint):
             return hint
 
@@ -152,23 +143,31 @@ class TypeHint(ABC):
         # "None" otherwise (i.e., if no such subclass has been authored yet).
         TypeHintSubclass = HINT_SIGN_TO_TYPEHINT.get(hint_sign)
 
-        # if a subscriptable type has no args, all we care about is the origin
-        if TypeHintSubclass and not get_hint_pep_args(hint):
-            TypeHintSubclass = _TypeHintClass
-
         # If this hint appears to be currently unsupported...
         if TypeHintSubclass is None:
+            #FIXME: The second condition here is kinda intense. Should we really
+            #be conflating typing attributes that aren't types with objects that
+            #are types? If so, refactor as follows to transparently support
+            #the third-party "typing_extensions" module (as much as reasonably
+            #can be, anyway):
+            #    from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
+            #    if isinstance(hint, type) or is_hint_pep_typing(hint):  # <-- ...still unsure about this
             if isinstance(hint, type) or getattr(hint, "__module__", "") == "typing":
                 TypeHintSubclass = _TypeHintClass
             else:
-                raise BeartypeMathException(
-                    f"Type hint {repr(hint)} currently unsupported by "
-                    f'class "beartype.door.TypeHint".'
+                raise BeartypeDoorNonpepException(
+                    f'Type hint {repr(hint)} currently unsupported by '
+                    f'"beartype.door.TypeHint".'
                 )
         # Else, this hint is supported.
 
+        # If a subscriptable type has no args, all we care about is the origin.
+        if not get_hint_pep_args(hint):
+            TypeHintSubclass = _TypeHintClass
+
         # Return this subclass.
         return super().__new__(TypeHintSubclass)
+
 
     def __init__(self, hint: object) -> None:
         '''
@@ -181,6 +180,9 @@ class TypeHint(ABC):
             Lower-level unordered type hint to be encapsulated by this
             higher-level partially ordered type hint.
         '''
+
+        #FIXME: Duplication logic of that in __new__(). It's likely that only
+        #one or the other is needed. But... which is it? *sigh*
         # TypeHint(TypeHint(hint)) == TypeHint(hint)
         if isinstance(hint, TypeHint):
             return
@@ -189,81 +191,22 @@ class TypeHint(ABC):
         # to be a type hint by validation performed by the __new__() method.
         # the full type hint passed to the constructor
         self._hint = hint
+
         # Sign uniquely identifying this and that hint if any *OR* "None"
         self._hint_sign = get_hint_pep_sign_or_none(hint)
 
-        # root type, that may or may not be subscripted
+        # Root type, that may or may not be subscripted
         self._origin: type = get_hint_pep_origin_or_none(hint) or hint  # type: ignore
 
-        # Tuple of all low-level unordered child type hints of this hint.
+        # Tuple of all low-level child type hints of this hint.
         self._args = get_hint_pep_args(hint)
         self._validate()
-        # Tuple of all high-level partially ordered child type hints of this hint.
-        self._hints_child_ordered = self._wrap_children(self._args)
 
-    def _validate(self):
-        '''Used by subclasses to validate self._args and self._origin'''
-        pass
+        # Tuple of all high-level child type hint wrappers of this hint.
+        self._args_wrapped = self._wrap_children(self._args)
 
-    def _wrap_children(self, unordered_children: tuple) -> Tuple["TypeHint", ...]:
-        '''Wrap type hint paremeters in TypeHint instances.
 
-        Gives subclasses an opportunity modify
-        '''
-        return tuple(
-            TypeHint(unordered_child) for unordered_child in unordered_children
-        )
-
-    @callable_cached
-    def is_subhint(self, other: object) -> bool:
-        '''
-        ``True`` only if this partially ordered type hint is **compatible** with
-        the passed partially ordered type hint, where compatibility implies that
-        the unordered type hint encapsulated by this partially ordered type hint
-        may be losslessly replaced by the unordered type hint encapsulated by
-        the parent partially ordered type hint *without* breaking backward
-        compatibility in APIs annotated by the former.
-
-        This method is memoized and thus enjoys ``O(1)`` amortized worst-case
-        time complexity across all calls to this method.
-        '''
-
-        # If the passed object is *NOT* a partially ordered type hint, raise an
-        # exception.
-        other_hint = die_unless_typehint(other)
-        # Else, that object is a partially ordered type hint.
-
-        # For each branch of the passed union if that hint is a union *OR* that
-        # hint as is otherwise...
-        return any(self._is_le_branch(branch) for branch in other_hint.branches)
-
-    def is_superhint(self, other: object) -> bool:
-        '''Return true if self is a superhint of other.'''
-        other = die_unless_typehint(other)
-        return other.is_subhint(self)
-
-    @property
-    def branches(self) -> Iterable["TypeHint"]:
-        '''
-        Immutable iterable of all **branches** (i.e., high-level partially ordered
-        type hints encapsulating all low-level unordered child type hints
-        subscripting (indexing) the low-level unordered parent type hint
-        encapsulated by this high-level partially ordered parent type hint if this
-        is a union (and thus an instance of the :class:`_TypeHintUnion`
-        subclass) *or* the 1-tuple containing only this instance itself
-        otherwise) of this partially ordered parent type hint.
-
-        This property enables the child type hints of :pep:`484`- and
-        :pep:`604`-compliant unions (e.g., :attr:`typing.Union`,
-        :attr:`typing.Optional`, and ``|``-delimited type objects) to be handled
-        transparently *without* special cases in subclass implementations.
-        '''
-
-        # Default to returning the 1-tuple containing only this instance, as
-        # *ALL* subclasses except "_HintTypeUnion" require this default.
-        return (self,)
-
-    def __iter__(self) -> Iterable["TypeHint"]:
+    def __iter__(self) -> Iterable['TypeHint']:
         '''
         Immutable iterable of all **children** (i.e., high-level partially ordered
         type hints encapsulating all low-level unordered child type hints
@@ -271,10 +214,13 @@ class TypeHint(ABC):
         encapsulated by this high-level partially ordered parent type hint) of
         this partially ordered parent type hint.
         '''
-        yield from self._hints_child_ordered
+
+        yield from self._args_wrapped
+
 
     def __hash__(self) -> int:
         return hash(self._hint)
+
 
     def __eq__(self, other: object) -> bool:
 
@@ -293,7 +239,7 @@ class TypeHint(ABC):
             self._hint_sign is not other._hint_sign
             or
             # These hints have a differing number of child type hints...
-            len(self._hints_child_ordered) != len(other._hints_child_ordered)
+            len(self._args_wrapped) != len(other._args_wrapped)
         ):
             # Then these hints are unequal.
             return False
@@ -303,41 +249,154 @@ class TypeHint(ABC):
         return all(
             self_child == other_child
             for self_child, other_child in zip(
-                self._hints_child_ordered, other._hints_child_ordered
+                self._args_wrapped, other._args_wrapped
             )
         )
+
 
     def __ne__(self, other: object) -> bool:
         return not self.__eq__(other)
 
     def __le__(self, other: object) -> bool:
         '''Return true if self is a subhint of other.'''
+
         if not isinstance(other, TypeHint):
             return NotImplemented
+
         return self.is_subhint(other)
+
 
     def __lt__(self, other: object) -> bool:
         '''Return true if self is a strict subhint of other.'''
+
         if not isinstance(other, TypeHint):
             return NotImplemented
+
         return self.is_subhint(other) and self != other
+
 
     def __ge__(self, other: object) -> bool:
         '''Return true if self is a superhint of other.'''
+
         if not isinstance(other, TypeHint):
             return NotImplemented
+
         return self.is_superhint(other)
+
 
     def __gt__(self, other: object) -> bool:
         '''Return true if self is a strict superhint of other.'''
+
         if not isinstance(other, TypeHint):
             return NotImplemented
+
         return self.is_superhint(other) and self != other
 
-    # not using abstractclass here because we use `TypeHint(stuff)`` everywhere...
-    # the __new__ method makes sure to instantiate the correct subclass, but
-    # mypy doesn't know that.
-    def _is_le_branch(self, branch: "TypeHint") -> bool:
+
+    def __repr__(self) -> str:
+        '''
+        Machine-readable representation of this type hint wrapper.
+        '''
+
+        return f'TypeHint({repr(self._hint)})'
+
+    # ..................{ PUBLIC                             }..................
+    @callable_cached
+    def is_subhint(self, other: 'TypeHint') -> bool:
+        '''
+        ``True`` only if the type hint wrapped by this wrapper is a **subhint**
+        of the type hint wrapped by the passed wrapper.
+
+        This method is memoized and thus enjoys ``O(1)`` amortized worst-case
+        time complexity across all calls to this method.
+
+        See Also
+        ----------
+        :func:`beartype.door.is_subhint`
+            Further details.
+        '''
+
+        # If the passed object is *NOT* a type hint wrapper, raise an exception.
+        die_unless_typehint(other)
+        # Else, that object is a type hint wrapper.
+
+        # For each branch of the passed union if that hint is a union *OR* that
+        # hint as is otherwise...
+        return any(self._is_le_branch(branch) for branch in other._branches)
+
+
+    def is_superhint(self, other: 'TypeHint') -> bool:
+        '''
+        ``True`` only if the type hint wrapped by this wrapper is a
+        **superhint** of the type hint wrapped by the passed wrapper.
+
+        This method is memoized and thus enjoys ``O(1)`` amortized worst-case
+        time complexity across all calls to this method.
+
+        See Also
+        ----------
+        :func:`beartype.door.is_subhint`
+            Further details.
+        '''
+
+        # If the passed object is *NOT* a type hint wrapper, raise an exception.
+        die_unless_typehint(other)
+        # Else, that object is a type hint wrapper.
+
+        # Return true only if this hint is a superhint of the passed hint.
+        return other.is_subhint(self)
+
+    # ..................{ PRIVATE                            }..................
+    def _validate(self):
+        '''
+        Used by subclasses to validate :attr:`_args` and :attr:`_origin`.
+        '''
+
+        pass
+
+
+    def _wrap_children(
+        self, unordered_children: tuple) -> Tuple['TypeHint', ...]:
+        '''
+        Wrap type hint parameters in :class:`TypeHint` instances.
+
+        Gives subclasses an opportunity modify.
+        '''
+
+        return tuple(
+            TypeHint(unordered_child) for unordered_child in unordered_children)
+
+    # ..................{ PRIVATE ~ property                 }..................
+    @property
+    def _branches(self) -> Iterable['TypeHint']:
+        '''
+        Immutable iterable of all **branches** (i.e., high-level type hint
+        wrappers encapsulating all low-level child type hints subscripting
+        (indexing) the low-level parent type hint encapsulated by this
+        high-level parent type hint wrappers if this is a union (and thus an
+        instance of the :class:`_TypeHintUnion` subclass) *or* the 1-tuple
+        containing only this instance itself otherwise) of this type hint
+        wrapper.
+
+        This property enables the child type hints of :pep:`484`- and
+        :pep:`604`-compliant unions (e.g., :attr:`typing.Union`,
+        :attr:`typing.Optional`, and ``|``-delimited type objects) to be handled
+        transparently *without* special cases in subclass implementations.
+        '''
+
+        # Default to returning the 1-tuple containing only this instance, as
+        # *ALL* subclasses except "_HintTypeUnion" require this default.
+        return (self,)
+
+    # ..................{ PRIVATE ~ abstract                 }..................
+    # Subclasses *MUST* implement all of the following abstract methods.
+
+    # We intentionally avoid applying the @abstractmethod decorator here. Why?
+    # Because doing so would cause static type checkers (e.g., mypy) to
+    # incorrectly flag this class as abstract and thus *NOT* instantiable. In
+    # fact, the magical __new__() method defined by this class enables this
+    # otherwise abstract class to be safely instantiated as "TypeHint(hint)".
+    def _is_le_branch(self, branch: 'TypeHint') -> bool:
         '''
         ``True`` only if this partially ordered type hint is **compatible** with
         the passed branch of another partially ordered type hint passed to the
@@ -348,64 +407,34 @@ class TypeHint(ABC):
         :meth:`__le__`
             Further details.
         '''
-        raise NotImplementedError(
-            "Subclasses must implement this method."
-        )  # pragma: no cover
 
-    def __repr__(self) -> str:
-        return f"TypeHint({self._hint!r})"
+        raise NotImplementedError("Subclasses must implement this method.")  # pragma: no cover
 
-    # not using abstractclass here because we use `TypeHint(stuff)`` everywhere...
-    # the __new__ method makes sure to instantiate the correct subclass, but
-    # mypy doesn't know that.
+    # ..................{ PRIVATE ~ abstract : property      }..................
     @property
     def _is_just_an_origin(self) -> bool:
-        '''Flag that indicates this hint can be evaluating only using the origin.
+        '''
+        Flag that indicates this hint can be evaluating only using the origin.
 
         This is useful for parametrized type hints with no arguments or with
-        "Any"-type placeholder arguments, like `Tuple[Any, ...]` or
-        `Callable[..., Any]`.
+        :attr:`typing.Any`-type placeholder arguments (e.g., ``Tuple[Any,
+        ...]``, ``Callable[..., Any]``).
 
         It's also useful in cases where a builtin type or abc.collection is used
         as a type hint (and has no sign).  For example:
 
-        ```
-        >>> get_hint_pep_sign_or_none(tuple)  # None
+        .. code-block:: python
 
-        >>> get_hint_pep_sign_or_none(typing.Tuple)
-        HintSignTuple
-        ```
+           >>> get_hint_pep_sign_or_none(tuple)  # None
 
-        In this case, using `_is_just_an_origin` lets us simplify the comparison.
+           >>> get_hint_pep_sign_or_none(typing.Tuple)
+           HintSignTuple
+
+        In this case, using :attr:`_is_just_an_origin` lets us simplify the
+        comparison.
         '''
-        raise NotImplementedError(
-            "Subclasses must implement this method."
-        )  # pragma: no cover
 
-# ....................{ TESTERS ~ more                     }....................
-#FIXME: Shift into a new "_doortest" submodule, please.
-def die_unless_typehint(obj: object) -> TypeHint:
-    '''
-    Raise an exception unless the passed object is a **partially ordered type
-    hint** (i.e., :class:`TypeHint` instance).
-
-    Parameters
-    ----------
-    obj : object
-        Arbitrary object to be validated.
-
-    Raises
-    ----------
-    BeartypeMathException
-        If this object is *not* a partially ordered type hint.
-    '''
-
-    # If this object is *NOT* a partially ordered type hint, raise an exception.
-    if not isinstance(obj, TypeHint):
-        raise BeartypeMathException(
-            f"{repr(obj)} is not a 'beartype.door.TypeHint' instance.",
-        )
-    return obj
+        raise NotImplementedError('Subclasses must implement this method.')  # pragma: no cover
 
 # ....................{ SUBCLASSES                         }....................
 class _TypeHintClass(TypeHint):
@@ -426,12 +455,15 @@ class _TypeHintClass(TypeHint):
         if branch._origin is Any:
             return True
 
-        # Numeric tower:
-        # https://peps.python.org/pep-0484/#the-numeric-tower
-        if self._origin is float and branch._origin in {float, int}:
-            return True
-        if self._origin is complex and branch._origin in {complex, float, int}:
-            return True
+        #FIXME: Actually, let's avoid the implicit numeric tower for now.
+        #Explicit is better than implicit and we really strongly disagree with
+        #this subsection of PEP 484, which does more real-world harm than good.
+        # # Numeric tower:
+        # # https://peps.python.org/pep-0484/#the-numeric-tower
+        # if self._origin is float and branch._origin in {float, int}:
+        #     return True
+        # if self._origin is complex and branch._origin in {complex, float, int}:
+        #     return True
 
         # Return true only if...
         return branch._is_just_an_origin and issubclass(
@@ -440,35 +472,39 @@ class _TypeHintClass(TypeHint):
 
 class _TypeHintSubscripted(TypeHint):
     '''
-    **Partially ordered subscripted type hint** (i.e., high-level object
-    encapsulating a low-level parent type hint subscripted (indexed) by one or
-    more equally low-level children type hints).
+    **Subscripted type hint wrapper** (i.e., high-level object encapsulating a
+    low-level parent type hint subscripted (indexed) by one or more equally
+    low-level children type hints).
 
     Attributes
     ----------
     _args : tuple[object]
         Tuple of all low-level unordered children type hints of the low-level
         unordered parent type hint passed to the :meth:`__init__` method.
-    _hints_child_ordered : tuple[TypeHint]
+    _args_wrapped : tuple[TypeHint]
         Tuple of all high-level partially ordered children type hints of this
         high-level partially ordered parent type hint.
     '''
 
+    #FIXME: Consider refactoring both here and below into a read-only class
+    #property for safety. This currently permits accidental modification. Gah!
     _required_nargs: int = -1
-
-    @property
-    def _is_just_an_origin(self) -> bool:
-        return all(x._origin is Any for x in self._hints_child_ordered)
 
     def _validate(self):
         if self._required_nargs > 0 and len(self._args) != self._required_nargs:
+            #FIXME: Consider raising a less ambiguous exception type, yo.
             # In most cases it will be hard to reach this exception, since most
-            # of the typing library's subscripted type hints will raise an execption
-            # if not constructed properly
-            raise BeartypeMathException(  # pragma: no cover
+            # of the typing library's subscripted type hints will raise an
+            # exception if constructed improperly.
+            raise BeartypeDoorException(  # pragma: no cover
                 f"{type(self)} type must have {self._required_nargs} "
                 f"argument(s). got {len(self._args)}"
             )
+
+
+    @property
+    def _is_just_an_origin(self) -> bool:
+        return all(x._origin is Any for x in self._args_wrapped)
 
     def _is_le_branch(self, branch: TypeHint) -> bool:
         # If the branch is not subscripted, then we assume it is subscripted
@@ -479,18 +515,17 @@ class _TypeHintSubscripted(TypeHint):
         return (
             # That branch is also a partially ordered single-argument
             # isinstanceable type hint *AND*...
-            isinstance(branch, type(self))
+            isinstance(branch, type(self)) and
             # The low-level unordered type hint encapsulated by this
             # high-level partially ordered type hint is a subclass of
             # The low-level unordered type hint encapsulated by the branch
-            and issubclass(self._origin, branch._origin)
+            issubclass(self._origin, branch._origin) and
             # *AND* All child (argument) hints are subclasses of the
             # corresponding branch child hint
-            and all(
+            all(
                 self_child <= branch_child
                 for self_child, branch_child in zip(
-                    self._hints_child_ordered, branch._hints_child_ordered
-                )
+                    self._args_wrapped, branch._args_wrapped)
             )
         )
 
@@ -541,12 +576,12 @@ class _TypeHintCallable(_TypeHintSubscripted):
     def arg_types(self) -> Tuple[TypeHint, ...]:
         # the arguments portion of the callable
         # may be an empty tuple if the callable takes no arguments
-        return self._hints_child_ordered[:-1]
+        return self._args_wrapped[:-1]
 
     @property
     def return_type(self) -> TypeHint:
         # the return type of the callable
-        return self._hints_child_ordered[-1]
+        return self._args_wrapped[-1]
 
     @property
     def takes_any_args(self) -> bool:
@@ -654,15 +689,15 @@ class _TypeHintTuple(_TypeHintSubscripted):
             return self.is_empty_tuple
 
         if branch.is_variable_length:
-            branch_type = branch._hints_child_ordered[0]
+            branch_type = branch._args_wrapped[0]
             if self.is_variable_length:
-                return branch_type <= self._hints_child_ordered[0]
-            return all(child <= branch_type for child in self._hints_child_ordered)
+                return branch_type <= self._args_wrapped[0]
+            return all(child <= branch_type for child in self._args_wrapped)
 
         if self.is_variable_length:
             return (
                 branch.is_variable_length
-                and self._hints_child_ordered[0] <= branch._hints_child_ordered[0]
+                and self._args_wrapped[0] <= branch._args_wrapped[0]
             )
 
         if len(self._args) != len(branch._args):
@@ -671,36 +706,39 @@ class _TypeHintTuple(_TypeHintSubscripted):
         return all(
             self_child <= branch_child
             for self_child, branch_child in zip(
-                self._hints_child_ordered, branch._hints_child_ordered
+                self._args_wrapped, branch._args_wrapped
             )
         )
 
 
 class _TypeHintLiteral(_TypeHintSubscripted):
-    def _wrap_children(self, _: tuple) -> Tuple["TypeHint", ...]:
-        # the parameters of Literal aren't hints, they're arbitrary values
-        # we don't wrap them.
-        return ()
 
     @callable_cached
-    def is_subhint(self, other: object) -> bool:
-        other_hint = die_unless_typehint(other)
+    def is_subhint(self, other: 'TypeHint') -> bool:
+        die_unless_typehint(other)
 
         # If the other hint is also a literal
-        if isinstance(other_hint, _TypeHintLiteral):
+        if isinstance(other, _TypeHintLiteral):
             # we check that our args are a subset of theirs
-            return all(arg in other_hint._args for arg in self._args)
+            return all(arg in other._args for arg in self._args)
 
         # If the other hint is a just an origin
-        if other_hint._is_just_an_origin:
+        if other._is_just_an_origin:
             # we check that our args instances of that origin
-            return all(isinstance(x, other_hint._origin) for x in self._args)
+            return all(isinstance(x, other._origin) for x in self._args)
 
-        return all(TypeHint(type(arg)) <= other_hint for arg in self._args)
+        return all(TypeHint(type(arg)) <= other for arg in self._args)
+
 
     @property
     def _is_just_an_origin(self) -> bool:
         return False
+
+
+    def _wrap_children(self, _: tuple) -> Tuple['TypeHint', ...]:
+        # the parameters of Literal aren't hints, they're arbitrary values
+        # we don't wrap them.
+        return ()
 
 
 class _TypeHintAnnotated(TypeHint):
@@ -776,39 +814,39 @@ class _TypeHintUnion(_TypeHintSubscripted):
     *and* :pep:`604`-compliant ``|``-delimited type unions).
     '''
 
-    @property
-    def branches(self) -> Iterable[TypeHint]:
-        return self._hints_child_ordered
-
     @callable_cached
-    def is_subhint(self, other: object) -> bool:
+    def is_subhint(self, other: 'TypeHint') -> bool:
 
-        # If the passed object is *NOT* a partially ordered type hint, raise an
-        # exception.
-        other_hint = die_unless_typehint(other)
+        # If the passed object is *NOT* a type hint wrapper, raise an exception.
+        die_unless_typehint(other)
 
         # If that hint is *NOT* a partially ordered union type hint, return false.
-        if not isinstance(other_hint, _TypeHintUnion):
-            return other_hint._hint is Any
+        if not isinstance(other, _TypeHintUnion):
+            return other._hint is Any
         # Else, that hint is a partially ordered union type hint.
 
         # FIXME: O(n^2) complexity ain't that great. Perhaps that's unavoidable
         # here, though? Contemplate optimizations, please.
 
         # every branch in this Union must be a member of the other Union
-        for branch in self.branches:
-            # If any item in this Union is not present in other_hint.branches,
+        for branch in self._branches:
+            # If any item in this Union is not present in other_hint._branches,
             # this hint is incompatible with that hint.
-            if not any(branch <= other_branch for other_branch in other_hint.branches):
+            if not any(
+                branch <= other_branch for other_branch in other._branches):
                 return False
 
         # Else, we're good.
         return True
 
+
+    @property
+    def _branches(self) -> Iterable[TypeHint]:
+        return self._args_wrapped
+
+
     def _is_le_branch(self, branch: TypeHint) -> bool:
-        raise NotImplementedError(
-            "_TypeHintUnion._is_le_branch() unsupported."
-        )  # pragma: no cover
+        raise NotImplementedError('_TypeHintUnion._is_le_branch() unsupported.')  # pragma: no cover
 
 # ....................{ DICTS                              }....................
 #FIXME: Shift into a new "_doordata" submodule, please. Note that doing so

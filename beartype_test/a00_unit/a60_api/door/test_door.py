@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Decidedly Object-Orientedly Recursive (DOOR) API unit tests.**
+**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) API unit tests.**
 
 This submodule unit tests the public API of the public
 :mod:`beartype.door` subpackage.
@@ -20,7 +20,7 @@ This submodule unit tests the public API of the public
 
 # ....................{ IMPORTS                            }....................
 from beartype_test.util.mark.pytskip import (
-    skip,
+    # skip,
     skip_if_python_version_less_than,
 )
 from pytest import fixture
@@ -130,10 +130,15 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         (Any, Any, True),
         (MuhThing, Any, True),
         (Union[int, MuhThing], Any, True),
-        # numeric tower
-        (float, int, True),
-        (complex, int, True),
-        (complex, float, True),
+        # Blame Guido.
+        (bool, int, True),
+        # PEP 484-compliant implicit numeric tower, which we explicitly and
+        # intentionally do *NOT* comply with. Floats are not integers. Notably,
+        # floats *CANNOT* losslessly represent many integers and are thus
+        # incompatible in general.
+        (float, int, False),
+        (complex, int, False),
+        (complex, float, False),
         (int, float, False),
         (float, complex, False),
         # subscripted types
@@ -369,6 +374,8 @@ def test_typehint_new() -> None:
 
     # Defer heavyweight imports.
     from beartype.door import TypeHint
+    from beartype.roar import BeartypeDoorNonpepException
+    from pytest import raises
 
     # Intentionally import from "typing" rather than "beartype.typing" to
     # guarantee PEP 484-compliant type hints.
@@ -381,12 +388,20 @@ def test_typehint_new() -> None:
     # previously memoized type hint.
     assert TypeHint(List[Any]) is TypeHint(List[Any])
     assert TypeHint(int) is TypeHint(int)
+
+    # Assert that nested type hint invocations internally avoid nesting by
+    # yielding the same previously memoized type hint.
     assert TypeHint(TypeHint(int)) is TypeHint(int)
 
     #FIXME: Consider reducing these two type hints to the same type hint.
     # Assert that recreating a type hint against non-identical but semantically
     # equivalent input sadly yields a different type hint.
     assert TypeHint(List) is not TypeHint(list)
+
+    # Assert this factory raises the expected exception when passed an object
+    # that is *not* a PEP-compliant type hint.
+    with raises(BeartypeDoorNonpepException):
+        TypeHint(b'Is there, that from the boundaries of the sky')
 
 
 #FIXME: Resolve, please. It looks like Python 3.7 and 3.8 are failing hard here.
@@ -445,11 +460,6 @@ def test_typehint_equals(
 #FIXME: Currently disabled due to failing tests under at least Python 3.7 and
 #3.8. See also relevant commentary at:
 #    https://github.com/beartype/beartype/pull/136#issuecomment-1175841494
-# def test_typehint_fail():
-#     with pytest.raises(BeartypeMathException):
-#         TypeHint(1)
-#
-#
 # @pytest.mark.parametrize(
 #     "nparams, sign_group",
 #     [
@@ -523,7 +533,7 @@ def test_typehint_equals(
 # def test_invalid_subtype_comparison():
 #     hint = TypeHint(t.Callable[[], list])
 #     with pytest.raises(
-#         BeartypeMathException, match="not a 'beartype.door.TypeHint' instance"
+#         BeartypeDoorException, match="not a 'beartype.door.TypeHint' instance"
 #     ):
 #         hint.is_subhint(int)
 #
@@ -539,5 +549,5 @@ def test_typehint_equals(
 #     class MyGeneric(t.Generic[T]):
 #         ...
 #
-#     with pytest.raises(BeartypeMathException, match="currently unsupported by class"):
+#     with pytest.raises(BeartypeDoorException, match="currently unsupported by class"):
 #         TypeHint(MyGeneric[int])

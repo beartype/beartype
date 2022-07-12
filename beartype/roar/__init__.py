@@ -49,6 +49,8 @@ from beartype.roar._roarexc import (
     BeartypeClawException as BeartypeClawException,
     BeartypeClawRegistrationException as BeartypeClawRegistrationException,
     BeartypeConfException as BeartypeConfException,
+    BeartypeDoorException as BeartypeDoorException,
+    BeartypeDoorNonpepException as BeartypeDoorNonpepException,
     BeartypeDecorException as BeartypeDecorException,
     BeartypeDecorWrappeeException as BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException as BeartypeDecorWrapperException,
@@ -78,7 +80,6 @@ from beartype.roar._roarexc import (
     BeartypeCallHintForwardRefException as BeartypeCallHintForwardRefException,
     BeartypeValeException as BeartypeValeException,
     BeartypeValeSubscriptionException as BeartypeValeSubscriptionException,
-    BeartypeMathException as BeartypeMathException,
 
     # Violations (i.e., exceptions raised during runtime type-checking).
     BeartypeAbbyHintViolation as BeartypeAbbyHintViolation,
