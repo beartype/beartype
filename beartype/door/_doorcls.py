@@ -14,6 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ TODO                               }....................
 #FIXME: Split into submodules for maintainability, please. \o/
 
+#FIXME: Privatize most (...or perhaps all) public instance variables, please.
+
 # ....................{ IMPORTS                            }....................
 from abc import ABC
 from beartype.door._doortest import die_unless_typehint
@@ -28,9 +30,8 @@ from beartype.typing import (
     Tuple,
     Type,
 )
-from beartype._data.hint.pep.sign import datapepsigns as signs
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
+from beartype._data.hint.pep.sign.datapepsigns import HintSignParamSpec
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
     get_hint_pep484585_callable_args,
@@ -47,13 +48,19 @@ from beartype._util.hint.pep.utilpepget import (
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from contextlib import suppress
 
-if IS_PYTHON_AT_LEAST_3_10:
-    from beartype.typing import ParamSpec as _ParamSpec
-else:
-    _ParamSpec = None  # type: ignore # noqa
-
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Document all public and private attributes of this class, please.
+#FIXME: Consider defining these new public methods:
+#    def is_bearable(obj: object) -> bool: ...
+#    def die_if_unbearable(obj: object) -> None: ...
+#
+#Since "TypeHint" will probably increasingly become the basis for our entire
+#code generation process, consider refactoring the existing
+#beartype.abby.is_bearable() and beartype.abby.die_if_unbearable() functions in
+#terms of the above functions: e.g.,
+#    # In "beartype.abby._abbytest":
+#    def is_bearable(obj: object, hint: object) -> bool:
+#        return TypeHint(hint).is_bearable(obj)  # <-- yeah. that's slick.
 class TypeHint(ABC):
     '''
     Abstract base class (ABC) of all **partially ordered type hint** (i.e.,
@@ -156,8 +163,8 @@ class TypeHint(ABC):
                 TypeHintSubclass = _TypeHintClass
             else:
                 raise BeartypeDoorNonpepException(
-                    f'Type hint {repr(hint)} currently unsupported by '
-                    f'"beartype.door.TypeHint".'
+                    f'Type hint {repr(hint)} '
+                    f'currently unsupported by "beartype.door.TypeHint".'
                 )
         # Else, this hint is supported.
 
@@ -553,30 +560,57 @@ class _TypeHintCallable(_TypeHintSubscripted):
         '''
 
         self._takes_any_args = False
+
         if len(self._args) == 0:  # pragma: no cover
-            # e.g. `Callable` without any arguments
-            # this may be unreachable, (since a bare Callable will go to _TypeHintClass)
-            # but it's here for completeness and safety.
+            # e.g. `Callable` without any arguments this may be unreachable,
+            # (since a bare Callable will go to _TypeHintClass) but it's here
+            # for completeness and safety.
             self._takes_any_args = True
             self._args = (Any,)  # returns any
         else:
             self._call_args = get_hint_pep484585_callable_args(self._hint)
-            if IS_PYTHON_AT_LEAST_3_10 and isinstance(
-                self._call_args, _ParamSpec):
-                raise NotImplementedError("ParamSpec not yet implemented.")
 
+            # If this hint was first subscripted by an ellipsis (i.e., "...")
+            # signifying a callable accepting an arbitrary number of parameters
+            # of arbitrary types...
             if self._call_args is Ellipsis:
                 # e.g. `Callable[..., Any]`
                 self._takes_any_args = True
                 self._call_args = ()  # Ellipsis in not a type, so strip it here.
+            # Else...
+            else:
+                # Sign uniquely identifying this parameter list if any *OR*
+                # "None" otherwise.
+                hint_args_sign = get_hint_pep_sign_or_none(self._call_args)
+
+                # If this hint was first subscripted by a PEP 612-compliant
+                # parameter specification, raise an exception. *sigh*
+                if hint_args_sign is HintSignParamSpec:
+                    raise BeartypeDoorNonpepException(
+                        f'Type hint {repr(self._hint)} '
+                        f'child PEP 612 "typing.ParamSpec" type hint '
+                        f'currently unsupported by "beartype.door.TypeHint".'
+                    )
+
+            #FIXME: Note this will fail if "self._call_args" is a PEP
+            #612-compliant "typing.ParamSpec(...)" or "typing.Concatenate[...]"
+            #object, as neither are tuples and thus *NOT* addable here.
+            # Recreate the tuple of child type hints subscripting this parent
+            # callable type hint from the tuple of argument type hints
+            # introspected above. Why? Because the latter is saner than the
+            # former in edge cases (e.g., ellipsis, empty argument lists).
             self._args = self._call_args + (self._args[-1],)
+
+        # Perform superclass validation.
         super()._validate()
+
 
     @property
     def arg_types(self) -> Tuple[TypeHint, ...]:
         # the arguments portion of the callable
         # may be an empty tuple if the callable takes no arguments
         return self._args_wrapped[:-1]
+
 
     @property
     def return_type(self) -> TypeHint:
@@ -648,6 +682,7 @@ class _TypeHintTuple(_TypeHintSubscripted):
         Specifically, remove any PEP-noncompliant type hints from the arguments,
         and set internal flags accordingly.
         '''
+
         if len(self._args) == 0:  # pragma: no cover
             # e.g. `Tuple` without any arguments
             # this may be unreachable, (since a bare Tuple will go to _TypeHintClass)
@@ -662,20 +697,28 @@ class _TypeHintTuple(_TypeHintSubscripted):
             self._args = (self._args[0],)
         super()._validate()
 
+
     @property
     def is_variable_length(self) -> bool:
         # Tuple[T, ...]
         return self._is_variable_length
 
+
     @property
     def _is_just_an_origin(self) -> bool:
         # Tuple[Any, ...]  or just Tuple
-        return self.is_variable_length and self._args[0] is Any
+        return (
+            self.is_variable_length and
+            bool(self._args) and
+            self._args[0] is Any
+        )
+
 
     @property
     def is_empty_tuple(self) -> bool:
         # Tuple[()]
         return self._is_empty_tuple
+
 
     def _is_le_branch(self, branch: TypeHint) -> bool:
         if branch._is_just_an_origin:
@@ -849,96 +892,26 @@ class _TypeHintUnion(_TypeHintSubscripted):
         raise NotImplementedError('_TypeHintUnion._is_le_branch() unsupported.')  # pragma: no cover
 
 # ....................{ DICTS                              }....................
-#FIXME: Shift into a new "_doordata" submodule, please. Note that doing so
+#FIXME: Shift into a new "_doordata" submodule, maybe? Note that doing so
 #requires as a prerequisite that we first split this submodule into smaller
 #submodules, which "_doordata" will then import individually from as needed.
+from beartype._data.hint.pep.sign.datapepsigns import (
+    HintSignTuple,
+    HintSignCallable,
+    HintSignLiteral,
+    HintSignAnnotated,
+)
 
 # Further initialized below by the _init() function.
 HINT_SIGN_TO_TYPEHINT: Dict[HintSign, Type[TypeHint]] = {
-    signs.HintSignTuple: _TypeHintTuple,
-    signs.HintSignCallable: _TypeHintCallable,
-    signs.HintSignLiteral: _TypeHintLiteral,
-    signs.HintSignAnnotated: _TypeHintAnnotated,
+    HintSignTuple:     _TypeHintTuple,
+    HintSignCallable:  _TypeHintCallable,
+    HintSignLiteral:   _TypeHintLiteral,
+    HintSignAnnotated: _TypeHintAnnotated,
 }
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
 to the :class:`TypeHint` subclass handling those hints.
-'''
-
-# ....................{ PRIVATE ~ frozensets               }....................
-# Note that the following frozensets are externally imported by unit tests and
-# thus intentionally declared as globals rather isolated to the _init() function
-# defined below.
-
-#FIXME: Shift into a new "_doordata" submodule, please.
-_HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1 = frozenset((
-    signs.HintSignAbstractSet,
-    signs.HintSignAsyncContextManager,
-    signs.HintSignAsyncIterable,
-    signs.HintSignAsyncIterator,
-    signs.HintSignAwaitable,
-    signs.HintSignCollection,
-    signs.HintSignContainer,
-    signs.HintSignContextManager,
-    signs.HintSignCounter,
-    signs.HintSignDeque,
-    signs.HintSignFrozenSet,
-    signs.HintSignIterable,
-    signs.HintSignIterator,
-    signs.HintSignKeysView,
-    signs.HintSignList,
-    signs.HintSignMatch,
-    signs.HintSignMappingView,
-    signs.HintSignMutableSequence,
-    signs.HintSignMutableSet,
-    signs.HintSignPattern,
-    signs.HintSignReversible,
-    signs.HintSignSequence,
-    signs.HintSignSet,
-    signs.HintSignType,
-    signs.HintSignValuesView,
-))
-'''
-Frozen set of all signs uniquely identifying **single-argument PEP-compliant
-type hints** (i.e., type hints subscriptable by only one child type hint)
-originating from an **isinstanceable origin type** (i.e., isinstanceable class
-such that *all* objects satisfying this hint are instances of this class).
-
-Note that the corresponding types in the typing module will have an ``_nparams``
-attribute with a value equal to 1.
-'''
-
-
-_HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2 = frozenset((
-    signs.HintSignAsyncGenerator,
-    # signs.HintSignCallable,  # defined explicitly below
-    signs.HintSignChainMap,
-    signs.HintSignDefaultDict,
-    signs.HintSignDict,
-    signs.HintSignItemsView,
-    signs.HintSignMapping,
-    signs.HintSignMutableMapping,
-    signs.HintSignOrderedDict,
-))
-'''
-Frozen set of all signs uniquely identifying **two-argument PEP-compliant
-type hints** (i.e., type hints subscriptable by exactly two child type hints)
-
-Note that the corresponding types in the typing module will have an ``_nparams``
-attribute with a value equal to 2.
-'''
-
-
-_HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3 = frozenset((
-    signs.HintSignCoroutine,
-    signs.HintSignGenerator,
-))
-'''
-Frozen set of all signs uniquely identifying **three-argument PEP-compliant
-type hints** (i.e., type hints subscriptable by exactly three child type hints)
-
-Note that the corresponding types in the typing module will have an ``_nparams``
-attribute with a value equal to 3.
 '''
 
 # ....................{ PRIVATE ~ initializers             }....................
@@ -948,12 +921,20 @@ def _init() -> None:
     Initialize this submodule.
     '''
 
+    # Isolate function-specific imports.
+    from beartype._data.hint.pep.sign.datapepsignset import (
+        HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1,
+        HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2,
+        HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3,
+        HINT_SIGNS_UNION,
+    )
+
     # Fully initialize the "HINT_SIGN_TO_TYPEHINT" dictionary declared above.
-    for sign in _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1:
+    for sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1:
         HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintOriginIsinstanceableArgs1
-    for sign in _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2:
+    for sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2:
         HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintOriginIsinstanceableArgs2
-    for sign in _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3:
+    for sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3:
         HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintOriginIsinstanceableArgs3
     for sign in HINT_SIGNS_UNION:
         HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintUnion

@@ -42,6 +42,7 @@ def die_unless_typehint(obj: object) -> None:
     # Else, this object is a type hint wrapper.
 
 # ....................{ TESTERS                            }....................
+#FIXME: Consider shifting to beartype.abby.is_subhint(), please.
 def is_subhint(subhint: object, superhint: object) -> bool:
     '''
     ``True`` only if the first passed hint is a **subhint** of the second passed

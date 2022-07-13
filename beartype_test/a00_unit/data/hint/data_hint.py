@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,7 +11,7 @@ cases on behalf of higher-level unit test submodules -- including PEP-compliant
 type hints, PEP-noncompliant type hint, and objects satisfying neither.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._cave._cavefast import (
     AnyType,
     NoneType,
@@ -27,7 +27,7 @@ from beartype_test.a00_unit.data.hint.pep.data_pep import (
     HINTS_PEP_META,
 )
 
-# ....................{ HINTS ~ tuples                    }....................
+# ....................{ HINTS ~ tuples                     }....................
 HINTS_META = HINTS_PEP_META + HINTS_NONPEP_META
 '''
 Tuple of all **PEP-agnostic type hint metadata** (i.e.,
@@ -36,7 +36,7 @@ metadata leveraged by various testing scenarios -- including both PEP-compliant
 and -noncompliant type hints).
 '''
 
-# ....................{ NON-HINTS ~ sets                  }....................
+# ....................{ NON-HINTS ~ sets                   }....................
 NOT_HINTS_HASHABLE = frozenset((
     # Scalar that is neither a type nor string (i.e., forward reference).
     0.12345678910111213141516,
@@ -50,7 +50,7 @@ Frozen set of various objects that are hashable but nonetheless unsupported by
 the :func:`beartype.beartype` decorator as valid type hints.
 '''
 
-# ....................{ NON-HINTS ~ tuples                }....................
+# ....................{ NON-HINTS ~ tuples                 }....................
 NOT_HINTS_UNHASHABLE = (
     # Dictionary.
     {'For all things turn to barrenness':
@@ -81,7 +81,7 @@ Since sets *cannot* by design contain unhashable objects, this container is
 defined as a tuple rather than a set.
 '''
 
-# ....................{ NON-PEP ~ classes                 }....................
+# ....................{ NON-PEP ~ classes                  }....................
 class NonpepCustom(str):
     '''
     PEP-noncompliant user-defined class subclassing an arbitrary superclass.
@@ -107,7 +107,7 @@ class NonpepCustomFakeTyping(object):
         return 'typing.FakeTypingType'
 NonpepCustomFakeTyping.__module__ = 'typing'
 
-# ....................{ NON-PEP ~ sets                    }....................
+# ....................{ NON-PEP ~ sets                     }....................
 # Note that we intentionally omit the "NonpepCustomFakeTyping" class here, as
 # that class masquerades too well as a "typing" class -- so well, in fact, that
 # "beartype._util.hint.pep.utilpeptest" functions are incapable of reasonably
@@ -143,7 +143,7 @@ Frozen set of **unignorable PEP-noncompliant type hints** (i.e.,
 PEP-noncompliant type hints that are *not* ignorable).
 '''
 
-# ....................{ NOT ~ sets                        }....................
+# ....................{ NOT ~ sets                         }....................
 NOT_HINTS_NONPEP = frozenset((
     # Set comprehension of tuples containing PEP-compliant type hints. Although
     # tuples containing PEP-noncompliant type hints are themselves valid
@@ -183,7 +183,7 @@ Tuple of various objects that are *not* PEP-compliant type hints exercising
 well-known edge cases.
 '''
 
-# ....................{ NOT ~ tuples                      }....................
+# ....................{ NOT ~ tuples                       }....................
 HINTS_IGNORABLE = (
     # Shallowly ignorable PEP-compliant type hints.
     HINTS_PEP_IGNORABLE_SHALLOW |

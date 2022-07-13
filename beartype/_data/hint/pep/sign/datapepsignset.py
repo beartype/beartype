@@ -4,11 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **PEP-compliant type hint sign sets** (i.e., frozen set globals
-aggregating instances of the
-:class:`beartype._data.hint.pep.sign.datapepsigncls.HintSign` class,
-enabling efficient categorization of signs as belonging to various categories
-of PEP-compliant type hints).
+Project-wide **type hint sign sets** (i.e., frozen set globals aggregating
+instances of the :class:`beartype._data.hint.pep.sign.datapepsigncls.HintSign`
+class, enabling efficient categorization of signs as belonging to various
+categories of type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -151,6 +150,202 @@ identifying unsubscripted type hints that are unconditionally ignorable by the
 :func:`beartype.beartype` decorator).
 '''
 
+# ....................{ SETS ~ kind                        }....................
+HINT_SIGNS_SEQUENCE_ARGS_1 = frozenset((
+    # ..................{ PEP (484|585)                      }..................
+    HintSignByteString,
+    HintSignList,
+    HintSignMutableSequence,
+    HintSignSequence,
+))
+'''
+Frozen set of all **standard sequence signs** (i.e., arbitrary objects uniquely
+identifying PEP-compliant type hints accepting exactly one subscripted type
+hint argument constraining *all* items of compliant sequences, which
+necessarily satisfy the :class:`collections.abc.Sequence` protocol with
+guaranteed ``O(1)`` indexation across all sequence items).
+
+This set intentionally excludes the:
+
+* :attr:`typing.AnyStr` sign, which accepts only the :class:`str` and
+  :class:`bytes` types as its sole subscripted argument, which does *not*
+  unconditionally constrain *all* items (i.e., unencoded and encoded characters
+  respectively) of compliant sequences but instead parametrizes this attribute.
+* :attr:`typing.ByteString` sign, which accepts *no* subscripted arguments.
+  :attr:`typing.ByteString` is simply an alias for the
+  :class:`collections.abc.ByteString` abstract base class (ABC) and thus
+  already handled by our fallback logic for supported PEP-compliant type hints.
+* :attr:`typing.Deque` sign, whose compliant objects (i.e.,
+  :class:`collections.deque` instances) only `guarantee O(n) indexation across
+  all sequence items <collections.deque_>`__:
+
+     Indexed access is ``O(1)`` at both ends but slows to ``O(n)`` in the
+     middle. For fast random access, use lists instead.
+
+* :attr:`typing.NamedTuple` sign, which embeds a variadic number of
+  PEP-compliant field type hints and thus requires special-cased handling.
+* :attr:`typing.Text` sign, which accepts *no* subscripted arguments.
+  :attr:`typing.Text` is simply an alias for the builtin :class:`str` type and
+  thus handled elsewhere as a PEP-noncompliant type hint.
+* :attr:`typing.Tuple` sign, which accepts a variadic number of subscripted
+  arguments and thus requires special-cased handling.
+
+.. _collections.deque:
+   https://docs.python.org/3/library/collections.html#collections.deque
+'''
+
+
+HINT_SIGNS_UNION = frozenset((
+    # ..................{ PEP 484                            }..................
+    HintSignOptional,
+    HintSignUnion,
+))
+'''
+Frozen set of all **union signs** (i.e., arbitrary objects uniquely identifying
+:pep:`484`-compliant type hints unifying one or more subscripted type hint
+arguments into a disjunctive set union of these arguments).
+
+If the active Python interpreter targets:
+
+* Python >= 3.9, the :attr:`typing.Optional` and :attr:`typing.Union`
+  attributes are distinct.
+* Python < 3.9, the :attr:`typing.Optional` attribute reduces to the
+  :attr:`typing.Union` attribute, in which case this set is technically
+  semantically redundant. Since tests of both object identity and set
+  membership are ``O(1)``, this set incurs no significant performance penalty
+  versus direct usage of the :attr:`typing.Union` attribute and is thus
+  unconditionally used as is irrespective of Python version.
+'''
+
+# ....................{ SIGNS ~ origin                     }....................
+HINT_SIGNS_ORIGIN_ISINSTANCEABLE = frozenset((
+    # ..................{ PEP (484|585)                      }..................
+    HintSignAbstractSet,
+    HintSignAsyncContextManager,
+    HintSignAsyncGenerator,
+    HintSignAsyncIterable,
+    HintSignAsyncIterator,
+    HintSignAwaitable,
+    HintSignByteString,
+    HintSignCallable,
+    HintSignChainMap,
+    HintSignCollection,
+    HintSignContainer,
+    HintSignContextManager,
+    HintSignCoroutine,
+    HintSignCounter,
+    HintSignDefaultDict,
+    HintSignDeque,
+    HintSignDict,
+    HintSignFrozenSet,
+    HintSignGenerator,
+    HintSignHashable,
+    HintSignItemsView,
+    HintSignIterable,
+    HintSignIterator,
+    HintSignKeysView,
+    HintSignList,
+    HintSignMapping,
+    HintSignMappingView,
+    HintSignMatch,
+    HintSignMutableMapping,
+    HintSignMutableSequence,
+    HintSignMutableSet,
+    HintSignOrderedDict,
+    HintSignPattern,
+    HintSignReversible,
+    HintSignSequence,
+    HintSignSet,
+    HintSignSized,
+    HintSignTuple,
+    HintSignType,
+    HintSignValuesView,
+))
+'''
+Frozen set of all signs uniquely identifying PEP-compliant type hints
+originating from an **isinstanceable origin type** (i.e., isinstanceable class
+such that *all* objects satisfying this hint are instances of this class).
+
+All hints identified by signs in this set are guaranteed to define
+``__origin__`` dunder instance variables whose values are the standard origin
+types they originate from. Since any object is trivially type-checkable against
+such a type by passing that object and type to the :func:`isinstance` builtin,
+*all* objects annotated by hints identified by signs in this set are at least
+shallowly type-checkable from wrapper functions generated by the
+:func:`beartype.beartype` decorator.
+'''
+
+# ....................{ SIGNS ~ origin : args              }....................
+HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1 = frozenset((
+    HintSignAbstractSet,
+    HintSignAsyncContextManager,
+    HintSignAsyncIterable,
+    HintSignAsyncIterator,
+    HintSignAwaitable,
+    HintSignCollection,
+    HintSignContainer,
+    HintSignContextManager,
+    HintSignCounter,
+    HintSignDeque,
+    HintSignFrozenSet,
+    HintSignIterable,
+    HintSignIterator,
+    HintSignKeysView,
+    HintSignList,
+    HintSignMatch,
+    HintSignMappingView,
+    HintSignMutableSequence,
+    HintSignMutableSet,
+    HintSignPattern,
+    HintSignReversible,
+    HintSignSequence,
+    HintSignSet,
+    HintSignType,
+    HintSignValuesView,
+))
+'''
+Frozen set of all signs uniquely identifying **single-argument PEP-compliant
+type hints** (i.e., type hints subscriptable by only one child type hint)
+originating from an **isinstanceable origin type** (i.e., isinstanceable class
+such that *all* objects satisfying this hint are instances of this class).
+
+Note that the corresponding types in the typing module will have an ``_nparams``
+instance variable with a value equal to 1.
+'''
+
+
+HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2 = frozenset((
+    HintSignAsyncGenerator,
+    # HintSignCallable,  # defined explicitly below
+    HintSignChainMap,
+    HintSignDefaultDict,
+    HintSignDict,
+    HintSignItemsView,
+    HintSignMapping,
+    HintSignMutableMapping,
+    HintSignOrderedDict,
+))
+'''
+Frozen set of all signs uniquely identifying **two-argument PEP-compliant
+type hints** (i.e., type hints subscriptable by exactly two child type hints)
+
+Note that the corresponding types in the typing module will have an ``_nparams``
+instance variable with a value equal to 2.
+'''
+
+
+HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3 = frozenset((
+    HintSignCoroutine,
+    HintSignGenerator,
+))
+'''
+Frozen set of all signs uniquely identifying **three-argument PEP-compliant
+type hints** (i.e., type hints subscriptable by exactly three child type hints)
+
+Note that the corresponding types in the typing module will have an ``_nparams``
+instance variable with a value equal to 3.
+'''
+
 # ....................{ SIGNS ~ return                     }....................
 HINT_SIGNS_RETURN_GENERATOR_ASYNC = frozenset((
     # ..................{ PEP (484|585)                      }..................
@@ -214,64 +409,6 @@ https://github.com/beartype/beartype/issues/65#issuecomment-954468111
 '''
 
 # ....................{ SIGNS ~ type                       }....................
-HINT_SIGNS_ORIGIN_ISINSTANCEABLE = frozenset((
-    # ..................{ PEP (484|585)                      }..................
-    HintSignAbstractSet,
-    HintSignAsyncContextManager,
-    HintSignAsyncGenerator,
-    HintSignAsyncIterable,
-    HintSignAsyncIterator,
-    HintSignAwaitable,
-    HintSignByteString,
-    HintSignCallable,
-    HintSignChainMap,
-    HintSignCollection,
-    HintSignContainer,
-    HintSignContextManager,
-    HintSignCoroutine,
-    HintSignCounter,
-    HintSignDefaultDict,
-    HintSignDeque,
-    HintSignDict,
-    HintSignFrozenSet,
-    HintSignGenerator,
-    HintSignHashable,
-    HintSignItemsView,
-    HintSignIterable,
-    HintSignIterator,
-    HintSignKeysView,
-    HintSignList,
-    HintSignMapping,
-    HintSignMappingView,
-    HintSignMatch,
-    HintSignMutableMapping,
-    HintSignMutableSequence,
-    HintSignMutableSet,
-    HintSignOrderedDict,
-    HintSignPattern,
-    HintSignReversible,
-    HintSignSequence,
-    HintSignSet,
-    HintSignSized,
-    HintSignTuple,
-    HintSignType,
-    HintSignValuesView,
-))
-'''
-Frozen set of all signs uniquely identifying PEP-compliant type hints
-originating from an **isinstanceable origin type** (i.e., isinstanceable class
-such that *all* objects satisfying this hint are instances of this class).
-
-All hints identified by signs in this set are guaranteed to define
-``__origin__`` dunder instance variables whose values are the standard origin
-types they originate from. Since any object is trivially type-checkable against
-such a type by passing that object and type to the :func:`isinstance` builtin,
-*all* objects annotated by hints identified by signs in this set are at least
-shallowly type-checkable from wrapper functions generated by the
-:func:`beartype.beartype` decorator.
-'''
-
-
 HINT_SIGNS_TYPE_MIMIC = frozenset((
     # ..................{ PEP 484                            }..................
     HintSignNewType,
@@ -394,71 +531,4 @@ HINT_SIGNS_SUPPORTED = frozenset((
 '''
 Frozen set of all **supported signs** (i.e., arbitrary objects uniquely
 identifying PEP-compliant type hints).
-'''
-
-# ....................{ SETS ~ kind                        }....................
-HINT_SIGNS_SEQUENCE_ARGS_1 = frozenset((
-    # ..................{ PEP (484|585)                      }..................
-    HintSignByteString,
-    HintSignList,
-    HintSignMutableSequence,
-    HintSignSequence,
-))
-'''
-Frozen set of all **standard sequence signs** (i.e., arbitrary objects uniquely
-identifying PEP-compliant type hints accepting exactly one subscripted type
-hint argument constraining *all* items of compliant sequences, which
-necessarily satisfy the :class:`collections.abc.Sequence` protocol with
-guaranteed ``O(1)`` indexation across all sequence items).
-
-This set intentionally excludes the:
-
-* :attr:`typing.AnyStr` sign, which accepts only the :class:`str` and
-  :class:`bytes` types as its sole subscripted argument, which does *not*
-  unconditionally constrain *all* items (i.e., unencoded and encoded characters
-  respectively) of compliant sequences but instead parametrizes this attribute.
-* :attr:`typing.ByteString` sign, which accepts *no* subscripted arguments.
-  :attr:`typing.ByteString` is simply an alias for the
-  :class:`collections.abc.ByteString` abstract base class (ABC) and thus
-  already handled by our fallback logic for supported PEP-compliant type hints.
-* :attr:`typing.Deque` sign, whose compliant objects (i.e.,
-  :class:`collections.deque` instances) only `guarantee O(n) indexation across
-  all sequence items <collections.deque_>`__:
-
-     Indexed access is ``O(1)`` at both ends but slows to ``O(n)`` in the
-     middle. For fast random access, use lists instead.
-
-* :attr:`typing.NamedTuple` sign, which embeds a variadic number of
-  PEP-compliant field type hints and thus requires special-cased handling.
-* :attr:`typing.Text` sign, which accepts *no* subscripted arguments.
-  :attr:`typing.Text` is simply an alias for the builtin :class:`str` type and
-  thus handled elsewhere as a PEP-noncompliant type hint.
-* :attr:`typing.Tuple` sign, which accepts a variadic number of subscripted
-  arguments and thus requires special-cased handling.
-
-.. _collections.deque:
-   https://docs.python.org/3/library/collections.html#collections.deque
-'''
-
-
-HINT_SIGNS_UNION = frozenset((
-    # ..................{ PEP 484                            }..................
-    HintSignOptional,
-    HintSignUnion,
-))
-'''
-Frozen set of all **union signs** (i.e., arbitrary objects uniquely identifying
-:pep:`484`-compliant type hints unifying one or more subscripted type hint
-arguments into a disjunctive set union of these arguments).
-
-If the active Python interpreter targets:
-
-* Python >= 3.9, the :attr:`typing.Optional` and :attr:`typing.Union`
-  attributes are distinct.
-* Python < 3.9, the :attr:`typing.Optional` attribute reduces to the
-  :attr:`typing.Union` attribute, in which case this set is technically
-  semantically redundant. Since tests of both object identity and set
-  membership are ``O(1)``, this set incurs no significant performance penalty
-  versus direct usage of the :attr:`typing.Union` attribute and is thus
-  unconditionally used as is irrespective of Python version.
 '''

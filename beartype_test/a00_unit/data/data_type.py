@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,7 +10,7 @@ This submodule predefines low-level class constants exercising known edge
 cases on behalf of higher-level unit test submodules.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 import builtins
 from beartype._data.mod.datamodpy import BUILTINS_MODULE_NAME
 from contextlib import contextmanager
@@ -23,7 +23,7 @@ from typing import (
     Generator,
 )
 
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 class CallableClass(object):
     '''
     Arbitrary pure-Python **callable class** (i.e., class defining the
@@ -38,7 +38,7 @@ class CallableClass(object):
 
         return len(args) + len(kwargs)
 
-# ....................{ CLASSES ~ hierarchy : 1           }....................
+# ....................{ CLASSES ~ hierarchy : 1            }....................
 # Arbitrary class hierarchy.
 
 class Class(object):
@@ -70,7 +70,7 @@ class SubclassSubclass(Subclass):
 
     pass
 
-# ....................{ CLASSES ~ hierarchy : 2           }....................
+# ....................{ CLASSES ~ hierarchy : 2            }....................
 # Yet another arbitrary class hierarchy.
 
 class OtherClass(object):
@@ -102,7 +102,7 @@ class OtherSubclassSubclass(OtherSubclass):
 
     pass
 
-# ....................{ CLASSES ~ isinstance              }....................
+# ....................{ CLASSES ~ isinstance               }....................
 class NonIsinstanceableMetaclass(type):
     '''
     Metaclass overriding the ``__instancecheck__()`` dunder method to
@@ -125,7 +125,7 @@ class NonIsinstanceableClass(object, metaclass=NonIsinstanceableMetaclass):
 
     pass
 
-# ....................{ CLASSES ~ issubclass              }....................
+# ....................{ CLASSES ~ issubclass               }....................
 class NonIssubclassableMetaclass(type):
     '''
     Metaclass overriding the ``__subclasscheck__()`` dunder method to
@@ -148,7 +148,7 @@ class NonIssubclassableClass(object, metaclass=NonIssubclassableMetaclass):
 
     pass
 
-# ....................{ CALLABLES ~ async : factory       }....................
+# ....................{ CALLABLES ~ async : factory        }....................
 # Note that we intentionally avoid declaring a factory function for deprecated
 # generator-based coroutines decorated by either the types.coroutine() or
 # asyncio.coroutine() decorators. CPython 3.10 removes support for these
@@ -185,7 +185,7 @@ async def async_generator_factory(text: str) -> AsyncGenerator[str, None]:
     # Yield an arbitrary string.
     yield f'{text}Rolls its perpetual stream; vast pines are strewing'
 
-# ....................{ CALLABLES ~ async : instance      }....................
+# ....................{ CALLABLES ~ async : instance       }....................
 async_generator = async_generator_factory(
     "Its destin'd path, or in the mangled soil")
 '''
@@ -202,7 +202,7 @@ Arbitrary pure-Python asynchronous non-generator coroutine.
 # Prevent Python from emitting "ResourceWarning" warnings.
 async_coroutine.close()
 
-# ....................{ CALLABLES ~ sync                  }....................
+# ....................{ CALLABLES ~ sync                   }....................
 def function():
     '''
     Arbitrary pure-Python function.
@@ -220,7 +220,7 @@ def context_manager_factory(obj: object) -> ContextManager[object]:
 
     yield obj
 
-# ....................{ CALLABLES ~ sync : decorator      }....................
+# ....................{ CALLABLES ~ sync : decorator       }....................
 def decorator(func: Callable) -> Callable:
     '''
     **Identity decorator** (i.e., decorator returning the passed callable
@@ -256,7 +256,7 @@ def decorator_wrapping(func):
     # Return this closure.
     return _identity_wrapper
 
-# ....................{ CALLABLES ~ sync : generator      }....................
+# ....................{ CALLABLES ~ sync : generator       }....................
 def sync_generator_factory() -> Generator[int, None, None]:
     '''
     Create and return a pure-Python generator yielding a single integer,
@@ -289,7 +289,7 @@ def sync_generator_factory_yield_int_send_float_return_str() -> (
     # Return a string constant.
     return 'Unmarred, scarred revenant remnants'
 
-# ....................{ CALLABLES ~ sync : closure        }....................
+# ....................{ CALLABLES ~ sync : closure         }....................
 def closure_factory():
     '''
     Arbitrary pure-Python closure factory function.
@@ -327,13 +327,13 @@ def closure_cell_factory():
     # Return this closure's first and only cell variable.
     return closure.__closure__[0]
 
-# ....................{ CALLABLES ~ sync : instance       }....................
+# ....................{ CALLABLES ~ sync : instance        }....................
 sync_generator = sync_generator_factory()
 '''
 Arbitrary pure-Python synchronous generator.
 '''
 
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS                          }....................
 CALLABLE_CODE_OBJECT = function.__code__
 '''
 Arbitrary callable code object.
@@ -352,13 +352,13 @@ try:
 except TypeError:
     TRACEBACK = exc_info()[2]
 
-# ....................{ CONSTANTS ~ filenames             }....................
+# ....................{ CONSTANTS ~ filenames              }....................
 MODULE_FILENAME = __file__
 '''
 Absolute filename of the current submodule, declared purely for convenience.
 '''
 
-# ....................{ SETS ~ callable                   }....................
+# ....................{ SETS ~ callable                    }....................
 CALLABLES_PYTHON = frozenset((function, Class, Class.instance_method))
 '''
 Frozen set of pure-Python callables exercising edge cases.
@@ -408,7 +408,7 @@ intentionally defined as a tuple rather than frozen set due to the
 unhashability of one or more members (e.g., ``TRACEBACK``).
 '''
 
-# ....................{ SETS ~ type : builtin             }....................
+# ....................{ SETS ~ type : builtin              }....................
 TYPES_BUILTIN = frozenset((
     bool,
     complex,
@@ -426,7 +426,7 @@ Frozen set of all **builtin types** i.e., globally accessible C-based type
 requiring *no* explicit importation)(.
 '''
 
-# ....................{ SETS ~ type : non-builtin         }....................
+# ....................{ SETS ~ type : non-builtin          }....................
 TYPES_BUILTIN_FAKE = frozenset((
     # Type of this builtin.
     builtin.__class__

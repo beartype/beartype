@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,7 +11,56 @@ PEP-compliant type hints, exercising known edge cases on behalf of higher-level
 unit test submodules.
 '''
 
-# ....................{ SETS                              }....................
+# ....................{ TODO                               }....................
+#FIXME: In hindsight, the structure of both this submodule and subsidiary
+#submodules imported below by the _init() method is simply *ABYSMAL.* Instead:
+#* Define one new @pytest.fixture-decorated session-scoped function for each
+#  public global variable currently defined below: e.g.,
+#      # Instead of this...
+#      HINTS_PEP_IGNORABLE_SHALLOW = None
+#
+#      # ...do this instead.
+#      from beartype_test.a00_util.data.hint.pep.proposal.data_pep484 import (
+#          hints_pep_ignorable_shallow_pep484,
+#      )
+#      from beartype_test.a00_util.data.hint.pep.proposal._data_pep593 import (
+#          hints_pep_ignorable_shallow_pep593,
+#      )
+#      from collections.abc import Set
+#      from pytest import fixture
+#
+#      @fixture(scope='session')
+#      def hints_pep_ignorable_shallow(
+#          hints_pep_ignorable_shallow_pep484,
+#          hints_pep_ignorable_shallow_pep593,
+#          ...,
+#      ) -> Set:
+#          return (
+#              hints_pep_ignorable_shallow_pep484 |
+#              hints_pep_ignorable_shallow_pep593 |
+#              ...
+#          )
+#* In "beartype_test.a00_unit.conftest" submodule, import those fixtures to
+#  implicitly expose those fixtures to all unit tests: e.g.,
+#      from beartype_test.a00_util.data.hint.pep.data_pep import (
+#          hints_pep_ignorable_shallow,
+#      )
+## Refactor all unit tests previously explicitly importing
+#  "HINTS_PEP_IGNORABLE_SHALLOW" to instead accept the
+#  "hints_pep_ignorable_shallow" fixture as a function parameter: e.g.,
+#      def test_em_up(hints_pep_ignorable_shallow: Set) -> None: ...
+#
+#The advantages are obvious. Currently, we unconditionally build these globals
+#out in an extremely convoluted process that happens really extremely early at
+#*PYTEST COLLECTION TIME.* That's horrible. The above refactoring instead defers
+#that build-out to *TEST CALL TIME.* Any tests skipped or ignored for the
+#current test session will result in fixtures required by those tests also being
+#skipped and ignored. Ultimately, though, the principal benefit is
+#maintainability; the above approach isolates PEP-specific data containers to
+#their own PEP-specific fixtures, which are then composable into even larger
+#PEP-agnostic fixtures. It just makes sense. Let's do this sometime, everybody.
+
+# ....................{ SETS                               }....................
 # Initialized by the _init() function below.
 HINTS_PEP_HASHABLE = None
 '''
@@ -28,7 +77,7 @@ testing purposes.
 
 # Initialized by the _init() function below.
 HINTS_PEP_IGNORABLE_SHALLOW = {
-    # ..................{ NON-PEP                           }..................
+    # ..................{ NON-PEP                            }..................
     # The PEP-noncompliant builtin "object" type is the transitive superclass
     # of all classes, parameters and return values annotated as "object"
     # unconditionally match *ALL* objects under isinstance()-based type
@@ -57,7 +106,7 @@ nonetheless ignorable and thus require dynamic testing by the high-level
 demonstrate this fact).
 '''
 
-# ....................{ TUPLES                            }....................
+# ....................{ TUPLES                             }....................
 # Initialized by the _init() function below.
 HINTS_PEP_META = []
 '''
@@ -74,7 +123,7 @@ hints (e.g., ``collections.abc.Callable[[], str]`` under :pep:`585`)
 impermissible for use as dictionary keys or set members.
 '''
 
-# ....................{ INITIALIZERS                      }....................
+# ....................{ INITIALIZERS                       }....................
 def _init() -> None:
     '''
     Initialize this submodule.
@@ -83,10 +132,10 @@ def _init() -> None:
     # Defer function-specific imports.
     import sys
     from beartype._util.utilobject import is_object_hashable
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import HintPepMetadata
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+        HintPepMetadata)
     from beartype_test.a00_unit.data.hint.pep.mod import (
-        _data_hintmodnumpy,
-    )
+        _data_hintmodnumpy)
     from beartype_test.a00_unit.data.hint.pep.proposal import (
         data_pep484,
         _data_pep544,

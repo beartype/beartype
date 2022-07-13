@@ -15,10 +15,6 @@ This submodule unit tests the public API of the public
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-# ....................{ TODO                               }....................
-
-# ....................{ IMPORTS                            }....................
 from beartype_test.util.mark.pytskip import (
     # skip,
     skip_if_python_version_less_than,
@@ -460,23 +456,6 @@ def test_typehint_equals(
 #FIXME: Currently disabled due to failing tests under at least Python 3.7 and
 #3.8. See also relevant commentary at:
 #    https://github.com/beartype/beartype/pull/136#issuecomment-1175841494
-# @pytest.mark.parametrize(
-#     "nparams, sign_group",
-#     [
-#         (1, _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1),
-#         (2, _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2),
-#         (3, _HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3),
-#     ],
-# )
-# def test_arg_nparams(nparams, sign_group):
-#     """Make sure that our hint sign groups are consistent with the typing module."""
-#     for sign in sign_group:
-#         actual = getattr(t, sign.name)._nparams
-#         assert (
-#             actual == nparams
-#         ), f"{sign.name} has {actual} params, should have {nparams}"
-#
-#
 # def test_callable_takes_args():
 #     assert TypeHint(t.Callable[[], t.Any]).takes_no_args is True
 #     assert TypeHint(t.Callable[[int], t.Any]).takes_no_args is False
