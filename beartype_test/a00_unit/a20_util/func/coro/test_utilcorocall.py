@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype callable calling utility unit tests.**
+**Beartype asynchronous callable calling utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.func.utilfunccall` submodule.
+:mod:`beartype._util.coro.utilcorocall` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -17,15 +17,15 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_call_func_async_sync() -> None:
+def test_run_coro_from_factory_sync() -> None:
     '''
     Test usage of the
-    :func:`beartype._util.func.utilfunccall.call_func_async_sync` caller.
+    :func:`beartype._util.coro.utilcorocall.run_coro_from_factory_sync` caller.
     '''
 
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
-    from beartype._util.func.utilfunccall import call_func_async_sync
+    from beartype._util.func.coro.utilcorocall import run_coro_from_factory_sync
     from beartype_test.a00_unit.data.data_type import (
         async_coroutine_factory,
         function,
@@ -34,7 +34,7 @@ def test_call_func_async_sync() -> None:
 
     # Assert this caller returns the value returned by the coroutine created and
     # returned by this coroutine factory.
-    assert call_func_async_sync(
+    assert run_coro_from_factory_sync(
         async_coroutine_factory,
         'And wall impregnable of beaming ice.\n'
     ) == (
@@ -45,11 +45,11 @@ def test_call_func_async_sync() -> None:
     # Assert this caller raises the expected exception when passed an uncallable
     # object.
     with raises(_BeartypeUtilCallableException):
-        call_func_async_sync('From yon remotest waste, have overthrown')
+        run_coro_from_factory_sync('From yon remotest waste, have overthrown')
     # Assert this caller raises the expected exception when passed a synchronous
     # callable.
     with raises(_BeartypeUtilCallableException):
-        call_func_async_sync(function)
+        run_coro_from_factory_sync(function)
 
     async def never_to_be_reclaimed():
         '''
@@ -69,4 +69,4 @@ def test_call_func_async_sync() -> None:
     # Assert this caller raises the expected exception when passed a coroutine
     # factory whose coroutine raises this exception when called.
     with raises(ValueError):
-        call_func_async_sync(never_to_be_reclaimed)
+        run_coro_from_factory_sync(never_to_be_reclaimed)

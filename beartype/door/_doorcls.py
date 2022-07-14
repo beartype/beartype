@@ -31,7 +31,7 @@ from beartype.typing import (
     Type,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsigns import HintSignParamSpec
+from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_CALLABLE_ARGS
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
     get_hint_pep484585_callable_args,
@@ -45,7 +45,6 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_or_none,
     get_hint_pep_sign_or_none,
 )
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from contextlib import suppress
 
 # ....................{ SUPERCLASSES                       }....................
@@ -207,7 +206,7 @@ class TypeHint(ABC):
 
         # Tuple of all low-level child type hints of this hint.
         self._args = get_hint_pep_args(hint)
-        self._validate()
+        self._munge_args()
 
         # Tuple of all high-level child type hint wrappers of this hint.
         self._args_wrapped = self._wrap_children(self._args)
@@ -354,7 +353,7 @@ class TypeHint(ABC):
         return other.is_subhint(self)
 
     # ..................{ PRIVATE                            }..................
-    def _validate(self):
+    def _munge_args(self):
         '''
         Used by subclasses to validate :attr:`_args` and :attr:`_origin`.
         '''
@@ -497,7 +496,7 @@ class _TypeHintSubscripted(TypeHint):
     #property for safety. This currently permits accidental modification. Gah!
     _required_nargs: int = -1
 
-    def _validate(self):
+    def _munge_args(self):
         if self._required_nargs > 0 and len(self._args) != self._required_nargs:
             #FIXME: Consider raising a less ambiguous exception type, yo.
             # In most cases it will be hard to reach this exception, since most
@@ -554,7 +553,7 @@ class _TypeHintOriginIsinstanceableArgs2(_TypeHintSubscripted):
 
 
 class _TypeHintCallable(_TypeHintSubscripted):
-    def _validate(self):
+    def _munge_args(self):
         '''
         Perform argument validation for a callable.
         '''
@@ -584,11 +583,11 @@ class _TypeHintCallable(_TypeHintSubscripted):
                 hint_args_sign = get_hint_pep_sign_or_none(self._call_args)
 
                 # If this hint was first subscripted by a PEP 612-compliant
-                # parameter specification, raise an exception. *sigh*
-                if hint_args_sign is HintSignParamSpec:
+                # type hint, raise an exception. *sigh*
+                if hint_args_sign in HINT_SIGNS_CALLABLE_ARGS:
                     raise BeartypeDoorNonpepException(
                         f'Type hint {repr(self._hint)} '
-                        f'child PEP 612 "typing.ParamSpec" type hint '
+                        f'child PEP 612 type hint hint {repr(self._call_args)} '
                         f'currently unsupported by "beartype.door.TypeHint".'
                     )
 
@@ -602,31 +601,56 @@ class _TypeHintCallable(_TypeHintSubscripted):
             self._args = self._call_args + (self._args[-1],)
 
         # Perform superclass validation.
-        super()._validate()
+        super()._munge_args()
 
 
+    #FIXME: Makes sense -- but let's rename to, say, param_typehint(). Note we
+    #intentionally choose "param" rather than "arg" here for disambiguity with
+    #the low-level "hint.__args__" tuple.
+    #FIXME: For the same reason, consider renaming:
+    #* get_hint_pep484585_callable_args() to
+    #  get_hint_pep484585_callable_params().
     @property
     def arg_types(self) -> Tuple[TypeHint, ...]:
-        # the arguments portion of the callable
-        # may be an empty tuple if the callable takes no arguments
+        '''
+        Arguments portion of the callable.
+
+        May be an empty tuple if the callable takes no arguments
+        '''
+
         return self._args_wrapped[:-1]
 
 
+    #FIXME: Makes sense -- but let's rename to, say, return_typehint().
     @property
     def return_type(self) -> TypeHint:
         # the return type of the callable
         return self._args_wrapped[-1]
 
+
+    #FIXME: Does this make sense?
     @property
     def takes_any_args(self) -> bool:
-        # Callable[...,
+        # Callable[..., ]
         return self._takes_any_args
 
+
+    #FIXME: Does this make sense?
     @property
     def takes_no_args(self) -> bool:
-        # Callable[[],
+        # Callable[[], ]
         return not self.arg_types and not self.takes_any_args
 
+
+    #FIXME: Does this make sense? Probably not. Callers can instead just:
+    #    hint.return_typehint is Any
+    #
+    #I mean, I get that we routinely test this below -- but those tests just
+    #trivially reduce to:
+    #    self._args[-1] is Any
+    #
+    #Moreover, this test is actually insufficient. There are *MANY* different
+    #type hints that are ignorable and thus semantically equivalent to "Any".
     @property
     def returns_any(self) -> bool:
         # Callable[..., Any]
@@ -659,6 +683,12 @@ class _TypeHintCallable(_TypeHintSubscripted):
         ):
             return False
 
+        #FIXME: Insufficient, sadly. There are *MANY* different type hints that
+        #are ignorable and thus semantically equivalent to "Any". It's likely
+        #we should just reduce this to a one-liner resembling:
+        #    return self.return_type <= branch.return_type
+        #
+        #Are we missing something? We're probably missing something. *sigh*
         if not branch.returns_any:
             return (
                 False
@@ -676,17 +706,18 @@ class _TypeHintTuple(_TypeHintSubscripted):
     _is_variable_length: bool = False
     _is_empty_tuple: bool = False
 
-    def _validate(self):
-        '''Perform argument validation for a tuple.
+    def _munge_args(self):
+        '''
+        Perform argument validation for a tuple.
 
         Specifically, remove any PEP-noncompliant type hints from the arguments,
         and set internal flags accordingly.
         '''
 
+        # e.g. `Tuple` without any arguments
+        # This may be unreachable, (since a bare Tuple will go to
+        # _TypeHintClass) but it's here for completeness and safety.
         if len(self._args) == 0:  # pragma: no cover
-            # e.g. `Tuple` without any arguments
-            # this may be unreachable, (since a bare Tuple will go to _TypeHintClass)
-            # but it's here for completeness and safety.
             self._is_variable_length = True
             self._args = (Any,)
         elif len(self._args) == 1 and self._args[0] == ():
@@ -695,7 +726,8 @@ class _TypeHintTuple(_TypeHintSubscripted):
         elif len(self._args) == 2 and self._args[1] is Ellipsis:
             self._is_variable_length = True
             self._args = (self._args[0],)
-        super()._validate()
+
+        super()._munge_args()
 
 
     @property

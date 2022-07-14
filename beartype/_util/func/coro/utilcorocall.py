@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **callable calling utilites** (i.e., callables calling other
-callables in various ways).
+Project-wide **asynchronous callable calling utilities** (i.e., callables
+calling asynchronous callables in various ways).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -20,7 +20,7 @@ from beartype.roar._roarexc import _BeartypeUtilCallableException
 from collections.abc import Callable
 
 # ....................{ CALLERS                            }....................
-def call_func_async_sync(func: Callable, *args, **kwargs) -> object:
+def run_coro_from_factory_sync(func: Callable, *args, **kwargs) -> object:
     '''
     Synchronously call the asynchronous coroutine object created and returned by
     calling the passed **asynchronous coroutine factory** (i.e., awaitable
@@ -37,7 +37,7 @@ def call_func_async_sync(func: Callable, *args, **kwargs) -> object:
     func : Callable
         Asynchronous coroutine factory to be called.
 
-    All remaining parameters are passed as is to this callable.
+    All remaining parameters are passed as is to the ``func`` callable.
 
     Returns
     ----------

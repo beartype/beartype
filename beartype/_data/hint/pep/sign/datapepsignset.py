@@ -14,7 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.hint.pep.sign.datapepsigns import (
-    # PEP-agnostic signs.
     HintSignAbstractSet,
     HintSignAnnotated,
     HintSignAny,
@@ -27,10 +26,12 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignCallable,
     HintSignChainMap,
     HintSignCollection,
+    HintSignConcatenate,
     HintSignContainer,
     HintSignContextManager,
     HintSignCoroutine,
     HintSignCounter,
+    HintSignDataclassInitVar,
     HintSignDefaultDict,
     HintSignDeque,
     HintSignDict,
@@ -56,6 +57,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNone,
     HintSignOptional,
     HintSignOrderedDict,
+    HintSignParamSpec,
     HintSignPattern,
     HintSignProtocol,
     HintSignReversible,
@@ -68,9 +70,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeVar,
     HintSignUnion,
     HintSignValuesView,
-
-    # PEP-specific signs.
-    HintSignDataclassInitVar,
 )
 
 # ....................{ SIGNS ~ bare                       }....................
@@ -151,6 +150,25 @@ identifying unsubscripted type hints that are unconditionally ignorable by the
 '''
 
 # ....................{ SETS ~ kind                        }....................
+HINT_SIGNS_CALLABLE_ARGS = frozenset((
+    # ..................{ PEP 612                            }..................
+    HintSignConcatenate,
+    HintSignPattern,
+))
+'''
+Frozen set of all **callable argument signs** (i.e., arbitrary objects uniquely
+identifying PEP-compliant child type hints typing the argument lists of parent
+:class:`collections.abc.Callable` type hints).
+
+This set necessarily excludes:
+
+* **Standard callable argument lists** (e.g., ``Callable[[bool, int], str]``),
+  which are specified as standard lists and thus identified by *no* signs.
+* **Ellipsis callable argument lists** (e.g., ``Callable[..., str]``), which are
+  specified as the ellipsis singleton and thus identified by *no* signs.
+'''
+
+
 HINT_SIGNS_SEQUENCE_ARGS_1 = frozenset((
     # ..................{ PEP (484|585)                      }..................
     HintSignByteString,
