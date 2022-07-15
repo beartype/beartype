@@ -20,6 +20,8 @@ from beartype.typing import (
 )
 from beartype._data.datatyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignCallable
+from beartype._data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_CALLABLE_PARAMS)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
 # ....................{ HINTS                              }....................
@@ -27,7 +29,7 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 # "beartype" to static analysis, reduce this hint to a simplistic facsimile of
 # its full form tolerated by static type checkers.
 if TYPE_CHECKING:
-    _HINT_PEP484585_CALLABLE_ARGS = Union[
+    _HINT_PEP484585_CALLABLE_PARAMS = Union[
         # For hints of the form "Callable[[{arg_hints}], {return_hint}]".
         tuple,
         # For hints of the form "Callable[typing.ParamSpec[...], {return_hint}]".
@@ -35,7 +37,7 @@ if TYPE_CHECKING:
     ]
 # Else, expand this hint to its full form supported by runtime type checkers.
 else:
-    _HINT_PEP484585_CALLABLE_ARGS = Union[
+    _HINT_PEP484585_CALLABLE_PARAMS = Union[
         # For hints of the form "Callable[[{arg_hints}], {return_hint}]".
         tuple,
         # For hints of the form "Callable[..., {return_hint}]".
@@ -120,22 +122,20 @@ def _die_unless_hint_pep484585_callable(
     # Else, this object is a callable type hint, raise an exception.
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please. Note that we should exercise *ALL* edge cases
-#by defining sample type hints doing so in our test suite.
-def get_hint_pep484585_callable_args(
+def get_hint_pep484585_callable_params(
     # Mandatory parameters.
     hint: object,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
     exception_prefix: str = '',
-) -> _HINT_PEP484585_CALLABLE_ARGS:
+) -> _HINT_PEP484585_CALLABLE_PARAMS:
     '''
     Object describing all **parameter type hints** (i.e., PEP-compliant child
     type hints typing the parameters accepted by a passed or returned callable)
-    of the passed :pep:`484`- or :pep:`585`-compliant **callable type hint**
-    (i.e., ``typing.Callable[...]`` or ``collections.abc.Callable[...]`` type
-    hint).
+    of the passed **callable type hint** (i.e., :pep:`484`-compliant
+    ``typing.Callable[...]`` or :pep:`585`-compliant
+    ``collections.abc.Callable[...]`` type hint).
 
     This getter returns one of several different types of objects, conditionally
     depending on the type of the first argument originally subscripting this
@@ -148,8 +148,8 @@ def get_hint_pep484585_callable_args(
       ``typing.ParamSpec[...]`` subscripting (indexing) this hint.
 
     This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    :func:`callable_cached` decorator), as the implementation requires no
+    iteration and thus exhibits guaranteed constant-time behaviour.
 
     Parameters
     ----------
@@ -164,7 +164,7 @@ def get_hint_pep484585_callable_args(
 
     Returns
     ----------
-    _HINT_PEP484585_CALLABLE_ARGS
+    _HINT_PEP484585_CALLABLE_PARAMS
         First argument originally subscripting this hint.
 
     Raises
@@ -174,10 +174,6 @@ def get_hint_pep484585_callable_args(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._data.hint.pep.sign.datapepsigns import (
-        HintSignConcatenate,
-        HintSignParamSpec,
-    )
     from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_args,
         get_hint_pep_sign_or_none,
@@ -309,7 +305,7 @@ def get_hint_pep484585_callable_args(
     # ellipsis.
 
     # Sign uniquely identifying this parameter type hint if any *OR* "None".
-    hint_sign = get_hint_pep_sign_or_none(hint_param)
+    hint_param_sign = get_hint_pep_sign_or_none(hint_param)
 
     # If this parameter type hint is a PEP-compliant parameter type (i.e.,
     # uniquely identifiable by a sign), return this hint as is.
@@ -329,11 +325,7 @@ def get_hint_pep484585_callable_args(
     #     >>> Callable[List[int], bool]
     #     TypeError: Callable[args, result]: args must be a list. Got
     #     typing.List[int]
-    #FIXME: Refactor this set into a proper "datapepsignset" frozen set!
-    if hint_sign in {
-        HintSignConcatenate,
-        HintSignParamSpec,
-    }:
+    if hint_param_sign in HINT_SIGNS_CALLABLE_PARAMS:
         return hint_param
     # Else, this parameter type hint is *NOT* a PEP-compliant parameter type
     # hint. This hint *CANNOT* be "special" and *MUST* thus be the single
@@ -342,4 +334,74 @@ def get_hint_pep484585_callable_args(
     #     (list[int], bool)
 
     # In this case, return the 1-tuple containing exactly this hint.
+    # print(f'get_hint_pep484585_callable_params({repr(hint)}) == ({repr(hint_param)},)')
+    # print(f'{repr(hint_param)} sign: {repr(hint_param_sign)}')
     return (hint_param,)
+
+
+def get_hint_pep484585_callable_return(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
+    exception_prefix: str = '',
+) -> object:
+    '''
+    **Return type hint** (i.e., PEP-compliant child type hint typing the return
+    returned by a passed or returned callable) of the passed
+    **callable type hint** (i.e., :pep:`484`-compliant ``typing.Callable[...]``
+    or :pep:`585`-compliant ``collections.abc.Callable[...]`` type hint).
+
+    This getter is considerably more trivial than the companion
+    :func:`get_hint_pep484585_callable_params` getter. Although this getter
+    exists largely for orthogonality and completeness, callers are advised to
+    defer to this getter rather than access this return type hint directly.
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Callable type hint to be inspected.
+    exception_cls : TypeException, optional
+        Type of exception to be raised. Defaults to
+        :exc:`BeartypeDecorHintPep484585Exception`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
+
+    Returns
+    ----------
+    object
+        Last argument originally subscripting this hint.
+
+    Raises
+    ----------
+    :exc:`exception_cls`
+        If this hint is *not* a callable type hint.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+
+    # If this hint is *NOT* a callable type hint, raise an exception.
+    _die_unless_hint_pep484585_callable(hint)
+    # Else, this hint is a callable type hint.
+
+    # Flattened tuple of the one or more child type hints subscripting this
+    # callable type hint. See get_hint_pep484585_callable_params() for details.
+    hint_args = get_hint_pep_args(hint)
+
+    # Return the last object subscripting this hint.
+    #
+    # Note that both the PEP 484-compliant "typing.Callable" factory *AND* the
+    # PEP 585-compliant "collections.abc.Callable" factory guarantee this object
+    # to exist. Ergo, we intentionally avoid repeating any validation here:
+    #     $ python3.10
+    #     >>> from collections.abc import Callable
+    #     >>> Callable[()]
+    #     TypeError: Callable must be used as Callable[[arg, ...], result].
+    return hint_args[-1]

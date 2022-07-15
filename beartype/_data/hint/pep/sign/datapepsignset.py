@@ -150,10 +150,10 @@ identifying unsubscripted type hints that are unconditionally ignorable by the
 '''
 
 # ....................{ SETS ~ kind                        }....................
-HINT_SIGNS_CALLABLE_ARGS = frozenset((
+HINT_SIGNS_CALLABLE_PARAMS = frozenset((
     # ..................{ PEP 612                            }..................
     HintSignConcatenate,
-    HintSignPattern,
+    HintSignParamSpec,
 ))
 '''
 Frozen set of all **callable argument signs** (i.e., arbitrary objects uniquely

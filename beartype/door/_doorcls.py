@@ -31,10 +31,11 @@ from beartype.typing import (
     Type,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_CALLABLE_ARGS
+from beartype._data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_CALLABLE_PARAMS)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
-    get_hint_pep484585_callable_args,
+    get_hint_pep484585_callable_params,
 )
 from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,
@@ -567,7 +568,7 @@ class _TypeHintCallable(_TypeHintSubscripted):
             self._takes_any_args = True
             self._args = (Any,)  # returns any
         else:
-            self._call_args = get_hint_pep484585_callable_args(self._hint)
+            self._call_args = get_hint_pep484585_callable_params(self._hint)
 
             # If this hint was first subscripted by an ellipsis (i.e., "...")
             # signifying a callable accepting an arbitrary number of parameters
@@ -584,7 +585,7 @@ class _TypeHintCallable(_TypeHintSubscripted):
 
                 # If this hint was first subscripted by a PEP 612-compliant
                 # type hint, raise an exception. *sigh*
-                if hint_args_sign in HINT_SIGNS_CALLABLE_ARGS:
+                if hint_args_sign in HINT_SIGNS_CALLABLE_PARAMS:
                     raise BeartypeDoorNonpepException(
                         f'Type hint {repr(self._hint)} '
                         f'child PEP 612 type hint hint {repr(self._call_args)} '
@@ -608,7 +609,7 @@ class _TypeHintCallable(_TypeHintSubscripted):
     #intentionally choose "param" rather than "arg" here for disambiguity with
     #the low-level "hint.__args__" tuple.
     #FIXME: For the same reason, consider renaming:
-    #* get_hint_pep484585_callable_args() to
+    #* get_hint_pep484585_callable_params() to
     #  get_hint_pep484585_callable_params().
     @property
     def arg_types(self) -> Tuple[TypeHint, ...]:
