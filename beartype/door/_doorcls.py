@@ -109,6 +109,29 @@ class TypeHint(ABC):
     '''
 
     # ..................{ DUNDERS                            }..................
+    #FIXME: Currently, this fails to cache unhashable type hints. Sadly, one of
+    #the most common kinds of type hints are unhashable: callable type hints of
+    #the form "Callable[[...], ...]". Since these hints are so ubiquitous, we
+    #*REALLY* want to add explicit support for caching callable type hints to
+    #our @callable_cached decorator directly. Notably, improve that decorator
+    #to:
+    #* Detect when a passed parameter has the name "hint" (e.g., by using our
+    #  existing argument parsing infrastructure).
+    #* If this is the case:
+    #  * Detect when the passed hint is a callable type hint.
+    #  * If this is the case:
+    #    * Cache (but do *NOT* actually modify the real passed parameter) the
+    #      parameter child type hint of this callable type hint as a new
+    #      "_CallableCachedCallableTypeHint" object. See below. Alternately, for
+    #      efficiency, we should probably *INSTEAD* just... Oh, wait.
+    #* Define a new private "_CallableCachedCallableTypeHint" dataclass ala:
+    #      @dataclass
+    #      class _CallableCachedCallableTypeHint(object):
+    #          params_hint: object
+    #          return_hint: object
+    #FIXME: *OH. WAIT.* We're pretty sure none of the above is actually a
+    #concern, because callable type hints flatten their arguments. Facepalm! In
+    #any case, let's at least unit test that to ensure this behaves as expected.
     @callable_cached
     def __new__(cls, hint: object) -> 'TypeHint':
         '''
@@ -194,16 +217,46 @@ class TypeHint(ABC):
         if isinstance(hint, TypeHint):
             return
 
+        #FIXME: Consider defining a new public read-only "hint" property
+        #exposing this to interested third-parties.
         # Classify all passed parameters. Note that this type hint is guaranteed
         # to be a type hint by validation performed by the __new__() method.
         # the full type hint passed to the constructor
         self._hint = hint
 
+        #FIXME: Consider defining a new public read-only "sign" property
+        #exposing this to interested third-parties. Note that doing so will also
+        #require moving our "datapepsigns" submodule to a public location. So:
+        #* Rename "beartype._data.hint.pep.sign.datapepsigns" to
+        #  "beartype.door.sign". Get it, "door sign"? I'll show myself out.
+
         # Sign uniquely identifying this and that hint if any *OR* "None"
         self._hint_sign = get_hint_pep_sign_or_none(hint)
 
+        #FIXME: This... is pretty wierd. I mean, I definitely get this part:
+        #    self._origin: type = get_hint_pep_origin_or_none(hint)
+        #
+        #Sure. That makes sense and is thus great. But the trailing " or hint"
+        #confounds me a bit. For one thing, arbitrary type hints are definitely
+        #*NOT* types and thus really *NOT* origin types. We probably just want
+        #to reduce this to simply:
+        #    self._origin = get_hint_pep_origin_or_none(hint)
+
         # Root type, that may or may not be subscripted
         self._origin: type = get_hint_pep_origin_or_none(hint) or hint  # type: ignore
+
+        #FIXME: Consider refactoring as follows:
+        #* Rename _munge_args() to _make_args().
+        #* Define TypeHint._make_args() to resemble:
+        #      def _make_args(self) -> tuple:
+        #          return get_hint_pep_args(self._hint)
+        #* Call that below as follows:
+        #      self._args = self._make_args(hint)
+        #* Redefine that in subclasses to resemble:
+        #      def _make_args(self) -> tuple:
+        #          args = super._make_args()
+        #          ...
+        #          return args
 
         # Tuple of all low-level child type hints of this hint.
         self._args = get_hint_pep_args(hint)
@@ -234,17 +287,17 @@ class TypeHint(ABC):
         # If that object is *NOT* an instance of the same class, defer to the
         # __eq__() method defined by the class of that object instead.
         if not isinstance(other, TypeHint):
+            #FIXME: Actually, don't we need to return "NotImplemented" here for
+            #Python to implicitly defer to the __eq__() method defined by the
+            #class of that object instead? Pretty sure. Investigate, please!
             return False
         # Else, that object is an instance of the same class.
-
-        if self._is_just_an_origin and other._is_just_an_origin:
+        elif self._is_args_ignorable and other._is_args_ignorable:
             return self._origin == other._origin
-
         # If either...
-        if (
+        elif (
             # These hints have differing signs *OR*...
-            self._hint_sign is not other._hint_sign
-            or
+            self._hint_sign is not other._hint_sign or
             # These hints have a differing number of child type hints...
             len(self._args_wrapped) != len(other._args_wrapped)
         ):
@@ -308,6 +361,11 @@ class TypeHint(ABC):
         return f'TypeHint({repr(self._hint)})'
 
     # ..................{ PUBLIC                             }..................
+    #FIXME: Define a new is_ignorable() tester resembling:
+    #    #@callable_cached  # <-- needed? wanted?
+    #    def is_ignorable(self) -> bool:
+    #        return is_hint_ignorable(self._hint)
+
     @callable_cached
     def is_subhint(self, other: 'TypeHint') -> bool:
         '''
@@ -419,7 +477,7 @@ class TypeHint(ABC):
 
     # ..................{ PRIVATE ~ abstract : property      }..................
     @property
-    def _is_just_an_origin(self) -> bool:
+    def _is_args_ignorable(self) -> bool:
         '''
         Flag that indicates this hint can be evaluating only using the origin.
 
@@ -437,7 +495,7 @@ class TypeHint(ABC):
            >>> get_hint_pep_sign_or_none(typing.Tuple)
            HintSignTuple
 
-        In this case, using :attr:`_is_just_an_origin` lets us simplify the
+        In this case, using :attr:`_is_args_ignorable` lets us simplify the
         comparison.
         '''
 
@@ -453,7 +511,7 @@ class _TypeHintClass(TypeHint):
     _hint: type
 
     @property
-    def _is_just_an_origin(self) -> bool:
+    def _is_args_ignorable(self) -> bool:
         '''Plain types are their origin.'''
         return True
 
@@ -473,7 +531,7 @@ class _TypeHintClass(TypeHint):
         #     return True
 
         # Return true only if...
-        return branch._is_just_an_origin and issubclass(
+        return branch._is_args_ignorable and issubclass(
             self._origin, branch._origin)
 
 
@@ -510,13 +568,20 @@ class _TypeHintSubscripted(TypeHint):
 
 
     @property
-    def _is_just_an_origin(self) -> bool:
+    def _is_args_ignorable(self) -> bool:
+
+        #FIXME: Kinda unsure about this. Above, we define "_origin" as:
+        #    self._origin: type = get_hint_pep_origin_or_none(hint) or hint  # type: ignore
+        #
+        #That effectively reduces to:
+        #    self._origin: type = hint.__origin__ or hint  # type: ignore
         return all(x._origin is Any for x in self._args_wrapped)
+
 
     def _is_le_branch(self, branch: TypeHint) -> bool:
         # If the branch is not subscripted, then we assume it is subscripted
         # with ``Any``, and we simply check that the origins are compatible.
-        if branch._is_just_an_origin:
+        if branch._is_args_ignorable:
             return issubclass(self._origin, branch._origin)
 
         return (
@@ -566,6 +631,9 @@ class _TypeHintCallable(_TypeHintSubscripted):
             # (since a bare Callable will go to _TypeHintClass) but it's here
             # for completeness and safety.
             self._takes_any_args = True
+
+            #FIXME: Actually, pretty sure this instead needs to be:
+            #    self._args = (..., Any,)  # returns any
             self._args = (Any,)  # returns any
         else:
             self._call_args = get_hint_pep484585_callable_params(self._hint)
@@ -605,12 +673,16 @@ class _TypeHintCallable(_TypeHintSubscripted):
         super()._munge_args()
 
 
-    #FIXME: Makes sense -- but let's rename to, say, param_typehint(). Note we
-    #intentionally choose "param" rather than "arg" here for disambiguity with
+    #FIXME: Makes sense -- but let's rename to, say, params_typehint(). Note we
+    #intentionally choose "params" rather than "args" here for disambiguity with
     #the low-level "hint.__args__" tuple.
-    #FIXME: For the same reason, consider renaming:
-    #* get_hint_pep484585_callable_params() to
-    #  get_hint_pep484585_callable_params().
+    #FIXME: Inefficient if frequently accessed. Consider:
+    #* Improving our @callable_cached decorator to efficiently handle
+    #  properties.
+    #* Prepend @callable_cached onto this decorator list: e.g.,
+    #      @callable_cached
+    #      @property
+    #      def arg_types(self) -> Tuple[TypeHint, ...]:
     @property
     def arg_types(self) -> Tuple[TypeHint, ...]:
         '''
@@ -629,48 +701,75 @@ class _TypeHintCallable(_TypeHintSubscripted):
         return self._args_wrapped[-1]
 
 
-    #FIXME: Does this make sense?
+    #FIXME: Rename to is_params_ignorable() for orthogonality with
+    #is_args_ignorable().
+    #FIXME: Refactor the trivially decidable "_takes_any_args" boolean away,
+    #please. Instead, just:
+    #* Remove "_takes_any_args".
+    #* Prepend @callable_cached onto this decorator list as above.
+    #* Refactor this property to resemble:
+    #      @callable_cached
+    #      @property
+    #      def is_params_ignorable(self) -> bool:
+    #          # Callable[..., ]
+    #          return hint._args[0] is Ellipsis
+    #FIXME: Alternately, let's assume that "TypeHint(Ellipsis)" behaves as
+    #expected. Then this just trivially reduces to:
+    #    return hint.params_typehint.is_ignorable()
+    #
+    #In other words, *JUST EXCISE THIS.* Callers should just call
+    #hint.params_typehint.is_ignorable() instead.
     @property
     def takes_any_args(self) -> bool:
         # Callable[..., ]
         return self._takes_any_args
 
 
-    #FIXME: Does this make sense?
+    #FIXME: Does this make sense? Probably not. We don't call this anywhere.
+    #Moreover, callers can simply test "not hint.params_typehint" instead, which
+    #is even more Pythonic than this manual approach. Excise this up, please.
     @property
     def takes_no_args(self) -> bool:
         # Callable[[], ]
         return not self.arg_types and not self.takes_any_args
 
 
-    #FIXME: Does this make sense? Probably not. Callers can instead just:
-    #    hint.return_typehint is Any
+    #FIXME: Rename to is_return_ignorable() for orthogonality.
+    #FIXME: Moreover, this test is actually insufficient. There are *MANY*
+    #different type hints that are ignorable and thus semantically equivalent to
+    #"Any". We will probably need to refactor this to resemble:
+    #    @callable_cached
+    #    @property
+    #    def is_return_ignorable(self) -> bool:
+    #        return self.return_typehint.is_ignorable()
     #
-    #I mean, I get that we routinely test this below -- but those tests just
-    #trivially reduce to:
-    #    self._args[-1] is Any
-    #
-    #Moreover, this test is actually insufficient. There are *MANY* different
-    #type hints that are ignorable and thus semantically equivalent to "Any".
+    #In other words, *JUST EXCISE THIS.* Callers should just call
+    #hint.return_typehint.is_ignorable() instead.
     @property
     def returns_any(self) -> bool:
         # Callable[..., Any]
         return self._args[-1] is Any
 
+
     @property
-    def _is_just_an_origin(self) -> bool:
+    def _is_args_ignorable(self) -> bool:
+        #FIXME: Refactor to resemble:
+        #    return self.is_params_ignorable and self.is_return_ignorable
         # Callable[..., Any] (or just `Callable`)
         return self.takes_any_args and self.returns_any
 
+
     def _is_le_branch(self, branch: TypeHint) -> bool:
+
         # If the branch is not subscripted, then we assume it is subscripted
         # with ``Any``, and we simply check that the origins are compatible.
-        if branch._is_just_an_origin:
+        if branch._is_args_ignorable:
             return issubclass(self._origin, branch._origin)
         if not isinstance(branch, _TypeHintCallable):
             return False
         if not issubclass(self._origin, branch._origin):
             return False
+
         if not branch.takes_any_args and (
             (
                 self.takes_any_args
@@ -738,7 +837,7 @@ class _TypeHintTuple(_TypeHintSubscripted):
 
 
     @property
-    def _is_just_an_origin(self) -> bool:
+    def _is_args_ignorable(self) -> bool:
         # Tuple[Any, ...]  or just Tuple
         return (
             self.is_variable_length and
@@ -754,12 +853,12 @@ class _TypeHintTuple(_TypeHintSubscripted):
 
 
     def _is_le_branch(self, branch: TypeHint) -> bool:
-        if branch._is_just_an_origin:
+        if branch._is_args_ignorable:
             return issubclass(self._origin, branch._origin)
 
         if not isinstance(branch, _TypeHintTuple):
             return False
-        if self._is_just_an_origin:
+        if self._is_args_ignorable:
             return False
         if branch.is_empty_tuple:
             return self.is_empty_tuple
@@ -799,7 +898,7 @@ class _TypeHintLiteral(_TypeHintSubscripted):
             return all(arg in other._args for arg in self._args)
 
         # If the other hint is a just an origin
-        if other._is_just_an_origin:
+        if other._is_args_ignorable:
             # we check that our args instances of that origin
             return all(isinstance(x, other._origin) for x in self._args)
 
@@ -807,7 +906,7 @@ class _TypeHintLiteral(_TypeHintSubscripted):
 
 
     @property
-    def _is_just_an_origin(self) -> bool:
+    def _is_args_ignorable(self) -> bool:
         return False
 
 
@@ -818,6 +917,7 @@ class _TypeHintLiteral(_TypeHintSubscripted):
 
 
 class _TypeHintAnnotated(TypeHint):
+
     def __init__(self, hint: object) -> None:
         super().__init__(hint)
         # Child type hints annotated by these parent "typing.Annotated[...]"
@@ -828,11 +928,13 @@ class _TypeHintAnnotated(TypeHint):
         # arguments subscripting these hints).
         self._metadata = get_hint_pep593_metadata(hint)
 
+
     @property
-    def _is_just_an_origin(self) -> bool:
+    def _is_args_ignorable(self) -> bool:
         # since Annotated[] must be used with at least two arguments, we are
         # never just the origin of the metahint
         return False
+
 
     def _is_le_branch(self, branch: TypeHint) -> bool:
         # If the other type is not annotated, we ignore annotations on this
