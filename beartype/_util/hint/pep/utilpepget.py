@@ -89,10 +89,15 @@ if IS_PYTHON_AT_LEAST_3_9:
 else:
     def get_hint_pep_args(hint: object) -> tuple:
 
-        # Return the value of the "__args__" dunder attribute if this hint
-        # defines this attribute *OR* the empty tuple otherwise.
+        # in python < 3.9, and unparametrized Generic would have the attribute
+        # `_special` set to True (but the actual __args__ are often a TypeVar).
+        # Because we want to differentiate between unparametrized and parametrized
+        # Generics, we check whether the hint is `_special` and if so, we return
+        # the empty tuple (instead of the TypeVar).
         if getattr(hint, '_special', False):
             return ()
+        # Return the value of the "__args__" dunder attribute if this hint
+        # defines this attribute *OR* the empty tuple otherwise.
         return getattr(hint, '__args__', ())
 
 # Document this function regardless of implementation details above.
