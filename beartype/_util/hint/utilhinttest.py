@@ -149,7 +149,8 @@ def is_hint(hint: object) -> bool:
 @callable_cached
 def is_hint_ignorable(hint: object) -> bool:
     '''
-    ``True`` only if the passed type hint is **ignorable.**
+    ``True`` only if the passed type hint is **ignorable** (i.e., conveys *no*
+    meaningful semantics despite superficially appearing to do so).
 
     This tester function is memoized for efficiency.
 

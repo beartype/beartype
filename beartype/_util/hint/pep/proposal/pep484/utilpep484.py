@@ -44,12 +44,11 @@ def is_hint_pep484_ignorable_or_none(
     Specifically, this tester function returns ``True`` only if this object is
     a deeply ignorable :pep:`484`-compliant type hint, including:
 
-    * A parametrization of the :class:`typing.Generic` abstract base class
-      (ABC) by one or more type variables. As the name implies, this ABC is
-      generic and thus fails to impose any meaningful constraints. Since a type
-      variable in and of itself also fails to impose any meaningful
-      constraints, these parametrizations are safely ignorable in all possible
-      contexts: e.g.,
+    * A parametrization of the :class:`typing.Generic` abstract base class (ABC)
+      by one or more type variables. As the name implies, this ABC is generic
+      and thus fails to impose any meaningful constraints. Since a type variable
+      in and of itself also fails to impose any meaningful constraints, these
+      parametrizations are safely ignorable in all possible contexts: e.g.,
 
       .. code-block:: python
 
@@ -141,7 +140,7 @@ def is_hint_pep484_ignorable_or_none(
     # Else, this hint is *NOT* a PEP 484-compliant union.
     #
     # If this hint is a PEP 484-compliant generic...
-    if hint_sign is HintSignGeneric:
+    elif hint_sign is HintSignGeneric:
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.utilpepget import (
             get_hint_pep_origin_or_none)
@@ -152,8 +151,8 @@ def is_hint_pep484_ignorable_or_none(
         # "typing.Generic[T]"), return true.
         #
         # Note that we intentionally avoid calling the
-        # get_hint_pep_origin_type_isinstanceable_or_none() function here, which has
-        # been intentionally designed to exclude PEP-compliant type hints
+        # get_hint_pep_origin_type_isinstanceable_or_none() function here, which
+        # has been intentionally designed to exclude PEP-compliant type hints
         # originating from "typing" type origins for stability reasons.
         if get_hint_pep_origin_or_none(hint) is Generic:
             # print(f'Testing generic hint {repr(hint)} deep ignorability... True')

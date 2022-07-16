@@ -28,8 +28,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
-    is_hint_pep484_ignorable_or_none,
-)
+    is_hint_pep484_ignorable_or_none)
 from beartype._util.hint.pep.proposal.utilpep544 import (
     is_hint_pep544_ignorable_or_none)
 from beartype._util.hint.pep.proposal.utilpep593 import (
@@ -60,7 +59,7 @@ Each such function is expected to return either:
 
 * If the passed object is fully compliant with that PEP:
 
-    * If this object is a ignorable, ``True``.
+    * If this object is ignorable, ``True``.
     * Else, ``False``.
 
 * If this object is *not* fully compliant with that PEP, ``None``.

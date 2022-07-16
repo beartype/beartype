@@ -278,27 +278,27 @@ HINTS_REPR_IGNORABLE_SHALLOW: FrozenSet[str] = {  # type: ignore[assignment]
 
     # ..................{ NON-PEP                            }..................
     # The PEP-noncompliant builtin "object" type is the transitive superclass
-    # of all classes, parameters and return values annotated as "object"
+    # of all classes. Ergo, parameters and return values annotated as "object"
     # unconditionally match *ALL* objects under isinstance()-based type
     # covariance and thus semantically reduce to unannotated parameters and
     # return values. This is literally the "beartype.cave.AnyType" type.
     "<class 'object'>",
 
     # ..................{ PEP 604                            }..................
-    # The low-level C-based "types.UnionType" class underlying PEP
-    # 604-compliant |-style unions (e.g., "int | float") imposes no constraints
-    # and is thus also semantically synonymous with the ignorable
-    # PEP-noncompliant "beartype.cave.AnyType" and hence "object" types.
-    # Nonetheless, this class *CANNOT* be instantiated from Python code:
+    # The low-level C-based "types.UnionType" class underlying PEP 604-compliant
+    # |-style unions (e.g., "int | float") imposes no constraints and is thus
+    # also semantically synonymous with the ignorable PEP-noncompliant
+    # "beartype.cave.AnyType" and hence "object" types. Nonetheless, this class
+    # *CANNOT* be instantiated from Python code:
     #     >>> import types
     #     >>> types.UnionType(int, bool)
     #     TypeError: cannot create 'types.UnionType' instances
     #
-    # Likewise, this class *CANNOT* be subscripted. It follows that there
-    # exists no meaningful equivalent of shallow type-checking for these
-    # unions. While trivially feasible, listing "<class 'types.UnionType'>"
-    # here would only prevent callers from meaningfully type-checking these
-    # unions passed as valid parameters or returned as valid returns: e.g.,
+    # Likewise, this class *CANNOT* be subscripted. It follows that there exists
+    # no meaningful equivalent of shallow type-checking for these unions. While
+    # trivially feasible, listing "<class 'types.UnionType'>" here would only
+    # prevent callers from meaningfully type-checking these unions passed as
+    # valid parameters or returned as valid returns: e.g.,
     #     @beartype
     #     def muh_union_printer(muh_union: UnionType) -> None: print(muh_union)
     #
@@ -507,9 +507,9 @@ def _init() -> None:
         # semantically synonymous with the ignorable PEP-noncompliant
         # "beartype.cave.AnyType" and hence "object" types. Since PEP
         # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
-        #     singleton including "typing.Generic" semantically expands to that
-        #     singelton subscripted by an implicit "Any" argument, "Generic"
-        #     semantically expands to the implicit "Generic[Any]" singleton.
+        # singleton including "typing.Generic" semantically expands to that
+        # singleton subscripted by an implicit "Any" argument, "Generic"
+        # semantically expands to the implicit "Generic[Any]" singleton.
         'Generic',
 
         # ................{ PEP 544                            }................

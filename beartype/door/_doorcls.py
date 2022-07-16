@@ -46,6 +46,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_or_none,
     get_hint_pep_sign_or_none,
 )
+from beartype._util.hint.utilhinttest import is_hint_ignorable
 from contextlib import suppress
 
 # ....................{ SUPERCLASSES                       }....................
@@ -360,20 +361,109 @@ class TypeHint(ABC):
 
         return f'TypeHint({repr(self._hint)})'
 
-    # ..................{ PUBLIC                             }..................
-    #FIXME: Define a new is_ignorable() tester resembling:
-    #    #@callable_cached  # <-- needed? wanted?
-    #    def is_ignorable(self) -> bool:
-    #        return is_hint_ignorable(self._hint)
+    # ..................{ PROPERTIES                         }..................
+    @property
+    def is_ignorable(self) -> bool:
+        '''
+        ``True`` only if this type hint is **ignorable** (i.e., conveys
+        *no* meaningful semantics despite superficially appearing to do so).
 
+        While one might expect the set of all ignorable type hints to be both
+        finite and small, this set is actually **countably infinite** in size.
+        Countably infinitely many type hints are ignorable. This includes:
+
+        * :attr:`typing.Any`, by design.
+        * :class:`object`, the root superclass of all types. Ergo, parameters
+          and return values annotated as :class:`object` unconditionally match
+          *all* objects under :func:`isinstance`-based type covariance and thus
+          semantically reduce to unannotated parameters and return values.
+        * The unsubscripted :attr:`typing.Optional` singleton, which
+          semantically expands to the implicit ``Optional[Any]`` type hint under
+          :pep:`484`. Since :pep:`484` also stipulates that all ``Optional[t]``
+          type hints semantically expand to ``Union[t, type(None)]`` type hints
+          for arbitrary arguments ``t``, ``Optional[Any]`` semantically expands
+          to merely ``Union[Any, type(None)]``. Since all unions subscripted by
+          :attr:`typing.Any` semantically reduce to merely :attr:`typing.Any`,
+          the unsubscripted :attr:`typing.Optional` singleton also reduces to
+          merely :attr:`typing.Any`. This intentionally excludes the
+          ``Optional[type(None)]`` type hint, which the :mod:`typing` module
+          reduces to merely ``type(None)``.
+        * The unsubscripted :attr:`typing.Union` singleton, which
+          semantically reduces to :attr:`typing.Any` by the same argument.
+        * Any subscription of :attr:`typing.Union` by one or more ignorable type
+          hints. There exists a countably infinite number of such subscriptions,
+          many of which are non-trivial to find by manual inspection. The
+          ignorability of a union is a transitive property propagated "virally"
+          from child to parent type hints. Consider:
+
+          * ``Union[Any, bool, str]``. Since :attr:`typing.Any` is ignorable,
+            this hint is trivially ignorable by manual inspection.
+          * ``Union[str, List[int], NewType('MetaType', Annotated[object,
+            53])]``. Although several child type hints of this union are
+            non-ignorable, the deeply nested :class:`object` child type hint is
+            ignorable by the argument above. It transitively follows that the
+            ``Annotated[object, 53]`` parent type hint subscripted by
+            :class:`object`, the :attr:`typing.NewType` parent type hint aliased
+            to ``Annotated[object, 53]``, *and* the entire union subscripted by
+            that :attr:`typing.NewType` are themselves all ignorable as well.
+
+        * Any subscription of :attr:`typing.Annotated` by one or more ignorable
+          type hints. As with :attr:`typing.Union`, there exists a countably
+          infinite number of such subscriptions. (See the prior item.)
+        * The :class:`typing.Generic` and :class:`typing.Protocol` superclasses,
+          both of which impose no constraints *in and of themselves.* Since all
+          possible objects satisfy both superclasses. both superclasses are
+          synonymous to the ignorable :class:`object` root superclass: e.g.,
+
+          .. code-block:: python
+
+             >>> from typing as Protocol
+             >>> isinstance(object(), Protocol)
+             True
+             >>> isinstance('wtfbro', Protocol)
+             True
+             >>> isinstance(0x696969, Protocol)
+             True
+
+        * Any subscription of either the :class:`typing.Generic` or
+          :class:`typing.Protocol` superclasses, regardless of whether the child
+          type hints subscripting those superclasses are ignorable or not.
+          Subscripting a type that conveys no meaningful semantics continues to
+          convey no meaningful semantics. For example, the type hints
+          ``typing.Generic[typing.Any]`` and ``typing.Generic[str]`` are both
+          equally ignorable – despite the :class:`str` class being otherwise
+          unignorable in most type hinting contexts.
+        * And frankly many more. And... *now we know why this tester exists.*
+
+        This tester method is memoized for efficiency.
+
+        Returns
+        ----------
+        bool
+            ``True`` only if this type hint is ignorable.
+        '''
+
+        # Mechanic: Somebody set up us the bomb.
+        return is_hint_ignorable(self._hint)
+
+    # ..................{ TESTERS                            }..................
     @callable_cached
     def is_subhint(self, other: 'TypeHint') -> bool:
         '''
-        ``True`` only if the type hint wrapped by this wrapper is a **subhint**
-        of the type hint wrapped by the passed wrapper.
+        ``True`` only if this type hint is a **subhint** of the passed type
+        hint.
 
-        This method is memoized and thus enjoys ``O(1)`` amortized worst-case
-        time complexity across all calls to this method.
+        This tester method is memoized for efficiency.
+
+        Parameters
+        ----------
+        other : TypeHint
+            Other type hint to test whether this type hint is a subhint of.
+
+        Returns
+        ----------
+        bool
+            ``True`` only if this type hint is a subhint of that other hint.
 
         See Also
         ----------
@@ -392,11 +482,20 @@ class TypeHint(ABC):
 
     def is_superhint(self, other: 'TypeHint') -> bool:
         '''
-        ``True`` only if the type hint wrapped by this wrapper is a
-        **superhint** of the type hint wrapped by the passed wrapper.
+        ``True`` only if this type hint is a **superhint** of the passed type
+        hint.
 
-        This method is memoized and thus enjoys ``O(1)`` amortized worst-case
-        time complexity across all calls to this method.
+        This tester method is memoized for efficiency.
+
+        Parameters
+        ----------
+        other : TypeHint
+            Other type hint to test whether this type hint is a superhint of.
+
+        Returns
+        ----------
+        bool
+            ``True`` only if this type hint is a superhint of that other hint.
 
         See Also
         ----------
@@ -714,7 +813,8 @@ class _TypeHintCallable(_TypeHintSubscripted):
     #          # Callable[..., ]
     #          return hint._args[0] is Ellipsis
     #FIXME: Alternately, let's assume that "TypeHint(Ellipsis)" behaves as
-    #expected. Then this just trivially reduces to:
+    #expected. It probably doesn't. So, we'll need to first do something about
+    #that. Then this just trivially reduces to:
     #    return hint.params_typehint.is_ignorable()
     #
     #In other words, *JUST EXCISE THIS.* Callers should just call
@@ -751,10 +851,25 @@ class _TypeHintCallable(_TypeHintSubscripted):
         return self._args[-1] is Any
 
 
+    #FIXME: Refactor to resemble:
+    #    return self.is_params_ignorable and self.is_return_ignorable
+    #FIXME: Actually, is this even needed? Pretty sure the superclass
+    #implementation should implicitly handle this already, assuming the
+    #superclass implementation defers to the new "TypeHint.is_ignorable"
+    #property... which it almost certainly doesn't yet. *sigh*
+    #FIXME: Additionally, we'll need to add support for ignoring ignorable
+    #callable type hints to our core is_hint_ignorable() tester. Specifically:
+    #* Ignore "Callable[..., {hint_ignorable}]" type hints, where "..." is the
+    #  ellipsis singleton and "{hint_ignorable}" is any ignorable type hint.
+    #  This has to be handled in a deep manner by:
+    #  * Defining a new is_hint_pep484585_ignorable_or_none() tester in the
+    #    existing "utilpep484585" submodule, whose initial implementation tests
+    #    for *ONLY* ignorable callable type hints.
+    #  * Import that tester in the "utilpeptest" submodule.
+    #  * Add that tester to the "_IS_HINT_PEP_IGNORABLE_TESTERS" tuple.
+    #  * Add example ignorable callable type hints to our test suite's data.
     @property
     def _is_args_ignorable(self) -> bool:
-        #FIXME: Refactor to resemble:
-        #    return self.is_params_ignorable and self.is_return_ignorable
         # Callable[..., Any] (or just `Callable`)
         return self.takes_any_args and self.returns_any
 

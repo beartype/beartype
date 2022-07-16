@@ -453,6 +453,36 @@ def test_typehint_equals(
         assert typehint_b != nonhint
 
 
+def test_typehint_is_ignorable() -> None:
+    '''
+    Test the :meth:`beartype.door.TypeHint.is_ignorable` tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.door import TypeHint
+    from beartype.roar import BeartypeDoorNonpepException
+    from beartype_test.a00_unit.data.hint.data_hint import HINTS_IGNORABLE
+    from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
+    from contextlib import suppress
+
+    # Assert this method accepts ignorable type hints.
+    for hint_ignorable in HINTS_IGNORABLE:
+        #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
+        #all currently unsupported type hints.
+        with suppress(BeartypeDoorNonpepException):
+            assert TypeHint(hint_ignorable).is_ignorable is True
+
+    # Assert this method:
+    # * Accepts unignorable PEP-compliant type hints.
+    # * Rejects ignorable PEP-compliant type hints.
+    for hint_pep_meta in HINTS_PEP_META:
+        #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
+        #all currently unsupported type hints.
+        with suppress(BeartypeDoorNonpepException):
+            assert TypeHint(hint_pep_meta.hint).is_ignorable is (
+                hint_pep_meta.is_ignorable)
+
+
 #FIXME: Currently disabled due to failing tests under at least Python 3.7 and
 #3.8. See also relevant commentary at:
 #    https://github.com/beartype/beartype/pull/136#issuecomment-1175841494
