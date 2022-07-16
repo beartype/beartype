@@ -15,10 +15,6 @@ This submodule unit tests the public API of the public
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import (
-    # skip,
-    skip_if_python_version_less_than,
-)
 from pytest import fixture
 
 # ....................{ FIXTURES                           }....................
@@ -340,8 +336,6 @@ def hint_equality_cases() -> 'Iterable[Tuple[object, object, bool]]':
     return tuple(HINT_EQUALITY_CASES)
 
 # ....................{ TESTS ~ testers                    }....................
-#FIXME: Resolve, please. It looks like Python 3.7 and 3.8 are failing hard here.
-@skip_if_python_version_less_than('3.9.0')
 def test_is_subhint(
     hint_subhint_cases: 'Iterable[Tuple[object, object, bool]]') -> None:
     '''
@@ -400,8 +394,6 @@ def test_typehint_new() -> None:
         TypeHint(b'Is there, that from the boundaries of the sky')
 
 
-#FIXME: Resolve, please. It looks like Python 3.7 and 3.8 are failing hard here.
-@skip_if_python_version_less_than('3.9.0')
 def test_typehint_equals(
     hint_equality_cases: 'Iterable[Tuple[object, object, bool]]') -> None:
     '''

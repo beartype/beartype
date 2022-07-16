@@ -91,6 +91,8 @@ else:
 
         # Return the value of the "__args__" dunder attribute if this hint
         # defines this attribute *OR* the empty tuple otherwise.
+        if getattr(hint, '_special', False):
+            return ()
         return getattr(hint, '__args__', ())
 
 # Document this function regardless of implementation details above.
