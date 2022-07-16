@@ -77,7 +77,6 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         Sequence,
         Sized,
         Tuple,
-        TypedDict,
         NamedTuple,
         Union,
     )
@@ -91,11 +90,6 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
     class MuhNutherThing:
         def __len__(self) -> int:
             ...
-
-
-    class MuhDict(TypedDict):
-        thing_one: str
-        thing_two: int
 
 
     class MuhTuple(NamedTuple):
@@ -200,7 +194,6 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         # moar nestz
         (List[int], Union[str, List[Union[int, str]]], True),
         # not really types:
-        (MuhDict, dict, True),
         (MuhTuple, tuple, True),
     ]
 
@@ -212,12 +205,17 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         from beartype.typing import (
             Literal,
             Protocol,
+            TypedDict,
         )
 
         # Arbitrary caching @beartype protocol.
         class MuhThingP(Protocol):
             def muh_method(self):
                 ...
+
+        class MuhDict(TypedDict):
+            thing_one: str
+            thing_two: int
 
         # Append cases exercising version-specific relations.
         HINT_SUBHINT_CASES.extend((
@@ -232,6 +230,8 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
             (Literal[7, 8, "3"], Union[list, int], False),
             (int, Literal[7], False),
             (Literal[7, 8], Literal[7, 8, 9], True),
+            # PEP 589-compliant type hints.
+            (MuhDict, dict, True),
         ))
 
         # If the active Python interpreter targets Python >= 3.9 and thus
