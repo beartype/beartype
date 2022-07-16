@@ -226,12 +226,12 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
             (MuhNutherThing, MuhThingP, False),
             (MuhThingP, MuhThing, False),
             # PEP 586-compliant type hints.
-            (Literal[1], int, True),
+            (Literal[7], int, True),
             (Literal["a"], str, True),
-            (Literal[1, 2, "3"], Union[int, str], True),
-            (Literal[1, 2, "3"], Union[list, int], False),
-            (int, Literal[1], False),
-            (Literal[1, 2], Literal[1, 2, 3], True),
+            (Literal[7, 8, "3"], Union[int, str], True),
+            (Literal[7, 8, "3"], Union[list, int], False),
+            (int, Literal[7], False),
+            (Literal[7, 8], Literal[7, 8, 9], True),
         ))
 
         # If the active Python interpreter targets Python >= 3.9 and thus
