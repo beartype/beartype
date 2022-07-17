@@ -15,7 +15,7 @@ This submodule unit tests the public API of the public
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import fixture
+from pytest import fixture, raises
 
 # ....................{ FIXTURES                           }....................
 #FIXME: Consider shifting into a new "conftest" plugin of this subpackage.
@@ -68,18 +68,25 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         Collection,
         DefaultDict,
         Dict,
+        Generic,
         Hashable,
         Iterable,
         List,
         Mapping,
+        NamedTuple,
         Optional,
         Reversible,
         Sequence,
         Sized,
         Tuple,
-        NamedTuple,
+        TypeVar,
         Union,
     )
+
+    # ..................{ TYPEVARS                           }..................
+    T = TypeVar("T")
+    SeqBoundTypeVar = TypeVar("SeqBoundTypeVar", bound=Sequence)
+    IntStrConstrainedTypeVar = TypeVar("IntStrConstrainedTypeVar", int, str)
 
     # ..................{ CLASSES                            }..................
     class MuhThing:
@@ -95,6 +102,10 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
     class MuhTuple(NamedTuple):
         thing_one: str
         thing_two: int
+
+
+    class MuhGeneric(Generic[T]):
+        ...
 
     # ..................{ LISTS                              }..................
     HINT_SUBHINT_CASES = [
@@ -191,6 +202,31 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         (int, Optional[int], True),
         (Optional[int], int, False),
         (list, Optional[Sequence], True),
+        # typevars
+        (list, SeqBoundTypeVar, True),
+        (SeqBoundTypeVar, list, False),
+        (int, IntStrConstrainedTypeVar, True),
+        (str, IntStrConstrainedTypeVar, True),
+        (list, IntStrConstrainedTypeVar, False),
+        (Union[int, str], IntStrConstrainedTypeVar, True),
+        (Union[int, str, None], IntStrConstrainedTypeVar, False),
+        (T, SeqBoundTypeVar, False),
+        (SeqBoundTypeVar, T, True),
+        (SeqBoundTypeVar, Any, True),
+        (Any, T, True),  # Any is compatible with an unconstrained TypeVar
+        (Any, SeqBoundTypeVar, False),  # but not vice versa
+        # generics
+        (MuhGeneric[list], MuhGeneric[SeqBoundTypeVar], True),
+        (MuhGeneric[str], MuhGeneric[SeqBoundTypeVar], True),
+        (MuhGeneric[int], MuhGeneric[SeqBoundTypeVar], False),
+        (MuhGeneric, MuhGeneric, True),
+        (MuhGeneric[int], MuhGeneric, True),
+        (MuhGeneric, MuhGeneric[int], False),
+        (MuhGeneric[list], MuhGeneric[Sequence], True),
+        (MuhGeneric[Sequence], MuhGeneric[list], False),
+        (MuhGeneric[SeqBoundTypeVar], MuhGeneric, True),
+        (MuhGeneric[int], MuhGeneric[SeqBoundTypeVar], False),
+
         # moar nestz
         (List[int], Union[str, List[Union[int, str]]], True),
         # not really types:
@@ -349,11 +385,17 @@ def test_is_subhint(
     '''
 
     # Defer heavyweight imports.
-    from beartype.door import is_subhint
+    from beartype.door import is_subhint, TypeHint
 
     # For each subhint relation to be tested...
     for subhint, superhint, IS_SUBHINT in hint_subhint_cases:
         # Assert this tester returns the expected boolean for these hints.
+        # The second API is equivalent to the first API, (and should be preferred)
+        # but this one is easier to debug on failure.
+        th1 = TypeHint(subhint)
+        th2 = TypeHint(superhint)
+        assert th1.is_subhint(th2) is IS_SUBHINT
+        # same as above, but much cleaner
         assert is_subhint(subhint, superhint) is IS_SUBHINT
 
 # ....................{ TESTS ~ class : dunders            }....................
@@ -365,7 +407,6 @@ def test_typehint_new() -> None:
     # Defer heavyweight imports.
     from beartype.door import TypeHint
     from beartype.roar import BeartypeDoorNonpepException
-    from pytest import raises
 
     # Intentionally import from "typing" rather than "beartype.typing" to
     # guarantee PEP 484-compliant type hints.
@@ -475,80 +516,76 @@ def test_typehint_is_ignorable() -> None:
                 hint_pep_meta.is_ignorable)
 
 
-#FIXME: Currently disabled due to failing tests under at least Python 3.7 and
-#3.8. See also relevant commentary at:
-#    https://github.com/beartype/beartype/pull/136#issuecomment-1175841494
-# def test_callable_takes_args():
-#     assert TypeHint(t.Callable[[], t.Any]).takes_no_args is True
-#     assert TypeHint(t.Callable[[int], t.Any]).takes_no_args is False
-#     assert TypeHint(t.Callable[..., t.Any]).takes_no_args is False
-#
-#     assert TypeHint(t.Callable[..., t.Any]).takes_any_args is True
-#     assert TypeHint(t.Callable[[int], t.Any]).takes_any_args is False
-#     assert TypeHint(t.Callable[[], t.Any]).takes_any_args is False
-#
-#
-# def test_empty_tuple():
-#     assert TypeHint(t.Tuple[()]).is_empty_tuple
-#
-#
-# def test_hint_iterable():
-#     assert list(TypeHint(t.Union[int, str])) == [TypeHint(int), TypeHint(str)]
-#     assert not list(TypeHint(int))
-#
-#
-# def test_hint_ordered_comparison():
-#     a = TypeHint(t.Callable[[], list])
-#     b = TypeHint(t.Callable[..., t.Sequence[t.Any]])
-#
-#     assert a <= b
-#     assert a < b
-#     assert a != b
-#     assert not a > b
-#     assert not a >= b
-#
-#     with pytest.raises(TypeError, match="not supported between"):
-#         a <= 1
-#     with pytest.raises(TypeError, match="not supported between"):
-#         a < 1
-#     with pytest.raises(TypeError, match="not supported between"):
-#         a >= 1
-#     with pytest.raises(TypeError, match="not supported between"):
-#         a > 1
-#
-#
-# def test_hint_repr():
-#     annotation = t.Callable[[], list]
-#     hint = TypeHint(annotation)
-#     assert repr(annotation) in repr(hint)
-#
-#
-# def test_types_that_are_just_origins():
-#     assert TypeHint(t.Callable)._is_just_an_origin
-#     assert TypeHint(t.Callable[..., t.Any])._is_just_an_origin
-#     assert TypeHint(t.Tuple)._is_just_an_origin
-#     assert TypeHint(t.Tuple[t.Any, ...])._is_just_an_origin
-#     assert TypeHint(int)._is_just_an_origin
-#
-#
-# def test_invalid_subtype_comparison():
-#     hint = TypeHint(t.Callable[[], list])
-#     with pytest.raises(
-#         BeartypeDoorException, match="not a 'beartype.door.TypeHint' instance"
-#     ):
-#         hint.is_subhint(int)
-#
-#
+def test_empty_tuple():
+    from beartype.door import TypeHint
+    from typing import Tuple
+    
+    assert TypeHint(Tuple[()]).is_empty_tuple
+
+
+def test_hint_iterable():
+    from beartype.door import TypeHint
+    from typing import Union
+    
+    assert list(TypeHint(Union[int, str])) == [TypeHint(int), TypeHint(str)]
+    assert not list(TypeHint(int))
+
+
+def test_hint_ordered_comparison():
+    from beartype.door import TypeHint
+    from typing import Callable, Sequence, Any
+
+    a = TypeHint(Callable[[], list])
+    b = TypeHint(Callable[..., Sequence[Any]])
+
+    assert a <= b
+    assert a < b
+    assert a != b
+    assert not a > b
+    assert not a >= b
+
+    with raises(TypeError, match="not supported between"):
+        a <= 1
+    with raises(TypeError, match="not supported between"):
+        a < 1
+    with raises(TypeError, match="not supported between"):
+        a >= 1
+    with raises(TypeError, match="not supported between"):
+        a > 1
+
+
+def test_hint_repr():
+    from beartype.door import TypeHint
+    from typing import Callable
+
+    annotation = Callable[[], list]
+    hint = TypeHint(annotation)
+    assert repr(annotation) in repr(hint)
+
+
+def test_types_that_are_just_origins():
+    from beartype.door import TypeHint
+    from typing import Any, Callable, Tuple
+
+    assert TypeHint(Callable)._is_args_ignorable
+    assert TypeHint(Callable[..., Any])._is_args_ignorable
+    assert TypeHint(Tuple)._is_args_ignorable
+    assert TypeHint(Tuple[Any, ...])._is_args_ignorable
+    assert TypeHint(int)._is_args_ignorable
+
+
+def test_invalid_subtype_comparison():
+    from beartype.door import TypeHint
+    from typing import Callable
+    from beartype.roar import BeartypeDoorException
+
+    hint = TypeHint(Callable[[], list])
+    with raises(BeartypeDoorException, match='not type hint wrapper'):
+        hint.is_subhint(int)
+
+
 # def test_callable_param_spec():
 #     # TODO
 #     with pytest.raises(NotImplementedError):
 #         TypeHint(t.Callable[t.ParamSpec("P"), t.TypeVar("T")])
-#
-#
-# def test_generic():
-#     # TODO
-#     class MyGeneric(t.Generic[T]):
-#         ...
-#
-#     with pytest.raises(BeartypeDoorException, match="currently unsupported by class"):
-#         TypeHint(MyGeneric[int])
+

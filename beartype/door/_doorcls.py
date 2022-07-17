@@ -18,6 +18,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from abc import ABC
+from typing import List, Optional
 from beartype.door._doortest import die_unless_typehint
 from beartype.roar import (
     BeartypeDoorException,
@@ -29,6 +30,7 @@ from beartype.typing import (
     Iterable,
     Tuple,
     Type,
+    TypeVar
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsignset import (
@@ -193,7 +195,7 @@ class TypeHint(ABC):
         # Else, this hint is supported.
 
         # If a subscriptable type has no args, all we care about is the origin.
-        if not get_hint_pep_args(hint):
+        if not get_hint_pep_args(hint) and not isinstance(hint, TypeVar):
             TypeHintSubclass = _TypeHintClass
 
         # Return this subclass.
@@ -615,9 +617,12 @@ class _TypeHintClass(TypeHint):
         return True
 
     def _is_le_branch(self, branch: TypeHint) -> bool:
-        # everything is a subclass of Any
         if branch._origin is Any:
+            # everything is a subclass of Any
             return True
+        elif self._origin is Any:
+            # but Any is only a subclass of Any 
+            return False
 
         #FIXME: Actually, let's avoid the implicit numeric tower for now.
         #Explicit is better than implicit and we really strongly disagree with
@@ -823,15 +828,6 @@ class _TypeHintCallable(_TypeHintSubscripted):
     def takes_any_args(self) -> bool:
         # Callable[..., ]
         return self._takes_any_args
-
-
-    #FIXME: Does this make sense? Probably not. We don't call this anywhere.
-    #Moreover, callers can simply test "not hint.params_typehint" instead, which
-    #is even more Pythonic than this manual approach. Excise this up, please.
-    @property
-    def takes_no_args(self) -> bool:
-        # Callable[[], ]
-        return not self.arg_types and not self.takes_any_args
 
 
     #FIXME: Rename to is_return_ignorable() for orthogonality.
@@ -1141,23 +1137,56 @@ class _TypeHintUnion(_TypeHintSubscripted):
     def _is_le_branch(self, branch: TypeHint) -> bool:
         raise NotImplementedError('_TypeHintUnion._is_le_branch() unsupported.')  # pragma: no cover
 
+class _TypeHintTypeVar(_TypeHintUnion):
+    _hint: TypeVar
+
+    def _wrap_children(self, unordered_children: tuple) -> Tuple["TypeHint", ...]:
+        variance = None
+        if self._hint.__covariant__:
+            variance = "covariant"
+        elif self._hint.__contravariant__:
+            variance = "contravariant"
+        if variance:
+            raise BeartypeDoorException(
+                "Only invariant TypeVars are currently supported. "
+                f"{self._hint!r} is {variance}"
+            )
+
+        # TypeVars may only be bound or constrained, but not both.
+        # the difference between the two has semantic meaning for
+        # static type checkers, but relatively little meaning for us here.
+        # Ultimately, we're only concerned with the set of compatible types
+        # present in either the bound or the constraints, so we treat a TypeVar
+        # as a Union of its constraints or bound.
+        # https://docs.python.org/3/library/typing.html#typing.TypeVar
+        if self._hint.__bound__ is not None:
+            return (TypeHint(self._hint.__bound__),)
+        elif self._hint.__constraints__:
+            return tuple(TypeHint(t) for t in self._hint.__constraints__)
+        return (TypeHint(Any),)
+
+
 # ....................{ DICTS                              }....................
 #FIXME: Shift into a new "_doordata" submodule, maybe? Note that doing so
 #requires as a prerequisite that we first split this submodule into smaller
 #submodules, which "_doordata" will then import individually from as needed.
 from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignTuple,
-    HintSignCallable,
-    HintSignLiteral,
     HintSignAnnotated,
+    HintSignCallable,
+    HintSignGeneric,
+    HintSignLiteral,
+    HintSignTuple,
+    HintSignTypeVar,
 )
 
 # Further initialized below by the _init() function.
 HINT_SIGN_TO_TYPEHINT: Dict[HintSign, Type[TypeHint]] = {
-    HintSignTuple:     _TypeHintTuple,
-    HintSignCallable:  _TypeHintCallable,
-    HintSignLiteral:   _TypeHintLiteral,
     HintSignAnnotated: _TypeHintAnnotated,
+    HintSignCallable:  _TypeHintCallable,
+    HintSignGeneric: _TypeHintSubscripted,
+    HintSignLiteral:   _TypeHintLiteral,
+    HintSignTuple:     _TypeHintTuple,
+    HintSignTypeVar: _TypeHintTypeVar,
 }
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
