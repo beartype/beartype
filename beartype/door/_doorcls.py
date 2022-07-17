@@ -18,7 +18,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from abc import ABC
-from typing import List, Optional
 from beartype.door._doortest import die_unless_typehint
 from beartype.roar import (
     BeartypeDoorException,
@@ -30,7 +29,7 @@ from beartype.typing import (
     Iterable,
     Tuple,
     Type,
-    TypeVar
+    TypeVar,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsignset import (
@@ -617,11 +616,13 @@ class _TypeHintClass(TypeHint):
         return True
 
     def _is_le_branch(self, branch: TypeHint) -> bool:
+        # everything is a subclass of Any
         if branch._origin is Any:
-            # everything is a subclass of Any
             return True
         elif self._origin is Any:
-            # but Any is only a subclass of Any 
+            # but Any is only a subclass of Any.
+            # Furthermore, typing.Any is not suitable as the first
+            # argument to issubclass() below.
             return False
 
         #FIXME: Actually, let's avoid the implicit numeric tower for now.

@@ -385,17 +385,11 @@ def test_is_subhint(
     '''
 
     # Defer heavyweight imports.
-    from beartype.door import is_subhint, TypeHint
+    from beartype.door import is_subhint
 
     # For each subhint relation to be tested...
     for subhint, superhint, IS_SUBHINT in hint_subhint_cases:
         # Assert this tester returns the expected boolean for these hints.
-        # The second API is equivalent to the first API, (and should be preferred)
-        # but this one is easier to debug on failure.
-        th1 = TypeHint(subhint)
-        th2 = TypeHint(superhint)
-        assert th1.is_subhint(th2) is IS_SUBHINT
-        # same as above, but much cleaner
         assert is_subhint(subhint, superhint) is IS_SUBHINT
 
 # ....................{ TESTS ~ class : dunders            }....................
