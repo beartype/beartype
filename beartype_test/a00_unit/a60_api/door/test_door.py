@@ -127,6 +127,8 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         (Any, Any, True),
         (MuhThing, Any, True),
         (Union[int, MuhThing], Any, True),
+        # but Any is only a subtype of Any
+        (Any, object, False),
         # Blame Guido.
         (bool, int, True),
         # PEP 484-compliant implicit numeric tower, which we explicitly and
