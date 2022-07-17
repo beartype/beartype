@@ -487,7 +487,7 @@ def test_typehint_is_ignorable() -> None:
 
     # Defer heavyweight imports.
     from beartype.door import TypeHint
-    from beartype.roar import BeartypeDoorNonpepException, BeartypeDecorException
+    from beartype.roar import BeartypeDoorException, BeartypeDoorNonpepException
     from beartype_test.a00_unit.data.hint.data_hint import HINTS_IGNORABLE
     from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
     from contextlib import suppress
@@ -508,7 +508,7 @@ def test_typehint_is_ignorable() -> None:
         #most of these will be BeartypeDoorNonpepException, but there are some
         #covariant type hints (e.g. numpy.dtype[+ScalarType]) that will raise a
         #"not invariant" exception in the TypeVarTypeHint.
-        with suppress(BeartypeDecorException):
+        with suppress(BeartypeDoorException):
             assert TypeHint(hint_pep_meta.hint).is_ignorable is (
                 hint_pep_meta.is_ignorable)
 
