@@ -312,7 +312,7 @@ def add_data(data_module: 'ModuleType') -> None:
     #
     # This boolean is true for Python interpreters targeting 3.6 < Python <
     # 3.9, oddly. (We don't make the rules. We simply complain about them.)
-    _IS_ARGS_HIDDEN = _IS_TYPEVARS_HIDDEN
+    _IS_ARGS_HIDDEN = False
 
     # ..................{ SETS                               }..................
     # Add PEP 484-specific shallowly ignorable test type hints to that set
@@ -1015,7 +1015,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Match,
             pep_sign=HintSignMatch,
             isinstanceable_type=RegexMatchType,
-            is_args=_IS_TYPEVARS_HIDDEN,  # <--- don't ask
+            is_args=_IS_ARGS_HIDDEN,
             is_typevars=_IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Regular expression match of one or more string constants.
@@ -1051,7 +1051,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Pattern,
             pep_sign=HintSignPattern,
             isinstanceable_type=RegexCompiledType,
-            is_args=_IS_TYPEVARS_HIDDEN,  # <--- don't ask
+            is_args=_IS_ARGS_HIDDEN,
             is_typevars=_IS_TYPEVARS_HIDDEN,
             piths_meta=(
                 # Regular expression string pattern.

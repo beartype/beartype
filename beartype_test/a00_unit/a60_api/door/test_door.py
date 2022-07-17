@@ -15,10 +15,6 @@ This submodule unit tests the public API of the public
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import (
-    # skip,
-    skip_if_python_version_less_than,
-)
 from pytest import fixture
 
 # ....................{ FIXTURES                           }....................
@@ -81,7 +77,6 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         Sequence,
         Sized,
         Tuple,
-        TypedDict,
         NamedTuple,
         Union,
     )
@@ -95,11 +90,6 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
     class MuhNutherThing:
         def __len__(self) -> int:
             ...
-
-
-    class MuhDict(TypedDict):
-        thing_one: str
-        thing_two: int
 
 
     class MuhTuple(NamedTuple):
@@ -204,7 +194,6 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         # moar nestz
         (List[int], Union[str, List[Union[int, str]]], True),
         # not really types:
-        (MuhDict, dict, True),
         (MuhTuple, tuple, True),
     ]
 
@@ -216,12 +205,17 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         from beartype.typing import (
             Literal,
             Protocol,
+            TypedDict,
         )
 
         # Arbitrary caching @beartype protocol.
         class MuhThingP(Protocol):
             def muh_method(self):
                 ...
+
+        class MuhDict(TypedDict):
+            thing_one: str
+            thing_two: int
 
         # Append cases exercising version-specific relations.
         HINT_SUBHINT_CASES.extend((
@@ -230,12 +224,14 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
             (MuhNutherThing, MuhThingP, False),
             (MuhThingP, MuhThing, False),
             # PEP 586-compliant type hints.
-            (Literal[1], int, True),
+            (Literal[7], int, True),
             (Literal["a"], str, True),
-            (Literal[1, 2, "3"], Union[int, str], True),
-            (Literal[1, 2, "3"], Union[list, int], False),
-            (int, Literal[1], False),
-            (Literal[1, 2], Literal[1, 2, 3], True),
+            (Literal[7, 8, "3"], Union[int, str], True),
+            (Literal[7, 8, "3"], Union[list, int], False),
+            (int, Literal[7], False),
+            (Literal[7, 8], Literal[7, 8, 9], True),
+            # PEP 589-compliant type hints.
+            (MuhDict, dict, True),
         ))
 
         # If the active Python interpreter targets Python >= 3.9 and thus
@@ -340,8 +336,6 @@ def hint_equality_cases() -> 'Iterable[Tuple[object, object, bool]]':
     return tuple(HINT_EQUALITY_CASES)
 
 # ....................{ TESTS ~ testers                    }....................
-#FIXME: Resolve, please. It looks like Python 3.7 and 3.8 are failing hard here.
-@skip_if_python_version_less_than('3.9.0')
 def test_is_subhint(
     hint_subhint_cases: 'Iterable[Tuple[object, object, bool]]') -> None:
     '''
@@ -400,8 +394,6 @@ def test_typehint_new() -> None:
         TypeHint(b'Is there, that from the boundaries of the sky')
 
 
-#FIXME: Resolve, please. It looks like Python 3.7 and 3.8 are failing hard here.
-@skip_if_python_version_less_than('3.9.0')
 def test_typehint_equals(
     hint_equality_cases: 'Iterable[Tuple[object, object, bool]]') -> None:
     '''
