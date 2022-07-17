@@ -1137,7 +1137,13 @@ class _TypeHintUnion(_TypeHintSubscripted):
     def _is_le_branch(self, branch: TypeHint) -> bool:
         raise NotImplementedError('_TypeHintUnion._is_le_branch() unsupported.')  # pragma: no cover
 
+
 class _TypeHintTypeVar(_TypeHintUnion):
+    '''
+    **Partially ordered TypeVar type hint** (i.e., high-level object encapsulating
+    a low-level PEP-compliant TypeVar type hint)
+    '''
+
     _hint: TypeVar
 
     def _wrap_children(self, unordered_children: tuple) -> Tuple["TypeHint", ...]:
