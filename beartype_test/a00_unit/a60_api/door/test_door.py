@@ -72,6 +72,7 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         Iterable,
         List,
         Mapping,
+        NewType,
         Optional,
         Reversible,
         Sequence,
@@ -80,6 +81,8 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         NamedTuple,
         Union,
     )
+
+    NewStr = NewType("NewStr", str)
 
     # ..................{ CLASSES                            }..................
     class MuhThing:
@@ -195,6 +198,11 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         (List[int], Union[str, List[Union[int, str]]], True),
         # not really types:
         (MuhTuple, tuple, True),
+        # NewType
+        (str, NewStr, True),
+        (NewStr, str, True),
+        (NewStr, int, False),
+        (int, NewStr, False),
     ]
 
     # If the active Python interpreter targets Python >= 3.8 and thus supports
@@ -349,10 +357,12 @@ def test_is_subhint(
     '''
 
     # Defer heavyweight imports.
-    from beartype.door import is_subhint
+    from beartype.door import is_subhint, TypeHint
 
     # For each subhint relation to be tested...
     for subhint, superhint, IS_SUBHINT in hint_subhint_cases:
+        th1 = TypeHint(subhint)
+        th2 = TypeHint(superhint)
         # Assert this tester returns the expected boolean for these hints.
         assert is_subhint(subhint, superhint) is IS_SUBHINT
 
