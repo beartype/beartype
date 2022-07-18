@@ -357,12 +357,10 @@ def test_is_subhint(
     '''
 
     # Defer heavyweight imports.
-    from beartype.door import is_subhint, TypeHint
+    from beartype.door import is_subhint
 
     # For each subhint relation to be tested...
     for subhint, superhint, IS_SUBHINT in hint_subhint_cases:
-        th1 = TypeHint(subhint)
-        th2 = TypeHint(superhint)
         # Assert this tester returns the expected boolean for these hints.
         assert is_subhint(subhint, superhint) is IS_SUBHINT
 
