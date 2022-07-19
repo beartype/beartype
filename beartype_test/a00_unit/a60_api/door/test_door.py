@@ -77,6 +77,7 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         Sequence,
         Sized,
         Tuple,
+        Type,
         NamedTuple,
         Union,
     )
@@ -86,6 +87,8 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         def muh_method(self):
             ...
 
+    class MuhSubThing(MuhThing):
+        ...
 
     class MuhNutherThing:
         def __len__(self) -> int:
@@ -140,6 +143,12 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         (List[int], List[Any], True),
         (Awaitable, Awaitable[str], False),
         (List[int], List[str], False),
+        # types
+        (Type[int], Type[int], True),
+        (Type[int], Type[str], False),
+        (Type[MuhSubThing], Type[MuhThing], True),
+        (Type[MuhThing], Type[MuhSubThing], False),
+        (MuhThing, Type[MuhThing], False),
         # maps
         (dict, Dict, True),
         (Dict[str, int], Dict, True),
