@@ -74,6 +74,7 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         List,
         Mapping,
         NamedTuple,
+        NewType,
         Optional,
         Reversible,
         Sequence,
@@ -83,16 +84,19 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         Union,
     )
 
-    # ..................{ TYPEVARS                           }..................
+    # ..................{ TYPEVARS & NewTypes                }..................
     T = TypeVar("T")
     SeqBoundTypeVar = TypeVar("SeqBoundTypeVar", bound=Sequence)
     IntStrConstrainedTypeVar = TypeVar("IntStrConstrainedTypeVar", int, str)
 
+    NewStr = NewType("NewStr", str)
     # ..................{ CLASSES                            }..................
     class MuhThing:
         def muh_method(self):
             ...
 
+    class MuhSubThing(MuhThing):
+        ...
 
     class MuhNutherThing:
         def __len__(self) -> int:
@@ -153,6 +157,12 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         (List[int], List[Any], True),
         (Awaitable, Awaitable[str], False),
         (List[int], List[str], False),
+        # types
+        (Type[int], Type[int], True),
+        (Type[int], Type[str], False),
+        (Type[MuhSubThing], Type[MuhThing], True),
+        (Type[MuhThing], Type[MuhSubThing], False),
+        (MuhThing, Type[MuhThing], False),
         # maps
         (dict, Dict, True),
         (Dict[str, int], Dict, True),
@@ -233,6 +243,11 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         (List[int], Union[str, List[Union[int, str]]], True),
         # not really types:
         (MuhTuple, tuple, True),
+        # NewType
+        (str, NewStr, True),
+        (NewStr, str, True),
+        (NewStr, int, False),
+        (int, NewStr, False),
     ]
 
     # If the active Python interpreter targets Python >= 3.8 and thus supports
