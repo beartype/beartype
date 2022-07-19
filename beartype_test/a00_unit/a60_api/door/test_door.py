@@ -72,6 +72,7 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         Iterable,
         List,
         Mapping,
+        NewType,
         Optional,
         Reversible,
         Sequence,
@@ -81,6 +82,8 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         NamedTuple,
         Union,
     )
+
+    NewStr = NewType("NewStr", str)
 
     # ..................{ CLASSES                            }..................
     class MuhThing:
@@ -204,6 +207,11 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         (List[int], Union[str, List[Union[int, str]]], True),
         # not really types:
         (MuhTuple, tuple, True),
+        # NewType
+        (str, NewStr, True),
+        (NewStr, str, True),
+        (NewStr, int, False),
+        (int, NewStr, False),
     ]
 
     # If the active Python interpreter targets Python >= 3.8 and thus supports

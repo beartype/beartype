@@ -46,6 +46,9 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_or_none,
     get_hint_pep_sign_or_none,
 )
+from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
+    get_hint_pep484_newtype_class,
+)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from contextlib import suppress
 
@@ -193,7 +196,7 @@ class TypeHint(ABC):
         # Else, this hint is supported.
 
         # If a subscriptable type has no args, all we care about is the origin.
-        if not get_hint_pep_args(hint):
+        if not get_hint_pep_args(hint) and hint_sign not in {HintSignNewType}:
             TypeHintSubclass = _TypeHintClass
 
         # Return this subclass.
@@ -1098,6 +1101,22 @@ class _TypeHintAnnotated(TypeHint):
             and self._metadata == other._metadata
         )
 
+class _TypeHintNewType(_TypeHintClass):
+    '''Partially ordered NewType type hint'''
+
+    # TODO:
+    # Note that currently, all this checks is the `__supertype__`.  Which is all
+    # that matters to avoid a TypeError at runtime. We could conceivably add some
+    # sort of "strict" flag that further asserts that the other type IS this
+    # newtype (i.e. match the semantics of a static type checker).  That would
+    # require either adding a `strict` kwarg to the `__init__`, or to the `is_subhint`
+    # method... both of which are somewhat invasive to the TypeHint API, for a
+    # relatively fringe case.
+    def __init__(self, hint: object) -> None:
+        super().__init__(hint)
+        self._origin = get_hint_pep484_newtype_class(hint)
+
+
 
 class _TypeHintUnion(_TypeHintSubscripted):
     '''
@@ -1146,6 +1165,7 @@ class _TypeHintUnion(_TypeHintSubscripted):
 #requires as a prerequisite that we first split this submodule into smaller
 #submodules, which "_doordata" will then import individually from as needed.
 from beartype._data.hint.pep.sign.datapepsigns import (
+    HintSignNewType,
     HintSignTuple,
     HintSignCallable,
     HintSignLiteral,
@@ -1158,6 +1178,7 @@ HINT_SIGN_TO_TYPEHINT: Dict[HintSign, Type[TypeHint]] = {
     HintSignCallable:  _TypeHintCallable,
     HintSignLiteral:   _TypeHintLiteral,
     HintSignAnnotated: _TypeHintAnnotated,
+    HintSignNewType:   _TypeHintNewType,
 }
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
