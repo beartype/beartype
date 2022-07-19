@@ -80,6 +80,7 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         Sequence,
         Sized,
         Tuple,
+        Type,
         TypeVar,
         Union,
     )
