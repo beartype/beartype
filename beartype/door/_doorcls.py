@@ -1114,7 +1114,23 @@ class _TypeHintNewType(_TypeHintClass):
     # relatively fringe case.
     def __init__(self, hint: object) -> None:
         super().__init__(hint)
-        self._origin = get_hint_pep484_newtype_class(hint)
+        supertype = get_hint_pep484_newtype_class(hint)
+        
+        # We want to "create" an origin for this NewType that treats the newtype
+        # as a subclass of its supertype.  For example, if the hint is 
+        # `NewType("MyType", str)`, then the origin should be
+        # `class MyString(str): pass`.
+        try:
+            # we create literal subclass here. but since TypeHints are cached, this
+            # type should only be created once, and therefore work?
+            name = getattr(hint, '__name__', str(hint))
+            self._origin = type(name, (supertype,), {})
+        except TypeError:
+            # not all types are subclassable (like `Any`)
+            self._origin = supertype
+ 
+    def _is_le_branch(self, branch: TypeHint) -> bool:
+        return super()._is_le_branch(branch)
 
 
 

@@ -208,8 +208,9 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         # not really types:
         (MuhTuple, tuple, True),
         # NewType
-        (str, NewStr, True),
         (NewStr, str, True),
+        (NewStr, NewStr, True),
+        (str, NewStr, False),  # NewType act like subtypes
         (NewStr, int, False),
         (int, NewStr, False),
     ]
@@ -371,7 +372,7 @@ def test_is_subhint(
     # For each subhint relation to be tested...
     for subhint, superhint, IS_SUBHINT in hint_subhint_cases:
         # Assert this tester returns the expected boolean for these hints.
-        assert is_subhint(subhint, superhint) is IS_SUBHINT
+        assert is_subhint(subhint, superhint) is IS_SUBHINT, f'{subhint} <= {superhint} is not {IS_SUBHINT}'
 
 # ....................{ TESTS ~ class : dunders            }....................
 def test_typehint_new() -> None:
