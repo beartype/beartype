@@ -5,8 +5,8 @@
 
 '''
 Project-wide :pep:`484`- and :pep:`585`-compliant **callable type hint
-utilities** (i.e., callables generically applicable to both :pep:`484`-
-and :pep:`585`-compliant ``Callable[...]`` type hints).
+utilities** (i.e., callables generically applicable to both :pep:`484`- and
+:pep:`585`-compliant ``Callable[...]`` type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

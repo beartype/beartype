@@ -25,18 +25,20 @@ from beartype.roar import (
 )
 from beartype.typing import (
     Any,
-    Dict,
     Iterable,
     Tuple,
-    Type,
     TypeVar,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_CALLABLE_PARAMS
-from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
-    get_hint_pep484585_callable_params,
+from beartype._data.hint.pep.sign.datapepsigns import (
+    # HintSignAnnotated,
+    # HintSignCallable,
+    # HintSignGeneric,
+    # HintSignLiteral,
+    HintSignNewType,
+    # HintSignTuple,
+    HintSignTypeVar,
 )
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
@@ -138,7 +140,7 @@ class TypeHint(ABC):
     # any case, let's at least unit test that to ensure this behaves as expected.
     @callable_cached
     def __new__(cls, hint: object) -> "TypeHint":
-        """
+        '''
         Factory constructor magically instantiating and returning an instance of
         the private concrete subclass of this public abstract base class (ABC)
         appropriate for handling the passed low-level unordered type hint.
@@ -160,7 +162,12 @@ class TypeHint(ABC):
             If this class does *not* currently support the passed hint.
         BeartypeDecorHintPepSignException
             If the passed hint is *not* actually a PEP-compliant type hint.
-        """
+        '''
+
+        #FIXME: It'd be great if we could import this at module scope for
+        #efficiency instead. Consider refactorings that would enable that! \o/
+        # Avoid circular import dependencies.
+        from beartype.door._doordata import HINT_SIGN_TO_TYPEHINT
 
         # If this low-level type hint is already a high-level type hint wrapper,
         # return this wrapper as is. This guarantees the following constraint:
@@ -195,6 +202,22 @@ class TypeHint(ABC):
                 )
         # Else, this hint is supported.
 
+        #FIXME: Add this new global to "datapepsignset" and reference below:
+        #    HINT_SIGNS_ORIGINLESS = frozenset((
+        #        HintSignNewType,
+        #        HintSignTypeVar,
+        #    ))
+        #
+        #Alternately, it might be preferable to refactor this to resemble:
+        #    if (
+        #       not get_hint_pep_args(hint) and
+        #       get_hint_pep_origin_or_none(hint) is None
+        #    ):
+        #        TypeHintSubclass = _TypeHintClass
+        #
+        #That's possibly simpler and cleaner, as it seamlessly conveys the exact
+        #condition we're going for -- assuming it works, of course. *sigh*
+        #
         # If a subscriptable type has no args, all we care about is the origin.
         if not get_hint_pep_args(hint) and hint_sign not in {
             HintSignNewType,
@@ -721,182 +744,6 @@ class _TypeHintOriginIsinstanceableArgs2(_TypeHintSubscripted):
     _required_nargs: int = 2
 
 
-class _TypeHintCallable(_TypeHintSubscripted):
-    def _munge_args(self):
-        """
-        Perform argument validation for a callable.
-        """
-
-        self._takes_any_args = False
-
-        if len(self._args) == 0:  # pragma: no cover
-            # e.g. `Callable` without any arguments this may be unreachable,
-            # (since a bare Callable will go to _TypeHintClass) but it's here
-            # for completeness and safety.
-            self._takes_any_args = True
-
-            # FIXME: Actually, pretty sure this instead needs to be:
-            #    self._args = (..., Any,)  # returns any
-            self._args = (Any,)  # returns any
-        else:
-            self._call_args = get_hint_pep484585_callable_params(self._hint)
-
-            # If this hint was first subscripted by an ellipsis (i.e., "...")
-            # signifying a callable accepting an arbitrary number of parameters
-            # of arbitrary types...
-            if self._call_args is Ellipsis:
-                # e.g. `Callable[..., Any]`
-                self._takes_any_args = True
-                self._call_args = ()  # Ellipsis in not a type, so strip it here.
-            # Else...
-            else:
-                # Sign uniquely identifying this parameter list if any *OR*
-                # "None" otherwise.
-                hint_args_sign = get_hint_pep_sign_or_none(self._call_args)
-
-                # If this hint was first subscripted by a PEP 612-compliant
-                # type hint, raise an exception. *sigh*
-                if hint_args_sign in HINT_SIGNS_CALLABLE_PARAMS:
-                    raise BeartypeDoorNonpepException(
-                        f"Type hint {repr(self._hint)} "
-                        f"child PEP 612 type hint hint {repr(self._call_args)} "
-                        f'currently unsupported by "beartype.door.TypeHint".'
-                    )
-
-            # FIXME: Note this will fail if "self._call_args" is a PEP
-            # 612-compliant "typing.ParamSpec(...)" or "typing.Concatenate[...]"
-            # object, as neither are tuples and thus *NOT* addable here.
-            # Recreate the tuple of child type hints subscripting this parent
-            # callable type hint from the tuple of argument type hints
-            # introspected above. Why? Because the latter is saner than the
-            # former in edge cases (e.g., ellipsis, empty argument lists).
-            self._args = self._call_args + (self._args[-1],)
-
-        # Perform superclass validation.
-        super()._munge_args()
-
-    # FIXME: Makes sense -- but let's rename to, say, params_typehint(). Note we
-    # intentionally choose "params" rather than "args" here for disambiguity with
-    # the low-level "hint.__args__" tuple.
-    # FIXME: Inefficient if frequently accessed. Consider:
-    # * Improving our @callable_cached decorator to efficiently handle
-    #  properties.
-    # * Prepend @callable_cached onto this decorator list: e.g.,
-    #      @callable_cached
-    #      @property
-    #      def arg_types(self) -> Tuple[TypeHint, ...]:
-    @property
-    def arg_types(self) -> Tuple[TypeHint, ...]:
-        """
-        Arguments portion of the callable.
-
-        May be an empty tuple if the callable takes no arguments
-        """
-
-        return self._args_wrapped[:-1]
-
-    # FIXME: Makes sense -- but let's rename to, say, return_typehint().
-    @property
-    def return_type(self) -> TypeHint:
-        # the return type of the callable
-        return self._args_wrapped[-1]
-
-    # FIXME: Rename to is_params_ignorable() for orthogonality with
-    # is_args_ignorable().
-    # FIXME: Refactor the trivially decidable "_takes_any_args" boolean away,
-    # please. Instead, just:
-    # * Remove "_takes_any_args".
-    # * Prepend @callable_cached onto this decorator list as above.
-    # * Refactor this property to resemble:
-    #      @callable_cached
-    #      @property
-    #      def is_params_ignorable(self) -> bool:
-    #          # Callable[..., ]
-    #          return hint._args[0] is Ellipsis
-    # FIXME: Alternately, let's assume that "TypeHint(Ellipsis)" behaves as
-    # expected. It probably doesn't. So, we'll need to first do something about
-    # that. Then this just trivially reduces to:
-    #    return hint.params_typehint.is_ignorable()
-    #
-    # In other words, *JUST EXCISE THIS.* Callers should just call
-    # hint.params_typehint.is_ignorable() instead.
-    @property
-    def takes_any_args(self) -> bool:
-        # Callable[..., ]
-        return self._takes_any_args
-
-    # FIXME: Rename to is_return_ignorable() for orthogonality.
-    # FIXME: Moreover, this test is actually insufficient. There are *MANY*
-    # different type hints that are ignorable and thus semantically equivalent to
-    # "Any". We will probably need to refactor this to resemble:
-    #    @callable_cached
-    #    @property
-    #    def is_return_ignorable(self) -> bool:
-    #        return self.return_typehint.is_ignorable()
-    #
-    # In other words, *JUST EXCISE THIS.* Callers should just call
-    # hint.return_typehint.is_ignorable() instead.
-    @property
-    def returns_any(self) -> bool:
-        # Callable[..., Any]
-        return self._args[-1] is Any
-
-    # FIXME: Refactor to resemble:
-    #    return self.is_params_ignorable and self.is_return_ignorable
-    # FIXME: Actually, is this even needed? Pretty sure the superclass
-    # implementation should implicitly handle this already, assuming the
-    # superclass implementation defers to the new "TypeHint.is_ignorable"
-    # property... which it almost certainly doesn't yet. *sigh*
-    # FIXME: Additionally, we'll need to add support for ignoring ignorable
-    # callable type hints to our core is_hint_ignorable() tester. Specifically:
-    # * Ignore "Callable[..., {hint_ignorable}]" type hints, where "..." is the
-    #  ellipsis singleton and "{hint_ignorable}" is any ignorable type hint.
-    #  This has to be handled in a deep manner by:
-    #  * Defining a new is_hint_pep484585_ignorable_or_none() tester in the
-    #    existing "utilpep484585" submodule, whose initial implementation tests
-    #    for *ONLY* ignorable callable type hints.
-    #  * Import that tester in the "utilpeptest" submodule.
-    #  * Add that tester to the "_IS_HINT_PEP_IGNORABLE_TESTERS" tuple.
-    #  * Add example ignorable callable type hints to our test suite's data.
-    @property
-    def _is_args_ignorable(self) -> bool:
-        # Callable[..., Any] (or just `Callable`)
-        return self.takes_any_args and self.returns_any
-
-    def _is_le_branch(self, branch: TypeHint) -> bool:
-
-        # If the branch is not subscripted, then we assume it is subscripted
-        # with ``Any``, and we simply check that the origins are compatible.
-        if branch._is_args_ignorable:
-            return issubclass(self._origin, branch._origin)
-        if not isinstance(branch, _TypeHintCallable):
-            return False
-        if not issubclass(self._origin, branch._origin):
-            return False
-
-        if not branch.takes_any_args and (
-            (
-                self.takes_any_args
-                or len(self.arg_types) != len(branch.arg_types)
-                or any(
-                    self_arg > branch_arg
-                    for self_arg, branch_arg in zip(self.arg_types, branch.arg_types)
-                )
-            )
-        ):
-            return False
-
-        # FIXME: Insufficient, sadly. There are *MANY* different type hints that
-        # are ignorable and thus semantically equivalent to "Any". It's likely
-        # we should just reduce this to a one-liner resembling:
-        #    return self.return_type <= branch.return_type
-        #
-        # Are we missing something? We're probably missing something. *sigh*
-        if not branch.returns_any:
-            return False if self.returns_any else self.return_type <= branch.return_type
-        return True
-
-
 class _TypeHintOriginIsinstanceableArgs3(_TypeHintSubscripted):
     _required_nargs: int = 3
 
@@ -1083,9 +930,9 @@ class _TypeHintNewType(_TypeHintClass):
     def __init__(self, hint: object) -> None:
         super().__init__(hint)
         supertype = get_hint_pep484_newtype_class(hint)
-        
+
         # We want to "create" an origin for this NewType that treats the newtype
-        # as a subclass of its supertype.  For example, if the hint is 
+        # as a subclass of its supertype.  For example, if the hint is
         # `NewType("MyType", str)`, then the origin should be
         # `class MyString(str): pass`.
         try:
@@ -1096,9 +943,11 @@ class _TypeHintNewType(_TypeHintClass):
         except TypeError:
             # not all types are subclassable (like `Any`)
             self._origin = supertype
- 
-    def _is_le_branch(self, branch: TypeHint) -> bool:
-        return super()._is_le_branch(branch)
+
+
+    #FIXME: Did we perhaps mean to do something here? Let's pretend not.
+    # def _is_le_branch(self, branch: TypeHint) -> bool:
+    #     return super()._is_le_branch(branch)
 
 
 class _TypeHintUnion(_TypeHintSubscripted):
@@ -1175,63 +1024,3 @@ class _TypeHintTypeVar(_TypeHintUnion):
         elif self._hint.__constraints__:
             return tuple(TypeHint(t) for t in self._hint.__constraints__)
         return (TypeHint(Any),)
-
-
-# ....................{ DICTS                              }....................
-# FIXME: Shift into a new "_doordata" submodule, maybe? Note that doing so
-# requires as a prerequisite that we first split this submodule into smaller
-# submodules, which "_doordata" will then import individually from as needed.
-from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignAnnotated,
-    HintSignCallable,
-    HintSignGeneric,
-    HintSignLiteral,
-    HintSignLiteral,
-    HintSignNewType,
-    HintSignTuple,
-    HintSignTypeVar,
-)
-
-# Further initialized below by the _init() function.
-HINT_SIGN_TO_TYPEHINT: Dict[HintSign, Type[TypeHint]] = {
-    HintSignAnnotated: _TypeHintAnnotated,
-    HintSignCallable: _TypeHintCallable,
-    HintSignGeneric: _TypeHintSubscripted,
-    HintSignLiteral: _TypeHintLiteral,
-    HintSignNewType: _TypeHintNewType,
-    HintSignTuple: _TypeHintTuple,
-    HintSignTypeVar: _TypeHintTypeVar,
-}
-"""
-Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
-to the :class:`TypeHint` subclass handling those hints.
-"""
-
-# ....................{ PRIVATE ~ initializers             }....................
-# FIXME: Shift into a new "_doordata" submodule, please.
-def _init() -> None:
-    """
-    Initialize this submodule.
-    """
-
-    # Isolate function-specific imports.
-    from beartype._data.hint.pep.sign.datapepsignset import (
-        HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1,
-        HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2,
-        HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3,
-        HINT_SIGNS_UNION,
-    )
-
-    # Fully initialize the "HINT_SIGN_TO_TYPEHINT" dictionary declared above.
-    for sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1:
-        HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintOriginIsinstanceableArgs1
-    for sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2:
-        HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintOriginIsinstanceableArgs2
-    for sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3:
-        HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintOriginIsinstanceableArgs3
-    for sign in HINT_SIGNS_UNION:
-        HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintUnion
-
-
-# Initialize this submodule.
-_init()
