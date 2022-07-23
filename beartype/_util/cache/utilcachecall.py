@@ -38,8 +38,11 @@ from beartype._util.func.arg.utilfuncargtest import (
     # is_func_argless,
     is_func_arg_variadic,
 )
-from beartype._util.text.utiltextlabel import prefix_callable
-from beartype._util.utilobject import SENTINEL, Iota
+from beartype._util.text.utiltextlabel import label_callable
+from beartype._util.utilobject import (
+    SENTINEL,
+    Iota,
+)
 from functools import wraps
 from warnings import warn
 
@@ -194,9 +197,10 @@ def callable_cached(func: Callable) -> Callable:
     # If this wrappee accepts variadic arguments, raise an exception.
     if is_func_arg_variadic(func_wrappee):
         raise _BeartypeUtilCallableCachedException(
-            f'@callable_cached {prefix_callable(func)}'
+            f'@callable_cached {label_callable(func)} '
             f'variadic arguments uncacheable.'
         )
+    # Else, this wrappee accepts *NO* variadic arguments.
 
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that
@@ -297,7 +301,7 @@ def callable_cached(func: Callable) -> Callable:
             #Since "None" is *NOT* a valid exception, we shouldn't need a
             #sentinel for safety here. Instead, this should suffice:
             #    exception = params_flat_to_exception_get(params_flat)
-
+            #
             #    # If this callable previously raised an exception when called with
             #    # these parameters, re-raise the same exception.
             #    if exception:

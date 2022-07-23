@@ -24,7 +24,7 @@ from beartype._decor._code.codemagic import (
 from beartype._decor._error.errormain import get_beartype_violation
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.func.utilfuncscope import CallableScope
-from beartype._util.func.utilfunctest import is_func_async_coroutine
+from beartype._util.func.utilfunctest import is_func_coro
 from beartype._util.func.utilfuncwrap import unwrap_func
 from types import CodeType
 
@@ -329,7 +329,7 @@ class BeartypeCall(object):
         #   asynchronous generator callables *NEVER* return any awaitable
         #   value; they instead yield one or more values to external "async
         #   for" loops.
-        if is_func_async_coroutine(self.func_wrappee_codeobj):
+        if is_func_coro(self.func_wrappee_codeobj):
             # Code snippet prefixing all calls to this callable.
             self.func_wrapper_code_call_prefix = 'await '
 

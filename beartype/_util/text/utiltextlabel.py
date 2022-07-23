@@ -66,7 +66,7 @@ def label_callable(
     from beartype._util.func.utilfunccodeobj import get_func_codeobj
     from beartype._util.func.utilfunctest import (
         is_func_lambda,
-        is_func_async_coroutine,
+        is_func_coro,
         is_func_async_generator,
         is_func_sync_generator,
     )
@@ -111,7 +111,7 @@ def label_callable(
         #
         # If that callable is an asynchronous coroutine, return this string
         # prefixed by a substring emphasizing that fact.
-        elif is_func_async_coroutine(func):
+        elif is_func_coro(func):
             func_label_prefix = 'coroutine '
         # Else, that callable is *NOT* an asynchronous coroutine.
         #

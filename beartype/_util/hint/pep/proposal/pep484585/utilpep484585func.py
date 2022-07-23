@@ -20,7 +20,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_RETURN_GENERATOR_SYNC,
 )
 from beartype._util.func.utilfunctest import (
-    is_func_async_coroutine,
+    is_func_coro,
     is_func_async_generator,
     is_func_sync_generator,
 )
@@ -73,7 +73,7 @@ def reduce_hint_pep484585_func_return(
     hint_sign = get_hint_pep_sign_or_none(hint)
 
     # If the decorated callable is a coroutine...
-    if is_func_async_coroutine(func):
+    if is_func_coro(func):
         # If this hint is "Coroutine[...]"...
         if hint_sign is HintSignCoroutine:
             # 3-tuple of all child type hints subscripting this hint if

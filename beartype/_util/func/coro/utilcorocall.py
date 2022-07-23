@@ -62,7 +62,7 @@ def run_coro_from_factory_sync(func: Callable, *args, **kwargs) -> object:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfunctest import is_func_async_coroutine
+    from beartype._util.func.utilfunctest import is_func_coro
 
     # If this callable is uncallable, raise an exception.
     if not callable(func):
@@ -71,7 +71,7 @@ def run_coro_from_factory_sync(func: Callable, *args, **kwargs) -> object:
     # Else, this callable is actually callable.
     #
     # If this callable is *NOT* a coroutine, raise an exception.
-    elif not is_func_async_coroutine(func):
+    elif not is_func_coro(func):
         raise _BeartypeUtilCallableException(
             f'Callable {repr(func)} not asynchronous coroutine factory.')
     # Else, this callable is a coroutine.

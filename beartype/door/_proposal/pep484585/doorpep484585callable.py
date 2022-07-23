@@ -2,14 +2,13 @@
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
-"""
-:pep:`484`- and :pep:`585`-compliant **Decidedly Object-Oriented
-Runtime-checking (DOOR) callable type hint classes** (i.e.,
-:class:`beartype.door.TypeHint` subclasses implementing support for both
+'''
+**Decidedly Object-Oriented Runtime-checking (DOOR) callable type hint classes**
+(i.e., :class:`beartype.door.TypeHint` subclasses implementing support for
 :pep:`484`- and :pep:`585`-compliant ``Callable[...]`` type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
-"""
+'''
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._doorcls import (
@@ -24,18 +23,26 @@ from beartype.typing import (
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_CALLABLE_PARAMS
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
     get_hint_pep484585_callable_params,
-
-    #FIXME: Call below in lieu of manual indexation ("_args[-1]"), please.
     get_hint_pep484585_callable_return,
 )
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 
 # ....................{ SUBCLASSES                         }....................
+# FIXME: Document all public and private attributes of this class, please.
 class _TypeHintCallable(_TypeHintSubscripted):
+    '''
+    **Callable type hint wrapper** (i.e., high-level object encapsulating a
+    low-level :pep:`484`- or :pep:`585`-compliant ``Callable[...]`` type hint).
+
+    Attributes (Private)
+    --------
+    '''
+
+    # ..................{ INITIALIZERS                       }..................
     def _munge_args(self):
-        """
+        '''
         Perform argument validation for a callable.
-        """
+        '''
 
         self._takes_any_args = False
 
@@ -49,42 +56,51 @@ class _TypeHintCallable(_TypeHintSubscripted):
             #    self._args = (..., Any,)  # returns any
             self._args = (Any,)  # returns any
         else:
-            self._call_args = get_hint_pep484585_callable_params(self._hint)
+            # Parameters type hint(s) subscripting this callable type hint.
+            self._callable_params = get_hint_pep484585_callable_params(
+                self._hint)
+
+            #FIXME: Should we classify this hint as well? Contemplate us up.
+            # Return type hint subscripting this callable type hint.
+            callable_return = get_hint_pep484585_callable_return(self._hint)
 
             # If this hint was first subscripted by an ellipsis (i.e., "...")
             # signifying a callable accepting an arbitrary number of parameters
             # of arbitrary types...
-            if self._call_args is Ellipsis:
+            if self._callable_params is Ellipsis:
                 # e.g. `Callable[..., Any]`
                 self._takes_any_args = True
-                self._call_args = ()  # Ellipsis in not a type, so strip it here.
+                self._callable_params = ()  # Ellipsis in not a type, so strip it here.
             # Else...
             else:
                 # Sign uniquely identifying this parameter list if any *OR*
                 # "None" otherwise.
-                hint_args_sign = get_hint_pep_sign_or_none(self._call_args)
+                hint_args_sign = get_hint_pep_sign_or_none(
+                    self._callable_params)
 
                 # If this hint was first subscripted by a PEP 612-compliant
                 # type hint, raise an exception. *sigh*
                 if hint_args_sign in HINT_SIGNS_CALLABLE_PARAMS:
                     raise BeartypeDoorNonpepException(
-                        f"Type hint {repr(self._hint)} "
-                        f"child PEP 612 type hint hint {repr(self._call_args)} "
+                        f'Type hint {repr(self._hint)} '
+                        f'child PEP 612 type hint hint '
+                        f'{repr(self._callable_params)} '
                         f'currently unsupported by "beartype.door.TypeHint".'
                     )
 
-            #FIXME: Note this will fail if "self._call_args" is a PEP
+            #FIXME: Note this will fail if "self._callable_params" is a PEP
             #612-compliant "typing.ParamSpec(...)" or "typing.Concatenate[...]"
             #object, as neither are tuples and thus *NOT* addable here.
             # Recreate the tuple of child type hints subscripting this parent
             # callable type hint from the tuple of argument type hints
             # introspected above. Why? Because the latter is saner than the
             # former in edge cases (e.g., ellipsis, empty argument lists).
-            self._args = self._call_args + (self._args[-1],)  # pyright: ignore[reportGeneralTypeIssues]
+            self._args = self._callable_params + (callable_return,)  # pyright: ignore[reportGeneralTypeIssues]
 
         # Perform superclass validation.
         super()._munge_args()
 
+    # ..................{ PROPERTIES                         }..................
     # FIXME: Makes sense -- but let's rename to, say, params_typehint(). Note we
     # intentionally choose "params" rather than "args" here for disambiguity with
     # the low-level "hint.__args__" tuple.
@@ -97,19 +113,21 @@ class _TypeHintCallable(_TypeHintSubscripted):
     #      def arg_types(self) -> Tuple[TypeHint, ...]:
     @property
     def arg_types(self) -> Tuple[TypeHint, ...]:
-        """
+        '''
         Arguments portion of the callable.
 
-        May be an empty tuple if the callable takes no arguments
-        """
+        May be an empty tuple if the callable takes no arguments.
+        '''
 
         return self._args_wrapped[:-1]
+
 
     # FIXME: Makes sense -- but let's rename to, say, return_typehint().
     @property
     def return_type(self) -> TypeHint:
         # the return type of the callable
         return self._args_wrapped[-1]
+
 
     # FIXME: Rename to is_params_ignorable() for orthogonality with
     # is_args_ignorable().
@@ -151,6 +169,7 @@ class _TypeHintCallable(_TypeHintSubscripted):
         # Callable[..., Any]
         return self._args[-1] is Any
 
+    # ..................{ PRIVATE ~ properties               }..................
     # FIXME: Refactor to resemble:
     #    return self.is_params_ignorable and self.is_return_ignorable
     # FIXME: Actually, is this even needed? Pretty sure the superclass
@@ -173,6 +192,7 @@ class _TypeHintCallable(_TypeHintSubscripted):
         # Callable[..., Any] (or just `Callable`)
         return self.takes_any_args and self.returns_any
 
+    # ..................{ PRIVATE ~ testers                  }..................
     def _is_le_branch(self, branch: TypeHint) -> bool:
 
         # If the branch is not subscripted, then we assume it is subscripted
@@ -186,11 +206,12 @@ class _TypeHintCallable(_TypeHintSubscripted):
 
         if not branch.takes_any_args and (
             (
-                self.takes_any_args
-                or len(self.arg_types) != len(branch.arg_types)
-                or any(
+                self.takes_any_args or
+                len(self.arg_types) != len(branch.arg_types) or
+                any(
                     self_arg > branch_arg
-                    for self_arg, branch_arg in zip(self.arg_types, branch.arg_types)
+                    for self_arg, branch_arg in zip(
+                        self.arg_types, branch.arg_types)
                 )
             )
         ):
@@ -203,5 +224,10 @@ class _TypeHintCallable(_TypeHintSubscripted):
         #
         # Are we missing something? We're probably missing something. *sigh*
         if not branch.returns_any:
-            return False if self.returns_any else self.return_type <= branch.return_type
+            return (
+                False
+                if self.returns_any else
+                self.return_type <= branch.return_type
+            )
+
         return True

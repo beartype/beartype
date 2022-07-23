@@ -14,7 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.door._doorcls import (
     TypeHint,
-    _TypeHintAnnotated,
     _TypeHintSubscripted,
     _TypeHintLiteral,
     _TypeHintNewType,
@@ -25,6 +24,7 @@ from beartype.door._doorcls import (
     _TypeHintTypeVar,
     _TypeHintUnion,
 )
+from beartype.door._proposal.doorpep593 import _TypeHintAnnotated
 from beartype.door._proposal.pep484585.doorpep484585callable import (
     _TypeHintCallable)
 from beartype.typing import (

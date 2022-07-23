@@ -43,12 +43,21 @@ class CallableClass(object):
 
 class Class(object):
     '''
-    Arbitrary pure-Python class defining an arbitrary method.
+    Arbitrary pure-Python class defining arbitrary methods.
     '''
 
     def instance_method(self):
         '''
         Arbitrary pure-Python instance method.
+        '''
+
+        pass
+
+
+    @property
+    def instance_property(self):
+        '''
+        Arbitrary pure-Python instance property.
         '''
 
         pass

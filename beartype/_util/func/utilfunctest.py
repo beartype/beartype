@@ -184,6 +184,26 @@ def is_func_lambda(func: Any) -> bool:
     )
 
 
+def is_func_property(func: Any) -> bool:
+    '''
+    ``True`` only if the passed object is a **pure-Python property** (i.e.,
+    method decorated by the builtin :func:`property` decorator).
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a pure-Python property.
+    '''
+
+    # We rejoice in the shared delight of one-liners.
+    return isinstance(func, property)
+
+
 def is_func_python(func: object) -> bool:
     '''
     ``True`` only if the passed object is a **pure-Python callable** (i.e.,
@@ -235,7 +255,7 @@ def is_func_async(func: object) -> bool:
     # Code object underlying this pure-Python callable if any *OR* "None".
     #
     # Note this tester intentionally:
-    # * Inlines the tests performed by the is_func_async_coroutine() and
+    # * Inlines the tests performed by the is_func_coro() and
     #   is_func_async_generator() testers for efficiency.
     # * Calls the get_func_codeobj_or_none() with "is_unwrapping" disabled
     #   rather than enabled. Why? Because the asynchronicity of this possibly
@@ -268,7 +288,7 @@ def is_func_async(func: object) -> bool:
     )
 
 
-def is_func_async_coroutine(func: object) -> bool:
+def is_func_coro(func: object) -> bool:
     '''
     ``True`` only if the passed object is an **asynchronous coroutine factory**
     (i.e., awaitable callable containing *no* ``yield`` expression implicitly

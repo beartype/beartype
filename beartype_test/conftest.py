@@ -75,7 +75,7 @@ def pytest_pyfunc_call(pyfuncitem: 'Function') -> None:
     #
     # Note that we intentionally prefer calling this well-tested tester of the
     # well-tested "inspect" module rather than our comparable
-    # beartype._util.func.utilfunctest.is_func_async_coroutine() tester, which
+    # beartype._util.func.utilfunctest.is_func_coro() tester, which
     # is hopefully but *NOT* necessarily known to be working here.
     if iscoroutinefunction(test_func):
         @wraps(test_func)
