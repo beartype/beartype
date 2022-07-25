@@ -15,7 +15,6 @@ This submodule unit tests the public API of the public
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pyparsing import col
 from pytest import fixture, raises
 
 # ....................{ FIXTURES                           }....................
@@ -49,7 +48,9 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
     '''
 
     # ..................{ IMPORTS                            }..................
-    from beartype import typing as bt
+    import collections.abc
+    import typing
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_LEAST_3_9,
         IS_PYTHON_AT_LEAST_3_8,
@@ -58,8 +59,6 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         Collection as CollectionABC,
         Sequence as SequenceABC,
     )
-    import collections.abc
-    import typing
 
     # Intentionally import from "typing" rather than "beartype.typing" to
     # guarantee PEP 484-compliant type hints.
@@ -88,12 +87,14 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         Union,
     )
 
-    # ..................{ TYPEVARS & NewTypes                }..................
+    # ..................{ NEWTYPES                           }..................
+    NewStr = NewType("NewStr", str)
+
+    # ..................{ TYPEVARS                           }..................
     T = TypeVar("T")
     SeqBoundTypeVar = TypeVar("SeqBoundTypeVar", bound=Sequence)
     IntStrConstrainedTypeVar = TypeVar("IntStrConstrainedTypeVar", int, str)
 
-    NewStr = NewType("NewStr", str)
     # ..................{ CLASSES                            }..................
     class MuhThing:
         def muh_method(self):
@@ -254,12 +255,18 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         (NewStr, int, False),
         (int, NewStr, False),
     ]
-    
-    # smoke test for all the typing.ABCs
+
+    # Smoke test for all "typing" ABCs. Smoke out those bugs, pytest!
     for cls_name in dir(collections.abc) + ['Deque']:
         if not cls_name.startswith("_"):
             typing_abc = getattr(typing, cls_name)
-            nparams = len(typing_abc.__parameters__)
+
+            # Tuple of the zero or more type variables parametrizing this ABC.
+            typing_abc_typevars = get_hint_pep_typevars(typing_abc)
+
+            # Number of type variables parametrizing this ABC.
+            nparams = len(typing_abc_typevars)
+
             if nparams:
                 sub = typing_abc[(list,) * nparams]
                 sup = typing_abc[(Sequence,) * nparams]
@@ -269,7 +276,6 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
 
             HINT_SUBHINT_CASES.append((sub, sup, True))
 
-    
     # If the active Python interpreter targets Python >= 3.8 and thus supports
     # PEP 544 and 586...
     if IS_PYTHON_AT_LEAST_3_8:
@@ -553,14 +559,14 @@ def test_typehint_is_ignorable() -> None:
 def test_empty_tuple():
     from beartype.door import TypeHint
     from typing import Tuple
-    
+
     assert TypeHint(Tuple[()]).is_empty_tuple
 
 
 def test_hint_iterable():
     from beartype.door import TypeHint
     from typing import Union
-    
+
     assert list(TypeHint(Union[int, str])) == [TypeHint(int), TypeHint(str)]
     assert not list(TypeHint(int))
 
@@ -618,8 +624,8 @@ def test_invalid_subtype_comparison():
         hint.is_subhint(int)
 
 
+#FIXME: Implement us up at some point, yo.
 # def test_callable_param_spec():
 #     # TODO
 #     with pytest.raises(NotImplementedError):
 #         TypeHint(t.Callable[t.ParamSpec("P"), t.TypeVar("T")])
-
