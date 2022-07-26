@@ -25,7 +25,7 @@ from contextlib import suppress
 # FIXME: Document all public and private attributes of this class, please.
 class _TypeHintAnnotated(TypeHint):
     '''
-    **Callable type hint wrapper** (i.e., high-level object encapsulating a
+    **Annotated type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`593`-compliant :attr:`typing.Annotated` type hint).
 
     Attributes (Private)

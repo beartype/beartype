@@ -1,9 +1,41 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
+#FIXME: [PEP 585] It looks like CPython's stdlib quietly extended PEP 585
+#support to a variety of undocumented classes, including:
+#* "asyncio.Future[T]".
+#* "asyncio.Task[T]".
+#* "asyncio.Queue[T]".
+#* "pathlib.PathLike[T]".
+#
+#Yes, we can verify that *ALL* of those actually behave as expected at runtime.
+#@beartype will need to add corresponding support for such hints, beginning with
+#defining new sign singletons suffixed by the same basenames (e.g.,
+#"HintSignFuture", "HintSignTask"). Or... maybe not? Maybe everything just
+#behaves as expected as is?
+#
+#At the least, we'll want to rigorously test *ALL* of the above in our test
+#suite to ensure that @beartype does indeed type-check these as expected.
+#FIXME: Sadly, we do need to explicitly do *SOMETHING*. @beartype currently
+#raises exceptions on callables annotated by any of the above, as the metaclass
+#of these hints prohibits isinstance() checks: e.g.,
+#    asyncio.Task[~T] uncheckable at runtime (i.e., not passable as second
+#    parameter to isinstance(), due to raising "isinstance() argument 2 cannot
+#    be a parameterized generic" from metaclass __instancecheck__() method).
+#
+#Rather than explicitly matching all of the above, we instead want @beartype to
+#perform an automated solution implicitly matching all of the above. Notably,
+#improve @beartype to:
+#
+#* Detect parametrized generic hints that are otherwise unrecognized (e.g.,
+#  "asyncio.Task[~T]"). 
+#* Introspect the origin (i.e., "__origin__" dunder attribute) from these hints.
+#* Internally replace each such parametrized generic hint with its origin when
+#  generating type-checking code. Voila!
+
 #FIXME: [PEP] Add PEP 613 support (i.e., "typing.TypeAlias"). Thankfully, this
 #is trivial. "typing.TypeAlias" is prohibited in callable definitions and
 #inside the bodies of callables. Ergo, @beartype should just raise a
@@ -197,4 +229,3 @@
 #  When doing so, remove the "Parameter.POSITIONAL_ONLY" type from the
 #  "_PARAM_KIND_IGNORABLE" set.
 #* Remove the "_PARAM_KIND_IGNORABLE" set entirely.
-

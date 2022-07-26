@@ -30,12 +30,7 @@ from beartype.typing import (
     TypeVar,
 )
 from beartype._data.hint.pep.sign.datapepsigns import (
-    # HintSignAnnotated,
-    # HintSignCallable,
-    # HintSignGeneric,
-    # HintSignLiteral,
     HintSignNewType,
-    # HintSignTuple,
     HintSignTypeVar,
 )
 from beartype._util.cache.utilcachecall import callable_cached
@@ -539,7 +534,9 @@ class TypeHint(ABC):
 
         pass
 
-    def _wrap_children(self, unordered_children: tuple) -> Tuple['TypeHint', ...]:
+
+    def _wrap_children(self, unordered_children: tuple) -> Tuple[
+        'TypeHint', ...]:
         """
         Wrap type hint parameters in :class:`TypeHint` instances.
 
@@ -825,33 +822,6 @@ class _TypeHintTuple(_TypeHintSubscripted):
                 self._args_wrapped, branch._args_wrapped
             )
         )
-
-
-class _TypeHintLiteral(_TypeHintSubscripted):
-    @callable_cached
-    def is_subhint(self, other: 'TypeHint') -> bool:
-        die_unless_typehint(other)
-
-        # If the other hint is also a literal
-        if isinstance(other, _TypeHintLiteral):
-            # we check that our args are a subset of theirs
-            return all(arg in other._args for arg in self._args)
-
-        # If the other hint is a just an origin
-        if other._is_args_ignorable:
-            # we check that our args instances of that origin
-            return all(isinstance(x, other._origin) for x in self._args)
-
-        return all(TypeHint(type(arg)) <= other for arg in self._args)
-
-    @property
-    def _is_args_ignorable(self) -> bool:
-        return False
-
-    def _wrap_children(self, _: tuple) -> Tuple['TypeHint', ...]:
-        # the parameters of Literal aren't hints, they're arbitrary values
-        # we don't wrap them.
-        return ()
 
 
 class _TypeHintNewType(_TypeHintClass):
