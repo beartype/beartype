@@ -11,8 +11,6 @@ for :pep:`593`-compliant :attr:`typing.Annotated` type hints).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                               }....................
-
 # ....................{ IMPORTS                            }....................
 from beartype.door._doorcls import TypeHint
 from beartype._util.hint.pep.proposal.utilpep593 import (
@@ -21,8 +19,8 @@ from beartype._util.hint.pep.proposal.utilpep593 import (
 )
 from contextlib import suppress
 
-# ....................{ SUPERCLASSES                       }....................
-# FIXME: Document all public and private attributes of this class, please.
+# ....................{ SUBCLASSES                         }....................
+#FIXME: Document all public and private attributes of this class, please.
 class _TypeHintAnnotated(TypeHint):
     '''
     **Annotated type hint wrapper** (i.e., high-level object encapsulating a

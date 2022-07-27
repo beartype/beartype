@@ -19,28 +19,17 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from abc import ABC
 from beartype.door._doortest import die_unless_typehint
-from beartype.roar import (
-    BeartypeDoorException,
-    BeartypeDoorNonpepException,
-)
+from beartype.roar import BeartypeDoorException
 from beartype.typing import (
     Any,
     Iterable,
     Tuple,
-    TypeVar,
-)
-from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignNewType,
-    HintSignTypeVar,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_origin_or_none,
     get_hint_pep_sign_or_none,
-)
-from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
-    get_hint_pep484_newtype_class,
 )
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 
@@ -133,18 +122,18 @@ class TypeHint(ABC):
         '''
         Factory constructor magically instantiating and returning an instance of
         the private concrete subclass of this public abstract base class (ABC)
-        appropriate for handling the passed low-level unordered type hint.
+        appropriate for handling the passed low-level type hint.
 
         Parameters
         ----------
         hint : object
-            Lower-level unordered type hint to be encapsulated by this
-            higher-level partially ordered type hint.
+            Low-level type hint to be wrapped by an instance of a concrete
+            subclass of this abstract superclass.
 
         Returns
         ----------
         TypeHint
-           Higher-level partially ordered type hint encapsulating that hint.
+            Type hint wrapper wrapping this low-level type hint.
 
         Raises
         ----------
@@ -154,11 +143,6 @@ class TypeHint(ABC):
             If the passed hint is *not* actually a PEP-compliant type hint.
         '''
 
-        #FIXME: It'd be great if we could import this at module scope for
-        #efficiency instead. Consider refactorings that would enable that! \o/
-        # Avoid circular import dependencies.
-        from beartype.door._doordata import HINT_SIGN_TO_TYPEHINT
-
         # If this low-level type hint is already a high-level type hint wrapper,
         # return this wrapper as is. This guarantees the following constraint:
         #     >>> TypeHint(TypeHint(hint)) is TypeHint(hint)
@@ -166,57 +150,17 @@ class TypeHint(ABC):
         if isinstance(hint, TypeHint):
             return hint
 
-        # Sign uniquely identifying this hint if any *OR* return None
-        # (i.e., if this hint is *NOT* actually a PEP-compliant type hint).
-        hint_sign = get_hint_pep_sign_or_none(hint)
+        #FIXME: It'd be great if we could import this at module scope for
+        #efficiency instead. Consider refactorings that would enable that! \o/
+        # Avoid circular import dependencies.
+        from beartype.door._doordata import get_typehint_subclass
 
-        # Private concrete subclass of this ABC handling this hint if any *OR*
-        # "None" otherwise (i.e., if no such subclass has been authored yet).
-        TypeHintSubclass = HINT_SIGN_TO_TYPEHINT.get(hint_sign)
+        # Concrete "TypeHint" subclass handling this hint if any *OR* raise an
+        # exception otherwise.
+        typehint_subclass = get_typehint_subclass(hint)
 
-        # If this hint appears to be currently unsupported...
-        if TypeHintSubclass is None:
-            # FIXME: The second condition here is kinda intense. Should we really
-            # be conflating typing attributes that aren't types with objects that
-            # are types? If so, refactor as follows to transparently support
-            # the third-party "typing_extensions" module (as much as reasonably
-            # can be, anyway):
-            #    from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
-            #    if isinstance(hint, type) or is_hint_pep_typing(hint):  # <-- ...still unsure about this
-            if isinstance(hint, type) or getattr(hint, "__module__", "") == "typing":
-                TypeHintSubclass = _TypeHintClass
-            else:
-                raise BeartypeDoorNonpepException(
-                    f"Type hint {repr(hint)} "
-                    f'currently unsupported by "beartype.door.TypeHint".'
-                )
-        # Else, this hint is supported.
-
-        #FIXME: Add this new global to "datapepsignset" and reference below:
-        #    HINT_SIGNS_ORIGINLESS = frozenset((
-        #        HintSignNewType,
-        #        HintSignTypeVar,
-        #    ))
-        #
-        #Alternately, it might be preferable to refactor this to resemble:
-        #    if (
-        #       not get_hint_pep_args(hint) and
-        #       get_hint_pep_origin_or_none(hint) is None
-        #    ):
-        #        TypeHintSubclass = _TypeHintClass
-        #
-        #That's possibly simpler and cleaner, as it seamlessly conveys the exact
-        #condition we're going for -- assuming it works, of course. *sigh*
-        #
-        # If a subscriptable type has no args, all we care about is the origin.
-        if not get_hint_pep_args(hint) and hint_sign not in {
-            HintSignNewType,
-            HintSignTypeVar,
-        }:
-            TypeHintSubclass = _TypeHintClass
-
-        # Return this subclass.
-        return super().__new__(TypeHintSubclass)
+        # Return a new cached instance of this subclass.
+        return super().__new__(typehint_subclass)
 
 
     def __init__(self, hint: object) -> None:
@@ -572,13 +516,15 @@ class TypeHint(ABC):
     # ..................{ PRIVATE ~ abstract                 }..................
     # Subclasses *MUST* implement all of the following abstract methods.
 
+    #FIXME: This implies our usage of "abc.ABC" above to be useless, which is
+    #mostly fine. But let's remove all reference to "abc.ABC" above, please.
     # We intentionally avoid applying the @abstractmethod decorator here. Why?
     # Because doing so would cause static type checkers (e.g., mypy) to
     # incorrectly flag this class as abstract and thus *NOT* instantiable. In
     # fact, the magical __new__() method defined by this class enables this
     # otherwise abstract class to be safely instantiated as "TypeHint(hint)".
     def _is_le_branch(self, branch: 'TypeHint') -> bool:
-        """
+        '''
         ``True`` only if this partially ordered type hint is **compatible** with
         the passed branch of another partially ordered type hint passed to the
         parent call of the :meth:`__le__` dunder method.
@@ -587,11 +533,10 @@ class TypeHint(ABC):
         ----------
         :meth:`__le__`
             Further details.
-        """
+        '''
 
-        raise NotImplementedError(
-            "Subclasses must implement this method."
-        )  # pragma: no cover
+        raise NotImplementedError(  # pragma: no cover
+            'Abstract method TypeHint._is_le_branch() undefined.')
 
     # ..................{ PRIVATE ~ abstract : property      }..................
     @property
@@ -746,191 +691,3 @@ class _TypeHintOriginIsinstanceableArgs2(_TypeHintSubscripted):
 
 class _TypeHintOriginIsinstanceableArgs3(_TypeHintSubscripted):
     _required_nargs: int = 3
-
-
-class _TypeHintTuple(_TypeHintSubscripted):
-    _is_variable_length: bool = False
-    _is_empty_tuple: bool = False
-
-    def _munge_args(self):
-        """
-        Perform argument validation for a tuple.
-
-        Specifically, remove any PEP-noncompliant type hints from the arguments,
-        and set internal flags accordingly.
-        """
-
-        # e.g. `Tuple` without any arguments
-        # This may be unreachable, (since a bare Tuple will go to
-        # _TypeHintClass) but it's here for completeness and safety.
-        if len(self._args) == 0:  # pragma: no cover
-            self._is_variable_length = True
-            self._args = (Any,)
-        elif len(self._args) == 1 and self._args[0] == ():
-            self._is_empty_tuple = True
-            self._args = ()
-        elif len(self._args) == 2 and self._args[1] is Ellipsis:
-            self._is_variable_length = True
-            self._args = (self._args[0],)
-
-        super()._munge_args()
-
-    @property
-    def is_variable_length(self) -> bool:
-        # Tuple[T, ...]
-        return self._is_variable_length
-
-    @property
-    def _is_args_ignorable(self) -> bool:
-        # Tuple[Any, ...]  or just Tuple
-        return self.is_variable_length and bool(self._args) and self._args[0] is Any
-
-    @property
-    def is_empty_tuple(self) -> bool:
-        # Tuple[()]
-        return self._is_empty_tuple
-
-    def _is_le_branch(self, branch: TypeHint) -> bool:
-        if branch._is_args_ignorable:
-            return issubclass(self._origin, branch._origin)
-
-        if not isinstance(branch, _TypeHintTuple):
-            return False
-        if self._is_args_ignorable:
-            return False
-        if branch.is_empty_tuple:
-            return self.is_empty_tuple
-
-        if branch.is_variable_length:
-            branch_type = branch._args_wrapped[0]
-            if self.is_variable_length:
-                return branch_type <= self._args_wrapped[0]
-            return all(child <= branch_type for child in self._args_wrapped)
-
-        if self.is_variable_length:
-            return (
-                branch.is_variable_length
-                and self._args_wrapped[0] <= branch._args_wrapped[0]
-            )
-
-        if len(self._args) != len(branch._args):
-            return False
-
-        return all(
-            self_child <= branch_child
-            for self_child, branch_child in zip(
-                self._args_wrapped, branch._args_wrapped
-            )
-        )
-
-
-class _TypeHintNewType(_TypeHintClass):
-    """Partially ordered NewType type hint"""
-
-    # TODO:
-    # Note that currently, all this checks is the `__supertype__`.  Which is all
-    # that matters to avoid a TypeError at runtime. We could conceivably add some
-    # sort of "strict" flag that further asserts that the other type IS this
-    # newtype (i.e. match the semantics of a static type checker).  That would
-    # require either adding a `strict` kwarg to the `__init__`, or to the `is_subhint`
-    # method... both of which are somewhat invasive to the TypeHint API, for a
-    # relatively fringe case.
-    def __init__(self, hint: object) -> None:
-        super().__init__(hint)
-        supertype = get_hint_pep484_newtype_class(hint)
-
-        # We want to "create" an origin for this NewType that treats the newtype
-        # as a subclass of its supertype.  For example, if the hint is
-        # `NewType("MyType", str)`, then the origin should be
-        # `class MyString(str): pass`.
-        try:
-            # we create literal subclass here. but since TypeHints are cached, this
-            # type should only be created once, and therefore work?
-            name = getattr(hint, '__name__', str(hint))
-            self._origin = type(name, (supertype,), {})
-        except TypeError:
-            # not all types are subclassable (like `Any`)
-            self._origin = supertype
-
-
-    #FIXME: Did we perhaps mean to do something here? Let's pretend not.
-    # def _is_le_branch(self, branch: TypeHint) -> bool:
-    #     return super()._is_le_branch(branch)
-
-
-class _TypeHintUnion(_TypeHintSubscripted):
-    """
-    **Partially ordered union type hint** (i.e., high-level object encapsulating
-    a low-level PEP-compliant union type hint, including both
-    :pep:`484`-compliant :attr:`typing.Union` and :attr:`typing.Optional` unions
-    *and* :pep:`604`-compliant ``|``-delimited type unions).
-    """
-
-    @callable_cached
-    def is_subhint(self, other: 'TypeHint') -> bool:
-
-        # If the passed object is *NOT* a type hint wrapper, raise an exception.
-        die_unless_typehint(other)
-
-        # If that hint is *NOT* a partially ordered union type hint, return false.
-        if not isinstance(other, _TypeHintUnion):
-            return other._hint is Any
-        # Else, that hint is a partially ordered union type hint.
-
-        # FIXME: O(n^2) complexity ain't that great. Perhaps that's unavoidable
-        # here, though? Contemplate optimizations, please.
-
-        # every branch in this Union must be a member of the other Union
-        for branch in self._branches:
-            # If any item in this Union is not present in other_hint._branches,
-            # this hint is incompatible with that hint.
-            if not any(branch <= other_branch for other_branch in other._branches):
-                return False
-
-        # Else, we're good.
-        return True
-
-    @property
-    def _branches(self) -> Iterable[TypeHint]:
-        return self._args_wrapped
-
-    def _is_le_branch(self, branch: TypeHint) -> bool:
-        raise NotImplementedError(
-            "_TypeHintUnion._is_le_branch() unsupported."
-        )  # pragma: no cover
-
-
-class _TypeHintTypeVar(_TypeHintUnion):
-    """
-    **Partially ordered TypeVar type hint** (i.e., high-level object encapsulating
-    a low-level PEP-compliant TypeVar type hint)
-    """
-
-    _hint: TypeVar
-
-    def _wrap_children(
-        self, unordered_children: tuple) -> Tuple['TypeHint', ...]:
-
-        variance = None
-        if self._hint.__covariant__:
-            variance = "covariant"
-        elif self._hint.__contravariant__:
-            variance = "contravariant"
-        if variance:
-            raise BeartypeDoorException(
-                "Only invariant TypeVars are currently supported. "
-                f"{self._hint!r} is {variance}"
-            )
-
-        # TypeVars may only be bound or constrained, but not both.
-        # the difference between the two has semantic meaning for
-        # static type checkers, but relatively little meaning for us here.
-        # Ultimately, we're only concerned with the set of compatible types
-        # present in either the bound or the constraints, so we treat a TypeVar
-        # as a Union of its constraints or bound.
-        # https://docs.python.org/3/library/typing.html#typing.TypeVar
-        if self._hint.__bound__ is not None:
-            return (TypeHint(self._hint.__bound__),)
-        elif self._hint.__constraints__:
-            return tuple(TypeHint(t) for t in self._hint.__constraints__)
-        return (TypeHint(Any),)

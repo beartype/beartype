@@ -261,6 +261,10 @@ def hint_subhint_cases() -> 'Iterable[Tuple[object, object, bool]]':
         if not cls_name.startswith("_"):
             typing_abc = getattr(typing, cls_name)
 
+            #FIXME: This logic (probably) isn't behaving as expected under
+            #Python >= 3.9, where unsubscripted "typing" factories (probably)
+            #are *NOT* parametrized by type variables. Let's research this up!
+
             # Tuple of the zero or more type variables parametrizing this ABC.
             typing_abc_typevars = get_hint_pep_typevars(typing_abc)
 

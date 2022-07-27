@@ -15,7 +15,7 @@ from beartype.door._doorcls import (
     TypeHint,
     _TypeHintSubscripted,
 )
-from beartype.roar import BeartypeDoorNonpepException
+from beartype.roar import BeartypeDoorPepUnsupportedException
 from beartype.typing import (
     Any,
     Tuple,
@@ -81,12 +81,14 @@ class _TypeHintCallable(_TypeHintSubscripted):
                 # If this hint was first subscripted by a PEP 612-compliant
                 # type hint, raise an exception. *sigh*
                 if hint_args_sign in HINT_SIGNS_CALLABLE_PARAMS:
-                    raise BeartypeDoorNonpepException(
+                    raise BeartypeDoorPepUnsupportedException(
                         f'Type hint {repr(self._hint)} '
-                        f'child PEP 612 type hint hint '
+                        f'PEP 612 child type hint '
                         f'{repr(self._callable_params)} '
-                        f'currently unsupported by "beartype.door.TypeHint".'
+                        f'currently unsupported.'
                     )
+                # Else, this hint was *NOT* first subscripted by a PEP
+                # 612-compliant type hint.
 
             #FIXME: Note this will fail if "self._callable_params" is a PEP
             #612-compliant "typing.ParamSpec(...)" or "typing.Concatenate[...]"

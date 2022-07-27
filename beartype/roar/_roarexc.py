@@ -131,10 +131,10 @@ class BeartypeConfException(BeartypeException):
 # ....................{ API ~ door                         }....................
 class BeartypeDoorException(BeartypeException):
     '''
-    Abstract base class of all **beartype Decidedly Object-Oriented
-    Runtime-checking (DOOR) exceptions.**
+    Abstract base class of all **Decidedly Object-Oriented Runtime-checking
+    (DOOR) exceptions.**
 
-    Instances of subclasses of this exception are raised at call time from the
+    Instances of subclasses of this exception are raised at call time from
     callables and classes published by the :func:`beartype.door` subpackage.
     '''
 
@@ -143,12 +143,40 @@ class BeartypeDoorException(BeartypeException):
 
 class BeartypeDoorNonpepException(BeartypeDoorException):
     '''
-    **Beartype Decidedly Object-Oriented Runtime-checking (DOOR)
-    PEP-noncompliant type hint exception.**
+    **Decidedly Object-Oriented Runtime-checking (DOOR) PEP-noncompliant type
+    hint exception.**
 
-    This exception is raised by the :func:`beartype.door.TypeHint.__init__`
-    constructor on receiving a **invalid PEP-noncompliant type hint** (i.e.,
+    This exception is raised at call time from :func:`beartype.door` callables
+    and classes on receiving an **invalid PEP-noncompliant type hint** (i.e.,
     type hint failing to comply with PEP standards currently supported by the
+    :mod:`beartype.door` API).
+    '''
+
+    pass
+
+
+class BeartypeDoorPepException(BeartypeDoorException):
+    '''
+    **Decidedly Object-Oriented Runtime-checking (DOOR) PEP-compliant type hint
+    exception.**
+
+    This exception is raised at call time from :func:`beartype.door` callables
+    and classes on receiving an **invalid PEP-compliant type hint** (i.e.,
+    type hint complying with PEP standards currently supported by the
+    :mod:`beartype.door` API but otherwise invalid for various reasons).
+    '''
+
+    pass
+
+
+class BeartypeDoorPepUnsupportedException(BeartypeDoorPepException):
+    '''
+    **Decidedly Object-Oriented Runtime-checking (DOOR) unsupported
+    PEP-compliant type hint exception.**
+
+    This exception is raised at call time from :func:`beartype.door` callables
+    and classes on receiving an **unsupported PEP-compliant type hint** (i.e.,
+    type hint complying with PEP standards *not* currently supported by the
     :mod:`beartype.door` API).
     '''
 
