@@ -94,8 +94,10 @@ def die_unless_type_or_types(
     if not is_type_or_types(type_or_types):
         assert isinstance(exception_cls, type), (
             'f{repr(exception_cls)} not exception class.')
+        assert issubclass(exception_cls, Exception), (
+            f'{repr(exception_cls)} not exception subclass.')
         assert isinstance(exception_prefix, str), (
-            'f{repr(exception_prefix)} not string.')
+            f'{repr(exception_prefix)} not string.')
 
         # Exception message to be raised below.
         exception_message = (

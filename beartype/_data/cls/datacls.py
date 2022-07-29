@@ -64,10 +64,11 @@ See Also
 '''
 
 # ....................{ TUPLES                             }....................
+#FIXME: Eliminate entirely, please.
 TYPES_BUILTIN_DECORATOR_DESCRIPTOR_FACTORY = (
     property,
-    classmethod,
-    staticmethod,
+    # classmethod,
+    # staticmethod,
 )
 '''
 Tuple of all **builtin descriptor factory decorators** (i.e., builtin types

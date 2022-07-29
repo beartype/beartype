@@ -25,6 +25,12 @@ from beartype.roar import (
     BeartypeDecorWrapperException,
     # BeartypeWarning,
 )
+from beartype._cave._cavefast import (
+    MethodDecoratorBuiltinTypes,
+    MethodDecoratorClassType,
+    MethodDecoratorPropertyType,
+    MethodDecoratorStaticType,
+)
 from beartype._data.cls.datacls import (
     TYPES_BUILTIN_DECORATOR_DESCRIPTOR_FACTORY)
 from beartype._data.datatyping import (
@@ -42,6 +48,10 @@ from beartype._util.cls.pep.utilpep557 import is_type_pep557
 from beartype._util.func.lib.utilbeartypefunc import (
     is_func_unbeartypeable,
     set_func_beartyped,
+)
+from beartype._util.func.utilfuncget import (
+    get_func_classmethod_wrappee,
+    get_func_staticmethod_wrappee,
 )
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.mod.utilmodget import get_object_module_line_number_begin
@@ -82,6 +92,11 @@ def beartype_object(
         Memoized parent decorator wrapping this unmemoized child decorator.
     '''
 
+    #FIXME: Undo this, please. There's *NO* tangible benefit to being so
+    #ideologically purist about these sorts of things. Relax. Expand. Explode.
+    #FIXME: After doing so, also:
+    #* Remove "TYPES_BUILTIN_DECORATOR_DESCRIPTOR_FACTORY" entirely.
+
     # Validate the type of the decorated object *BEFORE* performing any work
     # assuming this object to define attributes (e.g., "func.__name__").
     #
@@ -116,8 +131,7 @@ def beartype_object(
         )
     # Else, this is object is *NOT* such an unusable descriptor.
     #
-    # If this object is a class, return this class decorated with
-    # type-checking.
+    # If this object is a class, return this class decorated with type-checking.
     elif isinstance(obj, type):
         #FIXME: Mypy currently erroneously emits a false negative resembling
         #the following if the "# type: ignore..." pragma is omitted below:
@@ -129,24 +143,55 @@ def beartype_object(
         #hearts.
         return _beartype_type(cls=obj, conf=conf)  # type: ignore[return-value]
     # Else, this object is a non-class.
+
+    # Type of this object.
+    obj_type = type(obj)
+
+    # If this object is an uncallable builtin method descriptor (i.e., either a
+    # property, class method, or static method object), @beartype was listed
+    # above rather than below the builtin decorator generating this descriptor
+    # in the chain of decorators decorating this decorated callable. Although
+    # @beartype typically *MUST* decorate a callable directly, this edge case is
+    # sufficiently common *AND* trivial to resolve to warrant doing so. To do
+    # so, this conditional branch effectively reorders @beartype to be the first
+    # decorator decorating the pure-Python function underlying this method
+    # descriptor: e.g.,
+    #
+    #     # This branch detects and reorders this edge case...
+    #     class MuhClass(object):
+    #         @beartype
+    #         @classmethod
+    #         def muh_classmethod(cls) -> None: pass
+    #
+    #     # ...to resemble this direct decoration instead.
+    #     class MuhClass(object):
+    #         @classmethod
+    #         @beartype
+    #         def muh_classmethod(cls) -> None: pass
+    #
+    # Note that most but *NOT* all of these objects are uncallable. Regardless,
+    # *ALL* of these objects are unsuitable for direct decoration. Specifically:
+    # * Under Python < 3.10, *ALL* of these objects are uncallable.
+    # * Under Python >= 3.10:
+    #   * Descriptors created by @classmethod and @property are uncallable.
+    #   * Descriptors created by @staticmethod are technically callable but
+    #     C-based and thus unsuitable for decoration.
+    if obj_type in MethodDecoratorBuiltinTypes:
+        return _beartype_descriptor(descriptor=obj, conf=conf)
+    # Else, this object is *NOT* an uncallable builtin method descriptor.
     #
     # If this object is uncallable, raise an exception.
     elif not callable(obj):
+        # Raise an exception.
         raise BeartypeDecorWrappeeException(
             f'Uncallable {repr(obj)} not decoratable by @beartype.')
     # Else, this object is callable.
-    #
-    # If that callable is unbeartypeable (i.e., if this decorator should
-    # preserve that callable as is rather than wrap that callable with
-    # constant-time type-checking), silently reduce to the identity decorator.
-    elif is_func_unbeartypeable(obj):
-        return obj
-    # Else, that callable is beartypeable. Let's do this, folks.
 
     # Return a new callable decorating that callable with type-checking.
-    return _beartype_func(func=obj, conf=conf)
+    return _beartype_func(func=obj, conf=conf)  # type: ignore[return-value]
 
 
+#FIXME: Rename to beartype_object_nonfatal() for disambiguity, please.
 #FIXME: Unit test us up, please.
 def beartype_object_safe(
     obj: BeartypeableT,
@@ -278,7 +323,66 @@ def beartype_object_safe(
     # this object with a type-checking class or callable. So it goes, fam.
     return obj
 
-# ....................{ PRIVATE ~ beartypers               }....................
+# ....................{ PRIVATE ~ beartypers : func        }....................
+def _beartype_descriptor(
+    descriptor: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
+    '''
+    Decorate the passed C-based unbound method descriptor with dynamically
+    generated type-checking.
+
+    Parameters
+    ----------
+    descriptor : BeartypeableT
+        Descriptor to be decorated by :func:`beartype.beartype`.
+    conf : BeartypeConf
+        Beartype configuration configuring :func:`beartype.beartype` uniquely
+        specific to this descriptor.
+
+    Returns
+    ----------
+    BeartypeableT
+        New pure-Python callable wrapping this descriptor with type-checking.
+    '''
+    assert isinstance(descriptor, MethodDecoratorBuiltinTypes), (
+        f'{repr(descriptor)} not builtin method descriptor.')
+    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+
+    # Type of this descriptor.
+    descriptor_type = type(descriptor)
+
+    # If this descriptor is a class method...
+    if descriptor_type is MethodDecoratorClassType:
+        # Pure-Python unbound function wrapped by this descriptor.
+        descriptor_wrappee = get_func_classmethod_wrappee(descriptor)
+
+        # Return a new class method descriptor decorating that function with
+        # type-checking, implicitly destroying the prior descriptor.
+        return classmethod(_beartype_func(func=descriptor_wrappee, conf=conf))  # type: ignore[return-value]
+    # Else, this descriptor is *NOT* a class method.
+    #
+    # If this descriptor is a static method...
+    elif descriptor_type is MethodDecoratorStaticType:
+        # Pure-Python unbound function wrapped by this descriptor.
+        descriptor_wrappee = get_func_staticmethod_wrappee(descriptor)
+
+        # Return a new static method descriptor decorating that function with
+        # type-checking, implicitly destroying the prior descriptor.
+        return staticmethod(_beartype_func(func=descriptor_wrappee, conf=conf))  # type: ignore[return-value]
+    # Else, this descriptor is *NOT* a static method.
+    #
+    # If this descriptor is a property method...
+    #FIXME: Implement up this branch somehow, please.
+    elif descriptor_type is MethodDecoratorPropertyType:
+        pass
+
+    # Raise a fallback exception. This should *NEVER happen. This *WILL* happen.
+    raise BeartypeDecorWrappeeException(
+        f'Builtin method descriptor {repr(descriptor)} '
+        f'not decoratable by @beartype '
+        f'(i.e., neither property, class method, nor static method descriptor).'
+    )
+
+
 def _beartype_func(func: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
     '''
     Decorate the passed callable with dynamically generated type-checking.
@@ -299,6 +403,13 @@ def _beartype_func(func: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
     assert callable(func), f'{repr(func)} uncallable.'
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
 
+    # If that callable is unbeartypeable (i.e., if this decorator should
+    # preserve that callable as is rather than wrap that callable with
+    # constant-time type-checking), silently reduce to the identity decorator.
+    if is_func_unbeartypeable(func):
+        return func  # type: ignore[return-value]
+    # Else, that callable is beartypeable. Let's do this, folks.
+
     #FIXME: Uncomment to display all annotations in "pytest" tracebacks.
     # func_hints = func.__annotations__
 
@@ -312,15 +423,15 @@ def _beartype_func(func: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
     # If this callable requires *NO* type-checking, silently reduce to a noop
     # and thus the identity decorator by returning this callable as is.
     if not func_wrapper_code:
-        return func
+        return func  # type: ignore[return-value]
 
     # Function wrapping this callable with type-checking to be returned.
     #
     # For efficiency, this wrapper accesses *ONLY* local rather than global
     # attributes. The latter incur a minor performance penalty, since local
     # attributes take precedence over global attributes, implying all global
-    # attributes are *ALWAYS* first looked up as local attributes before
-    # falling back to being looked up as global attributes.
+    # attributes are *ALWAYS* first looked up as local attributes before falling
+    # back to being looked up as global attributes.
     func_wrapper = make_func(
         func_name=func_data.func_wrapper_name,
         func_code=func_wrapper_code,
@@ -342,7 +453,7 @@ def _beartype_func(func: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
     # Return this wrapper.
     return func_wrapper  # type: ignore[return-value]
 
-
+# ....................{ PRIVATE ~ beartypers : type        }....................
 def _beartype_type(cls: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
     '''
     Decorate the passed class with dynamically generated type-checking.

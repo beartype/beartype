@@ -300,10 +300,10 @@ See Also
 # guaranteed to *ALWAYS* exist is obtained instead.
 MethodUnboundClassCType: Any = type(dict.__dict__['fromkeys'])
 '''
-Type of all **C-based unbound class method descriptors** (i.e., callable
-objects implemented in low-level C, associated with class methods of
-builtin types when accessed with the low-level :attr:`object.__dict__`
-dictionary rather than as class or instance attributes).
+Type of all **C-based unbound class method descriptors** (i.e., callable objects
+implemented in low-level C, associated with class methods of builtin types when
+accessed with the low-level :attr:`object.__dict__` dictionary rather than as
+class or instance attributes).
 
 Despite being unbound, class method descriptors remain callable (e.g., by
 explicitly passing the intended ``cls`` objects as their first parameters).
@@ -362,9 +362,9 @@ class or instance attributes).
 
 Caveats
 ----------
-Class method objects are *only* accessible with the low-level
+Class method objects are *only* directly accessible via the low-level
 :attr:`object.__dict__` dictionary. When accessed as class or instance
-attributes, class methods are instances of the standard
+attributes, class methods reduce to instances of the standard
 :class:`MethodBoundInstanceOrClassType` type.
 
 Class method objects are *not* callable, as their implementations fail to
@@ -381,7 +381,7 @@ pure Python, and accessed as class rather than instance attributes).
 
 Caveats
 ----------
-Property objects are accessible both as class attributes *and* with the
+Property objects are directly accessible both as class attributes *and* via the
 low-level :attr:`object.__dict__` dictionary. Property objects are *not*
 accessible as instance attributes, for hopefully obvious reasons.
 
@@ -400,10 +400,10 @@ class or instance attributes).
 
 Caveats
 ----------
-Static method objects are *only* accessible with the low-level
+Static method objects are *only* directly accessible via the low-level
 :attr:`object.__dict__` dictionary. When accessed as class or instance
-attributes, static methods are instances of the standard :class:`FunctionType`
-type.
+attributes, static methods reduce to instances of the standard
+:class:`FunctionType` type.
 
 Static method objects are *not* callable, as their implementations fail to
 define the ``__call__`` dunder method.

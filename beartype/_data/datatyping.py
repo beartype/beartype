@@ -21,6 +21,11 @@ from beartype.typing import (
     TypeVar,
     Union,
 )
+from beartype._cave._cavefast import (
+    MethodDecoratorClassType,
+    MethodDecoratorPropertyType,
+    MethodDecoratorStaticType,
+)
 from types import (
     CodeType,
     FrameType,
@@ -39,7 +44,29 @@ all possible callable signatures.
 # ....................{ HINTS ~ typevar                    }....................
 # Type variables required by subsequent type hints below.
 
-BeartypeableT = TypeVar('BeartypeableT', bound=Union[type, CallableAny])
+BeartypeableT = TypeVar(
+    'BeartypeableT',
+    # The @beartype decorator decorates objects that are either...
+    bound=Union[
+        # An arbitrary class *OR*...
+        type,
+
+        # An arbitrary callable *OR*...
+        CallableAny,
+
+        # A C-based unbound class method descriptor (i.e., a pure-Python unbound
+        # function decorated by the builtin @classmethod decorator) *OR*...
+        MethodDecoratorClassType,
+
+        # A C-based unbound property method descriptor (i.e., a pure-Python
+        # unbound function decorated by the builtin @property decorator) *OR*...
+        MethodDecoratorPropertyType,
+
+        # A C-based unbound static method descriptor (i.e., a pure-Python
+        # unbound function decorated by the builtin @staticmethod decorator).
+        MethodDecoratorStaticType,
+    ],
+)
 '''
 :pep:`484`-compliant **generic beartypeable type variable** (i.e., type hint
 matching any arbitrary callable or class).

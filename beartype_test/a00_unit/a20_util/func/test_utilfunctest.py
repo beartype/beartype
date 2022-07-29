@@ -17,27 +17,6 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ testers                    }....................
-def test_is_func_property() -> None:
-    '''
-    Test the
-    :func:`beartype._util.func.utilfunctest.is_func_property` tester.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.func.utilfunctest import is_func_property
-    from beartype_test.a00_unit.data.data_type import (
-        CALLABLES,
-        Class,
-    )
-
-    # Assert this tester accepts a property.
-    assert is_func_property(Class.instance_property) is True
-
-    # Assert this tester rejects *ALL* callables.
-    for some_callable in CALLABLES:
-        assert is_func_property(some_callable) is False
-
-
 def test_is_func_lambda() -> None:
     '''
     Test the
@@ -229,6 +208,172 @@ def test_is_func_sync_generator() -> None:
     assert is_func_sync_generator('To hear—an old and solemn harmony;') is (
         False)
 
+# ....................{ TESTS ~ descriptor : classmethod   }....................
+def test_die_unless_func_classmethod() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfunctest.die_unless_func_classmethod`
+    validator.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
+    from beartype._util.func.utilfunctest import die_unless_func_classmethod
+    from beartype_test.a00_unit.data.data_type import (
+        CALLABLES,
+        Class,
+    )
+    from pytest import raises
+
+    # Assert this validator accepts a class method descriptor.
+    #
+    # Note that class method descriptors are *ONLY* directly accessible via the
+    # low-level "object.__dict__" dictionary. When accessed as class or instance
+    # attributes, class methods reduce to instances of the standard
+    # "beartype.cave.MethodBoundInstanceOrClassType" type.
+    die_unless_func_classmethod(Class.__dict__['class_method'])
+
+    # Assert this validator rejects *ALL* other callables.
+    for some_callable in CALLABLES:
+        with raises(_BeartypeUtilCallableException):
+            die_unless_func_classmethod(some_callable)
+
+
+def test_is_func_classmethod() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfunctest.is_func_classmethod` tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.func.utilfunctest import is_func_classmethod
+    from beartype_test.a00_unit.data.data_type import (
+        CALLABLES,
+        Class,
+    )
+
+    # Assert this tester accepts a class method descriptor.
+    #
+    # Note that class method descriptors are *ONLY* directly accessible via the
+    # low-level "object.__dict__" dictionary. When accessed as class or instance
+    # attributes, class methods reduce to instances of the standard
+    # "beartype.cave.MethodBoundInstanceOrClassType" type.
+    assert is_func_classmethod(Class.__dict__['class_method']) is True
+
+    # Assert this tester rejects *ALL* other callables.
+    for some_callable in CALLABLES:
+        assert is_func_classmethod(some_callable) is False
+
+# ....................{ TESTS ~ descriptor : property      }....................
+def test_die_unless_func_property() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfunctest.die_unless_func_property`
+    validator.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
+    from beartype._util.func.utilfunctest import die_unless_func_property
+    from beartype_test.a00_unit.data.data_type import (
+        CALLABLES,
+        Class,
+    )
+    from pytest import raises
+
+    # Assert this validator accepts a property descriptor.
+    #
+    # Note that property descriptors are directly accessible both as class
+    # attributes *AND* via the low-level "object.__dict__" dictionary. Property
+    # objects are *NOT* accessible as instance attributes, for obvious reasons.
+    die_unless_func_property(Class.instance_property)
+
+    # Assert this validator rejects *ALL* other callables.
+    for some_callable in CALLABLES:
+        with raises(_BeartypeUtilCallableException):
+            die_unless_func_property(some_callable)
+
+
+def test_is_func_property() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfunctest.is_func_property` tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.func.utilfunctest import is_func_property
+    from beartype_test.a00_unit.data.data_type import (
+        CALLABLES,
+        Class,
+    )
+
+    # Assert this tester accepts a property descriptor.
+    #
+    # Note that property descriptors are directly accessible both as class
+    # attributes *AND* via the low-level "object.__dict__" dictionary. Property
+    # objects are *NOT* accessible as instance attributes, for obvious reasons.
+    assert is_func_property(Class.instance_property) is True
+
+    # Assert this tester rejects *ALL* other callables.
+    for some_callable in CALLABLES:
+        assert is_func_property(some_callable) is False
+
+# ....................{ TESTS ~ descriptor : staticmethod  }....................
+def test_die_unless_func_staticmethod() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfunctest.die_unless_func_staticmethod`
+    validator.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
+    from beartype._util.func.utilfunctest import die_unless_func_staticmethod
+    from beartype_test.a00_unit.data.data_type import (
+        CALLABLES,
+        Class,
+    )
+    from pytest import raises
+
+    # Assert this validator accepts a static method descriptor.
+    #
+    # Note that static method descriptors are *ONLY* directly accessible via the
+    # low-level "object.__dict__" dictionary. When accessed as class or instance
+    # attributes, static methods reduce to instances of the standard
+    # "beartype.cave.FunctionType" type.
+    die_unless_func_staticmethod(Class.__dict__['static_method'])
+
+    # Assert this validator rejects *ALL* other callables.
+    for some_callable in CALLABLES:
+        with raises(_BeartypeUtilCallableException):
+            die_unless_func_staticmethod(some_callable)
+
+
+def test_is_func_staticmethod() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfunctest.is_func_staticmethod` tester.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.func.utilfunctest import is_func_staticmethod
+    from beartype_test.a00_unit.data.data_type import (
+        CALLABLES,
+        Class,
+    )
+
+    # Assert this tester accepts a static method descriptor.
+    #
+    # Note that static method descriptors are *ONLY* directly accessible via the
+    # low-level "object.__dict__" dictionary. When accessed as class or instance
+    # attributes, static methods reduce to instances of the standard
+    # "beartype.cave.FunctionType" type.
+    assert is_func_staticmethod(Class.__dict__['static_method']) is True
+
+    # Assert this tester rejects *ALL* other callables.
+    for some_callable in CALLABLES:
+        assert is_func_staticmethod(some_callable) is False
+
 # ....................{ TESTS ~ python                     }....................
 def test_die_unless_func_python() -> None:
     '''
@@ -237,16 +382,18 @@ def test_die_unless_func_python() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.func.utilfunctest import die_unless_func_python
     from beartype.roar._roarexc import _BeartypeUtilCallableException
+    from beartype._util.func.utilfunctest import die_unless_func_python
+    from beartype_test.a00_unit.data.data_type import CALLABLES_C
     from pytest import raises
 
     # Assert this validator accepts pure-Python callables.
     die_unless_func_python(lambda: True)
 
-    # Assert this validator rejects C-based callables.
-    with raises(_BeartypeUtilCallableException):
-        die_unless_func_python(iter)
+    # Assert this validator rejects *ALL* C-based callables.
+    for callable_c in CALLABLES_C:
+        with raises(_BeartypeUtilCallableException):
+            die_unless_func_python(callable_c)
 
 
 def test_is_func_python() -> None:

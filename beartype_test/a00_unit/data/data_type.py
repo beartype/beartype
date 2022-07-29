@@ -63,6 +63,24 @@ class Class(object):
         pass
 
 
+    @classmethod
+    def class_method(cls):
+        '''
+        Arbitrary pure-Python class method.
+        '''
+
+        pass
+
+
+    @staticmethod
+    def static_method():
+        '''
+        Arbitrary pure-Python static method.
+        '''
+
+        pass
+
+
 class Subclass(Class):
     '''
     Arbitrary pure-Python subclass of an arbitrary pure-Python superclass.
@@ -368,7 +386,13 @@ Absolute filename of the current submodule, declared purely for convenience.
 '''
 
 # ....................{ SETS ~ callable                    }....................
-CALLABLES_PYTHON = frozenset((function, Class, Class.instance_method))
+CALLABLES_PYTHON = frozenset((
+    function,
+    Class,
+    Class.instance_method,
+    Class.class_method,
+    Class.static_method,
+))
 '''
 Frozen set of pure-Python callables exercising edge cases.
 '''

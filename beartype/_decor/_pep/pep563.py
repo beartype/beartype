@@ -119,6 +119,7 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
     # Global scope for the decorated callable.
     func_globals = get_func_globals(
         func=func, exception_cls=BeartypeDecorHintPep563Exception)
+    # print(f'PEP 563-postponed type hint {repr(func)} globals:\n{repr(func_globals)}\n')
 
     # Dictionary mapping from parameter name to postponed hint for each
     # annotated parameter and return value of this callable.
@@ -313,6 +314,8 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
                 # requiring one or more attributes available only in the local
                 # scope for the decorated callable. In this case...
                 except Exception:
+                    # print(f'Resolving PEP 563-postponed type hint {repr(pith_hint)} locals...')
+
                     # Decide the local scope for the decorated callable.
                     func_locals = get_func_locals(
                         func=func,
@@ -345,16 +348,16 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
                     is_identifier(pith_hint)
                 ):
                     # This hint is *PROBABLY* a forward reference hinted as a
-                    # string. In this case, defer validation of this string as
-                    # a valid forward reference to a class (that presumably has
+                    # string. In this case, defer validation of this string as a
+                    # valid forward reference to a class (which presumably has
                     # yet to be declared) until call time of the decorated
                     # callable by preserving this string as is.
                     #
-                    # Insanely, PEP 563 fails to enable runtime type checkers
-                    # to distinguish between forward references hinted as
-                    # strings and non-forward references postponed under PEP
-                    # 563 as strings. Ideally, PEP 563 would postpone the
-                    # former as machine-readable string representations (e.g.,
+                    # PEP 563 prevents runtime type checkers from distinguishing
+                    # between forward references hinted as strings and
+                    # non-forward references postponed under PEP
+                    # 563 as strings. Ideally, PEP 563 would postpone the former
+                    # as machine-readable string representations (e.g.,
                     # converting "muh.class.name" to "'muh.class.name'"). It
                     # doesn't. Instead, it simply preserves forward references
                     # hinted as strings! Who approved this appalling

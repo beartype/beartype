@@ -4,11 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **callable tester** (i.e., callable testing various properties of
-passed callables) utilities.
-
-This private submodule implements utility functions dynamically introspecting
-various high-level properties of arbitrary callables.
+Project-wide **callable testers** (i.e., utility functions dynamically
+validating and inspecting various properties of passed callables).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -51,52 +48,13 @@ edge cases, and false positives. If you must pick your poison, pick this one.
 '''
 
 # ....................{ VALIDATORS                         }....................
-#FIXME: Uncomment when needed.
-# def die_unless_func_lambda(
-#     # Mandatory parameters.
-#     func: Any,
-#
-#     # Optional parameters.
-#     exception_cls: Type[Exception] = _BeartypeUtilCallableException,
-# ) -> None:
-#     '''
-#     Raise an exception unless the passed callable is a **pure-Python lambda
-#     function** (i.e., function declared as a `lambda` expression embedded in a
-#     larger statement rather than as a full-blown `def` statement).
-#
-#     Parameters
-#     ----------
-#     func : Callable
-#         Callable to be inspected.
-#     exception_cls : type, optional
-#         Type of exception to be raised if this callable is *not* a pure-Python
-#         lambda function. Defaults to :class:`_BeartypeUtilCallableException`.
-#
-#     Raises
-#     ----------
-#     exception_cls
-#          If this callable is *not* a pure-Python lambda function.
-#
-#     See Also
-#     ----------
-#     :func:`is_func_lambda`
-#         Further details.
-#     '''
-#
-#     # If this callable is *NOT* a lambda function, raise an exception.
-#     if not is_func_lambda(func):
-#         assert isinstance(exception_cls, type), (
-#             f'{repr(exception_cls)} not class.')
-#         raise exception_cls(f'Callable {repr(func)} not lambda function.')
-
-
 def die_unless_func_python(
     # Mandatory parameters.
     func: Codeobjable,
 
     # Optional parameters.
-    func_label: str = 'Callable',
     exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
 ) -> None:
     '''
     Raise an exception if the passed callable is **C-based** (i.e., implemented
@@ -111,17 +69,17 @@ def die_unless_func_python(
     ----------
     func : Codeobjable
         Callable to be inspected.
-    func_label : str, optional
-        Human-readable label describing this callable in exception messages
-        raised by this validator. Defaults to ``'Callable'``.
-    exception_cls : type, optional
-        Type of exception to be raised in the event of fatal error. Defaults to
+    exception_cls : TypeException, optional
+        Type of exception to be raised. Defaults to
         :class:`_BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Raises
     ----------
     :exc:`exception_cls`
-         If this callable has *no* code object and is thus *not* pure-Python.
+         If the passed callable is C-based.
 
     See Also
     ----------
@@ -131,22 +89,190 @@ def die_unless_func_python(
 
     # If this callable is *NOT* pure-Python, raise an exception.
     if not is_func_python(func):
-        assert isinstance(func_label, str), f'{repr(func_label)} not string.'
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not class.')
+        assert issubclass(exception_cls, Exception), (
+            f'{repr(exception_cls)} not exception subclass.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
 
         # If this callable is uncallable, raise an appropriate exception.
         if not callable(func):
-            raise exception_cls(f'{func_label} {repr(func)} not callable.')
+            raise exception_cls(f'{exception_prefix}{repr(func)} not callable.')
         # Else, this callable is callable.
 
-        # This callable *MUST* be C-based By process of elimination. In this
-        # case, raise an appropriate exception.
+        # Raise a human-readable exception.
         raise exception_cls(
-            f'{func_label} {repr(func)} not pure-Python (i.e., code object '
-            f'not found due to being either C[++]-based or object defining '
-            f'the __call__() dunder method).'
+            f'{exception_prefix}{repr(func)} not '
+            f'pure-Python callable backed by code object '
+            f'(i.e., either C-based callable or pure-Python callable backed by '
+            f'__call__() dunder method).'
         )
+    # Else, this callable is pure-Python.
+
+# ....................{ VALIDATORS ~ descriptors           }....................
+def die_unless_func_classmethod(
+    # Mandatory parameters.
+    func: Any,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception unless the passed object is a **C-based unbound class
+    method descriptor** (i.e., method decorated by the builtin
+    :class:`classmethod` decorator, yielding a non-callable instance of that
+    :class:`classmethod` decorator class implemented in low-level C and
+    accessible via the low-level :attr:`object.__dict__` dictionary rather than
+    as class or instance attributes).
+
+    Parameters
+    ----------
+    func : Any
+        Object to be inspected.
+    exception_cls : TypeException, optional
+        Type of exception to be raised. Defaults to
+        :class:`_BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Raises
+    ----------
+    :exc:`exception_cls`
+         If the passed object is *not* a class method descriptor.
+
+    See Also
+    ----------
+    :func:`is_func_classmethod`
+        Further details.
+    '''
+
+    # If this object is *NOT* a class method descriptor, raise an exception.
+    if not is_func_classmethod(func):
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not class.')
+        assert issubclass(exception_cls, Exception), (
+            f'{repr(exception_cls)} not exception subclass.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Raise a human-readable exception.
+        raise exception_cls(
+            f'{exception_prefix}{repr(func)} not '
+            f'C-based unbound class method descriptor.'
+        )
+    # Else, this object is a class method descriptor.
+
+
+def die_unless_func_property(
+    # Mandatory parameters.
+    func: Any,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception unless the passed object is a **C-based unbound property
+    method descriptor** (i.e., method decorated by the builtin :class:`property`
+    decorator, yielding a non-callable instance of that :class:`property`
+    decorator class implemented in low-level C and accessible as a class rather
+    than instance attribute).
+
+    Parameters
+    ----------
+    func : Any
+        Object to be inspected.
+    exception_cls : TypeException, optional
+        Type of exception to be raised. Defaults to
+        :property:`_BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Raises
+    ----------
+    :exc:`exception_cls`
+         If the passed object is *not* a property method descriptor.
+
+    See Also
+    ----------
+    :func:`is_func_property`
+        Further details.
+    '''
+
+    # If this object is *NOT* a property method descriptor, raise an exception.
+    if not is_func_property(func):
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not class.')
+        assert issubclass(exception_cls, Exception), (
+            f'{repr(exception_cls)} not exception subclass.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Raise a human-readable exception.
+        raise exception_cls(
+            f'{exception_prefix}{repr(func)} not '
+            f'C-based unbound property method descriptor.'
+        )
+    # Else, this object is a property method descriptor.
+
+
+def die_unless_func_staticmethod(
+    # Mandatory parameters.
+    func: Any,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception unless the passed object is a **C-based unbound static
+    method descriptor** (i.e., method decorated by the builtin
+    :class:`staticmethod` decorator, yielding a non-callable instance of that
+    :class:`staticmethod` decorator class implemented in low-level C and
+    accessible via the low-level :attr:`object.__dict__` dictionary rather than
+    as class or instance attributes).
+
+    Parameters
+    ----------
+    func : Any
+        Object to be inspected.
+    exception_cls : TypeException, optional
+        Type of exception to be raised. Defaults to
+        :static:`_BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Raises
+    ----------
+    :exc:`exception_cls`
+         If the passed object is *not* a static method descriptor.
+
+    See Also
+    ----------
+    :func:`is_func_staticmethod`
+        Further details.
+    '''
+
+    # If this object is *NOT* a static method descriptor, raise an exception.
+    if not is_func_staticmethod(func):
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not class.')
+        assert issubclass(exception_cls, Exception), (
+            f'{repr(exception_cls)} not exception subclass.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Raise a human-readable exception.
+        raise exception_cls(
+            f'{exception_prefix}{repr(func)} not '
+            f'C-based unbound static method descriptor.'
+        )
+    # Else, this object is a static method descriptor.
 
 # ....................{ TESTERS                            }....................
 def is_func_lambda(func: Any) -> bool:
@@ -184,26 +310,6 @@ def is_func_lambda(func: Any) -> bool:
     )
 
 
-def is_func_property(func: Any) -> bool:
-    '''
-    ``True`` only if the passed object is a **pure-Python property** (i.e.,
-    method decorated by the builtin :func:`property` decorator).
-
-    Parameters
-    ----------
-    func : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object is a pure-Python property.
-    '''
-
-    # We rejoice in the shared delight of one-liners.
-    return isinstance(func, property)
-
-
 def is_func_python(func: object) -> bool:
     '''
     ``True`` only if the passed object is a **pure-Python callable** (i.e.,
@@ -225,6 +331,107 @@ def is_func_python(func: object) -> bool:
     # Return true only if a pure-Python code object underlies this object.
     # C-based callables are associated with *NO* code objects.
     return get_func_codeobj_or_none(func) is not None
+
+# ....................{ TESTERS ~ descriptor               }....................
+def is_func_classmethod(func: Any) -> bool:
+    '''
+    ``True`` only if the passed object is a **C-based unbound class method
+    descriptor** (i.e., method decorated by the builtin :class:`classmethod`
+    decorator, yielding a non-callable instance of that :class:`classmethod`
+    decorator class implemented in low-level C and accessible via the
+    low-level :attr:`object.__dict__` dictionary rather than as class or
+    instance attributes).
+
+    Caveats
+    ----------
+    Class method objects are *only* directly accessible via the low-level
+    :attr:`object.__dict__` dictionary. When accessed as class or instance
+    attributes, class methods reduce to instances of the standard
+    :class:`MethodBoundInstanceOrClassType` type.
+
+    Class method objects are *not* callable, as their implementations fail to
+    define the ``__call__`` dunder method.
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a C-based unbound class method
+        descriptor.
+    '''
+
+    # Now you too have seen the pure light of the one-liner.
+    return isinstance(func, classmethod)
+
+
+def is_func_property(func: Any) -> bool:
+    '''
+    ``True`` only if the passed object is a **C-based unbound property method
+    descriptor** (i.e., method decorated by the builtin :class:`property`
+    decorator, yielding a non-callable instance of that :class:`property`
+    decorator class implemented in low-level C and accessible as a class rather
+    than instance attribute).
+
+    Caveats
+    ----------
+    Property objects are directly accessible both as class attributes *and* via
+    the low-level :attr:`object.__dict__` dictionary. Property objects are *not*
+    accessible as instance attributes, for hopefully obvious reasons.
+
+    Property objects are *not* callable, as their implementations fail to define
+    the ``__call__`` dunder method.
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a pure-Python property.
+    '''
+
+    # We rejoice in the shared delight of one-liners.
+    return isinstance(func, property)
+
+
+def is_func_staticmethod(func: Any) -> bool:
+    '''
+    ``True`` only if the passed object is a **C-based unbound static method
+    descriptor** (i.e., method decorated by the builtin :class:`staticmethod`
+    decorator, yielding a non-callable instance of that :class:`staticmethod`
+    decorator class implemented in low-level C and accessible via the low-level
+    :attr:`object.__dict__` dictionary rather than as class or instance
+    attributes).
+
+    Caveats
+    ----------
+    Static method objects are *only* directly accessible via the low-level
+    :attr:`object.__dict__` dictionary. When accessed as class or instance
+    attributes, static methods reduce to instances of the standard
+    :class:`FunctionType` type.
+
+    Static method objects are *not* callable, as their implementations fail to
+    define the ``__call__`` dunder method.
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a pure-Python static method.
+    '''
+
+    # Does the one-liner have Buddhahood? Mu.
+    return isinstance(func, staticmethod)
 
 # ....................{ TESTERS ~ async                    }....................
 def is_func_async(func: object) -> bool:

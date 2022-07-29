@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from collections.abc import Callable
 
 # ....................{ TESTERS                            }....................
-def is_func_pep484_no_type_checked(func: Callable) -> bool:
+def is_func_pep484_notypechecked(func: Callable) -> bool:
     '''
     ``True`` only if the passed callable was decorated by the
     :pep:`484`-compliant :func:`typing.no_type_check` decorator instructing

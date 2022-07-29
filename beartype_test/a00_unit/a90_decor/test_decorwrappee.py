@@ -108,24 +108,27 @@ def test_decor_wrappee_type_fail() -> None:
                 return 'Ruin? Were these their toys? or did a sea'
     assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]
 
-    # Assert that decorating a class method descriptor raises the expected
-    # exception.
-    with raises(BeartypeDecorWrappeeException) as exception_info:
-        class OrDidASeaOfFire(object):
-            @beartype
-            @classmethod
-            def envelop_once_this_silent_snow(self) -> str:
-                return 'None can reply—all seems eternal now.'
-    assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]
-
-    # Assert that decorating a static method descriptor raises the expected
-    # exception.
-    assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]
-    with raises(BeartypeDecorWrappeeException) as exception_info:
-        class TheWildernessHasAMysteriousTongue(object):
-            @beartype
-            @staticmethod
-            def which_teaches_awful_doubt() -> str:
-                return 'Which teaches awful doubt, or faith so mild,'
-    # print(f'Ugh: {exception_info.value.args[0]}')
-    assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]
+    #FIXME: Actually, @beartype now supports these two edge cases. Refactor both
+    #of these into passing tests that actually call the resulting methods and
+    #assert that doing so return the expected values, please. UwU
+    # # Assert that decorating a class method descriptor raises the expected
+    # # exception.
+    # with raises(BeartypeDecorWrappeeException) as exception_info:
+    #     class OrDidASeaOfFire(object):
+    #         @beartype
+    #         @classmethod
+    #         def envelop_once_this_silent_snow(self) -> str:
+    #             return 'None can reply—all seems eternal now.'
+    # assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]
+    #
+    # # Assert that decorating a static method descriptor raises the expected
+    # # exception.
+    # assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]
+    # with raises(BeartypeDecorWrappeeException) as exception_info:
+    #     class TheWildernessHasAMysteriousTongue(object):
+    #         @beartype
+    #         @staticmethod
+    #         def which_teaches_awful_doubt() -> str:
+    #             return 'Which teaches awful doubt, or faith so mild,'
+    # # print(f'Ugh: {exception_info.value.args[0]}')
+    # assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]

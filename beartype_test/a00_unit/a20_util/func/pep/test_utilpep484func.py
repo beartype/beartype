@@ -17,16 +17,16 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                             }....................
-def test_is_func_pep484_no_type_checked() -> None:
+def test_is_func_pep484_notypechecked() -> None:
     '''
     Test the
-    :func:`beartype._util.func.pep.utilpep484func.is_func_pep484_no_type_checked`
+    :func:`beartype._util.func.pep.utilpep484func.is_func_pep484_notypechecked`
     tester.
     '''
 
     # Defer heavyweight imports.
     from beartype._util.func.pep.utilpep484func import (
-        is_func_pep484_no_type_checked)
+        is_func_pep484_notypechecked)
     from typing import no_type_check
 
     @no_type_check
@@ -47,7 +47,7 @@ def test_is_func_pep484_no_type_checked() -> None:
         pass
 
     # Assert this tester returns the expected results for these callables.
-    assert is_func_pep484_no_type_checked(
+    assert is_func_pep484_notypechecked(
         now_float_above_thy_darkness) is True
-    assert is_func_pep484_no_type_checked(
+    assert is_func_pep484_notypechecked(
         and_now_rest) is False
