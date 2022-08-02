@@ -207,28 +207,60 @@ if IS_PYTHON_AT_LEAST_3_8:
             # See <https://github.com/python/mypy/issues/9282>
             cls = super().__new__(mcls, name, bases, namespace, **kw)
 
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            # CAUTION: Synchronize this "if" conditional against the standard
-            # "typing" module, which defines the exact same logic in the
-            # Protocol.__init_subclass__() class method.
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            # If it is unknown whether this class is an abstract protocol
-            # directly subclassing the "Protocol" superclass *OR* a concrete
-            # subclass of an abstract protocol, decide which applies now. Why?
-            # Because upstream performs the same logic. Since this logic tests
-            # the non-transitive dunder tuple "__bases__" of all *DIRECT*
-            # superclasses of this class rather than the transitive dunder
-            # tuple "__mro__" of all direct and indirect superclasses of this
-            # class, upstream logic erroneously detects abstract protocols as
-            # concrete by unconditionally reducing to:
-            #     cls._is_protocol = False
-            #
-            # Why? Because "beartype.typing.Protocol" subclasses
-            # "typing.Protocol", subclasses of "beartype.typing.Protocol" list
-            # "beartype.typing.Protocol" rather than "typing.Protocol" in their
-            # "__bases__" dunder tuple. Disaster, thy name is "typing"!
-            if not cls.__dict__.get('_is_protocol', False):
-                cls._is_protocol = any(b is Protocol for b in cls.__bases__)  # type: ignore[attr-defined]
+            # If this class is *NOT* the abstract "beartype.typing.Protocol"
+            # superclass defined below...
+            if name != 'Protocol':
+                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                # CAUTION: Synchronize this "if" conditional against the
+                # standard "typing" module, which defines the exact same logic
+                # in the Protocol.__init_subclass__() class method.
+                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                # If it is unknown whether this class is an abstract protocol
+                # directly subclassing the "Protocol" superclass *OR* a concrete
+                # subclass of an abstract protocol, decide which applies now.
+                # Why? Because upstream performs the same logic. Since this
+                # logic tests the non-transitive dunder tuple "__bases__" of all
+                # *DIRECT* superclasses of this class rather than the transitive
+                # dunder tuple "__mro__" of all direct and indirect superclasses
+                # of this class, upstream logic erroneously detects abstract
+                # fast @beartype protocols as concrete by unconditionally
+                # reducing to:
+                #     cls._is_protocol = False
+                #
+                # Why? Because "beartype.typing.Protocol" subclasses
+                # "typing.Protocol", subclasses of "beartype.typing.Protocol"
+                # list "beartype.typing.Protocol" rather than "typing.Protocol"
+                # in their "__bases__" dunder tuple. Disaster, thy name is
+                # "typing"!
+                if not cls.__dict__.get('_is_protocol'):
+                    # print(f'Protocol {cls} bases: {cls.__bases__}')
+                    cls._is_protocol = any(b is Protocol for b in cls.__bases__)  # type: ignore[attr-defined]
+
+                # If this protocol is concrete rather than abstract,
+                # monkey-patch this concrete protocol to be implicitly
+                # type-checkable at runtime. By default, protocols are *NOT*
+                # type-checkable at runtime unless explicitly decorated by this
+                # nonsensical decorator.
+                #
+                # Note that the abstract "beartype.typing.Protocol" superclass
+                # *MUST* be explicitly excluded from consideration. Why? For
+                # unknown reasons, monkey-patching that superclass as implicitly
+                # type-checkable at runtime has extreme consequences throughout
+                # the typing ecosystem. In particular, doing so causes *ALL*
+                # non-protocol classes to be subsequently erroneously detected
+                # as being PEP 544-compliant protocols: e.g.,
+                #     # If we monkey-patched the "Protocol" superclass as well, then
+                #     # the following snippet would insanely hold true... wat!?!?!?!
+                #     >>> from typing import Protocol
+                #     >>> class OhBoy(object): pass
+                #     >>> issubclass(OhBoy, Protocol)
+                #     True  # <-- we have now destroyed the world, folks.
+                if cls._is_protocol:
+                    # print(f'Protocol {cls} mro: {cls.__mro__}')
+                    runtime_checkable(cls)
+            # Else, this class is the abstract "beartype.typing.Protocol"
+            # superclass defined below. In this case, avoid dangerously
+            # monkey-patching this superclass.
 
             # Prefixing this class member with "_abc_" is necessary to prevent
             # it from being considered part of the Protocol. See also:
@@ -354,7 +386,7 @@ if IS_PYTHON_AT_LEAST_3_8:
         return True
 
     # ..................{ CLASSES                            }..................
-    @runtime_checkable
+    # @runtime_checkable
     class Protocol(
         _ProtocolSlow,
         # Force protocols to be generics. Although the standard

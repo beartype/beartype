@@ -17,6 +17,202 @@ concerns (e.g., PEP-compliance, PEP-noncompliance).
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+# ....................{ TESTS ~ pass : wrappee : static    }....................
+def test_decor_wrappee_type_descriptor() -> None:
+    '''
+    Test successful usage of the :func:`beartype.beartype` decorator on all
+    **C-based unbound builtin method descriptors** (i.e., methods decorated by
+    builtin method decorators).
+    '''
+
+    # Defer heavyweight imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from beartype.typing import NoReturn
+    from pytest import raises
+
+    class OrDidASeaOfFire(object):
+        '''
+        Arbitrary class declaring a class method, static method, property
+        getter, property setter, and property deleter -- all decorated by the
+        :func:`beartype.beartype` decorator.
+        '''
+
+        so_much_of_life_and_joy_is_lost = 'all seems eternal now.'
+        '''
+        Arbitrary class variable.
+        '''
+
+
+        def __init__(self) -> None:
+            '''
+            Arbitrary constructor, defined merely to set an instance variable
+            subsequently manipulated by property methods defined below.
+            '''
+
+            self._taught_her_young_ruin = (
+                'Ruin? Were these their toys? or did a sea')
+
+
+        @beartype
+        @classmethod
+        def envelop_once_this_silent_snow(cls) -> str:
+            '''
+            Arbitrary class method decorated first by the builtin
+            :class:`classmethod` descriptor and then by the
+            :func:`beartype.beartype` decorator, exercising an edge case in the
+            :func:`beartype.beartype` decorator.
+
+            Note that reversing this order of decoration does *not* exercising
+            an edge case in the :func:`beartype.beartype` decorator and is thus
+            omitted from testing.
+            '''
+
+            return f'None can reply—{cls.so_much_of_life_and_joy_is_lost}'
+
+
+        @beartype
+        @staticmethod
+        def the_wilderness_has_a_mysterious_tongue(
+            of_man_flies_far_in_dread: str = '') -> str:
+            '''
+            Arbitrary static method decorated first by the builtin
+            :class:`staticmethod` descriptor and then by the
+            :func:`beartype.beartype` decorator, exercising an edge case in the
+            :func:`beartype.beartype` decorator.
+
+            Note that reversing this order of decoration does *not* exercising
+            an edge case in the :func:`beartype.beartype` decorator and is thus
+            omitted from testing.
+            '''
+
+            return f'Which teaches awful doubt,{of_man_flies_far_in_dread}'
+
+
+        @beartype
+        @property
+        def where_the_old_earthquake_daemon(self) -> str:
+            '''
+            Arbitrary property getter method decorated first by the builtin
+            :class:`staticmethod` descriptor and then by the
+            :func:`beartype.beartype` decorator, exercising an edge case in the
+            :func:`beartype.beartype` decorator.
+
+            Note that reversing this order of decoration does *not* exercising
+            an edge case in the :func:`beartype.beartype` decorator and is thus
+            omitted from testing.
+            '''
+
+            return self._taught_her_young_ruin
+
+
+        @beartype
+        @where_the_old_earthquake_daemon.setter
+        def where_the_old_earthquake_daemon(self, vanish: str) -> None:
+            '''
+            Arbitrary property setter method decorated first by the builtin
+            :class:`staticmethod` descriptor and then by the
+            :func:`beartype.beartype` decorator, exercising an edge case in the
+            :func:`beartype.beartype` decorator.
+
+            Note that reversing this order of decoration does *not* exercising
+            an edge case in the :func:`beartype.beartype` decorator and is thus
+            omitted from testing.
+            '''
+
+            self._taught_her_young_ruin = vanish
+
+
+        @beartype
+        @where_the_old_earthquake_daemon.deleter
+        def where_the_old_earthquake_daemon(self) -> NoReturn:
+            '''
+            Arbitrary property deleter method decorated first by the builtin
+            :class:`staticmethod` descriptor and then by the
+            :func:`beartype.beartype` decorator, exercising an edge case in the
+            :func:`beartype.beartype` decorator.
+
+            Note that reversing this order of decoration does *not* exercising
+            an edge case in the :func:`beartype.beartype` decorator and is thus
+            omitted from testing.
+            '''
+
+            raise ValueError('And their place is not known.')
+
+
+    # Instance of this class.
+    the_race = OrDidASeaOfFire()
+
+    # Assert this class method accessed on both this instance and this class
+    # returns the expected value.
+    assert (
+        OrDidASeaOfFire.envelop_once_this_silent_snow() ==
+        the_race.envelop_once_this_silent_snow() ==
+        'None can reply—all seems eternal now.'
+    )
+
+    # Assert this class method docstring has been preserved as is.
+    assert OrDidASeaOfFire.envelop_once_this_silent_snow.__doc__ is not None
+    assert OrDidASeaOfFire.envelop_once_this_silent_snow.__doc__.startswith('''
+            Arbitrary class method''')
+
+    # Assert this static method accessed on both this instance and this class
+    # when passed a valid parameter returns the expected value.
+    assert (
+        OrDidASeaOfFire.the_wilderness_has_a_mysterious_tongue(' or faith so mild,') ==
+        the_race.the_wilderness_has_a_mysterious_tongue(' or faith so mild,') ==
+        'Which teaches awful doubt, or faith so mild,'
+    )
+
+    # Assert this static method docstring has been preserved as is.
+    assert OrDidASeaOfFire.the_wilderness_has_a_mysterious_tongue.__doc__ is not None
+    assert OrDidASeaOfFire.the_wilderness_has_a_mysterious_tongue.__doc__.startswith('''
+            Arbitrary static method''')
+
+    # Assert this static method accessed on both this instance and this class
+    # when passed an invalid parameter raises the expected exception.
+    with raises(BeartypeCallHintParamViolation):
+        OrDidASeaOfFire.the_wilderness_has_a_mysterious_tongue(b'his work and dwelling')
+    with raises(BeartypeCallHintParamViolation):
+        the_race.the_wilderness_has_a_mysterious_tongue(b'his work and dwelling')
+
+    # Assert this property getter method accessed on this instance returns the
+    # expected value.
+    assert the_race.where_the_old_earthquake_daemon == (
+        'Ruin? Were these their toys? or did a sea')
+
+    # Assert this property setter method accessed on this instance when passed a
+    # valid parameter silently succeeds.
+    the_race.where_the_old_earthquake_daemon = (
+        "Vanish, like smoke before the tempest's stream,")
+
+    # Assert this property getter method accessed on this instance returns this
+    # valid parameter.
+    assert the_race.where_the_old_earthquake_daemon == (
+        "Vanish, like smoke before the tempest's stream,")
+
+    # Assert this property setter method accessed on this instance when passed
+    # an invalid parameter raises the expected exception.
+    with raises(BeartypeCallHintParamViolation):
+        the_race.where_the_old_earthquake_daemon = (
+            b'And their place is not known. Below, vast caves')
+
+    # Assert this property deleter method accessed on this instance raises the
+            # expected exception.
+    with raises(ValueError) as exception_info:
+        del the_race.where_the_old_earthquake_daemon
+
+    # Exception message raised by the body of that block.
+    exception_message = str(exception_info.value)
+
+    # Assert this exception message is the expected string.
+    assert exception_message == 'And their place is not known.'
+
+    # Assert this property method docstring has been preserved as is.
+    assert OrDidASeaOfFire.where_the_old_earthquake_daemon.__doc__ is not None
+    assert OrDidASeaOfFire.where_the_old_earthquake_daemon.__doc__.startswith('''
+            Arbitrary property getter method''')
+
 # ....................{ TESTS ~ fail : arg                 }....................
 def test_decor_arg_name_fail() -> None:
     '''
@@ -93,42 +289,3 @@ def test_decor_wrappee_type_fail() -> None:
     # exception.
     with raises(BeartypeDecorWrappeeException):
         beartype(('Book of the Astronomican', 'Slaves to Darkness',))
-
-    # Substring embedded in the messages of exceptions raised by @beartype when
-    # passed uncallable descriptors created by builtin decorators.
-    EXCEPTION_DESCRIPTOR_SUBSTR = 'descriptor'
-
-    # Assert that decorating a property descriptor raises the expected
-    # exception.
-    with raises(BeartypeDecorWrappeeException) as exception_info:
-        class WhereTheOldEarthquakeDaemon(object):
-            @beartype
-            @property
-            def taught_her_young_ruin(self) -> str:
-                return 'Ruin? Were these their toys? or did a sea'
-    assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]
-
-    #FIXME: Actually, @beartype now supports these two edge cases. Refactor both
-    #of these into passing tests that actually call the resulting methods and
-    #assert that doing so return the expected values, please. UwU
-    # # Assert that decorating a class method descriptor raises the expected
-    # # exception.
-    # with raises(BeartypeDecorWrappeeException) as exception_info:
-    #     class OrDidASeaOfFire(object):
-    #         @beartype
-    #         @classmethod
-    #         def envelop_once_this_silent_snow(self) -> str:
-    #             return 'None can reply—all seems eternal now.'
-    # assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]
-    #
-    # # Assert that decorating a static method descriptor raises the expected
-    # # exception.
-    # assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]
-    # with raises(BeartypeDecorWrappeeException) as exception_info:
-    #     class TheWildernessHasAMysteriousTongue(object):
-    #         @beartype
-    #         @staticmethod
-    #         def which_teaches_awful_doubt() -> str:
-    #             return 'Which teaches awful doubt, or faith so mild,'
-    # # print(f'Ugh: {exception_info.value.args[0]}')
-    # assert EXCEPTION_DESCRIPTOR_SUBSTR in exception_info.value.args[0]

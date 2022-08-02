@@ -115,7 +115,7 @@ def get_package_conf_if_registered(package_name: str) -> BeartypeConfOrNone:
     # * Fundamentally dangerous, which is the greater concern. For example:
     #   The beartype.claw._clawast.BeartypeNodeTransformer.visit_Module()
     #   dynamically inserts a module-scoped import of the
-    #   @beartype._decor.decorcore.beartype_object_safe decorator at the head of
+    #   @beartype._decor.decorcore.beartype_object_nonfatal decorator at the head of
     #   the module currently being imported. But if the
     #   "beartype._decor.decorcore" submodule itself is being imported, then
     #   that importation would destructively induce an infinite circular import!

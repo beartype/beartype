@@ -185,6 +185,7 @@ def label_type(cls: type) -> str:
 
     # Label to be returned, initialized to this class' fully-qualified name.
     classname = get_object_type_name(cls)
+    # print(f'cls {cls} classname: {classname}')
 
     # If this name contains *NO* periods, this class is actually a builtin type
     # (e.g., "list"). Since builtin types are well-known and thus
@@ -206,6 +207,7 @@ def label_type(cls: type) -> str:
     # If this class is a PEP 544-compliant protocol supporting structural
     # subtyping, label this protocol.
     elif is_hint_pep544_protocol(cls):
+        # print(f'cls {cls} is protocol!')
         classname = f'<protocol "{classname}">'
     # Else if this class is a standard abstract base class (ABC) defined by a
     # stdlib submodule also known to support structural subtyping (e.g.,

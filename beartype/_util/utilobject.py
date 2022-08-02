@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilObjectNameException
 from contextlib import AbstractContextManager
-from typing import Any
+from beartype.typing import Any
 
 # ....................{ CLASSES                            }....................
 class Iota(object):

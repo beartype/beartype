@@ -31,8 +31,6 @@ from beartype._cave._cavefast import (
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
 )
-from beartype._data.cls.datacls import (
-    TYPES_BUILTIN_DECORATOR_DESCRIPTOR_FACTORY)
 from beartype._data.datatyping import (
     BeartypeableT,
     TypeWarning,
@@ -92,47 +90,8 @@ def beartype_object(
         Memoized parent decorator wrapping this unmemoized child decorator.
     '''
 
-    #FIXME: Undo this, please. There's *NO* tangible benefit to being so
-    #ideologically purist about these sorts of things. Relax. Expand. Explode.
-    #FIXME: After doing so, also:
-    #* Remove "TYPES_BUILTIN_DECORATOR_DESCRIPTOR_FACTORY" entirely.
-
-    # Validate the type of the decorated object *BEFORE* performing any work
-    # assuming this object to define attributes (e.g., "func.__name__").
-    #
-    # If this object is an unusable descriptor created by a builtin type
-    # masquerading as a decorator (e.g., @property), @beartype was erroneously
-    # listed above rather than below this decorator in the chain of decorators
-    # decorating an underlying callable. @beartype typically *MUST* decorate a
-    # callable directly. In this case, raise a human-readable exception
-    # instructing the end user to reverse the order of decoration.
-    #
-    # Note that most but *NOT* all of these objects are uncallable. Regardless,
-    # *ALL* of these objects are unsuitable for decoration. Specifically:
-    # * Under Python < 3.10, *ALL* of these objects are uncallable.
-    # * Under Python >= 3.10:
-    #   * Descriptors created by @classmethod and @property are uncallable.
-    #   * Descriptors created by @staticmethod are technically callable but
-    #     C-based and thus unsuitable for decoration.
-    if isinstance(obj, TYPES_BUILTIN_DECORATOR_DESCRIPTOR_FACTORY):
-        # Human-readable name of this type masquerading as a decorator.
-        DECORATOR_NAME = f'@{obj.__class__.__name__}'
-
-        # Raise an exception embedding this name.
-        raise BeartypeDecorWrappeeException(
-            f'Uncallable descriptor created by builtin decorator '
-            f'{DECORATOR_NAME} not decoratable by @beartype. '
-            f'Consider listing @beartype below rather than above '
-            f'{DECORATOR_NAME} in the decorator chain for this method: '
-            f'e.g.,\n'
-            f'\t{DECORATOR_NAME}\n'
-            f'\t@beartype      # <-- this is the Way of the Bear\n'
-            f'\tdef ...'
-        )
-    # Else, this is object is *NOT* such an unusable descriptor.
-    #
     # If this object is a class, return this class decorated with type-checking.
-    elif isinstance(obj, type):
+    if isinstance(obj, type):
         #FIXME: Mypy currently erroneously emits a false negative resembling
         #the following if the "# type: ignore..." pragma is omitted below:
         #    beartype/_decor/main.py:246: error: Incompatible return value type
@@ -191,9 +150,8 @@ def beartype_object(
     return _beartype_func(func=obj, conf=conf)  # type: ignore[return-value]
 
 
-#FIXME: Rename to beartype_object_nonfatal() for disambiguity, please.
 #FIXME: Unit test us up, please.
-def beartype_object_safe(
+def beartype_object_nonfatal(
     obj: BeartypeableT,
     conf: BeartypeConf,
     warning_category: TypeWarning,
@@ -350,8 +308,53 @@ def _beartype_descriptor(
     # Type of this descriptor.
     descriptor_type = type(descriptor)
 
+    # If this descriptor is a property method...
+    #
+    # Note that property method descriptors are intentionally tested first, due
+    # to their ubiquity "in the wild." Class and static method descriptors are
+    # comparatively rarefied by comparison.
+    #FIXME: Implement up this branch somehow, please.
+    if descriptor_type is MethodDecoratorPropertyType:
+        # Pure-Python unbound getter, setter, and deleter functions wrapped by
+        # this descriptor if any *OR* "None" otherwise (i.e., for each such
+        # function currently unwrapped by this descriptor).
+        descriptor_getter  = descriptor.fget
+        descriptor_setter  = descriptor.fset
+        descriptor_deleter = descriptor.fdel
+
+        # Decorate this getter function with type-checking.
+        #
+        # Note that *ALL* property method descriptors wrap at least a getter
+        # function (but *NOT* necessarily a setter or deleter function). This
+        # function is thus guaranteed to be non-"None".
+        descriptor_getter = _beartype_func(func=descriptor_getter, conf=conf)
+
+        # If this property method descriptor additionally wraps a setter and/or
+        # deleter function, type-check those functions as well.
+        if descriptor_setter is not None:
+            descriptor_setter = _beartype_func(
+                func=descriptor_setter, conf=conf)
+        if descriptor_deleter is not None:
+            descriptor_deleter = _beartype_func(
+                func=descriptor_deleter, conf=conf)
+
+        # Return a new property method descriptor decorating all of these
+        # functions, implicitly destroying the prior descriptor.
+        #
+        # Note that the "property" class interestingly has this signature:
+        #     class property(fget=None, fset=None, fdel=None, doc=None): ...
+        return property(
+            fget=descriptor_getter,
+            fset=descriptor_setter,
+            fdel=descriptor_deleter,
+            doc=descriptor.__doc__,
+        )
+    # Else, this descriptor is *NOT* a property method.
+    #
     # If this descriptor is a class method...
-    if descriptor_type is MethodDecoratorClassType:
+    elif descriptor_type is MethodDecoratorClassType:
+        #FIXME: Inefficient overkill, really. Reduce to simply:
+        #    descriptor_wrappee = descriptor.__func__
         # Pure-Python unbound function wrapped by this descriptor.
         descriptor_wrappee = get_func_classmethod_wrappee(descriptor)
 
@@ -362,6 +365,8 @@ def _beartype_descriptor(
     #
     # If this descriptor is a static method...
     elif descriptor_type is MethodDecoratorStaticType:
+        #FIXME: Inefficient overkill, really. Reduce to simply:
+        #    descriptor_wrappee = descriptor.__func__
         # Pure-Python unbound function wrapped by this descriptor.
         descriptor_wrappee = get_func_staticmethod_wrappee(descriptor)
 
@@ -369,11 +374,6 @@ def _beartype_descriptor(
         # type-checking, implicitly destroying the prior descriptor.
         return staticmethod(_beartype_func(func=descriptor_wrappee, conf=conf))  # type: ignore[return-value]
     # Else, this descriptor is *NOT* a static method.
-    #
-    # If this descriptor is a property method...
-    #FIXME: Implement up this branch somehow, please.
-    elif descriptor_type is MethodDecoratorPropertyType:
-        pass
 
     # Raise a fallback exception. This should *NEVER happen. This *WILL* happen.
     raise BeartypeDecorWrappeeException(

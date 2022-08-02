@@ -164,7 +164,13 @@ def is_type_or_types(type_or_types: object) -> bool:
     )
 
 
-def is_type_builtin(cls: type) -> bool:
+def is_type_builtin(
+    # Mandatory parameters.
+    cls: type,
+
+    # Optional parameters.
+    is_ignore_fake: bool = True,
+) -> bool:
     '''
     ``True`` only if the passed class is **builtin** (i.e., globally accessible
     C-based type requiring *no* explicit importation).
@@ -177,6 +183,11 @@ def is_type_builtin(cls: type) -> bool:
     ----------
     cls : type
         Class to be inspected.
+    is_ignore_fake : bool
+        ``True`` only if this tester intentionally ignores **fake builtin
+        types** (i.e., types that are *not* builtin but nonetheless erroneously
+        masquerade as being builtin, which includes the type of the :data:`None`
+        singleton). Defaults to ``True``.
 
     Returns
     ----------
@@ -188,6 +199,8 @@ def is_type_builtin(cls: type) -> bool:
     _BeartypeUtilTypeException
         If this object is *not* a class.
     '''
+    assert isinstance(is_ignore_fake, bool), (
+        f'{repr(is_ignore_fake)} not boolean.')
 
     # Avoid circular import dependencies.
     from beartype._util.mod.utilmodget import (
@@ -197,10 +210,9 @@ def is_type_builtin(cls: type) -> bool:
     die_unless_type(cls)
     # Else, this object is a type.
 
-    # If this type is a fake builtin (i.e., type that is *NOT* builtin but
-    # erroneously masquerading as being builtin), this type is *NOT* a builtin.
-    # In this case, silently reject this type.
-    if cls in TYPES_BUILTIN_FAKE:
+    # If ignoring fake builtin types *AND* this type is such a type, this type
+    # is *NOT* a builtin. In this case, silently reject this type.
+    if is_ignore_fake and cls in TYPES_BUILTIN_FAKE:
         return False
     # Else, this type is *NOT* a fake builtin.
 

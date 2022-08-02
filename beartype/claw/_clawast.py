@@ -65,7 +65,7 @@ class BeartypeNodeTransformer(NodeTransformer):
         parent node encapsulating the module currently being loaded by the
         :class:`beartype.claw._clawloader.BeartypeSourceFileLoader` object,
         importing our private
-        :func:`beartype._decor.decorcore.beartype_object_safe` decorator for
+        :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator for
         subsequent use by the other visitor methods defined by this class.
 
         Parameters
@@ -137,11 +137,11 @@ class BeartypeNodeTransformer(NodeTransformer):
         # one or more child nodes and is thus non-empty. In this case...
         if import_beartype_index != -1:
             # AST import child node importing our private
-            # beartype._decor.decorcore.beartype_object_safe() decorator for
+            # beartype._decor.decorcore.beartype_object_nonfatal() decorator for
             # subsequent use by the other visitor methods defined by this class.
             import_beartype = ImportFrom(
                 module='beartype._decor.decorcore',
-                names=[alias('beartype_object_safe')],
+                names=[alias('beartype_object_nonfatal')],
             )
 
             # Copy all source code metadata from the AST child node of this AST
@@ -168,7 +168,7 @@ class BeartypeNodeTransformer(NodeTransformer):
         '''
         Add a new abstract syntax tree (AST) child node to the passed AST
         callable parent node, decorating that callable by our private
-        :func:`beartype._decor.decorcore.beartype_object_safe` decorator if and
+        :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator if and
         only if that callable is **typed** (i.e., annotated by a return type
         hint and/or one or more parameter type hints).
 
@@ -212,10 +212,10 @@ class BeartypeNodeTransformer(NodeTransformer):
         # the detecting former is O(1) time complexity and thus trivial.
         if is_return_typed or is_args_typed:
             # AST decoration child node decorating that callable by our
-            # beartype._decor.decorcore.beartype_object_safe() decorator. Note
+            # beartype._decor.decorcore.beartype_object_nonfatal() decorator. Note
             # that this syntax derives from the example for the ast.arg() class:
             #     https://docs.python.org/3/library/ast.html#ast.arg
-            decorate_callable = Name(id='beartype_object_safe', ctx=Load())
+            decorate_callable = Name(id='beartype_object_nonfatal', ctx=Load())
 
             # Copy all source code metadata from this AST callable parent node
             # onto this AST decoration child node.

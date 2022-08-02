@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -7,7 +7,7 @@
 Project-wide :pep:`544`-compliant **type hint test data.**
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: Generalize this submodule to transparently test all hints against both
 #the "typing.Protocol" *AND* "beartype.typing.Protocol" superclasses. Doing so
 #will, in turn, require defining a new "HintPepMetadata.hints" instance
@@ -17,17 +17,17 @@ Project-wide :pep:`544`-compliant **type hint test data.**
 #classes directly subclassing the "typing.Protocol" ABC and one or more other
 #superclasses) once @beartype supports these protocols as well.
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS                          }....................
 _DATA_HINTPEP544_FILENAME = __file__
 '''
 Absolute filename of this data submodule, to be subsequently opened for
 cross-platform IO testing purposes by the :func:`add_data` function.
 '''
 
-# ....................{ ADDERS                            }....................
+# ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
     Add :pep:`544`-compliant type hint test data to various global containers
@@ -52,7 +52,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # Else, the active Python interpreter targets at least Python >= 3.8 and
     # thus supports PEP 544.
 
-    # ..................{ IMPORTS                           }..................
+    # ..................{ IMPORTS                            }..................
     # Defer Python >= 3.8-specific imports.
     import pathlib
     from abc import (
@@ -80,7 +80,7 @@ def add_data(data_module: 'ModuleType') -> None:
     S = TypeVar('S')
     T = TypeVar('T')
 
-    # ..................{ CALLABLES                         }..................
+    # ..................{ CALLABLES                          }..................
     def open_file_text():
         '''
         Function returning an open read-only file handle in text mode.
@@ -119,7 +119,7 @@ def add_data(data_module: 'ModuleType') -> None:
             HintPithUnsatisfiedMetadata(
                 pith=open_file_text, is_pith_factory=True))
 
-    # ..................{ PROTOCOLS ~ structural            }..................
+    # ..................{ PROTOCOLS ~ structural             }..................
     # User-defined class structurally (i.e., implicitly) satisfying *WITHOUT*
     # explicitly subclassing this user-defined protocol.
     class ProtocolCustomStructural(object):
@@ -145,7 +145,7 @@ def add_data(data_module: 'ModuleType') -> None:
         def __int__(self) -> int:
             return 42
 
-    # ..................{ ATTRS ~ supportsint               }..................
+    # ..................{ ATTRS ~ supportsint                }..................
     # For each PEP 544-specific attribute importable from a standard typing
     # module...
     #
@@ -179,7 +179,7 @@ def add_data(data_module: 'ModuleType') -> None:
         typing_module_names=TYPING_MODULE_NAMES_STANDARD,
         is_warn=True,
     ):
-        # ................{ PROTOCOLS ~ user                  }................
+        # ................{ PROTOCOLS ~ user                   }................
         # User-defined protocol parametrized by *NO* type variables declaring
         # arbitrary concrete and abstract methods.
         @runtime_checkable
@@ -200,7 +200,7 @@ def add_data(data_module: 'ModuleType') -> None:
             @abstractmethod
             def omega(self) -> str: pass
 
-        # ................{ PROTOCOLS ~ user : abc            }................
+        # ................{ PROTOCOLS ~ user : abc             }................
         # User-defined protocol superclass.
         @runtime_checkable
         class ProtocolCustomSuperclass(Protocol):
@@ -227,7 +227,7 @@ def add_data(data_module: 'ModuleType') -> None:
             def abstract_method(self) -> str:
                 return 'Concrete‐shambling,'
 
-        # ................{ SETS                              }................
+        # ................{ SETS                               }................
         # Add PEP 544-specific shallowly ignorable test type hints to that set
         # global.
         data_module.HINTS_PEP_IGNORABLE_SHALLOW.update((
@@ -251,10 +251,10 @@ def add_data(data_module: 'ModuleType') -> None:
             Protocol[S, T],
         ))
 
-        # ................{ TUPLES                            }................
+        # ................{ TUPLES                             }................
         # Add PEP 544-specific test type hints to that tuple.
         data_module.HINTS_PEP_META.extend((
-            # ..............{ PROTOCOLS ~ user                  }..............
+            # ..............{ PROTOCOLS ~ user                   }..............
             # Despite appearances, protocols implicitly subclass
             # "typing.Generic" and thus do *NOT* transparently reduce to
             # standard types.
@@ -325,7 +325,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
 
-            # ..............{ GENERICS ~ io : unsubscripted     }..............
+            # ..............{ GENERICS ~ io : unsubscripted      }..............
             # Unsubscripted "IO" abstract base class (ABC).
             HintPepMetadata(
                 hint=IO,
@@ -371,7 +371,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
 
-            # ..............{ GENERICS ~ io : subscripted       }..............
+            # ..............{ GENERICS ~ io : subscripted        }..............
             # All possible subscriptions of the "IO" abstract base class (ABC).
             HintPepMetadata(
                 hint=IO[Any],
@@ -432,7 +432,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
 
-            # ..............{ PROTOCOLS ~ supports              }..............
+            # ..............{ PROTOCOLS ~ supports               }..............
             # Unsubscripted "SupportsAbs" abstract base class (ABC).
             HintPepMetadata(
                 hint=SupportsAbs,

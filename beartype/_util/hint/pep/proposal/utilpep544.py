@@ -22,7 +22,7 @@ from beartype.typing import (
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES_STANDARD
-from beartype._util.cls.utilclstest import is_type_builtin, is_type_subclass
+from beartype._util.cls.utilclstest import is_type_builtin
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
 # ....................{ PRIVATE ~ mappings                 }....................
@@ -115,6 +115,9 @@ Typed version of the return of open() in text mode.
 # If the active Python interpreter targets at least Python >= 3.8 and thus
 # supports PEP 544, define these functions appropriately.
 if IS_PYTHON_AT_LEAST_3_8:
+    # Defer version-dependent imports.
+    from typing import Protocol
+
     def is_hint_pep544_ignorable_or_none(
         hint: object, hint_sign: HintSign) -> Optional[bool]:
 
@@ -169,25 +172,30 @@ if IS_PYTHON_AT_LEAST_3_8:
 
     def is_hint_pep544_protocol(hint: object) -> bool:
 
-        # Defer version-dependent imports.
-        from typing import Protocol
-
         # Return true only if this hint is...
         return (
+            # A type *AND*...
+            isinstance(hint, type) and
             # A PEP 544-compliant protocol *AND*...
-            is_type_subclass(hint, Protocol) and  # type: ignore[arg-type]
+            issubclass(hint, Protocol) and
             # *NOT* a builtin type. For unknown reasons, some but *NOT* all
             # builtin types erroneously present themselves to be PEP
             # 544-compliant protocols under Python >= 3.8: e.g.,
             #     >>> from typing import Protocol
-            #     >>> isinstance(str, Protocol)
+            #     >>> issubclass(str, Protocol)
             #     False        # <--- this makes sense
-            #     >>> isinstance(int, Protocol)
+            #     >>> issubclass(int, Protocol)
             #     True         # <--- this makes no sense whatsoever
             #
             # Since builtin types are obviously *NOT* PEP 544-compliant
             # protocols, explicitly exclude all such types. Why, Guido? Why?
-            not (isinstance(hint, type) and is_type_builtin(hint))
+            not is_type_builtin(
+                cls=hint,
+                # Do *NOT* ignore fake builtins for the purposes of this
+                # test. Why? Because even fake builtins (e.g., "type(None)")
+                # erroneously masquerade as PEP 544-compliant protocols! :o
+                is_ignore_fake=False,
+            )
         )
 
 

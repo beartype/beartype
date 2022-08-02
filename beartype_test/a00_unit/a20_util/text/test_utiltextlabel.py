@@ -17,8 +17,30 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                              }....................
-def test_label_callable():
+# ....................{ TESTS ~ labellers                  }....................
+def test_label_type() -> None:
+    '''
+    Test the :func:`beartype._util.text.utiltextlabel.label_type`
+    function.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.text.utiltextlabel import label_type
+    from beartype_test.a00_unit.data.data_type import Class
+
+    # Assert this labeller returns the expected label for a builtin type.
+    assert label_type(str) == 'str'
+
+    # Assert this labeller returns the expected label for the non-builtin type
+    # of the "None" singleton, exercising a common edge case.
+    assert label_type(type(None)) == '<class "builtins.NoneType">'
+
+    # Assert this labeller returns the expected label for a user-defined type.
+    assert label_type(Class) == (
+        '<class "beartype_test.a00_unit.data.data_type.Class">')
+
+# ....................{ TESTS ~ prefixers                  }....................
+def test_prefix_callable() -> None:
     '''
     Test the :func:`beartype._util.text.utiltextlabel.prefix_callable`
     function.
