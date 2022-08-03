@@ -67,7 +67,23 @@
 #* Adding a new "cls_scope" (or something) instance variable to our
 #  "beartype._decor._decorcall.BeartypeCall" dataclass, defined as either:
 #  * "None" for non-method callables.
-#  * The type of the class lexically declaring the current method callable.
+#  * The type of the class lexically declaring the current method callable. Note
+#    that this type is trivially retrievable from C-based bound instance method
+#    descriptors via the "__self__" dunder variable: e.g.,
+#        >>> class Yam(object): def yim(self): pass
+#        >>> Yam().yim.__self__
+#        <__main__.Yam at 0x7f4f70aad130>
+#
+#    That said, it kinda seems unlikely that our dynamically generated unbound
+#    pure-Python wrapper functions would have access to the C-based parent
+#    instance method descriptor. Given that, the only means of supporting this
+#    is probably to require that users decorate classes rather than class
+#    methods by @beartype. In the former case, @beartype trivially has access to
+#    this type and can safely set "BeartypeCall.cls_scope"; in the latter case,
+#    @beartype does not and *MUST* leave "BeartypeCall.cls_scope" as "None".
+#
+#    Ergo, @beartype should raise a fatal exception when visiting a "Self" hint
+#    *AND* "BeartypeCall.cls_scope is None" is true.
 #* It would be advisable to cache the "TypeVar" objects produced in this
 #  manner. Or perhaps that's overkill, as the same "utilhintconv" function
 #  performing this reduction *ALSO* currently reduces "TypeVar" objects to

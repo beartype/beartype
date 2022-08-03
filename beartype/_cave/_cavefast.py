@@ -1147,9 +1147,34 @@ MethodDecoratorBuiltinTypes = (
     MethodDecoratorStaticType,
 )
 '''
-Tuple of all **C-based unbound method decorator objects** (i.e., non-callable
-instances of a builtin decorator class implemented in low-level C, associated
-with methods implemented in pure Python)
+Tuple of all **C-based unbound method decorator types** (i.e., builtin decorator
+types implemented in low-level C whose instances are typically uncallable,
+associated with callable methods implemented in pure Python).
+'''
+
+
+MethodDescriptorTypes = (
+    # @classmethod, @staticmethod, and @property descriptor types.
+    MethodDecoratorBuiltinTypes + (
+        # Method descriptor type.
+        MethodBoundInstanceOrClassType,
+    )
+)
+'''
+Tuple of all **C-based unbound method descriptor types** (i.e., builtin types
+implemented in low-level C whose instances are typically uncallable, associated
+with callable methods implemented in pure Python).
+
+This tuple matches the types of all:
+
+* **Class method descriptors** (i.e., methods decorated by the builtin
+  :class:`classmethod` decorator).
+* Instance method descriptors (i.e., methods *not* decorated by a builtin method
+  decorator).
+* **Property method descriptors** (i.e., methods decorated by the builtin
+  :class:`property` decorator).
+* **Static method descriptors** (i.e., methods decorated by the builtin
+  :class:`staticmethod` decorator).
 '''
 
 

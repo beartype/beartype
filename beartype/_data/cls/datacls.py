@@ -16,6 +16,7 @@ from beartype._cave._cavefast import (
     FunctionType,
     FunctionOrMethodCType,
     MethodBoundInstanceOrClassType,
+    MethodDecoratorBuiltinTypes,
     ModuleType,
     NoneType,
     NotImplementedType,

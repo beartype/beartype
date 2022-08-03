@@ -255,9 +255,9 @@ if IS_PYTHON_AT_LEAST_3_8:
                 #     >>> class OhBoy(object): pass
                 #     >>> issubclass(OhBoy, Protocol)
                 #     True  # <-- we have now destroyed the world, folks.
-                if cls._is_protocol:
+                if cls._is_protocol:  # type: ignore[attr-defined]
                     # print(f'Protocol {cls} mro: {cls.__mro__}')
-                    runtime_checkable(cls)
+                    runtime_checkable(cls)  # pyright: ignore[reportGeneralTypeIssues]
             # Else, this class is the abstract "beartype.typing.Protocol"
             # superclass defined below. In this case, avoid dangerously
             # monkey-patching this superclass.

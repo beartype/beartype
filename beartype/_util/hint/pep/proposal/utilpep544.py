@@ -177,7 +177,7 @@ if IS_PYTHON_AT_LEAST_3_8:
             # A type *AND*...
             isinstance(hint, type) and
             # A PEP 544-compliant protocol *AND*...
-            issubclass(hint, Protocol) and
+            issubclass(hint, Protocol) and  # type: ignore[arg-type]
             # *NOT* a builtin type. For unknown reasons, some but *NOT* all
             # builtin types erroneously present themselves to be PEP
             # 544-compliant protocols under Python >= 3.8: e.g.,
