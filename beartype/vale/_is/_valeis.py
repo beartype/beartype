@@ -15,7 +15,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeValeLambdaWarning
+from beartype.roar import (
+    BeartypeValeLambdaWarning,
+    BeartypeValeValidationException,
+)
 from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
 from beartype.vale._core._valecore import (
     BeartypeValidator,
@@ -25,9 +28,45 @@ from beartype._util.func.utilfuncscope import (
     CallableScope,
     add_func_scope_attr,
 )
-from beartype._util.text.utiltextrepr import represent_func
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+from beartype._util.text.utiltextrepr import (
+    represent_func,
+    represent_object,
+)
 
-# ....................{ SUBCLASSES                         }....................
+# ....................{ PRIVATE ~ protocols                }....................
+# If the active Python interpreter targets Python >= 3.8 and thus supports
+# PEP 544-compliant protocols...
+if IS_PYTHON_AT_LEAST_3_8:
+    # Defer version-specific imports.
+    from beartype.typing import Protocol
+
+    class _SupportsBool(Protocol):
+        '''
+        Fast caching protocol matching any object whose class defines the
+        :meth:`__bool__` dunder method.
+        '''
+
+        def __bool__(self) -> bool: ...
+
+
+    class _SupportsLen(Protocol):
+        '''
+        Fast caching protocol matching any object whose class defines the
+        :meth:`__len__` dunder method.
+        '''
+
+        def __len__(self) -> bool: ...
+
+
+    _BoolLike = (_SupportsBool, _SupportsLen)
+    '''
+    :func:`isinstance`-able tuple of fast caching protocols matching any
+    **bool-like** (i.e., object whose class defines at least one of the
+    :meth:`__bool__` and/or :meth:`__len__` dunder methods).
+    '''
+
+# ....................{ PRIVATE ~ subclasses               }....................
 class _IsFactory(_BeartypeValidatorFactoryABC):
     '''
     **Beartype callable validator factory** (i.e., class that, when subscripted
@@ -292,11 +331,226 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
             Usage instructions.
         '''
 
+        # ..................{ VALIDATE                       }..................
         # If this class was subscripted by either no arguments *OR* two or more
         # arguments, raise an exception.
         self._die_unless_getitem_args_1(is_valid)
         # Else, this class was subscripted by exactly one argument.
 
+        # Lambda function dynamically generating the machine-readable
+        # representation of this validator, deferred due to the computational
+        # expense of accurately retrieving the source code for this validator
+        # (especially when this validator is itself a lambda function).
+        get_repr = lambda: (
+            f'{self._basename}['
+            f'{represent_func(func=is_valid, warning_cls=BeartypeValeLambdaWarning)}'
+            f']'
+        )
+
+        # ..................{ CLOSURE                        }..................
+        #FIXME: *PASS BELOW, PLEASE.*
+        #FIXME: Unit test edge cases extensively, please.
+        def _is_valid_bool(obj: object) -> bool:
+            '''
+            ``True`` only if the passed object satisfies the caller-defined
+            validation callable subscripting this :attr:`beartype.vale.Is`
+            validator factory.
+
+            This closure wraps that possibly unsafe callable with an implicit
+            type cast, guaranteeing that either:
+
+            * If that callable returns a boolean, this closure returns that
+              boolean as is.
+            * If that callable returns a non-boolean object, either:
+
+              * If that non-boolean is implicitly convertible into a boolean
+                (i.e., if passing that non-boolean to the :class:`bool` type
+                succeeds *without* raising an exception), this closure coerces
+                that non-boolean into a boolean and returns that boolean.
+              * Else, this closure raises a human-readable exception.
+
+            This closure is principally intended to massage non-standard
+            validation callables defined by popular third-party packages like
+            NumPy, which commonly return non-boolean objects that are implicitly
+            convertible into boolean objects: e.g.,
+
+            .. code-block::
+
+               >>> import numpy as np
+               >>> matrix = np.array([[2, 1], [1, 2]])
+               >>> is_all = np.all(matrix > 0))
+               >>> type(is_all)
+               <class 'numpy.bool_'>
+               >>> is_all
+               True  # <-- y u lie, numpy
+               >>> bool(is_all)
+               True
+
+            Parameters
+            ----------
+            obj : object
+                Object to be validated by that validation callable.
+
+            Returns
+            ----------
+            bool
+                ``True`` only if that object satisfies that validation callable.
+
+            Raises
+            ----------
+            BeartypeValeValidationException
+                If that validation callable returns a **non-bool-like**, where
+                "non-bool-like" is any object that:
+
+                * Is *not* a **boolean** (i.e., :class:`bool` instance).
+                * Is *not* **implicitly convertible** into a boolean (i.e., is
+                  an object whose class defines neither the :meth:`__bool__` nor
+                  :meth:`__len__` dunder methods).
+
+    * Subscript the :attr:`beartype.vale.Is` factory by a **non-bool-like
+      validator** (i.e., tester function returning an object that is neither a
+      :class:`bool` *nor* implicitly convertible into a :class:`bool`).
+            '''
+
+            # Object returned by validating this object against that callable.
+            is_obj_valid = is_valid(obj)
+
+            # If that object is a boolean, return that object as is.
+            if isinstance(is_obj_valid, bool):
+                return is_obj_valid
+            # Else, that object is *NOT* a boolean.
+
+            # "True" *ONLY* if that object is a bool-like (i.e., object whose
+            # class defines the __bool__() and/or __len__() dunder methods).
+            #
+            # Note that we intentionally avoid the Easier to Ask for Permission
+            # than Forgiveness (EAFP) approach typically favoured by the Python
+            # community for coercing types. Namely, we avoid doing this:
+            #    # Attempt to coerce this boolean into a non-boolean.
+            #    try:
+            #        is_obj_valid_bool = bool(is_obj_valid)
+            #    except Exception as exception:
+            #        raise SomeBeartypeException(...) from exception
+            #
+            # Why? Because the bool() constructor is overly permissive to the
+            # point of being *FRANKLY BROKEN.* Why? Because that constructor
+            # *NEVER* raises an exception (unless the class of that object
+            # defines a __bool__() dunder method raising an exception). Why?
+            # Because that constructor implicitly coerces *ALL* objects whose
+            # classes define *NO* __bool__() dunder method to "True" except for
+            # the following, which the bool() constructor explicitly detects
+            # and hard-codes to be coerced to "False":
+            # * The "None" singleton.
+            # * The "False" singleton.
+            # * Numeric 0 across all numeric types, including:
+            #   * Integer 0.
+            #   * Floating-point 0.0.
+            # * Empty containers across all container types, including:
+            #   * The empty tuple singleton (i.e., "()").
+            #   * The empty string singleton (i.e., "''").
+            #   * Any empty list (e.g., "[]").
+            #
+            # The proof is in the gelatinous spaghetti code:
+            #     >>> class OhMyGods(object): pass
+            #     >>> bool(OhMyGods())
+            #     True  # <-- WHAT THE HECK IS THIS, GUIDO. SRSLY, BRO. SRSLY.
+            #
+            # This is, of course, unbelievable. This is, of course, all true.
+            # What is this, Guido? Visual Basic in my Python? *facepalm*
+            #
+            # Note also that there are several means of testing for booliness.
+            # The obvious approach of calling getattr() is also the slowest,
+            # because getattr() internally performs the EAFP approach and
+            # exception handling in Python is known to be an obvious bottleneck.
+            # Ergo, we intentionally avoid doing this:
+            #     is_obj_valid_bool_method = getattr(is_obj_valid, '__bool__', None)
+            #
+            # Ideally, we would instead defer to a beartype-specific fast
+            # caching protocol that also internally performs a similar getattr()
+            # call wrapped within caching logic that amortizes the cost of that
+            # call across all isinstance() calls passed an object of that same
+            # type. Since there exists *NO* standard "SupportsBool" protocol,
+            # we would then trivially define our own like so:
+            #     from beartype.typing import Protocol
+            #     class SupportsBool(Protocol):
+            #         def __bool__(self) -> bool: ...
+            #
+            # Surprisingly, that fails. Why? Because the bool() constructor
+            # internally coerces objects into booleans like so:
+            # * If the passed object defines the __bool__() dunder method, that
+            #   constructor defers to that method.
+            # * Else if the passed object defines the __len__() dunder method,
+            #   that constructor defers to that method.
+            # * Else if the passed object is one of several hard-coded objects
+            #   evaluating to "False", that constructor returns "False".
+            # * Else, that constructor returns "True".
+            #
+            # To handle the first two cases, we instead:
+            #
+            # * Under Python >= 3.8, define both our own "SupportsBool" *AND*
+            #   "SupportsLen" protocols.
+            # * Under Python 3.7, fallback to slower getattr()-based tests.
+            is_obj_valid_boollike: bool = None  # type: ignore[assignment]
+
+            # If the active Python interpreter targets Python >= 3.8 and thus
+            # supports the PEP 544-compliant protocols defined above, decide
+            # whether that object is bool-like by deferring to those protocols.
+            if IS_PYTHON_AT_LEAST_3_8:
+                is_obj_valid_boollike = isinstance(is_obj_valid, _BoolLike)  # pyright: ignore
+            # Else, the active Python interpreter targets Python 3.7 and thus
+            # fails to support the PEP 544-compliant protocols defined above.
+            # Instead, decide whether that object is bool-like manually.
+            else:
+                is_obj_valid_boollike = (
+                    hasattr(is_obj_valid, '__bool__') or
+                    hasattr(is_obj_valid, '__len__')
+                )
+
+            # If that object is *NOT* bool-like, raise an exception.
+            if not is_obj_valid_boollike:
+                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                # CAUTION: Synchronize with the exception raised below, please.
+                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                raise BeartypeValeValidationException(
+                    f'Validator {get_repr()} '
+                    f'return value {repr(is_obj_valid)} not bool-like '
+                    f'(i.e., instance of neither "bool" nor '
+                    f'class defining __bool__() or __len__() dunder methods) '
+                    f'for subject object:\n{represent_object(obj)}'
+                )
+            # Else, that object is bool-like.
+
+            # Boolean coerced from this non-boolean via the __bool__() or
+            # __len__() dunder methods declared by the type of this non-boolean,
+            # initialized to "False" for safety.
+            is_obj_valid_bool = False
+
+            # Attempt to perform this coercion.
+            try:
+                is_obj_valid_bool = bool(is_obj_valid)
+            # If whichever of the __bool__() or __len__() dunder methods is
+            # called by the above bool() constructor raises an exception, wrap
+            # that exception in a higher-level @beartype exception.
+            #
+            # Note that this is *NOT* simply an uncommon edge case. In
+            # particular, the Pandas "DataFrame" type defines a __bool__()
+            # dunder method that unconditionally raises an exception. *facepalm*
+            except Exception as exception:
+                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                # CAUTION: Synchronize with the exception raised above, please.
+                #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                raise BeartypeValeValidationException(
+                    f'Validator {get_repr()} '
+                    f'return value {repr(is_obj_valid)} erroneously bool-like '
+                    f'(i.e., instance of class defining __bool__() or __len__() '
+                    f'dunder methods raising unexpected exception) '
+                    f'for subject object:\n{represent_object(obj)}'
+                ) from exception
+
+            # Return this boolean.
+            return is_obj_valid_bool
+
+        # ..................{ VALIDATOR                      }..................
         # Dictionary mapping from the name to value of each local attribute
         # referenced in the "is_valid_code" snippet defined below.
         is_valid_code_locals: CallableScope = {}
@@ -316,9 +570,5 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
             # by downstream logic.
             is_valid_code=f'{is_valid_attr_name}({{obj}})',
             is_valid_code_locals=is_valid_code_locals,
-            get_repr=lambda: (
-                f'{self._basename}['
-                f'{represent_func(func=is_valid, warning_cls=BeartypeValeLambdaWarning)}'
-                f']'
-            ),
+            get_repr=get_repr,
         )

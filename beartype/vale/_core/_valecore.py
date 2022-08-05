@@ -420,21 +420,21 @@ class BeartypeValidator(object):
             delimiting the human-readable representation of the tri-state
             boolean and validator representation in the returned substring).
         is_shortcircuited : bool, optional
-            ``True`` only if this lower-level validator is **short-circuited**
-            (i.e., *not* required to be tested against), in which case this
-            method will silently catch and reduce exceptions raised by this
-            validator's :meth:`is_valid` method to ``False``.
+            ``True`` only if this validator has been **short-circuited** (i.e.,
+            *not* required to be tested against) by a previously tested sibling
+            validator, in which case this method will silently catch and reduce
+            exceptions raised by the :meth:`is_valid` method to ``False``.
 
             Short-circuiting typically arises from binary validators (e.g.,
             :class:`beartype.vale._core._valecore.BeartypeValidatorConjunction`)
-            in which a low-level sibling validator, previously tested against
-            by the higher-level binary validator encapsulating both this
-            validator and that sibling validator, has already either fully
-            satisfied *or* failed to satisfy that binary validator; a binary
-            validator explicitly sets this parameter to ``True`` for *all*
-            children validators except the first child validator when the first
-            child validator either fully satisfies *or* fails to satisfy that
-            binary validator.
+            in which a low-level sibling validator, previously tested against by
+            the higher-level binary validator encapsulating both this validator
+            and that sibling validator, has already either fully satisfied *or*
+            failed to satisfy that binary validator; a binary validator
+            explicitly sets this parameter to ``True`` for *all* children
+            validators except the first child validator when the first child
+            validator either fully satisfies *or* fails to satisfy that binary
+            validator.
 
             This is *not* merely an optimization; this is a design requirement.
             External users often chain validators together with set operators
@@ -443,10 +443,10 @@ class BeartypeValidator(object):
             earlier validators already satisfy requirements. Violating this
             expectation causes later validators to trivially raise exceptions.
 
-            Without short-circuiting, this otherwise valid example raises a
-            non-human-readable exception. The short-circuited ``IsArrayMatrix``
-            validator expects to be tested *only* when the preceding
-            non-short-circuited ``IsArray2D`` validator fails:
+            Without short-circuiting, the otherwise valid following example
+            raises a non-human-readable exception. The short-circuited
+            ``IsArrayMatrix`` validator expects to be tested *only* when the
+            preceding non-short-circuited ``IsArray2D`` validator fails:
 
             .. code-block:: python
 
@@ -484,7 +484,7 @@ class BeartypeValidator(object):
         # True only if the passed object satisfies this validator.
         is_obj_valid = None
 
-        # If this validator is short-circuited...
+        # If this validator has been short-circuited by a prior sibling...
         if is_shortcircuited:
             # Attempt to decide whether that object satisfies this validator.
             try:

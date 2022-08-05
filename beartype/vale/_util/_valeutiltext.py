@@ -11,7 +11,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar._roarexc import _BeartypeValeUtilException
 from beartype.typing import Optional
+from beartype._cave._cavemap import NoneTypeOr
 
 # ....................{ FORMATTERS                         }....................
 def format_diagnosis_line(
@@ -60,6 +62,12 @@ def format_diagnosis_line(
     ----------
     str
         This diagnosis line formatted with this indentation level.
+
+    Raises
+    ----------
+    _BeartypeValeUtilException
+        If ``is_obj_valid`` is *not* a **tri-state boolean** (i.e., either
+        ``True``, ``False``, or ``None``).
     '''
     assert isinstance(validator_repr, str), (
         f'{repr(validator_repr)} not string.')
@@ -67,8 +75,21 @@ def format_diagnosis_line(
         f'{repr(indent_level_outer)} not string.')
     assert isinstance(indent_level_inner, str), (
         f'{repr(indent_level_inner)} not string.')
-    assert isinstance(is_obj_valid, (bool, type(None))), (
-        f'{repr(is_obj_valid)} not tri-state boolean.')
+
+    # If "is_obj_valid" is *NOT* a tri-state boolean, raise an exception.
+    #
+    # Note that this condition is intentionally validated with full-blown
+    # exception handling rather than a simple "assert" statement. This condition
+    # was previously implemented via a simple "assert" statement, which then
+    # raised a non-human-readable assertion in an end user issue. *OH, GODS!*
+    if not isinstance(is_obj_valid, NoneTypeOr[bool]):
+        raise _BeartypeValeUtilException(
+            f'beartype.vale._valeutiltext.format_diagnosis_line() parameter '
+            f'"is_obj_valid" value {repr(is_obj_valid)} '
+            f'not tri-state boolean for '
+            f'validator representation: {validator_repr}'
+        )
+    # Else, "is_obj_valid" is a tri-state boolean.
 
     # String representing this boolean value, padded with spaces on the left as
     # needed to produce a column-aligned line diagnosis resembling:

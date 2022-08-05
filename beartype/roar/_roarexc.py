@@ -649,17 +649,34 @@ class BeartypeValeSubscriptionException(BeartypeValeException):
     **Beartype validator subscription exception.**
 
     This exception is raised at instantiation time when subscripting (indexing)
-    classes published by the :func:`beartype.vale` subpackage, including
+    factories published by the :func:`beartype.vale` subpackage, including
     attempts to:
 
-    * Instantiate *any* of these classes. Like standard type hints, these
-      classes are *only* intended to be subscripted (indexed).
-    * Subscript *any* of these classes by anything other than a **data
-      validator** (i.e., tester function satisfying the type hint
-      ``collections.abc.Callable[[typing.Any,], bool]``).
+    * Instantiate *any* of these factories. Like standard type hints, these
+      factories are *only* intended to be subscripted (indexed).
     * Apply the ``&`` or ``|`` operators to *any* subscriptions of these
-      classes and *any* other objects (e.g.,
+      factories and *any* other objects (e.g.,
       ``beartype.vale.Is[lambda obj: True]] & 'If it seems bad, it is.'``).
+    * Subscript the :attr:`beartype.vale.Is` factory by anything other than a
+      **validator** (i.e., tester function satisfying the type hint
+      ``collections.abc.Callable[[typing.Any,], bool]``).
+    '''
+
+    pass
+
+
+class BeartypeValeValidationException(BeartypeValeException):
+    '''
+    **Beartype validator validation exception.**
+
+    This exception is raised at validation time (e.g.,, at call time of a
+    :func:`beartype.beartype`-decorated callable annotated by a beartype
+    validator) when a beartype validator fails to properly validate an object,
+    including attempts to:
+
+    * Subscript the :attr:`beartype.vale.Is` factory by a **non-bool-like
+      validator** (i.e., tester function returning an object that is neither a
+      :class:`bool` *nor* implicitly convertible into a :class:`bool`).
     '''
 
     pass
@@ -676,6 +693,17 @@ class _BeartypeDecorBeartypistryException(BeartypeDecorException):
 
     This private exception denotes a critical internal issue and should thus
     *never* be raised -- let alone exposed to end users.
+    '''
+
+    pass
+
+# ....................{ PRIVATE ~ vale                     }....................
+class _BeartypeValeUtilException(BeartypeValeException):
+    '''
+    **Beartype validator utility exception.**
+
+    This exception is raised from various submodules of the private
+    :func:`beartype.vale._util` subpackage.
     '''
 
     pass

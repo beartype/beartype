@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,18 +11,19 @@ This submodule unit tests the subset of the public API of the
 :mod:`beartype.vale._is._valeis` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ class : is                }....................
+# ....................{ TESTS ~ class : is                 }....................
 def test_api_vale_is_pass() -> None:
     '''
     Test successful usage of the :mod:`beartype.vale.Is` factory.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype._util.func.utilfuncmake import make_func
@@ -30,14 +31,38 @@ def test_api_vale_is_pass() -> None:
     from beartype.vale._core._valecore import BeartypeValidator
     from collections.abc import Mapping
 
-    # Undecorated non-lambda function suitable for subscripting the
-    # "beartype.vale.Is" factory with.
+    # ....................{ CLASSES                        }....................
+    class FalseFake(object):
+        '''
+        Arbitrary class whose instances are implicitly convertible into
+        **booleans** (i.e., :class:`bool` objects) via the :meth:`__bool__`
+        dunder method despite *not* subclassing the builtin :class:`bool` type.
+        '''
+
+        def __bool__(self) -> bool:
+            '''
+            Dunder method coercing this non-boolean into a boolean.
+            '''
+
+            # Return false rather than true to exercise a non-trivial edge case
+            # in which the callable subscripting an "Is[...]" validator returns
+            # a non-boolean object, which then induces a validation failure,
+            # which then displays a validator diagnosis embedding that object.
+            return False
+
+    # ....................{ FUNCS                          }....................
+    # Undecorated non-lambda function with which to subscript the "Is" factory.
     def _is_quoted(text):
         return '"' in text or "'" in text
 
-    # Decorated non-lambda function suitable for subscripting the
-    # "beartype.vale.Is" factory with, exercising an edge case with respect to
-    # callable parameter validation in that factory.
+    # Undecorated non-lambda function returning a non-boolean object implicitly
+    # convertible into a boolean with which to subscript the "Is" factory,
+    # exercising an edge case coercing the former to the latter in that factory.
+    def _is_false_fake(obj):
+        return FalseFake()
+
+    # Decorated non-lambda function with which to subscript the "Is" factory,
+    # exercising an edge case validating callable parameters in that factory.
     @beartype
     def _is_exclamatory(text: str):
         return '!' in text
@@ -53,6 +78,7 @@ def test_api_vale_is_pass() -> None:
         is_debug=True,
     )
 
+    # ....................{ VALIDATORS                     }....................
     # Validators produced by subscripting this factory with lambda functions
     # satisfying the expected API defined physically in this on-disk module.
     IsLengthy = Is[lambda text: len(text) > 30]
@@ -66,19 +92,25 @@ def test_api_vale_is_pass() -> None:
     # satisfying the expected API.
     IsQuoted = Is[_is_quoted]
     IsExclamatory = Is[_is_exclamatory]
+    IsFalseFake = Is[_is_false_fake]
 
     # Validator synthesized from the above validators with the domain-specific
     # language (DSL) supported by those validators.
     IsLengthyOrUnquotedSentence = IsLengthy | (IsSentence & ~IsQuoted)
 
+    # ....................{ ASSERTS ~ instance             }....................
     # Assert these validators satisfy the expected API.
     assert isinstance(IsLengthy, BeartypeValidator)
-    assert isinstance(IsSentence, BeartypeValidator)
-    assert isinstance(IsCommentary, BeartypeValidator)
-    assert isinstance(IsQuoted, BeartypeValidator)
-    assert isinstance(IsExclamatory, BeartypeValidator)
+    assert isinstance(IsLengthyOrUnquotedSentence, BeartypeValidator)
 
-    # Assert these validators perform the expected validation.
+    # Assert a validator provides both non-empty code and code locals.
+    assert isinstance(IsLengthy._is_valid_code, str)
+    assert isinstance(IsLengthy._is_valid_code_locals, Mapping)
+    assert bool(IsLengthy._is_valid_code)
+    assert bool(IsLengthy._is_valid_code_locals)
+
+    # ....................{ ASSERTS ~ is_valid             }....................
+    # Assert that non-composite validators perform the expected validation.
     assert IsLengthy.is_valid('Plunged in the battery-smoke') is False
     assert IsLengthy.is_valid('Right through the line they broke;') is True
     assert IsSentence.is_valid('Theirs not to make reply,') is False
@@ -93,12 +125,17 @@ def test_api_vale_is_pass() -> None:
     assert IsExclamatory.is_valid(
         '"Dizzy Ravine! and when I gaze on thee"') is True
 
-    # Assert a validator provides both non-empty code and code locals.
-    assert isinstance(IsLengthy._is_valid_code, str)
-    assert isinstance(IsLengthy._is_valid_code_locals, Mapping)
-    assert bool(IsLengthy._is_valid_code)
-    assert bool(IsLengthy._is_valid_code_locals)
+    # Assert that a composite validator performs the expected validation.
+    assert IsLengthyOrUnquotedSentence.is_valid(
+        'Stormed at with shot and shell,') is True
+    assert IsLengthyOrUnquotedSentence.is_valid(
+        'Rode the six hundred.') is True
+    assert IsLengthyOrUnquotedSentence.is_valid(
+        '"Forward, the Light Brigade.') is False
+    assert IsLengthyOrUnquotedSentence.is_valid(
+        'Into the valley of Death') is False
 
+    # ....................{ ASSERTS ~ repr                 }....................
     # Assert a physical lambda-based validator has the expected representation.
     IsLengthyRepr = repr(IsLengthy)
     assert 'len(text) > 30' in IsLengthyRepr
@@ -115,24 +152,15 @@ def test_api_vale_is_pass() -> None:
     # efficiently returning the same string.
     assert repr(IsLengthy) is IsLengthyRepr
 
-    # Assert this validator performs the expected validation.
-    assert IsLengthyOrUnquotedSentence.is_valid(
-        'Stormed at with shot and shell,') is True
-    assert IsLengthyOrUnquotedSentence.is_valid(
-        'Rode the six hundred.') is True
-    assert IsLengthyOrUnquotedSentence.is_valid(
-        '"Forward, the Light Brigade.') is False
-    assert IsLengthyOrUnquotedSentence.is_valid(
-        'Into the valley of Death') is False
-
     # Assert this validator provides the expected representation.
     IsLengthyOrUnquotedSentence_repr = repr(IsLengthyOrUnquotedSentence)
     assert '|' in IsLengthyOrUnquotedSentence_repr
     assert '&' in IsLengthyOrUnquotedSentence_repr
     assert '~' in IsLengthyOrUnquotedSentence_repr
 
-    # Assert that this validator reports the expected diagnosis for a string
-    # violating exactly one of the subvalidators composing this validator.
+    # ....................{ ASSERTS ~ diagnosis            }....................
+    # Assert that a composite validator reports the expected diagnosis for a
+    # string violating one of the subvalidators composing this validator.
     IsLengthyOrUnquotedSentence_diagnosis = (
         IsLengthyOrUnquotedSentence.get_diagnosis(
             obj='For "the very spirit" fails.',
@@ -145,6 +173,16 @@ def test_api_vale_is_pass() -> None:
     assert '&' in IsLengthyOrUnquotedSentence_diagnosis
     assert '~' in IsLengthyOrUnquotedSentence_diagnosis
 
+    #FIXME: Uncomment after finalizing support for this, please.
+    # # Assert that a non-composite validator subscripted by a callable returning
+    # # a non-boolean implicitly convertible into boolean "False" reports the
+    # # expected diagnosis for any arbitrary object.
+    # IsFalseFake_diagnosis = IsFalseFake.get_diagnosis(
+    #     obj="Shine in the rushing torrents' restless gleam,",
+    #     indent_level_outer='    ',
+    #     indent_level_inner='',
+    # )
+    # assert IsFalseFake_diagnosis.count('False') == 1
 
 
 def test_api_vale_is_fail() -> None:
@@ -199,7 +237,7 @@ def test_api_vale_is_fail() -> None:
     with raises(BeartypeValeSubscriptionException):
         IsNonEmpty | 'While horse and hero fell.'
 
-# ....................{ TESTS ~ decor                     }....................
+# ....................{ TESTS ~ decor                      }....................
 def test_api_vale_decor_fail() -> None:
     '''
     Test unsuccessful usage of the public :mod:`beartype.vale.Is` class when

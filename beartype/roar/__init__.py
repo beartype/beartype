@@ -82,6 +82,7 @@ from beartype.roar._roarexc import (
     BeartypeCallHintForwardRefException as BeartypeCallHintForwardRefException,
     BeartypeValeException as BeartypeValeException,
     BeartypeValeSubscriptionException as BeartypeValeSubscriptionException,
+    BeartypeValeValidationException as BeartypeValeValidationException,
 
     # Violations (i.e., exceptions raised during runtime type-checking).
     BeartypeAbbyHintViolation as BeartypeAbbyHintViolation,
