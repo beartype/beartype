@@ -84,15 +84,6 @@ from beartype.cave._cavelib import (
 
     # Type tuples.
     WeakRefProxyCTypes as WeakRefProxyCTypes,
-
-    # Deprecated types and type tuples.
-    _NumpyArrayType,
-    _NumpyScalarType,
-    _SequenceMutableOrNumpyArrayTypes,
-    _SequenceOrNumpyArrayTypes,
-    _SetuptoolsVersionTypes,
-    _VersionComparableTypes,
-    _VersionTypes,
 )
 from beartype._cave._caveabc import (
     BoolType as BoolType,
@@ -214,14 +205,6 @@ def __getattr__(attr_deprecated_name: str) -> object:
         attr_deprecated_name=attr_deprecated_name,
         attr_deprecated_name_to_nondeprecated_name={
             'HintPep585Type': 'HintGenericSubscriptedType',
-            'NumpyArrayType': '_NumpyArrayType',
-            'NumpyScalarType': '_NumpyScalarType',
-            'SequenceOrNumpyArrayTypes': '_SequenceOrNumpyArrayTypes',
-            'SequenceMutableOrNumpyArrayTypes': (
-                '_SequenceMutableOrNumpyArrayTypes'),
-            'SetuptoolsVersionTypes': '_SetuptoolsVersionTypes',
-            'VersionComparableTypes': '_VersionComparableTypes',
-            'VersionTypes': '_VersionTypes',
         },
         attr_nondeprecated_name_to_value=globals(),
     )

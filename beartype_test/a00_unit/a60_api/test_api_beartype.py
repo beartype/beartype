@@ -45,13 +45,6 @@ def test_api_deprecations() -> None:
     # List of the fully-qualified names of all deprecated attributes.
     DEPRECATED_ATTRIBUTES = [
         'beartype.cave.HintPep585Type',
-        'beartype.cave.NumpyArrayType',
-        'beartype.cave.NumpyScalarType',
-        'beartype.cave.SequenceOrNumpyArrayTypes',
-        'beartype.cave.SequenceMutableOrNumpyArrayTypes',
-        'beartype.cave.SetuptoolsVersionTypes',
-        'beartype.cave.VersionComparableTypes',
-        'beartype.cave.VersionTypes',
         'beartype.roar.BeartypeCallHintPepException',
         'beartype.roar.BeartypeCallHintPepParamException',
         'beartype.roar.BeartypeCallHintPepReturnException',
