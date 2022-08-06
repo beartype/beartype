@@ -173,16 +173,15 @@ def test_api_vale_is_pass() -> None:
     assert '&' in IsLengthyOrUnquotedSentence_diagnosis
     assert '~' in IsLengthyOrUnquotedSentence_diagnosis
 
-    #FIXME: Uncomment after finalizing support for this, please.
-    # # Assert that a non-composite validator subscripted by a callable returning
-    # # a non-boolean implicitly convertible into boolean "False" reports the
-    # # expected diagnosis for any arbitrary object.
-    # IsFalseFake_diagnosis = IsFalseFake.get_diagnosis(
-    #     obj="Shine in the rushing torrents' restless gleam,",
-    #     indent_level_outer='    ',
-    #     indent_level_inner='',
-    # )
-    # assert IsFalseFake_diagnosis.count('False') == 1
+    # Assert that a non-composite validator subscripted by a callable returning
+    # a non-boolean implicitly convertible into boolean "False" reports the
+    # expected diagnosis for any arbitrary object.
+    IsFalseFake_diagnosis = IsFalseFake.get_diagnosis(
+        obj="Shine in the rushing torrents' restless gleam,",
+        indent_level_outer='    ',
+        indent_level_inner='',
+    )
+    assert IsFalseFake_diagnosis.count('False') == 1
 
 
 def test_api_vale_is_fail() -> None:

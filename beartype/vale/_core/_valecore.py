@@ -17,54 +17,15 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeValeSubscriptionException
-from beartype.typing import (
-    Callable,
-    Union,
-)
+from beartype.vale._util._valeutilfunc import die_unless_validator_tester
 from beartype.vale._util._valeutiltext import format_diagnosis_line
-from beartype._util.func.arg.utilfuncargtest import (
-    die_unless_func_args_len_flexible_equal,
-    is_func_argless,
+from beartype.vale._util._valeutiltyping import (
+    BeartypeValidatorTester,
+    BeartypeValidatorRepresenter,
 )
+from beartype._util.func.arg.utilfuncargtest import is_func_argless
 from beartype._util.func.utilfuncscope import CallableScope
 from beartype._util.text.utiltextrepr import represent_object
-
-# ....................{ HINTS                              }....................
-BeartypeValidatorTester = Callable[[object], bool]
-'''
-PEP-compliant type hint matching a **beartype validator tester** (i.e.,
-caller-defined callable accepting a single arbitrary object and returning
-either ``True`` if that object satisfies an arbitrary constraint *or* ``False``
-otherwise).
-
-Beartype validator testers are suitable for subscripting functional beartype
-validator factories (e.g., :attr:`beartype.vale.Is`).
-'''
-
-
-BeartypeValidatorRepresenter = Union[str, Callable[[], str]]
-'''
-PEP-compliant type hint matching a **beartype validator representer** (i.e.,
-either a string *or* caller-defined callable accepting no arguments returning a
-machine-readable representation of a beartype validator).
-
-Technically, this representation *could* be passed by the caller rather than
-this callable dynamically generating that representation. Pragmatically,
-generating this representation is sufficiently slow for numerous types of
-validators that deferring their generation until required by a call to the
-:meth:`__repr__` dunder method externally called by a call to the :func:`repr`
-builtin` on this validator is effectively mandatory. Validators whose
-representations are particularly slow to generate include:
-
-* The :class:`Is` class subscripted by a lambda rather than non-lambda
-  function. Generating the representation of that class subscripted by a
-  non-lambda function only requires introspecting the name of that function and
-  is thus trivially fast. However, lambda functions have no names and are thus
-  *only* distinguishable by their source code; generating the representation of
-  that class subscripted by a lambda function requires parsing the source code
-  of the file declaring that lambda for the exact substring of that code
-  declaring that lambda.
-'''
 
 # ....................{ CLASSES                            }....................
 class BeartypeValidator(object):
@@ -91,7 +52,7 @@ class BeartypeValidator(object):
         this validator). See the :data:`BeartypeValidatorRepresenter` type hint
         for further details.
     _is_valid : BeartypeValidatorTester
-        **Validator** (i.e., caller-defined callable accepting a single
+        **Validator tester** (i.e., caller-defined callable accepting a single
         arbitrary object and returning either ``True`` if that object satisfies
         an arbitrary constraint *or* ``False`` otherwise).
     _is_valid_code : str
@@ -150,8 +111,8 @@ class BeartypeValidator(object):
         Parameters
         ----------
         is_valid : BeartypeValidatorTester
-            **Validator** (i.e., caller-defined callable accepting a single
-            arbitrary object and returning either ``True`` if that object
+            **Validator tester** (i.e., caller-defined callable accepting a
+            single arbitrary object and returning either ``True`` if that object
             satisfies an arbitrary constraint *or* ``False`` otherwise).
         is_valid_code : str
             **Validator code** (i.e., Python code snippet validating the
@@ -212,22 +173,9 @@ class BeartypeValidator(object):
         # Avoid circular import dependencies.
         from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
 
-        # If this validator is either uncallable, a C-based callable, *OR* a
-        # pure-Python callable accepting more or less than one parameter, raise
-        # an exception.
-        die_unless_func_args_len_flexible_equal(
-            func=is_valid,
-            func_args_len_flexible=1,
-            exception_cls=BeartypeValeSubscriptionException,
-        )
-        # Else, this validator is a pure-Python callable accepting exactly one
-        # parameter. Since no further validation can be performed on this
-        # callable without unsafely calling that callable, we accept this
-        # callable as is for now.
-        #
-        # Note that we *COULD* technically inspect annotations if defined on
-        # this callable as well. Since this callable is typically defined as a
-        # lambda, annotations are typically *NOT* defined on this callable.
+        # If that callable is *NOT* a validator tester, raise an exception.
+        die_unless_validator_tester(is_valid)
+        # Else, that callable is a validator tester.
 
         # If this code is *NOT* a string, raise an exception.
         if not isinstance(is_valid_code, str):

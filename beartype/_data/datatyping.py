@@ -6,7 +6,7 @@
 '''
 Project-wide **PEP-compliant type hints** (i.e., hints annotating callables
 declared throughout this codebase, either for compliance with :pep:`561` or
-:mod:`mypy` *or* for documentation purposes).
+simply for documentation purposes).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
