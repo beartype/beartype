@@ -155,10 +155,10 @@ jobs:
           #FIXME: Reduce to simply "3.11" after Python 3.11 goes live.
           # - tox-env: py311-coverage
           #   python-version: "3.11.0-alpha - 3.11.0"
-          - tox-env: pypy37-coverage
-            python-version: "pypy-3.7"
-          - tox-env: pypy38-coverage
-            python-version: "pypy-3.8"
+          #- tox-env: pypy37-coverage
+          #  python-version: "pypy-3.7"
+          #- tox-env: pypy38-coverage
+          #  python-version: "pypy-3.8"
           #FIXME: Uncomment after PyPy 3.9 goes live.
           # - tox-env: pypy39-coverage
           #   python-version: "pypy-3.9"
