@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._cave._cavefast import (
+    ClassType,
     EllipsisType,
     FunctionType,
     FunctionOrMethodCType,
@@ -62,4 +63,23 @@ See Also
     test-specific set is inefficiently defined implicitly by introspecting the
     :mod:`builtins` module. While less efficient, that test-specific set serves
     as an essential sanity check on that runtime-specific set.
+'''
+
+# ....................{ TUPLES                             }....................
+# Types of *ALL* objects that may be decorated by @beartype, intentionally
+# listed in descending order of real-world prevalence for negligible efficiency
+# gains when performing isinstance()-based tests against this tuple. These
+# include the types of *ALL*...
+TYPES_BEARTYPEABLE = (
+    # Pure-Python unbound functions and methods.
+    FunctionType,
+    # Pure-Python classes.
+    ClassType,
+    # C-based builtin method descriptors wrapping pure-Python unbound methods,
+    # including class methods, static methods, and property methods.
+    MethodDecoratorBuiltinTypes,
+)
+'''
+Tuple set of all **beartypeable types** (i.e., types of all objects that may be
+decorated by the :func:`beartype.beartype` decorator).
 '''

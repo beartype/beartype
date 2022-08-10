@@ -21,7 +21,7 @@ from collections.abc import Callable
 #FIXME: Unit test us up, please.
 def is_func_unbeartypeable(func: Callable) -> bool:
     '''
-    ``True`` only if the passed callable is a **unbeartypeable** (i.e., if the
+    ``True`` only if the passed callable is **unbeartypeable** (i.e., if the
     :func:`beartype.beartype` decorator should preserve that callable as is by
     reducing to the identity decorator rather than wrap that callable with
     constant-time type-checking).

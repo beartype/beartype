@@ -271,19 +271,7 @@ def test_decor_wrappee_type_fail() -> None:
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorWrappeeException
-    from beartype_test.a00_unit.data.data_type import (
-        CallableClass,
-        Class,
-    )
     from pytest import raises
-
-    # Assert that decorating an uncallable class raises the expected exception.
-    with raises(BeartypeDecorWrappeeException):
-        beartype(Class)
-
-    # Assert that decorating a callable class raises the expected exception.
-    with raises(BeartypeDecorWrappeeException):
-        beartype(CallableClass)
 
     # Assert that decorating an uncallable object raises the expected
     # exception.
