@@ -489,6 +489,8 @@ def _beartype_type(cls: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
     assert isinstance(cls, type), f'{repr(cls)} not type.'
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
 
+    #FIXME: *REMOVE THIS CONDITIONAL* after implementing full-blown support for
+    #class decoration, please.
     #FIXME: Unit test us up, please.
     # If this class is a dataclass...
     if is_type_pep557(cls):  # type: ignore[arg-type]

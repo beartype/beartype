@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,24 +10,25 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.error.utilerror` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
 from random import getrandbits
 
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 class CachedException(ValueError):
     '''
     Test-specific exception raised by unit tests exercising the
-    :func:`beartype._util.error.utilerror.reraise_exception_placeholder` function.
+    :func:`beartype._util.error.utilerror.reraise_exception_placeholder`
+    function.
     '''
 
     pass
 
-# ....................{ TESTS ~ exception                 }....................
+# ....................{ TESTS ~ exception                  }....................
 def test_reraise_exception_cached() -> None:
     '''
     Test the

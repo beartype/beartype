@@ -900,15 +900,6 @@ When the ``isinstance()`` and ``issubclass()`` builtins fail to scale, prefer
 the ``beartype.abby`` functional API enabling you to type-check *anything*
 *anytime* against *any* PEP-compliant type hint.
 
-    ‼
-
-    This API is not-so-optimized, but might be optimized shortly for optimistic
-    definitions of "shortly." Since a slow API that exists is preferable to a
-    fast API that doesn't exist, we hope everyone will bear :superscript:`...kek
-    kek` with the temporary slowdown. This API is more than fast enough for
-    general-purpose use, but cracks might show if you throw it at a tight inner
-    loop. Please file an issue request if your codebase is now concerned.
-
 .. _is_bearable:
 
 *def* beartype.abby.\ **is_bearable**\ (obj: object, hint: object, \*, conf:
@@ -2502,7 +2493,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | `tuple unions <Unions of Types_>`__     | **0.1.0**\ —\ *current*       | **0.1.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-| parameters         | optional                                | **0.1.0**\ —\ *current*       | **0.1.0**\ —\ *current*   |
+| parameters         | optional                                | **0.1.0**\ —\ *current*       | **0.11.0**\ —\ *current*  |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | keyword-only                            | **0.1.0**\ —\ *current*       | **0.1.0**\ —\ *current*   |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
