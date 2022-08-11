@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -22,15 +22,23 @@ Python 3.7.0.** If this is *not* the case, importing this submodule raises an
    https://github.com/beartype/beartype/issues/49
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from __future__ import annotations
 from beartype import beartype
+from beartype.typing import Union
 
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS                          }....................
 COLORS = 'red, gold, and green'
 '''
 Arbitrary string constant returned by the
 :meth:`Chameleon.like_my_dreams` class method.
+'''
+
+
+CLING = 'our love is strong'
+'''
+Arbitrary string constant returned by the :meth:`Karma.when_we_cling` class
+method.
 '''
 
 
@@ -47,8 +55,8 @@ Arbitrary string constant whose attribute name intentionally conflicts with
 that of a subsequently declared class.
 '''
 
-# ....................{ CLASSES                           }....................
-class Chameleon:
+# ....................{ CLASSES                            }....................
+class Chameleon(object):
     '''
     Arbitrary class declaring arbitrary methods.
 
@@ -58,15 +66,15 @@ class Chameleon:
         Arbitrary string.
     '''
 
-    # ..................{ INITIALIZER                       }..................
-    def __init__(self, colors: str):
+    # ..................{ INITIALIZER                        }..................
+    def __init__(self, colors: str) -> None:
         '''
         Arbitrary object initializer.
         '''
 
         self.colors = colors
 
-    # ..................{ METHODS ~ class                   }..................
+    # ..................{ METHODS                            }..................
     @classmethod
     @beartype
     def like_my_dreams(cls) -> Chameleon:
@@ -96,6 +104,43 @@ class Chameleon:
         return Chameleon(COLORS)
 
 
+    #FIXME: Revert back to the commented-out method declaration below *AFTER*:
+    #* Resolving outstanding issues preventing @beartype from resolving
+    #  postponed type hints on classes.
+    #* Decorating this class rather than this method by @beartype.
+    #* Removing the @beartype decoration below.
+    @staticmethod
+    @beartype
+    def when_we_cling() -> Chameleon:
+    # def when_we_cling() -> Union[Chameleon, complex]:
+        '''
+        Arbitrary static method decorated by the :mod:`beartype.beartype`
+        decorator creating and returning an arbitrary instance of this class
+        and thus annotated as returning a union containing the same class and
+        one or more arbitrary child type hints, exercising a pernicious
+        edge case unique to :pep:`563`-specific self-referential types.
+
+        Note that this and the comparable :meth:`like_my_dreams` class method
+        exercise different edge cases. That method exercises an edge case
+        concerning forward references, as a method annotated as returning the
+        type to which this method is bound under :pep:`563` is syntactically
+        indistinguishable from a standard forward reference without :pep:`563`. 
+        This method, in the other hand, exercises an edge case concerning
+        self-referential types, as a method annotated as returning an arbitrary
+        type hint subscripted by the type to which this method is bound under
+        :pep:`563` is syntactically *distinguishable* from a standard forward
+        reference without :pep:`563`.
+
+        Specifically, this method exercises a `recently submitted issue <issue
+        #152_>`__.
+
+        .. _issue #152:
+           https://github.com/beartype/beartype/issues/152
+        '''
+
+        return Chameleon(CLING)
+
+
 class Karma(object):
     '''
     Arbitrary class whose name intentionally conflicts with that of a
@@ -107,7 +152,7 @@ class Karma(object):
         Arbitrary string.
     '''
 
-    # ..................{ INITIALIZER                       }..................
+    # ..................{ INITIALIZER                        }..................
     def __init__(self, dreams: str):
         '''
         Arbitrary object initializer.
@@ -115,7 +160,7 @@ class Karma(object):
 
         self.dreams = dreams
 
-    # ..................{ METHODS ~ class                   }..................
+    # ..................{ METHODS ~ class                    }..................
     @classmethod
     @beartype
     def if_your_colors(cls) -> Karma:

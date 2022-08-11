@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -8,13 +8,10 @@
 
 This submodule unit tests :pep:`563` support implemented in the
 :func:`beartype.beartype` decorator.
-
-.. _PEP 563:
-   https://www.python.org/dev/peps/pep-0563
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 # WARNING: The "from __future__ import annotations" import appears to be
@@ -30,14 +27,14 @@ This submodule unit tests :pep:`563` support implemented in the
 # since PEP 563 is mandatory under Python >= 3.10, our entire test suite is
 # effectively run under PEP 563 on Python >= 3.10; ergo, conditionally
 # disabling these tests imposes no meaningful loss in coverage.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test.util.mark.pytskip import (
     skip_if_pypy,
     skip_if_python_version_greater_than_or_equal_to,
     skip_if_python_version_less_than,
 )
 
-# ....................{ TESTS ~ club                      }....................
+# .....................{ TESTS ~ club                      }....................
 @skip_if_python_version_less_than('3.7.0')
 def test_pep563_class_self_reference_reloaded() -> None:
     '''
@@ -45,15 +42,24 @@ def test_pep563_class_self_reference_reloaded() -> None:
     :func:`beartype.beartype` decorator if the active Python interpreter
     targets Python >= 3.7 *or* skip otherwise.
 
-    This test exercises a `recently submitted issue <issue #49_>`__ concerning
-    a :pep:`563`-postponed circular reference to a class currently being
-    declared from a method of that class decorated by
-    :func:`beartype.beartype`. See the
-    :meth:`beartype_test.a00_unit.data.pep.pep563.data_pep563_club.Chameleon.like_a_dream`
-    docstring for further details.
+    This test exercises multiple issues, including:
+
+    * `An issue <issue #49_>`__ concerning a :pep:`563`-postponed circular
+      reference to a class currently being declared from a method of that class
+      decorated by :func:`beartype.beartype`. See the
+      :meth:`beartype_test.a00_unit.data.pep.pep563.data_pep563_club.Chameleon.like_a_dream`
+      docstring for further details.
+    * `An issue <issue #152_>`__ concerning a :pep:`563`-postponed circular
+      reference to a class currently being declared embedded in a parent type
+      hint of a method of that class decorated by :func:`beartype.beartype`. See
+      the
+      :meth:`beartype_test.a00_unit.data.pep.pep563.data_pep563_club.Chameleon.when_we_cling`
+      docstring for further details.
 
     .. _issue #49:
        https://github.com/beartype/beartype/issues/49
+    .. _issue #152:
+       https://github.com/beartype/beartype/issues/152
     '''
 
     # Defer heavyweight imports.
@@ -71,14 +77,22 @@ def test_pep563_class_self_reference_reloaded() -> None:
     assert data_pep563_club.Chameleon.like_my_dreams().colors == (
         data_pep563_club.COLORS)
 
+    # Assert that a @beartype-decorated class method whose circular return
+    # annotation is embedded in a parent type hint postponed under PEP 563
+    # returns the expected value.
+    assert data_pep563_club.Chameleon.when_we_cling().colors == (
+        data_pep563_club.CLING)
+
     # Intentionally reload this submodule into the same attribute.
     print('Reloading submodule "data_pep563_club"...')
     data_pep563_club = reload(data_pep563_club)
     print('Reloaded submodule "data_pep563_club".')
 
-    # Assert the same constraint as above.
+    # Re-assert the same constraints as above.
     assert data_pep563_club.Chameleon.like_my_dreams().colors == (
         data_pep563_club.COLORS)
+    assert data_pep563_club.Chameleon.when_we_cling().colors == (
+        data_pep563_club.CLING)
 
 
 @skip_if_python_version_less_than('3.7.0')
@@ -105,7 +119,7 @@ def test_pep563_class_self_reference_override() -> None:
     # expected value.
     assert Karma.if_your_colors().dreams == DREAMS
 
-# ....................{ TESTS ~ poem                      }....................
+# ....................{ TESTS ~ poem                       }....................
 @skip_if_python_version_less_than('3.7.0')
 def test_pep563_module() -> None:
     '''
@@ -190,6 +204,7 @@ def test_pep563_closure_nonnested() -> None:
 
 #FIXME: *REPORT AN UPSTREAM ISSUE WITH THE PYPY TRACKER AT:*
 #    https://foss.heptapod.net/pypy/pypy/-/issues
+#
 #So, what's going on here? What's going on here is that PyPy appears to be
 #slightly broken with respect to the "FrameType.f_locals" dictionary. Whereas
 #CPython provides the actual dictionary of lexically scoped locals required by
@@ -288,7 +303,7 @@ def test_pep563_class() -> None:
     assert isinstance(minecraft_end_txt_unscrambled_stanza, str)
     assert minecraft_end_txt_unscrambled_stanza.count('dream') == 5
 
-# ....................{ TESTS ~ limit                     }....................
+# ....................{ TESTS ~ limit                      }....................
 #FIXME: Hilariously, we can't even unit test whether the
 #beartype._decor._pep.pep563._die_if_hint_repr_exceeds_child_limit() function
 #behaves as expected. See commentary in the

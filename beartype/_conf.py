@@ -377,9 +377,9 @@ class BeartypeConf(object):
         '''
 
         return (
-            f'{self.__class__.__name__}(\n'
-            f'    is_debug={repr(self._is_debug)},\n'
-            f'    strategy={repr(self._strategy)},\n'
+            f'{self.__class__.__name__}('
+            f'is_debug={repr(self._is_debug)}, '
+            f'strategy={repr(self._strategy)}'
             f')'
         )
 

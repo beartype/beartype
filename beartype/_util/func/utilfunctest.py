@@ -512,7 +512,7 @@ def is_func_coro(func: object) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this object is an asynchronous coroutine.
+        ``True`` only if this object is an asynchronous coroutine factory.
 
     See Also
     ----------

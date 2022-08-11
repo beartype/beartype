@@ -13,6 +13,28 @@ decorator.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Generalize to support resolution of locals if a class is currently being
+#decorated. Doing so will require generalizing the "BeartypeCall" class to
+#additionally expose a new "cls_decor" instance variable, which the
+#resolve_hints_pep563_if_active() function defined below should then:
+#* If "bear_call.cls_decor" is "None", perform the current callable-centric
+#  logic iterating stack frames.
+#* Else, perform a new class-centric logic iterating base classes in MRO. Note
+#  that PEP 563 offers this crude heuristic for computing locals from a class:
+#    For classes, localns can be composed by chaining vars of the given class
+#    and its base classes (in the method resolution order). Since slots can only
+#    be filled after the class was defined, we don’t need to consult them for
+#    this purpose.
+#
+#We probably want to split resolve_hints_pep563_if_active() into:
+#* A new private _resolve_hints_pep563_func() resolver performing the current
+#  callable-centric resolution.
+#* A new private _resolve_hints_pep563_type() resolver performing the proposed
+#  class-centric resolution above.
+#
+#Naturally, this could benefit from *EXTENSIVE* unit tests.
+
 # ....................{ IMPORTS                            }....................
 import __future__
 from beartype.roar import BeartypeDecorHintPep563Exception
@@ -319,13 +341,33 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
                     # Decide the local scope for the decorated callable.
                     func_locals = get_func_locals(
                         func=func,
+
+                        #FIXME: Consider dynamically calculating exactly how
+                        #many additional @beartype-specific frames are ignorable
+                        #on the first call to this function, caching that
+                        #number, and then reusing that cached number on all
+                        #subsequent calls to this function. The current approach
+                        #employed below of naively hard-coding a number of
+                        #frames to ignore was incredibly fragile and had to be
+                        #effectively disabled, which hampers runtime efficiency.
+
                         # Ignore additional frames on the call stack embodying:
                         # * The current call to this function.
+                        #
+                        # Note that we currently avoid attempting to ignore
+                        # additional frames that we could technically ignore,
+                        # including:
                         # * The call to the parent
-                        #   beartype._decor._decorcall.BeartypeCall.reinit() method.
+                        #   beartype._decor._decorcall.BeartypeCall.reinit()
+                        #   method.
                         # * The call to the parent @beartype.beartype()
                         #   decorator.
-                        func_stack_frames_ignore=3,
+                        #
+                        # Why? Because the @beartype codebase has been
+                        # sufficiently refactored so as to render any such
+                        # attempts non-trivial, fragile, and frankly dangerous.
+                        func_stack_frames_ignore=1,
+
                         exception_cls=BeartypeDecorHintPep563Exception,
                     )
             # In either case, the local scope of the decorated callable has now

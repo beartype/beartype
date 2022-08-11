@@ -4,11 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **callable code object** utilities.
-
-This private submodule implements utility functions dynamically introspecting
-**code objects** (i.e., instances of the :class:`CodeType` type)
-underlying all pure-Python callables.
+Project-wide **callable code object utilities** (i.e., callables introspecting
+**code objects** (i.e., instances of the :class:`CodeType` type) underlying all
+pure-Python callables).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

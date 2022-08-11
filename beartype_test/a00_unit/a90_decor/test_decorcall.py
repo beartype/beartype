@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,13 +9,13 @@
 This submodule unit tests the :func:`beartype._decor._decorcall` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 def test_decor_data() -> None:
     '''
     Test usage of the :func:`beartype._decor._decorcall.BeartypeCall` dataclass.
@@ -34,17 +34,32 @@ def test_decor_data() -> None:
     with raises(TypeError):
         hash(bear_data)
 
-    # Assert that reinitializing this metadata with invalid parameters raises
-    # the expected exceptions.
+    # Assert that reinitializing this metadata a non-callable raises the
+    # expected exception.
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
             func='The fields, the lakes, the forests, and the streams,',
-            conf=BeartypeConf(),
+            func_conf=BeartypeConf(),
         )
+
+    # Assert that reinitializing this metadata with a C-based builtin function
+    # raises the expected exception.
+    with raises(BeartypeDecorWrappeeException):
+        bear_data.reinit(func=iter, func_conf=BeartypeConf())
+
+    # Assert that reinitializing this metadata with a non-configuration raises
+    # the expected exception.
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
             func=lambda: ...,
-            conf='Ocean, and all the living things that dwell',
+            func_conf='Ocean, and all the living things that dwell',
         )
+
+    # Assert that reinitializing this metadata with a non-class raises the
+    # expected exception.
     with raises(BeartypeDecorWrappeeException):
-        bear_data.reinit(func=iter, conf=BeartypeConf())
+        bear_data.reinit(
+            func=lambda: ...,
+            func_conf=BeartypeConf(),
+            func_cls="Shine in the rushing torrents' restless gleam,",
+        )
