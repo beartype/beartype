@@ -75,15 +75,6 @@ class BeartypeCall(object):
     func_arg_name_to_hint_get : Callable[[str, object], object]
         :meth:`dict.get` method bound to the :attr:`func_arg_name_to_hint`
         dictionary, localized as a negligible microoptimization. Blame Guido.
-    func_cls : Optional[type]
-        Either:
-
-        * If the end user directly decorated a class by the
-          :func:`beartype.beartype` decorator *and* the :meth:`reinit` method
-          has been called, that class.
-        * Else, either the end user directly decorated a callable by the
-          :func:`beartype.beartype` decorator *or* the :meth:`reinit` method
-          has not been called. In either case, ``None``.
     func_conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring the
@@ -148,6 +139,15 @@ class BeartypeCall(object):
         *or* ``None`` otherwise. To efficiently (albeit imperfectly) avoid
         clashes with existing attributes of the module defining that function,
         this name is obfuscated while still preserving human-readability.
+    cls_owner : Optional[type]
+        Either:
+
+        * If the end user directly decorated a class by the
+          :func:`beartype.beartype` decorator *and* the :meth:`reinit` method
+          has been called, that class.
+        * Else, either the end user directly decorated a callable by the
+          :func:`beartype.beartype` decorator *or* the :meth:`reinit` method
+          has not been called. In either case, ``None``.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -158,8 +158,8 @@ class BeartypeCall(object):
     __slots__ = (
         'func_arg_name_to_hint',
         'func_arg_name_to_hint_get',
-        'func_cls',
         'func_conf',
+        'cls_owner',
         'func_wrappee_codeobj',
         'func_wrappee_wrappee_codeobj',
         'func_wrappee',
@@ -203,8 +203,8 @@ class BeartypeCall(object):
         # Nullify all remaining instance variables.
         self.func_arg_name_to_hint: Dict[str, object] = None  # type: ignore[assignment]
         self.func_arg_name_to_hint_get: Callable[[str, object], object] = None  # type: ignore[assignment]
-        self.func_cls: Optional[type] = None
         self.func_conf: BeartypeConf = None  # type: ignore[assignment]
+        self.cls_owner: Optional[type] = None
         self.func_wrappee: Callable = None  # type: ignore[assignment]
         self.func_wrappee_codeobj: CodeType = None  # type: ignore[assignment]
         self.func_wrappee_wrappee: Callable = None  # type: ignore[assignment]
@@ -223,7 +223,7 @@ class BeartypeCall(object):
         func_conf: BeartypeConf,
 
         # Optional parameters.
-        func_cls: Optional[type] = None,
+        cls_owner: Optional[type] = None,
     ) -> None:
         '''
         Reinitialize this metadata from the passed callable, typically after
@@ -242,7 +242,7 @@ class BeartypeCall(object):
         func_conf : BeartypeConf
             Beartype configuration configuring :func:`beartype.beartype`
             specific to this callable.
-        func_cls : Optional[type]
+        cls_owner : Optional[type]
             Either:
 
             * If the end user directly decorated a class by the
@@ -266,7 +266,7 @@ class BeartypeCall(object):
               equivalently, if this callable is either C-based *or* a class or
               object defining the ``__call__()`` dunder method.
             * This configuration is *not* actually a configuration.
-            * ``func_cls`` is neither a class *nor* ``None``.
+            * ``cls_owner`` is neither a class *nor* ``None``.
         '''
 
         # Avoid circular import dependencies.
@@ -283,15 +283,15 @@ class BeartypeCall(object):
                 f'{repr(func_conf)} not beartype configuration.')
         # Else, this configuration is a configuration.
         #
-        # If "func_cls" is neither a class *NOR* "None", raise an exception.
-        elif not isinstance(func_cls, NoneTypeOr[type]):
+        # If "cls_owner" is neither a class *NOR* "None", raise an exception.
+        elif not isinstance(cls_owner, NoneTypeOr[type]):
             raise BeartypeDecorWrappeeException(
-                f'{repr(func_cls)} neither type nor "None".')
-        # Else, "func_cls" is either a class *OR* "None".
+                f'{repr(cls_owner)} neither type nor "None".')
+        # Else, "cls_owner" is either a class *OR* "None".
 
         # Classify all passed parameters.
         self.func_conf = func_conf
-        self.func_cls = func_cls
+        self.cls_owner = cls_owner
 
         # Possibly wrapped callable currently being decorated.
         self.func_wrappee = func

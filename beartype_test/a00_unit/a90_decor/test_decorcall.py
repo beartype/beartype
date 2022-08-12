@@ -61,5 +61,5 @@ def test_decor_data() -> None:
         bear_data.reinit(
             func=lambda: ...,
             func_conf=BeartypeConf(),
-            func_cls="Shine in the rushing torrents' restless gleam,",
+            cls_owner="Shine in the rushing torrents' restless gleam,",
         )

@@ -34,6 +34,53 @@ This private submodule is *not* intended for importation by downstream callers.
 #  class-centric resolution above.
 #
 #Naturally, this could benefit from *EXTENSIVE* unit tests.
+#FIXME: Critically, note that the resolve_hints_pep563_if_active() should
+#additively *CHAIN* the locals computed by both the
+#_resolve_hints_pep563_func() *AND* resolver.
+#_resolve_hints_pep563_type() resolvers. Both are required. We think, anyway?
+#Are there locals that can only be computed by considering both types of scopes?
+#FIXME: Actually, let's *NOT* do most of the above. Specifically, let's *NOT*
+#split resolve_hints_pep563_if_active() into subfunctions. On the other hand,
+#let's still perform a new class-centric logic iterating base classes in MRO.
+#Note that PEP 563 offers this crude heuristic for computing locals from a
+#class:
+#    For classes, localns can be composed by chaining vars of the given class
+#    and its base classes (in the method resolution order). Since slots can only
+#    be filled after the class was defined, we don’t need to consult them for
+#    this purpose.
+#
+#Thankfully, the standard typing.get_type_hints() getter defined by Python 3.10
+#provides this exceedingly useful snippet for deciding this. Lightly rewritten
+#in a slightly more appropriate parlance, this snippet is:
+#    for base in reversed(bear_call.cls_owner.__mro__):
+#        base_globals = getattr(sys.modules.get(base.__module__, None), '__dict__', {})
+#        base_locals = dict(vars(base))
+#
+#        ann = base.__dict__.get('__annotations__', {})
+#
+#        #FIXME: No idea what this is about, frankly. Note that:
+#        #    types.GetSetDescriptorType == type(FunctionType.__code__)
+#        if isinstance(ann, types.GetSetDescriptorType):
+#            ann = {}
+#
+#        #FIXME: The thing to do here is then eval() each value of the "ann"
+#        #dictionary to resolve the postponed value of that annotation.
+#
+#Obviously, we should significantly clean all of the above up. Nonetheless,
+#that's a phenomenal start to what otherwise would have been a laborious and
+#probably extremely broken draft implementation.
+#
+#*WAIT...* The above would seem to be irrelevant for our current purposes. We
+#don't particularly care about postponed *CLASS ATTRIBUTE ANNOTATIONS* at the
+#moment, which is what the above appears to resolve. We only care about
+#resolving postponed *METHOD ANNOTATIONS.* Given that, the question then
+#becomes: "Can postponed method annotations refer to class attributes?" Notably:
+#    class Yam(object):
+#        muh_int = int
+#        def muh_meth(self) -> muh_int:
+#            return 42
+#
+#Does the above actually work, both when PEP 563 is disabled *AND* enabled?
 
 # ....................{ IMPORTS                            }....................
 import __future__

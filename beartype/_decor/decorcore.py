@@ -25,13 +25,12 @@ from beartype.roar import (
     BeartypeDecorWrapperException,
     # BeartypeWarning,
 )
+from beartype.typing import Optional
 from beartype._cave._cavefast import (
-    # MethodBoundInstanceOrClassType,
     MethodDecoratorBuiltinTypes,
     MethodDecoratorClassType,
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
-    # MethodDescriptorTypes,
 )
 from beartype._data.datatyping import (
     BeartypeableT,
@@ -45,7 +44,6 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
 )
-from beartype._util.cls.pep.utilpep557 import is_type_pep557
 from beartype._util.func.lib.utilbeartypefunc import (
     is_func_unbeartypeable,
     set_func_beartyped,
@@ -58,7 +56,43 @@ from warnings import warn
 
 # ....................{ DECORATORS                         }....................
 def beartype_object(
-    obj: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
+    # Mandatory parameters.
+    obj: BeartypeableT,
+    conf: BeartypeConf,
+
+    #FIXME: Rename this to "cls_owners" both here and in "_decorcall" by
+    #generalizing this to be an iterable of types: e.g.,
+    ## In "beartype._data.datatyping":
+    #BeartypeableClassOwners = Optional[Tuple[type, ...]]
+    #
+    ## Below...
+    #    cls_owners: BeartypeableClassOwners = None,
+    #
+    #Why? Deeply nested classes under PEP 563. Although that will *PROBABLY*
+    #never happen, someone somewhere will do something horrifying like the
+    #following and then vociferously complain on our issue tracker about it:
+    #    from __future__ import annotations
+    #    class OhGods(object):
+    #        class SaveUs(object):
+    #            class FromOurselves(object):
+    #                def no_redemption(self) -> OhGods: pass
+    #                def beware_ye(self) -> OhGods.SaveUs.FromOurselves: pass
+    #
+    #Note the deeply nested reference to "OhGods". For efficiency, let's just
+    #use tuples; as always, they remain Python's most space and time efficient
+    #data structure. In 99% of use cases, "cls_owners" will either be "None" or
+    #a 1-tuple containing a single class.
+    #FIXME: *WAIT.* Don't do any of the above. Why? Because nested classes are
+    #globally referenced via "." syntax against the outermost root class. Ergo,
+    #the only reference we need to preserve is against that class. The above
+    #example cleanly demonstrates this. There is absolutely *NO* value to
+    #preserving references to inner classes. Thus, we don't. Document this in
+    #the documentation for "cls_owner", please. This is still a highly
+    #non-trivial design decision that we're likely to neglect and forget. *sigh*
+
+    # Optional parameters.
+    cls_owner: Optional[type] = None,
+) -> BeartypeableT:
     '''
     Decorate the passed **beartypeable** (i.e., caller-defined object that may
     be decorated by the :func:`beartype.beartype` decorator) with optimal
@@ -68,10 +102,16 @@ def beartype_object(
     ----------
     obj : BeartypeableT
         **Beartypeable** (i.e., pure-Python callable or class) to be decorated.
-    conf : BeartypeConf, optional
+    conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring the
         current decoration of the decorated callable or class).
+    cls_owner : Optional[type]
+        Class owning (i.e., directly declaring) this beartypeable if this
+        beartypeable is an attribute (including a method or nested class) of a
+        class being decorated by the :func:`beartype.beartype` decorator *or*
+        ``None`` otherwise (i.e., if this beartypeable is being directly
+        decorated by that decorator instead). Defaults to ``None``.
 
     Returns
     ----------
@@ -91,14 +131,8 @@ def beartype_object(
 
     # If this object is a class, return this class decorated with type-checking.
     if isinstance(obj, type):
-        #FIXME: Mypy currently erroneously emits a false negative resembling
-        #the following if the "# type: ignore..." pragma is omitted below:
-        #    beartype/_decor/main.py:246: error: Incompatible return value type
-        #    (got "type", expected "BeartypeableT")  [return-value]
-        #This is almost certainly a mypy issue, as _beartype_type() is
-        #explicitly annotated as both accepting and returning "BeartypeableT".
-        #Until upstream resolves this, we squelch mypy with regret in our
-        #hearts.
+        #FIXME: Refactor _beartype_type() to additionally accept an optional
+        #"cls_owner" parameter; then pass that parameter, please.
         return _beartype_type(cls=obj, conf=conf)  # type: ignore[return-value]
     # Else, this object is a non-class.
 
@@ -520,7 +554,8 @@ def _beartype_type(cls: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
         if isinstance(attr_value, TYPES_BEARTYPEABLE):
             # This attribute decorated with type-checking configured by this
             # configuration if *NOT* already decorated.
-            attr_value_beartyped = beartype_object(obj=attr_value, conf=conf)
+            attr_value_beartyped = beartype_object(
+                obj=attr_value, conf=conf, cls_owner=cls)
 
             # Replace this undecorated attribute with this decorated attribute.
             #
