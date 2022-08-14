@@ -11,8 +11,6 @@ cases on behalf of higher-level unit test submodules.
 '''
 
 # ....................{ IMPORTS                            }....................
-import builtins
-from beartype._data.mod.datamodpy import BUILTINS_MODULE_NAME
 from contextlib import contextmanager
 from sys import exc_info, implementation
 from typing import (
@@ -460,23 +458,8 @@ requiring *no* explicit importation)(.
 '''
 
 # ....................{ SETS ~ type : non-builtin          }....................
-TYPES_BUILTIN_FAKE = frozenset((
-    # Type of this builtin.
-    builtin.__class__
-    # For each builtin (i.e., globally accessible object implicitly imported by
-    # the active Python interpreter into *EVERY* lexical context)...
-    for builtin in builtins.__dict__.values()
-    # If...
-    if (
-        # The type of this builtin also insists itself to be defined by the
-        # "builtins" module and thus also be a builtin *AND*...
-        builtin.__class__.__module__ == BUILTINS_MODULE_NAME and
-        # The "builtins" module contains *NO* globally-scoped attribute whose
-        # name is that of this type...
-        builtin.__class__.__name__ not in builtins.__dict__
-    # Then add this cheatin', lyin', no-good type to this set.
-    )
-))
+# Fully initialized below by the _init() function.
+TYPES_BUILTIN_FAKE = None
 '''
 Frozen set of all **fake builtin types** (i.e., types that are *not* builtin
 but which nonetheless erroneously masquerade as being builtin).
@@ -492,10 +475,67 @@ See Also
 '''
 
 
-TYPES_NONBUILTIN = frozenset((
-    # Arbitrary non-builtin type.
-    Class,
-)) | TYPES_BUILTIN_FAKE
+# Fully initialized below by the _init() function.
+TYPES_NONBUILTIN = None
 '''
 Frozen set of arbitrary non-builtin types.
 '''
+
+# ....................{ INITIALIZERS                       }....................
+def _init() -> None:
+    '''
+    Initialize this submodule.
+    '''
+
+    # Defer initialization-specific imports.
+    import builtins, types
+    from beartype._data.mod.datamodpy import BUILTINS_MODULE_NAME
+    from beartype._util.utilobject import get_object_type_unless_type
+
+    # Global variables assigned to below.
+    global TYPES_BUILTIN_FAKE, TYPES_NONBUILTIN
+
+    # Set of all fake builtin types.
+    TYPES_BUILTIN_FAKE_SET = set()
+
+    # Frozen set of all standard modules well-known to define at least one fake
+    # builtin type.
+    #
+    # Note that, although the "builtins" module defines *MOST* fake builtins,
+    # the "types" module defines *SOME* fake builtins as well. These include:
+    # * "types.TracebackType".
+    MODULES_TYPES_BUILTIN_FAKE = frozenset((builtins, types))
+
+    # For each such module...
+    for module_type_builtin_fake in MODULES_TYPES_BUILTIN_FAKE:
+        # For each builtin (i.e., globally accessible object implicitly imported
+        # by the active Python interpreter into *EVERY* lexical context)...
+        for builtin in module_type_builtin_fake.__dict__.values():
+            # Type of this builtin if this builtin is *NOT* a type or this
+            # builtin type as is.
+            type_builtin = get_object_type_unless_type(builtin)
+
+            # If...
+            if (
+                # This builtin type insists itself to be defined by the
+                # "builtins" module and thus be a builtin *AND*...
+                type_builtin.__module__ == BUILTINS_MODULE_NAME and
+                # The "builtins" module contains *NO* globally-scoped attribute
+                # whose name is that of this type...
+                type_builtin.__name__ not in builtins.__dict__
+            # Add this cheatin', lyin', no-good fake builtin type to this set.
+            ):
+                TYPES_BUILTIN_FAKE_SET.add(type_builtin)
+
+    # Frozen set of all fake builtin types.
+    TYPES_BUILTIN_FAKE = frozenset((TYPES_BUILTIN_FAKE_SET))
+
+    # Frozen set of arbitrary non-builtin types.
+    TYPES_NONBUILTIN = frozenset((
+        # Arbitrary non-builtin type.
+        Class,
+    )) | TYPES_BUILTIN_FAKE
+
+
+# Initialize this submodule.
+_init()

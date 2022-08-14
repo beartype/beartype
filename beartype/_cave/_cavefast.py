@@ -64,6 +64,7 @@ from enum import (
     EnumMeta as _EnumMeta,
 )
 from io import IOBase as _IOBase
+from sys import exc_info as _exc_info
 from typing import Any
 
 # Note that:
@@ -83,11 +84,16 @@ from typing import Any
 from types import (
     AsyncGeneratorType as _AsyncGeneratorType,
     BuiltinFunctionType as _BuiltinFunctionType,
+    CellType as _CellType,
     CoroutineType as _CoroutineType,
+    FrameType as _FrameType,
     FunctionType as _FunctionType,
     GeneratorType as _GeneratorType,
+    GetSetDescriptorType as _GetSetDescriptorType,
+    MemberDescriptorType as _MemberDescriptorType,
     MethodType as _MethodType,
     ModuleType as _ModuleType,
+    TracebackType as _TracebackType,
 )
 
 # ....................{ IMPORTS ~ conditional              }....................
@@ -209,6 +215,26 @@ CallableCodeObjectType: Any = type((lambda: None).__code__)
 '''
 Type of all **code objects** (i.e., C-based objects underlying all pure-Python
 callables to which those callables are compiled for efficiency).
+'''
+
+# ....................{ TYPES ~ call : exception           }....................
+ExceptionTracebackType = _TracebackType
+'''
+Type of all **traceback objects** (i.e., C-based objects comprising the full
+stack traces associated with raised exceptions).
+'''
+
+
+CallableFrameType = _FrameType
+'''
+Type of all **call stack frame objects** (i.e., C-based objects
+encapsulating each call to each callable on the current call stack).
+'''
+
+# ....................{ TYPES ~ call : closure             }....................
+ClosureVarCellType = _CellType
+'''
+Type of all **pure-Python closure cell variables.**
 '''
 
 # ....................{ TYPES ~ call : function            }....................
@@ -351,6 +377,28 @@ See Also
     Type of all C-based unbound dunder method wrapper descriptors.
 '''
 
+
+MethodUnboundPropertyNontrivialCExtensionType = _GetSetDescriptorType
+'''
+Type of all **C extension-specific unbound non-trivial property method
+descriptors** (i.e., uncallable objects implemented in low-level C extensions,
+associated with **non-trivial property methods** (i.e., wrapping underlying
+attributes that are *not* trivially convertible to C types) of C extensions when
+accessed with the low-level :attr:`object.__dict__` dictionary rather than as
+class or instance attributes).
+'''
+
+
+MethodUnboundPropertyTrivialCExtensionType = _MemberDescriptorType
+'''
+Type of all **C extension-specific unbound trivial property method descriptors**
+(i.e., uncallable objects implemented in low-level C extensions, associated with
+**trivial property methods** (i.e., wrapping underlying attributes that are
+trivially convertible to C types) of C extensions when accessed with the
+low-level :attr:`object.__dict__` dictionary rather than as class or instance
+attributes).
+'''
+
 # ....................{ TYPES ~ call : method : decorator  }....................
 MethodDecoratorClassType = classmethod
 '''
@@ -485,6 +533,14 @@ This special-purpose type is a subtype of the more general-purpose
 :class:`GeneratorType`. Whereas the latter applies to *all* generators
 implementing the :class:`collections.abc.Iterator` protocol, the former only
 applies to generators implicitly created by Python itself.
+'''
+
+# ....................{ TYPES ~ class                      }....................
+ClassDictType = type(type.__dict__)
+'''
+Type of all **pure-Python class dictionaries** (i.e., immutable mappings
+officially referred to as "mapping proxies," whose keys are strictly constrained
+for both efficiency and correctness to be Python identifier strings).
 '''
 
 # ....................{ TYPES ~ data                       }....................
@@ -673,7 +729,7 @@ Caveats
 **This type does not guarantee mutability** (i.e., the capacity to modify
 instances of this type after instantiation). This type ambiguously matches both
 mutable mapping types (e.g., :class:`dict`) and immutable mapping types (e.g.,
-:class:`mappingproxy`). Where mutability is required, prefer the non-ambiguous
+:class:`ClassDictType`). Where mutability is required, prefer the non-ambiguous
 :class:`MappingMutableType` type instead.
 
 See Also

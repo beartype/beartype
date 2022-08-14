@@ -11,13 +11,28 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+#FIXME: Export these types from "beartype.cave", please.
 from beartype._cave._cavefast import (
+    AsyncCoroutineCType,
+    AsyncGeneratorCType,
+    CallableCodeObjectType,
+    CallableFrameType,
+    ClassDictType,
     ClassType,
+    ClosureVarCellType,
     EllipsisType,
+    ExceptionTracebackType,
     FunctionType,
     FunctionOrMethodCType,
+    GeneratorCType,
+    MethodBoundInstanceDunderCType,
     MethodBoundInstanceOrClassType,
     MethodDecoratorBuiltinTypes,
+    MethodUnboundClassCType,
+    MethodUnboundInstanceDunderCType,
+    MethodUnboundInstanceNondunderCType,
+    MethodUnboundPropertyNontrivialCExtensionType,
+    MethodUnboundPropertyTrivialCExtensionType,
     ModuleType,
     NoneType,
     NotImplementedType,
@@ -25,10 +40,24 @@ from beartype._cave._cavefast import (
 
 # ....................{ SETS                               }....................
 TYPES_BUILTIN_FAKE = frozenset((
+    AsyncCoroutineCType,
+    AsyncGeneratorCType,
+    CallableCodeObjectType,
+    CallableFrameType,
+    ClassDictType,
+    ClosureVarCellType,
     EllipsisType,
+    ExceptionTracebackType,
     FunctionType,
     FunctionOrMethodCType,
+    GeneratorCType,
+    MethodBoundInstanceDunderCType,
     MethodBoundInstanceOrClassType,
+    MethodUnboundClassCType,
+    MethodUnboundInstanceDunderCType,
+    MethodUnboundInstanceNondunderCType,
+    MethodUnboundPropertyNontrivialCExtensionType,
+    MethodUnboundPropertyTrivialCExtensionType,
     ModuleType,
     NoneType,
     NotImplementedType,
