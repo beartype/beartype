@@ -32,6 +32,7 @@ from beartype._cave._cavefast import (
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
 )
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.datatyping import (
     BeartypeableT,
     TypeWarning,
@@ -60,38 +61,9 @@ def beartype_object(
     obj: BeartypeableT,
     conf: BeartypeConf,
 
-    #FIXME: Rename this to "cls_owners" both here and in "_decorcall" by
-    #generalizing this to be an iterable of types: e.g.,
-    ## In "beartype._data.datatyping":
-    #BeartypeableClassOwners = Optional[Tuple[type, ...]]
-    #
-    ## Below...
-    #    cls_owners: BeartypeableClassOwners = None,
-    #
-    #Why? Deeply nested classes under PEP 563. Although that will *PROBABLY*
-    #never happen, someone somewhere will do something horrifying like the
-    #following and then vociferously complain on our issue tracker about it:
-    #    from __future__ import annotations
-    #    class OhGods(object):
-    #        class SaveUs(object):
-    #            class FromOurselves(object):
-    #                def no_redemption(self) -> OhGods: pass
-    #                def beware_ye(self) -> OhGods.SaveUs.FromOurselves: pass
-    #
-    #Note the deeply nested reference to "OhGods". For efficiency, let's just
-    #use tuples; as always, they remain Python's most space and time efficient
-    #data structure. In 99% of use cases, "cls_owners" will either be "None" or
-    #a 1-tuple containing a single class.
-    #FIXME: *WAIT.* Don't do any of the above. Why? Because nested classes are
-    #globally referenced via "." syntax against the outermost root class. Ergo,
-    #the only reference we need to preserve is against that class. The above
-    #example cleanly demonstrates this. There is absolutely *NO* value to
-    #preserving references to inner classes. Thus, we don't. Document this in
-    #the documentation for "cls_owner", please. This is still a highly
-    #non-trivial design decision that we're likely to neglect and forget. *sigh*
-
     # Optional parameters.
-    cls_owner: Optional[type] = None,
+    cls_root: Optional[type] = None,
+    cls_curr: Optional[type] = None,
 ) -> BeartypeableT:
     '''
     Decorate the passed **beartypeable** (i.e., caller-defined object that may
@@ -106,12 +78,70 @@ def beartype_object(
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring the
         current decoration of the decorated callable or class).
-    cls_owner : Optional[type]
-        Class owning (i.e., directly declaring) this beartypeable if this
-        beartypeable is an attribute (including a method or nested class) of a
-        class being decorated by the :func:`beartype.beartype` decorator *or*
-        ``None`` otherwise (i.e., if this beartypeable is being directly
-        decorated by that decorator instead). Defaults to ``None``.
+    cls_root : Optional[type]
+        Either:
+
+        * If this beartypeable is an attribute (e.g., method, nested class) of a
+          class currently being decorated by the :func:`beartype.beartype`
+          decorator, the **root decorated class** (i.e., module-scoped class
+          initially decorated by this decorator whose lexical scope encloses
+          this beartypeable).
+        * Else, this beartypeable was decorated directly by this decorator. In
+          this case, ``None``.
+
+        Note that this decorator requires *both* the root and currently
+        decorated class to correctly resolve edge cases under :pep:`563`: e.g.,
+
+        .. code-block:: python
+
+           from __future__ import annotations
+           from beartype import beartype
+
+           @beartype
+           class Outer(object):
+               class Inner(object):
+                   # At this time, the "Outer" class has been fully defined but
+                   # is *NOT* yet accessible as a module-scoped attribute. Ergo,
+                   # the *ONLY* means of exposing the "Outer" class to the
+                   # recursive decoration of this get_outer() method is to
+                   # explicitly pass the "Outer" class as the "cls_root"
+                   # parameter to all decoration calls.
+                   def get_outer(self) -> Outer:
+                       return Outer()
+
+    cls_curr : Optional[type]
+        Either:
+
+        * If this beartypeable is an attribute (e.g., method, nested class) of a
+          class currently being decorated by the :func:`beartype.beartype`
+          decorator, the **current decorated class** (i.e., possibly nested
+          class currently being decorated by this decorator).
+        * Else, this beartypeable was decorated directly by this decorator. In
+          this case, ``None``.
+
+        Note that this parameter is intentionally a single class rather than an
+        iterable of all nesting parent classes with lexical scopes enclosing the
+        class owning this beartypeable. Why? Because nested classes are
+        functionally useless in Python, which is *not* necessarily a bad thing.
+        Notably, nested classes have *no* implicit access to either their parent
+        classes *or* to class variables declared by those parent classes. Nested
+        classes *only* have explicit access to module-scoped classes -- exactly
+        like any other arbitrary objects: e.g.,
+
+        .. code-block:: python
+
+           class Outer(object):
+               my_str = str
+
+               class Inner(object):
+                   # This induces a fatal compile-time exception resembling:
+                   #     NameError: name 'my_str' is not defined
+                   def get_str(self) -> my_str:
+                       return 'Oh, Gods.'
+
+        Ergo, the *only* owning class of interest to :mod:`beartype` is the root
+        owning class containing other nested classes; *all* of those other
+        nested classes are semantically and syntactically irrelevant.
 
     Returns
     ----------
@@ -130,10 +160,29 @@ def beartype_object(
     '''
 
     # If this object is a class, return this class decorated with type-checking.
+    #
+    # Note that the passed "cls_curr" class is ignorable in this context.
+    # Why? There are three cases. "obj" is either a:
+    # * Root decorated class, in which case both "cls_root" and
+    #   "cls_curr" are "None". Ergo, "cls_curr" conveys *NO*
+    #   meaningful semantics.
+    # * Inner decorated class of a root decorated class, in which case both
+    #   "cls_root" and "cls_curr" refer to that root decorated case.
+    #   Ergo, "cls_curr" conveys *NO* additional meaningful semantics.
+    # * Leaf decorated class of an inner decorated class of a root decorated
+    #   class, in which case "cls_root" and "cls_curr" refer to
+    #   different classes. However, lexical scoping rules in Python prevent
+    #   leaf classes from directly referring to any parent classes *OTHER* than
+    #   module-scoped root classes. Ergo, "cls_curr" conveys *NO*
+    #   meaningful semantics again.
+    #
+    # In all cases, "cls_curr" conveys *NO* meaningful semantics.
     if isinstance(obj, type):
-        #FIXME: Refactor _beartype_type() to additionally accept an optional
-        #"cls_owner" parameter; then pass that parameter, please.
-        return _beartype_type(cls=obj, conf=conf)  # type: ignore[return-value]
+        return _beartype_type(  # type: ignore[return-value]
+            cls=obj,
+            conf=conf,
+            cls_root=cls_root,
+        )
     # Else, this object is a non-class.
 
     # Type of this object.
@@ -169,7 +218,12 @@ def beartype_object(
     #   * Descriptors created by @staticmethod are technically callable but
     #     C-based and thus unsuitable for decoration.
     if obj_type in MethodDecoratorBuiltinTypes:
-        return _beartype_descriptor(descriptor=obj, conf=conf)
+        return _beartype_descriptor(  # type: ignore[return-value]
+            descriptor=obj,
+            conf=conf,
+            cls_root=cls_root,
+            cls_curr=cls_curr,
+        )
     # Else, this object is *NOT* an uncallable builtin method descriptor.
     #
     # If this object is uncallable, raise an exception.
@@ -180,9 +234,15 @@ def beartype_object(
     # Else, this object is callable.
 
     # Return a new callable decorating that callable with type-checking.
-    return _beartype_func(func=obj, conf=conf)  # type: ignore[return-value]
+    return _beartype_func(  # type: ignore[return-value]
+        func=obj,
+        conf=conf,
+        cls_root=cls_root,
+        cls_curr=cls_curr,
+    )
 
 
+#FIXME: Generalize to accept "cls_owner_*" parameters, please.
 #FIXME: Unit test us up, please.
 def beartype_object_nonfatal(
     obj: BeartypeableT,
@@ -316,7 +376,14 @@ def beartype_object_nonfatal(
 
 # ....................{ PRIVATE ~ beartypers : func        }....................
 def _beartype_descriptor(
-    descriptor: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
+    # Mandatory parameters.
+    descriptor: BeartypeableT,
+    conf: BeartypeConf,
+
+    # Optional parameters.
+    cls_root: Optional[type] = None,
+    cls_curr: Optional[type] = None,
+) -> BeartypeableT:
     '''
     Decorate the passed C-based unbound method descriptor with dynamically
     generated type-checking.
@@ -328,6 +395,12 @@ def _beartype_descriptor(
     conf : BeartypeConf
         Beartype configuration configuring :func:`beartype.beartype` uniquely
         specific to this descriptor.
+    cls_root : Optional[type]
+        **Root decorated class** if any or ``None`` otherwise. Defaults to
+        ``None``. See also :func:`beartype_object` for details.
+    cls_curr : Optional[type]
+        **Current decorated class** if any or ``None`` otherwise. Defaults to
+        ``None``. See also :func:`beartype_object` for details.
 
     Returns
     ----------
@@ -350,25 +423,38 @@ def _beartype_descriptor(
         # Pure-Python unbound getter, setter, and deleter functions wrapped by
         # this descriptor if any *OR* "None" otherwise (i.e., for each such
         # function currently unwrapped by this descriptor).
-        descriptor_getter  = descriptor.fget  # type: ignore[union-attr]
-        descriptor_setter  = descriptor.fset  # type: ignore[union-attr]
-        descriptor_deleter = descriptor.fdel  # type: ignore[union-attr]
+        descriptor_getter  = descriptor.fget  # type: ignore[assignment,union-attr]
+        descriptor_setter  = descriptor.fset  # type: ignore[assignment,union-attr]
+        descriptor_deleter = descriptor.fdel  # type: ignore[assignment,union-attr]
 
         # Decorate this getter function with type-checking.
         #
         # Note that *ALL* property method descriptors wrap at least a getter
         # function (but *NOT* necessarily a setter or deleter function). This
         # function is thus guaranteed to be non-"None".
-        descriptor_getter = _beartype_func(func=descriptor_getter, conf=conf)  # type: ignore[type-var]
+        descriptor_getter = _beartype_func(  # type: ignore[type-var]
+            func=descriptor_getter,  # pyright: ignore[reportGeneralTypeIssues]
+            conf=conf,
+            cls_root=cls_root,
+            cls_curr=cls_curr,
+        )
 
         # If this property method descriptor additionally wraps a setter and/or
         # deleter function, type-check those functions as well.
         if descriptor_setter is not None:
             descriptor_setter = _beartype_func(
-                func=descriptor_setter, conf=conf)
+                func=descriptor_setter,
+                conf=conf,
+                cls_root=cls_root,
+                cls_curr=cls_curr,
+            )
         if descriptor_deleter is not None:
             descriptor_deleter = _beartype_func(
-                func=descriptor_deleter, conf=conf)
+                func=descriptor_deleter,
+                conf=conf,
+                cls_root=cls_root,
+                cls_curr=cls_curr,
+            )
 
         # Return a new property method descriptor decorating all of these
         # functions, implicitly destroying the prior descriptor.
@@ -385,18 +471,34 @@ def _beartype_descriptor(
     #
     # If this descriptor is a class method...
     elif descriptor_type is MethodDecoratorClassType:
+        # Pure-Python unbound function type-checking this class method.
+        func_checked = _beartype_func(
+            func=descriptor.__func__,  # type: ignore[union-attr]
+            conf=conf,
+            cls_root=cls_root,
+            cls_curr=cls_curr,
+        )
+
         # Return a new class method descriptor decorating the pure-Python
         # unbound function wrapped by this descriptor with type-checking,
         # implicitly destroying the prior descriptor.
-        return classmethod(_beartype_func(func=descriptor.__func__, conf=conf))  # type: ignore[return-value,union-attr]
+        return classmethod(func_checked)  # type: ignore[return-value]
     # Else, this descriptor is *NOT* a class method.
     #
     # If this descriptor is a static method...
     elif descriptor_type is MethodDecoratorStaticType:
+        # Pure-Python unbound function type-checking this static method.
+        func_checked = _beartype_func(
+            func=descriptor.__func__,  # type: ignore[union-attr]
+            conf=conf,
+            cls_root=cls_root,
+            cls_curr=cls_curr,
+        )
+
         # Return a new static method descriptor decorating the pure-Python
         # unbound function wrapped by this descriptor with type-checking,
         # implicitly destroying the prior descriptor.
-        return staticmethod(_beartype_func(func=descriptor.__func__, conf=conf))  # type: ignore[return-value,union-attr]
+        return staticmethod(func_checked)  # type: ignore[return-value]
     # Else, this descriptor is *NOT* a static method.
 
     #FIXME: Unconvinced this edge case is required or desired. Does @beartype
@@ -433,7 +535,15 @@ def _beartype_descriptor(
     )
 
 
-def _beartype_func(func: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
+def _beartype_func(
+    # Mandatory parameters.
+    func: BeartypeableT,
+    conf: BeartypeConf,
+
+    # Optional parameters.
+    cls_root: Optional[type] = None,
+    cls_curr: Optional[type] = None,
+) -> BeartypeableT:
     '''
     Decorate the passed callable with dynamically generated type-checking.
 
@@ -444,25 +554,38 @@ def _beartype_func(func: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
     conf : BeartypeConf
         Beartype configuration configuring :func:`beartype.beartype` uniquely
         specific to this callable.
+    cls_root : Optional[type]
+        **Root decorated class** if any or ``None`` otherwise. Defaults to
+        ``None``. See also :func:`beartype_object` for details.
+    cls_curr : Optional[type]
+        **Current decorated class** if any or ``None`` otherwise. Defaults to
+        ``None``. See also :func:`beartype_object` for details.
 
     Returns
     ----------
     BeartypeableT
         New pure-Python callable wrapping this callable with type-checking.
     '''
-    assert callable(func), f'{repr(func)} uncallable.'
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-
-    # If that callable is unbeartypeable (i.e., if this decorator should
-    # preserve that callable as is rather than wrap that callable with
-    # constant-time type-checking), silently reduce to the identity decorator.
-    if is_func_unbeartypeable(func):
-        return func  # type: ignore[return-value]
-    # Else, that callable is beartypeable. Let's do this, folks.
 
     #FIXME: Uncomment to display all annotations in "pytest" tracebacks.
     # func_hints = func.__annotations__
 
+    # If that callable is unbeartypeable (i.e., if this decorator should
+    # preserve that callable as is rather than wrap that callable with
+    # constant-time type-checking), silently reduce to the identity decorator.
+    if is_func_unbeartypeable(func):  # type: ignore[arg-type]
+        return func  # type: ignore[return-value]
+    # Else, that callable is beartypeable. Let's do this, folks.
+
+    # Validate all passed parameters.
+    assert callable(func), f'{repr(func)} uncallable.'
+    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    assert isinstance(cls_root, NoneTypeOr[type]), (
+        f'{repr(cls_root)} neither type nor "None".')
+    assert isinstance(cls_curr, NoneTypeOr[type]), (
+        f'{repr(cls_curr)} neither type nor "None".')
+
+    #FIXME: Forward on the passed "cls_owner_*" parameters, please.
     # Previously cached callable metadata reinitialized from this callable.
     func_data = acquire_object_typed(BeartypeCall)
     func_data.reinit(func, conf)
@@ -474,6 +597,7 @@ def _beartype_func(func: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
     # and thus the identity decorator by returning this callable as is.
     if not func_wrapper_code:
         return func  # type: ignore[return-value]
+    # Else, this callable requires type-checking. Let's *REALLY* do this, fam.
 
     # Function wrapping this callable with type-checking to be returned.
     #
@@ -504,7 +628,14 @@ def _beartype_func(func: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
     return func_wrapper  # type: ignore[return-value]
 
 # ....................{ PRIVATE ~ beartypers : type        }....................
-def _beartype_type(cls: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
+def _beartype_type(
+    # Mandatory parameters.
+    cls: BeartypeableT,
+    conf: BeartypeConf,
+
+    # Optional parameters.
+    cls_root: Optional[type] = None,
+) -> BeartypeableT:
     '''
     Decorate the passed class with dynamically generated type-checking.
 
@@ -515,6 +646,13 @@ def _beartype_type(cls: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
     conf : BeartypeConf
         Beartype configuration configuring :func:`beartype.beartype` uniquely
         specific to this class.
+    cls_root : Optional[type]
+        **Root decorated class** if any or ``None`` otherwise. Defaults to
+        ``None``. See also :func:`beartype_object` for details.
+
+    Note this function intentionally accepts *no* ``cls_curr`` parameter, unlike
+    most functions defined by this submodule. See :func:`beartype_object` for
+    further details.
 
     Returns
     ----------
@@ -523,6 +661,8 @@ def _beartype_type(cls: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
     '''
     assert isinstance(cls, type), f'{repr(cls)} not type.'
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    assert isinstance(cls_root, NoneTypeOr[type]), (
+        f'{repr(cls_root)} neither type nor "None".')
 
     #FIXME: Insufficient. We also want to set a beartype-specific dunder
     #attribute -- say, "__beartyped" -- on this class. Additionally, if this
@@ -555,7 +695,35 @@ def _beartype_type(cls: BeartypeableT, conf: BeartypeConf) -> BeartypeableT:
             # This attribute decorated with type-checking configured by this
             # configuration if *NOT* already decorated.
             attr_value_beartyped = beartype_object(
-                obj=attr_value, conf=conf, cls_owner=cls)
+                obj=attr_value,
+                conf=conf,
+                #FIXME: Technically, we *ONLY* want to set "cls_root" when
+                #the root decorated class is module-scoped, because that's the
+                #only root decorated class that can actually be referenced by
+                #PEP 563-postponed type hints. Can we efficiently distinguish
+                #module-scoped from non-module-scoped classes? We have no idea.
+                #Probably not, frankly. We'd probably have to inspect the call
+                #stack for a module boundary, at which point efficiency has
+                #certainly been yeeted out the window. Ignore for now. *sigh*
+                # Root decorated class, defined as either...
+                cls_root=(
+                    # If the caller passed *NO* root decorated class, then this
+                    # class is necessarily the first decorated class being
+                    # decorated directly by @beartype and thus the root
+                    # decorated class.
+                    #
+                    # Note that this is the common case and thus tested first.
+                    # Indeed, since nested classes effectively do *NOT* exist in
+                    # the wild, this comprises 99.99% of all real-world cases.
+                    cls
+                    if cls_root is None else
+                    # Else, the caller passed a root decorated class. Preserve
+                    # that class as is to properly expose that class elsewhere.
+                    cls_root
+                ),
+                # Current decorated class.
+                cls_curr=cls,
+            )
 
             # Replace this undecorated attribute with this decorated attribute.
             #

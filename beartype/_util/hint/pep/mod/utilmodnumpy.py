@@ -129,7 +129,7 @@ def reduce_hint_numpy_ndarray(
     # attribute passed to this getter.
     from beartype.vale import IsAttr, IsEqual, IsSubclass
     from numpy import dtype, ndarray
-    from numpy.typing import NDArray
+    from numpy.typing import NDArray  # type: ignore[attr-defined]
 
     #FIXME: Consider submitting an upstream issue about this. We don't
     #particularly feel like arguing tonight, because that's a lonely hill.
