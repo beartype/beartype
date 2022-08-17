@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import (
     Any,
     Callable,
+    Dict,
     Iterable,
     Tuple,
     Type,
@@ -120,6 +121,14 @@ in both configuration and decoration modes.
 IterableStrs = Iterable[str]
 '''
 PEP-compliant type hint matching *any* iterable of zero or more strings.
+'''
+
+# ....................{ HINTS ~ lexical                    }....................
+LexicalScope = Dict[str, Any]
+'''
+PEP-compliant type hint matching a **lexical scope** (i.e., dictionary mapping
+from the name to value of each locally or globally scoped variable accessible
+to a callable or class).
 '''
 
 # ....................{ HINTS ~ type                       }....................

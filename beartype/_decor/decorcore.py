@@ -108,7 +108,6 @@ def beartype_object(
                    # parameter to all decoration calls.
                    def get_outer(self) -> Outer:
                        return Outer()
-
     cls_curr : Optional[type]
         Either:
 
@@ -409,7 +408,7 @@ def _beartype_descriptor(
     '''
     assert isinstance(descriptor, MethodDecoratorBuiltinTypes), (
         f'{repr(descriptor)} not builtin method descriptor.')
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    # assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
 
     # Type of this descriptor.
     descriptor_type = type(descriptor)
@@ -566,6 +565,12 @@ def _beartype_func(
     BeartypeableT
         New pure-Python callable wrapping this callable with type-checking.
     '''
+    assert callable(func), f'{repr(func)} uncallable.'
+    # assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    # assert isinstance(cls_root, NoneTypeOr[type]), (
+    #     f'{repr(cls_root)} neither type nor "None".')
+    # assert isinstance(cls_curr, NoneTypeOr[type]), (
+    #     f'{repr(cls_curr)} neither type nor "None".')
 
     #FIXME: Uncomment to display all annotations in "pytest" tracebacks.
     # func_hints = func.__annotations__
@@ -576,14 +581,6 @@ def _beartype_func(
     if is_func_unbeartypeable(func):  # type: ignore[arg-type]
         return func  # type: ignore[return-value]
     # Else, that callable is beartypeable. Let's do this, folks.
-
-    # Validate all passed parameters.
-    assert callable(func), f'{repr(func)} uncallable.'
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-    assert isinstance(cls_root, NoneTypeOr[type]), (
-        f'{repr(cls_root)} neither type nor "None".')
-    assert isinstance(cls_curr, NoneTypeOr[type]), (
-        f'{repr(cls_curr)} neither type nor "None".')
 
     #FIXME: Forward on the passed "cls_owner_*" parameters, please.
     # Previously cached callable metadata reinitialized from this callable.
@@ -660,9 +657,9 @@ def _beartype_type(
         This class decorated by :func:`beartype.beartype`.
     '''
     assert isinstance(cls, type), f'{repr(cls)} not type.'
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-    assert isinstance(cls_root, NoneTypeOr[type]), (
-        f'{repr(cls_root)} neither type nor "None".')
+    # assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    # assert isinstance(cls_root, NoneTypeOr[type]), (
+    #     f'{repr(cls_root)} neither type nor "None".')
 
     #FIXME: Insufficient. We also want to set a beartype-specific dunder
     #attribute -- say, "__beartyped" -- on this class. Additionally, if this

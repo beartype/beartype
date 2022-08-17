@@ -20,6 +20,10 @@ from beartype.vale._util._valeutilsnip import (
     VALE_CODE_CHECK_ISSUBCLASS_TEST_format,
 )
 from beartype.vale._core._valecore import BeartypeValidator
+from beartype._data.datatyping import (
+    LexicalScope,
+    TypeOrTupleTypes,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.cls.pep.utilpep3119 import (
@@ -28,12 +32,8 @@ from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_issubclassable,
     die_unless_type_or_types_issubclassable,
 )
-from beartype._util.func.utilfuncscope import (
-    CallableScope,
-    add_func_scope_attr,
-)
+from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.utilobject import get_object_name
-from beartype._data.datatyping import TypeOrTupleTypes
 
 # ....................{ SUBCLASSES ~ instance              }....................
 class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
@@ -200,7 +200,7 @@ class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
 
         # Dictionary mapping from the name to value of each local attribute
         # referenced in the "is_valid_code" snippet defined below.
-        is_valid_code_locals: CallableScope = {}
+        is_valid_code_locals: LexicalScope = {}
 
         # Name of a new parameter added to the signature of wrapper functions
         # whose value is this type or tuple of types, enabling this type or
@@ -403,7 +403,7 @@ class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
 
         # Dictionary mapping from the name to value of each local attribute
         # referenced in the "is_valid_code" snippet defined below.
-        is_valid_code_locals: CallableScope = {}
+        is_valid_code_locals: LexicalScope = {}
 
         # Name of a new parameter added to the signature of wrapper functions
         # whose value is this type or tuple of types, enabling this type or

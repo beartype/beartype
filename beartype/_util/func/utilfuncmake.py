@@ -18,7 +18,7 @@ from beartype.typing import (
     Optional,
     Type,
 )
-from beartype._util.func.utilfuncscope import CallableScope
+from beartype._data.datatyping import LexicalScope
 from beartype._util.text.utiltextlabel import label_exception
 from beartype._util.text.utiltextmunge import number_lines
 from beartype._util.utilobject import get_object_name
@@ -34,8 +34,8 @@ def make_func(
     func_code: str,
 
     # Optional arguments.
-    func_globals: Optional[CallableScope] = None,
-    func_locals:  Optional[CallableScope] = None,
+    func_globals: Optional[LexicalScope] = None,
+    func_locals:  Optional[LexicalScope] = None,
     func_doc: Optional[str] = None,
     func_label:   Optional[str] = None,
     func_wrapped: Optional[Callable] = None,

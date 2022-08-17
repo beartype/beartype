@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
-Project-wide **unmemoized class tester** (i.e., unmemoized and thus efficient
-callable testing various properties of arbitrary classes) utilities.
+Project-wide **class testers** (i.e., low-level callables testing and validating
+various properties of arbitrary classes).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -20,7 +20,7 @@ from beartype._data.datatyping import (
     TypeOrTupleTypes,
 )
 
-# ....................{ VALIDATORS                        }....................
+# ....................{ VALIDATORS                         }....................
 def die_unless_type(
     # Mandatory parameters.
     cls: object,
@@ -131,7 +131,7 @@ def die_unless_type_or_types(
         # Raise this exception.
         raise exception_cls(f'{exception_message}.')
 
-# ....................{ TESTERS                           }....................
+# ....................{ TESTERS                            }....................
 def is_type_or_types(type_or_types: object) -> bool:
     '''
     ``True`` only if the passed object is either a class *or* tuple of one or

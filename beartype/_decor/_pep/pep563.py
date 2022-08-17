@@ -14,34 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Generalize to support resolution of locals if a class is currently being
-#decorated. Doing so will require generalizing the "BeartypeCall" class to
-#additionally expose a new "cls_decor" instance variable, which the
-#resolve_hints_pep563_if_active() function defined below should then:
-#* If "bear_call.cls_decor" is "None", perform the current callable-centric
-#  logic iterating stack frames.
-#* Else, perform a new class-centric logic iterating base classes in MRO. Note
-#  that PEP 563 offers this crude heuristic for computing locals from a class:
-#    For classes, localns can be composed by chaining vars of the given class
-#    and its base classes (in the method resolution order). Since slots can only
-#    be filled after the class was defined, we don’t need to consult them for
-#    this purpose.
-#
-#We probably want to split resolve_hints_pep563_if_active() into:
-#* A new private _resolve_hints_pep563_func() resolver performing the current
-#  callable-centric resolution.
-#* A new private _resolve_hints_pep563_type() resolver performing the proposed
-#  class-centric resolution above.
-#
-#Naturally, this could benefit from *EXTENSIVE* unit tests.
-#FIXME: Critically, note that the resolve_hints_pep563_if_active() should
-#additively *CHAIN* the locals computed by both the
-#_resolve_hints_pep563_func() *AND* resolver.
-#_resolve_hints_pep563_type() resolvers. Both are required. We think, anyway?
-#Are there locals that can only be computed by considering both types of scopes?
-#FIXME: Actually, let's *NOT* do most of the above. Specifically, let's *NOT*
-#split resolve_hints_pep563_if_active() into subfunctions. On the other hand,
-#let's still perform a new class-centric logic iterating base classes in MRO.
+#FIXME: Perform a new class-centric logic iterating base classes in MRO.
 #Note that PEP 563 offers this crude heuristic for computing locals from a
 #class:
 #    For classes, localns can be composed by chaining vars of the given class
@@ -69,18 +42,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #Obviously, we should significantly clean all of the above up. Nonetheless,
 #that's a phenomenal start to what otherwise would have been a laborious and
 #probably extremely broken draft implementation.
-#
-#*WAIT...* The above would seem to be irrelevant for our current purposes. We
-#don't particularly care about postponed *CLASS ATTRIBUTE ANNOTATIONS* at the
-#moment, which is what the above appears to resolve. We only care about
-#resolving postponed *METHOD ANNOTATIONS.* Given that, the question then
-#becomes: "Can postponed method annotations refer to class attributes?" Notably:
-#    class Yam(object):
-#        muh_int = int
-#        def muh_meth(self) -> muh_int:
-#            return 42
-#
-#Does the above actually work, both when PEP 563 is disabled *AND* enabled?
 
 # ....................{ IMPORTS                            }....................
 import __future__
@@ -90,9 +51,9 @@ from beartype.typing import (
     FrozenSet,
     Optional,
 )
+from beartype._data.datatyping import LexicalScope
 from beartype._decor._decorcall import BeartypeCall
 from beartype._util.func.utilfuncscope import (
-    CallableScope,
     get_func_globals,
     get_func_locals,
     is_func_nested,
@@ -181,8 +142,8 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
     # Then this callable's hints are *NOT* postponed under PEP 563. In this
     # case, silently reduce to a noop.
         return
-    # Else, these hints are postponed under PEP 563. In this case, resolve
-    # these hints to their referents.
+    # Else, these hints are postponed under PEP 563. In this case, resolve these
+    # hints to their referents.
 
     # ..................{ LOCALS                             }..................
     # Global scope for the decorated callable.
@@ -191,7 +152,8 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
     # print(f'PEP 563-postponed type hint {repr(func)} globals:\n{repr(func_globals)}\n')
 
     # Dictionary mapping from parameter name to postponed hint for each
-    # annotated parameter and return value of this callable.
+    # annotated parameter and return value of this callable, localized for
+    # negligible efficiency gains.
     func_hints_postponed = func.__annotations__
 
     # Dictionary mapping from parameter name to resolved hint for each
@@ -208,7 +170,7 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
     # O(n**2) for an arbitrary large integer n, defer doing so until we must
     # (i.e., when that callable's postponed annotations are *NOT* resolvable
     # given only the global scope of that callable).
-    func_locals: Optional[CallableScope] = None
+    func_locals: Optional[LexicalScope] = None
 
     # Non-empty frozen set of the unqualified names of all parent callables
     # lexically containing this nested callable (including this nested
@@ -242,10 +204,11 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
         # Then this hint is a PEP 563-compliant postponed hint. Note that this
         # test could technically yield a false positive in the unlikely edge
         # case that this annotation was previously postponed but has since been
-        # replaced in-place with its referent, which is itself a string
-        # matching the PEP 563 format without actually being a PEP
-        # 563-formatted postponed string. Since there's nothing we can do about
-        # that, we choose to just silently pretend everything will be okay.
+        # replaced in-place by its referent that is itself a string matching the
+        # PEP 563 format without actually being a PEP 563-formatted postponed
+        # string. Since PEP 563 authors failed to provide solutions to this or
+        # any other outstanding runtime issues with PEP 563, there's *NOTHING*
+        # we can do about that. We prefer to pretend everything will be okay.
             # print(f'Resolving postponed hint {repr(pith_hint)}...')
 
             #FIXME: Since CPython appears to currently be incapable of even
@@ -336,8 +299,20 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
             # accepting *NO* meaningful configuration, there exists *NO* means
             # of only partially resolving parent type hints while preserving
             # relative forward references subscripting those hints. The
-            # solution in those cases is for end users to replace implicit with
-            # explicit forward references: e.g.,
+            # solution in those cases is for end users to either:
+            #
+            # * Decorate classes rather than methods: e.g.,
+            #     # Users should replace this method decoration, which will
+            #     # fail at runtime...
+            #     class MuhClass:
+            #         @beartype
+            #         def muh_method(self) -> list[MuhClass]: ...
+            #
+            #     # ...with this class decoration, which will work.
+            #     @beartype
+            #     class MuhClass:
+            #         def muh_method(self) -> list[MuhClass]: ...
+            # * Replace implicit with explicit forward references: e.g.,
             #     # Users should replace this implicit forward reference, which
             #     # will fail at runtime...
             #     class MuhClass:
@@ -417,6 +392,63 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
 
                         exception_cls=BeartypeDecorHintPep563Exception,
                     )
+
+                    # Root decorated class (i.e., class directly decorated by
+                    # @beartype whose lexical scope contains this method),
+                    # localized for negligible efficiency gains. *sigh*
+                    cls_root = bear_call.cls_root
+
+                    # If the decorated callable is a method transitively
+                    # declared by a root decorated class, add a new local
+                    # exposing the unqualified basename of this class. Why?
+                    # Because this class may be recursively referenced in
+                    # postponed type hints and *MUST* thus be exposed to *ALL*
+                    # postponed type hints. However, this class is currently
+                    # being decorated and thus has yet to be defined in either:
+                    # * If this class is module-scoped, the global attribute
+                    #   dictionary of that module and thus the "func_globals"
+                    #   dictionary.
+                    # * If this class is closure-scoped, the local attribute
+                    #   dictionary of that closure and thus the "func_locals"
+                    #   dictionary.
+                    #
+                    # Note that doing so implicitly overrides any previously
+                    # declared local of the same name. Although non-ideal, doing
+                    # so constitutes syntactically valid Python and is thus
+                    # *NOT* worth emitting even a non-fatal warning over: e.g.,
+                    #     # This is fine... technically.
+                    #     from beartype import beartype
+                    #     def muh_closure() -> None:
+                    #         MuhClass = 'This is horrible, yet fine.'
+                    #
+                    #         @beartype
+                    #         class MuhClass(object):
+                    #             def muh_method(self) -> str:
+                    #                 return 'Look away and cringe, everyone!'
+                    if cls_root is not None:
+                        # Unqualified basename of this root decorated class.
+                        cls_root_basename = cls_root.__name__
+
+                        # Add a new local exposing this class to type hints.
+                        func_locals[cls_root_basename] = cls_root
+
+                        # Current decorated class (i.e., class directly defining
+                        # this method), localized for negligible efficiency
+                        # gains. Note that, since "cls_root" is *NOT* "None",
+                        # "cls_curr" should also necessarily be *NOT* "None".
+                        # Nonetheless, let's assert that for safety.
+                        cls_curr = bear_call.cls_curr
+                        assert cls_curr is not None, (
+                            f'"cls_root" {repr(cls_root)} non-"None" but '
+                            f'"cls_curr" {repr(cls_curr)}.')
+
+                        #FIXME: Call get_type_locals() here to obtain locals for
+                        #this class and then forcefully merge those locals into
+                        #"func_locals", silently overwriting *ALL* existing
+                        #locals of the same name. Class locals take precedence.
+
+                    # Else, the decorated callable is *NOT* a method
+                    # transitively declared by a root decorated class.
             # In either case, the local scope of the decorated callable has now
             # been decided. (Validate this to be the case.)
             assert func_locals is not None, (

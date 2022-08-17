@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._data.datatyping import LexicalScope
 from beartype._decor._cache.cachetype import (
     TYPISTRY_HINT_NAME_TUPLE_PREFIX,
     bear_typistry,
@@ -26,10 +27,7 @@ from beartype._decor._code._pep._pepsnip import (
 )
 from beartype._util.cls.pep.utilpep3119 import die_unless_type_isinstanceable
 from beartype._util.cls.utilclstest import is_type_builtin
-from beartype._util.func.utilfuncscope import (
-    CallableScope,
-    add_func_scope_attr,
-)
+from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep_type)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
@@ -74,7 +72,7 @@ PEP-compliant type hint matching a set *or* tuple of zero or more classes.
 def add_func_scope_type_or_types(
     # Mandatory parameters.
     type_or_types: TypeOrTupleTypes,
-    func_scope: CallableScope,
+    func_scope: LexicalScope,
 
     # Optional parameters.
     exception_prefix: str = (
@@ -96,7 +94,7 @@ def add_func_scope_type_or_types(
     ----------
     type_or_types : TypeOrTupleTypes
         Arbitrary class or tuple of classes to be added to this scope.
-    func_scope : CallableScope
+    func_scope : LexicalScope
         Local or global scope to add this class or tuple of classes to.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
@@ -153,7 +151,7 @@ def add_func_scope_type_or_types(
 def add_func_scope_type(
     # Mandatory parameters.
     cls: type,
-    func_scope: CallableScope,
+    func_scope: LexicalScope,
 
     # Optional parameters.
     exception_prefix: str = 'Globally or locally scoped class ',
@@ -170,7 +168,7 @@ def add_func_scope_type(
     ----------
     cls : type
         Arbitrary class to be added to this scope.
-    func_scope : CallableScope
+    func_scope : LexicalScope
         Local or global scope to add this class to.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
@@ -214,7 +212,7 @@ def add_func_scope_type(
 def add_func_scope_types(
     # Mandatory parameters.
     types: _HINT_TYPES_SET_OR_TUPLE,
-    func_scope: CallableScope,
+    func_scope: LexicalScope,
 
     # Optional parameters.
     is_unique: bool = False,
@@ -276,7 +274,7 @@ def add_func_scope_types(
     ----------
     types : _HINT_TYPES_SET_OR_TUPLE
         Set or tuple of arbitrary types to be added to this scope.
-    func_scope : CallableScope
+    func_scope : LexicalScope
         Local or global scope to add this object to.
     is_unique : bool, optional
         ``True`` only if the caller guarantees this tuple to contain *no*
@@ -391,7 +389,7 @@ def express_func_scope_type_forwardref(
     # Mandatory parameters.
     forwardref: HINT_PEP484585_FORWARDREF_UNION,
     forwardrefs_class_basename: Optional[set],
-    func_scope: CallableScope,
+    func_scope: LexicalScope,
 
     # Optional parameters.
     exception_prefix: str = 'Globally or locally scoped forward reference ',
@@ -414,7 +412,7 @@ def express_func_scope_type_forwardref(
         references relative to this scope if any *or* ``None`` otherwise
         (i.e., if no relative forward references have been expressed relative
         to this scope yet).
-    func_scope : CallableScope
+    func_scope : LexicalScope
         Local or global scope to add this forward reference to.
     exception_prefix : str, optional
         Human-readable substring describing this forward reference in exception

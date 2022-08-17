@@ -26,9 +26,12 @@
 #search-as-you-type[-into-a-search-bar] functionality. The demo's quite
 #impressive, as expected of an official ReadTheDocs extension. Let's go!
 
-#FIXME: [THEME] Consider switching to the nascent PyData Sphinx theme, now
-#widely leveraged across the data science sphere (e.g., NumPy, SciPy):
+#FIXME: [THEME] Consider switching to either:
+#* The nascent PyData Sphinx theme, now widely leveraged across the data science
+#  sphere (e.g., NumPy, SciPy):
 #    https://github.com/pydata/pydata-sphinx-theme
+#* Furo, now widely leveraged across the UIX sphere (e.g., KivyMD):
+#    https://github.com/pradyunsg/furo
 
 # ....................{ IMPORTS ~ kludge                  }....................
 # If extensions (or modules to document with autodoc) are in another directory,

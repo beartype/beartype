@@ -168,7 +168,8 @@ def get_object_name(obj: Any) -> str:
         object_scopes_name
     )
 
-
+# ....................{ GETTERS ~ basename                 }....................
+#FIXME: Unit test us up, please.
 def get_object_basename_scoped(obj: Any) -> str:
     '''
     **Lexically scoped name** (i.e., ``.``-delimited string unambiguously

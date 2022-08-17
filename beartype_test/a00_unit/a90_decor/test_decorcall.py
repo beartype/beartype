@@ -16,9 +16,9 @@ This submodule unit tests the :func:`beartype._decor._decorcall` submodule.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_decor_data() -> None:
+def test_beartypecall() -> None:
     '''
-    Test usage of the :func:`beartype._decor._decorcall.BeartypeCall` dataclass.
+    Test the :func:`beartype._decor._decorcall.BeartypeCall` dataclass.
     '''
 
     # Defer heavyweight imports.
@@ -55,11 +55,17 @@ def test_decor_data() -> None:
             func_conf='Ocean, and all the living things that dwell',
         )
 
-    # Assert that reinitializing this metadata with a non-class raises the
+    # Assert that reinitializing this metadata with non-classes raises the
     # expected exception.
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
             func=lambda: ...,
             func_conf=BeartypeConf(),
-            cls_owner="Shine in the rushing torrents' restless gleam,",
+            cls_root="Shine in the rushing torrents' restless gleam,",
+        )
+    with raises(BeartypeDecorWrappeeException):
+        bear_data.reinit(
+            func=lambda: ...,
+            func_conf=BeartypeConf(),
+            cls_curr='Which from those secret chasms in tumult welling',
         )

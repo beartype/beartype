@@ -26,12 +26,10 @@ from beartype.vale._util._valeutilsnip import (
     VALE_CODE_INDENT_1,
 )
 from beartype.vale._core._valecore import BeartypeValidator
+from beartype._data.datatyping import LexicalScope
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.kind.utilkinddict import update_mapping
-from beartype._util.func.utilfuncscope import (
-    CallableScope,
-    add_func_scope_attr,
-)
+from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.text.utiltextrepr import represent_object
 from beartype._util.utilobject import SENTINEL
@@ -244,7 +242,7 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
 
         # Dictionary mapping from the name to value of each local attribute
         # referenced in the "is_valid_code" snippet defined below.
-        is_valid_code_locals: CallableScope = {}
+        is_valid_code_locals: LexicalScope = {}
 
         # If this attribute name is unqualified (i.e., contains no "."
         # delimiters), prefer an efficient optimization avoiding iteration.

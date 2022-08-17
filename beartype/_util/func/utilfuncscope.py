@@ -14,21 +14,15 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype.typing import (
     Any,
-    Dict,
     Optional,
 )
 from beartype._util.utilobject import get_object_basename_scoped
-from beartype._data.datatyping import TypeException
+from beartype._data.datatyping import (
+    LexicalScope,
+    TypeException,
+)
 from collections.abc import Callable
 from types import CodeType
-
-# ....................{ HINTS                              }....................
-CallableScope = Dict[str, Any]
-'''
-PEP-compliant type hint matching a **callable socpe** (i.e., dictionary mapping
-from the name to value of each locally or globally scoped variable accessible
-to a callable).
-'''
 
 # ....................{ TESTERS                            }....................
 def is_func_nested(func: Callable) -> bool:
@@ -128,7 +122,7 @@ def get_func_globals(
 
     # Optional parameters.
     exception_cls: TypeException = _BeartypeUtilCallableException,
-) -> CallableScope:
+) -> LexicalScope:
     '''
     **Global scope** (i.e., a dictionary mapping from the name to value of each
     globally scoped attribute declared by the module transitively declaring
@@ -194,7 +188,7 @@ def get_func_locals(
     # Optional parameters.
     func_stack_frames_ignore: int = 0,
     exception_cls: TypeException = _BeartypeUtilCallableException,
-) -> CallableScope:
+) -> LexicalScope:
     '''
     **Local scope** for the passed callable.
 
@@ -229,6 +223,10 @@ def get_func_locals(
        ...    # Instance method annotated by this class variable.
        ...    def muh_method(self) -> muh_class_var: return 42
 
+    However, note that this getter's transparent support for methods does *not*
+    extend to methods of the currently decorated class. Why? Because that class
+    has yet to be declared and thus added to the call stack.
+
     Caveats
     ----------
     **This high-level getter requires the private low-level**
@@ -261,12 +259,12 @@ def get_func_locals(
 
     Returns
     ----------
-    Dict[str, Any]
+    LexicalScope
         Local scope for this callable.
 
     Raises
     ----------
-    exception_cls
+    :exc:`exception_cls`
         If the next non-ignored frame following the last ignored frame is *not*
         the parent callable or module directly declaring the passed callable.
     '''
@@ -318,7 +316,7 @@ def get_func_locals(
 
     # ..................{ LOCALS ~ scope                     }..................
     # Local scope of the passed callable to be returned.
-    func_scope: CallableScope = {}
+    func_scope: LexicalScope = {}
 
     # ..................{ LOCALS ~ scope : name              }..................
     # Unqualified name of this nested callable.
@@ -524,7 +522,7 @@ def get_func_locals(
 def add_func_scope_attr(
     # Mandatory parameters.
     attr: Any,
-    func_scope: CallableScope,
+    func_scope: LexicalScope,
 
     # Optional parameters.
     exception_prefix: str = 'Globally or locally scoped attribute ',
@@ -541,7 +539,7 @@ def add_func_scope_attr(
     ----------
     attr : Any
         Arbitrary object to be added to this scope.
-    func_scope : CallableScope
+    func_scope : LexicalScope
         Local or global scope to add this object to.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the

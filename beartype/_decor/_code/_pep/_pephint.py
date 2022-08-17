@@ -92,6 +92,7 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
 )
+from beartype._data.datatyping import LexicalScope
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignForwardRef,
@@ -106,10 +107,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
     HINT_SIGNS_UNION,
 )
-from beartype._util.func.utilfuncscope import (
-    CallableScope,
-    add_func_scope_attr,
-)
+from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
@@ -226,7 +224,7 @@ def pep_code_check_hint(
         PEP593_CODE_HINT_VALIDATOR_SUFFIX.format),
     PEP593_CODE_HINT_VALIDATOR_CHILD_format: Callable = (
         PEP593_CODE_HINT_VALIDATOR_CHILD.format),
-) -> Tuple[str, CallableScope, Tuple[str, ...]]:
+) -> Tuple[str, LexicalScope, Tuple[str, ...]]:
     '''
     Python code snippet type-checking the previously localized parameter or
     return value annotated by the passed PEP-compliant type hint against that
@@ -262,7 +260,7 @@ def pep_code_check_hint(
 
     Returns
     ----------
-    Tuple[str, CallableScope, Tuple[str, ...]]
+    Tuple[str, LexicalScope, Tuple[str, ...]]
         3-tuple ``(func_wrapper_code, func_wrapper_locals,
         hint_forwardrefs_class_basename)``, where:
 
@@ -497,7 +495,7 @@ def pep_code_check_hint(
     # Local scope (i.e., dictionary mapping from the name to value of each
     # attribute referenced in the signature) of this wrapper function required
     # by this Python code snippet.
-    func_wrapper_locals: CallableScope = {}
+    func_wrapper_locals: LexicalScope = {}
 
     # True only if one or more PEP-compliant type hints visitable from this
     # root hint require a pseudo-random integer. If true, the higher-level

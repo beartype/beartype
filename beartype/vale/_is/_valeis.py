@@ -23,10 +23,8 @@ from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
 from beartype.vale._core._valecore import BeartypeValidator
 from beartype.vale._util._valeutilfunc import die_unless_validator_tester
 from beartype.vale._util._valeutiltyping import BeartypeValidatorTester
-from beartype._util.func.utilfuncscope import (
-    CallableScope,
-    add_func_scope_attr,
-)
+from beartype._data.datatyping import LexicalScope
+from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.text.utiltextrepr import (
     represent_func,
@@ -574,7 +572,7 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
         # ..................{ VALIDATOR                      }..................
         # Dictionary mapping from the name to value of each local attribute
         # referenced in the "is_valid_code" snippet defined below.
-        is_valid_code_locals: CallableScope = {}
+        is_valid_code_locals: LexicalScope = {}
 
         # Name of a new parameter added to the signature of each
         # @beartype-decorated wrapper function whose value is this validator,

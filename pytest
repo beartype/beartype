@@ -105,7 +105,6 @@ print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${pathname}"
 #     INTERNALERROR>   File "/usr/lib/python3.8/site-packages/_pytest/config/__init__.py", line 1321, in issue_config_time_warning
 #     INTERNALERROR>     warnings.warn(warning, stacklevel=stacklevel)
 #     INTERNALERROR> DeprecationWarning: The 'asyncio_mode' default value will change to 'strict' in future, please explicitly use 'asyncio_mode=strict' or 'asyncio_mode=auto' in pytest configuration file.
-#     ^CTraceback (most recent call last):
 #
 # This is *ABSOLUTELY* senseless, because this project intentionally does *NOT*
 # require, reference, or otherwise leverage "pytest-asyncio" anywhere. However,

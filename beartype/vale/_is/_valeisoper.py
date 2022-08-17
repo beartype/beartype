@@ -66,11 +66,9 @@ from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
 from beartype.vale._util._valeutilsnip import (
     VALE_CODE_CHECK_ISEQUAL_TEST_format)
 from beartype.vale._core._valecore import BeartypeValidator
+from beartype._data.datatyping import LexicalScope
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.func.utilfuncscope import (
-    CallableScope,
-    add_func_scope_attr,
-)
+from beartype._util.func.utilfuncscope import add_func_scope_attr
 
 # ....................{ SUBCLASSES ~ equal                 }....................
 class _IsEqualFactory(_BeartypeValidatorFactoryABC):
@@ -235,7 +233,7 @@ class _IsEqualFactory(_BeartypeValidatorFactoryABC):
 
         # Dictionary mapping from the name to value of each local attribute
         # referenced in the "is_valid_code" snippet defined below.
-        is_valid_code_locals: CallableScope = {}
+        is_valid_code_locals: LexicalScope = {}
 
         # Name of a new parameter added to the signature of wrapper functions
         # whose value is this object, enabling this object to be tested in
