@@ -76,6 +76,7 @@ from beartype.roar import (
     BeartypeAbbyHintViolation,
     BeartypeCallHintReturnViolation,
 )
+from beartype.roar._roarexc import _BeartypeDoorTextException
 from beartype.typing import Callable
 from beartype._conf import BeartypeConf
 from beartype._decor._cache.cachedecor import beartype
@@ -83,11 +84,13 @@ from beartype._util.hint.utilhinttest import die_unless_hint
 
 # ....................{ PRIVATE ~ constants                }....................
 _TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX = (
-    '@beartyped _get_type_checker._die_if_unbearable() return ')
+    '@beartyped beartype.abby._abbytest._get_type_checker._die_if_unbearable() '
+    'return '
+)
 '''
 Irrelevant substring prefixing *all* exception messages raised by *all*
-**runtime type-checkers** (i.e., functions created and returned by the
-:func: `_get_type_checker` getter).
+**synthetic runtime type-checkers** (i.e., callables dynamically created and
+returned by the :func: `_get_type_checker` getter).
 '''
 
 
@@ -95,8 +98,9 @@ _TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX_LEN = (
     len(_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX))
 '''
 Length of the irrelevant substring prefixing *all*
-exception messages raised by *all* **runtime type-checkers** (i.e., functions
-created and returned by the :func: `_get_type_checker` getter).
+exception messages raised by *all* **synthetic runtime type-checkers** (i.e.,
+callables dynamically created and returned by the :func: `_get_type_checker`
+getter).
 '''
 
 # ....................{ PRIVATE ~ hints                    }....................
@@ -145,6 +149,9 @@ def die_if_unbearable(
 
         * Supported PEP-compliant type hint.
         * Supported PEP-noncompliant type hint.
+    _BeartypeDoorTextException
+        If this object violates this hint *but* the message of the exception to
+        be raised by this validator is *not* prefixed by the expected substring.
 
     Examples
     ----------
@@ -169,6 +176,22 @@ def die_if_unbearable(
     except BeartypeCallHintReturnViolation as exception:
         # Exception message.
         exception_message = str(exception)
+
+        # If this exception message is *NOT* prefixed by the expected substring,
+        # raise an exception.
+        #
+        # Note that this should *NEVER* occur in production releases, but that
+        # this could potentially occur during pre-production testing. Ergo, it
+        # is worth explicitly checking but *NOT* worth investing time and effort
+        # in raising a human-readable exception.
+        if not exception_message.startswith(
+            _TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX):
+            raise _BeartypeDoorTextException(
+                f'_get_type_checker._die_if_unbearable() exception '
+                f'"{exception_message}" not prefixed by '
+                f'"{_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX}".'
+            ) from exception
+        # Else, this exception message is prefixed by the expected substring.
 
         # Replace the irrelevant substring prefixing this message with a
         # relevant substring applicable to this higher-level function.

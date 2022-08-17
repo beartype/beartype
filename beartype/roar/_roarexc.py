@@ -977,6 +977,18 @@ class _BeartypeUtilCachedObjectTypedException(_BeartypeUtilCachedException):
 
     pass
 
+# ....................{ PRIVATE ~ util : door                }..................
+class _BeartypeDoorTextException(BeartypeDoorException):
+    '''
+    **Decidedly Object-Oriented Runtime-checking (DOOR) text exception.**
+
+    This exception is raised at call time from :func:`beartype.door` callables
+    and classes on detecting invalid strings (e.g., on raising an exception
+    whose message is *not* prefixed by the expected substring).
+    '''
+
+    pass
+
 # ....................{ PRIVATE ~ util : object              }..................
 class _BeartypeUtilObjectException(_BeartypeUtilException):
     '''
