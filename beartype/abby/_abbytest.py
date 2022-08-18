@@ -80,6 +80,7 @@ from beartype.roar._roarexc import _BeartypeDoorTextException
 from beartype.typing import Callable
 from beartype._conf import BeartypeConf
 from beartype._decor._cache.cachedecor import beartype
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.utilhinttest import die_unless_hint
 
 # ....................{ PRIVATE ~ constants                }....................
@@ -279,25 +280,49 @@ def is_bearable(
     return False
 
 # ....................{ PRIVATE ~ getters                  }....................
+#FIXME: Shift into a more public location for widespread usage elsewhere: e.g.,
+#* Define a new "beartype._check" subpackage.
+#* Define a new "beartype._check.checkget" submodule.
+#* Rename this function to get_object_checker() in that submodule.
+#* Shift the "_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX*" globals into that
+#  submodule as well, probably publicized and renamed to:
+#  * "CHECKER_EXCEPTION_MESSAGE_PREFIX".
+#  * "CHECKER_EXCEPTION_MESSAGE_PREFIX_LEN".
+#* *COPY* (i.e., do *NOT* move) the die_if_unbearable() into that submodule,
+#  renamed to either:
+#  * check_object(). This is the one, due to orthogonality with the
+#    get_object_checker() getter.
+#  * die_if_object_violates_hint(). Fairly long, but disambiguous.
+#* Generalize check_object() to accept additional *MANDATORY* "exception_cls"
+#  and "exception_prefix" parameters. Replace the currently hard-coded 'Object '
+#  prefix in check_object() by "exception_prefix".
+#* Refactor die_if_unbearable() in this submodule to defer entirely to
+#  check_object() in that submodule.
+#* Shift the "_BeartypeTypeChecker" type hint into the existing
+#  "beartype._data.datatyping" submodule, publicized and renamed to
+#  "BeartypeChecker".
+@callable_cached
 def _get_type_checker(
     hint: object, conf: BeartypeConf) -> _BeartypeTypeChecker:
     '''
-    Create, cache, and return a **runtime type-checker** (i.e., function
-    raising a :exc:`BeartypeCallHintReturnViolation` exception when the object
-    passed to that function violates the hint passed to this parent getter
-    under the passed beartype configuration).
+    Create, cache, and return a **synthetic runtime type-checker** (i.e.,
+    function raising a :exc:`BeartypeCallHintReturnViolation` exception when the
+    object passed to that function violates the hint passed to this parent
+    getter under the passed beartype configuration).
 
-    Note that this runtime type checker intentionally raises
-    :exc:`BeartypeCallHintReturnViolation` rather than
-    :exc:`BeartypeCallHintParamViolation` exceptions. Type-checking return
-    values is marginally faster than type-checking parameters. Ergo, we
-    intentionally annotate this return rather than parameter of this checker.
+    This checker intentionally raises :exc:`BeartypeCallHintReturnViolation`
+    rather than :exc:`BeartypeCallHintParamViolation` exceptions. Since
+    type-checking returns is *slightly* faster than type-checking parameters,
+    this factory intentionally annotates the return rather than a parameter of
+    this checker.
+
+    This factory is memoized for efficiency. 
 
     Parameters
     ----------
     hint : object
-        PEP-compliant type hint to validate all objects passed to this runtime
-        type-checker against.
+        Type hint to validate *all* objects passed to the checker returned by
+        this factory against.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring how this
@@ -307,7 +332,7 @@ def _get_type_checker(
     Returns
     ----------
     _BeartypeTypeChecker
-        Runtime type-checker specific to this hint and configuration.
+        Synthetic runtime type-checker specific to this hint and configuration.
 
     Raises
     ----------

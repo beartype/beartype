@@ -13,36 +13,6 @@ decorator.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: Perform a new class-centric logic iterating base classes in MRO.
-#Note that PEP 563 offers this crude heuristic for computing locals from a
-#class:
-#    For classes, localns can be composed by chaining vars of the given class
-#    and its base classes (in the method resolution order). Since slots can only
-#    be filled after the class was defined, we don’t need to consult them for
-#    this purpose.
-#
-#Thankfully, the standard typing.get_type_hints() getter defined by Python 3.10
-#provides this exceedingly useful snippet for deciding this. Lightly rewritten
-#in a slightly more appropriate parlance, this snippet is:
-#    for base in reversed(bear_call.cls_owner.__mro__):
-#        base_globals = getattr(sys.modules.get(base.__module__, None), '__dict__', {})
-#        base_locals = dict(vars(base))
-#
-#        ann = base.__dict__.get('__annotations__', {})
-#
-#        #FIXME: No idea what this is about, frankly. Note that:
-#        #    types.GetSetDescriptorType == type(FunctionType.__code__)
-#        if isinstance(ann, types.GetSetDescriptorType):
-#            ann = {}
-#
-#        #FIXME: The thing to do here is then eval() each value of the "ann"
-#        #dictionary to resolve the postponed value of that annotation.
-#
-#Obviously, we should significantly clean all of the above up. Nonetheless,
-#that's a phenomenal start to what otherwise would have been a laborious and
-#probably extremely broken draft implementation.
-
 # ....................{ IMPORTS                            }....................
 import __future__
 from beartype.roar import BeartypeDecorHintPep563Exception
@@ -53,6 +23,7 @@ from beartype.typing import (
 )
 from beartype._data.datatyping import LexicalScope
 from beartype._decor._decorcall import BeartypeCall
+from beartype._util.cls.utilclsget import get_type_locals
 from beartype._util.func.utilfuncscope import (
     get_func_globals,
     get_func_locals,
@@ -127,6 +98,8 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
     # ..................{ DETECTION                          }..................
     # Localize attributes of this metadata for negligible efficiency gains.
     func = bear_call.func_wrappee
+    cls_root = bear_call.cls_root
+    cls_curr = bear_call.cls_curr
 
     # If it is *NOT* the case that...
     if not (
@@ -360,7 +333,39 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
                 except Exception:
                     # print(f'Resolving PEP 563-postponed type hint {repr(pith_hint)} locals...')
 
-                    # Decide the local scope for the decorated callable.
+                    #FIXME: Almost done! Our last task is to generalize this
+                    #getter to support methods. Currently, this getter iterates
+                    #up the call stack for the class defining the passed
+                    #callable. Since this class is currently being decorated,
+                    #however, this class does *NOT* exist on the call stack.
+                    #Ergo, we need some means of notifying this getter of that
+                    #fact. Perhaps add a new optional parameter to
+                    #get_func_locals() resembling:
+                    #    def get_func_locals(
+                    #        # Optional parameters.
+                    #        func_scope_names_ignore: int = 1,
+                    #    ) -> ...: ...
+                    #
+                    #Then pass "func_scope_names_ignore" below as follows:
+                    #    is_cls_root = cls_root is not None
+                    #    func_locals = get_func_locals(
+                    #        func=func,
+                    #        func_scope_names_ignore=(
+                    #            2 if is_cls_root else 1),
+                    #        ...,
+                    #    )
+                    #    if is_cls_root: ...
+                    #
+                    #Of course, that is *STILL* insufficient. Why? Because we
+                    #need to ignore *ALL* parent classes -- not simply the
+                    #current class. We don't currently store that count, because
+                    #we otherwise don't need that count. But... maybe we do now.
+                    #
+                    #Consider defining a new "BeartypeCall.clses_len" integer.
+                    #That's certainly preferable to a full-blown tuple or list.
+                    #So... make it so, please.
+
+                    # Local scope for the decorated callable.
                     func_locals = get_func_locals(
                         func=func,
 
@@ -393,11 +398,6 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
                         exception_cls=BeartypeDecorHintPep563Exception,
                     )
 
-                    # Root decorated class (i.e., class directly decorated by
-                    # @beartype whose lexical scope contains this method),
-                    # localized for negligible efficiency gains. *sigh*
-                    cls_root = bear_call.cls_root
-
                     # If the decorated callable is a method transitively
                     # declared by a root decorated class, add a new local
                     # exposing the unqualified basename of this class. Why?
@@ -426,27 +426,52 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
                     #             def muh_method(self) -> str:
                     #                 return 'Look away and cringe, everyone!'
                     if cls_root is not None:
-                        # Unqualified basename of this root decorated class.
-                        cls_root_basename = cls_root.__name__
-
-                        # Add a new local exposing this class to type hints.
-                        func_locals[cls_root_basename] = cls_root
-
-                        # Current decorated class (i.e., class directly defining
-                        # this method), localized for negligible efficiency
-                        # gains. Note that, since "cls_root" is *NOT* "None",
-                        # "cls_curr" should also necessarily be *NOT* "None".
-                        # Nonetheless, let's assert that for safety.
-                        cls_curr = bear_call.cls_curr
+                        # Note that, since "cls_root" is *NOT* "None",
+                        # "cls_curr" should similarly be *NOT* "None". Because
+                        # Murphy, assert that for safety.
                         assert cls_curr is not None, (
                             f'"cls_root" {repr(cls_root)} non-"None" but '
                             f'"cls_curr" {repr(cls_curr)}.')
 
-                        #FIXME: Call get_type_locals() here to obtain locals for
-                        #this class and then forcefully merge those locals into
-                        #"func_locals", silently overwriting *ALL* existing
-                        #locals of the same name. Class locals take precedence.
+                        # Unqualified basenames of the root and current
+                        # decorated classes.
+                        cls_root_basename = cls_root.__name__
+                        cls_curr_basename = cls_curr.__name__
 
+                        # Add new locals exposing these classes to type hints,
+                        # implicitly overwriting any locals of the same name in
+                        # the higher-level local scope for any closure declaring
+                        # this class if any. These classes are currently being
+                        # decorated and thus guaranteed to be the most recent
+                        # declarations of local variables by these names.
+                        #
+                        # Note that the current class assumes lexical precedence
+                        # over the root class and is thus intentionally added
+                        # *AFTER* the latter.
+                        func_locals[cls_root_basename] = cls_root
+                        func_locals[cls_curr_basename] = cls_curr
+
+                        # Local scope for the class directly defining the
+                        # decorated callable.
+                        #
+                        # Note that callables *ONLY* have direct access to
+                        # attributes declared by the classes directly defining
+                        # those callables. Ergo, the local scopes for parent
+                        # classes of this class (including the root decorated
+                        # class) are irrelevant.
+                        cls_curr_locals = get_type_locals(
+                            cls=cls_curr,
+                            exception_cls=BeartypeDecorHintPep563Exception,
+                        )
+
+                        # Forcefully merge this local scope into the current
+                        # local scope, implicitly overwriting any locals of the
+                        # same name. Class locals necessarily assume lexical
+                        # precedence over:
+                        # * These classes themselves.
+                        # * Locals defined by higher-level parent classes.
+                        # * Locals defined by closures defining these classes.
+                        func_locals.update(cls_curr_locals)
                     # Else, the decorated callable is *NOT* a method
                     # transitively declared by a root decorated class.
             # In either case, the local scope of the decorated callable has now

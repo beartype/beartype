@@ -304,9 +304,15 @@ def get_func_locals(
     if (
         # The passed callable is dynamically declared in-memory...
         func_module_name is None or
-        # The passed callable is unnested *OR*...
+        # The passed callable is module-scoped rather than nested *OR*...
         not is_func_nested(func)
     ):
+        #FIXME: *INEFFICIENT.* This recreates an empty dictionary each call.
+        #Instead:
+        #* Define a new "DICT_EMPTY = {}" dictionary somewhere. Perhaps in a new
+        #  "beartype._data.datakind" submodule?
+        #* Reference that dictionary below rather than "{}".
+
         # Then silently reduce to a noop by treating this nested callable as
         # module-scoped by preserving "func_locals" as the empty dictionary.
         return {}
