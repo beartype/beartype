@@ -13,6 +13,34 @@ standardized by the :mod:`typing` module.
 
 # ....................{ TODO                               }....................
 #FIXME: Publicly document everything in "README.rst", please. *sigh*
+#
+#This is a great first start on a cheat sheet-style synopsis:
+#
+#    # This is DOOR. It's a Pythonic API providing an object-oriented interface
+#    # to low-level type hints that basically have no interface whatsoever.
+#    >>> from beartype.door import TypeHint
+#    >>> usable_type_hint = TypeHint(int | str | None)
+#    >>> print(usable_type_hint)
+#    TypeHint(int | str | None)
+#    
+#    # DOOR hints can be iterated Pythonically.
+#    >>> for child_hint in usable_type_hint: print(child_hint)
+#    TypeHint(<class 'int'>)
+#    TypeHint(<class 'str'>)
+#    TypeHint(<class 'NoneType'>)
+#    
+#    # DOOR hints support equality Pythonically.
+#    >>> from typing import Union
+#    >>> usable_type_hint == TypeHint(Union[int, str, None])
+#    True  # <-- this is madness.
+#    
+#    # DOOR hints support rich comparisons Pythonically.
+#    >>> usable_type_hint <= TypeHint(int | str | bool | None)
+#    True  # <-- madness continues.
+#    
+#    # DOOR hints are self-caching.
+#    >>> TypeHint(int | str | bool | None) is TypeHint(int | str | bool | None)
+#    True  # <-- blowing minds over here.
 
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

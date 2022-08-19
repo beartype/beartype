@@ -167,12 +167,12 @@ def die_if_unbearable(
     # @beartype-decorated closure raising an
     # "BeartypeCallHintReturnViolation" exception if the parameter passed to
     # this closure violates the hint passed to this parent tester.
-    _die_if_unbearable = _get_type_checker(hint, conf)
+    _check_object = _get_type_checker(hint, conf)
 
     # Attempt to type-check this object by passing this object to this closure,
     # which then implicitly type-checks this object as a return value.
     try:
-        _die_if_unbearable(obj)
+        _check_object(obj)
     # If this closure raises an exception as this object violates this hint...
     except BeartypeCallHintReturnViolation as exception:
         # Exception message.
@@ -258,13 +258,13 @@ def is_bearable(
     # @beartype-decorated closure raising an
     # "BeartypeCallHintReturnViolation" exception if the parameter passed to
     # this closure violates the hint passed to this parent tester.
-    _die_if_unbearable = _get_type_checker(hint, conf)
+    _check_object = _get_type_checker(hint, conf)
 
     # Attempt to...
     try:
         # Type-check this object by passing this object to this closure, which
         # then implicitly type-checks this object as a return value.
-        _die_if_unbearable(obj)
+        _check_object(obj)
 
         # If this closure fails to raise an exception, this object *MUST*
         # necessarily satisfy this hint. In this case, return true.
