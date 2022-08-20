@@ -48,11 +48,11 @@ from beartype._decor._code.codesnip import (
     CODE_INIT_RANDOM_INT,
     CODE_RETURN_UNCHECKED,
     CODE_SIGNATURE,
+    PARAM_KIND_TO_CODE_LOCALIZE,
     PEP484_CODE_CHECK_NORETURN,
 )
 from beartype._decor._code._pep._pephint import pep_code_check_hint
 from beartype._decor._code._pep._pepsnip import (
-    PARAM_KIND_TO_PEP_CODE_LOCALIZE,
     PEP_CODE_CHECK_RETURN_PREFIX,
     PEP_CODE_CHECK_RETURN_SUFFIX,
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
@@ -413,12 +413,12 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             #
             # Since @beartype now supports *ALL* parameter kinds, we safely
             # assume this behaves as expected without additional validation.
-            # PARAM_LOCALIZE_TEMPLATE = PARAM_KIND_TO_PEP_CODE_LOCALIZE[arg_kind]
+            # PARAM_LOCALIZE_TEMPLATE = PARAM_KIND_TO_CODE_LOCALIZE[arg_kind]
 
             #FIXME: Preserved in the event of a new future unsupported parameter kind.
             # Python code template localizing this parameter if this kind of
             # parameter is supported *OR* "None" otherwise.
-            PARAM_LOCALIZE_TEMPLATE = PARAM_KIND_TO_PEP_CODE_LOCALIZE.get(  # type: ignore
+            PARAM_LOCALIZE_TEMPLATE = PARAM_KIND_TO_CODE_LOCALIZE.get(  # type: ignore
                 arg_kind, None)
 
             # If this kind of parameter is unsupported, raise an exception.

@@ -19,9 +19,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # All "FIXME:" comments for this submodule reside in this package's "__init__"
 # submodule to improve maintainability and readability here.
 
-#FIXME: Replace this submodule entirely with the contents of the refactored
-#"_pephintnew" submodule after successfully rewriting the latter.
-
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeDecorHintPepException,
@@ -155,15 +152,10 @@ from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
 from random import getrandbits
 
-# ....................{ CODERS                             }....................
-#FIXME: Attempt to JIT this function with Numba at some point. This will almost
-#certainly either immediately blow up or improve nothing, but we're curious to
-#see what happens. Make it so, Ensign Numba!
-# from numba import jit
-# @jit
-
+# ....................{ MAKERS                             }....................
+#FIXME: Revise docstrings, please.
 @callable_cached
-def pep_code_check_hint(
+def make_expr_is_object_satisfies_hint(
     # ..................{ PARAMS ~ mandatory                 }..................
     hint: object,
 
@@ -191,8 +183,6 @@ def pep_code_check_hint(
 
     # "beartype._decor._code._pep._pepsnip" string globals required only for
     # their bound "str.format" methods.
-    PEP_CODE_HINT_ROOT_SUFFIX_format: Callable = (
-        PEP_CODE_HINT_ROOT_SUFFIX.format),
     PEP_CODE_PITH_ASSIGN_EXPR_format: Callable = (
         PEP_CODE_PITH_ASSIGN_EXPR.format),
     PEP484_CODE_HINT_INSTANCE_format: Callable = (
@@ -229,9 +219,8 @@ def pep_code_check_hint(
         PEP593_CODE_HINT_VALIDATOR_CHILD.format),
 ) -> Tuple[str, LexicalScope, Tuple[str, ...]]:
     '''
-    Python code snippet type-checking the previously localized parameter or
-    return value annotated by the passed PEP-compliant type hint against that
-    hint of the decorated callable.
+    Python code snippet comprising a single boolean expression type-checking
+    an arbitrary object against the passed PEP-compliant type hint.
 
     This code generator is memoized for efficiency.
 
@@ -597,15 +586,10 @@ def pep_code_check_hint(
     # placeholder describing the root hint.
     hint_child_placeholder = _enqueue_hint_child(PITH_ROOT_VAR_NAME)
 
-    #FIXME: *OPTIMIZE THIS.* If one considers it, this should be a constant.
-    #There's *NO* need to recompute this on each function call -- especially
-    #given how expensive string formatting is. Globalize this, please.
-
     # Python code snippet type-checking the root pith against the root hint,
     # localized separately from the "func_wrapper_code" snippet to enable this
     # function to validate this code to be valid *BEFORE* returning this code.
-    func_root_code = (
-        f'{PEP_CODE_HINT_ROOT_PREFIX}{hint_child_placeholder}')
+    func_root_code = hint_child_placeholder
 
     # Python code snippet to be returned, seeded with a placeholder to be
     # replaced on the first iteration of the breadth-first search performed
@@ -1913,42 +1897,154 @@ def pep_code_check_hint(
     # Else, the breadth-first search above successfully generated code.
 
     # ..................{ CODE ~ locals                      }..................
-    # PEP-compliant code snippet passing the value of the random integer
-    # previously generated for the current call to the exception-handling
-    # function call embedded in the "PEP_CODE_HINT_ROOT_SUFFIX" snippet,
-    # defaulting to passing *NO* such integer.
-    func_wrapper_code_random_int_if_any = ''
-
     # If type-checking the root pith requires a pseudo-random integer...
     if is_var_random_int_needed:
-        # Pass this integer to the function raising exceptions.
-        func_wrapper_code_random_int_if_any = (
-            PEP_CODE_HINT_ROOT_SUFFIX_RANDOM_INT)
-
         # Pass the random.getrandbits() function required to generate this
         # integer to this wrapper function as an optional hidden parameter.
         func_wrapper_locals[_ARG_NAME_GETRANDBITS] = getrandbits
 
     # ..................{ CODE ~ suffix                      }..................
-    # Suffix this code by a Python code snippet raising a human-readable
-    # exception when the root pith violates the root type hint.
-    func_wrapper_code += PEP_CODE_HINT_ROOT_SUFFIX_format(
-        random_int_if_any=func_wrapper_code_random_int_if_any)
+    # Tuple of the unqualified classnames referred to by all relative forward
+    # references visitable from this hint converted from that set to reduce
+    # space consumption after memoization by @callable_cached, defined as...
+    hint_forwardrefs_class_basename_tuple = (
+        # If *NO* relative forward references are visitable from this root
+        # hint, the empty tuple;
+        ()
+        if hint_forwardrefs_class_basename is None else
+        # Else, that set converted into a tuple.
+        tuple(hint_forwardrefs_class_basename)
+    )
 
     # Return all metadata required by higher-level callers.
     return (
         func_wrapper_code,
         func_wrapper_locals,
-        # Tuple of the unqualified classnames referred to by all relative
-        # forward references visitable from this hint converted from that set
-        # to reduce space consumption after memoization by @callable_cached,
-        # defined as either...
-        (
-            # If *NO* relative forward references are visitable from this root
-            # hint, the empty tuple;
-            ()
-            if hint_forwardrefs_class_basename is None else
-            # Else, that set converted into a tuple.
-            tuple(hint_forwardrefs_class_basename)
-        ),
+        hint_forwardrefs_class_basename_tuple,
+    )
+
+# ....................{ CODERS                             }....................
+#FIXME: Attempt to JIT this function with Numba at some point. This will almost
+#certainly either immediately blow up or improve nothing, but we're curious to
+#see what happens. Make it so, Ensign Numba!
+# from numba import jit
+# @jit
+
+#FIXME: Define a companion make_code_is_object_satisfies_hint(), please.
+#FIXME: Revise docstring, please.
+@callable_cached
+def make_code_die_unless_object_satisfies_hint(
+    hint: object) -> Tuple[str, LexicalScope, Tuple[str, ...]]:
+    '''
+    Python code snippet type-checking the previously localized parameter or
+    return value annotated by the passed PEP-compliant type hint against that
+    hint of the decorated callable.
+
+    This code generator is memoized for efficiency.
+
+    Caveats
+    ----------
+    **This function intentionally accepts no** ``exception_prefix`` **parameter.**
+    Why? Since that parameter is typically specific to the caller, accepting
+    that parameter would effectively prevent this code generator from memoizing
+    the passed hint with the returned code, which would rather defeat the
+    point. Instead, this function only:
+
+    * Returns generic non-working code containing the placeholder
+      :attr:`beartype._decor._code._pep.pepcode.PITH_ROOT_NAME_PLACEHOLDER_STR`
+      substring that the caller is required to globally replace by the name of
+      the current parameter *or* ``return`` for return values (e.g., by calling
+      the builtin :meth:`str.replace` method) to generate the desired
+      non-generic working code type-checking that parameter or return value.
+    * Raises generic non-human-readable exceptions containing the placeholder
+      :attr:`beartype._util.error.utilerror.EXCEPTION_PLACEHOLDER`
+      substring that the caller is required to explicitly catch and raise
+      non-generic human-readable exceptions from by calling the
+      :func:`beartype._util.error.utilerror.reraise_exception_placeholder`
+      function.
+
+    Parameters
+    ----------
+    hint : object
+        PEP-compliant type hint to be type-checked.
+
+    Returns
+    ----------
+    Tuple[str, LexicalScope, Tuple[str, ...]]
+        3-tuple ``(func_wrapper_code, func_wrapper_locals,
+        hint_forwardrefs_class_basename)``, where:
+
+        * ``func_wrapper_code`` is a Python code snippet type-checking the
+          previously localized parameter or return value against this hint.
+        * ``func_wrapper_locals`` is the **local scope** (i.e., dictionary
+          mapping from the name to value of each attribute referenced in the
+          signature) of this wrapper function needed for this type-checking.
+        * ``hint_forwardrefs_class_basename`` is a tuple of the unqualified
+          classnames of :pep:`484`-compliant relative forward references
+          visitable from this root hint (e.g., ``('MuhClass', 'YoClass')``
+          given the root hint ``Union['MuhClass', List['YoClass']]``).
+
+    Raises
+    ----------
+    BeartypeDecorHintPepException
+        If this object is *not* a PEP-compliant type hint.
+    BeartypeDecorHintPepUnsupportedException
+        If this object is a PEP-compliant type hint currently unsupported by
+        the :func:`beartype.beartype` decorator.
+    BeartypeDecorHintPep484Exception
+        If one or more PEP-compliant type hints visitable from this object are
+        nested :attr:`typing.NoReturn` child hints, since
+        :attr:`typing.NoReturn` is valid *only* as a non-nested return hint.
+    BeartypeDecorHintPep593Exception
+        If one or more PEP-compliant type hints visitable from this object
+        subscript the :pep:`593`-compliant :class:`typing.Annotated` class such
+        that:
+
+        * The second argument subscripting that class is an instance of the
+          :class:`beartype.vale.Is` class.
+        * One or more further arguments subscripting that class are *not*
+          instances of the :class:`beartype.vale.Is` class.
+
+    Warns
+    ----------
+    BeartypeDecorHintPep585DeprecationWarning
+        If one or more :pep:`484`-compliant type hints visitable from this
+        object have been deprecated by :pep:`585`.
+    '''
+
+    # Python code snippet comprising a single boolean expression type-checking
+    # an arbitrary object against this hint.
+    (
+        func_wrapper_code_expr,
+        func_wrapper_locals,
+        hint_forwardrefs_class_basename,
+    ) = make_expr_is_object_satisfies_hint(hint)
+
+    # PEP-compliant code snippet passing the value of the random integer
+    # previously generated for the current call to the exception-handling
+    # function call embedded in the "PEP_CODE_HINT_ROOT_SUFFIX" snippet,
+    # defaulting to passing *NO* such integer.
+    func_wrapper_code_random_int_if_any = (
+        PEP_CODE_HINT_ROOT_SUFFIX_RANDOM_INT
+        if ARG_NAME_GETRANDBITS in func_wrapper_locals else
+        ''
+    )
+
+    # Suffix this code by a Python code snippet raising a human-readable
+    # exception when the root pith violates the root type hint.
+    func_wrapper_code_suffix = PEP_CODE_HINT_ROOT_SUFFIX.format(
+        random_int_if_any=func_wrapper_code_random_int_if_any)
+
+    # Python code snippet type-checking the root pith against the root hint.
+    func_wrapper_code = (
+        f'{PEP_CODE_HINT_ROOT_PREFIX}'
+        f'{func_wrapper_code_expr}'
+        f'{func_wrapper_code_suffix}'
+    )
+
+    # Return all metadata required by higher-level callers.
+    return (
+        func_wrapper_code,
+        func_wrapper_locals,
+        hint_forwardrefs_class_basename,
     )
