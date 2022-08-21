@@ -32,14 +32,13 @@ from beartype._cave._cavefast import (
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
 )
-from beartype._cave._cavemap import NoneTypeOr
+from beartype._conf import BeartypeConf
 from beartype._data.datatyping import (
     BeartypeableT,
     TypeWarning,
 )
 from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
-from beartype._conf import BeartypeConf
-from beartype._decor._code.codemain import generate_code
+from beartype._decor._wrapper.wrappermain import generate_code
 from beartype._decor._decorcall import BeartypeCall
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,

@@ -532,7 +532,7 @@ decorator generates deeply type-checking code).
 
 This set contains *every* sign explicitly supported by one or more conditional
 branches in the body of the
-:func:`beartype._decor._code._pep._pephint.pep_code_check_hint` function
+:func:`beartype._check._expr.exprcode.make_func_wrapper_code` function
 generating code deeply type-checking the current pith against the PEP-compliant
 type hint annotated by a subscription of that attribute.
 '''

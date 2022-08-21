@@ -90,8 +90,7 @@ ArgMeta = Tuple[ArgKind, str, object]
 '''
 PEP-compliant type hint matching each 3-tuple ``(arg_kind, arg_name,
 default_value_or_mandatory)`` iteratively yielded by the :func:`iter_func_args`
-generator for each parameter accepted by the passed pure-Python callable,
-where:
+generator for each parameter accepted by the passed pure-Python callable, where:
 
 * ``arg_kind`` is this parameter's **kind** (i.e., :class:`ArgKind` enumeration
   member conveying this parameter's syntactic class, constraining how the

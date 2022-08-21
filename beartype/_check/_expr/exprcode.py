@@ -4,13 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator PEP-compliant type-checking code generator.**
-
-This private submodule dynamically generates pure-Python code type-checking
-arbitrary **PEP-compliant type hints** (i.e., :mod:`beartype`-agnostic
-annotations compliant with annotation-centric PEPs) of the decorated callable
-with a breadth-first search over the abstract graph of nested objects reachable
-from the subscripted arguments of these hints.
+**Beartype type-checking code factories** (i.e., low-level callables dynamically
+generating pure-Python code snippets type-checking arbitrary objects against
+PEP-compliant type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -19,21 +15,16 @@ This private submodule is *not* intended for importation by downstream callers.
 # All "FIXME:" comments for this submodule reside in this package's "__init__"
 # submodule to improve maintainability and readability here.
 
-#FIXME: Replace this submodule entirely with the contents of the refactored
-#"_pephintnew" submodule after successfully rewriting the latter.
-
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep593Exception,
 )
-from beartype.typing import (
-    Optional,
-    Tuple,
-)
+from beartype.typing import Optional
 from beartype._cave._cavefast import TestableTypes
-from beartype._decor._code.codemagic import (
+from beartype._data.datatyping import CodeGenerated
+from beartype._decor._wrapper.wrappermagic import (
     EXCEPTION_PREFIX,
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     EXCEPTION_PREFIX_HINT,
@@ -41,23 +32,20 @@ from beartype._decor._code.codemagic import (
     VAR_NAME_PREFIX_PITH,
     VAR_NAME_PITH_ROOT as PITH_ROOT_VAR_NAME,
 )
-from beartype._decor._code._pep._pepmagic import (
+from beartype._check._expr._exprmagic import (
     HINT_META_INDEX_HINT,
     HINT_META_INDEX_PLACEHOLDER,
     HINT_META_INDEX_PITH_EXPR,
     HINT_META_INDEX_PITH_VAR_NAME,
     HINT_META_INDEX_INDENT,
 )
-from beartype._decor._code._pep._pepscope import (
+from beartype._check._expr._exprscope import (
     add_func_scope_type,
     add_func_scope_types,
     add_func_scope_type_or_types,
     express_func_scope_type_forwardref,
 )
-from beartype._decor._code._pep._pepsnip import (
-    PEP_CODE_HINT_ROOT_PREFIX,
-    PEP_CODE_HINT_ROOT_SUFFIX,
-    PEP_CODE_HINT_ROOT_SUFFIX_RANDOM_INT,
+from beartype._check._expr._exprsnip import (
     PEP_CODE_HINT_CHILD_PLACEHOLDER_PREFIX,
     PEP_CODE_HINT_CHILD_PLACEHOLDER_SUFFIX,
     PEP_CODE_PITH_ASSIGN_EXPR,
@@ -155,7 +143,7 @@ from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
 from random import getrandbits
 
-# ....................{ CODERS                             }....................
+# ....................{ MAKERS                             }....................
 #FIXME: Attempt to JIT this function with Numba at some point. This will almost
 #certainly either immediately blow up or improve nothing, but we're curious to
 #see what happens. Make it so, Ensign Numba!
@@ -163,7 +151,7 @@ from random import getrandbits
 # @jit
 
 @callable_cached
-def pep_code_check_hint(
+def make_check_expr(
     # ..................{ PARAMS ~ mandatory                 }..................
     hint: object,
 
@@ -172,7 +160,7 @@ def pep_code_check_hint(
     # lookup as local attributes. Yes, this is an absurd microoptimization.
     # *fight me, github developer community*
 
-    # "beartype._decor._code.codemagic" globals.
+    # "beartype._decor._wrapper.wrappermagic" globals.
     _ARG_NAME_GETRANDBITS=ARG_NAME_GETRANDBITS,
     _CODE_INDENT_1=CODE_INDENT_1,
     _CODE_INDENT_2=CODE_INDENT_2,
@@ -180,7 +168,7 @@ def pep_code_check_hint(
     _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     _EXCEPTION_PREFIX_HINT=EXCEPTION_PREFIX_HINT,
 
-    # "beartype._decor._code._pep._pepmagic" globals.
+    # "beartype._check._expr._exprmagic" globals.
     _HINT_META_INDEX_HINT=HINT_META_INDEX_HINT,
     _HINT_META_INDEX_PLACEHOLDER=HINT_META_INDEX_PLACEHOLDER,
     _HINT_META_INDEX_PITH_EXPR=HINT_META_INDEX_PITH_EXPR,
@@ -189,10 +177,8 @@ def pep_code_check_hint(
     _LINE_RSTRIP_INDEX_AND=LINE_RSTRIP_INDEX_AND,
     _LINE_RSTRIP_INDEX_OR=LINE_RSTRIP_INDEX_OR,
 
-    # "beartype._decor._code._pep._pepsnip" string globals required only for
+    # "beartype._check._expr._exprsnip" string globals required only for
     # their bound "str.format" methods.
-    PEP_CODE_HINT_ROOT_SUFFIX_format: Callable = (
-        PEP_CODE_HINT_ROOT_SUFFIX.format),
     PEP_CODE_PITH_ASSIGN_EXPR_format: Callable = (
         PEP_CODE_PITH_ASSIGN_EXPR.format),
     PEP484_CODE_HINT_INSTANCE_format: Callable = (
@@ -227,24 +213,33 @@ def pep_code_check_hint(
         PEP593_CODE_HINT_VALIDATOR_SUFFIX.format),
     PEP593_CODE_HINT_VALIDATOR_CHILD_format: Callable = (
         PEP593_CODE_HINT_VALIDATOR_CHILD.format),
-) -> Tuple[str, LexicalScope, Tuple[str, ...]]:
+) -> CodeGenerated:
     '''
-    Python code snippet type-checking the previously localized parameter or
-    return value annotated by the passed PEP-compliant type hint against that
-    hint of the decorated callable.
+    **Type-checking expression factory** (i.e., low-level callable dynamically
+    generating a pure-Python boolean expression type-checking an arbitrary
+    object against the passed PEP-compliant type hint).
 
-    This code generator is memoized for efficiency.
+    This code factory performs a breadth-first search (BFS) over the abstract
+    graph of nested type hints reachable from the subscripted arguments of the
+    passed root type hint. For each such (possibly nested) hint, this factory
+    embeds one or more boolean subexpressions validating a (possibly nested
+    sub)object of an arbitrary object against that hint into the full boolean
+    expression created and returned by this factory. In short, this factory is
+    the beating heart of :mod:`beartype`. We applaud you for your perseverance.
+    You finally found the essence of the Great Bear. You did it!! Now, we clap.
+
+    This code factory is memoized for efficiency. 
 
     Caveats
     ----------
-    **This function intentionally accepts no** ``exception_prefix`` **parameter.**
-    Why? Since that parameter is typically specific to the caller, accepting
-    that parameter would effectively prevent this code generator from memoizing
-    the passed hint with the returned code, which would rather defeat the
-    point. Instead, this function only:
+    **This factory intentionally accepts no** ``exception_prefix``
+    **parameter.** Why? Since that parameter is typically specific to the
+    caller, accepting that parameter would prevent this factory from memoizing
+    the passed hint with the returned code, which would rather defeat the point.
+    Instead, this factory only:
 
     * Returns generic non-working code containing the placeholder
-      :attr:`beartype._decor._code._pep.pepcode.PITH_ROOT_NAME_PLACEHOLDER_STR`
+      :attr:`beartype._check._expr.pepcode.PITH_ROOT_NAME_PLACEHOLDER_STR`
       substring that the caller is required to globally replace by the name of
       the current parameter *or* ``return`` for return values (e.g., by calling
       the builtin :meth:`str.replace` method) to generate the desired
@@ -256,6 +251,7 @@ def pep_code_check_hint(
       :func:`beartype._util.error.utilerror.reraise_exception_placeholder`
       function.
 
+
     Parameters
     ----------
     hint : object
@@ -263,19 +259,10 @@ def pep_code_check_hint(
 
     Returns
     ----------
-    Tuple[str, LexicalScope, Tuple[str, ...]]
-        3-tuple ``(func_wrapper_code, func_wrapper_locals,
-        hint_forwardrefs_class_basename)``, where:
-
-        * ``func_wrapper_code`` is a Python code snippet type-checking the
-          previously localized parameter or return value against this hint.
-        * ``func_wrapper_locals`` is the **local scope** (i.e., dictionary
-          mapping from the name to value of each attribute referenced in the
-          signature) of this wrapper function needed for this type-checking.
-        * ``hint_forwardrefs_class_basename`` is a tuple of the unqualified
-          classnames of :pep:`484`-compliant relative forward references
-          visitable from this root hint (e.g., ``('MuhClass', 'YoClass')``
-          given the root hint ``Union['MuhClass', List['YoClass']]``).
+    CodeGenerated
+        Tuple containing the Python code snippet dynamically generated by this
+        code generator and metadata describing that code. See the
+        :attr:`beartype._data.datatyping.CodeGenerated` type hint for details.
 
     Raises
     ----------
@@ -502,7 +489,7 @@ def pep_code_check_hint(
 
     # True only if one or more PEP-compliant type hints visitable from this
     # root hint require a pseudo-random integer. If true, the higher-level
-    # beartype._decor._code.codemain.generate_code() function prefixes the body
+    # beartype._decor._wrapper.wrappermain.generate_code() function prefixes the body
     # of this wrapper function with code generating such an integer.
     is_var_random_int_needed = False
 
@@ -597,15 +584,10 @@ def pep_code_check_hint(
     # placeholder describing the root hint.
     hint_child_placeholder = _enqueue_hint_child(PITH_ROOT_VAR_NAME)
 
-    #FIXME: *OPTIMIZE THIS.* If one considers it, this should be a constant.
-    #There's *NO* need to recompute this on each function call -- especially
-    #given how expensive string formatting is. Globalize this, please.
-
     # Python code snippet type-checking the root pith against the root hint,
     # localized separately from the "func_wrapper_code" snippet to enable this
     # function to validate this code to be valid *BEFORE* returning this code.
-    func_root_code = (
-        f'{PEP_CODE_HINT_ROOT_PREFIX}{hint_child_placeholder}')
+    func_root_code = hint_child_placeholder
 
     # Python code snippet to be returned, seeded with a placeholder to be
     # replaced on the first iteration of the breadth-first search performed
@@ -641,7 +623,7 @@ def pep_code_check_hint(
         # otherwise (i.e., if this hint is irreducible).
         #
         # Note that the root hint has already been permanently sanified by the
-        # calling "beartype._decor._code.codemain" submodule and thus need
+        # calling "beartype._decor._wrapper.wrappermain" submodule and thus need
         # *NOT* be inefficiently resanified here.
         if hints_meta_index_curr:
             hint_curr = sanify_hint_child(
@@ -1913,42 +1895,28 @@ def pep_code_check_hint(
     # Else, the breadth-first search above successfully generated code.
 
     # ..................{ CODE ~ locals                      }..................
-    # PEP-compliant code snippet passing the value of the random integer
-    # previously generated for the current call to the exception-handling
-    # function call embedded in the "PEP_CODE_HINT_ROOT_SUFFIX" snippet,
-    # defaulting to passing *NO* such integer.
-    func_wrapper_code_random_int_if_any = ''
-
     # If type-checking the root pith requires a pseudo-random integer...
     if is_var_random_int_needed:
-        # Pass this integer to the function raising exceptions.
-        func_wrapper_code_random_int_if_any = (
-            PEP_CODE_HINT_ROOT_SUFFIX_RANDOM_INT)
-
         # Pass the random.getrandbits() function required to generate this
         # integer to this wrapper function as an optional hidden parameter.
         func_wrapper_locals[_ARG_NAME_GETRANDBITS] = getrandbits
 
     # ..................{ CODE ~ suffix                      }..................
-    # Suffix this code by a Python code snippet raising a human-readable
-    # exception when the root pith violates the root type hint.
-    func_wrapper_code += PEP_CODE_HINT_ROOT_SUFFIX_format(
-        random_int_if_any=func_wrapper_code_random_int_if_any)
+    # Tuple of the unqualified classnames referred to by all relative forward
+    # references visitable from this hint converted from that set to reduce
+    # space consumption after memoization by @callable_cached, defined as...
+    hint_forwardrefs_class_basename_tuple = (
+        # If *NO* relative forward references are visitable from this root
+        # hint, the empty tuple;
+        ()
+        if hint_forwardrefs_class_basename is None else
+        # Else, that set converted into a tuple.
+        tuple(hint_forwardrefs_class_basename)
+    )
 
     # Return all metadata required by higher-level callers.
     return (
         func_wrapper_code,
         func_wrapper_locals,
-        # Tuple of the unqualified classnames referred to by all relative
-        # forward references visitable from this hint converted from that set
-        # to reduce space consumption after memoization by @callable_cached,
-        # defined as either...
-        (
-            # If *NO* relative forward references are visitable from this root
-            # hint, the empty tuple;
-            ()
-            if hint_forwardrefs_class_basename is None else
-            # Else, that set converted into a tuple.
-            tuple(hint_forwardrefs_class_basename)
-        ),
+        hint_forwardrefs_class_basename_tuple,
     )

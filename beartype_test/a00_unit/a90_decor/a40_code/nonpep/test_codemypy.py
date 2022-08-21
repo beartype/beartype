@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,17 +9,16 @@
 This submodule unit tests the :func:`beartype.beartype` decorator with respect
 to :mod:`mypy`-compliant type hints (i.e., type hints that are *not* explicitly
 PEP-compliant but are effectively PEP-compliant due to being accepted by
-:mod:`mypy`, the de-facto type-hinting standard).
+:mod:`mypy`, the *de facto* type-hinting standard).
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.pytroar import raises_uncached
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ decor : no_type_check     }....................
+# ....................{ TESTS                              }....................
 def test_decor_mypy_notimplemented() -> None:
     '''
     Test the :func:`beartype.beartype` decorator against :mod:`mypy` compliant
@@ -27,16 +26,21 @@ def test_decor_mypy_notimplemented() -> None:
     permissible *only* as an unsubscripted return annotation of binary dunder
     methods.
     '''
+
+    # ..................{ IMPORTS                            }..................
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintReturnViolation
+    from beartype_test.util.pytroar import raises_uncached
 
+    # ..................{ LOCALS                             }..................
     # Without this, the forward reference in the return type of
     # TheCloud.__add__ (below) will fail because bear desperately yearns to
     # find it at the module level. And who are we to be so cruel as to hide the
     # object of her desires any more deeply than that?
     global TheCloud
 
+    # ..................{ CLASSES                            }..................
     class TheCloud:
         '''
         Arbitrary class declaring a method exercising this test.
@@ -97,6 +101,7 @@ def test_decor_mypy_notimplemented() -> None:
     the_seas    = TheCloud()
     the_streams = TheCloud()
 
+    # ..................{ ASSERTS                            }..................
     # Assert each instance compares equal to itself.
     assert the_seas    == the_seas
     assert the_streams == the_streams

@@ -21,7 +21,7 @@ from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf import BeartypeConf
 from beartype._data.datatyping import LexicalScope
-from beartype._decor._code.codemagic import (
+from beartype._decor._wrapper.wrappermagic import (
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
 )
@@ -59,9 +59,9 @@ class BeartypeCall(object):
     ----------
     **This object cannot be used to communicate state between low-level
     memoized callables** (e.g.,
-    :func:`beartype._decor._code._pep._pephint.pep_code_check_hint`) **and
+    :func:`beartype._check._expr.exprcode.make_func_wrapper_code`) **and
     higher-level callables** (e.g.,
-    :func:`beartype._decor._code.codemain.generate_code`). Instead, memoized
+    :func:`beartype._decor._wrapper.wrappermain.generate_code`). Instead, memoized
     callables *must* return that state as additional return values up the call
     stack to those higher-level callables. By definition, memoized callables
     are *not* recalled on subsequent calls passed the same parameters. Since
@@ -348,6 +348,11 @@ class BeartypeCall(object):
         # parameters unconditionally required by *ALL* wrapper functions.
         self.func_wrapper_locals.clear()
         self.func_wrapper_locals[ARG_NAME_FUNC] = func
+
+        #FIXME: Non-ideal. This should *NOT* be set here but rather in the
+        #lower-level code generating factory function that actually embeds the
+        #call to this function (e.g.,
+        #beartype._check._checkcode.make_func_code()).
         self.func_wrapper_locals[ARG_NAME_RAISE_EXCEPTION] = (
             get_beartype_violation)
 

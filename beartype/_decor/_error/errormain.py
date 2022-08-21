@@ -21,7 +21,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #generalization, the most reasonable *BY FAR* is probably to:
 #
 #* Embed additional assignment expressions in the type-checking tests generated
-#  by the pep_code_check_hint() function that uniquely store the value of each
+#  by the make_func_wrapper_code() function that uniquely store the value of each
 #  item, key, or value returned by each access of a non-indexable container
 #  iterator into a new unique local variable. Note this unavoidably requires:
 #  * Adding a new index to the "hint_curr_meta" tuples internally created by
@@ -160,7 +160,7 @@ def get_beartype_violation(
     runtime type-checkers, each complementing the other by providing
     functionality unsuited for the other. These are:
 
-    * The :mod:`beartype._decor._code._pep` submodule, dynamically generating
+    * The :mod:`beartype._check._expr` submodule, dynamically generating
       optimized PEP-compliant runtime type-checking code embedded in the body
       of the wrapper function wrapping the decorated callable. For both
       efficiency and maintainability, that code only tests whether or not a

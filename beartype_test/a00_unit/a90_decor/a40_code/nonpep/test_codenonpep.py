@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,19 +11,17 @@ to **PEP-noncompliant type hints** (i.e., :mod:`beartype`-specific annotations
 *not* compliant with annotation-centric PEPs).
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.pytroar import raises_uncached
-from pytest import raises
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: Define new unit tests exercising:
 #* Python >= 3.8-specific keyword-only parameters.
 
-# ....................{ TESTS ~ pass : param : kind       }....................
+# ....................{ TESTS ~ pass : param : kind        }....................
 def test_nonpep_param_kind_positional_or_keyword_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator for a
@@ -85,6 +83,7 @@ def test_nonpep_param_kind_variadic_fail() -> None:
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
+    from pytest import raises
 
     # Decorated callable to be exercised.
     @beartype
@@ -98,7 +97,7 @@ def test_nonpep_param_kind_variadic_fail() -> None:
         imperium_of_man(
             'Legiones Astartes', 30, 31, 36, 'M41', primarch='Leman Russ')
 
-# ....................{ TESTS ~ pass : param : type       }....................
+# ....................{ TESTS ~ pass : param : type        }....................
 def test_nonpep_pass_param_tuple() -> None:
     '''
     Test type-checking for a function call successfully passed a parameter
@@ -142,7 +141,7 @@ def test_nonpep_pass_param_custom() -> None:
         'Troglydium hruddi', delphic_plague=CustomTestStr('Delphic Sink')) == (
         'Troglydium hruddiDelphic Sink')
 
-# ....................{ TESTS ~ fail : param : call       }....................
+# ....................{ TESTS ~ fail : param : call        }....................
 def test_nonpep_fail_param_call_tuple() -> None:
     '''
     Test type-checking for a function call unsuccessfully passed a parameter
@@ -152,6 +151,7 @@ def test_nonpep_fail_param_call_tuple() -> None:
     # Import this decorator.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
+    from pytest import raises
 
     # Annotated function to be type-checked.
     @beartype
@@ -163,7 +163,7 @@ def test_nonpep_fail_param_call_tuple() -> None:
     with raises(BeartypeCallHintParamViolation):
         eldar('Mother of the Eldar', 100.100)
 
-# ....................{ TESTS ~ fail : param : hint       }....................
+# ....................{ TESTS ~ fail : param : hint        }....................
 def test_nonpep_param_hint_invalid_fail() -> None:
     '''
     Test type-checking for a function with a parameter annotated with a type
@@ -173,6 +173,7 @@ def test_nonpep_param_hint_invalid_fail() -> None:
     # Import this decorator.
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintNonpepException
+    from beartype_test.util.pytroar import raises_uncached
 
     # Assert that type-checking a function with an integer parameter annotation
     # raises the expected exception.
@@ -181,7 +182,7 @@ def test_nonpep_param_hint_invalid_fail() -> None:
         def nurgle(nurgling: str, great_unclean_one: 0x8BADF00D) -> str:
             return nurgling + str(great_unclean_one)
 
-# ....................{ TESTS ~ fail : return             }....................
+# ....................{ TESTS ~ fail : return              }....................
 def test_nonpep_fail_return_call() -> None:
     '''
     Test type-checking for a function call unsuccessfully returning a value
@@ -191,6 +192,7 @@ def test_nonpep_fail_return_call() -> None:
     # Import this decorator.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintReturnViolation
+    from pytest import raises
 
     # Annotated function to be type-checked.
     @beartype
@@ -212,6 +214,7 @@ def test_nonpep_fail_return_hint_nonpep() -> None:
     # Import this decorator.
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintNonpepException
+    from beartype_test.util.pytroar import raises_uncached
 
     # Assert the expected exception from attempting to type-check a function
     # with a return annotation that is *NOT* a supported type.

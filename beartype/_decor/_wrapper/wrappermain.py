@@ -38,26 +38,26 @@ from beartype._decor._cache.cachetype import (
     register_typistry_forwardref,
 )
 from beartype._decor._decorcall import BeartypeCall
-from beartype._decor._code.codemagic import (
+from beartype._check._expr._exprsnip import (
+    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
+    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
+)
+from beartype._decor._wrapper._wrappercode import make_func_wrapper_code
+from beartype._decor._wrapper.wrappermagic import (
     ARG_NAME_GETRANDBITS,
     ARG_NAME_TYPISTRY,
     EXCEPTION_PREFIX,
 )
-from beartype._decor._code.codesnip import (
+from beartype._decor._wrapper.wrappersnip import (
     CODE_INIT_ARGS_LEN,
     CODE_INIT_RANDOM_INT,
+    CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
+    CODE_RETURN_CHECK_PREFIX,
+    CODE_RETURN_CHECK_SUFFIX,
     CODE_RETURN_UNCHECKED,
     CODE_SIGNATURE,
     PARAM_KIND_TO_CODE_LOCALIZE,
     PEP484_CODE_CHECK_NORETURN,
-)
-from beartype._decor._code._pep._pephint import pep_code_check_hint
-from beartype._decor._code._pep._pepsnip import (
-    PEP_CODE_CHECK_RETURN_PREFIX,
-    PEP_CODE_CHECK_RETURN_SUFFIX,
-    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
-    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
-    PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
 )
 from beartype._util.error.utilerror import reraise_exception_placeholder
 from beartype._util.func.arg.utilfuncargiter import (
@@ -130,7 +130,7 @@ callables).
 def generate_code(
     bear_call: BeartypeCall,
 
-    # "beartype._decor._code.codesnip" string globals required only for their
+    # "beartype._decor._wrapper.wrappersnip" string globals required only for their
     # bound "str.format" methods.
     CODE_RETURN_UNCHECKED_format: Callable = CODE_RETURN_UNCHECKED.format,
 ) -> str:
@@ -332,8 +332,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
     #generate callable-specific wrapper signatures.
 
     # For the name of each parameter accepted by this callable and the
-    # "ParameterMeta" object describing this parameter (in declaration
-    # order)...
+    # "ParameterMeta" object describing this parameter (in declaration order)...
     for arg_index, arg_meta in enumerate(iter_func_args(
         # Possibly lowest-level wrappee underlying the possibly
         # higher-level wrapper currently being decorated by the @beartype
@@ -375,11 +374,13 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 continue
             # Else, this parameter is non-ignorable.
 
-            # PEP-compliant type hint converted from this PEP-noncompliant type
-            # hint if this hint is PEP-noncompliant, this hint as is if this
-            # hint is both PEP-compliant and supported, *OR* raise an exception
-            # otherwise (i.e., if this hint is neither PEP-noncompliant nor a
-            # supported PEP-compliant hint).
+            # Either:
+            # * If this hint is PEP-noncompliant, the PEP-compliant type hint
+            #   converted from this PEP-noncompliant type hint.
+            # * Else if this hint is both PEP-compliant and supported, this hint
+            #   as is.
+            # * Else, raise an exception (i.e., if this hint is neither
+            #   PEP-noncompliant nor a supported PEP-compliant hint).
             #
             # Do this first *BEFORE* passing this hint to any further callables.
             hint = sanify_hint_root(
@@ -439,9 +440,9 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 code_param_check_pith,
                 func_wrapper_locals,
                 hint_forwardrefs_class_basename,
-            ) = pep_code_check_hint(hint)
+            ) = make_func_wrapper_code(hint)
 
-            # Merge the local scope required to type-check this parameter into the
+            # Merge the local scope required to check this parameter into the
             # local scope currently required by the current wrapper function.
             update_mapping(bear_call.func_wrapper_locals, func_wrapper_locals)
 
@@ -450,7 +451,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 arg_name=arg_name, arg_index=arg_index)
 
             # Unmemoize this snippet against the current parameter.
-            code_param_check = _unmemoize_pep_code(
+            code_param_check = _unmemoize_func_wrapper_code(
                 bear_call=bear_call,
                 func_wrapper_code=code_param_check_pith,
                 pith_repr=repr(arg_name),
@@ -553,8 +554,8 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
         hint = reduce_hint_pep484585_func_return(
             func=bear_call.func_wrappee, exception_prefix=EXCEPTION_PREFIX)
 
-        # If this is the PEP 484-compliant "typing.NoReturn" type hint
-        # permitted *ONLY* as a return annotation...
+        # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
+        # *ONLY* as a return annotation...
         if hint is NoReturn:
             # Default this snippet to a pre-generated snippet validating this
             # callable to *NEVER* successfully return. Yup!
@@ -562,11 +563,15 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                 func_call_prefix=bear_call.func_wrapper_code_call_prefix)
         # Else, this is *NOT* "typing.NoReturn". In this case...
         else:
-            # PEP-compliant type hint converted from this PEP-noncompliant type
-            # hint if this hint is PEP-noncompliant, this hint as is if this
-            # hint is both PEP-compliant and supported, *OR* raise an exception
-            # otherwise (i.e., if this hint is neither PEP-noncompliant nor a
-            # supported PEP-compliant hint).
+            # Either:
+            # * If this hint is PEP-noncompliant, the PEP-compliant type hint
+            #   converted from this PEP-noncompliant type hint.
+            # * Else if this hint is both PEP-compliant and supported, this hint
+            #   as is.
+            # * Else, raise an exception (i.e., if this hint is neither
+            #   PEP-noncompliant nor a supported PEP-compliant hint).
+            #
+            # Do this first *BEFORE* passing this hint to any further callables.
             hint = sanify_hint_root(
                 hint=hint,
                 func=bear_call.func_wrappee,
@@ -578,7 +583,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
             # snippet type-checking this return against this hint.
             if not is_hint_ignorable(hint):
                 # Empty tuple, passed below to satisfy the
-                # _unmemoize_pep_code() API.
+                # _unmemoize_func_wrapper_code() API.
                 hint_forwardrefs_class_basename = ()
 
                 # Generate a memoized parameter-agnostic code snippet
@@ -587,7 +592,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                     code_return_check_pith,
                     func_wrapper_locals,
                     hint_forwardrefs_class_basename,
-                ) = pep_code_check_hint(hint)
+                ) = make_func_wrapper_code(hint)
 
                 # Merge the local scope required to type-check this return into
                 # the local scope currently required by the current wrapper
@@ -596,7 +601,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                     bear_call.func_wrapper_locals, func_wrapper_locals)
 
                 # Unmemoize this snippet against this return.
-                code_return_check_pith_unmemoized = _unmemoize_pep_code(
+                code_return_check_pith_unmemoized = _unmemoize_func_wrapper_code(
                     bear_call=bear_call,
                     func_wrapper_code=code_return_check_pith,
                     pith_repr=_RETURN_REPR,
@@ -605,17 +610,18 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                 )
 
                 # Python code snippet type-checking this return.
-                code_return_check_prefix = PEP_CODE_CHECK_RETURN_PREFIX.format(
+                code_return_check_prefix = CODE_RETURN_CHECK_PREFIX.format(
                     func_call_prefix=bear_call.func_wrapper_code_call_prefix)
 
                 # Return a Python code snippet:
-                # * Calling the decorated callable and localize its return *AND*...
+                # * Calling the decorated callable and localize its return
+                #   *AND*...
                 # * Type-checking this return *AND*...
                 # * Returning this return from this wrapper function.
                 func_wrapper_code = (
                     f'{code_return_check_prefix}'
                     f'{code_return_check_pith_unmemoized}'
-                    f'{PEP_CODE_CHECK_RETURN_SUFFIX}'
+                    f'{CODE_RETURN_CHECK_SUFFIX}'
                 )
             # Else, this PEP-compliant hint is ignorable.
             # if not func_wrapper_code: print(f'Ignoring {bear_call.func_name} return hint {repr(hint)}...')
@@ -633,13 +639,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
     return func_wrapper_code
 
 # ....................{ PRIVATE ~ return                   }....................
-def _make_func_wrapper_signature(
-    bear_call: BeartypeCall,
-
-    # "beartype._decor._code.codesnip" string globals required only for their
-    # bound "str.format" methods.
-    CODE_SIGNATURE_format: Callable = CODE_SIGNATURE.format,
-) -> str:
+def _make_func_wrapper_signature(bear_call: BeartypeCall) -> str:
     '''
     Create and return the **signature** (i.e., callable declaration prefixing
     the body of that callable) of the decorated callable.
@@ -693,7 +693,7 @@ def _make_func_wrapper_signature(
         )
 
     # Python code snippet declaring the signature of this wrapper.
-    code_signature = CODE_SIGNATURE_format(
+    code_signature = CODE_SIGNATURE.format(
         func_wrapper_prefix=bear_call.func_wrapper_code_signature_prefix,
         func_wrapper_name=bear_call.func_wrapper_name,
         func_wrapper_params=code_signature_args,
@@ -701,8 +701,7 @@ def _make_func_wrapper_signature(
 
     # Python code snippet of preliminary statements (e.g., local variable
     # assignments) if any *AFTER* generating snippets type-checking parameters
-    # and return values, both of which modify instance variables of the
-    # dataclass tested below.
+    # and returns (which modifies dataclass variables tested below).
     code_body_init = (
         # If the body of this wrapper requires a pseudo-random integer, append
         # code generating and localizing such an integer to this signature.
@@ -720,7 +719,7 @@ def _make_func_wrapper_signature(
     )
 
 # ....................{ PRIVATE ~ unmemoize                }....................
-def _unmemoize_pep_code(
+def _unmemoize_func_wrapper_code(
     bear_call: BeartypeCall,
     func_wrapper_code: str,
     pith_repr: str,
@@ -734,7 +733,7 @@ def _unmemoize_pep_code(
     Specifically, this function (in order):
 
     #. Globally replaces all references to the
-       :data:`PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER` placeholder substring
+       :data:`CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER` placeholder substring
        cached into this code with the passed ``pith_repr`` parameter.
     #. Unmemoizes this code by globally replacing all relative forward
        reference placeholder substrings cached into this code with Python
@@ -776,7 +775,7 @@ def _unmemoize_pep_code(
     func_wrapper_code = replace_str_substrs(
         text=func_wrapper_code,
         # This placeholder substring cached into this code with...
-        old=PEP_CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
+        old=CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
         # This object representation of the name of this parameter or return.
         new=pith_repr,
     )
@@ -795,9 +794,8 @@ def _unmemoize_pep_code(
         # For each unqualified classname referred to by a relative forward
         # reference type hints visitable from the current root type hint...
         for hint_forwardref_class_basename in hint_forwardrefs_class_basename:
-            # Generate an unmemoized callable-specific code snippet
-            # type-checking this class by globally replacing in this
-            # callable-agnostic code...
+            # Generate an unmemoized callable-specific code snippet checking
+            # this class by globally replacing in this callable-agnostic code...
             func_wrapper_code = replace_str_substrs(
                 text=func_wrapper_code,
                 # This placeholder substring cached into this code with...
@@ -812,7 +810,8 @@ def _unmemoize_pep_code(
                     # Fully-qualified classname referred to by this forward
                     # reference relative to the decorated callable.
                     get_hint_pep484585_forwardref_classname_relative_to_object(
-                        hint=hint_forwardref_class_basename, obj=func,)),
+                        hint=hint_forwardref_class_basename, obj=func)
+                ),
             )
 
     # Return this unmemoized callable-specific code snippet.

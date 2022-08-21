@@ -57,7 +57,7 @@
 #need to pursue anyway regardless of the above concerns.
 #
 #The solution is to make the breadth-first search (BFS) internally performed
-#by the pep_code_check_hint() function below more recursion-esque. We will
+#by the make_func_wrapper_code() function below more recursion-esque. We will
 #*NOT* be refactoring that function to leverage:
 #
 #* Recursion rather than iteration for all of the obvious reasons.
@@ -712,7 +712,7 @@
 #    "next(counter)" is the 0-based index of the next item of that tuple to be
 #    type-checked.
 #
-#Given that low-level infrastructure, the pep_code_check_hint() function below
+#Given that low-level infrastructure, the make_func_wrapper_code() function below
 #then generates code perfectly type-checking arbitrary tuples in O(1) time that
 #should ideally resemble (where "__beartype_pith_j" is the current pith
 #referring to this tuple):

@@ -13,19 +13,16 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype.typing import (
-    Any,
-    Union,
-)
+from beartype.typing import Union
+from beartype._data.datatyping import TypeException
 from beartype._util.cls.utilclstest import die_unless_type
 from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
     HINT_PEP484_FORWARDREF_TYPE,
     get_hint_pep484_forwardref_type_basename,
     is_hint_pep484_forwardref,
 )
-from beartype._util.mod.utilmodimport import import_module_attr
 from beartype._util.mod.utilmodget import get_object_module_name
-from beartype._data.datatyping import TypeException
+from beartype._util.mod.utilmodimport import import_module_attr
 
 # ....................{ HINTS                              }....................
 HINT_PEP484585_FORWARDREF_TYPES = (str, HINT_PEP484_FORWARDREF_TYPE)

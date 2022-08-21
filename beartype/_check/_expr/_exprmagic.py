@@ -74,7 +74,7 @@ of that hint to the later time at which that child argument is visited.
 Example
 ----------
 For example, the
-:func:`beartype._decor._hint._pep._pephint.pep_code_check_hint` function might
+:func:`beartype._decor._hint._pep._pephint.make_func_wrapper_code` function might
 generate intermediary code resembling the following on visiting the
 :data:`Union` parent of a ``Union[int, str]`` object *before* visiting either
 the :class:`int` or :class:`str` children of that object:

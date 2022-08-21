@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -7,26 +7,26 @@
 **Beartype decorator PEP-compliant code wrapper scope utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._decor._code._pep._pepscope` submodule.
+:mod:`beartype._check._expr._exprscope` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ adder : type              }....................
+# ....................{ TESTS ~ adder : type               }....................
 def test_add_func_scope_type_pass() -> None:
     '''
     Test successful usage of the
-    :func:`beartype._decor._code._pep._pepscope.add_func_scope_type` function.
+    :func:`beartype._check._expr._exprscope.add_func_scope_type` function.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._cave._cavefast import NoneType, RegexCompiledType
-    from beartype._decor._code._pep._pepscope import add_func_scope_type
+    from beartype._check._expr._exprscope import add_func_scope_type
     from beartype._util.utilobject import get_object_type_basename
 
     # Arbitrary scope to be added to below.
@@ -60,12 +60,12 @@ def test_add_func_scope_type_pass() -> None:
 def test_add_func_scope_type_fail() -> None:
     '''
     Test unsuccessful usage of the
-    :func:`beartype._decor._code._pep._pepscope.add_func_scope_type` function.
+    :func:`beartype._check._expr._exprscope.add_func_scope_type` function.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintPep3119Exception
-    from beartype._decor._code._pep._pepscope import add_func_scope_type
+    from beartype._check._expr._exprscope import add_func_scope_type
     from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
     from pytest import raises
 
@@ -88,18 +88,18 @@ def test_add_func_scope_type_fail() -> None:
     with raises(BeartypeDecorHintPep3119Exception):
         add_func_scope_type(cls=NonIsinstanceableClass, func_scope=func_scope)
 
-# ....................{ TESTS ~ adder : tuple             }....................
+# ....................{ TESTS ~ adder : tuple              }....................
 def test_add_func_scope_types_pass() -> None:
     '''
     Test successful usage of the
-    :func:`beartype._decor._code._pep._pepscope.add_func_scope_types` function.
+    :func:`beartype._check._expr._exprscope.add_func_scope_types` function.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._cave._cavefast import CallableTypes, ModuleOrStrTypes
     from beartype._cave._cavemap import NoneTypeOr
-    from beartype._decor._code._pep._pepscope import add_func_scope_types
+    from beartype._check._expr._exprscope import add_func_scope_types
     from beartype._util.utilobject import get_object_type_basename
     from beartype_test.a00_unit.data.data_type import Class
 
@@ -169,12 +169,12 @@ def test_add_func_scope_types_pass() -> None:
 def test_add_func_scope_types_fail() -> None:
     '''
     Test unsuccessful usage of the
-    :func:`beartype._decor._code._pep._pepscope.add_func_scope_types` function.
+    :func:`beartype._check._expr._exprscope.add_func_scope_types` function.
     '''
 
     # Defer heavyweight imports
     from beartype.roar import BeartypeDecorHintNonpepException
-    from beartype._decor._code._pep._pepscope import add_func_scope_types
+    from beartype._check._expr._exprscope import add_func_scope_types
     from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
         Pep484GenericTypevaredSingle)
@@ -234,19 +234,19 @@ def test_add_func_scope_types_fail() -> None:
             func_scope=func_scope,
         )
 
-# ....................{ TESTS ~ expresser : type          }....................
+# ....................{ TESTS ~ expresser : type           }....................
 def test_express_func_scope_type_forwardref() -> None:
     '''
     Test the
-    :func:`beartype._decor._code._pep._pepscope.express_func_scope_type_forwardref`
+    :func:`beartype._check._expr._exprscope.express_func_scope_type_forwardref`
     function.
     '''
 
     # Defer heavyweight imports.
     from beartype.roar import BeartypeDecorHintForwardRefException
     from beartype._decor._cache.cachetype import bear_typistry
-    from beartype._decor._code.codemagic import ARG_NAME_TYPISTRY
-    from beartype._decor._code._pep._pepscope import (
+    from beartype._decor._wrapper.wrappermagic import ARG_NAME_TYPISTRY
+    from beartype._check._expr._exprscope import (
         express_func_scope_type_forwardref)
     from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
         HINT_PEP484_FORWARDREF_TYPE)

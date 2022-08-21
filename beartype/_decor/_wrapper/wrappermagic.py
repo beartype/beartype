@@ -22,7 +22,7 @@ transitively across this subpackage, which the
 dynamically replaces with the name of both the currently decorated callable
 *and* the currently iterated parameter or return of that callable.
 
-Note that the :mod:`beartype._decor._code.codemain` submodule guarantees the
+Note that the :mod:`beartype._decor._wrapper.wrappermain` submodule guarantees the
 substring replacing this placeholder to be suffixed by a single space. Ergo, we
 intentionally avoid doing so here.
 '''

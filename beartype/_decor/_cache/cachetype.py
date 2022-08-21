@@ -17,7 +17,7 @@ from beartype.roar import (
     BeartypeDecorHintForwardRefException,
 )
 from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
-from beartype._decor._code.codemagic import ARG_NAME_TYPISTRY
+from beartype._decor._wrapper.wrappermagic import ARG_NAME_TYPISTRY
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.pep.utilpep3119 import die_unless_type_isinstanceable
 from beartype._util.cls.utilclstest import is_type_builtin

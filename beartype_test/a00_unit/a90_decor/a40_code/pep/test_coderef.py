@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -12,15 +12,15 @@ strings whose values are the names of classes and tuples of classes that
 typically have yet to be defined).
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test.util.pytroar import raises_uncached
 from typing import Union
 
-# ....................{ TESTS ~ pass                      }....................
+# ....................{ TESTS ~ pass                       }....................
 def test_hint_forwardref_data_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator with
@@ -39,7 +39,7 @@ def test_hint_forwardref_data_pass() -> None:
         # between_the_woods_and_frozen_lake,
     )
 
-    # ..................{ UNNESTED                          }..................
+    # ..................{ UNNESTED                           }..................
     # Objects passed below to exercise forward references.
     MILES_TO_GO = TheDarkestEveningOfTheYear('And miles to go before I sleep')
     WOODS = TheDarkestEveningOfTheYear('The woods are lovely, dark and deep,')
@@ -54,7 +54,7 @@ def test_hint_forwardref_data_pass() -> None:
 
     #FIXME: Disabled until we decide whether we want to bother trying to
     #resolve nested forward references or not.
-    # # ..................{ NESTED                            }..................
+    # # ..................{ NESTED                             }..................
     # # 3-tuple of closures and classes nested in this callable.
     # (to_stop_without, to_watch_his_woods, WhoseWoodsTheseAreIThinkIKnow) = (
     #     between_the_woods_and_frozen_lake())
@@ -98,7 +98,7 @@ def test_hint_forwardref_param_pass() -> None:
     assert sisters_of_battle('Abbess Sanctorum', Random()) in range(
         ESTABLISHMENT_DATE_MIN, ESTABLISHMENT_DATE_MAX + 1)
 
-# ....................{ TESTS ~ fail                      }....................
+# ....................{ TESTS ~ fail                       }....................
 def test_hint_forwardref_decor_fail() -> None:
     '''
     Test unsuccessful decorator-time usage of the :func:`beartype.beartype`

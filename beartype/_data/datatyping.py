@@ -85,6 +85,14 @@ checkers (e.g., :mod:`mypy`) and type-aware IDEs (e.g., VSCode) that the
 # ....................{ HINTS ~ callable ~ late            }....................
 # Callable-specific type hints *NOT* required by subsequent type hints below.
 
+CallableTester = Callable[[object], bool]
+'''
+PEP-compliant type hint matching a **tester callable** (i.e., arbitrary callable
+accepting a single arbitrary object and returning either ``True`` if that object
+satisfies an arbitrary constraint *or* ``False`` otherwise).
+'''
+
+
 Codeobjable = Union[Callable, CodeType, FrameType, GeneratorType]
 '''
 PEP-compliant type hint matching a **codeobjable** (i.e., pure-Python object
@@ -117,18 +125,41 @@ of the :func:`beartype.beartype` decorator, including calls to that decorator
 in both configuration and decoration modes.
 '''
 
-# ....................{ HINTS ~ iterable                   }....................
-IterableStrs = Iterable[str]
-'''
-PEP-compliant type hint matching *any* iterable of zero or more strings.
-'''
-
-# ....................{ HINTS ~ lexical                    }....................
+# ....................{ HINTS ~ code                       }....................
 LexicalScope = Dict[str, Any]
 '''
 PEP-compliant type hint matching a **lexical scope** (i.e., dictionary mapping
 from the name to value of each locally or globally scoped variable accessible
 to a callable or class).
+'''
+
+
+CodeGenerated = Tuple[str, LexicalScope, Tuple[str, ...]]
+'''
+PEP-compliant type hint matching **generated code** (i.e., a tuple containing
+a Python code snippet dynamically generated on-the-fly by a
+:mod:`beartype`-specific code generator and metadata describing that code).
+
+Specifically, this hint matches a 3-tuple ``(func_wrapper_code,
+func_wrapper_locals, hint_forwardrefs_class_basename)``, where:
+
+* ``func_wrapper_code`` is a Python code snippet type-checking an arbitrary
+  object against this hint. For the common case of code generated for a
+  :func:`beartype.beartype`-decorated callable, this snippet type-checks a
+  previously localized parameter or return value against this hint.
+* ``func_wrapper_locals`` is the **local scope** (i.e., dictionary mapping from
+  the name to value of each attribute referenced one or more times in this code)
+  of the body of the function embedding this code.
+* ``hint_forwardrefs_class_basename`` is a tuple of the unqualified classnames
+  of :pep:`484`-compliant relative forward references visitable from this hint
+  (e.g., ``('MuhClass', 'YoClass')`` given the hint ``Union['MuhClass',
+  List['YoClass']]``).
+'''
+
+# ....................{ HINTS ~ iterable                   }....................
+IterableStrs = Iterable[str]
+'''
+PEP-compliant type hint matching *any* iterable of zero or more strings.
 '''
 
 # ....................{ HINTS ~ type                       }....................

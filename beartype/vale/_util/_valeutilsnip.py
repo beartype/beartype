@@ -20,7 +20,7 @@ from beartype._util.text.utiltextmagic import CODE_INDENT_1
 VALE_CODE_INDENT_1 = f'{{indent}}{CODE_INDENT_1}'
 '''
 Code snippet prefixed by the placeholder substring ``"{indent}"`` (which the
-:func:`beartype._decor._code._pep._pephint.pep_code_check_hint` replaces with
+:func:`beartype._check._expr.exprcode.make_func_wrapper_code` replaces with
 the indentation level required by the current beartype validator) followed by a
 single level of indentation.
 '''
