@@ -29,15 +29,15 @@ class CacheUnboundedStrong(object):
 
     Design
     ------
-    Cache implementations typically employ weak references for safety.
-    Employing strong references invites memory leaks by preventing objects
-    *only* referenced by the cache (cache-only objects) from being
-    garbage-collected. Nonetheless, this cache intentionally employs strong
-    references to persist these cache-only objects across calls to callables
-    decorated with :func:`beartype.beartype`. In theory, caching an object
-    under a weak reference would result in immediate garbage-collection as,
-    with no external strong referents, the object would get collected with all
-    other short-lived objects in the first generation (i.e., generation 0).
+    Cache implementations typically employ weak references for safety. Employing
+    strong references invites memory leaks by preventing objects *only*
+    referenced by the cache (cache-only objects) from being garbage-collected.
+    Nonetheless, this cache intentionally employs strong references to persist
+    these cache-only objects across calls to callables decorated with
+    :func:`beartype.beartype`. In theory, caching an object under a weak
+    reference would result in immediate garbage-collection; with *no* external
+    strong referents, that object would be garbage-collected with all other
+    short-lived objects in the first generation (i.e., generation 0).
 
     This cache intentionally does *not* adhere to standard mapping semantics by
     subclassing a standard mapping API (e.g., :class:`dict`,
@@ -111,9 +111,11 @@ class CacheUnboundedStrong(object):
         _SENTINEL=SENTINEL,
     ) -> object:
         '''
-        Statically associate the passed key with the passed value if this cache
-        has yet to cache this key (i.e., if this method has yet to be passed
-        this key) and, in any case, return the value associated with this key.
+        **Statically** (i.e., non-dynamically, rather than "statically" in the
+        different semantic sense of "static" methods) associate the passed key
+        with the passed value if this cache has yet to cache this key (i.e., if
+        this method has yet to be passed this key) and, in any case, return the
+        value associated with this key.
 
         Parameters
         ----------

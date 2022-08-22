@@ -67,6 +67,7 @@ from beartype._check._checksnip import (
 from beartype._check.expr.exprcode import make_check_expr
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
+from beartype._util.hint.utilhintconv import sanify_hint_child
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from itertools import count
 
@@ -160,14 +161,7 @@ def make_func_tester(
     #   nor a supported PEP-compliant hint).
     #
     # Do this first *BEFORE* passing this hint to any further callables.
-    #FIXME: Oh, boy. Unsure exactly how we're going to generalize
-    #sanify_hint_root(), but... we clearly need to now. *megasigh*
-    # hint = sanify_hint_root(
-    #     hint=hint,
-    #     func=bear_call.func_wrappee,
-    #     pith_name='return',
-    #     exception_prefix=EXCEPTION_PLACEHOLDER,
-    # )
+    hint = sanify_hint_child(hint=hint, exception_prefix=EXCEPTION_PLACEHOLDER)
 
     # If this hint is ignorable, all objects satisfy this hint. In this case,
     # return the trivial tester function unconditionally returning true.

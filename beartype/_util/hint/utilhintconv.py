@@ -57,9 +57,9 @@ from beartype._cave._cavefast import NotImplementedType, NoneType
 from beartype._data.func.datafunc import METHOD_NAMES_BINARY_DUNDER
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
+    HintSignDataclassInitVar,
     HintSignNewType,
     HintSignNumpyArray,
-    HintSignDataclassInitVar,
     HintSignType,
     HintSignTypeVar,
     HintSignTypedDict,
@@ -77,7 +77,10 @@ from beartype._util.hint.pep.proposal.utilpep557 import (
 from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.utilhinttest import die_unless_hint
-from collections.abc import Callable, Mapping
+from collections.abc import (
+    Callable,
+    Mapping,
+)
 
 # ....................{ PRIVATE ~ mappings                 }....................
 _HINT_REPR_TO_HINT = CacheUnboundedStrong()
@@ -100,9 +103,15 @@ This cache does *not* cache:
   (e.g., ``Dict[str, int]`` only means what you think it means if an
   importation resembling ``from typing import Dict`` preceded that type hint).
 
-Implementation
+Design
 --------------
-This dictionary is intentionally designed as a naive dictionary rather than
+**This dictionary is intentionally thread-safe.** Why? Because this dictionary
+is used to modify the ``__attributes__`` dunder variable of arbitrary callables.
+Since most of those callables are either module- or class-scoped, that variable
+is effectively global. To prevent race conditions between competing threads
+contending over that global variable, this dictionary *must* be thread-safe.
+
+This dictionary is intentionally designed as a naive dictionary rather than a
 robust LRU cache, for the same reasons that callables accepting hints are
 memoized by the :func:`beartype._util.cache.utilcachecall.callable_cached`
 rather than the :func:`functools.lru_cache` decorator. Why? Because:
@@ -211,6 +220,8 @@ def sanify_hint_root(
 
     # If this object is neither a PEP-noncompliant type hint *NOR* supported
     # PEP-compliant type hint, raise an exception.
+    #
+    # Note that this function call is effectively memoized and thus efficient.
     die_unless_hint(hint=hint, exception_prefix=exception_prefix)
     # Else, this object is a supported PEP-compliant type hint.
 
@@ -244,7 +255,14 @@ def sanify_hint_root(
     return hint
 
 
-def sanify_hint_child(hint: object, exception_prefix: str) -> Any:
+def sanify_hint_child(
+    # Mandatory parameters.
+    hint: object,
+    exception_prefix: str,
+
+    # Optional parameters.
+    is_validate: bool = False,
+) -> Any:
     '''
     PEP-compliant type hint sanified (i.e., sanitized) from the passed
     **PEP-compliant child type hint** (i.e., hint transitively subscripting the
@@ -259,6 +277,12 @@ def sanify_hint_child(hint: object, exception_prefix: str) -> Any:
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
+    is_validate : bool, optional
+        Validate this hint as a supported PEP-compliant type hint *after*
+        internal coercion of this hint from possibly PEP-noncompliant to
+        PEP-compliant by passing this hint to the :func:`die_unless_hint`
+        raiser. Since validation is typically desirable, the caller is expected
+        to know what they are doing when disabling this. Defaults to ``True``.
 
     Returns
     ----------
@@ -266,10 +290,28 @@ def sanify_hint_child(hint: object, exception_prefix: str) -> Any:
         PEP-compliant type hint sanified from this hint.
     '''
 
-    # Return this hint first coerced and then reduced, intentionally covering
-    # the subset of the logic performed by the sanify_hint_root() sanifier
-    # specifically applicable to child type hints.
-    return _reduce_hint(_coerce_hint_any(hint), exception_prefix)
+    # This sanifier covers the proper subset of logic performed by the
+    # sanify_hint_root() sanifier applicable to child type hints.
+
+    # PEP-compliant type hint coerced (i.e., permanently converted in the
+    # annotations dunder dictionary of the passed callable) from this possibly
+    # PEP-noncompliant type hint if this hint is coercible *OR* this hint as is
+    # otherwise. Since the passed hint is *NOT* necessarily PEP-compliant,
+    # perform this coercion *BEFORE* validating this hint to be PEP-compliant.
+    hint = _coerce_hint_any(hint)
+
+    # If validating this hint as a supported PEP-compliant type hint...
+    if is_validate:
+        # If this hint is *NOT* a supported PEP-compliant type hint, raise an
+        # exception. Note that this function call is effectively memoized and
+        # thus fast.
+        die_unless_hint(hint=hint, exception_prefix=exception_prefix)
+        # Else, this hint is a supported PEP-compliant type hint.
+    # Else, this hint is *NOT* being validated as supported and PEP-compliant.
+    # In this case, the caller is expected to know what they are doing.
+
+    # Return this hint reduced.
+    return _reduce_hint(hint, exception_prefix)
 
 # ....................{ COERCERS                           }....................
 #FIXME: Document mypy-specific coercion in the docstring as well, please.

@@ -47,15 +47,15 @@ def die_unless_hint(
 
     Efficiency
     ----------
-    This validator is effectively (but technically *not*) memoized. Since the
-    passed ``exception_prefix`` parameter is typically unique to each call to this
-    validator, memoizing this validator would uselessly consume excess space
-    *without* improving time efficiency. Instead, this validator first calls
-    the memoized :func:`is_hint_pep` tester. If that tester returns ``True``,
-    this validator immediately returns ``True`` and is thus effectively
-    memoized; else, this validator inefficiently raises a human-readable
-    exception without memoization. Since efficiency is largely irrelevant in
-    exception handling, this validator thus remains effectively memoized.
+    This validator is effectively (but technically *not*) memoized. The passed
+    ``exception_prefix`` parameter is usually unique to each call to this
+    validator; memoizing this validator would uselessly consume excess space
+    *without* improving time efficiency. Instead, this validator first calls the
+    memoized :func:`is_hint_pep` tester. If that tester returns ``True``, this
+    validator immediately returns ``True`` and is thus effectively memoized;
+    else, this validator inefficiently raises a human-readable exception without
+    memoization. Since efficiency is mostly irrelevant in exception handling,
+    this validator remains effectively memoized.
 
     Parameters
     ----------

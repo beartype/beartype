@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,13 +10,13 @@ This submodule unit tests the :func:`beartype.beartype` decorator with respect
 to :pep:`484`-compliant type hints.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ decor : no_type_check     }....................
+# ....................{ TESTS ~ decor : no_type_check      }....................
 def test_pep484_decor_no_type_check() -> None:
     '''
     Test the :func:`beartype.beartype` decorator against all edge cases of the
@@ -25,7 +25,10 @@ def test_pep484_decor_no_type_check() -> None:
 
     # Defer heavyweight imports.
     from beartype import beartype
-    from typing import Union, no_type_check
+    from beartype.typing import (
+        Union,
+        no_type_check,
+    )
 
     # Callable decorated by @typing.no_type_check whose otherwise PEP-compliant
     # type hints *SHOULD* be subsequently ignored by @beartype.
@@ -40,7 +43,7 @@ def test_pep484_decor_no_type_check() -> None:
     # reduced to a noop by returning this callable undecorated.
     assert of_beechen_green is of_beechen_green_beartyped
 
-# ....................{ TESTS ~ hint : noreturn           }....................
+# ....................{ TESTS ~ hint : noreturn            }....................
 def test_pep484_hint_noreturn() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on synchronous callables
@@ -54,8 +57,11 @@ def test_pep484_hint_noreturn() -> None:
         BeartypeCallHintViolation,
         BeartypeDecorHintPep484Exception,
     )
+    from beartype.typing import (
+        NoReturn,
+        Union,
+    )
     from beartype_test.util.pytroar import raises_uncached
-    from typing import NoReturn, Union
 
     # Exception guaranteed to be raised *ONLY* by the mending_wall() function.
     class BeforeIBuiltAWallIdAskToKnow(Exception): pass
@@ -126,7 +132,7 @@ async def test_pep484_hint_noreturn_async() -> None:
     async def work_of_hunters(another_thing) -> NoReturn:
         raise ValueError('The work of hunters is another thing:')
 
-# ....................{ TESTS ~ hint : sequence           }....................
+# ....................{ TESTS ~ hint : sequence            }....................
 def test_pep484_hint_sequence_args_1_cached() -> None:
     '''
     Test that a `subtle issue <issue #5_>`__ of the :func:`beartype.beartype`
@@ -185,7 +191,7 @@ def test_pep484_hint_sequence_args_1_cached() -> None:
     ), 'All the sun long it was running, it was lovely, the hay').startswith(
         'And as I was green and carefree, famous among the barns')
 
-# ....................{ TESTS ~ hint : invalid            }....................
+# ....................{ TESTS ~ hint : invalid             }....................
 #FIXME: Excise us up. We're unconvinced that arbitrarily prohibiting *ANY*
 #isinstanceable classes from being used as type hints is a useful approach --
 #even if those classes are "typing" attributes typically intended to be
