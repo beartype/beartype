@@ -246,7 +246,7 @@ def generate_code(
         func_scope=bear_call.func_wrapper_scope,
         code_signature_format=CODE_SIGNATURE,
         code_signature_prefix=bear_call.func_wrapper_code_signature_prefix,
-        is_debug=bear_call.func_conf.is_debug,
+        conf=bear_call.func_conf,
     )
 
     # Return Python code defining the wrapper type-checking this callable.

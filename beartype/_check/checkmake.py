@@ -231,6 +231,7 @@ def make_func_tester(
         func_name=func_name,
         func_scope=func_scope,
         code_signature_format=FUNC_TESTER_CODE_SIGNATURE,
+        conf=conf,
     )
 
     #FIXME: Prefix the "{code_check_expr}" by a "return " statement, please. We

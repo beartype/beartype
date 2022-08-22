@@ -188,6 +188,18 @@ class BeartypeConf(object):
             the type-checking wrapper function dynamically generated for the
             decorated callable. This is mostly intended for internal debugging,
             documentation, and optimization purposes. Defaults to ``False``.
+            Specifically, enabling this parameter instructs :mod:`beartype` to:
+
+            * Append to the declaration of each **hidden parameter** (i.e.,
+              whose name is prefixed by ``"__beartype_"`` and whose value is
+              that of an external attribute internally referenced in the body of
+              that function) the machine-readable representation of the initial
+              value of that parameter, stripped of newlines and truncated to a
+              hopefully sensible length. Since the
+              :func:`beartype._util.text.utiltextrepr.represent_object` function
+              called to do so is shockingly slow, these substrings are
+              conditionally embedded in the returned signature *only* when
+              enabling this boolean.
         strategy : BeartypeStrategy, optional
             **Type-checking strategy** (i.e., :class:`BeartypeStrategy`
             enumeration member) with which to implement all type-checks in the

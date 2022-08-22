@@ -21,6 +21,7 @@ from beartype._check.util._checkutilsnip import (
     CODE_SIGNATURE_ARG,
     CODE_INIT_RANDOM_INT,
 )
+from beartype._conf import BeartypeConf
 from beartype._data.datatyping import (
     LexicalScope,
 )
@@ -33,10 +34,10 @@ def make_func_signature(
     func_name: str,
     func_scope: LexicalScope,
     code_signature_format: str,
+    conf: BeartypeConf,
 
     # Optional parameters.
     code_signature_prefix: str = '',
-    is_debug: bool = False,
 
     # String globals required only for their bound str.format() methods.
     CODE_SIGNATURE_ARG_format: Callable = (
@@ -69,6 +70,9 @@ def make_func_signature(
           ``code_signature_prefix`` parameter.
         * ``{code_signature_args}``, replaced by the declaration of all hidden
           parameters in the passed ``func_scope`` parameter.
+    conf : BeartypeConf, optional
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object).
     code_signature_prefix : str, optional
         Code snippet prefixing this signature, typically either:
 
@@ -77,17 +81,6 @@ def make_func_signature(
           coroutines), the space-suffixed keyword ``"async "``.
 
         Defaults to the empty string and thus synchronous behaviour.
-    is_debug : bool, optional
-        ``True`` only if enabling debug-specific output. Defaults to ``False``.
-        Specifically, enabling this parameter instructs this factory to:
-
-        * Append to the declaration of each such hidden parameter the
-          machine-readable representation of the initial value of that
-          parameter, stripped of newlines and truncated to a hopefully sensible
-          length. Since the :func:`represent_object` function called below to
-          sanitize that value is incredibly slow, these substrings are
-          conditionally embedded in the returned signature *only* when enabling
-          debug-specific output.
 
     Yields
     ----------
@@ -96,7 +89,11 @@ def make_func_signature(
     '''
     assert isinstance(func_name, str), f'{repr(func_name)} not string.'
     assert isinstance(func_scope, dict), f'{repr(func_scope)} not dictionary.'
-    assert isinstance(is_debug, bool), f'{repr(is_debug)} not boolean.'
+    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    assert isinstance(code_signature_format, str), (
+        f'{repr(code_signature_format)} not string.')
+    assert isinstance(code_signature_prefix, str), (
+        f'{repr(code_signature_prefix)} not string.')
 
     # Python code snippet declaring all optional private beartype-specific
     # parameters directly derived from the local scope established by the above
@@ -113,7 +110,7 @@ def make_func_signature(
         # parameter below *ONLY* if the caller explicitly requested debugging.
         arg_comment = (
             f' # is {represent_object(arg_value)}'
-            if is_debug else
+            if conf.is_debug else
             ''
         )
 
