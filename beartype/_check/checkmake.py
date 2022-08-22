@@ -44,7 +44,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  callers to generate violation exceptions with arbitrary context-specific
 #  human-readable prefixes.
 #* Shift code currently residing in the BeartypeCall.reinit() method that
-#  adds "ARG_NAME_RAISE_EXCEPTION" to "func_wrapper_locals" into the
+#  adds "ARG_NAME_RAISE_EXCEPTION" to "func_wrapper_scope" into the
 #  make_func_raiser_code() factory instead.
 #* Refactor the original lower-level
 #  beartype._decor._error.errormain.get_beartype_violation() getter in terms of
@@ -57,27 +57,59 @@ from beartype._data.datatyping import (
     CallableTester,
     TypeException,
 )
-from beartype._check._expr.exprcode import make_check_expr
-# from beartype._util.cache.utilcachecall import callable_cached
+from beartype._check.checkmagic import (
+    FUNC_TESTER_NAME_PREFIX,
+)
+from beartype._check.util.checkutilmake import make_func_signature
+from beartype._check._checksnip import (
+    FUNC_TESTER_CODE_SIGNATURE,
+)
+from beartype._check.expr.exprcode import make_check_expr
+from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
+from beartype._util.hint.utilhinttest import is_hint_ignorable
+from itertools import count
 
-#FIXME: Consider shifting the entire "wrappermagic" submodule to a new
-#"beartype._check.checkmagic" submodule, please.
-from beartype._decor._wrapper.wrappermagic import ARG_NAME_GETRANDBITS
+# ....................{ PRIVATE ~ globals                  }....................
+_func_tester_name_counter = count(start=0, step=1)
+'''
+**Type-checking tester function name uniquifier** (i.e., iterator yielding the
+next integer incrementation starting at 0, leveraged by the
+:func:`make_func_tester` factory to uniquify the names of the tester functions
+created by that factory).
+'''
+
+# ....................{ PRIVATE ~ testers                  }....................
+def _func_tester_ignorable(obj: object) -> bool:
+    '''
+    **Ignorable type-checking tester function singleton** (i.e., function
+    unconditionally returning ``True``, semantically equivalent to a tester
+    testing whether an arbitrary object passed to this tester satisfies an
+    ignorable PEP-compliant type hint).
+
+    The :func:`make_func_tester` factory efficiently returns this singleton when
+    passed an ignorable type hint rather than inefficiently regenerating a
+    unique ignorable type-checking tester function for that hint.
+    '''
+
+    return True
 
 # ....................{ MAKERS                             }....................
 #FIXME: Refactor the beartype.abby.is_bearable() tester in terms of this new
 #factory, please.
-#FIXME: Does this factory benefit from memoization? Probably... not. We already
-#memoize the layer immediately below and above this factory. Document this
-#justification for *NOT* doing so, please.
-# @callable_cached
-def make_hint_tester(
+#FIXME: Unit test us up, please -- especially with respect to edge cases unique
+#to this factory like:
+#* Ignorable hints.
+#* Relative hints (i.e., hints containing one or more relative forward
+#  references).
+#
+#Note that it might be preferable to simply exercise the higher-level
+#is_bearable() tester against the above edge cases, which all broadly apply to
+#that tester as well.
+@callable_cached
+def make_func_tester(
     # Mandatory parameters.
     hint: object,
-
-    #FIXME: Docstring us up, please.
-    code_prefix: str,
-    code_suffix: str,
 
     # Optional parameters.
     conf: BeartypeConf = BeartypeConf(),
@@ -120,11 +152,34 @@ def make_hint_tester(
     assert issubclass(exception_cls, Exception), (
         f'{repr(exception_cls)} not exception type.')
 
+    # Either:
+    # * If this hint is PEP-noncompliant, the PEP-compliant type hint converted
+    #   from this PEP-noncompliant type hint.
+    # * Else if this hint is both PEP-compliant and supported, this hint as is.
+    # * Else, raise an exception (i.e., if this hint is neither PEP-noncompliant
+    #   nor a supported PEP-compliant hint).
+    #
+    # Do this first *BEFORE* passing this hint to any further callables.
+    #FIXME: Oh, boy. Unsure exactly how we're going to generalize
+    #sanify_hint_root(), but... we clearly need to now. *megasigh*
+    # hint = sanify_hint_root(
+    #     hint=hint,
+    #     func=bear_call.func_wrappee,
+    #     pith_name='return',
+    #     exception_prefix=EXCEPTION_PLACEHOLDER,
+    # )
+
+    # If this hint is ignorable, all objects satisfy this hint. In this case,
+    # return the trivial tester function unconditionally returning true.
+    if is_hint_ignorable(hint):
+        return _func_tester_ignorable
+    # Else, this hint is unignorable.
+
     # Python code snippet comprising a single boolean expression type-checking
     # an arbitrary object against this hint.
     (
-        code_expr,
-        func_locals,
+        code_check_expr,
+        func_scope,
         hint_forwardrefs_class_basename,
     ) = make_check_expr(hint)
 
@@ -156,40 +211,42 @@ def make_hint_tester(
     # tester) sufficiently slow as to be pragmatically infeasible.
     if hint_forwardrefs_class_basename:
         raise exception_cls(
-            f'Type hint {repr(hint)} contains one or more relative forward '
-            f'references:\n\t{repr(hint_forwardrefs_class_basename)}\n'
+            f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '
+            f'contains one or more relative forward references:\n'
+            f'\t{repr(hint_forwardrefs_class_basename)}\n'
             f'Beartype prohibits relative forward references outside of '
             f'@beartype-decorated callables. For your own personal safety and '
             f'those of the codebases you love, consider canonicalizing these '
             f'relative forward references into absolute forward references '
-            f'(e.g., from "MuhClass" into "muh_module.MuhClass").'
+            f'(e.g., by replacing "MuhClass" with "muh_module.MuhClass").'
         )
     # Else, this hint contains *NO* relative forward references.
 
-    #FIXME: Insufficient. We'll also need to generalize the
-    #"CODE_INIT_RANDOM_INT" snippet out of "wrappermain" and into this function.
-    #FIXME: Indeed. It increasingly looks like we want to generalize the
-    #_make_func_wrapper_signature() factory into a new public
-    #beartype._check._checkcode.make_func_signature() factory. That function is
-    #sufficiently useful to warrant generalization. Note that doing so will be
-    #slightly non-trivial, as _make_func_wrapper_signature() is currently only
-    #passed "BeartypeCall". We do *NOT* want to bother creating and passing a
-    #new "BeartypeCall" instance here. So, we'll need to generalize
-    #make_func_signature() to accept *ALL* of the "BeartypeCall" instance
-    #variables referenced in that factory as parameters of that factory. *sigh*
-    #
-    #Then replace the existing call to _make_func_wrapper_signature() in
-    #"wrappermain" with a call to make_func_signature().
+    # Unqualified basename of this tester function, uniquified by suffixing an
+    # arbitrary integer guaranteed to be unique to this tester function.
+    func_name = f'{FUNC_TESTER_NAME_PREFIX}{next(_func_tester_name_counter)}'
 
-    # Python code snippet type-checking the root pith against the root hint.
-    hint_tester_code = (
-        f'{code_prefix}'
-        f'{code_expr}'
-        f'{code_suffix}'
+    # Python code snippet declaring the signature of this tester function.
+    code_signature = make_func_signature(
+        func_name=func_name,
+        func_scope=func_scope,
+        code_signature_format=FUNC_TESTER_CODE_SIGNATURE,
+    )
+
+    #FIXME: Prefix the "{code_check_expr}" by a "return " statement, please. We
+    #probably also need to perform a global search-and-replacement on the root
+    #pith ala the _unmemoize_func_wrapper_code() function, which we should
+    #generalize into a new public unmemoize_func_code() function. *sigh*
+
+    # Python code snippet defining this tester function in entirety.
+    func_tester_code = (
+        f'{code_signature}'
+        f'{code_check_expr}'
+        # f'{code_suffix}'
     )
 
     #FIXME: Call make_func() here, please.
-    hint_tester = lambda obj: True
+    func_tester = lambda obj: True
 
     # Return this tester, please.
-    return hint_tester
+    return func_tester

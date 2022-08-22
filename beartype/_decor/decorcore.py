@@ -605,7 +605,7 @@ def _beartype_func(
     func_wrapper = make_func(
         func_name=func_data.func_wrapper_name,
         func_code=func_wrapper_code,
-        func_locals=func_data.func_wrapper_locals,
+        func_locals=func_data.func_wrapper_scope,
         func_label=f'@beartyped {func.__name__}() wrapper',
         func_wrapped=func,
         is_debug=conf.is_debug,

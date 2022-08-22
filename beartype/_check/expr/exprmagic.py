@@ -4,16 +4,34 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator PEP-compliant code generator magic** (i.e., global
-constants simplifying PEP-compliant code generation but *not* themselves code).
+Beartype decorator **type-checking expression magic** (i.e., global string
+constants embedded in the implementations of boolean expressions type-checking
+arbitrary objects against arbitrary PEP-compliant type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
 from itertools import count
 
-# ....................{ CONSTANTS ~ hint : meta            }....................
+# ....................{ EXCEPTION                          }....................
+EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL = (
+    f'{EXCEPTION_PLACEHOLDER}wrapper parameter ')
+'''
+Human-readable substring describing a new wrapper parameter required by the
+current root type hint in exception messages.
+'''
+
+
+EXCEPTION_PREFIX_HINT = f'{EXCEPTION_PLACEHOLDER}type hint '
+'''
+Human-readable substring describing the current root type hint generically
+(i.e., agnostic of the specific PEP standard to which this hint conforms) in
+exception messages.
+'''
+
+# ....................{ HINT ~ meta                        }....................
 # Iterator yielding the next integer incrementation starting at 0, to be safely
 # deleted *AFTER* defining the following 0-based indices via this iterator.
 __hint_meta_index_counter = count(start=0, step=1)

@@ -141,13 +141,13 @@ a Python code snippet dynamically generated on-the-fly by a
 :mod:`beartype`-specific code generator and metadata describing that code).
 
 Specifically, this hint matches a 3-tuple ``(func_wrapper_code,
-func_wrapper_locals, hint_forwardrefs_class_basename)``, where:
+func_wrapper_scope, hint_forwardrefs_class_basename)``, where:
 
 * ``func_wrapper_code`` is a Python code snippet type-checking an arbitrary
   object against this hint. For the common case of code generated for a
   :func:`beartype.beartype`-decorated callable, this snippet type-checks a
   previously localized parameter or return value against this hint.
-* ``func_wrapper_locals`` is the **local scope** (i.e., dictionary mapping from
+* ``func_wrapper_scope`` is the **local scope** (i.e., dictionary mapping from
   the name to value of each attribute referenced one or more times in this code)
   of the body of the function embedding this code.
 * ``hint_forwardrefs_class_basename`` is a tuple of the unqualified classnames

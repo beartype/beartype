@@ -160,7 +160,7 @@ def get_beartype_violation(
     runtime type-checkers, each complementing the other by providing
     functionality unsuited for the other. These are:
 
-    * The :mod:`beartype._check._expr` submodule, dynamically generating
+    * The :mod:`beartype._check.expr` submodule, dynamically generating
       optimized PEP-compliant runtime type-checking code embedded in the body
       of the wrapper function wrapping the decorated callable. For both
       efficiency and maintainability, that code only tests whether or not a

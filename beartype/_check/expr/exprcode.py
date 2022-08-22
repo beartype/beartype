@@ -23,29 +23,27 @@ from beartype.roar import (
 )
 from beartype.typing import Optional
 from beartype._cave._cavefast import TestableTypes
-from beartype._data.datatyping import CodeGenerated
-from beartype._decor._wrapper.wrappermagic import (
-    EXCEPTION_PREFIX,
-    EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
-    EXCEPTION_PREFIX_HINT,
+from beartype._check.checkmagic import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_PREFIX_PITH,
-    VAR_NAME_PITH_ROOT as PITH_ROOT_VAR_NAME,
+    VAR_NAME_PITH_ROOT,
 )
-from beartype._check._expr._exprmagic import (
+from beartype._check.expr.exprmagic import (
+    EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
+    EXCEPTION_PREFIX_HINT,
     HINT_META_INDEX_HINT,
     HINT_META_INDEX_PLACEHOLDER,
     HINT_META_INDEX_PITH_EXPR,
     HINT_META_INDEX_PITH_VAR_NAME,
     HINT_META_INDEX_INDENT,
 )
-from beartype._check._expr._exprscope import (
+from beartype._check.expr._exprscope import (
     add_func_scope_type,
     add_func_scope_types,
     add_func_scope_type_or_types,
     express_func_scope_type_forwardref,
 )
-from beartype._check._expr._exprsnip import (
+from beartype._check.expr._exprsnip import (
     PEP_CODE_HINT_CHILD_PLACEHOLDER_PREFIX,
     PEP_CODE_HINT_CHILD_PLACEHOLDER_SUFFIX,
     PEP_CODE_PITH_ASSIGN_EXPR,
@@ -73,6 +71,7 @@ from beartype._check._expr._exprsnip import (
     PEP593_CODE_HINT_VALIDATOR_PREFIX,
     PEP593_CODE_HINT_VALIDATOR_SUFFIX,
 )
+from beartype._data.datatyping import CodeGenerated
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
@@ -84,6 +83,7 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     release_object_typed,
 )
 from beartype._data.datatyping import LexicalScope
+from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignForwardRef,
@@ -164,11 +164,11 @@ def make_check_expr(
     _ARG_NAME_GETRANDBITS=ARG_NAME_GETRANDBITS,
     _CODE_INDENT_1=CODE_INDENT_1,
     _CODE_INDENT_2=CODE_INDENT_2,
-    _EXCEPTION_PREFIX=EXCEPTION_PREFIX,
+    _EXCEPTION_PREFIX=EXCEPTION_PLACEHOLDER,
     _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     _EXCEPTION_PREFIX_HINT=EXCEPTION_PREFIX_HINT,
 
-    # "beartype._check._expr._exprmagic" globals.
+    # "beartype._check.expr.exprmagic" globals.
     _HINT_META_INDEX_HINT=HINT_META_INDEX_HINT,
     _HINT_META_INDEX_PLACEHOLDER=HINT_META_INDEX_PLACEHOLDER,
     _HINT_META_INDEX_PITH_EXPR=HINT_META_INDEX_PITH_EXPR,
@@ -177,8 +177,8 @@ def make_check_expr(
     _LINE_RSTRIP_INDEX_AND=LINE_RSTRIP_INDEX_AND,
     _LINE_RSTRIP_INDEX_OR=LINE_RSTRIP_INDEX_OR,
 
-    # "beartype._check._expr._exprsnip" string globals required only for
-    # their bound "str.format" methods.
+    # "beartype._check.expr._exprsnip" string globals required only for
+    # their bound str.format() methods.
     PEP_CODE_PITH_ASSIGN_EXPR_format: Callable = (
         PEP_CODE_PITH_ASSIGN_EXPR.format),
     PEP484_CODE_HINT_INSTANCE_format: Callable = (
@@ -228,7 +228,7 @@ def make_check_expr(
     the beating heart of :mod:`beartype`. We applaud you for your perseverance.
     You finally found the essence of the Great Bear. You did it!! Now, we clap.
 
-    This code factory is memoized for efficiency. 
+    This code factory is memoized for efficiency.
 
     Caveats
     ----------
@@ -239,18 +239,17 @@ def make_check_expr(
     Instead, this factory only:
 
     * Returns generic non-working code containing the placeholder
-      :attr:`beartype._check._expr.pepcode.PITH_ROOT_NAME_PLACEHOLDER_STR`
-      substring that the caller is required to globally replace by the name of
-      the current parameter *or* ``return`` for return values (e.g., by calling
-      the builtin :meth:`str.replace` method) to generate the desired
-      non-generic working code type-checking that parameter or return value.
+      :data:`VAR_NAME_PITH_ROOT` substring that the caller is required to
+      globally replace by either the name of the current parameter *or*
+      ``return`` for return values (e.g., by calling the builtin
+      :meth:`str.replace` method) to generate the desired non-generic working
+      code type-checking that parameter or return value.
     * Raises generic non-human-readable exceptions containing the placeholder
       :attr:`beartype._util.error.utilerror.EXCEPTION_PLACEHOLDER`
       substring that the caller is required to explicitly catch and raise
       non-generic human-readable exceptions from by calling the
       :func:`beartype._util.error.utilerror.reraise_exception_placeholder`
       function.
-
 
     Parameters
     ----------
@@ -333,10 +332,10 @@ def make_check_expr(
     # This name is either:
     # * Initially, the name of the currently type-checked parameter or return.
     # * On subsequently type-checking nested items of the parameter or return
-    #   under Python >= 3.8, the name of the local variable uniquely assigned
-    #   to by the assignment expression defined by "pith_curr_assign_expr"
-    #   (i.e., the left-hand side (LHS) of that assignment expression).
-    pith_curr_var_name = PITH_ROOT_VAR_NAME
+    #   under Python >= 3.8, the name of the local variable uniquely assigned to
+    #   by the assignment expression defined by "pith_curr_assign_expr" (i.e.,
+    #   the left-hand side (LHS) of that assignment expression).
+    pith_curr_var_name = VAR_NAME_PITH_ROOT
 
     # Python code snippet expanding to the current level of indentation
     # appropriate for the currently visited hint.
@@ -485,7 +484,7 @@ def make_check_expr(
     # Local scope (i.e., dictionary mapping from the name to value of each
     # attribute referenced in the signature) of this wrapper function required
     # by this Python code snippet.
-    func_wrapper_locals: LexicalScope = {}
+    func_wrapper_scope: LexicalScope = {}
 
     # True only if one or more PEP-compliant type hints visitable from this
     # root hint require a pseudo-random integer. If true, the higher-level
@@ -582,7 +581,7 @@ def make_check_expr(
     # type-checking the child pith expression (i.e., "pith_child_expr") against
     # the currently iterated child hint (i.e., "hint_child"), initialized to a
     # placeholder describing the root hint.
-    hint_child_placeholder = _enqueue_hint_child(PITH_ROOT_VAR_NAME)
+    hint_child_placeholder = _enqueue_hint_child(VAR_NAME_PITH_ROOT)
 
     # Python code snippet type-checking the root pith against the root hint,
     # localized separately from the "func_wrapper_code" snippet to enable this
@@ -784,7 +783,7 @@ def make_check_expr(
                         # exception -- which should *NEVER* happen, as this
                         # hint was validated above to be supported.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
-                        func_scope=func_wrapper_locals,
+                        func_scope=func_wrapper_scope,
                         exception_prefix=_EXCEPTION_PREFIX_HINT,
                     ),
                 )
@@ -810,7 +809,7 @@ def make_check_expr(
                         forwardref=hint_curr,
                         forwardrefs_class_basename=(
                             hint_forwardrefs_class_basename),
-                        func_scope=func_wrapper_locals,
+                        func_scope=func_wrapper_scope,
                         exception_prefix=_EXCEPTION_PREFIX,
                     ))
 
@@ -964,7 +963,7 @@ def make_check_expr(
                         # seemingly equivalent test like "hints_meta_index_curr
                         # != 0" would generate false positives and thus
                         # unnecessarily inefficient code.
-                        pith_curr_expr is not PITH_ROOT_VAR_NAME and
+                        pith_curr_expr is not VAR_NAME_PITH_ROOT and
 
                         #FIXME: Overly ambiguous, unfortunately. This suffices
                         #for now but absolutely *WILL* fail with inscrutable
@@ -1021,8 +1020,8 @@ def make_check_expr(
                         #     SyntaxError: invalid syntax
                         ':=' not in pith_curr_expr
                     ):
-                    # Then all conditions needed to assign the current pith to
-                    # a unique local variable via a Python >= 3.8-specific
+                    # Then all conditions needed to assign the current pith to a
+                    # unique local variable via a Python >= 3.8-specific
                     # assignment expression are satisfied. In this case...
                         # Increment the integer suffixing the name of this
                         # variable *BEFORE* defining this local variable.
@@ -1201,7 +1200,7 @@ def make_check_expr(
                                 #       https://stackoverflow.com/a/40054478/2809027
                                 hint_curr_expr=add_func_scope_types(
                                     types=hint_childs_nonpep,
-                                    func_scope=func_wrapper_locals,
+                                    func_scope=func_wrapper_scope,
                                     exception_prefix=_EXCEPTION_PREFIX_HINT,
                                 ),
                             ))
@@ -1305,7 +1304,7 @@ def make_check_expr(
                     hint_curr_expr = add_func_scope_type(
                         # Origin type of this sequence.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
-                        func_scope=func_wrapper_locals,
+                        func_scope=func_wrapper_scope,
                         exception_prefix=_EXCEPTION_PREFIX_HINT,
                     )
                     # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
@@ -1555,7 +1554,7 @@ def make_check_expr(
                         # both this validator code *AND* the current code
                         # type-checking this entire root hint.
                         update_mapping(
-                            mapping_trg=func_wrapper_locals,
+                            mapping_trg=func_wrapper_scope,
                             mapping_src=hint_child._is_valid_code_locals,
                         )
 
@@ -1595,7 +1594,7 @@ def make_check_expr(
                         # Python expression evaluating to this superclass.
                         hint_curr_expr = add_func_scope_type_or_types(
                             type_or_types=hint_child,  # type: ignore[arg-type]
-                            func_scope=func_wrapper_locals,
+                            func_scope=func_wrapper_scope,
                             exception_prefix=_EXCEPTION_PREFIX_HINT,
                         )
                     # Else, this superclass is *NOT* actually a class. By
@@ -1611,7 +1610,7 @@ def make_check_expr(
                                 forwardref=hint_child,  # type: ignore[arg-type]
                                 forwardrefs_class_basename=(
                                     hint_forwardrefs_class_basename),
-                                func_scope=func_wrapper_locals,
+                                func_scope=func_wrapper_scope,
                                 exception_prefix=_EXCEPTION_PREFIX,
                             ))
 
@@ -1710,7 +1709,7 @@ def make_check_expr(
                         # Python expression evaluating to this generic type.
                         hint_curr_expr=add_func_scope_type(
                             cls=hint_curr,
-                            func_scope=func_wrapper_locals,
+                            func_scope=func_wrapper_scope,
                             exception_prefix=_EXCEPTION_PREFIX_HINT,
                         ),
                     )
@@ -1767,7 +1766,7 @@ def make_check_expr(
                                 type(hint_child)
                                 for hint_child in hint_childs
                             },
-                            func_scope=func_wrapper_locals,
+                            func_scope=func_wrapper_scope,
                             exception_prefix=_EXCEPTION_PREFIX_HINT,
                         ),
                     )
@@ -1781,7 +1780,7 @@ def make_check_expr(
                             # Python expression evaluating to this object.
                             hint_child_expr=add_func_scope_attr(
                                 attr=hint_child,
-                                func_scope=func_wrapper_locals,
+                                func_scope=func_wrapper_scope,
                                 exception_prefix=(
                                     _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
                             ),
@@ -1838,7 +1837,7 @@ def make_check_expr(
                 # Python expression evaluating to this type.
                 hint_curr_expr=add_func_scope_type(
                     cls=hint_curr,
-                    func_scope=func_wrapper_locals,
+                    func_scope=func_wrapper_scope,
                     exception_prefix=_EXCEPTION_PREFIX_HINT,
                 ),
             )
@@ -1899,7 +1898,7 @@ def make_check_expr(
     if is_var_random_int_needed:
         # Pass the random.getrandbits() function required to generate this
         # integer to this wrapper function as an optional hidden parameter.
-        func_wrapper_locals[_ARG_NAME_GETRANDBITS] = getrandbits
+        func_wrapper_scope[_ARG_NAME_GETRANDBITS] = getrandbits
 
     # ..................{ CODE ~ suffix                      }..................
     # Tuple of the unqualified classnames referred to by all relative forward
@@ -1917,6 +1916,6 @@ def make_check_expr(
     # Return all metadata required by higher-level callers.
     return (
         func_wrapper_code,
-        func_wrapper_locals,
+        func_wrapper_scope,
         hint_forwardrefs_class_basename_tuple,
     )

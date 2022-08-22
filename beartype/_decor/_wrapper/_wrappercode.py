@@ -13,14 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._check.checkmagic import ARG_NAME_GETRANDBITS
+from beartype._check.expr.exprcode import make_check_expr
+from beartype._data.datatyping import CodeGenerated
 from beartype._decor._wrapper.wrappersnip import (
     CODE_HINT_ROOT_PREFIX,
     CODE_HINT_ROOT_SUFFIX,
     CODE_HINT_ROOT_SUFFIX_RANDOM_INT,
 )
-from beartype._data.datatyping import CodeGenerated
-from beartype._decor._wrapper.wrappermagic import ARG_NAME_GETRANDBITS
-from beartype._check._expr.exprcode import make_check_expr
 from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ MAKERS                             }....................
@@ -66,7 +66,7 @@ def make_func_wrapper_code(hint: object) -> CodeGenerated:
     # an arbitrary object against this hint.
     (
         func_wrapper_code_expr,
-        func_wrapper_locals,
+        func_wrapper_scope,
         hint_forwardrefs_class_basename,
     ) = make_check_expr(hint)
 
@@ -76,7 +76,7 @@ def make_func_wrapper_code(hint: object) -> CodeGenerated:
     # defaulting to passing *NO* such integer.
     func_wrapper_code_random_int_if_any = (
         CODE_HINT_ROOT_SUFFIX_RANDOM_INT
-        if ARG_NAME_GETRANDBITS in func_wrapper_locals else
+        if ARG_NAME_GETRANDBITS in func_wrapper_scope else
         ''
     )
 
@@ -95,6 +95,6 @@ def make_func_wrapper_code(hint: object) -> CodeGenerated:
     # Return all metadata required by higher-level callers.
     return (
         func_wrapper_code,
-        func_wrapper_locals,
+        func_wrapper_scope,
         hint_forwardrefs_class_basename,
     )

@@ -20,8 +20,8 @@ from beartype._decor._cache.cachetype import (
     bear_typistry,
     register_typistry_forwardref,
 )
-from beartype._decor._wrapper.wrappermagic import ARG_NAME_TYPISTRY
-from beartype._check._expr._exprsnip import (
+from beartype._check.checkmagic import ARG_NAME_TYPISTRY
+from beartype._check.expr._exprsnip import (
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
 )

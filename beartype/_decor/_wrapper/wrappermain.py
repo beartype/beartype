@@ -33,24 +33,19 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
 )
 from beartype.typing import NoReturn
+from beartype._check.checkmagic import ARG_NAME_TYPISTRY
+from beartype._check.expr._exprsnip import (
+    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
+    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
+)
+from beartype._check.util.checkutilmake import make_func_signature
 from beartype._decor._cache.cachetype import (
     bear_typistry,
     register_typistry_forwardref,
 )
 from beartype._decor._decorcall import BeartypeCall
-from beartype._check._expr._exprsnip import (
-    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
-    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
-)
-from beartype._decor._wrapper._wrappercode import make_func_wrapper_code
-from beartype._decor._wrapper.wrappermagic import (
-    ARG_NAME_GETRANDBITS,
-    ARG_NAME_TYPISTRY,
-    EXCEPTION_PREFIX,
-)
 from beartype._decor._wrapper.wrappersnip import (
     CODE_INIT_ARGS_LEN,
-    CODE_INIT_RANDOM_INT,
     CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
     CODE_RETURN_CHECK_PREFIX,
     CODE_RETURN_CHECK_SUFFIX,
@@ -59,9 +54,12 @@ from beartype._decor._wrapper.wrappersnip import (
     PARAM_KIND_TO_CODE_LOCALIZE,
     PEP484_CODE_CHECK_NORETURN,
 )
-from beartype._util.error.utilerror import reraise_exception_placeholder
+from beartype._decor._wrapper._wrappercode import make_func_wrapper_code
+from beartype._util.error.utilerror import (
+    EXCEPTION_PLACEHOLDER,
+    reraise_exception_placeholder,
+)
 from beartype._util.func.arg.utilfuncargiter import (
-    # ARG_META_INDEX_DEFAULT,
     ARG_META_INDEX_KIND,
     ARG_META_INDEX_NAME,
     ArgKind,
@@ -78,9 +76,7 @@ from beartype._util.text.utiltextlabel import (
     prefix_callable_decorated_arg,
     prefix_callable_decorated_return,
 )
-from beartype._util.text.utiltextmagic import CODE_INDENT_1
 from beartype._util.text.utiltextmunge import replace_str_substrs
-from beartype._util.text.utiltextrepr import represent_object
 from beartype._util.utilobject import SENTINEL
 from collections.abc import (
     Callable,
@@ -130,8 +126,8 @@ callables).
 def generate_code(
     bear_call: BeartypeCall,
 
-    # "beartype._decor._wrapper.wrappersnip" string globals required only for their
-    # bound "str.format" methods.
+    # "beartype._decor._wrapper.wrappersnip" string globals required only for
+    # their bound "str.format" methods.
     CODE_RETURN_UNCHECKED_format: Callable = CODE_RETURN_UNCHECKED.format,
 ) -> str:
     '''
@@ -242,6 +238,17 @@ def generate_code(
             func_call_prefix=bear_call.func_wrapper_code_call_prefix)
     # Else, the callable return requires type-checking.
 
+    # Python code snippet declaring the signature of this type-checking wrapper
+    # function, deferred for efficiency until *AFTER* confirming that a wrapper
+    # function is even required.
+    code_signature = make_func_signature(
+        func_name=bear_call.func_wrapper_name,
+        func_scope=bear_call.func_wrapper_scope,
+        code_signature_format=CODE_SIGNATURE,
+        code_signature_prefix=bear_call.func_wrapper_code_signature_prefix,
+        is_debug=bear_call.func_conf.is_debug,
+    )
+
     # Return Python code defining the wrapper type-checking this callable.
     # While there exist numerous alternatives to string formatting (e.g.,
     # appending to a list or bytearray before joining the items of that
@@ -253,7 +260,7 @@ def generate_code(
     # Since string concatenation is heavily optimized by the official CPython
     # interpreter, the simplest approach is the most ideal. KISS, bro.
     return (
-        f'{_make_func_wrapper_signature(bear_call)}'
+        f'{code_signature}'
         f'{code_check_params}'
         f'{code_check_return}'
     )
@@ -367,7 +374,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # decorator, raise an exception.
             if arg_name.startswith('__bear'):
                 raise BeartypeDecorParamNameException(
-                    f'{EXCEPTION_PREFIX}reserved by @beartype.')
+                    f'{EXCEPTION_PLACEHOLDER}reserved by @beartype.')
             # If either the type of this parameter is silently ignorable, continue
             # to the next parameter.
             elif arg_kind in _PARAM_KINDS_IGNORABLE:
@@ -387,7 +394,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 hint=hint,
                 func=bear_call.func_wrappee,
                 pith_name=arg_name,
-                exception_prefix=EXCEPTION_PREFIX,
+                exception_prefix=EXCEPTION_PLACEHOLDER,
             )
 
             # If this hint is ignorable, continue to the next parameter.
@@ -428,7 +435,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # should have simply ignored this parameter.
             if PARAM_LOCALIZE_TEMPLATE is None:
                 raise BeartypeDecorHintPepException(
-                    f'{EXCEPTION_PREFIX}kind {repr(arg_kind)} '
+                    f'{EXCEPTION_PLACEHOLDER}kind {repr(arg_kind)} '
                     f'currently unsupported by @beartype.'
                 )
             # Else, this kind of parameter is supported. Ergo, this code is
@@ -438,13 +445,13 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # any parameter or return value with an arbitrary name.
             (
                 code_param_check_pith,
-                func_wrapper_locals,
+                func_wrapper_scope,
                 hint_forwardrefs_class_basename,
             ) = make_func_wrapper_code(hint)
 
             # Merge the local scope required to check this parameter into the
             # local scope currently required by the current wrapper function.
-            update_mapping(bear_call.func_wrapper_locals, func_wrapper_locals)
+            update_mapping(bear_call.func_wrapper_scope, func_wrapper_scope)
 
             # Python code snippet localizing this parameter.
             code_param_localize = PARAM_LOCALIZE_TEMPLATE.format(
@@ -461,9 +468,8 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # Append code type-checking this parameter against this hint.
             func_wrapper_code += f'{code_param_localize}{code_param_check}'
         # If any exception was raised, reraise this exception with each
-        # placeholder substring (i.e.,
-        # "beartype._util.error.utilerror.EXCEPTION_PLACEHOLDER" instance)
-        # replaced with a description of this callable and parameter.
+        # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER") replaced with a
+        # description of this callable and parameter.
         except Exception as exception:
             reraise_exception_placeholder(
                 exception=exception,
@@ -523,11 +529,6 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
     assert bear_call.__class__ is BeartypeCall, (
         f'{repr(bear_call)} not @beartype call.')
 
-    # Python code snippet to be returned, defaulting to the empty string
-    # implying this callable's return to either be unannotated *OR* annotated by
-    # a safely ignorable type hint.
-    func_wrapper_code = ''
-
     # Type hint annotating this callable's return if any *OR* "SENTINEL"
     # otherwise (i.e., if this return is unannotated).
     #
@@ -538,8 +539,13 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
 
     # If this return is unannotated, silently reduce to a noop.
     if hint is SENTINEL:
-        return func_wrapper_code
+        return ''
     # Else, this return is annotated.
+
+    # Python code snippet to be returned, defaulting to the empty string
+    # implying this callable's return to either be unannotated *OR* annotated by
+    # a safely ignorable type hint.
+    func_wrapper_code = ''
 
     # Attempt to...
     try:
@@ -552,7 +558,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
         # Perform this reduction *BEFORE* performing subsequent tests (e.g., to
         # accept "Coroutine[None, None, typing.NoReturn]" as expected).
         hint = reduce_hint_pep484585_func_return(
-            func=bear_call.func_wrappee, exception_prefix=EXCEPTION_PREFIX)
+            func=bear_call.func_wrappee, exception_prefix=EXCEPTION_PLACEHOLDER)
 
         # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
         # *ONLY* as a return annotation...
@@ -576,7 +582,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                 hint=hint,
                 func=bear_call.func_wrappee,
                 pith_name='return',
-                exception_prefix=EXCEPTION_PREFIX,
+                exception_prefix=EXCEPTION_PLACEHOLDER,
             )
 
             # If this PEP-compliant hint is unignorable, generate and return a
@@ -590,7 +596,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                 # type-checking any parameter or return with any name.
                 (
                     code_return_check_pith,
-                    func_wrapper_locals,
+                    func_wrapper_scope,
                     hint_forwardrefs_class_basename,
                 ) = make_func_wrapper_code(hint)
 
@@ -598,7 +604,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                 # the local scope currently required by the current wrapper
                 # function.
                 update_mapping(
-                    bear_call.func_wrapper_locals, func_wrapper_locals)
+                    bear_call.func_wrapper_scope, func_wrapper_scope)
 
                 # Unmemoize this snippet against this return.
                 code_return_check_pith_unmemoized = _unmemoize_func_wrapper_code(
@@ -638,87 +644,8 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
     # Return this code.
     return func_wrapper_code
 
-# ....................{ PRIVATE ~ return                   }....................
-def _make_func_wrapper_signature(bear_call: BeartypeCall) -> str:
-    '''
-    Create and return the **signature** (i.e., callable declaration prefixing
-    the body of that callable) of the decorated callable.
-
-    Parameters
-    ----------
-    bear_call : BeartypeCall
-        Decorated callable to be inspected.
-
-    Yields
-    ----------
-    str
-        Signature of this callable.
-    '''
-    assert bear_call.__class__ is BeartypeCall, (
-        f'{repr(bear_call)} not @beartype call.')
-
-    # Python code snippet declaring all optional private beartype-specific
-    # parameters directly derived from the local scope established by the above
-    # calls to the _code_check_args() and _code_check_return() functions.
-    code_signature_args = ''
-
-    # For the name and value of each such parameter...
-    for arg_name, arg_value in bear_call.func_wrapper_locals.items():
-        # Machine-readable representation of this parameter's initial value,
-        # stripped of newline and truncated to a (hopefully) sensible length.
-        # Since the represent_object() function called below to sanitize this
-        # value is incredibly slow, this representation is conditionally
-        # appended as a mildly human-readable comment to the declaration of
-        # this parameter below *ONLY* if the caller configured @beartype to
-        # print the definition of this wrapper.
-        arg_value_repr = (
-            f' # is {represent_object(arg_value)}'
-            if bear_call.func_conf.is_debug else
-            ''
-        )
-
-        # Compose the declaration of this parameter in the signature of this
-        # wrapper from...
-        code_signature_args += (
-            # Indentation prefixing all wrapper parameters.
-            f'{CODE_INDENT_1}'
-            # Default this parameter to the current value of the module-scoped
-            # attribute of the same name, passed to the make_func() function by
-            # the parent @beartype decorator. While awkward, this is the
-            # optimally efficient means of exposing arbitrary attributes to the
-            # body of this wrapper function.
-            f'{arg_name}={arg_name},{arg_value_repr}'
-            # Newline for readability.
-            f'\n'
-        )
-
-    # Python code snippet declaring the signature of this wrapper.
-    code_signature = CODE_SIGNATURE.format(
-        func_wrapper_prefix=bear_call.func_wrapper_code_signature_prefix,
-        func_wrapper_name=bear_call.func_wrapper_name,
-        func_wrapper_params=code_signature_args,
-    )
-
-    # Python code snippet of preliminary statements (e.g., local variable
-    # assignments) if any *AFTER* generating snippets type-checking parameters
-    # and returns (which modifies dataclass variables tested below).
-    code_body_init = (
-        # If the body of this wrapper requires a pseudo-random integer, append
-        # code generating and localizing such an integer to this signature.
-        CODE_INIT_RANDOM_INT
-        if ARG_NAME_GETRANDBITS in bear_call.func_wrapper_locals else
-        # Else, this body requires *NO* such integer. In this case, preserve
-        # this signature as is.
-        ''
-    )
-
-    # Return this signature suffixed by zero or more preliminary statements.
-    return (
-        f'{code_signature}'
-        f'{code_body_init}'
-    )
-
 # ....................{ PRIVATE ~ unmemoize                }....................
+#FIXME: Publicize and shift into "_wrappercode" for maintainability, please.
 def _unmemoize_func_wrapper_code(
     bear_call: BeartypeCall,
     func_wrapper_code: str,
@@ -789,7 +716,7 @@ def _unmemoize_func_wrapper_code(
 
         # Pass the beartypistry singleton as a private "__beartypistry"
         # parameter to this wrapper function.
-        bear_call.func_wrapper_locals[ARG_NAME_TYPISTRY] = bear_typistry
+        bear_call.func_wrapper_scope[ARG_NAME_TYPISTRY] = bear_typistry
 
         # For each unqualified classname referred to by a relative forward
         # reference type hints visitable from the current root type hint...

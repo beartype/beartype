@@ -59,7 +59,7 @@ class BeartypeCall(object):
     ----------
     **This object cannot be used to communicate state between low-level
     memoized callables** (e.g.,
-    :func:`beartype._check._expr.exprcode.make_func_wrapper_code`) **and
+    :func:`beartype._check.expr.exprcode.make_func_wrapper_code`) **and
     higher-level callables** (e.g.,
     :func:`beartype._decor._wrapper.wrappermain.generate_code`). Instead, memoized
     callables *must* return that state as additional return values up the call
@@ -159,16 +159,13 @@ class BeartypeCall(object):
           nor asynchronous generator), the empty string.
         * If the decorated callable is asynchronous (i.e., either a coroutine
           nor asynchronous generator), the ``"async "`` keyword.
-    func_wrapper_locals : LexicalScope
+    func_wrapper_scope : LexicalScope
         **Local scope** (i.e., dictionary mapping from the name to value of
-        each attribute referenced in the signature) of this wrapper function
-        required by this code snippet.
+        each attribute referenced in the signature) of this wrapper function.
     func_wrapper_name : Optional[str]
         Machine-readable name of the wrapper function to be generated and
         returned by this decorator if the :meth:`reinit` method has been called
-        *or* ``None`` otherwise. To efficiently (albeit imperfectly) avoid
-        clashes with existing attributes of the module defining that function,
-        this name is obfuscated while still preserving human-readability.
+        *or* ``None`` otherwise.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -188,7 +185,7 @@ class BeartypeCall(object):
         'func_wrappee_wrappee',
         'func_wrapper_code_call_prefix',
         'func_wrapper_code_signature_prefix',
-        'func_wrapper_locals',
+        'func_wrapper_scope',
         'func_wrapper_name',
     )
 
@@ -234,7 +231,7 @@ class BeartypeCall(object):
         self.func_wrappee_wrappee_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
         self.func_wrapper_code_call_prefix: str = None  # type: ignore[assignment]
         self.func_wrapper_code_signature_prefix: str = None  # type: ignore[assignment]
-        self.func_wrapper_locals: LexicalScope = {}
+        self.func_wrapper_scope: LexicalScope = {}
         self.func_wrapper_name: str = None  # type: ignore[assignment]
 
 
@@ -346,14 +343,14 @@ class BeartypeCall(object):
 
         # Efficiently reduce this local scope back to the dictionary of all
         # parameters unconditionally required by *ALL* wrapper functions.
-        self.func_wrapper_locals.clear()
-        self.func_wrapper_locals[ARG_NAME_FUNC] = func
+        self.func_wrapper_scope.clear()
+        self.func_wrapper_scope[ARG_NAME_FUNC] = func
 
         #FIXME: Non-ideal. This should *NOT* be set here but rather in the
         #lower-level code generating factory function that actually embeds the
         #call to this function (e.g.,
         #beartype._check._checkcode.make_func_code()).
-        self.func_wrapper_locals[ARG_NAME_RAISE_EXCEPTION] = (
+        self.func_wrapper_scope[ARG_NAME_RAISE_EXCEPTION] = (
             get_beartype_violation)
 
         # Machine-readable name of the wrapper function to be generated.

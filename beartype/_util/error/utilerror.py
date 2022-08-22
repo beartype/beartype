@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -13,12 +13,22 @@ generating code for the :func:`beartype.beartype` decorator.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS                          }....................
 EXCEPTION_PLACEHOLDER = '$%ROOT_PITH_LABEL/~'
 '''
-Default non-human-readable source substring to be globally replaced by the
-target substring in the generic messages of memoized exceptions passed to the
+Non-human-readable source substring to be globally replaced by a human-readable
+target substring in the messages of memoized exceptions passed to the
 :func:`reraise_exception` function.
+
+This substring prefixes most exception messages raised by memoized callables,
+including code generation factories memoized on passed PEP-compliant type hints
+(e.g., the :mod:`beartype._check` and :mod:`beartype._decor` submodules). The
+:func:`beartype._util.error.utilerror.reraise_exception_placeholder` function
+then dynamically replaces this prefix of the message of the passed exception
+with a human-readable synopsis of the current unmemoized exception context,
+including the name of both the currently decorated callable *and* the currently
+iterated parameter or return of that callable for aforementioned code generation
+factories.
 
 Usage
 ----------
@@ -29,16 +39,16 @@ Memoization prohibits those callables from raising human-readable exception
 messages. Why? Doing so would require those callables to accept fine-grained
 parameters unique to each call to those callables, which those callables would
 then dynamically format into human-readable exception messages raised by those
-callables. The standard example would be a ``exception_prefix`` parameter labelling
-the human-readable category of type hint being inspected by the current call
-(e.g., ``@beartyped muh_func() parameter "muh_param" PEP type hint "List[int]"``
-for a ``List[int]`` type hint on the `muh_param` parameter of a ``muh_func()``
-function decorated by the :func:`beartype.beartype` decorator). Since the whole
-point of memoization is to cache callable results between calls, any callable
-accepting any fine-grained parameter unique to each call to that callable is
-effectively *not* memoizable in any meaningful sense of the adjective
-"memoizable." Ergo, memoized callables *cannot* raise human-readable exception
-messages unique to each call to those callables.
+callables. The standard example would be a ``exception_prefix`` parameter
+labelling the human-readable category of type hint being inspected by the
+current call (e.g., ``@beartyped muh_func() parameter "muh_param" PEP type hint
+"List[int]"`` for a ``List[int]`` type hint on the `muh_param` parameter of a
+``muh_func()`` function decorated by the :func:`beartype.beartype` decorator).
+Since the whole point of memoization is to cache callable results between calls,
+any callable accepting any fine-grained parameter unique to each call to that
+callable is effectively *not* memoizable in any meaningful sense of the
+adjective "memoizable." Ergo, memoized callables *cannot* raise human-readable
+exception messages unique to each call to those callables.
 
 This substring indirectly solves this issue by inverting the onus of human
 readability. Rather than requiring memoized callables to raise human-readable
@@ -72,7 +82,7 @@ containing those fragments. The indirect approach avoids percolation, thus
 streamlining the implementations of all callables involved. Phew!
 '''
 
-# ....................{ RAISERS                           }....................
+# ....................{ RAISERS                            }....................
 def reraise_exception_placeholder(
     # Mandatory parameters.
     exception: Exception,
