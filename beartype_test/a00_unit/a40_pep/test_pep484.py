@@ -61,7 +61,7 @@ def test_pep484_hint_noreturn() -> None:
         NoReturn,
         Union,
     )
-    from beartype_test.util.pytroar import raises_uncached
+    from beartype_test._util.pytroar import raises_uncached
 
     # Exception guaranteed to be raised *ONLY* by the mending_wall() function.
     class BeforeIBuiltAWallIdAskToKnow(Exception): pass

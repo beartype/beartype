@@ -16,7 +16,7 @@ documentation for the third-party :mod:`sphinx` package.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import skip_unless_package
+from beartype_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS                             }....................
 #FIXME: For the benefit of the community, externally document how to do this
@@ -46,7 +46,7 @@ def test_sphinx_build(make_app, tmp_path) -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype_test.util.path.pytpathmain import get_main_sphinx_source_dir
+    from beartype_test._util.path.pytpathmain import get_main_sphinx_source_dir
     from sphinx.testing.path import path
 
     #FIXME: Pass "parallel=CPUS_LEN" as well, where "CPUS_LEN" is the number of

@@ -15,7 +15,7 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
+# from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS ~ attr                      }....................
 def test_get_hint_pep_args() -> None:

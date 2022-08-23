@@ -16,7 +16,7 @@ This submodule unit tests the public API of the public
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
-from beartype_test.util.mark.pytmark import ignore_warnings
+from beartype_test._util.mark.pytmark import ignore_warnings
 
 # ....................{ TESTS                              }....................
 # Prevent pytest from capturing and displaying all expected non-fatal

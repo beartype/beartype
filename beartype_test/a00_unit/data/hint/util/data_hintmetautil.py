@@ -76,7 +76,7 @@ def iter_hints_piths_meta() -> 'Generator[HintPithMetadata]':
         HintPithSatisfiedMetadata,
         HintPithUnsatisfiedMetadata,
     )
-    from beartype_test.util.pytcontext import noop_context_manager
+    from beartype_test._util.pytcontext import noop_context_manager
 
     # Tuple of two arbitrary values used to trivially iterate twice below.
     RANGE_2 = (None, None)

@@ -72,9 +72,9 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPithSatisfiedMetadata,
         HintPithUnsatisfiedMetadata,
     )
-    from beartype_test.util.mod.pytmodtest import (
+    from beartype_test._util.mod.pytmodtest import (
         is_package_beartype_vale_usable)
-    from beartype_test.util.mod.pytmodtyping import iter_typing_attrs
+    from beartype_test._util.mod.pytmodtyping import iter_typing_attrs
 
     # Type variables.
     S = TypeVar('S')

@@ -15,7 +15,7 @@ top-level ``README.rst`` file.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import skip_unless_package
+from beartype_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS                             }....................
 #FIXME: Consider submitting as a StackOverflow post. Dis iz l33t, yo!
@@ -45,7 +45,7 @@ def test_doc_readme(monkeypatch) -> None:
     # Defer heavyweight imports.
     from docutils.core import publish_parts
     from docutils.utils import Reporter
-    from beartype_test.util.path.pytpathmain import get_main_readme_file
+    from beartype_test._util.path.pytpathmain import get_main_readme_file
 
     # Decoded plaintext contents of this project's readme file as a string.
     #

@@ -69,7 +69,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
     reduce_hint_pep484585_func_return)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     get_hint_pep484585_forwardref_classname_relative_to_object)
-from beartype._util.hint.utilhintconv import sanify_hint_root
+from beartype._util.hint.utilhintconv import sanify_func_hint_root
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.text.utiltextlabel import (
@@ -390,7 +390,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             #   PEP-noncompliant nor a supported PEP-compliant hint).
             #
             # Do this first *BEFORE* passing this hint to any further callables.
-            hint = sanify_hint_root(
+            hint = sanify_func_hint_root(
                 hint=hint,
                 func=bear_call.func_wrappee,
                 pith_name=arg_name,
@@ -468,8 +468,9 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # Append code type-checking this parameter against this hint.
             func_wrapper_code += f'{code_param_localize}{code_param_check}'
         # If any exception was raised, reraise this exception with each
-        # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER") replaced with a
-        # description of this callable and parameter.
+        # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
+        # replaced by a human-readable description of this callable and
+        # annotated parameter.
         except Exception as exception:
             reraise_exception_placeholder(
                 exception=exception,
@@ -578,7 +579,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
             #   PEP-noncompliant nor a supported PEP-compliant hint).
             #
             # Do this first *BEFORE* passing this hint to any further callables.
-            hint = sanify_hint_root(
+            hint = sanify_func_hint_root(
                 hint=hint,
                 func=bear_call.func_wrappee,
                 pith_name='return',
@@ -632,8 +633,8 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
             # Else, this PEP-compliant hint is ignorable.
             # if not func_wrapper_code: print(f'Ignoring {bear_call.func_name} return hint {repr(hint)}...')
     # If any exception was raised, reraise this exception with each placeholder
-    # substring (i.e., "beartype._util.error.utilerror.EXCEPTION_PLACEHOLDER"
-    # instance) replaced with a description of this callable and return.
+    # substring (i.e., "EXCEPTION_PLACEHOLDER" instance) replaced by a
+    # human-readable description of this callable and annotated return.
     except Exception as exception:
         reraise_exception_placeholder(
             exception=exception,
@@ -645,7 +646,6 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
     return func_wrapper_code
 
 # ....................{ PRIVATE ~ unmemoize                }....................
-#FIXME: Publicize and shift into "_wrappercode" for maintainability, please.
 def _unmemoize_func_wrapper_code(
     bear_call: BeartypeCall,
     func_wrapper_code: str,

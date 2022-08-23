@@ -15,7 +15,7 @@ This submodule unit tests both the public *and* private API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
+from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS                             }....................
 # If the active Python interpreter targets Python < 3.8, this interpreter fails

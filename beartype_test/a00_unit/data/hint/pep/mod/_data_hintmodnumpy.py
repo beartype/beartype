@@ -20,7 +20,7 @@ dramatically simplify code generation for these hints. Ergo, so we do.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype_test.util.mod.pytmodtest import (
+from beartype_test._util.mod.pytmodtest import (
     is_package_numpy_typing_ndarray_deep)
 
 # ....................{ ADDERS                            }....................

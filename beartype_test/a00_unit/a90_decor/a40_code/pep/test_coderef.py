@@ -17,7 +17,7 @@ typically have yet to be defined).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.pytroar import raises_uncached
+from beartype_test._util.pytroar import raises_uncached
 from typing import Union
 
 # ....................{ TESTS ~ pass                       }....................

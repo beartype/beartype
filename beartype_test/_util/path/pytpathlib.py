@@ -13,7 +13,7 @@
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.pytroar import BeartypeTestPathException
+from beartype_test._util.pytroar import BeartypeTestPathException
 from pathlib import Path
 
 # ....................{ RELATIVIZERS                      }....................

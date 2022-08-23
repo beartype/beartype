@@ -583,11 +583,11 @@ def _beartype_func(
 
     #FIXME: Forward on the passed "cls_owner_*" parameters, please.
     # Previously cached callable metadata reinitialized from this callable.
-    func_data = acquire_object_typed(BeartypeCall)
-    func_data.reinit(func, conf)
+    bear_call = acquire_object_typed(BeartypeCall)
+    bear_call.reinit(func, conf)
 
     # Generate the raw string of Python statements implementing this wrapper.
-    func_wrapper_code = generate_code(func_data)
+    func_wrapper_code = generate_code(bear_call)
 
     # If this callable requires *NO* type-checking, silently reduce to a noop
     # and thus the identity decorator by returning this callable as is.
@@ -603,10 +603,21 @@ def _beartype_func(
     # attributes are *ALWAYS* first looked up as local attributes before falling
     # back to being looked up as global attributes.
     func_wrapper = make_func(
-        func_name=func_data.func_wrapper_name,
+        func_name=bear_call.func_wrapper_name,
         func_code=func_wrapper_code,
-        func_locals=func_data.func_wrapper_scope,
-        func_label=f'@beartyped {func.__name__}() wrapper',
+        func_locals=bear_call.func_wrapper_scope,
+
+        #FIXME: String formatting is infamously slow. As an optimization, it'd
+        #be strongly preferable to instead pass a lambda function accepting *NO*
+        #parameters and returning the desired string, which make_func() should
+        #then internally call on an as-needed basis to make this string: e.g.,
+        #    func_label_factory=lambda: f'@beartyped {bear_call.func_wrapper_name}() wrapper',
+        #
+        #This is trivial. The only question then is: "Which is actually faster?"
+        #Before finalizing this refactoring, let's profile both, adopt whichever
+        #outperforms the other, and then document this choice in make_func().
+        func_label=f'@beartyped {bear_call.func_wrapper_name}() wrapper',
+
         func_wrapped=func,
         is_debug=conf.is_debug,
         exception_cls=BeartypeDecorWrapperException,
@@ -618,7 +629,7 @@ def _beartype_func(
     set_func_beartyped(func_wrapper)
 
     # Release this callable metadata back to its object pool.
-    release_object_typed(func_data)
+    release_object_typed(bear_call)
 
     # Return this wrapper.
     return func_wrapper  # type: ignore[return-value]

@@ -15,7 +15,7 @@ encapsulating test-agnostic paths applicable to the codebase being tested).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.meta import PACKAGE_NAME
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype_test.util.path.pytpathlib import DirRelative, FileRelative
+from beartype_test._util.path.pytpathlib import DirRelative, FileRelative
 from pathlib import Path
 
 # ....................{ GETTERS ~ dir                     }....................

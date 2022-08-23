@@ -15,7 +15,7 @@ encapsulating test-specific paths unique to this test suite).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.meta import PACKAGE_NAME
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype_test.util.path.pytpathlib import DirRelative  #, FileRelative
+from beartype_test._util.path.pytpathlib import DirRelative  #, FileRelative
 from pathlib import Path
 
 # ....................{ GETTERS ~ dir                      }....................
@@ -29,7 +29,7 @@ def get_test_package_dir() -> Path:
     '''
 
     # Avoid circular import dependencies.
-    from beartype_test.util.path.pytpathmain import get_main_dir
+    from beartype_test._util.path.pytpathmain import get_main_dir
 
     # Objectionable action!
     return DirRelative(get_main_dir(), f'{PACKAGE_NAME}_test')

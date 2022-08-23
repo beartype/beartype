@@ -16,7 +16,7 @@ documentation for the third-party :mod:`sphinx` package.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import skip_unless_package
+from beartype_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS                             }....................
 #FIXME: *NON-IDEAL.* This test manually invokes Sphinx internals. Instead, this
@@ -44,8 +44,8 @@ def test_beartype_in_sphinx(tmp_path) -> None:
     from beartype import beartype
     from beartype._util.mod.lib.utilsphinx import (
         _SPHINX_AUTODOC_SUBPACKAGE_NAME)
-    from beartype_test.util.cmd.pytcmdexit import is_success
-    from beartype_test.util.path.pytpathtest import (
+    from beartype_test._util.cmd.pytcmdexit import is_success
+    from beartype_test._util.path.pytpathtest import (
         get_test_func_data_lib_sphinx_dir)
     from sys import modules as modules_imported_name
 

@@ -28,7 +28,7 @@ This submodule unit tests :pep:`563` support implemented in the
 # effectively run under PEP 563 on Python >= 3.10; ergo, conditionally
 # disabling these tests imposes no meaningful loss in coverage.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import (
+from beartype_test._util.mark.pytskip import (
     skip_if_pypy,
     skip_if_python_version_greater_than_or_equal_to,
     skip_if_python_version_less_than,

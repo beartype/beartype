@@ -121,7 +121,7 @@ def skip_unless_pathable(command_basename: str):
     '''
 
     # Defer heavyweight imports.
-    from beartype_test.util.cmd.pytcmdpath import is_pathable
+    from beartype_test._util.cmd.pytcmdpath import is_pathable
 
     # Skip this test if *NO* command with this basename resides in the ${PATH}.
     return skip_if(
@@ -143,7 +143,7 @@ def skip_if_ci():
     '''
 
     # Defer heavyweight imports.
-    from beartype_test.util.pytci import is_ci
+    from beartype_test._util.pytci import is_ci
 
     # Skip this test if the active Python interpreter is CI-hosted.
     return skip_if(is_ci(), reason='Incompatible with CI workflows.')
@@ -176,7 +176,7 @@ def skip_if_ci():
 #         IS_PYTHON_3_7,
 #         IS_PYTHON_AT_LEAST_3_8,
 #     )
-#     from beartype_test.util.mod.pytmodtest import is_package_typing_extensions
+#     from beartype_test._util.mod.pytmodtest import is_package_typing_extensions
 #
 #     # True only if the active Python interpreter supports PEP 544. See the
 #     # decorator docstring for further details.
@@ -408,7 +408,7 @@ def _skip_if_callable_raises_exception(
     '''
 
     # Avoid circular import dependencies.
-    from beartype_test.util.mark.pytmark import noop
+    from beartype_test._util.mark.pytmark import noop
 
     # Default all unpassed arguments to sane values.
     if args is None:

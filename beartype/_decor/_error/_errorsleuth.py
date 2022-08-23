@@ -175,24 +175,6 @@ class CauseSleuth(object):
         hint = sanify_hint_child(
             hint=hint,
             exception_prefix=self.exception_prefix,
-
-            # Prevent this sanitization from internally validating this hint
-            # against the die_unless_hint() raiser. While doing so is useful in
-            # most other callables, this property is transitively called by the
-            # get_beartype_violation() getter. Since the current
-            # @beartype-decorated callable may pass that getter arbitrary hints,
-            # these hints may be context-sensitively invalid as general-purpose
-            # hints (e.g., "typing.NoReturn", valid *ONLY* as a root return
-            # annotation). Permitting this sanitization to internally validate
-            # this hint against the die_unless_hint() raiser would erroneously
-            # raise an exception on context-sensitive hints that are otherwise
-            # valid in this specific context. Moreover, any hint passed to this
-            # property is already guaranteed to be valid. Why? Because
-            # type-checking code was already dynamically generated for this
-            # hint, which previously validated this hint context-sensitively.
-            # Instead, validation of this hint is deferred to subsequent
-            # callables transitively called by get_beartype_violation().
-            is_validate=False,
         )
 
         # If this hint is PEP-compliant...

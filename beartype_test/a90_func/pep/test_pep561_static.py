@@ -15,7 +15,7 @@ third-party static type-checkers and hence :pep:`561`.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import (
+from beartype_test._util.mark.pytskip import (
     skip_if_pypy,
     skip_unless_package,
     skip_unless_pathable,
@@ -52,7 +52,7 @@ def test_pep561_mypy() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype_test.util.path.pytpathmain import (
+    from beartype_test._util.path.pytpathmain import (
         get_main_mypy_config_file,
         get_main_package_dir,
     )
@@ -173,7 +173,7 @@ def test_pep561_pyright() -> None:
     # Defer heavyweight imports.
     from beartype.meta import PACKAGE_NAME
     from beartype._util.py.utilpyversion import get_python_version_major_minor
-    from beartype_test.util.cmd.pytcmdrun import run_command_forward_output
+    from beartype_test._util.cmd.pytcmdrun import run_command_forward_output
 
     # List of all shell words with which to run the external "pyright" command.
     PYRIGHT_ARGS = (

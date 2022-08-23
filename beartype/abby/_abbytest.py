@@ -74,13 +74,17 @@ during the lifecycle of the active Python process).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import (
     BeartypeAbbyHintViolation,
+    BeartypeAbbyTesterException,
     BeartypeCallHintReturnViolation,
+    BeartypeConfException,
 )
 from beartype.roar._roarexc import _BeartypeDoorTextException
 from beartype.typing import Callable
+from beartype._check.checkmake import make_func_tester
 from beartype._conf import BeartypeConf
 from beartype._decor._cache.cachedecor import beartype
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.error.utilerror import reraise_exception_placeholder
 from beartype._util.hint.utilhinttest import die_unless_hint
 
 # ....................{ PRIVATE ~ constants                }....................
@@ -207,6 +211,12 @@ def die_if_unbearable(
     # exception back up this call stack.
 
 # ....................{ TESTERS                            }....................
+#FIXME: Improve unit tests to exhaustively exercise edge cases, including:
+#* Ignorable hints.
+#* Relative hints (i.e., hints containing one or more relative forward
+#  references).
+#* Invalid hints. In this case, test that the raised exception is prefixed by
+#  the expected substring rather than our exception placeholder.
 def is_bearable(
     # Mandatory flexible parameters.
     obj: object,
@@ -237,14 +247,15 @@ def is_bearable(
 
     Raises
     ----------
-    BeartypeDecorHintPepUnsupportedException
-        If this hint is a PEP-compliant type hint currently unsupported by
-        the :func:`beartype.beartype` decorator.
-    BeartypeDecorHintNonpepException
-        If this hint is neither a:
+    BeartypeAbbyTesterException
+        If this hint is invalid as a general-purpose type hint, including either
+        if this hint is:
 
-        * Supported PEP-compliant type hint.
-        * Supported PEP-noncompliant type hint.
+        * *Not* PEP-compliant (i.e., is a PEP-noncompliant type hint).
+        * PEP-compliant but currently unsupported by :mod:`beartype`.
+        * PEP-compliant and supported but containing one or more relative
+          forward references, which this tester explicitly prohibits to improve
+          both call-time efficiency and (more importantly) end user portability.
 
     Examples
     ----------
@@ -255,29 +266,32 @@ def is_bearable(
         False
     '''
 
-    # @beartype-decorated closure raising an
-    # "BeartypeCallHintReturnViolation" exception if the parameter passed to
-    # this closure violates the hint passed to this parent tester.
-    _check_object = _get_type_checker(hint, conf)
+    # If this configuration is *NOT* a configuration, raise an exception.
+    if not isinstance(conf, BeartypeConf):
+        raise BeartypeConfException(
+            f'{repr(conf)} not beartype configuration.')
+    # Else, this configuration is a configuration.
 
-    # Attempt to...
+    # Attempt to dynamically generate a memoized low-level type-checking tester
+    # function returning true only if the object passed to that tester satisfies
+    # the type hint passed to this high-level type-checking tester function.
+    #
+    # Note that parameters are intentionally passed positionally for efficiency.
+    # Since make_func_tester() is memoized, passing parameters by keyword would
+    # raise a non-fatal "_BeartypeUtilCallableCachedKwargsWarning" warning.
     try:
-        # Type-check this object by passing this object to this closure, which
-        # then implicitly type-checks this object as a return value.
-        _check_object(obj)
+        func_tester = make_func_tester(hint, conf, BeartypeAbbyTesterException)
+    # If any exception was raised, reraise this exception with each placeholder
+    # substring (i.e., "EXCEPTION_PLACEHOLDER" instance) replaced by the passed
+    # exception prefix.
+    except Exception as exception:
+        reraise_exception_placeholder(
+            exception=exception,
+            target_str='is_bearable() ',
+        )
 
-        # If this closure fails to raise an exception, this object *MUST*
-        # necessarily satisfy this hint. In this case, return true.
-        return True
-    # If this closure raises an exception as this object violates this hint,
-    # silently squelch this exception and return false below.
-    except BeartypeCallHintReturnViolation:
-        pass
-    # Else, this closure raised another exception. In this case, percolate this
-    # exception back up this call stack.
-
-    # Return false, since this object violates this hint. (See above.)
-    return False
+    # Return true only if the passed object satisfies this hint.
+    return func_tester(obj)  # pyright: ignore[reportUnboundVariable]
 
 # ....................{ PRIVATE ~ getters                  }....................
 #FIXME: Shift into a more public location for widespread usage elsewhere: e.g.,
@@ -301,6 +315,9 @@ def is_bearable(
 #* Shift the "_BeartypeTypeChecker" type hint into the existing
 #  "beartype._data.datatyping" submodule, publicized and renamed to
 #  "BeartypeChecker".
+#FIXME: And... the prior "FIXME:" comment is almost certainly obsolete already.
+#Eventually, we want to eliminate this getter entirely in favour of dynamically
+#generating a full-blown exception raiser specific to the passed hint. *shrig*
 @callable_cached
 def _get_type_checker(
     hint: object, conf: BeartypeConf) -> _BeartypeTypeChecker:
@@ -310,13 +327,13 @@ def _get_type_checker(
     object passed to that function violates the hint passed to this parent
     getter under the passed beartype configuration).
 
-    This checker intentionally raises :exc:`BeartypeCallHintReturnViolation`
+    This factory intentionally raises :exc:`BeartypeCallHintReturnViolation`
     rather than :exc:`BeartypeCallHintParamViolation` exceptions. Since
     type-checking returns is *slightly* faster than type-checking parameters,
     this factory intentionally annotates the return rather than a parameter of
     this checker.
 
-    This factory is memoized for efficiency. 
+    This factory is memoized for efficiency.
 
     Parameters
     ----------

@@ -173,7 +173,7 @@ def test_nonpep_param_hint_invalid_fail() -> None:
     # Import this decorator.
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintNonpepException
-    from beartype_test.util.pytroar import raises_uncached
+    from beartype_test._util.pytroar import raises_uncached
 
     # Assert that type-checking a function with an integer parameter annotation
     # raises the expected exception.
@@ -214,7 +214,7 @@ def test_nonpep_fail_return_hint_nonpep() -> None:
     # Import this decorator.
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintNonpepException
-    from beartype_test.util.pytroar import raises_uncached
+    from beartype_test._util.pytroar import raises_uncached
 
     # Assert the expected exception from attempting to type-check a function
     # with a return annotation that is *NOT* a supported type.

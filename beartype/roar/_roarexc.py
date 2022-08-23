@@ -597,6 +597,31 @@ class BeartypeCallHintReturnViolation(BeartypeCallHintViolation):
     pass
 
 # ....................{ API ~ abby                         }....................
+class BeartypeAbbyException(BeartypeException):
+    '''
+    Abstract base class of all **functional type-checking exceptions.**
+
+    Instances of subclasses of this exception are raised at call time from
+    callables and classes published by the :func:`beartype.abby` subpackage.
+    '''
+
+    pass
+
+
+class BeartypeAbbyTesterException(BeartypeAbbyException):
+    '''
+    **Beartype functional type-checking tester exception.**
+
+    This exception is raised at call time by the
+    :func:`beartype.abby.is_bearable` function when passed an invalid type hint
+    (e.g., PEP-noncompliant type hint, unsupported PEP-compliant type hint,
+    supported PEP-compliant type hint containing one or more relative forward
+    references).
+    '''
+
+    pass
+
+
 class BeartypeAbbyHintViolation(BeartypeCallHintViolation):
     '''
     **Beartype functional type-checking exception.**

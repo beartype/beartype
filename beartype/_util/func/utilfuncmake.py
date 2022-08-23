@@ -72,7 +72,7 @@ def make_func(
         ``None``, in which case this function remains undocumented.
     func_label : str, optional
         Human-readable label describing this function for error-handling
-        purposes. Defaults to ``{name}()``.
+        purposes. Defaults to ``{func_name}()``.
     func_wrapped : Callable, optional
         Callable wrapped by the function to be created. If non-``None``,
         special dunder attributes will be propagated (i.e., copied) from this

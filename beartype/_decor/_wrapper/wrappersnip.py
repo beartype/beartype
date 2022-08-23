@@ -42,7 +42,16 @@ Note that:
     the space-suffixed keyword ``"async "``.
 '''
 
-# ....................{ PITH                               }....................
+
+CODE_INIT_ARGS_LEN = f'''
+    # Localize the number of passed positional arguments for efficiency.
+    {VAR_NAME_ARGS_LEN} = len(args)'''
+'''
+PEP-agnostic code snippet localizing the number of passed positional arguments
+for callables accepting one or more such arguments.
+'''
+
+# ....................{ CODE ~ check                       }....................
 CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER = '?|PITH_ROOT_NAME`^'
 '''
 Placeholder source substring to be globally replaced by the **root pith name**
@@ -58,16 +67,7 @@ See Also
     Related commentary.
 '''
 
-# ....................{ CODE ~ init                        }....................
-CODE_INIT_ARGS_LEN = f'''
-    # Localize the number of passed positional arguments for efficiency.
-    {VAR_NAME_ARGS_LEN} = len(args)'''
-'''
-PEP-agnostic code snippet localizing the number of passed positional arguments
-for callables accepting one or more such arguments.
-'''
 
-# ....................{ CODE ~ check                       }....................
 CODE_HINT_ROOT_PREFIX = '''
         # Type-check this passed parameter or return value against this
         # PEP-compliant type hint.
@@ -123,7 +123,7 @@ generated for the current call to the exception-handling function call embedded
 in the :data:`CODE_HINT_ROOT_SUFFIX` snippet.
 '''
 
-# ....................{ CODE ~ param                       }....................
+# ....................{ CODE ~ arg                         }....................
 PARAM_KIND_TO_CODE_LOCALIZE = {
     # Snippet localizing any positional-only parameter (e.g.,
     # "{posonlyarg}, /") by lookup in the wrapper's "*args" dictionary.

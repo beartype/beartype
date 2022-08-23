@@ -234,9 +234,9 @@ def make_check_expr(
     ----------
     **This factory intentionally accepts no** ``exception_prefix``
     **parameter.** Why? Since that parameter is typically specific to the
-    caller, accepting that parameter would prevent this factory from memoizing
-    the passed hint with the returned code, which would rather defeat the point.
-    Instead, this factory only:
+    context-sensitive use case of the caller, accepting that parameter would
+    prevent this factory from memoizing the passed hint with the returned code,
+    which would rather defeat the point. Instead, this factory only:
 
     * Returns generic non-working code containing the placeholder
       :data:`VAR_NAME_PITH_ROOT` substring that the caller is required to
@@ -245,9 +245,9 @@ def make_check_expr(
       :meth:`str.replace` method) to generate the desired non-generic working
       code type-checking that parameter or return value.
     * Raises generic non-human-readable exceptions containing the placeholder
-      :attr:`beartype._util.error.utilerror.EXCEPTION_PLACEHOLDER`
-      substring that the caller is required to explicitly catch and raise
-      non-generic human-readable exceptions from by calling the
+      :attr:`beartype._util.error.utilerror.EXCEPTION_PLACEHOLDER` substring
+      that the caller is required to explicitly catch and raise non-generic
+      human-readable exceptions from by calling the
       :func:`beartype._util.error.utilerror.reraise_exception_placeholder`
       function.
 

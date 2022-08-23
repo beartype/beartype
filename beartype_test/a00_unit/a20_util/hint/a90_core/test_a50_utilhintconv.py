@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,21 +10,21 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.hint.utilhintconv` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ coercers                  }....................
-def test_coerce_hint_root() -> None:
+# ....................{ TESTS ~ coercers                   }....................
+def test_coerce_func_hint_root() -> None:
     '''
-    Test the private :func:`beartype._util.hint.utilhintconv._coerce_hint_root`
-    reducer.
+    Test the private
+    :func:`beartype._util.hint.utilhintconv._coerce_func_hint_root` coercer.
     '''
 
     # Defer heavyweight imports.
-    from beartype._util.hint.utilhintconv import _coerce_hint_root
+    from beartype._util.hint.utilhintconv import _coerce_func_hint_root
 
     # ..................{ CALLABLES                         }..................
     def one_legion_of_wild_thoughts() -> str:
@@ -32,7 +32,7 @@ def test_coerce_hint_root() -> None:
 
     # ..................{ CORE                              }..................
     # Assert this coercer preserves an isinstanceable type as is.
-    assert _coerce_hint_root(
+    assert _coerce_func_hint_root(
         hint=str,
         func=one_legion_of_wild_thoughts,
         pith_name='return',
@@ -53,7 +53,7 @@ def test_coerce_hint_root() -> None:
 def test_coerce_hint_any() -> None:
     '''
     Test the private :func:`beartype._util.hint.utilhintconv._coerce_hint_any`
-    reducer.
+    coercer.
     '''
 
     # Defer heavyweight imports.
@@ -107,9 +107,9 @@ def test_reduce_hint() -> None:
         T_BOUNDED,
         T_CONSTRAINED,
     )
-    from beartype_test.util.mod.pytmodtyping import (
+    from beartype_test._util.mod.pytmodtyping import (
         import_typing_attr_or_none_safe)
-    from beartype_test.util.mod.pytmodtest import (
+    from beartype_test._util.mod.pytmodtest import (
         is_package_numpy,
         is_package_numpy_typing_ndarray_deep,
     )

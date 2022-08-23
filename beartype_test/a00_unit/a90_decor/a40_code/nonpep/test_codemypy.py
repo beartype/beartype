@@ -31,7 +31,7 @@ def test_decor_mypy_notimplemented() -> None:
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintReturnViolation
-    from beartype_test.util.pytroar import raises_uncached
+    from beartype_test._util.pytroar import raises_uncached
 
     # ..................{ LOCALS                             }..................
     # Without this, the forward reference in the return type of

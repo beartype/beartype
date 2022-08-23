@@ -216,7 +216,7 @@ def import_typing_attr_or_none_safe(typing_attr_basename: str) -> Any:
     # Defer heavyweight imports.
     from beartype._util.mod.lib.utiltyping import import_typing_attr_or_none
     # from beartype._util.mod.utilmodimport import import_module_attr_or_none
-    from beartype_test.util.mod.pytmodtest import is_package_typing_extensions
+    from beartype_test._util.mod.pytmodtest import is_package_typing_extensions
     # print(f'is_package_typing_extensions: {is_package_typing_extensions()}')
 
     # Return either...

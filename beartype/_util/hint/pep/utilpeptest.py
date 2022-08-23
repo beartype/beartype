@@ -230,21 +230,21 @@ def die_if_hint_pep_unsupported(
     # *ONLY* as a return annotation, raise an exception specific to this hint.
     if hint is NoReturn:
         raise BeartypeDecorHintPep484Exception(
-            f'{exception_prefix}return type hint {repr(hint)} invalid (i.e., '
+            f'{exception_prefix}return type hint "{repr(hint)}" invalid (i.e., '
             f'"typing.NoReturn" valid only as non-nested return annotation).'
         )
     # Else, this is any PEP-compliant type hint other than "typing.NoReturn".
+
     # In this case, raise a general-purpose exception.
     #
-    # Note that, by definition, the sign uniquely identifying this hint
-    # *SHOULD* be in the "HINT_SIGNS_SUPPORTED" set. Regardless of whether
-    # it is or isn't, we raise a similar exception. Ergo, there's no benefit to
-    # validating that expectation here.
-    else:
-        raise BeartypeDecorHintPepUnsupportedException(
-            f'{exception_prefix}type hint {repr(hint)} '
-            f'currently unsupported by @beartype.'
-        )
+    # Note that, by definition, the sign uniquely identifying this hint *SHOULD*
+    # be in the "HINT_SIGNS_SUPPORTED" set. Regardless of whether it is or not,
+    # we raise a similar exception in either case. Ergo, there is *NO* practical
+    # benefit to validating that expectation here.
+    raise BeartypeDecorHintPepUnsupportedException(
+        f'{exception_prefix}type hint {repr(hint)} '
+        f'currently unsupported by @beartype.'
+    )
 
 # ....................{ WARNINGS                           }....................
 #FIXME: Resurrect support for the passed "warning_prefix" parameter. We've

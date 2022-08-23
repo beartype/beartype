@@ -16,7 +16,7 @@ tests as either failed, parametrized, or skipped.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import pytest
-from beartype_test.util.pytroar import BeartypeTestMarkException
+from beartype_test._util.pytroar import BeartypeTestMarkException
 
 # ....................{ MARKS                              }....................
 noop = pytest.mark.noop

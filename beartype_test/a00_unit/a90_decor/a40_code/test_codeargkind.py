@@ -16,7 +16,7 @@ positional-only, variadic positional, variadic keyword).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
+from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS                             }....................
 def test_arg_kind_flex() -> None:
@@ -102,7 +102,7 @@ def test_arg_kind_kwonly_mixed() -> None:
     from beartype import beartype
     from beartype.roar import BeartypeCallHintViolation
     from beartype.typing import Union
-    from beartype_test.util.pytroar import raises_uncached
+    from beartype_test._util.pytroar import raises_uncached
 
     # Decorated callable to be exercised.
     @beartype
@@ -137,7 +137,7 @@ def test_arg_kind_flex_varpos_kwonly() -> None:
     from beartype import beartype
     from beartype.roar import BeartypeCallHintViolation
     from beartype.typing import Union
-    from beartype_test.util.pytroar import raises_uncached
+    from beartype_test._util.pytroar import raises_uncached
 
     # Decorated callable to be exercised.
     @beartype
@@ -197,7 +197,7 @@ def test_arg_kind_posonly() -> None:
     from beartype import beartype
     from beartype.roar import BeartypeCallHintViolation
     from beartype_test.a00_unit.data.pep.data_pep570 import pep570_posonly
-    from beartype_test.util.pytroar import raises_uncached
+    from beartype_test._util.pytroar import raises_uncached
 
     # Wrapper function type-checking this unchecked function.
     the_taste_and_the_hunger = beartype(pep570_posonly)

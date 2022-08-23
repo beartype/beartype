@@ -29,7 +29,7 @@ def test_package_import_isolation() -> None:
     from beartype._util.py.utilpyversion import IS_PYTHON_3_7
 
     # Defer heavyweight imports.
-    from beartype_test.util.cmd.pytcmdrun import (
+    from beartype_test._util.cmd.pytcmdrun import (
         run_python_forward_stderr_return_stdout)
     from re import (
         compile as re_compile,

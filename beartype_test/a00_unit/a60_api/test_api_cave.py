@@ -15,7 +15,7 @@ This submodule unit tests the public API of the :mod:`beartype.cave` submodule.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import argparse, functools, re, sys, weakref
-from beartype_test.util.mark.pytskip import skip_if_pypy, skip_unless_package
+from beartype_test._util.mark.pytskip import skip_if_pypy, skip_unless_package
 from collections import deque
 from collections.abc import Iterable
 from decimal import Decimal

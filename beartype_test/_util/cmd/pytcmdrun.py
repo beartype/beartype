@@ -216,7 +216,7 @@ def run_command_forward_output(
     '''
 
     # Defer heavyweight imports.
-    from beartype_test.util.cmd.pytcmdexit import is_failure
+    from beartype_test._util.cmd.pytcmdexit import is_failure
 
     # 0-based exit status reported by running this command.
     exit_status = run_command_forward_output_return_status(
@@ -266,7 +266,7 @@ def run_command_forward_output_return_status(
     '''
 
     # Defer heavyweight imports.
-    from beartype_test.util.cmd.pytcmdexit import FAILURE_DEFAULT
+    from beartype_test._util.cmd.pytcmdexit import FAILURE_DEFAULT
 
     # Sanitize these arguments.
     popen_kwargs = _init_popen_kwargs(command_words, popen_kwargs)

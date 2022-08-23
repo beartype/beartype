@@ -15,7 +15,7 @@ This submodule unit tests :pep:`544` support implemented in the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test.util.mark.pytskip import skip_if_python_version_less_than
+from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 from pytest import raises
 
 # ....................{ TESTS                             }....................

@@ -16,7 +16,7 @@ to :pep:`484`- and :pep:`585`-compliant type hints.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
-from beartype_test.util.mark.pytmark import ignore_warnings
+from beartype_test._util.mark.pytmark import ignore_warnings
 
 # ....................{ TESTS ~ decor : async              }....................
 # Prevent pytest from capturing and displaying all expected non-fatal
@@ -32,7 +32,7 @@ async def test_decor_async_coroutine() -> None:
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintPep585Exception
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-    from beartype_test.util.pytroar import raises_uncached
+    from beartype_test._util.pytroar import raises_uncached
     from collections.abc import Coroutine as Pep585Coroutine
     from typing import Union, Coroutine as Pep484Coroutine
 
@@ -110,7 +110,7 @@ async def test_decor_async_generator() -> None:
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintPep484585Exception
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-    from beartype_test.util.pytroar import raises_uncached
+    from beartype_test._util.pytroar import raises_uncached
     from collections.abc import (
         AsyncGenerator as Pep585AsyncGenerator,
         AsyncIterable as Pep585AsyncIterable,
@@ -248,7 +248,7 @@ def test_decor_sync_generator() -> None:
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintPep484585Exception
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-    from beartype_test.util.pytroar import raises_uncached
+    from beartype_test._util.pytroar import raises_uncached
     from collections.abc import (
         Generator as Pep585Generator,
         Iterable as Pep585Iterable,

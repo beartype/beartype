@@ -51,7 +51,7 @@ def is_pathable(command_basename: str) -> bool:
         f'{repr(command_basename)} not string.')
 
     # Defer heavyweight imports.
-    from beartype_test.util.path.pytpathname import die_unless_basename
+    from beartype_test._util.path.pytpathname import die_unless_basename
 
     # If this string is *NOT* a pure basename, raise an exception.
     die_unless_basename(command_basename)

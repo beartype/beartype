@@ -31,7 +31,7 @@ def die_unless_basename(pathname: str) -> None:
 
     Raises
     ----------
-    beartype_test.util.pytroar.BeartypeTestPathException
+    beartype_test._util.pytroar.BeartypeTestPathException
         If this pathname is *not* a pure basename.
 
     See Also
@@ -41,7 +41,7 @@ def die_unless_basename(pathname: str) -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype_test.util.pytroar import BeartypeTestPathException
+    from beartype_test._util.pytroar import BeartypeTestPathException
 
     # If this pathname is *NOT* a pure basename, raise an exception.
     if not is_basename(pathname):

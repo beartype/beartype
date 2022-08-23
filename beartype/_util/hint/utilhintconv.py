@@ -12,6 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: Consider splitting this submodule into two new submodules for
+#maintainability:
+#* "beartype._util.hint.conv.utilconvsanify", containing sanify_*() functions.
+#* "beartype._util.hint.conv.utilconvcoerce", containing coerce_*() functions.
+
 #FIXME: coerce_hint() should also rewrite unhashable hints to be hashable *IF
 #FEASIBLE.* This isn't always feasible, of course (e.g., "Annotated[[]]",
 #"Literal[[]]"). The one notable place where this *IS* feasible is with PEP
@@ -128,10 +133,10 @@ rather than the :func:`functools.lru_cache` decorator. Why? Because:
   space savings in dropping stale references to unused hints.
 '''
 
-# ....................{ SANIFIERS                          }....................
+# ....................{ SANIFIERS ~ root                   }....................
 #FIXME: Unit test us up, please.
 #FIXME: Revise docstring in accordance with recent dramatic improvements.
-def sanify_hint_root(
+def sanify_func_hint_root(
     hint: object,
     func: Callable,
     pith_name: str,
@@ -206,12 +211,16 @@ def sanify_hint_root(
         * A supported PEP-compliant type hint.
     '''
 
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with the sanify_hint_root() sanitizer, please.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     # PEP-compliant type hint coerced (i.e., permanently converted in the
     # annotations dunder dictionary of the passed callable) from this possibly
     # PEP-noncompliant type hint if this hint is coercible *OR* this hint as is
     # otherwise. Since the passed hint is *NOT* necessarily PEP-compliant,
     # perform this coercion *BEFORE* validating this hint to be PEP-compliant.
-    hint = func.__annotations__[pith_name] = _coerce_hint_root(
+    hint = func.__annotations__[pith_name] = _coerce_func_hint_root(
         hint=hint,
         func=func,
         pith_name=pith_name,
@@ -255,14 +264,97 @@ def sanify_hint_root(
     return hint
 
 
-def sanify_hint_child(
-    # Mandatory parameters.
-    hint: object,
-    exception_prefix: str,
+#FIXME: Unit test us up, please.
+#FIXME: Revise docstring in accordance with recent dramatic improvements.
+def sanify_hint_root(hint: object, exception_prefix: str) -> object:
+    '''
+    PEP-compliant type hint sanified (i.e., sanitized) from the passed **root
+    type hint** (i.e., possibly PEP-noncompliant type hint that has *no* parent
+    type hint) if this hint is reducible *or* this hint as is otherwise (i.e.,
+    if this hint is irreducible).
 
-    # Optional parameters.
-    is_validate: bool = False,
-) -> Any:
+    Specifically, this function:
+
+    * If this hint is a **PEP-noncompliant tuple union** (i.e., tuple of one or
+      more standard classes and forward references to standard classes):
+
+      * Coerces this tuple union into the equivalent :pep:`484`-compliant
+        union.
+      * Replaces this tuple union in the ``__annotations__`` dunder tuple of
+        this callable with this :pep:`484`-compliant union.
+      * Returns this :pep:`484`-compliant union.
+
+    * Else if this hint is already PEP-compliant, preserves and returns this
+      hint unmodified as is.
+    * Else (i.e., if this hint is neither PEP-compliant nor -noncompliant and
+      thus invalid as a type hint), raise an exception.
+
+    Caveats
+    ----------
+    This function *cannot* be meaningfully memoized, since the passed type hint
+    is *not* guaranteed to be cached somewhere. Only functions passed cached
+    type hints can be meaningfully memoized. Even if this function *could* be
+    meaningfully memoized, there would be no benefit; this function is only
+    called once per parameter or return of the currently decorated callable.
+
+    This function is intended to be called *after* all possibly
+    :pep:`563`-compliant **deferred type hints** (i.e., type hints persisted as
+    evaluatable strings rather than actual type hints) annotating this callable
+    if any have been evaluated into actual type hints.
+
+    Parameters
+    ----------
+    hint : object
+        Possibly PEP-noncompliant root type hint to be sanified.
+    exception_prefix : str
+        Human-readable label prefixing the representation of this object in the
+        exception message.
+
+    Returns
+    ----------
+    object
+        Either:
+
+        * If this hint is PEP-noncompliant, a PEP-compliant type hint converted
+          from this hint.
+        * If this hint is PEP-compliant, this hint unmodified as is.
+
+    Raises
+    ----------
+    BeartypeDecorHintNonpepException
+        If this object is neither:
+
+        * A PEP-noncompliant type hint.
+        * A supported PEP-compliant type hint.
+    '''
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize with the sanify_func_hint_root() sanitizer, please.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # PEP-compliant type hint coerced from this possibly PEP-noncompliant type
+    # hint if this hint is coercible *OR* this hint as is otherwise. Since the
+    # passed hint is *NOT* necessarily PEP-compliant, perform this coercion
+    # *BEFORE* validating this hint to be PEP-compliant.
+    hint = _coerce_hint_root(hint=hint, exception_prefix=exception_prefix)
+
+    # If this object is neither a PEP-noncompliant type hint *NOR* supported
+    # PEP-compliant type hint, raise an exception.
+    #
+    # Note that this function call is effectively memoized and thus efficient.
+    die_unless_hint(hint=hint, exception_prefix=exception_prefix)
+    # Else, this object is a supported PEP-compliant type hint.
+
+    # Reduce this hint to a lower-level PEP-compliant type hint if this hint is
+    # reducible *OR* this hint as is otherwise. See
+    # sanify_func_hint_root() for further commentary.
+    hint = _reduce_hint(hint, exception_prefix)
+
+    # Return this sanified hint.
+    return hint
+
+# ....................{ SANIFIERS ~ child                  }....................
+def sanify_hint_child(hint: object, exception_prefix: str) -> Any:
     '''
     PEP-compliant type hint sanified (i.e., sanitized) from the passed
     **PEP-compliant child type hint** (i.e., hint transitively subscripting the
@@ -277,12 +369,6 @@ def sanify_hint_child(
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
-    is_validate : bool, optional
-        Validate this hint as a supported PEP-compliant type hint *after*
-        internal coercion of this hint from possibly PEP-noncompliant to
-        PEP-compliant by passing this hint to the :func:`die_unless_hint`
-        raiser. Since validation is typically desirable, the caller is expected
-        to know what they are doing when disabling this. Defaults to ``True``.
 
     Returns
     ----------
@@ -300,22 +386,12 @@ def sanify_hint_child(
     # perform this coercion *BEFORE* validating this hint to be PEP-compliant.
     hint = _coerce_hint_any(hint)
 
-    # If validating this hint as a supported PEP-compliant type hint...
-    if is_validate:
-        # If this hint is *NOT* a supported PEP-compliant type hint, raise an
-        # exception. Note that this function call is effectively memoized and
-        # thus fast.
-        die_unless_hint(hint=hint, exception_prefix=exception_prefix)
-        # Else, this hint is a supported PEP-compliant type hint.
-    # Else, this hint is *NOT* being validated as supported and PEP-compliant.
-    # In this case, the caller is expected to know what they are doing.
-
     # Return this hint reduced.
     return _reduce_hint(hint, exception_prefix)
 
-# ....................{ COERCERS                           }....................
+# ....................{ COERCERS ~ root                    }....................
 #FIXME: Document mypy-specific coercion in the docstring as well, please.
-def _coerce_hint_root(
+def _coerce_func_hint_root(
     hint: object,
     func: Callable,
     pith_name: str,
@@ -324,20 +400,9 @@ def _coerce_hint_root(
     '''
     PEP-compliant type hint coerced (i.e., converted) from the passed **root
     type hint** (i.e., possibly PEP-noncompliant type hint annotating the
-    parameter or return with the passed name of the passed callable if this
+    parameter or return with the passed name of the passed callable) if this
     hint is coercible *or* this hint as is otherwise (i.e., if this hint is
     *not* coercible).
-
-    Specifically, if the passed hint is:
-
-    * A **PEP-noncompliant tuple union** (i.e., tuple of one or more standard
-      classes and forward references to standard classes), this function:
-
-      * Coerces this tuple union into the equivalent :pep:`484`-compliant
-        union.
-      * Replaces this tuple union in the ``__annotations__`` dunder tuple of
-        this callable with this :pep:`484`-compliant union.
-      * Returns this :pep:`484`-compliant union.
 
     This function is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator). Since the hint returned by this
@@ -435,13 +500,68 @@ def _coerce_hint_root(
         # this edge case by effectively performing the same type expansion as
         # performed here. *applause*
         return Union[hint, NotImplementedType]  # pyright: ignore[reportGeneralTypeIssues]
-    # Else, this hint is *NOT* the mypy-compliant "NotImplemented" singleton.
+
+    # Defer to the function-agnostic root hint coercer as a generic fallback.
+    return _coerce_hint_root(hint=hint, exception_prefix=exception_prefix)
+
+
+def _coerce_hint_root(hint: object, exception_prefix: str) -> object:
+    '''
+    PEP-compliant type hint coerced (i.e., converted) from the passed **root
+    type hint** (i.e., possibly PEP-noncompliant type hint that has *no* parent
+    type hint) if this hint is coercible *or* this hint as is otherwise (i.e.,
+    if this hint is *not* coercible).
+
+    Specifically, if the passed hint is:
+
+    * A **PEP-noncompliant tuple union** (i.e., tuple of one or more standard
+      classes and forward references to standard classes), this function:
+
+      * Coerces this tuple union into the equivalent :pep:`484`-compliant
+        union.
+      * Replaces this tuple union in the ``__annotations__`` dunder tuple of
+        this callable with this :pep:`484`-compliant union.
+      * Returns this :pep:`484`-compliant union.
+
+    This function is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator). Since the hint returned by this
+    function conditionally depends upon the passed callable, memoizing this
+    function would consume space needlessly with *no* useful benefit.
+
+    Caveats
+    ----------
+    This function *cannot* be meaningfully memoized, since the passed type hint
+    is *not* guaranteed to be cached somewhere. Only functions passed cached
+    type hints can be meaningfully memoized. Since this high-level function
+    internally defers to unmemoized low-level functions that are ``O(n)`` in
+    ``n`` the size of the inheritance hierarchy of this hint, this function
+    should be called sparingly. See the :mod:`beartype._decor._cache.cachehint`
+    submodule for further details.
+
+    Parameters
+    ----------
+    hint : object
+        Possibly PEP-noncompliant type hint to be possibly coerced.
+    exception_prefix : str
+        Human-readable label prefixing the representation of this object in the
+        exception message.
+
+    Returns
+    ----------
+    object
+        Either:
+
+        * If this possibly PEP-noncompliant hint is coercible, a PEP-compliant
+          type hint coerced from this hint.
+        * Else, this hint as is unmodified.
+    '''
+
     # ..................{ NON-PEP                            }..................
     # If this hint is a PEP-noncompliant tuple union, coerce this union into
     # the equivalent PEP-compliant union subscripted by the same child hints.
     # By definition, PEP-compliant unions are a superset of PEP-noncompliant
     # tuple unions and thus accept all child hints accepted by the latter.
-    elif isinstance(hint, tuple):
+    if isinstance(hint, tuple):
         return make_hint_pep484_union(hint)
     # Else, this hint is *NOT* a PEP-noncompliant tuple union.
 
@@ -453,7 +573,7 @@ def _coerce_hint_root(
     # Return this hint, possibly coerced as a context-agnostic type hint.
     return _coerce_hint_any(hint)
 
-
+# ....................{ COERCERS ~ any                     }....................
 def _coerce_hint_any(hint: object) -> Any:
     '''
     PEP-compliant type hint coerced (i.e., converted) from the passed

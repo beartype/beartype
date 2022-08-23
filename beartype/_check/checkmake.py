@@ -62,12 +62,14 @@ from beartype._check.checkmagic import (
 )
 from beartype._check.util.checkutilmake import make_func_signature
 from beartype._check._checksnip import (
+    FUNC_TESTER_CODE_RETURN,
     FUNC_TESTER_CODE_SIGNATURE,
 )
 from beartype._check.expr.exprcode import make_check_expr
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
-from beartype._util.hint.utilhintconv import sanify_hint_child
+from beartype._util.hint.utilhintconv import sanify_hint_root
+from beartype._util.func.utilfuncmake import make_func
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from itertools import count
 
@@ -96,19 +98,14 @@ def _func_tester_ignorable(obj: object) -> bool:
     return True
 
 # ....................{ MAKERS                             }....................
-#FIXME: Refactor the beartype.abby.is_bearable() tester in terms of this new
-#factory, please.
-#FIXME: Unit test us up, please -- especially with respect to edge cases unique
-#to this factory like:
-#* Ignorable hints.
-#* Relative hints (i.e., hints containing one or more relative forward
-#  references).
-#
-#Note that it might be preferable to simply exercise the higher-level
-#is_bearable() tester against the above edge cases, which all broadly apply to
-#that tester as well.
 @callable_cached
 def make_func_tester(
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: All calls to this memoized factory pass parameters *POSITIONALLY*
+    # rather than by keyword. Care should be taken when refactoring parameters,
+    # particularly with respect to parameter position.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     # Mandatory parameters.
     hint: object,
 
@@ -123,6 +120,21 @@ def make_func_tester(
     passed to this factory and returning that result as its boolean return).
 
     This factory is memoized for efficiency.
+
+    Caveats
+    ----------
+    **This factory intentionally accepts no** ``exception_prefix``
+    **parameter.** Why? Since that parameter is typically specific to the
+    context-sensitive use case of the caller, accepting that parameter would
+    prevent this factory from memoizing the passed hint with the returned code,
+    which would rather defeat the point. Instead, this factory only:
+
+    * Raises generic non-human-readable exceptions containing the placeholder
+      :attr:`beartype._util.error.utilerror.EXCEPTION_PLACEHOLDER` substring
+      that the caller is required to explicitly catch and raise non-generic
+      human-readable exceptions from by calling the
+      :func:`beartype._util.error.utilerror.reraise_exception_placeholder`
+      function.
 
     Parameters
     ----------
@@ -150,6 +162,7 @@ def make_func_tester(
     ----------
     All warnings emitted by the lower-level :func:`make_check_expr` factory.
     '''
+    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
     assert issubclass(exception_cls, Exception), (
         f'{repr(exception_cls)} not exception type.')
 
@@ -161,7 +174,7 @@ def make_func_tester(
     #   nor a supported PEP-compliant hint).
     #
     # Do this first *BEFORE* passing this hint to any further callables.
-    hint = sanify_hint_child(hint=hint, exception_prefix=EXCEPTION_PLACEHOLDER)
+    hint = sanify_hint_root(hint=hint, exception_prefix=EXCEPTION_PLACEHOLDER)
 
     # If this hint is ignorable, all objects satisfy this hint. In this case,
     # return the trivial tester function unconditionally returning true.
@@ -218,30 +231,37 @@ def make_func_tester(
 
     # Unqualified basename of this tester function, uniquified by suffixing an
     # arbitrary integer guaranteed to be unique to this tester function.
-    func_name = f'{FUNC_TESTER_NAME_PREFIX}{next(_func_tester_name_counter)}'
+    func_tester_name = (
+        f'{FUNC_TESTER_NAME_PREFIX}{next(_func_tester_name_counter)}')
 
     # Python code snippet declaring the signature of this tester function.
     code_signature = make_func_signature(
-        func_name=func_name,
+        func_name=func_tester_name,
         func_scope=func_scope,
         code_signature_format=FUNC_TESTER_CODE_SIGNATURE,
         conf=conf,
     )
 
-    #FIXME: Prefix the "{code_check_expr}" by a "return " statement, please. We
-    #probably also need to perform a global search-and-replacement on the root
-    #pith ala the _unmemoize_func_wrapper_code() function, which we should
-    #generalize into a new public unmemoize_func_code() function. *sigh*
+    # Python code snippet returning the boolean result of type-checking the
+    # arbitrary object passed to this tester function against this type hint.
+    code_check_return = FUNC_TESTER_CODE_RETURN.format(
+        code_check_expr=code_check_expr)
 
     # Python code snippet defining this tester function in entirety.
     func_tester_code = (
         f'{code_signature}'
-        f'{code_check_expr}'
-        # f'{code_suffix}'
+        f'{code_check_return}'
     )
 
-    #FIXME: Call make_func() here, please.
-    func_tester = lambda obj: True
+    # Type-checking tester function to be returned.
+    func_tester = make_func(
+        func_name=func_tester_name,
+        func_code=func_tester_code,
+        func_locals=func_scope,
+        func_label=f'{EXCEPTION_PLACEHOLDER}tester {func_tester_name}()',
+        is_debug=conf.is_debug,
+        exception_cls=exception_cls,
+    )
 
-    # Return this tester, please.
+    # Return this tester function.
     return func_tester
