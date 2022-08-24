@@ -25,7 +25,6 @@ from beartype.roar import (
     BeartypeDecorWrapperException,
     # BeartypeWarning,
 )
-from beartype.typing import Optional
 from beartype._cave._cavefast import (
     MethodDecoratorBuiltinTypes,
     MethodDecoratorClassType,
@@ -35,6 +34,7 @@ from beartype._cave._cavefast import (
 from beartype._conf import BeartypeConf
 from beartype._data.datatyping import (
     BeartypeableT,
+    TypeStack,
     TypeWarning,
 )
 from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
@@ -55,14 +55,15 @@ from traceback import format_exc
 from warnings import warn
 
 # ....................{ DECORATORS                         }....................
+#FIXME: Revise docstrings everywhere from "cls_root" and "cls_curr" to
+#"cls_stack", please.
 def beartype_object(
     # Mandatory parameters.
     obj: BeartypeableT,
     conf: BeartypeConf,
 
     # Optional parameters.
-    cls_root: Optional[type] = None,
-    cls_curr: Optional[type] = None,
+    cls_stack: TypeStack = None,
 ) -> BeartypeableT:
     '''
     Decorate the passed **beartypeable** (i.e., caller-defined object that may
@@ -179,7 +180,7 @@ def beartype_object(
         return _beartype_type(  # type: ignore[return-value]
             cls=obj,
             conf=conf,
-            cls_root=cls_root,
+            cls_stack=cls_stack,
         )
     # Else, this object is a non-class.
 
@@ -219,8 +220,7 @@ def beartype_object(
         return _beartype_descriptor(  # type: ignore[return-value]
             descriptor=obj,
             conf=conf,
-            cls_root=cls_root,
-            cls_curr=cls_curr,
+            cls_stack=cls_stack,
         )
     # Else, this object is *NOT* an uncallable builtin method descriptor.
     #
@@ -235,12 +235,11 @@ def beartype_object(
     return _beartype_func(  # type: ignore[return-value]
         func=obj,
         conf=conf,
-        cls_root=cls_root,
-        cls_curr=cls_curr,
+        cls_stack=cls_stack,
     )
 
 
-#FIXME: Generalize to accept "cls_owner_*" parameters, please.
+#FIXME: Generalize to accept a "cls_stack" parameter, please.
 #FIXME: Unit test us up, please.
 def beartype_object_nonfatal(
     obj: BeartypeableT,
@@ -378,9 +377,8 @@ def _beartype_descriptor(
     descriptor: BeartypeableT,
     conf: BeartypeConf,
 
-    # Optional parameters.
-    cls_root: Optional[type] = None,
-    cls_curr: Optional[type] = None,
+    # Variadic keyword parameters.
+    **kwargs
 ) -> BeartypeableT:
     '''
     Decorate the passed C-based unbound method descriptor with dynamically
@@ -433,8 +431,7 @@ def _beartype_descriptor(
         descriptor_getter = _beartype_func(  # type: ignore[type-var]
             func=descriptor_getter,  # pyright: ignore[reportGeneralTypeIssues]
             conf=conf,
-            cls_root=cls_root,
-            cls_curr=cls_curr,
+            **kwargs
         )
 
         # If this property method descriptor additionally wraps a setter and/or
@@ -443,15 +440,13 @@ def _beartype_descriptor(
             descriptor_setter = _beartype_func(
                 func=descriptor_setter,
                 conf=conf,
-                cls_root=cls_root,
-                cls_curr=cls_curr,
+                **kwargs
             )
         if descriptor_deleter is not None:
             descriptor_deleter = _beartype_func(
                 func=descriptor_deleter,
                 conf=conf,
-                cls_root=cls_root,
-                cls_curr=cls_curr,
+                **kwargs
             )
 
         # Return a new property method descriptor decorating all of these
@@ -473,8 +468,7 @@ def _beartype_descriptor(
         func_checked = _beartype_func(
             func=descriptor.__func__,  # type: ignore[union-attr]
             conf=conf,
-            cls_root=cls_root,
-            cls_curr=cls_curr,
+            **kwargs
         )
 
         # Return a new class method descriptor decorating the pure-Python
@@ -489,8 +483,7 @@ def _beartype_descriptor(
         func_checked = _beartype_func(
             func=descriptor.__func__,  # type: ignore[union-attr]
             conf=conf,
-            cls_root=cls_root,
-            cls_curr=cls_curr,
+            **kwargs
         )
 
         # Return a new static method descriptor decorating the pure-Python
@@ -538,9 +531,8 @@ def _beartype_func(
     func: BeartypeableT,
     conf: BeartypeConf,
 
-    # Optional parameters.
-    cls_root: Optional[type] = None,
-    cls_curr: Optional[type] = None,
+    # Variadic keyword parameters.
+    **kwargs
 ) -> BeartypeableT:
     '''
     Decorate the passed callable with dynamically generated type-checking.
@@ -641,7 +633,7 @@ def _beartype_type(
     conf: BeartypeConf,
 
     # Optional parameters.
-    cls_root: Optional[type] = None,
+    cls_stack: TypeStack = None,
 ) -> BeartypeableT:
     '''
     Decorate the passed class with dynamically generated type-checking.
@@ -694,6 +686,26 @@ def _beartype_type(
     #* A PEP 563-fueled self-referential class. See this as a simple example:
     #     https://github.com/beartype/beartype/issues/152#issuecomment-1197778501
 
+    # Replace the passed class stack with a new class stack appending this
+    # decorated class to the top of this stack, reflecting the fact that this
+    # decorated class is now the most deeply lexically nested class for the
+    # currently recursive chain of @beartype-decorated classes.
+    cls_stack = (
+        # If the caller passed *NO* class stack, then this class is necessarily
+        # the first decorated class being decorated directly by @beartype and
+        # thus the root decorated class.
+        #
+        # Note this is the common case and thus tested first. Since nested
+        # classes effectively do *NOT* exist in the wild, this comprises
+        # 99.999% of all real-world cases.
+        (cls,)
+        if cls_stack is None else
+        # Else, the caller passed a clack stack comprising at least a root
+        # decorated class. Preserve that class as is to properly expose that
+        # class elsewhere.
+        cls_stack + (cls,)
+    )
+
     # For the unqualified name and value of each direct (i.e., *NOT* indirectly
     # inherited) attribute of this class...
     for attr_name, attr_value in cls.__dict__.items():
@@ -704,32 +716,7 @@ def _beartype_type(
             attr_value_beartyped = beartype_object(
                 obj=attr_value,
                 conf=conf,
-                #FIXME: Technically, we *ONLY* want to set "cls_root" when
-                #the root decorated class is module-scoped, because that's the
-                #only root decorated class that can actually be referenced by
-                #PEP 563-postponed type hints. Can we efficiently distinguish
-                #module-scoped from non-module-scoped classes? We have no idea.
-                #Probably not, frankly. We'd probably have to inspect the call
-                #stack for a module boundary, at which point efficiency has
-                #certainly been yeeted out the window. Ignore for now. *sigh*
-                # Root decorated class, defined as either...
-                cls_root=(
-                    # If the caller passed *NO* root decorated class, then this
-                    # class is necessarily the first decorated class being
-                    # decorated directly by @beartype and thus the root
-                    # decorated class.
-                    #
-                    # Note that this is the common case and thus tested first.
-                    # Indeed, since nested classes effectively do *NOT* exist in
-                    # the wild, this comprises 99.99% of all real-world cases.
-                    cls
-                    if cls_root is None else
-                    # Else, the caller passed a root decorated class. Preserve
-                    # that class as is to properly expose that class elsewhere.
-                    cls_root
-                ),
-                # Current decorated class.
-                cls_curr=cls,
+                cls_stack=cls_stack,
             )
 
             # Replace this undecorated attribute with this decorated attribute.

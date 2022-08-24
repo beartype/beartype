@@ -69,7 +69,7 @@
    list[str], as list item 0 value b'Oh, my God! A horrible plane crash!'
    not str.
 
-   # ..................{ VALIDATORS }..................
+   # ..................{ VALIDATORS  }..................
    # Squash bugs by refining type hints with validators.
    >>> from beartype.vale import Is  # <---- validator factory
    >>> from typing import Annotated  # <---------------- if Python ≥ 3.9.0
@@ -93,8 +93,9 @@
    typing.Annotated[list[str], Is[lambda lst: bool(lst)]], as value []
    violates validator Is[lambda lst: bool(lst)].
 
-   # ..................{ @ ANY TIME }.............................
-   # Type-check anything against any type hint – anywhere, anytime.
+   # ..................{ AT ANY TIME }..................
+   # Type-check anything against any type hint –
+   # anywhere at anytime.
    >>> from beartype.abby import (
    ...     is_bearable,  # <-------- like "isinstance(...)"
    ...     die_if_unbearable,  # <-- like "assert isinstance(...)"
@@ -105,6 +106,21 @@
    beartype.roar.BeartypeAbbyHintViolation: Object [3405692655, 2343432205]
    violates type hint typing.Annotated[list[str], Is[lambda lst: bool(lst)]],
    as list index 0 item 3405692655 not instance of str.
+
+   # ..................{ O(1) TIME   }..................
+   # Type-check anything in constant-time with
+   # negligible constants – regardless of input size.
+   #
+   # Type-check a list of one million 2-tuples of NumPy
+   # arrays in nearly 1µs (one millionth of a second).
+   >>> from beartype.abby import is_bearable
+   >>> from beartype.typing import List, Tuple
+   >>> import numpy as np
+   >>> data = [(np.array(i), np.array(i+1)) for i in range(1000000)]
+   >>> %time is_bearable(data, List[Tuple[np.array, np.array]])
+       CPU times: user 31 µs, sys: 2 µs, total: 33 µs
+       Wall time: 36.7 µs
+   False
 
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by
@@ -894,7 +910,7 @@ Beartype At Any Time API
 
 .. parsed-literal::
 
-   Type-check anything against any type hint – at any time.
+   Type-check anything against any type hint – anywhere, at any time.
 
 When the ``isinstance()`` and ``issubclass()`` builtins fail to scale, prefer
 the ``beartype.abby`` functional API enabling you to type-check *anything*

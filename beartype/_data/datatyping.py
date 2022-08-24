@@ -17,6 +17,7 @@ from beartype.typing import (
     Callable,
     Dict,
     Iterable,
+    Optional,
     Tuple,
     Type,
     TypeVar,
@@ -191,4 +192,11 @@ more classes.
 
 Equivalently, this hint matches all objects passable as the second parameters
 to the :func:`isinstance` and :func:`issubclass` builtins.
+'''
+
+# ....................{ HINTS ~ type : tuple : stack       }....................
+TypeStack = Optional[Tuple[type, ...]]
+'''
+PEP-compliant type hint matching a **type stack** (i.e., either tuple of zero or
+more arbitrary types *or* ``None``).
 '''

@@ -47,25 +47,25 @@ def test_beartypecall() -> None:
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(func=iter, func_conf=BeartypeConf())
 
-    # Assert that reinitializing this metadata with a non-configuration raises
-    # the expected exception.
+    # Assert that reinitializing this metadata with an invalid configuration
+    # raises the expected exception.
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
             func=lambda: ...,
             func_conf='Ocean, and all the living things that dwell',
         )
 
-    # Assert that reinitializing this metadata with non-classes raises the
-    # expected exception.
+    # Assert that reinitializing this metadata with invalid class stacks raises
+    # the expected exception.
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
             func=lambda: ...,
             func_conf=BeartypeConf(),
-            cls_root="Shine in the rushing torrents' restless gleam,",
+            cls_stack="Shine in the rushing torrents' restless gleam,",
         )
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
             func=lambda: ...,
             func_conf=BeartypeConf(),
-            cls_curr='Which from those secret chasms in tumult welling',
+            cls_stack=('Which from those secret chasms in tumult welling',),
         )

@@ -98,8 +98,7 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
     # ..................{ DETECTION                          }..................
     # Localize attributes of this metadata for negligible efficiency gains.
     func = bear_call.func_wrappee
-    cls_root = bear_call.cls_root
-    cls_curr = bear_call.cls_curr
+    cls_stack = bear_call.cls_stack
 
     # If it is *NOT* the case that...
     if not (
@@ -425,13 +424,10 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
                     #         class MuhClass(object):
                     #             def muh_method(self) -> str:
                     #                 return 'Look away and cringe, everyone!'
-                    if cls_root is not None:
-                        # Note that, since "cls_root" is *NOT* "None",
-                        # "cls_curr" should similarly be *NOT* "None". Because
-                        # Murphy, assert that for safety.
-                        assert cls_curr is not None, (
-                            f'"cls_root" {repr(cls_root)} non-"None" but '
-                            f'"cls_curr" {repr(cls_curr)}.')
+                    if cls_stack:
+                        # Root and current decorated classes.
+                        cls_root = cls_stack[0]
+                        cls_curr = cls_stack[-1]
 
                         # Unqualified basenames of the root and current
                         # decorated classes.

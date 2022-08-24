@@ -20,7 +20,10 @@ from beartype.typing import (
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf import BeartypeConf
-from beartype._data.datatyping import LexicalScope
+from beartype._data.datatyping import (
+    LexicalScope,
+    TypeStack,
+)
 from beartype._decor._wrapper.wrappermagic import (
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
@@ -31,7 +34,7 @@ from beartype._util.func.utilfunctest import is_func_coro
 from beartype._util.func.utilfuncwrap import unwrap_func
 
 # ....................{ GLOBALS ~ private                  }....................
-_TypeOrNone = NoneTypeOr[type]
+_TypeStackOrNone = NoneTypeOr[tuple]
 '''
 2-tuple ``(type, type(None)``, globally cached for negligible space and time
 efficiency gains on validating passed parameters below.
@@ -174,8 +177,7 @@ class BeartypeCall(object):
     # called @beartype decorations. Slotting has been shown to reduce read and
     # write costs by approximately ~10%, which is non-trivial.
     __slots__ = (
-        'cls_curr',
-        'cls_root',
+        'cls_stack',
         'func_arg_name_to_hint',
         'func_arg_name_to_hint_get',
         'func_conf',
@@ -220,8 +222,7 @@ class BeartypeCall(object):
         '''
 
         # Nullify instance variables for safety.
-        self.cls_curr: Optional[type] = None
-        self.cls_root: Optional[type] = None
+        self.cls_stack: TypeStack = None
         self.func_arg_name_to_hint: Dict[str, object] = None  # type: ignore[assignment]
         self.func_arg_name_to_hint_get: Callable[[str, object], object] = None  # type: ignore[assignment]
         self.func_conf: BeartypeConf = None  # type: ignore[assignment]
@@ -243,8 +244,7 @@ class BeartypeCall(object):
         func_conf: BeartypeConf,
 
         # Optional parameters.
-        cls_root: Optional[type] = None,
-        cls_curr: Optional[type] = None,
+        cls_stack: TypeStack = None,
     ) -> None:
         '''
         Reinitialize this metadata from the passed callable, typically after
@@ -308,21 +308,25 @@ class BeartypeCall(object):
                 f'"conf" {repr(func_conf)} not beartype configuration.')
         # Else, this configuration is a configuration.
         #
-        # If "cls_root" is neither a class *NOR* "None", raise an exception.
-        elif not isinstance(cls_root, _TypeOrNone):
+        # If this class stack is neither a tuple *NOR* "None", raise an
+        # exception.
+        elif not isinstance(cls_stack, _TypeStackOrNone):
             raise BeartypeDecorWrappeeException(
-                f'"cls_root" {repr(cls_root)} neither type nor "None".')
-        # Else, "cls_root" is either a class *OR* "None".
-        #
-        # If "cls_curr" is neither a class *NOR* "None", raise an exception.
-        elif not isinstance(cls_curr, _TypeOrNone):
-            raise BeartypeDecorWrappeeException(
-                f'"cls_curr" {repr(cls_curr)} neither type nor "None".')
-        # Else, "cls_curr" is either a class *OR* "None".
+                f'"cls_stack" {repr(cls_stack)} neither tuple nor "None".')
+        # Else, this class stack is either a tuple *OR* "None".
+
+        # If this class stack is *NOT* "None", this class stack is a tuple. In
+        # this case, for each item of this class stack tuple...
+        if cls_stack is not None:
+            for cls_stack_item in cls_stack:
+                # If this item is *NOT* a type, raise an exception.
+                if not isinstance(cls_stack_item, type):
+                    raise BeartypeDecorWrappeeException(
+                        f'"cls_stack" item {repr(cls_stack_item)} not type.')
+        # Else, this class stack is "None".
 
         # Classify all passed parameters.
-        self.cls_curr = cls_curr
-        self.cls_root = cls_root
+        self.cls_stack = cls_stack
         self.func_conf = func_conf
 
         # Possibly wrapped callable currently being decorated.

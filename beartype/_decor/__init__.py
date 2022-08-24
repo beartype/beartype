@@ -11,7 +11,7 @@
 #* "asyncio.Queue[T]".
 #* "pathlib.PathLike[T]".
 #
-#Yes, we can verify that *ALL* of those actually behave as expected at runtime.
+#Yes, we can verify that *ALL* of those actually are subscriptable at runtime.
 #@beartype will need to add corresponding support for such hints, beginning with
 #defining new sign singletons suffixed by the same basenames (e.g.,
 #"HintSignFuture", "HintSignTask"). Or... maybe not? Maybe everything just
