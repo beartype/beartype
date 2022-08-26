@@ -183,6 +183,22 @@ def get_object_basename_scoped(obj: Any) -> str:
     #. If this object is transitively declared by another object (e.g., class,
        callable) and thus nested in that object, the unqualified basenames of
        all parent objects transitively declaring this object in that module.
+       For usability, these basenames intentionally omit the meaningless
+       placeholder ``"<locals>"`` substrings artificially injected by Python
+       itself into the original ``__qualname__`` instance variable underlying
+       this getter: e.g.,
+
+       .. code-block:: python
+
+          >>> from beartype._util.utilobject import get_object_basename_scoped
+          >>> def muh_func():
+          ...     def muh_closure(): pass
+          ...     return muh_closure()
+          >>> muh_func().__qualname__
+          'muh_func.<locals>.muh_closure'  # <-- bad Python
+          >>> get_object_basename_scoped(muh_func)
+          'muh_func.muh_closure'  # <-- good @beartype
+
     #. Unqualified basename of this object.
 
     Caveats

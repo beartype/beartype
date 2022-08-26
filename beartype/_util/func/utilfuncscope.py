@@ -17,6 +17,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._util.utilobject import get_object_basename_scoped
+from beartype._data.datakind import DICT_EMPTY
 from beartype._data.datatyping import (
     LexicalScope,
     TypeException,
@@ -186,6 +187,7 @@ def get_func_locals(
     func: Callable,
 
     # Optional parameters.
+    func_scope_names_ignore: int = 0,
     func_stack_frames_ignore: int = 0,
     exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> LexicalScope:
@@ -248,6 +250,17 @@ def get_func_locals(
     ----------
     func : Callable
         Callable to be inspected.
+    func_scope_names_ignore : int, optional
+        Number of parent lexical scopes in the fully-qualified name of that
+        callable to be ignored (i.e., silently incremented past), such that the
+        next non-ignored lexical scope preceding the first ignored lexical scope
+        is that of the parent callable or module directly declaring the passed
+        callable. This parameter is typically used to ignore the parent lexical
+        scopes of parent classes lexically nesting that callable that have yet
+        to be fully declared and thus encapsulated by stack frames on the call
+        stack (e.g., due to being currently decorated by
+        :func:`beartype.beartype`). See the :mod:`beartype._decor._pep.pep563`
+        submodule for the standard use case. Defaults to 0.
     func_stack_frames_ignore : int, optional
         Number of frames on the call stack to be ignored (i.e., silently
         incremented past), such that the next non-ignored frame following the
@@ -269,6 +282,10 @@ def get_func_locals(
         the parent callable or module directly declaring the passed callable.
     '''
     assert callable(func), f'{repr(func)} not callable.'
+    assert isinstance(func_scope_names_ignore, int), (
+        f'{func_scope_names_ignore} not integer.')
+    assert func_scope_names_ignore >= 0, (
+        f'{func_scope_names_ignore} negative.')
     assert isinstance(func_stack_frames_ignore, int), (
         f'{func_stack_frames_ignore} not integer.')
     assert func_stack_frames_ignore >= 0, (
@@ -306,16 +323,10 @@ def get_func_locals(
         func_module_name is None or
         # The passed callable is module-scoped rather than nested *OR*...
         not is_func_nested(func)
+    # Then silently reduce to a noop by treating this nested callable as
+    # module-scoped by preserving "func_locals" as the empty dictionary.
     ):
-        #FIXME: *INEFFICIENT.* This recreates an empty dictionary each call.
-        #Instead:
-        #* Define a new "DICT_EMPTY = {}" dictionary somewhere. Perhaps in a new
-        #  "beartype._data.datakind" submodule?
-        #* Reference that dictionary below rather than "{}".
-
-        # Then silently reduce to a noop by treating this nested callable as
-        # module-scoped by preserving "func_locals" as the empty dictionary.
-        return {}
+        return DICT_EMPTY
     # Else, all of the following constraints hold:
     # * The passed callable is physically declared on-disk.
     # * The passed callable is nested.
@@ -337,7 +348,7 @@ def get_func_locals(
     #     ...     return muh_closure()
     #     >>> muh_func().__qualname__
     #     'muh_func.<locals>.muh_closure'
-    func_name_qualified = func.__qualname__
+    func_name_qualified = get_object_basename_scoped(func)
 
     # Non-empty list of the unqualified names of all parent callables lexically
     # containing that nested callable (including that nested callable itself).
@@ -356,29 +367,99 @@ def get_func_locals(
     #   frames with irrelevant lexical scopes, starting at the stack top (end).
     func_scope_names = func_name_qualified.rsplit(sep='.')
 
-    # Assert this nested callable is encapsulated by at least two lexical
-    # scopes identifying at least this nested callable and the parent callable
-    # or class declaring this nested callable.
-    assert len(func_scope_names) >= 2, (
-        f'{func_name_unqualified}() not nested (i.e., fully-qualified name '
-        f'"{func_name_qualified}" == unqualified name '
-        f'"{func_name_unqualified}").')
+    # Number of lexical scopes encapsulating that callable.
+    func_scope_names_len = len(func_scope_names)
 
-    # If the unqualified name of the last parent callable lexically containing
-    # the passed callable is *NOT* that callable itself, the caller maliciously
-    # renamed one but *NOT* both of the dunder attributes of that callable
-    # uniquely identifying that callable. In this case, raise an exception.
-    if func_scope_names[-1] != func_name_unqualified:
+    # If that nested callable is *NOT* encapsulated by at least two lexical
+    # scopes identifying at least that nested callable and the parent callable
+    # or class declaring that nested callable, raise an exception.
+    #
+    # You are probably now contemplating to yourself in the special darkness of
+    # your own personal computer cave: "But @leycec, isn't this condition
+    # *ALWAYS* the case? The above `not is_func_nested()` check already ignored
+    # non-nested callables."
+    #
+    # Allow me to now explicate. By the check above, that callable is nested...
+    # By the check below, however, only one lexical scope encapsulates that
+    # callable. This is not a contradiction. This is just a malicious caller.
+    # The get_object_basename_scoped() getter called above silently removed all
+    # "<locals>." placeholders from this list of lexical scopes, because those
+    # "<locals>." placeholders convey no meaningful semantics. But the
+    # is_func_nested() tester detects nested callables by searching for those
+    # "<locals>." placeholders. It follows that the caller triggered this
+    # condition by maliciously renaming the "__qualname__" dunder attribute of
+    # the passed callable to be erroneously prefixed by "<locals>". Curiously,
+    # Python permits such manhandling: e.g.,
+    #     # Python thinks this is fine.
+    #     >>> def muh_func(): pass
+    #     >>> muh_func.__qualname__ = '<locals>.muh_func'  # <-- curse you!
+    if func_scope_names_len < 2:
         raise exception_cls(
             f'{func_name_unqualified}() fully-qualified name '
-            f'{func_name_qualified}() invalid (i.e., last lexical scope '
+            f'{func.__qualname__}() invalid (e.g., placeholder substring '
+            f'"<locals>" not preceded by parent callable name).'
+        )
+    # Else, that nested callable is encapsulated by at least two lexical
+    # scopes identifying at least that nested callable and the parent callable
+    # or class declaring that nested callable.
+    #
+    # If the unqualified basename of the last parent callable lexically
+    # containing the passed callable is *NOT* that callable itself, the caller
+    # maliciously renamed one but *NOT* both of "__qualname__" and "__name__".
+    # In this case, raise an exception. Again, Python permits this. *sigh*
+    elif func_scope_names[-1] != func_name_unqualified:
+        raise exception_cls(
+            f'{func_name_unqualified}() fully-qualified name '
+            f'{func.__qualname__}() invalid (i.e., last lexical scope '
             f'"{func_scope_names[-1]}" != unqualified name '
             f'"{func_name_unqualified}").'
         )
+    # Else, the unqualified basename of the last parent callable lexically
+    # containing the passed callable is that callable itself.
 
-    # Unqualified name of the parent callable directly lexically containing
-    # (and thus declaring) the passed callable -- which by the above validation
-    # is guaranteed to be the second-to-last string in this list of names.
+    # 1-based negative index of the unqualified basename of the parent callable
+    # or module directly lexically containing the passed callable in the list of
+    # all unqualified basenames encapsulating that callable. By the above
+    # validation, this index is guaranteed to begin at the second-to-last
+    # basename in this list.
+    func_scope_names_index = -2 - func_scope_names_ignore
+
+    # Number of unignorable lexical scopes encapsulating that callable,
+    # magically adding 1 to account for the fact that "func_scope_names_index"
+    # is a 1-based negative index rather than 0-based positive index.
+    func_scope_names_search_len = (
+        func_scope_names_len + func_scope_names_index + 1)
+
+    # If exactly *ZERO* unignorable lexical scopes encapsulate that callable,
+    # all lexical scopes encapsulating that callable are exactly ignorable,
+    # implying that there is *NO* parent lexical scope to search for. In this
+    # case, silently reduce to a noop by returning the empty dictionary.
+    if func_scope_names_search_len == 0:
+        return DICT_EMPTY
+    # If a *NEGATIVE* number of unignorable lexical scopes encapsulate that
+    # callable, the caller erroneously insists that there exist more ignorable
+    # lexical scopes encapsulating that callable than there actually exist
+    # lexical scopes encapsulating that callable. The caller is profoundly
+    # mistaken. Whereas the prior branch is a non-erroneous condition that
+    # commonly occurs, this current branch is an erroneous condition that should
+    # *NEVER* occur. In this case...
+    elif func_scope_names_search_len < 0:
+        # Number of parent lexical scopes containing that callable.
+        func_scope_parents_len = func_scope_names_len - 1
+
+        # Raise an exception.
+        raise exception_cls(
+            f'Callable name "{func_name_qualified}" contains only '
+            f'{func_scope_parents_len} parent lexical scope(s) but '
+            f'"func_scope_names_ignore" parameter ignores '
+            f'{func_scope_names_ignore} parent lexical scope(s), leaving '
+            f'{func_scope_names_search_len} parent lexical scope(s) to be '
+            f'searched for {func_name_qualified}() locals.'
+        )
+    # Else, there are one or more unignorable lexical scopes to be searched.
+
+    # Unqualified basename of the parent callable or module directly lexically
+    # containing the passed callable.
     #
     # Note that that the parent callable's local runtime scope transitively
     # contains *ALL* local variables accessible to this nested callable
@@ -388,29 +469,7 @@ def get_func_locals(
     # scope). Since that parent callable's local runtime scope is exactly the
     # dictionary to be returned, iteration below searches up the runtime call
     # stack for a stack frame embodying that parent callable and no further.
-    func_scope_name = func_scope_names[-2]
-
-    # If this name is the placeholder substring specific to nested callables...
-    if func_scope_name == '<locals>':
-        # If this list contains less than three names, this list *MUST* contain
-        # exactly two names, since this list is neither empty *NOR* contains
-        # exactly one name. In this case, this name *MUST* by deduction have
-        # been the first in this list.
-        #
-        # But this placeholder substring *MUST* be preceded by the name of a
-        # parent callable. Since this is *NOT* the case, the caller maliciously
-        # renamed the "__qualname__" dunder attributes of the passed callable
-        # to be prefixed by "<locals>". In this case, raise an exception.
-        if len(func_scope_names) < 3:
-            raise exception_cls(
-                f'{func_name_unqualified}() fully-qualified name '
-                f'{func_name_qualified}() invalid (i.e., placeholder '
-                f'substring "<locals>" not preceded by parent callable name).'
-            )
-
-        # Skip over this placeholder to the unqualified name of the parent
-        # callable lexically containing the passed callable.
-        func_scope_name = func_scope_names[-3]
+    func_scope_name = func_scope_names[func_scope_names_index]
     # print(f'Searching for parent {func_scope_name}() local scope...')
 
     # ..................{ LOCALS ~ frame                     }..................
@@ -473,7 +532,7 @@ def get_func_locals(
         # of this nested callable. In this case, raise an exception.
         if func_frame_name == FUNC_CODEOBJ_NAME_MODULE:
             raise exception_cls(
-                f'{get_object_basename_scoped(func)}() parent lexical scope '
+                f'{func_name_qualified}() parent lexical scope '
                 f'{func_scope_name}() not found on call stack.'
             )
         # Else, that scope is *NOT* a module.

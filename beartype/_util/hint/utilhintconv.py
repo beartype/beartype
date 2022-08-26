@@ -12,6 +12,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: Coercively cache PEP 604-compliant new-style union type hints (e.g.,
+#"int | str"), which are *NOT* self-caching: e.g.,
+#    >>> int | str is int | str
+#    False  # <--- just "Ugh!"
+#
+#Since new-style union type hints will rapidly become increasingly popular, this
+#is a fairly critical coercion. Please make it so, I beg my future self!
+
 #FIXME: Consider splitting this submodule into two new submodules for
 #maintainability:
 #* "beartype._util.hint.conv.utilconvsanify", containing sanify_*() functions.

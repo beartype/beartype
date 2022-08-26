@@ -98,7 +98,6 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
     # ..................{ DETECTION                          }..................
     # Localize attributes of this metadata for negligible efficiency gains.
     func = bear_call.func_wrappee
-    cls_stack = bear_call.cls_stack
 
     # If it is *NOT* the case that...
     if not (
@@ -118,6 +117,9 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
     # hints to their referents.
 
     # ..................{ LOCALS                             }..................
+    # Localize additional attributes of this metadata for efficiency gains.
+    cls_stack = bear_call.cls_stack
+
     # Global scope for the decorated callable.
     func_globals = get_func_globals(
         func=func, exception_cls=BeartypeDecorHintPep563Exception)
@@ -331,42 +333,48 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
                 # scope for the decorated callable. In this case...
                 except Exception:
                     # print(f'Resolving PEP 563-postponed type hint {repr(pith_hint)} locals...')
-
-                    #FIXME: Almost done! Our last task is to generalize this
-                    #getter to support methods. Currently, this getter iterates
-                    #up the call stack for the class defining the passed
-                    #callable. Since this class is currently being decorated,
-                    #however, this class does *NOT* exist on the call stack.
-                    #Ergo, we need some means of notifying this getter of that
-                    #fact. Perhaps add a new optional parameter to
-                    #get_func_locals() resembling:
-                    #    def get_func_locals(
-                    #        # Optional parameters.
-                    #        func_scope_names_ignore: int = 1,
-                    #    ) -> ...: ...
-                    #
-                    #Then pass "func_scope_names_ignore" below as follows:
-                    #    is_cls_root = cls_root is not None
-                    #    func_locals = get_func_locals(
-                    #        func=func,
-                    #        func_scope_names_ignore=(
-                    #            2 if is_cls_root else 1),
-                    #        ...,
-                    #    )
-                    #    if is_cls_root: ...
-                    #
-                    #Of course, that is *STILL* insufficient. Why? Because we
-                    #need to ignore *ALL* parent classes -- not simply the
-                    #current class. We don't currently store that count, because
-                    #we otherwise don't need that count. But... maybe we do now.
-                    #
-                    #Consider defining a new "BeartypeCall.clses_len" integer.
-                    #That's certainly preferable to a full-blown tuple or list.
-                    #So... make it so, please.
+                    # print(f'Ignoring {len(cls_stack or ())} lexical parent class scopes...')
 
                     # Local scope for the decorated callable.
                     func_locals = get_func_locals(
                         func=func,
+
+                        # Ignore all lexical scopes in the fully-qualified name
+                        # of the decorated callable corresponding to owner
+                        # classes lexically nesting the current decorated class
+                        # containing that callable (including the current
+                        # decorated class). Why? Because these classes are *ALL*
+                        # currently being decorated and thus have yet to be
+                        # encapsulated by new stack frames on the call stack. If
+                        # these lexical scopes are *NOT* ignored, this call to
+                        # get_func_locals() will fail to find the parent lexical
+                        # scope of the decorated callable and then raise an
+                        # unexpected exception.
+                        #
+                        # Consider, for example, this nested class decoration of
+                        # a fully-qualified "muh_package.Outer" class:
+                        #     from beartype import beartype
+                        #
+                        #     @beartype
+                        #     class Outer(object):
+                        #         class Middle(object):
+                        #             class Inner(object):
+                        #                 def muh_method(self) -> str:
+                        #                     return 'Painful API is painful.'
+                        #
+                        # When @beartype finally recurses into decorating the
+                        # nested muh_package.Outer.Middle.Inner.muh_method()
+                        # method, this call to get_func_locals() if *NOT* passed
+                        # this parameter would naively assume that the parent
+                        # lexical scope of the current muh_method() method on
+                        # the call stack is named "Inner". Instead, the parent
+                        # lexical scope of that method on the call stack is
+                        # named "muh_package" -- the first lexical scope
+                        # enclosing that method that exists on the call stack.
+                        # Ergo, the non-existent "Outer", "Middle", and "Inner"
+                        # lexical scopes must *ALL* be silently ignored here.
+                        func_scope_names_ignore=(
+                            0 if cls_stack is None else len(cls_stack)),
 
                         #FIXME: Consider dynamically calculating exactly how
                         #many additional @beartype-specific frames are ignorable
@@ -380,9 +388,9 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
                         # Ignore additional frames on the call stack embodying:
                         # * The current call to this function.
                         #
-                        # Note that we currently avoid attempting to ignore
-                        # additional frames that we could technically ignore,
-                        # including:
+                        # Note that, for safety, we currently avoid ignoring
+                        # additional frames that we could technically ignore.
+                        # These include:
                         # * The call to the parent
                         #   beartype._decor._decorcall.BeartypeCall.reinit()
                         #   method.
@@ -397,24 +405,53 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
                         exception_cls=BeartypeDecorHintPep563Exception,
                     )
 
-                    # If the decorated callable is a method transitively
-                    # declared by a root decorated class, add a new local
-                    # exposing the unqualified basename of this class. Why?
-                    # Because this class may be recursively referenced in
-                    # postponed type hints and *MUST* thus be exposed to *ALL*
-                    # postponed type hints. However, this class is currently
-                    # being decorated and thus has yet to be defined in either:
-                    # * If this class is module-scoped, the global attribute
-                    #   dictionary of that module and thus the "func_globals"
-                    #   dictionary.
-                    # * If this class is closure-scoped, the local attribute
-                    #   dictionary of that closure and thus the "func_locals"
-                    #   dictionary.
+                    # If the decorated callable is a method transitively defined
+                    # by a root decorated class, add a pair of new local
+                    # attributes exposing both:
                     #
-                    # Note that doing so implicitly overrides any previously
-                    # declared local of the same name. Although non-ideal, doing
-                    # so constitutes syntactically valid Python and is thus
-                    # *NOT* worth emitting even a non-fatal warning over: e.g.,
+                    # * The unqualified basename of the root decorated class.
+                    #   Why? Because this class may be recursively referenced in
+                    #   postponed type hints and *MUST* thus be exposed to *ALL*
+                    #   postponed type hints. However, this class is currently
+                    #   being decorated and thus has yet to be defined in
+                    #   either:
+                    #   * If this class is module-scoped, the global attribute
+                    #     dictionary of that module and thus the "func_globals"
+                    #     dictionary.
+                    #   * If this class is closure-scoped, the local attribute
+                    #     dictionary of that closure and thus the "func_locals"
+                    #     dictionary.
+                    # * The unqualified basename of the current decorated class.
+                    #   Why? For similar reasons. Since the current decorated
+                    #   class may be lexically nested in the root decorated
+                    #   class, the current decorated class is *NOT* already
+                    #   accessible as either a global or local; the current
+                    #   decorated class is *NOT* already exposed by either the
+                    #   "func_globals" or "func_locals" dictionary. Exposing the
+                    #   current decorated class to postponed type hints
+                    #   referencing that class thus requires adding a local
+                    #   attribute exposing that class.
+                    #
+                    # Note that:
+                    # * *ALL* intermediary classes (i.e., excluding the root
+                    #   decorated class) lexically nesting the current decorated
+                    #   class are irrelevant. Intermediary classes are neither
+                    #   module-scoped nor closure-scoped and thus *NOT*
+                    #   accessible as either globals or locals to the nested
+                    #   lexical scope of the current decorated class: e.g.,
+                    #     # This raises a parser error and is thus *NOT* fine:
+                    #     #     NameError: name 'muh_type' is not defined
+                    #     class Outer(object):
+                    #         class Middle(object):
+                    #             muh_type = str
+                    #
+                    #             class Inner(object):
+                    #                 def muh_method(self) -> muh_type:
+                    #                     return 'Dumpster fires are all I see.'
+                    # * This implicitly overrides any previously declared locals
+                    #   of the same name. Although non-ideal, this constitutes
+                    #   syntactically valid Python and is thus *NOT* worth
+                    #   emitting even a non-fatal warning over: e.g.,
                     #     # This is fine... technically.
                     #     from beartype import beartype
                     #     def muh_closure() -> None:

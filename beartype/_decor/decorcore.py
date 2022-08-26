@@ -573,10 +573,9 @@ def _beartype_func(
         return func  # type: ignore[return-value]
     # Else, that callable is beartypeable. Let's do this, folks.
 
-    #FIXME: Forward on the passed "cls_owner_*" parameters, please.
     # Previously cached callable metadata reinitialized from this callable.
     bear_call = acquire_object_typed(BeartypeCall)
-    bear_call.reinit(func, conf)
+    bear_call.reinit(func, conf, **kwargs)
 
     # Generate the raw string of Python statements implementing this wrapper.
     func_wrapper_code = generate_code(bear_call)

@@ -56,7 +56,7 @@ that of a subsequently declared class.
 '''
 
 # ....................{ CLASSES                            }....................
-# @beartype
+@beartype
 class Chameleon(object):
     '''
     Arbitrary class declaring arbitrary methods.
@@ -79,8 +79,8 @@ class Chameleon(object):
     # Intentionally decorate this class method directly by @beartype to validate
     # that @beartype resolves directly self-referential type hints (i.e., type
     # hints that are directly self-references to the declaring class).
+    # @beartype
     @classmethod
-    @beartype
     def like_my_dreams(cls) -> Chameleon:
         '''
         Arbitrary class method decorated by the :mod:`beartype.beartype`
@@ -116,17 +116,8 @@ class Chameleon(object):
     # Note that indirectly self-referential type hints *CANNOT* be properly
     # resolved for methods directly decorated by @beartype. Due to
     # decoration-time constraints, this class itself *MUST* be decorated.
-    # @staticmethod
-    # def when_we_cling() -> Union[Chameleon, complex]:
-
-    #FIXME: Revert back to the commented-out method declaration above *AFTER*:
-    #* Resolving outstanding issues preventing @beartype from resolving
-    #  postponed type hints on classes.
-    #* Decorating this class rather than this method by @beartype.
-    #* Removing the @beartype decoration below.
     @staticmethod
-    @beartype
-    def when_we_cling() -> Chameleon:
+    def when_we_cling() -> Union[Chameleon, complex]:
         '''
         Arbitrary static method decorated by the :mod:`beartype.beartype`
         decorator creating and returning an arbitrary instance of this class
