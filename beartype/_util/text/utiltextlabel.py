@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Optional
+from beartype._util.text.utiltextcolor import error_color
 from beartype._util.utilobject import (
     get_object_name,
     get_object_type_name,
@@ -389,10 +390,11 @@ def prefix_callable_decorated_arg_value(
     # Avoid circular import dependencies.
     from beartype._util.text.utiltextrepr import represent_object
 
+    colored_arg = error_color(f'{arg_name}={represent_object(arg_value)}')
     # Create and return this label.
     return (
         f'{prefix_callable_decorated(func)}parameter '
-        f'{arg_name}={represent_object(arg_value)} '
+        f'`{colored_arg}` '
     )
 
 # ....................{ PREFIXERS ~ callable : return      }....................
@@ -445,5 +447,5 @@ def prefix_callable_decorated_return_value(
     # Create and return this label.
     return (
         f'{prefix_callable_decorated_return(func)}'
-        f'{represent_object(return_value)} '
+        f'`{error_color(represent_object(return_value))}` '
     )
