@@ -128,7 +128,7 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep_args,
     warn_if_hint_pep_deprecated,
 )
-from beartype._util.hint.utilhintconv import sanify_hint_child
+from beartype._util.hint.convert.utilconvsanify import sanify_hint_child
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8

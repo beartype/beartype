@@ -68,7 +68,7 @@ from beartype._check._checksnip import (
 from beartype._check.expr.exprcode import make_check_expr
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
-from beartype._util.hint.utilhintconv import sanify_hint_root
+from beartype._util.hint.convert.utilconvsanify import sanify_hint_root
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from itertools import count

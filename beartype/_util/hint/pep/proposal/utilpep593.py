@@ -20,7 +20,7 @@ from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
 from beartype._data.datatyping import TypeException
 
-# ....................{ VALIDATORS                         }....................
+# ....................{ RAISERS                            }....................
 #FIXME: Pass "exception_prefix" to all calls of this validator.
 def die_unless_hint_pep593(
     # Mandatory parameters.

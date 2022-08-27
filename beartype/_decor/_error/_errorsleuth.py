@@ -33,7 +33,7 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep,
     is_hint_pep_args,
 )
-from beartype._util.hint.utilhintconv import sanify_hint_child
+from beartype._util.hint.convert.utilconvsanify import sanify_hint_child
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 
 # ....................{ CLASSES                            }....................

@@ -69,7 +69,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
     reduce_hint_pep484585_func_return)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     get_hint_pep484585_forwardref_classname_relative_to_object)
-from beartype._util.hint.utilhintconv import sanify_func_hint_root
+from beartype._util.hint.convert.utilconvsanify import sanify_func_hint_root
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.text.utiltextlabel import (
