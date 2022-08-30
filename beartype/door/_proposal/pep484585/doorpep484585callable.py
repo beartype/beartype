@@ -29,7 +29,7 @@ from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 
 # ....................{ SUBCLASSES                         }....................
 # FIXME: Document all public and private attributes of this class, please.
-class _TypeHintCallable(_TypeHintSubscripted):
+class CallableTypeHint(_TypeHintSubscripted):
     '''
     **Callable type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`484`- or :pep:`585`-compliant ``Callable[...]`` type hint).
@@ -48,7 +48,7 @@ class _TypeHintCallable(_TypeHintSubscripted):
 
         if len(self._args) == 0:  # pragma: no cover
             # e.g. `Callable` without any arguments this may be unreachable,
-            # (since a bare Callable will go to _TypeHintClass) but it's here
+            # (since a bare Callable will go to ClassTypeHint) but it's here
             # for completeness and safety.
             self._takes_any_args = True
 
@@ -201,7 +201,7 @@ class _TypeHintCallable(_TypeHintSubscripted):
         # with ``Any``, and we simply check that the origins are compatible.
         if branch._is_args_ignorable:
             return issubclass(self._origin, branch._origin)
-        if not isinstance(branch, _TypeHintCallable):
+        if not isinstance(branch, CallableTypeHint):
             return False
         if not issubclass(self._origin, branch._origin):
             return False

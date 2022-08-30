@@ -278,7 +278,8 @@ class TypeHint(ABC):
         # Return true only if all child type hints of these hints are equal.
         return all(
             self_child == other_child
-            for self_child, other_child in zip(self._args_wrapped, other._args_wrapped)
+            for self_child, other_child in zip(
+                self._args_wrapped, other._args_wrapped)
         )
 
 
@@ -499,7 +500,7 @@ class TypeHint(ABC):
         wrappers encapsulating all low-level child type hints subscripting
         (indexing) the low-level parent type hint encapsulated by this
         high-level parent type hint wrappers if this is a union (and thus an
-        instance of the :class:`_TypeHintUnion` subclass) *or* the 1-tuple
+        instance of the :class:`UnionTypeHint` subclass) *or* the 1-tuple
         containing only this instance itself otherwise) of this type hint
         wrapper.
 
@@ -545,43 +546,47 @@ class TypeHint(ABC):
         Flag that indicates this hint can be evaluating only using the origin.
 
         This is useful for parametrized type hints with no arguments or with
-        :attr:`typing.Any`-type placeholder arguments (e.g., ``Tuple[Any,
-        ...]``, ``Callable[..., Any]``).
+        :attr:`typing.Any`-type placeholder arguments (e.g.,
+        ``Tuple[Any, ...]``, ``Callable[..., Any]``).
 
         It's also useful in cases where a builtin type or abc.collection is used
         as a type hint (and has no sign).  For example:
 
         .. code-block:: python
 
-           >>> get_hint_pep_sign_or_none(tuple)  # None
-
+           >>> get_hint_pep_sign_or_none(tuple)
+           None
            >>> get_hint_pep_sign_or_none(typing.Tuple)
            HintSignTuple
 
-        In this case, using :attr:`_is_args_ignorable` lets us simplify the
-        comparison.
+        In this case, using :attr:`_is_args_ignorable` allows us to us simplify
+        the comparison.
         """
 
-        raise NotImplementedError(
-            "Subclasses must implement this method."
-        )  # pragma: no cover
-
+        raise NotImplementedError(  # pragma: no cover
+            'Abstract method TypeHint._is_args_ignorable() undefined.')
 
 # ....................{ SUBCLASSES                         }....................
-class _TypeHintClass(TypeHint):
-    """
-    **Partially ordered class type hint** (i.e., high-level object encapsulating
-    a low-level PEP-compliant type hint that is, in fact, a simple class).
-    """
+class ClassTypeHint(TypeHint):
+    '''
+    **Class type hint wrapper** (i.e., high-level object encapsulating a
+    low-level PEP-compliant type hint that is, in fact, a simple class).
+    '''
 
+    # ..................{ PRIVATE                            }..................
     _hint: type
 
     @property
     def _is_args_ignorable(self) -> bool:
-        """Plain types are their origin."""
+        '''
+        Plain types are their origin.
+        '''
+
         return True
 
+
     def _is_le_branch(self, branch: TypeHint) -> bool:
+
         # everything is a subclass of Any
         if branch._origin is Any:
             return True
@@ -591,9 +596,9 @@ class _TypeHintClass(TypeHint):
             # argument to issubclass() below.
             return False
 
-        # FIXME: Actually, let's avoid the implicit numeric tower for now.
-        # Explicit is better than implicit and we really strongly disagree with
-        # this subsection of PEP 484, which does more real-world harm than good.
+        #FIXME: Actually, let's avoid the implicit numeric tower for now.
+        #Explicit is better than implicit and we really strongly disagree with
+        #this subsection of PEP 484, which does more real-world harm than good.
         # # Numeric tower:
         # # https://peps.python.org/pep-0484/#the-numeric-tower
         # if self._origin is float and branch._origin in {float, int}:
@@ -602,7 +607,8 @@ class _TypeHintClass(TypeHint):
         #     return True
 
         # Return true only if...
-        return branch._is_args_ignorable and issubclass(self._origin, branch._origin)
+        return branch._is_args_ignorable and issubclass(
+            self._origin, branch._origin)
 
 
 class _TypeHintSubscripted(TypeHint):

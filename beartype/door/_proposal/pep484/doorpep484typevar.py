@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._doorcls import TypeHint
-from beartype.door._proposal.doorpep484604 import _TypeHintUnion
+from beartype.door._proposal.doorpep484604 import UnionTypeHint
 from beartype.roar import BeartypeDoorPepUnsupportedException
 from beartype.typing import (
     Any,
@@ -23,7 +23,7 @@ from beartype.typing import (
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Document all public and private attributes of this class, please.
-class _TypeHintTypeVar(_TypeHintUnion):
+class TypeVarTypeHint(UnionTypeHint):
     '''
     **Type variable wrapper** (i.e., high-level object encapsulating a low-level
     :pep:`484`-compliant :attr:`typing.TypeVar` type hint).

@@ -12,12 +12,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._doorcls import _TypeHintClass
+from beartype.door._doorcls import ClassTypeHint
 from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
     get_hint_pep484_newtype_class)
 
 # ....................{ SUBCLASSES                         }....................
-class _TypeHintNewType(_TypeHintClass):
+class NewTypeTypeHint(ClassTypeHint):
     '''
     **New-type type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`484`-compliant :attr:`typing.NewType` type hint).

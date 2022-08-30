@@ -21,7 +21,7 @@ from beartype.typing import Tuple
 from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ SUBCLASSES                         }....................
-class _TypeHintLiteral(_TypeHintSubscripted):
+class LiteralTypeHint(_TypeHintSubscripted):
     '''
     **Literal type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`586`-compliant :attr:`typing.Literal` type hint).
@@ -35,7 +35,7 @@ class _TypeHintLiteral(_TypeHintSubscripted):
 
         # If the other hint is also a literal, check that our args are a subset
         # of theirs.
-        if isinstance(other, _TypeHintLiteral):
+        if isinstance(other, LiteralTypeHint):
             return all(arg in other._args for arg in self._args)
 
         # If the other hint is a just an origin, check that our args are *ALL*

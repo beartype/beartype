@@ -25,7 +25,7 @@ from beartype.typing import (
 from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ SUBCLASSES                         }....................
-class _TypeHintUnion(_TypeHintSubscripted):
+class UnionTypeHint(_TypeHintSubscripted):
     '''
     **Union type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`484`-compliant :attr:`typing.Optional` or
@@ -70,7 +70,7 @@ class _TypeHintUnion(_TypeHintSubscripted):
 
         # If that hint is *NOT* also a union type hint, return true only if that
         # hint is the "typing.Any" catch-all.
-        if not isinstance(other, _TypeHintUnion):
+        if not isinstance(other, UnionTypeHint):
             return other._hint is Any
         # Else, that hint is a partially ordered union type hint.
 
@@ -90,7 +90,7 @@ class _TypeHintUnion(_TypeHintSubscripted):
 
     # ..................{ PRIVATE                            }..................
     def _is_le_branch(self, branch: TypeHint) -> bool:
-        raise NotImplementedError('_TypeHintUnion._is_le_branch() unsupported.')  # pragma: no cover
+        raise NotImplementedError('UnionTypeHint._is_le_branch() unsupported.')  # pragma: no cover
 
 
     @property
