@@ -28,7 +28,7 @@ from beartype.door._proposal.pep484.doorpep484typevar import TypeVarTypeHint
 from beartype.door._proposal.pep484585.doorpep484585callable import (
     CallableTypeHint)
 from beartype.door._proposal.pep484585.doorpep484585tuple import (
-    TupleTypeHint)
+    _TupleTypeHint)
 from beartype.roar import (
     BeartypeDoorNonpepException,
     # BeartypeDoorPepUnsupportedException,
@@ -138,7 +138,7 @@ _HINT_SIGN_TO_TYPEHINT_CLS: Dict[HintSign, Type[TypeHint]] = {
     HintSignGeneric: _TypeHintSubscripted,
     HintSignLiteral: LiteralTypeHint,
     HintSignNewType: NewTypeTypeHint,
-    HintSignTuple: TupleTypeHint,
+    HintSignTuple: _TupleTypeHint,
     HintSignTypeVar: TypeVarTypeHint,
 }
 '''
@@ -173,8 +173,15 @@ def _init() -> None:
     # For each concrete "TypeHint" subclass registered with this dictionary
     # (*AFTER* initializing this dictionary)...
     for typehint_cls in _HINT_SIGN_TO_TYPEHINT_CLS.values():
-        # Sanitize the fully-qualified module name of this subclass from the
-        # private submodule declaring this subclass (e.g.,
+        # If the unqualified basename of this subclass is prefixed by an
+        # underscare, this subclass is private rather than public. In this case,
+        # silently ignore this private subclass and continue to the next.
+        if typehint_cls.__name__.startswith('_'):
+            continue
+        # Else, this subclass is public.
+
+        # Sanitize the fully-qualified module name of this public subclass from
+        # the private submodule declaring this subclass (e.g.,
         # "beartype.door._proposal.doorpep484604.UnionTypeHintbeartype") to the
         # public "beartype.door" subpackage to both improve the readability of
         # exception messages and discourage end users from accessing that

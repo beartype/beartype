@@ -21,7 +21,7 @@ from beartype.typing import (
 
 # ....................{ SUBCLASSES                         }....................
 # FIXME: Document all public and private attributes of this class, please.
-class TupleTypeHint(_TypeHintSubscripted):
+class _TupleTypeHint(_TypeHintSubscripted):
     '''
     **Tuple type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`484`- or :pep:`585`-compliant ``Tuple[...]`` type hint).
@@ -108,7 +108,7 @@ class TupleTypeHint(_TypeHintSubscripted):
         if branch._is_args_ignorable:
             return issubclass(self._origin, branch._origin)
 
-        if not isinstance(branch, TupleTypeHint):
+        if not isinstance(branch, _TupleTypeHint):
             return False
         if self._is_args_ignorable:
             return False

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -7,13 +7,13 @@
 :mod:`pytest` **PEP-agnostic type hint utilities.**
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 class HintPithMetadata(object):
     '''
     Dataclass encapsulating all relevant type hint- and pith-specific metadata
@@ -30,7 +30,7 @@ class HintPithMetadata(object):
         Object either satisfying or violating this hint.
     '''
 
-    # ..................{ INITIALIZERS                      }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
         hint_meta: 'HintNonpepMetadata',
@@ -56,7 +56,7 @@ class HintPithMetadata(object):
         self.pith_meta = pith_meta
         self.pith = pith
 
-# ....................{ ITERATORS                         }....................
+# ....................{ ITERATORS                          }....................
 def iter_hints_piths_meta() -> 'Generator[HintPithMetadata]':
     '''
     Generator iteratively yielding test-specific type hints with metadata
@@ -70,8 +70,8 @@ def iter_hints_piths_meta() -> 'Generator[HintPithMetadata]':
     '''
 
     # Defer heavyweight imports.
-    from beartype_test.a00_unit.data.hint.data_hint import HINTS_META
     from beartype._util.utilobject import is_object_context_manager
+    from beartype_test.a00_unit.data.hint.data_hint import HINTS_META
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithSatisfiedMetadata,
         HintPithUnsatisfiedMetadata,

@@ -418,29 +418,8 @@ def hint_equality_cases() -> 'Iterable[Tuple[object, object, bool]]':
     # Return this mutable list coerced into an immutable tuple for safety.
     return tuple(HINT_EQUALITY_CASES)
 
-# ....................{ TESTS ~ testers                    }....................
-def test_is_subhint(
-    hint_subhint_cases: 'Iterable[Tuple[object, object, bool]]') -> None:
-    '''
-    Test the :func:`beartype.door.is_subhint` tester.
-
-    Parameters
-    ----------
-    hint_subhint_cases : Iterable[Tuple[object, object, bool]]
-        Iterable of one or more 3-tuples ``(subhint, superhint, is_subhint)``,
-        declared by the :func:`hint_subhint_cases` fixture.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype.door import is_subhint
-
-    # For each subhint relation to be tested...
-    for subhint, superhint, IS_SUBHINT in hint_subhint_cases:
-        # Assert this tester returns the expected boolean for these hints.
-        assert is_subhint(subhint, superhint) is IS_SUBHINT, f'{subhint} <= {superhint} is not {IS_SUBHINT}'
-
-# ....................{ TESTS ~ class : dunders            }....................
-def test_typehint_new() -> None:
+# ....................{ TESTS ~ class                      }....................
+def test_door_typehint_new() -> None:
     '''
     Test the :meth:`beartype.door.TypeHint.__new__` factory method.
     '''
@@ -476,7 +455,48 @@ def test_typehint_new() -> None:
         TypeHint(b'Is there, that from the boundaries of the sky')
 
 
-def test_typehint_equals(
+def test_door_typehint_mapping() -> None:
+    '''
+    Test that the :meth:`beartype.door.TypeHint.__new__` factory method
+    successfully creates and returns an instance of a concrete subclass of the
+    abstract :class:`beartype.door.TypeHint` superclass conditionally handling
+    the kind of low-level type hint passed to that factory method.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.door import TypeHint
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+        HintPepMetadata)
+    from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
+        iter_hints_piths_meta)
+
+    # For each predefined type hint and associated metadata...
+    for hint_pith_meta in iter_hints_piths_meta():
+        # Metadata describing this type hint.
+        hint_meta = hint_pith_meta.hint_meta
+
+        # If either...
+        if (
+            # This hint is PEP-noncompliant *OR*...
+            not isinstance(hint_meta, HintPepMetadata) or
+            # This kind of type hint is currently unsupported by the
+            # "beartype.door" submodule...
+            hint_meta.typehint_cls is None
+        ):
+            # Silently ignore this hint and continue to the next.
+            continue
+        # Else, this kind of type hint is currently supported by the
+        # "beartype.door" submodule *AND* this hint is PEP-compliant.
+
+        # Instance of a concrete subclass of the abstract "TypeHint" superclass
+        # conditionally handling this kind of type hint.
+        typehint = TypeHint(hint_meta.hint)
+
+        # Assert that this instance is of the expected subclass.
+        assert isinstance(typehint, hint_meta.typehint_cls)
+
+# ....................{ TESTS ~ class : dunders            }....................
+def test_door_typehint_equals(
     hint_equality_cases: 'Iterable[Tuple[object, object, bool]]') -> None:
     '''
     Test the :meth:`beartype.door.TypeHint.__equals__` tester.
@@ -526,8 +546,30 @@ def test_typehint_equals(
         assert typehint_a != nonhint
         assert typehint_b != nonhint
 
+# ....................{ TESTS ~ testers                    }....................
+def test_door_is_subhint(
+    hint_subhint_cases: 'Iterable[Tuple[object, object, bool]]') -> None:
+    '''
+    Test the :func:`beartype.door.is_subhint` tester.
 
-def test_typehint_is_ignorable() -> None:
+    Parameters
+    ----------
+    hint_subhint_cases : Iterable[Tuple[object, object, bool]]
+        Iterable of one or more 3-tuples ``(subhint, superhint, is_subhint)``,
+        declared by the :func:`hint_subhint_cases` fixture.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.door import is_subhint
+
+    # For each subhint relation to be tested...
+    for subhint, superhint, IS_SUBHINT in hint_subhint_cases:
+        # Assert this tester returns the expected boolean for these hints.
+        assert is_subhint(subhint, superhint) is IS_SUBHINT, (
+            f'{subhint} <= {superhint} is not {IS_SUBHINT}')
+
+# ....................{ TESTS ~ properties                 }....................
+def test_door_typehint_is_ignorable() -> None:
     '''
     Test the :meth:`beartype.door.TypeHint.is_ignorable` tester.
     '''
@@ -560,14 +602,14 @@ def test_typehint_is_ignorable() -> None:
                 hint_pep_meta.is_ignorable)
 
 
-def test_empty_tuple():
+def test_door_empty_tuple():
     from beartype.door import TypeHint
     from typing import Tuple
 
     assert TypeHint(Tuple[()]).is_empty_tuple
 
 
-def test_hint_iterable():
+def test_door_hint_iterable():
     from beartype.door import TypeHint
     from typing import Union
 
@@ -575,7 +617,7 @@ def test_hint_iterable():
     assert not list(TypeHint(int))
 
 
-def test_hint_ordered_comparison():
+def test_door_hint_ordered_comparison():
     from beartype.door import TypeHint
     from typing import Callable, Sequence, Any
 
@@ -598,7 +640,7 @@ def test_hint_ordered_comparison():
         a > 1
 
 
-def test_hint_repr():
+def test_door_hint_repr():
     from beartype.door import TypeHint
     from typing import Callable
 
@@ -607,7 +649,7 @@ def test_hint_repr():
     assert repr(annotation) in repr(hint)
 
 
-def test_types_that_are_just_origins():
+def test_door_types_that_are_just_origins():
     from beartype.door import TypeHint
     from typing import Any, Callable, Tuple
 
@@ -618,7 +660,7 @@ def test_types_that_are_just_origins():
     assert TypeHint(int)._is_args_ignorable
 
 
-def test_invalid_subtype_comparison():
+def test_door_invalid_subtype_comparison():
     from beartype.door import TypeHint
     from typing import Callable
     from beartype.roar import BeartypeDoorException
@@ -629,7 +671,7 @@ def test_invalid_subtype_comparison():
 
 
 #FIXME: Implement us up at some point, yo.
-# def test_callable_param_spec():
+# def test_door_callable_param_spec():
 #     # TODO
 #     with pytest.raises(NotImplementedError):
 #         TypeHint(t.Callable[t.ParamSpec("P"), t.TypeVar("T")])
