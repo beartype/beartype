@@ -32,6 +32,14 @@ standardized by the :mod:`typing` module.
 #    >>> isinstance(door_hint, UnionTypeHint)
 #    True
 #
+#    # DOOR hints can be type-checked Pythonically -- unlike normal type hints.
+#    >>> door_hint.is_bearable('The unbearable lightness of type-checking.')
+#    True
+#    >>> door_hint.die_if_unbearable(b'The @beartype that cannot be named.')
+#    beartype.roar.BeartypeDoorHintViolation: Object b'The @beartype that cannot
+#    be named.' violates type hint int | str | None, as bytes b'The @beartype
+#    that cannot be named.' not str, <class "builtins.NoneType">, or int.
+#
 #    # DOOR hints can be iterated Pythonically -- unlike normal type hints.
 #    >>> for door_child_hint in door_hint:
 #    ...     print(door_child_hint)

@@ -593,10 +593,10 @@ def test_door_typehint_is_ignorable() -> None:
     # * Rejects ignorable PEP-compliant type hints.
     for hint_pep_meta in HINTS_PEP_META:
         #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
-        #all currently unsupported type hints.
-        #most of these will be BeartypeDoorNonpepException, but there are some
-        #covariant type hints (e.g. numpy.dtype[+ScalarType]) that will raise a
-        #"not invariant" exception in the TypeVarTypeHint.
+        #all currently unsupported type hints. Most of these will be
+        #"BeartypeDoorNonpepException", but there are some covariant type hints
+        #(e.g. numpy.dtype[+ScalarType]) that will raise a "not invariant"
+        #exception in the "TypeVarTypeHint" subclass.
         with suppress(BeartypeDoorException):
             assert TypeHint(hint_pep_meta.hint).is_ignorable is (
                 hint_pep_meta.is_ignorable)

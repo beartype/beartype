@@ -51,6 +51,7 @@ from beartype.roar._roarexc import (
     BeartypeClawRegistrationException as BeartypeClawRegistrationException,
     BeartypeConfException as BeartypeConfException,
     BeartypeDoorException as BeartypeDoorException,
+    BeartypeDoorHintViolation as BeartypeDoorHintViolation,
     BeartypeDoorNonpepException as BeartypeDoorNonpepException,
     BeartypeDoorPepException as BeartypeDoorPepException,
     BeartypeDoorPepUnsupportedException as BeartypeDoorPepUnsupportedException,

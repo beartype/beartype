@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -16,13 +16,13 @@ elsewhere; rather, this submodule exercises this decorator to be configurable
 as expected from a high-level API perspective.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ CALLABLES                         }....................
+# ....................{ CALLABLES                          }....................
 def _earthquake(and_fiery_flood: int, and_hurricane: int) -> bool:
     '''
     Arbitrary callable to be decorated by the :func:`beartype.beartype`
@@ -36,10 +36,10 @@ def _earthquake(and_fiery_flood: int, and_hurricane: int) -> bool:
 
     return len(and_fiery_flood) % and_hurricane == 0
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 def test_decor_conf() -> None:
     '''
-    Test the :func:`beartype.beartype` decorator by the optional ``conf``
+    Test the :func:`beartype.beartype` decorator against the optional ``conf``
     parameter agnostic of parameters instantiating that configuration.
     '''
 
@@ -142,7 +142,6 @@ def test_decor_conf_is_debug_updates_linecache(capsys) -> None:
 
     # @beartype subdecorator printing wrapper function definitions.
     beartype_printing = beartype(conf=BeartypeConf(is_debug=True))
-
     beartyped_earthquake = beartype_printing(_earthquake)
 
     # Pytest object freezing the current state of standard output and error as
@@ -150,13 +149,13 @@ def test_decor_conf_is_debug_updates_linecache(capsys) -> None:
     standard_captured = capsys.readouterr()
     standard_lines = standard_captured.out.splitlines(keepends=True)
 
-    # This is probably overkill, but check to see that we generated lines in
-    # our linecache that correspond to the ones we printed. This a fragile
-    # coupling, but we can relax this later to avoid making those line-by-line
-    # comparisons and just check for the decorated function's filename's
-    # presence in the cache.
+    # This is probably overkill, but check to see that we generated lines in our
+    # linecache that correspond to the ones we printed. This a fragile coupling.
+    # We can relax this later to avoid making those line-by-line comparisons and
+    # just check for the decorated function's filename's presence in the cache.
     assert beartyped_earthquake.__code__.co_filename in linecache.cache
-    code_len, mtime, code_lines, code_filename = linecache.cache[beartyped_earthquake.__code__.co_filename]
+    code_len, mtime, code_lines, code_filename = linecache.cache[
+        beartyped_earthquake.__code__.co_filename]
     assert mtime is None
     assert len(code_lines) == len(standard_lines)
     for code_line, standard_line in zip(code_lines, standard_lines):

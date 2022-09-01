@@ -422,22 +422,23 @@ Frozen set of both pure-Python *and* C-based callables exercising edge cases.
 '''
 
 
-NON_CALLABLES = (
-    CALLABLE_CODE_OBJECT,
-    type.__dict__,      # Mapping Proxy Type
-    implementation,     # Simple Namespace Type
-    async_coroutine,
-    async_generator,
-    sync_generator,
-    closure_cell_factory(), # Cell type
-    TRACEBACK,
-    TRACEBACK.tb_frame,
-)
-'''
-Tuple of callable-like non-callable objects exercising edge cases,
-intentionally defined as a tuple rather than frozen set due to the
-unhashability of one or more members (e.g., ``TRACEBACK``).
-'''
+#FIXME: Currently unused but preserved for posterity.
+# NON_CALLABLES = (
+#     CALLABLE_CODE_OBJECT,
+#     type.__dict__,      # Mapping Proxy Type
+#     implementation,     # Simple Namespace Type
+#     async_coroutine,
+#     async_generator,
+#     sync_generator,
+#     closure_cell_factory(), # Cell type
+#     TRACEBACK,
+#     TRACEBACK.tb_frame,
+# )
+# '''
+# Tuple of callable-like non-callable objects exercising edge cases, intentionally
+# defined as a tuple rather than frozen set due to the unhashability of one or
+# more members (e.g., ``TRACEBACK``).
+# '''
 
 # ....................{ SETS ~ type : builtin              }....................
 TYPES_BUILTIN = frozenset((

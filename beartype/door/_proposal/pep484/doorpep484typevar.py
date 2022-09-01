@@ -39,28 +39,34 @@ class TypeVarTypeHint(UnionTypeHint):
     def _wrap_children(
         self, unordered_children: tuple) -> Tuple[TypeHint, ...]:
 
-        # Human-readable string describing the variance of this type variable if
-        # any *OR* "None" otherwise (i.e., if this type variable is invariant).
-        variance_str = None
-        if self._hint.__covariant__:
-            variance_str = 'covariant'
-        elif self._hint.__contravariant__:
-            variance_str = 'contravariant'
-
-        # If this type variable is variant, raise an exception.
-        if variance_str:
-            raise BeartypeDoorPepUnsupportedException(
-                f'Type hint {repr(self._hint)} '
-                f'variance "{variance_str}" currently unsupported.'
-            )
-        # Else, this type variable is invariant.
+        #FIXME: Support covariance and contravariance, please. We don't
+        #particularly care about either at the moment. Moreover, runtime type
+        #checkers were *NEVER* expected to support either -- although we
+        #eventually intend to do so. For now, raising a fatal exception here
+        #would seem to be extreme overkill. Doing nothing is (probably) better
+        #than doing something reckless and wild.
+        # # Human-readable string describing the variance of this type variable if
+        # # any *OR* "None" otherwise (i.e., if this type variable is invariant).
+        # variance_str = None
+        # if self._hint.__covariant__:
+        #     variance_str = 'covariant'
+        # elif self._hint.__contravariant__:
+        #     variance_str = 'contravariant'
+        #
+        # # If this type variable is variant, raise an exception.
+        # if variance_str:
+        #     raise BeartypeDoorPepUnsupportedException(
+        #         f'Type hint {repr(self._hint)} '
+        #         f'variance "{variance_str}" currently unsupported.'
+        #     )
+        # # Else, this type variable is invariant.
 
         # TypeVars may only be bound or constrained, but not both. The
         # difference between the two has semantic meaning for static type
         # checkers, but relatively little meaning for us here. Ultimately, we're
         # only concerned with the set of compatible types present in either the
-        # bound or the constraints, so we treat a TypeVar as a Union of its
-        # constraints or bound. See also:
+        # bound or the constraints, so we treat a type variable as a union of
+        # its constraints or bound. See also:
         #     https://docs.python.org/3/library/typing.html#typing.TypeVar
         if self._hint.__bound__ is not None:
             return (TypeHint(self._hint.__bound__),)

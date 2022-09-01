@@ -18,13 +18,22 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from abc import ABC
+from beartype.abby import (
+    die_if_unbearable,
+    is_bearable,
+)
 from beartype.door._doortest import die_unless_typehint
-from beartype.roar import BeartypeDoorException
+from beartype.roar import (
+    BeartypeAbbyHintViolation,
+    BeartypeDoorException,
+    BeartypeDoorHintViolation,
+)
 from beartype.typing import (
     Any,
     Iterable,
     Tuple,
 )
+from beartype._conf import BeartypeConf
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
@@ -407,7 +416,111 @@ class TypeHint(ABC):
         # Mechanic: Somebody set up us the bomb.
         return is_hint_ignorable(self._hint)
 
-    # ..................{ TESTERS                            }..................
+    # ..................{ CHECKERS                           }..................
+    def die_if_unbearable(
+        self,
+
+        # Mandatory flexible parameters.
+        obj: object,
+
+        # Optional keyword-only parameters.
+        *,
+        conf: BeartypeConf = BeartypeConf(),
+    ) -> None:
+        '''
+        Raise an exception if the passed arbitrary object violates this type
+        hint under the passed beartype configuration.
+
+        Parameters
+        ----------
+        obj : object
+            Arbitrary object to be tested against this hint.
+        conf : BeartypeConf, optional
+            **Beartype configuration** (i.e., self-caching dataclass
+            encapsulating all settings configuring type-checking for the passed
+            object). Defaults to ``BeartypeConf()``, the default ``O(1)``
+            constant-time configuration.
+
+        Raises
+        ----------
+        BeartypeDoorHintViolation
+            If this object violates this hint.
+
+        Examples
+        ----------
+            >>> from beartype.door import TypeHint
+            >>> TypeHint(list[str]).die_if_unbearable(
+            ...     ['And', 'what', 'rough', 'beast,'], )
+            >>> TypeHint(list[str]).die_if_unbearable(
+            ...     ['its', 'hour', 'come', 'round'], list[int])
+            beartype.roar.BeartypeDoorHintViolation: Object ['its', 'hour',
+            'come', 'round'] violates type hint list[int], as list index 0 item
+            'its' not instance of int.
+        '''
+
+        #FIXME: Extremely non-ideal, obviously. Although this suffices for now,
+        #the EAFP has clearly gotten out-of-hand and is now into the Cray Zone.
+
+        # Attempt to type-check this object by deferring to the existing
+        # die_if_unbearable() raiser.
+        try:
+            die_if_unbearable(obj, self._hint, conf=conf)
+        # If this object violates this hint, wrap this abby-specific exception
+        # in the equivalent DOOR-specific exception.
+        except BeartypeAbbyHintViolation as exception:
+            raise BeartypeDoorHintViolation(str(exception)) from exception
+        # Else, this object satisfies this hint.
+
+
+    def is_bearable(
+        self,
+
+        # Mandatory flexible parameters.
+        obj: object,
+
+        # Optional keyword-only parameters.
+        *, conf: BeartypeConf = BeartypeConf(),
+    ) -> bool:
+        '''
+        ``True`` only if the passed arbitrary object satisfies this type hint
+        under the passed beartype configuration.
+
+        Parameters
+        ----------
+        obj : object
+            Arbitrary object to be tested against this hint.
+        conf : BeartypeConf, optional
+            **Beartype configuration** (i.e., self-caching dataclass
+            encapsulating all settings configuring type-checking for the passed
+            object). Defaults to ``BeartypeConf()``, the default ``O(1)``
+            constant-time configuration.
+
+        Returns
+        ----------
+        bool
+            ``True`` only if this object satisfies this hint.
+
+        Raises
+        ----------
+        BeartypeDecorHintForwardRefException
+            If this hint contains one or more relative forward references, which
+            this tester explicitly prohibits to improve both the efficiency and
+            portability of calls to this tester.
+
+        Examples
+        ----------
+            >>> from beartype.door import TypeHint
+            >>> TypeHint(list[str]).is_bearable(['Things', 'fall', 'apart;'])
+            True
+            >>> TypeHint(list[int]).is_bearable(
+            ...     ['the', 'centre', 'cannot', 'hold;'])
+            False
+        '''
+
+        # One-liners justify their own existence.
+        return is_bearable(obj, self._hint, conf=conf)
+
+    # ..................{ TESTERS ~ subhint                  }..................
     @callable_cached
     def is_subhint(self, other: 'TypeHint') -> bool:
         """
@@ -638,9 +751,10 @@ class _TypeHintSubscripted(TypeHint):
             # of the typing library's subscripted type hints will raise an
             # exception if constructed improperly.
             raise BeartypeDoorException(  # pragma: no cover
-                f"{type(self)} type must have {self._required_nargs} "
-                f"argument(s). got {len(self._args)}"
+                f'{type(self)} type must have {self._required_nargs} '
+                f'argument(s), but got {len(self._args)}.'
             )
+
 
     @property
     def _is_args_ignorable(self) -> bool:
