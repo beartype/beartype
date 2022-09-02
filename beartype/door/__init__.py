@@ -13,7 +13,7 @@ standardized by the :mod:`typing` module.
 
 # ....................{ TODO                               }....................
 #FIXME: Publicly document everything in "README.rst", please. Notably:
-#* List all public attributes of "beartype.door" in our "Feature" matrix.
+#* Globally replace "beartype.abby" with "beartype.door" in "README.rst", too.
 #* This is a great first start on a cheat sheet-style synopsis:
 #
 #    # This is DOOR. It's a Pythonic API providing an object-oriented interface
@@ -86,7 +86,9 @@ from beartype.door._doorcls import (
     TypeHint as TypeHint,
     ClassTypeHint as ClassTypeHint,
 )
-from beartype.door._doortest import (
+from beartype.door._doorcheck import (
+    die_if_unbearable as die_if_unbearable,
+    is_bearable as is_bearable,
     is_subhint as is_subhint,
 )
 from beartype.door._proposal.doorpep484604 import (

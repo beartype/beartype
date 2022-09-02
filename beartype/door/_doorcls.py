@@ -18,7 +18,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from abc import ABC
-from beartype.abby import (
+from beartype.door._doorcheck import (
     die_if_unbearable,
     is_bearable,
 )
@@ -50,9 +50,9 @@ from beartype._util.hint.utilhinttest import is_hint_ignorable
 #
 # Since 'TypeHint' will probably increasingly become the basis for our entire
 # code generation process, consider refactoring the existing
-# beartype.abby.is_bearable() and beartype.abby.die_if_unbearable() functions in
+# beartype.door.is_bearable() and beartype.door.die_if_unbearable() functions in
 # terms of the above functions: e.g.,
-#    # In "beartype.abby._abbytest":
+#    # In "beartype.door._abbytest":
 #    def is_bearable(obj: object, hint: object) -> bool:
 #        return TypeHint(hint).is_bearable(obj)  # <-- yeah. that's slick.
 class TypeHint(ABC):

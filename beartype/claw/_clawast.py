@@ -148,9 +148,9 @@ class BeartypeNodeTransformer(NodeTransformer):
             # inserted under the parent node encapsulating the currently visited
             # bmodule in the AST for that module).
             nodes_import_beartype_attr = (
-                # Our beartype.abby.die_if_unbearable() raiser.
+                # Our beartype.door.die_if_unbearable() raiser.
                 ImportFrom(
-                    module='beartype.abby',
+                    module='beartype.door',
                     names=[alias('die_if_unbearable')],
                 ),
                 # Our beartype._decor.decorcore.beartype_object_nonfatal() decorator.
@@ -290,7 +290,7 @@ class BeartypeNodeTransformer(NodeTransformer):
         a :pep:`562`-compliant type hint) parent node, inserting a subsequent
         statement following that annotated assignment that type-checks that
         attribute against that type hint by passing both to our public
-        :func:`beartype.abby.is_bearable` tester.
+        :func:`beartype.door.is_bearable` tester.
 
         Parameters
         ----------

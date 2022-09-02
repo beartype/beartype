@@ -220,7 +220,7 @@ def make_func_tester(
     # These references would then be resolved against the global and local
     # lexical scope of that callable. While technically feasible, doing so would
     # render higher-level "beartype" functions calling this lower-level
-    # factory (e.g., our increasingly popular public beartype.abby.is_bearable()
+    # factory (e.g., our increasingly popular public beartype.door.is_bearable()
     # tester) sufficiently slow as to be pragmatically infeasible.
     if hint_forwardrefs_class_basename:
         raise BeartypeDecorHintForwardRefException(

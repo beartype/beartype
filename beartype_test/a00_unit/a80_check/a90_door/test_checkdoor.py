@@ -4,10 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype abby type-checking unit tests.**
+**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) type-checking unit
+tests.**
 
 This submodule unit tests the subset of the public API of the public
-:mod:`beartype.abby` subpackage that pertains to type-checking.
+:mod:`beartype.door` subpackage that pertains to type-checking.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -22,14 +23,14 @@ from beartype_test._util.mark.pytmark import ignore_warnings
 # Prevent pytest from capturing and displaying all expected non-fatal
 # beartype-specific warnings emitted by this test. Urgh!
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
-def test_abby_die_if_unbearable_pass() -> None:
+def test_door_die_if_unbearable_pass() -> None:
     '''
-    Test successful usage of the :class:`beartype.abby.die_if_unbearable`
-    raiser.
+    Test successful usage of the procedural
+    :class:`beartype.door.die_if_unbearable` raiser.
     '''
 
     # Defer heavyweight imports.
-    from beartype.abby import die_if_unbearable
+    from beartype.door import die_if_unbearable
     from beartype.roar import BeartypeAbbyHintViolation
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithUnsatisfiedMetadata)
@@ -66,14 +67,14 @@ def test_abby_die_if_unbearable_pass() -> None:
             die_if_unbearable(pith, hint)
 
 
-def test_abby_die_if_unbearable_fail() -> None:
+def test_door_die_if_unbearable_fail() -> None:
     '''
-    Test unsuccessful usage of the :class:`beartype.abby.die_if_unbearable`
-    raiser.
+    Test unsuccessful usage of the procedural
+    :class:`beartype.door.die_if_unbearable` raiser.
     '''
 
     # Defer heavyweight imports.
-    from beartype.abby import die_if_unbearable
+    from beartype.door import die_if_unbearable
     from beartype.roar import (
         BeartypeConfException,
         BeartypeDecorHintNonpepException,
@@ -97,18 +98,71 @@ def test_abby_die_if_unbearable_fail() -> None:
             conf='Visit the hidden buds, or dreamless sleep',
         )
 
-# ....................{ TESTS ~ testers                    }....................
-# Prevent pytest from capturing and displaying all expected non-fatal
-# beartype-specific warnings emitted by this test. Urgh!
+
+# See above for @ignore_warnings() discussion.
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
-def test_abby_is_bearable_pass() -> None:
+def test_door_typehint_die_if_unbearable() -> None:
     '''
-    Test successful usage of the :class:`beartype.abby.is_bearable` tester.
+    Test successful usage of the object-oriented
+    :meth:`beartype.door.TypeHint.die_if_unbearable` tester.
+
+    This test intentionally tests only the core functionality of this tester to
+    avoid violating Don't Repeat Yourself (DRY). This tester internally defers
+    to the procedural :class:`beartype.door.die_if_unbearable` tester, already
+    exhaustively tested by preceding unit tests.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.door import TypeHint
+    from beartype.roar import (
+        BeartypeDoorHintViolation,
+        BeartypeDoorNonpepException,
+    )
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+        HintPithUnsatisfiedMetadata)
+    from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
+        iter_hints_piths_meta)
+    from contextlib import suppress
+    from pytest import raises
+
+    # For each predefined unignorable type hint and associated metadata...
+    for hint_pith_meta in iter_hints_piths_meta():
+        # Type hint to be type-checked.
+        hint = hint_pith_meta.hint_meta.hint
+
+        # Object to type-check against this type hint.
+        pith = hint_pith_meta.pith
+
+        #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
+        #all currently unsupported type hints.
+        with suppress(BeartypeDoorNonpepException):
+            # Wrapper wrapping this type hint.
+            typehint = TypeHint(hint)
+
+            # If this pith violates this hint, assert this raiser raises the
+            # expected exception when passed this pith and hint.
+            if isinstance(
+                hint_pith_meta.pith_meta, HintPithUnsatisfiedMetadata):
+                with raises(BeartypeDoorHintViolation):
+                    typehint.die_if_unbearable(pith)
+            # Else, this pith satisfies this hint. In this case, assert this
+            # raiser raises *NO* exception when passed this pith and hint.
+            else:
+                typehint.die_if_unbearable(pith)
+
+
+# ....................{ TESTS ~ testers                    }....................
+# See above for @ignore_warnings() discussion.
+@ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
+def test_door_is_bearable_pass() -> None:
+    '''
+    Test successful usage of the procedural :class:`beartype.door.is_bearable`
+    tester.
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer heavyweight imports.
-    from beartype.abby import is_bearable
+    from beartype.door import is_bearable
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithUnsatisfiedMetadata)
     from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
@@ -141,14 +195,15 @@ def test_abby_is_bearable_pass() -> None:
         assert is_bearable(pith, hint) is is_bearable_expected
 
 
-def test_abby_is_bearable_fail() -> None:
+def test_door_is_bearable_fail() -> None:
     '''
-    Test unsuccessful usage of the :class:`beartype.abby.is_bearable` tester.
+    Test unsuccessful usage of the procedural :class:`beartype.door.is_bearable`
+    tester.
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer heavyweight imports.
-    from beartype.abby import is_bearable
+    from beartype.door import is_bearable
     from beartype.roar import (
         BeartypeConfException,
         BeartypeDecorHintForwardRefException,
@@ -190,3 +245,44 @@ def test_abby_is_bearable_fail() -> None:
             obj='Breathes its swift vapours to the circling air.',
             hint='RollsItsLoudWatersToTheOceanWaves',
         )
+
+
+# See above for @ignore_warnings() discussion.
+@ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
+def test_door_typehint_is_bearable() -> None:
+    '''
+    Test successful usage of the object-oriented
+    :meth:`beartype.door.TypeHint.is_bearable` tester.
+
+    This test intentionally tests only the core functionality of this tester to
+    avoid violating Don't Repeat Yourself (DRY). This tester internally defers
+    to the procedural :class:`beartype.door.is_bearable` tester, already
+    exhaustively tested by preceding unit tests.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.door import TypeHint
+    from beartype.roar import BeartypeDoorNonpepException
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+        HintPithUnsatisfiedMetadata)
+    from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
+        iter_hints_piths_meta)
+    from contextlib import suppress
+
+    # For each predefined unignorable type hint and associated metadata...
+    for hint_pith_meta in iter_hints_piths_meta():
+        # Type hint to be type-checked.
+        hint = hint_pith_meta.hint_meta.hint
+
+        # Object to type-check against this type hint.
+        pith = hint_pith_meta.pith
+
+        # True only if this pith satisfies this hint.
+        is_bearable_expected = not isinstance(
+            hint_pith_meta.pith_meta, HintPithUnsatisfiedMetadata)
+
+        #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
+        #all currently unsupported type hints.
+        with suppress(BeartypeDoorNonpepException):
+            # Assert this tester returns false when passed this pith and hint.
+            assert TypeHint(hint).is_bearable(pith) is is_bearable_expected

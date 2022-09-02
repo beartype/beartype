@@ -34,7 +34,8 @@ from beartype._util.hint.utilhinttest import die_unless_hint
 
 # ....................{ PRIVATE ~ constants                }....................
 _TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX = (
-    '@beartyped beartype.abby._abbytest._get_type_checker._die_if_unbearable() '
+    '@beartyped '
+    'beartype.door._doorcheck._get_type_checker._die_if_unbearable() '
     'return '
 )
 '''
@@ -99,7 +100,7 @@ def die_if_unbearable(
 
     Examples
     ----------
-        >>> from beartype.abby import die_if_unbearable
+        >>> from beartype.door import die_if_unbearable
         >>> die_if_unbearable(['And', 'what', 'rough', 'beast,'], list[str])
         >>> die_if_unbearable(['its', 'hour', 'come', 'round'], list[int])
         beartype.roar.BeartypeAbbyHintViolation: Object ['its', 'hour', 'come',
@@ -195,7 +196,7 @@ def is_bearable(
 
     Examples
     ----------
-        >>> from beartype.abby import is_bearable
+        >>> from beartype.door import is_bearable
         >>> is_bearable(['Things', 'fall', 'apart;'], list[str])
         True
         >>> is_bearable(['the', 'centre', 'cannot', 'hold;'], list[int])
@@ -228,6 +229,72 @@ def is_bearable(
 
     # Return true only if the passed object satisfies this hint.
     return func_tester(obj)  # pyright: ignore[reportUnboundVariable]
+
+
+def is_subhint(subhint: object, superhint: object) -> bool:
+    '''
+    ``True`` only if the first passed hint is a **subhint** of the second passed
+    hint, in which case this second hint is a **superhint** of this first hint.
+
+    Equivalently, this tester returns ``True`` only if *all* of the following
+    conditions apply:
+
+    * These two hints are **semantically related** (i.e., convey broadly similar
+      semantics enabling these two hints to be reasonably compared). For
+      example:
+
+      * ``callable.abc.Iterable[str]`` and ``callable.abc.Sequence[int]`` are
+        semantically related. These two hints both convey container semantics.
+        Despite their differing child hints, these two hints are broadly similar
+        enough to be reasonably comparable.
+      * ``callable.abc.Iterable[str]`` and ``callable.abc.Callable[[], int]``
+        are *not* semantically related. Whereas the first hints conveys a
+        container semantic, the second hint conveys a callable semantic. Since
+        these two semantics are unrelated, these two hints are dissimilar
+        enough to *not* be reasonably comparable.
+
+    * The first hint is **semantically equivalent** to or **narrower** than the
+      second hint. Equivalently:
+
+      * The first hint matches less than or equal to the total number of all
+        possible objects matched by the second hint.
+      * The size of the countably infinite set of all possible objects matched
+        by the first hint is less than or equal to that of those matched by the
+        second hint.
+
+    * The first hint is **compatible** with the second hint. Since the first
+      hint is semantically narrower than the second, APIs annotated by the first
+      hint may safely replace that hint with the second hint; doing so preserves
+      backward compatibility.
+
+    Parameters
+    ----------
+    subhint : object
+        PEP-compliant type hint or type to be tested as the subhint.
+    superhint : object
+        PEP-compliant type hint or type to be tested as the superhint.
+
+    Returns
+    -------
+    bool
+        ``True`` only if this first hint is a subhint of this second hint.
+
+    Examples
+    --------
+        >>> from beartype.door import is_subhint
+        >>> is_subhint(int, int)
+        True
+        >>> is_subhint(Callable[[], list], Callable[..., Sequence[Any]])
+        True
+        >>> is_subhint(Callable[[], list], Callable[..., Sequence[int]])
+        False
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype.door._doorcls import TypeHint
+
+    # The one-liner is mightier than the... many-liner.
+    return TypeHint(subhint).is_subhint(TypeHint(superhint))
 
 # ....................{ PRIVATE ~ getters                  }....................
 #FIXME: Shift into a more public location for widespread usage elsewhere: e.g.,

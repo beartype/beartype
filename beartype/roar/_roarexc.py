@@ -482,7 +482,7 @@ class BeartypeAbbyException(BeartypeException):
     Abstract base class of all **functional type-checking exceptions.**
 
     Instances of subclasses of this exception are raised at call time from
-    callables and classes published by the :func:`beartype.abby` subpackage.
+    callables and classes published by the :func:`beartype.door` subpackage.
     '''
 
     pass
@@ -493,7 +493,7 @@ class BeartypeAbbyTesterException(BeartypeAbbyException):
     **Beartype functional type-checking tester exception.**
 
     This exception is raised at call time by the
-    :func:`beartype.abby.is_bearable` function when passed an invalid type hint.
+    :func:`beartype.door.is_bearable` function when passed an invalid type hint.
     '''
 
     pass
@@ -504,7 +504,7 @@ class BeartypeAbbyHintViolation(BeartypeCallHintViolation):
     **Beartype functional type-checking exception.**
 
     This exception is raised at call time by the
-    :func:`beartype.abby.die_if_unbearable` function when passed an object
+    :func:`beartype.door.die_if_unbearable` function when passed an object
     violating the passed type hint.
     '''
 
