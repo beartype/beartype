@@ -9,8 +9,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from sys import platform, stdout
-
+import functools
+import sys
 
 # ....................{ CONSTANTS ~                        }....................
 # Windows command prompt does not support ANSI escape sequences, but the Windows
@@ -35,7 +35,7 @@ def _is_stdout_terminal() -> bool:
     # Note that input streams are *NOT* guaranteed to define
     # the isatty() method. Defensively test for the existence of
     # that method before deferring to that method.
-    return hasattr(stdout, 'isatty') and stdout.isatty()
+    return hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
 
 
 def _is_stdout_terminal_colourized() -> bool:
@@ -45,9 +45,24 @@ def _is_stdout_terminal_colourized() -> bool:
     '''
 
     # *BOOM.*
-    return _is_stdout_terminal() and platform != 'win32'
+    return _is_stdout_terminal() and sys.platform != 'win32'
 
 
+def _plain_if_not_stdout(func):
+    '''
+    Decorator that returns the plain text if standard output is not attached to
+    an interactive terminal.
+    '''
+    @functools.wraps(func)
+    def wrapper(text: str) -> str:
+        if _is_stdout_terminal_colourized():
+            return func(text)
+        return text
+
+    return wrapper
+
+
+@_plain_if_not_stdout
 def error_colour(text: str) -> str:
     '''
     colour the errors.
@@ -55,6 +70,8 @@ def error_colour(text: str) -> str:
 
     return COLOUR_RED + text + COLOUR_RESET
 
+
+@_plain_if_not_stdout
 def truth_colour(text: str) -> str:
     '''
     colour the information of the truth.
