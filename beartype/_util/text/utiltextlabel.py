@@ -394,7 +394,7 @@ def prefix_callable_decorated_arg_value(
     # Create and return this label.
     return (
         f'{prefix_callable_decorated(func)}parameter '
-        f'`{coloured_arg}` '
+        f'{coloured_arg} '
     )
 
 # ....................{ PREFIXERS ~ callable : return      }....................
@@ -447,5 +447,5 @@ def prefix_callable_decorated_return_value(
     # Create and return this label.
     return (
         f'{prefix_callable_decorated_return(func)}'
-        f'`{error_colour(represent_object(return_value))}` '
+        f'{error_colour(represent_object(return_value))} '
     )

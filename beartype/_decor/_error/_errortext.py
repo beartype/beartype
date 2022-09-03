@@ -33,4 +33,4 @@ def represent_pith(pith: object) -> str:
         Human-readable description of this object.
     '''
 
-    return f'{label_type(type(pith))} `{error_colour(represent_object(pith))}`'
+    return f'{label_type(type(pith))} {error_colour(represent_object(pith))}'

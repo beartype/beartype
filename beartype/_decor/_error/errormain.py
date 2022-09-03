@@ -317,7 +317,7 @@ def get_beartype_violation(
         pith_value_repr = represent_object(
             obj=pith_value, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)
         raise _BeartypeCallHintPepRaiseDesynchronizationException(
-            f'{exception_prefix}violates type hint `{truth_colour(repr(hint))}`, '
+            f'{exception_prefix}violates type hint {truth_colour(repr(hint))}, '
             f'but utility function get_beartype_violation() '
             f'erroneously suggests this object satisfies this hint. '
             f'Please report this desynchronization failure to '
@@ -334,7 +334,7 @@ def get_beartype_violation(
 
     # Exception of the desired class embedding this cause.
     exception = exception_cls(  # type: ignore[misc]
-        f'{exception_prefix}violates type hint `{truth_colour(repr(hint))}`, as '
+        f'{exception_prefix}violates type hint {truth_colour(repr(hint))}, as '
         f'{exception_cause_suffixed}'
     )
 

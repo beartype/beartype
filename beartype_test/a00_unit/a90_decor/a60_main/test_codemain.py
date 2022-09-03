@@ -21,11 +21,11 @@ from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
 from beartype_test._util.mark.pytmark import ignore_warnings
 
 
-def _strip_ansi_escape_sequences_and_backticks(text: str) -> str:
+def _strip_ansi_escape_sequences(text: str) -> str:
     '''
     Strip all ANSI escape sequences from the passed string.
     '''
-    return re.sub(r'\\033[^m]*m|`', '', text)
+    return re.sub(r'\\033[^m]*m', '', text)
 
 
 # ....................{ TESTS                             }....................
@@ -137,7 +137,7 @@ def test_codemain() -> None:
 
             # Exception message raised by this wrapper function.
             exception_str = str(exception_info.value)
-            exception_str = _strip_ansi_escape_sequences_and_backticks(exception_str)
+            exception_str = _strip_ansi_escape_sequences(exception_str)
             # print('exception message: {}'.format(exception_str))
 
             # Exception type localized for debuggability. Sadly, the
