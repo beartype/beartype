@@ -11,7 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.text.utiltextcolour import error_colour
+from beartype._util.text.utiltextcolour import error_colour, user_value_colour
 from beartype._util.text.utiltextlabel import label_type
 from beartype._util.text.utiltextrepr import represent_object
 
@@ -33,4 +33,4 @@ def represent_pith(pith: object) -> str:
         Human-readable description of this object.
     '''
 
-    return f'{label_type(type(pith))} {error_colour(represent_object(pith))}'
+    return f'{error_colour(label_type(type(pith)))} {user_value_colour(represent_object(pith))}'

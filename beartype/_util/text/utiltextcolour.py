@@ -44,16 +44,24 @@ if _is_stdout_terminal_colourized():
     COLOUR_GREEN = '\033[92m'
     COLOUR_RED = '\033[31m'
     COLOUR_BLUE = '\033[34m'
-    # COLOUR_CYAN = '\033[36m'
+    COLOUR_YELLOW = '\033[33m'
     COLOUR_RESET = '\033[0m'
     TEXT_BOLD = '\033[1m'
 else:
     COLOUR_GREEN = ''
     COLOUR_RED = ''
-    # COLOUR_CYAN = ''
+    COLOUR_YELLOW = ''
     COLOUR_BLUE = ''
     COLOUR_RESET = ''
     TEXT_BOLD = ''
+
+
+def user_value_colour(text: str) -> str:
+    '''
+    Colour user values.
+    '''
+
+    return f"{COLOUR_YELLOW}{text}{COLOUR_RESET}"
 
 
 def matched_colour(text: str) -> str:
