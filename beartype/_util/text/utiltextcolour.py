@@ -77,7 +77,7 @@ def error_colour(text: str) -> str:
     Colour the errors.
     '''
 
-    return f"{COLOUR_RED}{text}{COLOUR_RESET}"
+    return f"{TEXT_BOLD}{COLOUR_RED}{text}{COLOUR_RESET}"
 
 
 def truth_colour(text: str) -> str:
