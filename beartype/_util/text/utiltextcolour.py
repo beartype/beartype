@@ -9,13 +9,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-import functools
 import sys
-
-# ....................{ CONSTANTS ~ ANSI escape sequences  }....................
-COLOUR_RED = '\033[31m'
-COLOUR_BLUE = '\033[34m'
-COLOUR_RESET = '\033[0m'
 
 
 def _is_stdout_terminal() -> bool:
@@ -45,21 +39,17 @@ def _is_stdout_terminal_colourized() -> bool:
     return _is_stdout_terminal() and sys.platform != 'win32'
 
 
-def _plain_if_not_stdout(func):
-    '''
-    Decorator that returns the plain text if standard output is not attached to
-    an interactive terminal.
-    '''
-    @functools.wraps(func)
-    def wrapper(text: str) -> str:
-        if _is_stdout_terminal_colourized():
-            return func(text)
-        return text
-
-    return wrapper
+# ....................{ CONSTANTS ~ ANSI escape sequences  }....................
+if _is_stdout_terminal_colourized():
+    COLOUR_RED = '\033[31m'
+    COLOUR_BLUE = '\033[34m'
+    COLOUR_RESET = '\033[0m'
+else:
+    COLOUR_RED = ''
+    COLOUR_BLUE = ''
+    COLOUR_RESET = ''
 
 
-@_plain_if_not_stdout
 def error_colour(text: str) -> str:
     '''
     Colour the errors.
@@ -68,7 +58,6 @@ def error_colour(text: str) -> str:
     return f"{COLOUR_RED}{text}{COLOUR_RESET}"
 
 
-@_plain_if_not_stdout
 def truth_colour(text: str) -> str:
     '''
     Colour the information of the truth.
