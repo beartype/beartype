@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,23 +10,25 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.mod.utilmoddeprecate` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 def test_deprecate_module_attr() -> None:
     '''
     Test the
     :func:`beartype._util.mod.utilmoddeprecate.deprecate_module_attr` function.
     '''
 
+    # ..................{ IMPORTS                            }..................
     # Defer heavyweight imports.
     from beartype._util.mod.utilmoddeprecate import deprecate_module_attr
     from pytest import raises, warns
 
+    # ..................{ LOCALS                             }..................
     # Dictionary mapping from the deprecated to non-deprecated name of
     # arbitrary objects masquerading as deprecated and non-deprecated
     # attributes (respectively) of an arbitrary submodule.
@@ -54,6 +56,7 @@ def test_deprecate_module_attr() -> None:
         '__name__': 'Lines.Written_in_the.Vale_of.Chamouni',
     }
 
+    # ..................{ WARNS                              }..................
     # Assert this function both emits the expected warning and returns the
     # expected value of a deprecated attribute originating from a public
     # non-deprecated attribute of an arbitrary submodule.
@@ -76,6 +79,7 @@ def test_deprecate_module_attr() -> None:
             attr_nondeprecated_name_to_value=ATTR_NONDEPRECATED_NAME_TO_VALUE,
         ) == 'whose veil'
 
+    # ..................{ RAISES                             }..................
     # Assert this function raises the expected exception when passed any name
     # other than that of a deprecated attribute.
     with raises(AttributeError):
@@ -89,7 +93,7 @@ def test_deprecate_module_attr() -> None:
     # Assert this function raises the expected exception when passed the name
     # of a deprecated attribute whose corresponding non-deprecated attribute is
     # *NOT* defined by this submodule.
-    with raises(AttributeError):
+    with raises(ImportError):
         assert deprecate_module_attr(
             attr_deprecated_name='Wraps_all_in',
             attr_deprecated_name_to_nondeprecated_name=(

@@ -21,7 +21,7 @@ from beartype.typing import (
 
 # ....................{ SUBCLASSES                         }....................
 # FIXME: Document all public and private attributes of this class, please.
-class _TypeHintTuple(_TypeHintSubscripted):
+class _TupleTypeHint(_TypeHintSubscripted):
     '''
     **Tuple type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`484`- or :pep:`585`-compliant ``Tuple[...]`` type hint).
@@ -48,7 +48,7 @@ class _TypeHintTuple(_TypeHintSubscripted):
 
         # e.g. `Tuple` without any arguments
         # This may be unreachable, (since a bare Tuple will go to
-        # _TypeHintClass) but it's here for completeness and safety.
+        # ClassTypeHint) but it's here for completeness and safety.
         if len(self._args) == 0:  # pragma: no cover
             self._is_variable_length = True
             self._args = (Any,)
@@ -108,7 +108,7 @@ class _TypeHintTuple(_TypeHintSubscripted):
         if branch._is_args_ignorable:
             return issubclass(self._origin, branch._origin)
 
-        if not isinstance(branch, _TypeHintTuple):
+        if not isinstance(branch, _TupleTypeHint):
             return False
         if self._is_args_ignorable:
             return False

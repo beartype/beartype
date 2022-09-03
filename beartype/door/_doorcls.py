@@ -18,13 +18,22 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from abc import ABC
+from beartype.door._doorcheck import (
+    die_if_unbearable,
+    is_bearable,
+)
 from beartype.door._doortest import die_unless_typehint
-from beartype.roar import BeartypeDoorException
+from beartype.roar import (
+    BeartypeAbbyHintViolation,
+    BeartypeDoorException,
+    BeartypeDoorHintViolation,
+)
 from beartype.typing import (
     Any,
     Iterable,
     Tuple,
 )
+from beartype._conf import BeartypeConf
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
@@ -41,9 +50,9 @@ from beartype._util.hint.utilhinttest import is_hint_ignorable
 #
 # Since 'TypeHint' will probably increasingly become the basis for our entire
 # code generation process, consider refactoring the existing
-# beartype.abby.is_bearable() and beartype.abby.die_if_unbearable() functions in
+# beartype.door.is_bearable() and beartype.door.die_if_unbearable() functions in
 # terms of the above functions: e.g.,
-#    # In "beartype.abby._abbytest":
+#    # In "beartype.door._abbytest":
 #    def is_bearable(obj: object, hint: object) -> bool:
 #        return TypeHint(hint).is_bearable(obj)  # <-- yeah. that's slick.
 class TypeHint(ABC):
@@ -278,7 +287,8 @@ class TypeHint(ABC):
         # Return true only if all child type hints of these hints are equal.
         return all(
             self_child == other_child
-            for self_child, other_child in zip(self._args_wrapped, other._args_wrapped)
+            for self_child, other_child in zip(
+                self._args_wrapped, other._args_wrapped)
         )
 
 
@@ -406,7 +416,111 @@ class TypeHint(ABC):
         # Mechanic: Somebody set up us the bomb.
         return is_hint_ignorable(self._hint)
 
-    # ..................{ TESTERS                            }..................
+    # ..................{ CHECKERS                           }..................
+    def die_if_unbearable(
+        self,
+
+        # Mandatory flexible parameters.
+        obj: object,
+
+        # Optional keyword-only parameters.
+        *,
+        conf: BeartypeConf = BeartypeConf(),
+    ) -> None:
+        '''
+        Raise an exception if the passed arbitrary object violates this type
+        hint under the passed beartype configuration.
+
+        Parameters
+        ----------
+        obj : object
+            Arbitrary object to be tested against this hint.
+        conf : BeartypeConf, optional
+            **Beartype configuration** (i.e., self-caching dataclass
+            encapsulating all settings configuring type-checking for the passed
+            object). Defaults to ``BeartypeConf()``, the default ``O(1)``
+            constant-time configuration.
+
+        Raises
+        ----------
+        BeartypeDoorHintViolation
+            If this object violates this hint.
+
+        Examples
+        ----------
+            >>> from beartype.door import TypeHint
+            >>> TypeHint(list[str]).die_if_unbearable(
+            ...     ['And', 'what', 'rough', 'beast,'], )
+            >>> TypeHint(list[str]).die_if_unbearable(
+            ...     ['its', 'hour', 'come', 'round'], list[int])
+            beartype.roar.BeartypeDoorHintViolation: Object ['its', 'hour',
+            'come', 'round'] violates type hint list[int], as list index 0 item
+            'its' not instance of int.
+        '''
+
+        #FIXME: Extremely non-ideal, obviously. Although this suffices for now,
+        #the EAFP has clearly gotten out-of-hand and is now into the Cray Zone.
+
+        # Attempt to type-check this object by deferring to the existing
+        # die_if_unbearable() raiser.
+        try:
+            die_if_unbearable(obj, self._hint, conf=conf)
+        # If this object violates this hint, wrap this abby-specific exception
+        # in the equivalent DOOR-specific exception.
+        except BeartypeAbbyHintViolation as exception:
+            raise BeartypeDoorHintViolation(str(exception)) from exception
+        # Else, this object satisfies this hint.
+
+
+    def is_bearable(
+        self,
+
+        # Mandatory flexible parameters.
+        obj: object,
+
+        # Optional keyword-only parameters.
+        *, conf: BeartypeConf = BeartypeConf(),
+    ) -> bool:
+        '''
+        ``True`` only if the passed arbitrary object satisfies this type hint
+        under the passed beartype configuration.
+
+        Parameters
+        ----------
+        obj : object
+            Arbitrary object to be tested against this hint.
+        conf : BeartypeConf, optional
+            **Beartype configuration** (i.e., self-caching dataclass
+            encapsulating all settings configuring type-checking for the passed
+            object). Defaults to ``BeartypeConf()``, the default ``O(1)``
+            constant-time configuration.
+
+        Returns
+        ----------
+        bool
+            ``True`` only if this object satisfies this hint.
+
+        Raises
+        ----------
+        BeartypeDecorHintForwardRefException
+            If this hint contains one or more relative forward references, which
+            this tester explicitly prohibits to improve both the efficiency and
+            portability of calls to this tester.
+
+        Examples
+        ----------
+            >>> from beartype.door import TypeHint
+            >>> TypeHint(list[str]).is_bearable(['Things', 'fall', 'apart;'])
+            True
+            >>> TypeHint(list[int]).is_bearable(
+            ...     ['the', 'centre', 'cannot', 'hold;'])
+            False
+        '''
+
+        # One-liners justify their own existence.
+        return is_bearable(obj, self._hint, conf=conf)
+
+    # ..................{ TESTERS ~ subhint                  }..................
     @callable_cached
     def is_subhint(self, other: 'TypeHint') -> bool:
         """
@@ -499,7 +613,7 @@ class TypeHint(ABC):
         wrappers encapsulating all low-level child type hints subscripting
         (indexing) the low-level parent type hint encapsulated by this
         high-level parent type hint wrappers if this is a union (and thus an
-        instance of the :class:`_TypeHintUnion` subclass) *or* the 1-tuple
+        instance of the :class:`UnionTypeHint` subclass) *or* the 1-tuple
         containing only this instance itself otherwise) of this type hint
         wrapper.
 
@@ -545,43 +659,47 @@ class TypeHint(ABC):
         Flag that indicates this hint can be evaluating only using the origin.
 
         This is useful for parametrized type hints with no arguments or with
-        :attr:`typing.Any`-type placeholder arguments (e.g., ``Tuple[Any,
-        ...]``, ``Callable[..., Any]``).
+        :attr:`typing.Any`-type placeholder arguments (e.g.,
+        ``Tuple[Any, ...]``, ``Callable[..., Any]``).
 
         It's also useful in cases where a builtin type or abc.collection is used
         as a type hint (and has no sign).  For example:
 
         .. code-block:: python
 
-           >>> get_hint_pep_sign_or_none(tuple)  # None
-
+           >>> get_hint_pep_sign_or_none(tuple)
+           None
            >>> get_hint_pep_sign_or_none(typing.Tuple)
            HintSignTuple
 
-        In this case, using :attr:`_is_args_ignorable` lets us simplify the
-        comparison.
+        In this case, using :attr:`_is_args_ignorable` allows us to us simplify
+        the comparison.
         """
 
-        raise NotImplementedError(
-            "Subclasses must implement this method."
-        )  # pragma: no cover
-
+        raise NotImplementedError(  # pragma: no cover
+            'Abstract method TypeHint._is_args_ignorable() undefined.')
 
 # ....................{ SUBCLASSES                         }....................
-class _TypeHintClass(TypeHint):
-    """
-    **Partially ordered class type hint** (i.e., high-level object encapsulating
-    a low-level PEP-compliant type hint that is, in fact, a simple class).
-    """
+class ClassTypeHint(TypeHint):
+    '''
+    **Class type hint wrapper** (i.e., high-level object encapsulating a
+    low-level PEP-compliant type hint that is, in fact, a simple class).
+    '''
 
+    # ..................{ PRIVATE                            }..................
     _hint: type
 
     @property
     def _is_args_ignorable(self) -> bool:
-        """Plain types are their origin."""
+        '''
+        Plain types are their origin.
+        '''
+
         return True
 
+
     def _is_le_branch(self, branch: TypeHint) -> bool:
+
         # everything is a subclass of Any
         if branch._origin is Any:
             return True
@@ -591,9 +709,9 @@ class _TypeHintClass(TypeHint):
             # argument to issubclass() below.
             return False
 
-        # FIXME: Actually, let's avoid the implicit numeric tower for now.
-        # Explicit is better than implicit and we really strongly disagree with
-        # this subsection of PEP 484, which does more real-world harm than good.
+        #FIXME: Actually, let's avoid the implicit numeric tower for now.
+        #Explicit is better than implicit and we really strongly disagree with
+        #this subsection of PEP 484, which does more real-world harm than good.
         # # Numeric tower:
         # # https://peps.python.org/pep-0484/#the-numeric-tower
         # if self._origin is float and branch._origin in {float, int}:
@@ -602,7 +720,8 @@ class _TypeHintClass(TypeHint):
         #     return True
 
         # Return true only if...
-        return branch._is_args_ignorable and issubclass(self._origin, branch._origin)
+        return branch._is_args_ignorable and issubclass(
+            self._origin, branch._origin)
 
 
 class _TypeHintSubscripted(TypeHint):
@@ -632,9 +751,10 @@ class _TypeHintSubscripted(TypeHint):
             # of the typing library's subscripted type hints will raise an
             # exception if constructed improperly.
             raise BeartypeDoorException(  # pragma: no cover
-                f"{type(self)} type must have {self._required_nargs} "
-                f"argument(s). got {len(self._args)}"
+                f'{type(self)} type must have {self._required_nargs} '
+                f'argument(s), but got {len(self._args)}.'
             )
+
 
     @property
     def _is_args_ignorable(self) -> bool:

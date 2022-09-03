@@ -62,7 +62,7 @@ class BeartypeCall(object):
     ----------
     **This object cannot be used to communicate state between low-level
     memoized callables** (e.g.,
-    :func:`beartype._check.expr.exprcode.make_func_wrapper_code`) **and
+    :func:`beartype._check.expr.exprmake.make_func_wrapper_code`) **and
     higher-level callables** (e.g.,
     :func:`beartype._decor._wrapper.wrappermain.generate_code`). Instead, memoized
     callables *must* return that state as additional return values up the call

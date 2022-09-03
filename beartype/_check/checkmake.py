@@ -51,6 +51,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  the new higher-level get_func_raiser_violation() getter.
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.roar._roarexc import _BeartypeCheckException
 from beartype._conf import BeartypeConf
 from beartype._data.datatyping import (
@@ -65,7 +66,7 @@ from beartype._check._checksnip import (
     FUNC_TESTER_CODE_RETURN,
     FUNC_TESTER_CODE_SIGNATURE,
 )
-from beartype._check.expr.exprcode import make_check_expr
+from beartype._check.expr.exprmake import make_check_expr
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
 from beartype._util.hint.convert.utilconvsanify import sanify_hint_root
@@ -158,6 +159,11 @@ def make_func_tester(
     All exceptions raised by the lower-level :func:`make_check_expr` factory.
     Additionally, this factory also raises:
 
+    BeartypeDecorHintForwardRefException
+        If this hint contains one or more relative forward references, which
+        this factory explicitly prohibits to improve both the efficiency and
+        portability of calls by users to the resulting type-checker.
+
     Warns
     ----------
     All warnings emitted by the lower-level :func:`make_check_expr` factory.
@@ -214,10 +220,10 @@ def make_func_tester(
     # These references would then be resolved against the global and local
     # lexical scope of that callable. While technically feasible, doing so would
     # render higher-level "beartype" functions calling this lower-level
-    # factory (e.g., our increasingly popular public beartype.abby.is_bearable()
+    # factory (e.g., our increasingly popular public beartype.door.is_bearable()
     # tester) sufficiently slow as to be pragmatically infeasible.
     if hint_forwardrefs_class_basename:
-        raise exception_cls(
+        raise BeartypeDecorHintForwardRefException(
             f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '
             f'contains one or more relative forward references:\n'
             f'\t{repr(hint_forwardrefs_class_basename)}\n'

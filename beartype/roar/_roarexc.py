@@ -62,126 +62,6 @@ class BeartypeException(Exception, metaclass=_ABCMeta):
         self.__class__.__module__ = 'beartype.roar'
         # print(f'{self.__class__.__name__}: {message}')
 
-# ....................{ CAVE                               }....................
-class BeartypeCaveException(BeartypeException):
-    '''
-    Abstract base class of all **beartype cave exceptions.**
-
-    Instances of subclasses of this exception are raised at usage time from
-    various types published by the :func:`beartype.cave` submodule.
-    '''
-
-    pass
-
-# ....................{ CAVE ~ NoneTypeOr                  }....................
-class BeartypeCaveNoneTypeOrException(BeartypeCaveException):
-    '''
-    Abstract base class of all **beartype cave** ``None`` **tuple factory
-    exceptions.**
-
-    Instances of subclasses of this exception are raised at usage time from
-    the :func:`beartype.cave.NoneTypeOr` tuple factory.
-    '''
-
-    pass
-
-
-class BeartypeCaveNoneTypeOrKeyException(BeartypeCaveNoneTypeOrException):
-    '''
-    **Beartype cave** ``None`` **tuple factory key exception.**
-
-    Instances of this exception are raised when indexing the :func:
-    `beartype.cave.NoneTypeOr` dictionary with an invalid key, including:
-
-    * The empty tuple.
-    * Arbitrary objects that are neither:
-
-      * **Types** (i.e., :class:`beartype.cave.ClassType` instances).
-      * **Tuples of types** (i.e., tuples whose items are all
-        :class:`beartype.cave.ClassType` instances).
-    '''
-
-    pass
-
-
-class BeartypeCaveNoneTypeOrMutabilityException(
-    BeartypeCaveNoneTypeOrException):
-    '''
-    **Beartype cave** ``None`` **tuple factory mutability exception.**
-
-    Instances of this exception are raised when attempting to explicitly set a
-    key on the :func:`beartype.cave.NoneTypeOr` dictionary.
-    '''
-
-    pass
-
-# ....................{ API ~ conf                         }....................
-class BeartypeConfException(BeartypeException):
-    '''
-    **Beartype configuration exception.**
-
-    Instances of this exception are raised on either erroneously instantiating
-    the :class:`beartype.BeartypeConf` class *or* passing an object that is not
-    an instance of that class as the ``conf`` parameter to the
-    :func:`beartype.beartype` decorator.
-    '''
-
-    pass
-
-# ....................{ API ~ door                         }....................
-class BeartypeDoorException(BeartypeException):
-    '''
-    Abstract base class of all **Decidedly Object-Oriented Runtime-checking
-    (DOOR) exceptions.**
-
-    Instances of subclasses of this exception are raised at call time from
-    callables and classes published by the :func:`beartype.door` subpackage.
-    '''
-
-    pass
-
-
-class BeartypeDoorNonpepException(BeartypeDoorException):
-    '''
-    **Decidedly Object-Oriented Runtime-checking (DOOR) PEP-noncompliant type
-    hint exception.**
-
-    This exception is raised at call time from :func:`beartype.door` callables
-    and classes on receiving an **invalid PEP-noncompliant type hint** (i.e.,
-    type hint failing to comply with PEP standards currently supported by the
-    :mod:`beartype.door` API).
-    '''
-
-    pass
-
-
-class BeartypeDoorPepException(BeartypeDoorException):
-    '''
-    **Decidedly Object-Oriented Runtime-checking (DOOR) PEP-compliant type hint
-    exception.**
-
-    This exception is raised at call time from :func:`beartype.door` callables
-    and classes on receiving an **invalid PEP-compliant type hint** (i.e.,
-    type hint complying with PEP standards currently supported by the
-    :mod:`beartype.door` API but otherwise invalid for various reasons).
-    '''
-
-    pass
-
-
-class BeartypeDoorPepUnsupportedException(BeartypeDoorPepException):
-    '''
-    **Decidedly Object-Oriented Runtime-checking (DOOR) unsupported
-    PEP-compliant type hint exception.**
-
-    This exception is raised at call time from :func:`beartype.door` callables
-    and classes on receiving an **unsupported PEP-compliant type hint** (i.e.,
-    type hint complying with PEP standards *not* currently supported by the
-    :mod:`beartype.door` API).
-    '''
-
-    pass
-
 # ....................{ DECORATOR                          }....................
 class BeartypeDecorException(BeartypeException):
     '''
@@ -602,7 +482,7 @@ class BeartypeAbbyException(BeartypeException):
     Abstract base class of all **functional type-checking exceptions.**
 
     Instances of subclasses of this exception are raised at call time from
-    callables and classes published by the :func:`beartype.abby` subpackage.
+    callables and classes published by the :func:`beartype.door` subpackage.
     '''
 
     pass
@@ -613,10 +493,7 @@ class BeartypeAbbyTesterException(BeartypeAbbyException):
     **Beartype functional type-checking tester exception.**
 
     This exception is raised at call time by the
-    :func:`beartype.abby.is_bearable` function when passed an invalid type hint
-    (e.g., PEP-noncompliant type hint, unsupported PEP-compliant type hint,
-    supported PEP-compliant type hint containing one or more relative forward
-    references).
+    :func:`beartype.door.is_bearable` function when passed an invalid type hint.
     '''
 
     pass
@@ -627,8 +504,61 @@ class BeartypeAbbyHintViolation(BeartypeCallHintViolation):
     **Beartype functional type-checking exception.**
 
     This exception is raised at call time by the
-    :func:`beartype.abby.die_if_unbearable` function when passed an arbitrary
-    object violating the passed type hint.
+    :func:`beartype.door.die_if_unbearable` function when passed an object
+    violating the passed type hint.
+    '''
+
+    pass
+
+# ....................{ API ~ cave                         }....................
+class BeartypeCaveException(BeartypeException):
+    '''
+    Abstract base class of all **beartype cave exceptions.**
+
+    Instances of subclasses of this exception are raised at usage time from
+    various types published by the :func:`beartype.cave` submodule.
+    '''
+
+    pass
+
+# ....................{ API ~ cave : nonetypeor            }....................
+class BeartypeCaveNoneTypeOrException(BeartypeCaveException):
+    '''
+    Abstract base class of all **beartype cave** ``None`` **tuple factory
+    exceptions.**
+
+    Instances of subclasses of this exception are raised at usage time from
+    the :func:`beartype.cave.NoneTypeOr` tuple factory.
+    '''
+
+    pass
+
+
+class BeartypeCaveNoneTypeOrKeyException(BeartypeCaveNoneTypeOrException):
+    '''
+    **Beartype cave** ``None`` **tuple factory key exception.**
+
+    Instances of this exception are raised when indexing the :func:
+    `beartype.cave.NoneTypeOr` dictionary with an invalid key, including:
+
+    * The empty tuple.
+    * Arbitrary objects that are neither:
+
+      * **Types** (i.e., :class:`beartype.cave.ClassType` instances).
+      * **Tuples of types** (i.e., tuples whose items are all
+        :class:`beartype.cave.ClassType` instances).
+    '''
+
+    pass
+
+
+class BeartypeCaveNoneTypeOrMutabilityException(
+    BeartypeCaveNoneTypeOrException):
+    '''
+    **Beartype cave** ``None`` **tuple factory mutability exception.**
+
+    Instances of this exception are raised when attempting to explicitly set a
+    key on the :func:`beartype.cave.NoneTypeOr` dictionary.
     '''
 
     pass
@@ -652,6 +582,85 @@ class BeartypeClawRegistrationException(BeartypeClawException):
     This exception is raised at call time by the
     :func:`beartype.claw.beartype_submodules_on_import` function when passed
     invalid parameters.
+    '''
+
+    pass
+
+# ....................{ API ~ conf                         }....................
+class BeartypeConfException(BeartypeException):
+    '''
+    **Beartype configuration exception.**
+
+    Instances of this exception are raised on either erroneously instantiating
+    the :class:`beartype.BeartypeConf` class *or* passing an object that is not
+    an instance of that class as the ``conf`` parameter to the
+    :func:`beartype.beartype` decorator.
+    '''
+
+    pass
+
+# ....................{ API ~ door                         }....................
+class BeartypeDoorException(BeartypeException):
+    '''
+    Abstract base class of all **Decidedly Object-Oriented Runtime-checking
+    (DOOR) exceptions.**
+
+    Instances of subclasses of this exception are raised at call time from
+    callables and classes published by the :func:`beartype.door` subpackage.
+    '''
+
+    pass
+
+
+class BeartypeDoorHintViolation(BeartypeCallHintViolation):
+    '''
+    **Beartype object-oriented type-checking exception.**
+
+    This exception is raised at call time by the
+    :meth:`beartype.door.TypeHint.die_if_unbearable` method when passed an
+    object violating the current type hint.
+    '''
+
+    pass
+
+# ....................{ API ~ door : pep                   }....................
+class BeartypeDoorNonpepException(BeartypeDoorException):
+    '''
+    **Decidedly Object-Oriented Runtime-checking (DOOR) PEP-noncompliant type
+    hint exception.**
+
+    This exception is raised at call time from :func:`beartype.door` callables
+    and classes on receiving an **invalid PEP-noncompliant type hint** (i.e.,
+    type hint failing to comply with PEP standards currently supported by the
+    :mod:`beartype.door` API).
+    '''
+
+    pass
+
+
+class BeartypeDoorPepException(BeartypeDoorException):
+    '''
+    **Decidedly Object-Oriented Runtime-checking (DOOR) PEP-compliant type hint
+    exception.**
+
+    This exception is raised at call time from :func:`beartype.door` callables
+    and classes on receiving an **invalid PEP-compliant type hint** (i.e.,
+    type hint complying with PEP standards currently supported by the
+    :mod:`beartype.door` API but otherwise invalid for various reasons).
+    '''
+
+    pass
+
+
+class BeartypeDoorPepUnsupportedException(BeartypeDoorPepException):
+    '''
+    **Decidedly Object-Oriented Runtime-checking (DOOR) unsupported
+    PEP-compliant type hint exception.**
+
+    This exception is raised at call time from :func:`beartype.door` callables
+    and classes on receiving an **unsupported PEP-compliant type hint** (i.e.,
+    type hint complying with PEP standards *not* currently supported by the
+    :mod:`beartype.door` API).
     '''
 
     pass

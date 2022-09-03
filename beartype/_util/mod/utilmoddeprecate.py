@@ -17,7 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # by this submodule. This submodule is typically called from the "__init__"
 # submodules of public subpackages.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.typing import Dict
+from beartype.typing import Any, Dict
 from beartype._util.utilobject import SENTINEL
 from warnings import warn
 
@@ -25,7 +25,7 @@ from warnings import warn
 def deprecate_module_attr(
     attr_deprecated_name: str,
     attr_deprecated_name_to_nondeprecated_name: Dict[str, str],
-    attr_nondeprecated_name_to_value: Dict[str, object],
+    attr_nondeprecated_name_to_value: Dict[str, Any],
 ) -> object:
     '''
     Dynamically retrieve a deprecated attribute with the passed unqualified
@@ -71,8 +71,13 @@ def deprecate_module_attr(
 
     Raises
     ----------
-    :exc:`AttributeError`
+    AttributeError
         If this attribute is unrecognized and thus erroneous.
+    ImportError
+        If the passed ``attr_nondeprecated_name_to_value`` dictionary fails to
+        define the non-deprecated variant of the passed deprecated attribute
+        mapped to by the passed ``attr_deprecated_name_to_nondeprecated_name``
+        dictionary.
 
     See Also
     ----------
@@ -108,9 +113,23 @@ def deprecate_module_attr(
             attr_nondeprecated_name, SENTINEL)
 
         # If that module fails to define this non-deprecated attribute, raise
-        # an exception. Note this should *NEVER* happen but surely will.
+        # an exception.
+        #
+        # Note that:
+        # * This should *NEVER* happen but surely will. In fact, this just did.
+        # * This intentionally raises an beartype-agnostic "ImportError"
+        #   exception rather than a beartype-specific exception. Why? Because
+        #   this function is *ONLY* ever called by the module-scoped
+        #   __getattr__() dunder function in the "__init__.py" submodules
+        #   defining public namespaces of public packages. In turn, that
+        #   __getattr__() dunder function is only ever implicitly called by
+        #   Python's non-trivial import machinery. For unknown reasons, that
+        #   machinery silently ignores *ALL* exceptions raised by that
+        #   __getattr__() dunder function and thus raised by this function
+        #   *EXCEPT* "ImportError" exceptions. Of necessity, we have *NO*
+        #   recourse but to defer to Python's poorly documented API constraints.
         if attr_nondeprecated_value is SENTINEL:
-            raise AttributeError(
+            raise ImportError(
                 f'Deprecated attribute '
                 f'"{attr_deprecated_name}" in submodule "{MODULE_NAME}" '
                 f'originates from missing non-deprecated attribute '
@@ -156,5 +175,8 @@ def deprecate_module_attr(
 
     # Raise the same exception raised by Python on accessing a non-existent
     # attribute of a module *NOT* defining this dunder function.
+    #
+    # Note that Python's non-trivial import machinery silently coerces this
+    # "AttributeError" exception into an "ImportError" exception. Just do it!
     raise AttributeError(
         f"module '{MODULE_NAME}' has no attribute '{attr_deprecated_name}'")

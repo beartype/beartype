@@ -51,6 +51,7 @@ from beartype.roar._roarexc import (
     BeartypeClawRegistrationException as BeartypeClawRegistrationException,
     BeartypeConfException as BeartypeConfException,
     BeartypeDoorException as BeartypeDoorException,
+    BeartypeDoorHintViolation as BeartypeDoorHintViolation,
     BeartypeDoorNonpepException as BeartypeDoorNonpepException,
     BeartypeDoorPepException as BeartypeDoorPepException,
     BeartypeDoorPepUnsupportedException as BeartypeDoorPepUnsupportedException,
@@ -118,7 +119,9 @@ def __getattr__(attr_deprecated_name: str) -> object:
 
     The Python interpreter implicitly calls this :pep:`562`-compliant module
     dunder function under Python >= 3.7 *after* failing to directly retrieve an
-    explicit attribute with this name from this submodule.
+    explicit attribute with this name from this submodule. Since this dunder
+    function is only called in the event of an error, neither space nor time
+    efficiency are a concern here.
 
     Parameters
     ----------

@@ -21,7 +21,7 @@ from contextlib import suppress
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Document all public and private attributes of this class, please.
-class _TypeHintAnnotated(TypeHint):
+class AnnotatedTypeHint(TypeHint):
     '''
     **Annotated type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`593`-compliant :attr:`typing.Annotated` type hint).
@@ -49,7 +49,7 @@ class _TypeHintAnnotated(TypeHint):
         if not isinstance(other, TypeHint):
             return False
         return (
-            isinstance(other, _TypeHintAnnotated)
+            isinstance(other, AnnotatedTypeHint)
             and self._metahint == other._metahint
             and self._metadata == other._metadata
         )
@@ -67,7 +67,7 @@ class _TypeHintAnnotated(TypeHint):
         # If the other type is not annotated, we ignore annotations on this
         # one and just check that the metahint is a subhint of the other.
         # e.g. Annotated[t.List[int], 'meta'] <= List[int]
-        if not isinstance(branch, _TypeHintAnnotated):
+        if not isinstance(branch, AnnotatedTypeHint):
             return self._metahint.is_subhint(branch)
 
         # Else, that hint is a "typing.Annotated[...]" type hint. If either...

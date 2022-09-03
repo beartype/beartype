@@ -14,21 +14,21 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.door._doorcls import (
     TypeHint,
-    _TypeHintClass,
+    ClassTypeHint,
     _TypeHintOriginIsinstanceableArgs1,
     _TypeHintOriginIsinstanceableArgs2,
     _TypeHintOriginIsinstanceableArgs3,
     _TypeHintSubscripted,
 )
-from beartype.door._proposal.doorpep484604 import _TypeHintUnion
-from beartype.door._proposal.doorpep586 import _TypeHintLiteral
-from beartype.door._proposal.doorpep593 import _TypeHintAnnotated
-from beartype.door._proposal.pep484.doorpep484newtype import _TypeHintNewType
-from beartype.door._proposal.pep484.doorpep484typevar import _TypeHintTypeVar
+from beartype.door._proposal.doorpep484604 import UnionTypeHint
+from beartype.door._proposal.doorpep586 import LiteralTypeHint
+from beartype.door._proposal.doorpep593 import AnnotatedTypeHint
+from beartype.door._proposal.pep484.doorpep484newtype import NewTypeTypeHint
+from beartype.door._proposal.pep484.doorpep484typevar import TypeVarTypeHint
 from beartype.door._proposal.pep484585.doorpep484585callable import (
-    _TypeHintCallable)
+    CallableTypeHint)
 from beartype.door._proposal.pep484585.doorpep484585tuple import (
-    _TypeHintTuple)
+    _TupleTypeHint)
 from beartype.roar import (
     BeartypeDoorNonpepException,
     # BeartypeDoorPepUnsupportedException,
@@ -83,7 +83,7 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
 
     # Private concrete subclass of this ABC handling this hint if any *OR*
     # "None" otherwise (i.e., if no such subclass has been authored yet).
-    typehint_subclass = _HINT_SIGN_TO_TYPEHINT.get(hint_sign)
+    typehint_subclass = _HINT_SIGN_TO_TYPEHINT_CLS.get(hint_sign)
 
     # If this hint appears to be currently unsupported...
     if typehint_subclass is None:
@@ -95,7 +95,7 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
         #    from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
         #    if isinstance(hint, type) or is_hint_pep_typing(hint):  # <-- ...still unsure about this
         if isinstance(hint, type) or getattr(hint, "__module__", "") == "typing":
-            typehint_subclass = _TypeHintClass
+            typehint_subclass = ClassTypeHint
         else:
             raise BeartypeDoorNonpepException(
                 f'Type hint {repr(hint)} invalid '
@@ -115,7 +115,7 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
     #       not get_hint_pep_args(hint) and
     #       get_hint_pep_origin_or_none(hint) is None
     #    ):
-    #        typehint_subclass = _TypeHintClass
+    #        typehint_subclass = ClassTypeHint
     #
     #That's possibly simpler and cleaner, as it seamlessly conveys the exact
     #condition we're going for -- assuming it works, of course. *sigh*
@@ -125,21 +125,21 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
         HintSignNewType,
         HintSignTypeVar,
     }:
-        typehint_subclass = _TypeHintClass
+        typehint_subclass = ClassTypeHint
 
     # Return this subclass.
     return typehint_subclass
 
 # ....................{ PRIVATE ~ globals                  }....................
 # Further initialized below by the _init() function.
-_HINT_SIGN_TO_TYPEHINT: Dict[HintSign, Type[TypeHint]] = {
-    HintSignAnnotated: _TypeHintAnnotated,
-    HintSignCallable: _TypeHintCallable,
+_HINT_SIGN_TO_TYPEHINT_CLS: Dict[HintSign, Type[TypeHint]] = {
+    HintSignAnnotated: AnnotatedTypeHint,
+    HintSignCallable: CallableTypeHint,
     HintSignGeneric: _TypeHintSubscripted,
-    HintSignLiteral: _TypeHintLiteral,
-    HintSignNewType: _TypeHintNewType,
-    HintSignTuple: _TypeHintTuple,
-    HintSignTypeVar: _TypeHintTypeVar,
+    HintSignLiteral: LiteralTypeHint,
+    HintSignNewType: NewTypeTypeHint,
+    HintSignTuple: _TupleTypeHint,
+    HintSignTypeVar: TypeVarTypeHint,
 }
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
@@ -162,13 +162,31 @@ def _init() -> None:
 
     # Fully initialize the "HINT_SIGN_TO_TYPEHINT" dictionary declared above.
     for sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1:
-        _HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintOriginIsinstanceableArgs1
+        _HINT_SIGN_TO_TYPEHINT_CLS[sign] = _TypeHintOriginIsinstanceableArgs1
     for sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_2:
-        _HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintOriginIsinstanceableArgs2
+        _HINT_SIGN_TO_TYPEHINT_CLS[sign] = _TypeHintOriginIsinstanceableArgs2
     for sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_3:
-        _HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintOriginIsinstanceableArgs3
+        _HINT_SIGN_TO_TYPEHINT_CLS[sign] = _TypeHintOriginIsinstanceableArgs3
     for sign in HINT_SIGNS_UNION:
-        _HINT_SIGN_TO_TYPEHINT[sign] = _TypeHintUnion
+        _HINT_SIGN_TO_TYPEHINT_CLS[sign] = UnionTypeHint
+
+    # For each concrete "TypeHint" subclass registered with this dictionary
+    # (*AFTER* initializing this dictionary)...
+    for typehint_cls in _HINT_SIGN_TO_TYPEHINT_CLS.values():
+        # If the unqualified basename of this subclass is prefixed by an
+        # underscare, this subclass is private rather than public. In this case,
+        # silently ignore this private subclass and continue to the next.
+        if typehint_cls.__name__.startswith('_'):
+            continue
+        # Else, this subclass is public.
+
+        # Sanitize the fully-qualified module name of this public subclass from
+        # the private submodule declaring this subclass (e.g.,
+        # "beartype.door._proposal.doorpep484604.UnionTypeHintbeartype") to the
+        # public "beartype.door" subpackage to both improve the readability of
+        # exception messages and discourage end users from accessing that
+        # private submodule.
+        typehint_cls.__class__.__module__ = 'beartype.door'
 
 
 # Initialize this submodule.

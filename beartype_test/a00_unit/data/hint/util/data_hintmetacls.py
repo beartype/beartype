@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,12 +9,15 @@ classes encapsulating sample type hints instantiated by the
 :mod:`beartype_test.a00_unit.data.hint` submodules).
 '''
 
-# ....................{ IMPORTS                           }....................
-from beartype.typing import Optional
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: To raise human-readable test errors, avoid importing from
+# package-specific submodules at module scope.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from typing import Optional
 from collections.abc import Iterable
 
-# ....................{ PRIVATE                           }....................
+# ....................{ PRIVATE                            }....................
 _EXCEPTION_STR_MATCH_REGEXES_MANDATORY = (
     # Ensure *ALL* exception messages contain the substring "type hint".
     # Exception messages *NOT* containing this substring are overly ambiguous
@@ -34,7 +37,7 @@ _NoneTypeOrType = (type, type(None))
 2-tuple matching both classes and the ``None`` singleton.
 '''
 
-# ....................{ CLASSES ~ hint : [un]satisfied    }....................
+# ....................{ CLASSES ~ hint : [un]satisfied     }....................
 class HintPithSatisfiedMetadata(object):
     '''
     **Type hint-satisfying pith metadata** (i.e., dataclass whose instance
@@ -66,7 +69,7 @@ class HintPithSatisfiedMetadata(object):
         passing this value to the decorated callable). Defaults to ``False``.
     '''
 
-    # ..................{ INITIALIZERS                      }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
 
@@ -87,7 +90,7 @@ class HintPithSatisfiedMetadata(object):
         self.is_context_manager = is_context_manager
         self.is_pith_factory = is_pith_factory
 
-    # ..................{ STRINGIFIERS                      }..................
+    # ..................{ STRINGIFIERS                       }..................
     def __repr__(self) -> str:
         return '\n'.join((
             f'{self.__class__.__name__}(',
@@ -118,7 +121,7 @@ class HintPithUnsatisfiedMetadata(HintPithSatisfiedMetadata):
         returning this ``pith``. Defaults to the empty tuple.
     '''
 
-    # ..................{ INITIALIZERS                      }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
         *args,
@@ -155,7 +158,7 @@ class HintPithUnsatisfiedMetadata(HintPithSatisfiedMetadata):
             _EXCEPTION_STR_MATCH_REGEXES_MANDATORY
         )
 
-    # ..................{ STRINGIFIERS                      }..................
+    # ..................{ STRINGIFIERS                       }..................
     def __repr__(self) -> str:
         return '\n'.join((
             f'{self.__class__.__name__}(',
@@ -167,7 +170,7 @@ class HintPithUnsatisfiedMetadata(HintPithSatisfiedMetadata):
             f')',
         ))
 
-# ....................{ CLASSES ~ hint : superclass       }....................
+# ....................{ CLASSES ~ hint : superclass        }....................
 class HintNonpepMetadata(object):
     '''
     **PEP-noncompliant type hint metadata** (i.e., dataclass whose instance
@@ -203,7 +206,7 @@ class HintNonpepMetadata(object):
         Defaults to the empty tuple.
     '''
 
-    # ..................{ INITIALIZERS                      }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
         *,
@@ -236,7 +239,7 @@ class HintNonpepMetadata(object):
         self.is_supported = is_supported
         self.piths_meta = piths_meta
 
-    # ..................{ STRINGIFIERS                      }..................
+    # ..................{ STRINGIFIERS                       }..................
     def __repr__(self) -> str:
         return '\n'.join((
             f'{self.__class__.__name__}(',
@@ -247,7 +250,7 @@ class HintNonpepMetadata(object):
             f')',
         ))
 
-# ....................{ CLASSES ~ hint : subclass         }....................
+# ....................{ CLASSES ~ hint : subclass          }....................
 class HintPepMetadata(HintNonpepMetadata):
     '''
     **PEP-compliant type hint metadata** (i.e., dataclass whose instance
@@ -310,18 +313,22 @@ class HintPepMetadata(HintNonpepMetadata):
 
         * If this hint is subscripted, :attr:`isinstanceable_type`.
         * Else, ``None``.
+    typehint_cls : Optional[Type[beartype.door.TypeHint]]
+        Concrete :class:`beartype.door.TypeHint` subclass responsible for
+        handling this hint if any *or* ``None`` otherwise (e.g., if the
+        :mod:`beartype.door` submodule has yet to support this hint).
 
     All remaining keyword arguments are passed as is to the superclass
     :meth:`HintNonpepMetadata.__init__` method.
     '''
 
-    # ..................{ INITIALIZERS                      }..................
+    # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
         *,
 
         # Mandatory keyword-only parameters.
-        pep_sign: HintSign,
+        pep_sign: 'beartype._data.hint.pep.sign.datapepsigncls.HintSign',
 
         # Optional keyword-only parameters.
         is_args: Optional[bool] = None,
@@ -332,15 +339,22 @@ class HintPepMetadata(HintNonpepMetadata):
         is_typing: Optional[bool] = None,
         isinstanceable_type: Optional[type] = None,
         generic_type: Optional[type] = None,
+        typehint_cls: 'Optional[Type[beartype.door.TypeHint]]' = None,
         **kwargs
     ) -> None:
+
+        # Defer heavyweight imports.
+        from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+        from beartype.door import TypeHint
+
+        # Validate passed non-variadic parameters.
         assert isinstance(is_typevars, bool), (
             f'{repr(is_typevars)} not bool.')
         assert isinstance(pep_sign, HintSign), f'{repr(pep_sign)} not sign.'
         assert isinstance(isinstanceable_type, _NoneTypeOrType), (
             f'{repr(isinstanceable_type)} neither class nor "None".')
 
-        # Initialize our superclass with all passed keyword arguments.
+        # Initialize our superclass with all remaining variadic parameters.
         super().__init__(**kwargs)
 
         # Machine-readable representation of this hint.
@@ -397,10 +411,21 @@ class HintPepMetadata(HintNonpepMetadata):
             f'{repr(is_typing)} not bool.')
         assert isinstance(generic_type, _NoneTypeOrType), (
             f'{repr(generic_type)} neither class nor "None".')
+        assert isinstance(generic_type, _NoneTypeOrType), (
+            f'{repr(generic_type)} neither class nor "None".')
+        assert (
+            typehint_cls is None or (
+                isinstance(typehint_cls, type) and
+                issubclass(typehint_cls, TypeHint),
+            )
+        ), (
+            f'{repr(typehint_cls)} neither '
+            f'"beartype.door.TypeHint" subclass nor "None".'
+        )
 
-        # Validate that the "is_pep585_builtin" and "is_type_typing" are *NOT* both true.
-        # Note that both can be false (e.g., for PEP 484-compliant user-defined
-        # generics).
+        # Validate that the "is_pep585_builtin" and "is_type_typing" parameters
+        # are *NOT* both true. Note, however, that both can be false (e.g., for
+        # PEP 484-compliant user-defined generics).
         assert not (
             (is_pep585_builtin or is_pep585_generic) and is_type_typing), (
             f'Mutually incompatible boolean parameters '
@@ -410,22 +435,24 @@ class HintPepMetadata(HintNonpepMetadata):
         )
 
         # Classify all passed parameters.
-        self.pep_sign = pep_sign
+        self.generic_type = generic_type
         self.is_args = is_args
         self.is_pep585_builtin = is_pep585_builtin
         self.is_pep585_generic = is_pep585_generic
         self.is_typevars = is_typevars
         self.is_type_typing = is_type_typing
         self.is_typing = is_typing
-        self.generic_type = generic_type
         self.isinstanceable_type = isinstanceable_type
+        self.pep_sign = pep_sign
+        self.typehint_cls = typehint_cls
 
-    # ..................{ STRINGIFIERS                      }..................
+    # ..................{ STRINGIFIERS                       }..................
     def __repr__(self) -> str:
         return '\n'.join((
             f'{self.__class__.__name__}(',
             f'    hint={repr(self.hint)},',
             f'    pep_sign={repr(self.pep_sign)},',
+            f'    typehint_cls={repr(self.typehint_cls)},',
             f'    generic_type={repr(self.generic_type)},',
             f'    isinstanceable_type={repr(self.isinstanceable_type)},',
             f'    is_args={repr(self.is_args)},',

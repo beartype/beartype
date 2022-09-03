@@ -295,6 +295,15 @@ def add_data(data_module: 'ModuleType') -> None:
         Module to be added to.
     '''
 
+    # ..................{ IMPORTS                            }..................
+    # Defer heavyweight imports.
+    from beartype.door import (
+        CallableTypeHint,
+        NewTypeTypeHint,
+        TypeVarTypeHint,
+        UnionTypeHint,
+    )
+
     # ..................{ BOOLEANS                           }..................
     # True only if unsubscripted typing attributes (i.e., public attributes of
     # the "typing" module without arguments) are parametrized by one or more
@@ -481,6 +490,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=T,
             pep_sign=HintSignTypeVar,
+            typehint_cls=TypeVarTypeHint,
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
             is_typing=False,
@@ -500,6 +510,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=AnyStr,
             pep_sign=HintSignTypeVar,
+            typehint_cls=TypeVarTypeHint,
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
             piths_meta=(
@@ -521,6 +532,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=T_CONSTRAINED,
             pep_sign=HintSignTypeVar,
+            typehint_cls=TypeVarTypeHint,
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
             is_typing=False,
@@ -544,6 +556,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=T_BOUNDED,
             pep_sign=HintSignTypeVar,
+            typehint_cls=TypeVarTypeHint,
             #FIXME: Remove after fully supporting type variables.
             is_ignorable=True,
             is_typing=False,
@@ -565,6 +578,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Callable[[], str],
             pep_sign=HintSignCallable,
+            typehint_cls=CallableTypeHint,
             isinstanceable_type=collections_abc.Callable,
             piths_meta=(
                 # Lambda function returning a string constant.
@@ -988,7 +1002,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=NewType('TotallyNotAStr', str),
             pep_sign=HintSignNewType,
-            # is_args=False,
+            typehint_cls=NewTypeTypeHint,
             # "typing.NewType" type hints are always declared by that module.
             is_typing=True,
             # If the active Python interpreter targets:
@@ -1453,6 +1467,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Union,
             pep_sign=HintSignUnion,
+            typehint_cls=UnionTypeHint,
             is_ignorable=True,
         ),
 
@@ -1463,6 +1478,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Union[int, Sequence[str]],
             pep_sign=HintSignUnion,
+            typehint_cls=UnionTypeHint,
             piths_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(21),
@@ -1519,6 +1535,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Union[dict, float, int,
                 Sequence[Union[dict, float, int, MutableSequence[str]]]],
             pep_sign=HintSignUnion,
+            typehint_cls=UnionTypeHint,
             piths_meta=(
                 # Empty dictionary.
                 HintPithSatisfiedMetadata({}),
@@ -1607,6 +1624,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Union[str, Iterable[Tuple[S, T]]],
             pep_sign=HintSignUnion,
+            typehint_cls=UnionTypeHint,
             is_typevars=True,
         ),
 
@@ -1763,6 +1781,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Optional,
             pep_sign=HintSignOptional,
+            typehint_cls=UnionTypeHint,
             is_ignorable=True,
         ),
 
@@ -1782,6 +1801,7 @@ def add_data(data_module: 'ModuleType') -> None:
             #   "Optional" attribute under older Python versions.
             pep_sign=(
                 HintSignOptional if IS_PYTHON_AT_LEAST_3_9 else HintSignUnion),
+            typehint_cls=UnionTypeHint,
             piths_meta=(
                 # None singleton.
                 HintPithSatisfiedMetadata(None),

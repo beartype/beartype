@@ -23,6 +23,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from ast import (
     AST,
+    AnnAssign,
+    Call,
     Expr,
     FunctionDef,
     ImportFrom,
@@ -33,9 +35,13 @@ from ast import (
     Str,
     alias,
 )
+from beartype.typing import (
+    List,
+    Union,
+)
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
-# ....................{ CLASSES                            }....................
+# ....................{ SUBCLASSES                         }....................
 #FIXME: Implement us up, please.
 #FIXME: Docstring us up, please.
 #FIXME: Unit test us up, please.
@@ -84,7 +90,7 @@ class BeartypeNodeTransformer(NodeTransformer):
         # importing our beartype decorator, initialized to the erroneous index
         # "-1" to enable detection of empty modules (i.e., modules whose AST
         # module nodes containing *NO* child nodes) below.
-        import_beartype_index = -1
+        node_import_beartype_attrs_index = -1
 
         # AST child node of this AST module parent node immediately preceding
         # the AST import child node to be added below, defaulting to this AST
@@ -99,7 +105,8 @@ class BeartypeNodeTransformer(NodeTransformer):
         #
         # For the 0-based index and value of each direct AST child node of this
         # AST module parent node...
-        for import_beartype_index, module_child in enumerate(node.body):
+        for node_import_beartype_attrs_index, module_child in enumerate(
+            node.body):
             # If this child node signifies either...
             if (
                 # A module docstring...
@@ -131,28 +138,40 @@ class BeartypeNodeTransformer(NodeTransformer):
                 continue
 
         # If the 0-based index of the first safe position of the list of all AST
-        # child nodes of this AST module parent node to insert an import
-        # statement importing our beartype decorator is *NOT* the erroneous
-        # index to which this index was initialized above, this module contains
-        # one or more child nodes and is thus non-empty. In this case...
-        if import_beartype_index != -1:
-            # AST import child node importing our private
-            # beartype._decor.decorcore.beartype_object_nonfatal() decorator for
-            # subsequent use by the other visitor methods defined by this class.
-            import_beartype = ImportFrom(
-                module='beartype._decor.decorcore',
-                names=[alias('beartype_object_nonfatal')],
+        # child nodes of this AST module parent node to insert import
+        # statements importing various beartype attributes is *NOT* the
+        # erroneous index to which this index was initialized above, this module
+        # contains one or more child nodes and is thus non-empty. In this
+        # case...
+        if node_import_beartype_attrs_index != -1:
+            # Tuple of all module-scoped import nodes (i.e., child nodes to be
+            # inserted under the parent node encapsulating the currently visited
+            # bmodule in the AST for that module).
+            nodes_import_beartype_attr = (
+                # Our beartype.door.die_if_unbearable() raiser.
+                ImportFrom(
+                    module='beartype.door',
+                    names=[alias('die_if_unbearable')],
+                ),
+                # Our beartype._decor.decorcore.beartype_object_nonfatal() decorator.
+                ImportFrom(
+                    module='beartype._decor.decorcore',
+                    names=[alias('beartype_object_nonfatal')],
+                ),
             )
 
-            # Copy all source code metadata from the AST child node of this AST
-            # module parent node immediately preceding this AST import child
-            # node onto this AST import child node.
-            _copy_node_code_metadata(
-                node_src=node, node_trg=import_beartype)
+            # For each module-scoped import node to be inserted...
+            for node_import_beartype_attr in nodes_import_beartype_attr:
+                # Copy all source code metadata from the AST child node of this
+                # AST module parent node immediately preceding this AST import
+                # child node onto this AST import child node.
+                _copy_node_code_metadata(
+                    node_src=node, node_trg=node_import_beartype_attr)
 
-            # Insert this AST import child node at this safe position of the
-            # list of all AST child nodes of this AST module parent node.
-            node.body.insert(import_beartype_index, import_beartype)
+                # Insert this AST import child node at this safe position of the
+                # list of all AST child nodes of this AST module parent node.
+                node.body.insert(
+                    node_import_beartype_attrs_index, node_import_beartype_attr)
         # Else, this module is empty. In this case, silently reduce to a noop.
         # Since this edge case is *EXTREMELY* uncommon, avoid optimizing for
         # this edge case (here or elsewhere).
@@ -168,8 +187,8 @@ class BeartypeNodeTransformer(NodeTransformer):
         '''
         Add a new abstract syntax tree (AST) child node to the passed AST
         callable parent node, decorating that callable by our private
-        :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator if and
-        only if that callable is **typed** (i.e., annotated by a return type
+        :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator if
+        and only if that callable is **typed** (i.e., annotated by a return type
         hint and/or one or more parameter type hints).
 
         Parameters
@@ -211,6 +230,9 @@ class BeartypeNodeTransformer(NodeTransformer):
         # Note that the former is intentionally tested *BEFORE* the latter, as
         # the detecting former is O(1) time complexity and thus trivial.
         if is_return_typed or is_args_typed:
+            #FIXME: Additionally pass the current beartype configuration as a
+            #keyword-only "conf={conf}" parameter to this decorator, please.
+
             # AST decoration child node decorating that callable by our
             # beartype._decor.decorcore.beartype_object_nonfatal() decorator. Note
             # that this syntax derives from the example for the ast.arg() class:
@@ -260,17 +282,127 @@ class BeartypeNodeTransformer(NodeTransformer):
         # Return this AST callable node as is.
         return node
 
+
+    def visit_AnnAssign(self, node: AnnAssign) -> Union[AST, List[AST]]:
+        '''
+        Add a new abstract syntax tree (AST) child node to the passed AST
+        **annotated assignment** (i.e., assignment of an attribute annotated by
+        a :pep:`562`-compliant type hint) parent node, inserting a subsequent
+        statement following that annotated assignment that type-checks that
+        attribute against that type hint by passing both to our public
+        :func:`beartype.door.is_bearable` tester.
+
+        Parameters
+        ----------
+        node : AnnAssign
+            AST annotated assignment parent node to be transformed.
+
+        Returns
+        ----------
+        Union[AST, List[AST]]
+            Either:
+
+            * If this annotated assignment parent node is *not* **simple**
+              (i.e., the attribute being assigned to is embedded in parentheses
+              and thus denotes a full-blown Python expression rather than a
+              simple attribute name), that same parent node unmodified.
+            * Else, a 2-list comprising both that parent node and a new adjacent
+              :class:`Call` node performing this type-check.
+
+        See Also
+        ----------
+        https://github.com/awf/awfutils
+            Third-party Python package whose ``@awfutils.typecheck`` decorator
+            implements statement-level :func:`isinstance`-based type-checking in
+            a similar manner, strongly inspiring this implementation. Thanks so
+            much to Cambridge researcher @awf (Andrew Fitzgibbon) for the
+            phenomenal inspiration!
+        '''
+
+        # Note that "AnnAssign" node subclass defines these instance variables:
+        # * "node.annotation", a child node describing the PEP-compliant type
+        #   hint annotating this assignment, typically an instance of either:
+        #   * "ast.Name".
+        #   * "ast.Str".
+        # * "node.simple", a boolean that is true only if "node.target" is an
+        #   "ast.Name" node.
+        # * "node.target", a child node describing the target attribute assigned
+        #   to by this assignment, guaranteed to be an instance of either:
+        #   * "ast.Name", in which case this assignment is denoted as "simple"
+        #     via the "node.simple" instance variable. This is the common case
+        #     in which the attribute being assigned to is *NOT* embedded in
+        #     parentheses and thus denotes a simple attribute name rather than a
+        #     full-blown Python expression.
+        #   * "ast.Attribute".
+        #   * "ast.Subscript".
+        # * "node.value", an optional child node describing the source value
+        #   being assigned to this target attribute.
+
+        #FIXME: Can and/or should we also support "node.target" child nodes that
+        #are instances of "ast.Attribute" and "ast.Subscript"?
+        # If this assignment is *NOT* simple, this assignment is *NOT* assigning
+        # to an attribute name. In this case, silently ignore this assignment.
+        if not node.simple:
+            return node
+        # Else, this assignment is simple and assigning to an attribute name.
+
+        # Validate this fact.
+        assert isinstance(node.target, Name)
+
+        #FIXME: Additionally pass the current beartype configuration as a
+        #keyword-only "conf={conf}" parameter to this raiser, please.
+
+        # Child node referencing the function performing this type-checking,
+        # previously imported at module scope by visit_FunctionDef() above.
+        node_typecheck_function = Name('die_if_unbearable', ctx=Load())
+
+        # Child node passing the value newly assigned to this attribute by this
+        # assignment as the first parameter to die_if_unbearable().
+        node_typecheck_pith = Name(node.target.id, ctx=Load())
+
+        # Adjacent node type-checking this newly assigned attribute against the
+        # PEP-compliant type hint annotating this assignment by deferring to our
+        # die_if_unbearable() raiser.
+        node_typecheck = Call(
+            node_typecheck_function,
+            [
+                # Child node passing the value newly assigned to this
+                # attribute by this assignment as the first parameter.
+                node_typecheck_pith,
+                # Child node passing the type hint annotating this assignment as
+                # the second parameter.
+                node.annotation,
+            ],
+            [],
+        )
+
+        # Copy all source code metadata from this AST annotated assignment node
+        # onto *ALL* AST nodes created above.
+        _copy_node_code_metadata(
+            node_src=node, node_trg=node_typecheck_function)
+        _copy_node_code_metadata(node_src=node, node_trg=node_typecheck_pith)
+        _copy_node_code_metadata(node_src=node, node_trg=node_typecheck)
+
+        #FIXME: Can we replace this inefficient list with an efficient tuple?
+        #Probably not. Let's avoid doing so for the moment, as the "ast" API is
+        #obstruse enough as it is.
+        # Return a list comprising these two adjacent nodes.
+        return [node, node_typecheck]
+
 # ....................{ PRIVATE ~ copiers                  }....................
-#FIXME: Call us up above, please.
 def _copy_node_code_metadata(node_src: AST, node_trg: AST) -> None:
     '''
     Copy all **source code metadata** (i.e., beginning and ending line and
     column numbers) from the passed source abstract syntax tree (AST) node onto
     the passed target AST node.
 
-    This function is an efficient alternative to the extremely inefficient
-    (albeit still useful) :func:`ast.fix_missing_locations` function. The
-    tradeoffs are as follows:
+    This function is an efficient alternative to:
+    * The extremely inefficient (albeit still useful)
+      :func:`ast.fix_missing_locations` function.
+    * The mildly inefficient (and mostly useless) :func:`ast.copy_location`
+      function.
+
+    The tradeoffs are as follows:
 
     * :func:`ast.fix_missing_locations` is ``O(n)`` time complexity for ``n``
       the number of AST nodes across the entire AST tree, but requires only a
