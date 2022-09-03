@@ -50,8 +50,8 @@ if _is_stdout_terminal_colourized():
 else:
     COLOUR_GREEN = ''
     COLOUR_RED = ''
-    COLOUR_YELLOW = ''
     COLOUR_BLUE = ''
+    COLOUR_YELLOW = ''
     COLOUR_RESET = ''
     TEXT_BOLD = ''
 
