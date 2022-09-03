@@ -117,10 +117,10 @@
    >>> from beartype.typing import List, Tuple
    >>> import numpy as np
    >>> data = [(np.array(i), np.array(i+1)) for i in range(1000000)]
-   >>> %time is_bearable(data, List[Tuple[np.array, np.array]])
+   >>> %time is_bearable(data, List[Tuple[np.ndarray, np.ndarray]])
        CPU times: user 31 µs, sys: 2 µs, total: 33 µs
        Wall time: 36.7 µs
-   False
+   True
 
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by
