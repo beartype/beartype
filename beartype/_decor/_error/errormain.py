@@ -102,7 +102,7 @@ from beartype._util.text.utiltextlabel import (
     prefix_callable_decorated_arg_value,
     prefix_callable_decorated_return_value,
 )
-from beartype._util.text.utiltextcolor import error_color, truth_color
+from beartype._util.text.utiltextcolour import error_colour, truth_colour
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import represent_object
 from beartype._data.datatyping import TypeException
@@ -317,14 +317,14 @@ def get_beartype_violation(
         pith_value_repr = represent_object(
             obj=pith_value, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)
         raise _BeartypeCallHintPepRaiseDesynchronizationException(
-            f'{exception_prefix}violates type hint `{truth_color(repr(hint))}`, '
+            f'{exception_prefix}violates type hint `{truth_colour(repr(hint))}`, '
             f'but utility function get_beartype_violation() '
             f'erroneously suggests this object satisfies this hint. '
             f'Please report this desynchronization failure to '
             f'the beartype issue tracker ({URL_ISSUES}) with '
             f'the accompanying exception traceback and '
             f'the representation of this object:\n'
-            f'{error_color(pith_value_repr)}'
+            f'{error_colour(pith_value_repr)}'
         )
     # Else, this pith violates this hint as expected and as required for sanity.
 
@@ -334,7 +334,7 @@ def get_beartype_violation(
 
     # Exception of the desired class embedding this cause.
     exception = exception_cls(  # type: ignore[misc]
-        f'{exception_prefix}violates type hint `{truth_color(repr(hint))}`, as '
+        f'{exception_prefix}violates type hint `{truth_colour(repr(hint))}`, as '
         f'{exception_cause_suffixed}'
     )
 
