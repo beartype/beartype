@@ -12,10 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 import functools
 import sys
 
-# ....................{ CONSTANTS ~                        }....................
-# Windows command prompt does not support ANSI escape sequences, but the Windows
-# terminal does and it is becoming the default terminal for Windows. So we add
-# colour control strings to all platforms.
+# ....................{ CONSTANTS ~ ANSI escape sequences  }....................
 COLOUR_RED = '\033[31m'
 COLOUR_BLUE = '\033[34m'
 COLOUR_RESET = '\033[0m'
@@ -65,16 +62,16 @@ def _plain_if_not_stdout(func):
 @_plain_if_not_stdout
 def error_colour(text: str) -> str:
     '''
-    colour the errors.
+    Colour the errors.
     '''
 
-    return COLOUR_RED + text + COLOUR_RESET
+    return f"{COLOUR_RED}{text}{COLOUR_RESET}"
 
 
 @_plain_if_not_stdout
 def truth_colour(text: str) -> str:
     '''
-    colour the information of the truth.
+    Colour the information of the truth.
     '''
 
-    return COLOUR_BLUE + text + COLOUR_RESET
+    return f"{COLOUR_BLUE}{text}{COLOUR_RESET}"
