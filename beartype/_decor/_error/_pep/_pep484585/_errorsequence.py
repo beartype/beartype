@@ -24,6 +24,7 @@ from beartype._decor._error._errortype import (
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._util.text.utiltextcolour import matched_colour
 from beartype._util.text.utiltextlabel import label_obj_type
 
 # ....................{ GETTERS ~ sequence                 }....................
@@ -269,7 +270,7 @@ def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> Optional[str]:
                 # intended to be embedded in a longer string).
                 if pith_item_cause is not None:
                     return (
-                        f'{label_obj_type(sleuth.pith)} '
+                        f'{matched_colour(label_obj_type(sleuth.pith))} '
                         f'index {pith_item_index} item {pith_item_cause}'
                     )
                 # Else, this item is *NOT* the cause of this failure. Silently

@@ -41,13 +41,27 @@ def _is_stdout_terminal_colourized() -> bool:
 
 # ....................{ CONSTANTS ~ ANSI escape sequences  }....................
 if _is_stdout_terminal_colourized():
+    COLOUR_GREEN = '\033[92m'
     COLOUR_RED = '\033[31m'
     COLOUR_BLUE = '\033[34m'
+    # COLOUR_CYAN = '\033[36m'
     COLOUR_RESET = '\033[0m'
+    TEXT_BOLD = '\033[1m'
 else:
+    COLOUR_GREEN = ''
     COLOUR_RED = ''
+    # COLOUR_CYAN = ''
     COLOUR_BLUE = ''
     COLOUR_RESET = ''
+    TEXT_BOLD = ''
+
+
+def matched_colour(text: str) -> str:
+    '''
+    Colour the matched / correct types.
+    '''
+
+    return f"{TEXT_BOLD}{COLOUR_GREEN}{text}{COLOUR_RESET}"
 
 
 def error_colour(text: str) -> str:
@@ -63,4 +77,4 @@ def truth_colour(text: str) -> str:
     Colour the information of the truth.
     '''
 
-    return f"{COLOUR_BLUE}{text}{COLOUR_RESET}"
+    return f"{TEXT_BOLD}{COLOUR_BLUE}{text}{COLOUR_RESET}"

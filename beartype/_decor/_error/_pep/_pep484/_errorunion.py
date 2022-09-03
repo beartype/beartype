@@ -21,6 +21,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._util.text.utiltextcolour import truth_colour
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextmunge import (
     suffix_unless_suffixed,
@@ -161,7 +162,7 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> Optional[str]:
         # child hints of the average "typing.Union" in general *AND* due to the
         # fact that this function is only called when a catastrophic type-check
         # failure has already occurred.
-        causes_union.insert(0, f'not {cause_types_unsatisfied}')
+        causes_union.insert(0, f'not {truth_colour(cause_types_unsatisfied)}')
 
     # If prior logic appended *NO* causes, raise an exception.
     if not causes_union:
