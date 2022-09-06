@@ -14,6 +14,7 @@ from beartype.roar import BeartypeDecorHintPep586Exception
 from beartype.typing import Any
 from beartype._cave._cavefast import EnumMemberType, NoneType
 from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
+from beartype._util.text.utiltextcolour import truth_colour, error_colour
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._data.datatyping import TypeException
 
@@ -134,8 +135,9 @@ def die_unless_hint_pep586(
                 # Raise an exception.
                 raise exception_cls(
                     f'{exception_prefix}PEP 586 type hint {repr(hint)} '
-                    f'argument {hint_literal_index} {repr(hint_literal)} '
-                    f'not {hint_literal_types}.'
+                    f'argument {hint_literal_index} '
+                    f'{error_colour(repr(hint_literal))} '
+                    f'not {truth_colour(hint_literal_types)}.'
                 )
 
 # ....................{ GETTERS                            }....................

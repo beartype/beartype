@@ -34,6 +34,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
     get_hint_pep484585_subclass_superclass)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
+from beartype._util.text.utiltextcolour import truth_colour
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextlabel import label_type
 from beartype._decor._error._errortext import represent_pith
@@ -70,7 +71,7 @@ def get_cause_or_none_instance_type(sleuth: CauseSleuth) -> Optional[str]:
     # longer string.
     return (
         f'{represent_pith(sleuth.pith)} not instance of '
-        f'{label_type(sleuth.hint)}'
+        f'{truth_colour(label_type(sleuth.hint))}'
     )
 
 
@@ -173,7 +174,7 @@ def get_cause_or_none_instance_types_tuple(
     # longer string.
     return (
         f'{represent_pith(sleuth.pith)} not instance of '
-        f'{join_delimited_disjunction_types(sleuth.hint)}'
+        f'{truth_colour(join_delimited_disjunction_types(sleuth.hint))}'
     )
 
 # ....................{ GETTERS ~ subclass : type          }....................
