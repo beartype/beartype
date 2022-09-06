@@ -51,7 +51,6 @@ from beartype.roar._roarexc import (
     BeartypeClawRegistrationException as BeartypeClawRegistrationException,
     BeartypeConfException as BeartypeConfException,
     BeartypeDoorException as BeartypeDoorException,
-    BeartypeDoorHintViolation as BeartypeDoorHintViolation,
     BeartypeDoorNonpepException as BeartypeDoorNonpepException,
     BeartypeDoorPepException as BeartypeDoorPepException,
     BeartypeDoorPepUnsupportedException as BeartypeDoorPepUnsupportedException,
@@ -91,6 +90,7 @@ from beartype.roar._roarexc import (
     BeartypeCallHintViolation as BeartypeCallHintViolation,
     BeartypeCallHintParamViolation as BeartypeCallHintParamViolation,
     BeartypeCallHintReturnViolation as BeartypeCallHintReturnViolation,
+    BeartypeDoorHintViolation as BeartypeDoorHintViolation,
 )
 
 # Public warning hierarchy.
