@@ -353,35 +353,6 @@ class BeartypeDecorParamNameException(BeartypeDecorParamException):
 
     pass
 
-# ....................{ DECORATOR ~ pep                    }....................
-class BeartypeDecorPepException(BeartypeDecorException):
-    '''
-    Abstract base class of all **beartype decorator Python Enhancement Proposal
-    (PEP) exceptions.**
-
-    Instances of subclasses of this exception are raised at decoration time
-    from the :func:`beartype.beartype` decorator on receiving a callable
-    violating a specific PEP.
-    '''
-
-    pass
-
-
-class BeartypeDecorHintPep563Exception(BeartypeDecorPepException):
-    '''
-    **Beartype decorator** `PEP 563`_ **evaluation exception.**
-
-    This exception is raised at decoration time from the
-    :func:`beartype.beartype` decorator on failing to dynamically evaluate a
-    postponed annotation of the decorated callable when `PEP 563`_ is active
-    for that callable.
-
-    .. _PEP 563:
-       https://www.python.org/dev/peps/pep-0563
-    '''
-
-    pass
-
 # ....................{ CALL                               }....................
 class BeartypeCallException(BeartypeException):
     '''
@@ -472,6 +443,31 @@ class BeartypeCallHintReturnViolation(BeartypeCallHintViolation):
     :func:`beartype.beartype` decorator type-checking a decorated callable when
     that call returns an object violating the type hint annotating the return
     of that decorated callable.
+    '''
+
+    pass
+
+# ....................{ PEP                                }....................
+class BeartypePepException(BeartypeDecorException):
+    '''
+    Abstract base class of all **beartype Python Enhancement Proposal (PEP)
+    exceptions.**
+
+    Instances of subclasses of this exception are raised at both call time and
+    decoration time on receiving a callable or class violating a specific PEP.
+    '''
+
+    pass
+
+
+class BeartypePep563Exception(BeartypePepException):
+    '''
+    **Beartype** :pep:`563` **exception.**
+
+    This exception is raised at both call time of the
+    :func:`beartype.peps.resolve_pep563` function and decoration time of the
+    :func:`beartype.beartype` decorator on failing to dynamically evaluate a
+    postponed annotation of a callable for which :pep:`563` is active.
     '''
 
     pass

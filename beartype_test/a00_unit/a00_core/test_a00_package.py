@@ -59,7 +59,9 @@ def test_api_deprecations() -> None:
         'beartype.roar.BeartypeCallHintPepReturnException',
         'beartype.roar.BeartypeDecorHintNonPepException',
         'beartype.roar.BeartypeDecorHintNonPepNumPyException',
+        'beartype.roar.BeartypeDecorHintPep563Exception',
         'beartype.roar.BeartypeDecorHintPepDeprecatedWarning',
+        'beartype.roar.BeartypeDecorPepException',
     )
 
     # For each deprecated attribute declared by beartype...

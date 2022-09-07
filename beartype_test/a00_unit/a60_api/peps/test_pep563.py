@@ -6,41 +6,52 @@
 '''
 **Beartype** :pep:`563` **unit tests.**
 
-This submodule unit tests :pep:`563` support implemented in the
-:func:`beartype.beartype` decorator.
+This submodule unit tests :pep:`563` support provided by the
+:func:`beartype.peps` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-# WARNING: The "from __future__ import annotations" import appears to be
-# subtly broken under Python >= 3.10, where performing this import prevents
-# the "f_locals" attribute of stack frames from capturing locals defined by
-# parent callables and accessed *ONLY* in type hints annotating one or more
-# parameters of nested callables contained in those parent callables. Oddly,
-# this breakage does *NOT* extend to type hints annotating returns of those
-# nested callables -- only parameters. Ergo, we can only conclude this to be a
-# subtle bug. We should probably issue an upstream CPython report. For now,
-# conditionally disable *ALL* PEP 563-specific tests importing from another
-# module containing an "from __future__ import annotations" import. Note that,
-# since PEP 563 is mandatory under Python >= 3.10, our entire test suite is
-# effectively run under PEP 563 on Python >= 3.10; ergo, conditionally
-# disabling these tests imposes no meaningful loss in coverage.
+# WARNING: The "from __future__ import annotations" import appears to be subtly
+# broken under Python >= 3.10, where performing that import prevents the
+# "f_locals" attribute of stack frames from capturing locals defined by parent
+# callables and accessed *ONLY* in type hints annotating one or more parameters
+# of nested callables contained in those parent callables. Oddly, this breakage
+# does *NOT* extend to type hints annotating returns of those nested callables
+# -- only parameters. Ergo, we can only conclude this to be a subtle bug. We
+# should probably issue an upstream CPython report. For now, conditionally
+# disable *ALL* PEP 563-specific tests importing from another module containing
+# an "from __future__ import annotations" import.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import (
     skip_if_pypy,
     skip_if_python_version_greater_than_or_equal_to,
-    skip_if_python_version_less_than,
 )
 
+# .....................{ TESTS ~ resolves                  }....................
+def test_resolve_pep563_fail() -> None:
+    '''
+    Test unsuccessful usage of the
+    :func:`beartype.peps.resolve_pep563` resolver.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype.peps import resolve_pep563
+    from beartype.roar import BeartypePep563Exception
+    from pytest import raises
+
+    # Assert that this resolver raises the expected exception when passed a
+    # non-callable.
+    with raises(BeartypePep563Exception):
+        resolve_pep563('Mont Blanc yet gleams on high:—the power is there,')
+
 # .....................{ TESTS ~ club                      }....................
-@skip_if_python_version_less_than('3.7.0')
 def test_pep563_class_self_reference_reloaded() -> None:
     '''
     Test module-scoped :pep:`563` support implemented in the
-    :func:`beartype.beartype` decorator if the active Python interpreter
-    targets Python >= 3.7 *or* skip otherwise.
+    :func:`beartype.beartype` decorator.
 
     This test exercises multiple issues, including:
 
@@ -107,12 +118,10 @@ def test_pep563_class_self_reference_reloaded() -> None:
     #     data_pep563_club.CLING)
 
 
-@skip_if_python_version_less_than('3.7.0')
 def test_pep563_class_self_reference_override() -> None:
     '''
     Test module-scoped :pep:`563` support implemented in the
-    :func:`beartype.beartype` decorator if the active Python interpreter
-    targets Python >= 3.7 *or* skip otherwise.
+    :func:`beartype.beartype` decorator.
 
     This test exercises an edge case in which a :pep:`563`-postponed circular
     reference to a class currently being declared from a method of that class
@@ -132,12 +141,10 @@ def test_pep563_class_self_reference_override() -> None:
     assert Karma.if_your_colors().dreams == DREAMS
 
 # ....................{ TESTS ~ poem                       }....................
-@skip_if_python_version_less_than('3.7.0')
 def test_pep563_module() -> None:
     '''
     Test module-scoped :pep:`563` support implemented in the
-    :func:`beartype.beartype` decorator if the active Python interpreter
-    targets Python >= 3.7 *or* skip otherwise.
+    :func:`beartype.beartype` decorator.
     '''
 
     # Defer heavyweight imports.
@@ -191,12 +198,10 @@ def test_pep563_module() -> None:
     assert isinstance(get_minecraft_end_txt_typed(player_name='Notch'), str)
 
 
-@skip_if_python_version_less_than('3.7.0')
 def test_pep563_closure_nonnested() -> None:
     '''
     Test non-nested closure-scoped :pep:`563` support implemented in the
-    :func:`beartype.beartype` decorator if the active Python interpreter
-    targets Python >= 3.7 *or* skip otherwise.
+    :func:`beartype.beartype` decorator.
     '''
 
     # Defer heavyweight imports.
@@ -253,12 +258,10 @@ def test_pep563_closure_nonnested() -> None:
 
 @skip_if_pypy()
 @skip_if_python_version_greater_than_or_equal_to('3.10.0')
-@skip_if_python_version_less_than('3.7.0')
 def test_pep563_closure_nested() -> None:
     '''
     Test nested closure-scoped :pep:`563` support implemented in the
-    :func:`beartype.beartype` decorator if the active Python interpreter
-    targets Python >= 3.7 *or* skip otherwise.
+    :func:`beartype.beartype` decorator.
     '''
 
     # Defer heavyweight imports.
@@ -286,12 +289,10 @@ def test_pep563_closure_nested() -> None:
         'It is reading our thoughts as though they were words on a screen.')
 
 
-@skip_if_python_version_less_than('3.7.0')
 def test_pep563_class() -> None:
     '''
     Test class-scoped :pep:`563` support implemented in the
-    :func:`beartype.beartype` decorator if the active Python interpreter
-    targets Python >= 3.7 *or* skip otherwise.
+    :func:`beartype.beartype` decorator.
     '''
 
     # Defer heavyweight imports.

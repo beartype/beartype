@@ -78,16 +78,27 @@ def beartype_object(
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring the
         current decoration of the decorated callable or class).
-    cls_root : Optional[type]
+    cls_stack : TypeStack
         Either:
 
         * If this beartypeable is an attribute (e.g., method, nested class) of a
           class currently being decorated by the :func:`beartype.beartype`
-          decorator, the **root decorated class** (i.e., module-scoped class
-          initially decorated by this decorator whose lexical scope encloses
-          this beartypeable).
+          decorator, the **type stack** (i.e., tuple of one or more lexically
+          nested classes that are either currently being decorated *or* have
+          already been decorated by this decorator in descending order of
+          top- to bottom-most lexically nested) such that:
+
+          * The first item of this tuple is expected to be the **root decorated
+            class** (i.e., module-scoped class initially decorated by this
+            decorator whose lexical scope encloses this beartypeable).
+          * The last item of this tuple is expected to be the **current
+            decorated class** (i.e., possibly nested class currently being
+            decorated by this decorator).
+
         * Else, this beartypeable was decorated directly by this decorator. In
           this case, ``None``.
+
+        Defaults to ``None``.
 
         Note that this decorator requires *both* the root and currently
         decorated class to correctly resolve edge cases under :pep:`563`: e.g.,
@@ -108,24 +119,11 @@ def beartype_object(
                    # parameter to all decoration calls.
                    def get_outer(self) -> Outer:
                        return Outer()
-    cls_curr : Optional[type]
-        Either:
 
-        * If this beartypeable is an attribute (e.g., method, nested class) of a
-          class currently being decorated by the :func:`beartype.beartype`
-          decorator, the **current decorated class** (i.e., possibly nested
-          class currently being decorated by this decorator).
-        * Else, this beartypeable was decorated directly by this decorator. In
-          this case, ``None``.
-
-        Note that this parameter is intentionally a single class rather than an
-        iterable of all nesting parent classes with lexical scopes enclosing the
-        class owning this beartypeable. Why? Because nested classes are
-        functionally useless in Python, which is *not* necessarily a bad thing.
-        Notably, nested classes have *no* implicit access to either their parent
-        classes *or* to class variables declared by those parent classes. Nested
-        classes *only* have explicit access to module-scoped classes -- exactly
-        like any other arbitrary objects: e.g.,
+        Note also that nested classes have *no* implicit access to either their
+        parent classes *or* to class variables declared by those parent classes.
+        Nested classes *only* have explicit access to module-scoped classes --
+        exactly like any other arbitrary objects: e.g.,
 
         .. code-block:: python
 
@@ -141,6 +139,12 @@ def beartype_object(
         Ergo, the *only* owning class of interest to :mod:`beartype` is the root
         owning class containing other nested classes; *all* of those other
         nested classes are semantically and syntactically irrelevant.
+        Nonetheless, this tuple intentionally preserves *all* of those other
+        nested classes. Why? Because :pep:`563` resolution can only find the
+        parent callable lexically containing that nested class hierarchy on the
+        current call stack (if any) treating the total number of classes
+        lexically nesting the currently decorated class as input metadata, as
+        trivially provided by the length of this tuple.
 
     Returns
     ----------
@@ -391,12 +395,9 @@ def _beartype_descriptor(
     conf : BeartypeConf
         Beartype configuration configuring :func:`beartype.beartype` uniquely
         specific to this descriptor.
-    cls_root : Optional[type]
-        **Root decorated class** if any or ``None`` otherwise. Defaults to
-        ``None``. See also :func:`beartype_object` for details.
-    cls_curr : Optional[type]
-        **Current decorated class** if any or ``None`` otherwise. Defaults to
-        ``None``. See also :func:`beartype_object` for details.
+
+    All remaining keyword parameters are passed as is to the
+    :func:`_beartype_func` decorator.
 
     Returns
     ----------
@@ -544,12 +545,9 @@ def _beartype_func(
     conf : BeartypeConf
         Beartype configuration configuring :func:`beartype.beartype` uniquely
         specific to this callable.
-    cls_root : Optional[type]
-        **Root decorated class** if any or ``None`` otherwise. Defaults to
-        ``None``. See also :func:`beartype_object` for details.
-    cls_curr : Optional[type]
-        **Current decorated class** if any or ``None`` otherwise. Defaults to
-        ``None``. See also :func:`beartype_object` for details.
+
+    All remaining keyword parameters are passed as is to the
+    :meth:`BeartypeCall.reinit` method.
 
     Returns
     ----------
@@ -644,9 +642,9 @@ def _beartype_type(
     conf : BeartypeConf
         Beartype configuration configuring :func:`beartype.beartype` uniquely
         specific to this class.
-    cls_root : Optional[type]
-        **Root decorated class** if any or ``None`` otherwise. Defaults to
-        ``None``. See also :func:`beartype_object` for details.
+    cls_stack : TypeStack
+        **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
+        ``None``). Defaults to ``None``. See also :func:`beartype_object`.
 
     Note this function intentionally accepts *no* ``cls_curr`` parameter, unlike
     most functions defined by this submodule. See :func:`beartype_object` for

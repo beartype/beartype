@@ -68,7 +68,6 @@ from beartype.roar._roarexc import (
     BeartypeDecorHintPep484585Exception as BeartypeDecorHintPep484585Exception,
     BeartypeDecorHintPep544Exception as BeartypeDecorHintPep544Exception,
     BeartypeDecorHintPep557Exception as BeartypeDecorHintPep557Exception,
-    BeartypeDecorHintPep563Exception as BeartypeDecorHintPep563Exception,
     BeartypeDecorHintPep585Exception as BeartypeDecorHintPep585Exception,
     BeartypeDecorHintPep586Exception as BeartypeDecorHintPep586Exception,
     BeartypeDecorHintPep593Exception as BeartypeDecorHintPep593Exception,
@@ -76,11 +75,12 @@ from beartype.roar._roarexc import (
     BeartypeDecorHintTypeException as BeartypeDecorHintTypeException,
     BeartypeDecorParamException as BeartypeDecorParamException,
     BeartypeDecorParamNameException as BeartypeDecorParamNameException,
-    BeartypeDecorPepException as BeartypeDecorPepException,
     BeartypeCallException as BeartypeCallException,
     BeartypeCallUnavailableTypeException as BeartypeCallUnavailableTypeException,
     BeartypeCallHintException as BeartypeCallHintException,
     BeartypeCallHintForwardRefException as BeartypeCallHintForwardRefException,
+    BeartypePepException as BeartypePepException,
+    BeartypePep563Exception as BeartypePep563Exception,
     BeartypeValeException as BeartypeValeException,
     BeartypeValeSubscriptionException as BeartypeValeSubscriptionException,
     BeartypeValeValidationException as BeartypeValeValidationException,
@@ -161,8 +161,12 @@ def __getattr__(attr_deprecated_name: str) -> object:
                 'BeartypeDecorHintNonpepException'),
             'BeartypeDecorHintNonPepNumPyException': (
                 'BeartypeDecorHintNonpepNumpyException'),
+            'BeartypeDecorHintPep563Exception': (
+                'BeartypePep563Exception'),
             'BeartypeDecorHintPepDeprecatedWarning': (
                 'BeartypeDecorHintPepDeprecationWarning'),
+            'BeartypeDecorPepException': (
+                'BeartypePepException'),
         },
         attr_nondeprecated_name_to_value=globals(),
     )

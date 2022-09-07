@@ -4,11 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator** :pep:`563` **support.**
-
-This private submodule this submodule implements :pep:`563` (i.e., "Postponed
-Evaluation of Annotations") support on behalf of the :func:`beartype.beartype`
-decorator.
+**Beartype** :pep:`563` **support.** (i.e., low-level functions resolving
+stringified PEP-compliant type hints implicitly postponed by the active Python
+interpreter via a ``from __future__ import annotations`` statement at the head
+of the external user-defined module currently being introspected).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -21,52 +20,55 @@ from beartype.typing import (
     FrozenSet,
     Optional,
 )
-from beartype._data.datatyping import LexicalScope
-from beartype._decor._decorcall import BeartypeCall
+from beartype._data.datatyping import (
+    LexicalScope,
+    TypeStack,
+)
 from beartype._util.cls.utilclsget import get_type_locals
 from beartype._util.func.utilfuncscope import (
     get_func_globals,
     get_func_locals,
     is_func_nested,
 )
+from beartype._util.func.utilfunctest import die_unless_func_python
 from beartype._util.text.utiltextident import is_identifier
 from beartype._util.text.utiltextlabel import prefix_callable_decorated_pith
+from collections.abc import Callable
 from sys import modules as sys_modules
 
 # ....................{ CONSTANTS                          }....................
 _FROZEN_SET_EMPTY: FrozenSet[Any] = frozenset()
 '''
 Empty frozen set, globalized as a mild optimization for the body of the
-:func:`resolve_hints_pep563_if_active` resolver.
+:func:`resolve_pep563` resolver.
 '''
 
 # ....................{ RESOLVERS                          }....................
-#FIXME: Refactor in favour of our new beartype.peps.resolve_pep563() function.
-def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
+def resolve_pep563(
+    # Mandatory parameters.
+    func: Callable,
+
+    # Optional parameters.
+    cls_stack: TypeStack = None,
+) -> None:
     '''
     Resolve all :pep:`563`-based **postponed annotations** (i.e., strings that
     when dynamically evaluated as Python expressions yield actual annotations)
-    on the currently decorated callable to their **referents** (i.e., the
-    actual annotations to which those postponed annotations evaluate) if `PEP
-    563`_ is active for this callable *or* silently reduce to a noop otherwise
-    (i.e., if :pep:`563` is *not* active for this callable).
+    on the passed callable to their **referents** (i.e., the actual annotations
+    to which those postponed annotations evaluate) if `PEP 563`_ is active for
+    that callable *or* silently reduce to a noop otherwise (i.e., if :pep:`563`
+    is *not* active for that callable).
 
-    :pep:`563` is active for this callable if the active Python interpreter
-    targets either:
-
-    * Python >= 3.7 *and* the module declaring this callable explicitly enables
-      :pep:`563` support with a leading dunder importation of the form ``from
-      __future__ import annotations``.
-    * Python >= ?.?.?, where :pep:`563` is unconditionally globally enabled.
-
-    If :pep:`563` is active for this callable, then for each type-hint
-    annotating this callable:
+    :pep:`563` is active for that callable if the module declaring that callable
+    explicitly enabled :pep:`563` support with a leading dunder importation of
+    the form ``from __future__ import annotations``. If :pep:`563` is active for
+    that callable, then for each type-hint annotating that callable:
 
     * If that hint is a string and thus postponed, this function:
 
-      #. Dynamically evaluates that string within this callable's globals
+      #. Dynamically evaluates that string within that callable's globals
          context (i.e., set of all global variables defined by the module
-         declaring this callable).
+         declaring that callable).
       #. Replaces that hint's string value with the expression produced by this
          dynamic evaluation.
 
@@ -74,32 +76,89 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
       that was previously postponed having already been evaluated by a prior
       decorator).
 
-    Caveats
-    ----------
-    **This function must be called only directly by the**
-    :meth:`beartype._decor._decorcall.BeartypeCall.reinit` **method**, due to
-    unavoidably introspecting the current call stack and making fixed
-    assumptions about the structure and height of that stack.
-
     Parameters
     ----------
-    bear_call : BeartypeCall
-        Decorated callable to be resolved.
+    func : Callable
+        Callable to resolve postponed annotations on.
+    cls_stack : TypeStack
+        Either:
+
+        * If that callable is a method of a class, the **type stack** (i.e.,
+          tuple of one or more lexically nested classes in descending order of
+          top- to bottom-most lexically nested) such that:
+
+          * The first item of this tuple is expected to be the **root class**
+            (i.e., top-most class whose lexical scope encloses that callable,
+            typically declared at module scope and thus global).
+          * The last item of this tuple is expected to be the **current class**
+            (i.e., possibly nested class directly containing that method).
+
+        * Else, that callable is *not* a method of a class. In this case,
+          ``None``.
+
+        Defaults to ``None``.
+
+        Note that this function requires *both* the root and current class to
+        correctly resolve edge cases under :pep:`563`: e.g.,
+
+        .. code-block:: python
+
+           from __future__ import annotations
+           from beartype import beartype
+
+           @beartype
+           class Outer(object):
+               class Inner(object):
+                   # At this time, the "Outer" class has been fully defined but
+                   # is *NOT* yet accessible as a module-scoped attribute. Ergo,
+                   # the *ONLY* means of exposing the "Outer" class to the
+                   # recursive decoration of this get_outer() method is to
+                   # explicitly pass the "Outer" class as the "cls_root"
+                   # parameter to all decoration calls.
+                   def get_outer(self) -> Outer:
+                       return Outer()
+
+        Note also that nested classes have *no* implicit access to either their
+        parent classes *or* to class variables declared by those parent classes.
+        Nested classes *only* have explicit access to module-scoped classes --
+        exactly like any other arbitrary objects: e.g.,
+
+        .. code-block:: python
+
+           class Outer(object):
+               my_str = str
+
+               class Inner(object):
+                   # This induces a fatal compile-time exception resembling:
+                   #     NameError: name 'my_str' is not defined
+                   def get_str(self) -> my_str:
+                       return 'Oh, Gods.'
+
+        Nonetheless, this tuple *must* contain all of those nested classes
+        lexically containing the passed method. Why? Because this function
+        resolves local attributes defined in the body of the callable on the
+        current call stack lexically containing those nested classes (if any) by
+        treating the length of this tuple as the total number of classes
+        lexically nesting the current class. In short, just pass everything.
 
     Raises
     ----------
     BeartypePep563Exception
-        If evaluating a postponed annotation on this callable raises an
-        exception (e.g., due to that annotation referring to local state
-        inaccessible in this deferred context).
+        If either:
+
+        * ``func`` is *not* a pure-Python callable.
+        * Evaluating a postponed annotation on that callable raises an exception
+          (e.g., due to that annotation referring to local state inaccessible in
+          this deferred context).
     '''
-    assert bear_call.__class__ is BeartypeCall, (
-        f'{repr(bear_call)} not @beartype call.')
+
+    # ..................{ VALIDATION                         }..................
+    # If that callable is *NOT* pure-Python, raise an exception.
+    die_unless_func_python(
+        func=func, exception_cls=BeartypePep563Exception)
+    # Else, that callable is pure-Python.
 
     # ..................{ DETECTION                          }..................
-    # Localize attributes of this metadata for negligible efficiency gains.
-    func = bear_call.func_wrappee
-
     # If it is *NOT* the case that...
     if not (
         # This callable was declared by on on-disk module *AND*...
@@ -118,9 +177,6 @@ def resolve_hints_pep563_if_active(bear_call: BeartypeCall) -> None:
     # hints to their referents.
 
     # ..................{ LOCALS                             }..................
-    # Localize additional attributes of this metadata for efficiency gains.
-    cls_stack = bear_call.cls_stack
-
     # Global scope for the decorated callable.
     func_globals = get_func_globals(
         func=func, exception_cls=BeartypePep563Exception)

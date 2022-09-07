@@ -191,7 +191,7 @@ beartype.__doc__ = (
             fully-qualified classnames).
           * **Tuple unions** (i.e., tuples containing one or more classes
             and/or forward references).
-    BeartypeDecorHintPep563Exception
+    BeartypePep563Exception
         If :pep:`563` is active for this callable and evaluating a **postponed
         annotation** (i.e., annotation whose value is a string) on this
         callable raises an exception (e.g., due to that annotation referring to

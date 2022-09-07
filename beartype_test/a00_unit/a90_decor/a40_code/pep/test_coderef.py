@@ -114,7 +114,7 @@ def test_hint_forwardref_decor_fail() -> None:
     #enables some variant of PEP 563... yet again.
     # from beartype.roar import (
     #     BeartypeDecorHintForwardRefException,
-    #     BeartypeDecorHintPep563Exception,
+    #     BeartypePep563Exception,
     # )
     # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     #
@@ -124,7 +124,7 @@ def test_hint_forwardref_decor_fail() -> None:
     # # unable to reliably differentiate forward references from non-forward
     # # references and thus treats the former as the latter here.
     # exception_cls = (
-    #     BeartypeDecorHintPep563Exception
+    #     BeartypePep563Exception
     #     if IS_PYTHON_AT_LEAST_3_10 else
     #     BeartypeDecorHintForwardRefException
     # )
