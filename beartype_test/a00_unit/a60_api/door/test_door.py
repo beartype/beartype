@@ -369,9 +369,7 @@ def hint_equality_cases() -> 'Iterable[Tuple[object, object, bool]]':
     '''
 
     # ..................{ IMPORTS                            }..................
-    from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_LEAST_3_9,
-    )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
     # Intentionally import from "typing" rather than "beartype.typing" to
     # guarantee PEP 484-compliant type hints.
@@ -440,19 +438,24 @@ def test_door_typehint_new() -> None:
     assert TypeHint(List[Any]) is TypeHint(List[Any])
     assert TypeHint(int) is TypeHint(int)
 
+    #FIXME: Generalize "TypeHint" to ensure that these two type hints actually
+    #do reduce to the same "TypeHint" object. Specifically, "List" and "list"
+    #are both indeed semantically equivalent to "List[Any]".
+
+    # Assert that recreating a type hint against non-identical but semantically
+    # equivalent input does *NOT* reduce to the same previously memoized type
+    # hint, sadly.
+    assert TypeHint(List) is not TypeHint(list)
+
     # Assert that nested type hint invocations internally avoid nesting by
     # yielding the same previously memoized type hint.
     assert TypeHint(TypeHint(int)) is TypeHint(int)
 
-    #FIXME: Consider reducing these two type hints to the same type hint.
-    # Assert that recreating a type hint against non-identical but semantically
-    # equivalent input sadly yields a different type hint.
-    assert TypeHint(List) is not TypeHint(list)
-
     # Assert this factory raises the expected exception when passed an object
     # that is *not* a PEP-compliant type hint.
     with raises(BeartypeDoorNonpepException):
-        TypeHint(b'Is there, that from the boundaries of the sky')
+        # Intentionally localized to assist in debugging test failures.
+        typehint = TypeHint(b'Is there, that from the boundaries of the sky')
 
 
 def test_door_typehint_mapping() -> None:
@@ -494,6 +497,9 @@ def test_door_typehint_mapping() -> None:
 
         # Assert that this instance is of the expected subclass.
         assert isinstance(typehint, hint_meta.typehint_cls)
+
+        # Assert that the type hint wrapped by this instance is the same hint.
+        assert typehint.hint is hint_meta.hint
 
 # ....................{ TESTS ~ class : dunders            }....................
 def test_door_typehint_equals(

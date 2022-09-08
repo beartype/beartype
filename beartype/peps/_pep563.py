@@ -12,6 +12,10 @@ of the external user-defined module currently being introspected).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Conditionally emit a non-fatal PEP 563-specific warning when the active
+#Python interpreter targets Python >= 3.10 *AND* the passed callable is nested.
+
 # ....................{ IMPORTS                            }....................
 import __future__
 from beartype.roar import BeartypePep563Exception

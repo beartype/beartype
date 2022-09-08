@@ -51,7 +51,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #  the new higher-level get_func_raiser_violation() getter.
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintForwardRefException
+from beartype.roar import (
+    BeartypeConfException,
+    BeartypeDecorHintForwardRefException,
+)
 from beartype.roar._roarexc import _BeartypeCheckException
 from beartype._conf import BeartypeConf
 from beartype._data.datatyping import (
@@ -159,6 +162,8 @@ def make_func_tester(
     All exceptions raised by the lower-level :func:`make_check_expr` factory.
     Additionally, this factory also raises:
 
+    BeartypeConfException
+        If this configuration is *not* a :class:`BeartypeConf` instance.
     BeartypeDecorHintForwardRefException
         If this hint contains one or more relative forward references, which
         this factory explicitly prohibits to improve both the efficiency and
@@ -168,9 +173,12 @@ def make_func_tester(
     ----------
     All warnings emitted by the lower-level :func:`make_check_expr` factory.
     '''
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-    assert issubclass(exception_cls, Exception), (
-        f'{repr(exception_cls)} not exception type.')
+
+    # If the passed "conf" is *NOT* a configuration, raise an exception.
+    if not isinstance(conf, BeartypeConf):
+        raise BeartypeConfException(
+            f'{repr(conf)} not beartype configuration.')
+    # Else, the passed "conf" is a configuration.
 
     # Either:
     # * If this hint is PEP-noncompliant, the PEP-compliant type hint converted

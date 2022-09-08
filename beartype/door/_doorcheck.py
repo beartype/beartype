@@ -21,16 +21,19 @@ from beartype.roar import (
     BeartypeAbbyHintViolation,
     BeartypeAbbyTesterException,
     BeartypeCallHintReturnViolation,
-    BeartypeConfException,
 )
 from beartype.roar._roarexc import _BeartypeDoorTextException
-from beartype.typing import Callable
+from beartype.typing import (
+    Callable,
+    TypeVar,
+)
 from beartype._check.checkmake import make_func_tester
 from beartype._conf import BeartypeConf
 from beartype._decor._cache.cachedecor import beartype
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerror import reraise_exception_placeholder
 from beartype._util.hint.utilhinttest import die_unless_hint
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
 # ....................{ PRIVATE ~ constants                }....................
 _TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX = (
@@ -55,6 +58,12 @@ getter).
 '''
 
 # ....................{ PRIVATE ~ hints                    }....................
+_T = TypeVar('_T')
+'''
+PEP-compliant type hint matching an arbitrary PEP-compliant type hint.
+'''
+
+
 _BeartypeTypeChecker = Callable[[object], None]
 '''
 PEP-compliant type hint matching a **runtime type-checker** (i.e., function
@@ -151,86 +160,6 @@ def die_if_unbearable(
     # exception back up this call stack.
 
 # ....................{ TESTERS                            }....................
-#FIXME: Improve unit tests to exhaustively exercise edge cases, including:
-#* Invalid hints. In this case, test that the raised exception is prefixed by
-#  the expected substring rather than our exception placeholder.
-def is_bearable(
-    # Mandatory flexible parameters.
-    obj: object,
-    hint: object,
-
-    # Optional keyword-only parameters.
-    *, conf: BeartypeConf = BeartypeConf(),
-) -> bool:
-    '''
-    ``True`` only if the passed arbitrary object satisfies the passed
-    PEP-compliant type hint under the passed beartype configuration.
-
-    Parameters
-    ----------
-    obj : object
-        Arbitrary object to be tested against this hint.
-    hint : object
-        PEP-compliant type hint to test this object against.
-    conf : BeartypeConf, optional
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object). Defaults
-        to ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
-
-    Returns
-    ----------
-    bool
-        ``True`` only if this object satisfies this hint.
-
-    Raises
-    ----------
-    BeartypeDecorHintForwardRefException
-        If this hint contains one or more relative forward references, which
-        this tester explicitly prohibits to improve both the efficiency and
-        portability of calls to this tester.
-    BeartypeDecorHintNonpepException
-        If this hint is *not* PEP-compliant (i.e., complies with *no* Python
-        Enhancement Proposals (PEPs) currently supported by :mod:`beartype`).
-    BeartypeDecorHintPepUnsupportedException
-        If this hint is currently unsupported by :mod:`beartype`.
-
-    Examples
-    ----------
-        >>> from beartype.door import is_bearable
-        >>> is_bearable(['Things', 'fall', 'apart;'], list[str])
-        True
-        >>> is_bearable(['the', 'centre', 'cannot', 'hold;'], list[int])
-        False
-    '''
-
-    # If this configuration is *NOT* a configuration, raise an exception.
-    if not isinstance(conf, BeartypeConf):
-        raise BeartypeConfException(
-            f'{repr(conf)} not beartype configuration.')
-    # Else, this configuration is a configuration.
-
-    # Attempt to dynamically generate a memoized low-level type-checking tester
-    # function returning true only if the object passed to that tester satisfies
-    # the type hint passed to this high-level type-checking tester function.
-    #
-    # Note that parameters are intentionally passed positionally for efficiency.
-    # Since make_func_tester() is memoized, passing parameters by keyword would
-    # raise a non-fatal "_BeartypeUtilCallableCachedKwargsWarning" warning.
-    try:
-        func_tester = make_func_tester(hint, conf, BeartypeAbbyTesterException)
-    # If any exception was raised, reraise this exception with each placeholder
-    # substring (i.e., "EXCEPTION_PLACEHOLDER" instance) replaced by the passed
-    # exception prefix.
-    except Exception as exception:
-        reraise_exception_placeholder(
-            exception=exception,
-            target_str='is_bearable() ',
-        )
-
-    # Return true only if the passed object satisfies this hint.
-    return func_tester(obj)  # pyright: ignore[reportUnboundVariable]
-
-
 def is_subhint(subhint: object, superhint: object) -> bool:
     '''
     ``True`` only if the first passed hint is a **subhint** of the second passed
@@ -295,6 +224,144 @@ def is_subhint(subhint: object, superhint: object) -> bool:
 
     # The one-liner is mightier than the... many-liner.
     return TypeHint(subhint).is_subhint(TypeHint(superhint))
+
+# ....................{ TESTERS ~ is_bearable()            }....................
+#FIXME: Improve unit tests to exhaustively exercise edge cases, including:
+#* Invalid hints. In this case, test that the raised exception is prefixed by
+#  the expected substring rather than our exception placeholder.
+
+# If the active Python interpreter targets Python >= 3.10 and thus supports PEP
+# 647 (i.e., "typing.TypeGuard[...]" type hints), declare the is_bearable()
+# tester to have a PEP 647-compliant signature. Doing so substantially reduces
+# static type-checking complaints in end user code calling this tester.
+if IS_PYTHON_AT_LEAST_3_10:
+    # Defer version-specific imports.
+    from beartype.typing import TypeGuard
+
+    def is_bearable(  # pyright: ignore[reportGeneralTypeIssues]
+        # Mandatory flexible parameters.
+        obj: object,
+        hint: _T,
+
+        # Optional keyword-only parameters.
+        *, conf: BeartypeConf = BeartypeConf(),
+    ) -> TypeGuard[_T]:
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAUTION: Synchronize this implementation with that defined below. For
+        # efficiency, these two implementations violate DRY rather than
+        # deferring to a lower-level tester function.
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        # Attempt to dynamically generate a memoized low-level type-checking
+        # tester function returning true only if the object passed to that
+        # tester satisfies the type hint passed to this high-level type-checking
+        # tester function.
+        #
+        # Note that parameters are intentionally passed positionally for
+        # efficiency. Since make_func_tester() is memoized, passing parameters
+        # by keyword would raise a non-fatal
+        # "_BeartypeUtilCallableCachedKwargsWarning" warning.
+        try:
+            func_tester = make_func_tester(
+                hint, conf, BeartypeAbbyTesterException)
+        # If any exception was raised, reraise this exception with each
+        # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
+        # replaced by the passed exception prefix.
+        except Exception as exception:
+            reraise_exception_placeholder(
+                exception=exception,
+                target_str='is_bearable() ',
+            )
+
+        # Return true only if the passed object satisfies this hint.
+        return func_tester(obj)  # pyright: ignore[reportUnboundVariable]
+# Else, this interpreter targets Python < 3.10 and thus fails to supports PEP
+# 647. In this case, fallback to a PEP 647-agnostic signature.
+else:
+    def is_bearable(  # type: ignore[misc]
+        # Mandatory flexible parameters.
+        obj: object,
+        hint: object,
+
+        # Optional keyword-only parameters.
+        *, conf: BeartypeConf = BeartypeConf(),
+    ) -> bool:
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CAUTION: Synchronize this implementation with that defined above. For
+        # efficiency, these two implementations violate DRY rather than
+        # deferring to a lower-level tester function.
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        # Attempt to dynamically generate a memoized low-level type-checking
+        # tester function returning true only if the object passed to that
+        # tester satisfies the type hint passed to this high-level type-checking
+        # tester function.
+        #
+        # Note that parameters are intentionally passed positionally for
+        # efficiency. Since make_func_tester() is memoized, passing parameters
+        # by keyword would raise a non-fatal
+        # "_BeartypeUtilCallableCachedKwargsWarning" warning.
+        try:
+            func_tester = make_func_tester(
+                hint, conf, BeartypeAbbyTesterException)
+        # If any exception was raised, reraise this exception with each
+        # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
+        # replaced by the passed exception prefix.
+        except Exception as exception:
+            reraise_exception_placeholder(
+                exception=exception,
+                target_str='is_bearable() ',
+            )
+
+        # Return true only if the passed object satisfies this hint.
+        return func_tester(obj)  # pyright: ignore[reportUnboundVariable]
+
+
+# Document up the above function.
+is_bearable.__doc__ = (
+    '''
+    ``True`` only if the passed arbitrary object satisfies the passed
+    PEP-compliant type hint under the passed beartype configuration.
+
+    Parameters
+    ----------
+    obj : object
+        Arbitrary object to be tested against this hint.
+    hint : object
+        PEP-compliant type hint to test this object against.
+    conf : BeartypeConf, optional
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object). Defaults
+        to ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object satisfies this hint.
+
+    Raises
+    ----------
+    BeartypeConfException
+        If this configuration is *not* a :class:`BeartypeConf` instance.
+    BeartypeDecorHintForwardRefException
+        If this hint contains one or more relative forward references, which
+        this tester explicitly prohibits to improve both the efficiency and
+        portability of calls to this tester.
+    BeartypeDecorHintNonpepException
+        If this hint is *not* PEP-compliant (i.e., complies with *no* Python
+        Enhancement Proposals (PEPs) currently supported by :mod:`beartype`).
+    BeartypeDecorHintPepUnsupportedException
+        If this hint is currently unsupported by :mod:`beartype`.
+
+    Examples
+    ----------
+        >>> from beartype.door import is_bearable
+        >>> is_bearable(['Things', 'fall', 'apart;'], list[str])
+        True
+        >>> is_bearable(['the', 'centre', 'cannot', 'hold;'], list[int])
+        False
+    '''
+)
 
 # ....................{ PRIVATE ~ getters                  }....................
 #FIXME: Shift into a more public location for widespread usage elsewhere: e.g.,

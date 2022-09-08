@@ -3,20 +3,39 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide terminal **text colour** control utilities.
+Project-wide **terminal text colour utilities** (i.e., low-level callables
+conditionally accenting caller-defined strings with ANSII escape sequences
+colourizing those strings when printed to an ANSII-capable terminal).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
 import sys
+from re import sub
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
 def is_stdout_terminal() -> bool:
     '''
-    ``True`` only if standard output is currently attached to an interactive
-    terminal.
+    ``True`` only if standard output is currently attached to a **TTY** (i.e.,
+    interactive terminal).
+
+    If this tester returns ``True``, the TTY to which standard output is
+    currently attached may be safely assumed to support **ANSI escape
+    sequences** (i.e., POSIX-compliant colour codes). This assumption even holds
+    under platforms that are otherwise *not* POSIX-compliant, including:
+
+    * All popular terminals (including the stock Windows Terminal) and
+      interactive development environments (IDEs) (including VSCode) bundled
+      with Microsoft Windows, beginning at Windows 10.
+
+    Caveats
+    ----------
+    **This tester is intentionally not memoized** (i.e., via the
+    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator), as
+    external callers can and frequently do monkey-patch or otherwise modify the
+    value of the global :attr:`sys.stdout` output stream.
 
     See Also
     ----------
@@ -54,13 +73,13 @@ else:
     TEXT_BOLD = ''
 
 # ....................{ COLOURIZERS                        }....................
-def user_value_colour(text: str) -> str:
+def error_colour(text: str) -> str:
     '''
-    Colour user values.
+    Colour the errors.
     '''
     assert isinstance(text, str), f'{repr(text)} not string.'
 
-    return f'{COLOUR_YELLOW}{text}{COLOUR_RESET}'
+    return f'{TEXT_BOLD}{COLOUR_RED}{text}{COLOUR_RESET}'
 
 
 def matched_colour(text: str) -> str:
@@ -72,15 +91,6 @@ def matched_colour(text: str) -> str:
     return f'{TEXT_BOLD}{COLOUR_GREEN}{text}{COLOUR_RESET}'
 
 
-def error_colour(text: str) -> str:
-    '''
-    Colour the errors.
-    '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
-
-    return f'{TEXT_BOLD}{COLOUR_RED}{text}{COLOUR_RESET}'
-
-
 def truth_colour(text: str) -> str:
     '''
     Colour the information of the truth.
@@ -88,3 +98,34 @@ def truth_colour(text: str) -> str:
     assert isinstance(text, str), f'{repr(text)} not string.'
 
     return f'{TEXT_BOLD}{COLOUR_BLUE}{text}{COLOUR_RESET}'
+
+
+def user_value_colour(text: str) -> str:
+    '''
+    Colour user values.
+    '''
+    assert isinstance(text, str), f'{repr(text)} not string.'
+
+    return f'{COLOUR_YELLOW}{text}{COLOUR_RESET}'
+
+# ....................{ STRIPPERS                          }....................
+#FIXME: Consider compiling the regex internally leveraged by this string munger
+#if we ever actually call this string munger outside of unit tests.
+def strip_text_ansi(text: str) -> str:
+    '''
+    Strip all ANSI escape sequences from the passed string.
+
+    Parameters
+    ----------
+    text : str
+        Text to be stripped of ANSI.
+
+    Returns
+    ----------
+    str
+        This text stripped of ANSI.
+    '''
+    assert isinstance(text, str), f'{repr(text)} not string.'
+
+    # Glory be to the one liner that you are about to read.
+    return sub(r'\033[^m]*m', '', text)

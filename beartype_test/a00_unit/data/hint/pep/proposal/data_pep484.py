@@ -1613,7 +1613,7 @@ def add_data(data_module: 'ModuleType') -> None:
                         r'\n\*\s.*\b[Tt]uple index \d+ item\b',
                         # Contains an indented bullet point declaring the index
                         # of the random list item *NOT* satisfying this hint.
-                        r'\n\s+\*\s.*\b[L]ist index \d+ item\b',
+                        r'\n\s+\*\s.*\b[Ll]ist index \d+ item\b',
                     ),
                 ),
             ),

@@ -49,6 +49,7 @@ def test_codemain() -> None:
         BeartypeCallHintViolation,
         # BeartypeDecorHintPep585DeprecationWarning,
     )
+    from beartype._util.text.utiltextcolour import strip_text_ansi
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithUnsatisfiedMetadata)
     from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
@@ -129,7 +130,7 @@ def test_codemain() -> None:
 
             # Exception message raised by this wrapper function.
             exception_str = str(exception_info.value)
-            exception_str = _strip_ansi_escape_sequences(exception_str)
+            exception_str = strip_text_ansi(exception_str)
             # print('exception message: {}'.format(exception_str))
 
             # Exception type localized for debuggability. Sadly, the
@@ -174,16 +175,3 @@ def test_codemain() -> None:
             # Assert this wrapper function successfully type-checks this pith
             # against this hint *WITHOUT* modifying this pith.
             assert func_typed(pith) is pith
-
-# ....................{ PRIVATE                            }....................
-def _strip_ansi_escape_sequences(text: str) -> str:
-    '''
-    Strip all ANSI escape sequences from the passed string.
-    '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
-
-    # Defer function-specific imports.
-    from re import sub
-
-    #FIXME: This appears to work, but might not actually. Investigate further?
-    return sub(r'\\033[^m]*m', '', text)
