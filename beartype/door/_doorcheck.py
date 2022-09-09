@@ -236,7 +236,7 @@ def is_subhint(subhint: object, superhint: object) -> bool:
 # static type-checking complaints in end user code calling this tester.
 if IS_PYTHON_AT_LEAST_3_10:
     # Defer version-specific imports.
-    from beartype.typing import TypeGuard
+    from beartype.typing import TypeGuard  # pyright: ignore[reportGeneralTypeIssues]
 
     def is_bearable(  # pyright: ignore[reportGeneralTypeIssues]
         # Mandatory flexible parameters.

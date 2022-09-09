@@ -148,12 +148,20 @@ class BeartypeNodeTransformer(NodeTransformer):
             # inserted under the parent node encapsulating the currently visited
             # bmodule in the AST for that module).
             nodes_import_beartype_attr = (
-                # Our beartype.door.die_if_unbearable() raiser.
+                # Our public beartype.door.die_if_unbearable() raiser,
+                # intentionally imported from our private
+                # "beartype.door._doorcheck" submodule rather than our public
+                # "beartype.door" subpackage. Why? Because the former consumes
+                # marginally less space and time to import than the latter.
+                # Whereas the latter imports the full "TypeHint" hierarchy, the
+                # former only imports multiple low-level utility functions.
                 ImportFrom(
-                    module='beartype.door',
+                    module='beartype.door._doorcheck',
                     names=[alias('die_if_unbearable')],
                 ),
-                # Our beartype._decor.decorcore.beartype_object_nonfatal() decorator.
+                # Our private
+                # beartype._decor.decorcore.beartype_object_nonfatal()
+                # decorator.
                 ImportFrom(
                     module='beartype._decor.decorcore',
                     names=[alias('beartype_object_nonfatal')],

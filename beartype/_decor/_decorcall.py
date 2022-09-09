@@ -11,11 +11,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.peps import resolve_pep563
 from beartype.roar import BeartypeDecorWrappeeException
 from beartype.typing import (
     Callable,
     Dict,
-    Optional,
 )
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
@@ -294,9 +294,6 @@ class BeartypeCall(object):
         # non-trivial slice of decoration time. In other words, efficiency.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        # Avoid circular import dependencies.
-        from beartype._decor._pep.pep563 import resolve_hints_pep563_if_active
-
         # If this callable is uncallable, raise an exception.
         if not callable(func):
             raise BeartypeDecorWrappeeException(f'{repr(func)} uncallable.')
@@ -362,7 +359,10 @@ class BeartypeCall(object):
 
         # Resolve all postponed hints on this callable if any *BEFORE* parsing
         # the actual hints these postponed hints refer to.
-        resolve_hints_pep563_if_active(self)
+        resolve_pep563(
+            func=self.func_wrappee,
+            cls_stack=self.cls_stack,
+        )
 
         #FIXME: Globally replace all references to "__annotations__" throughout
         #the "beartype._decor" subpackage with references to this instead.

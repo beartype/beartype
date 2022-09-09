@@ -525,7 +525,7 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
     #     tester.
     if IS_PYTHON_AT_LEAST_3_10:
         # Defer version-specific imports.
-        from beartype.typing import TypeGuard
+        from beartype.typing import TypeGuard  # pyright: ignore[reportGeneralTypeIssues]
 
         #FIXME: Submit an upstream mypy issue. Since mypy correctly accepts our
         #comparable beartype.door.is_bearable() function, mypy should also
