@@ -35,6 +35,9 @@ class _TupleTypeHint(_TypeHintSubscripted):
     #than *INSTANCE* variables. To define the latter, push these assignments
     #into the existing _munge_args() method defined below, please.
     _is_variable_length: bool = False
+
+    #FIXME: Additionally, this is non-ideal. The superclass __len__() method
+    #already returns 0 as expected for "Tuple[()]" type hints. Excise us up!
     _is_empty_tuple: bool = False
 
     # ..................{ INITIALIZERS                       }..................
@@ -62,14 +65,6 @@ class _TupleTypeHint(_TypeHintSubscripted):
         super()._munge_args()
 
     # ..................{ PROPERTIES                         }..................
-    #FIXME: Let's excise this in favour of just "bool(self)". Admittedly, that
-    #suggests we at least need to define __len__() and possibly also __bool__().
-    #Still, Pythonic APIs are preferable to ad-hoc methods. Fun ensues.
-    @property
-    def is_empty_tuple(self) -> bool:
-        # Tuple[()]
-        return self._is_empty_tuple
-
     #FIXME: Docstring us up, please. This is actually quite valuable.
     #FIXME: Actually, it might be preferable to define two distinct subclasses:
     #* "class _TypeHintTupleVariadic(_TypeHintSequence)", handling variadic
@@ -112,8 +107,8 @@ class _TupleTypeHint(_TypeHintSubscripted):
             return False
         if self._is_args_ignorable:
             return False
-        if branch.is_empty_tuple:
-            return self.is_empty_tuple
+        if branch._is_empty_tuple:
+            return self._is_empty_tuple
 
         if branch.is_variable_length:
             branch_type = branch._args_wrapped[0]

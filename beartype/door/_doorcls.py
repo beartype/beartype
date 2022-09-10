@@ -272,17 +272,16 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
 
     # ..................{ DUNDERS                            }..................
     def __hash__(self) -> int:
+        '''
+        Hash of the low-level immutable type hint wrapped by this immutable
+        wrapper.
+
+        This wrapper satisfies the :class:`collections.abc.Hashable` abstract
+        base class (ABC) by overriding this method, enabling this wrapper to be
+        used as in hashable containers (e.g., dictionaries, sets).
+        '''
+
         return hash(self._hint)
-
-
-    def __iter__(self) -> Iterable['TypeHint']:
-        '''
-        Iterable of all **children** (i.e., type hint wrappers encapsulating all
-        child type hints) subscripting (indexing) the type hint encapsulated by
-        this type hint wrapper.
-        '''
-
-        yield from self._args_wrapped
 
 
     def __repr__(self) -> str:
@@ -362,6 +361,42 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
             return NotImplemented
 
         return self.is_superhint(other) and self != other
+
+    # ..................{ DUNDERS ~ iterable                 }..................
+    def __iter__(self) -> Iterable['TypeHint']:
+        '''
+        Generator iteratively yielding all **children** (i.e., :class:`TypeHint`
+        instances wrapping all low-level child type hints) subscripting the
+        low-level parent type hint wrapped by this :class:`TypeHint` instance.
+        '''
+
+        yield from self._args_wrapped
+
+    # ..................{ DUNDERS ~ iterable : sized         }..................
+    #FIXME: Unit test us up, please.
+    def __bool__(self) -> bool:
+        '''
+        ``True`` only if the low-level parent type hint wrapped by this wrapper
+        was subscripted by at least one child type hint.
+        '''
+
+        # See __len__() for further commentary.
+        return bool(self._args_wrapped)
+
+
+    #FIXME: Unit test us up, please.
+    def __len__(self) -> int:
+        '''
+        Number of low-level child type hints subscripting the low-level parent
+        type hint wrapped by this wrapper.
+        '''
+
+        # Return the exact length of the same iterable returned by the
+        # __iter__() dunder method rather than the possibly differing length of
+        # the "self._args" tuple, for safety. Theoretically, these two iterables
+        # should exactly coincide in length. Pragmatically, it's best to assume
+        # nothing in the murky waters we swim in.
+        return len(self._args_wrapped)
 
     # ..................{ PROPERTIES ~ read-only             }..................
     # Read-only properties intentionally defining *NO* corresponding setter.
@@ -678,15 +713,16 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
 
     def _wrap_children(self, unordered_children: tuple) -> Tuple[
         'TypeHint', ...]:
-        """
-        Wrap type hint parameters in :class:`TypeHint` instances.
+        '''
+        Tuple of zero or more :class:`TypeHint` instances wrapping all low-level
+        child type hints subscripting the low-level parent type hint wrapped by
+        this :class:`TypeHint` instance.
 
         Gives subclasses an opportunity modify.
-        """
+        '''
 
         return tuple(
-            TypeHint(unordered_child) for unordered_child in unordered_children
-        )
+            TypeHint(unordered_child) for unordered_child in unordered_children)
 
     # ..................{ PRIVATE ~ property                 }..................
     @property

@@ -20,7 +20,6 @@ from beartype._util.hint.pep.proposal.utilpep593 import (
 from contextlib import suppress
 
 # ....................{ SUBCLASSES                         }....................
-#FIXME: Document all public and private attributes of this class, please.
 class AnnotatedTypeHint(TypeHint):
     '''
     **Annotated type hint wrapper** (i.e., high-level object encapsulating a
@@ -28,29 +27,38 @@ class AnnotatedTypeHint(TypeHint):
 
     Attributes (Private)
     --------
+    _metadata : tuple[object]
+        **Metadata** (i.e., tuple of zero or more arbitrary low-level
+        caller-defined objects annotating this :attr:`typing.Annotated` type
+        hint, equivalent to all remaining arguments subscripting this hint).
+    _metahint_wrapper : TypeHint
+        **Metahint wrapper** (i.e., :class:`TypeHint` instance wrapping the
+        child type hint annotated by this parent :attr:`typing.Annotated` type
+        hint, equivalent to the first argument subscripting this hint).
     '''
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(self, hint: object) -> None:
+
+        # Initialize our superclass.
         super().__init__(hint)
 
-        # Child type hints annotated by these parent "typing.Annotated[...]"
-        # type hints (i.e., the first arguments subscripting these hints).
-        self._metahint = TypeHint(get_hint_pep593_metahint(hint))
-
-        # Tuple of zero or more arbitrary caller-defined objects annotating by
-        # these parent "typing.Annotated[...]" type hints (i.e., all remaining
-        # arguments subscripting these hints).
+        # Tuple of the zero or more arbitrary caller-defined arguments following
+        # the first argument subscripting this hint.
         self._metadata = get_hint_pep593_metadata(hint)
+
+        # Wrapper wrapping the first argument subscripting this hint.
+        self._metahint_wrapper = TypeHint(get_hint_pep593_metahint(hint))
 
     # ..................{ DUNDERS ~ compare : equals         }..................
     def __eq__(self, other: object) -> bool:
 
         if not isinstance(other, TypeHint):
             return False
+
         return (
             isinstance(other, AnnotatedTypeHint)
-            and self._metahint == other._metahint
+            and self._metahint_wrapper == other._metahint_wrapper
             and self._metadata == other._metadata
         )
 
@@ -68,13 +76,13 @@ class AnnotatedTypeHint(TypeHint):
         # one and just check that the metahint is a subhint of the other.
         # e.g. Annotated[t.List[int], 'meta'] <= List[int]
         if not isinstance(branch, AnnotatedTypeHint):
-            return self._metahint.is_subhint(branch)
+            return self._metahint_wrapper.is_subhint(branch)
 
         # Else, that hint is a "typing.Annotated[...]" type hint. If either...
         if (
             # The child type hint annotated by this parent hint does not subhint
             # the child type hint annotated by that parent hint *OR*...
-            self._metahint > branch._metahint or
+            self._metahint_wrapper > branch._metahint_wrapper or
             # These hints are annotated by a differing number of objects...
             len(self._metadata) != len(branch._metadata)
         ):

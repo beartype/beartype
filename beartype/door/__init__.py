@@ -47,6 +47,16 @@ standardized by the :mod:`typing` module.
 #    TypeHint(<class 'str'>)
 #    TypeHint(<class 'NoneType'>)
 #
+#    # DOOR hints are sized Pythonically -- unlike normal type hints.
+#    >>> len(door_hint)
+#    3
+#
+#    # DOOR hints evaluate as booleans Pythonically -- unlike normal type hints.
+#    >>> if door_hint: print('This type hint has children.')
+#    This type hint has children.
+#    >>> if not TypeHint(tuple[()]): print('But this other type hint is empty.')
+#    But this other type hint is empty.
+#
 #    # DOOR hints support equality Pythonically -- unlike normal type hints.
 #    >>> from typing import Union
 #    >>> door_hint == TypeHint(Union[int, str, None])
