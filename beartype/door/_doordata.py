@@ -14,12 +14,13 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.door._doorcls import (
     TypeHint,
-    ClassTypeHint,
     _TypeHintOriginIsinstanceableArgs1,
     _TypeHintOriginIsinstanceableArgs2,
     _TypeHintOriginIsinstanceableArgs3,
     _TypeHintSubscripted,
 )
+from beartype.door._proposal.pep484.doorpep484class import (
+    ClassTypeHint)
 from beartype.door._proposal.doorpep484604 import UnionTypeHint
 from beartype.door._proposal.doorpep586 import LiteralTypeHint
 from beartype.door._proposal.doorpep593 import AnnotatedTypeHint
@@ -77,8 +78,9 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
         If the passed hint is *not* actually a PEP-compliant type hint.
     '''
 
-    # Sign uniquely identifying this hint if any *OR* return None
-    # (i.e., if this hint is *NOT* actually a PEP-compliant type hint).
+    # ..................{ SUBCLASS                           }..................
+    # Sign uniquely identifying this hint if any *OR* return None (i.e., if this
+    # hint is *NOT* actually a PEP-compliant type hint).
     hint_sign = get_hint_pep_sign_or_none(hint)
 
     # Private concrete subclass of this ABC handling this hint if any *OR*
@@ -134,12 +136,12 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
 # Further initialized below by the _init() function.
 _HINT_SIGN_TO_TYPEHINT_CLS: Dict[HintSign, Type[TypeHint]] = {
     HintSignAnnotated: AnnotatedTypeHint,
-    HintSignCallable: CallableTypeHint,
-    HintSignGeneric: _TypeHintSubscripted,
-    HintSignLiteral: LiteralTypeHint,
-    HintSignNewType: NewTypeTypeHint,
-    HintSignTuple: _TupleTypeHint,
-    HintSignTypeVar: TypeVarTypeHint,
+    HintSignCallable:  CallableTypeHint,
+    HintSignGeneric:   _TypeHintSubscripted,
+    HintSignLiteral:   LiteralTypeHint,
+    HintSignNewType:   NewTypeTypeHint,
+    HintSignTuple:     _TupleTypeHint,
+    HintSignTypeVar:   TypeVarTypeHint,
 }
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints

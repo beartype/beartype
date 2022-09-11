@@ -9,6 +9,24 @@ objects against PEP-compliant type hints, callable at *any* arbitrary time
 during the lifecycle of the active Python process).
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Refactor our current "IS_PYTHON_AT_LEAST_3_10" that static type-checkers
+#do *NOT* grok to the classic workaround that static type-checkers do grok. Note
+#also the intentional usage of "typing_extensions" versus "typing", as static
+#type-checkers accept the former but *NOT* the latter to provide "TypeGuard"
+#under Python < 3.10:
+#    # Praise be to MIT ML guru @rsokl for this brilliant circumvention.
+#    if typing.TYPE_CHECKING:
+#        from typing_extensions import TypeGuard
+#    else:
+#        try:
+#            from typing import TypeGuard
+#        except ImportError:
+#            try:
+#                from typing_extensions import TypeGuard
+#            except ImportError:
+#                TypeGuard = bool
+
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: This submodule intentionally does *not* import the

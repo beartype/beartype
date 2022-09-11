@@ -33,6 +33,8 @@ from beartype.typing import (
     Generic,
     Iterable,
     Tuple,
+    Union,
+    overload,
 )
 from beartype._conf import BeartypeConf
 from beartype._util.cache.utilcachecall import callable_cached
@@ -46,6 +48,28 @@ from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
 # ....................{ SUPERCLASSES                       }....................
+#FIXME: Override the __contains__() dunder method as well, please. Doing so will
+#fully transform "TypeHint" into a full-blown collection as well as set, which
+#would be monstrously powerful. Note, however, that we should do so
+#*EFFICIENTLY* with guaranteed O(1) lookup behaviour. Ergo, don't do this:
+#    @callable_cached
+#    def __contains__(self, hint_child: 'TypeHint') -> bool:
+#        return hint_child in self._args_wrapped
+#
+#Since "_args_wrapped" is a tuple, that operation exhibits inefficient O(n)
+#lookup behaviour. To do this efficiently, we'll need to dynamically define a
+#new backing set on-the-fly as needed ala:
+#    @callable_cached  # <-- does this support properties, yet? *sigh*
+#    @property
+#    def _args_wrapped_set(self) -> FrozenSet[object, ...]:
+#        return frozenset(self._args_wrapped)
+#
+#Given that, __contains__() trivially reduces to this efficient implementation:
+#    # No caching is required, as this is already O(1). \o/
+#    def __contains__(self, hint_child: 'TypeHint') -> bool:
+#        return hint_child in self._args_wrapped_set  # <-- lol
+#FIXME: For disambiguity, rename "_args_wrapped" to "_args_wrapped_tuple". Gah!
+
 #FIXME: Document all public and private attributes of this class, please.
 class TypeHint(Generic[_T], metaclass=ABCMeta):
     '''
@@ -183,6 +207,54 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
             return hint
         # Else, this hint is *NOT* already a wrapper.
 
+        #FIXME: *THIS IS TRASH.* I mean, look at this shambolic thing. We've
+        #duplicate this madness into the __init__() method now, which means
+        #we've fundamentally gone astray. The correct way to handle both this
+        #*AND* the similar "_is_initted" madness is to declare a new
+        #"_TypeHintMeta" metaclass. Look. Just do it. We already have the
+        #outline of that metaclass in the existing
+        #"beartype._util.cache.utilcachemeta" submodule. So:
+        #* Define a new "_doormeta" submodule copy-and-pasted from
+        #  "utilcachemeta".
+        #* Rename the "ABCSingletonMeta" metaclass to "_TypeHintMeta".
+        #* Refactor the _TypeHintMeta.__call__() method to do basically
+        #  everything this __new__() method currently does.
+        #* Note that the "ABCSingletonMeta" metaclass will need a bit of
+        #  generalizing, as that metaclass assumes that it should be caching
+        #  instances of this abstract "TypeHint" superclass rather than concrete
+        #  singletons of that superclass. Using a dictionary should suffice.
+        #* Leverage "metaclass=_TypeHintMeta" above.
+        #* Remove this __new__() method entirely.
+        #* Remove "_is_initted" everywhere. Seriously. What a horror show.
+        #* Remove the duplicate "REDUCERS" block from __init__(). *sigh*
+
+        # ..................{ REDUCERS                           }..................
+        # Reduce this hint to a more amenable form suitable for mapping to a
+        # concrete "TypeHint" subclass if desired.
+        #
+        # Note that this reduction intentionally ignores the entire
+        # "beartype._util.hint.convert" subpackage. Although submodules of that
+        # subpackage do perform various coercions, reductions, and sanitizations of
+        # low-level PEP-compliant type hints, they do so only for the express
+        # purpose of dynamic code generation. That subpackage is *NOT*
+        # general-purpose and is, in fact, harmful in this context. Why? Because
+        # that subpackage erodes the semantic meaning from numerous type hints that
+        # this subpackage necessarily preserves.
+        #
+        # ..................{ REDUCERS ~ pep 484 : none          }..................
+        # If this is the PEP 484-compliant "None" singleton, reduce this hint to
+        # the type of that singleton. While *NOT* explicitly defined by the
+        # "typing" module, PEP 484 explicitly supports this singleton:
+        #     When used in a type hint, the expression None is considered
+        #     equivalent to type(None).
+        #
+        # The "None" singleton is used to type callables lacking an explicit
+        # "return" statement and thus absurdly common. Ergo, detect this early.
+        if hint is None:
+            from beartype._cave._cavefast import NoneType
+            hint = NoneType  # pyright: ignore[reportGeneralTypeIssues]
+        # Else, this is *NOT* the PEP 484-compliant "None" singleton.
+
         #FIXME: It'd be great if we could import this at module scope for
         #efficiency instead. Consider refactorings that would enable that! \o/
         # Avoid circular import dependencies.
@@ -209,14 +281,12 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
 
     def __init__(self, hint: _T) -> None:
         '''
-        Initialize this high-level partially ordered type hint against the
-        passed low-level unordered type hint.
+        Initialize this type hint wrapper from the passed low-level type hint.
 
         Parameters
         ----------
         hint : object
-            Lower-level unordered type hint to be encapsulated by this
-            higher-level partially ordered type hint.
+            Lower-level type hint to be wrapped by this wrapper.
         '''
         # print(f'!!!!!!!!!!!!! [ in {repr(type(self))}.__init__() ] !!!!!!!!!!!!!!!')
 
@@ -231,6 +301,34 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
         # re-initializing this wrapper.
         self._is_initted = True
 
+        #FIXME: *SEE ABOVE.* Just "Ugh."
+        # ..................{ REDUCERS                           }..................
+        # Reduce this hint to a more amenable form suitable for mapping to a
+        # concrete "TypeHint" subclass if desired.
+        #
+        # Note that this reduction intentionally ignores the entire
+        # "beartype._util.hint.convert" subpackage. Although submodules of that
+        # subpackage do perform various coercions, reductions, and sanitizations of
+        # low-level PEP-compliant type hints, they do so only for the express
+        # purpose of dynamic code generation. That subpackage is *NOT*
+        # general-purpose and is, in fact, harmful in this context. Why? Because
+        # that subpackage erodes the semantic meaning from numerous type hints that
+        # this subpackage necessarily preserves.
+        #
+        # ..................{ REDUCERS ~ pep 484 : none          }..................
+        # If this is the PEP 484-compliant "None" singleton, reduce this hint to
+        # the type of that singleton. While *NOT* explicitly defined by the
+        # "typing" module, PEP 484 explicitly supports this singleton:
+        #     When used in a type hint, the expression None is considered
+        #     equivalent to type(None).
+        #
+        # The "None" singleton is used to type callables lacking an explicit
+        # "return" statement and thus absurdly common. Ergo, detect this early.
+        if hint is None:
+            from beartype._cave._cavefast import NoneType
+            hint = NoneType  # pyright: ignore[reportGeneralTypeIssues]
+
+        # Else, this is *NOT* the PEP 484-compliant "None" singleton.
         # Classify all passed parameters. Note that this type hint is guaranteed
         # to be a type hint by validation performed by the __new__() method.
         self._hint = hint
@@ -267,6 +365,19 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
         self._args = get_hint_pep_args(hint)
         self._munge_args()
 
+        #FIXME: Space and time inefficient. Defer computation of the
+        #"_args_wrapped" instance variable until absolutely required by
+        #replacing this static attribute with a dynamic caching property: e.g.,
+        #    @callable_cached  # <-- does this support properties, yet? *sigh*
+        #    @property
+        #    def _args_wrapped(self) -> Tuple[object, ...]:
+        #        return self._wrap_children(self._args)
+        #
+        #Doing so then allows us to obsolete the _wrap_children() method by
+        #simply shifting the entirety of _wrap_children() into _args_wrapped().
+        #Subclasses then override _args_wrapped() rather than _wrap_children()
+        #as need. Swell, eh? Heh.
+
         # Tuple of all high-level child type hint wrappers of this hint.
         self._args_wrapped = self._wrap_children(self._args)
 
@@ -276,9 +387,9 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
         Hash of the low-level immutable type hint wrapped by this immutable
         wrapper.
 
-        This wrapper satisfies the :class:`collections.abc.Hashable` abstract
-        base class (ABC) by overriding this method, enabling this wrapper to be
-        used as in hashable containers (e.g., dictionaries, sets).
+        Defining this method satisfies the :class:`collections.abc.Hashable`
+        abstract base class (ABC), enabling this wrapper to be used as in
+        hashable containers (e.g., dictionaries, sets).
         '''
 
         return hash(self._hint)
@@ -365,12 +476,73 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
     # ..................{ DUNDERS ~ iterable                 }..................
     def __iter__(self) -> Iterable['TypeHint']:
         '''
-        Generator iteratively yielding all **children** (i.e., :class:`TypeHint`
-        instances wrapping all low-level child type hints) subscripting the
-        low-level parent type hint wrapped by this :class:`TypeHint` instance.
+        Generator iteratively yielding all **children type hint wrappers**
+        (i.e., :class:`TypeHint` instances wrapping all low-level child type
+        hints originally subscripting the low-level parent type hint wrapped by
+        this :class:`TypeHint` instance).
+
+        Defining this method satisfies the :class:`collections.abc.Iterable`
+        abstract base class (ABC).
         '''
 
         yield from self._args_wrapped
+
+    # ..................{ DUNDERS ~ iterable : item          }..................
+    # Inform static type-checkers of the one-to-one correspondence between the
+    # type of the object subscripting an instance of this class with the type of
+    # the object returned by that subscription. Note this constraint is strongly
+    # inspired by this erudite StackOverflow answer:
+    #     https://stackoverflow.com/a/71183076/2809027
+
+    @overload
+    def __getitem__(self, index: int) -> object: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Tuple[object, ...]: ...
+
+    def __getitem__(self, index: Union[int, slice]) -> (
+        Union[object, Tuple[object, ...]]):
+        '''
+        Either:
+
+        * If the passed object is an integer, then this type hint wrapper was
+          subscripted by either a positive 0-based absolute index or a negative
+          -1-based relative index. In either case, this dunder method returns
+          the **child type hint wrapper** (i.e., :class:`TypeHint` instance
+          wrapping a low-level child type hint originally subscripting the
+          low-level parent type hint wrapped by this :class:`TypeHint` instance)
+          with the same index.
+        * If the passed object is a slice, then this type hint wrapper was
+          subscripted by a range of such indices. In this case, this dunder
+          method returns a tuple of the zero or more child type hint wrappers
+          with the same indices.
+
+        Parameters
+        ----------
+        index : Union[int, slice]
+            Either:
+
+            * Positive 0-based absolute index or negative -1-based relative
+              index of the child type hint originally subscripting the parent
+              type hint wrapped by this :class:`TypeHint` instance to be
+              returned wrapped by a new :class:`TypeHint` instance.
+            * Slice of such indices of the zero or more child type hints
+              originally subscripting the parent type hint wrapped by this
+              :class:`TypeHint` instance to be returned in a tuple of these
+              child type hints wrapped by new :class:`TypeHint` instances.
+
+        Returns
+        ----------
+        Union[int, Tuple[object, ...]]
+            Child type hint wrapper(s) at these index(es), as detailed above.
+        '''
+
+        # Defer validation of the correctness of the passed index or slice to
+        # the low-level tuple.__getitem__() dunder method. Though we could (and
+        # possibly should) perform that validation here, doing so is non-trivial
+        # in the case of both a negative relative index *AND* a passed slice.
+        # This trivial approach suffices for now.
+        return self._args_wrapped[index]
 
     # ..................{ DUNDERS ~ iterable : sized         }..................
     #FIXME: Unit test us up, please.
@@ -389,6 +561,9 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
         '''
         Number of low-level child type hints subscripting the low-level parent
         type hint wrapped by this wrapper.
+
+        Defining this method satisfies the :class:`collections.abc.Sized`
+        abstract base class (ABC).
         '''
 
         # Return the exact length of the same iterable returned by the
@@ -799,50 +974,6 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
             'Abstract method TypeHint._is_args_ignorable() undefined.')
 
 # ....................{ SUBCLASSES                         }....................
-class ClassTypeHint(TypeHint):
-    '''
-    **Class type hint wrapper** (i.e., high-level object encapsulating a
-    low-level PEP-compliant type hint that is, in fact, a simple class).
-    '''
-
-    # ..................{ PRIVATE                            }..................
-    _hint: type
-
-    @property
-    def _is_args_ignorable(self) -> bool:
-        '''
-        Plain types are their origin.
-        '''
-
-        return True
-
-
-    def _is_le_branch(self, branch: TypeHint) -> bool:
-
-        # everything is a subclass of Any
-        if branch._origin is Any:
-            return True
-        elif self._origin is Any:
-            # but Any is only a subclass of Any.
-            # Furthermore, typing.Any is not suitable as the first
-            # argument to issubclass() below.
-            return False
-
-        #FIXME: Actually, let's avoid the implicit numeric tower for now.
-        #Explicit is better than implicit and we really strongly disagree with
-        #this subsection of PEP 484, which does more real-world harm than good.
-        # # Numeric tower:
-        # # https://peps.python.org/pep-0484/#the-numeric-tower
-        # if self._origin is float and branch._origin in {float, int}:
-        #     return True
-        # if self._origin is complex and branch._origin in {complex, float, int}:
-        #     return True
-
-        # Return true only if...
-        return branch._is_args_ignorable and issubclass(
-            self._origin, branch._origin)
-
-
 class _TypeHintSubscripted(TypeHint):
     """
     **Subscripted type hint wrapper** (i.e., high-level object encapsulating a

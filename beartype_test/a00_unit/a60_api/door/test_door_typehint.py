@@ -95,7 +95,7 @@ def hint_equality_cases() -> 'Iterable[Tuple[object, object, bool]]':
     # Return this mutable list coerced into an immutable tuple for safety.
     return tuple(HINT_EQUALITY_CASES)
 
-# ....................{ TESTS ~ class                      }....................
+# ....................{ TESTS ~ dunder ~ creation          }....................
 def test_door_typehint_new() -> None:
     '''
     Test the :meth:`beartype.door.TypeHint.__new__` factory method.
@@ -181,20 +181,22 @@ def test_door_typehint_mapping() -> None:
         # Assert that the type hint wrapped by this instance is the same hint.
         assert typehint.hint is hint_meta.hint
 
-# ....................{ TESTS ~ class : dunders            }....................
+# ....................{ TESTS ~ dunders                    }....................
 #FIXME: Insufficient. Generalize to test *ALL* possible kinds of type hints.
-def test_door_typehint_bool():
+def test_door_typehint_repr() -> None:
     '''
-    Test the :meth:`beartype.door.TypeHint.__len__` dunder method.
+    Test the :meth:`beartype.door.TypeHint.__repr__` dunder method.
     '''
 
     # Defer test-specific imports.
     from beartype.door import TypeHint
-    from beartype.typing import Tuple
+    from beartype.typing import Callable
 
-    assert bool(TypeHint(Tuple[()])) is False
+    annotation = Callable[[], list]
+    hint = TypeHint(annotation)
+    assert repr(annotation) in repr(hint)
 
-
+# ....................{ TESTS ~ dunders : compare          }....................
 def test_door_typehint_equals(
     hint_equality_cases: 'Iterable[Tuple[object, object, bool]]') -> None:
     '''
@@ -246,52 +248,6 @@ def test_door_typehint_equals(
         assert typehint_b != nonhint
 
 
-#FIXME: Insufficient. Generalize to test *ALL* possible kinds of type hints.
-def test_door_typehint_iter() -> None:
-    '''
-    Test the :meth:`beartype.door.TypeHint.__iter__` dunder method.
-    '''
-
-    # Defer test-specific imports.
-    from beartype.door import TypeHint
-    from beartype.typing import Union
-
-    # Note that unions are *NOT* order-preserving in the general case. Although
-    # unions are order-preserving in isolated test cases, self-caching employed
-    # behind-the-scenes by unions prevent order from being reliably tested.
-    assert set(TypeHint(Union[int, str])) == {TypeHint(int), TypeHint(str)}
-    assert not list(TypeHint(int))
-
-
-#FIXME: Insufficient. Generalize to test *ALL* possible kinds of type hints.
-def test_door_typehint_len():
-    '''
-    Test the :meth:`beartype.door.TypeHint.__len__` dunder method.
-    '''
-
-    # Defer test-specific imports.
-    from beartype.door import TypeHint
-    from beartype.typing import Tuple
-
-    assert len(TypeHint(Tuple[()])) == 0
-    # assert TypeHint(Tuple[()]).is_empty_tuple
-
-
-#FIXME: Insufficient. Generalize to test *ALL* possible kinds of type hints.
-def test_door_typehint_repr() -> None:
-    '''
-    Test the :meth:`beartype.door.TypeHint.__repr__` dunder method.
-    '''
-
-    # Defer test-specific imports.
-    from beartype.door import TypeHint
-    from beartype.typing import Callable
-
-    annotation = Callable[[], list]
-    hint = TypeHint(annotation)
-    assert repr(annotation) in repr(hint)
-
-
 def test_door_typehint_rich_fail() -> None:
     '''
     Test unsuccessful usage the rich comparison dunder methods defined by the
@@ -320,6 +276,76 @@ def test_door_typehint_rich_fail() -> None:
         a >= 1
     with raises(TypeError, match="not supported between"):
         a > 1
+
+# ....................{ TESTS ~ dunders : iterable         }....................
+#FIXME: Insufficient. Generalize to test *ALL* possible kinds of type hints.
+def test_door_typehint_iter() -> None:
+    '''
+    Test the :meth:`beartype.door.TypeHint.__iter__` dunder method.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.door import TypeHint
+    from beartype.typing import Union
+
+    # Note that unions are *NOT* order-preserving in the general case. Although
+    # unions are order-preserving in isolated test cases, self-caching employed
+    # behind-the-scenes by unions prevent order from being reliably tested.
+    assert set(TypeHint(Union[int, str])) == {TypeHint(int), TypeHint(str)}
+    assert not list(TypeHint(int))
+
+
+#FIXME: Insufficient. Generalize to test *ALL* possible kinds of type hints.
+def test_door_typehint_getitem() -> None:
+    '''
+    Test the :meth:`beartype.door.TypeHint.__getitem__` dunder method.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.door import TypeHint
+    from beartype.typing import Union
+
+    # Arbitrary wrapper wrapping a type hint subscripted by multiple children.
+    typehint = TypeHint(Union[int, str, None])
+
+    # Assert that subscripting this wrapper by a positive index yields a wrapper
+    # wrapping the expected child type hint at that index.
+    assert typehint[0] == TypeHint(int)
+
+    # Assert that subscripting this wrapper by a negative index yields a wrapper
+    # wrapping the expected child type hint at that index.
+    assert typehint[-1] == TypeHint(None)
+
+    # Assert that subscripting this wrapper by a slice yields a tuple of zero or
+    # more wrappers wrapping the expected child type hints at those indices.
+    assert typehint[0:2] == (TypeHint(int), TypeHint(str))
+
+# ....................{ TESTS ~ dunders : iterable : sized }....................
+#FIXME: Insufficient. Generalize to test *ALL* possible kinds of type hints.
+def test_door_typehint_bool() -> None:
+    '''
+    Test the :meth:`beartype.door.TypeHint.__len__` dunder method.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.door import TypeHint
+    from beartype.typing import Tuple
+
+    assert bool(TypeHint(Tuple[()])) is False
+
+
+#FIXME: Insufficient. Generalize to test *ALL* possible kinds of type hints.
+def test_door_typehint_len():
+    '''
+    Test the :meth:`beartype.door.TypeHint.__len__` dunder method.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.door import TypeHint
+    from beartype.typing import Tuple
+
+    assert len(TypeHint(Tuple[()])) == 0
+    # assert TypeHint(Tuple[()]).is_empty_tuple
 
 # ....................{ TESTS ~ properties                 }....................
 def test_door_typehint_is_ignorable() -> None:

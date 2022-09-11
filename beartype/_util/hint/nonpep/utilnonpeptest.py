@@ -21,7 +21,7 @@ from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_isinstanceable,
-    is_type_isinstanceable,
+    is_type_or_types_isinstanceable,
 )
 from beartype._data.datatyping import TypeException
 
@@ -88,17 +88,19 @@ def die_if_hint_nonpep(
             f'{repr(exception_prefix)} not string.')
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not type.')
+        assert issubclass(exception_cls, Exception), (
+            f'{repr(exception_cls)} not exception type.')
 
         raise exception_cls(
             f'{exception_prefix}type hint {repr(hint)} '
-            f'is PEP-noncompliant (e.g., ' +
+            f'is PEP-noncompliant (e.g., neither ' +
             (
                 (
-                    'isinstanceable class, forward reference, or tuple of '
+                    'isinstanceable class, forward reference, nor tuple of '
                     'isinstanceable classes and/or forward references).'
                 )
                 if is_str_valid else
-                'isinstanceable class or tuple of isinstanceable classes).'
+                'isinstanceable class nor tuple of isinstanceable classes).'
             )
         )
     # Else, this object is *NOT* a PEP-noncompliant type hint.
@@ -299,7 +301,7 @@ def die_unless_hint_nonpep_type(
 #* Else, we:
 #  * Perform a new optimized EAFP-style isinstance() check resembling that
 #    performed by die_unless_type_isinstanceable().
-#  * Likewise for _is_hint_nonpep_tuple() vis-a-vis is_type_isinstanceable().
+#  * Likewise for _is_hint_nonpep_tuple() vis-a-vis is_type_or_types_isinstanceable().
 #Fortunately, tuple unions are now sufficiently rare in the wild (i.e., in
 #real-world use cases) that this mild inefficiency probably no longer matters.
 #FIXME: Indeed! Now that we have the die_unless_type_or_types_isinstanceable()
@@ -391,15 +393,15 @@ def die_unless_hint_nonpep_tuple(
 
     # For each item of this tuple...
     for hint_item in hint:
-        # Duplicate the above logic. For negligible efficiency gains (and
-        # more importantly to avoid exhausting the stack), avoid calling
-        # this function recursively to do so. *shrug*
+        # Duplicate the above logic. For negligible efficiency gains (and more
+        # importantly to avoid exhausting the stack), avoid calling this
+        # function recursively to do so. *shrug*
 
         # If this item is a class...
         if isinstance(hint_item, type):
-            # If this class is *NOT* PEP-noncompliant, raise an exception.
-            die_unless_hint_nonpep_type(
-                hint=hint_item,
+            # If this class is *NOT* isinstanceable, raise an exception.
+            die_unless_type_isinstanceable(
+                cls=hint_item,
                 exception_prefix=exception_prefix,
                 exception_cls=exception_cls,
             )
@@ -545,10 +547,10 @@ def _is_hint_nonpep_tuple(
         # This tuple is non-empty *AND*...
         len(hint) > 0 and
         # Each item of this tuple is either a caller-permitted forward
-        # reference *OR* a PEP-noncompliant class.
+        # reference *OR* an isinstanceable class.
         all(
-            _is_hint_nonpep_type(hint_item) if isinstance(hint_item, type) else
-            is_str_valid                    if isinstance(hint_item, str) else
+            is_type_or_types_isinstanceable(hint_item) if isinstance(hint_item, type) else
+            is_str_valid                               if isinstance(hint_item, str) else
             False
             for hint_item in hint
         )
@@ -583,4 +585,4 @@ def _is_hint_nonpep_type(hint: object) -> bool:
     # Return true only if this object is isinstanceable and *NOT* a
     # PEP-compliant class, in which case this *MUST* be a PEP-noncompliant
     # class by definition.
-    return is_type_isinstanceable(hint) and not is_hint_pep(hint)
+    return is_type_or_types_isinstanceable(hint) and not is_hint_pep(hint)

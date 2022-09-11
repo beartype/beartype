@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -16,7 +16,7 @@ PEP-noncompliant type hints include:
   returning :class:`dict` instances annotated by PEP-compliant type hints.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 import sys
 from beartype._cave._cavefast import (
     EllipsisType,
@@ -37,7 +37,7 @@ from typing import (
     NamedTuple,
 )
 
-# ....................{ GLOBALS                           }....................
+# ....................{ GLOBALS                            }....................
 NamedTupleType = NamedTuple(
     'NamedTupleType', [('fumarole', str), ('enrolled', int)])
 '''
@@ -45,7 +45,7 @@ PEP-compliant user-defined :func:`collections.namedtuple` instance typed with
 PEP-compliant annotations.
 '''
 
-# ....................{ ADDERS                            }....................
+# ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
     Add :pep:`484`**-compliant PEP-noncompliant type hint test data to various
@@ -57,11 +57,11 @@ def add_data(data_module: 'ModuleType') -> None:
         Module to be added to.
     '''
 
-    # ..................{ TUPLES                            }..................
+    # ..................{ TUPLES                             }..................
     # Add PEP 484-specific PEP-noncompliant test type hints to this dictionary
     # global.
     data_module.HINTS_NONPEP_META.extend((
-        # ................{ NAMEDTUPLE                        }................
+        # ................{ NAMEDTUPLE                         }................
         # "NamedTuple" instances transparently reduce to standard tuples and
         # *MUST* thus be handled as non-"typing" type hints.
         HintNonpepMetadata(
@@ -85,13 +85,13 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ TYPEDDICT                         }................
+        # ................{ TYPEDDICT                          }................
         # "TypedDict" instances transparently reduce to dicts.
         #FIXME: Implement us up, but note when doing so that:
         #* We currently unconditionally reduce "TypeDict" to "Mapping".
         #* "TypedDict" was first introduced with Python 3.8.
 
-        # ................{ TYPE ~ builtin                    }................
+        # ................{ TYPE ~ builtin                     }................
         # Integer.
         HintNonpepMetadata(
             hint=int,
@@ -180,10 +180,12 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ TYPE ~ builtin : fake             }................
+        # ................{ TYPE ~ builtin : fake              }................
         # Fake builtin types (i.e., types that are *NOT* builtin but which
         # nonetheless erroneously masquerade as being builtin), exercising edge
-        # cases in @beartype code generation. See also:
+        # cases in @beartype code generation.
+        #
+        # See also:
         # * The "beartype._data.cls.datacls.TYPES_BUILTIN_FAKE" set.
 
         # Fake builtin ellipsis type.

@@ -87,13 +87,31 @@ from beartype._util.py.utilpyversion import (
 )
 
 # ....................{ MAPPINGS ~ repr                    }....................
-# The majority of this dictionary is initialized with automated inspection
-# below in the _init() function. The *ONLY* key-value pairs explicitly defined
-# here are those *NOT* amenable to such inspection.
+# The majority of this dictionary is initialized with automated inspection below
+# in the _init() function. The *ONLY* key-value pairs explicitly defined here
+# are those *NOT* amenable to such inspection.
 HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: Dict[str, HintSign] = {
     # ..................{ PEP 484                            }..................
     # All other PEP 484-compliant representation prefixes are defined by
     # automated inspection below.
+
+    # PEP 484-compliant "None" singleton, which transparently reduces to
+    # "types.NoneType". While not explicitly defined by the "typing" module,
+    # PEP 484 explicitly supports this singleton:
+    #     When used in a type hint, the expression None is considered equivalent
+    #     to type(None).
+    #
+    # Note that the representation of the type of the "None" singleton (i.e.,
+    # "<class 'NoneType'>") is intentionally omitted here despite the "None"
+    # singleton reducing to that type. Indeed, the *ONLY* reason we detect this
+    # singleton at all is to enable that reduction. Although this singleton
+    # conveys a PEP-compliant semantic, the type of this singleton explicitly
+    # conveys *NO* PEP-compliant semantics. That type is simply a standard
+    # isinstanceable type (like any other). Indeed, attempting to erroneously
+    # associate the type of the "None" singleton with the same sign here would
+    # cause that type to be detected as conveying sign-specific PEP-compliant
+    # semantics rather than *NO* such semantics, which would then substantially
+    # break and complicate dynamic code generation for no benefit whatsoever.
     'None': HintSignNone,
 }
 '''
@@ -125,8 +143,8 @@ HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN: Dict[str, HintSign] = {
     # when unsubscripted (e.g., simply "list"), unsubscripted classes convey no
     # deep semantics and thus need *NOT* be detected as PEP-compliant.
     #
-    # For maintainability, these key-value pairs are intentionally listed in
-    # the same order as the official list in PEP 585 itself.
+    # For maintainability, these key-value pairs are intentionally listed in the
+    # same order as the official list in PEP 585 itself.
     'tuple': HintSignTuple,
     'list': HintSignList,
     'dict': HintSignDict,
@@ -222,10 +240,6 @@ HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
     #   codebase, we (currently) opt to do so.
     'builtins.str': HintSignForwardRef,
 
-    # Python >= 3.8 implements PEP 557-compliant "dataclasses.InitVar" type
-    # hints as instances of that class.
-    'dataclasses.InitVar': HintSignDataclassInitVar,
-
     # Python >= 3.10 implements PEP 484-compliant "typing.NewType" type hints as
     # instances of that class. Regardless of the current Python version,
     # "typing_extensions.NewType" type hints remain implemented in manner of
@@ -233,6 +247,11 @@ HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
     # intentionally omit "typing_extensions.NewType" here. See also:
     #     https://github.com/python/typing/blob/master/typing_extensions/src_py3/typing_extensions.py
     'typing.NewType': HintSignNewType,
+
+    # ..................{ PEP 557                            }..................
+    # Python >= 3.8 implements PEP 557-compliant "dataclasses.InitVar" type
+    # hints as instances of that class.
+    'dataclasses.InitVar': HintSignDataclassInitVar,
 
     # ..................{ PEP 604                            }..................
     # PEP 604-compliant |-style unions (e.g., "int | float") are internally

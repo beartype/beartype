@@ -26,7 +26,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #Specifically, rather than accept "typing" nonsense verbatim, we could instead:
 #* Detect PEP 544-compatible protocol type hints *NOT* decorated by
-#  @typing.runtime_checkable. The existing is_type_isinstanceable() tester now
+#  @typing.runtime_checkable. The existing is_type_or_types_isinstanceable() tester now
 #  detects whether arbitrary classes are isinstanceable, so just call that.
 #* Emit a non-fatal warning advising the end user to resolve this on their end.
 #* Meanwhile, beartype can simply:

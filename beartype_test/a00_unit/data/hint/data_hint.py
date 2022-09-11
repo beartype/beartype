@@ -42,7 +42,7 @@ NOT_HINTS_HASHABLE = frozenset((
     0.12345678910111213141516,
     # Empty tuple.
     (),
-    # Tuple containing an scalar that is neither a type nor string.
+    # Tuple containing a scalar that is neither a type nor string.
     (list, 'list', 0xFEEDFACE, NoneType,),
 ))
 '''
@@ -119,8 +119,6 @@ HINTS_NONPEP = frozenset((
     str,
     # User-defined type.
     NonpepCustom,
-    # Beartype cave type.
-    NoneType,
     # Non-empty tuple containing two types.
     NoneTypeOr[AnyType],
     # Non-empty tuple containing two types and a fully-qualified forward
@@ -152,14 +150,17 @@ NOT_HINTS_NONPEP = frozenset((
     {
         # Tuple containing this PEP-compliant type hint...
         (int, hint_pep_hashable, NoneType,)
-        # For each PEP-compliant type hint...
+        # For each hashable PEP-compliant type hint...
         for hint_pep_hashable in HINTS_PEP_HASHABLE
-        # That is *NOT* a string-based forward reference, which are a unique
-        # edge case supported as both PEP 484-compliant outside tuples *AND*
-        # beartype-specific inside tuples. Including such references here would
-        # erroneously cause tests to treat tuples containing string-based
-        # forward references as *NOT* beartype-specific type hints.
-        if not isinstance(hint_pep_hashable, str)
+        # That is neither:
+        # * An isinstanceable class.
+        # * A string-based forward reference.
+        #
+        # Both are unique edge cases supported as both PEP 484-compliant outside
+        # tuples *AND* beartype-specific inside tuples. Including these hints
+        # here would erroneously cause tests to treat tuples containing these
+        # hints as *NOT* tuple type hints.
+        if not isinstance(hint_pep_hashable, (str, type))
     } |
     # Set comprehension of hashable PEP-compliant non-class type hints.
     HINTS_PEP_HASHABLE |

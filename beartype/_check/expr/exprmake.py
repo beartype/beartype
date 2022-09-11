@@ -89,6 +89,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignGeneric,
     HintSignLiteral,
+    HintSignNone,
     HintSignTuple,
     HintSignType,
 )
@@ -627,6 +628,7 @@ def make_check_expr(
         if hints_meta_index_curr:
             hint_curr = sanify_hint_child(
                 hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
+        # Else, this is the already sanified root hint.
 
         #FIXME: Comment this sanity check out after we're sufficiently
         #convinced this algorithm behaves as expected. While useful, this check

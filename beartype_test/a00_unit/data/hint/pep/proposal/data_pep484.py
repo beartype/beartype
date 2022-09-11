@@ -393,23 +393,6 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # Unsubscripted "None" singleton, which transparently reduces to
-        # "types.NoneType". While not explicitly defined by the "typing"
-        # module, PEP 484 explicitly supports this singleton:
-        #     When used in a type hint, the expression None is considered
-        #     equivalent to type(None).
-        HintPepMetadata(
-            hint=None,
-            pep_sign=HintSignNone,
-            is_type_typing=False,
-            piths_meta=(
-                # "None" singleton.
-                HintPithSatisfiedMetadata(None),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Betossing Bilious libidos, and'),
-            ),
-        ),
-
         # Unsubscripted "Hashable" attribute.
         HintPepMetadata(
             hint=Hashable,
@@ -482,6 +465,24 @@ def add_data(data_module: 'ModuleType') -> None:
                 HintPithSatisfiedMetadata(_TEST_PEP484_FORWARDREF_TYPE()),
                 # String object.
                 HintPithUnsatisfiedMetadata('Silvicultures of'),
+            ),
+        ),
+
+        # ................{ UNSUBSCRIPTED ~ none               }................
+        # Unsubscripted "None" singleton, which transparently reduces to
+        # "types.NoneType". While not explicitly defined by the "typing" module,
+        # PEP 484 explicitly supports this singleton:
+        #     When used in a type hint, the expression None is considered
+        #     equivalent to type(None).
+        HintPepMetadata(
+            hint=None,
+            pep_sign=HintSignNone,
+            is_type_typing=False,
+            piths_meta=(
+                # "None" singleton.
+                HintPithSatisfiedMetadata(None),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Betossing Bilious libidos, and'),
             ),
         ),
 

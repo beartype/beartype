@@ -117,7 +117,7 @@ def die_unless_type_isinstanceable(
     # Else, this object is a class.
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with the is_type_isinstanceable() tester.
+    # CAUTION: Synchronize with the is_type_or_types_isinstanceable() tester.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # If this class is *NOT* isinstanceable, raise an exception.
     try:
@@ -225,7 +225,7 @@ def die_unless_type_or_types_isinstanceable(
     # validation) be a tuple of classes. In this case...
     else:
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize with the is_type_isinstanceable() tester.
+        # CAUTION: Synchronize with the is_type_or_types_isinstanceable() tester.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # If this tuple of classes is *NOT* isinstanceable, raise an exception.
         try:
@@ -352,7 +352,7 @@ def die_unless_type_issubclassable(
     # Else, this hint is a class.
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with the is_type_issubclassable() tester.
+    # CAUTION: Synchronize with the is_type_or_types_issubclassable() tester.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     try:
         issubclass(type, cls)  # type: ignore[arg-type]
@@ -434,7 +434,7 @@ def die_unless_type_or_types_issubclassable(
     # validation) be a tuple of classes. In this case...
     else:
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize with the is_type_issubclassable() tester.
+        # CAUTION: Synchronize with the is_type_or_types_issubclassable() tester.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # If this tuple of classes is *NOT* issubclassable, raise an exception.
         try:
@@ -468,7 +468,7 @@ def die_unless_type_or_types_issubclassable(
             raise exception_cls(f'{exception_message}.') from exception
 
 # ....................{ TESTERS                            }....................
-def is_type_isinstanceable(cls: object) -> bool:
+def is_type_or_types_isinstanceable(cls: object) -> bool:
     '''
     ``True`` only if the passed object is either an **isinstanceable class**
     (i.e., class whose metaclass does *not* define an ``__instancecheck__()``
@@ -547,7 +547,7 @@ def is_type_isinstanceable(cls: object) -> bool:
         return False
 
 
-def is_type_issubclassable(cls: object) -> bool:
+def is_type_or_types_issubclassable(cls: object) -> bool:
     '''
     ``True`` only if the passed object is either an **issubclassable class**
     (i.e., class whose metaclass does *not* define a ``__subclasscheck__()``

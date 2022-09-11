@@ -306,14 +306,8 @@ def get_hint_pep_sign(
 
     # If this hint is unrecognized...
     if hint_sign is None:
-        assert issubclass(exception_cls, Exception), (
-            f'{repr(exception_cls)} not exception class.')
-        assert isinstance(exception_prefix, str), (
-            f'{repr(exception_prefix)} not string.')
-
         # Avoid circular import dependencies.
-        from beartype._util.hint.nonpep.utilnonpeptest import (
-            die_if_hint_nonpep)
+        from beartype._util.hint.nonpep.utilnonpeptest import die_if_hint_nonpep
 
         # If this hint is PEP-noncompliant, raise an exception.
         die_if_hint_nonpep(
@@ -344,10 +338,6 @@ def get_hint_pep_sign(
 
 
 #FIXME: Revise us up the docstring, most of which is now obsolete.
-#FIXME: Refactor as follows:
-#* Remove all now-unused "beartype._util.hint.pep.*" testers. Thanks to this
-#  dramatically simpler approach, we no longer require the excessive glut of
-#  PEP-specific testers we previously required.
 @callable_cached
 def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     '''
@@ -515,8 +505,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     hint_repr_prefix, hint_repr_subscripted, _ = repr(hint).partition('[')
 
     # Sign identifying this possibly unsubscripted hint if this hint is
-    # identifiable by its possibly unsubscripted representation *OR* "None"
-    # otherwise.
+    # identifiable by its possibly unsubscripted representation *OR* "None".
     hint_sign = HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN.get(hint_repr_prefix)
 
     # If this hint is identifiable by its possibly unsubscripted

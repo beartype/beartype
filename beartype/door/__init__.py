@@ -19,51 +19,58 @@ standardized by the :mod:`typing` module.
 #    # This is DOOR. It's a Pythonic API providing an object-oriented interface
 #    # to low-level type hints that basically have no interface whatsoever.
 #    >>> from beartype.door import TypeHint
-#    >>> door_hint = TypeHint(int | str | None)
-#    >>> print(door_hint)
+#    >>> union_hint = TypeHint(int | str | None)
+#    >>> print(union_hint)
 #    TypeHint(int | str | None)
 #
 #    # DOOR hints have Pythonic classes -- unlike normal type hints.
-#    >>> type(door_hint)
+#    >>> type(union_hint)
 #    beartype.door.UnionTypeHint
 #
 #    # DOOR hints can be introspected Pythonically -- unlike normal type hints.
 #    >>> from beartype.door import UnionTypeHint
-#    >>> isinstance(door_hint, UnionTypeHint)
+#    >>> isinstance(union_hint, UnionTypeHint)
 #    True
 #
 #    # DOOR hints can be type-checked Pythonically -- unlike normal type hints.
-#    >>> door_hint.is_bearable('The unbearable lightness of type-checking.')
+#    >>> union_hint.is_bearable('The unbearable lightness of type-checking.')
 #    True
-#    >>> door_hint.die_if_unbearable(b'The @beartype that cannot be named.')
+#    >>> union_hint.die_if_unbearable(b'The @beartype that cannot be named.')
 #    beartype.roar.BeartypeDoorHintViolation: Object b'The @beartype that cannot
 #    be named.' violates type hint int | str | None, as bytes b'The @beartype
 #    that cannot be named.' not str, <class "builtins.NoneType">, or int.
 #
 #    # DOOR hints can be iterated Pythonically -- unlike normal type hints.
-#    >>> for door_child_hint in door_hint:
-#    ...     print(door_child_hint)
+#    >>> for child_hint in union_hint: print(child_hint)
 #    TypeHint(<class 'int'>)
 #    TypeHint(<class 'str'>)
 #    TypeHint(<class 'NoneType'>)
 #
+#    # DOOR hints can be indexed Pythonically -- unlike normal type hints.
+#    >>> union_hint[0]
+#    TypeHint(<class 'int'>)
+#    >>> union_hint[-1]
+#    TypeHint(<class 'str'>)
+#    >>> union_hint[0:2]
+#    (TypeHint(<class 'int'>), TypeHint(<class 'str'>))
+#
 #    # DOOR hints are sized Pythonically -- unlike normal type hints.
-#    >>> len(door_hint)
+#    >>> len(union_hint)
 #    3
 #
 #    # DOOR hints evaluate as booleans Pythonically -- unlike normal type hints.
-#    >>> if door_hint: print('This type hint has children.')
+#    >>> if union_hint: print('This type hint has children.')
 #    This type hint has children.
 #    >>> if not TypeHint(tuple[()]): print('But this other type hint is empty.')
 #    But this other type hint is empty.
 #
 #    # DOOR hints support equality Pythonically -- unlike normal type hints.
 #    >>> from typing import Union
-#    >>> door_hint == TypeHint(Union[int, str, None])
+#    >>> union_hint == TypeHint(Union[int, str, None])
 #    True  # <-- this is madness.
 #
 #    # DOOR hints support comparisons Pythonically -- unlike normal type hints.
-#    >>> door_hint <= TypeHint(int | str | bool | None)
+#    >>> union_hint <= TypeHint(int | str | bool | None)
 #    True  # <-- madness continues.
 #
 #    # DOOR hints are semantically self-caching.
@@ -93,9 +100,7 @@ standardized by the :mod:`typing` module.
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.door._doorcls import (
-    TypeHint as TypeHint,
-    ClassTypeHint as ClassTypeHint,
-)
+    TypeHint as TypeHint)
 from beartype.door._doorcheck import (
     die_if_unbearable as die_if_unbearable,
     is_bearable as is_bearable,
@@ -107,6 +112,8 @@ from beartype.door._proposal.doorpep586 import (
     LiteralTypeHint as LiteralTypeHint)
 from beartype.door._proposal.doorpep593 import (
     AnnotatedTypeHint as AnnotatedTypeHint)
+from beartype.door._proposal.pep484.doorpep484class import (
+    ClassTypeHint as ClassTypeHint)
 from beartype.door._proposal.pep484.doorpep484newtype import (
     NewTypeTypeHint as NewTypeTypeHint)
 from beartype.door._proposal.pep484.doorpep484typevar import (
