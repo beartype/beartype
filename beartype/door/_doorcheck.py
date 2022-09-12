@@ -4,9 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype type-checking testers** (i.e., functions type-checking arbitrary
-objects against PEP-compliant type hints, callable at *any* arbitrary time
-during the lifecycle of the active Python process).
+**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) procedural
+type-checkers** (i.e., high-level functions type-checking arbitrary objects
+against PEP-compliant type hints at *any* time during the lifecycle of the
+active Python process).
 '''
 
 # ....................{ TODO                               }....................
@@ -35,16 +36,16 @@ during the lifecycle of the active Python process).
 # whereas the API defined by this submodule is expected to unconditionally
 # operate as expected regardless of the current context.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype.door._doortyping import (
+    T,
+    BeartypeTypeChecker,
+)
 from beartype.roar import (
     BeartypeAbbyHintViolation,
     BeartypeAbbyTesterException,
     BeartypeCallHintReturnViolation,
 )
 from beartype.roar._roarexc import _BeartypeDoorTextException
-from beartype.typing import (
-    Callable,
-    TypeVar,
-)
 from beartype._check.checkmake import make_func_tester
 from beartype._conf import BeartypeConf
 from beartype._decor._cache.cachedecor import beartype
@@ -73,21 +74,6 @@ Length of the irrelevant substring prefixing *all*
 exception messages raised by *all* **synthetic runtime type-checkers** (i.e.,
 callables dynamically created and returned by the :func: `_get_type_checker`
 getter).
-'''
-
-# ....................{ PRIVATE ~ hints                    }....................
-_T = TypeVar('_T')
-'''
-PEP-compliant type hint matching an arbitrary PEP-compliant type hint.
-'''
-
-
-_BeartypeTypeChecker = Callable[[object], None]
-'''
-PEP-compliant type hint matching a **runtime type-checker** (i.e., function
-created and returned by the :func:`_get_type_checker` getter, raising a
-:exc:`BeartypeCallHintReturnViolation` exception when the object passed to that
-function violates a PEP-compliant type hint).
 '''
 
 # ....................{ VALIDATORS                         }....................
@@ -259,11 +245,11 @@ if IS_PYTHON_AT_LEAST_3_10:
     def is_bearable(  # pyright: ignore[reportGeneralTypeIssues]
         # Mandatory flexible parameters.
         obj: object,
-        hint: _T,
+        hint: T,
 
         # Optional keyword-only parameters.
         *, conf: BeartypeConf = BeartypeConf(),
-    ) -> TypeGuard[_T]:
+    ) -> TypeGuard[T]:
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize this implementation with that defined below. For
         # efficiency, these two implementations violate DRY rather than
@@ -400,7 +386,7 @@ is_bearable.__doc__ = (
 #  prefix in check_object() by "exception_prefix".
 #* Refactor die_if_unbearable() in this submodule to defer entirely to
 #  check_object() in that submodule.
-#* Shift the "_BeartypeTypeChecker" type hint into the existing
+#* Shift the "BeartypeTypeChecker" type hint into the existing
 #  "beartype._data.datatyping" submodule, publicized and renamed to
 #  "BeartypeChecker".
 #FIXME: And... the prior "FIXME:" comment is almost certainly obsolete already.
@@ -408,7 +394,7 @@ is_bearable.__doc__ = (
 #generating a full-blown exception raiser specific to the passed hint. *shrig*
 @callable_cached
 def _get_type_checker(
-    hint: object, conf: BeartypeConf) -> _BeartypeTypeChecker:
+    hint: object, conf: BeartypeConf) -> BeartypeTypeChecker:
     '''
     Create, cache, and return a **synthetic runtime type-checker** (i.e.,
     function raising a :exc:`BeartypeCallHintReturnViolation` exception when the
@@ -436,7 +422,7 @@ def _get_type_checker(
 
     Returns
     ----------
-    _BeartypeTypeChecker
+    BeartypeTypeChecker
         Synthetic runtime type-checker specific to this hint and configuration.
 
     Raises

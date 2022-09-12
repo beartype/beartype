@@ -106,13 +106,7 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
             )
     # Else, this hint is supported.
 
-    #FIXME: Add this new global to "datapepsignset" and reference below:
-    #    HINT_SIGNS_ORIGINLESS = frozenset((
-    #        HintSignNewType,
-    #        HintSignTypeVar,
-    #    ))
-    #
-    #Alternately, it might be preferable to refactor this to resemble:
+    #FIXME: Alternately, it might be preferable to refactor this to resemble:
     #    if (
     #       not get_hint_pep_args(hint) and
     #       get_hint_pep_origin_or_none(hint) is None
@@ -123,11 +117,12 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
     #condition we're going for -- assuming it works, of course. *sigh*
 
     # If a subscriptable type has no args, all we care about is the origin.
-    if not get_hint_pep_args(hint) and hint_sign not in {
-        HintSignNewType,
-        HintSignTypeVar,
-    }:
+    elif (
+        not get_hint_pep_args(hint) and
+        hint_sign not in _HINT_SIGNS_ORIGINLESS
+    ):
         typehint_subclass = ClassTypeHint
+    # In any case, this hint is supported by this concrete subclass.
 
     # Return this subclass.
     return typehint_subclass
@@ -146,6 +141,16 @@ _HINT_SIGN_TO_TYPEHINT_CLS: Dict[HintSign, Type[TypeHint]] = {
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
 to the :class:`TypeHint` subclass handling those hints.
+'''
+
+
+#FIXME: Consider shifting into "datapepsignset" if still required.
+_HINT_SIGNS_ORIGINLESS = frozenset((
+    HintSignNewType,
+    HintSignTypeVar,
+))
+'''
+Frozen set of all **origin-less signs.**
 '''
 
 # ....................{ PRIVATE ~ initializers             }....................

@@ -56,10 +56,9 @@ from beartype.typing import (
 from beartype._cave._cavefast import NotImplementedType
 from beartype._data.func.datafunc import METHOD_NAMES_BINARY_DUNDER
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
+from beartype._util.hint.utilhinttest import is_hint_uncached
 from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
     make_hint_pep484_union)
-from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin
-from beartype._util.hint.pep.proposal.utilpep604 import is_hint_pep604
 from collections.abc import Callable
 
 # ....................{ PRIVATE ~ mappings                 }....................
@@ -397,8 +396,7 @@ def coerce_hint_any(hint: object) -> Any:
     type hints can be meaningfully memoized. Since this high-level function
     internally defers to unmemoized low-level functions that are ``O(n)`` for
     ``n`` the size of the inheritance hierarchy of this hint, this function
-    should be called sparingly. See the :mod:`beartype._decor._cache.cachehint`
-    submodule for further details.
+    should be called sparingly.
 
     This function intentionally does *not* cache :pep:`484`-compliant generics
     subscripted by type variables under Python < 3.9. Those hints are
@@ -428,24 +426,10 @@ def coerce_hint_any(hint: object) -> Any:
     '''
 
     # ..................{ NON-SELF-CACHING                   }..................
-    # If this hint is either...
-    if (
-        # PEP 585-compliant (e.g., "list[str]"), this hint is *NOT* self-caching
-        # (e.g., "list[str] is not list[str]").
-        is_hint_pep585_builtin(hint) or
-        # PEP 604-compliant (e.g., "int | str"), this hint is *NOT* self-caching
-        # (e.g., "int | str is not int | str").
-        #
-        # Note that this hint could also be implicitly cached by coercing this
-        # non-self-caching PEP 604-compliant union into a self-caching PEP
-        # 484-compliant union (e.g., from "int | str" to "Union[int, str]").
-        # Since doing so would consume substantially more time for *NO* tangible
-        # gain, we strongly prefer the current trivial and efficient approach.
-        is_hint_pep604(hint)
-    ):
-    # Then this hint *MUST* thus be explicitly cached here. Failing to do so
-    # disables subsequent memoization, reducing decoration-time efficiency when
-    # decorating callables repeatedly annotated by copies of this hint.
+    # If this hint is *NOT* self-caching, this hint *MUST* thus be explicitly
+    # cached here. Failing to do so would disable subsequent memoization,
+    # reducing decoration- and call-time efficiency when decorating callables
+    # repeatedly annotated by copies of this hint.
     #
     # Specifically, deduplicate this hint by either:
     # * If this is the first copy of this hint passed to this function, cache
@@ -453,6 +437,7 @@ def coerce_hint_any(hint: object) -> Any:
     # * Else, one or more prior copies of this hint have already been passed to
     #   this function. In this case, replace this subsequent copy by the first
     #   copy of this hint originally passed to a prior call of this function.
+    if is_hint_uncached(hint):
         return _HINT_REPR_TO_SINGLETON.get_value_static(
             key=repr(hint), value=hint)
         # return _HINT_REPR_TO_SINGLETON.get_value_static(key=repr(hint), value=hint)

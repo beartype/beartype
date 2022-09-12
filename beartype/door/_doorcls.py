@@ -16,13 +16,14 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: Privatize most (...or perhaps all) public instance variables, please.
 
 # ....................{ IMPORTS                            }....................
-from abc import ABCMeta
+# from abc import ABCMeta
 from beartype.door._doorcheck import (
     die_if_unbearable,
     is_bearable,
-    _T,
 )
+from beartype.door._doormeta import _TypeHintMeta
 from beartype.door._doortest import die_unless_typehint
+from beartype.door._doortyping import T
 from beartype.roar import (
     BeartypeAbbyHintViolation,
     BeartypeDoorException,
@@ -71,7 +72,8 @@ from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 #FIXME: For disambiguity, rename "_args_wrapped" to "_args_wrapped_tuple". Gah!
 
 #FIXME: Document all public and private attributes of this class, please.
-class TypeHint(Generic[_T], metaclass=ABCMeta):
+class TypeHint(Generic[T], metaclass=_TypeHintMeta):
+# class TypeHint(Generic[T], metaclass=ABCMeta):
     '''
     Abstract base class (ABC) of all **type hint wrapper** (i.e., high-level
     object encapsulating a low-level type hint augmented with a magically
@@ -118,219 +120,22 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
     _args_wrapped : Tuple[TypeHint, ...]
         Tuple of all zero or more high-level child **type hint wrappers** (i.e.,
         :class:`TypeHint` instance) of this wrapper.
-    _is_initted : bool
-        ``True`` only if the :meth:`__init__` method has already been called for
-        this wrapper. Sadly, Python provides no means of preventing Python from
-        uselessly re-calling the :meth:`__init__` method of each singleton
-        instance of this ABC on each re-instantiation of this ABC passed the
-        same low-level type hint. Although metaclasses can be employed to avoid
-        this issue, doing so imposes even more non-trivial constraints: namely,
-        that that metaclass must then be aware that the :meth:`__new__` method
-        overridden by this ABC returns concrete subclasses rather than this ABC.
-        Although that issue can also be avoided by refactoring all or most of
-        the :meth:`__new__` method into that metaclass, doing so is likely to
-        spiral into the Death Star of Marble Madness. Gah!
     '''
 
-    # ..................{ ANNOTATIONS                        }..................
-    # Prevent static type checkers from vomiting everywhere, please. Just do it!
-    _is_initted: bool = False
-
     # ..................{ INITIALIZERS                       }..................
-    # FIXME: Currently, this fails to cache unhashable type hints. Sadly, one of
-    # the most common kinds of type hints are unhashable: callable type hints of
-    # the form "Callable[[...], ...]". Since these hints are so ubiquitous, we
-    # *REALLY* want to add explicit support for caching callable type hints to
-    # our @callable_cached decorator directly. Notably, improve that decorator
-    # to:
-    # * Detect when a passed parameter has the name "hint" (e.g., by using our
-    #  existing argument parsing infrastructure).
-    # * If this is the case:
-    #  * Detect when the passed hint is a callable type hint.
-    #  * If this is the case:
-    #    * Cache (but do *NOT* actually modify the real passed parameter) the
-    #      parameter child type hint of this callable type hint as a new
-    #      "_CallableCachedCallableTypeHint" object. See below. Alternately, for
-    #      efficiency, we should probably *INSTEAD* just... Oh, wait.
-    # * Define a new private "_CallableCachedCallableTypeHint" dataclass ala:
-    #      @dataclass
-    #      class _CallableCachedCallableTypeHint(object):
-    #          params_hint: object
-    #          return_hint: object
-    # FIXME: *OH. WAIT.* We're pretty sure none of the above is actually a
-    # concern, because callable type hints flatten their arguments. Facepalm! In
-    # any case, let's at least unit test that to ensure this behaves as expected.
-    @callable_cached
-    def __new__(cls, hint: _T) -> 'TypeHint':
-        '''
-        Factory constructor magically instantiating and returning a singleton
-        instance of the concrete subclass of this abstract base class (ABC)
-        appropriate for handling the passed low-level type hint.
-
-        Parameters
-        ----------
-        hint : object
-            Low-level type hint to be wrapped by an instance of a concrete
-            subclass of this abstract superclass.
-
-        Returns
-        ----------
-        TypeHint
-            Type hint wrapper wrapping this low-level type hint.
-
-        Raises
-        ----------
-        BeartypeDoorNonpepException
-            If this class does *not* currently support the passed hint.
-        BeartypeDecorHintPepSignException
-            If the passed hint is *not* actually a PEP-compliant type hint.
-        '''
-
-        # Note that a class should typically *NOT* override both the __new__()
-        # and __init__() dunder methods. Ideally, a class should only override
-        # one or the other. Indeed, the singleton design pattern implemented
-        # here is most cleanly implemented with a metaclass approach as detailed
-        # at this relevant StackOverflow answer:
-        #     https://stackoverflow.com/a/8665179/2809027
-        #
-        # Sadly, the metaclass approach assumes that the class in question
-        # either does not already have a custom metaclass *OR* does but that
-        # metaclass can be trivially refactored to support the singleton design
-        # pattern. In this case, however, our metaclass is the extremely
-        # non-trivial "abc.ABCMeta" metaclass. While defining a new metaclass
-
-        # If this low-level type hint is already a high-level type hint wrapper,
-        # return this wrapper as is. This guarantees the following constraint:
-        #     >>> TypeHint(TypeHint(hint)) is TypeHint(hint)
-        #     True
-        if isinstance(hint, TypeHint):
-            return hint
-        # Else, this hint is *NOT* already a wrapper.
-
-        #FIXME: *THIS IS TRASH.* I mean, look at this shambolic thing. We've
-        #duplicate this madness into the __init__() method now, which means
-        #we've fundamentally gone astray. The correct way to handle both this
-        #*AND* the similar "_is_initted" madness is to declare a new
-        #"_TypeHintMeta" metaclass. Look. Just do it. We already have the
-        #outline of that metaclass in the existing
-        #"beartype._util.cache.utilcachemeta" submodule. So:
-        #* Define a new "_doormeta" submodule copy-and-pasted from
-        #  "utilcachemeta".
-        #* Rename the "ABCSingletonMeta" metaclass to "_TypeHintMeta".
-        #* Refactor the _TypeHintMeta.__call__() method to do basically
-        #  everything this __new__() method currently does.
-        #* Note that the "ABCSingletonMeta" metaclass will need a bit of
-        #  generalizing, as that metaclass assumes that it should be caching
-        #  instances of this abstract "TypeHint" superclass rather than concrete
-        #  singletons of that superclass. Using a dictionary should suffice.
-        #* Leverage "metaclass=_TypeHintMeta" above.
-        #* Remove this __new__() method entirely.
-        #* Remove "_is_initted" everywhere. Seriously. What a horror show.
-        #* Remove the duplicate "REDUCERS" block from __init__(). *sigh*
-
-        # ..................{ REDUCERS                           }..................
-        # Reduce this hint to a more amenable form suitable for mapping to a
-        # concrete "TypeHint" subclass if desired.
-        #
-        # Note that this reduction intentionally ignores the entire
-        # "beartype._util.hint.convert" subpackage. Although submodules of that
-        # subpackage do perform various coercions, reductions, and sanitizations of
-        # low-level PEP-compliant type hints, they do so only for the express
-        # purpose of dynamic code generation. That subpackage is *NOT*
-        # general-purpose and is, in fact, harmful in this context. Why? Because
-        # that subpackage erodes the semantic meaning from numerous type hints that
-        # this subpackage necessarily preserves.
-        #
-        # ..................{ REDUCERS ~ pep 484 : none          }..................
-        # If this is the PEP 484-compliant "None" singleton, reduce this hint to
-        # the type of that singleton. While *NOT* explicitly defined by the
-        # "typing" module, PEP 484 explicitly supports this singleton:
-        #     When used in a type hint, the expression None is considered
-        #     equivalent to type(None).
-        #
-        # The "None" singleton is used to type callables lacking an explicit
-        # "return" statement and thus absurdly common. Ergo, detect this early.
-        if hint is None:
-            from beartype._cave._cavefast import NoneType
-            hint = NoneType  # pyright: ignore[reportGeneralTypeIssues]
-        # Else, this is *NOT* the PEP 484-compliant "None" singleton.
-
-        #FIXME: It'd be great if we could import this at module scope for
-        #efficiency instead. Consider refactorings that would enable that! \o/
-        # Avoid circular import dependencies.
-        from beartype.door._doordata import get_typehint_subclass
-
-        # Concrete "TypeHint" subclass handling this hint if any *OR* raise an
-        # exception otherwise.
-        typehint_subclass = get_typehint_subclass(hint)
-        # print(f'!!!!!!!!!!!!! [ in {repr(cls)}.__new__() ] !!!!!!!!!!!!!!!')
-
-        # Return a new instance of this subclass.
-        #
-        # Note that invoking the superclass __new__() method here defers to the
-        # default object.__new__() method implicitly calling our subclass
-        # __init__() method defined below. In short, this is magical.
-        self = super().__new__(typehint_subclass)
-
-        # Note that this instance has yet to be initialized.
-        self._is_initted = False
-
-        # Return this instance.
-        return self
-
-
-    def __init__(self, hint: _T) -> None:
+    def __init__(self, hint: T) -> None:
         '''
         Initialize this type hint wrapper from the passed low-level type hint.
 
         Parameters
         ----------
         hint : object
-            Lower-level type hint to be wrapped by this wrapper.
+            Low-level type hint to be wrapped by this wrapper.
         '''
-        # print(f'!!!!!!!!!!!!! [ in {repr(type(self))}.__init__() ] !!!!!!!!!!!!!!!')
 
-        # If this wrapper has already been initialized, avoid reinitializing
-        # this wrapper by silently reducing to a noop.
-        if self._is_initted:
-            return
-        # Else, this wrapper has yet to be initialized.
-
-        # Note that this wrapper has now been initialized, preventing subsequent
-        # calls to this method bound to the same singleton wrapper from
-        # re-initializing this wrapper.
-        self._is_initted = True
-
-        #FIXME: *SEE ABOVE.* Just "Ugh."
-        # ..................{ REDUCERS                           }..................
-        # Reduce this hint to a more amenable form suitable for mapping to a
-        # concrete "TypeHint" subclass if desired.
-        #
-        # Note that this reduction intentionally ignores the entire
-        # "beartype._util.hint.convert" subpackage. Although submodules of that
-        # subpackage do perform various coercions, reductions, and sanitizations of
-        # low-level PEP-compliant type hints, they do so only for the express
-        # purpose of dynamic code generation. That subpackage is *NOT*
-        # general-purpose and is, in fact, harmful in this context. Why? Because
-        # that subpackage erodes the semantic meaning from numerous type hints that
-        # this subpackage necessarily preserves.
-        #
-        # ..................{ REDUCERS ~ pep 484 : none          }..................
-        # If this is the PEP 484-compliant "None" singleton, reduce this hint to
-        # the type of that singleton. While *NOT* explicitly defined by the
-        # "typing" module, PEP 484 explicitly supports this singleton:
-        #     When used in a type hint, the expression None is considered
-        #     equivalent to type(None).
-        #
-        # The "None" singleton is used to type callables lacking an explicit
-        # "return" statement and thus absurdly common. Ergo, detect this early.
-        if hint is None:
-            from beartype._cave._cavefast import NoneType
-            hint = NoneType  # pyright: ignore[reportGeneralTypeIssues]
-
-        # Else, this is *NOT* the PEP 484-compliant "None" singleton.
         # Classify all passed parameters. Note that this type hint is guaranteed
-        # to be a type hint by validation performed by the __new__() method.
+        # to be a type hint by validation performed by this metaclass __init__()
+        # method.
         self._hint = hint
 
         # Sign uniquely identifying this and that hint if any *OR* "None"
@@ -413,8 +218,15 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
             # class of that object instead? Pretty sure. Investigate, please!
             return False
         # Else, that object is an instance of the same class.
+        #
+        # If *ALL* of the child type hints subscripting both of these parent
+        # type hints are ignorable, return true only if these parent type hints
+        # both originate from the same isinstanceable class.
         elif self._is_args_ignorable and other._is_args_ignorable:
             return self._origin == other._origin
+        # Else, one or more of the child type hints subscripting either of these
+        # parent type hints are unignorable.
+        #
         # If either...
         elif (
             # These hints have differing signs *OR*...
@@ -577,7 +389,7 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
     # Read-only properties intentionally defining *NO* corresponding setter.
 
     @property
-    def hint(self) -> _T:
+    def hint(self) -> T:
         '''
         **Original type hint** (i.e., low-level PEP-compliant type hint wrapped
         by this wrapper at :meth:`TypeHint.__init__` instantiation time).
@@ -744,8 +556,8 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
         #    error: Variable "beartype.door._doorcls.TypeHint.TypeGuard" is not
         #    valid as a type
         #
-        #Clearly, mypy fails to percolate the type variable "_T" from our
-        #pseudo-superclass "Generic[_T]" onto this return annotation. *sigh*
+        #Clearly, mypy fails to percolate the type variable "T" from our
+        #pseudo-superclass "Generic[T]" onto this return annotation. *sigh*
         def is_bearable(  # pyright: ignore[reportGeneralTypeIssues]
             self,
 
@@ -754,7 +566,7 @@ class TypeHint(Generic[_T], metaclass=ABCMeta):
 
             # Optional keyword-only parameters.
             *, conf: BeartypeConf = BeartypeConf(),
-        ) -> TypeGuard[_T]:  # type: ignore[valid-type]
+        ) -> TypeGuard[T]:  # type: ignore[valid-type]
 
             # One-liners justify their own existence.
             return is_bearable(obj, self._hint, conf=conf)

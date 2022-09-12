@@ -12,8 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._cave._cavefast import NoneType
-from beartype.door._doorcheck import _T
 from beartype.door._doorcls import TypeHint
 from beartype.typing import Any
 

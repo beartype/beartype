@@ -31,12 +31,9 @@ class UnionTypeHint(_TypeHintSubscripted):
     low-level :pep:`484`-compliant :attr:`typing.Optional` or
     :attr:`typing.Union` type hint *or* :pep:`604`-compliant ``|``-delimited
     union type hint).
-
-    Attributes (Private)
-    --------
     '''
 
-    # ..................{ PRIVATE                            }..................
+    # ..................{ TESTERS                            }..................
     @callable_cached
     def is_subhint(self, other: TypeHint) -> bool:
 
@@ -88,11 +85,11 @@ class UnionTypeHint(_TypeHintSubscripted):
         # Else, we're good.
         return True
 
-    # ..................{ PRIVATE                            }..................
-    def _is_le_branch(self, branch: TypeHint) -> bool:
-        raise NotImplementedError('UnionTypeHint._is_le_branch() unsupported.')  # pragma: no cover
-
-
+    # ..................{ PRIVATE ~ properties               }..................
     @property
     def _branches(self) -> Iterable[TypeHint]:
         return self._args_wrapped
+
+    # ..................{ PRIVATE ~ testers                  }..................
+    def _is_le_branch(self, branch: TypeHint) -> bool:
+        raise NotImplementedError('UnionTypeHint._is_le_branch() unsupported.')  # pragma: no cover

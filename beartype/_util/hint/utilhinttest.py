@@ -145,6 +145,59 @@ def is_hint(hint: object) -> bool:
         is_hint_nonpep(hint=hint, is_str_valid=True)
     )
 
+# ....................{ TESTERS ~ caching                  }....................
+#FIXME: Unit test us up, please.
+def is_hint_uncached(hint: object) -> bool:
+    '''
+    ``True`` only if the passed type hint is **uncached** (i.e., hint *not*
+    already internally cached by its parent class or module).
+
+    Caveats
+    ----------
+    This function *cannot* be meaningfully memoized, since the passed type hint
+    is *not* guaranteed to be cached somewhere. Only functions passed cached
+    type hints can be meaningfully memoized. Since this high-level function
+    internally defers to unmemoized low-level functions that are ``O(n)`` for
+    ``n`` the size of the inheritance hierarchy of this hint, this function
+    should be called sparingly.
+
+    Parameters
+    ----------
+    hint : object
+        Type hint to be inspected.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this type hint is uncached.
+
+    See Also
+    ----------
+    :func:`beartype.util.hint.convert.utilconvcoerce.coerce_hint_any`
+        Further details.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.utilpep585 import (
+        is_hint_pep585_builtin)
+    from beartype._util.hint.pep.proposal.utilpep604 import is_hint_pep604
+
+    # Return true only if this hint is either...
+    return (
+        # PEP 585-compliant (e.g., "list[str]"), this hint is *NOT* self-caching
+        # (e.g., "list[str] is not list[str]").
+        is_hint_pep585_builtin(hint) or
+        # PEP 604-compliant (e.g., "int | str"), this hint is *NOT* self-caching
+        # (e.g., "int | str is not int | str").
+        #
+        # Note that this hint could also be implicitly cached by coercing this
+        # non-self-caching PEP 604-compliant union into a self-caching PEP
+        # 484-compliant union (e.g., from "int | str" to "Union[int, str]").
+        # Since doing so would consume substantially more time for *NO* tangible
+        # gain, we strongly prefer the current trivial and efficient approach.
+        is_hint_pep604(hint)
+    )
+
 # ....................{ TESTERS ~ ignorable                }....................
 @callable_cached
 def is_hint_ignorable(hint: object) -> bool:
