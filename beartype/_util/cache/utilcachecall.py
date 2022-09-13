@@ -199,8 +199,8 @@ def callable_cached(func: Callable) -> Callable:
     # Else, this wrappee accepts *NO* variadic arguments.
 
     # Dictionary mapping a tuple of all flattened parameters passed to each
-    # prior call of the decorated callable with the value returned by that
-    # call if any (i.e., if that call did *NOT* raise an exception).
+    # prior call of the decorated callable with the value returned by that call
+    # if any (i.e., if that call did *NOT* raise an exception).
     params_flat_to_return_value: Dict[tuple, object] = {}
 
     # get() method of this dictionary, localized for efficiency.

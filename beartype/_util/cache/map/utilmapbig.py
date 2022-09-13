@@ -13,9 +13,11 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import (
     Callable,
     Dict,
+    Union,
 )
 from beartype._util.utilobject import SENTINEL
 from collections.abc import Hashable
+from contextlib import AbstractContextManager
 from threading import Lock
 
 # ....................{ CLASSES                            }....................
@@ -64,13 +66,13 @@ class CacheUnboundedStrong(object):
     _key_to_value_set : Callable
         The :meth:`self._key_to_value.__setitem__` dunder method, classified
         for efficiency.
-    _lock : Lock
-        **Non-reentrant instance-specific thread lock** (i.e., low-level thread
-        locking mechanism implemented as a highly efficient C extension,
-        defined as an instance variable for non-reentrant reuse by the public
-        API of this class). Although CPython, the canonical Python interpreter,
-        *does* prohibit conventional multithreading via its Global Interpreter
-        Lock (GIL), CPython still coercively preempts long-running threads at
+    _lock : AbstractContextManager
+        **Instance-specific thread lock** (i.e., low-level thread locking
+        mechanism implemented as a highly efficient C extension, defined as an
+        instance variable for non-reentrant reuse by the public API of this
+        class). Although CPython, the canonical Python interpreter, *does*
+        prohibit conventional multithreading via its Global Interpreter Lock
+        (GIL), CPython still coercively preempts long-running threads at
         arbitrary execution points. Ergo, multithreading concerns are *not*
         safely ignorable -- even under CPython.
     '''
@@ -88,19 +90,31 @@ class CacheUnboundedStrong(object):
     )
 
     # ..................{ INITIALIZER                        }..................
-    def __init__(self) -> None:
+    def __init__(
+        self,
+
+        # Optional parameters.
+        lock_type: Union[type, Callable[[], object]] = Lock,
+    ) -> None:
         '''
         Initialize this cache to an empty cache.
+
+        Parameters
+        ----------
+        lock_type : Union[type, Callable[[], object]]
+            Type of thread-safe lock to internally use. Defaults to
+            :class:`Lock` (i.e., the type of the standard non-reentrant lock)
+            for efficiency.
         '''
 
         # Initialize all instance variables.
         self._key_to_value: Dict[Hashable, object] = {}
         self._key_to_value_get = self._key_to_value.get
         self._key_to_value_set = self._key_to_value.__setitem__
-        self._lock = Lock()
+        self._lock: AbstractContextManager = lock_type()  # type: ignore[assignment]
 
     # ..................{ GETTERS                            }..................
-    def get_value_static(
+    def cache_or_get_cached_value(
         self,
 
         # Mandatory parameters.
@@ -131,7 +145,7 @@ class CacheUnboundedStrong(object):
         object
             **Value** (i.e., arbitrary object) associated with this key.
         '''
-        assert isinstance(key, Hashable), f'{repr(key)} unhashable.'
+        # assert isinstance(key, Hashable), f'{repr(key)} unhashable.'
 
         # Thread-safely (but non-reentrantly)...
         with self._lock:
@@ -152,12 +166,15 @@ class CacheUnboundedStrong(object):
 
 
     #FIXME: Unit test us up.
-    def get_value_dynamic(
+    #FIXME: Generalize to accept a new mandatory "arg: object" parameter and
+    #then pass rather than forcefully passing the passed key. \o/
+    def cache_or_get_cached_func_return_passed_arg(
         self,
 
         # Mandatory parameters.
         key: Hashable,
-        value_factory: Callable[[Hashable], object],
+        value_factory: Callable[[object], object],
+        arg: object,
 
         # Hidden parameters, localized for negligible efficiency.
         _SENTINEL=SENTINEL,
@@ -183,17 +200,20 @@ class CacheUnboundedStrong(object):
         key : Hashable
             **Key** (i.e., arbitrary hashable object) to return the associated
             value of.
-        value_factory : Callable[[Hashable], object]
-            Caller-defined function accepting this key and dynamically
-            returning the value to be associated with this key.
+        value_factory : Callable[[object], object]
+            **Value factory** (i.e., caller-defined function accepting the
+            passed ``arg`` object and dynamically returning the value to be
+            associated with this key).
+        arg : object
+            Arbitrary object to be passed as is to this value factory.
 
         Returns
         ----------
         object
             **Value** (i.e., arbitrary object) associated with this key.
         '''
-        assert isinstance(key, Hashable), f'{repr(key)} unhashable.'
-        assert callable(value_factory), f'{repr(value_factory)} uncallable.'
+        # assert isinstance(key, Hashable), f'{repr(key)} unhashable.'
+        # assert callable(value_factory), f'{repr(value_factory)} uncallable.'
 
         # Thread-safely (but non-reentrantly)...
         with self._lock:
@@ -208,7 +228,7 @@ class CacheUnboundedStrong(object):
 
             # Value created by this factory function, localized for negligible
             # efficiency to avoid the unnecessary subsequent dictionary lookup.
-            value = value_factory(key)
+            value = value_factory(arg)
 
             # Cache this key with this value.
             self._key_to_value_set(key, value)

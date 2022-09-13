@@ -438,9 +438,9 @@ def coerce_hint_any(hint: object) -> Any:
     #   this function. In this case, replace this subsequent copy by the first
     #   copy of this hint originally passed to a prior call of this function.
     if is_hint_uncached(hint):
-        return _HINT_REPR_TO_SINGLETON.get_value_static(
+        return _HINT_REPR_TO_SINGLETON.cache_or_get_cached_value(
             key=repr(hint), value=hint)
-        # return _HINT_REPR_TO_SINGLETON.get_value_static(key=repr(hint), value=hint)
+        # return _HINT_REPR_TO_SINGLETON.cache_or_get_cached_value(key=repr(hint), value=hint)
     # Else, this hint is (hopefully) self-caching.
 
     # Return this uncoerced hint as is.

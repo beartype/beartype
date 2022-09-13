@@ -19,8 +19,10 @@ from beartype.typing import (
     Tuple,
 )
 from beartype._cave._cavefast import NoneType
+from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.hint.utilhinttest import is_hint_uncached
 from collections.abc import Hashable
+from threading import RLock
 
 # ....................{ METACLASSES                        }....................
 #FIXME: Unit test us up, please.
@@ -69,90 +71,7 @@ class _TypeHintMeta(ABCMeta):
         StackOverflow answers strongly inspiring this implementation.
     '''
 
-    # ..................{ CLASS VARIABLES                    }..................
-    #FIXME: Docstring us up, please.
-    # Note that we intentionally cache machine-readable representations of
-    # low-level type hints rather than those hints themselves. Since
-    # increasingly many hints are no longer self-caching (e.g., PEP
-    # 585-compliant type hints like "list[str]"), the latter *CANNOT* be
-    # guaranteed to be singletons and thus safely used as cache keys. Also:
-    #
-    # **This dictionary intentionally caches machine-readable representation strings
-    # hashes rather than alternative keys** (e.g., actual hashes). Why? Disambiguity.
-    # Although comparatively less efficient in both space and time to construct than
-    # hashes, the :func:`repr` strings produced for two dissimilar type hints *never*
-    # ambiguously collide unless an external caller maliciously modified one or more
-    # identifying dunder attributes of those hints (e.g., the ``__module__``,
-    # ``__qualname__``, and/or ``__name__`` dunder attributes). That should *never*
-    # occur in production code. Meanwhile, the :func:`hash` values produced for two
-    # dissimilar type hints *commonly* ambiguously collide. This is why hashable
-    # containers (e.g., :class:`dict`, :class:`set`) explicitly handle hash table
-    # collisions and why we are *not* going to do so.
-    #hint_key_to_wrapper: Dict[str, 'beartype.door.TypeHint'] = {}
-
-    # ..................{ INITIALIZERS                       }..................
-    #FIXME: Docstring us up, please.
-    # def __new__(
-    #     metacls,
-    #     classname: str,
-    #     class_bases: Tuple[type],
-    #     class_dict: Mapping[str, object],
-    # ) -> None:
-    #     '''
-    #     '''
-    #
-    #     pass
-
-
-    #FIXME: Revise docstring, please.
-    def __init__(
-        cls: '_TypeHintMeta',
-        classname: str,
-        class_bases: Tuple[type],
-        class_dict: Dict[str, Any],
-    ) -> None:
-        '''
-        Initialize the passed singleton abstract base class (ABC).
-
-        Parameters
-        ----------
-        cls : _TypeHintMeta
-            :class:`beartype.door.TypeHint' abstract base class (ABC) whose class is this metaclass.
-
-        All remaining parameters are passed as is to the superclass
-        :meth:`ABCMeta.__init__` method.
-        '''
-        # print(f'!!!!!!!!!!!!! [ in _TypeHintMeta.__init__({repr(cls)}) ] !!!!!!!!!!!!!!!')
-
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: The "beartype.door._doorcls" submodule *CANNOT* be imported
-        # from here, as doing so ignites a circular import dependency.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        # Initialize this "TypeHint" class with all passed parameters.
-        super().__init__(classname, class_bases, class_dict)
-
-        # If this class is the "TypeHint" abstract base class (ABC) itself...
-        if classname == 'TypeHint':
-            # print('!!!!!!!!!!!!! [ _TypeHintMeta.__init__ ] initializing "TypeHint"... !!!!!!!!!!!!!!!')
-
-            #FIXME: Non-thread-safe. This doesn't particularly matter for the
-            #moment, as this API is only intended for external use. Callers are
-            #expected to provide thread-safe caching, if they like. Nonetheless,
-            #let's explicitly note that somewhere, please.
-
-            # Classify all instance variables for safety.
-            #
-            # **Type hint wrapper cache** (i.e., non-thread-safe cache mapping
-            # from the machine-readable representations of all type hints to
-            # cached singleton instances of concrete subclasses of the
-            # :class:`beartype.door.TypeHint` abstract base class (ABC) wrapping
-            # those hints).**
-            cls.hint_key_to_wrapper: Dict[Hashable, object] = {}
-        # Else, this class is a concrete subclass of that ABC. In this case,
-        # silently ignore this subclass.
-
-
+    # ..................{ INSTANTIATORS                      }..................
     def __call__(cls: '_TypeHintMeta', hint: object) -> Any:  # type: ignore[override]
         '''
         Factory constructor magically instantiating and returning a singleton
@@ -180,7 +99,6 @@ class _TypeHintMeta(ABCMeta):
         # ................{ IMPORTS                            }................
         # Avoid circular import dependencies.
         from beartype.door._doorcls import TypeHint
-        from beartype.door._doordata import get_typehint_subclass
 
         # ................{ TRIVIALITIES                       }................
         # If this class is a concrete subclass of the "TypeHint" abstract base
@@ -226,17 +144,53 @@ class _TypeHintMeta(ABCMeta):
             id(hint)
         )
 
+        #FIXME: Revise commentary, please.
         # Previously cached type hint wrapper wrapping this hint if this hint
         # has already been wrapped at least once by an instance of the
         # "TypeHint" class under the active Python interpreter *OR* "None"
         # otherwise (i.e., if this hist has yet to be wrapped such an instance).
-        wrapper = cls.hint_key_to_wrapper.get(hint_key)
+        wrapper = (
+            _HINT_KEY_TO_WRAPPER.cache_or_get_cached_func_return_passed_arg(
+                # Cache this wrapper singleton under this key.
+                key=hint_key,
+                # If a wrapper singleton has yet to be instantiated for this
+                # hint, do so by calling this private factory method passed...
+                value_factory=cls._make_wrapper,
+                # ...this hint.
+                arg=hint,
+            ))
 
-        # If this hint has already been wrapped, return this cached wrapper.
-        if wrapper is not None:
-            # print('!!!!!!!!!!!!! [ _TypeHintMeta.__call__ ] returning cached singleton... !!!!!!!!!!!!!!!')
-            return wrapper
-        # Else, this hint has yet to be wrapped.
+        # Return this wrapper.
+        return wrapper
+
+    # ..................{ PRIVATE                            }..................
+    def _make_wrapper(cls: '_TypeHintMeta', hint: object) -> object:
+        '''
+        **Type hint wrapper factory** (i.e., low-level private method creating
+        and returning a new :class:`beartype.door.TypeHint` instance wrapping
+        the passed type hint), intended to be called by the
+        :meth:`CacheUnboundedStrong.cache_or_get_cached_func_return_passed_arg`
+        method to create a new type hint wrapper singleton for the passed hint.
+
+        Parameters
+        ----------
+        cls : _TypeHintMeta
+            The :class:`beartype.door.TypeHint` ABC.
+        hint : object
+            Low-level type hint to be wrapped by a singleton
+            :class:`beartype.door.TypeHint` instance.
+
+        Raises
+        ----------
+        BeartypeDoorNonpepException
+            If this class does *not* currently support the passed hint.
+        BeartypeDecorHintPepSignException
+            If the passed hint is *not* actually a PEP-compliant type hint.
+        '''
+
+        # ................{ IMPORTS                            }................
+        # Avoid circular import dependencies.
+        from beartype.door._doordata import get_typehint_subclass
 
         # ................{ REDUCTION                          }................
         # Reduce this hint to a more amenable form suitable for mapping to a
@@ -275,10 +229,64 @@ class _TypeHintMeta(ABCMeta):
         # this subclass.
         wrapper = wrapper_subclass(hint)
         # wrapper = super(_TypeHintMeta, wrapper_subclass).__call__(hint)
-
-        # Cache this wrapper under the key uniquely identifying this hint.
-        cls.hint_key_to_wrapper[hint_key] = wrapper
         # print('!!!!!!!!!!!!! [ _TypeHintMeta.__call__ ] caching and returning singleton... !!!!!!!!!!!!!!!')
 
         # Return this wrapper.
         return wrapper
+
+# ....................{ PRIVATE ~ mappings                 }....................
+_HINT_KEY_TO_WRAPPER = CacheUnboundedStrong(
+    # Prefer the slower reentrant lock type for safety. As the subpackage name
+    # implies, the DOOR API is fundamentally recursive and requires reentrancy.
+    lock_type=RLock,
+)
+'''
+**Type hint wrapper cache** (i.e., non-thread-safe cache mapping
+from the machine-readable representations of all type hints to
+cached singleton instances of concrete subclasses of the
+:class:`beartype.door.TypeHint` abstract base class (ABC) wrapping
+those hints).**
+
+Design
+--------------
+**This dictionary is intentionally thread-safe.** Why? Because this dictionary
+is used to ensure that :class:`beartype.door.TypeHint` instances are singletons,
+enabling callers to reliably implement higher-level abstractions memoized (i.e.,
+cached) against these singletons. Those abstractions could be module-scoped and
+thus effectively global. To prevent race conditions between competing threads
+contending over those globals, this dictionary *must* be thread-safe.
+
+**This dictionary is intentionally designed as a naive dictionary rather than a
+robust LRU cache,** for the same reasons that callables accepting hints are
+memoized by the :func:`beartype._util.cache.utilcachecall.callable_cached`
+rather than the :func:`functools.lru_cache` decorator. Why? Because:
+
+* The number of different type hints instantiated across even worst-case
+  codebases is negligible in comparison to the space consumed by those hints.
+* The :attr:`sys.modules` dictionary persists strong references to all
+  callables declared by previously imported modules. In turn, the
+  ``func.__annotations__`` dunder dictionary of each such callable persists
+  strong references to all type hints annotating that callable. In turn, these
+  two statements imply that type hints are *never* garbage collected but
+  instead persisted for the lifetime of the active Python process. Ergo,
+  temporarily caching hints in an LRU cache is pointless, as there are *no*
+  space savings in dropping stale references to unused hints.
+
+**This dictionary intentionally caches machine-readable representation strings
+hashes rather than alternative keys** (e.g., actual hashes). Why? Disambiguity.
+Although comparatively less efficient in both space and time to construct than
+hashes, the :func:`repr` strings produced for two dissimilar type hints *never*
+ambiguously collide unless an external caller maliciously modified one or more
+identifying dunder attributes of those hints (e.g., the ``__module__``,
+``__qualname__``, and/or ``__name__`` dunder attributes). That should *never*
+occur in production code. Meanwhile, the :func:`hash` values produced for two
+dissimilar type hints *commonly* ambiguously collide. This is why hashable
+containers (e.g., :class:`dict`, :class:`set`) explicitly handle hash table
+collisions and why we are *not* going to do so.
+
+Likewise, this dictionary intentionally caches machine-readable representations
+of low-level type hints rather than those hints themselves. Since increasingly
+many hints are no longer self-caching (e.g., PEP 585-compliant type hints like
+"list[str]"), the latter *CANNOT* be guaranteed to be singletons and thus safely
+used as cache keys. Also:
+'''

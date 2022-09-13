@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,13 +10,13 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.cache.map.utilmapbig` submodule.
 """
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 def test_cacheunboundedstrong() -> None:
     """
     Test successful usage of the
@@ -46,21 +46,21 @@ def test_cacheunboundedstrong() -> None:
 
     # Assert that statically getting an uncached key returns the passed value
     # (i.e., caches that key with that value).
-    assert cache_unbounded.get_value_static(
+    assert cache_unbounded.cache_or_get_cached_value(
         key=KEY_A, value=VALUE_A) is VALUE_A
 
     # Assert that statically getting a cached key returns the previously
     # (rather than currently) passed value.
-    assert cache_unbounded.get_value_static(
+    assert cache_unbounded.cache_or_get_cached_value(
         key=KEY_A, value=VALUE_B) is VALUE_A
 
     # Assert that dynamically getting a cached key returns the previously
     # passed value rather than a value returned by the passed value factory.
-    assert cache_unbounded.get_value_dynamic(
-        key=KEY_A, value_factory=value_factory) is VALUE_A
+    assert cache_unbounded.cache_or_get_cached_func_return_passed_arg(
+        key=KEY_A, value_factory=value_factory, arg=KEY_A) is VALUE_A
 
     # Assert that dynamically getting an uncached key returns the value
     # returned by the passed value factory (i.e., caches that key with that
     # value).
-    assert cache_unbounded.get_value_dynamic(
-        key=KEY_B, value_factory=value_factory) == hash(KEY_B)
+    assert cache_unbounded.cache_or_get_cached_func_return_passed_arg(
+        key=KEY_B, value_factory=value_factory, arg=KEY_B) == hash(KEY_B)
