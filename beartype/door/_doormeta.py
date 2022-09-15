@@ -13,15 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from abc import ABCMeta
-from beartype.typing import (
-    Any,
-    Dict,
-    Tuple,
-)
+from beartype.typing import Any
 from beartype._cave._cavefast import NoneType
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.hint.utilhinttest import is_hint_uncached
-from collections.abc import Hashable
 from threading import RLock
 
 # ....................{ METACLASSES                        }....................

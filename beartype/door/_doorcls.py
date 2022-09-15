@@ -12,11 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Declare "TypeHint" attributes as slotted for lookup efficiency, please.
+#FIXME: Slot "TypeHint" attributes for lookup efficiency, please.
 #FIXME: Privatize most (...or perhaps all) public instance variables, please.
 
 # ....................{ IMPORTS                            }....................
-# from abc import ABCMeta
 from beartype.door._doorcheck import (
     die_if_unbearable,
     is_bearable,
@@ -30,6 +29,7 @@ from beartype.roar import (
     BeartypeDoorHintViolation,
 )
 from beartype.typing import (
+    TYPE_CHECKING,
     Any,
     Generic,
     Iterable,
@@ -39,14 +39,23 @@ from beartype.typing import (
 )
 from beartype._conf import BeartypeConf
 from beartype._util.cache.utilcachecall import callable_cached
-# from beartype._util.cache.utilcachemeta import ABCSingletonMeta
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_origin_or_none,
     get_hint_pep_sign_or_none,
 )
 from beartype._util.hint.utilhinttest import is_hint_ignorable
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
+from beartype._util.mod.lib.utiltyping import import_typing_attr_or_fallback
+
+# ....................{ HINTS                              }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: Synchronize with similar logic in "beartype.door._doorcheck". See
+# the head of that submodule for detailed commentary.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if TYPE_CHECKING:
+    from typing_extensions import TypeGuard
+else:
+    TypeGuard = import_typing_attr_or_fallback('TypeGuard', bool)
 
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Override the __contains__() dunder method as well, please. Doing so will
@@ -538,56 +547,25 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             raise BeartypeDoorHintViolation(str(exception)) from exception
         # Else, this object satisfies this hint.
 
-    # ..................{ CHECKERS ~ is_bearable()           }..................
-    # If the active Python interpreter targets Python >= 3.10 and thus supports
-    # PEP
-    # 647 (i.e., "typing.TypeGuard[...]" type hints), declare the is_bearable()
-    #     tester to have a PEP 647-compliant signature. Doing so substantially
-    #     reduces static type-checking complaints in end user code calling this
-    #     tester.
-    if IS_PYTHON_AT_LEAST_3_10:
-        # Defer version-specific imports.
-        from beartype.typing import TypeGuard  # pyright: ignore[reportGeneralTypeIssues]
 
-        #FIXME: Submit an upstream mypy issue. Since mypy correctly accepts our
-        #comparable beartype.door.is_bearable() function, mypy should also
-        #accept this equivalent method. mypy currently fails to do so with this
-        #false positive:
-        #    error: Variable "beartype.door._doorcls.TypeHint.TypeGuard" is not
-        #    valid as a type
-        #
-        #Clearly, mypy fails to percolate the type variable "T" from our
-        #pseudo-superclass "Generic[T]" onto this return annotation. *sigh*
-        def is_bearable(  # pyright: ignore[reportGeneralTypeIssues]
-            self,
+    #FIXME: Submit an upstream mypy issue. Since mypy correctly accepts our
+    #comparable beartype.door.is_bearable() function, mypy should also
+    #accept this equivalent method. mypy currently fails to do so with this
+    #false positive:
+    #    error: Variable "beartype.door._doorcls.TypeHint.TypeGuard" is not
+    #    valid as a type
+    #
+    #Clearly, mypy fails to percolate the type variable "T" from our
+    #pseudo-superclass "Generic[T]" onto this return annotation. *sigh*
+    def is_bearable(
+        self,
 
-            # Mandatory flexible parameters.
-            obj: object,
+        # Mandatory flexible parameters.
+        obj: object,
 
-            # Optional keyword-only parameters.
-            *, conf: BeartypeConf = BeartypeConf(),
-        ) -> TypeGuard[T]:  # type: ignore[valid-type]
-
-            # One-liners justify their own existence.
-            return is_bearable(obj, self._hint, conf=conf)
-    # Else, this interpreter targets Python < 3.10 and thus fails to supports PEP
-    # 647. In this case, fallback to a PEP 647-agnostic signature.
-    else:
-        def is_bearable(  # type: ignore[misc]
-            self,
-
-            # Mandatory flexible parameters.
-            obj: object,
-
-            # Optional keyword-only parameters.
-            *, conf: BeartypeConf = BeartypeConf(),
-        ) -> bool:
-
-            # One-liners justify their own existence.
-            return is_bearable(obj, self._hint, conf=conf)
-
-    # Document up the above function.
-    is_bearable.__doc__ = (
+        # Optional keyword-only parameters.
+        *, conf: BeartypeConf = BeartypeConf(),
+    ) -> TypeGuard[T]:
         '''
         ``True`` only if the passed arbitrary object satisfies this type hint
         under the passed beartype configuration.
@@ -623,7 +601,9 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             ...     ['the', 'centre', 'cannot', 'hold;'])
             False
         '''
-    )
+
+        # One-liners justify their own existence.
+        return is_bearable(obj, self._hint, conf=conf)
 
     # ..................{ TESTERS ~ subhint                  }..................
     @callable_cached

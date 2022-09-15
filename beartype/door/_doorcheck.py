@@ -11,22 +11,14 @@ active Python process).
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Refactor our current "IS_PYTHON_AT_LEAST_3_10" that static type-checkers
-#do *NOT* grok to the classic workaround that static type-checkers do grok. Note
-#also the intentional usage of "typing_extensions" versus "typing", as static
-#type-checkers accept the former but *NOT* the latter to provide "TypeGuard"
-#under Python < 3.10:
-#    # Praise be to MIT ML guru @rsokl for this brilliant circumvention.
-#    if typing.TYPE_CHECKING:
-#        from typing_extensions import TypeGuard
-#    else:
-#        try:
-#            from typing import TypeGuard
-#        except ImportError:
-#            try:
-#                from typing_extensions import TypeGuard
-#            except ImportError:
-#                TypeGuard = bool
+#FIXME: Consider validating the signatures of both the is_bearable() function
+#defined below *AND* TypeHint.is_bearable() method defined elsewhere to have
+#returns annotated as "TypeHint[T]" from the perspective of static
+#type-checking. Sadly, doing so is extremely non-trivial -- requiring usage of a
+#new mandatory "pytest-mypy-plugins" test-time dependency, which itself requires
+#definition of mypy-specific cases in a new supplementary top-level directory.
+#Honestly, it's all a bit insane. We just wish we could call mypy's fake
+#reveal_type() function at runtime, honestly. *sigh*
 
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -46,35 +38,48 @@ from beartype.roar import (
     BeartypeCallHintReturnViolation,
 )
 from beartype.roar._roarexc import _BeartypeDoorTextException
+from beartype.typing import TYPE_CHECKING
 from beartype._check.checkmake import make_func_tester
 from beartype._conf import BeartypeConf
 from beartype._decor._cache.cachedecor import beartype
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerror import reraise_exception_placeholder
 from beartype._util.hint.utilhinttest import die_unless_hint
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
+from beartype._util.mod.lib.utiltyping import import_typing_attr_or_fallback
 
-# ....................{ PRIVATE ~ constants                }....................
-_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX = (
-    '@beartyped '
-    'beartype.door._doorcheck._get_type_checker._die_if_unbearable() '
-    'return '
-)
-'''
-Irrelevant substring prefixing *all* exception messages raised by *all*
-**synthetic runtime type-checkers** (i.e., callables dynamically created and
-returned by the :func: `_get_type_checker` getter).
-'''
+# ....................{ HINTS                              }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: Synchronize with similar logic in "beartype.door._doorcls".
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-
-_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX_LEN = (
-    len(_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX))
-'''
-Length of the irrelevant substring prefixing *all*
-exception messages raised by *all* **synthetic runtime type-checkers** (i.e.,
-callables dynamically created and returned by the :func: `_get_type_checker`
-getter).
-'''
+# Portably import the PEP 647-compliant "typing.TypeGuard" type hint factory
+# first introduced by Python >= 3.10, regardless of the current version of
+# Python and regardless of whether this submodule is currently being subject to
+# static type-checking or not. Praise be to MIT ML guru and stunning Hypothesis
+# maintainer @rsokl (Ryan Soklaski) for this brilliant circumvention. \o/
+#
+# Usage of this factory is a high priority. Hinting the return of the
+# is_bearable() tester with a type guard created by this factory effectively
+# coerces that tester in an arbitrarily complete type narrower and thus type
+# parser at static analysis time, substantially reducing complaints from static
+# type-checkers in end user code deferring to that tester.
+#
+# If this submodule is currently being statically type-checked (e.g., mypy),
+# intentionally import from the third-party "typing_extensions" module rather
+# than the standard "typing" module. Why? Because doing so eliminates Python
+# version complaints from static type-checkers (e.g., mypy, pyright). Static
+# type-checkers could care less whether "typing_extensions" is actually
+# installed or not; they only care that "typing_extensions" unconditionally
+# defines this type factory across all Python versions, whereas "typing" only
+# conditionally defines this type factory under Python >= 3.10. *facepalm*
+if TYPE_CHECKING:
+    from typing_extensions import TypeGuard
+# Else, this submodule is currently being imported at runtime by Python. In this
+# case, dynamically import this factory from whichever of the standard "typing"
+# module *OR* the third-party "typing_extensions" module declares this factory,
+# falling back to the builtin "bool" type if none do.
+else:
+    TypeGuard = import_typing_attr_or_fallback('TypeGuard', bool)
 
 # ....................{ VALIDATORS                         }....................
 def die_if_unbearable(
@@ -234,95 +239,14 @@ def is_subhint(subhint: object, superhint: object) -> bool:
 #* Invalid hints. In this case, test that the raised exception is prefixed by
 #  the expected substring rather than our exception placeholder.
 
-# If the active Python interpreter targets Python >= 3.10 and thus supports PEP
-# 647 (i.e., "typing.TypeGuard[...]" type hints), declare the is_bearable()
-# tester to have a PEP 647-compliant signature. Doing so substantially reduces
-# static type-checking complaints in end user code calling this tester.
-if IS_PYTHON_AT_LEAST_3_10:
-    # Defer version-specific imports.
-    from beartype.typing import TypeGuard  # pyright: ignore[reportGeneralTypeIssues]
+def is_bearable(
+    # Mandatory flexible parameters.
+    obj: object,
+    hint: T,
 
-    def is_bearable(  # pyright: ignore[reportGeneralTypeIssues]
-        # Mandatory flexible parameters.
-        obj: object,
-        hint: T,
-
-        # Optional keyword-only parameters.
-        *, conf: BeartypeConf = BeartypeConf(),
-    ) -> TypeGuard[T]:
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize this implementation with that defined below. For
-        # efficiency, these two implementations violate DRY rather than
-        # deferring to a lower-level tester function.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        # Attempt to dynamically generate a memoized low-level type-checking
-        # tester function returning true only if the object passed to that
-        # tester satisfies the type hint passed to this high-level type-checking
-        # tester function.
-        #
-        # Note that parameters are intentionally passed positionally for
-        # efficiency. Since make_func_tester() is memoized, passing parameters
-        # by keyword would raise a non-fatal
-        # "_BeartypeUtilCallableCachedKwargsWarning" warning.
-        try:
-            func_tester = make_func_tester(
-                hint, conf, BeartypeAbbyTesterException)
-        # If any exception was raised, reraise this exception with each
-        # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
-        # replaced by the passed exception prefix.
-        except Exception as exception:
-            reraise_exception_placeholder(
-                exception=exception,
-                target_str='is_bearable() ',
-            )
-
-        # Return true only if the passed object satisfies this hint.
-        return func_tester(obj)  # pyright: ignore[reportUnboundVariable]
-# Else, this interpreter targets Python < 3.10 and thus fails to supports PEP
-# 647. In this case, fallback to a PEP 647-agnostic signature.
-else:
-    def is_bearable(  # type: ignore[misc]
-        # Mandatory flexible parameters.
-        obj: object,
-        hint: object,
-
-        # Optional keyword-only parameters.
-        *, conf: BeartypeConf = BeartypeConf(),
-    ) -> bool:
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize this implementation with that defined above. For
-        # efficiency, these two implementations violate DRY rather than
-        # deferring to a lower-level tester function.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        # Attempt to dynamically generate a memoized low-level type-checking
-        # tester function returning true only if the object passed to that
-        # tester satisfies the type hint passed to this high-level type-checking
-        # tester function.
-        #
-        # Note that parameters are intentionally passed positionally for
-        # efficiency. Since make_func_tester() is memoized, passing parameters
-        # by keyword would raise a non-fatal
-        # "_BeartypeUtilCallableCachedKwargsWarning" warning.
-        try:
-            func_tester = make_func_tester(
-                hint, conf, BeartypeAbbyTesterException)
-        # If any exception was raised, reraise this exception with each
-        # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
-        # replaced by the passed exception prefix.
-        except Exception as exception:
-            reraise_exception_placeholder(
-                exception=exception,
-                target_str='is_bearable() ',
-            )
-
-        # Return true only if the passed object satisfies this hint.
-        return func_tester(obj)  # pyright: ignore[reportUnboundVariable]
-
-
-# Document up the above function.
-is_bearable.__doc__ = (
+    # Optional keyword-only parameters.
+    *, conf: BeartypeConf = BeartypeConf(),
+) -> TypeGuard[T]:
     '''
     ``True`` only if the passed arbitrary object satisfies the passed
     PEP-compliant type hint under the passed beartype configuration.
@@ -365,7 +289,30 @@ is_bearable.__doc__ = (
         >>> is_bearable(['the', 'centre', 'cannot', 'hold;'], list[int])
         False
     '''
-)
+
+    # Attempt to dynamically generate a memoized low-level type-checking
+    # tester function returning true only if the object passed to that
+    # tester satisfies the type hint passed to this high-level type-checking
+    # tester function.
+    #
+    # Note that parameters are intentionally passed positionally for
+    # efficiency. Since make_func_tester() is memoized, passing parameters
+    # by keyword would raise a non-fatal
+    # "_BeartypeUtilCallableCachedKwargsWarning" warning.
+    try:
+        func_tester = make_func_tester(
+            hint, conf, BeartypeAbbyTesterException)
+    # If any exception was raised, reraise this exception with each
+    # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
+    # replaced by the passed exception prefix.
+    except Exception as exception:
+        reraise_exception_placeholder(
+            exception=exception,
+            target_str='is_bearable() ',
+        )
+
+    # Return true only if the passed object satisfies this hint.
+    return func_tester(obj)  # pyright: ignore[reportUnboundVariable]
 
 # ....................{ PRIVATE ~ getters                  }....................
 #FIXME: Shift into a more public location for widespread usage elsewhere: e.g.,
@@ -454,3 +401,25 @@ def _get_type_checker(
 
     # Return this closure.
     return _die_if_unbearable
+
+# ....................{ PRIVATE ~ constants                }....................
+_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX = (
+    '@beartyped '
+    'beartype.door._doorcheck._get_type_checker._die_if_unbearable() '
+    'return '
+)
+'''
+Irrelevant substring prefixing *all* exception messages raised by *all*
+**synthetic runtime type-checkers** (i.e., callables dynamically created and
+returned by the :func: `_get_type_checker` getter).
+'''
+
+
+_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX_LEN = (
+    len(_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX))
+'''
+Length of the irrelevant substring prefixing *all*
+exception messages raised by *all* **synthetic runtime type-checkers** (i.e.,
+callables dynamically created and returned by the :func: `_get_type_checker`
+getter).
+'''
