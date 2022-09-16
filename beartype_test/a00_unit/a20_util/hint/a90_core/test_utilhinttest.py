@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-agnostic type hint tester utility unit tests.**
+**Beartype PEP-agnostic type hint tester utility** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.hint.utilhinttest` submodule.
@@ -15,9 +15,6 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# from beartype.roar import BeartypeDecorHintPepIgnorableDeepWarning
-# from beartype_test._util.mark.pytmark import ignore_warnings
-from pytest import raises
 
 # ....................{ TESTS                              }....................
 def test_die_unless_hint() -> None:
@@ -26,7 +23,7 @@ def test_die_unless_hint() -> None:
     validator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import (
         BeartypeDecorHintNonpepException,
         BeartypeDecorHintPepUnsupportedException,
@@ -36,6 +33,7 @@ def test_die_unless_hint() -> None:
         NOT_HINTS, HINTS_NONPEP)
     from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
+    from pytest import raises
 
     # Assert this function accepts PEP-noncompliant type hints.
     for nonhint_pep in HINTS_NONPEP:
@@ -63,7 +61,7 @@ def test_is_hint() -> None:
     Test the :func:`beartype._util.hint.utilhinttest.is_hint` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.utilhinttest import is_hint
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS, HINTS_NONPEP
     from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
@@ -92,7 +90,7 @@ def test_is_hint_ignorable() -> None:
     Test the :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.utilhinttest import is_hint_ignorable
     from beartype_test.a00_unit.data.hint.data_hint import (
         HINTS_IGNORABLE,

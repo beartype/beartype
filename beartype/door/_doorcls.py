@@ -38,12 +38,14 @@ from beartype.typing import (
     overload,
 )
 from beartype._conf import BeartypeConf
+from beartype._data.datatyping import CallableMethodGetitemArg
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_origin_or_none,
     get_hint_pep_sign_or_none,
 )
+from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.mod.lib.utiltyping import import_typing_attr_or_fallback
 
@@ -55,7 +57,8 @@ from beartype._util.mod.lib.utiltyping import import_typing_attr_or_fallback
 if TYPE_CHECKING:
     from typing_extensions import TypeGuard
 else:
-    TypeGuard = import_typing_attr_or_fallback('TypeGuard', bool)
+    TypeGuard = import_typing_attr_or_fallback(
+        'TypeGuard', TypeHintTypeFactory(bool))
 
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Override the __contains__() dunder method as well, please. Doing so will
@@ -69,8 +72,8 @@ else:
 #Since "_args_wrapped" is a tuple, that operation exhibits inefficient O(n)
 #lookup behaviour. To do this efficiently, we'll need to dynamically define a
 #new backing set on-the-fly as needed ala:
-#    @callable_cached  # <-- does this support properties, yet? *sigh*
 #    @property
+#    @callable_cached  # <-- does this support properties, yet? *sigh*
 #    def _args_wrapped_set(self) -> FrozenSet[object, ...]:
 #        return frozenset(self._args_wrapped)
 #
@@ -321,7 +324,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     @overload
     def __getitem__(self, index: slice) -> Tuple[object, ...]: ...
 
-    def __getitem__(self, index: Union[int, slice]) -> (
+    def __getitem__(self, index: CallableMethodGetitemArg) -> (
         Union[object, Tuple[object, ...]]):
         '''
         Either:

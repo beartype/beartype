@@ -83,6 +83,13 @@ checkers (e.g., :mod:`mypy`) and type-aware IDEs (e.g., VSCode) that the
   including metaclasses and method-resolution orders (MRO) of those classes.
 '''
 
+# ....................{ HINTS ~ callable ~ args            }....................
+CallableMethodGetitemArg = Union[int, slice]
+'''
+PEP-compliant type hint matching the standard type of the single positional
+argument accepted by the ``__getitem__` dunder method.
+'''
+
 # ....................{ HINTS ~ callable ~ late            }....................
 # Callable-specific type hints *NOT* required by subsequent type hints below.
 

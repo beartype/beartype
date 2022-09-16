@@ -15,9 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #singletons in Python. Fascinating... but sadly currently unused.
 
 # # ....................{ IMPORTS                            }....................
-# from abc import ABCMeta
 # from beartype.typing import (
-#     Dict,
 #     Optional,
 #     Type,
 #     TypeVar,
@@ -31,12 +29,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 # # ....................{ METACLASSES                        }....................
 # #FIXME: Unit test us up, please.
-# class ABCSingletonMeta(ABCMeta):
-## class SingletonMeta(type):
+# class SingletonMeta(type):
 #     '''
-#     **Singleton abstract base class (ABC) metaclass** (i.e., the standard
-#     :class:`abc.ABCMeta` metaclass augmented with caching to implement the
-#     singleton design pattern).
+#     **Singleton metaclass** (i.e., the root :class:`type` metaclass augmented
+#     with caching to implement the singleton design pattern).
 #
 #     This metaclass is superior to the usual approach of implementing the
 #     singleton design pattern: overriding the :meth:`__new__` method of a
@@ -87,37 +83,38 @@ This private submodule is *not* intended for importation by downstream callers.
 #             Singleton abstract base class (ABC) whose class is this metaclass.
 #
 #         All remaining parameters are passed as is to the superclass
-#         :meth:`ABCMeta.__init__` method.
+#         :meth:`type.__init__` method.
 #         '''
 #
-#         # Defer to the superclass method.
-#         super(ABCSingletonMeta, cls).__init__(*args, **kwargs)
+#         # Initialize our superclass with all passed parameters.
+#         super().__init__(*args, **kwargs)
 #
 #         # Nullify all instance variables for safety.
 #         cls.__singleton: Optional[type] = None
-#         # print(f'!!!!!!!!!!!!! [ in ABCSingletonMeta.__init__({repr(cls)}) ] !!!!!!!!!!!!!!!')
+#         # print(f'!!!!!!!!!!!!! [ in SingletonMeta.__init__({repr(cls)}) ] !!!!!!!!!!!!!!!')
 #
 #
 #     def __call__(cls: Type[_T], *args, **kwargs) -> _T:
 #         '''
-#         Instantiate the passed singleton abstract base class (ABC).
+#         Instantiate the passed singleton class.
 #
 #         Parameters
 #         ----------
 #         cls : type
-#             Singleton abstract base class (ABC) whose class is this metaclass.
+#             Singleton class whose class is this metaclass.
 #
 #         All remaining parameters are passed as is to the superclass
-#         :meth:`ABCMeta.__call__` method.
+#         :meth:`type.__call__` method.
 #         '''
 #
-#         # If a singleton instance of that ABC has yet to be instantiated, do so.
-#         # print(f'!!!!!!!!!!!!! [ in ABCSingletonMeta.__call__({repr(cls)}) ] !!!!!!!!!!!!!!!')
+#         # If a singleton instance of that class has yet to be instantiated, do
+#         # so.
+#         # print(f'!!!!!!!!!!!!! [ in SingletonMeta.__call__({repr(cls)}) ] !!!!!!!!!!!!!!!')
 #         if cls.__singleton is None:
-#             cls.__singleton = super(ABCSingletonMeta, cls).__call__(
-#                 *args, **kwargs)
+#             cls.__singleton = super().__call__(*args, **kwargs)
 #             # print(f'!!!!!!!!!!!!! [ instantiating new {repr(cls)} singleton ] !!!!!!!!!!!!!!!')
-#         # Else, a singleton instance of that ABC has already been instantiated.
+#         # Else, a singleton instance of that class has already been
+#         # instantiated.
 #
 #         # Return this singleton instance as is.
 #         return cls.__singleton

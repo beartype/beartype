@@ -44,6 +44,7 @@ from beartype._conf import BeartypeConf
 from beartype._decor._cache.cachedecor import beartype
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerror import reraise_exception_placeholder
+from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.mod.lib.utiltyping import import_typing_attr_or_fallback
 
@@ -51,6 +52,12 @@ from beartype._util.mod.lib.utiltyping import import_typing_attr_or_fallback
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Synchronize with similar logic in "beartype.door._doorcls".
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#FIXME: This approach is *PHENOMENAL.* No. Seriously, We could implement a
+#full-blown "beartype.typing" subpackage (or perhaps even separate "beartyping"
+#package) extending this core concept to *ALL* type hint factories, enabling
+#users to trivially annotate with any type hint factory regardless of the
+#current version of Python or whether "typing_extensions" is installed or not.
 
 # Portably import the PEP 647-compliant "typing.TypeGuard" type hint factory
 # first introduced by Python >= 3.10, regardless of the current version of
@@ -79,7 +86,8 @@ if TYPE_CHECKING:
 # module *OR* the third-party "typing_extensions" module declares this factory,
 # falling back to the builtin "bool" type if none do.
 else:
-    TypeGuard = import_typing_attr_or_fallback('TypeGuard', bool)
+    TypeGuard = import_typing_attr_or_fallback(
+        'TypeGuard', TypeHintTypeFactory(bool))
 
 # ....................{ VALIDATORS                         }....................
 def die_if_unbearable(
