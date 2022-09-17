@@ -31,6 +31,7 @@ from beartype.roar import (
 from beartype.typing import (
     TYPE_CHECKING,
     Any,
+    FrozenSet,
     Generic,
     Iterable,
     Tuple,
@@ -61,28 +62,7 @@ else:
         'TypeGuard', TypeHintTypeFactory(bool))
 
 # ....................{ SUPERCLASSES                       }....................
-#FIXME: Override the __contains__() dunder method as well, please. Doing so will
-#fully transform "TypeHint" into a full-blown collection as well as set, which
-#would be monstrously powerful. Note, however, that we should do so
-#*EFFICIENTLY* with guaranteed O(1) lookup behaviour. Ergo, don't do this:
-#    @callable_cached
-#    def __contains__(self, hint_child: 'TypeHint') -> bool:
-#        return hint_child in self._args_wrapped
-#
-#Since "_args_wrapped" is a tuple, that operation exhibits inefficient O(n)
-#lookup behaviour. To do this efficiently, we'll need to dynamically define a
-#new backing set on-the-fly as needed ala:
-#    @property
-#    @callable_cached  # <-- does this support properties, yet? *sigh*
-#    def _args_wrapped_set(self) -> FrozenSet[object, ...]:
-#        return frozenset(self._args_wrapped)
-#
-#Given that, __contains__() trivially reduces to this efficient implementation:
-#    # No caching is required, as this is already O(1). \o/
-#    def __contains__(self, hint_child: 'TypeHint') -> bool:
-#        return hint_child in self._args_wrapped_set  # <-- lol
-#FIXME: For disambiguity, rename "_args_wrapped" to "_args_wrapped_tuple". Gah!
-
+#FIXME: Subclass all applicable "collections.abc" ABCs for explicitness, please.
 #FIXME: Document all public and private attributes of this class, please.
 class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 # class TypeHint(Generic[T], metaclass=ABCMeta):
@@ -128,10 +108,16 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     Attributes (Private)
     --------
     _args : Tuple[object, ...]
-        Tuple of all zero or more low-level child type hints of this wrapper.
-    _args_wrapped : Tuple[TypeHint, ...]
-        Tuple of all zero or more high-level child **type hint wrappers** (i.e.,
-        :class:`TypeHint` instance) of this wrapper.
+        Tuple of the zero or more low-level child type hints subscripting
+        (indexing) the low-level parent type hint wrapped by this wrapper.
+    _hint : T
+        Low-level type hint wrapped by this wrapper.
+    _hint_sign : Optional[beartype._data.hint.pep.sign.datapepsigncls.HintSign]
+        Either:
+
+        * If this hint is PEP-compliant and thus uniquely identified by a
+          :mod:`beartype`-specific sign, that sign.
+        * If this hint is a simple class, ``None``.
     '''
 
     # ..................{ INITIALIZERS                       }..................
@@ -182,22 +168,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         self._args = get_hint_pep_args(hint)
         self._munge_args()
 
-        #FIXME: Space and time inefficient. Defer computation of the
-        #"_args_wrapped" instance variable until absolutely required by
-        #replacing this static attribute with a dynamic caching property: e.g.,
-        #    @callable_cached  # <-- does this support properties, yet? *sigh*
-        #    @property
-        #    def _args_wrapped(self) -> Tuple[object, ...]:
-        #        return self._wrap_children(self._args)
-        #
-        #Doing so then allows us to obsolete the _wrap_children() method by
-        #simply shifting the entirety of _wrap_children() into _args_wrapped().
-        #Subclasses then override _args_wrapped() rather than _wrap_children()
-        #as need. Swell, eh? Heh.
-
-        # Tuple of all high-level child type hint wrappers of this hint.
-        self._args_wrapped = self._wrap_children(self._args)
-
     # ..................{ DUNDERS                            }..................
     def __hash__(self) -> int:
         '''
@@ -244,7 +214,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             # These hints have differing signs *OR*...
             self._hint_sign is not other._hint_sign or
             # These hints have a differing number of child type hints...
-            len(self._args_wrapped) != len(other._args_wrapped)
+            len(self._args_wrapped_tuple) != len(other._args_wrapped_tuple)
         ):
             # Then these hints are unequal.
             return False
@@ -254,7 +224,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         return all(
             self_child == other_child
             for self_child, other_child in zip(
-                self._args_wrapped, other._args_wrapped)
+                self._args_wrapped_tuple, other._args_wrapped_tuple)
         )
 
 
@@ -298,6 +268,18 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         return self.is_superhint(other) and self != other
 
     # ..................{ DUNDERS ~ iterable                 }..................
+    def __contains__(self, hint_child: 'TypeHint') -> bool:
+        '''
+        ``True`` only if the low-level type hint wrapped by the passed **type
+        hint wrapper** (i.e., :class:`TypeHint` instance) is a child type hint
+        originally subscripting the low-level parent type hint wrapped by this
+        :class:`TypeHint` instance.
+        '''
+
+        # Sgt. Pepper's One-liners GitHub Club Band.
+        return hint_child in self._args_wrapped_frozenset
+
+
     def __iter__(self) -> Iterable['TypeHint']:
         '''
         Generator iteratively yielding all **children type hint wrappers**
@@ -309,7 +291,8 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         abstract base class (ABC).
         '''
 
-        yield from self._args_wrapped
+        # For those who are about to one-liner, we salute you.
+        yield from self._args_wrapped_tuple
 
     # ..................{ DUNDERS ~ iterable : item          }..................
     # Inform static type-checkers of the one-to-one correspondence between the
@@ -366,7 +349,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # possibly should) perform that validation here, doing so is non-trivial
         # in the case of both a negative relative index *AND* a passed slice.
         # This trivial approach suffices for now.
-        return self._args_wrapped[index]
+        return self._args_wrapped_tuple[index]
 
     # ..................{ DUNDERS ~ iterable : sized         }..................
     #FIXME: Unit test us up, please.
@@ -377,7 +360,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         '''
 
         # See __len__() for further commentary.
-        return bool(self._args_wrapped)
+        return bool(self._args_wrapped_tuple)
 
 
     #FIXME: Unit test us up, please.
@@ -395,7 +378,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # the "self._args" tuple, for safety. Theoretically, these two iterables
         # should exactly coincide in length. Pragmatically, it's best to assume
         # nothing in the murky waters we swim in.
-        return len(self._args_wrapped)
+        return len(self._args_wrapped_tuple)
 
     # ..................{ PROPERTIES ~ read-only             }..................
     # Read-only properties intentionally defining *NO* corresponding setter.
@@ -639,7 +622,10 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         # Return true only if this type hint is a subhint of *ANY* branch of the
         # passed type hint.
-        return any(self._is_le_branch(branch) for branch in other._branches)
+        return any(
+            self._is_le_branch(other_branch)
+            for other_branch in other._branches
+        )
 
 
     def is_superhint(self, other: 'TypeHint') -> bool:
@@ -680,21 +666,54 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         pass
 
+    # ..................{ PRIVATE ~ properties : read-only   }..................
+    # Read-only properties intentionally defining *NO* corresponding setter.
 
-    def _wrap_children(self, unordered_children: tuple) -> Tuple[
-        'TypeHint', ...]:
+    #FIXME: List @callable_cached first *AFTER* we improve that decorator to
+    #explicitly support properties.
+    #FIXME: *UGH.* Our attempt to cache with @callable_cached here provokes
+    #infinite recursion overflow due to subtle interaction between __eq__,
+    #__hash__, and our default implementation of @callable_cached. This should
+    #behave as expected once we generalize @callable_cached to support
+    #properties, which we *CLEARLY* need to immediately do. Gah!
+
+    # @callable_cached  # <-- does this support properties, yet? *sigh*
+    @property  # type: ignore
+    def _args_wrapped_tuple(self) -> Tuple['TypeHint', ...]:
         '''
-        Tuple of zero or more :class:`TypeHint` instances wrapping all low-level
-        child type hints subscripting the low-level parent type hint wrapped by
-        this :class:`TypeHint` instance.
+        Tuple of the zero or more high-level child **type hint wrappers** (i.e.,
+        :class:`TypeHint` instances) wrapping the low-level child type hints
+        subscripting (indexing) the low-level parent type hint wrapped by this
+        wrapper.
 
-        Gives subclasses an opportunity modify.
+        This attribute is intentionally defined as a memoized property to
+        minimize space and time consumption for use cases *not* accessing this
+        attribute.
         '''
 
-        return tuple(
-            TypeHint(unordered_child) for unordered_child in unordered_children)
+        # One-liner, don't fail us now!
+        return tuple(TypeHint(hint_child) for hint_child in self._args)
 
-    # ..................{ PRIVATE ~ property                 }..................
+
+    #FIXME: List @callable_cached first *AFTER* we improve that decorator to
+    #explicitly support properties.
+    @property  # type: ignore
+    @callable_cached  # <-- does this support properties, yet? *sigh*
+    def _args_wrapped_frozenset(self) -> FrozenSet['TypeHint']:
+        '''
+        Frozen set of the zero or more high-level child **type hint wrappers**
+        (i.e., :class:`TypeHint` instances) wrapping the low-level child type
+        hints subscripting (indexing) the low-level parent type hint wrapped by
+        this wrapper.
+
+        This attribute is intentionally defined as a memoized property to
+        minimize space and time consumption for use cases *not* accessing this
+        attribute.
+        '''
+
+        return frozenset(self._args_wrapped_tuple)
+
+
     @property
     def _branches(self) -> Iterable['TypeHint']:
         """
@@ -780,7 +799,7 @@ class _TypeHintSubscripted(TypeHint):
     _args : tuple[object]
         Tuple of all low-level unordered children type hints of the low-level
         unordered parent type hint passed to the :meth:`__init__` method.
-    _args_wrapped : tuple[TypeHint]
+    _args_wrapped_tuple : tuple[TypeHint]
         Tuple of all high-level partially ordered children type hints of this
         high-level partially ordered parent type hint.
     """
@@ -809,7 +828,7 @@ class _TypeHintSubscripted(TypeHint):
         #
         # That effectively reduces to:
         #    self._origin: type = hint.__origin__ or hint  # type: ignore
-        return all(x._origin is Any for x in self._args_wrapped)
+        return all(x._origin is Any for x in self._args_wrapped_tuple)
 
     def _is_le_branch(self, branch: TypeHint) -> bool:
         # If the branch is not subscripted, then we assume it is subscripted
@@ -832,7 +851,7 @@ class _TypeHintSubscripted(TypeHint):
             all(
                 self_child <= branch_child
                 for self_child, branch_child in zip(
-                    self._args_wrapped, branch._args_wrapped
+                    self._args_wrapped_tuple, branch._args_wrapped_tuple
                 )
             )
         )

@@ -121,14 +121,14 @@ class CallableTypeHint(_TypeHintSubscripted):
         May be an empty tuple if the callable takes no arguments.
         '''
 
-        return self._args_wrapped[:-1]
+        return self._args_wrapped_tuple[:-1]
 
 
     # FIXME: Makes sense -- but let's rename to, say, return_typehint().
     @property
     def return_type(self) -> TypeHint:
         # the return type of the callable
-        return self._args_wrapped[-1]
+        return self._args_wrapped_tuple[-1]
 
 
     # FIXME: Rename to is_params_ignorable() for orthogonality with

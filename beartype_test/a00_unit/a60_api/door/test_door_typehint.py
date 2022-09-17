@@ -296,6 +296,33 @@ def test_door_typehint_rich_fail() -> None:
 
 # ....................{ TESTS ~ dunders : iterable         }....................
 #FIXME: Insufficient. Generalize to test *ALL* possible kinds of type hints.
+def test_door_typehint_contains() -> None:
+    '''
+    Test the :meth:`beartype.door.TypeHint.__contains__` dunder method.
+    '''
+
+    # Defer test-specific imports.
+    from beartype.door import TypeHint
+    from beartype.typing import Union
+
+    # Sample type hint wrappers.
+    wrapper_int = TypeHint(int)
+    wrapper_str = TypeHint(str)
+    wrapper_int_str = TypeHint(Union[int, str])
+
+    # Assert that various parent type hints contain the expected child type
+    # hints.
+    assert wrapper_int in wrapper_int_str
+    assert wrapper_str in wrapper_int_str
+
+    # Assert that various parent type hints do *NOT* contain the expected child
+    # type hints.
+    assert wrapper_int not in wrapper_int
+    assert wrapper_str not in wrapper_int
+    assert TypeHint(bool) not in wrapper_int_str
+
+
+#FIXME: Insufficient. Generalize to test *ALL* possible kinds of type hints.
 def test_door_typehint_iter() -> None:
     '''
     Test the :meth:`beartype.door.TypeHint.__iter__` dunder method.
@@ -346,9 +373,14 @@ def test_door_typehint_bool() -> None:
 
     # Defer test-specific imports.
     from beartype.door import TypeHint
-    from beartype.typing import Tuple
+    from beartype.typing import (
+        Tuple,
+        Union,
+    )
 
+    # Assert that various type hints evaluate to the expected booleans.
     assert bool(TypeHint(Tuple[()])) is False
+    assert bool(TypeHint(Union[int, str])) is True
 
 
 #FIXME: Insufficient. Generalize to test *ALL* possible kinds of type hints.
@@ -359,10 +391,14 @@ def test_door_typehint_len():
 
     # Defer test-specific imports.
     from beartype.door import TypeHint
-    from beartype.typing import Tuple
+    from beartype.typing import (
+        Tuple,
+        Union,
+    )
 
+    # Assert that various type hints evaluate to the expected lengths.
     assert len(TypeHint(Tuple[()])) == 0
-    # assert TypeHint(Tuple[()]).is_empty_tuple
+    assert len(TypeHint(Union[int, str])) == 2
 
 # ....................{ TESTS ~ properties                 }....................
 def test_door_typehint_is_ignorable() -> None:

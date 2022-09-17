@@ -111,15 +111,15 @@ class _TupleTypeHint(_TypeHintSubscripted):
             return self._is_empty_tuple
 
         if branch.is_variable_length:
-            branch_type = branch._args_wrapped[0]
+            branch_type = branch._args_wrapped_tuple[0]
             if self.is_variable_length:
-                return branch_type <= self._args_wrapped[0]
-            return all(child <= branch_type for child in self._args_wrapped)
+                return branch_type <= self._args_wrapped_tuple[0]
+            return all(child <= branch_type for child in self._args_wrapped_tuple)
 
         if self.is_variable_length:
             return (
                 branch.is_variable_length
-                and self._args_wrapped[0] <= branch._args_wrapped[0]
+                and self._args_wrapped_tuple[0] <= branch._args_wrapped_tuple[0]
             )
 
         if len(self._args) != len(branch._args):
@@ -128,6 +128,6 @@ class _TupleTypeHint(_TypeHintSubscripted):
         return all(
             self_child <= branch_child
             for self_child, branch_child in zip(
-                self._args_wrapped, branch._args_wrapped
+                self._args_wrapped_tuple, branch._args_wrapped_tuple
             )
         )

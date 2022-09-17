@@ -21,6 +21,8 @@ from beartype.typing import Tuple
 from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ SUBCLASSES                         }....................
+#FIXME: Insufficient. We also need to override __eq__(), because Literal hints
+#do *NOT* provide a sane _args_wrapped_tuple() required by the default __eq__().
 class LiteralTypeHint(_TypeHintSubscripted):
     '''
     **Literal type hint wrapper** (i.e., high-level object encapsulating a
@@ -31,28 +33,40 @@ class LiteralTypeHint(_TypeHintSubscripted):
     @callable_cached
     def is_subhint(self, other: TypeHint) -> bool:
 
+        # If the other hint is *NOT* also a wrapper, raise an exception.
         die_unless_typehint(other)
+        # Else, the other hint is also a wrapper.
 
-        # If the other hint is also a literal, check that our args are a subset
+        # If the other hint is also a Literal, check that our args are a subset
         # of theirs.
         if isinstance(other, LiteralTypeHint):
             return all(arg in other._args for arg in self._args)
-
-        # If the other hint is a just an origin, check that our args are *ALL*
+        # Else, the other hint is *NOT* also a Literal.
+        #
+        # If the other hint is just an origin, check that our args are *ALL*
         # instances of that origin.
-        if other._is_args_ignorable:
+        elif other._is_args_ignorable:
             return all(isinstance(x, other._origin) for x in self._args)
+        # Else, the other hint is *NOT* just an origin.
 
-        # Else... something, something. *waves hands madly*
-        return all(TypeHint(type(arg)) <= other for arg in self._args)
-
-    # ..................{ PRIVATE                            }..................
-    def _wrap_children(self, _: tuple) -> Tuple[TypeHint, ...]:
-        # The parameters of Literal aren't hints; they're arbitrary values.
-        # Do *NOT* erroneously wrap those values with "TypeHint" instances.
-        return ()
+        # Return true only if the type of each child hint subscripting this
+        # parent hint is a subhint and thus inclusive subclass of the other
+        # hint.
+        return all(
+            TypeHint(type(hint_child)) <= other for hint_child in self._args)
 
     # ..................{ PRIVATE ~ properties               }..................
+    @property
+    def _args_wrapped_tuple(self) -> Tuple[TypeHint, ...]:
+
+        # Return the empty tuple, thus presenting Literal type hints as having
+        # *NO* child type hints. Why? Because the arguments subscripting a
+        # Literal type hint are *NOT* generally PEP-compliant type hints and
+        # thus *CANNOT* be safely wrapped by "TypeHint" instances. These
+        # arguments are merely arbitrary values.
+        return ()
+
+
     @property
     def _is_args_ignorable(self) -> bool:
         return False

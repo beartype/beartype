@@ -39,6 +39,7 @@ class UnionTypeHint(_TypeHintSubscripted):
 
         # If the passed object is *NOT* a type hint wrapper, raise an exception.
         die_unless_typehint(other)
+        # Else, the passed object is a type hint wrapper.
 
         #FIXME: Generalize. The test for "other._hint is Any" is generally
         #applicable to *ALL* type hints and should thus reside in the "TypeHint"
@@ -88,7 +89,7 @@ class UnionTypeHint(_TypeHintSubscripted):
     # ..................{ PRIVATE ~ properties               }..................
     @property
     def _branches(self) -> Iterable[TypeHint]:
-        return self._args_wrapped
+        return self._args_wrapped_tuple
 
     # ..................{ PRIVATE ~ testers                  }..................
     def _is_le_branch(self, branch: TypeHint) -> bool:
