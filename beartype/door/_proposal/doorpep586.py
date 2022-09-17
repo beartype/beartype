@@ -64,6 +64,10 @@ class LiteralTypeHint(_TypeHintSubscripted):
         # Literal type hint are *NOT* generally PEP-compliant type hints and
         # thus *CANNOT* be safely wrapped by "TypeHint" instances. These
         # arguments are merely arbitrary values.
+        #
+        # Note that this property getter is intentionally *NOT* memoized with
+        # @property_cached, as Python already efficiently guarantees the empty
+        # tuple to be a singleton.
         return ()
 
 

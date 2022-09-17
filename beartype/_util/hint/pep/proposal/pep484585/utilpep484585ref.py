@@ -167,7 +167,7 @@ def get_hint_pep484585_forwardref_classname(
     return (
         # If this hint is a PEP 484-compliant forward reference, the typically
         # unqualified classname referred to by this reference.
-        get_hint_pep484_forwardref_type_basename(hint)  # pyright: ignore[reportGeneralTypeIssues]
+        get_hint_pep484_forwardref_type_basename(hint)  # type: ignore[return-value]
         if is_hint_pep484_forwardref(hint) else
         # Else, this hint is a string. In this case, this string as is.
         hint

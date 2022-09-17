@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._doorcls import TypeHint
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
@@ -51,6 +52,7 @@ class AnnotatedTypeHint(TypeHint):
         self._metahint_wrapper = TypeHint(get_hint_pep593_metahint(hint))
 
     # ..................{ DUNDERS ~ compare : equals         }..................
+    @callable_cached
     def __eq__(self, other: object) -> bool:
 
         if not isinstance(other, TypeHint):

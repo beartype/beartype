@@ -50,8 +50,10 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 )
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
+    get_hint_pep_origin_or_none,
     get_hint_pep_sign_or_none,
 )
+from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
 
 # ....................{ GETTERS                            }....................
 def get_typehint_subclass(hint: object) -> Type[TypeHint]:
@@ -79,30 +81,36 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
     '''
 
     # ..................{ SUBCLASS                           }..................
-    # Sign uniquely identifying this hint if any *OR* return None (i.e., if this
-    # hint is *NOT* actually a PEP-compliant type hint).
+    # Sign uniquely identifying this hint if any *OR* "None" otherwise (i.e., if
+    # this hint is a PEP-noncompliant class).
     hint_sign = get_hint_pep_sign_or_none(hint)
 
     # Private concrete subclass of this ABC handling this hint if any *OR*
     # "None" otherwise (i.e., if no such subclass has been authored yet).
-    typehint_subclass = _HINT_SIGN_TO_TYPEHINT_CLS.get(hint_sign)
+    wrapper_subclass = _HINT_SIGN_TO_TYPEHINT_CLS.get(hint_sign)  # type: ignore[arg-type]
 
     # If this hint appears to be currently unsupported...
-    if typehint_subclass is None:
-        # FIXME: The second condition here is kinda intense. Should we really
-        # be conflating typing attributes that aren't types with objects that
-        # are types? If so, refactor as follows to transparently support
-        # the third-party "typing_extensions" module (as much as reasonably
-        # can be, anyway):
-        #    from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
-        #    if isinstance(hint, type) or is_hint_pep_typing(hint):  # <-- ...still unsure about this
-        if isinstance(hint, type) or getattr(hint, "__module__", "") == "typing":
-            typehint_subclass = ClassTypeHint
+    if wrapper_subclass is None:
+        # FIXME: This condition is kinda intense. Should we really be conflating
+        # typing attributes that aren't types with objects that are types? Let's
+        # investigate exactly which kinds of type hints require this and
+        # contemplate something considerably more elegant.
+        # If either...
+        if (
+            # This hint is a PEP-noncompliant class *OR*...
+            isinstance(hint, type) or
+            # An unsupported kind of PEP-compliant type hint (e.g.,
+            # "typing.TypedDict" instance)...
+            is_hint_pep_typing(hint)
+        # Return the concrete "TypeHint" subclass handling all such classes.
+        ):
+            wrapper_subclass = ClassTypeHint
+        # Else, raise an exception.
         else:
             raise BeartypeDoorNonpepException(
                 f'Type hint {repr(hint)} invalid '
-                f'(i.e., either PEP-noncompliant or '
-                f'PEP-compliant but currently unsupported).'
+                f'(i.e., either PEP-noncompliant or PEP-compliant but '
+                f'currently unsupported by "beartype.door.TypeHint").'
             )
     # Else, this hint is supported.
 
@@ -111,21 +119,24 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
     #       not get_hint_pep_args(hint) and
     #       get_hint_pep_origin_or_none(hint) is None
     #    ):
-    #        typehint_subclass = ClassTypeHint
+    #        wrapper_subclass = ClassTypeHint
     #
     #That's possibly simpler and cleaner, as it seamlessly conveys the exact
     #condition we're going for -- assuming it works, of course. *sigh*
+    #FIXME: While sensible, the above approach induces non-trivial test
+    #failures. Let's investigate this further at a later time, please.
 
     # If a subscriptable type has no args, all we care about is the origin.
     elif (
         not get_hint_pep_args(hint) and
         hint_sign not in _HINT_SIGNS_ORIGINLESS
+        # get_hint_pep_origin_or_none(hint) is None
     ):
-        typehint_subclass = ClassTypeHint
+        wrapper_subclass = ClassTypeHint
     # In any case, this hint is supported by this concrete subclass.
 
     # Return this subclass.
-    return typehint_subclass
+    return wrapper_subclass
 
 # ....................{ PRIVATE ~ globals                  }....................
 # Further initialized below by the _init() function.

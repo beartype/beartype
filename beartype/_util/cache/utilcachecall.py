@@ -27,8 +27,8 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
 from beartype.roar._roarwarn import _BeartypeUtilCallableCachedKwargsWarning
 from beartype.typing import (
-    Callable,
     Dict,
+    TypeVar,
 )
 from beartype._util.func.arg.utilfuncargtest import (
     # is_func_argless,
@@ -39,31 +39,18 @@ from beartype._util.utilobject import (
     SENTINEL,
     Iota,
 )
+from collections.abc import Callable
 from functools import wraps
 from warnings import warn
 
-# ....................{ CONSTANTS ~ private : sentinel     }....................
-_SENTINEL_KWARGS_KEYS = (Iota(),)
+# ....................{ PRIVATE ~ hints                    }....................
+_CallableT = TypeVar('_CallableT', bound=Callable)
 '''
-Sentinel tuple signifying subsequent keyword argument names.
-
-This tuple is internally leveraged by the :func:`callable_cached` decorator to
-differentiate keyword argument names from preceding positional arguments in the
-flattened tuple of all parameters passed to the decorated callable.
-'''
-
-
-_SENTINEL_KWARGS_VALUES = (Iota(),)
-'''
-Sentinel tuple signifying subsequent keyword argument values.
-
-This tuple is internally leveraged by the :func:`callable_cached` decorator to
-differentiate keyword argument names from preceding positional arguments in the
-flattened tuple of all parameters passed to the decorated callable.
+Type variable bound to match *only* callables.
 '''
 
 # ....................{ DECORATORS                         }....................
-def callable_cached(func: Callable) -> Callable:
+def callable_cached(func: _CallableT) -> _CallableT:
     '''
     **Memoize** (i.e., efficiently cache and return all previously returned
     values of the passed callable as well as all previously raised exceptions
@@ -105,10 +92,16 @@ def callable_cached(func: Callable) -> Callable:
 
     Caveats
     ----------
-    **No parameters accepted by the decorated callable may be variadic** (i.e.,
+    **The decorated callable must accept no variadic parameters** (i.e.,
     either variadic positional or keyword arguments). While memoizing variadic
     parameters would of course be feasible, this decorator has yet to implement
     support for memoizing variadic parameters.
+
+    **The decorated callable should not be a property method** (i.e., either a
+    property getter, setter, or deleter subsequently decorated by the
+    :class:`property` decorator). Technically, this decorator *can* be used to
+    memoize property methods; pragmatically, doing so would be sufficiently
+    inefficient as to defeat the intention of memoizing in the first place.
 
     **Order of keyword arguments passed to the decorated callable is
     significant.** This decorator recaches return values produced by calls to
@@ -166,12 +159,12 @@ def callable_cached(func: Callable) -> Callable:
 
     Parameters
     ----------
-    func : Callable
+    func : _CallableT
         Callable to be memoized.
 
     Returns
     ----------
-    Callable
+    _CallableT
         Closure wrapping this callable with memoization.
 
     Raises
@@ -354,4 +347,186 @@ def callable_cached(func: Callable) -> Callable:
         return return_value
 
     # Return this wrapper.
-    return _callable_cached
+    return _callable_cached  # type: ignore[return-value]
+
+
+def property_cached(func: _CallableT) -> _CallableT:
+    '''
+    **Memoize** (i.e., efficiently cache and return all previously returned
+    values of the passed property method as well as all previously raised
+    exceptions of that method previously rather than inefficiently recalling
+    that method) the passed **property method method** (i.e., either a property
+    getter, setter, or deleter subsequently decorated by the :class:`property`
+    decorator).
+
+    On the first access of a property decorated with this decorator (in order):
+
+    #. The passed method implementing this property is called.
+    #. The value returned by this property is internally cached into a private
+       attribute of the object to which this method is bound.
+    #. This value is returned.
+
+    On each subsequent access of this property, this cached value is returned as
+    is *without* calling this method. Hence, this method is called at most once
+    for each object exposing this property.
+
+    Caveats
+    ----------
+    **This decorator must be preceded by an explicit usage of the standard**
+    :class:`property` **decorator.** Although this decorator could be trivially
+    refactored to automatically decorate the returned property method by the
+    :class:`property` decorator, doing so would violate static type-checking
+    expectations -- introducing far more issues than it would solve.
+
+    **This decorator should always be preferred over the standard**
+    :func:`functools.cached_property` **decorator available under Python >=
+    3.8.** This decorator is substantially more efficient in both space and time
+    than that decorator -- which is, of course, the entire point of caching.
+
+    **This decorator does not destroy bound property methods.** Technically,
+    the most efficient means of caching a property value into an instance is to
+    replace the property method currently bound to that instance with an
+    instance variable initialized to that value (e.g., as documented by this
+    `StackOverflow answer`_). Since a property should only ever be treated as an
+    instance variable, there superficially exists little harm in dynamically
+    changing the type of the former to the latter. Sadly, doing so introduces
+    numerous subtle issues with no plausible workaround. In particular,
+    replacing property methods by instance variables:
+
+    * Permits callers to erroneously set **read-only properties** (i.e.,
+      properties lacking setter methods), a profound violation of one of the
+      principle use cases for properties.
+    * Prevents pickling logic elsewhere from automatically excluding cached
+      property values, forcing these values to *always* be pickled to disk.
+      This is bad. Cached property values are *always* safely recreatable in
+      memory (and hence need *not* be pickled) and typically space-consumptive
+      in memory (and hence best *not* pickled). The slight efficiency gain from
+      replacing property methods by instance variables is hardly worth the
+      significant space loss from pickling these variables.
+
+    .. _StackOverflow answer:
+        https://stackoverflow.com/a/36684652/2809027
+
+    Parameters
+    ----------
+    func : _CallableT
+        Property method to be memoized.
+    '''
+    assert callable(func), f'{repr(func)} not callable.'
+
+    # Name of the private instance variable to which this decorator caches the
+    # value returned by the decorated property method.
+    property_var_name = (
+        _PROPERTY_CACHED_VAR_NAME_PREFIX + func.__name__)
+
+    # Raw string of Python statements comprising the body of this wrapper,
+    # including (in order):
+    #
+    # * A "@wraps" decorator propagating the name, docstring, and other
+    #   identifying metadata of the original function to this wrapper.
+    # * A private "__property_method" parameter initialized to this function.
+    #   In theory, the "func" parameter passed to this decorator
+    #   should be accessible as a closure-style local in this wrapper. For
+    #   unknown reasons (presumably, a subtle bug in the exec() builtin), this
+    #   is not the case. Instead, a closure-style local must be simulated by
+    #   passing the "func" parameter to this function at function
+    #   definition time as the default value of an arbitrary parameter.
+    #
+    # While there exist numerous alternative implementations for caching
+    # properties, the approach implemented below has been profiled to be the
+    # most efficient. Alternatives include (in order of decreasing efficiency):
+    #
+    # * Dynamically getting and setting a property-specific key-value pair of
+    #   the internal dictionary for the current object, timed to be
+    #   approximately 1.5 times as slow as exception handling: e.g.,
+    #
+    #     if not {property_name!r} in self.__dict__:
+    #         self.__dict__[{property_name!r}] = __property_method(self)
+    #     return self.__dict__[{property_name!r}]
+    #
+    # * Dynamically getting and setting a property-specific attribute of
+    #   the current object (e.g., the internal dictionary for the current
+    #   object), timed to be approximately 1.5 times as slow as exception
+    #   handling: e.g.,
+    #
+    #     if not hasattr(self, {property_name!r}):
+    #         setattr(self, {property_name!r}, __property_method(self))
+    #     return getattr(self, {property_name!r})
+    #
+    # Lastly, note that this implementation intentionally avoids calling our
+    # higher-level beartype._util.func.utilfuncmake.make_func() factory function
+    # for dynamically generating functions. Although this implementation could
+    # certainly be refactored in terms of that factory, doing so would
+    # needlessly reduce debuggability and portability for *NO* tangible gain.
+    func_body = '''
+@wraps(__property_method)
+def property_method_cached(self, __property_method=__property_method):
+    try:
+        return self.{property_var_name}
+    except AttributeError:
+        self.{property_var_name} = __property_method(self)
+        return self.{property_var_name}
+'''.format(property_var_name=property_var_name)
+
+    # Dictionary mapping from local attribute names to values. For efficiency,
+    # only attributes required by the body of this wrapper are copied from the
+    # current namespace. (See below.)
+    local_attrs = {'__property_method': func}
+
+    # Dynamically define this wrapper as a closure of this decorator. For
+    # obscure and presumably uninteresting reasons, Python fails to locally
+    # declare this closure when the locals() dictionary is passed; to capture
+    # this closure, a local dictionary must be passed instead.
+    exec(func_body, globals(), local_attrs)
+
+    # Return this wrapper method.
+    return local_attrs['property_method_cached']
+
+# ....................{ PRIVATE ~ constants : var          }....................
+_CALLABLE_CACHED_VAR_NAME_PREFIX = '_betse_cached__'
+'''
+Substring prefixing the names of all private instance variables to which all
+caching decorators (e.g., :func:`property_cached`) cache values returned by
+decorated callables.
+
+This prefix guarantees uniqueness across *all* instances -- including those
+instantiated from official Python and unofficial third-party classes and those
+internally defined by this application. Doing so permits logic elsewhere (e.g.,
+pickling filtering) to uniquely match and act upon these variables.
+'''
+
+
+_FUNCTION_CACHED_VAR_NAME = (
+    f'{_CALLABLE_CACHED_VAR_NAME_PREFIX}function_value')
+'''
+Name of the private instance variable to which the :func:`func_cached`
+decorator statically caches the value returned by the decorated function.
+'''
+
+
+_PROPERTY_CACHED_VAR_NAME_PREFIX = (
+    f'{_CALLABLE_CACHED_VAR_NAME_PREFIX}property_')
+'''
+Substring prefixing the names of all private instance variables to which the
+:func:`property_cached` decorator dynamically caches the value returned by the
+decorated property method.
+'''
+# ....................{ PRIVATE ~ constant : sentinel      }....................
+_SENTINEL_KWARGS_KEYS = (Iota(),)
+'''
+Sentinel tuple signifying subsequent keyword argument names.
+
+This tuple is internally leveraged by the :func:`callable_cached` decorator to
+differentiate keyword argument names from preceding positional arguments in the
+flattened tuple of all parameters passed to the decorated callable.
+'''
+
+
+_SENTINEL_KWARGS_VALUES = (Iota(),)
+'''
+Sentinel tuple signifying subsequent keyword argument values.
+
+This tuple is internally leveraged by the :func:`callable_cached` decorator to
+differentiate keyword argument names from preceding positional arguments in the
+flattened tuple of all parameters passed to the decorated callable.
+'''

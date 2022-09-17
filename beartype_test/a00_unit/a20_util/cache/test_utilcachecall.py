@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,28 +10,31 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.cache.utilcachecall` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.roar._roarwarn import _BeartypeUtilCallableCachedKwargsWarning
 from beartype_test._util.mark.pytmark import ignore_warnings
-from pytest import raises
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 # Prevent pytest from capturing and displaying all expected non-fatal
 # beartype-specific warnings emitted by the @callable_cached decorator.
 @ignore_warnings(_BeartypeUtilCallableCachedKwargsWarning)
-def test_callable_cached_pass() -> None:
+def test_callable_cached() -> None:
     '''
-    Test successful usage of the
+    Test the
     :func:`beartype._util.cache.utilcachecall.callable_cached` decorator.
     '''
 
-    # Defer heavyweight imports.
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
     from beartype._util.cache.utilcachecall import callable_cached
+    from pytest import raises
 
+    # ..................{ CALLABLES                          }..................
     # Callable memoized by this decorator.
     @callable_cached
     def still_i_rise(bitter, twisted, lies):
@@ -45,12 +48,14 @@ def test_callable_cached_pass() -> None:
         # decorator's conditional caching of return values.
         return bitter + twisted + lies
 
+    # ..................{ LOCALS                             }..................
     # Objects to be passed as parameters below.
     bitter  = ('You', 'may', 'write', 'me', 'down', 'in', 'history',)
     twisted = ('With', 'your', 'bitter,', 'twisted,', 'lies.',)
     lies    = ('You', 'may', 'trod,', 'me,', 'in', 'the', 'very', 'dirt',)
     dust    = ('But', 'still,', 'like', 'dust,', "I'll", 'rise',)
 
+    # ..................{ ASSERTS ~ pass                     }..................
     # Assert that memoizing two calls passed the same positional arguments
     # caches and returns the same value.
     assert (
@@ -96,17 +101,7 @@ def test_callable_cached_pass() -> None:
         'With the certainty of tides',
     )
 
-
-def test_callable_cached_fail() -> None:
-    '''
-    Test unsuccessful usage of the
-    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.cache.utilcachecall import callable_cached
-    from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
-
+    # ..................{ ASSERTS ~ fail                     }..................
     # Assert that attempting to memoize a callable accepting one or more
     # variadic positional parameters fails with the expected exception.
     with raises(_BeartypeUtilCallableCachedException):
@@ -120,3 +115,71 @@ def test_callable_cached_fail() -> None:
         @callable_cached
         def my_soulful_cries(**kwargs):
             return kwargs
+
+
+
+def test_property_cached() -> None:
+    '''
+    Test the
+    :func:`beartype._util.cache.utilcachecall.property_cached` decorator.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype._util.cache.utilcachecall import property_cached
+
+    # ..................{ CLASSES                            }..................
+    class Keeper(object):
+        '''
+        Arbitrary class defining the property to be cached.
+        '''
+
+        def __init__(self, keys: int) -> None:
+            self.keys = keys
+
+
+        @property
+        @property_cached
+        def keys_cached(self) -> int:
+            # Property value to be both cached and returned.
+            keys_cached = self.keys * 2
+
+            # To detect erroneous attempts to call this property method multiple
+            # times for the same object, modify the object variable from which
+            # this property value derived in a predictable way on each call of
+            # this property method.
+            self.keys /= 2
+
+            # Return this property value.
+            return keys_cached
+
+    # ..................{ LOCALS                             }..................
+    # Value of the "Keeper.keys" attribute *BEFORE* invoking keys_cached().
+    KEY_COUNT_PRECACHED = 7
+
+    # Value of the "Keeper.keys" attribute *AFTER* invoking keys_cached().
+    KEY_COUNT_POSTCACHED = KEY_COUNT_PRECACHED / 2
+
+    # Value of the "Keeper.keys_cached" property.
+    KEY_COUNT_CACHED = KEY_COUNT_PRECACHED * 2
+
+    # Instance of this class initialized with this value.
+    i_want_out = Keeper(keys=KEY_COUNT_PRECACHED)
+
+    # ..................{ ASSERTS                            }..................
+    # Assert this attribute to be as initialized.
+    assert i_want_out.keys == KEY_COUNT_PRECACHED
+
+    # Assert this property to be as cached.
+    assert i_want_out.keys_cached == KEY_COUNT_CACHED
+
+    # Assert this attribute to have been modified by this property call.
+    assert i_want_out.keys == KEY_COUNT_POSTCACHED
+
+    # Assert this property to still be as cached.
+    assert i_want_out.keys_cached == KEY_COUNT_CACHED
+
+    # Assert this attribute to *NOT* have been modified again, validating that
+    # the prior property access returned the previously cached value rather than
+    # recalling this property method.
+    assert i_want_out.keys == KEY_COUNT_POSTCACHED

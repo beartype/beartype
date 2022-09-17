@@ -1,4 +1,5 @@
-#!/usr/bin/env python3 --------------------( LICENSE                            )--------------------
+#!/usr/bin/env python3
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -20,7 +21,9 @@ from beartype.typing import (
     Any,
     Tuple,
 )
-from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_CALLABLE_PARAMS
+from beartype._data.hint.pep.sign.datapepsignset import (
+    HINT_SIGNS_CALLABLE_PARAMS)
+from beartype._util.cache.utilcachecall import property_cached
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
     get_hint_pep484585_callable_params,
     get_hint_pep484585_callable_return,
@@ -44,17 +47,11 @@ class CallableTypeHint(_TypeHintSubscripted):
         Perform argument validation for a callable.
         '''
 
-        self._takes_any_args = False
-
+        # Note that a "Callable" without any arguments this may be unreachable,
+        # as a bare "Callable" will go to "ClassTypeHint". Nonetheless, this
+        # remains handled for completeness and safety.
         if len(self._args) == 0:  # pragma: no cover
-            # e.g. `Callable` without any arguments this may be unreachable,
-            # (since a bare Callable will go to ClassTypeHint) but it's here
-            # for completeness and safety.
-            self._takes_any_args = True
-
-            # FIXME: Actually, pretty sure this instead needs to be:
-            #    self._args = (..., Any,)  # returns any
-            self._args = (Any,)  # returns any
+            self._args = (..., Any,)
         else:
             # Parameters type hint(s) subscripting this callable type hint.
             self._callable_params = get_hint_pep484585_callable_params(
@@ -66,11 +63,12 @@ class CallableTypeHint(_TypeHintSubscripted):
 
             # If this hint was first subscripted by an ellipsis (i.e., "...")
             # signifying a callable accepting an arbitrary number of parameters
-            # of arbitrary types...
+            # of arbitrary types, strip this ellipsis. The ellipsis is *NOT* a
+            # PEP-compliant type hint in general and thus *CANNOT* be wrapped by
+            # the "TypeHint" wrapper.
             if self._callable_params is Ellipsis:
                 # e.g. `Callable[..., Any]`
-                self._takes_any_args = True
-                self._callable_params = ()  # Ellipsis in not a type, so strip it here.
+                self._callable_params = ()
             # Else...
             else:
                 # Sign uniquely identifying this parameter list if any *OR*
@@ -102,83 +100,8 @@ class CallableTypeHint(_TypeHintSubscripted):
         # Perform superclass validation.
         super()._munge_args()
 
-    # ..................{ PROPERTIES                         }..................
-    # FIXME: Makes sense -- but let's rename to, say, params_typehint(). Note we
-    # intentionally choose "params" rather than "args" here for disambiguity with
-    # the low-level "hint.__args__" tuple.
-    # FIXME: Inefficient if frequently accessed. Consider:
-    # * Improving our @callable_cached decorator to efficiently handle
-    #  properties.
-    # * Prepend @callable_cached onto this decorator list: e.g.,
-    #      @callable_cached
-    #      @property
-    #      def arg_types(self) -> Tuple[TypeHint, ...]:
-    @property
-    def arg_types(self) -> Tuple[TypeHint, ...]:
-        '''
-        Arguments portion of the callable.
-
-        May be an empty tuple if the callable takes no arguments.
-        '''
-
-        return self._args_wrapped_tuple[:-1]
-
-
-    # FIXME: Makes sense -- but let's rename to, say, return_typehint().
-    @property
-    def return_type(self) -> TypeHint:
-        # the return type of the callable
-        return self._args_wrapped_tuple[-1]
-
-
-    # FIXME: Rename to is_params_ignorable() for orthogonality with
-    # is_args_ignorable().
-    # FIXME: Refactor the trivially decidable "_takes_any_args" boolean away,
-    # please. Instead, just:
-    # * Remove "_takes_any_args".
-    # * Prepend @callable_cached onto this decorator list as above.
-    # * Refactor this property to resemble:
-    #      @callable_cached
-    #      @property
-    #      def is_params_ignorable(self) -> bool:
-    #          # Callable[..., ]
-    #          return hint._args[0] is Ellipsis
-    # FIXME: Alternately, let's assume that "TypeHint(Ellipsis)" behaves as
-    # expected. It probably doesn't. So, we'll need to first do something about
-    # that. Then this just trivially reduces to:
-    #    return hint.params_typehint.is_ignorable()
-    #
-    # In other words, *JUST EXCISE THIS.* Callers should just call
-    # hint.params_typehint.is_ignorable() instead.
-    @property
-    def takes_any_args(self) -> bool:
-        # Callable[..., ]
-        return self._takes_any_args
-
-    # FIXME: Rename to is_return_ignorable() for orthogonality.
-    # FIXME: Moreover, this test is actually insufficient. There are *MANY*
-    # different type hints that are ignorable and thus semantically equivalent to
-    # "Any". We will probably need to refactor this to resemble:
-    #    @callable_cached
-    #    @property
-    #    def is_return_ignorable(self) -> bool:
-    #        return self.return_typehint.is_ignorable()
-    #
-    # In other words, *JUST EXCISE THIS.* Callers should just call
-    # hint.return_typehint.is_ignorable() instead.
-    @property
-    def returns_any(self) -> bool:
-        # Callable[..., Any]
-        return self._args[-1] is Any
-
-    # ..................{ PRIVATE ~ properties               }..................
-    # FIXME: Refactor to resemble:
-    #    return self.is_params_ignorable and self.is_return_ignorable
-    # FIXME: Actually, is this even needed? Pretty sure the superclass
-    # implementation should implicitly handle this already, assuming the
-    # superclass implementation defers to the new "TypeHint.is_ignorable"
-    # property... which it almost certainly doesn't yet. *sigh*
-    # FIXME: Additionally, we'll need to add support for ignoring ignorable
+    # ..................{ PROPERTIES ~ bools                 }..................
+    # FIXME: Remove this by instead adding support for ignoring ignorable
     # callable type hints to our core is_hint_ignorable() tester. Specifically:
     # * Ignore "Callable[..., {hint_ignorable}]" type hints, where "..." is the
     #  ellipsis singleton and "{hint_ignorable}" is any ignorable type hint.
@@ -190,11 +113,45 @@ class CallableTypeHint(_TypeHintSubscripted):
     #  * Add that tester to the "_IS_HINT_PEP_IGNORABLE_TESTERS" tuple.
     #  * Add example ignorable callable type hints to our test suite's data.
     @property
-    def _is_args_ignorable(self) -> bool:
+    def is_ignorable(self) -> bool:
         # Callable[..., Any] (or just `Callable`)
-        return self.takes_any_args and self.returns_any
+        return self.is_params_ignorable and self.is_return_ignorable
+
+
+    @property
+    def is_params_ignorable(self) -> bool:
+        # Callable[..., ???]
+        return self._args[0] is Ellipsis
+
+
+    @property
+    def is_return_ignorable(self) -> bool:
+        # Callable[???, Any]
+        return self.return_hint.is_ignorable
+
+    # ..................{ PROPERTIES ~ hints                 }..................
+    @property  # type: ignore
+    @property_cached
+    def param_hints(self) -> Tuple[TypeHint, ...]:
+        '''
+        Arguments portion of the callable.
+
+        May be an empty tuple if the callable takes no arguments.
+        '''
+
+        return self._args_wrapped_tuple[:-1]
+
+
+    @property
+    def return_hint(self) -> TypeHint:
+        '''
+        Return type of the callable.
+        '''
+
+        return self._args_wrapped_tuple[-1]
 
     # ..................{ PRIVATE ~ testers                  }..................
+    #FIXME: Internally comment us up, please.
     def _is_le_branch(self, branch: TypeHint) -> bool:
 
         # If the branch is not subscripted, then we assume it is subscripted
@@ -206,14 +163,14 @@ class CallableTypeHint(_TypeHintSubscripted):
         if not issubclass(self._origin, branch._origin):
             return False
 
-        if not branch.takes_any_args and (
+        if not branch.is_params_ignorable and (
             (
-                self.takes_any_args or
-                len(self.arg_types) != len(branch.arg_types) or
+                self.is_params_ignorable or
+                len(self.param_hints) != len(branch.param_hints) or
                 any(
                     self_arg > branch_arg
                     for self_arg, branch_arg in zip(
-                        self.arg_types, branch.arg_types)
+                        self.param_hints, branch.param_hints)
                 )
             )
         ):
@@ -222,14 +179,14 @@ class CallableTypeHint(_TypeHintSubscripted):
         # FIXME: Insufficient, sadly. There are *MANY* different type hints that
         # are ignorable and thus semantically equivalent to "Any". It's likely
         # we should just reduce this to a one-liner resembling:
-        #    return self.return_type <= branch.return_type
+        #    return self.return_hint <= branch.return_hint
         #
         # Are we missing something? We're probably missing something. *sigh*
-        if not branch.returns_any:
+        if not branch.is_return_ignorable:
             return (
                 False
-                if self.returns_any else
-                self.return_type <= branch.return_type
+                if self.is_return_ignorable else
+                self.return_hint <= branch.return_hint
             )
 
         return True

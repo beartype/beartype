@@ -20,7 +20,7 @@ from beartype.typing import (
     Tuple,
     TypeVar,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.utilcachecall import property_cached
 
 # ....................{ SUBCLASSES                         }....................
 class TypeVarTypeHint(UnionTypeHint):
@@ -33,10 +33,8 @@ class TypeVarTypeHint(UnionTypeHint):
     _hint: TypeVar
 
     # ..................{ PRIVATE                            }..................
-    #FIXME: List @callable_cached first *AFTER* we improve that decorator to
-    #explicitly support properties.
     @property  # type: ignore
-    @callable_cached  # <-- does this support properties, yet? *sigh*
+    @property_cached
     def _args_wrapped_tuple(self) -> Tuple[TypeHint, ...]:
 
         #FIXME: Support covariance and contravariance, please. We don't

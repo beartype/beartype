@@ -181,7 +181,7 @@ class _IsEqualFactory(_BeartypeValidatorFactoryABC):
 
     # ..................{ DUNDERS                            }..................
     @callable_cached
-    def __getitem__(self, obj: Any) -> BeartypeValidator:
+    def __getitem__(self, obj: Any) -> BeartypeValidator:  # type: ignore[override]
         '''
         Create and return a new beartype validator validating equality against
         the passed object, suitable for subscripting :pep:`593`-compliant

@@ -599,7 +599,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                     code_return_check_pith,
                     func_wrapper_scope,
                     hint_forwardrefs_class_basename,
-                ) = make_func_wrapper_code(hint)
+                ) = make_func_wrapper_code(hint)  # type: ignore[assignment]
 
                 # Merge the local scope required to type-check this return into
                 # the local scope currently required by the current wrapper

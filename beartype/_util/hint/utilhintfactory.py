@@ -49,7 +49,7 @@ class _TypeHintTypeFactoryMeta(type):
 
     # ..................{ INITIALIZERS                       }..................
     @callable_cached
-    def __call__(cls, type_factory: type) -> 'TypeHintTypeFactory':
+    def __call__(cls, type_factory: type) -> 'TypeHintTypeFactory':  # type: ignore[override]
         '''
         Instantiate the passed singleton class with the passed arbitrary type.
 

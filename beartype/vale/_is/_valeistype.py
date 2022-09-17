@@ -119,7 +119,7 @@ class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
 
     # ..................{ DUNDERS                            }..................
     @callable_cached
-    def __getitem__(self, types: TypeOrTupleTypes) -> BeartypeValidator:
+    def __getitem__(self, types: TypeOrTupleTypes) -> BeartypeValidator:  # type: ignore[override]
         '''
         Create and return a new beartype validator validating type instancing
         against at least one of the passed classes, suitable for subscripting
@@ -322,7 +322,7 @@ class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
 
     # ..................{ DUNDERS                            }..................
     @callable_cached
-    def __getitem__(self, types: TypeOrTupleTypes) -> BeartypeValidator:
+    def __getitem__(self, types: TypeOrTupleTypes) -> BeartypeValidator:  # type: ignore[override]
         '''
         Create and return a new beartype validator validating type inheritance
         against at least one of the passed classes, suitable for subscripting

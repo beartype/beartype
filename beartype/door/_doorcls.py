@@ -40,7 +40,10 @@ from beartype.typing import (
 )
 from beartype._conf import BeartypeConf
 from beartype._data.datatyping import CallableMethodGetitemArg
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.utilcachecall import (
+    callable_cached,
+    property_cached,
+)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_origin_or_none,
@@ -190,7 +193,17 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         return f'TypeHint({repr(self._hint)})'
 
     # ..................{ DUNDERS ~ compare : equals         }..................
+    @callable_cached
     def __eq__(self, other: object) -> bool:
+        '''
+        ``True`` only if the low-level type hint wrapped by this wrapper is
+        semantically equivalent to the other low-level type hint wrapped by the
+        passed wrapper.
+
+        This tester is memoized for efficiency, as Python implicitly calls this
+        dunder method on hashable-based container lookups (e.g.,
+        :meth:`dict.get`) that are expected to be ``O(1)`` fast.
+        '''
 
         # If that object is *NOT* an instance of the same class, defer to the
         # __eq__() method defined by the class of that object instead.
@@ -669,16 +682,8 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     # ..................{ PRIVATE ~ properties : read-only   }..................
     # Read-only properties intentionally defining *NO* corresponding setter.
 
-    #FIXME: List @callable_cached first *AFTER* we improve that decorator to
-    #explicitly support properties.
-    #FIXME: *UGH.* Our attempt to cache with @callable_cached here provokes
-    #infinite recursion overflow due to subtle interaction between __eq__,
-    #__hash__, and our default implementation of @callable_cached. This should
-    #behave as expected once we generalize @callable_cached to support
-    #properties, which we *CLEARLY* need to immediately do. Gah!
-
-    # @callable_cached  # <-- does this support properties, yet? *sigh*
     @property  # type: ignore
+    @property_cached
     def _args_wrapped_tuple(self) -> Tuple['TypeHint', ...]:
         '''
         Tuple of the zero or more high-level child **type hint wrappers** (i.e.,
@@ -695,10 +700,8 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         return tuple(TypeHint(hint_child) for hint_child in self._args)
 
 
-    #FIXME: List @callable_cached first *AFTER* we improve that decorator to
-    #explicitly support properties.
     @property  # type: ignore
-    @callable_cached  # <-- does this support properties, yet? *sigh*
+    @property_cached
     def _args_wrapped_frozenset(self) -> FrozenSet['TypeHint']:
         '''
         Frozen set of the zero or more high-level child **type hint wrappers**
@@ -789,27 +792,60 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
 # ....................{ SUBCLASSES                         }....................
 class _TypeHintSubscripted(TypeHint):
-    """
+    '''
     **Subscripted type hint wrapper** (i.e., high-level object encapsulating a
     low-level parent type hint subscripted (indexed) by one or more equally
     low-level children type hints).
+    '''
 
-    Attributes
-    ----------
-    _args : tuple[object]
-        Tuple of all low-level unordered children type hints of the low-level
-        unordered parent type hint passed to the :meth:`__init__` method.
-    _args_wrapped_tuple : tuple[TypeHint]
-        Tuple of all high-level partially ordered children type hints of this
-        high-level partially ordered parent type hint.
-    """
-
+    # ..................{ CLASS VARIABLES                    }..................
     # FIXME: Consider refactoring both here and below into a read-only class
     # property for safety. This currently permits accidental modification. Gah!
     _required_nargs: int = -1
 
+    # ..................{ PRIVATE ~ properties               }..................
+    @property  # type: ignore
+    @property_cached
+    def _is_args_ignorable(self) -> bool:
+        '''
+        ``True`` only if all child type hints subscripting (indexing) this
+        parent type hint are ignorable.
+
+        Note that this property is *not* equivalent to the :meth:`is_ignorable`
+        property. Although related, a non-ignorable parent type hint can
+        trivially have ignorable child type hints (e.g., ``list[Any]``).
+        '''
+
+        #FIXME: Kinda unsure about this. Above, we define "_origin" as:
+        #   self._origin: type = get_hint_pep_origin_or_none(hint) or hint  # type: ignore
+        #
+        #That effectively reduces to:
+        #   self._origin: type = hint.__origin__ or hint  # type: ignore
+        #FIXME: Ideally, this should read:
+        #    return all(
+        #        hint_child.is_ignorable
+        #        for hint_child in self._args_wrapped_tuple
+        #    )
+        #
+        #Sadly, that refactoring currently raises non-trivial test failures.
+        #Let's investigate at a later time, please.
+        return all(x._origin is Any for x in self._args_wrapped_tuple)
+
+    # ..................{ PRIVATE ~ methods                  }..................
     def _munge_args(self):
-        if self._required_nargs > 0 and len(self._args) != self._required_nargs:
+
+        if (
+            self._required_nargs > 0 and
+            len(self._args) != self._required_nargs
+        ):
+            #FIXME: This seems sensible, but currently provokes test failures.
+            #Let's investigate further at a later time, please.
+            # # If this hint was subscripted by *NO* parameters, comply with PEP
+            # # 484 standards by silently pretending this hint was subscripted by
+            # # the "typing.Any" fallback for all missing parameters.
+            # if len(self._args) == 0:
+            #     return (Any,)*self._required_nargs
+
             # FIXME: Consider raising a less ambiguous exception type, yo.
             # In most cases it will be hard to reach this exception, since most
             # of the typing library's subscripted type hints will raise an
@@ -820,32 +856,22 @@ class _TypeHintSubscripted(TypeHint):
             )
 
 
-    @property
-    def _is_args_ignorable(self) -> bool:
-
-        # FIXME: Kinda unsure about this. Above, we define "_origin" as:
-        #    self._origin: type = get_hint_pep_origin_or_none(hint) or hint  # type: ignore
-        #
-        # That effectively reduces to:
-        #    self._origin: type = hint.__origin__ or hint  # type: ignore
-        return all(x._origin is Any for x in self._args_wrapped_tuple)
-
     def _is_le_branch(self, branch: TypeHint) -> bool:
-        # If the branch is not subscripted, then we assume it is subscripted
-        # with ``Any``, and we simply check that the origins are compatible.
+
+        # If the other branch was *NOT* subscripted, we assume it was
+        # subscripted by "Any" and simply check that the origins are compatible.
         if branch._is_args_ignorable:
             return issubclass(self._origin, branch._origin)
+        # Else, the other branch was subscripted.
 
         return (
-            # That branch is also a partially ordered single-argument
-            # isinstanceable type hint *AND*...
-            isinstance(branch, type(self))
-            and
+            # That branch is also a type hint wrapper of the same concrete
+            # subclass as this type hint wrapper *AND*...
+            isinstance(branch, type(self)) and
             # The low-level unordered type hint encapsulated by this
             # high-level partially ordered type hint is a subclass of
             # The low-level unordered type hint encapsulated by the branch
-            issubclass(self._origin, branch._origin)
-            and
+            issubclass(self._origin, branch._origin) and
             # *AND* All child (argument) hints are subclasses of the
             # corresponding branch child hint
             all(
