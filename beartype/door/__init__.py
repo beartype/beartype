@@ -25,11 +25,11 @@ standardized by the :mod:`typing` module.
 #
 #    # DOOR hints have Pythonic classes -- unlike normal type hints.
 #    >>> type(union_hint)
-#    beartype.door.UnionTypeHint
+#    beartype.door.UnionTypeHint  # <-- what madness is this?
 #
-#    # DOOR hints can be introspected Pythonically -- unlike normal type hints.
+#    # DOOR hints can be classified Pythonically -- unlike normal type hints.
 #    >>> from beartype.door import UnionTypeHint
-#    >>> isinstance(union_hint, UnionTypeHint)
+#    >>> isinstance(union_hint, UnionTypeHint)  # <-- *shocked face*
 #    True
 #
 #    # DOOR hints can be type-checked Pythonically -- unlike normal type hints.
@@ -51,14 +51,22 @@ standardized by the :mod:`typing` module.
 #    TypeHint(<class 'int'>)
 #    >>> union_hint[-1]
 #    TypeHint(<class 'str'>)
+#
+#    # DOOR hints can be sliced Pythonically -- unlike normal type hints.
 #    >>> union_hint[0:2]
 #    (TypeHint(<class 'int'>), TypeHint(<class 'str'>))
 #
+#    # DOOR hints supports "in" Pythonically -- unlike normal type hints.
+#    >>> TypeHint(int) in union_hint  # <-- it's all true.
+#    True
+#    >>> TypeHint(bool) in union_hint  # <-- believe it.
+#    False
+#
 #    # DOOR hints are sized Pythonically -- unlike normal type hints.
-#    >>> len(union_hint)
+#    >>> len(union_hint)  # <-- woah.
 #    3
 #
-#    # DOOR hints evaluate as booleans Pythonically -- unlike normal type hints.
+#    # DOOR hints reduce to booleans Pythonically -- unlike normal type hints.
 #    >>> if union_hint: print('This type hint has children.')
 #    This type hint has children.
 #    >>> if not TypeHint(tuple[()]): print('But this other type hint is empty.')

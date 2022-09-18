@@ -150,8 +150,11 @@ jobs:
             python-version: "3.8"
           - tox-env: py39-coverage
             python-version: "3.9"
+          #FIXME: Relax this pinned constraint back to merely Python 3.10
+          #*AFTER* mypy resolves the following issue:
+          #    https://github.com/python/mypy/issues/13627
           - tox-env: py310-coverage
-            python-version: "3.10"
+            python-version: "3.10.6"
           #FIXME: Reduce to simply "3.11" after Python 3.11 goes live.
           # - tox-env: py311-coverage
           #   python-version: "3.11.0-alpha - 3.11.0"
