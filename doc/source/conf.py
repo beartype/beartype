@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 #
-# --------------------( SYNOPSIS                          )--------------------
+# --------------------( SYNOPSIS                           )--------------------
 # Configuration file for the Sphinx documentation builder.
 #
-# --------------------( SEE ALSO                          )--------------------
+# --------------------( SEE ALSO                           )--------------------
 # * https://www.sphinx-doc.org/en/master/usage/configuration.html
 #   List of all options supported in this file.
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: [EXTENSION] Add "intersphinx" support to enable us to cross-reference
 #standard modules (e.g., "typing"). Yes, this absolutely should be builtin.
 #Naturally, that means it isn't. See also:
@@ -33,7 +33,7 @@
 #* Furo, now widely leveraged across the UIX sphere (e.g., KivyMD):
 #    https://github.com/pradyunsg/furo
 
-# ....................{ IMPORTS ~ kludge                  }....................
+# ....................{ IMPORTS ~ kludge                   }....................
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -41,11 +41,11 @@
 # See also:
 # * https://samnicholls.net/2016/06/15/how-to-sphinx-readthedocs
 #   The "Make autodoc actually work" is the canonical writeup on this kludge.
-# import os, sys
-# # sys.path.insert(0, os.path.abspath('../../'))
+import os, sys
+sys.path.insert(0, os.path.abspath('../../'))
 # print(f'sys.path (from "doc/source/conf.py"): {sys.path}')
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 # Sphinx defaults to hardcoding version specifiers. Since this is insane, we
 # import our package-specific version specifier for reuse below. See also:
 # * https://protips.readthedocs.io/git-tag-version.html
@@ -55,14 +55,14 @@ from beartype.meta import AUTHORS, COPYRIGHT, NAME, VERSION
 from beartype._util.mod.utilmodtest import is_module
 from warnings import warn
 
-# ....................{ METADATA                          }....................
+# ....................{ METADATA                           }....................
 # Metadata programmatically defined by this package.
 project = NAME
 author = AUTHORS
 copyright = COPYRIGHT
 release = VERSION
 
-# ....................{ SETTINGS                          }....................
+# ....................{ SETTINGS                           }....................
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -71,11 +71,11 @@ templates_path = ['_templates']
 # affects html_static_path and html_extra_path.
 exclude_patterns = []
 
-# ....................{ EXTENSIONS ~ mandatory            }....................
+# ....................{ EXTENSIONS ~ mandatory             }....................
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    # ..................{ BUILTIN                           }..................
+    # ..................{ BUILTIN                            }..................
     # Builtin extensions unconditionally available under *ALL* reasonably
     # modern versions of Sphinx uniquely prefixed by "sphinx.ext.".
 
@@ -102,7 +102,7 @@ extensions = [
     # those modules to these listings.
     'sphinx.ext.viewcode',
 
-    # ..................{ BUILTIN ~ autodoc                 }..................
+    # ..................{ BUILTIN ~ autodoc                  }..................
     #FIXME: Actually, we probably just want to use the third-party Sphinx
     #AutoAPI extension instead at:
     #    https://github.com/readthedocs/sphinx-autoapi
@@ -136,13 +136,13 @@ extensions = [
     # with a single compact HTML markup tag) the documentation it generates.
     'sphinx.ext.autosummary',
 
-    # ..................{ THIRD-PARTY                       }..................
+    # ..................{ THIRD-PARTY                        }..................
     # Third-party Sphinx extensions required to be externally installed. For
     # usability, this block should typically be empty. Third-party Sphinx
     # extensions should ideally be optionally enabled. See below.
 ]
 
-# ....................{ EXTENSIONS ~ optional             }....................
+# ....................{ EXTENSIONS ~ optional              }....................
 # Third-party Sphinx extensions conditionally used if externally installed.
 
 # If "sphinx_rtd_theme" (i.e., the third-party Sphinx extension providing the
@@ -171,7 +171,7 @@ else:
         ),
     )
 
-# ....................{ EXTENSIONS ~ autodoc              }....................
+# ....................{ EXTENSIONS ~ autodoc               }....................
 # 'sphinx.ext.autodoc'-specific settings. See also:
 #     https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 
@@ -180,7 +180,7 @@ else:
 # descriptions) of those callables. Note this requires Sphinx >= 4.1.
 autodoc_typehints = 'both'
 
-# ....................{ EXTENSIONS ~ autosectionlabel     }....................
+# ....................{ EXTENSIONS ~ autosectionlabel      }....................
 # 'sphinx.ext.autosectionlabel'-specific settings. See also:
 #     https://www.sphinx-doc.org/en/master/usage/extensions/autosectionlabel.html
 
@@ -191,7 +191,7 @@ autodoc_typehints = 'both'
 # common use case that's effectively infeasible to prohibit.
 autosectionlabel_prefix_document = True
 
-# ....................{ EXTENSIONS ~ napoleon             }....................
+# ....................{ EXTENSIONS ~ napoleon              }....................
 # 'sphinx.ext.napoleon'-specific settings. See also:
 #     https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
 
@@ -220,13 +220,13 @@ napoleon_custom_sections = [
 # napoleon_use_param = False
 # napoleon_use_ivar = True
 
-# ....................{ BUILD ~ html                      }....................
+# ....................{ BUILD ~ html                       }....................
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-# ....................{ BUILD ~ html : mathjax            }....................
+# ....................{ BUILD ~ html : mathjax             }....................
 # Remote URI to the top-level "MathJax.js" script providing MathJax. If
 # unspecified, the current user *MUST* have MathJax locally installed. Note
 # that MathJax is locally installable under:
