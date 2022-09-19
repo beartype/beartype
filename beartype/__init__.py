@@ -54,13 +54,15 @@ from sys import modules as _modules
 if 'beartype.__is_installing__' not in _modules:
     # Publicize the private @beartype._decor.beartype decorator as
     # @beartype.beartype, preserving all implementation details as private.
-    from beartype._decor.decormain import beartype
+    from beartype._decor.decormain import (
+        beartype as beartype,
+    )
 
     # Publicize all top-level configuration attributes required to configure the
     # @beartype.beartype decorator.
     from beartype._conf import (
-        BeartypeConf,
-        BeartypeStrategy,
+        BeartypeConf as BeartypeConf,
+        BeartypeStrategy as BeartypeStrategy,
     )
 # Else, this submodule is *NOT* being imported at install time.
 
