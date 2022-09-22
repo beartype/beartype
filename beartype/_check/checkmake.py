@@ -115,7 +115,6 @@ def make_func_tester(
 
     # Optional parameters.
     conf: BeartypeConf = BeartypeConf(),
-    exception_cls: TypeException = _BeartypeCheckException,
 ) -> CallableTester:
     '''
     **Type-checking tester function factory** (i.e., low-level callable
@@ -140,6 +139,10 @@ def make_func_tester(
       :func:`beartype._util.error.utilerror.reraise_exception_placeholder`
       function.
 
+    **This factory intentionally accepts no** ``exception_cls`` **parameter.**
+    Doing so would only ambiguously obscure context-sensitive exceptions raised
+    by lower-level utility functions called by this higher-level factory.
+
     Parameters
     ----------
     hint : object
@@ -148,9 +151,6 @@ def make_func_tester(
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
         to ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
-    exception_cls : Type[Exception]
-        Type of exception to be raised. Defaults to
-        :exc:`_BeartypeCheckException`.
 
     Returns
     ----------
@@ -168,6 +168,10 @@ def make_func_tester(
         If this hint contains one or more relative forward references, which
         this factory explicitly prohibits to improve both the efficiency and
         portability of calls by users to the resulting type-checker.
+    _BeartypeUtilCallableException
+        If this function erroneously generates a syntactically invalid
+        type-checking tester function. That should *never* happen, but let's
+        admit that you're still reading this for a reason.
 
     Warns
     ----------
@@ -274,7 +278,6 @@ def make_func_tester(
         func_locals=func_scope,
         func_label=f'{EXCEPTION_PLACEHOLDER}tester {func_tester_name}()',
         is_debug=conf.is_debug,
-        exception_cls=exception_cls,
     )
 
     # Return this tester function.

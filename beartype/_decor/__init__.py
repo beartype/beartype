@@ -4,6 +4,10 @@
 # See "LICENSE" for further details.
 
 # ....................{ TODO                               }....................
+#FIXME: "typing.LiteralString". We just had a mildly brilliant revelation in
+#the "beartype.claw._clawast" submodule as to how we might go about performing
+#static analysis at runtime via the third-party "executing" submodule. \o/
+
 #FIXME: [PEP 585] It looks like CPython's stdlib quietly extended PEP 585
 #support to a variety of undocumented classes, including:
 #* "asyncio.Future[T]".

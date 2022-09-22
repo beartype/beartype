@@ -33,9 +33,8 @@ from beartype.door._doortyping import (
     BeartypeTypeChecker,
 )
 from beartype.roar import (
-    BeartypeAbbyHintViolation,
-    BeartypeAbbyTesterException,
     BeartypeCallHintReturnViolation,
+    BeartypeDoorHintViolation,
 )
 from beartype.roar._roarexc import _BeartypeDoorTextException
 from beartype.typing import TYPE_CHECKING
@@ -116,20 +115,20 @@ def die_if_unbearable(
 
     Raises
     ----------
-    BeartypeAbbyHintViolation
-        If this object violates this hint.
     BeartypeDecorHintNonpepException
         If this hint is *not* PEP-compliant (i.e., complies with *no* Python
         Enhancement Proposals (PEPs) currently supported by :mod:`beartype`).
     BeartypeDecorHintPepUnsupportedException
         If this hint is currently unsupported by :mod:`beartype`.
+    BeartypeDoorHintViolation
+        If this object violates this hint.
 
     Examples
     ----------
         >>> from beartype.door import die_if_unbearable
         >>> die_if_unbearable(['And', 'what', 'rough', 'beast,'], list[str])
         >>> die_if_unbearable(['its', 'hour', 'come', 'round'], list[int])
-        beartype.roar.BeartypeAbbyHintViolation: Object ['its', 'hour', 'come',
+        beartype.roar.BeartypeDoorHintViolation: Object ['its', 'hour', 'come',
         'round'] violates type hint list[int], as list index 0 item 'its' not
         instance of int.
     '''
@@ -172,7 +171,7 @@ def die_if_unbearable(
         )
 
         # Wrap this exception in a more readable higher-level exception.
-        raise BeartypeAbbyHintViolation(exception_message) from exception
+        raise BeartypeDoorHintViolation(exception_message) from exception
     # Else, this closure raised another exception. In this case, percolate this
     # exception back up this call stack.
 
@@ -308,8 +307,7 @@ def is_bearable(
     # by keyword would raise a non-fatal
     # "_BeartypeUtilCallableCachedKwargsWarning" warning.
     try:
-        func_tester = make_func_tester(
-            hint, conf, BeartypeAbbyTesterException)
+        func_tester = make_func_tester(hint, conf)
     # If any exception was raised, reraise this exception with each
     # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
     # replaced by the passed exception prefix.

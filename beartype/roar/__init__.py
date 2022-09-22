@@ -42,7 +42,6 @@ raids native beehives for organic honey.
 from beartype.roar._roarexc import (
     # Exceptions.
     BeartypeException as BeartypeException,
-    BeartypeAbbyTesterException as BeartypeAbbyTesterException,
     BeartypeCaveException as BeartypeCaveException,
     BeartypeCaveNoneTypeOrException as BeartypeCaveNoneTypeOrException,
     BeartypeCaveNoneTypeOrKeyException as BeartypeCaveNoneTypeOrKeyException,
@@ -86,7 +85,6 @@ from beartype.roar._roarexc import (
     BeartypeValeValidationException as BeartypeValeValidationException,
 
     # Violations (i.e., exceptions raised during runtime type-checking).
-    BeartypeAbbyHintViolation as BeartypeAbbyHintViolation,
     BeartypeCallHintViolation as BeartypeCallHintViolation,
     BeartypeCallHintParamViolation as BeartypeCallHintParamViolation,
     BeartypeCallHintReturnViolation as BeartypeCallHintReturnViolation,
@@ -151,6 +149,12 @@ def __getattr__(attr_deprecated_name: str) -> object:
     return deprecate_module_attr(
         attr_deprecated_name=attr_deprecated_name,
         attr_deprecated_name_to_nondeprecated_name={
+            'BeartypeAbbyException': (
+                'BeartypeDoorException'),
+            'BeartypeAbbyHintViolation': (
+                'BeartypeDoorHintViolation'),
+            'BeartypeAbbyTesterException': (
+                'BeartypeDoorException'),
             'BeartypeCallHintPepException': (
                 'BeartypeCallHintViolation'),
             'BeartypeCallHintPepParamException': (

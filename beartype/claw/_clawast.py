@@ -15,10 +15,48 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Once @beartype supports class decoration, additionally define a new
-#BeartypeNodeTransformer.visit_ClassDef() method modelled after the equivelent
-#TypeguardTransformer.visit_ClassDef() method residing at:
+#FIXME: Additionally define a new BeartypeNodeTransformer.visit_ClassDef()
+#method modelled after the equivelent TypeguardTransformer.visit_ClassDef()
+#method residing at:
 #    https://github.com/agronholm/typeguard/blob/master/src/typeguard/importhook.py
+
+#FIXME: *OMG.* See also the third-party "executing" Python package:
+#    https://github.com/alexmojaki/executing
+#
+#IPython itself internally leverages "executing" via "stack_data" (i.e., a
+#slightly higher-level third-party Python package that internally leverages
+#"executing") to syntax-highlight the currently executing AST node. Indeed,
+#"executing" sports an intense test suite (much like ours) effectively
+#guaranteeing a one-to-one mapping between stack frames and AST nodes.
+#
+#So, what's the Big Idea here? The Big Idea here is that @beartype can
+#internally (...possibly only optionally, but possibly mandatorily) leverage
+#"stack_data" to begin performing full-blown static type-checking at runtime --
+#especially of mission critical type hints like "typing.LiteralString" which can
+#*ONLY* be type-checked via static analysis. :o
+#
+#So, what's the Little Idea here? The Little Idea here is that @beartype can
+#generate type-checking wrappers that type-check parameters or returns annotated
+#by "typing.LiteralString" by calling an internal private utility function --
+#say, "_die_unless_literalstring(func: Callable, arg_name: str) -> None" -- with
+#"func" as the current type-checking wrapper and "arg_name" as either the name
+#of that parameter or "return". The _die_unless_literalstring() raiser then:
+#* Dynamically searches up the call stack for the stack frame encapsulating an
+#  external call to the passed "func" callable.
+#* Passes that stack frame to the "executing" package.
+#* "executing" then returns the AST node corresponding to that stack frame.
+#* Introspects that node for the passed parameter whose name is "arg_name".
+#* Raises an exception unless the value of that parameter is an AST node
+#  corresponding to a string literal.
+#
+#Of course, that won't necessarily be fast -- but it will be accurate. Since
+#security trumps speed, speed is significantly less of a concern insofar as
+#"typing.LiteralString" is concerned. Of course, we should also employ
+#significant caching... if we even can.
+#FIXME: The above idea generalizes from "typing.LiteralString" to other
+#fascinating topics as well. Indeed, given sufficient caching, one could begin
+#to internally generate and cache a mypy-like graph network whose nodes are
+#typed attributes and whose edges are relations between those typed attributes.
 
 # ....................{ IMPORTS                            }....................
 from ast import (

@@ -31,7 +31,7 @@ def test_door_die_if_unbearable_pass() -> None:
 
     # Defer heavyweight imports.
     from beartype.door import die_if_unbearable
-    from beartype.roar import BeartypeAbbyHintViolation
+    from beartype.roar import BeartypeDoorHintViolation
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithUnsatisfiedMetadata)
     from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
@@ -50,7 +50,7 @@ def test_door_die_if_unbearable_pass() -> None:
         if isinstance(hint_pith_meta.pith_meta, HintPithUnsatisfiedMetadata):
             # Assert this raiser raises the expected exception when passed this
             # pith and hint.
-            with raises(BeartypeAbbyHintViolation) as exception_info:
+            with raises(BeartypeDoorHintViolation) as exception_info:
                 die_if_unbearable(pith, hint)
 
             # Exception message raised by this wrapper function.

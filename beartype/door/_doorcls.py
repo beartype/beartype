@@ -24,7 +24,6 @@ from beartype.door._doormeta import _TypeHintMeta
 from beartype.door._doortest import die_unless_typehint
 from beartype.door._doortyping import T
 from beartype.roar import (
-    BeartypeAbbyHintViolation,
     BeartypeDoorException,
     BeartypeDoorHintViolation,
 )
@@ -533,18 +532,8 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             'its' not instance of int.
         '''
 
-        #FIXME: Extremely non-ideal, obviously. Although this suffices for now,
-        #the EAFP has clearly gotten out-of-hand and is now into the Cray Zone.
-
-        # Attempt to type-check this object by deferring to the existing
-        # die_if_unbearable() raiser.
-        try:
-            die_if_unbearable(obj, self._hint, conf=conf)
-        # If this object violates this hint, wrap this abby-specific exception
-        # in the equivalent DOOR-specific exception.
-        except BeartypeAbbyHintViolation as exception:
-            raise BeartypeDoorHintViolation(str(exception)) from exception
-        # Else, this object satisfies this hint.
+        # One-liner, one love, one heart. Let's get together and code alright.
+        die_if_unbearable(obj, self._hint, conf=conf)
 
 
     #FIXME: Submit an upstream mypy issue. Since mypy correctly accepts our

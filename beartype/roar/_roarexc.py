@@ -419,7 +419,45 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
     for that parameter or return value).
     '''
 
-    pass
+    def __str__(self) -> str:
+
+        # Avoid circular import dependencies.
+        from beartype._util.text.utiltextcolour import strip_text_ansi
+
+        # Exception message reported by our superclass, possibly containing
+        # ANSI escape sequences when standard output is attached to a TTY.
+        violation_ansifull = super().__str__()
+
+        # Exception message stripped of *ALL* ANSI escape sequences.
+        violation_ansiless = strip_text_ansi(violation_ansifull)
+
+        #FIXME: Pick up here, please. Specifically:
+        #* Inspect the call stack for the external caller directly calling this
+        #  dunder method.
+        #
+        #* If that caller is C-based, preserve ANSI. Why? Because presumably
+        #  that caller is CPython itself printing this violation to "stdout".
+        #* Else, that caller is pure-Python. In this case, strip ANSI. Why?
+        #  Because presumably this exception message is being dynamically
+        #  retrieved by the caller from high-level Python code, in which case
+        #  the caller almost certainly does *NOT* expect ANSI escape sequences.
+        #
+        #Something resembling the following should suffice:
+        #      from beartype._util.func.utilfuncframe import iter_frames
+        #      from beartype._util.func.utilfunctest import is_func_python
+        #
+        #      call_stack = iter_frames(func_stack_frames_ignore=1)
+        #      caller_frame = next(call_stack)
+        #
+        #      return (
+        #          violation_ansiless
+        #          if is_func_python(caller_frame) else
+        #          violation_ansifull
+        #      )
+
+        # Return this message.
+        return violation_ansifull
+        # return violation_ansiless
 
 
 class BeartypeCallHintParamViolation(BeartypeCallHintViolation):
@@ -468,40 +506,6 @@ class BeartypePep563Exception(BeartypePepException):
     :func:`beartype.peps.resolve_pep563` function and decoration time of the
     :func:`beartype.beartype` decorator on failing to dynamically evaluate a
     postponed annotation of a callable for which :pep:`563` is active.
-    '''
-
-    pass
-
-# ....................{ API ~ abby                         }....................
-class BeartypeAbbyException(BeartypeException):
-    '''
-    Abstract base class of all **functional type-checking exceptions.**
-
-    Instances of subclasses of this exception are raised at call time from
-    callables and classes published by the :func:`beartype.door` subpackage.
-    '''
-
-    pass
-
-
-class BeartypeAbbyTesterException(BeartypeAbbyException):
-    '''
-    **Beartype functional type-checking tester exception.**
-
-    This exception is raised at call time by the
-    :func:`beartype.door.is_bearable` function when passed an invalid type hint.
-    '''
-
-    pass
-
-
-class BeartypeAbbyHintViolation(BeartypeCallHintViolation):
-    '''
-    **Beartype functional type-checking exception.**
-
-    This exception is raised at call time by the
-    :func:`beartype.door.die_if_unbearable` function when passed an object
-    violating the passed type hint.
     '''
 
     pass

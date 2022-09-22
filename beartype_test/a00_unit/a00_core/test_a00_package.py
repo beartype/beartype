@@ -54,6 +54,9 @@ def test_api_deprecations() -> None:
     DEPRECATED_ATTRIBUTES = (
         'beartype.abby',
         'beartype.cave.HintPep585Type',
+        'beartype.roar.BeartypeAbbyException',
+        'beartype.roar.BeartypeAbbyHintViolation',
+        'beartype.roar.BeartypeAbbyTesterException',
         'beartype.roar.BeartypeCallHintPepException',
         'beartype.roar.BeartypeCallHintPepParamException',
         'beartype.roar.BeartypeCallHintPepReturnException',
