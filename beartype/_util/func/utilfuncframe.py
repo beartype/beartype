@@ -57,7 +57,6 @@ CPython resembles:
 '''
 
 # ....................{ ITERATORS                          }....................
-#FIXME: Unit test us up, please.
 def iter_frames(
     # Optional parameters.
     func_stack_frames_ignore: int = 0,
@@ -124,8 +123,9 @@ def iter_frames(
         >>> from beartype._util.func.utilfunccodeobj import (
         ...     get_func_codeobj_or_none)
         >>> from beartype._util.func.utilfuncframe import iter_frames
-        >>> # For each stack frame on the call stack...
-        ... for func_frame in iter_frames():
+
+        # For each stack frame on the call stack...
+        >>> for func_frame in iter_frames():
         ...     # Code object underlying this frame's scope if this scope is
         ...     # pure-Python *OR* "None" otherwise.
         ...     func_frame_codeobj = get_func_codeobj_or_none(func_frame)
@@ -154,16 +154,38 @@ def iter_frames(
 
     # If the active Python interpreter fails to declare the private
     # sys._getframe() getter, reduce to the empty generator (i.e., noop).
-    if get_frame is None:
+    if get_frame is None:  # pragma: no cover
         yield from ()
+        return
     # Else, the active Python interpreter declares the sys._getframe() getter.
 
-    # Next non-ignored frame following the last ignored frame, ignoring an
-    # additional frame embodying the current call to this iterator.
-    func_frame = get_frame(func_stack_frames_ignore + 1)  # type: ignore[misc]
+    # Attempt to obtain the...
+    try:
+        # Next non-ignored frame following the last ignored frame, ignoring an
+        # additional frame embodying the current call to this iterator.
+        func_frame = get_frame(func_stack_frames_ignore + 1)  # type: ignore[misc]
+    # If doing so raises a "ValueError" exception...
+    except ValueError as value_error:
+        # Whose message matches this standard boilerplate, the caller requested
+        # that this generator ignore more stack frames than currently exist on
+        # the call stack. Permitting this exception to unwind the call stack
+        # would only needlessly increase the fragility of this already fragile
+        # mission-critical generator. Instead, swallow this exception and
+        # silently reduce to the empty generator (i.e., noop).
+        if str(value_error) == 'call stack is not deep enough':
+            yield from ()
+            return
+        # Whose message does *NOT* match this standard boilerplate, an
+        # unexpected exception occurred. In this case, re-raise this exception.
+
+        raise
+    # Else, doing so raised *NO* "ValueError" exception.
+    # print(f'start frame: {repr(func_frame)}')
 
     # While at least one frame remains on the call stack...
     while func_frame:
+        # print(f'current frame: {repr(func_frame)}')
+
         # Yield this frame to the caller.
         yield func_frame
 
