@@ -729,15 +729,15 @@ your GigaChad IDE of choice.
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Beartype fully supports `type narrowing`_ with the `PEP 647`_-compliant
-typing.TypeGuard_ type hint – and is, in fact, the **maximal type narrower**
-(i.e., beartype type supports type narrowing of all PEP-compliant type hints).
+typing.TypeGuard_ type hint. In fact, beartype supports type narrowing of *all*
+PEP-compliant type hints and is thus the first maximal type narrower.
 
 Specifically, the `procedural beartype.door.is_bearable() function
 <is_bearable_>`__ and `object-oriented beartype.door.TypeHint.is_bearable()
 method <beartype.door_>`__ both narrow the type of the passed test object (which
 can be *anything*) to the passed type hint (which can be *anything*
 PEP-compliant). Both soft-guarantee runtime performance on the order of less
-than 1µs (i.e., less than one millionth of a second), preserving both runtime
+than 1µs (i.e., less than one millionth of a second), preserving runtime
 performance and your personal sanity.
 
 Calling either `is_bearable() <is_bearable_>`__ *or* `TypeHint.is_bearable()
@@ -774,7 +774,7 @@ reducing static type-checker spam that went rotten decades ago: e.g.,
    def munch_on_list_of_strings(lst: list[str]): ...
    def munch_on_list_of_integers(lst: list[int]): ...
 
-Beartype: because you no longer care what static type-checkers think.
+Beartype: *because you no longer care what static type-checkers think.*
 
 Usage
 =====
@@ -959,20 +959,35 @@ Beartype Object-oriented API
 .. # FIXME: Synopsize this in our introduction and cheatsheet, please!
 .. # FIXME: Synopsize class decoration in our introduction and sheatsheet, too!
 
+Most Python projects only annotate objects with type hints. The actual usage of
+those type hints is left to other projects.
+
+Some Python projects, however, do actually use type hints to perform productive
+work at runtime. You are reading about one such project. But perhaps we're not
+the only reckless explorers into these uncharted waters. Perhaps your brave
+Python project also wants to introspect, inspect, investigate, or otherwise
+query type hints at runtime. If so, you'll have noted that type hints basically
+provide *no* usable runtime API.
+
+Enter the **DOOR** (**D**ecidedly **O**bject-\ **o**riented
+**R**untime-checker): beartype's first-class public API for introspecting,
+comparing, and type-checking type hints Pythonically in ``O(1)`` time with
+negligible constants. Let's cheatsheet this.
+
 .. code-block:: python
 
    # This is DOOR. It's a Pythonic API providing an object-oriented interface
    # to low-level type hints that basically have no interface whatsoever.
    >>> from beartype.door import TypeHint
-   >>> union_hint = TypeHint(int | str | None)
-   >>> print(union_hint)
-   TypeHint(int | str | None)
 
-   # DOOR hints have Pythonic classes -- unlike normal type hints.
+   # DOOR hint wrapping a PEP 604-compliant type union.
+   >>> union_hint = TypeHint(int | str | None)  # <-- so. it begins.
+
+   # DOOR hints have Pythonic public classes -- unlike normal type hints.
    >>> type(union_hint)
    beartype.door.UnionTypeHint  # <-- what madness is this?
 
-   # DOOR hints can be classified Pythonically -- unlike normal type hints.
+   # DOOR hints can be detected Pythonically -- unlike normal type hints.
    >>> from beartype.door import UnionTypeHint
    >>> isinstance(union_hint, UnionTypeHint)  # <-- *shocked face*
    True
