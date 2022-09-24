@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,14 +10,14 @@ This submodule functionally tests the syntactic validity of this project's
 top-level ``README.rst`` file.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import skip_unless_package
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 #FIXME: Consider submitting as a StackOverflow post. Dis iz l33t, yo!
 
 # If the third-party "docutils" package satisfying this minimum version is
@@ -39,7 +39,7 @@ def test_doc_readme(monkeypatch) -> None:
     ----------
     monkeypatch : MonkeyPatch
         Builtin fixture object permitting object attributes to be safely
-        modified for the duration of this unit test.
+        modified for the duration of this test.
     '''
 
     # Defer heavyweight imports.
@@ -80,6 +80,8 @@ def test_doc_readme(monkeypatch) -> None:
         # to the above list.
         if level >= reporter.WARNING_LEVEL:
             system_messages.append(message)
+        # Else, this message is neither a warning *NOR* error. In this case,
+        # silently ignore this message.
 
         # Return value returned by the above call as is.
         return message_result
@@ -91,8 +93,8 @@ def test_doc_readme(monkeypatch) -> None:
         value=system_message_patched,
     )
 
-    # Attempt to render this "README.rst" file as reST, implicitly invoking
-    # this monkey-patch.
+    # Attempt to render this "README.rst" file as reST, implicitly invoking this
+    # monkey-patch.
     publish_parts(source=README_CONTENTS, writer_name='html4css1')
 
     # Assert "docutils" to have emitted *NO* warnings or errors.

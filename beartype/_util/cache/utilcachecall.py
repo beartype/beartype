@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ TODO                               }....................
 #FIXME: Generalize @callable_cached to revert to the body of the
-#@betse._util.type.decorator.decmemo.func_cached decorator when the passed
+#@beartype._util.type.decorator.decmemo.func_cached decorator when the passed
 #callable accepts *NO* parameters, which can be trivially decided by inspecting
 #the code object of this callable. Why do this? Because the @func_cached
 #decorator is *INSANELY* fast for this edge case -- substantially faster than
@@ -419,54 +419,15 @@ def property_cached(func: _CallableT) -> _CallableT:
     property_var_name = (
         _PROPERTY_CACHED_VAR_NAME_PREFIX + func.__name__)
 
-    # Raw string of Python statements comprising the body of this wrapper,
-    # including (in order):
+    # Raw string of Python statements comprising the body of this wrapper.
     #
-    # * A "@wraps" decorator propagating the name, docstring, and other
-    #   identifying metadata of the original function to this wrapper.
-    # * A private "__property_method" parameter initialized to this function.
-    #   In theory, the "func" parameter passed to this decorator
-    #   should be accessible as a closure-style local in this wrapper. For
-    #   unknown reasons (presumably, a subtle bug in the exec() builtin), this
-    #   is not the case. Instead, a closure-style local must be simulated by
-    #   passing the "func" parameter to this function at function
-    #   definition time as the default value of an arbitrary parameter.
-    #
-    # While there exist numerous alternative implementations for caching
-    # properties, the approach implemented below has been profiled to be the
-    # most efficient. Alternatives include (in order of decreasing efficiency):
-    #
-    # * Dynamically getting and setting a property-specific key-value pair of
-    #   the internal dictionary for the current object, timed to be
-    #   approximately 1.5 times as slow as exception handling: e.g.,
-    #
-    #     if not {property_name!r} in self.__dict__:
-    #         self.__dict__[{property_name!r}] = __property_method(self)
-    #     return self.__dict__[{property_name!r}]
-    #
-    # * Dynamically getting and setting a property-specific attribute of
-    #   the current object (e.g., the internal dictionary for the current
-    #   object), timed to be approximately 1.5 times as slow as exception
-    #   handling: e.g.,
-    #
-    #     if not hasattr(self, {property_name!r}):
-    #         setattr(self, {property_name!r}, __property_method(self))
-    #     return getattr(self, {property_name!r})
-    #
-    # Lastly, note that this implementation intentionally avoids calling our
+    # Note that this implementation intentionally avoids calling our
     # higher-level beartype._util.func.utilfuncmake.make_func() factory function
     # for dynamically generating functions. Although this implementation could
     # certainly be refactored in terms of that factory, doing so would
     # needlessly reduce debuggability and portability for *NO* tangible gain.
-    func_body = '''
-@wraps(__property_method)
-def property_method_cached(self, __property_method=__property_method):
-    try:
-        return self.{property_var_name}
-    except AttributeError:
-        self.{property_var_name} = __property_method(self)
-        return self.{property_var_name}
-'''.format(property_var_name=property_var_name)
+    func_body = _PROPERTY_CACHED_CODE.format(
+        property_var_name=property_var_name)
 
     # Dictionary mapping from local attribute names to values. For efficiency,
     # only attributes required by the body of this wrapper are copied from the
@@ -483,7 +444,7 @@ def property_method_cached(self, __property_method=__property_method):
     return local_attrs['property_method_cached']
 
 # ....................{ PRIVATE ~ constants : var          }....................
-_CALLABLE_CACHED_VAR_NAME_PREFIX = '_betse_cached__'
+_CALLABLE_CACHED_VAR_NAME_PREFIX = '_beartype_cached__'
 '''
 Substring prefixing the names of all private instance variables to which all
 caching decorators (e.g., :func:`property_cached`) cache values returned by
@@ -511,6 +472,58 @@ Substring prefixing the names of all private instance variables to which the
 :func:`property_cached` decorator dynamically caches the value returned by the
 decorated property method.
 '''
+
+# ....................{ PRIVATE ~ constants : code         }....................
+_PROPERTY_CACHED_CODE = '''
+@wraps(__property_method)
+def property_method_cached(self, __property_method=__property_method):
+    try:
+        return self.{property_var_name}
+    except AttributeError:
+        self.{property_var_name} = __property_method(self)
+        return self.{property_var_name}
+'''
+'''
+Raw string of Python statements comprising the body of the wrapper function
+dynamically generated by the :func:`property_cached` decorator.
+
+These statements include (in order):
+
+* A :mod:`functools.wraps` decoration propagating the name, docstring, and other
+  identifying metadata of the original function to this wrapper.
+* A private ``__property_method`` parameter set to the underlying property
+  getter method. In theory, the ``func`` parameter passed to the
+  :func:`property_cached` decorator should be accessible as a closure-style
+  local in this code. For unknown reasons (presumably, a subtle bug in the
+  :func:`exec` builtin), this is not the case. Instead, a closure-style local
+  must be simulated by passing the ``func`` parameter to this function at
+  function definition time as the default value of an arbitrary parameter.
+
+Design
+----------
+While there exist numerous alternative implementations for caching properties,
+the approach implemented below has been profiled to be the most efficient.
+Alternatives include (in order of decreasing efficiency):
+
+* Dynamically getting and setting a property-specific key-value pair of the
+  internal dictionary for the current object, timed to be approximately 1.5
+  times as slow as exception handling: e.g.,
+
+.. code-block:: python
+   if not {property_name!r} in self.__dict__:
+       self.__dict__[{property_name!r}] = __property_method(self)
+   return self.__dict__[{property_name!r}]
+
+* Dynamically getting and setting a property-specific attribute of the current
+  object (e.g., the internal dictionary for the current object), timed to be
+  approximately 1.5 times as slow as exception handling: e.g.,
+
+.. code-block:: python
+   if not hasattr(self, {property_name!r}):
+       setattr(self, {property_name!r}, __property_method(self))
+   return getattr(self, {property_name!r})
+'''
+
 # ....................{ PRIVATE ~ constant : sentinel      }....................
 _SENTINEL_KWARGS_KEYS = (Iota(),)
 '''

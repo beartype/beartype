@@ -96,14 +96,14 @@
    # ..................{ AT ANY TIME }..................
    # Type-check anything against any type hint –
    # anywhere at anytime.
-   >>> from beartype.abby import (
+   >>> from beartype.door import (
    ...     is_bearable,  # <-------- like "isinstance(...)"
    ...     die_if_unbearable,  # <-- like "assert isinstance(...)"
    ... )
    >>> is_bearable(['The', 'goggles', 'do', 'nothing.'], list[str])
    True
    >>> die_if_unbearable([0xCAFEBEEF, 0x8BADF00D], ListOfStrings)
-   beartype.roar.BeartypeAbbyHintViolation: Object [3405692655, 2343432205]
+   beartype.roar.BeartypeDoorHintViolation: Object [3405692655, 2343432205]
    violates type hint typing.Annotated[list[str], Is[lambda lst: bool(lst)]],
    as list index 0 item 3405692655 not instance of str.
 
@@ -113,7 +113,7 @@
    #
    # Type-check a list of one million 2-tuples of NumPy
    # arrays in nearly 1µs (one millionth of a second).
-   >>> from beartype.abby import is_bearable
+   >>> from beartype.door import is_bearable
    >>> from beartype.typing import List, Tuple
    >>> import numpy as np
    >>> data = [(np.array(i), np.array(i+1)) for i in range(1000000)]
@@ -682,52 +682,99 @@ This is why we beartype.
 ...under VSCode?
 ~~~~~~~~~~~~~~~~
 
-Beartype fully complies with mypy_, `PEP 561`_, and other community standards
-for statically type-checking dynamic Python code. Modern Integrated Development
-Environments (IDEs) support these standards - including VSCode_, Microsoft's
-free-as-in-beer GigaChad IDE. Just:
+**Beartype fully supports VSCode out-of-the-box** – especially via Pylance_,
+Microsoft's bleeding-edge Python extension for VSCode. Chortle in your joy,
+corporate subscribers and academic sponsors! All the intellisense you can
+tab-complete and more is now within your honey-slathered paws. Why? Because...
 
-* **Enable mypy type-checking.** Mypy_ complies with all typing standards
-  required by beartype. In fact, mypy_ is the *de facto* standard against which
-  all other type checkers (including beartype itself and Microsoft's pyright_)
-  are measured. Just:
+Beartype laboriously complies with pyright_, Microsoft's in-house static
+type-checker for Python. Pylance_ enables pyright_ as its default static
+type-checker. Beartype thus complies with Pylance_, too.
 
-  #. `Install mypy <mypy install_>`__.
-  #. `Install the VSCode Mypy extension <VSCode Mypy extension_>`__.
-  #. Rejoice as things mostly lint as expected for once.
+Beartype *also* laboriously complies with mypy_, Python's official static
+type-checker. VSCode users preferring mypy_ to pyright_ may switch Pylance_ to
+type-check via the former. Just:
 
-* If you additionally use Pylance_, **disable Pylance type-checking.**
-  Pylance_ statically type-checks with pyright_ rather than mypy_. Ugh!
-  Pyright_ openly violates typing standards required by beartype – including
-  `PEP 484`_, the core standard that *everything* calling itself a type-checker
-  had better comply with. [#pyright-failure-1]_ [#pyright-failure-2]_ Just:
-
-  #. Open the *User Settings* dialog.
-  #. Search for ``Type Checking Mode``.
-  #. Browse to ``Python › Analysis: Type Checking Mode``.
-  #. Switch the "default rule set for type checking" to ``off``.
+#. `Install mypy <mypy install_>`__.
+#. `Install the VSCode Mypy extension <VSCode Mypy extension_>`__.
+#. Open the *User Settings* dialog.
+#. Search for ``Type Checking Mode``.
+#. Browse to ``Python › Analysis: Type Checking Mode``.
+#. Switch the "default rule set for type checking" to ``off``.
 
 |VSCode-Pylance-type-checking-setting|
 
 :superscript:`Pretend that reads "off" rather than "strict". Pretend we took
 this screenshot.`
 
-Scientists especially want to switch from pyright_ to mypy_. Many scientific
-packages bundle mypy_ plugins describing dynamic runtime behaviour. Since
-pyright_ devs `refuse to implement a comparable plugin API <pyright
-plugins_>`__, Pylance_ fails to type-check many scientific packages.
+There are tradeoffs here, because that's just how the code rolls. On:
 
-    Dear Microsoft,
+* The one paw, pyright_ is *significantly* more performant than mypy_ under
+  Pylance_ and supports type-checking standards currently unsupported by mypy_
+  (e.g., recursive type hints).
+* The other paw, mypy_ supports a vast plugin architecture enabling third-party
+  Python packages to describe dynamic runtime behaviour statically.
 
-    We embrace you. We just wish you embraced community standards, too.
+Beartype: we enable hard choices, so that you can make them for us.
 
-    — Us
+...under [insert-IDE-name-here]?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. [#pyright-failure-1]
-   `See this <pyright PEP violation #1_>`__. You didn't want to, but the
-   clickbait undertow was too strong that day.
-.. [#pyright-failure-2]
-   `See this <pyright PEP violation #2_>`__, too. There goes Tuesday!
+Beartype fully complies with mypy_, pyright_, `PEP 561`_, and other community
+standards that govern how Python is statically type-checked. Modern Integrated
+Development Environments (IDEs) support these standards - hopefully including
+your GigaChad IDE of choice.
+
+...with type narrowing?
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Beartype fully supports `type narrowing`_ with the `PEP 647`_-compliant
+typing.TypeGuard_ type hint – and is, in fact, the **maximal type narrower**
+(i.e., beartype type supports type narrowing of all PEP-compliant type hints).
+
+Specifically, the `procedural beartype.door.is_bearable() function
+<is_bearable_>`__ and `object-oriented beartype.door.TypeHint.is_bearable()
+method <beartype.door_>`__ both narrow the type of the passed test object (which
+can be *anything*) to the passed type hint (which can be *anything*
+PEP-compliant). Both soft-guarantee runtime performance on the order of less
+than 1µs (i.e., less than one millionth of a second), preserving both runtime
+performance and your personal sanity.
+
+Calling either `is_bearable() <is_bearable_>`__ *or* `TypeHint.is_bearable()
+<beartype.door_>`__ in your code enables beartype to symbiotically eliminate
+false positives from static type-checkers checking that code, substantially
+reducing static type-checker spam that went rotten decades ago: e.g.,
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype.door import is_bearable
+
+   def narrow_types_like_a_boss_with_beartype(lst: list[int | str]):
+       '''
+       This function eliminates false positives from static type-checkers
+       like mypy and pyright by narrowing types with ``is_bearable()``.
+
+       Note that decorating this function with ``@beartype`` is *not*
+       required to inform static type-checkers of type narrowing. Of
+       course, you should still do that anyway. Trust is a fickle thing.
+       '''
+
+       # If this list contains integers rather than strings, call another
+       # function accepting only a list of integers.
+       if is_bearable(lst, list[int]):
+           # "lst" has been though a lot. Let's celebrate its courageous story.
+           munch_on_list_of_strings(lst)  # mypy/pyright: OK!
+       # If this list contains strings rather than integers, call another
+       # function accepting only a list of strings.
+       elif is_bearable(lst, list[str]):
+           # "lst": The Story of "lst." The saga of false positives ends now.
+           munch_on_list_of_strings(lst)  # mypy/pyright: OK!
+
+   def munch_on_list_of_strings(lst: list[str]): ...
+   def munch_on_list_of_integers(lst: list[int]): ...
+
+Beartype: because you no longer care what static type-checkers think.
 
 Usage
 =====
@@ -903,9 +950,87 @@ guide you on your maiden voyage through the misty archipelagos of type hinting:
 .. #
 .. #  * `typing.Union`_, enabling .
 
-.. _beartype.abby:
+.. _beartype.door:
 
-Beartype At Any Time API
+Beartype Object-oriented API
+----------------------------
+
+.. # FIXME: Human-readable discussion, please!
+.. # FIXME: Synopsize this in our introduction and cheatsheet, please!
+.. # FIXME: Synopsize class decoration in our introduction and sheatsheet, too!
+
+.. code-block:: python
+
+   # This is DOOR. It's a Pythonic API providing an object-oriented interface
+   # to low-level type hints that basically have no interface whatsoever.
+   >>> from beartype.door import TypeHint
+   >>> union_hint = TypeHint(int | str | None)
+   >>> print(union_hint)
+   TypeHint(int | str | None)
+
+   # DOOR hints have Pythonic classes -- unlike normal type hints.
+   >>> type(union_hint)
+   beartype.door.UnionTypeHint  # <-- what madness is this?
+
+   # DOOR hints can be classified Pythonically -- unlike normal type hints.
+   >>> from beartype.door import UnionTypeHint
+   >>> isinstance(union_hint, UnionTypeHint)  # <-- *shocked face*
+   True
+
+   # DOOR hints can be type-checked Pythonically -- unlike normal type hints.
+   >>> union_hint.is_bearable('The unbearable lightness of type-checking.')
+   True
+   >>> union_hint.die_if_unbearable(b'The @beartype that cannot be named.')
+   beartype.roar.BeartypeDoorHintViolation: Object b'The @beartype that cannot
+   be named.' violates type hint int | str | None, as bytes b'The @beartype
+   that cannot be named.' not str, <class "builtins.NoneType">, or int.
+
+   # DOOR hints can be iterated Pythonically -- unlike normal type hints.
+   >>> for child_hint in union_hint: print(child_hint)
+   TypeHint(<class 'int'>)
+   TypeHint(<class 'str'>)
+   TypeHint(<class 'NoneType'>)
+
+   # DOOR hints can be indexed Pythonically -- unlike normal type hints.
+   >>> union_hint[0]
+   TypeHint(<class 'int'>)
+   >>> union_hint[-1]
+   TypeHint(<class 'str'>)
+
+   # DOOR hints can be sliced Pythonically -- unlike normal type hints.
+   >>> union_hint[0:2]
+   (TypeHint(<class 'int'>), TypeHint(<class 'str'>))
+
+   # DOOR hints supports "in" Pythonically -- unlike normal type hints.
+   >>> TypeHint(int) in union_hint  # <-- it's all true.
+   True
+   >>> TypeHint(bool) in union_hint  # <-- believe it.
+   False
+
+   # DOOR hints are sized Pythonically -- unlike normal type hints.
+   >>> len(union_hint)  # <-- woah.
+   3
+
+   # DOOR hints reduce to booleans Pythonically -- unlike normal type hints.
+   >>> if union_hint: print('This type hint has children.')
+   This type hint has children.
+   >>> if not TypeHint(tuple[()]): print('But this other type hint is empty.')
+   But this other type hint is empty.
+
+   # DOOR hints support equality Pythonically -- unlike normal type hints.
+   >>> from typing import Union
+   >>> union_hint == TypeHint(Union[int, str, None])
+   True  # <-- this is madness.
+
+   # DOOR hints support comparisons Pythonically -- unlike normal type hints.
+   >>> union_hint <= TypeHint(int | str | bool | None)
+   True  # <-- madness continues.
+
+   # DOOR hints are semantically self-caching.
+   >>> TypeHint(int | str | bool | None) is TypeHint(None | bool | str | int)
+   True  # <-- blowing minds over here.
+
+Beartype Procedural API
 ------------------------
 
 .. parsed-literal::
@@ -913,12 +1038,15 @@ Beartype At Any Time API
    Type-check anything against any type hint – anywhere, at any time.
 
 When the ``isinstance()`` and ``issubclass()`` builtins fail to scale, prefer
-the ``beartype.abby`` functional API enabling you to type-check *anything*
-*anytime* against *any* PEP-compliant type hint.
+the ``beartype.dooc`` procedural API. Type-check *anything* *anytime* against
+*any* PEP-compliant type hint.
+
+.. # FIXME: Document the new is_subhint() tester function as well, please!
+.. # FIXME: Document the new "beartype.peps" submodule as well, please!
 
 .. _is_bearable:
 
-*def* beartype.abby.\ **is_bearable**\ (obj: object, hint: object, \*, conf:
+*def* beartype.door.\ **is_bearable**\ (obj: object, hint: object, \*, conf:
 beartype.BeartypeConf = BeartypeConf()) -> bool
 
     **Type-hint tester,** returning either:
@@ -930,7 +1058,7 @@ beartype.BeartypeConf = BeartypeConf()) -> bool
 
     .. code-block:: python
 
-       >>> from beartype.abby import is_bearable
+       >>> from beartype.door import is_bearable
        >>> from beartype.typing import List, Sequence, Optional, Union
        >>> is_bearable("Kif, I’m feeling the ‘Captain's itch.’", Optional[str])
        True
@@ -945,7 +1073,7 @@ beartype.BeartypeConf = BeartypeConf()) -> bool
 
     .. code-block:: python
 
-       >>> from beartype.abby import is_bearable
+       >>> from beartype.door import is_bearable
        >>> is_bearable('I surrender and volunteer for treason.', str)
        True
        >>> is_bearable(b'Stop exploding, you cowards.', (str, bytes))
@@ -960,7 +1088,7 @@ beartype.BeartypeConf = BeartypeConf()) -> bool
 
     .. code-block:: python
 
-       >>> from beartype.abby import is_bearable
+       >>> from beartype.door import is_bearable
        >>> from beartype.typing import Type, Union
        >>> from collections.abc import Awaitable, Collection, Iterable
        >>> is_bearable(str, Type[Iterable])
@@ -970,11 +1098,11 @@ beartype.BeartypeConf = BeartypeConf()) -> bool
        >>> is_bearable(bool, Union[Type[str], Type[float]])
        False
 
-    See ``help(beartype.abby.is_bearable)`` for further details.
+    See ``help(beartype.door.is_bearable)`` for further details.
 
 .. _die_if_unbearable:
 
-*def* beartype.abby.\ **die_if_unbearable**\ (obj: object, hint: object, \*,
+*def* beartype.door.\ **die_if_unbearable**\ (obj: object, hint: object, \*,
 conf: beartype.BeartypeConf = BeartypeConf()) -> None
 
     **Type-hint validator,** either:
@@ -987,16 +1115,16 @@ conf: beartype.BeartypeConf = BeartypeConf()) -> None
 
     .. code-block:: python
 
-       >>> from beartype.abby import die_if_unbearable
+       >>> from beartype.door import die_if_unbearable
        >>> from beartype.typing import List, Sequence, Optional, Union
        >>> die_if_unbearable("My people ate them all!", Union[List[int], None])
-       BeartypeAbbyHintViolation: Object _if_unbearable() return 'My people ate
+       BeartypeDoorHintViolation: Object _if_unbearable() return 'My people ate
        them all!' violates type hint typing.Optional[list[int]], as str 'My
        people ate them all!' not list or <protocol "builtins.NoneType">.
        >>> die_if_unbearable("I'm swelling with patriotic mucus!", Optional[str])
        >>> die_if_unbearable("I'm not on trial here.", Sequence[str])
 
-    See ``help(beartype.abby.die_if_unbearable)`` for further details.
+    See ``help(beartype.door.die_if_unbearable)`` for further details.
 
 Beartype Validators
 -------------------
@@ -2527,11 +2655,11 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | Pyre_                                   | *none*                        | *none*                    |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-| beartype.abby_     | die_if_unbearable_                      | **0.10.0**\ —\ **0.10.4**     | **0.10.0**\ —\ **0.10.4** |
+| beartype.abby      | die_if_unbearable_                      | **0.10.0**\ —\ **0.10.4**     | **0.10.0**\ —\ **0.10.4** |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | is_bearable_                            | **0.10.0**\ —\ **0.10.4**     | **0.10.0**\ —\ **0.10.4** |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-| beartype.door      | TypeHint                                | **0.11.0**\ —\ *current*      | **0.11.0**\ —\ *current*  |
+| beartype.door_     | TypeHint                                | **0.11.0**\ —\ *current*      | **0.11.0**\ —\ *current*  |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | AnnotatedTypeHint                       | **0.11.0**\ —\ *current*      | **0.11.0**\ —\ *current*  |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
@@ -4517,15 +4645,18 @@ fitfully started, though long will you curse our names. *Praise Cleese.*
 License
 =======
 
-``beartype`` is `open-source software released <beartype license_>`__ under the
+Beartype is `open-source software released <beartype license_>`__ under the
 `permissive MIT license <MIT license_>`__.
 
 Funding
 =======
 
-``beartype`` is currently financed as a purely volunteer open-source project –
-which is to say, it's unfinanced. Prior funding sources (*yes, they once
-existed*) include:
+Beartype is financed as a purely volunteer open-source project via `GitHub
+Sponsors`_, to whom our burgeoning community is eternally indebted. Without your
+generosity, runtime type-checking would be a shadow of its current hulking bulk.
+We genuflect before your selfless charity, everyone!
+
+Prior official funding sources (*yes, they once existed*) include:
 
 #. A `Paul Allen Discovery Center award`_ from the `Paul G. Allen Frontiers
    Group`_ under the administrative purview of the `Paul Allen Discovery
@@ -4535,69 +4666,20 @@ existed*) include:
    in the `Bioelectric Tissue Simulation Engine (BETSE) <BETSE_>`__.
    :superscript:`Phew!`
 
-Authors
-=======
-
 .. # FIXME: Consider replacing this hand-rolled list that we've predictably
 .. # failed to properly maintain with an automated avatar-heavy list
 .. # synthesized by the @all-contributors bot. See also:
 .. #     https://github.com/all-contributors/all-contributors
 .. # Note, however, that we'll almost certainly need to also run this first:
 .. #     https://dev.to/tlylt/automatically-add-all-existing-repo-contributors-with-all-contributors-cli-5hdj
+.. # FIXME: Indeed, we're not particularly fond of any existing solution we've
+.. # found (including the above). For now, let's just leave this disabled. :{
 
-``beartype`` is developed with the grateful assistance of a volunteer community
-of enthusiasts, including (*in chronological order of issue or pull request*):
-
-#. `Cecil Curry (@leycec) <leycec_>`__. :superscript:`Hi! It's me.` From
-   beartype's early gestation as a nondescript ``@type_check`` decorator
-   in the `Bioelectric Tissue Simulation Engine (BETSE) <BETSE_>`__ to its
-   general-audience release as a `public package supported across multiple
-   Python and platform-specific package managers <Install_>`__, I shepherd the
-   fastest, hardest, and deepest runtime type-checking solution in any
-   `dynamically-typed`_ language towards a well-typed future of PEP-compliance
-   and boundless quality assurance. *Cue epic taiko drumming.*
-#. `Felix Hildén (@felix-hilden) <felix-hilden_>`__, the Finnish `computer
-   vision`_ expert world-renowned for his effulgent fun-loving disposition
-   *and*:
-
-   * `Branding beartype with the Logo of the Decade <beartype felix-hilden
-     branding_>`__, say nine out of ten Finnish brown bears. "The other bears
-     are just jelly," claims Hildén.
-   * `Documenting beartype with its first Sphinx-based directory structure
-     <beartype felix-hilden docs structure_>`__.
-   * `Configuring that structure for Read The Docs (RTD)-friendly rendering
-     <beartype felix-hilden docs RTD confs_>`__.
-
-#. `@harens <harens_>`__, the boisterous London developer acclaimed for his
-   defense of British animals that quack pridefully as they peck you in city
-   parks *as well as*:
-
-   * `Renovating beartype for conformance with both static type checking under
-     <beartype harens mypy_>`__ mypy_ and `PEP 561`_.
-   * Maintaining our first third-party packages:
-
-     * `A macOS-specific Homebrew tap predicted to solve all your problems
-       <beartype Homebrew_>`__.
-     * `A macOS-specific MacPorts Portfile expected to solve even more problems
-       <beartype MacPorts_>`__.
-
-#. `@Heliotrop3 <Heliotrop3_>`__, the `perennial flowering plant genus from
-   Peru <heliotrope_>`__ whose "primal drive for ruthless efficiency makes
-   overcoming these opportunities for growth [*and incoming world conquest*]
-   inevitable" as well as:
-
-   * `Introspecting human-readable labels from arbitrary callables <beartype
-     Heliotrop3 callable labelling_>`__.
-   * Improving quality assurance across internal:
-
-     * `Caching data structures <beartype Heliotrop3 QA caching_>`__.
-     * `String munging utilities <beartype Heliotrop3 QA munging_>`__.
-
-#. `@posita <posita_>`__, the superpositive code luminary of superpositional
-   genius status singularly responsible for:
-
-   * `Generalizing "NotImplemented" support to non-boolean binary dunder
-     methods <beartype posita NotImplemented_>`__.
+.. # Authors
+.. # =======
+.. #
+.. # ``beartype`` is developed with the grateful assistance of a volunteer community
+.. # of enthusiasts, including (*in chronological order of issue or pull request*):
 
 See Also
 ========
@@ -4712,12 +4794,12 @@ rather than Python runtime) include:
 * pyright_, published by Microsoft.
 * pytype_, published by Google.
 
-.. # ------------------( IMAGES                             )------------------
+.. # ------------------( IMAGES                              )------------------
 .. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.png
    :target: https://beartype.readthedocs.io
    :alt: beartype —[ the bare-metal type checker ]—
 
-.. # ------------------( IMAGES ~ badge                     )------------------
+.. # ------------------( IMAGES ~ badge                      )------------------
 .. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
    :align: top
    :target: https://beartype.readthedocs.io
@@ -4732,18 +4814,20 @@ rather than Python runtime) include:
    :target: https://beartype.readthedocs.io/en/latest/?badge=latest
    :alt: beartype Read The Docs (RTD) status
 
-.. # ------------------( IMAGES ~ screenshot               )------------------
+.. # ------------------( IMAGES ~ screenshot                 )------------------
 .. |VSCode-Pylance-type-checking-setting| image:: https://user-images.githubusercontent.com/217028/164616311-c4a24889-0c53-4726-9051-29be7263ee9b.png
    :alt: Disabling pyright-based VSCode Pylance type-checking
 
-.. # ------------------( IMAGES ~ downstream                )------------------
+.. # ------------------( IMAGES ~ downstream                 )------------------
 .. # Insert links to GitHub Sponsors funding at the icon level here, please!
 
-.. # ------------------( LINKS ~ beartype : funding         )------------------
+.. # ------------------( LINKS ~ beartype : funding          )------------------
 .. _BETSE:
    https://github.com/betsee/betse
 .. _BETSEE:
    https://github.com/betsee/betsee
+.. _GitHub Sponsors:
+   https://github.com/sponsors/leycec
 .. _Paul Allen:
    https://en.wikipedia.org/wiki/Paul_Allen
 .. _Paul Allen Discovery Center:
@@ -4757,11 +4841,11 @@ rather than Python runtime) include:
 .. _beartype sponsorship:
    https://github.com/sponsors/leycec
 
-.. # ------------------( LINKS ~ beartype : local           )------------------
+.. # ------------------( LINKS ~ beartype : local            )------------------
 .. _beartype license:
    LICENSE
 
-.. # ------------------( LINKS ~ beartype : local : module  )------------------
+.. # ------------------( LINKS ~ beartype : local : module   )------------------
 .. _beartype errormain:
    beartype/_decor/_code/_pep/_error/errormain.py
 .. _beartype pephint:
@@ -4779,7 +4863,7 @@ rather than Python runtime) include:
 .. _beartype util pep:
    beartype/_util/hint/pep/proposal
 
-.. # ------------------( LINKS ~ beartype : package         )------------------
+.. # ------------------( LINKS ~ beartype : package          )------------------
 .. _beartype Anaconda:
    https://anaconda.org/conda-forge/beartype
 .. _beartype Gentoo:
@@ -4791,13 +4875,13 @@ rather than Python runtime) include:
 .. _beartype PyPI:
    https://pypi.org/project/beartype
 
-.. # ------------------( LINKS ~ beartype : package : meta  )------------------
+.. # ------------------( LINKS ~ beartype : package : meta   )------------------
 .. _Libraries.io:
    https://libraries.io
 .. _beartype dependents:
    https://libraries.io/pypi/beartype/dependents
 
-.. # ------------------( LINKS ~ beartype : remote          )------------------
+.. # ------------------( LINKS ~ beartype : remote           )------------------
 .. _beartype:
    https://github.com/beartype/beartype
 .. _beartype issues:
@@ -4815,7 +4899,7 @@ rather than Python runtime) include:
 .. _beartype tests:
    https://github.com/beartype/beartype/actions?workflow=tests
 
-.. # ------------------( LINKS ~ beartype : user            )------------------
+.. # ------------------( LINKS ~ beartype : user             )------------------
 .. _Heliotrop3:
    https://github.com/Heliotrop3
 .. _felix-hilden:
@@ -4960,12 +5044,6 @@ rather than Python runtime) include:
 .. _PYTHONOPTIMIZE:
    https://docs.python.org/3/using/cmdline.html#envvar-PYTHONOPTIMIZE
 
-.. # ------------------( LINKS ~ py : ide                   )------------------
-.. _PyCharm:
-   https://en.wikipedia.org/wiki/PyCharm
-.. _Pylance:
-   https://github.com/microsoft/pylance-release
-
 .. # ------------------( LINKS ~ py : interpreter           )------------------
 .. _Brython:
    https://brython.info
@@ -5040,13 +5118,13 @@ rather than Python runtime) include:
 .. _numpy.typing.NDArray:
    https://numpy.org/devdocs/reference/typing.html#ndarray
 
-.. # ------------------( LINKS ~ py : package : sphinx      )------------------
+.. # ------------------( LINKS ~ py : package : sphinx       )------------------
 .. _Sphinx:
    https://www.sphinx-doc.org
 .. _sphinx.ext.autodoc:
    https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 
-.. # ------------------( LINKS ~ py : package : test        )------------------
+.. # ------------------( LINKS ~ py : package : test         )------------------
 .. _Codecov:
    https://about.codecov.io
 .. _pytest:
@@ -5054,7 +5132,7 @@ rather than Python runtime) include:
 .. _tox:
    https://tox.readthedocs.io
 
-.. # ------------------( LINKS ~ py : pep                   )------------------
+.. # ------------------( LINKS ~ py : pep                    )------------------
 .. _PEP 0:
    https://www.python.org/dev/peps
 .. _PEP 20:
@@ -5108,13 +5186,13 @@ rather than Python runtime) include:
 .. _PEP 3141:
    https://www.python.org/dev/peps/pep-3141
 
-.. # ------------------( LINKS ~ py : pep : 3119            )------------------
+.. # ------------------( LINKS ~ py : pep : 3119             )------------------
 .. _PEP 3119:
    https://www.python.org/dev/peps/pep-3119
 .. _virtual base classes:
    https://www.python.org/dev/peps/pep-3119/#id33
 
-.. # ------------------( LINKS ~ py : pep : 484             )------------------
+.. # ------------------( LINKS ~ py : pep : 484              )------------------
 .. _PEP 484:
    https://www.python.org/dev/peps/pep-0484
 .. _relative forward references:
@@ -5122,25 +5200,25 @@ rather than Python runtime) include:
 .. _type aliases:
    https://www.python.org/dev/peps/pep-0484/#type-aliases
 
-.. # ------------------( LINKS ~ py : pep : 560             )------------------
+.. # ------------------( LINKS ~ py : pep : 560              )------------------
 .. _PEP 560:
    https://www.python.org/dev/peps/pep-0560
 .. _mro_entries:
    https://www.python.org/dev/peps/pep-0560/#id20
 
-.. # ------------------( LINKS ~ py : service               )------------------
+.. # ------------------( LINKS ~ py : service                )------------------
 .. _Anaconda:
    https://docs.conda.io/en/latest/miniconda.html
 .. _PyPI:
    https://pypi.org
 
-.. # ------------------( LINKS ~ py : stdlib : abc          )------------------
+.. # ------------------( LINKS ~ py : stdlib : abc           )------------------
 .. _abc:
    https://docs.python.org/3/library/abc.html
 .. _abc.ABCMeta:
    https://docs.python.org/3/library/abc.html#abc.ABCMeta
 
-.. # ------------------( LINKS ~ py : stdlib : builtins     )------------------
+.. # ------------------( LINKS ~ py : stdlib : builtins      )------------------
 .. _builtins:
    https://docs.python.org/3/library/stdtypes.html
 .. _None:
@@ -5170,7 +5248,7 @@ rather than Python runtime) include:
 .. _type:
    https://docs.python.org/3/library/stdtypes.html#bltin-type-objects
 
-.. # ------------------( LINKS ~ py : stdlib : collections  }------------------
+.. # ------------------( LINKS ~ py : stdlib : collections   }------------------
 .. _collections:
    https://docs.python.org/3/library/collections.html
 .. _collections.ChainMap:
@@ -5184,7 +5262,7 @@ rather than Python runtime) include:
 .. _collections.deque:
    https://docs.python.org/3/library/collections.html#collections.deque
 
-.. # ------------------( LINKS ~ py : stdlib : collections.abc }---------------
+.. # ------------------( LINKS ~ py : stdlib : collections.abc  }---------------
 .. _collections.abc:
    https://docs.python.org/3/library/collections.abc.html
 .. _collections.abc.AsyncGenerator:
@@ -5234,7 +5312,7 @@ rather than Python runtime) include:
 .. _collections.abc.ValuesView:
    https://docs.python.org/3/library/collections.abc.html#collections.abc.ValuesView
 
-.. # ------------------( LINKS ~ py : stdlib : contextlib   )------------------
+.. # ------------------( LINKS ~ py : stdlib : contextlib    )------------------
 .. _contextlib:
    https://docs.python.org/3/library/contextlib.html
 .. _contextlib.AbstractAsyncContextManager:
@@ -5242,7 +5320,7 @@ rather than Python runtime) include:
 .. _contextlib.AbstractContextManager:
    https://docs.python.org/3/library/contextlib.html#contextlib.AbstractContextManager
 
-.. # ------------------( LINKS ~ py : stdlib : abc          )------------------
+.. # ------------------( LINKS ~ py : stdlib : abc           )------------------
 .. _dataclasses:
    https://docs.python.org/3/library/dataclasses.html
 .. _dataclasses.InitVar:
@@ -5250,21 +5328,21 @@ rather than Python runtime) include:
 .. _dataclasses.dataclass:
    https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass
 
-.. # ------------------( LINKS ~ py : stdlib : enum         )------------------
+.. # ------------------( LINKS ~ py : stdlib : enum          )------------------
 .. _enum.Enum:
    https://docs.python.org/3/library/enum.html#enum.Enum
 
-.. # ------------------( LINKS ~ py : stdlib : io           )------------------
+.. # ------------------( LINKS ~ py : stdlib : io            )------------------
 .. _io:
    https://docs.python.org/3/library/io.html
 
-.. # ------------------( LINKS ~ py : stdlib : os           )------------------
+.. # ------------------( LINKS ~ py : stdlib : os            )------------------
 .. _os:
    https://docs.python.org/3/library/os.html
 .. _os.walk:
    https://docs.python.org/3/library/os.html#os.walk
 
-.. # ------------------( LINKS ~ py : stdlib : random       )------------------
+.. # ------------------( LINKS ~ py : stdlib : random        )------------------
 .. _random:
    https://docs.python.org/3/library/random.html
 .. _random.getrandbits:
@@ -5272,7 +5350,7 @@ rather than Python runtime) include:
 .. _random twister:
    https://stackoverflow.com/a/11704178/2809027
 
-.. # ------------------( LINKS ~ py : stdlib : re           )------------------
+.. # ------------------( LINKS ~ py : stdlib : re            )------------------
 .. _re:
    https://docs.python.org/3/library/re.html
 .. _re.Match:
@@ -5280,7 +5358,7 @@ rather than Python runtime) include:
 .. _re.Pattern:
    https://docs.python.org/3/library/re.html#regular-expression-objects
 
-.. # ------------------( LINKS ~ py : stdlib : typing : attr)------------------
+.. # ------------------( LINKS ~ py : stdlib : typing : attr )------------------
 .. _typing:
    https://docs.python.org/3/library/typing.html
 .. _typing.AbstractSet:
@@ -5436,7 +5514,7 @@ rather than Python runtime) include:
 .. _typing.TYPE_CHECKING:
    https://docs.python.org/3/library/typing.html#typing.TYPE_CHECKING
 
-.. # ------------------( LINKS ~ py : type : runtime        )------------------
+.. # ------------------( LINKS ~ py : type : runtime         )------------------
 .. _enforce:
    https://github.com/RussBaz/enforce
 .. _enforce_typing:
@@ -5452,7 +5530,7 @@ rather than Python runtime) include:
 .. _typeguard:
    https://github.com/agronholm/typeguard
 
-.. # ------------------( LINKS ~ py : type : runtime : data )------------------
+.. # ------------------( LINKS ~ py : type : runtime : data  )------------------
 .. _PyContracts:
    https://github.com/AlexandruBurlacu/pycontracts
 .. _contracts:
@@ -5468,13 +5546,13 @@ rather than Python runtime) include:
 .. _pcd:
    https://pypi.org/project/pcd
 
-.. # ------------------( LINKS ~ py : type : static         )------------------
+.. # ------------------( LINKS ~ py : type : static          )------------------
 .. _Pyre:
    https://pyre-check.org
 .. _pytype:
    https://github.com/google/pytype
 
-.. # ------------------( LINKS ~ py : type : static         )------------------
+.. # ------------------( LINKS ~ py : type : static          )------------------
 .. _pyright:
    https://github.com/Microsoft/pyright
 .. _pyright plugins:
@@ -5484,25 +5562,31 @@ rather than Python runtime) include:
 .. _pyright PEP violation #2:
    https://github.com/beartype/beartype/issues/127
 
-.. # ------------------( LINKS ~ py : type : static : mypy  )------------------
+.. # ------------------( LINKS ~ py : type : static : mypy   )------------------
 .. _mypy:
    http://mypy-lang.org
 .. _mypy install:
    https://mypy.readthedocs.io/en/stable/getting_started.html
 .. _mypy plugin:
    https://mypy.readthedocs.io/en/stable/extending_mypy.html
+.. _type narrowing:
+   https://mypy.readthedocs.io/en/stable/type_narrowing.html
 
-.. # ------------------( LINKS ~ soft : ide                 )------------------
+.. # ------------------( LINKS ~ soft : ide                  )------------------
+.. _PyCharm:
+   https://en.wikipedia.org/wiki/PyCharm
 .. _Vim:
    https://www.vim.org
 
-.. # ------------------( LINKS ~ soft : ide : vscode        )------------------
+.. # ------------------( LINKS ~ soft : ide : vscode         )------------------
+.. _Pylance:
+   https://github.com/microsoft/pylance-release
 .. _VSCode:
    https://code.visualstudio.com
 .. _VSCode Mypy extension:
    https://marketplace.visualstudio.com/items?itemName=matangover.mypy
 
-.. # ------------------( LINKS ~ soft : lang                )------------------
+.. # ------------------( LINKS ~ soft : lang                 )------------------
 .. _C:
    https://en.wikipedia.org/wiki/C_(programming_language)
 .. _C++:
@@ -5512,10 +5596,10 @@ rather than Python runtime) include:
 .. _Rust:
    https://www.rust-lang.org
 
-.. # ------------------( LINKS ~ soft : license             )------------------
+.. # ------------------( LINKS ~ soft : license              )------------------
 .. _MIT license:
    https://opensource.org/licenses/MIT
 
-.. # ------------------( LINKS ~ soft : web                 )------------------
+.. # ------------------( LINKS ~ soft : web                  )------------------
 .. _React:
    https://reactjs.org

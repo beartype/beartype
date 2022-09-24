@@ -53,15 +53,21 @@ Human-readable package name.
 '''
 
 
+LICENSE = 'MIT'
+'''
+Human-readable name of the license this package is licensed under.
+'''
+
+# ....................{ METADATA ~ package                 }....................
 PACKAGE_NAME = NAME.lower()
 '''
 Fully-qualified name of the top-level Python package containing this submodule.
 '''
 
 
-LICENSE = 'MIT'
+PACKAGE_TEST_NAME = f'{PACKAGE_NAME}_test'
 '''
-Human-readable name of the license this package is licensed under.
+Fully-qualified name of the top-level Python package exercising this project.
 '''
 
 # ....................{ PYTHON ~ version                   }....................

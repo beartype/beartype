@@ -23,9 +23,6 @@ from beartype._data.datatyping import TypeException
 from contextlib import contextmanager
 from pytest import raises
 
-# See the "beartype.cave" submodule for further commentary.
-__all__ = ['STAR_IMPORTS_CONSIDERED_HARMFUL']
-
 # ....................{ CONTEXTS                           }....................
 @contextmanager
 def raises_uncached(exception_cls: TypeException) -> 'ExceptionInfo':
@@ -105,17 +102,6 @@ class BeartypeTestMarkException(BeartypeTestException):
 
     This exception is raised at test time from decorators defined by the
     :mod:`beartype_test._util.mark` subpackage.
-    '''
-
-    pass
-
-
-class BeartypeTestPathException(BeartypeTestException):
-    '''
-    **Beartype test path exceptions.**
-
-    This exception is raised at test time from utility functions defined by the
-    :mod:`beartype_test._util.path` subpackage.
     '''
 
     pass

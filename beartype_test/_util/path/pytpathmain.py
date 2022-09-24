@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -8,17 +8,23 @@ Test-specific **main codebase paths** (i.e., :class:`pathlib.Path` instances
 encapsulating test-agnostic paths applicable to the codebase being tested).
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.meta import PACKAGE_NAME
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype.meta import (
+    PACKAGE_NAME,
+    PACKAGE_TEST_NAME,
+)
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype_test._util.path.pytpathlib import DirRelative, FileRelative
+from beartype_test._util.path.pytpathlib import (
+    DirRelative,
+    FileRelative,
+)
 from pathlib import Path
 
-# ....................{ GETTERS ~ dir                     }....................
+# ....................{ GETTERS ~ dir                      }....................
 @callable_cached
 def get_main_dir() -> Path:
     '''
@@ -47,7 +53,7 @@ def get_main_dir() -> Path:
     # Note that we intentionally avoid testing paths *NOT* bundled with release
     # tarballs (e.g., a root ".git/" directory), as doing so would prevent
     # external users and tooling from running tests from release tarballs.
-    DirRelative(MAIN_DIR, 'beartype_test')
+    DirRelative(MAIN_DIR, PACKAGE_TEST_NAME)
 
     # Return this path.
     return MAIN_DIR
@@ -65,7 +71,7 @@ def get_main_package_dir() -> Path:
     # Terrifying terseness!
     return DirRelative(get_main_dir(), PACKAGE_NAME)
 
-# ....................{ GETTERS ~ dir : sphinx            }....................
+# ....................{ GETTERS ~ dir : sphinx             }....................
 @callable_cached
 def get_main_sphinx_dir() -> Path:
     '''
@@ -91,7 +97,7 @@ def get_main_sphinx_source_dir() -> Path:
     # Immense propensity!
     return DirRelative(get_main_sphinx_dir(), 'source')
 
-# ....................{ GETTERS ~ file                    }....................
+# ....................{ GETTERS ~ file                     }....................
 @callable_cached
 def get_main_mypy_config_file() -> Path:
     '''
