@@ -955,24 +955,25 @@ guide you on your maiden voyage through the misty archipelagos of type hinting:
 Beartype Object-oriented API
 ----------------------------
 
-.. # FIXME: Human-readable discussion, please!
 .. # FIXME: Synopsize this in our introduction and cheatsheet, please!
 .. # FIXME: Synopsize class decoration in our introduction and sheatsheet, too!
 
 Most Python projects only annotate objects with type hints. The actual usage of
-those type hints is left to other projects.
+those type hints is left to other projects. That's fine for most definitions of
+"fine."
 
-Some Python projects, however, do actually use type hints to perform productive
+Some Python projects, however, actually do use type hints to perform productive
 work at runtime. You are reading about one such project. But perhaps we're not
 the only reckless explorers into these uncharted waters. Perhaps your brave
 Python project also wants to introspect, inspect, investigate, or otherwise
-query type hints at runtime. If so, you'll have noted that type hints basically
-provide *no* usable runtime API.
+break into the locked cathedral named Type Hints. If so, you've noted that type
+hints do *not* define a usable public Pythonic API. This was by design. But
+that's a bad design for most definitions of "bad" and "design."
 
-Enter the **DOOR** (**D**ecidedly **O**bject-\ **o**riented
-**R**untime-checker): beartype's first-class public API for introspecting,
-comparing, and type-checking type hints Pythonically in ``O(1)`` time with
-negligible constants. Let's cheatsheet this.
+Enter the **DOOR** (\ **D**\ ecidedly **O**\ bject-\ **o**\ riented
+**R**\ untime-checker): the first usable public Pythonic API for introspecting,
+comparing, and type-checking type hints in ``O(1)`` time with negligible
+constants. Let's cheatsheet this.
 
 .. code-block:: python
 
@@ -1026,7 +1027,7 @@ negligible constants. Let's cheatsheet this.
    >>> len(union_hint)  # <-- woah.
    3
 
-   # DOOR hints reduce to booleans Pythonically -- unlike normal type hints.
+   # DOOR hints test as booleans Pythonically -- unlike normal type hints.
    >>> if union_hint: print('This type hint has children.')
    This type hint has children.
    >>> if not TypeHint(tuple[()]): print('But this other type hint is empty.')
