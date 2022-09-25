@@ -959,16 +959,15 @@ Beartype Object-oriented API
 .. # FIXME: Synopsize class decoration in our introduction and sheatsheet, too!
 
 Most Python projects only annotate objects with type hints. The actual usage of
-those type hints is left to other projects. That's fine for most definitions of
-"fine."
+those type hints is left to other projects.
 
 Some Python projects, however, actually do use type hints to perform productive
 work at runtime. You are reading about one such project. But perhaps we're not
 the only reckless explorers into these uncharted waters. Perhaps your brave
 Python project also wants to introspect, inspect, investigate, or otherwise
-break into the locked cathedral named Type Hints. If so, you've noted that type
+break into the locked cathedral of Type Hints. If so, you've seen that type
 hints do *not* define a usable public Pythonic API. This was by design. But
-that's a bad design for most definitions of "bad" and "design."
+that's a bad design.
 
 Enter the **DOOR** (\ **D**\ ecidedly **O**\ bject-\ **o**\ riented
 **R**\ untime-checker): the first usable public Pythonic API for introspecting,
