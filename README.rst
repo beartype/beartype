@@ -965,7 +965,7 @@ Some Python projects, however, actually do use type hints to perform productive
 work at runtime. You are reading about one such project. But perhaps we're not
 the only reckless explorers into these uncharted waters. Perhaps your brave
 Python project also wants to introspect, inspect, investigate, or otherwise
-break into the locked cathedral of Type Hints. If so, you've seen that type
+break into the locked cathedral of type hints. If so, you've seen that type
 hints do *not* define a usable public Pythonic API. This was by design. But
 that's a bad design.
 
@@ -1045,6 +1045,37 @@ constants. Let's cheatsheet this.
    >>> TypeHint(int | str | bool | None) is TypeHint(None | bool | str | int)
    True  # <-- blowing minds over here.
 
+``beartype.door.TypeHint`` wrappers:
+
+* Are **immutable**, **hashable**, and safely usable both as dictionary keys and
+  in sets.
+* Support efficient **lookup** of child type hints – just like **dictionaries**
+  and **sets**.
+* Support efficient **iteration** over and **random access** of child type hints
+  – just like **lists** and **tuples**.
+* Are **partially ordered** over the set of all type hints (according to the
+  `subhint relation <is_subhint_>`__) and safely usable in any algorithm
+  accepting a partial ordering (e.g., `topological sort`_).
+* Guarantee similar performance as ``@beartype`` itself. All ``TypeHint``
+  methods and properties run in (possibly `amortized <amortized analysis_>`__)
+  **constant time** with negligible constants.
+
+``beartype.door``: never leave typing_ without it.
+
+TypeHint Methods
+~~~~~~~~~~~~~~~~
+
+.. # FIXME: Write us up, please.
+
+TypeHint as Sequence
+~~~~~~~~~~~~~~~~~~~~
+
+TypeHint as Set
+~~~~~~~~~~~~~~~
+
+TypeHint Comparison
+~~~~~~~~~~~~~~~~~~~
+
 Beartype Procedural API
 ------------------------
 
@@ -1058,6 +1089,32 @@ the ``beartype.dooc`` procedural API. Type-check *anything* *anytime* against
 
 .. # FIXME: Document the new is_subhint() tester function as well, please!
 .. # FIXME: Document the new "beartype.peps" submodule as well, please!
+
+.. _die_if_unbearable:
+
+*def* beartype.door.\ **die_if_unbearable**\ (obj: object, hint: object, \*,
+conf: beartype.BeartypeConf = BeartypeConf()) -> None
+
+    **Type-hint exception raiser,** either:
+
+    * Raising a human-readable exception if the passed arbitrary object ``obj``
+      violates the passed PEP-compliant type hint ``hint`` under the passed
+      beartype configuration ``conf``.
+    * Reducing to a noop otherwise (i.e., if ``obj`` satisfies ``hint`` under
+      ``conf``).
+
+    .. code-block:: python
+
+       >>> from beartype.door import die_if_unbearable
+       >>> from beartype.typing import List, Sequence, Optional, Union
+       >>> die_if_unbearable("My people ate them all!", Union[List[int], None])
+       BeartypeDoorHintViolation: Object _if_unbearable() return 'My people ate
+       them all!' violates type hint typing.Optional[list[int]], as str 'My
+       people ate them all!' not list or <protocol "builtins.NoneType">.
+       >>> die_if_unbearable("I'm swelling with patriotic mucus!", Optional[str])
+       >>> die_if_unbearable("I'm not on trial here.", Sequence[str])
+
+    See ``help(beartype.door.die_if_unbearable)`` for further details.
 
 .. _is_bearable:
 
@@ -1115,31 +1172,90 @@ beartype.BeartypeConf = BeartypeConf()) -> bool
 
     See ``help(beartype.door.is_bearable)`` for further details.
 
-.. _die_if_unbearable:
+.. _is_subhint:
 
-*def* beartype.door.\ **die_if_unbearable**\ (obj: object, hint: object, \*,
-conf: beartype.BeartypeConf = BeartypeConf()) -> None
+*def* beartype.door.\ **is_subhint**\ (subhint: object, superhint: object) ->
+bool
 
-    **Type-hint validator,** either:
+    **Subhint tester,** returning either:
 
-    * Raising a human-readable exception if the passed arbitrary object ``obj``
-      violates the passed PEP-compliant type hint ``hint`` under the passed
-      beartype configuration ``conf``.
-    * Reducing to a noop otherwise (i.e., if ``obj`` satisfies ``hint`` under
-      ``conf``).
+    * ``True`` if the first passed PEP-compliant type hint is a **subhint** of
+      the second passed PEP-compliant type hint, in which case the second hint
+      is a **superhint** of the first hint.
+    * ``False`` otherwise.
 
     .. code-block:: python
 
-       >>> from beartype.door import die_if_unbearable
-       >>> from beartype.typing import List, Sequence, Optional, Union
-       >>> die_if_unbearable("My people ate them all!", Union[List[int], None])
-       BeartypeDoorHintViolation: Object _if_unbearable() return 'My people ate
-       them all!' violates type hint typing.Optional[list[int]], as str 'My
-       people ate them all!' not list or <protocol "builtins.NoneType">.
-       >>> die_if_unbearable("I'm swelling with patriotic mucus!", Optional[str])
-       >>> die_if_unbearable("I'm not on trial here.", Sequence[str])
+       # Import the requisite machinery.
+       >>> from beartype.door import is_subhint
 
-    See ``help(beartype.door.die_if_unbearable)`` for further details.
+       # A type hint matching any callable accepting no arguments and returning
+       # a list is a subhint of a type hint matching any callable accepting any
+       # arguments and returning a sequence of any types.
+       >>> is_subhint(Callable[[], list], Callable[..., Sequence[Any]])
+       True
+
+       # A type hint matching any callable accepting no arguments and returning
+       # a list, however, is *NOT* a subhint of a type hint matching any
+       # callable accepting any arguments and returning a sequence of integers.
+       >>> is_subhint(Callable[[], list], Callable[..., Sequence[int]])
+       False
+
+       # Booleans are subclasses and thus subhints of integers.
+       >>> is_subhint(bool, int)
+       True
+
+       # The converse, however, is *NOT* true.
+       >>> is_subhint(int, bool)
+       False
+
+       # All classes are subclasses and thus subhints of themselves.
+       >>> is_subhint(int, int)
+       True
+
+    Equivalently, this tester returns ``True`` only if *all* of the following
+    conditions apply:
+
+    * **Commensurability.** These two hints are **semantically related** (i.e.,
+      convey broadly similar semantics enabling these two hints to be reasonably
+      compared). For example:
+
+      * ``callable.abc.Iterable[str]`` and ``callable.abc.Sequence[int]`` are
+        semantically related. These two hints both convey container semantics.
+        Despite their differing child hints, these two hints are broadly similar
+        enough to be reasonably comparable.
+      * ``callable.abc.Iterable[str]`` and ``callable.abc.Callable[[], int]``
+        are *not* semantically related. Whereas the first hints conveys a
+        container semantic, the second hint conveys a callable semantic. Since
+        these two semantics are unrelated, these two hints are dissimilar
+        enough to *not* be reasonably comparable.
+
+    * **Narrowness.** The first hint is either **narrower** than or
+      **semantically equivalent** to the second hint. Equivalently:
+
+      * The first hint matches **less than or equal to** the total number of all
+        possible objects matched by the second hint.
+      * In `set theoretic jargon <set theory_>`__, the size of the countably
+        infinite set of all possible objects matched by the first hint is **less
+        than or equal to** that of those matched by the second hint.
+
+    This tester supports a wide variety of practical use cases – including:
+
+    * **Multiple dispatch.** A pure-Python decorator can implement `multiple
+      dispatch`_ over multiple overloaded implementations of the same callable
+      by calling this function. An overload of the currently called callable can
+      be dispatched to if the types of the passed parameters are all
+      **subhints** of the type hints annotating that overload.
+    * Formal verification of **API compatibility** across version bumps.
+      Automated tooling like linters, continuous integration (CI), `git` hooks,
+      and integrated development environments (IDEs) can raise pre-release
+      alerts prior to accidental publication of API breakage by calling this
+      function. A Python API preserves backward compatibility if each type hint
+      annotating each public class or callable of the current version of that
+      API is a **superhint** of the type hint annotating the same class or
+      callable of the prior release of that API.
+
+    See ``help(beartype.door.is_subhint)`` for further details.
 
 Beartype Validators
 -------------------
@@ -4977,8 +5093,12 @@ rather than Python runtime) include:
    https://en.wikipedia.org/wiki/Gratis_versus_libre
 .. _memory safety:
    https://en.wikipedia.org/wiki/Memory_safety
+.. _multiple dispatch:
+   https://en.wikipedia.org/wiki/Multiple_dispatch
 .. _random walk:
    https://en.wikipedia.org/wiki/Random_walk
+.. _set theory:
+   https://en.wikipedia.org/wiki/Set_theory
 .. _shield wall:
    https://en.wikipedia.org/wiki/Shield_wall
 .. _dynamic typing:
@@ -4986,6 +5106,8 @@ rather than Python runtime) include:
 .. _static typing:
 .. _statically-typed:
    https://en.wikipedia.org/wiki/Type_system
+.. _topological sort:
+   https://en.wikipedia.org/wiki/Topological_sorting
 .. _type inference:
    https://en.wikipedia.org/wiki/Type_inference
 .. _zero-cost abstraction:
