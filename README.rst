@@ -107,17 +107,14 @@
    violates type hint typing.Annotated[list[str], Is[lambda lst: bool(lst)]],
    as list index 0 item 3405692655 not instance of str.
 
-   # ..................{ O(1) TIME   }..................
-   # Type-check anything in constant-time with
-   # negligible constants – regardless of input size.
-   #
-   # Type-check a list of one million 2-tuples of NumPy
-   # arrays in nearly 1µs (one millionth of a second).
+   # ..................{ GO TO PLAID }..................
+   # Type-check anything in around 1µs (one millionth of
+   # a second) – including this list of one million
+   # 2-tuples of NumPy arrays.
    >>> from beartype.door import is_bearable
-   >>> from beartype.typing import List, Tuple
-   >>> import numpy as np
-   >>> data = [(np.array(i), np.array(i+1)) for i in range(1000000)]
-   >>> %time is_bearable(data, List[Tuple[np.ndarray, np.ndarray]])
+   >>> from numpy import array, ndarray
+   >>> data = [(array(i), array(i)) for i in range(1000000)]
+   >>> %time is_bearable(data, list[tuple[ndarray, ndarray]])
        CPU times: user 31 µs, sys: 2 µs, total: 33 µs
        Wall time: 36.7 µs
    True
@@ -561,6 +558,46 @@ by the quaint phrase "one-way random walk over the expected data structure."
 check only a random integer nested in a single triply-nested list passed to
 each call of that function. This is the worst-case cost of a single call to a
 function decorated by an ``O(1)`` runtime type checker.
+
+What does "near-real-time" even mean?
+-------------------------------------
+
+Beartype type-checks objects at runtime in around **1µs** (i.e., one
+microsecond, one millionth of a second), the typical high-water mark for
+software running in real-time_:
+
+.. code-block:: python
+
+   # Let's check a list of 181,320,382 integers in ~1µs.
+   >>> from beartype import beartype
+   >>> def sum_list_unbeartyped(some_list: list) -> int:
+   ...     return sum(some_list)
+   >>> sum_list_beartyped = beartype(sum_list_unbeartyped)
+   >>> %time sum_list_unbeartyped([42]*0xACEBABE)
+   CPU times: user 3.15 s, sys: 418 ms, total: 3.57 s
+   Wall time: 3.58 s  # <-- okay.
+   Out[20]: 7615456044
+   >>> %time sum_list_beartyped([42]*0xACEBABE)
+   CPU times: user 3.11 s, sys: 440 ms, total: 3.55 s
+   Wall time: 3.56 s  # <-- woah.
+   Out[22]: 7615456044
+
+Beartype does *not* contractually guarantee this constraint, as the above
+example demonstrates. Under abnormal processing loads (e.g., leycec_'s arthritic
+Athlon™ II X2 240, because you can't have enough redundant 2's in a product
+name) or when passed edge-case type hints (e.g., classes whose metaclasses
+implement stunningly bad ``__isinstancecheck__()`` dunder methods), worst-case
+performance could exceed the average-case near-instantaneous response time.
+
+Beartype is therefore *not* real-time_; beartype is merely `near-real-time (NRT)
+<near-real-time_>`__, also variously referred to as "pseudo-real-time,"
+"quasi-real-time," or simply "high-performance." Real-time_ software guarantees
+performance with a scheduler forcibly terminating tasks exceeding some deadline.
+That's bad in most use cases. The outrageous cost of enforcement harms
+real-world performance, stability, and usability.
+
+Thus NRT. It's like NFTs – only wonderful rather than mostly awful. That must be
+what the "F" is for.
 
 How do I type-check...
 ----------------------
@@ -1062,19 +1099,19 @@ constants. Let's cheatsheet this.
 
 ``beartype.door``: never leave typing_ without it.
 
-TypeHint Methods
-~~~~~~~~~~~~~~~~
-
 .. # FIXME: Write us up, please.
-
-TypeHint as Sequence
-~~~~~~~~~~~~~~~~~~~~
-
-TypeHint as Set
-~~~~~~~~~~~~~~~
-
-TypeHint Comparison
-~~~~~~~~~~~~~~~~~~~
+.. # TypeHint Methods
+.. # ~~~~~~~~~~~~~~~~
+.. #
+.. #
+.. # TypeHint as Sequence
+.. # ~~~~~~~~~~~~~~~~~~~~
+.. #
+.. # TypeHint as Set
+.. # ~~~~~~~~~~~~~~~
+.. #
+.. # TypeHint Comparison
+.. # ~~~~~~~~~~~~~~~~~~~
 
 Beartype Procedural API
 ------------------------
@@ -5095,8 +5132,12 @@ rather than Python runtime) include:
    https://en.wikipedia.org/wiki/Memory_safety
 .. _multiple dispatch:
    https://en.wikipedia.org/wiki/Multiple_dispatch
+.. _near-real-time:
+   https://en.wikipedia.org/wiki/Real-time_computing#Near_real-time
 .. _random walk:
    https://en.wikipedia.org/wiki/Random_walk
+.. _real-time:
+   https://en.wikipedia.org/wiki/Real-time_computing
 .. _set theory:
    https://en.wikipedia.org/wiki/Set_theory
 .. _shield wall:
