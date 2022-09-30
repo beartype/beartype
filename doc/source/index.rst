@@ -1,4 +1,4 @@
-.. # ------------------( SEO                                )------------------
+.. # ------------------( SEO                                 )------------------
 .. # Metadata converted into HTML-specific meta tags parsed by search engines.
 .. # Note that:
 .. # * The "description" should be no more than 300 characters and ideally no
@@ -10,7 +10,7 @@
      Beartype is an open-source pure-Python PEP-compliant constant-time runtime
      type checker emphasizing efficiency and portability.
 
-.. # ------------------( SYNOPSIS                           )------------------
+.. # ------------------( SYNOPSIS                            )------------------
 
 =================
 |beartype-banner|
@@ -37,12 +37,12 @@
 
    tutorial
 
-.. # ------------------( IMAGES                             )------------------
+.. # ------------------( IMAGES                              )------------------
 .. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.png
    :target: https://github.com/beartype/beartype
    :alt: beartype —[ the bare-metal type checker ]—
    :width: 510 px
 
-.. # ------------------( LINKS ~ kipling                    )------------------
+.. # ------------------( LINKS ~ kipling                     )------------------
 .. _The Jungle Book:
    https://www.gutenberg.org/files/236/236-h/236-h.htm

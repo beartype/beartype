@@ -11,10 +11,6 @@
 #   List of all options supported in this file.
 
 # ....................{ TODO                               }....................
-#FIXME: [EXTENSION] Add "intersphinx" support to enable us to cross-reference
-#standard modules (e.g., "typing"). Yes, this absolutely should be builtin.
-#Naturally, that means it isn't. See also:
-#    https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
 #FIXME: [EXTENSION] Add "sphinx-notfound-page" support to enable us to provide
 #a sane 404 page for non-existent pages. In fact, we already appear to have a
 #"404.rst" document. Well, isn't that noice. Because we can't be bothered to
@@ -22,16 +18,6 @@
 #* We've temporarily moved "404.rst" into the parent subdirectory, where it
 #  has absolutely no effect (but at least does *NOT* induce fatal errors).
 #* We'll need to move "404.rst" back into this subdirectory first.
-#FIXME: [EXTENSION] Add "readthedocs-sphinx-search" support to enable real-time
-#search-as-you-type[-into-a-search-bar] functionality. The demo's quite
-#impressive, as expected of an official ReadTheDocs extension. Let's go!
-
-#FIXME: [THEME] Consider switching to either:
-#* The nascent PyData Sphinx theme, now widely leveraged across the data science
-#  sphere (e.g., NumPy, SciPy):
-#    https://github.com/pydata/pydata-sphinx-theme
-#* Furo, now widely leveraged across the UIX sphere (e.g., KivyMD):
-#    https://github.com/pradyunsg/furo
 
 # ....................{ IMPORTS ~ kludge                   }....................
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -51,16 +37,23 @@ sys.path.insert(0, os.path.abspath('../../'))
 # * https://protips.readthedocs.io/git-tag-version.html
 #   "Inferring Release Number from Git Tags", detailing a clever one-liner
 #   harvesting this specifier from the most recent git tag.
-from beartype.meta import AUTHORS, COPYRIGHT, NAME, VERSION
+from beartype.meta import (
+    AUTHORS,
+    COPYRIGHT,
+    NAME,
+    SPHINX_THEME_NAME,
+    VERSION,
+)
 from beartype._util.mod.utilmodtest import is_module
-from warnings import warn
+# from warnings import warn
 
-# ....................{ METADATA                           }....................
-# Metadata programmatically defined by this package.
+# ....................{ CONSTANTS ~ sphinx                 }....................
+# Sphinx-specific metadata programmatically published by this package.
 project = NAME
 author = AUTHORS
 copyright = COPYRIGHT
 release = VERSION
+version = VERSION
 
 # ....................{ SETTINGS                           }....................
 # Add any paths that contain templates here, relative to this directory.
@@ -79,12 +72,19 @@ extensions = [
     # Builtin extensions unconditionally available under *ALL* reasonably
     # modern versions of Sphinx uniquely prefixed by "sphinx.ext.".
 
-    # Automatically create one explicit globally cross-referenceable target
-    # "{/document/basename}:{section_title}" for each section titled
-    # "{section_title}" of each document residing at "{/document/basename}". By
-    # default, Sphinx insanely requires targets to be manually prepended before
-    # all sections to be cross-referenced elsewhere.
+    # Builtin extension automatically creating one explicit globally
+    # cross-referenceable target "{/document/basename}:{section_title}" for each
+    # section titled "{section_title}" of each document residing at
+    # "{/document/basename}". By default, Sphinx requires targets to be manually
+    # prepended before all sections to be cross-referenced elsewhere. *facepalm*
     'sphinx.ext.autosectionlabel',
+
+    # Builtin extension enabling attributes defined by the standard library
+    # (e.g., the "typing" module, the "types.GenericAlias" type) to be
+    # cross-referenced as a fallback when *NOT* already defined by this project.
+    # See also:
+    #     https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
+    "sphinx.ext.intersphinx",
 
     # Builtin extension autogenerating reStructuredText documentation from
     # class, callable, and variable docstrings embedded in Python modules
@@ -145,28 +145,36 @@ extensions = [
 # ....................{ EXTENSIONS ~ optional              }....................
 # Third-party Sphinx extensions conditionally used if externally installed.
 
-# If "sphinx_rtd_theme" (i.e., the third-party Sphinx extension providing the
-# official Read The Docs (RTD) HTML theme) is importable under the active
-# Python interpreter, prefer this theme to Sphinx's default HTML theme for
-# substantially more mobile-friendly rendering.
-if is_module('sphinx_rtd_theme'):
-    # Register the fully-qualified name of this extension.
-    extensions.append('sphinx_rtd_theme')
-
+# If the third-party Sphinx extension defining the custom HTML theme preferred
+# by this documentation is importable under the active Python interpreter,
+# enable this theme for substantially improved rendering.
+if is_module(SPHINX_THEME_NAME):
     # Set the HTML theme to this theme.
-    html_theme = 'sphinx_rtd_theme'
-# Else, this theme extension is unavailable. In this case, fallback to the
-# Sphinx's default HTML theme *AND*...
+    #
+    # Note that we intentionally do *NOT* do this, which other themes require:
+    #     Register the fully-qualified name of this extension.
+    #     extensions.append(SPHINX_THEME_NAME)
+    # Why? Because doing so induces this exception from Furo:
+    #     Extension error (furo):
+    #     Handler <function _builder_inited at 0x7f9be7bf2040> for event
+    #     'builder-inited' threw an exception (exception: Did you list 'furo' in
+    #     the `extensions` in conf.py? If so, please remove it. Furo does not
+    #     work with non-HTML builders and specifying it as an `html_theme` is
+    #     sufficient.)
+    html_theme = SPHINX_THEME_NAME
+# Else, this theme is unavailable. In this case, fallback to Sphinx's default
+# HTML theme *AND*...
 else:
     #FIXME: Convert this back into a warning by calling warn() *AFTER* deciding
     #how to do so safely. The core issue is that we convert warnings into
     #failures during testing; ergo, we need to install the Python package
     #providing this theme during testing. We can't be bothered at the moment.
+
     # Emit a non-fatal warning informing end users of this fallback.
     print(
         (
             'WARNING: '
-            'Optional Sphinx extension "sphinx_rtd_theme" not found; '
+            f'Optional Sphinx extension "{SPHINX_THEME_NAME}" not found; '
             'falling back to default Sphinx HTML theme.'
         ),
     )
@@ -220,16 +228,29 @@ napoleon_custom_sections = [
 # napoleon_use_param = False
 # napoleon_use_ivar = True
 
+# ....................{ EXTENSIONS ~ pygments              }....................
+#FIXME: Uncomment as desired. Let's see how the defaults do first, please.
+# # Pygments style.
+# pygments_style = "autumn"
+# pygments_dark_style = "monokai"
+
 # ....................{ BUILD ~ html                       }....................
+#FIXME: Define the "html_favicon" setting as well -- once we actually create a
+#favicon, of course. *sigh*
+
+# Relative filename or URL of a small image (i.e., no wider than 200px) to be
+# rendered in the upper left-hand corner of the sidebar for this theme.
+html_logo = 'https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg'
+
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
 # ....................{ BUILD ~ html : mathjax             }....................
-# Remote URI to the top-level "MathJax.js" script providing MathJax. If
-# unspecified, the current user *MUST* have MathJax locally installed. Note
-# that MathJax is locally installable under:
+# URL to the top-level "MathJax.js" script providing MathJax. If unspecified,
+# the user *MUST* locally install MathJax. Note that MathJax is locally
+# installable under:
 # * Debian systems with:
 #   $ sudo apt install libjs-mathjax
 #

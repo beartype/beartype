@@ -458,6 +458,38 @@ See Also
     Further details.
 '''
 
+# ....................{ METADATA ~ libs : theme            }....................
+SPHINX_THEME_NAME = 'furo'
+'''
+Name of the third-party Sphinx extension providing the custom HTML theme
+preferred by this documentation.
+
+Note that we selected this theme according to mostly objective (albeit
+ultimately subjective) heuristic criteria. In descending order of importance, we
+selected the theme with:
+
+#. The most frequent git commit history.
+#. The open issues and pull requests (PRs).
+#. The most GitHub stars as a crude proxy for aggregate rating.
+
+Furo handily bested all other themes across all three criteria. Furo is very
+well-maintained, frequently closes out open issues and merges open PRs, and
+sports the highest quantity of GitHub stars by an overwhelming margin.
+
+See Also
+----------
+https://github.com/pradyunsg/furo
+    Upstream GitHub-hosted repository.
+'''
+
+
+SPHINX_THEME_VERSION_MINIMUM = '2022.6.21'
+'''
+Human-readable minimum version as a ``.``-delimited string of the **Furo Sphinx
+theme** (i.e., :mod:`furo`) optionally leveraged when building package
+documentation.
+'''
+
 # ....................{ METADATA ~ libs : doc              }....................
 _LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX = '4.1.0'
 '''
@@ -468,14 +500,6 @@ Specifically, this project requires:
 
 * :mod:sphinx` >= 4.1.0, which first supported the
   ``autodoc_typehints = 'both'`` option.
-'''
-
-
-_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX_RTD_THEME = '0.5.1'
-'''
-Human-readable minimum version as a ``.``-delimited string of the **Read The
-Docs (RTD)-flavoured Sphinx theme** (i.e., :mod:`sphinx_rtd_theme`) optionally
-leveraged when building package documentation.
 '''
 
 
@@ -506,8 +530,7 @@ See Also
 LIBS_DOCTIME_MANDATORY_RTD = (
     f'sphinx =={_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX}',
     (
-        f'sphinx-rtd-theme '
-        f'=={_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX_RTD_THEME}'
+        f'{SPHINX_THEME_NAME} =={SPHINX_THEME_VERSION_MINIMUM}'
     ),
 )
 '''

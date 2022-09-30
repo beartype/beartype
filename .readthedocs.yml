@@ -1,29 +1,49 @@
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 #
-# --------------------( SYNOPSIS                          )--------------------
+# --------------------( SYNOPSIS                           )--------------------
 # Project-wide Read The Docs (RTD) configuration.
 
-# ....................{ METADATA                          }....................
+# ....................{ METADATA                           }....................
 # RTD configuration scheme version this file complies with.
 version: 2
 
-# ....................{ INSTALLATION                      }....................
+# ....................{ BUILD                              }....................
+build:
+  # Build under the most recent Long Term Service (LTS) release of Ubuntu.
+  os: ubuntu-22.04
+  tools:
+    # Build under the most recently released minor version of CPython.
+    python: '3.10'
+
+# ....................{ PYTHON                             }....................
 python:
   install:
+    # Install documentation dependencies by effectively running this command:
+    #     $ pip install -e .[doc-rtd]
+    #
+    # That is, instruct RTD to install the "doc-rtd" extra defined by our
+    # top-level setuptools-based "setup.py" script, preserving DRY.
     - method: pip
       path: .
       extra_requirements:
         - doc-rtd
 
-  # Permit Read The Docs (RTD) to reuse Python packages installed by its
-  # system package manager, which mostly means the standard scientific stack.
+  # Permit RTD to reuse Python packages installed by its system package manager,
+  # which mostly means the standard scientific stack.
   system_packages: true
 
-# ....................{ SPHINX                            }....................
+# ....................{ SPHINX                             }....................
+sphinx:
+  # Relative filename of the Sphinx-specific configuration script configuring
+  # document generation for this project.
+  configuration: doc/source/conf.py
+
+  #FIXME: Unclear why we need this, but we probably do. *shrug*
+  builder: dirhtml
+
 #FIXME: Uncomment the following *AFTER* eliminating all warnings across our
 #documentation. Since we have yet to do so, this remains commented. It is sad.
-# sphinx:
 #   # For safety, convert non-fatal Sphinx warnings into fatal errors.
 #   fail_on_warning: true

@@ -19,8 +19,9 @@
 |codecov-badge| |ci-badge| |rtd-badge|
 
 **Beartype** is an `open-source <beartype license_>`__ `PEP-compliant
-<Compliance_>`__ `constant-time <Timings_>`__ `pure-Python runtime type checker
-<Usage_>`__ emphasizing efficiency, usability, and thrilling puns.
+<Compliance_>`__ `near-real-time <beartype near-real-time_>`__ `pure-Python
+runtime type checker <Usage_>`__ emphasizing efficiency, usability, and
+thrilling puns.
 
 .. #FIXME: Once we actually receive a sponsor at this tier, please remove this
 .. #placeholder as well as the icon links below. kthx
@@ -123,10 +124,10 @@ Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by
 `enforcing type safety at the granular level of functions and methods
 <Usage_>`__ against `type hints standardized by the Python community
-<Compliance_>`__ in `O(1) non-amortized worst-case time with negligible
-constant factors <Timings_>`__. If the prior sentence was unreadable jargon,
-`see our friendly and approachable FAQ for a human-readable synopsis
-<Frequently Asked Questions (FAQ)_>`__.
+<Compliance_>`__ in `O(1) non-amortized worst-case time with negligible constant
+factors <Timings_>`__. If the prior sentence was unreadable jargon, `see our
+friendly and approachable FAQ for a human-readable synopsis <Frequently Asked
+Questions (FAQ)_>`__.
 
 Beartype is `portably implemented <beartype codebase_>`__ in `Python 3
 <Python_>`__, `continuously stress-tested <beartype tests_>`__ via `GitHub
@@ -160,13 +161,13 @@ developed Python versions <Python status_>`__, `all Python package managers
 Install
 =======
 
-Let's install ``beartype`` with pip_:
+Let's install beartype with pip_:
 
 .. code-block:: bash
 
    pip3 install beartype
 
-Let's install ``beartype`` with Anaconda_:
+Let's install beartype with Anaconda_:
 
 .. code-block:: bash
 
@@ -186,14 +187,14 @@ sometimes you just need this thing to work.
 macOS
 ~~~~~
 
-Let's install ``beartype`` with Homebrew_ on macOS_ courtesy `our third-party
+Let's install beartype with Homebrew_ on macOS_ courtesy `our third-party
 tap <beartype Homebrew_>`__:
 
 .. code-block:: bash
 
    brew install beartype/beartype/beartype
 
-Let's install ``beartype`` with MacPorts_ on macOS_:
+Let's install beartype with MacPorts_ on macOS_:
 
 .. code-block:: bash
 
@@ -206,7 +207,7 @@ MacPorts_>`__.
 Linux
 ~~~~~
 
-Let's install ``beartype`` with ``emerge`` on Gentoo_ courtesy `a third-party
+Let's install beartype with ``emerge`` on Gentoo_ courtesy `a third-party
 overlay <beartype Gentoo_>`__, because source-based Linux distributions are the
 CPU-bound nuclear option:
 
@@ -357,7 +358,7 @@ What is beartype?
 Why, it's the world's first ``O(1)`` runtime type checker in any
 `dynamically-typed`_ lang... oh, *forget it.*
 
-You know typeguard_? Then you know ``beartype`` – more or less. ``beartype`` is
+You know typeguard_? Then you know beartype – more or less. beartype is
 typeguard_'s younger, faster, and slightly sketchier brother who routinely
 ingests performance-enhancing anabolic nootropics.
 
@@ -430,14 +431,14 @@ the former as a default behaviour.
 When should I use beartype?
 ---------------------------
 
-Use ``beartype`` to assure the quality of Python code beyond what tests alone
+Use beartype to assure the quality of Python code beyond what tests alone
 can assure. If you have yet to test, do that first with a pytest_-based test
 suite, tox_ configuration, and `continuous integration (CI) <continuous
 integration_>`__. If you have any time, money, or motivation left, `annotate
 callables with PEP-compliant type hints <Compliance_>`__ and `decorate those
 callables with the @beartype.beartype decorator <Usage_>`__.
 
-Prefer ``beartype`` over other runtime and static type checkers whenever you
+Prefer beartype over other runtime and static type checkers whenever you
 lack control over the objects passed to or returned from your callables –
 *especially* whenever you cannot limit the size of those objects. This includes
 common developer scenarios like:
@@ -448,7 +449,7 @@ common developer scenarios like:
   output sufficiently large data internally passed to or returned from app
   callables.
 
-If none of the above apply, prefer ``beartype`` over static type checkers
+If none of the above apply, prefer beartype over static type checkers
 whenever:
 
 * You want to `check types decidable only at runtime <Versus Static Type
@@ -458,9 +459,9 @@ whenever:
   language is guaranteed to fail and frequently does. If you've ever cursed the
   sky after suffixing working code incorrectly typed by mypy_ with non-portable
   vendor-specific pragmas like ``# type: ignore[{unreadable_error}]``,
-  ``beartype`` was written for you.
+  beartype was written for you.
 * You want to preserve `dynamic typing`_, because Python is a
-  `dynamically-typed`_ language. Unlike ``beartype``, static type checkers
+  `dynamically-typed`_ language. Unlike beartype, static type checkers
   enforce `static typing`_ and are thus strongly opinionated; they believe
   `dynamic typing`_ is harmful and emit errors on `dynamically-typed`_ code.
   This includes common use patterns like changing the type of a variable by
@@ -474,25 +475,25 @@ whenever:
     **Beartype believes dynamic typing is beneficial by default,** because
     Python is beneficial by default.
 
-    **Beartype is unopinionated.** That's because ``beartype`` `operates
+    **Beartype is unopinionated.** That's because beartype `operates
     exclusively at the higher level of pure-Python callables <Versus Static
     Type Checkers_>`__ rather than the lower level of individual statements
-    *inside* pure-Python callables. Unlike static type checkers, ``beartype``
+    *inside* pure-Python callables. Unlike static type checkers, beartype
     can't be opinionated about things that no one should be.
 
-If none of the above *still* apply, still use ``beartype``. It's `free
+If none of the above *still* apply, still use beartype. It's `free
 as in beer and speech <gratis versus libre_>`__, `cost-free at installation-
 and runtime <Overview_>`__, and transparently stacks with existing
-type-checking solutions. Leverage ``beartype`` until you find something that
-suites you better, because ``beartype`` is *always* better than nothing.
+type-checking solutions. Leverage beartype until you find something that
+suites you better, because beartype is *always* better than nothing.
 
 Why should I use beartype?
 --------------------------
 
-The idea of ``beartype`` is that it never costs you anything. It might not do
+The idea of beartype is that it never costs you anything. It might not do
 as much as you'd like, but it will always do *something* – which is more than
 Python's default behaviour, which is to do *nothing* and ignore type hints
-altogether. This means you can always safely add ``beartype`` to any Python
+altogether. This means you can always safely add beartype to any Python
 package, module, app, or script regardless of size, scope, funding, or audience
 and never worry about your backend Django_ server taking a nosedive on St.
 Patty's Day just because your frontend React_ client helpfully sent a 5MB JSON
@@ -525,10 +526,10 @@ What does beartype do?
 ----------------------
 
 Generally, as little as it can while still satisfying the accepted definition
-of "runtime type checker." Specifically, ``beartype`` performs a `one-way
+of "runtime type checker." Specifically, beartype performs a `one-way
 random walk over the expected data structure of objects passed to and returned
 from @beartype-decorated functions and methods <That's Some Catch, That
-Catch-22_>`__. Basically, ``beartype`` type-checks randomly sampled data.
+Catch-22_>`__. Basically, beartype type-checks randomly sampled data.
 
 Consider `the prior example of a function annotated as accepting a
 triply-nested list of integers passed a list containing 1,000 nested lists each
@@ -538,7 +539,7 @@ beartype?_>`__.
 When decorated by typeguard_, every call to that function checks every integer
 nested in that list.
 
-When decorated by ``beartype``, every call to the same function checks only a
+When decorated by beartype, every call to the same function checks only a
 single random integer contained in a single random nested list contained in a
 single random nested list contained in that parent list. This is what we mean
 by the quaint phrase "one-way random walk over the expected data structure."
@@ -559,12 +560,14 @@ check only a random integer nested in a single triply-nested list passed to
 each call of that function. This is the worst-case cost of a single call to a
 function decorated by an ``O(1)`` runtime type checker.
 
+.. _beartype near-real-time:
+
 What does "near-real-time" even mean?
 -------------------------------------
 
 Beartype type-checks objects at runtime in around **1µs** (i.e., one
-microsecond, one millionth of a second), the typical high-water mark for
-software running in real-time_:
+microsecond, one millionth of a second), the standard high-water mark for
+`real-time software <real-time_>`__:
 
 .. code-block:: python
 
@@ -582,12 +585,12 @@ software running in real-time_:
    Wall time: 3.56 s  # <-- woah.
    Out[22]: 7615456044
 
-Beartype does *not* contractually guarantee this constraint, as the above
+Beartype does *not* contractually guarantee this performance, as the above
 example demonstrates. Under abnormal processing loads (e.g., leycec_'s arthritic
 Athlon™ II X2 240, because you can't have enough redundant 2's in a product
-name) or when passed edge-case type hints (e.g., classes whose metaclasses
+line) or when passed edge-case type hints (e.g., classes whose metaclasses
 implement stunningly bad ``__isinstancecheck__()`` dunder methods), worst-case
-performance could exceed the average-case near-instantaneous response time.
+performance could exceed this average-case near-instantaneous response time.
 
 Beartype is therefore *not* real-time_; beartype is merely `near-real-time (NRT)
 <near-real-time_>`__, also variously referred to as "pseudo-real-time,"
@@ -597,7 +600,7 @@ That's bad in most use cases. The outrageous cost of enforcement harms
 real-world performance, stability, and usability.
 
 Thus NRT. It's like NFTs – only wonderful rather than mostly awful. That must be
-what the "F" is for.
+what the "F" stands for.
 
 How do I type-check...
 ----------------------
@@ -608,7 +611,7 @@ How do I type-check...
 ~~~~~~~~~~~~~~~
 
 **tl;dr:** You just want bearboto3_, a well-maintained third-party package
-cleanly integrating ``beartype`` **+** Boto3_. But you're not doing that.
+cleanly integrating beartype **+** Boto3_. But you're not doing that.
 You're reading on to find out why you want bearboto3_, aren't you? I *knew* it.
 
 Boto3_ is the official Amazon Web Services (AWS) Software Development Kit (SDK)
@@ -626,11 +629,11 @@ types against either:
   context-aware code completion across compliant IDEs (e.g., PyCharm_, `VSCode
   Pylance <Pylance_>`__). Those types are merely placeholder stubs; they do
   *not* correspond to actual Boto3_ types and thus break runtime type checkers
-  (including ``beartype``) when used as type hints.
+  (including beartype) when used as type hints.
 * **Beartype** by fabricating your own `PEP-compliant beartype validators
-  <Beartype Validators_>`__, enabling ``beartype`` to validate arbitrary
+  <Beartype Validators_>`__, enabling beartype to validate arbitrary
   objects against actual Boto3_ types at runtime when used as type hints. You
-  already require ``beartype``, so no additional third-party dependencies are
+  already require beartype, so no additional third-party dependencies are
   required. Those validators are silently ignored by static type checkers; they
   do *not* enable context-aware code completion across compliant IDEs.
 
@@ -953,14 +956,14 @@ type hint, including the types and indices of the first container item failing
 to satisfy the nested ``Sequence[int]`` hint.
 
 See a `subsequent section <Implementation_>`__ for actual code dynamically
-generated by ``beartype`` for real-world use cases resembling those above. Fun!
+generated by beartype for real-world use cases resembling those above. Fun!
 
 Would You Like to Know More?
 ----------------------------
 
-If you know `type hints <PEP 484_>`__, you know ``beartype``. Since
-``beartype`` is driven entirely by `tool-agnostic community standards <PEP
-0_>`__, the public API for ``beartype`` is exactly the sum of those standards.
+If you know `type hints <PEP 484_>`__, you know beartype. Since
+beartype is driven entirely by `tool-agnostic community standards <PEP
+0_>`__, the public API for beartype is exactly the sum of those standards.
 As the user, all you need to know is that decorated callables magically raise
 human-readable exceptions when you pass parameters or return values violating
 the PEP-compliant type hints annotating those parameters or returns.
@@ -1145,11 +1148,14 @@ conf: beartype.BeartypeConf = BeartypeConf()) -> None
        >>> from beartype.door import die_if_unbearable
        >>> from beartype.typing import List, Sequence, Optional, Union
        >>> die_if_unbearable("My people ate them all!", Union[List[int], None])
-       BeartypeDoorHintViolation: Object _if_unbearable() return 'My people ate
-       them all!' violates type hint typing.Optional[list[int]], as str 'My
-       people ate them all!' not list or <protocol "builtins.NoneType">.
+       BeartypeDoorHintViolation: Object 'My people ate them all!' violates type
+       hint typing.Optional[list[int]], as str 'My people ate them all!' not
+       list or <class "builtins.NoneType">.
        >>> die_if_unbearable("I'm swelling with patriotic mucus!", Optional[str])
        >>> die_if_unbearable("I'm not on trial here.", Sequence[str])
+
+    For those familiar with typeguard_, this function implements the beartype
+    equivalent of the low-level typeguard.check_type_ function.
 
     See ``help(beartype.door.die_if_unbearable)`` for further details.
 
@@ -2291,7 +2297,7 @@ release of Python 3.9.0." Spoiler: Python 3.9.0 was released on October 5th,
     **Most of the "typing" module will be removed in 2025 or 2026.**
 
 If your codebase currently imports from the typing_ module, *most* of those
-imports will break under an upcoming Python release. This is what ``beartype``
+imports will break under an upcoming Python release. This is what beartype
 is shouting about. Bad Changes™ are coming to dismantle your working code.
 
 Are We on the Worst Timeline?
@@ -3181,7 +3187,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 Timings
 =======
 
-Let's profile ``beartype`` against other runtime type-checkers with `a battery
+Let's profile beartype against other runtime type-checkers with `a battery
 of surely fair, impartial, and unbiased use cases <beartype profiler_>`__:
 
 .. code-block:: bash
@@ -3252,7 +3258,7 @@ of surely fair, impartial, and unbiased use cases <beartype profiler_>`__:
 ELI5
 ----
 
-``beartype`` is:
+beartype is:
 
 * **At least twenty times faster** (i.e., 20,000%) and consumes **three orders
   of magnitude less time** in the worst case than typeguard_ – the only
@@ -3268,9 +3274,9 @@ ELI5
   ``List[object]`` as as it does to check ``Union[int, str]``, which takes
   roughly twice the time as it does to check ``str``.
 
-``beartype`` performs most of its work at *decoration* time. The ``@beartype``
+beartype performs most of its work at *decoration* time. The ``@beartype``
 decorator consumes most of the time needed to first decorate and then
-repeatedly call a decorated function. ``beartype`` is thus front-loaded. After
+repeatedly call a decorated function. beartype is thus front-loaded. After
 paying the initial cost of decoration, each type-checked call thereafter incurs
 comparatively little overhead.
 
@@ -3391,7 +3397,7 @@ total number of items recursively contained in a container to be checked) by
 recursively and repeatedly checking *all* items of *all* containers passed to
 or returned from *all* calls of decorated callables.
 
-``beartype`` guarantees ``O(1)`` time complexity by non-recursively but
+beartype guarantees ``O(1)`` time complexity by non-recursively but
 repeatedly checking *one* random item at *all* nesting levels of *all*
 containers passed to or returned from *all* calls of decorated callables, thus
 amortizing the cost of deeply checking containers across calls. (See the
@@ -3399,7 +3405,7 @@ subsection on `@beartype-generated code deeply type-checking arbitrarily nested
 containers in constant time <Constant Nested Deep Sequence Decoration_>`__ for
 what this means in practice.)
 
-``beartype`` exploits the `well-known coupon collector's problem <coupon
+beartype exploits the `well-known coupon collector's problem <coupon
 collector's problem_>`__ applied to abstract trees of nested type hints,
 enabling us to statistically predict the number of calls required to fully
 type-check all items of an arbitrary container on average. Formally, let:
@@ -3448,16 +3454,16 @@ non-negligible, the term ``γn`` grows significantly slower than the term
 .. image:: https://render.githubusercontent.com/render/math?math=%5Cdisplaystyle+E%28T%29+%3D+O%28n+%5Clog+n%29
 
 We now generalize this bound to the general case. When checking a container
-containing *no* subcontainers, ``beartype`` only randomly samples one item from
+containing *no* subcontainers, beartype only randomly samples one item from
 that container on each call. When checking a container containing arbitrarily
-many nested subcontainers, however, ``beartype`` randomly samples one random
+many nested subcontainers, however, beartype randomly samples one random
 item from each nesting level of that container on each call.
 
-In general, ``beartype`` thus samples ``h`` random items from a container on
+In general, beartype thus samples ``h`` random items from a container on
 each call, where ``h`` is that container's height (i.e., maximum number of
 edges on the longest path from that container to a non-container leaf item
 reachable from items directly contained in that container). Since ``h ≥ 1``,
-``beartype`` samples at least as many items each call as assumed in the usual
+beartype samples at least as many items each call as assumed in the usual
 `coupon collector's problem`_ and thus paradoxically takes a fewer number of
 calls on average to check all items of a container containing arbitrarily many
 subcontainers as it does to check all items of a container containing *no*
@@ -3687,7 +3693,7 @@ Beartype currently silently ignores these typing_ types at decoration time:
 * typing.Final_.
 * `@typing.final`_.
 
-Subsequent ``beartype`` versions will first shallowly and then deeply
+Subsequent beartype versions will first shallowly and then deeply
 type-check these typing_ types while preserving our `O(1) time complexity (with
 negligible constant factors) guarantee <Timings_>`__.
 
@@ -4038,14 +4044,14 @@ Implementation
 ==============
 
 Let's take a deep dive into the deep end of runtime type checking – the
-``beartype`` way. In this subsection, we show code generated by the
+beartype way. In this subsection, we show code generated by the
 ``@beartype`` decorator in real-world use cases and tell why that code is the
 fastest possible code type-checking those cases.
 
 Identity Decoration
 -------------------
 
-We begin by wading into the torpid waters of the many ways ``beartype`` avoids
+We begin by wading into the torpid waters of the many ways beartype avoids
 doing any work whatsoever, because laziness is the virtue we live by. The
 reader may recall that the fastest decorator at decoration- *and* call-time is
 the **identity decorator** returning its decorated callable unmodified: e.g.,
@@ -4057,7 +4063,7 @@ the **identity decorator** returning its decorated callable unmodified: e.g.,
    def identity_decorator(func: Callable): -> Callable:
        return func
 
-``beartype`` silently reduces to the identity decorator whenever it can, which
+beartype silently reduces to the identity decorator whenever it can, which
 is surprisingly often. Our three weapons are laziness, surprise, ruthless
 efficiency, and an almost fanatical devotion to constant-time type checking.
 
@@ -4190,7 +4196,7 @@ These include:
 Constant Decoration
 -------------------
 
-We continue by trundling into the turbid waters out at sea, where ``beartype``
+We continue by trundling into the turbid waters out at sea, where beartype
 reluctantly performs its minimal amount of work with a heavy sigh.
 
 Constant Builtin Type Decoration
@@ -4250,7 +4256,7 @@ Let's dismantle this bit by bit:
   types, and forward references to currently undeclared types visitable from
   type hints annotating callables decorated by ``@beartype``. We'll see more
   about the ``__beartypistry`` in a moment. For know, just know that
-  ``__beartypistry`` is a private singleton of the ``beartype`` package. This
+  ``__beartypistry`` is a private singleton of the beartype package. This
   object is frequently accessed and thus localized to the body of this wrapper
   rather than accessed as a global variable, which would be mildly slower.
 * ``__beartype_pith_0`` is the value of the first passed parameter, regardless
@@ -4258,7 +4264,7 @@ Let's dismantle this bit by bit:
   unpassed, the value defaults to the ``__beartypistry``. Since *no* caller
   should access (let alone pass) that object, that object serves as an
   efficient sentinel value enabling us to discern passed from unpassed
-  parameters. ``beartype`` internally favours the term "pith" (which we
+  parameters. beartype internally favours the term "pith" (which we
   absolutely just made up) to transparently refer to the arbitrary object
   currently being type-checked against its associated type hint.
 * ``isinstance(__beartype_pith_0, int)`` tests whether the value passed for
@@ -4458,7 +4464,7 @@ We have now diverged from normalcy. Let's dismantle this iota by iota:
   length is preferred. Since most sequences are likely to contain fewer items
   than this integer, pseudo-random sequence items are indexable by taking the
   modulo of this integer with the sizes of those sequences. For big sequences
-  containing more than this number of items, ``beartype`` deeply type-checks
+  containing more than this number of items, beartype deeply type-checks
   leading items with indices in this range while ignoring trailing items. Given
   the practical infeasibility of storing big sequences in memory, this seems an
   acceptable real-world tradeoff. Suck it, big sequences!
@@ -4567,17 +4573,17 @@ the higher-level perspective of architecture and internal API design.
 Developers
 ==========
 
-Let's contribute `pull requests <beartype pulls_>`__ to ``beartype`` for the
+Let's contribute `pull requests <beartype pulls_>`__ to beartype for the
 good of typing_. The `primary maintainer of this repository is a friendly
 beardless Canadian guy <leycec_>`__ who guarantees that he will *always* be
 nice and congenial and promptly merge all requests that pass continuous
 integration (CI) tests.
 
-And thanks for merely reading this! Like all open-source software, ``beartype``
+And thanks for merely reading this! Like all open-source software, beartype
 thrives on community contributions, activity, and interest. *This means you,
 stalwart Python hero.*
 
-``beartype`` has `two problem spots (listed below in order of decreasing
+beartype has `two problem spots (listed below in order of decreasing
 importance and increasing complexity) <Moar Depth_>`__ that could *always*
 benefit from a volunteer army of good GitHub Samaritans.
 
@@ -4607,16 +4613,16 @@ Let's take this from the top.
 
       git remote add upstream https://github.com/beartype/beartype.git
 
-#. **Uninstall all previously installed versions** of ``beartype``. For
-   example, if you previously installed ``beartype`` with ``pip``, manually
-   uninstall ``beartype`` with ``pip``.
+#. **Uninstall all previously installed versions** of beartype. For
+   example, if you previously installed beartype with ``pip``, manually
+   uninstall beartype with ``pip``.
 
    .. code-block:: bash
 
       pip uninstall beartype
 
-#. Install ``beartype`` with ``pip`` in **editable mode.** This synchronizes
-   changes made to your fork against the ``beartype`` package imported in
+#. Install beartype with ``pip`` in **editable mode.** This synchronizes
+   changes made to your fork against the beartype package imported in
    Python. Note the ``[dev]`` extra installs developer-specific mandatory
    dependencies required at test or documentation time.
 
@@ -4687,21 +4693,21 @@ Let's take this from the top.
 Moar Depth
 ----------
 
-So, you want to help ``beartype`` deeply type-check even *more* type hints than
+So, you want to help beartype deeply type-check even *more* type hints than
 she already does? Let us help you help us, because you are awesome.
 
-First, an egregious lore dump. It's commonly assumed that ``beartype`` only
+First, an egregious lore dump. It's commonly assumed that beartype only
 internally implements a single type-checker. After all, every *other* static
 and runtime type-checker only internally implements a single type-checker.
 Why would a type-checker internally implement several divergent overlapping
 type-checkers and... what would that even mean? Who would be so vile, cruel,
 and sadistic as to do something like that?
 
-*We would.* ``beartype`` often violates assumptions. This is no exception.
-Externally, of course, ``beartype`` presents itself as a single type-checker.
-Internally, ``beartype`` is implemented as a two-phase series of orthogonal
+*We would.* beartype often violates assumptions. This is no exception.
+Externally, of course, beartype presents itself as a single type-checker.
+Internally, beartype is implemented as a two-phase series of orthogonal
 type-checkers. Why? Because efficiency, which is the reason we are all here.
-These type-checkers are (in the order that callables decorated by ``beartype``
+These type-checkers are (in the order that callables decorated by beartype
 perform them at runtime):
 
 #. **Testing phase.** In this fast first pass, each callable decorated by
@@ -4783,7 +4789,7 @@ You're done! *Praise Guido.*
 Moar Compliance
 ---------------
 
-So, you want to help ``beartype`` comply with even *more* `Python Enhancement
+So, you want to help beartype comply with even *more* `Python Enhancement
 Proposals (PEPs) <PEP 0_>`__ than she already complies with? Let us help you
 help us, because you are young and idealistic and you mean well.
 
@@ -4830,7 +4836,7 @@ Prior official funding sources (*yes, they once existed*) include:
    Group`_ under the administrative purview of the `Paul Allen Discovery
    Center`_ at `Tufts University`_ over the period 2015—2018 preceding the
    untimely death of `Microsoft co-founder Paul Allen <Paul Allen_>`__, during
-   which ``beartype`` was maintained as the private ``@type_check`` decorator
+   which beartype was maintained as the private ``@type_check`` decorator
    in the `Bioelectric Tissue Simulation Engine (BETSE) <BETSE_>`__.
    :superscript:`Phew!`
 
@@ -4846,16 +4852,16 @@ Prior official funding sources (*yes, they once existed*) include:
 .. # Authors
 .. # =======
 .. #
-.. # ``beartype`` is developed with the grateful assistance of a volunteer community
+.. # beartype is developed with the grateful assistance of a volunteer community
 .. # of enthusiasts, including (*in chronological order of issue or pull request*):
 
 See Also
 ========
 
-External ``beartype`` resources include:
+External beartype resources include:
 
 * `This list of all open-source PyPI-hosted dependents of this package
-  <beartype dependents_>`__ (i.e., third-party packages requiring ``beartype``
+  <beartype dependents_>`__ (i.e., third-party packages requiring beartype
   as a runtime dependency), kindly furnished by the `Libraries.io package
   registry <Libraries.io_>`__.
 
@@ -4873,7 +4879,7 @@ decorators, function calls, and import hooks) include:
 +-----------------+---------+---------------+---------------------------+
 | package         | active  | PEP-compliant | time multiplier [#speed]_ |
 +=================+=========+===============+===========================+
-| ``beartype``    | **yes** | **yes**       | 1 ✕ ``beartype``          |
+| beartype        | **yes** | **yes**       | 1 ✕ beartype              |
 +-----------------+---------+---------------+---------------------------+
 | enforce_        | no      | **yes**       | *unknown*                 |
 +-----------------+---------+---------------+---------------------------+
@@ -4887,18 +4893,18 @@ decorators, function calls, and import hooks) include:
 +-----------------+---------+---------------+---------------------------+
 | typical_        | **yes** | **yes**       | *unknown*                 |
 +-----------------+---------+---------------+---------------------------+
-| typeguard_      | no      | **yes**       | 20 ✕ ``beartype``         |
+| typeguard_      | no      | **yes**       | 20 ✕ beartype             |
 +-----------------+---------+---------------+---------------------------+
 
 .. [#speed]
    The *time multliplier* column approximates **how much slower on average
-   than** ``beartype`` **that checker is** as `timed by our profile suite
+   than** beartype **that checker is** as `timed by our profile suite
    <Timings_>`__. A time multiplier of:
 
-   * "1" means that checker is approximately as fast as ``beartype``, which
-     means that checker is probably ``beartype`` itself.
-   * "20" means that checker is approximately twenty times slower than
-     ``beartype`` on average.
+   * "1" means that checker is approximately as fast as beartype, which means
+     that checker is probably beartype itself.
+   * "20" means that checker is approximately twenty times slower than beartype
+     on average.
 
 Like `static type checkers <Static Type Checkers_>`__, runtime type checkers
 *always* require callables to be annotated by type hints. Unlike `static type
@@ -5705,8 +5711,12 @@ rather than Python runtime) include:
    https://github.com/k2bd/typen
 .. _typical:
    https://github.com/seandstewart/typical
+
+.. # ------------------( LINKS ~ py : type : runtime : typeg )------------------
 .. _typeguard:
    https://github.com/agronholm/typeguard
+.. _typeguard.check_type:
+   https://typeguard.readthedocs.io/en/latest/userguide.html#checking-types-directly
 
 .. # ------------------( LINKS ~ py : type : runtime : data  )------------------
 .. _PyContracts:
