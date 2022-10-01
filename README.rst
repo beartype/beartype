@@ -1300,6 +1300,114 @@ bool
 
     See ``help(beartype.door.is_subhint)`` for further details.
 
+Procedural Showcase
+~~~~~~~~~~~~~~~~~~~
+
+By the power of beartype, you too shall catch all bugs.
+
+Detect API Breakage
++++++++++++++++++++
+
+Detect breaking API changes in arbitrary callables via type hints alone in ten
+lines of code: :superscript:`...ignoring imports, docstrings, comments, and
+blank lines to make myself look better`
+
+.. code-block:: python
+
+   from beartype import beartype
+   from beartype.door import is_subhint
+   from beartype.peps import resolve_pep563
+   from collections.abc import Callable
+
+   @beartype
+   def is_func_api_preserved(func_new: Callable, func_old: Callable) -> bool:
+       '''
+       ``True`` only if the signature of the first passed callable (presumably
+       the newest version of some callable to be released) preserves backward
+       API compatibility with the second passed callable (presumably an older
+       previously released version of the first passed callable) according to
+       the PEP-compliant type hints annotating these two callables.
+
+       Parameters
+       ----------
+       func_new: Callable
+           Newest version of a callable to test for API breakage.
+       func_old: Callable
+           Older version of that same callable.
+
+       Returns
+       ----------
+       bool
+           ``True`` only if the ``func_new`` API preserves the ``func_old`` API.
+       '''
+
+       # Resolve all PEP 563-postponed type hints annotating these two callables
+       # *BEFORE* reasoning with these type hints.
+       resolve_pep563(func_new)
+       resolve_pep563(func_old)
+
+       # For the name of each annotated parameter (or "return" for an annotated
+       # return) and the hint annotating that parameter or return for this newer
+       # callable...
+       for func_arg_name, func_new_hint in func_new.__annotations__.items():
+           # Corresponding hint annotating this older callable if any or "None".
+           func_old_hint = func_old.__annotations__.get(func_arg_name)
+
+           # If no corresponding hint annotates this older callable, silently
+           # continue to the next hint.
+           if func_old_hint is None:
+               continue
+           # Else, a corresponding hint annotates this older callable.
+
+           # If this older hint is *NOT* a subhint of this newer hint, this
+           # parameter or return breaks backward compatibility.
+           if not is_subhint(func_old_hint, func_new_hint):
+               return False
+           # Else, this older hint is a subhint of this newer hint. In this case,
+           # this parameter or return preserves backward compatibility.
+
+       # All annotated parameters and returns preserve backward compatibility.
+       return True
+
+The proof is in the real-world pudding:
+
+.. code-block:: python
+
+   >>> from numbers import Real
+
+   # New and successively older APIs of the same example function.
+   >>> def new_func(text: str | None, ints: list[Real]) -> int: ...
+   >>> def old_func(text: str, ints: list[int]) -> bool: ...
+   >>> def older_func(text: str, ints: list) -> bool: ...
+
+   # Does the newest version of that function preserve backward compatibility
+   # with the next older version?
+   >>> is_func_api_preserved(new_func, old_func)
+   True  # <-- good. this is good.
+
+   # Does the newest version of that function preserve backward compatibility
+   # with the oldest version?
+   >>> is_func_api_preserved(new_func, older_func)
+   False  # <-- OH. MY. GODS.
+
+In the latter case, the oldest version ``older_func()`` of that function
+ambiguously annotated its ``ints`` parameter to accept *any* list rather than
+merely a list of numbers. Both the newer version ``new_func()`` and the next
+older version ``old_func()`` resolve the ambiguity by annotating that parameter
+to accept *only* lists of numbers. Technically, that constitutes API breakage;
+users upgrading from the older version of the package providing ``older_func()``
+to the newer version of the package providing ``new_func()`` *could* have been
+passing lists of non-numbers to ``older_func()``. Their code is now broke. Of
+course, their code was probably always broke. But they're now screaming murder
+on your issue tracker and all you can say is: "We shoulda used beartype."
+
+In the former case, ``new_func()`` relaxes the constraint from ``old_func()``
+that this list contain only integers to accept a list containing both integers
+and floats. ``new_func()`` thus preserves backward compatibility with
+``old_func()``.
+
+**Thus was Rome's API preserved in a day.**
+
 Beartype Validators
 -------------------
 
@@ -2851,7 +2959,7 @@ Let's chart current and future compliance with Python's `typing`_ landscape:
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 |                    | is_bearable_                            | **0.11.0**\ —\ *current*      | **0.11.0**\ —\ *current*  |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
-|                    | is_subhint                              | **0.11.0**\ —\ *current*      | **0.11.0**\ —\ *current*  |
+|                    | is_subhint_                             | **0.11.0**\ —\ *current*      | **0.11.0**\ —\ *current*  |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
 | beartype.peps      | resolve_pep563                          | **0.11.0**\ —\ *current*      | **0.11.0**\ —\ *current*  |
 +--------------------+-----------------------------------------+-------------------------------+---------------------------+
