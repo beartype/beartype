@@ -1,4 +1,4 @@
-.. # ------------------( SEO                                )------------------
+.. # ------------------( SEO                                 )------------------
 .. # Metadata converted into HTML-specific meta tags parsed by search engines.
 .. # Note that:
 .. # * The "description" should be no more than 300 characters and ideally no
@@ -10,7 +10,7 @@
      Beartype is an open-source pure-Python PEP-compliant constant-time runtime
      type checker emphasizing efficiency and portability.
 
-.. # ------------------( SYNOPSIS                           )------------------
+.. # ------------------( SYNOPSIS                            )------------------
 
 =================
 |beartype-banner|
@@ -1310,7 +1310,7 @@ Detect API Breakage
 
 Detect breaking API changes in arbitrary callables via type hints alone in ten
 lines of code: :superscript:`...ignoring imports, docstrings, comments, and
-blank lines to make myself look better`
+blank lines to make us look better`
 
 .. code-block:: python
 
@@ -5193,7 +5193,8 @@ rather than Python runtime) include:
 .. _posita:
    https://github.com/posita
 
-.. # ------------------( LINKS ~ beartype : user : PRs      )------------------
+.. # ------------------( LINKS ~ beartype : user : PRs       )------------------
+.. #FIXME: Most of these can now be safely removed... I think? *sigh*
 .. _beartype Heliotrop3 QA caching:
    https://github.com/beartype/beartype/pull/15
 .. _beartype Heliotrop3 QA munging:
@@ -5211,7 +5212,7 @@ rather than Python runtime) include:
 .. _beartype posita NotImplemented:
    https://github.com/beartype/beartype/pull/26
 
-.. # ------------------( LINKS ~ github                     )------------------
+.. # ------------------( LINKS ~ github                      )------------------
 .. _GitHub Actions:
    https://github.com/features/actions
 .. _GitHub account signin:
@@ -5221,7 +5222,7 @@ rather than Python runtime) include:
 .. _gitter:
    https://gitter.im
 
-.. # ------------------( LINKS ~ idea                       )------------------
+.. # ------------------( LINKS ~ idea                        )------------------
 .. _Denial-of-Service:
    https://en.wikipedia.org/wiki/Denial-of-service_attack
 .. _DRY:
@@ -5268,19 +5269,19 @@ rather than Python runtime) include:
 .. _zero-cost abstraction:
    https://boats.gitlab.io/blog/post/zero-cost-abstractions
 
-.. # ------------------( LINKS ~ kipling                    )------------------
+.. # ------------------( LINKS ~ kipling                     )------------------
 .. _The Jungle Book:
    https://www.gutenberg.org/files/236/236-h/236-h.htm
 .. _Shere Khan:
    https://en.wikipedia.org/wiki/Shere_Khan
 
-.. # ------------------( LINKS ~ math                       )------------------
+.. # ------------------( LINKS ~ math                        )------------------
 .. _Euler–Mascheroni constant:
    https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant
 .. _coupon collector's problem:
    https://en.wikipedia.org/wiki/Coupon_collector%27s_problem
 
-.. # ------------------( LINKS ~ math : set                 )------------------
+.. # ------------------( LINKS ~ math : set                  )------------------
 .. _conjunction:
    https://en.wikipedia.org/wiki/Logical_conjunction
 .. _disjunction:
@@ -5290,11 +5291,11 @@ rather than Python runtime) include:
 .. _relative set complement:
    https://en.wikipedia.org/wiki/Complement_(set_theory)#Relative_complement
 
-.. # ------------------( LINKS ~ math : type                )------------------
+.. # ------------------( LINKS ~ math : type                 )------------------
 .. _covariance:
    https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)
 
-.. # ------------------( LINKS ~ meme                       )------------------
+.. # ------------------( LINKS ~ meme                        )------------------
 .. _RNGesus:
    https://knowyourmeme.com/memes/rngesus
 .. _goes up to eleven:
@@ -5306,11 +5307,11 @@ rather than Python runtime) include:
 .. _the gripping hand:
    http://catb.org/jargon/html/O/on-the-gripping-hand.html
 
-.. # ------------------( LINKS ~ os : linux                 )------------------
+.. # ------------------( LINKS ~ os : linux                  )------------------
 .. _Gentoo:
    https://www.gentoo.org
 
-.. # ------------------( LINKS ~ os : macos                 )------------------
+.. # ------------------( LINKS ~ os : macos                  )------------------
 .. _macOS:
    https://en.wikipedia.org/wiki/MacOS
 .. _HomeBrew:
@@ -5318,11 +5319,11 @@ rather than Python runtime) include:
 .. _MacPorts:
    https://www.macports.org
 
-.. # ------------------( LINKS ~ other                      )------------------
+.. # ------------------( LINKS ~ other                       )------------------
 .. _heliotrope:
    https://en.wikipedia.org/wiki/Heliotropium
 
-.. # ------------------( LINKS ~ py                         )------------------
+.. # ------------------( LINKS ~ py                          )------------------
 .. _Python:
    https://www.python.org
 .. _Python status:
@@ -5330,13 +5331,13 @@ rather than Python runtime) include:
 .. _pip:
    https://pip.pypa.io
 
-.. # ------------------( LINKS ~ py : cli                   )------------------
+.. # ------------------( LINKS ~ py : cli                    )------------------
 .. _-O:
    https://docs.python.org/3/using/cmdline.html#cmdoption-o
 .. _PYTHONOPTIMIZE:
    https://docs.python.org/3/using/cmdline.html#envvar-PYTHONOPTIMIZE
 
-.. # ------------------( LINKS ~ py : interpreter           )------------------
+.. # ------------------( LINKS ~ py : interpreter            )------------------
 .. _Brython:
    https://brython.info
 .. _CPython:
@@ -5348,7 +5349,7 @@ rather than Python runtime) include:
 .. _PyPy:
    https://www.pypy.org
 
-.. # ------------------( LINKS ~ py : lang                  )------------------
+.. # ------------------( LINKS ~ py : lang                   )------------------
 .. _generic alias parameters:
    https://docs.python.org/3/library/stdtypes.html#genericalias.__parameters__
 .. _isinstancecheck:
@@ -5360,13 +5361,13 @@ rather than Python runtime) include:
 .. _operator precedence:
    https://docs.python.org/3/reference/expressions.html#operator-precedence
 
-.. # ------------------( LINKS ~ py : misc                  )------------------
+.. # ------------------( LINKS ~ py : misc                   )------------------
 .. _Guido van Rossum:
    https://en.wikipedia.org/wiki/Guido_van_Rossum
 .. _RealPython:
    https://realpython.com/python-type-checking
 
-.. # ------------------( LINKS ~ py : package               )------------------
+.. # ------------------( LINKS ~ py : package                )------------------
 .. _Django:
    https://www.djangoproject.com
 .. _NetworkX:
@@ -5384,7 +5385,7 @@ rather than Python runtime) include:
 .. _typing_extensions:
    https://pypi.org/project/typing-extensions
 
-.. # ------------------( LINKS ~ py : package : boto3       )------------------
+.. # ------------------( LINKS ~ py : package : boto3        )------------------
 .. _Boto3:
    https://aws.amazon.com/sdk-for-python
 .. _bearboto3:
@@ -5392,7 +5393,7 @@ rather than Python runtime) include:
 .. _mypy-boto3:
    https://mypy-boto3.readthedocs.io
 
-.. # ------------------( LINKS ~ py : package : numpy       )------------------
+.. # ------------------( LINKS ~ py : package : numpy        )------------------
 .. _NumPy:
    https://numpy.org
 .. _numpy.dtype:

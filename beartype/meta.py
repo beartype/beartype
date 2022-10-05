@@ -505,6 +505,7 @@ Specifically, this project requires:
 
 LIBS_DOCTIME_MANDATORY = (
     f'sphinx >={_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX}',
+    f'autoapi >=0.9.0',
 )
 '''
 **Mandatory developer documentation build-time package dependencies** (i.e.,

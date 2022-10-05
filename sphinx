@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 #
-# --------------------( SYNOPSIS                          )--------------------
+# --------------------( SYNOPSIS                           )--------------------
 # Bash shell script wrapping this project's Sphinx-based documentation build
 # system, passing sane default options suitable for interactive terminal
 # building and otherwise passing all passed arguments as is to the
@@ -13,11 +13,11 @@
 # canonical ${BASH_SOURCE} string global, reliably providing the absolute
 # pathnames of this script and hence this script's directory.
 
-# ....................{ PREAMBLE                          }....................
+# ....................{ PREAMBLE                           }....................
 # Enable strictness for sanity.
 set -e
 
-# ....................{ ARRAYS                            }....................
+# ....................{ ARRAYS                             }....................
 # Array of all shell words with which to invoke "sphinx-build" below.
 #
 # Bizarrely, note that these Sphinx options are *ONLY* available in the short
@@ -25,26 +25,26 @@ set -e
 SPHINX_BUILD_ARGS=(
     command sphinx-build
 
-    # ..................{ SPHINX ~ mode                     }..................
+    # ..................{ SPHINX ~ mode                      }..................
     # Generate HTML documentation.
     -M html
 
-    # ..................{ SPHINX ~ paths                    }..................
+    # ..................{ SPHINX ~ paths                     }..................
     # Relative dirname of the directory containing source documentation in
     # reStructuredText (reST) format.
-    doc/source/
+    doc/src/
 
     # Relative dirname of the directory containing target documentation in the
     # format corresponding to the "-M" option above (typically, HTML).
-    doc/build/
+    doc/trg/
 
     # Pass all remaining non-option arguments to "sphinx-build" as is,
     # comprising the set of all relative or absolute filenames to be built. If
     # unpassed, "sphinx-build" rebuilds all outdated files by default.
     "${@}"
 
-    # ..................{ SPHINX ~ options                  }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # ..................{ SPHINX ~ options                   }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: In flagrant violation of POSIX standards, sensible norms, and
     # its own bloody documentation in both "--help" text and error messages,
     # "sphinx-build" requires that options be passed *AFTER* pathnames. By
@@ -54,7 +54,7 @@ SPHINX_BUILD_ARGS=(
     #     $ ./sphinx
     #     usage: sphinx-build [OPTIONS] SOURCEDIR OUTPUTDIR [FILENAMES...]
     #     sphinx-build: error: argument -d: expected one argument
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Convert non-fatal warnings into fatal errors for safety.
     -W
@@ -86,7 +86,7 @@ SPHINX_BUILD_ARGS=(
 )
 echo "Running: ${SPHINX_BUILD_ARGS[*]}"
 
-# ....................{ FUNCTIONS                         }....................
+# ....................{ FUNCTIONS                          }....................
 # str canonicalize_path(str pathname)
 #
 # Canonicalize the passed pathname.
@@ -106,7 +106,7 @@ import os, sys
 print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${pathname}"
 }
 
-# ....................{ PATHS                             }....................
+# ....................{ PATHS                              }....................
 # Absolute or relative filename of this script.
 SCRIPT_FILENAME="$(canonicalize_path "${BASH_SOURCE[0]}")"
 
@@ -114,7 +114,7 @@ SCRIPT_FILENAME="$(canonicalize_path "${BASH_SOURCE[0]}")"
 # script, equivalent to the top-level directory for this project.
 SCRIPT_DIRNAME="$(dirname "${SCRIPT_FILENAME}")"
 
-# ....................{ MAIN                              }....................
+# ....................{ MAIN                               }....................
 # Temporarily change the current working directory to that of this project.
 # pushd "${SCRIPT_DIRNAME}/doc" >/dev/null
 pushd "${SCRIPT_DIRNAME}" >/dev/null

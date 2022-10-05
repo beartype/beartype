@@ -38,7 +38,7 @@ python:
 sphinx:
   # Relative filename of the Sphinx-specific configuration script configuring
   # document generation for this project.
-  configuration: doc/source/conf.py
+  configuration: doc/src/conf.py
 
   #FIXME: Unclear why we need this, but we probably do. *shrug*
   builder: dirhtml
