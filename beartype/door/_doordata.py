@@ -50,7 +50,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 )
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
-    get_hint_pep_origin_or_none,
+    # get_hint_pep_origin_or_none,
     get_hint_pep_sign_or_none,
 )
 from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
@@ -74,9 +74,9 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
 
     Raises
     ----------
-    BeartypeDoorNonpepException
+    beartype.roar.BeartypeDoorNonpepException
         If this API does *not* currently support the passed hint.
-    BeartypeDecorHintPepSignException
+    beartype.roar.BeartypeDecorHintPepSignException
         If the passed hint is *not* actually a PEP-compliant type hint.
     '''
 

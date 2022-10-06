@@ -143,7 +143,7 @@ class BeartypeValidator(object):
 
         Raises
         ----------
-        BeartypeValeSubscriptionException
+        beartype.roar.BeartypeValeSubscriptionException
             If either:
 
             * ``is_valid`` is either:

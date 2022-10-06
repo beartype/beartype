@@ -37,16 +37,44 @@
 .. # the Sphinx-specific "toctree::" directive:
 .. #     https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-toctree
 
+Let's Type This
+---------------
+
+.. # Leading TOC entry self-referentially referring back to this document,
+.. # enabling users to trivially navigate back to this document from elsewhere.
+.. #
+.. # Note that the ":hidden:" option adds this entry to the TOC sidebar while
+.. # omitting this entry from the TOC displayed inline in this document. This is
+.. # sensible; since any user currently viewing this document has *NO* need to
+.. #  navigate to the current document, the inline TOC omits this entry.
+.. toctree::
+   :hidden:
+   :caption: Contents
+
+   Bear with Us <self>
+
 .. # FIXME: Obsolete, but momentarily preserved for reference.
 .. # .. toctree::
 .. #    :hidden:
 .. #    :caption: Package
-.. # 
+.. #
 .. #    changes
 .. #    reference
-.. # 
+.. #
 .. # .. toctree::
 .. #    :hidden:
 .. #    :caption: Guide
 .. # 
 .. #    tutorial
+
+.. toctree::
+   :caption: Beartype API reference
+
+   API </api/beartype/index>
+
+Would You Like to Know More?
+----------------------------
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

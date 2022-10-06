@@ -575,7 +575,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         Raises
         ----------
-        BeartypeDecorHintForwardRefException
+        beartype.roar.BeartypeDecorHintForwardRefException
             If this hint contains one or more relative forward references, which
             this tester explicitly prohibits to improve both the efficiency and
             portability of calls to this tester.

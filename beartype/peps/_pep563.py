@@ -147,7 +147,7 @@ def resolve_pep563(
 
     Raises
     ----------
-    BeartypePep563Exception
+    beartype.roar.BeartypePep563Exception
         If either:
 
         * ``func`` is *not* a pure-Python callable.

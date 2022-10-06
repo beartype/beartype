@@ -32,7 +32,7 @@ def die_unless_validator_tester(
 
     Raises
     ----------
-    BeartypeValeSubscriptionException
+    beartype.roar.BeartypeValeSubscriptionException
         If that object is either:
 
         * *Not* callable.

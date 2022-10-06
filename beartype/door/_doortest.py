@@ -26,7 +26,7 @@ def die_unless_typehint(obj: object) -> None:
 
     Raises
     ----------
-    BeartypeDoorException
+    beartype.roar.BeartypeDoorException
         If this object is *not* a type hint wrapper.
     '''
 

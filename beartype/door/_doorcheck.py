@@ -115,12 +115,12 @@ def die_if_unbearable(
 
     Raises
     ----------
-    BeartypeDecorHintNonpepException
+    beartype.roar.BeartypeDecorHintNonpepException
         If this hint is *not* PEP-compliant (i.e., complies with *no* Python
         Enhancement Proposals (PEPs) currently supported by :mod:`beartype`).
-    BeartypeDecorHintPepUnsupportedException
+    beartype.roar.BeartypeDecorHintPepUnsupportedException
         If this hint is currently unsupported by :mod:`beartype`.
-    BeartypeDoorHintViolation
+    beartype.roar.BeartypeDoorHintViolation
         If this object violates this hint.
 
     Examples
@@ -276,16 +276,16 @@ def is_bearable(
 
     Raises
     ----------
-    BeartypeConfException
+    beartype.roar.BeartypeConfException
         If this configuration is *not* a :class:`BeartypeConf` instance.
-    BeartypeDecorHintForwardRefException
+    beartype.roar.BeartypeDecorHintForwardRefException
         If this hint contains one or more relative forward references, which
         this tester explicitly prohibits to improve both the efficiency and
         portability of calls to this tester.
-    BeartypeDecorHintNonpepException
+    beartype.roar.BeartypeDecorHintNonpepException
         If this hint is *not* PEP-compliant (i.e., complies with *no* Python
         Enhancement Proposals (PEPs) currently supported by :mod:`beartype`).
-    BeartypeDecorHintPepUnsupportedException
+    beartype.roar.BeartypeDecorHintPepUnsupportedException
         If this hint is currently unsupported by :mod:`beartype`.
 
     Examples
@@ -380,10 +380,10 @@ def _get_type_checker(
 
     Raises
     ----------
-    BeartypeDecorHintPepUnsupportedException
+    beartype.roar.BeartypeDecorHintPepUnsupportedException
         If this hint is a PEP-compliant type hint currently unsupported by
         the :func:`beartype.beartype` decorator.
-    BeartypeDecorHintNonpepException
+    beartype.roar.BeartypeDecorHintNonpepException
         If this hint is neither a:
 
         * Supported PEP-compliant type hint.
