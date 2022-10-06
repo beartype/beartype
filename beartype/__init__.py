@@ -91,13 +91,13 @@ For PEP 8 compliance, this specifier has the canonical name
 '''
 
 
-# __all__ = [
-#     'BeartypeConf',
-#     'BeartypeStrategy',
-#     'beartype',
-#     '__version__',
-#     '__version_info__',
-# ]
+__all__ = [
+    'BeartypeConf',
+    'BeartypeStrategy',
+    'beartype',
+    '__version__',
+    '__version_info__',
+]
 '''
 Special list global of the unqualified names of all public package attributes
 explicitly exported by and thus safely importable from this package.
