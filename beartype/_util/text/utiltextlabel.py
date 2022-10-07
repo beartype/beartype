@@ -12,7 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Optional
-from beartype._util.text.utiltextcolour import user_value_colour
 from beartype._util.utilobject import (
     get_object_name,
     get_object_type_name,
@@ -362,41 +361,6 @@ def prefix_callable_decorated_arg(
     # Create and return this label.
     return f'{prefix_callable_decorated(func)}parameter "{arg_name}" '
 
-
-def prefix_callable_decorated_arg_value(
-    func: Callable, arg_name: str, arg_value: object) -> str:
-    '''
-    Human-readable label describing the parameter with the passed name and
-    trimmed value of the passed **decorated callable** (i.e., callable wrapped
-    by the :func:`beartype.beartype` decorator with a wrapper function
-    type-checking that callable) suffixed by delimiting whitespace.
-
-    Parameters
-    ----------
-    func : Callable
-        Decorated callable to be labelled.
-    arg_name : str
-        Name of the parameter of this callable to be labelled.
-    arg_value : object
-        Value of the parameter of this callable to be labelled.
-
-    Returns
-    ----------
-    str
-        Human-readable label describing this parameter's name and value.
-    '''
-    assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
-
-    # Avoid circular import dependencies.
-    from beartype._util.text.utiltextrepr import represent_object
-
-    coloured_arg = user_value_colour(f'{arg_name}={represent_object(arg_value)}')
-    # Create and return this label.
-    return (
-        f'{prefix_callable_decorated(func)}parameter '
-        f'{coloured_arg} '
-    )
-
 # ....................{ PREFIXERS ~ callable : return      }....................
 def prefix_callable_decorated_return(func: Callable) -> str:
     '''
@@ -418,34 +382,3 @@ def prefix_callable_decorated_return(func: Callable) -> str:
 
     # Create and return this label.
     return f'{prefix_callable_decorated(func)}return '
-
-
-def prefix_callable_decorated_return_value(
-    func: Callable, return_value: object) -> str:
-    '''
-    Human-readable label describing the passed trimmed return value of the
-    passed **decorated callable** (i.e., callable wrapped by the
-    :func:`beartype.beartype` decorator with a wrapper function type-checking
-    that callable) suffixed by delimiting whitespace.
-
-    Parameters
-    ----------
-    func : Callable
-        Decorated callable to be labelled.
-    return_value : object
-        Value returned by this callable to be labelled.
-
-    Returns
-    ----------
-    str
-        Human-readable label describing this return value.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.text.utiltextrepr import represent_object
-
-    # Create and return this label.
-    return (
-        f'{prefix_callable_decorated_return(func)}'
-        f'{user_value_colour(represent_object(return_value))} '
-    )

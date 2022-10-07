@@ -4930,6 +4930,15 @@ License
 Beartype is `open-source software released <beartype license_>`__ under the
 `permissive MIT license <MIT license_>`__.
 
+Contributors
+============
+
+Beartype is the work product of volunteer enthusiasm, excess caffeine, and
+sleepless Wednesday evenings. These brave GitHubbers hurtled `the pull request
+(PR) gauntlet <beartype pulls_>`__ so that you wouldn't have to:
+
+|beartype-contributors|
+
 Funding
 =======
 
@@ -5080,6 +5089,9 @@ rather than Python runtime) include:
 .. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.png
    :target: https://beartype.readthedocs.io
    :alt: beartype —[ the bare-metal type checker ]—
+.. |beartype-contributors| image:: https://contrib.rocks/image?repo=beartype/beartype
+   :target: https://github.com/beartype/beartype/graphs/contributors
+   :alt: Beartype contributors
 
 .. # ------------------( IMAGES ~ badge                      )------------------
 .. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
@@ -5182,35 +5194,10 @@ rather than Python runtime) include:
    https://github.com/beartype/beartype/actions?workflow=tests
 
 .. # ------------------( LINKS ~ beartype : user             )------------------
-.. _Heliotrop3:
-   https://github.com/Heliotrop3
-.. _felix-hilden:
-   https://github.com/felix-hilden
 .. _harens:
    https://github.com/harens
 .. _leycec:
    https://github.com/leycec
-.. _posita:
-   https://github.com/posita
-
-.. # ------------------( LINKS ~ beartype : user : PRs       )------------------
-.. #FIXME: Most of these can now be safely removed... I think? *sigh*
-.. _beartype Heliotrop3 QA caching:
-   https://github.com/beartype/beartype/pull/15
-.. _beartype Heliotrop3 QA munging:
-   https://github.com/beartype/beartype/pull/24
-.. _beartype Heliotrop3 callable labelling:
-   https://github.com/beartype/beartype/pull/19
-.. _beartype felix-hilden branding:
-   https://github.com/beartype/beartype/issues/8#issuecomment-760103474
-.. _beartype felix-hilden docs structure:
-   https://github.com/beartype/beartype/pull/8
-.. _beartype felix-hilden docs RTD confs:
-   https://github.com/beartype/beartype/pull/9
-.. _beartype harens mypy:
-   https://github.com/beartype/beartype/pull/26
-.. _beartype posita NotImplemented:
-   https://github.com/beartype/beartype/pull/26
 
 .. # ------------------( LINKS ~ github                      )------------------
 .. _GitHub Actions:

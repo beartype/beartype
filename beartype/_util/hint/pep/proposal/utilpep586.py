@@ -13,10 +13,9 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep586Exception
 from beartype.typing import Any
 from beartype._cave._cavefast import EnumMemberType, NoneType
-from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
-from beartype._util.text.utiltextcolour import truth_colour, error_colour
-from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._data.datatyping import TypeException
+from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
+from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 
 # ....................{ CONSTANTS                          }....................
 _LITERAL_ARG_TYPES = (bool, bytes, int, str, EnumMemberType, NoneType)
@@ -113,7 +112,7 @@ def die_unless_hint_pep586(
     # objects permissible as arguments subscripting the "typing.Literal"
     # singleton, PEP 586 explicitly offloads the odious chore of enforcing
     # those restrictions onto third-party type checkers by intentionally
-    # implementing that singleton to permissively accept all possible
+    # implementing that singleton to permissively accept *ALL* possible
     # objects when subscripted:
     #     Although the set of parameters Literal[...] may contain at type
     #     check time is very small, the actual implementation of
@@ -136,8 +135,7 @@ def die_unless_hint_pep586(
                 raise exception_cls(
                     f'{exception_prefix}PEP 586 type hint {repr(hint)} '
                     f'argument {hint_literal_index} '
-                    f'{error_colour(repr(hint_literal))} '
-                    f'not {truth_colour(hint_literal_types)}.'
+                    f'{repr(hint_literal)} not {hint_literal_types}.'
                 )
 
 # ....................{ GETTERS                            }....................

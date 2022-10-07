@@ -102,6 +102,7 @@ class BeartypeConf(object):
 
     Attributes
     ----------
+    _is_color : bool, optional
     _is_debug : bool, optional
         ``True`` only if the :func:`beartype.beartype` decorator prints to
         standard output the definition (including both signature and body) of
@@ -132,6 +133,7 @@ class BeartypeConf(object):
     # cache dunder methods. Slotting has been shown to reduce read and write
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
+        '_is_color',
         '_is_debug',
         '_strategy',
     )
@@ -139,6 +141,7 @@ class BeartypeConf(object):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
+        _is_color: bool
         _is_debug: bool
         _strategy: BeartypeStrategy
 
@@ -182,6 +185,22 @@ class BeartypeConf(object):
 
         Parameters
         ----------
+        is_color : bool, optional
+            Tri-state boolean governing how and whether beartype colours
+            **type-checking violations** (i.e.,
+            :class:`beartype.roar.BeartypeCallHintViolation` exceptions) with
+            POSIX-compliant ANSI escape sequences for readability. Specifically,
+            if this boolean is:
+
+            * ``False``, beartype *never* colours type-checking violations
+              raised by callables configured with this configuration.
+            * ``True``, beartype *always* colours type-checking violations
+              raised by callables configured with this configuration.
+            * ``None``, beartype conditionally colours type-checking violations
+              raised by callables configured with this configuration only when
+              standard output is attached to an interactive terminal.
+
+            Defaults to ``None``.
         is_debug : bool, optional
             ``True`` only if the :func:`beartype.beartype` decorator prints to
             standard output the definition (including signature and body) of

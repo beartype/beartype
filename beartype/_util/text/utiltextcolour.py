@@ -10,64 +10,121 @@ strings when printed to an ANSI-capable terminal).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: The structure of this submodule is fundamentally *DANGEROUS.* Why?
+#Because the *ONLY* things @beartype should be colourizing are type-checking
+#violations. Even that is a bit of a big ask for users, but it's largely worth
+#it for the improved readability from tooling that supports ANSI in exceptions.
+#@beartype absolutely should *NOT* be colourizing anything else. Ergo, the
+#subset of this submodule that colourizes (e.g., the "colour_"-prefixed
+#functions) should be shifted into an error handling-specific submodule to
+#prevent general-purpose logic in the @beartype codebase from erroneously
+#colourizing general-purpose strings -- say:
+#* A new "beartype._decor._error._util._utilerrorcolour" submodule.
+#
+#Note that general-purpose ANSI functionality (e.g., the strip_text_ansi()
+#function) should remain preserved as is in this submodule for usability.
+
 # ....................{ IMPORTS                            }....................
 from beartype._util.os.utilostty import is_stdout_terminal
 from re import (
     compile as re_compile,
-    sub as re_sub,
+    # sub as re_sub,
 )
 
 # ....................{ CONSTANTS ~ ANSI                   }....................
 if is_stdout_terminal():
-    COLOUR_GREEN = '\033[92m'
-    COLOUR_RED = '\033[31m'
-    COLOUR_BLUE = '\033[34m'
-    COLOUR_YELLOW = '\033[33m'
-    COLOUR_RESET = '\033[0m'
-    TEXT_BOLD = '\033[1m'
+    _COLOUR_GREEN = '\033[92m'
+    _COLOUR_RED = '\033[31m'
+    _COLOUR_BLUE = '\033[34m'
+    _COLOUR_YELLOW = '\033[33m'
+    _COLOUR_RESET = '\033[0m'
+    _STYLE_BOLD = '\033[1m'
 else:
-    COLOUR_GREEN = ''
-    COLOUR_RED = ''
-    COLOUR_BLUE = ''
-    COLOUR_YELLOW = ''
-    COLOUR_RESET = ''
-    TEXT_BOLD = ''
+    _COLOUR_GREEN = ''
+    _COLOUR_RED = ''
+    _COLOUR_BLUE = ''
+    _COLOUR_YELLOW = ''
+    _COLOUR_RESET = ''
+    _STYLE_BOLD = ''
 
 # ....................{ COLOURIZERS                        }....................
 def error_colour(text: str) -> str:
     '''
-    Colour the errors.
+    Colour the passed substring as an error.
+
+    Parameters
+    ----------
+    text : str
+        Text to be coloured as an error.
+
+    Returns
+    ----------
+    str
+        This text coloured as an error.
     '''
+
     assert isinstance(text, str), f'{repr(text)} not string.'
 
-    return f'{TEXT_BOLD}{COLOUR_RED}{text}{COLOUR_RESET}'
+    return f'{_STYLE_BOLD}{_COLOUR_RED}{text}{_COLOUR_RESET}'
 
 
 def matched_colour(text: str) -> str:
     '''
-    Colour the matched / correct types.
+    Colour the passed substring as a matched (i.e., correct) type.
+
+    Parameters
+    ----------
+    text : str
+        Text to be coloured as matched.
+
+    Returns
+    ----------
+    str
+        This text coloured as matched.
     '''
     assert isinstance(text, str), f'{repr(text)} not string.'
 
-    return f'{TEXT_BOLD}{COLOUR_GREEN}{text}{COLOUR_RESET}'
+    return f'{_STYLE_BOLD}{_COLOUR_GREEN}{text}{_COLOUR_RESET}'
 
 
-def truth_colour(text: str) -> str:
+def colour_hint(text: str) -> str:
     '''
-    Colour the information of the truth.
+    Colour the passed substring as a PEP-compliant type hint.
+
+    Parameters
+    ----------
+    text : str
+        Text to be coloured as a type hint.
+
+    Returns
+    ----------
+    str
+        This text coloured as a type hint.
     '''
     assert isinstance(text, str), f'{repr(text)} not string.'
 
-    return f'{TEXT_BOLD}{COLOUR_BLUE}{text}{COLOUR_RESET}'
+    return f'{_STYLE_BOLD}{_COLOUR_BLUE}{text}{_COLOUR_RESET}'
 
 
-def user_value_colour(text: str) -> str:
+def colour_repr(text: str) -> str:
     '''
-    Colour user values.
+    Colour the passed substring as a **representation** (i.e., machine-readable
+    string returned by the :func:`repr` builtin).
+
+    Parameters
+    ----------
+    text : str
+        Text to be coloured as a representation.
+
+    Returns
+    ----------
+    str
+        This text coloured as a representation.
     '''
     assert isinstance(text, str), f'{repr(text)} not string.'
 
-    return f'{COLOUR_YELLOW}{text}{COLOUR_RESET}'
+    return f'{_COLOUR_YELLOW}{text}{_COLOUR_RESET}'
 
 # ....................{ STRIPPERS                          }....................
 def strip_text_ansi(text: str) -> str:

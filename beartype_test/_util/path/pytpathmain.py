@@ -95,7 +95,7 @@ def get_main_sphinx_source_dir() -> Path:
     '''
 
     # Immense propensity!
-    return DirRelative(get_main_sphinx_dir(), 'source')
+    return DirRelative(get_main_sphinx_dir(), 'src')
 
 # ....................{ GETTERS ~ file                     }....................
 @callable_cached
