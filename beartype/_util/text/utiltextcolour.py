@@ -27,10 +27,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._util.os.utilostty import is_stdout_terminal
-from re import (
-    compile as re_compile,
-    # sub as re_sub,
-)
+from re import compile as re_compile
 
 # ....................{ CONSTANTS ~ ANSI                   }....................
 if is_stdout_terminal():

@@ -192,6 +192,7 @@ jobs:
 
     # ..................{ PROCESS                            }..................
     steps:
+      # ..................{ SETUP                            }..................
       - name: 'Checking out repository...'
         uses: 'actions/checkout@v3'
       - name: "Installing Python ${{ matrix.python-version }}..."
@@ -202,6 +203,7 @@ jobs:
         run: |
           python -VV
           python -m site
+      # ..................{ INSTALL                          }..................
       # Note that:
       # * This command *MUST* be platform-agnostic by running under both:
       #   * POSIX-compliant platforms (e.g., Linux, macOS).
@@ -216,6 +218,7 @@ jobs:
       - name: 'Installing package dependencies...'
         run: |
           python -m pip --quiet install --upgrade ${{ env._PIP_PACKAGE_NAMES }}
+      # ..................{ TEST                             }..................
       - name: 'Testing package with "tox"...'
         # Run the subsequent script as a Bash script. Although POSIX-compliant
         # platforms (e.g., Linux, macOS) sensibly default to Bash, Windows
@@ -265,3 +268,14 @@ jobs:
           name: "${{ matrix.platform }}-${{ matrix.python-version }}"
           # file: ./coverage.xml
           # name: ${{ runner.os }}-${{ matrix.python-version }}
+      # ..................{ TYPE-CHECK                       }..................
+      # Type-check this package with "mypy". See also:
+      #     https://github.com/jpetrucciani/mypy-check
+      - name: 'Type-checking package with "mypy"...'
+        uses: 'jpetrucciani/mypy-check@master'
+        python-version: "${{ matrix.python-version }}"
+      # Type-check this package with "pyright". See also:
+      #     https://github.com/jakebailey/pyright-action
+      - name: 'Type-checking package with "pyright"...'
+        uses: 'jakebailey/pyright-action@v1'
+        python-version: "${{ matrix.python-version }}"

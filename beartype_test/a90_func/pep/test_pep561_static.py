@@ -16,6 +16,7 @@ third-party static type-checkers and hence :pep:`561`.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import (
+    skip_if_ci,
     skip_if_pypy,
     skip_unless_package,
     skip_unless_pathable,
@@ -42,7 +43,12 @@ from beartype_test._util.mark.pytskip import (
 #   with PyPy for inscrutable reasons that should presumably be fixed at some
 #   future point. See also:
 #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
+# * Tests are *NOT* running remotely under GitHub Actions-based continuous
+#   integration (CI). For unknown reasons, this test now spuriously fails under
+#   CI with a non-human-readable exception message resembling:
+#       TypeError: 'mypy' is not a package
 @skip_unless_package('mypy')
+@skip_if_ci()
 @skip_if_pypy()
 def test_pep561_mypy() -> None:
     '''
@@ -146,7 +152,18 @@ def test_pep561_mypy() -> None:
 #     *NO* means of disabling that dubious behavior.
 #   Ergo, we resoundingly ignore that high-level package in favour of the
 #   low-level "pyright" command. Such is quality assurance. It always hurts.
+#
+# Skip this "pyright"-specific functional test unless all of the following
+# apply:
+# * The "pyright" command is in the current "${PATH}".
+# * Tests are *NOT* running remotely under GitHub Actions-based continuous
+#   integration (CI). Since the only sane means of installing "pyright" under
+#   GitHub Actions is via the third-party "jakebailey/pyright-action" action
+#   (which implicitly exercises this package against "pyright"), explicitly
+#   exercising this package against "pyright" yet again would only needlessly
+#   complicate CI workflows and consume excess CI minutes for *NO* gain.
 @skip_unless_pathable('pyright')
+@skip_if_ci()
 def test_pep561_pyright() -> None:
     '''
     Functional test testing this project's compliance with :pep:`561` by
