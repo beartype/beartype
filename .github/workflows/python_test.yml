@@ -273,9 +273,11 @@ jobs:
       #     https://github.com/jpetrucciani/mypy-check
       - name: 'Type-checking package with "mypy"...'
         uses: 'jpetrucciani/mypy-check@master'
-        python-version: "${{ matrix.python-version }}"
+        with:
+          python-version: "${{ matrix.python-version }}"
       # Type-check this package with "pyright". See also:
       #     https://github.com/jakebailey/pyright-action
       - name: 'Type-checking package with "pyright"...'
         uses: 'jakebailey/pyright-action@v1'
-        python-version: "${{ matrix.python-version }}"
+        with:
+          python-version: "${{ matrix.python-version }}"
