@@ -26,6 +26,7 @@ class NewTypeTypeHint(ClassTypeHint):
     # ..................{ INITIALIZERS                       }..................
     def __init__(self, hint: object) -> None:
 
+        # Initialize the superclass with all passed parameters.
         super().__init__(hint)
 
         supertype = get_hint_pep484_newtype_class(hint)

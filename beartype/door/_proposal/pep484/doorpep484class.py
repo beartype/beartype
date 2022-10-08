@@ -13,7 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._doorcls import TypeHint
-from beartype.typing import Any
+from beartype.typing import (
+    TYPE_CHECKING,
+    Any,
+)
 
 # ....................{ SUBCLASSES                         }....................
 class ClassTypeHint(TypeHint):
@@ -44,25 +47,20 @@ class ClassTypeHint(TypeHint):
        (str, NoneType)
     '''
 
-    # ..................{ PRIVATE                            }..................
-    #FIXME: Kinda awkward. We get it, bet let's *NOT* define class variables
-    #just to satisfy the pernicious desires of static type-checkers. Gah! Now
-    #that we have a hint() property, this would substantially preferable:
-    #    @property
-    #    def hint(self) -> type:
-    #        return self._hint
-    _hint: type
+    # ..................{ STATIC                             }..................
+    # Squelch false negatives from static type checkers.
+    if TYPE_CHECKING:
+        _hint: type
 
-    # ..................{ PROPERTIES                         }..................
+    # ..................{ PRIVATE ~ properties               }..................
     @property
     def _is_args_ignorable(self) -> bool:
-        '''
-        Plain types are their origin.
-        '''
 
+        # Unconditionally return true, as simple classes are unsubscripted and
+        # could thus be said to only have ignorable arguments. Look. Semantics.
         return True
 
-    # ..................{ METHODS                            }..................
+    # ..................{ PRIVATE ~ methods                  }..................
     def _is_le_branch(self, branch: TypeHint) -> bool:
 
         # Everything is a subclass of "Any".

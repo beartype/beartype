@@ -16,6 +16,7 @@ from beartype.door._doorcls import TypeHint
 from beartype.door._proposal.doorpep484604 import UnionTypeHint
 # from beartype.roar import BeartypeDoorPepUnsupportedException
 from beartype.typing import (
+    TYPE_CHECKING,
     Any,
     Tuple,
     TypeVar,
@@ -29,11 +30,13 @@ class TypeVarTypeHint(UnionTypeHint):
     :pep:`484`-compliant :attr:`typing.TypeVar` type hint).
     '''
 
-    # ..................{ VARIABLES                          }..................
-    _hint: TypeVar
+    # ..................{ STATIC                             }..................
+    # Squelch false negatives from static type checkers.
+    if TYPE_CHECKING:
+        _hint: TypeVar
 
-    # ..................{ PRIVATE                            }..................
-    @property  # type: ignore
+    # ..................{ PRIVATE ~ methods                  }..................
+    @property  # type: ignore[misc]
     @property_cached
     def _args_wrapped_tuple(self) -> Tuple[TypeHint, ...]:
 

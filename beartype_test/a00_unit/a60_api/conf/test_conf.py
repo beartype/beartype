@@ -45,12 +45,12 @@ def test_api_conf_type() -> None:
     # Assert beartype configurations to be self-memoizing across both
     # unparametrized and parametrized type instantiations.
     #
-    # Note that the latter explicitly validates that the "strategy" parameter
-    # may be passed positionally.
+    # Note that the latter explicitly validates that this memoization ignores
+    # the order in which parameters are passed.
     assert BeartypeConf() is BeartypeConf()
     assert (
-        BeartypeConf(BeartypeStrategy.On, is_debug=True) is
-        BeartypeConf(BeartypeStrategy.On, is_debug=True)
+        BeartypeConf(strategy=BeartypeStrategy.On, is_debug=True, is_color=True) is
+        BeartypeConf(is_color=True, is_debug=True, strategy=BeartypeStrategy.On)
     )
 
     # Default (i.e., unparametrized) beartype configuration.
@@ -58,23 +58,26 @@ def test_api_conf_type() -> None:
 
     # Assert this configuration to default to the expected public fields.
     assert bear_conf_default.strategy is BeartypeStrategy.O1
+    assert bear_conf_default.is_color is None
     assert bear_conf_default.is_debug is False
 
     # Assert that attempting to modify any public raises the expected
     # exception.
     with raises(AttributeError):
-        bear_conf_default.strategy = BeartypeStrategy.O0
+        bear_conf_default.is_color = True
     with raises(AttributeError):
         bear_conf_default.is_debug = True
+    with raises(AttributeError):
+        bear_conf_default.strategy = BeartypeStrategy.O0
 
     # Arbitrary parametrized beartype configuration.
     bear_conf_nondefault = BeartypeConf(
-        strategy=BeartypeStrategy.Ologn, is_debug=True)
+        is_color=True, is_debug=True, strategy=BeartypeStrategy.Ologn)
 
     # Assert two identical configurations to compare equal.
     assert bear_conf_default == BeartypeConf()
     assert bear_conf_nondefault == BeartypeConf(
-        strategy=BeartypeStrategy.Ologn, is_debug=True)
+        strategy=BeartypeStrategy.Ologn, is_debug=True, is_color=True)
 
     # Assert two differing configurations to compare unequal.
     assert bear_conf_default != bear_conf_nondefault
@@ -82,7 +85,7 @@ def test_api_conf_type() -> None:
     # Assert two identical configurations to hash equal.
     assert hash(bear_conf_default) == hash(BeartypeConf())
     assert hash(bear_conf_nondefault) == hash(BeartypeConf(
-        strategy=BeartypeStrategy.Ologn, is_debug=True))
+        strategy=BeartypeStrategy.Ologn, is_debug=True, is_color=True))
 
     # Assert two differing configurations to hash unequal.
     assert hash(bear_conf_default) != hash(bear_conf_nondefault)
@@ -93,14 +96,18 @@ def test_api_conf_type() -> None:
     # Assert this representation to contain the names of this class and all
     # public fields of this class.
     assert 'BeartypeConf' in bear_conf_repr
-    assert 'strategy' in bear_conf_repr
+    assert 'is_color' in bear_conf_repr
     assert 'is_debug' in bear_conf_repr
+    assert 'strategy' in bear_conf_repr
 
     # Assert that instantiating a configuration with invalid parameters raises
     # the expected exceptions.
     with raises(BeartypeConfException):
-        BeartypeConf(strategy=(
-            'By all, but which the wise, and great, and good'))
+        BeartypeConf(is_color=(
+            'And many sounds, and much of life and death.'))
     with raises(BeartypeConfException):
         BeartypeConf(is_debug=(
             'Interpret, or make felt, or deeply feel.'))
+    with raises(BeartypeConfException):
+        BeartypeConf(strategy=(
+            'By all, but which the wise, and great, and good'))

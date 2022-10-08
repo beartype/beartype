@@ -22,6 +22,7 @@ from beartype.typing import (
     Dict,
     Optional,
 )
+from beartype._cave._cavemap import NoneTypeOr
 from enum import (
     Enum,
     auto as next_enum_member_value,
@@ -102,7 +103,20 @@ class BeartypeConf(object):
 
     Attributes
     ----------
-    _is_color : bool, optional
+    is_color : Optional[bool]
+        Tri-state boolean governing how and whether beartype colours
+        **type-checking violations** (i.e.,
+        :class:`beartype.roar.BeartypeCallHintViolation` exceptions) with
+        POSIX-compliant ANSI escape sequences for readability. Specifically, if
+        this boolean is:
+
+        * ``False``, beartype *never* colours type-checking violations raised by
+          callables configured with this configuration.
+        * ``True``, beartype *always* colours type-checking violations raised by
+          callables configured with this configuration.
+        * ``None``, beartype conditionally colours type-checking violations
+          raised by callables configured with this configuration only when
+          standard output is attached to an interactive terminal.
     _is_debug : bool, optional
         ``True`` only if the :func:`beartype.beartype` decorator prints to
         standard output the definition (including both signature and body) of
@@ -141,7 +155,7 @@ class BeartypeConf(object):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
-        _is_color: bool
+        _is_color: Optional[bool]
         _is_debug: bool
         _strategy: BeartypeStrategy
 
@@ -158,12 +172,11 @@ class BeartypeConf(object):
     def __new__(
         cls,
 
-        # Optional flexible parameters.
-        strategy: BeartypeStrategy = BeartypeStrategy.O1,
-
         # Optional keyword-only parameters.
         *,
+        is_color: Optional[bool] = None,
         is_debug: bool = False,
+        strategy: BeartypeStrategy = BeartypeStrategy.O1,
     ) -> 'BeartypeConf':
         '''
         Instantiate this configuration if needed (i.e., if *no* prior
@@ -185,7 +198,7 @@ class BeartypeConf(object):
 
         Parameters
         ----------
-        is_color : bool, optional
+        is_color : Optional[bool]
             Tri-state boolean governing how and whether beartype colours
             **type-checking violations** (i.e.,
             :class:`beartype.roar.BeartypeCallHintViolation` exceptions) with
@@ -250,7 +263,37 @@ class BeartypeConf(object):
         # dunder method, maximizing efficiency (the entire point of caching) by
         # avoiding the cost of an additional method call both here and (more
         # importantly) in BeartypeConf.__hash__(). See that method for details.
+
+        #FIXME: *NO, NO, NO.* Hash collisions mean that hashing is *NOT* a
+        #robust means of hashing. Instead, we need to:
+        #* Define a new private "_BeartypeConfMeta" metaclass.
+        #* Define a new _BeartypeConfMeta.__new__() method that:
+        #  * Leverages "iter_args(cls.__init__)" to iterate the names of all
+        #    keyword-only parameters defined by the BeartypeConf.__init__()
+        #    method.
+        #  * Accumulate these parameter names into a "self._KWARG_NAME_TO_INDEX"
+        #    instance variable of the current metaclass instance. This variable
+        #    is a dictionary mapping from the name of each such keyword-only
+        #    parameter to the *ARBITRARY* 0-based index of the value of that
+        #    parameter previously passed to a prior BeartypeConf.__init__()
+        #    call. The indices are arbitrary but do need to be deterministic.
+        #* Refactor this __new__() method into a new
+        #  _BeartypeConfMeta.__call__() method. That method will need to be
+        #  implemented *COMPLETELY* differently. Given the previously computed
+        #  "self._KWARG_NAME_TO_INDEX" dictionary, map the passed "**kwargs"
+        #  dictionary into a corresponding "args" tuple. Note that this
+        #  _BeartypeConfMeta.__call__() method should itself accept *NO*
+        #  variadic positional "*args"; namely, the signature should resemble:
+        #      def __call__(cls, **kwargs) -> 'beartype.BeartypeConf':
+        #          ...
+        #* Implement __call__() in a manner similar to the existing
+        #  @callable_cached decorator, now that an "args" tuple has been
+        #  computed for efficient lookup and caching.
+        #* Generalize "_BeartypeConfMeta" once working to support *ANY*
+        #  arbitrary class. Specifically, rename "_BeartypeConfMeta" to
+        #  "beartype._util.cache.utilcachemeta.SingletonKwargsMeta".
         BEARTYPE_CONF_HASH = hash((
+            is_color,
             is_debug,
             strategy,
         ))
@@ -262,27 +305,37 @@ class BeartypeConf(object):
         # Else, this method has yet to instantiate a configuration with these
         # parameters. In this case, do so below (and cache that configuration).
 
-        # If this boolean is *NOT* actually a boolean, raise an exception.
-        if not isinstance(is_debug, bool):
+        # If "is_color" is *NOT* a tri-state boolean, raise an exception.
+        if not isinstance(is_color, NoneTypeOr[bool]):
             raise BeartypeConfException(
-                f'Beartype configuration setting "is_debug" '
+                f'Beartype configuration parameter "is_color" '
+                f'value {repr(is_color)} not tri-state boolean '
+                f'(i.e., "True", "False", or "None").'
+            )
+        # Else, "is_color" is a tri-state boolean, raise an exception.
+        #
+        # If "is_debug" is *NOT* a boolean, raise an exception.
+        elif not isinstance(is_debug, bool):
+            raise BeartypeConfException(
+                f'Beartype configuration parameter "is_debug" '
                 f'value {repr(is_debug)} not boolean.'
             )
-        # Else, this boolean is actually a boolean.
+        # Else, "is_debug" is a boolean.
         #
-        # If this enumeration member is *NOT* actually an enumeration member,
-        # raise an exception.
+        # If "strategy" is *NOT* an enumeration member, raise an exception.
         elif not isinstance(strategy, BeartypeStrategy):
             raise BeartypeConfException(
-                f'Beartype configuration setting "strategy" value '
-                f'{repr(strategy)} not "BeartypeStrategy" enumeration member.'
+                f'Beartype configuration parameter "strategy" '
+                f'value {repr(strategy)} not '
+                f'"beartype.BeartypeStrategy" enumeration member.'
             )
-        # Else, this enumeration member is actually an enumeration member.
+        # Else, "strategy" is an enumeration member.
 
         # Instantiate a new configuration of this type.
         self = super().__new__(cls)
 
         # Classify all passed parameters with this configuration.
+        self._is_color = is_color
         self._is_debug = is_debug
         self._strategy = strategy
 
@@ -295,6 +348,27 @@ class BeartypeConf(object):
     # ..................{ PROPERTIES                         }..................
     # Read-only public properties effectively prohibiting mutation of their
     # underlying private attributes.
+
+    @property
+    def is_color(self) -> Optional[bool]:
+        '''
+        Tri-state boolean governing how and whether beartype colours
+        **type-checking violations** (i.e.,
+        :class:`beartype.roar.BeartypeCallHintViolation` exceptions) with
+        POSIX-compliant ANSI escape sequences for readability. Specifically, if
+        this boolean is:
+
+        * ``False``, beartype *never* colours type-checking violations raised by
+          callables configured with this configuration.
+        * ``True``, beartype *always* colours type-checking violations raised by
+          callables configured with this configuration.
+        * ``None``, beartype conditionally colours type-checking violations
+          raised by callables configured with this configuration only when
+          standard output is attached to an interactive terminal.
+        '''
+
+        return self._is_color
+
 
     @property
     def is_debug(self) -> bool:
@@ -355,6 +429,7 @@ class BeartypeConf(object):
         if isinstance(other, BeartypeConf):
             # Return true only if these configurations share the same settings.
             return (
+                self._is_color == other._is_color and
                 self._is_debug == other._is_debug and
                 self._strategy == other._strategy
             )
@@ -390,6 +465,7 @@ class BeartypeConf(object):
         # * Optimally uniformly distributed, thus minimizing the likelihood of
         #   expensive hash collisions.
         return hash((
+            self._is_color,
             self._is_debug,
             self._strategy,
         ))
@@ -409,6 +485,7 @@ class BeartypeConf(object):
 
         return (
             f'{self.__class__.__name__}('
+            f'is_color={repr(self._is_color)}, '
             f'is_debug={repr(self._is_debug)}, '
             f'strategy={repr(self._strategy)}'
             f')'

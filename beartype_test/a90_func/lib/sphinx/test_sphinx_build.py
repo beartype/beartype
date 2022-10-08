@@ -16,14 +16,19 @@ documentation for the third-party :mod:`sphinx` package.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_unless_package
+from beartype_test._util.mark.pytskip import skip, skip_unless_package
 
 # ....................{ TESTS                              }....................
+#FIXME: Reenable this once we resolve how to actually do so. Currently, the
+#make_app() call below is failing with a low-level exception raised from the
+#third-party "autoapi" Sphinx extension, seemingly due to a deprecation:
+#    sphinx.errors.ExtensionError: Handler <function run_autoapi at 0x7f82568552d0> for event 'builder-inited' threw an exception (exception: The 'Module.doc' attribute is deprecated, use 'Module.doc_node' instead.)
 #FIXME: For the benefit of the community, externally document how to do this
 #for others at this open issue:
 #    https://github.com/sphinx-doc/sphinx/issues/7008
 #Note the trivial "conftest" submodule in this directory. Since this is all
 #surprisingly easy, a simple comment describing this should easily suffice.
+@skip('Currently broken by Sphinx "autoapi" deprecations.')
 @skip_unless_package('sphinx')
 def test_sphinx_build(make_app, tmp_path) -> None:
     '''

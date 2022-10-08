@@ -16,6 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #FIXME: Privatize most (...or perhaps all) public instance variables, please.
 
 # ....................{ IMPORTS                            }....................
+from abc import abstractmethod
 from beartype.door._doorcheck import (
     die_if_unbearable,
     is_bearable,
@@ -23,10 +24,7 @@ from beartype.door._doorcheck import (
 from beartype.door._doormeta import _TypeHintMeta
 from beartype.door._doortest import die_unless_typehint
 from beartype.door._doortyping import T
-from beartype.roar import (
-    BeartypeDoorException,
-    BeartypeDoorHintViolation,
-)
+from beartype.roar import BeartypeDoorException
 from beartype.typing import (
     TYPE_CHECKING,
     Any,
@@ -245,7 +243,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
     # ..................{ DUNDERS ~ compare : rich           }..................
     def __le__(self, other: object) -> bool:
-        """Return true if self is a subhint of other."""
+        '''Return true if self is a subhint of other.'''
 
         if not isinstance(other, TypeHint):
             return NotImplemented
@@ -254,7 +252,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
 
     def __lt__(self, other: object) -> bool:
-        """Return true if self is a strict subhint of other."""
+        '''Return true if self is a strict subhint of other.'''
 
         if not isinstance(other, TypeHint):
             return NotImplemented
@@ -263,7 +261,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
 
     def __ge__(self, other: object) -> bool:
-        """Return true if self is a superhint of other."""
+        '''Return true if self is a superhint of other.'''
 
         if not isinstance(other, TypeHint):
             return NotImplemented
@@ -272,7 +270,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
 
     def __gt__(self, other: object) -> bool:
-        """Return true if self is a strict superhint of other."""
+        '''Return true if self is a strict superhint of other.'''
 
         if not isinstance(other, TypeHint):
             return NotImplemented
@@ -314,13 +312,12 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     #     https://stackoverflow.com/a/71183076/2809027
 
     @overload
-    def __getitem__(self, index: int) -> object: ...
-
+    def __getitem__(self, index: int) -> 'TypeHint': ...
     @overload
-    def __getitem__(self, index: slice) -> Tuple[object, ...]: ...
+    def __getitem__(self, index: slice) -> Tuple['TypeHint', ...]: ...
 
     def __getitem__(self, index: CallableMethodGetitemArg) -> (
-        Union[object, Tuple[object, ...]]):
+        Union['TypeHint', Tuple['TypeHint', ...]]):
         '''
         Either:
 
@@ -352,8 +349,8 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         Returns
         ----------
-        Union[int, Tuple[object, ...]]
-            Child type hint wrapper(s) at these index(es), as detailed above.
+        Union['TypeHint', Tuple['TypeHint', ...]]
+            Child type hint wrapper(s) at these ind(ex|ices), as detailed above.
         '''
 
         # Defer validation of the correctness of the passed index or slice to
@@ -596,7 +593,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     # ..................{ TESTERS ~ subhint                  }..................
     @callable_cached
     def is_subhint(self, other: 'TypeHint') -> bool:
-        """
+        '''
         ``True`` only if this type hint is a **subhint** of the passed type
         hint.
 
@@ -616,7 +613,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         ----------
         :func:`beartype.door.is_subhint`
             Further details.
-        """
+        '''
 
         # If the passed object is *NOT* a type hint wrapper, raise an exception.
         die_unless_typehint(other)
@@ -631,7 +628,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
 
     def is_superhint(self, other: 'TypeHint') -> bool:
-        """
+        '''
         ``True`` only if this type hint is a **superhint** of the passed type
         hint.
 
@@ -651,7 +648,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         ----------
         :func:`beartype.door.is_subhint`
             Further details.
-        """
+        '''
 
         # If the passed object is *NOT* a type hint wrapper, raise an exception.
         die_unless_typehint(other)
@@ -662,9 +659,9 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
     # ..................{ PRIVATE                            }..................
     def _munge_args(self):
-        """
+        '''
         Used by subclasses to validate :attr:`_args` and :attr:`_origin`.
-        """
+        '''
 
         pass
 
@@ -787,13 +784,8 @@ class _TypeHintSubscripted(TypeHint):
     low-level children type hints).
     '''
 
-    # ..................{ CLASS VARIABLES                    }..................
-    # FIXME: Consider refactoring both here and below into a read-only class
-    # property for safety. This currently permits accidental modification. Gah!
-    _required_nargs: int = -1
-
-    # ..................{ PRIVATE ~ properties               }..................
-    @property  # type: ignore
+    # ..................{ PRIVATE ~ properties : concrete    }..................
+    @property  # type: ignore[misc]
     @property_cached
     def _is_args_ignorable(self) -> bool:
         '''
@@ -821,30 +813,6 @@ class _TypeHintSubscripted(TypeHint):
         return all(x._origin is Any for x in self._args_wrapped_tuple)
 
     # ..................{ PRIVATE ~ methods                  }..................
-    def _munge_args(self):
-
-        if (
-            self._required_nargs > 0 and
-            len(self._args) != self._required_nargs
-        ):
-            #FIXME: This seems sensible, but currently provokes test failures.
-            #Let's investigate further at a later time, please.
-            # # If this hint was subscripted by *NO* parameters, comply with PEP
-            # # 484 standards by silently pretending this hint was subscripted by
-            # # the "typing.Any" fallback for all missing parameters.
-            # if len(self._args) == 0:
-            #     return (Any,)*self._required_nargs
-
-            # FIXME: Consider raising a less ambiguous exception type, yo.
-            # In most cases it will be hard to reach this exception, since most
-            # of the typing library's subscripted type hints will raise an
-            # exception if constructed improperly.
-            raise BeartypeDoorException(  # pragma: no cover
-                f'{type(self)} type must have {self._required_nargs} '
-                f'argument(s), but got {len(self._args)}.'
-            )
-
-
     def _is_le_branch(self, branch: TypeHint) -> bool:
 
         # If the other branch was *NOT* subscripted, we assume it was
@@ -871,22 +839,88 @@ class _TypeHintSubscripted(TypeHint):
             )
         )
 
+# ....................{ SUBCLASSES ~ isinstanceable        }....................
+class _TypeHintOriginIsinstanceable(_TypeHintSubscripted):
+    '''
+    **Isinstanceable type hint wrapper** (i.e., high-level object
+    encapsulating a low-level parent type hint subscripted (indexed) by exactly
+    one or more low-level child type hints originating from isinstanceable
+    classes such that *all* objects satisfying those hints are instances of
+    those class).
+    '''
 
-class _TypeHintOriginIsinstanceableArgs1(_TypeHintSubscripted):
-    """
-    **partially ordered single-argument isinstanceable type hint** (i.e.,
-    high-level object encapsulating a low-level PEP-compliant type hint
-    subscriptable by only one child type hint originating from an
-    isinstanceable class such that *all* objects satisfying that hint are
-    instances of that class).
-    """
+    # ..................{ PRIVATE ~ properties               }..................
+    @property
+    @abstractmethod
+    def _args_len_expected(self) -> int:
+        '''
+        Number of child type hints that this instance of a concrete subclass of
+        this abstract base class (ABC) is expected to be subscripted (indexed)
+        by.
+        '''
 
-    _required_nargs: int = 1
+        pass
+
+    # ..................{ PRIVATE ~ methods                  }..................
+    def _munge_args(self):
+
+        if len(self._args) != self._args_len_expected:
+            #FIXME: This seems sensible, but currently provokes test failures.
+            #Let's investigate further at a later time, please.
+            # # If this hint was subscripted by *NO* parameters, comply with PEP
+            # # 484 standards by silently pretending this hint was subscripted by
+            # # the "typing.Any" fallback for all missing parameters.
+            # if len(self._args) == 0:
+            #     return (Any,)*self._args_len_expected
+
+            #FIXME: Consider raising a less ambiguous exception type, yo.
+            #FIXME: Consider actually testing this. This *IS* technically
+            #testable and should thus *NOT* be marked as "pragma: no cover".
+
+            # In most cases it will be hard to reach this exception, since most
+            # of the typing library's subscripted type hints will raise an
+            # exception if constructed improperly.
+            raise BeartypeDoorException(  # pragma: no cover
+                f'{type(self)} type must have {self._args_len_expected} '
+                f'argument(s), but got {len(self._args)}.'
+            )
 
 
-class _TypeHintOriginIsinstanceableArgs2(_TypeHintSubscripted):
-    _required_nargs: int = 2
+class _TypeHintOriginIsinstanceableArgs1(_TypeHintOriginIsinstanceable):
+    '''
+    **1-argument isinstanceable type hint wrapper** (i.e., high-level object
+    encapsulating a low-level parent type hint subscripted (indexed) by exactly
+    one low-level child type hint originating from an isinstanceable class such
+    that *all* objects satisfying that hint are instances of that class).
+    '''
+
+    @property
+    def _args_len_expected(self) -> int:
+        return 1
 
 
-class _TypeHintOriginIsinstanceableArgs3(_TypeHintSubscripted):
-    _required_nargs: int = 3
+class _TypeHintOriginIsinstanceableArgs2(_TypeHintOriginIsinstanceable):
+    '''
+    **2-argument isinstanceable type hint wrapper** (i.e., high-level object
+    encapsulating a low-level parent type hint subscripted (indexed) by exactly
+    two low-level child type hints originating from isinstanceable classes such
+    that *all* objects satisfying those hints are instances of those classes).
+    '''
+
+    @property
+    def _args_len_expected(self) -> int:
+        return 2
+
+
+class _TypeHintOriginIsinstanceableArgs3(_TypeHintOriginIsinstanceable):
+    '''
+    **3-argument isinstanceable type hint wrapper** (i.e., high-level object
+    encapsulating a low-level parent type hint subscripted (indexed) by exactly
+    three low-level child type hints originating from isinstanceable classes
+    such that *all* objects satisfying those hints are instances of those
+    classes).
+    '''
+
+    @property
+    def _args_len_expected(self) -> int:
+        return 3

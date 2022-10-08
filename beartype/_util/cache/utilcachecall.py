@@ -194,18 +194,18 @@ def callable_cached(func: _CallableT) -> _CallableT:
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that call
     # if any (i.e., if that call did *NOT* raise an exception).
-    params_flat_to_return_value: Dict[tuple, object] = {}
+    args_flat_to_return_value: Dict[tuple, object] = {}
 
     # get() method of this dictionary, localized for efficiency.
-    params_flat_to_return_value_get = params_flat_to_return_value.get
+    args_flat_to_return_value_get = args_flat_to_return_value.get
 
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the exception raised by that
     # call if any (i.e., if that call raised an exception).
-    params_flat_to_exception: Dict[tuple, Exception] = {}
+    args_flat_to_exception: Dict[tuple, Exception] = {}
 
     # get() method of this dictionary, localized for efficiency.
-    params_flat_to_exception_get = params_flat_to_exception.get
+    args_flat_to_exception_get = args_flat_to_exception.get
 
     @wraps(func)
     def _callable_cached(*args, **kwargs):
@@ -239,7 +239,7 @@ def callable_cached(func: _CallableT) -> _CallableT:
         #    *args = ('a', 'b')
         #    *kwargs = {'muh_arg3': 0, 'muh_arg4': 1}
         # ...which the following logic flattens into this tuple:
-        #    params_flat = (
+        #    args_flat = (
         #        'a', 'b',
         #        _SENTINEL_KWARGS_KEYS, 'muh_arg3', 'muh_arg4',
         #        _SENTINEL_KWARGS_VALUES, 0, 1,
@@ -256,7 +256,7 @@ def callable_cached(func: _CallableT) -> _CallableT:
         #   names from subsequent keyword argument values.
         # * The values of all passed keyword arguments coerced into a tuple.
         if kwargs:
-            params_flat = (
+            args_flat = (
                 args +
                 _SENTINEL_KWARGS_KEYS   + tuple(kwargs.keys()) +
                 _SENTINEL_KWARGS_VALUES + tuple(kwargs.values())
@@ -278,18 +278,18 @@ def callable_cached(func: _CallableT) -> _CallableT:
         # tuple items are necessarily hashable, this argument is necessarily
         # hashable as well and thus permissible as a dictionary key below.
         elif len(args) == 1:
-            params_flat = args[0]
+            args_flat = args[0]
         # Else, one or more positional arguments are passed. In this case,
         # reuse this tuple as is.
         else:
-            params_flat = args
+            args_flat = args
 
         # Attempt to...
         try:
-            #FIXME: Optimize the params_flat_to_exception_get() case, please.
+            #FIXME: Optimize the args_flat_to_exception_get() case, please.
             #Since "None" is *NOT* a valid exception, we shouldn't need a
             #sentinel for safety here. Instead, this should suffice:
-            #    exception = params_flat_to_exception_get(params_flat)
+            #    exception = args_flat_to_exception_get(args_flat)
             #
             #    # If this callable previously raised an exception when called with
             #    # these parameters, re-raise the same exception.
@@ -303,7 +303,7 @@ def callable_cached(func: _CallableT) -> _CallableT:
             #
             # Note that this call raises a "TypeError" exception if any item of
             # this flattened tuple is unhashable.
-            exception = params_flat_to_exception_get(params_flat, SENTINEL)
+            exception = args_flat_to_exception_get(args_flat, SENTINEL)
 
             # If this callable previously raised an exception when called with
             # these parameters, re-raise the same exception.
@@ -315,8 +315,8 @@ def callable_cached(func: _CallableT) -> _CallableT:
             # Value returned by a prior call to the decorated callable when
             # passed these parameters *OR* a sentinel placeholder otherwise
             # (i.e., if this callable has yet to be passed these parameters).
-            return_value = params_flat_to_return_value_get(
-                params_flat, SENTINEL)
+            return_value = args_flat_to_return_value_get(
+                args_flat, SENTINEL)
 
             # If this callable has already been called with these parameters,
             # return the value returned by that prior call.
@@ -328,12 +328,12 @@ def callable_cached(func: _CallableT) -> _CallableT:
             try:
                 # Call this parameter with these parameters and cache the value
                 # returned by this call to these parameters.
-                return_value = params_flat_to_return_value[params_flat] = func(
+                return_value = args_flat_to_return_value[args_flat] = func(
                     *args, **kwargs)
-            # If this call raises an exception...
+            # If this call raised an exception...
             except Exception as exception:
                 # Cache this exception to these parameters.
-                params_flat_to_exception[params_flat] = exception
+                args_flat_to_exception[args_flat] = exception
 
                 # Re-raise this exception.
                 raise exception
@@ -341,6 +341,9 @@ def callable_cached(func: _CallableT) -> _CallableT:
         # are unhashable, perform this call as is *WITHOUT* memoization. While
         # non-ideal, stability is better than raising a fatal exception.
         except TypeError:
+            #FIXME: If testing, emit a non-fatal warning or possibly even raise
+            #a fatal exception. In either case, we want our test suite to notify
+            #us about this.
             return func(*args, **kwargs)
 
         # Return this value.
