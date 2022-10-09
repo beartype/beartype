@@ -128,7 +128,7 @@ def reduce_hint_numpy_ndarray(
     # instantiated by the user by first importing the "numpy.typing.NDArray"
     # attribute passed to this getter.
     from beartype.vale import IsAttr, IsEqual, IsSubclass
-    from numpy import dtype, ndarray
+    from numpy import dtype, ndarray  # pyright: ignore[reportMissingImports]
     from numpy.typing import NDArray  # type: ignore[attr-defined]
 
     #FIXME: Consider submitting an upstream issue about this. We don't
@@ -336,7 +336,7 @@ def _get_numpy_dtype_type_abcs() -> FrozenSet[type]:
     '''
 
     # Defer heavyweight imports.
-    from numpy import (
+    from numpy import (  # pyright: ignore[reportMissingImports]
         character,
         complexfloating,
         flexible,
