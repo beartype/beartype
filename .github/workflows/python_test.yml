@@ -68,7 +68,6 @@ env:
   # test-time dependencies. These include:
   # * "tox", the only mandatory test-time dependency.
   _PIP_PACKAGE_NAMES: |
-    docker
     tox
 
 # ....................{ MAIN                               }....................
