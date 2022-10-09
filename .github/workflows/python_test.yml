@@ -68,6 +68,7 @@ env:
   # test-time dependencies. These include:
   # * "tox", the only mandatory test-time dependency.
   _PIP_PACKAGE_NAMES: |
+    docker
     tox
 
 # ....................{ MAIN                               }....................
@@ -219,19 +220,34 @@ jobs:
         run: |
           python -m pip --quiet install --upgrade ${{ env._PIP_PACKAGE_NAMES }}
       # ..................{ TYPE-CHECK                       }..................
+      # Type-check this package *BEFORE* testing this package. Why? Because
+      # "tox" internally creates a copy of this package residing at a temporary
+      # "build/lib/{package_name}" subdirectory. When type-checking this package
+      # *AFTER* testing this package, the existence of that subdirectory
+      # confuses mypy into believing that multiple duplicate copies of this
+      # package exist, which induces mypy to emit false positives, which induces
+      # this entire job and thus run to fail. In short, mypy.
+
+      #FIXME: *UGH.* The otherwise excellent "jpetrucciani/mypy-check" action
+      #currently requires Docker and thus fails to support macOS runners, due to
+      #a petty licensing dispute on Docker's part. Until upstream resolves this
+      #in some fashion, we have *NO* recourse but to temporarily disable static
+      #type-checking under mypy from this workflow. See also this open issue:
+      #    https://github.com/jpetrucciani/mypy-check/issues/30
+      # # Type-check this package with "mypy". See also:
+      # #     https://github.com/jpetrucciani/mypy-check
+      # - name: 'Type-checking package with "mypy"...'
+      #   uses: 'jpetrucciani/mypy-check@master'
+      #   with:
+      #     python_version: "${{ matrix.python-version }}"
+      #     # path: 'beartype'
+
       # Type-check this package with "pyright". See also:
       #     https://github.com/jakebailey/pyright-action
       - name: 'Type-checking package with "pyright"...'
         uses: 'jakebailey/pyright-action@v1'
         with:
           python-version: "${{ matrix.python-version }}"
-      # Type-check this package with "mypy". See also:
-      #     https://github.com/jpetrucciani/mypy-check
-      - name: 'Type-checking package with "mypy"...'
-        uses: 'jpetrucciani/mypy-check@master'
-        # with:
-        #   python_version: "${{ matrix.python-version }}"
-          # path: 'beartype'
       # ..................{ TEST                             }..................
       - name: 'Testing package with "tox"...'
         # Run the subsequent script as a Bash script. Although POSIX-compliant
