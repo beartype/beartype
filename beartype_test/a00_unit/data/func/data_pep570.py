@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -47,10 +47,10 @@ non-human-readable exceptions at test collection time resembling:
     E   SyntaxError: invalid syntax
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from typing import Union
 
-# ....................{ CALLABLES                         }....................
+# ....................{ CALLABLES                          }....................
 def func_args_2_posonly_mixed(
     before_spreading_his_black_wings: Union[bytearray, str],
     reaching_for_the_skies: Union[bool, str] = 'in this forest',
