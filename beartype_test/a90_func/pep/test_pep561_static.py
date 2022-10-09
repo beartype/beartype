@@ -121,18 +121,6 @@ def test_pep561_mypy() -> None:
     assert mypy_stdout.startswith('Success: ')
 
 
-#FIXME: Integrate with our continuous integration (CI) workflow. Doing so is
-#probably trivial, given the official advice at:
-#    https://github.com/microsoft/pyright/blob/main/docs/ci-integration.md
-#
-#Specifically:
-#* Additionally decorate the test below by @skip_if_ci(). Under CI, we'll
-#  instead leverage yet another third-party GitHub Action. Gaah!
-#* Add the following to the job section of ".github/workflows/python_test.yml":
-#  #FIXME: This requires some configuration to pass the appropriate
-#  #'--pythonversion' option and "beartype" dirname, please.
-#  - uses: jakebailey/pyright-action@v1
-
 # If the external third-party "pyright" command is *NOT* pathable (i.e., an
 # executable command residing in the ${PATH} of the local filesystem), skip this
 # test. Note that:
