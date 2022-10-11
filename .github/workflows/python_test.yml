@@ -226,21 +226,21 @@ jobs:
       # confuses mypy into believing that multiple duplicate copies of this
       # package exist, which induces mypy to emit false positives, which induces
       # this entire job and thus run to fail. In short, mypy.
-
-      #FIXME: *UGH.* The otherwise excellent "jpetrucciani/mypy-check" action
-      #currently requires Docker and thus fails to support macOS runners, due to
-      #a petty licensing dispute on Docker's part. Until upstream resolves this
-      #in some fashion, we have *NO* recourse but to temporarily disable static
-      #type-checking under mypy from this workflow. See also this open issue:
-      #    https://github.com/jpetrucciani/mypy-check/issues/30
-      # # Type-check this package with "mypy". See also:
-      # #     https://github.com/jpetrucciani/mypy-check
-      # - name: 'Type-checking package with "mypy"...'
-      #   uses: 'jpetrucciani/mypy-check@master'
-      #   with:
-      #     python_version: "${{ matrix.python-version }}"
-      #     # path: 'beartype'
-
+      #
+      # Type-check this package with "mypy". See also:
+      #     https://github.com/jpetrucciani/mypy-check
+      #
+      # Note that:
+      # * This otherwise excellent action currently requires Docker and thus
+      #   fails to support macOS runners, due to a petty licensing dispute on
+      #   Docker's part. Upstream wisely advises skipping this action under
+      #   mypy and we fully agree. See also this open issue:
+      #       https://github.com/jpetrucciani/mypy-check/issues/30
+      - name: 'Type-checking package with "mypy"...'
+        uses: 'jpetrucciani/mypy-check@master'
+        if: matrix.platform != "macos-latest"
+        with:
+          python_version: "${{ matrix.python-version }}"
       # Type-check this package with "pyright". See also:
       #     https://github.com/jakebailey/pyright-action
       - name: 'Type-checking package with "pyright"...'

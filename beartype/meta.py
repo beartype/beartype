@@ -276,6 +276,12 @@ have yet to be stabilized and hence tagged. Hence, this URL is typically valid
 '''
 
 
+URL_FORUMS = f'{URL_HOMEPAGE}/discussions'
+'''
+URL of this package's user forums.
+'''
+
+
 URL_ISSUES = f'{URL_HOMEPAGE}/issues'
 '''
 URL of this package's issue tracker.

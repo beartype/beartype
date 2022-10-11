@@ -107,7 +107,7 @@ def get_main_mypy_config_file() -> Path:
     '''
 
     # Obverse obviation!
-    return FileRelative(get_main_dir(), '.mypy.ini')
+    return FileRelative(get_main_dir(), 'mypy.ini')
 
 
 @callable_cached

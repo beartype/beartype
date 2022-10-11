@@ -257,51 +257,17 @@ class BeartypeConf(object):
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize this logic with BeartypeConf.__hash__().
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # Hash of these parameters.
-        #
-        # Note this logic inlines the body of the BeartypeConf.__hash__()
-        # dunder method, maximizing efficiency (the entire point of caching) by
-        # avoiding the cost of an additional method call both here and (more
-        # importantly) in BeartypeConf.__hash__(). See that method for details.
-
-        #FIXME: *NO, NO, NO.* Hash collisions mean that hashing is *NOT* a
-        #robust means of hashing. Instead, we need to:
-        #* Define a new private "_BeartypeConfMeta" metaclass.
-        #* Define a new _BeartypeConfMeta.__new__() method that:
-        #  * Leverages "iter_args(cls.__init__)" to iterate the names of all
-        #    keyword-only parameters defined by the BeartypeConf.__init__()
-        #    method.
-        #  * Accumulate these parameter names into a "self._KWARG_NAME_TO_INDEX"
-        #    instance variable of the current metaclass instance. This variable
-        #    is a dictionary mapping from the name of each such keyword-only
-        #    parameter to the *ARBITRARY* 0-based index of the value of that
-        #    parameter previously passed to a prior BeartypeConf.__init__()
-        #    call. The indices are arbitrary but do need to be deterministic.
-        #* Refactor this __new__() method into a new
-        #  _BeartypeConfMeta.__call__() method. That method will need to be
-        #  implemented *COMPLETELY* differently. Given the previously computed
-        #  "self._KWARG_NAME_TO_INDEX" dictionary, map the passed "**kwargs"
-        #  dictionary into a corresponding "args" tuple. Note that this
-        #  _BeartypeConfMeta.__call__() method should itself accept *NO*
-        #  variadic positional "*args"; namely, the signature should resemble:
-        #      def __call__(cls, **kwargs) -> 'beartype.BeartypeConf':
-        #          ...
-        #* Implement __call__() in a manner similar to the existing
-        #  @callable_cached decorator, now that an "args" tuple has been
-        #  computed for efficient lookup and caching.
-        #* Generalize "_BeartypeConfMeta" once working to support *ANY*
-        #  arbitrary class. Specifically, rename "_BeartypeConfMeta" to
-        #  "beartype._util.cache.utilcachemeta.SingletonKwargsMeta".
-        BEARTYPE_CONF_HASH = hash((
+        # Efficiently hashable tuple of these parameters (in arbitrary order).
+        beartype_conf_args = (
             is_color,
             is_debug,
             strategy,
-        ))
+        )
 
         # If this method has already instantiated a configuration with these
         # parameters, return that configuration for consistency and efficiency.
-        if BEARTYPE_CONF_HASH in _BEARTYPE_CONF_HASH_TO_CONF:
-            return _BEARTYPE_CONF_HASH_TO_CONF[BEARTYPE_CONF_HASH]
+        if beartype_conf_args in _BEARTYPE_CONF_ARGS_TO_CONF:
+            return _BEARTYPE_CONF_ARGS_TO_CONF[beartype_conf_args]
         # Else, this method has yet to instantiate a configuration with these
         # parameters. In this case, do so below (and cache that configuration).
 
@@ -340,7 +306,7 @@ class BeartypeConf(object):
         self._strategy = strategy
 
         # Cache this configuration.
-        _BEARTYPE_CONF_HASH_TO_CONF[BEARTYPE_CONF_HASH] = self
+        _BEARTYPE_CONF_ARGS_TO_CONF[beartype_conf_args] = self
 
         # Return this configuration.
         return self
@@ -498,7 +464,7 @@ PEP-compliant type hint matching either a beartype configuration *or* ``None``.
 '''
 
 # ....................{ PRIVATE ~ globals                  }....................
-_BEARTYPE_CONF_HASH_TO_CONF: Dict[int, BeartypeConf] = {}
+_BEARTYPE_CONF_ARGS_TO_CONF: Dict[tuple, BeartypeConf] = {}
 '''
 Non-thread-safe **beartype configuration cache** (i.e., dictionary mapping from
 the hash of each set of parameters accepted by a prior call of the
