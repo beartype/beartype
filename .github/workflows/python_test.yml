@@ -241,6 +241,7 @@ jobs:
         uses: 'jpetrucciani/mypy-check@master'
         with:
           python_version: "${{ matrix.python-version }}"
+          mypy_flags: '--config-file mypy.ini'
       # Type-check this package with "pyright". See also:
       #     https://github.com/jakebailey/pyright-action
       - name: 'Type-checking package with "pyright"...'
