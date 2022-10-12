@@ -226,7 +226,28 @@ jobs:
       # confuses mypy into believing that multiple duplicate copies of this
       # package exist, which induces mypy to emit false positives, which induces
       # this entire job and thus run to fail. In short, mypy.
+
+      # Type-check this package with "pyright". See also:
+      #     https://github.com/jakebailey/pyright-action
+      - name: 'Type-checking package with "pyright"...'
+        uses: 'jakebailey/pyright-action@v1'
+        with:
+          python-version: "${{ matrix.python-version }}"
+
+      #FIXME: Consider reenabling this action at some later date – or perhaps
+      #not. I threw more than a few scarce volunteer hours at this action with
+      #little to no success but great agitation and increasingly wrathful
+      #feelings. The final straw was a seemingly non-human-readable
+      #Windows-specific error at action setup resembling:
+      #    unable to prepare context: path "D:a_actionsjpetruccianimypy-checkmaster" not found
       #
+      #In short, we're done here for now. Rather than depend on an external
+      #action for this, it would probably be prudent to simply:
+      #* Install "mypy" as a standard Python package.
+      #* Run "mypy" as a standard CLI command.
+      #
+      #In short, that's what we *SHOULD* have done initially. More fool us.
+
       # Type-check this package with "mypy". See also:
       #     https://github.com/jpetrucciani/mypy-check
       #
@@ -236,19 +257,14 @@ jobs:
       #   Docker's part. Upstream wisely advises skipping this action under
       #   mypy and we fully agree. See also this open issue:
       #       https://github.com/jpetrucciani/mypy-check/issues/30
-      - name: 'Type-checking package with "mypy"...'
-        if: matrix.platform != 'macos-latest'
-        uses: 'jpetrucciani/mypy-check@master'
-        with:
-          path: 'beartype'
-          python_version: "${{ matrix.python-version }}"
-          # mypy_flags: '--config-file mypy.ini'
-      # Type-check this package with "pyright". See also:
-      #     https://github.com/jakebailey/pyright-action
-      - name: 'Type-checking package with "pyright"...'
-        uses: 'jakebailey/pyright-action@v1'
-        with:
-          python-version: "${{ matrix.python-version }}"
+      # - name: 'Type-checking package with "mypy"...'
+      #   if: matrix.platform != 'macos-latest'
+      #   uses: 'jpetrucciani/mypy-check@master'
+      #   with:
+      #     path: 'beartype'
+      #     python_version: "${{ matrix.python-version }}"
+      #     # mypy_flags: '--config-file mypy.ini'
+
       # ..................{ TEST                             }..................
       - name: 'Testing package with "tox"...'
         # Run the subsequent script as a Bash script. Although POSIX-compliant
