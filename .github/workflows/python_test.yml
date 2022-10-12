@@ -237,8 +237,8 @@ jobs:
       #   mypy and we fully agree. See also this open issue:
       #       https://github.com/jpetrucciani/mypy-check/issues/30
       - name: 'Type-checking package with "mypy"...'
+        if: matrix.platform != 'macos-latest'
         uses: 'jpetrucciani/mypy-check@master'
-        if: matrix.platform != "macos-latest"
         with:
           python_version: "${{ matrix.python-version }}"
       # Type-check this package with "pyright". See also:
