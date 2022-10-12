@@ -234,36 +234,15 @@ jobs:
         with:
           python-version: "${{ matrix.python-version }}"
 
-      #FIXME: Consider reenabling this action at some later date – or perhaps
-      #not. I threw more than a few scarce volunteer hours at this action with
-      #little to no success but great agitation and increasingly wrathful
-      #feelings. The final straw was a seemingly non-human-readable
-      #Windows-specific error at action setup resembling:
-      #    unable to prepare context: path "D:a_actionsjpetruccianimypy-checkmaster" not found
+      # Type-check this package with "mypy".
       #
-      #In short, we're done here for now. Rather than depend on an external
-      #action for this, it would probably be prudent to simply:
-      #* Install "mypy" as a standard Python package.
-      #* Run "mypy" as a standard CLI command.
-      #
-      #In short, that's what we *SHOULD* have done initially. More fool us.
-
-      # Type-check this package with "mypy". See also:
-      #     https://github.com/jpetrucciani/mypy-check
-      #
-      # Note that:
-      # * This otherwise excellent action currently requires Docker and thus
-      #   fails to support macOS runners, due to a petty licensing dispute on
-      #   Docker's part. Upstream wisely advises skipping this action under
-      #   mypy and we fully agree. See also this open issue:
-      #       https://github.com/jpetrucciani/mypy-check/issues/30
-      # - name: 'Type-checking package with "mypy"...'
-      #   if: matrix.platform != 'macos-latest'
-      #   uses: 'jpetrucciani/mypy-check@master'
-      #   with:
-      #     path: 'beartype'
-      #     python_version: "${{ matrix.python-version }}"
-      #     # mypy_flags: '--config-file mypy.ini'
+      - name: 'Type-checking package with "mypy:"...'
+        run: |
+          python -m pip --quiet install mypy==0.982
+          # list version in ci logs
+          mypy --version
+          # run mypy
+          mypy ./beartype/
 
       # ..................{ TEST                             }..................
       - name: 'Testing package with "tox"...'
