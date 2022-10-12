@@ -21,6 +21,7 @@ from beartype.typing import (
     Tuple,
 )
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._conf import BeartypeConf
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
@@ -51,6 +52,10 @@ class CauseSleuth(object):
         line of the string returned by this getter if this string spans
         multiple lines *or* ignored otherwise (i.e., if this string is instead
         embedded in the current line).
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all flags, options, settings, and other metadata configuring the
+        current decoration of the decorated callable or class).
     exception_prefix : str
         Human-readable label describing the parameter or return value from
         which this object originates, typically embedded in exceptions raised
@@ -91,6 +96,7 @@ class CauseSleuth(object):
     # * Minimize space and time complexity.
     __slots__ = (
         'cause_indent',
+        'conf',
         'exception_prefix',
         'func',
         'hint_sign',
@@ -103,6 +109,7 @@ class CauseSleuth(object):
 
     _INIT_PARAM_NAMES = frozenset((
         'cause_indent',
+        'conf',
         'exception_prefix',
         'func',
         'hint',
@@ -122,6 +129,7 @@ class CauseSleuth(object):
     def __init__(
         self,
         func: Callable,
+        conf: BeartypeConf,
         pith: Any,
         hint: Any,
         cause_indent: str,
@@ -132,6 +140,8 @@ class CauseSleuth(object):
         Initialize this object.
         '''
         assert callable(func), f'{repr(func)} not callable.'
+        assert isinstance(conf, BeartypeConf), (
+            f'{repr(conf)} not configuration.')
         assert isinstance(cause_indent, str), (
             f'{repr(cause_indent)} not string.')
         assert isinstance(exception_prefix, str), (
@@ -141,6 +151,7 @@ class CauseSleuth(object):
 
         # Classify all passed parameters.
         self.func = func
+        self.conf = conf
         self.pith = pith
         self.cause_indent = cause_indent
         self.exception_prefix = exception_prefix

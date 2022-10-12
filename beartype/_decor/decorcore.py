@@ -55,8 +55,6 @@ from traceback import format_exc
 from warnings import warn
 
 # ....................{ DECORATORS                         }....................
-#FIXME: Revise docstrings everywhere from "cls_root" and "cls_curr" to
-#"cls_stack", please.
 def beartype_object(
     # Mandatory parameters.
     obj: BeartypeableT,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -7,24 +7,24 @@
 **Beartype error-handling string munging unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._decor._error._errortext` submodule.
+:mod:`beartype._decor._error._util.errorutiltext` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 def test_represent_pith() -> None:
     '''
     Test the
-    :func:`beartype._decor._error._errortext.represent_pith` function.
+    :func:`beartype._decor._error._util.errorutiltext.represent_pith` function.
     '''
 
     # Defer heavyweight imports.
-    from beartype._decor._error._errortext import represent_pith
+    from beartype._decor._error._util.errorutiltext import represent_pith
 
     # Custom type to be represented below.
     class CustomType(object):

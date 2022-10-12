@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._util.text.utiltextcolour import (
-    error_colour,
+    colour_error,
     colour_repr,
 )
 from beartype._util.text.utiltextlabel import (
@@ -101,6 +101,6 @@ def represent_pith(pith: object) -> str:
     '''
 
     return (
-        f'{error_colour(label_type(type(pith)))} '
+        f'{colour_error(label_type(type(pith)))} '
         f'{colour_repr(represent_object(pith))}'
     )

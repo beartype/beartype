@@ -37,7 +37,7 @@ from beartype._util.hint.pep.utilpepget import (
 from beartype._util.text.utiltextcolour import colour_hint
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextlabel import label_type
-from beartype._decor._error._errortext import represent_pith
+from beartype._decor._error._util.errorutiltext import represent_pith
 
 # ....................{ GETTERS ~ instance : type          }....................
 def get_cause_or_none_instance_type(sleuth: CauseSleuth) -> Optional[str]:

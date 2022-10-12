@@ -16,7 +16,7 @@ from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype.typing import Optional
 from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
 from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._decor._error._errortext import represent_pith
+from beartype._decor._error._util.errorutiltext import represent_pith
 from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,

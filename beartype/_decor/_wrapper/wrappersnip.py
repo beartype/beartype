@@ -18,6 +18,7 @@ from beartype._check.checkmagic import (
     VAR_NAME_RANDOM_INT,
 )
 from beartype._decor._wrapper.wrappermagic import (
+    ARG_NAME_BEARTYPE_CONF,
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
     VAR_NAME_ARGS_LEN,
@@ -88,6 +89,7 @@ This prefix is intended to be locally suffixed in the
 CODE_HINT_ROOT_SUFFIX = f''':
             raise {ARG_NAME_RAISE_EXCEPTION}(
                 func={ARG_NAME_FUNC},
+                conf={ARG_NAME_BEARTYPE_CONF},
                 pith_name={CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER},
                 pith_value={VAR_NAME_PITH_ROOT},{{random_int_if_any}}
             )
@@ -257,6 +259,7 @@ PEP484_CODE_CHECK_NORETURN = f'''
     # interpreter, unconditionally raise an exception.
     raise {ARG_NAME_RAISE_EXCEPTION}(
         func={ARG_NAME_FUNC},
+        conf={ARG_NAME_BEARTYPE_CONF},
         pith_name='return',
         pith_value={VAR_NAME_PITH_ROOT},
     )'''

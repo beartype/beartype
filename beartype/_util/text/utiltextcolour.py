@@ -46,7 +46,7 @@ else:
     _STYLE_BOLD = ''
 
 # ....................{ COLOURIZERS                        }....................
-def error_colour(text: str) -> str:
+def colour_error(text: str) -> str:
     '''
     Colour the passed substring as an error.
 
@@ -64,25 +64,6 @@ def error_colour(text: str) -> str:
     assert isinstance(text, str), f'{repr(text)} not string.'
 
     return f'{_STYLE_BOLD}{_COLOUR_RED}{text}{_COLOUR_RESET}'
-
-
-def matched_colour(text: str) -> str:
-    '''
-    Colour the passed substring as a matched (i.e., correct) type.
-
-    Parameters
-    ----------
-    text : str
-        Text to be coloured as matched.
-
-    Returns
-    ----------
-    str
-        This text coloured as matched.
-    '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
-
-    return f'{_STYLE_BOLD}{_COLOUR_GREEN}{text}{_COLOUR_RESET}'
 
 
 def colour_hint(text: str) -> str:
@@ -123,7 +104,29 @@ def colour_repr(text: str) -> str:
 
     return f'{_COLOUR_YELLOW}{text}{_COLOUR_RESET}'
 
+
+def colour_type(text: str) -> str:
+    '''
+    Colour the passed substring as a simple class.
+
+    Parameters
+    ----------
+    text : str
+        Text to be coloured as a simple class.
+
+    Returns
+    ----------
+    str
+        This text coloured as a simple class.
+    '''
+    assert isinstance(text, str), f'{repr(text)} not string.'
+
+    return f'{_STYLE_BOLD}{_COLOUR_GREEN}{text}{_COLOUR_RESET}'
+
 # ....................{ STRIPPERS                          }....................
+#FIXME: Unit test us up, please. To do so, we'll probably want to define a
+#companion is_text_ansi() tester returning true only if the passed string
+#contains one or more ANSI escape sequences.
 def strip_text_ansi(text: str) -> str:
     '''
     Strip all ANSI escape sequences from the passed string.

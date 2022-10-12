@@ -25,18 +25,18 @@ def test_get_beartype_violation() -> None:
     '''
 
     # Defer heavyweight imports.
+    from beartype import BeartypeConf
     from beartype.roar import (
         BeartypeCallHintParamViolation,
         BeartypeCallHintReturnViolation,
         BeartypeDecorHintNonpepException,
     )
     from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-    from beartype._decor._error.errormain import (
-        get_beartype_violation)
     from beartype.typing import (
         List,
         Tuple,
     )
+    from beartype._decor._error.errormain import get_beartype_violation
     from pytest import raises
     from typing import Union
 
@@ -52,16 +52,23 @@ def test_get_beartype_violation() -> None:
 
         return achromatic_voice
 
+    # Keyword arguments to be unconditionally passed to *ALL* calls of the
+    # get_beartype_violation() getter below.
+    kwargs = dict(
+        func=forest_unknown,
+        conf=BeartypeConf(),
+    )
+
     # Assert this function returns the expected exception when passed a
     # parameter annotated by a PEP-compliant type hint failing to shallowly
     # satisfy the type of that type hint.
     violation = get_beartype_violation(
-        func=forest_unknown,
         pith_name='secret_orchard',
         pith_value=(
             'You are in a forest unknown:',
             'The secret orchard.',
         ),
+        **kwargs
     )
     assert isinstance(violation, BeartypeCallHintParamViolation)
 
@@ -69,12 +76,12 @@ def test_get_beartype_violation() -> None:
     # parameter annotated by a PEP-compliant type hint failing to deeply
     # satisfy the type of that type hint.
     violation = get_beartype_violation(
-        func=forest_unknown,
         pith_name='secret_orchard',
         pith_value=[
             b'I am awaiting the sunrise',
             b'Gazing modestly through the coldest morning',
         ],
+        **kwargs
     )
     assert isinstance(violation, BeartypeCallHintParamViolation)
 
@@ -82,12 +89,12 @@ def test_get_beartype_violation() -> None:
     # parameter annotated by a PEP-noncompliant type hint failing to shallowly
     # satisfy the type of that type hint.
     violation = get_beartype_violation(
-        func=forest_unknown,
         pith_name='to_bid_you_farewell',
         pith_value=(
             b'Once it came you lied,'
             b"Embracing us over autumn's proud treetops."
         ),
+        **kwargs
     )
     assert isinstance(violation, BeartypeCallHintParamViolation)
 
@@ -95,12 +102,12 @@ def test_get_beartype_violation() -> None:
     # return value annotated by a PEP-compliant type hint failing to satisfy
     # that type hint.
     violation = get_beartype_violation(
-        func=forest_unknown,
         pith_name='return',
         pith_value=[
             'Sunbirds leave their dark recesses.',
             'Shadows glide the archways.',
         ],
+        **kwargs
     )
     assert isinstance(violation, BeartypeCallHintReturnViolation)
 
@@ -108,12 +115,12 @@ def test_get_beartype_violation() -> None:
     # unannotated parameter.
     with raises(_BeartypeCallHintPepRaiseException):
         get_beartype_violation(
-            func=forest_unknown,
             pith_name='achromatic_voice',
             pith_value=(
                 'And your voice is vast and achromatic,'
                 'But still so precious.'
             ),
+            **kwargs
         )
 
     # Assert this function raises the expected exception when passed a
@@ -121,7 +128,6 @@ def test_get_beartype_violation() -> None:
     # (i.e., is neither PEP-compliant nor -noncompliant).
     with raises(BeartypeDecorHintNonpepException):
         get_beartype_violation(
-            func=forest_unknown,
             pith_name='amaranth_symbol',
             pith_value=(
                 'I have kept it,'
@@ -132,4 +138,5 @@ def test_get_beartype_violation() -> None:
                 'When we both walk the shadows,'
                 'It will set ablaze and vanish.'
             ),
+            **kwargs
         )

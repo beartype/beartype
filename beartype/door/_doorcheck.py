@@ -157,7 +157,7 @@ def die_if_unbearable(
         if not exception_message.startswith(
             _TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX):
             raise _BeartypeDoorTextException(
-                f'_get_type_checker._die_if_unbearable() exception '
+                f'_check_object() exception '
                 f'"{exception_message}" not prefixed by '
                 f'"{_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX}".'
             ) from exception

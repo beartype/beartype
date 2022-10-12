@@ -18,7 +18,7 @@ from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
 from beartype._util.hint.pep.proposal.utilpep586 import (
     get_hint_pep586_literals)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
-from beartype._decor._error._errortext import represent_pith
+from beartype._decor._error._util.errorutiltext import represent_pith
 
 # ....................{ GETTERS                            }....................
 def get_cause_or_none_literal(sleuth: CauseSleuth) -> Optional[str]:

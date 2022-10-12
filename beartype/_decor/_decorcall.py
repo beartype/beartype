@@ -25,6 +25,7 @@ from beartype._data.datatyping import (
     TypeStack,
 )
 from beartype._decor._wrapper.wrappermagic import (
+    ARG_NAME_BEARTYPE_CONF,
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
 )
@@ -346,6 +347,7 @@ class BeartypeCall(object):
         # parameters unconditionally required by *ALL* wrapper functions.
         self.func_wrapper_scope.clear()
         self.func_wrapper_scope[ARG_NAME_FUNC] = func
+        self.func_wrapper_scope[ARG_NAME_BEARTYPE_CONF] = func_conf
 
         #FIXME: Non-ideal. This should *NOT* be set here but rather in the
         #lower-level code generating factory function that actually embeds the

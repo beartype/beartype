@@ -81,6 +81,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._conf import BeartypeConf
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
@@ -97,7 +98,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_UNION,
 )
 from beartype._decor._error._errorsleuth import CauseSleuth
-from beartype._decor._error._errortext import (
+from beartype._decor._error._util.errorutiltext import (
     prefix_callable_decorated_arg_value,
     prefix_callable_decorated_return_value,
 )
@@ -105,6 +106,7 @@ from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.text.utiltextcolour import (
     colour_hint,
     colour_repr,
+    strip_text_ansi,
 )
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import represent_object
@@ -119,25 +121,14 @@ Dictionary mapping each **sign** (i.e., arbitrary object uniquely identifying a
 PEP-compliant type) to a private getter function defined by this submodule
 whose signature matches that of the :func:`_get_cause_or_none` function and
 which is dynamically dispatched by that function to describe type-checking
-failures specific to that unsubscripted :mod:`typing` attribute.,
-'''
-
-# ....................{ CONSTANTS                          }....................
-# Assuming a line length of 80 characters, this magic number truncates
-# arbitrary object representations to 100 lines (i.e., 8000/80), which seems
-# more than reasonable and (possibly) not overly excessive.
-_CAUSE_TRIM_OBJECT_REPR_MAX_LEN = 8000
-'''
-Maximum length of arbitrary object representations suffixing human-readable
-strings returned by the :func:`_get_cause_or_none` getter function, intended to
-be sufficiently long to assist in identifying type-check failures but not so
-excessively long as to prevent human-readability.
+failures specific to that unsubscripted :mod:`typing` attribute.
 '''
 
 # ....................{ GETTERS                            }....................
 def get_beartype_violation(
     # Mandatory parameters.
     func: Callable,
+    conf: BeartypeConf,
     pith_name: str,
     pith_value: object,
 
@@ -189,6 +180,10 @@ def get_beartype_violation(
     ----------
     func : CallableTypes
         Decorated callable to raise this exception from.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all flags, options, settings, and other metadata configuring the
+        current decoration of the decorated callable or class).
     pith_name : str
         Either:
 
@@ -249,14 +244,17 @@ def get_beartype_violation(
           this type check when in fact this pith fails to do so.
     '''
     assert callable(func), f'{repr(func)} uncallable.'
+    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
     assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
     assert isinstance(random_int, NoneTypeOr[int]), (
         f'{repr(random_int)} neither integer nor "None".')
+
     # print('''get_beartype_violation(
     #     func={!r},
+    #     conf={!r},
     #     pith_name={!r},
     #     pith_value={!r}',
-    # )'''.format(func, pith_name, pith_value))
+    # )'''.format(func, conf, pith_name, pith_value))
 
     # Type of exception to be raised.
     exception_cls: TypeException = None  # type: ignore[assignment]
@@ -291,11 +289,11 @@ def get_beartype_violation(
     # PEP-compliant type hint annotating this parameter or return value.
     hint = func.__annotations__[pith_name]
 
-    # If this is *NOT* the PEP 484-compliant "typing.NoReturn" type hint
+    # If this hint is *NOT* the PEP 484-compliant "typing.NoReturn" type hint
     # permitted *ONLY* as a return annotation, this is a standard type hint
     # generally supported by both parameters and return values. In this case...
     if hint is not NoReturn:
-        # If type hint is *NOT* a supported type hint, raise an exception.
+        # If this hint is unsupported, raise an exception.
         die_unless_hint(hint=hint, exception_prefix=exception_prefix)
         # Else, this type hint is supported.
 
@@ -304,6 +302,7 @@ def get_beartype_violation(
     # if this pith satisfies this hint).
     exception_cause = CauseSleuth(
         func=func,
+        conf=conf,
         pith=pith_value,
         hint=hint,
         cause_indent='',
@@ -335,11 +334,65 @@ def get_beartype_violation(
     exception_cause_suffixed = suffix_unless_suffixed(
         text=exception_cause, suffix='.')
 
-    # Exception of the desired class embedding this cause.
-    exception = exception_cls(  # type: ignore[misc]
+    # Exception message embedding this cause.
+    exception_message = (
         f'{exception_prefix}violates type hint {colour_hint(repr(hint))}, as '
         f'{exception_cause_suffixed}'
     )
+
+    #FIXME: Inefficient and thus non-ideal. Since efficiency isn't a pressing
+    #concern in an exception raiser, this is more a matter of design purity than
+    #anything. Still, it would be preferable to avoid embedding ANSI escape
+    #sequences in this cause when the user requests that rather than forcibly
+    #stripping those sequences out after the fact via an inefficient regex. To
+    #do so, we'll want to:
+    #* Augment the beartype._util.text.utiltextcolour.colour_*() family of
+    #  functions with a mandatory "conf: BeartypeConf" parameter.
+    #* Pass that parameter to *EVERY* call to one of those functions -- both
+    #  here and elsewhere.
+    #* Refactor those functions to respect that parameter. The ideal means of
+    #  doing so would probably be define in the
+    #  "beartype._util.text.utiltextcolour" submodule:
+    #  * A new "_BeartypeTheme" dataclass mapping from style names to format
+    #    strings embedding the ANSI escape sequences styling those styles.
+    #  * A new pair of private "_THEME_MONOCHROME" and "_THEME_PRISMATIC"
+    #    instances of that dataclass. The values of the "_THEME_MONOCHROME"
+    #    dictionary should all just be the default format string: e.g.,
+    #    _THEME_MONOCHROME = _BeartypeTheme(
+    #        format_error='{text}',
+    #        ...
+    #    )
+    #
+    #    _THEME_PRISMATIC = _BeartypeTheme(
+    #        format_error=f'{_STYLE_BOLD}{_COLOUR_RED}{{text}}{_COLOUR_RESET}',
+    #        ...
+    #    )
+    #  * A new "_THEME_DEFAULT" instance of that dataclass conditionally defined
+    #    as either "_THEME_MONOCHROME" or "_THEME_PRISMATIC" depending on
+    #    whether stdout is attached to a TTY or not. Alternately, to avoid
+    #    performing that somewhat expensive logic at module scope (and thus on
+    #    initial beartype importation), it might be preferable to instead define
+    #    a new cached private getter resembling:
+    #
+    #    @callable_cached
+    #    def _get_theme_default() -> _BeartypeTheme:
+    #        return (
+    #            _THEME_PRISMATIC
+    #            if is_stdout_terminal() else
+    #            _THEME_MONOCHROME
+    #        )
+    #FIXME: *OH, RIGHT.* We actually *MUST* implement the above refactoring to
+    #support the case of "conf.is_color is True". Welp... there you go then.
+
+    #FIXME: Unit test us up, please.
+    # If the user configuration requests that this cause contain *NO* ANSI
+    # escape sequences, strip these sequences.
+    if conf.is_color is False:
+        exception_message = strip_text_ansi(exception_message)
+        # print(f'exception_message: {exception_message}')
+
+    # Exception of the desired class embedding this cause.
+    exception = exception_cls(exception_message)  # type: ignore[misc]
 
     # Return this exception to the @beartype-generated type-checking wrapper
     # (which directly calls this function), which will then squelch the
@@ -347,7 +400,19 @@ def get_beartype_violation(
     # this exception directly from that wrapper.
     return exception
 
-# ....................{ INITIALIZERS                       }....................
+# ....................{ PRIVATE ~ constants                }....................
+# Assuming a line length of 80 characters, this magic number truncates
+# arbitrary object representations to 100 lines (i.e., 8000/80), which seems
+# more than reasonable and (possibly) not overly excessive.
+_CAUSE_TRIM_OBJECT_REPR_MAX_LEN = 8000
+'''
+Maximum length of arbitrary object representations suffixing human-readable
+strings returned by the :func:`_get_cause_or_none` getter function, intended to
+be sufficiently long to assist in identifying type-check failures but not so
+excessively long as to prevent human-readability.
+'''
+
+# ....................{ PRIVATE ~ initializers             }....................
 def _init() -> None:
     '''
     Initialize this submodule.
