@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype PEP-compliant type hint exception raisers** (i.e., functions raising
-human-readable exceptions called by :mod:`beartype`-decorated callables on the
-first invalid parameter or return value failing a type-check against the
-PEP-compliant type hint annotating that parameter or return).
+**Beartype exception raisers** (i.e., high-level callables raising
+human-readable exceptions called by :func:`beartype.beartype`-decorated
+callables on the first invalid parameter or return value failing a type-check
+against the PEP-compliant type hint annotating that parameter or return).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -98,16 +98,16 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_UNION,
 )
 from beartype._decor._error._errorsleuth import CauseSleuth
+from beartype._decor._error._util.errorutilcolor import (
+    color_hint,
+    color_repr,
+)
 from beartype._decor._error._util.errorutiltext import (
     prefix_callable_decorated_arg_value,
     prefix_callable_decorated_return_value,
 )
 from beartype._util.hint.utilhinttest import die_unless_hint
-from beartype._util.text.utiltextcolour import (
-    colour_hint,
-    colour_repr,
-    strip_text_ansi,
-)
+from beartype._util.text.utiltextansi import strip_text_ansi
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import represent_object
 from beartype._data.datatyping import TypeException
@@ -319,14 +319,14 @@ def get_beartype_violation(
         pith_value_repr = represent_object(
             obj=pith_value, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)
         raise _BeartypeCallHintPepRaiseDesynchronizationException(
-            f'{exception_prefix}violates type hint {colour_hint(repr(hint))}, '
+            f'{exception_prefix}violates type hint {color_hint(repr(hint))}, '
             f'but utility function get_beartype_violation() '
             f'erroneously suggests this object satisfies this hint. '
             f'Please report this desynchronization failure to '
             f'the beartype issue tracker ({URL_ISSUES}) with '
             f'the accompanying exception traceback and '
             f'the representation of this object:\n'
-            f'{colour_repr(pith_value_repr)}'
+            f'{color_repr(pith_value_repr)}'
         )
     # Else, this pith violates this hint as expected and as required for sanity.
 
@@ -336,7 +336,7 @@ def get_beartype_violation(
 
     # Exception message embedding this cause.
     exception_message = (
-        f'{exception_prefix}violates type hint {colour_hint(repr(hint))}, as '
+        f'{exception_prefix}violates type hint {color_hint(repr(hint))}, as '
         f'{exception_cause_suffixed}'
     )
 
@@ -346,13 +346,13 @@ def get_beartype_violation(
     #sequences in this cause when the user requests that rather than forcibly
     #stripping those sequences out after the fact via an inefficient regex. To
     #do so, we'll want to:
-    #* Augment the beartype._util.text.utiltextcolour.colour_*() family of
+    #* Augment the beartype._util.text.utiltextansi.color_*() family of
     #  functions with a mandatory "conf: BeartypeConf" parameter.
     #* Pass that parameter to *EVERY* call to one of those functions -- both
     #  here and elsewhere.
     #* Refactor those functions to respect that parameter. The ideal means of
     #  doing so would probably be define in the
-    #  "beartype._util.text.utiltextcolour" submodule:
+    #  "beartype._util.text.utiltextansi" submodule:
     #  * A new "_BeartypeTheme" dataclass mapping from style names to format
     #    strings embedding the ANSI escape sequences styling those styles.
     #  * A new pair of private "_THEME_MONOCHROME" and "_THEME_PRISMATIC"

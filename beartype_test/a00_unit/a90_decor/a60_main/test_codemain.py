@@ -49,7 +49,7 @@ def test_codemain() -> None:
         BeartypeCallHintViolation,
         # BeartypeDecorHintPep585DeprecationWarning,
     )
-    from beartype._util.text.utiltextcolour import strip_text_ansi
+    from beartype._util.text.utiltextansi import strip_text_ansi
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithUnsatisfiedMetadata)
     from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (

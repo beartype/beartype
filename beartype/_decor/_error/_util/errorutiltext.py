@@ -11,10 +11,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.text.utiltextcolour import (
-    colour_error,
-    colour_repr,
-)
 from beartype._util.text.utiltextlabel import (
     label_type,
     prefix_callable_decorated,
@@ -48,8 +44,11 @@ def prefix_callable_decorated_arg_value(
     '''
     assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
 
+    # Avoid circular import dependencies.
+    from beartype._decor._error._util.errorutilcolor import color_repr
+
     # Human-readable string depicting this parameter name and value.
-    arg_name_value = colour_repr(f'{arg_name}={represent_object(arg_value)}')
+    arg_name_value = color_repr(f'{arg_name}={represent_object(arg_value)}')
 
     # Create and return this label.
     return f'{prefix_callable_decorated(func)}parameter {arg_name_value}'
@@ -76,10 +75,13 @@ def prefix_callable_decorated_return_value(
         Human-readable label describing this return value.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._decor._error._util.errorutilcolor import color_repr
+
     # Create and return this label.
     return (
         f'{prefix_callable_decorated_return(func)} '
-        f'{colour_repr(represent_object(return_value))} '
+        f'{color_repr(represent_object(return_value))} '
     )
 
 # ....................{ REPRESENTERS                       }....................
@@ -100,7 +102,14 @@ def represent_pith(pith: object) -> str:
         Human-readable description of this object.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._decor._error._util.errorutilcolor import (
+        color_error,
+        color_repr,
+    )
+
+    # Create and return this representation.
     return (
-        f'{colour_error(label_type(type(pith)))} '
-        f'{colour_repr(represent_object(pith))}'
+        f'{color_error(label_type(type(pith)))} '
+        f'{color_repr(represent_object(pith))}'
     )

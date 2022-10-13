@@ -1124,7 +1124,7 @@ Beartype Procedural API
    Type-check anything against any type hint – anywhere, at any time.
 
 When the ``isinstance()`` and ``issubclass()`` builtins fail to scale, prefer
-the ``beartype.dooc`` procedural API. Type-check *anything* *anytime* against
+the ``beartype.door`` procedural API. Type-check *anything* *anytime* against
 *any* PEP-compliant type hint.
 
 .. # FIXME: Document the new is_subhint() tester function as well, please!
@@ -1407,6 +1407,23 @@ and floats. ``new_func()`` thus preserves backward compatibility with
 ``old_func()``.
 
 **Thus was Rome's API preserved in a day.**
+
+Beartype Configuration
+----------------------
+
+Dynamically define your own application-specific ``@beartype`` decorator – 
+efficiently configured for your exact use case.
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype import beartype, BeartypeConf, BeartypeStrategy
+
+   #FIXME: Document us up, please!
+
+
+Beartype Procedural API
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Beartype Validators
 -------------------

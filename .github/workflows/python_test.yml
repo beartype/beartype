@@ -234,14 +234,19 @@ jobs:
         with:
           python-version: "${{ matrix.python-version }}"
 
+      #FIXME: Revisit @jpetrucciani's otherwise stellar GitHub Action
+      #"jpetrucciani/mypy-check" once the issue tracker there settles a bit.
+      #See also these open issue currently blocking our usage here:
+      #    https://github.com/jpetrucciani/mypy-check/issues/31
+      #    https://github.com/jpetrucciani/mypy-check/issues/30
       # Type-check this package with "mypy".
-      #
       - name: 'Type-checking package with "mypy:"...'
         run: |
-          python -m pip --quiet install mypy==0.982
-          # list version in ci logs
+          # Manually install "mypy" in the standard way.
+          python -m pip --quiet install mypy
+          # Log this "mypy" version for debuggability.
           mypy --version
-          # run mypy
+          # Run this "mypy" instance against our main package.
           mypy ./beartype/
 
       # ..................{ TEST                             }..................
