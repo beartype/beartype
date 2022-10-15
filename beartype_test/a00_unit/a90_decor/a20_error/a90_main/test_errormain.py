@@ -24,6 +24,7 @@ def test_get_beartype_violation() -> None:
     function.
     '''
 
+    # ..................{ IMPORTS                            }..................
     # Defer heavyweight imports.
     from beartype import BeartypeConf
     from beartype.roar import (
@@ -37,9 +38,12 @@ def test_get_beartype_violation() -> None:
         Tuple,
     )
     from beartype._decor._error.errormain import get_beartype_violation
+    from beartype._util.os.utilostty import is_stdout_terminal
+    from beartype._util.text.utiltextansi import is_text_ansi
     from pytest import raises
     from typing import Union
 
+    # ..................{ LOCALS                             }..................
     def forest_unknown(
         secret_orchard: List[str],
         achromatic_voice,
@@ -59,6 +63,7 @@ def test_get_beartype_violation() -> None:
         conf=BeartypeConf(),
     )
 
+    # ..................{ PASS                               }..................
     # Assert this function returns the expected exception when passed a
     # parameter annotated by a PEP-compliant type hint failing to shallowly
     # satisfy the type of that type hint.
@@ -111,6 +116,42 @@ def test_get_beartype_violation() -> None:
     )
     assert isinstance(violation, BeartypeCallHintReturnViolation)
 
+    # ..................{ PASS ~ ansi                        }..................
+    # Keyword arguments to be unconditionally passed to calls of the
+    # get_beartype_violation() getter testing ANSI-specific functionality.
+    kwargs_ansi = dict(
+        func=forest_unknown,
+        pith_name='secret_orchard',
+        pith_value=(
+            'We walked into the night',
+            'Am I to bid you farewell?',
+        ),
+    )
+
+    # Violation configured to contain ANSI escape sequences.
+    violation = get_beartype_violation(
+        conf=BeartypeConf(is_color=True), **kwargs_ansi)
+
+    # Assert this violation message contains ANSI escape sequences.
+    assert is_text_ansi(str(violation)) is True
+
+    # Violation configured to contain *NO* ANSI escape sequences.
+    violation = get_beartype_violation(
+        conf=BeartypeConf(is_color=False), **kwargs_ansi)
+
+    # Assert this violation message contains *NO* ANSI escape sequences.
+    assert is_text_ansi(str(violation)) is False
+
+    # Violation configured to conditionally contain ANSI escape sequences only
+    # when standard output is attached to an interactive terminal.
+    violation = get_beartype_violation(
+        conf=BeartypeConf(is_color=None), **kwargs_ansi)
+
+    # Assert this violation message contains ANSI escape sequences only when
+    # standard output is attached to an interactive terminal.
+    assert is_text_ansi(str(violation)) is is_stdout_terminal()
+
+    # ..................{ FAIL                               }..................
     # Assert this function raises the expected exception when passed an
     # unannotated parameter.
     with raises(_BeartypeCallHintPepRaiseException):

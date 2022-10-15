@@ -12,6 +12,43 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from re import compile as re_compile
 
+# ....................{ CONSTANTS                          }....................
+ANSI_RESET = '\033[0m'
+'''
+ANSI escape sequence resetting the effect of all prior ANSI sequence sequences,
+effectively "undoing" all colors and styles applied by those sequences.
+'''
+
+# ....................{ CONSTANTS ~ color                  }....................
+COLOR_GREEN = '\033[92m'
+'''
+ANSI escape sequence colouring all subsequent characters as green.
+'''
+
+
+COLOR_RED = '\033[31m'
+'''
+ANSI escape sequence colouring all subsequent characters as red.
+'''
+
+
+COLOR_BLUE = '\033[34m'
+'''
+ANSI escape sequence colouring all subsequent characters as blue.
+'''
+
+
+COLOR_YELLOW = '\033[33m'
+'''
+ANSI escape sequence colouring all subsequent characters as yellow.
+'''
+
+# ....................{ CONSTANTS ~ style                  }....................
+STYLE_BOLD = '\033[1m'
+'''
+ANSI escape sequence stylizing all subsequent characters as bold.
+'''
+
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
 def is_text_ansi(text: str) -> bool:

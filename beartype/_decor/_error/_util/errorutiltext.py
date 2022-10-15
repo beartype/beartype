@@ -51,7 +51,7 @@ def prefix_callable_decorated_arg_value(
     arg_name_value = color_repr(f'{arg_name}={represent_object(arg_value)}')
 
     # Create and return this label.
-    return f'{prefix_callable_decorated(func)}parameter {arg_name_value}'
+    return f'{prefix_callable_decorated(func)}parameter {arg_name_value} '
 
 
 def prefix_callable_decorated_return_value(
@@ -80,7 +80,7 @@ def prefix_callable_decorated_return_value(
 
     # Create and return this label.
     return (
-        f'{prefix_callable_decorated_return(func)} '
+        f'{prefix_callable_decorated_return(func)}'
         f'{color_repr(represent_object(return_value))} '
     )
 

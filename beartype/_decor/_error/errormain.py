@@ -101,13 +101,13 @@ from beartype._decor._error._errorsleuth import CauseSleuth
 from beartype._decor._error._util.errorutilcolor import (
     color_hint,
     color_repr,
+    strip_text_ansi_if_configured,
 )
 from beartype._decor._error._util.errorutiltext import (
     prefix_callable_decorated_arg_value,
     prefix_callable_decorated_return_value,
 )
 from beartype._util.hint.utilhinttest import die_unless_hint
-from beartype._util.text.utiltextansi import strip_text_ansi
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
 from beartype._util.text.utiltextrepr import represent_object
 from beartype._data.datatyping import TypeException
@@ -340,56 +340,11 @@ def get_beartype_violation(
         f'{exception_cause_suffixed}'
     )
 
-    #FIXME: Inefficient and thus non-ideal. Since efficiency isn't a pressing
-    #concern in an exception raiser, this is more a matter of design purity than
-    #anything. Still, it would be preferable to avoid embedding ANSI escape
-    #sequences in this cause when the user requests that rather than forcibly
-    #stripping those sequences out after the fact via an inefficient regex. To
-    #do so, we'll want to:
-    #* Augment the beartype._util.text.utiltextansi.color_*() family of
-    #  functions with a mandatory "conf: BeartypeConf" parameter.
-    #* Pass that parameter to *EVERY* call to one of those functions -- both
-    #  here and elsewhere.
-    #* Refactor those functions to respect that parameter. The ideal means of
-    #  doing so would probably be define in the
-    #  "beartype._util.text.utiltextansi" submodule:
-    #  * A new "_BeartypeTheme" dataclass mapping from style names to format
-    #    strings embedding the ANSI escape sequences styling those styles.
-    #  * A new pair of private "_THEME_MONOCHROME" and "_THEME_PRISMATIC"
-    #    instances of that dataclass. The values of the "_THEME_MONOCHROME"
-    #    dictionary should all just be the default format string: e.g.,
-    #    _THEME_MONOCHROME = _BeartypeTheme(
-    #        format_error='{text}',
-    #        ...
-    #    )
-    #
-    #    _THEME_PRISMATIC = _BeartypeTheme(
-    #        format_error=f'{_STYLE_BOLD}{_COLOUR_RED}{{text}}{_COLOUR_RESET}',
-    #        ...
-    #    )
-    #  * A new "_THEME_DEFAULT" instance of that dataclass conditionally defined
-    #    as either "_THEME_MONOCHROME" or "_THEME_PRISMATIC" depending on
-    #    whether stdout is attached to a TTY or not. Alternately, to avoid
-    #    performing that somewhat expensive logic at module scope (and thus on
-    #    initial beartype importation), it might be preferable to instead define
-    #    a new cached private getter resembling:
-    #
-    #    @callable_cached
-    #    def _get_theme_default() -> _BeartypeTheme:
-    #        return (
-    #            _THEME_PRISMATIC
-    #            if is_stdout_terminal() else
-    #            _THEME_MONOCHROME
-    #        )
-    #FIXME: *OH, RIGHT.* We actually *MUST* implement the above refactoring to
-    #support the case of "conf.is_color is True". Welp... there you go then.
-
     #FIXME: Unit test us up, please.
-    # If the user configuration requests that this cause contain *NO* ANSI
-    # escape sequences, strip these sequences.
-    if conf.is_color is False:
-        exception_message = strip_text_ansi(exception_message)
-        # print(f'exception_message: {exception_message}')
+    # Strip all ANSI escape sequences from this message if requested by this
+    # external user-defined configuration.
+    exception_message = strip_text_ansi_if_configured(
+        text=exception_message, conf=conf)
 
     # Exception of the desired class embedding this cause.
     exception = exception_cls(exception_message)  # type: ignore[misc]
