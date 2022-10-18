@@ -17,7 +17,7 @@ from beartype._check.checkmagic import (
     VAR_NAME_PITH_ROOT,
     VAR_NAME_RANDOM_INT,
 )
-from beartype._decor._wrapper.wrappermagic import (
+from beartype._check.checkmagic import (
     ARG_NAME_BEARTYPE_CONF,
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,

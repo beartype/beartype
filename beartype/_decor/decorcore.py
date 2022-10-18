@@ -39,7 +39,7 @@ from beartype._data.datatyping import (
 )
 from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
 from beartype._decor._wrapper.wrappermain import generate_code
-from beartype._decor._decorcall import BeartypeCall
+from beartype._check.checkcall import BeartypeCall
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,

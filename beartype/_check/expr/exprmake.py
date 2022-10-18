@@ -129,7 +129,7 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep_args,
     warn_if_hint_pep_deprecated,
 )
-from beartype._util.hint.convert.utilconvsanify import sanify_hint_child
+from beartype._check.conv.convsanify import sanify_hint_child
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
@@ -161,7 +161,7 @@ def make_check_expr(
     # lookup as local attributes. Yes, this is an absurd microoptimization.
     # *fight me, github developer community*
 
-    # "beartype._decor._wrapper.wrappermagic" globals.
+    # "beartype._check.checkmagic" globals.
     _ARG_NAME_GETRANDBITS=ARG_NAME_GETRANDBITS,
     _CODE_INDENT_1=CODE_INDENT_1,
     _CODE_INDENT_2=CODE_INDENT_2,

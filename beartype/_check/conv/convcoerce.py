@@ -55,78 +55,18 @@ from beartype.typing import (
 )
 from beartype._cave._cavefast import NotImplementedType
 from beartype._data.func.datafunc import METHOD_NAMES_BINARY_DUNDER
+from beartype._check.checkcall import BeartypeCall
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.hint.utilhinttest import is_hint_uncached
 from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
     make_hint_pep484_union)
-from collections.abc import Callable
-
-# ....................{ PRIVATE ~ mappings                 }....................
-_HINT_REPR_TO_SINGLETON = CacheUnboundedStrong()
-'''
-**Type hint cache** (i.e., thread-safe cache mapping from the machine-readable
-representations of all non-self-cached type hints to cached singleton instances
-of those hints).**
-
-This cache caches:
-
-* :pep:`585`-compliant type hints, which do *not* cache themselves.
-* :pep:`604`-compliant unions, which do *not* cache themselves.
-
-This cache does *not* cache:
-
-* Type hints declared by the :mod:`typing` module, which implicitly cache
-  themselves on subscription thanks to inscrutable metaclass magic.
-* :pep:`563`-compliant **deferred type hints** (i.e., type hints persisted as
-  evaluable strings rather than actual type hints). Ideally, this cache would
-  cache the evaluations of *all* deferred type hints. Sadly, doing so is
-  infeasible in the general case due to global and local namespace lookups
-  (e.g., ``Dict[str, int]`` only means what you think it means if an
-  importation resembling ``from typing import Dict`` preceded that type hint).
-
-Design
---------------
-**This dictionary is intentionally thread-safe.** Why? Because this dictionary
-is used to modify the ``__attributes__`` dunder variable of arbitrary callables.
-Since most such callables are either module- or class-scoped, that variable is
-effectively global. To prevent race conditions between competing threads
-contending over that variable, this dictionary *must* be thread-safe.
-
-**This dictionary is intentionally designed as a naive dictionary rather than a
-robust LRU cache,** for the same reasons that callables accepting hints are
-memoized by the :func:`beartype._util.cache.utilcachecall.callable_cached`
-rather than the :func:`functools.lru_cache` decorator. Why? Because:
-
-* The number of different type hints instantiated across even worst-case
-  codebases is negligible in comparison to the space consumed by those hints.
-* The :attr:`sys.modules` dictionary persists strong references to all
-  callables declared by previously imported modules. In turn, the
-  ``func.__annotations__`` dunder dictionary of each such callable persists
-  strong references to all type hints annotating that callable. In turn, these
-  two statements imply that type hints are *never* garbage collected but
-  instead persisted for the lifetime of the active Python process. Ergo,
-  temporarily caching hints in an LRU cache is pointless, as there are *no*
-  space savings in dropping stale references to unused hints.
-
-**This dictionary intentionally caches machine-readable representation strings
-hashes rather than alternative keys** (e.g., actual hashes). Why? Disambiguity.
-Although comparatively less efficient in both space and time to construct than
-hashes, the :func:`repr` strings produced for two dissimilar type hints *never*
-ambiguously collide unless an external caller maliciously modified one or more
-identifying dunder attributes of those hints (e.g., the ``__module__``,
-``__qualname__``, and/or ``__name__`` dunder attributes). That should *never*
-occur in production code. Meanwhile, the :func:`hash` values produced for two
-dissimilar type hints *commonly* ambiguously collide. This is why hashable
-containers (e.g., :class:`dict`, :class:`set`) explicitly handle hash table
-collisions and why we are *not* going to do so.
-'''
 
 # ....................{ COERCERS ~ root                    }....................
 #FIXME: Document mypy-specific coercion in the docstring as well, please.
 def coerce_func_hint_root(
     hint: object,
-    func: Callable,
-    pith_name: str,
+    arg_name: str,
+    bear_call: BeartypeCall,
     exception_prefix: str,
 ) -> object:
     '''
@@ -155,14 +95,14 @@ def coerce_func_hint_root(
     ----------
     hint : object
         Possibly PEP-noncompliant type hint to be possibly coerced.
-    func : Callable
-        Callable annotated by this hint.
-    pith_name : str
+    arg_name : str
         Either:
 
         * If this hint annotates a parameter of that callable, the name of that
           parameter.
         * If this hint annotates the return of that callable, ``"return"``.
+    bear_call : BeartypeCall
+        Decorated callable annotated by this hint.
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
@@ -176,16 +116,17 @@ def coerce_func_hint_root(
           type hint coerced from this hint.
         * Else, this hint as is unmodified.
     '''
-    assert callable(func), f'{repr(func)} not callable.'
-    assert isinstance(pith_name, str), f'{pith_name} not string.'
+    assert isinstance(arg_name, str), f'{arg_name} not string.'
+    assert bear_call.__class__ is BeartypeCall, (
+        f'{repr(bear_call)} not @beartype call.')
 
     # ..................{ MYPY                               }..................
     # If...
     if (
         # This hint annotates the return for the decorated callable *AND*...
-        pith_name == 'return' and
+        arg_name == 'return' and
         # The decorated callable is a binary dunder method (e.g., __eq__())...
-        func.__name__ in METHOD_NAMES_BINARY_DUNDER
+        bear_call.func_wrapper_name in METHOD_NAMES_BINARY_DUNDER
     ):
         # Expand this hint to accept both this hint *AND* the "NotImplemented"
         # singleton as valid returns from this method. Why? Because this
@@ -445,3 +386,63 @@ def coerce_hint_any(hint: object) -> Any:
 
     # Return this uncoerced hint as is.
     return hint
+
+# ....................{ PRIVATE ~ mappings                 }....................
+_HINT_REPR_TO_SINGLETON = CacheUnboundedStrong()
+'''
+**Type hint cache** (i.e., thread-safe cache mapping from the machine-readable
+representations of all non-self-cached type hints to cached singleton instances
+of those hints).**
+
+This cache caches:
+
+* :pep:`585`-compliant type hints, which do *not* cache themselves.
+* :pep:`604`-compliant unions, which do *not* cache themselves.
+
+This cache does *not* cache:
+
+* Type hints declared by the :mod:`typing` module, which implicitly cache
+  themselves on subscription thanks to inscrutable metaclass magic.
+* :pep:`563`-compliant **deferred type hints** (i.e., type hints persisted as
+  evaluable strings rather than actual type hints). Ideally, this cache would
+  cache the evaluations of *all* deferred type hints. Sadly, doing so is
+  infeasible in the general case due to global and local namespace lookups
+  (e.g., ``Dict[str, int]`` only means what you think it means if an
+  importation resembling ``from typing import Dict`` preceded that type hint).
+
+Design
+--------------
+**This dictionary is intentionally thread-safe.** Why? Because this dictionary
+is used to modify the ``__attributes__`` dunder variable of arbitrary callables.
+Since most such callables are either module- or class-scoped, that variable is
+effectively global. To prevent race conditions between competing threads
+contending over that variable, this dictionary *must* be thread-safe.
+
+**This dictionary is intentionally designed as a naive dictionary rather than a
+robust LRU cache,** for the same reasons that callables accepting hints are
+memoized by the :func:`beartype._util.cache.utilcachecall.callable_cached`
+rather than the :func:`functools.lru_cache` decorator. Why? Because:
+
+* The number of different type hints instantiated across even worst-case
+  codebases is negligible in comparison to the space consumed by those hints.
+* The :attr:`sys.modules` dictionary persists strong references to all
+  callables declared by previously imported modules. In turn, the
+  ``func.__annotations__`` dunder dictionary of each such callable persists
+  strong references to all type hints annotating that callable. In turn, these
+  two statements imply that type hints are *never* garbage collected but
+  instead persisted for the lifetime of the active Python process. Ergo,
+  temporarily caching hints in an LRU cache is pointless, as there are *no*
+  space savings in dropping stale references to unused hints.
+
+**This dictionary intentionally caches machine-readable representation strings
+hashes rather than alternative keys** (e.g., actual hashes). Why? Disambiguity.
+Although comparatively less efficient in both space and time to construct than
+hashes, the :func:`repr` strings produced for two dissimilar type hints *never*
+ambiguously collide unless an external caller maliciously modified one or more
+identifying dunder attributes of those hints (e.g., the ``__module__``,
+``__qualname__``, and/or ``__name__`` dunder attributes). That should *never*
+occur in production code. Meanwhile, the :func:`hash` values produced for two
+dissimilar type hints *commonly* ambiguously collide. This is why hashable
+containers (e.g., :class:`dict`, :class:`set`) explicitly handle hash table
+collisions and why we are *not* going to do so.
+'''

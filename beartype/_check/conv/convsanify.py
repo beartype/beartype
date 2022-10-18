@@ -13,70 +13,28 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Any
+from beartype._check.checkcall import BeartypeCall
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
-from beartype._util.hint.convert.utilconvcoerce import (
+from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
+from beartype._check.conv.convcoerce import (
     coerce_func_hint_root,
     coerce_hint_any,
     coerce_hint_root,
 )
-from beartype._util.hint.convert.utilconvreduce import reduce_hint
+from beartype._check.conv.convreduce import reduce_hint
 from beartype._util.hint.utilhinttest import die_unless_hint
-from collections.abc import Callable
-
-# ....................{ PRIVATE ~ mappings                 }....................
-_HINT_REPR_TO_HINT = CacheUnboundedStrong()
-'''
-**Type hint cache** (i.e., thread-safe cache mapping from the machine-readable
-representations of all non-self-cached type hints to those hints).**
-
-This cache caches:
-
-* :pep:`585`-compliant type hints, which do *not* cache themselves.
-
-This cache does *not* cache:
-
-* Type hints declared by the :mod:`typing` module, which implicitly cache
-  themselves on subscription thanks to inscrutable metaclass magic.
-* :pep:`563`-compliant **deferred type hints** (i.e., type hints persisted as
-  evaluable strings rather than actual type hints). Ideally, this cache would
-  cache the evaluations of *all* deferred type hints. Sadly, doing so is
-  infeasible in the general case due to global and local namespace lookups
-  (e.g., ``Dict[str, int]`` only means what you think it means if an
-  importation resembling ``from typing import Dict`` preceded that type hint).
-
-Design
---------------
-**This dictionary is intentionally thread-safe.** Why? Because this dictionary
-is used to modify the ``__attributes__`` dunder variable of arbitrary callables.
-Since most of those callables are either module- or class-scoped, that variable
-is effectively global. To prevent race conditions between competing threads
-contending over that global variable, this dictionary *must* be thread-safe.
-
-This dictionary is intentionally designed as a naive dictionary rather than a
-robust LRU cache, for the same reasons that callables accepting hints are
-memoized by the :func:`beartype._util.cache.utilcachecall.callable_cached`
-rather than the :func:`functools.lru_cache` decorator. Why? Because:
-
-* The number of different type hints instantiated across even worst-case
-  codebases is negligible in comparison to the space consumed by those hints.
-* The :attr:`sys.modules` dictionary persists strong references to all
-  callables declared by previously imported modules. In turn, the
-  ``func.__annotations__`` dunder dictionary of each such callable persists
-  strong references to all type hints annotating that callable. In turn, these
-  two statements imply that type hints are *never* garbage collected but
-  instead persisted for the lifetime of the active Python process. Ergo,
-  temporarily caching hints in an LRU cache is pointless, as there are *no*
-  space savings in dropping stale references to unused hints.
-'''
 
 # ....................{ SANIFIERS ~ root                   }....................
 #FIXME: Unit test us up, please.
 #FIXME: Revise docstring in accordance with recent dramatic improvements.
 def sanify_func_hint_root(
+    # Mandatory parameters.
     hint: object,
-    func: Callable,
-    pith_name: str,
-    exception_prefix: str,
+    arg_name: str,
+    bear_call: BeartypeCall,
+
+    # Optional parameters.
+    exception_prefix: str = EXCEPTION_PLACEHOLDER,
 ) -> object:
     '''
     PEP-compliant type hint sanified (i.e., sanitized) from the passed **root
@@ -118,16 +76,16 @@ def sanify_func_hint_root(
     ----------
     hint : object
         Possibly PEP-noncompliant root type hint to be sanified.
-    func : Callable
-        Callable that this hint directly annotates a parameter or return of.
-    pith_name : str
+    arg_name : str
         Either:
 
         * If this hint annotates a parameter, the name of that parameter.
         * If this hint annotates the return, ``"return"``.
-    exception_prefix : str
+    bear_call : BeartypeCall
+        Decorated callable directly annotated by this hint.
+    exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
-        exception message.
+        exception message. Defaults to :data:`EXCEPTION_PLACEHOLDER`.
 
     Returns
     ----------
@@ -156,11 +114,13 @@ def sanify_func_hint_root(
     # PEP-noncompliant type hint if this hint is coercible *OR* this hint as is
     # otherwise. Since the passed hint is *NOT* necessarily PEP-compliant,
     # perform this coercion *BEFORE* validating this hint to be PEP-compliant.
-    hint = func.__annotations__[pith_name] = coerce_func_hint_root(
-        hint=hint,
-        func=func,
-        pith_name=pith_name,
-        exception_prefix=exception_prefix,
+    hint = bear_call.func_wrappee.__annotations__[arg_name] = (
+        coerce_func_hint_root(
+            hint=hint,
+            arg_name=arg_name,
+            bear_call=bear_call,
+            exception_prefix=exception_prefix,
+        )
     )
 
     # If this object is neither a PEP-noncompliant type hint *NOR* supported
@@ -324,3 +284,49 @@ def sanify_hint_child(hint: object, exception_prefix: str) -> Any:
 
     # Return this hint reduced.
     return reduce_hint(hint, exception_prefix)
+
+# ....................{ PRIVATE ~ mappings                 }....................
+_HINT_REPR_TO_HINT = CacheUnboundedStrong()
+'''
+**Type hint cache** (i.e., thread-safe cache mapping from the machine-readable
+representations of all non-self-cached type hints to those hints).**
+
+This cache caches:
+
+* :pep:`585`-compliant type hints, which do *not* cache themselves.
+
+This cache does *not* cache:
+
+* Type hints declared by the :mod:`typing` module, which implicitly cache
+  themselves on subscription thanks to inscrutable metaclass magic.
+* :pep:`563`-compliant **deferred type hints** (i.e., type hints persisted as
+  evaluable strings rather than actual type hints). Ideally, this cache would
+  cache the evaluations of *all* deferred type hints. Sadly, doing so is
+  infeasible in the general case due to global and local namespace lookups
+  (e.g., ``Dict[str, int]`` only means what you think it means if an
+  importation resembling ``from typing import Dict`` preceded that type hint).
+
+Design
+--------------
+**This dictionary is intentionally thread-safe.** Why? Because this dictionary
+is used to modify the ``__attributes__`` dunder variable of arbitrary callables.
+Since most of those callables are either module- or class-scoped, that variable
+is effectively global. To prevent race conditions between competing threads
+contending over that global variable, this dictionary *must* be thread-safe.
+
+This dictionary is intentionally designed as a naive dictionary rather than a
+robust LRU cache, for the same reasons that callables accepting hints are
+memoized by the :func:`beartype._util.cache.utilcachecall.callable_cached`
+rather than the :func:`functools.lru_cache` decorator. Why? Because:
+
+* The number of different type hints instantiated across even worst-case
+  codebases is negligible in comparison to the space consumed by those hints.
+* The :attr:`sys.modules` dictionary persists strong references to all
+  callables declared by previously imported modules. In turn, the
+  ``func.__annotations__`` dunder dictionary of each such callable persists
+  strong references to all type hints annotating that callable. In turn, these
+  two statements imply that type hints are *never* garbage collected but
+  instead persisted for the lifetime of the active Python process. Ergo,
+  temporarily caching hints in an LRU cache is pointless, as there are *no*
+  space savings in dropping stale references to unused hints.
+'''

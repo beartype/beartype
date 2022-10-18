@@ -19,9 +19,8 @@
 |codecov-badge| |ci-badge| |rtd-badge|
 
 **Beartype** is an `open-source <beartype license_>`__ `PEP-compliant
-<Compliance_>`__ `near-real-time <beartype near-real-time_>`__ `pure-Python
-runtime type checker <Usage_>`__ emphasizing efficiency, usability, and
-thrilling puns.
+<Compliance_>`__ `near-real-time <beartype realtime_>`__ `pure-Python runtime
+type checker <Usage_>`__ emphasizing efficiency, usability, and thrilling puns.
 
 .. #FIXME: Once we actually receive a sponsor at this tier, please remove this
 .. #placeholder as well as the icon links below. kthx
@@ -560,7 +559,7 @@ check only a random integer nested in a single triply-nested list passed to
 each call of that function. This is the worst-case cost of a single call to a
 function decorated by an ``O(1)`` runtime type checker.
 
-.. _beartype near-real-time:
+.. _beartype realtime:
 
 What does "near-real-time" even mean?
 -------------------------------------
@@ -599,8 +598,8 @@ performance with a scheduler forcibly terminating tasks exceeding some deadline.
 That's bad in most use cases. The outrageous cost of enforcement harms
 real-world performance, stability, and usability.
 
-Thus NRT. It's like NFTs – only wonderful rather than mostly awful. That must be
-what the "F" stands for.
+Thus NRT. It's like an NFT – only wonderful rather than not. That must be what
+the "F" stands for.
 
 How do I type-check...
 ----------------------

@@ -69,7 +69,7 @@
 #
 #Note that implementing this reduction will require:
 #* Adding a new "cls_scope" (or something) instance variable to our
-#  "beartype._decor._decorcall.BeartypeCall" dataclass, defined as either:
+#  "beartype._check.checkcall.BeartypeCall" dataclass, defined as either:
 #  * "None" for non-method callables.
 #  * The type of the class lexically declaring the current method callable. Note
 #    that this type is trivially retrievable from C-based bound instance method
@@ -209,7 +209,7 @@
 #  thus never be the default.
 #
 #To differentiate between these three strategies, consider:
-#* Declare an enumeration in "beartype._decor._decorcall" resembling:
+#* Declare an enumeration in "beartype._check.checkcall" resembling:
 #    from enum import Enum
 #    BeartypeStrategyKind = Enum('BeartypeStrategyKind ('O1', 'Ologn', 'On',))
 #* Define a new "BeartypeCall.strategy_kind" instance variable.

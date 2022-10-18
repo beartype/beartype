@@ -453,7 +453,7 @@ def resolve_pep563(
                         # additional frames that we could technically ignore.
                         # These include:
                         # * The call to the parent
-                        #   beartype._decor._decorcall.BeartypeCall.reinit()
+                        #   beartype._check.checkcall.BeartypeCall.reinit()
                         #   method.
                         # * The call to the parent @beartype.beartype()
                         #   decorator.

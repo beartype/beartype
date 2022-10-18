@@ -400,7 +400,7 @@ def express_func_scope_type_forwardref(
     class that typically has yet to be declared) as a Python expression
     evaluating to this forward reference when accessed via the beartypistry
     singleton added as a new key-value pair of the passed dictionary, whose
-    key is the string :attr:`beartype._decor._wrapper.wrappermagic.ARG_NAME_TYPISTRY`
+    key is the string :attr:`beartype._check.checkmagic.ARG_NAME_TYPISTRY`
     and whose value is the beartypistry singleton.
 
     Parameters

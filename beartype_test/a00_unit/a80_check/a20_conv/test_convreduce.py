@@ -7,7 +7,7 @@
 Project-wide **PEP-agnostic type hint conversion utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.convert.utilconvreduce` submodule.
+:mod:`beartype._check.conv.convreduce` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,7 +20,7 @@ This submodule unit tests the public API of the private
 def test_reduce_hint() -> None:
     '''
     Test the private
-    :func:`beartype._util.hint.convert.utilconvreduce.reduce_hint` reducer.
+    :func:`beartype._check.conv.convreduce.reduce_hint` reducer.
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -31,7 +31,7 @@ def test_reduce_hint() -> None:
     )
     from beartype.vale import IsEqual
     from beartype._cave._cavefast import NoneType
-    from beartype._util.hint.convert.utilconvreduce import reduce_hint
+    from beartype._check.conv.convreduce import reduce_hint
     from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
     from beartype._util.hint.pep.proposal.utilpep593 import is_hint_pep593
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign

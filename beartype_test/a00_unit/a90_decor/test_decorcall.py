@@ -6,7 +6,7 @@
 '''
 **Beartype decorator dataclass unit tests.**
 
-This submodule unit tests the :func:`beartype._decor._decorcall` submodule.
+This submodule unit tests the :func:`beartype._check.checkcall` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -18,13 +18,13 @@ This submodule unit tests the :func:`beartype._decor._decorcall` submodule.
 # ....................{ TESTS                              }....................
 def test_beartypecall() -> None:
     '''
-    Test the :func:`beartype._decor._decorcall.BeartypeCall` dataclass.
+    Test the :func:`beartype._check.checkcall.BeartypeCall` dataclass.
     '''
 
     # Defer heavyweight imports.
     from beartype import BeartypeConf
     from beartype.roar import BeartypeDecorWrappeeException
-    from beartype._decor._decorcall import BeartypeCall
+    from beartype._check.checkcall import BeartypeCall
     from pytest import raises
 
     # Arbitrary beartype metadata.
@@ -39,20 +39,20 @@ def test_beartypecall() -> None:
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
             func='The fields, the lakes, the forests, and the streams,',
-            func_conf=BeartypeConf(),
+            conf=BeartypeConf(),
         )
 
     # Assert that reinitializing this metadata with a C-based builtin function
     # raises the expected exception.
     with raises(BeartypeDecorWrappeeException):
-        bear_data.reinit(func=iter, func_conf=BeartypeConf())
+        bear_data.reinit(func=iter, conf=BeartypeConf())
 
     # Assert that reinitializing this metadata with an invalid configuration
     # raises the expected exception.
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
             func=lambda: ...,
-            func_conf='Ocean, and all the living things that dwell',
+            conf='Ocean, and all the living things that dwell',
         )
 
     # Assert that reinitializing this metadata with invalid class stacks raises
@@ -60,12 +60,12 @@ def test_beartypecall() -> None:
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
             func=lambda: ...,
-            func_conf=BeartypeConf(),
+            conf=BeartypeConf(),
             cls_stack="Shine in the rushing torrents' restless gleam,",
         )
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
             func=lambda: ...,
-            func_conf=BeartypeConf(),
+            conf=BeartypeConf(),
             cls_stack=('Which from those secret chasms in tumult welling',),
         )

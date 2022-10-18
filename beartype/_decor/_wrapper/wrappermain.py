@@ -43,7 +43,7 @@ from beartype._decor._cache.cachetype import (
     bear_typistry,
     register_typistry_forwardref,
 )
-from beartype._decor._decorcall import BeartypeCall
+from beartype._check.checkcall import BeartypeCall
 from beartype._decor._wrapper.wrappersnip import (
     CODE_INIT_ARGS_LEN,
     CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
@@ -69,7 +69,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
     reduce_hint_pep484585_func_return)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     get_hint_pep484585_forwardref_classname_relative_to_object)
-from beartype._util.hint.convert.utilconvsanify import sanify_func_hint_root
+from beartype._check.conv.convsanify import sanify_func_hint_root
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.text.utiltextlabel import (
@@ -82,45 +82,6 @@ from collections.abc import (
     Callable,
     Iterable,
 )
-
-# ....................{ PRIVATE ~ constants                }....................
-#FIXME: Remove this set *AFTER* handling these kinds of parameters.
-_PARAM_KINDS_IGNORABLE = frozenset((
-    ArgKind.VAR_KEYWORD,
-))
-'''
-Frozen set of all :attr:`ArgKind` enumeration members to be ignored
-during annotation-based type checking in the :func:`beartype.beartype`
-decorator.
-
-This includes:
-
-* Constants specific to variadic keyword parameters (e.g., ``**kwargs``), which
-  are currently unsupported by :func:`beartype`.
-* Constants specific to positional-only parameters, which apply only to
-  non-pure-Python callables (e.g., defined by C extensions). The
-  :func:`beartype` decorator applies *only* to pure-Python callables, which
-  provide no syntactic means for specifying positional-only parameters.
-'''
-
-
-_PARAM_KINDS_POSITIONAL = frozenset((
-    ArgKind.POSITIONAL_ONLY,
-    ArgKind.POSITIONAL_OR_KEYWORD,
-))
-'''
-Frozen set of all **positional parameter kinds** (i.e.,
-:attr:`ArgKind` enumeration members signifying that a callable parameter
-either may *or* must be passed positionally).
-'''
-
-
-_RETURN_REPR = repr('return')
-'''
-Object representation of the magic string implying a return value in various
-Python objects (e.g., the ``__annotations__`` dunder dictionary of annotated
-callables).
-'''
 
 # ....................{ GENERATORS                         }....................
 def generate_code(
@@ -246,7 +207,7 @@ def generate_code(
         func_scope=bear_call.func_wrapper_scope,
         code_signature_format=CODE_SIGNATURE,
         code_signature_prefix=bear_call.func_wrapper_code_signature_prefix,
-        conf=bear_call.func_conf,
+        conf=bear_call.conf,
     )
 
     # Return Python code defining the wrapper type-checking this callable.
@@ -265,7 +226,46 @@ def generate_code(
         f'{code_check_return}'
     )
 
-# ....................{ PRIVATE ~ params                   }....................
+# ....................{ PRIVATE ~ constants                }....................
+#FIXME: Remove this set *AFTER* handling these kinds of parameters.
+_PARAM_KINDS_IGNORABLE = frozenset((
+    ArgKind.VAR_KEYWORD,
+))
+'''
+Frozen set of all :attr:`ArgKind` enumeration members to be ignored
+during annotation-based type checking in the :func:`beartype.beartype`
+decorator.
+
+This includes:
+
+* Constants specific to variadic keyword parameters (e.g., ``**kwargs``), which
+  are currently unsupported by :func:`beartype`.
+* Constants specific to positional-only parameters, which apply only to
+  non-pure-Python callables (e.g., defined by C extensions). The
+  :func:`beartype` decorator applies *only* to pure-Python callables, which
+  provide no syntactic means for specifying positional-only parameters.
+'''
+
+
+_PARAM_KINDS_POSITIONAL = frozenset((
+    ArgKind.POSITIONAL_ONLY,
+    ArgKind.POSITIONAL_OR_KEYWORD,
+))
+'''
+Frozen set of all **positional parameter kinds** (i.e.,
+:attr:`ArgKind` enumeration members signifying that a callable parameter
+either may *or* must be passed positionally).
+'''
+
+
+_RETURN_REPR = repr('return')
+'''
+Object representation of the magic string implying a return value in various
+Python objects (e.g., the ``__annotations__`` dunder dictionary of annotated
+callables).
+'''
+
+# ....................{ PRIVATE ~ args                     }....................
 def _code_check_args(bear_call: BeartypeCall) -> str:
     '''
     Generate a Python code snippet type-checking all annotated parameters of
@@ -381,7 +381,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 continue
             # Else, this parameter is non-ignorable.
 
-            # Either:
+            # Sanitize this hint to either:
             # * If this hint is PEP-noncompliant, the PEP-compliant type hint
             #   converted from this PEP-noncompliant type hint.
             # * Else if this hint is both PEP-compliant and supported, this hint
@@ -391,11 +391,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             #
             # Do this first *BEFORE* passing this hint to any further callables.
             hint = sanify_func_hint_root(
-                hint=hint,
-                func=bear_call.func_wrappee,
-                pith_name=arg_name,
-                exception_prefix=EXCEPTION_PLACEHOLDER,
-            )
+                hint=hint, arg_name=arg_name, bear_call=bear_call)
 
             # If this hint is ignorable, continue to the next parameter.
             #
@@ -570,7 +566,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                 func_call_prefix=bear_call.func_wrapper_code_call_prefix)
         # Else, this is *NOT* "typing.NoReturn". In this case...
         else:
-            # Either:
+            # Sanitize this hint to either:
             # * If this hint is PEP-noncompliant, the PEP-compliant type hint
             #   converted from this PEP-noncompliant type hint.
             # * Else if this hint is both PEP-compliant and supported, this hint
@@ -580,11 +576,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
             #
             # Do this first *BEFORE* passing this hint to any further callables.
             hint = sanify_func_hint_root(
-                hint=hint,
-                func=bear_call.func_wrappee,
-                pith_name='return',
-                exception_prefix=EXCEPTION_PLACEHOLDER,
-            )
+                hint=hint, arg_name='return', bear_call=bear_call)
 
             # If this PEP-compliant hint is unignorable, generate and return a
             # snippet type-checking this return against this hint.
