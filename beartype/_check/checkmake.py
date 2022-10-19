@@ -56,7 +56,7 @@ from beartype.roar import (
     BeartypeDecorHintForwardRefException,
 )
 from beartype.roar._roarexc import _BeartypeCheckException
-from beartype._conf import BeartypeConf
+from beartype._conf.confcls import BeartypeConf
 from beartype._data.datatyping import (
     CallableTester,
     TypeException,

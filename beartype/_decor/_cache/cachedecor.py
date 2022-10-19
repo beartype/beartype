@@ -33,10 +33,8 @@ from beartype._data.datatyping import (
     BeartypeableT,
 )
 from beartype._decor.decorcore import beartype_object
-from beartype._conf import (
-    BeartypeConf,
-    BeartypeStrategy,
-)
+from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confenum import BeartypeStrategy
 
 # ....................{ DECORATORS                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -21,7 +21,7 @@ from beartype._check.util._checkutilsnip import (
     CODE_SIGNATURE_ARG,
     CODE_INIT_RANDOM_INT,
 )
-from beartype._conf import BeartypeConf
+from beartype._conf.confcls import BeartypeConf
 from beartype._data.datatyping import (
     LexicalScope,
 )

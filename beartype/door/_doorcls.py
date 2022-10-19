@@ -35,7 +35,7 @@ from beartype.typing import (
     Union,
     overload,
 )
-from beartype._conf import BeartypeConf
+from beartype._conf.confcls import BeartypeConf
 from beartype._data.datatyping import CallableMethodGetitemArg
 from beartype._util.cache.utilcachecall import (
     callable_cached,

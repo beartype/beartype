@@ -21,7 +21,7 @@ from beartype.typing import (
     Tuple,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._conf import BeartypeConf
+from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,

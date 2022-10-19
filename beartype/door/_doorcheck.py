@@ -39,7 +39,7 @@ from beartype.roar import (
 from beartype.roar._roarexc import _BeartypeDoorTextException
 from beartype.typing import TYPE_CHECKING
 from beartype._check.checkmake import make_func_tester
-from beartype._conf import BeartypeConf
+from beartype._conf.confcls import BeartypeConf
 from beartype._decor._cache.cachedecor import beartype
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerror import reraise_exception_placeholder

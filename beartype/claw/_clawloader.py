@@ -24,7 +24,7 @@ from beartype.claw._clawast import BeartypeNodeTransformer
 from beartype.claw._clawregistrar import get_package_conf_if_registered
 from beartype.meta import VERSION
 from beartype.typing import Optional
-from beartype._conf import BeartypeConfOrNone
+from beartype._conf.confcls import BeartypeConf
 from importlib import (  # type: ignore[attr-defined]
     _bootstrap_external,  # pyright: ignore[reportGeneralTypeIssues]
 )
@@ -250,7 +250,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         super().__init__(*args, **kwargs)
 
         # Nullify all subclass-specific instance variables for safety.
-        self._module_conf_if_registered: BeartypeConfOrNone = None
+        self._module_conf_if_registered: Optional[BeartypeConf] = None
 
     # ..................{ LOADER API                         }..................
     # The importlib._bootstrap_external.*Loader API declares the low-level

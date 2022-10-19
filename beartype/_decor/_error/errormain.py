@@ -81,7 +81,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._conf import BeartypeConf
+from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,

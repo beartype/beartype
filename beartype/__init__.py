@@ -49,8 +49,8 @@ from sys import modules as _modules
 # "beartype.meta" is the *ONLY* "beartype" submodule guaranteed to be safely
 # importable at install time. All other "beartype" submodules should be assumed
 # to be unsafe due to potentially importing one or more optional runtime
-# dependencies yet to be installed (e.g., "typing_extensions" package). See
-# "setup.py" for further details.
+# dependencies yet to be installed (e.g., "typing_extensions"). See "setup.py"
+# for gruesome details you did not want to know about.
 if 'beartype.__is_installing__' not in _modules:
     # Publicize the private @beartype._decor.beartype decorator as
     # @beartype.beartype, preserving all implementation details as private.
@@ -60,8 +60,10 @@ if 'beartype.__is_installing__' not in _modules:
 
     # Publicize all top-level configuration attributes required to configure the
     # @beartype.beartype decorator.
-    from beartype._conf import (
+    from beartype._conf.confcls import (
         BeartypeConf as BeartypeConf,
+    )
+    from beartype._conf.confenum import (
         BeartypeStrategy as BeartypeStrategy,
     )
 # Else, this submodule is *NOT* being imported at install time.

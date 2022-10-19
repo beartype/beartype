@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._conf import BeartypeConf
+from beartype._conf.confcls import BeartypeConf
 from beartype._util.os.utilostty import is_stdout_terminal
 from beartype._util.text.utiltextansi import (
     ANSI_RESET,

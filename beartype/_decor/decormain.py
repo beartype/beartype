@@ -20,7 +20,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import TYPE_CHECKING
-from beartype._conf import BeartypeConf
+from beartype._conf.confcls import BeartypeConf
 from beartype._data.datatyping import (
     BeartypeConfedDecorator,
     BeartypeReturn,

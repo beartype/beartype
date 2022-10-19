@@ -4,15 +4,14 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator configuration API** (i.e., enumerations, classes,
-singletons, and other attributes enabling external callers to selectively
-configure the :func:`beartype` decorator on a fine-grained per-decoration call
-basis).
+**Beartype configuration class hierarchy** (i.e., public dataclasses defining
+beartype's configuration API, enabling end users to selectively configure
+:mod:`beartype` with optional runtime type-checking behaviours).
 
 Most of the public attributes defined by this private submodule are explicitly
-exported to external callers in our top-level :mod:`beartype.__init__`
-submodule. This private submodule is *not* intended for direct importation by
-downstream callers.
+exported to external users in our top-level :mod:`beartype.__init__` submodule.
+This private submodule is *not* intended for direct importation by downstream
+callers.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -23,73 +22,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from enum import (
-    Enum,
-    auto as next_enum_member_value,
-    unique as die_unless_enum_member_values_unique,
-)
-
-# ....................{ ENUMERATIONS                       }....................
-#FIXME: Document us up in "README.rst", please.
-@die_unless_enum_member_values_unique
-class BeartypeStrategy(Enum):
-    '''
-    Enumeration of all kinds of **type-checking strategies** (i.e., competing
-    procedures for type-checking objects passed to or returned from
-    :func:`beartype.beartype`-decorated callables, each with concomitant
-    tradeoffs with respect to runtime complexity and quality assurance).
-
-    Strategies are intentionally named according to `conventional Big O
-    notation <Big O_>`__ (e.g., :attr:`BeartypeStrategy.On` enables the
-    ``O(n)`` strategy). Strategies are established per-decoration at the
-    fine-grained level of callables decorated by the :func: `beartype.beartype`
-    decorator by either:
-
-    * Calling a high-level convenience decorator establishing that strategy
-      (e.g., :func:`beartype.conf.beartype_On`, enabling the ``O(n)`` strategy
-      for all callables decorated by that decorator).
-    * Setting the :attr:`BeartypeConfiguration.strategy` variable of the
-      :attr:`BeartypeConfiguration` object passed as the optional ``conf``
-      parameter to the lower-level core :func: `beartype.beartype` decorator.
-
-    Strategies enforce and guarantee their corresponding runtime complexities
-    (e.g., ``O(n)``) across all type checks performed for all callables
-    enabling those strategies. For example, a callable decorated with the
-    :attr:`BeartypeStrategy.On` strategy will exhibit linear runtime complexity
-    as its type-checking overhead.
-
-    .. _Big O:
-       https://en.wikipedia.org/wiki/Big_O_notation
-
-    Attributes
-    ----------
-    O0 : EnumMemberType
-        **No-time strategy** (i.e, disabling type-checking for a decorated
-        callable by reducing :func:`beartype.beartype` to the identity
-        decorator for that callable). Although seemingly useless, this strategy
-        enables users to selectively blacklist (prevent) callables from being
-        type-checked by our as-yet-unimplemented import hook. When implemented,
-        that hook will type-check all callables within a package or module
-        *except* those callables explicitly decorated by this strategy.
-    O1 : EnumMemberType
-        **Constant-time strategy** (i.e., the default ``O(1)`` strategy,
-        type-checking a single randomly selected item of each container). As
-        the default, this strategy need *not* be explicitly enabled.
-    Ologn : EnumMemberType
-        **Logarithmic-time strategy** (i.e., the ``O(log n)` strategy,
-        type-checking a randomly selected number of items ``log(len(obj))`` of
-        each container ``obj``). This strategy is **currently unimplemented.**
-        (*To be implemented by a future beartype release.*)
-    On : EnumMemberType
-        **Linear-time strategy** (i.e., an ``O(n)`` strategy, type-checking
-        *all* items of a container). This strategy is **currently
-        unimplemented.** (*To be implemented by a future beartype release.*)
-    '''
-
-    O0 = next_enum_member_value()
-    O1 = next_enum_member_value()
-    Ologn = next_enum_member_value()
-    On = next_enum_member_value()
+from beartype._conf.confenum import BeartypeStrategy
 
 # ....................{ CLASSES                            }....................
 #FIXME: Document us up in "README.rst", please.
@@ -103,7 +36,7 @@ class BeartypeConf(object):
 
     Attributes
     ----------
-    is_color : Optional[bool]
+    _is_color : Optional[bool]
         Tri-state boolean governing how and whether beartype colours
         **type-checking violations** (i.e.,
         :class:`beartype.roar.BeartypeCallHintViolation` exceptions) with
@@ -118,11 +51,11 @@ class BeartypeConf(object):
           raised by callables configured with this configuration only when
           standard output is attached to an interactive terminal.
     _is_debug : bool, optional
-        ``True`` only if the :func:`beartype.beartype` decorator prints to
-        standard output the definition (including both signature and body) of
-        the type-checking wrapper function dynamically generated for the
-        decorated callable. This is mostly intended for internal debugging,
-        documentation, and optimization purposes.
+        ``True`` only if debugging :mod:`beartype`. See also the :meth:`__new__`
+        method docstring.
+    _is_pep484_tower : bool, optional
+        ``True`` only if enabling support for the :pep:`484`-compliant
+        implicit numeric tower. See also the :meth:`__new__` method docstring.
     _strategy : BeartypeStrategy, optional
         **Type-checking strategy** (i.e., :class:`BeartypeStrategy` enumeration
         member) with which to implement all type-checks in the wrapper function
@@ -149,6 +82,7 @@ class BeartypeConf(object):
     __slots__ = (
         '_is_color',
         '_is_debug',
+        '_is_pep484_tower',
         '_strategy',
     )
 
@@ -157,6 +91,7 @@ class BeartypeConf(object):
     if TYPE_CHECKING:
         _is_color: Optional[bool]
         _is_debug: bool
+        _is_pep484_tower: bool
         _strategy: BeartypeStrategy
 
     # ..................{ INSTANTIATORS                      }..................
@@ -176,6 +111,7 @@ class BeartypeConf(object):
         *,
         is_color: Optional[bool] = None,
         is_debug: bool = False,
+        is_pep484_tower: bool = False,
         strategy: BeartypeStrategy = BeartypeStrategy.O1,
     ) -> 'BeartypeConf':
         '''
@@ -215,14 +151,18 @@ class BeartypeConf(object):
 
             Defaults to ``None``.
         is_debug : bool, optional
-            ``True`` only if the :func:`beartype.beartype` decorator prints to
-            standard output the definition (including signature and body) of
-            the type-checking wrapper function dynamically generated for the
-            decorated callable. This is mostly intended for internal debugging,
-            documentation, and optimization purposes. Defaults to ``False``.
-            Specifically, enabling this parameter instructs :mod:`beartype` to:
+            ``True`` only if debugging :mod:`beartype` by:
 
-            * Append to the declaration of each **hidden parameter** (i.e.,
+            * Printing the definition (including both the signature and body) of
+              each type-checking wrapper function dynamically generated by
+              :mod:`beartype` to standard output.
+            * Caching the body of each type-checking wrapper function
+              dynamically generated by :mod:`beartype` with the standard
+              :mod:`linecache` module, enabling these function bodies to be
+              introspected at runtime *and* improving the readability of
+              tracebacks whose call stacks contain one or more calls to these
+              :func:`beartype.beartype`-decorated functions.
+            * Appending to the declaration of each **hidden parameter** (i.e.,
               whose name is prefixed by ``"__beartype_"`` and whose value is
               that of an external attribute internally referenced in the body of
               that function) the machine-readable representation of the initial
@@ -232,6 +172,28 @@ class BeartypeConf(object):
               called to do so is shockingly slow, these substrings are
               conditionally embedded in the returned signature *only* when
               enabling this boolean.
+        is_pep484_tower : bool, optional
+            ``True`` only if enabling support for the :pep:`484`-compliant
+            **implicit numeric tower** (i.e., lossy conversion of integers to
+            floating-point numbers as well as both integers and floating-point
+            numbers to complex numbers). Specifically, enabling this instructs
+            :mod:`beartype` to automatically expand:
+
+            * All :class:`float` type hints to ``float | int``, thus implicitly
+              accepting both integers and floating-point numbers for objects
+              annotated as only accepting floating-point numbers.
+            * All :class:`complex` type hints to ``complex | float | int``, thus
+              implicitly accepting integers, floating-point, and complex numbers
+              for objects annotated as only accepting complex numbers.
+
+            Defaults to ``False`` to minimize precision error introduced by
+            lossy conversions from integers to floating-point numbers to complex
+            numbers. Since most integers do *not* have exact representations
+            as floating-point numbers, each conversion of an integer into a
+            floating-point number typically introduces a small precision error
+            that accumulates over multiple conversions and operations into a
+            larger precision error. Enabling this improves the usability of
+            public APIs at a cost of introducing precision errors.
         strategy : BeartypeStrategy, optional
             **Type-checking strategy** (i.e., :class:`BeartypeStrategy`
             enumeration member) with which to implement all type-checks in the
@@ -246,10 +208,12 @@ class BeartypeConf(object):
 
         Raises
         ----------
-        :exc:`BeartypeConfException`
+        BeartypeConfException
             If either:
 
+            * ``is_color`` is *not* a tri-state boolean.
             * ``is_debug`` is *not* a boolean.
+            * ``is_pep484_tower`` is *not* a boolean.
             * ``strategy`` is *not* a :class:`BeartypeStrategy` enumeration
               member.
         '''
@@ -261,6 +225,7 @@ class BeartypeConf(object):
         beartype_conf_args = (
             is_color,
             is_debug,
+            is_pep484_tower,
             strategy,
         )
 
@@ -288,6 +253,14 @@ class BeartypeConf(object):
             )
         # Else, "is_debug" is a boolean.
         #
+        # If "is_pep484_tower" is *NOT* a boolean, raise an exception.
+        elif not isinstance(is_pep484_tower, bool):
+            raise BeartypeConfException(
+                f'Beartype configuration parameter "is_pep484_tower" '
+                f'value {repr(is_debug)} not boolean.'
+            )
+        # Else, "is_pep484_tower" is a boolean.
+        #
         # If "strategy" is *NOT* an enumeration member, raise an exception.
         elif not isinstance(strategy, BeartypeStrategy):
             raise BeartypeConfException(
@@ -303,6 +276,7 @@ class BeartypeConf(object):
         # Classify all passed parameters with this configuration.
         self._is_color = is_color
         self._is_debug = is_debug
+        self._is_pep484_tower = is_pep484_tower
         self._strategy = strategy
 
         # Cache this configuration.
@@ -339,16 +313,30 @@ class BeartypeConf(object):
     @property
     def is_debug(self) -> bool:
         '''
-        ``True`` only if the :func:`beartype.beartype` decorator prints to
-        standard output the definition (including both signature and body) of
-        the type-checking wrapper function dynamically generated for the
-        decorated callable.
+        ``True`` only if debugging :mod:`beartype`.
 
-        This is mostly intended for internal debugging, documentation, and
-        optimization purposes.
+        See Also
+        ----------
+        :meth:`__new__`
+            Further details.
         '''
 
         return self._is_debug
+
+
+    @property
+    def is_pep484_tower(self) -> bool:
+        '''
+        ``True`` only if enabling support for the :pep:`484`-compliant
+        implicit numeric tower.
+
+        See Also
+        ----------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._is_pep484_tower
 
 
     @property
@@ -397,6 +385,7 @@ class BeartypeConf(object):
             return (
                 self._is_color == other._is_color and
                 self._is_debug == other._is_debug and
+                self._is_pep484_tower == other._is_pep484_tower and
                 self._strategy == other._strategy
             )
         # Else, this other object is *NOT* also a beartype configuration.
@@ -433,6 +422,7 @@ class BeartypeConf(object):
         return hash((
             self._is_color,
             self._is_debug,
+            self._is_pep484_tower,
             self._strategy,
         ))
 
@@ -453,15 +443,10 @@ class BeartypeConf(object):
             f'{self.__class__.__name__}('
             f'is_color={repr(self._is_color)}, '
             f'is_debug={repr(self._is_debug)}, '
+            f'is_pep484_tower={repr(self._is_pep484_tower)}, '
             f'strategy={repr(self._strategy)}'
             f')'
         )
-
-# ....................{ HINTS                              }....................
-BeartypeConfOrNone = Optional[BeartypeConf]
-'''
-PEP-compliant type hint matching either a beartype configuration *or* ``None``.
-'''
 
 # ....................{ PRIVATE ~ globals                  }....................
 _BEARTYPE_CONF_ARGS_TO_CONF: Dict[tuple, BeartypeConf] = {}

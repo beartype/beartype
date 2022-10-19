@@ -24,10 +24,7 @@ from beartype.typing import (
     Optional,
     Union,
 )
-from beartype._conf import (
-    BeartypeConf,
-    BeartypeConfOrNone,
-)
+from beartype._conf.confcls import BeartypeConf
 from beartype._util.text.utiltextident import is_identifier
 from collections.abc import Iterable as IterableABC
 from contextlib import contextmanager
@@ -59,7 +56,7 @@ def is_packages_registered_any() -> bool:
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
-def get_package_conf_if_registered(package_name: str) -> BeartypeConfOrNone:
+def get_package_conf_if_registered(package_name: str) -> Optional[BeartypeConf]:
     '''
     Beartype configuration with which to type-check the package with the passed
     name if either that package or a parent package of that package has been
