@@ -443,7 +443,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 code_param_check_pith,
                 func_wrapper_scope,
                 hint_forwardrefs_class_basename,
-            ) = make_func_wrapper_code(hint)
+            ) = make_func_wrapper_code(hint, bear_call.conf)
 
             # Merge the local scope required to check this parameter into the
             # local scope currently required by the current wrapper function.
@@ -591,7 +591,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                     code_return_check_pith,
                     func_wrapper_scope,
                     hint_forwardrefs_class_basename,
-                ) = make_func_wrapper_code(hint)  # type: ignore[assignment]
+                ) = make_func_wrapper_code(hint, bear_call.conf)  # type: ignore[assignment]
 
                 # Merge the local scope required to type-check this return into
                 # the local scope currently required by the current wrapper

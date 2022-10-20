@@ -55,24 +55,27 @@ from beartype.roar import (
     BeartypeConfException,
     BeartypeDecorHintForwardRefException,
 )
-from beartype.roar._roarexc import _BeartypeCheckException
-from beartype._conf.confcls import BeartypeConf
+# from beartype.roar._roarexc import _BeartypeCheckException
+from beartype._conf.confcls import (
+    BEARTYPE_CONF_DEFAULT,
+    BeartypeConf,
+)
 from beartype._data.datatyping import (
     CallableTester,
-    TypeException,
+    # TypeException,
 )
 from beartype._check.checkmagic import (
     FUNC_TESTER_NAME_PREFIX,
 )
+from beartype._check.conv.convsanify import sanify_hint_root
+from beartype._check.expr.exprmake import make_check_expr
 from beartype._check.util.checkutilmake import make_func_signature
 from beartype._check._checksnip import (
     FUNC_TESTER_CODE_RETURN,
     FUNC_TESTER_CODE_SIGNATURE,
 )
-from beartype._check.expr.exprmake import make_check_expr
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
-from beartype._check.conv.convsanify import sanify_hint_root
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from itertools import count
@@ -114,7 +117,7 @@ def make_func_tester(
     hint: object,
 
     # Optional parameters.
-    conf: BeartypeConf = BeartypeConf(),
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
 ) -> CallableTester:
     '''
     **Type-checking tester function factory** (i.e., low-level callable
@@ -192,7 +195,11 @@ def make_func_tester(
     #   nor a supported PEP-compliant hint).
     #
     # Do this first *BEFORE* passing this hint to any further callables.
-    hint = sanify_hint_root(hint=hint, exception_prefix=EXCEPTION_PLACEHOLDER)
+    hint = sanify_hint_root(
+        hint=hint,
+        conf=conf,
+        exception_prefix=EXCEPTION_PLACEHOLDER,
+    )
 
     # If this hint is ignorable, all objects satisfy this hint. In this case,
     # return the trivial tester function unconditionally returning true.
@@ -206,7 +213,7 @@ def make_func_tester(
         code_check_expr,
         func_scope,
         hint_forwardrefs_class_basename,
-    ) = make_check_expr(hint)
+    ) = make_check_expr(hint, conf)
 
     # If this hint contains one or more relative forward references, this hint
     # is non-portable across lexical scopes. Why? Because this hint is relative

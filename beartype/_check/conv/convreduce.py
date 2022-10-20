@@ -14,6 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Any
 from beartype._cave._cavefast import NoneType
+from beartype._conf.confcls import (
+    BEARTYPE_CONF_DEFAULT,
+    BeartypeConf,
+)
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignDataclassInitVar,
@@ -37,7 +41,11 @@ from collections.abc import Mapping
 #FIXME: Improve documentation to list all reductions performed by this reducer.
 #Sadly, this documentation is currently quite out-of-date. What? It happens!
 @callable_cached
-def reduce_hint(hint: Any, exception_prefix: str) -> object:
+def reduce_hint(
+    hint: Any,
+    conf: BeartypeConf,
+    exception_prefix: str,
+) -> object:
     '''
     Lower-level type hint reduced (i.e., converted) from the passed higher-level
     type hint if this hint is reducible *or* this hint as is otherwise (i.e., if
@@ -60,6 +68,9 @@ def reduce_hint(hint: Any, exception_prefix: str) -> object:
     ----------
     hint : Any
         Type hint to be possibly reduced.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object).
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
@@ -80,6 +91,7 @@ def reduce_hint(hint: Any, exception_prefix: str) -> object:
         :func:`beartype._util.hint.pep.mod.utilmodnumpy.reduce_hint_numpy_ndarray`
         function for further details.
     '''
+    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
 
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.
@@ -90,14 +102,26 @@ def reduce_hint(hint: Any, exception_prefix: str) -> object:
     # alternatives (that are more readily readable and maintainable) do exist,
     # these alternatives all appear to be substantially less efficient.
     #
-    # ..................{ NON-PEP                           }..................
-    # If this hint is unidentifiable, return this hint as is unmodified.
+    # ..................{ NON-PEP                            }..................
+    # If this hint is unidentifiable...
     #
     # Since this includes *ALL* isinstanceable classes (including both
     # user-defined classes and builtin types), this is *ALWAYS* detected first.
     if hint_sign is None:
+        #FIXME: Unit test us up, please.
+        #FIXME: Implement us up, please.
+        # If this configuration enables support for the PEP 484-compliant implicit
+        # numeric tower *AND* this hint is either the standard "float" or "complex"
+        # classes governed by this tower...
+        #
+        # These classes are excruciatingly common and thus detected very early.
+        # if (hint is float or hint is complex):
+
+        # Else, this hint is truly unidentifiable.
+
+        # Return this hint as is unmodified.
         return hint
-    # ..................{ PEP 484 ~ none                     }..................
+    # ..................{ PEP 484                            }..................
     # If this is the PEP 484-compliant "None" singleton, reduce this hint to
     # the type of that singleton. While *NOT* explicitly defined by the
     # "typing" module, PEP 484 explicitly supports this singleton:
@@ -108,8 +132,7 @@ def reduce_hint(hint: Any, exception_prefix: str) -> object:
     # "return" statement and thus absurdly common. Ergo, detect this early.
     elif hint is None:
         hint = NoneType
-    # ..................{ PEP 484 ~ typevar                  }..................
-    #FIXME: Remove this *AFTER* deeply type-checking type variables.
+    #FIXME: Remove this branch *AFTER* deeply type-checking type variables.
     # If this is a PEP 484-compliant type variable...
     #
     # Type variables are excruciatingly common and thus detected very early.

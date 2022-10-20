@@ -185,6 +185,7 @@ class CauseSleuth(object):
         # @beartype (e.g., "typing.Annotated[numpy.ndarray, beartype.vale.*]").
         hint = sanify_hint_child(
             hint=hint,
+            conf=self.conf,
             exception_prefix=self.exception_prefix,
         )
 

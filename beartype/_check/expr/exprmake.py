@@ -71,6 +71,7 @@ from beartype._check.expr._exprsnip import (
     PEP593_CODE_HINT_VALIDATOR_PREFIX,
     PEP593_CODE_HINT_VALIDATOR_SUFFIX,
 )
+from beartype._conf.confcls import BeartypeConf
 from beartype._data.datatyping import CodeGenerated
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoollistfixed import (
@@ -155,6 +156,7 @@ from random import getrandbits
 def make_check_expr(
     # ..................{ PARAMS ~ mandatory                 }..................
     hint: object,
+    conf: BeartypeConf,
 
     # ..................{ PARAMS ~ optional                  }..................
     # Globals defined above, declared as optional parameters for efficient
@@ -256,6 +258,9 @@ def make_check_expr(
     ----------
     hint : object
         PEP-compliant type hint to be type-checked.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object).
 
     Returns
     ----------
@@ -627,7 +632,10 @@ def make_check_expr(
         # *NOT* be inefficiently resanified here.
         if hints_meta_index_curr:
             hint_curr = sanify_hint_child(
-                hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
+                hint=hint_curr,
+                conf=conf,
+                exception_prefix=_EXCEPTION_PREFIX,
+            )
         # Else, this is the already sanified root hint.
 
         #FIXME: Comment this sanity check out after we're sufficiently

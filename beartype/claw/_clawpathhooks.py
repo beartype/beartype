@@ -42,7 +42,10 @@ from beartype.typing import (
     Optional,
     Union,
 )
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcls import (
+    BEARTYPE_CONF_DEFAULT,
+    BeartypeConf,
+)
 from beartype._util.func.utilfunccodeobj import (
     FUNC_CODEOBJ_NAME_MODULE,
     get_func_codeobj,
@@ -67,7 +70,7 @@ from types import (
 def beartype_all(
     # Optional keyword-only parameters.
     *,
-    conf: BeartypeConf = BeartypeConf(),
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
 ) -> None:
     '''
     Register a new **universal beartype import path hook** (i.e., callable
@@ -185,7 +188,7 @@ def beartype_package(
 
     # Optional keyword-only parameters.
     *,
-    conf: BeartypeConf = BeartypeConf(),
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
 ) -> None:
     '''
     Register a new **package-specific beartype import path hook** (i.e.,

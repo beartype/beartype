@@ -35,7 +35,10 @@ from beartype.typing import (
     Union,
     overload,
 )
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcls import (
+    BEARTYPE_CONF_DEFAULT,
+    BeartypeConf,
+)
 from beartype._data.datatyping import CallableMethodGetitemArg
 from beartype._util.cache.utilcachecall import (
     callable_cached,
@@ -496,7 +499,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         # Optional keyword-only parameters.
         *,
-        conf: BeartypeConf = BeartypeConf(),
+        conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     ) -> None:
         '''
         Raise an exception if the passed arbitrary object violates this type
@@ -530,7 +533,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         '''
 
         # One-liner, one love, one heart. Let's get together and code alright.
-        die_if_unbearable(obj, self._hint, conf=conf)
+        die_if_unbearable(obj=obj, hint=self._hint, conf=conf)
 
 
     #FIXME: Submit an upstream mypy issue. Since mypy correctly accepts our
@@ -549,7 +552,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         obj: object,
 
         # Optional keyword-only parameters.
-        *, conf: BeartypeConf = BeartypeConf(),
+        *, conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     ) -> TypeGuard[T]:
         '''
         ``True`` only if the passed arbitrary object satisfies this type hint
@@ -588,7 +591,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         '''
 
         # One-liners justify their own existence.
-        return is_bearable(obj, self._hint, conf=conf)
+        return is_bearable(obj=obj, hint=self._hint, conf=conf)
 
     # ..................{ TESTERS ~ subhint                  }..................
     @callable_cached

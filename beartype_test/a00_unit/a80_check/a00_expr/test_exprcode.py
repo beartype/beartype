@@ -25,7 +25,11 @@ def test_make_check_code_decoration() -> None:
 
     # Defer heavyweight imports.
     from beartype._check.expr.exprmake import make_check_expr
+    from beartype._conf.confcls import BEARTYPE_CONF_DEFAULT
 
     # Assert this function generates identical code for identical hints and is
     # thus cached via memoization.
-    assert make_check_expr(str) is make_check_expr(str)
+    assert (
+        make_check_expr(str, BEARTYPE_CONF_DEFAULT) is
+        make_check_expr(str, BEARTYPE_CONF_DEFAULT)
+    )

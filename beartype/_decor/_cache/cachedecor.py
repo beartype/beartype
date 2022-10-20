@@ -27,14 +27,17 @@ from beartype.typing import (
     Dict,
     Optional,
 )
+from beartype._conf.confcls import (
+    BEARTYPE_CONF_DEFAULT,
+    BeartypeConf,
+)
+from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.datatyping import (
     BeartypeConfedDecorator,
     BeartypeReturn,
     BeartypeableT,
 )
 from beartype._decor.decorcore import beartype_object
-from beartype._conf.confcls import BeartypeConf
-from beartype._conf.confenum import BeartypeStrategy
 
 # ....................{ DECORATORS                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -50,15 +53,15 @@ def beartype(
 
     # Optional keyword-only parameters.
     *,
-    conf: BeartypeConf = BeartypeConf(),
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
 ) -> BeartypeReturn:
 
-    # If this configuration is *NOT* a configuration, raise an exception.
+    # If "conf" is *NOT* a configuration, raise an exception.
     if not isinstance(conf, BeartypeConf):
         raise BeartypeConfException(
             f'{repr(conf)} not beartype configuration.')
-    # Else, this configuration is a configuration.
-
+    # Else, "conf" is a configuration.
+    #
     # If passed an object to be decorated, this decorator is in decoration
     # rather than configuration mode. In this case, decorate this object with
     # type-checking configured by this configuration.
@@ -71,7 +74,7 @@ def beartype(
     # decorator overloads declared above. Nonetheless, we're largely permissive
     # here; callers that are doing this are sufficiently intelligent to be
     # trusted to violate PEP 561-compliance if they so choose. So... *shrug*
-    if obj is not None:
+    elif obj is not None:
         return beartype_object(obj, conf)
     # Else, we were passed *NO* object to be decorated. In this case, this
     # decorator is in configuration rather than decoration mode.
@@ -92,10 +95,10 @@ def beartype(
         return beartype_confed_cached
     # Else, this is the first call to this public decorator passed this
     # configuration in configuration mode.
-
+    #
     # If this configuration enables the no-time strategy performing *NO*
     # type-checking, define only the identity decorator reducing to a noop.
-    if conf.strategy is BeartypeStrategy.O0:
+    elif conf.strategy is BeartypeStrategy.O0:
         #FIXME: This requires augmentation. We can't just return a pure
         #identity decorator. Instead, we need to return a minimal
         #quasi-identity decorator that:

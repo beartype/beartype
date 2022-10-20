@@ -14,14 +14,15 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Any
 from beartype._check.checkcall import BeartypeCall
-from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
-from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
 from beartype._check.conv.convcoerce import (
     coerce_func_hint_root,
     coerce_hint_any,
     coerce_hint_root,
 )
 from beartype._check.conv.convreduce import reduce_hint
+from beartype._conf.confcls import BeartypeConf
+from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
+from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
 from beartype._util.hint.utilhinttest import die_unless_hint
 
 # ....................{ SANIFIERS ~ root                   }....................
@@ -154,7 +155,7 @@ def sanify_func_hint_root(
     #
     # Note that parameters are intentionally passed positionally to both
     # optimize memoization efficiency and circumvent memoization warnings.
-    hint = reduce_hint(hint, exception_prefix)
+    hint = reduce_hint(hint, bear_call.conf, exception_prefix)
 
     # Return this sanified hint.
     return hint
@@ -162,7 +163,11 @@ def sanify_func_hint_root(
 
 #FIXME: Unit test us up, please.
 #FIXME: Revise docstring in accordance with recent dramatic improvements.
-def sanify_hint_root(hint: object, exception_prefix: str) -> object:
+def sanify_hint_root(
+    hint: object,
+    conf: BeartypeConf,
+    exception_prefix: str,
+) -> object:
     '''
     PEP-compliant type hint sanified (i.e., sanitized) from the passed **root
     type hint** (i.e., possibly PEP-noncompliant type hint that has *no* parent
@@ -202,6 +207,9 @@ def sanify_hint_root(hint: object, exception_prefix: str) -> object:
     ----------
     hint : object
         Possibly PEP-noncompliant root type hint to be sanified.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object).
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
@@ -244,13 +252,17 @@ def sanify_hint_root(hint: object, exception_prefix: str) -> object:
     # Reduce this hint to a lower-level PEP-compliant type hint if this hint is
     # reducible *OR* this hint as is otherwise. See
     # sanify_func_hint_root() for further commentary.
-    hint = reduce_hint(hint, exception_prefix)
+    hint = reduce_hint(hint, conf, exception_prefix)
 
     # Return this sanified hint.
     return hint
 
 # ....................{ SANIFIERS ~ child                  }....................
-def sanify_hint_child(hint: object, exception_prefix: str) -> Any:
+def sanify_hint_child(
+    hint: object,
+    conf: BeartypeConf,
+    exception_prefix: str,
+) -> Any:
     '''
     PEP-compliant type hint sanified (i.e., sanitized) from the passed
     **PEP-compliant child type hint** (i.e., hint transitively subscripting the
@@ -262,6 +274,9 @@ def sanify_hint_child(hint: object, exception_prefix: str) -> Any:
     ----------
     hint : object
         PEP-compliant type hint to be sanified.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object).
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
@@ -283,7 +298,7 @@ def sanify_hint_child(hint: object, exception_prefix: str) -> Any:
     hint = coerce_hint_any(hint)
 
     # Return this hint reduced.
-    return reduce_hint(hint, exception_prefix)
+    return reduce_hint(hint, conf, exception_prefix)
 
 # ....................{ PRIVATE ~ mappings                 }....................
 _HINT_REPR_TO_HINT = CacheUnboundedStrong()

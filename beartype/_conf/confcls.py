@@ -461,3 +461,17 @@ used as a memoization optimization, the only harmful consequences of a race
 condition between threads contending over this cache is a mildly inefficient
 (but otherwise harmless) repeated re-memoization of duplicate configurations.
 '''
+
+# ....................{ GLOBALS                            }....................
+# This global is intentionally defined *AFTER* all other attributes above, which
+# this global implicitly assumes to be defined.
+BEARTYPE_CONF_DEFAULT = BeartypeConf()
+'''
+**Default beartype configuration** (i.e., :class:`BeartypeConf` class
+instantiated with *no* parameters and thus default parameters), globalized to
+trivially optimize external access to this configuration throughout this
+codebase.
+
+Note that this global is *not* publicized to end users, who can simply
+instantiate ``BeartypeConf()`` to obtain the same singleton.
+'''

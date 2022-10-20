@@ -20,7 +20,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import TYPE_CHECKING
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcls import (
+    BEARTYPE_CONF_DEFAULT,
+    BeartypeConf,
+)
 from beartype._data.datatyping import (
     BeartypeConfedDecorator,
     BeartypeReturn,
@@ -86,7 +89,7 @@ if (
 
         # Optional keyword-only parameters.
         *,
-        conf: BeartypeConf = BeartypeConf(),
+        conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     ) -> BeartypeReturn:
         return obj
 # Else, the active Python interpreter is in a standard runtime state. In this

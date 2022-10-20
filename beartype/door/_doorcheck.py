@@ -39,7 +39,10 @@ from beartype.roar import (
 from beartype.roar._roarexc import _BeartypeDoorTextException
 from beartype.typing import TYPE_CHECKING
 from beartype._check.checkmake import make_func_tester
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcls import (
+    BEARTYPE_CONF_DEFAULT,
+    BeartypeConf,
+)
 from beartype._decor._cache.cachedecor import beartype
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerror import reraise_exception_placeholder
@@ -96,7 +99,7 @@ def die_if_unbearable(
 
     # Optional keyword-only parameters.
     *,
-    conf: BeartypeConf = BeartypeConf(),
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
 ) -> None:
     '''
     Raise an exception if the passed arbitrary object violates the passed
@@ -241,7 +244,7 @@ def is_subhint(subhint: object, superhint: object) -> bool:
     # The one-liner is mightier than the... many-liner.
     return TypeHint(subhint).is_subhint(TypeHint(superhint))
 
-# ....................{ TESTERS ~ is_bearable()            }....................
+# ....................{ TESTERS ~ is_bearable              }....................
 #FIXME: Improve unit tests to exhaustively exercise edge cases, including:
 #* Invalid hints. In this case, test that the raised exception is prefixed by
 #  the expected substring rather than our exception placeholder.
@@ -252,7 +255,8 @@ def is_bearable(
     hint: T,
 
     # Optional keyword-only parameters.
-    *, conf: BeartypeConf = BeartypeConf(),
+    *,
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
 ) -> TypeGuard[T]:
     '''
     ``True`` only if the passed arbitrary object satisfies the passed
@@ -370,8 +374,7 @@ def _get_type_checker(
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring how this
-        object is type-checked). Defaults to ``BeartypeConf()``, the default
-        beartype configuration.
+        object is type-checked).
 
     Returns
     ----------

@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._check.checkmagic import ARG_NAME_GETRANDBITS
 from beartype._check.expr.exprmake import make_check_expr
+from beartype._conf.confcls import BeartypeConf
 from beartype._data.datatyping import CodeGenerated
 from beartype._decor._wrapper.wrappersnip import (
     CODE_HINT_ROOT_PREFIX,
@@ -24,9 +25,8 @@ from beartype._decor._wrapper.wrappersnip import (
 from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ MAKERS                             }....................
-#FIXME: Refactor in terms of the higher-level make_func_code() factory, please.
 @callable_cached
-def make_func_wrapper_code(hint: object) -> CodeGenerated:
+def make_func_wrapper_code(hint: object, conf: BeartypeConf) -> CodeGenerated:
     '''
     **Type-checking wrapper function code factory** (i.e., low-level callable
     dynamically generating a pure-Python code snippet type-checking the
@@ -40,6 +40,9 @@ def make_func_wrapper_code(hint: object) -> CodeGenerated:
     ----------
     hint : object
         PEP-compliant type hint to be type-checked.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object).
 
     Returns
     ----------
@@ -68,7 +71,7 @@ def make_func_wrapper_code(hint: object) -> CodeGenerated:
         func_wrapper_code_expr,
         func_wrapper_scope,
         hint_forwardrefs_class_basename,
-    ) = make_check_expr(hint)
+    ) = make_check_expr(hint, conf)
 
     # PEP-compliant code snippet passing the value of the random integer
     # previously generated for the current call to the exception-handling
