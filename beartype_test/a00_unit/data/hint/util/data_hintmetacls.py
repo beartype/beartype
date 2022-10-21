@@ -14,6 +14,10 @@ classes encapsulating sample type hints instantiated by the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype._conf.confcls import (
+    BEARTYPE_CONF_DEFAULT,
+    BeartypeConf,
+)
 from typing import Optional
 from collections.abc import Iterable
 
@@ -191,6 +195,9 @@ class HintNonpepMetadata(object):
     ----------
     hint : object
         Type hint to be tested.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for this type hint).
     is_ignorable : bool
         ``True`` only if this hint is safely ignorable by the
         :func:`beartype.beartype` decorator. Defaults to ``False``.
@@ -215,10 +222,15 @@ class HintNonpepMetadata(object):
         hint: object,
 
         # Optional keyword-only parameters.
+        conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
         is_ignorable: bool = False,
         is_supported: bool = True,
         piths_meta: 'Iterable[HintPithSatisfiedMetadata]' = (),
     ) -> None:
+
+        # Validate passed non-variadic parameters.
+        assert isinstance(conf, BeartypeConf), (
+            f'{repr(conf)} not beartype configuration.')
         assert isinstance(is_ignorable, bool), (
             f'{repr(is_ignorable)} not bool.')
         assert isinstance(is_supported, bool), (
@@ -235,6 +247,7 @@ class HintNonpepMetadata(object):
 
         # Classify all passed parameters.
         self.hint = hint
+        self.conf = conf
         self.is_ignorable = is_ignorable
         self.is_supported = is_supported
         self.piths_meta = piths_meta
@@ -244,6 +257,7 @@ class HintNonpepMetadata(object):
         return '\n'.join((
             f'{self.__class__.__name__}(',
             f'    hint={repr(self.hint)},',
+            f'    conf={repr(self.conf)},',
             f'    is_ignorable={repr(self.is_ignorable)},',
             f'    is_supported={repr(self.is_supported)},',
             f'    piths_meta={repr(self.piths_meta)},',
@@ -451,6 +465,7 @@ class HintPepMetadata(HintNonpepMetadata):
         return '\n'.join((
             f'{self.__class__.__name__}(',
             f'    hint={repr(self.hint)},',
+            f'    conf={repr(self.conf)},',
             f'    pep_sign={repr(self.pep_sign)},',
             f'    typehint_cls={repr(self.typehint_cls)},',
             f'    generic_type={repr(self.generic_type)},',

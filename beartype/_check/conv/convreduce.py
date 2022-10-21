@@ -18,6 +18,10 @@ from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
+from beartype._data.datatyping import (
+    Pep484TowerComplex,
+    Pep484TowerFloat,
+)
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignDataclassInitVar,
@@ -108,15 +112,27 @@ def reduce_hint(
     # Since this includes *ALL* isinstanceable classes (including both
     # user-defined classes and builtin types), this is *ALWAYS* detected first.
     if hint_sign is None:
-        #FIXME: Unit test us up, please.
-        #FIXME: Implement us up, please.
-        # If this configuration enables support for the PEP 484-compliant implicit
-        # numeric tower *AND* this hint is either the standard "float" or "complex"
-        # classes governed by this tower...
-        #
-        # These classes are excruciatingly common and thus detected very early.
-        # if (hint is float or hint is complex):
-
+        # If... 
+        if (
+            # This configuration enables support for the PEP 484-compliant
+            # implicit numeric tower *AND*...
+            conf.is_pep484_tower and
+            # This hint is either the builtin "float" or "complex" classes
+            # governed by this tower...
+            (hint is float or hint is complex)
+        # Then expand this hint to the corresponding numeric tower.
+        ):
+            # Expand this hint to match...
+            hint = (
+                # If this hint is the builtin "float" class, both the builtin
+                # "float" and "int" classes;
+                Pep484TowerFloat
+                if hint is float else
+                # Else, this hint is the builtin "complex" class by the above
+                # condition; in this case, the builtin "complex", "float", and
+                # "int" classes.
+                Pep484TowerComplex
+            )
         # Else, this hint is truly unidentifiable.
 
         # Return this hint as is unmodified.

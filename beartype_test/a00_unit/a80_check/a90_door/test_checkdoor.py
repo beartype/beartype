@@ -23,25 +23,33 @@ from beartype_test._util.mark.pytmark import ignore_warnings
 # Prevent pytest from capturing and displaying all expected non-fatal
 # beartype-specific warnings emitted by this test. Urgh!
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
-def test_door_die_if_unbearable_pass() -> None:
+def test_door_die_if_unbearable() -> None:
     '''
-    Test successful usage of the procedural
-    :class:`beartype.door.die_if_unbearable` raiser.
+    Test the :class:`beartype.door.die_if_unbearable` raiser.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer heavyweight imports.
     from beartype.door import die_if_unbearable
-    from beartype.roar import BeartypeDoorHintViolation
+    from beartype.roar import (
+        BeartypeConfException,
+        BeartypeDecorHintNonpepException,
+        BeartypeDoorHintViolation,
+    )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithUnsatisfiedMetadata)
     from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
         iter_hints_piths_meta)
     from pytest import raises
 
+    # ....................{ PASS                           }....................
     # For each predefined type hint and associated metadata...
     for hint_pith_meta in iter_hints_piths_meta():
         # Type hint to be type-checked.
         hint = hint_pith_meta.hint_meta.hint
+
+        # Beartype dataclass configuring this type-check.
+        conf = hint_pith_meta.hint_meta.conf
 
         # Object to type-check against this type hint.
         pith = hint_pith_meta.pith
@@ -51,7 +59,7 @@ def test_door_die_if_unbearable_pass() -> None:
             # Assert this raiser raises the expected exception when passed this
             # pith and hint.
             with raises(BeartypeDoorHintViolation) as exception_info:
-                die_if_unbearable(pith, hint)
+                die_if_unbearable(pith, hint, conf=conf)
 
             # Exception message raised by this wrapper function.
             exception_str = str(exception_info.value)
@@ -64,23 +72,9 @@ def test_door_die_if_unbearable_pass() -> None:
         else:
             # Assert this validator raises *NO* exception when passed this pith
             # and hint.
-            die_if_unbearable(pith, hint)
+            die_if_unbearable(pith, hint, conf=conf)
 
-
-def test_door_die_if_unbearable_fail() -> None:
-    '''
-    Test unsuccessful usage of the procedural
-    :class:`beartype.door.die_if_unbearable` raiser.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype.door import die_if_unbearable
-    from beartype.roar import (
-        BeartypeConfException,
-        BeartypeDecorHintNonpepException,
-    )
-    from pytest import raises
-
+    # ....................{ FAIL                           }....................
     # Assert this tester raises the expected exception when passed an invalid
     # object as the type hint.
     with raises(BeartypeDecorHintNonpepException):
@@ -103,8 +97,7 @@ def test_door_die_if_unbearable_fail() -> None:
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
 def test_door_typehint_die_if_unbearable() -> None:
     '''
-    Test successful usage of the object-oriented
-    :meth:`beartype.door.TypeHint.die_if_unbearable` tester.
+    Test the :meth:`beartype.door.TypeHint.die_if_unbearable` raiser.
 
     This test intentionally tests only the core functionality of this tester to
     avoid violating Don't Repeat Yourself (DRY). This tester internally defers
@@ -130,6 +123,9 @@ def test_door_typehint_die_if_unbearable() -> None:
         # Type hint to be type-checked.
         hint = hint_pith_meta.hint_meta.hint
 
+        # Beartype dataclass configuring this type-check.
+        conf = hint_pith_meta.hint_meta.conf
+
         # Object to type-check against this type hint.
         pith = hint_pith_meta.pith
 
@@ -144,61 +140,18 @@ def test_door_typehint_die_if_unbearable() -> None:
             if isinstance(
                 hint_pith_meta.pith_meta, HintPithUnsatisfiedMetadata):
                 with raises(BeartypeDoorHintViolation):
-                    typehint.die_if_unbearable(pith)
+                    typehint.die_if_unbearable(pith, conf=conf)
             # Else, this pith satisfies this hint. In this case, assert this
             # raiser raises *NO* exception when passed this pith and hint.
             else:
-                typehint.die_if_unbearable(pith)
-
+                typehint.die_if_unbearable(pith, conf=conf)
 
 # ....................{ TESTS ~ testers                    }....................
 # See above for @ignore_warnings() discussion.
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
-def test_door_is_bearable_pass() -> None:
+def test_door_is_bearable() -> None:
     '''
-    Test successful usage of the procedural :class:`beartype.door.is_bearable`
-    tester.
-    '''
-
-    # ..................{ IMPORTS                            }..................
-    # Defer heavyweight imports.
-    from beartype.door import is_bearable
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-        HintPithUnsatisfiedMetadata)
-    from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
-        iter_hints_piths_meta)
-    from beartype_test.a00_unit.data.hint.data_hint import HINTS_IGNORABLE
-
-    # ..................{ IGNORABLE                          }..................
-    # Arbitrary object to be tested below.
-    pith = 'The breath and blood of distant lands, for ever'
-
-    # For each predefined ignorable type hint...
-    for hint_ignorable in HINTS_IGNORABLE:
-        # Assert this tester returns true when passed this object and this hint.
-        assert is_bearable(pith, hint_ignorable) is True
-
-    # ..................{ UNIGNORABLE                        }..................
-    # For each predefined unignorable type hint and associated metadata...
-    for hint_pith_meta in iter_hints_piths_meta():
-        # Type hint to be type-checked.
-        hint = hint_pith_meta.hint_meta.hint
-
-        # Object to type-check against this type hint.
-        pith = hint_pith_meta.pith
-
-        # True only if this pith satisfies this hint.
-        is_bearable_expected = not isinstance(
-            hint_pith_meta.pith_meta, HintPithUnsatisfiedMetadata)
-
-        # Assert this tester returns false when passed this pith and hint.
-        assert is_bearable(pith, hint) is is_bearable_expected
-
-
-def test_door_is_bearable_fail() -> None:
-    '''
-    Test unsuccessful usage of the procedural :class:`beartype.door.is_bearable`
-    tester.
+    Test the :class:`beartype.door.is_bearable` tester.
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -209,9 +162,43 @@ def test_door_is_bearable_fail() -> None:
         BeartypeDecorHintForwardRefException,
         BeartypeDecorHintNonpepException,
     )
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+        HintPithUnsatisfiedMetadata)
+    from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
+        iter_hints_piths_meta)
+    from beartype_test.a00_unit.data.hint.data_hint import HINTS_IGNORABLE
     from pytest import raises
 
-    # ..................{ PARAMETERS                         }..................
+    # ..................{ PASS ~ ignorable                   }..................
+    # Arbitrary object to be tested below.
+    pith = 'The breath and blood of distant lands, for ever'
+
+    # For each predefined ignorable type hint...
+    for hint_ignorable in HINTS_IGNORABLE:
+        # Assert this tester returns true when passed this object and this hint.
+        assert is_bearable(pith, hint_ignorable) is True
+
+    # ..................{ PASS ~ unignorable                 }..................
+    # For each predefined unignorable type hint and associated metadata...
+    for hint_pith_meta in iter_hints_piths_meta():
+        # Type hint to be type-checked.
+        hint = hint_pith_meta.hint_meta.hint
+
+        # Beartype dataclass configuring this type-check.
+        conf = hint_pith_meta.hint_meta.conf
+
+        # Object to type-check against this type hint.
+        pith = hint_pith_meta.pith
+
+        # True only if this pith satisfies this hint.
+        is_bearable_expected = not isinstance(
+            hint_pith_meta.pith_meta, HintPithUnsatisfiedMetadata)
+
+        # Assert this tester returns the expected boolean when passed this pith
+        # and hint.
+        assert is_bearable(pith, hint, conf=conf) is is_bearable_expected
+
+    # ..................{ FAIL ~ args                        }..................
     # Assert this tester raises the expected exception when passed an invalid
     # object as the type hint.
     with raises(BeartypeDecorHintNonpepException):
@@ -229,7 +216,7 @@ def test_door_is_bearable_fail() -> None:
             conf='Visit the hidden buds, or dreamless sleep',
         )
 
-    # ..................{ FORWARD REFERENCES                 }..................
+    # ..................{ FAIL ~ refs                        }..................
     class RollsItsLoudWatersToTheOceanWaves(object):
         '''
         Arbitrary class with which to test relative forward references below.
@@ -251,8 +238,7 @@ def test_door_is_bearable_fail() -> None:
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
 def test_door_typehint_is_bearable() -> None:
     '''
-    Test successful usage of the object-oriented
-    :meth:`beartype.door.TypeHint.is_bearable` tester.
+    Test the :meth:`beartype.door.TypeHint.is_bearable` tester.
 
     This test intentionally tests only the core functionality of this tester to
     avoid violating Don't Repeat Yourself (DRY). This tester internally defers
@@ -274,6 +260,9 @@ def test_door_typehint_is_bearable() -> None:
         # Type hint to be type-checked.
         hint = hint_pith_meta.hint_meta.hint
 
+        # Beartype dataclass configuring this type-check.
+        conf = hint_pith_meta.hint_meta.conf
+
         # Object to type-check against this type hint.
         pith = hint_pith_meta.pith
 
@@ -284,5 +273,7 @@ def test_door_typehint_is_bearable() -> None:
         #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
         #all currently unsupported type hints.
         with suppress(BeartypeDoorNonpepException):
-            # Assert this tester returns false when passed this pith and hint.
-            assert TypeHint(hint).is_bearable(pith) is is_bearable_expected
+            # Assert this tester returns the expected boolean when passed this
+            # pith and hint.
+            assert TypeHint(hint).is_bearable(pith, conf=conf) is (
+                is_bearable_expected)

@@ -32,7 +32,14 @@ def test_reduce_hint() -> None:
     from beartype.vale import IsEqual
     from beartype._cave._cavefast import NoneType
     from beartype._check.conv.convreduce import reduce_hint
-    from beartype._conf.confcls import BEARTYPE_CONF_DEFAULT
+    from beartype._conf.confcls import (
+        BEARTYPE_CONF_DEFAULT,
+        BeartypeConf,
+    )
+    from beartype._data.datatyping import (
+        Pep484TowerComplex,
+        Pep484TowerFloat,
+    )
     from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
     from beartype._util.hint.pep.proposal.utilpep593 import is_hint_pep593
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
@@ -52,7 +59,7 @@ def test_reduce_hint() -> None:
     from pytest import raises, warns
     # from typing import TypeVar
 
-    # ..................{ LOCALs                             }..................
+    # ..................{ LOCALS                             }..................
     # Positional arguments to be passed to all calls to reduce_hints() below.
     args = (BEARTYPE_CONF_DEFAULT, '')
 
@@ -62,6 +69,20 @@ def test_reduce_hint() -> None:
 
     # Assert this reducer reduces "None" to "type(None)".
     assert reduce_hint(None, *args) is NoneType
+
+    # ..................{ PEP 484 ~ tower                    }..................
+    # Assert this reducer expands the builtin "float" and "complex" types to
+    # their corresponding numeric towers when configured to do so.
+    assert reduce_hint(float, BeartypeConf(is_pep484_tower=True), '') is (
+        Pep484TowerFloat)
+    assert reduce_hint(complex, BeartypeConf(is_pep484_tower=True), '') is (
+        Pep484TowerComplex)
+
+    # Assert this reducer preserves the builtin "float" and "complex" types as
+    # is when configured to disable the implicit numeric tower.
+    assert reduce_hint(float,   BeartypeConf(is_pep484_tower=False), '') is float
+    assert reduce_hint(complex, BeartypeConf(is_pep484_tower=False), '') is (
+        complex)
 
     # ..................{ PEP 484 ~ typevar                  }..................
     # Assert this reducer preserves unbounded type variables as is.

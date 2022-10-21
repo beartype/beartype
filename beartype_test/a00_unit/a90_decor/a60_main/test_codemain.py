@@ -62,6 +62,9 @@ def test_codemain() -> None:
         # Type hint to be type-checked.
         hint = hint_pith_meta.hint_meta.hint
 
+        # Beartype dataclass configuring this type-check.
+        conf = hint_pith_meta.hint_meta.conf
+
         # Object to type-check against this type hint.
         pith = hint_pith_meta.pith
 
@@ -107,7 +110,7 @@ def test_codemain() -> None:
         #     func_typed = beartype(func_untyped)
 
         # @beartype-generated wrapper function type-checking this callable.
-        func_typed = beartype(func_untyped)
+        func_typed = beartype(conf=conf)(func_untyped)
 
         # If this pith violates this hint...
         if isinstance(pith_meta, HintPithUnsatisfiedMetadata):

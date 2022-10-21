@@ -23,7 +23,7 @@ def test_pep484_decor_no_type_check() -> None:
     :pep:`484`-compliant :attr:`typing.no_type_check` decorator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.typing import (
         Union,
@@ -51,7 +51,7 @@ def test_pep484_hint_noreturn() -> None:
     type hint, which is valid *only* as an unsubscripted return annotation.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import (
         BeartypeCallHintViolation,
@@ -122,9 +122,9 @@ async def test_pep484_hint_noreturn_async() -> None:
     type hint, which is valid *only* as an unsubscripted return annotation.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
-    from typing import NoReturn
+    from beartype.typing import NoReturn
 
     # Asynchronous coroutine unconditionally raising an exception correctly
     # annotating its return as "NoReturn".
@@ -148,9 +148,9 @@ def test_pep484_hint_sequence_args_1_cached() -> None:
        https://github.com/beartype/beartype/issues/5
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
-    from typing import Union
+    from beartype.typing import Union
 
     # Callable annotated by an arbitrary PEP 484 standard sequence type hint.
     @beartype
@@ -212,7 +212,7 @@ def test_pep484_hint_sequence_args_1_cached() -> None:
 #     PEP-compliant type hints).
 #     '''
 #
-#     # Defer heavyweight imports.
+#     # Defer test-specific imports.
 #     from beartype import beartype
 #     from beartype.roar import BeartypeDecorHintPepSignException
 #     from beartype_test.a00_unit.data.hint.pep.data_pep import (

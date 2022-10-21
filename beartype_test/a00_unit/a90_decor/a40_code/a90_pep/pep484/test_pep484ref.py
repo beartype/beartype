@@ -17,11 +17,9 @@ typically have yet to be defined).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.pytroar import raises_uncached
-from typing import Union
 
 # ....................{ TESTS ~ pass                       }....................
-def test_hint_forwardref_data_pass() -> None:
+def test_pep484_ref__data_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator with
     respect to both PEP-compliant and -noncompliant forward references by
@@ -69,7 +67,7 @@ def test_hint_forwardref_data_pass() -> None:
     # assert to_watch_his_woods(STOP) == STOP
 
 
-def test_hint_forwardref_param_pass() -> None:
+def test_pep484_ref__param_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator for a
     callable passed a parameter annotated with a PEP-noncompliant
@@ -99,7 +97,7 @@ def test_hint_forwardref_param_pass() -> None:
         ESTABLISHMENT_DATE_MIN, ESTABLISHMENT_DATE_MAX + 1)
 
 # ....................{ TESTS ~ fail                       }....................
-def test_hint_forwardref_decor_fail() -> None:
+def test_pep484_ref__decor_fail() -> None:
     '''
     Test unsuccessful decorator-time usage of the :func:`beartype.beartype`
     decorator with respect to both PEP-compliant and -noncompliant forward
@@ -109,6 +107,7 @@ def test_hint_forwardref_decor_fail() -> None:
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintForwardRefException
+    from beartype_test._util.pytroar import raises_uncached
 
     #FIXME: Uncomment if and when a future Python release unconditionally
     #enables some variant of PEP 563... yet again.
@@ -150,7 +149,7 @@ def test_hint_forwardref_decor_fail() -> None:
             return i_hear_it
 
 
-def test_hint_forwardref_call_fail() -> None:
+def test_pep484_ref__call_fail() -> None:
     '''
     Test unsuccessful call-time usage of the :func:`beartype.beartype`
     decorator with respect to both PEP-compliant and -noncompliant forward
@@ -160,6 +159,8 @@ def test_hint_forwardref_call_fail() -> None:
     # Defer heavyweight imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintForwardRefException
+    from beartype.typing import Union
+    from beartype_test._util.pytroar import raises_uncached
 
     # Decorated callable annotated by a PEP-noncompliant fully-qualified
     # forward reference referring to a non-existent type.
@@ -216,7 +217,7 @@ def test_hint_forwardref_call_fail() -> None:
         somewhere_ages('I doubted if I should ever come back.')
 
 
-def test_hint_forwardref_call_param_fail() -> None:
+def test_pep484_ref__call_param_fail() -> None:
     '''
     Test unsuccessful call-time usage of the :func:`beartype.beartype`
     decorator for callables passed parameters annotated with PEP-noncompliant
@@ -230,6 +231,7 @@ def test_hint_forwardref_call_param_fail() -> None:
         BeartypeCallHintForwardRefException,
         BeartypeCallHintParamViolation,
     )
+    from beartype_test._util.pytroar import raises_uncached
 
     # Dates between which the Black Legion must have been established.
     ESTABLISHMENT_DATE_MIN = 30000

@@ -170,6 +170,22 @@ IterableStrs = Iterable[str]
 PEP-compliant type hint matching *any* iterable of zero or more strings.
 '''
 
+# ....................{ HINTS ~ pep : 484                  }....................
+# Type hints required to fully comply with PEP 484.
+
+Pep484TowerComplex = Union[complex, float, int]
+'''
+:pep:`484`-compliant type hint matching the **implicit complex tower** (i.e.,
+complex numbers, floating-point numbers, and integers).
+'''
+
+
+Pep484TowerFloat = Union[float, int]
+'''
+:pep:`484`-compliant type hint matching the **implicit floating-point tower**
+(i.e., both floating-point numbers and integers).
+'''
+
 # ....................{ HINTS ~ type                       }....................
 TypeException = Type[Exception]
 '''

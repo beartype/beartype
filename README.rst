@@ -1410,7 +1410,7 @@ and floats. ``new_func()`` thus preserves backward compatibility with
 Beartype Configuration
 ----------------------
 
-Dynamically define your own application-specific ``@beartype`` decorator – 
+Dynamically define your own application-specific ``@beartype`` decorator –
 efficiently configured for your exact use case.
 
 .. code-block:: python
@@ -2536,7 +2536,7 @@ Let's type-check like `greased lightning`_:
 
 .. code-block:: python
 
-   # ..................{              IMPORTS               }..................
+   # ..................{              IMPORTS                }..................
    # Import the core @beartype decorator.
    from beartype import beartype
 
@@ -2571,13 +2571,13 @@ Let's type-check like `greased lightning`_:
    # Import user-defined classes, too.
    from my_package.my_module import MyClass
 
-   # ..................{              TYPEVARS              }..................
+   # ..................{              TYPEVARS               }..................
    # User-defined PEP 484-compliant type variable. Note @beartype currently
    # ignores type variables, but that @beartype 1.0.0 is expected to fully
    # support type variables. See also: https://github.com/beartype/beartype/issues/7
    T = typing.TypeVar('T')
 
-   # ..................{              PROTOCOLS             }..................
+   # ..................{              PROTOCOLS              }..................
    # User-defined PEP 544-compliant protocol referenced below in type hints.
    # Note this requires Python ≥ 3.8 and that protocols *MUST* be explicitly
    # decorated by the @runtime_checkable decorator to be usable with @beartype.
@@ -2589,7 +2589,7 @@ Let's type-check like `greased lightning`_:
                'define a method with the same signature as this method.'
            )
 
-   # ..................{              FUNCTIONS             }..................
+   # ..................{              FUNCTIONS              }..................
    # Decorate functions with @beartype and...
    @beartype
    def my_function(
@@ -2701,7 +2701,7 @@ Let's type-check like `greased lightning`_:
        await sleep(0)
        return 0xDEFECA7E
 
-   # ..................{              GENERATORS            }..................
+   # ..................{              GENERATORS             }..................
    # Decorate synchronous generators as above but returning a synchronous
    # generator type.
    @beartype
@@ -2716,54 +2716,52 @@ Let's type-check like `greased lightning`_:
        await sleep(0)
        yield 0x8BADF00D
 
-   # ..................{              CLASSES               }..................
-   # User-defined class referenced in forward references above.
+   # ..................{              CLASSES                }..................
+   # Decorate classes with @beartype – which then automatically decorates all
+   # methods and properties of those classes with @beartype.
+   @beartype
    class MyOtherClass:
-       # Decorate instance methods as above without annotating "self".
-       @beartype
+       # Annotate instance methods as above without annotating "self".
        def __init__(self, scalar: ScalarTypes) -> None:
            self._scalar = scalar
 
-       # Decorate class methods as above without annotating "cls". When
-       # chaining decorators, "@beartype" should typically be specified last.
+       # Annotate class methods as above without annotating "cls".
        @classmethod
-       @beartype
        def my_classmethod(cls, regex: RegexTypes, wut: str) -> (
            Callable[(), str]):
            import re
            return lambda: re.sub(regex, 'unbearable', str(cls._scalar) + wut)
 
-       # Decorate static methods as above.
+       # Annotate static methods as above, too.
        @staticmethod
-       @beartype
        def my_staticmethod(callable: abc.Callable[[str], T], text: str) -> T:
            return callable(text)
 
-       # Decorate property getter methods as above.
+       # Annotate property getter methods as above, too.
        @property
-       @beartype
        def my_gettermethod(self) -> abc.Iterator[int]:
            return range(0x0B00B135 + int(self._scalar), 0xB16B00B5)
 
-       # Decorate property setter methods as above.
+       # Annotate property setter methods as above, too.
        @my_gettermethod.setter
-       @beartype
        def my_settermethod(self, bad: Integral = 0xBAAAAAAD) -> None:
            self._scalar = bad if bad else 0xBADDCAFE
 
-       # Decorate methods accepting or returning instances of the class
+       # Annotate methods accepting or returning instances of the class
        # currently being declared with relative forward references.
-       @beartype
        def my_selfreferential_method(self) -> list['MyOtherClass']:
            return [self] * 42
 
-   # ..................{              CLASSES ~ dataclass   }..................
+   # ..................{              DATACLASSES            }..................
    # Import the requisite machinery. Note this requires Python ≥ 3.8.
    from dataclasses import dataclass, InitVar
 
-   # User-defined dataclass. @beartype currently only type-checks the implicit
-   # __init__() method generated by @dataclass. Fields are type-checked *ONLY*
-   # at initialization time and thus *NOT* type-checked when reassigned to.
+   # Decorate dataclasses with @beartype – which then automatically decorates
+   # all methods and properties of those dataclasses with @beartype, including
+   # the __init__() constructors created by @dataclass. Fields are type-checked
+   # *ONLY* at initialization time and thus *NOT* type-checked when reassigned.
+   #
+   # Decoration order is significant. List @beartype before @dataclass, please.
    @beartype
    @dataclass
    class MyDataclass:
@@ -2771,57 +2769,62 @@ Let's type-check like `greased lightning`_:
        field_must_satisfy_builtin_type: InitVar[str]
        field_must_satisfy_pep604_union: str | None = None
 
-       # Decorate explicit methods with @beartype as above.
-       @beartype
+       # Annotate methods as above.
        def __post_init__(self, field_must_satisfy_builtin_type: str) -> None:
            if self.field_must_satisfy_pep604_union is None:
                self.field_must_satisfy_pep604_union = (
                    field_must_satisfy_builtin_type)
 
-   # ..................{              GENERICS              }..................
-   # User-defined PEP 585-compliant generic referenced above in type hints.
-   # Note this requires Python ≥ 3.9.
+   # ..................{              GENERICS               }..................
+   # Decorate PEP 585 generics with @beartype. Note this requires Python ≥ 3.9.
+   @beartype
    class MyPep585Generic(tuple[int, float]):
-       # Decorate static class methods as above without annotating "cls".
-       @beartype
        def __new__(cls, integer: int, real: float) -> tuple[int, float]:
            return tuple.__new__(cls, (integer, real))
 
-   # User-defined PEP 484-compliant generic referenced above in type hints.
+   # Decorate PEP 484 generics with @beartype, too.
+   @beartype
    class MyPep484Generic(typing.Tuple[str, ...]):
-       # Decorate static class methods as above without annotating "cls".
-       @beartype
        def __new__(cls, *args: str) -> typing.Tuple[str, ...]:
            return tuple.__new__(cls, args)
 
-   # ..................{             CONFIGURATION          }..................
-   # Import the configuration API.
+   # ..................{             CONFIGURATION           }..................
+   # Import beartype's configuration API to configure runtime type-checking.
    from beartype import BeartypeConf, BeartypeStrategy
 
-   # Configure type-checking by passing @beartype an optional configuration.
-   @beartype(conf=BeartypeConf(
-       # Optionally switch to a different type-checking strategy, including:
-       # * "BeartypeStrategy.On", type-checking in O(n) linear time.
-       #   (Currently unimplemented but roadmapped for a future release.)
-       # * "BeartypeStrategy.Ologn", type-checking in O(logn) logarithmic time.
-       #   (Currently unimplemented but roadmapped for a future release.)
-       # * "BeartypeStrategy.O1", type-checking in O(1) constant time. This
-       #   default strategy need *NOT* be explicitly enabled.
-       # * "strategy=BeartypeStrategy.O0", disabling type-checking entirely.
-       strategy=BeartypeStrategy.On,
-       # Optionally enable developer-friendly debugging for this decoration.
+   # Dynamically create your own @beartype decorator, configured for your needs.
+   bugbeartype = beartype(conf=BeartypeConf(
+       # Optionally disable or enable output of colors (i.e., ANSI escape
+       # sequences) in type-checking violations via this tri-state boolean:
+       # * "None" conditionally enables colors when standard output is attached
+       #   to an interactive terminal. [DEFAULT]
+       # * "True" unconditionally enables colors.
+       # * "False" unconditionally disables colors.
+       is_color=False,  # <-- disable colors entirely
+       # Optionally enable developer-friendly debugging.
        is_debug=True,
+       # Optionally enable the PEP 484-compliant implicit numeric tower by:
+       # * Expanding all "float" type hints to "float | int".
+       # * Expanding all "complex" type hints to "complex | float | int".
+       is_pep484_tower=True,
+       # Optionally switch to a different type-checking strategy:
+       # * "BeartypeStrategy.O1" type-checks in O(1) constant time. [DEFAULT]
+       # * "BeartypeStrategy.On" type-checks in O(n) linear time.
+       #   (Currently unimplemented but roadmapped for a future release.)
+       # * "BeartypeStrategy.Ologn" type-checks in O(log n) logarithmic time.
+       #   (Currently unimplemented but roadmapped for a future release.)
+       # * "strategy=BeartypeStrategy.O0" disables type-checking entirely.
+       strategy=BeartypeStrategy.On,  # <-- enable linear-time type-checking
    ))
-   def my_configured_function(
-       # Parameter type-checked in O(n) linear time. (Currently unimplemented.)
-       param_checked_in_On_time: list[int],
-   # Return type-checked in O(n) linear time, too. (Currently unimplemented.)
-   ) -> set[str]:
-       return set(str(item) for item in param_checked_in_On_time)
 
-   # ..................{             VALIDATORS             }..................
-   # Import PEP 593-compliant beartype-specific type hints validating arbitrary
-   # caller constraints. Note this requires beartype ≥ 0.7.0 and either:
+   # Decorate with your decorator (rather than the vanilla @beartype decorator).
+   @bugbeartype
+   def my_configured_function(list_checked_in_On_time: list[float]) -> set[str]:
+       return set(str(item) for item in list_checked_in_On_time)
+
+   # ..................{             VALIDATORS              }..................
+   # Import beartype's PEP 593 validator API to validate arbitrary constraints.
+   # Note this requires either:
    # * Python ≥ 3.9.0.
    # * typing_extensions ≥ 3.9.0.0.
    from beartype.vale import Is, IsAttr, IsEqual
@@ -2851,7 +2854,7 @@ Let's type-check like `greased lightning`_:
    # Validator composed with standard operators from the above validators,
    # permissively matching all of the following:
    # * Empty NumPy arrays of any dtype *except* 64-bit floats.
-   * * Non-empty one- and two-dimensional NumPy arrays of 64-bit floats.
+   # * Non-empty one- and two-dimensional NumPy arrays of 64-bit floats.
    NumpyArrayEmptyNonFloatOrNonEmptyFloat1Or2D = Annotated[np.ndarray,
        # "&" creates a new validator matching when both operands match, while
        # "|" creates a new validator matching when one or both operands match;
@@ -2877,11 +2880,11 @@ Let's type-check like `greased lightning`_:
            [np.array([i], np.dtype=np.float64) for i in range(0xFEEDFACE)]
        )
 
-   # ..................{             NUMPY                  }..................
+   # ..................{             NUMPY                   }..................
    # Import NumPy-specific type hints validating NumPy array constraints. Note:
    # * These hints currently only validate array dtypes. To validate additional
    #   constraints like array shapes, prefer validators instead. See above.
-   # * This requires NumPy ≥ 1.21.0, beartype ≥ 0.8.0, and either:
+   # * This requires NumPy ≥ 1.21.0 and either:
    #   * Python ≥ 3.9.0.
    #   * typing_extensions ≥ 3.9.0.0.
    from numpy.typing import NDArray
