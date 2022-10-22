@@ -1118,21 +1118,16 @@ constants. Let's cheatsheet this.
 Beartype Procedural API
 ------------------------
 
-.. parsed-literal::
+Type-check *anything* at *any* time against *any* type hint. When the
+``isinstance()`` and ``issubclass()`` builtins fail to scale, prefer the
+``beartype.door`` procedural API.
 
-   Type-check anything against any type hint – anywhere, at any time.
-
-When the ``isinstance()`` and ``issubclass()`` builtins fail to scale, prefer
-the ``beartype.door`` procedural API. Type-check *anything* *anytime* against
-*any* PEP-compliant type hint.
-
-.. # FIXME: Document the new is_subhint() tester function as well, please!
 .. # FIXME: Document the new "beartype.peps" submodule as well, please!
 
 .. _die_if_unbearable:
 
 *def* beartype.door.\ **die_if_unbearable**\ (obj: object, hint: object, \*,
-conf: beartype.BeartypeConf = BeartypeConf()) -> None
+conf: beartype.BeartypeConf_ = BeartypeConf()) -> None
 
     **Type-hint exception raiser,** either:
 
@@ -1161,7 +1156,7 @@ conf: beartype.BeartypeConf = BeartypeConf()) -> None
 .. _is_bearable:
 
 *def* beartype.door.\ **is_bearable**\ (obj: object, hint: object, \*, conf:
-beartype.BeartypeConf = BeartypeConf()) -> bool
+beartype.BeartypeConf_ = BeartypeConf()) -> bool
 
     **Type-hint tester,** returning either:
 
@@ -1418,11 +1413,32 @@ efficiently configured for your exact use case.
    # Import the requisite machinery.
    from beartype import beartype, BeartypeConf, BeartypeStrategy
 
-   #FIXME: Document us up, please!
+   # Dynamically create a new @monotowertype decorator configured to:
+   # * Avoid outputting colors in type-checking violations.
+   # * Enable support for the implicit numeric tower standardized by PEP 484.
+   monotowertype = beartype(conf=BeartypeConf(
+       is_color=False, is_pep484_tower=True))
 
+   # Decorate with your decorator instead of the vanilla @beartype decorator.
+   @monotowertype
+   def muh_colorless_permissive_func(int_or_float: float) -> float:
+       return int_or_float ** int_or_float ^ round(int_or_float)
 
-Beartype Procedural API
-~~~~~~~~~~~~~~~~~~~~~~~
+Configuration: because you know best.
+
+Beartype Configuration API
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. #FIXME: Document us up, please!
+
+.. _beartype.BeartypeConf:
+
+*class* beartype.\ **BeartypeConf**\ (\*, strategy: beartype.BeartypeStrategy_ =
+BeartypeStrategy.O1) -> None
+
+    **Beartype configuration** ...
+
+.. _beartype.BeartypeStrategy:
 
 Beartype Validators
 -------------------
@@ -2800,13 +2816,16 @@ Let's type-check like `greased lightning`_:
        #   to an interactive terminal. [DEFAULT]
        # * "True" unconditionally enables colors.
        # * "False" unconditionally disables colors.
-       is_color=False,  # <-- disable colors entirely
+       is_color=False,  # <-- disable color entirely
+
        # Optionally enable developer-friendly debugging.
        is_debug=True,
-       # Optionally enable the PEP 484-compliant implicit numeric tower by:
+
+       # Optionally enable PEP 484's implicit numeric tower by:
        # * Expanding all "float" type hints to "float | int".
        # * Expanding all "complex" type hints to "complex | float | int".
        is_pep484_tower=True,
+
        # Optionally switch to a different type-checking strategy:
        # * "BeartypeStrategy.O1" type-checks in O(1) constant time. [DEFAULT]
        # * "BeartypeStrategy.On" type-checks in O(n) linear time.
@@ -2817,9 +2836,9 @@ Let's type-check like `greased lightning`_:
        strategy=BeartypeStrategy.On,  # <-- enable linear-time type-checking
    ))
 
-   # Decorate with your decorator (rather than the vanilla @beartype decorator).
+   # Decorate with your decorator instead of the vanilla @beartype decorator.
    @bugbeartype
-   def my_configured_function(list_checked_in_On_time: list[float]) -> set[str]:
+   def muh_configured_func(list_checked_in_On_time: list[float]) -> set[str]:
        return set(str(item) for item in list_checked_in_On_time)
 
    # ..................{             VALIDATORS              }..................

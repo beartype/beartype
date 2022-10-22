@@ -17,22 +17,6 @@ PEP-noncompliant type hints include:
 '''
 
 # ....................{ IMPORTS                            }....................
-import sys
-from beartype._cave._cavefast import (
-    EllipsisType,
-    FunctionType,
-    FunctionOrMethodCType,
-    MethodBoundInstanceOrClassType,
-    ModuleType,
-    NoneType,
-    NotImplementedType,
-)
-from beartype_test.a00_unit.data.data_type import Class
-from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    HintNonpepMetadata,
-    HintPithSatisfiedMetadata,
-    HintPithUnsatisfiedMetadata,
-)
 from typing import (
     NamedTuple,
 )
@@ -56,6 +40,26 @@ def add_data(data_module: 'ModuleType') -> None:
     data_module : ModuleType
         Module to be added to.
     '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer heavyweight imports.
+    import sys
+    from beartype import BeartypeConf
+    from beartype._cave._cavefast import (
+        EllipsisType,
+        FunctionType,
+        FunctionOrMethodCType,
+        MethodBoundInstanceOrClassType,
+        ModuleType,
+        NoneType,
+        NotImplementedType,
+    )
+    from beartype_test.a00_unit.data.data_type import Class
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+        HintNonpepMetadata,
+        HintPithSatisfiedMetadata,
+        HintPithUnsatisfiedMetadata,
+    )
 
     # ..................{ TUPLES                             }..................
     # Add PEP 484-specific PEP-noncompliant test type hints to this dictionary
@@ -114,8 +118,6 @@ def add_data(data_module: 'ModuleType') -> None:
                         r'\n',
                         # A bullet delimiter.
                         r'\*',
-                        # Descriptive terms applied only to non-builtin types.
-                        r'\bprotocol\b',
                         # The double-quoted name of this builtin type.
                         r'"int"',
                     ),
@@ -147,8 +149,6 @@ def add_data(data_module: 'ModuleType') -> None:
                         r'\n',
                         # A bullet delimiter.
                         r'\*',
-                        # Descriptive terms applied only to non-builtin types.
-                        r'\bprotocol\b',
                         # The double-quoted name of this builtin type.
                         r'"str"',
                     ),
@@ -171,10 +171,141 @@ def add_data(data_module: 'ModuleType') -> None:
                         r'\n',
                         # A bullet delimiter.
                         r'\*',
-                        # Descriptive terms applied only to non-builtin types.
-                        r'\bprotocol\b',
                         # The double-quoted name of this builtin type.
                         r'"str"',
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ TYPE ~ builtin : tower             }................
+        # Types implicated in the PEP 484-compliant implicit numeric tower only
+        # optionally supported by enabling the
+        # "beartype.BeartypeConf.is_pep484_tower" parameter, which expands:
+        # * "float" as an alias for "float | int".
+        # * "complex" as an alias for "complex | float | int".
+
+        # Floating-point number with the implicit numeric tower disabled.
+        HintNonpepMetadata(
+            hint=float,
+            conf=BeartypeConf(is_pep484_tower=False),
+            piths_meta=(
+                # Floating-point number constant.
+                HintPithSatisfiedMetadata(0.110001),
+                # Integer constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=110001,
+                    # Match that the exception message raised for this pith
+                    # contains...
+                    exception_str_match_regexes=(
+                        # The type *NOT* satisfied by this object.
+                        r'\bfloat\b',
+                    ),
+                    # Match that the exception message raised for this pith
+                    # does *NOT* contain...
+                    exception_str_not_match_regexes=(
+                        # A newline.
+                        r'\n',
+                        # A bullet delimiter.
+                        r'\*',
+                        # The double-quoted name of this builtin type.
+                        r'"float"',
+                    ),
+                ),
+            ),
+        ),
+
+        # Floating-point number with the implicit numeric tower enabled.
+        HintNonpepMetadata(
+            hint=float,
+            conf=BeartypeConf(is_pep484_tower=True),
+            piths_meta=(
+                # Floating-point number constant.
+                HintPithSatisfiedMetadata(0.577215664901532860606512090082),
+                # Integer constant.
+                HintPithSatisfiedMetadata(5772),
+                # Complex number constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=(1566 + 4901j),
+                    # Match that the exception message raised for this pith
+                    # contains...
+                    exception_str_match_regexes=(
+                        # The type *NOT* satisfied by this object.
+                        r'\bfloat\b',
+                    ),
+                    # Match that the exception message raised for this pith
+                    # does *NOT* contain...
+                    exception_str_not_match_regexes=(
+                        # A newline.
+                        r'\n',
+                        # A bullet delimiter.
+                        r'\*',
+                        # The double-quoted name of this builtin type.
+                        r'"float"',
+                    ),
+                ),
+            ),
+        ),
+
+        # Complex number with the implicit numeric tower disabled.
+        HintNonpepMetadata(
+            hint=complex,
+            conf=BeartypeConf(is_pep484_tower=False),
+            piths_meta=(
+                # Complex number constant.
+                HintPithSatisfiedMetadata(1.787 + 2316.5j),
+                # Floating-point number constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=0.300330000000000330033,
+                    # Match that the exception message raised for this pith
+                    # contains...
+                    exception_str_match_regexes=(
+                        # The type *NOT* satisfied by this object.
+                        r'\bcomplex\b',
+                    ),
+                    # Match that the exception message raised for this pith
+                    # does *NOT* contain...
+                    exception_str_not_match_regexes=(
+                        # A newline.
+                        r'\n',
+                        # A bullet delimiter.
+                        r'\*',
+                        # The double-quoted name of this builtin type.
+                        r'"complex"',
+                    ),
+                ),
+            ),
+        ),
+
+        # Complex number with the implicit numeric tower enabled.
+        HintNonpepMetadata(
+            hint=complex,
+            conf=BeartypeConf(is_pep484_tower=True),
+            piths_meta=(
+                # Complex number constant.
+                HintPithSatisfiedMetadata(2.622 + 575.5j),
+                # Floating-point number constant.
+                HintPithSatisfiedMetadata(0.8346268),
+                # Integer constant.
+                HintPithSatisfiedMetadata(1311),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    pith='Park-ed trails',
+                    # Match that the exception message raised for this pith
+                    # contains...
+                    exception_str_match_regexes=(
+                        # The type *NOT* satisfied by this object.
+                        r'\bcomplex\b',
+                    ),
+                    # Match that the exception message raised for this pith
+                    # does *NOT* contain...
+                    exception_str_not_match_regexes=(
+                        # A newline.
+                        r'\n',
+                        # A bullet delimiter.
+                        r'\*',
+                        # The double-quoted name of this builtin type.
+                        r'"complex"',
                     ),
                 ),
             ),
