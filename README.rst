@@ -1433,10 +1433,49 @@ Beartype Configuration API
 
 .. _beartype.BeartypeConf:
 
-*class* beartype.\ **BeartypeConf**\ (\*, strategy: beartype.BeartypeStrategy_ =
-BeartypeStrategy.O1) -> None
+| *class* beartype.\ **BeartypeConf**\ (
+|     \*,
+|     is_color: Optional[bool] = None,
+|     is_debug: bool = False,
+|     is_pep484_tower: bool = False,
+|     strategy: beartype.BeartypeStrategy_ = BeartypeStrategy.O1,
+| )
 
-    **Beartype configuration** ...
+    **Beartype configuration** (i.e., self-caching dataclass encapsulating all
+    flags, options, settings, and other metadata configuring each type-checking
+    operation performed by beartype -- including each decoration of a callable
+    or class by the ``@beartype.beartype`` decorator).
+
+    The default beartype configuration ``BeartypeConf()`` configures beartype
+    to:
+
+    * Conditionally output color when standard output is attached to a terminal.
+    * Disable developer-specific debugging logic.
+    * Disable support for `PEP 484's implicit numeric tower <implicit numeric
+      tower_>`__.
+    * Perform ``O(1)`` constant-time type-checking for safety, scalability, and
+      efficiency.
+
+    Beartype configurations are immutable objects memoized on the unordered set
+    of all passed parameters. Due to this, beartype configurations are both
+    hashable and comparable under equality (and are thus suitable for use as
+    dictionary keys and set members). Lastly, beartype configurations support
+    meaningful ``repr()`` output:
+
+    .. code-block:: python
+
+       >>> from beartype import BeartypeConf
+       >>> BeartypeConf() is BeartypeConf()
+       True
+       >>> BeartypeConf(is_color=False) is BeartypeConf(is_color=False)
+       True
+       >>> BeartypeConf(is_color=False) == BeartypeConf(is_color=True)
+       False
+       >>> repr(BeartypeConf())
+       'BeartypeConf(is_color=None, is_debug=False, is_pep484_tower=False, strategy=<BeartypeStrategy.O1: 2>)'
+
+    Beartype configurations support the following optional keyword-only
+    parameters:
 
 .. _beartype.BeartypeStrategy:
 
@@ -5010,6 +5049,11 @@ Prior official funding sources (*yes, they once existed*) include:
 .. # beartype is developed with the grateful assistance of a volunteer community
 .. # of enthusiasts, including (*in chronological order of issue or pull request*):
 
+History
+=======
+
+|beartype-stars|
+
 See Also
 ========
 
@@ -5130,6 +5174,9 @@ rather than Python runtime) include:
 .. |beartype-contributors| image:: https://contrib.rocks/image?repo=beartype/beartype
    :target: https://github.com/beartype/beartype/graphs/contributors
    :alt: Beartype contributors
+.. |beartype-stars| image:: https://star-history.com/#beartype/beartype&Date
+   :target: https://github.com/beartype/beartype/stargazers
+   :alt: Beartype stargazers
 
 .. # ------------------( IMAGES ~ badge                      )------------------
 .. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
@@ -5513,8 +5560,10 @@ rather than Python runtime) include:
 .. # ------------------( LINKS ~ py : pep : 484              )------------------
 .. _PEP 484:
    https://www.python.org/dev/peps/pep-0484
+.. _implicit numeric tower:
+   https://peps.python.org/pep-0484/#the-numeric-tower
 .. _relative forward references:
-   https://www.python.org/dev/peps/pep-0484/#id28
+   https://peps.python.org/pep-0484/#forward-references
 .. _type aliases:
    https://www.python.org/dev/peps/pep-0484/#type-aliases
 

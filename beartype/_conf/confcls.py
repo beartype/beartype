@@ -30,9 +30,9 @@ from beartype._conf.confenum import BeartypeStrategy
 class BeartypeConf(object):
     '''
     **Beartype configuration** (i.e., self-caching dataclass encapsulating all
-    flags, options, settings, and other metadata configuring each granular
-    decoration of a callable or class by the :func:`beartype.beartype`
-    decorator).
+    flags, options, settings, and other metadata configuring each type-checking
+    operation performed by :mod:`beartype` -- including each decoration of a
+    callable or class by the :func:`beartype.beartype` decorator).
 
     Attributes
     ----------
