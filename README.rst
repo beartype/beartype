@@ -1419,35 +1419,32 @@ efficiently configured for your exact use case.
    monotowertype = beartype(conf=BeartypeConf(
        is_color=False, is_pep484_tower=True))
 
-   # Decorate with your decorator instead of the vanilla @beartype decorator.
+   # Decorate with this decorator instead of the vanilla @beartype decorator.
    @monotowertype
    def muh_colorless_permissive_func(int_or_float: float) -> float:
        return int_or_float ** int_or_float ^ round(int_or_float)
 
 Configuration: because you know best.
 
-Beartype Configuration API
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. #FIXME: Document us up, please!
+Configuration API
+~~~~~~~~~~~~~~~~~
 
 .. _beartype.BeartypeConf:
 
 | *class* beartype.\ **BeartypeConf**\ (
-|     \*,
-|     is_color: Optional[bool] = None,
-|     is_debug: bool = False,
-|     is_pep484_tower: bool = False,
-|     strategy: beartype.BeartypeStrategy_ = BeartypeStrategy.O1,
+| |_| |_| |_| |_| \*,
+| |_| |_| |_| |_| `is_color <beartype.BeartypeConf.is_color_>`__: Optional[bool] = None,
+| |_| |_| |_| |_| `is_debug <beartype.BeartypeConf.is_debug_>`__: bool = False,
+| |_| |_| |_| |_| `is_pep484_tower <beartype.BeartypeConf.is_pep484_tower_>`__: bool = False,
+| |_| |_| |_| |_| `strategy <beartype.BeartypeConf.strategy_>`__: beartype.BeartypeStrategy_ = BeartypeStrategy.O1,
 | )
 
     **Beartype configuration** (i.e., self-caching dataclass encapsulating all
     flags, options, settings, and other metadata configuring each type-checking
-    operation performed by beartype -- including each decoration of a callable
+    operation performed by beartype – including each decoration of a callable
     or class by the ``@beartype.beartype`` decorator).
 
-    The default beartype configuration ``BeartypeConf()`` configures beartype
-    to:
+    The default configuration ``BeartypeConf()`` configures beartype to:
 
     * Conditionally output color when standard output is attached to a terminal.
     * Disable developer-specific debugging logic.
@@ -1456,11 +1453,8 @@ Beartype Configuration API
     * Perform ``O(1)`` constant-time type-checking for safety, scalability, and
       efficiency.
 
-    Beartype configurations are immutable objects memoized on the unordered set
-    of all passed parameters. Due to this, beartype configurations are both
-    hashable and comparable under equality (and are thus suitable for use as
-    dictionary keys and set members). Lastly, beartype configurations support
-    meaningful ``repr()`` output:
+    Beartype configurations are immutable objects memoized (i.e., cached) on the
+    unordered set of all passed parameters:
 
     .. code-block:: python
 
@@ -1469,13 +1463,87 @@ Beartype Configuration API
        True
        >>> BeartypeConf(is_color=False) is BeartypeConf(is_color=False)
        True
+
+    Beartype configurations are comparable under equality:
+
+    .. code-block:: python
+
        >>> BeartypeConf(is_color=False) == BeartypeConf(is_color=True)
        False
+
+    Beartype configurations are hashable and thus suitable for use as dictionary
+    keys and set members:
+
+    .. code-block:: python
+
+       >>> BeartypeConf(is_color=False) == BeartypeConf(is_color=True)
+       False
+       >>> confs = {BeartypeConf(), BeartypeConf(is_color=False)}
+       >>> BeartypeConf() in confs
+       True
+
+    Beartype configurations support meaningful ``repr()`` output:
+
+    .. code-block:: python
+
        >>> repr(BeartypeConf())
        'BeartypeConf(is_color=None, is_debug=False, is_pep484_tower=False, strategy=<BeartypeStrategy.O1: 2>)'
 
-    Beartype configurations support the following optional keyword-only
-    parameters:
+    Beartype configurations expose read-only public properties of the same
+    names as the above parameters:
+
+    .. code-block:: python
+
+       >>> BeartypeConf().is_color
+       None
+       >>> BeartypeConf().strategy
+       <BeartypeStrategy.O1: 2>
+
+    Beartype configurations support these optional keyword-only parameters at
+    instantiation time:
+
+    .. _beartype.BeartypeConf.is_color:
+
+    * **is_color**\ : Optional[bool] = None
+
+      Tri-state boolean governing how and whether beartype colours
+      **type-checking violations** (i.e.,
+      ``beartype.roar.BeartypeCallHintViolation`` exceptions) with
+      POSIX-compliant ANSI escape sequences for readability. Specifically, if
+      this boolean is:
+
+      * ``False``, beartype *never* colours type-checking violations
+        raised by callables configured with this configuration.
+      * ``True``, beartype *always* colours type-checking violations
+        raised by callables configured with this configuration.
+      * ``None``, beartype conditionally colours type-checking violations
+        raised by callables configured with this configuration only when
+        standard output is attached to an interactive terminal.
+
+      Defaults to ``None``.
+      
+      The standard use case is to dynamically define your own
+      application-specific ``@beartype`` decorator unconditionally disabling
+      colours in type-checking violations, usually due to one or more frameworks
+      in your app stack failing to support ANSI escape sequences. And it shall
+      be known as... ``@monobeartype``!
+
+      .. code-block:: python
+
+         # Import the requisite machinery.
+         from beartype import beartype, BeartypeConf
+
+         # Dynamically create a new @monobeartype decorator disabling colours.
+         monobeartype = beartype(conf=BeartypeConf(is_color=False))
+
+         # Decorate with this decorator instead of the vanilla @beartype decorator.
+         @monobeartype
+         def muh_colorless_func() -> str:
+             return b"In the kingdom of the blind, you are now king.'
+
+    .. _beartype.BeartypeConf.is_debug:
+    .. _beartype.BeartypeConf.is_pep484_tower:
+    .. _beartype.BeartypeConf.strategy:
 
 .. _beartype.BeartypeStrategy:
 
@@ -5199,6 +5267,15 @@ rather than Python runtime) include:
 
 .. # ------------------( IMAGES ~ downstream                 )------------------
 .. # Insert links to GitHub Sponsors funding at the icon level here, please!
+
+.. # ------------------( SUBSTITUTIONS                       )------------------
+.. # Non-breaking space, defined as a reST substitution substituting all "|_|"
+.. # substrings with the non-breaking space Unicode character. Note that the
+.. # ":trim:" directive silently removes all whitespace surrounding this "|_|".
+.. # See also this StackOverflow answer strongly inspiring this substitution:
+.. #     https://stackoverflow.com/a/12145490/2809027
+.. |_| unicode:: 0xA0 
+   :trim:
 
 .. # ------------------( LINKS ~ beartype : funding          )------------------
 .. _BETSE:
