@@ -1525,7 +1525,7 @@ Configuration API
 
       Defaults to ``None``.
 
-      The common use case is to dynamically define your own application-specific
+      The standard use case is to dynamically define your own app-specific
       ``@beartype`` decorator unconditionally disabling colours in type-checking
       violations, usually due to one or more frameworks in your application
       stack failing to support ANSI escape sequences. Please file upstream
@@ -1612,6 +1612,56 @@ Configuration API
          (line 0025)     return __beartype_pith_0
 
     .. _BeartypeConf.is_pep484_tower:
+
+    * **is_pep484_tower**\ : bool = False
+
+       ``True`` only if enabling support for the `PEP 484-compliant implicit
+       numeric tower <implicit numeric tower_>`__ (i.e., lossy conversion of
+       integers to floating-point numbers as well as both integers and
+       floating-point numbers to complex numbers). Specifically, enabling this
+       instructs beartype to automatically expand:
+
+       * All ``float`` type hints to ``float | int``, thus implicitly accepting
+         both integers and floating-point numbers for objects annotated as only
+         accepting floating-point numbers.
+       * All ``complex`` type hints to ``complex | float | int``, thus
+         implicitly accepting integers, floating-point, and complex numbers for
+         objects annotated as only accepting complex numbers.
+
+       Defaults to ``False`` to minimize precision error introduced by lossy
+       conversions from integers to floating-point numbers to complex numbers.
+       Since most integers do *not* have exact representations as floating-point
+       numbers, each conversion of an integer into a floating-point number
+       typically introduces a small precision error that accumulates over
+       multiple conversions and operations into a larger precision error.
+       Enabling this improves the usability of public APIs at a cost of
+       introducing precision errors.
+
+      The standard use case is to dynamically define your own app-specific
+      ``@beartype`` decorator unconditionally enabling support for the implicit
+      numeric tower, usually as a convenience to your userbase who do *not*
+      particularly care about the above precision concerns. Behold the
+      permissive powers of... ``@beartowertype``!
+
+      .. code-block:: python
+
+         # Import the requisite machinery.
+         from beartype import beartype, BeartypeConf
+
+         # Dynamically create a new @beartowertype decorator enabling the tower.
+         beartowertype = beartype(conf=BeartypeConf(is_pep484_tower=False))
+
+         # Decorate with this decorator instead of the vanilla @beartype decorator.
+         @beartowertype
+         def crunch_numbers(numbers: list[float]) -> float:
+             return sum(numbers)
+
+         # This is now fine.
+         crunch_numbers([3, 1, 4, 1, 5, 9])
+
+         # This is still fine, too.
+         crunch_numbers([3.1, 4.1, 5.9])
+
     .. _BeartypeConf.strategy:
 
 .. _BeartypeStrategy:
