@@ -592,7 +592,7 @@ example demonstrates. Under abnormal processing loads (e.g., leycec_'s arthritic
 Athlon™ II X2 240, because you can't have enough redundant 2's in a product
 line) or when passed edge-case type hints (e.g., classes whose metaclasses
 implement stunningly bad ``__isinstancecheck__()`` dunder methods), worst-case
-performance could exceed this average-case near-instantaneous response time.
+performance could exceed the average-case near-instantaneous response time.
 
 Beartype is therefore *not* real-time_; beartype is merely `near-real-time (NRT)
 <near-real-time_>`__, also variously referred to as "pseudo-real-time,"
@@ -601,8 +601,7 @@ performance with a scheduler forcibly terminating tasks exceeding some deadline.
 That's bad in most use cases. The outrageous cost of enforcement harms
 real-world performance, stability, and usability.
 
-Thus NRT. It's like an NFT – only wonderful rather than not. That must be what
-the "F" stands for.
+Thus NRT. It's good for you. It's good for me. It's just good.
 
 How do I type-check...
 ----------------------
@@ -1408,8 +1407,8 @@ and floats. ``new_func()`` thus preserves backward compatibility with
 Beartype Configuration
 ----------------------
 
-Dynamically define your own application-specific ``@beartype`` decorator –
-efficiently configured for your exact use case.
+Define your own app-specific ``@beartype`` decorator – **configured** for your
+exact use case:
 
 .. code-block:: python
 
@@ -1427,7 +1426,7 @@ efficiently configured for your exact use case.
    def muh_colorless_permissive_func(int_or_float: float) -> float:
        return int_or_float ** int_or_float ^ round(int_or_float)
 
-Configuration: because you know best.
+Configuration: *because you know best*.
 
 Configuration API
 ~~~~~~~~~~~~~~~~~
@@ -1439,13 +1438,13 @@ Configuration API
 | |_| |_| |_| |_| `is_color <BeartypeConf.is_color_>`__: Optional[bool] = None,
 | |_| |_| |_| |_| `is_debug <BeartypeConf.is_debug_>`__: bool = False,
 | |_| |_| |_| |_| `is_pep484_tower <BeartypeConf.is_pep484_tower_>`__: bool = False,
-| |_| |_| |_| |_| `strategy <BeartypeConf.strategy_>`__: BeartypeStrategy_ = BeartypeStrategy.O1,
+| |_| |_| |_| |_| `strategy <BeartypeConf.strategy_>`__: BeartypeStrategy_ = BeartypeStrategy.O1_,
 | )
 
-    **Beartype configuration** (i.e., self-caching dataclass encapsulating all
-    flags, options, settings, and other metadata configuring each type-checking
-    operation performed by beartype – including each decoration of a callable
-    or class by the ``@beartype.beartype`` decorator).
+    **Beartype configuration** (i.e., self-caching dataclass instance
+    encapsulating all flags, options, settings, and other metadata configuring
+    each type-checking operation performed by beartype – including each
+    decoration of a callable or class by the ``@beartype.beartype`` decorator).
 
     The default configuration ``BeartypeConf()`` configures beartype to:
 
@@ -1615,27 +1614,27 @@ Configuration API
 
     * **is_pep484_tower**\ : bool = False
 
-       ``True`` only if enabling support for the `PEP 484-compliant implicit
-       numeric tower <implicit numeric tower_>`__ (i.e., lossy conversion of
-       integers to floating-point numbers as well as both integers and
-       floating-point numbers to complex numbers). Specifically, enabling this
-       instructs beartype to automatically expand:
+      ``True`` only if enabling support for `PEP 484's implicit numeric tower
+      <implicit numeric tower_>`__ (i.e., lossy conversion of integers to
+      floating-point numbers as well as both integers and floating-point
+      numbers to complex numbers). Specifically, enabling this instructs
+      beartype to automatically expand:
 
-       * All ``float`` type hints to ``float | int``, thus implicitly accepting
-         both integers and floating-point numbers for objects annotated as only
-         accepting floating-point numbers.
-       * All ``complex`` type hints to ``complex | float | int``, thus
-         implicitly accepting integers, floating-point, and complex numbers for
-         objects annotated as only accepting complex numbers.
+      * All ``float`` type hints to ``float | int``, thus implicitly accepting
+        both integers and floating-point numbers for objects annotated as only
+        accepting floating-point numbers.
+      * All ``complex`` type hints to ``complex | float | int``, thus
+        implicitly accepting integers, floating-point, and complex numbers for
+        objects annotated as only accepting complex numbers.
 
-       Defaults to ``False`` to minimize precision error introduced by lossy
-       conversions from integers to floating-point numbers to complex numbers.
-       Since most integers do *not* have exact representations as floating-point
-       numbers, each conversion of an integer into a floating-point number
-       typically introduces a small precision error that accumulates over
-       multiple conversions and operations into a larger precision error.
-       Enabling this improves the usability of public APIs at a cost of
-       introducing precision errors.
+      Defaults to ``False`` to minimize precision error introduced by lossy
+      conversions from integers to floating-point numbers to complex numbers.
+      Since most integers do *not* have exact representations as floating-point
+      numbers, each conversion of an integer into a floating-point number
+      typically introduces a small precision error that accumulates over
+      multiple conversions and operations into a larger precision error.
+      Enabling this improves the usability of public APIs at a cost of
+      introducing precision errors.
 
       The standard use case is to dynamically define your own app-specific
       ``@beartype`` decorator unconditionally enabling support for the implicit
@@ -1664,7 +1663,88 @@ Configuration API
 
     .. _BeartypeConf.strategy:
 
+    * **strategy**\ : BeartypeStrategy_ = BeartypeStrategy.O1_
+
+      **Type-checking strategy** (i.e., BeartypeStrategy_ enumeration member
+      dictating how many items are type-checked at each nesting level of each
+      container and thus how responsively beartype type-checks containers). This
+      setting governs the core tradeoff in runtime type-checking between:
+
+      * **Overhead** in the amount of time that beartype spends type-checking.
+      * **Completeness** in the number of objects that beartype type-checks.
+
+      As beartype gracefully scales up to check larger and larger containers,
+      so too does beartype simultaneously scale down to check fewer and fewer
+      items of those containers. This scaleable behaviour preserves performance
+      regardless of container size while increasing the likelihood of false
+      negatives (i.e., failures to catch invalid items in large containers) as
+      container size increases. You can either type-check a small number of
+      objects nearly instantaneously *or* you can type-check a large number of
+      objects comparatively slower. *Pick one.*
+
+      Defaults to BeartypeStrategy.O1_, the constant-time ``O(1)`` strategy –
+      maximizing scalability at a cost of also maximizing false positives.
+
 .. _BeartypeStrategy:
+
+*class* beartype.\ **BeartypeStrategy**\ (enum.Enum)
+
+    Enumeration of all kinds of **type-checking strategies** (i.e., competing
+    procedures for type-checking objects passed to or returned from
+    ``@beartype``\ -decorated callables, each with concomitant tradeoffs with
+    respect to runtime complexity and quality assurance).
+
+    Strategies are intentionally named according to `conventional Big O
+    notation <Big O_>`__ (e.g., BeartypeStrategy.On_ enables the ``O(n)``
+    strategy). Strategies are established per-decoration at the fine-grained
+    level of callables decorated by the ``@beartype`` decorator by setting the
+    BeartypeConf.strategy_ parameter of the beartype.BeartypeConf_ object passed
+    as the optional ``conf`` parameter to that decorator.
+
+    Strategies enforce their corresponding runtime complexities (e.g., ``O(n)``)
+    across *all* type-checks performed for callables enabling those strategies.
+    For example, a callable configured by the BeartypeStrategy.On_ strategy will
+    exhibit linear ``O(n)`` complexity as its overhead for type-checking each
+    nesting level of each container passed to and returned from that callable.
+
+    This enumeration defines these members:
+
+    .. _BeartypeStrategy.O0:
+
+    * BeartypeStrategy.\ **O0** : beartype.cave.EnumMemberType
+
+      **No-time strategy** (i.e, disabling type-checking for a decorated
+      callable by reducing ``@beartype`` to the identity decorator for that
+      callable). Although seemingly useless, this strategy enables users to
+      selectively blacklist (prevent) callables from being type-checked by our
+      as-yet-unimplemented import hook. When implemented, that hook will
+      type-check all callables within a package or module *except* those
+      callables explicitly decorated by this strategy.
+
+    .. _BeartypeStrategy.O1:
+
+    * BeartypeStrategy.\ **O1** : beartype.cave.EnumMemberType
+
+      **Constant-time strategy** (i.e., the default ``O(1)`` strategy,
+      type-checking a single randomly selected item of each container). As the
+      default, this strategy need *not* be explicitly enabled.
+
+    .. _BeartypeStrategy.Ologn:
+
+    * BeartypeStrategy.\ **Ologn** : beartype.cave.EnumMemberType
+
+      **Logarithmic-time strategy** (i.e., the ``O(log n)`` strategy,
+      type-checking a randomly selected number of items ``log(len(obj))`` of
+      each container ``obj``). This strategy is **currently unimplemented.**
+      (*To be implemented by a future beartype release.*)
+
+    .. _BeartypeStrategy.On:
+
+    * BeartypeStrategy.\ **On** : beartype.cave.EnumMemberType
+
+      **Linear-time strategy** (i.e., the ``O(n)`` strategy, type-checking *all*
+      items of a container). This strategy is **currently unimplemented.** (*To
+      be implemented by a future beartype release.*)
 
 Beartype Validators
 -------------------
@@ -5548,6 +5628,8 @@ rather than Python runtime) include:
    https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant
 .. _coupon collector's problem:
    https://en.wikipedia.org/wiki/Coupon_collector%27s_problem
+.. _Big O:
+   https://en.wikipedia.org/wiki/Big_O_notation
 
 .. # ------------------( LINKS ~ math : set                  )------------------
 .. _conjunction:

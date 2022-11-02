@@ -35,21 +35,17 @@ class BeartypeStrategy(Enum):
     Strategies are intentionally named according to `conventional Big O
     notation <Big O_>`__ (e.g., :attr:`BeartypeStrategy.On` enables the
     ``O(n)`` strategy). Strategies are established per-decoration at the
-    fine-grained level of callables decorated by the :func: `beartype.beartype`
-    decorator by either:
+    fine-grained level of callables decorated by the :func:`beartype.beartype`
+    decorator by setting the :attr:`beartype.BeartypeConf.strategy` parameter of
+    the :class:`beartype.BeartypeConf` object passed as the optional ``conf``
+    parameter to that decorator.
 
-    * Calling a high-level convenience decorator establishing that strategy
-      (e.g., :func:`beartype.conf.beartype_On`, enabling the ``O(n)`` strategy
-      for all callables decorated by that decorator).
-    * Setting the :attr:`BeartypeConfiguration.strategy` variable of the
-      :attr:`BeartypeConfiguration` object passed as the optional ``conf``
-      parameter to the lower-level core :func: `beartype.beartype` decorator.
-
-    Strategies enforce and guarantee their corresponding runtime complexities
-    (e.g., ``O(n)``) across all type checks performed for all callables
-    enabling those strategies. For example, a callable decorated with the
-    :attr:`BeartypeStrategy.On` strategy will exhibit linear runtime complexity
-    as its type-checking overhead.
+    Strategies enforce their corresponding runtime complexities (e.g., ``O(n)``)
+    across *all* type-checks performed for callables enabling those strategies.
+    For example, a callable configured by the :attr:`BeartypeStrategy.On`
+    strategy will exhibit linear ``O(n)`` complexity as its overhead for
+    type-checking each nesting level of each container passed to and returned
+    from that callable.
 
     .. _Big O:
        https://en.wikipedia.org/wiki/Big_O_notation
@@ -69,12 +65,12 @@ class BeartypeStrategy(Enum):
         type-checking a single randomly selected item of each container). As
         the default, this strategy need *not* be explicitly enabled.
     Ologn : EnumMemberType
-        **Logarithmic-time strategy** (i.e., the ``O(log n)` strategy,
+        **Logarithmic-time strategy** (i.e., the ``O(log n)`` strategy,
         type-checking a randomly selected number of items ``log(len(obj))`` of
         each container ``obj``). This strategy is **currently unimplemented.**
         (*To be implemented by a future beartype release.*)
     On : EnumMemberType
-        **Linear-time strategy** (i.e., an ``O(n)`` strategy, type-checking
+        **Linear-time strategy** (i.e., the ``O(n)`` strategy, type-checking
         *all* items of a container). This strategy is **currently
         unimplemented.** (*To be implemented by a future beartype release.*)
     '''
