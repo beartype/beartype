@@ -692,6 +692,31 @@ You're welcome.
 ...NumPy arrays?
 ~~~~~~~~~~~~~~~~
 
+You have more than a few options here, depending on what NumPy array metadata
+you want to type-check. Options are good! Repeat after me.
+
+If you want to type-check:
+
+* The ``dtype`` of a NumPy array, prefer the `official
+  "numpy.typing.NDArray[{dtype}]" type hint factory bundled with NumPy
+  explicitly supported by beartype <NumPy Type Hints_>`__ – also referred to as
+  a `typed NumPy array <NumPy Type Hints_>`__.
+* The ``shape`` of a NumPy array (and possibly more), you have two additional
+  sub-options here depending on whether:
+
+  * You want **static type-checkers** to enforce that ``shape`` *and* you don't
+    mind adding an **additional mandatory runtime dependency** to your stack. In
+    this case:
+
+    * Require the `third-party "nptyping" package <nptyping_>`__.
+    * Prefer the unofficial ``nptyping.NDArray[{nptyping.dtype},
+      nptyping.Shape[...]]`` type hint factory implicitly supported by beartype.
+
+  * You don't mind static type-checkers ignoring that ``shape`` *or* you mind
+    adding an additional mandatory runtime dependency to your stack. In this
+    case, prefer `simple beartype validators provided by beartype <Tensor
+    Property Matching_>`__.
+
 Beartype fully supports `typed NumPy arrays <NumPy Type Hints_>`__. Because
 beartype cares.
 
@@ -1674,13 +1699,13 @@ Configuration API
       * **Completeness** in the number of objects that beartype type-checks.
 
       As beartype gracefully scales up to check larger and larger containers,
-      so too does beartype simultaneously scale down to check fewer and fewer
-      items of those containers. This scaleable behaviour preserves performance
-      regardless of container size while increasing the likelihood of false
-      negatives (i.e., failures to catch invalid items in large containers) as
-      container size increases. You can either type-check a small number of
-      objects nearly instantaneously *or* you can type-check a large number of
-      objects comparatively slower. *Pick one.*
+      so beartype simultaneously scales down to check fewer and fewer items of
+      those containers. This scalability preserves performance regardless of
+      container size while increasing the likelihood of false negatives (i.e.,
+      failures to catch invalid items in large containers) as container size
+      increases. You can either type-check a small number of objects nearly
+      instantaneously *or* you can type-check a large number of objects slowly.
+      Pick one.
 
       Defaults to BeartypeStrategy.O1_, the constant-time ``O(1)`` strategy –
       maximizing scalability at a cost of also maximizing false positives.
@@ -6205,7 +6230,7 @@ rather than Python runtime) include:
 .. _pytype:
    https://github.com/google/pytype
 
-.. # ------------------( LINKS ~ py : type : static          )------------------
+.. # ------------------( LINKS ~ py : type : static : pyright)------------------
 .. _pyright:
    https://github.com/Microsoft/pyright
 .. _pyright plugins:
@@ -6224,6 +6249,10 @@ rather than Python runtime) include:
    https://mypy.readthedocs.io/en/stable/extending_mypy.html
 .. _type narrowing:
    https://mypy.readthedocs.io/en/stable/type_narrowing.html
+
+.. # ------------------( LINKS ~ py : type : tensor          )------------------
+.. _nptyping:
+   https://github.com/ramonhagenaars/nptyping
 
 .. # ------------------( LINKS ~ soft : ide                  )------------------
 .. _PyCharm:
