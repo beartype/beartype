@@ -689,6 +689,31 @@ Validators_>`__ to satisfy both static and runtime type checkers:
 
 You're welcome.
 
+...JAX arrays?
+~~~~~~~~~~~~~~
+
+You only have two options here. Bask in the array of options at your disposal!
+:superscript:`...get it? ...array? I'll stop now.`
+
+Choose wisely, wily scientist. If:
+
+* You don't mind adding an **additional mandatory runtime dependency** to your
+  app:
+
+  * Require the `third-party "jaxtyping" package <jaxtyping_>`__.
+  * Annotate callables with type hint factories published by ``jaxtyping``
+    (e.g., ``jaxtyping.Float[jaxtyping.Array, '{metadata1 ... metadataN}']``).
+
+  Beartype fully supports `typed JAX arrays <jaxtyping_>`__. Because
+  `Google mathematician @patrick-kidger <patrick-kidger_>`__ already did all the
+  hard work, we didn't have to. Bless the runtime API you made, @patrick-kidger.
+
+* You mind adding an additional mandatory runtime dependency to your app, prefer
+  `beartype validators <Tensor Property Matching_>`__. Since `JAX declares a
+  (*waving hands here*) broadly similar API to that of NumPy via its "jax.numpy"
+  compatibility layer <jax.numpy_>`__, most NumPy-specific examples cleanly
+  generalize to JAX. Thankfully, beartype is *no* exception.
+
 ...NumPy arrays?
 ~~~~~~~~~~~~~~~~
 
@@ -705,20 +730,75 @@ If you want to type-check:
   sub-options here depending on whether:
 
   * You want **static type-checkers** to enforce that ``shape`` *and* you don't
-    mind adding an **additional mandatory runtime dependency** to your stack. In
+    mind adding an **additional mandatory runtime dependency** to your app. In
     this case:
 
     * Require the `third-party "nptyping" package <nptyping_>`__.
     * Prefer the unofficial ``nptyping.NDArray[{nptyping.dtype},
       nptyping.Shape[...]]`` type hint factory implicitly supported by beartype.
 
-  * You don't mind static type-checkers ignoring that ``shape`` *or* you mind
-    adding an additional mandatory runtime dependency to your stack. In this
-    case, prefer `simple beartype validators provided by beartype <Tensor
-    Property Matching_>`__.
+    Beartype fully supports `typed NumPy arrays <NumPy Type Hints_>`__. Because
+    beartype cares.
 
-Beartype fully supports `typed NumPy arrays <NumPy Type Hints_>`__. Because
-beartype cares.
+  * You don't mind static type-checkers ignoring that ``shape`` *or* you mind
+    adding an additional mandatory runtime dependency to your app. In this case,
+    prefer `beartype validators <Tensor Property Matching_>`__.
+
+...PyTorch tensors?
+~~~~~~~~~~~~~~~~~~~
+
+You only have two options here. We're pretty sure two is better than none.
+Therefore, we give thanks. If:
+
+* You don't mind adding an **additional mandatory runtime dependency** to your
+  app:
+
+  * Require the `third-party "TorchTyping" package <TorchTyping_>`__.
+  * Annotate callables with type hint factories published by TorchTyping (e.g.,
+    ``TorchTyping.TensorType['{metadata1}', ..., '{metadataN}']``).
+
+  Beartype fully supports `typed PyTorch tensors <TorchTyping_>`__. Because
+  `Google mathematician @patrick-kidger <patrick-kidger_>`__ already did all the
+  hard work, we didn't have to. Bless the runtime API you made, @patrick-kidger.
+
+* You mind adding an additional mandatory runtime dependency to your app. In
+  this case, prefer `beartype validators <Beartype Validators_>`__. For example,
+  validate callable parameters and returns as strictly floating-point *or*
+  integral PyTorch tensors:
+
+  .. code-block:: python
+
+     # Import the requisite machinery.
+     from beartype import beartype
+     from beartype.vale import Is
+     from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+     # from typing_extensions import Annotated   # <-- if Python < 3.9.0
+
+     from torch import (
+         float as torch_float,
+         int as torch_int,
+         tensor,
+     )
+
+     # PEP-compliant type hint matching only a floating-point PyTorch tensor.
+     TorchTensorFloat = Annotated[tensor, Is[
+         lambda tens: tens.type() is torch_float]]
+
+     # PEP-compliant type hint matching only an integral PyTorch tensor.
+     TorchTensorInt = Annotated[tensor, Is[
+         lambda tens: tens.type() is torch_int]]
+
+     # Type-check everything like an NLP babelfish.
+     @beartype
+     def deep_dream(dreamy_tensor: TorchTensorFloat) -> TorchTensorInt:
+         return dreamy_tensor.type(dtype=torch_int)
+
+  Of course, `beartype.vale.Is[...] <Is_>`__ supports arbitrarily complex
+  Turing-complete Python expressions. The above example generalizes to typing
+  the dimensionality, device, and other metadata of PyTorch tensors to whatever
+  degree of specificity your code desires.
+
+  `beartype.vale.Is[...] <Is_>`__: *it's lambdas all the way down.*
 
 ...mock types?
 ~~~~~~~~~~~~~~
@@ -1446,7 +1526,7 @@ exact use case:
    monotowertype = beartype(conf=BeartypeConf(
        is_color=False, is_pep484_tower=True))
 
-   # Decorate with this decorator instead of the vanilla @beartype decorator.
+   # Decorate with this decorator rather than @beartype everywhere.
    @monotowertype
    def muh_colorless_permissive_func(int_or_float: float) -> float:
        return int_or_float ** int_or_float ^ round(int_or_float)
@@ -1564,7 +1644,7 @@ Configuration API
          # Dynamically create a new @monobeartype decorator disabling colour.
          monobeartype = beartype(conf=BeartypeConf(is_color=False))
 
-         # Decorate with this decorator instead of the vanilla @beartype decorator.
+         # Decorate with this decorator rather than @beartype everywhere.
          @monobeartype
          def muh_colorless_func() -> str:
              return b'In the kingdom of the blind, you are now king.'
@@ -1605,7 +1685,7 @@ Configuration API
          # Insider D&D jokes in my @beartype? You'd better believe. It's happening.
          >>> bugbeartype = beartype(conf=BeartypeConf(is_debug=True))
 
-         # Decorate with this decorator instead of the vanilla @beartype decorator.
+         # Decorate with this decorator rather than @beartype everywhere.
          >>> @bugbeartype
          ... def muh_bugged_func() -> str:
          ...     return b'Consistency is the bugbear that frightens little minds.'
@@ -1675,7 +1755,7 @@ Configuration API
          # Dynamically create a new @beartowertype decorator enabling the tower.
          beartowertype = beartype(conf=BeartypeConf(is_pep484_tower=False))
 
-         # Decorate with this decorator instead of the vanilla @beartype decorator.
+         # Decorate with this decorator rather than @beartype everywhere.
          @beartowertype
          def crunch_numbers(numbers: list[float]) -> float:
              return sum(numbers)
@@ -1740,11 +1820,85 @@ Configuration API
 
       **No-time strategy** (i.e, disabling type-checking for a decorated
       callable by reducing ``@beartype`` to the identity decorator for that
-      callable). Although seemingly useless, this strategy enables users to
-      selectively blacklist (prevent) callables from being type-checked by our
-      as-yet-unimplemented import hook. When implemented, that hook will
-      type-check all callables within a package or module *except* those
-      callables explicitly decorated by this strategy.
+      callable). This strategy is functionally equivalent to (but more
+      general-purpose than) the standard `@typing.no_type_check`_ decorator;
+      whereas `@typing.no_type_check`_ only applies to callables, this strategy
+      applies to *all* contexts accepting a beartype configuration – including:
+
+      * The ``@beartype`` decorator decorating a class.
+      * The `beartype.door.is_bearable() function <is_bearable_>`__.
+      * The `beartype.door.die_if_unbearable() function <die_if_unbearable_>`__.
+      * The `beartype.door.TypeHint.is_bearable() method <beartype.door_>`__.
+      * The `beartype.door.TypeHint.die_if_unbearable() method
+        <beartype.door_>`__.
+
+      Just like in real life, there exist valid use cases for doing absolutely
+      nothing. This includes:
+
+      * **Blacklisting callables.** Although seemingly useless, this strategy
+        allows callers to selectively prevent callables that would otherwise be
+        type-checked (e.g., due to class decorations or import hooks) from being
+        type-checked:
+
+        .. code-block:: python
+
+           # Import the requisite machinery.
+           from beartype import beartype, BeartypeConf, BeartypeStrategy
+
+           # Dynamically create a new @nobeartype decorator disabling type-checking.
+           nobeartype = beartype(conf=BeartypeConf(strategy=BeartypeStrategy.O0))
+
+           # Automatically decorate all methods of this class...
+           @beartype
+           class TypeCheckedClass(object):
+               # Including this method, which raises a type-checking violation
+               # due to returning a non-"None" value.
+               def type_checked_method(self) -> None:
+                   return 'This string is not "None". Apparently, that is a problem.'
+
+               # Excluding this method, which raises *NO* type-checking
+               # violation despite returning a non-"None" value.
+               @nobeartype
+               def non_type_checked_method(self) -> None:
+                   return 'This string is not "None". Thankfully, no one cares.'
+
+      * **Eliding overhead.** Beartype `already exhibits near-real-time overhead
+        of less than 1µs (one microsecond, one millionth of a second) per call
+        to type-checked callables <beartype realtime_>`__. When even that
+        negligible overhead isn't negligible enough, brave callers considering a
+        change of workplace may globally disable *all* type-checking performed
+        by beartype. Please prepare your resume before doing so. Also, do so
+        *only* under production builds intended for release; development builds
+        intended for testing should (ideally) preserve type-checking. Either:
+
+        * `Pass Python the "-O" command-line option <-O_>`__, which beartype
+          respects.
+        * `Run Python under the "PYTHONOPTIMIZE" environment variable
+          <PYTHONOPTIMIZE_>`__, which beartype also respects.
+        * Define a new ``@maybebeartype`` decorator disabling type-checking when
+          an app-specific constant ``I_AM_RELEASE_BUILD`` defined elsewhere is
+          enabled:
+
+          .. code-block:: python
+
+             # Import the requisite machinery.
+             from beartype import beartype, BeartypeConf, BeartypeStrategy
+
+             # Let us pretend you know what you are doing for a hot moment.
+             from your_app import I_AM_RELEASE_BUILD
+
+             # Dynamically create a new @maybebeartype decorator disabling
+             # type-checking when "I_AM_RELEASE_BUILD" is enabled.
+             maybebeartype = beartype(conf=BeartypeConf(strategy=(
+                 BeartypeStrategy.O0
+                 if I_AM_RELEASE_BUILD else
+                 BeartypeStrategy.O1
+             ))
+
+             # Decorate with this decorator rather than @beartype everywhere.
+             @maybebeartype
+             def muh_performance_critical_func(big_list: list[int]) -> int:
+                 return sum(big_list)
 
     .. _BeartypeStrategy.O1:
 
@@ -1864,14 +2018,14 @@ calls the pure-Python functions and methods you specify when you subscript
 Beartype validators thus come in two flavours – each with its attendant
 tradeoffs:
 
-* **Functional validators,** created by subscripting the ``beartype.vale.Is``
-  class with a function accepting a single parameter and returning ``True``
-  only when that parameter satisfies a caller-defined constraint. Each
-  functional validator incurs the cost of calling that function for each call
-  to each ``@beartype``\ -decorated callable annotated by that validator, but
-  is Turing-complete and thus supports all possible validation scenarios.
+* **Functional validators,** created by subscripting the `beartype.vale.Is
+  <Is_>`__ class with a function accepting a single parameter and returning
+  ``True`` only when that parameter satisfies a caller-defined constraint. Each
+  functional validator incurs the cost of calling that function for each call to
+  each ``@beartype``\ -decorated callable annotated by that validator, but is
+  Turing-complete and thus supports all possible validation scenarios.
 * **Declarative validators,** created by subscripting any *other* class in the
-  ``beartype.vale`` subpackage (e.g., ``beartype.vale.IsEquals``) with
+  beartype.vale_ subpackage (e.g., `beartype.vale.IsEqual <IsEqual_>`__) with
   arguments specific to that class. Each declarative validator generates
   efficient inline code calling *no* hidden functions and thus incurring no
   function costs, but is special-purpose and thus supports only a narrow band
@@ -4564,8 +4718,8 @@ reduced to the identity decorator by returning that function unmodified:
    True
 
 We've verified that ``@beartype`` reduces to the identity decorator when
-decorating unannotated callables. That's but the tip of the iceberg, though.
-``@beartype`` unconditionally reduces to a noop when:
+decorating unannotated callables. That's but the tip of the efficiency iceberg,
+though. ``@beartype`` unconditionally reduces to a noop when:
 
 * The decorated callable is itself decorated by the `PEP 484`_-compliant
   `@typing.no_type_check`_ decorator.
@@ -5580,6 +5734,8 @@ rather than Python runtime) include:
    https://github.com/beartype/beartype/actions?workflow=tests
 
 .. # ------------------( LINKS ~ beartype : user             )------------------
+.. _patrick-kidger:
+   https://github.com/patrick-kidger
 .. _harens:
    https://github.com/harens
 .. _leycec:
@@ -5767,6 +5923,10 @@ rather than Python runtime) include:
    https://github.com/beartype/bearboto3
 .. _mypy-boto3:
    https://mypy-boto3.readthedocs.io
+
+.. # ------------------( LINKS ~ py : package : jax          )------------------
+.. _jax.numpy:
+   https://jax.readthedocs.io/en/latest/notebooks/thinking_in_jax.html
 
 .. # ------------------( LINKS ~ py : package : numpy        )------------------
 .. _NumPy:
@@ -6251,8 +6411,12 @@ rather than Python runtime) include:
    https://mypy.readthedocs.io/en/stable/type_narrowing.html
 
 .. # ------------------( LINKS ~ py : type : tensor          )------------------
+.. _jaxtyping:
+   https://github.com/google/jaxtyping
 .. _nptyping:
    https://github.com/ramonhagenaars/nptyping
+.. _TorchTyping:
+   https://github.com/patrick-kidger/torchtyping
 
 .. # ------------------( LINKS ~ soft : ide                  )------------------
 .. _PyCharm:
