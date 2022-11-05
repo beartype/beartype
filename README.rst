@@ -692,10 +692,7 @@ You're welcome.
 ...JAX arrays?
 ~~~~~~~~~~~~~~
 
-You only have two options here. Bask in the array of options at your disposal!
-:superscript:`...get it? ...array? I'll stop now.`
-
-Choose wisely, wily scientist. If:
+You only have two options here. Choose wisely, wily scientist. If:
 
 * You don't mind adding an **additional mandatory runtime dependency** to your
   app:
@@ -705,22 +702,22 @@ Choose wisely, wily scientist. If:
     (e.g., ``jaxtyping.Float[jaxtyping.Array, '{metadata1 ... metadataN}']``).
 
   Beartype fully supports `typed JAX arrays <jaxtyping_>`__. Because
-  `Google mathematician @patrick-kidger <patrick-kidger_>`__ already did all the
-  hard work, we didn't have to. Bless the runtime API you made, @patrick-kidger.
+  `Google mathematician @patrick-kidger <patrick-kidger_>`__ did all the hard
+  work, we didn't have to. Bless your runtime API, @patrick-kidger.
 
 * You mind adding an additional mandatory runtime dependency to your app, prefer
   `beartype validators <Tensor Property Matching_>`__. Since `JAX declares a
-  (*waving hands here*) broadly similar API to that of NumPy via its "jax.numpy"
-  compatibility layer <jax.numpy_>`__, most NumPy-specific examples cleanly
-  generalize to JAX. Thankfully, beartype is *no* exception.
+  broadly similar API to that of NumPy with its "jax.numpy" compatibility layer
+  <jax.numpy_>`__, most NumPy-specific examples cleanly generalize to JAX.
+  Beartype is *no* exception.
+
+Bask in the array of options at your disposal! :superscript:`...get it?
+...array? I'll stop now.`
 
 ...NumPy arrays?
 ~~~~~~~~~~~~~~~~
 
-You have more than a few options here, depending on what NumPy array metadata
-you want to type-check. Options are good! Repeat after me.
-
-If you want to type-check:
+You have more than a few options here. If you want to type-check:
 
 * The ``dtype`` of a NumPy array, prefer the `official
   "numpy.typing.NDArray[{dtype}]" type hint factory bundled with NumPy
@@ -744,11 +741,13 @@ If you want to type-check:
     adding an additional mandatory runtime dependency to your app. In this case,
     prefer `beartype validators <Tensor Property Matching_>`__.
 
+Options are good! Repeat this mantra in times of need.
+
 ...PyTorch tensors?
 ~~~~~~~~~~~~~~~~~~~
 
 You only have two options here. We're pretty sure two is better than none.
-Therefore, we give thanks. If:
+Thus, we give thanks. If:
 
 * You don't mind adding an **additional mandatory runtime dependency** to your
   app:
@@ -758,13 +757,14 @@ Therefore, we give thanks. If:
     ``TorchTyping.TensorType['{metadata1}', ..., '{metadataN}']``).
 
   Beartype fully supports `typed PyTorch tensors <TorchTyping_>`__. Because
-  `Google mathematician @patrick-kidger <patrick-kidger_>`__ already did all the
-  hard work, we didn't have to. Bless the runtime API you made, @patrick-kidger.
+  `Google mathematician @patrick-kidger <patrick-kidger_>`__ did all the hard
+  work, we didn't have to. Bless your runtime API, @patrick-kidger.
 
 * You mind adding an additional mandatory runtime dependency to your app. In
   this case, prefer `beartype validators <Beartype Validators_>`__. For example,
-  validate callable parameters and returns as strictly floating-point *or*
-  integral PyTorch tensors:
+  validate callable parameters and returns as either floating-point *or*
+  integral PyTorch tensors via the `functional validator factory
+  beartype.vale.Is[...] <Is_>`__:
 
   .. code-block:: python
 
@@ -774,6 +774,7 @@ Therefore, we give thanks. If:
      from typing import Annotated   # <--------------- if Python ≥ 3.9.0
      # from typing_extensions import Annotated   # <-- if Python < 3.9.0
 
+     # Import PyTorch (d)types of interest.
      from torch import (
          float as torch_float,
          int as torch_int,
@@ -793,10 +794,10 @@ Therefore, we give thanks. If:
      def deep_dream(dreamy_tensor: TorchTensorFloat) -> TorchTensorInt:
          return dreamy_tensor.type(dtype=torch_int)
 
-  Of course, `beartype.vale.Is[...] <Is_>`__ supports arbitrarily complex
-  Turing-complete Python expressions. The above example generalizes to typing
-  the dimensionality, device, and other metadata of PyTorch tensors to whatever
-  degree of specificity your code desires.
+  Since `beartype.vale.Is[...] <Is_>`__ supports arbitrary Turing-complete
+  Python expressions, the above example generalizes to typing the device,
+  dimensionality, and other metadata of PyTorch tensors to whatever degree of
+  specificity you desire.
 
   `beartype.vale.Is[...] <Is_>`__: *it's lambdas all the way down.*
 
@@ -1820,10 +1821,10 @@ Configuration API
 
       **No-time strategy** (i.e, disabling type-checking for a decorated
       callable by reducing ``@beartype`` to the identity decorator for that
-      callable). This strategy is functionally equivalent to (but more
-      general-purpose than) the standard `@typing.no_type_check`_ decorator;
+      callable). This strategy is functionally equivalent to but more
+      general-purpose than the standard `@typing.no_type_check`_ decorator;
       whereas `@typing.no_type_check`_ only applies to callables, this strategy
-      applies to *all* contexts accepting a beartype configuration – including:
+      applies to *any* context accepting a beartype configuration such as:
 
       * The ``@beartype`` decorator decorating a class.
       * The `beartype.door.is_bearable() function <is_bearable_>`__.
@@ -1832,8 +1833,8 @@ Configuration API
       * The `beartype.door.TypeHint.die_if_unbearable() method
         <beartype.door_>`__.
 
-      Just like in real life, there exist valid use cases for doing absolutely
-      nothing. This includes:
+      Just like in real life, there exist use cases for doing absolutely
+      nothing – including:
 
       * **Blacklisting callables.** Although seemingly useless, this strategy
         allows callers to selectively prevent callables that would otherwise be
@@ -1864,12 +1865,12 @@ Configuration API
 
       * **Eliding overhead.** Beartype `already exhibits near-real-time overhead
         of less than 1µs (one microsecond, one millionth of a second) per call
-        to type-checked callables <beartype realtime_>`__. When even that
-        negligible overhead isn't negligible enough, brave callers considering a
-        change of workplace may globally disable *all* type-checking performed
-        by beartype. Please prepare your resume before doing so. Also, do so
-        *only* under production builds intended for release; development builds
-        intended for testing should (ideally) preserve type-checking. Either:
+        of type-checked callables <beartype realtime_>`__. When even that
+        negligible overhead isn't negligible enough, brave callers considering
+        an occupational change may globally disable *all* type-checking
+        performed by beartype. Please prepare your resume before doing so. Also,
+        do so *only* under production builds intended for release; development
+        builds intended for testing should preserve type-checking. Either:
 
         * `Pass Python the "-O" command-line option <-O_>`__, which beartype
           respects.
