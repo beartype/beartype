@@ -25,6 +25,7 @@ from beartype.roar import (
     BeartypeDecorWrapperException,
     # BeartypeWarning,
 )
+from beartype.typing import no_type_check
 from beartype._cave._cavefast import (
     MethodDecoratorBuiltinTypes,
     MethodDecoratorClassType,
@@ -32,6 +33,7 @@ from beartype._cave._cavefast import (
     MethodDecoratorStaticType,
 )
 from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.datatyping import (
     BeartypeableT,
     TypeStack,
@@ -562,27 +564,40 @@ def _beartype_func(
     #FIXME: Uncomment to display all annotations in "pytest" tracebacks.
     # func_hints = func.__annotations__
 
+    # If this configuration enables the no-time strategy performing *NO*
+    # type-checking, monkey-patch that callable with the standard
+    # @typing.no_type_check decorator detected above by the call to the
+    # is_func_unbeartypeable() tester on all subsequent decorations passed the
+    # same callable. (Doing so prevents all subsequent decorations from
+    # erroneously ignoring this previously applied no-time strategy.)
+    if conf.strategy is BeartypeStrategy.O0:
+        no_type_check(func)
+    # Else, this configuration enables a positive-time strategy performing at
+    # least the minimal amount of type-checking.
+
     # If that callable is unbeartypeable (i.e., if this decorator should
     # preserve that callable as is rather than wrap that callable with
     # constant-time type-checking), silently reduce to the identity decorator.
+    #
+    # Note that this conditional implicitly handles the prior conditional! :O
     if is_func_unbeartypeable(func):  # type: ignore[arg-type]
         return func  # type: ignore[return-value]
     # Else, that callable is beartypeable. Let's do this, folks.
 
-    # Previously cached callable metadata reinitialized from this callable.
+    # Previously cached callable metadata reinitialized from that callable.
     bear_call = acquire_object_typed(BeartypeCall)
     bear_call.reinit(func, conf, **kwargs)
 
     # Generate the raw string of Python statements implementing this wrapper.
     func_wrapper_code = generate_code(bear_call)
 
-    # If this callable requires *NO* type-checking, silently reduce to a noop
-    # and thus the identity decorator by returning this callable as is.
+    # If that callable requires *NO* type-checking, silently reduce to a noop
+    # and thus the identity decorator by returning that callable as is.
     if not func_wrapper_code:
         return func  # type: ignore[return-value]
-    # Else, this callable requires type-checking. Let's *REALLY* do this, fam.
+    # Else, that callable requires type-checking. Let's *REALLY* do this, fam.
 
-    # Function wrapping this callable with type-checking to be returned.
+    # Function wrapping that callable with type-checking to be returned.
     #
     # For efficiency, this wrapper accesses *ONLY* local rather than global
     # attributes. The latter incur a minor performance penalty, since local

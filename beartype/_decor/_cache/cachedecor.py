@@ -31,7 +31,6 @@ from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
-from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.datatyping import (
     BeartypeConfedDecorator,
     BeartypeReturn,
@@ -95,78 +94,40 @@ def beartype(
         return beartype_confed_cached
     # Else, this is the first call to this public decorator passed this
     # configuration in configuration mode.
-    #
-    # If this configuration enables the no-time strategy performing *NO*
-    # type-checking, define only the identity decorator reducing to a noop.
-    elif conf.strategy is BeartypeStrategy.O0:
-        #FIXME: This requires augmentation. We can't just return a pure
-        #identity decorator. Instead, we need to return a minimal
-        #quasi-identity decorator that:
-        #* Monkey-patches the passed callable with our "__beartype_wrapped =
-        #  True" (or whatever that is) dunder boolean to prevent repeated
-        #  decorations be non-O(0) @beartype decorations.
-        #* Cache PEP 585-compliant type hints to reduce space costs.
-        def beartype_confed(obj: BeartypeableT) -> BeartypeableT:
-            '''
-            Return the passed **beartypeable** (i.e., pure-Python callable or
-            class) as is *without* type-checking that beartypeable under a
-            beartype configuration enabling the **no-time strategy** (i.e.,
-            :attr:`beartype.BeartypeStrategy.O0`) passed to a prior call to the
-            :func:`beartype.beartype` decorator.
 
-            Parameters
-            ----------
-            obj : BeartypeableT
-                Beartypeable to be preserved as is.
+    # Define a private decorator generically applying this configuration to any
+    # beartypeable object passed to this decorator.
+    def beartype_confed(obj: BeartypeableT) -> BeartypeableT:
+        '''
+        Decorate the passed **beartypeable** (i.e., pure-Python callable or
+        class) with optimal type-checking dynamically generated unique to
+        that beartypeable under the beartype configuration passed to a
+        prior call to the :func:`beartype.beartype` decorator.
 
-            Returns
-            ----------
-            BeartypeableT
-                This beartypeable unmodified.
+        Parameters
+        ----------
+        obj : BeartypeableT
+            Beartypeable to be decorated.
 
-            See Also
-            ----------
-            :func:`beartype.beartype`
-                Further details.
-            '''
+        Returns
+        ----------
+        BeartypeableT
+            Either:
 
-            return obj
-    # Else, this configuration enables a positive-time strategy performing at
-    # least the minimal amount of type-checking. In this case, define a private
-    # decorator generically applying this configuration to any beartypeable
-    # object passed to this decorator.
-    else:
-        def beartype_confed(obj: BeartypeableT) -> BeartypeableT:
-            '''
-            Decorate the passed **beartypeable** (i.e., pure-Python callable or
-            class) with optimal type-checking dynamically generated unique to
-            that beartypeable under the beartype configuration passed to a
-            prior call to the :func:`beartype.beartype` decorator.
+            * If the passed object is a class, this existing class
+              embellished with dynamically generated type-checking.
+            * If the passed object is a callable, a new callable wrapping
+              that callable with dynamically generated type-checking.
 
-            Parameters
-            ----------
-            obj : BeartypeableT
-                Beartypeable to be decorated.
+        See Also
+        ----------
+        :func:`beartype.beartype`
+            Further details.
+        '''
 
-            Returns
-            ----------
-            BeartypeableT
-                Either:
-
-                * If the passed object is a class, this existing class
-                  embellished with dynamically generated type-checking.
-                * If the passed object is a callable, a new callable wrapping
-                  that callable with dynamically generated type-checking.
-
-            See Also
-            ----------
-            :func:`beartype.beartype`
-                Further details.
-            '''
-
-            # Decorate this object with type-checking configured by this
-            # configuration.
-            return beartype_object(obj, conf)
+        # Decorate this object with type-checking configured by this
+        # configuration.
+        return beartype_object(obj, conf)
 
     # Cache this private decorator against this configuration.
     _bear_conf_to_decor[conf] = beartype_confed
