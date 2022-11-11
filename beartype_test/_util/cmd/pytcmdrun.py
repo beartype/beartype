@@ -54,6 +54,7 @@ from beartype.typing import (
     Iterable,
     Mapping,
     Optional,
+    Tuple,
 )
 from collections.abc import (
     Iterable as IterableABC,
@@ -65,6 +66,7 @@ from subprocess import (
     TimeoutExpired,
     call as subprocess_call,
     check_output as subprocess_check_output,
+    run as subprocess_run,
 )
 
 # ....................{ GLOBALS                            }....................
@@ -118,21 +120,6 @@ PEP-compliant type hint matching the ``popen_kwargs`` parameter passed to most
 callables declared by this submodule.
 '''
 
-# ....................{ PRIVATE ~ globals                  }....................
-_INIT_POPEN_KWARGS_POPEN_KWARGS_NAMES_CLOSE_FDS_CONFLICTING = frozenset((
-    'stdin', 'stdout', 'stderr', 'close_fds'))
-'''
-Frozen set of the names of all keyword parameters which if passed would prevent
-the :func:`_init_popen_kwargs` function from safely defaulting the ``close_fds``
-parameter to false under **vanilla Microsoft Windows** (i.e., *not* running the
-Cygwin POSIX compatibility layer).
-
-See Also
-----------
-:func:`_init_popen_kwargs`
-    Further details.
-'''
-
 # ....................{ RUNNERS ~ command                  }....................
 #FIXME: Unit test us up, please.
 def run_command_forward_stderr_return_stdout(
@@ -143,11 +130,11 @@ def run_command_forward_stderr_return_stdout(
     popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None,
 ) -> str:
     '''
-    Run the passed command as a subprocess of the active Python process,
-    raising an exception on subprocess failure while both forwarding all
-    standard error output by this subprocess to the standard error file handle
-    of the active Python process *and* capturing and returning all stdout
-    output by this subprocess.
+    Run the passed command as a subprocess of the active Python process, raising
+    an exception on subprocess failure while both forwarding all standard error
+    of this subprocess to the standard error file handle of the active Python
+    process *and* capturing and returning all standard output of this
+    subprocess.
 
     This exception contains the exit status of this subprocess.
 
@@ -163,9 +150,9 @@ def run_command_forward_stderr_return_stdout(
     Returns
     ----------
     str
-        All stdout captured from this subprocess, stripped of all trailing
-        newlines (as under most POSIX shells) *and* decoded with the current
-        locale's preferred encoding (e.g., UTF-8).
+        All standard output captured from this subprocess, stripped of all
+        trailing newlines (as under most POSIX shells) *and* decoded with the
+        current locale's preferred encoding (e.g., UTF-8).
 
     Raises
     ----------
@@ -284,99 +271,85 @@ def run_command_forward_output_return_status(
     # Return this exit status.
     return exit_status
 
-# ....................{ RUNNERS ~ python                   }....................
-#FIXME: Unit test us up, please.
-def run_python_forward_stderr_return_stdout(
+
+def run_command_return_stdout_stderr(
     # Mandatory parameters.
-    python_args: _HINT_COMMAND_WORDS,
+    command_words: _HINT_COMMAND_WORDS,
 
     # Optional parameters.
-    popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None
-) -> None:
+    popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None,
+) -> Tuple[str, str]:
     '''
-    Run a new Python subprocess of the active Python process passed the passed
-    arguments, raising an exception on subprocess failure while both forwarding
-    all standard error output by this subprocess to the standard error file
-    handle of the active Python process *and* capturing and returning all
-    stdout output by this subprocess.
+    Run the passed command as a subprocess of the active Python process, raising
+    an exception on subprocess failure while capturing and returning both all
+    standard output and error of this subprocess.
 
     This exception contains the exit status of this subprocess.
 
     Parameters
     ----------
-    python_args : _HINT_COMMAND_WORDS
-        Iterable of zero or more shell words to passed to this new Python
-        subprocess.
+    command_words : _HINT_COMMAND_WORDS
+        Iterable of one or more shell words comprising this command.
     popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
         Dictionary of all keyword arguments to be passed to the
         :meth:`subprocess.Popen.__init__` method. Defaults to ``None``, in
         which case the empty dictionary is assumed.
 
-    Raises
+    Returns
     ----------
-    CalledProcessError
-        If the subprocess running this command report non-zero exit status.
-    '''
-
-    # Defer heavyweight imports.
-    from beartype._util.py.utilpyinterpreter import get_interpreter_filename
-
-    # Absolute filename of the executable binary for the active Python process.
-    interpreter_filename = get_interpreter_filename()
-
-    # Tuple of one or more shell words running a new Python subprocess.
-    command_words = (interpreter_filename,) + tuple(python_args)
-
-    # Run that subprocess, capturing and returning all output stdout.
-    return run_command_forward_stderr_return_stdout(
-        command_words=command_words, popen_kwargs=popen_kwargs)
-
-
-#FIXME: Uncomment as needed. *sigh*
-#FIXME: Unit test us up, please.
-def run_python_forward_output(
-    # Mandatory parameters.
-    python_args: _HINT_COMMAND_WORDS,
-
-    # Optional parameters.
-    popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None
-) -> None:
-    '''
-    Run a new Python subprocess of the active Python process passed the passed
-    arguments, raising an exception on subprocess failure while forwarding all
-    standard output and error output by this subprocess to the standard output
-    and error file handles of the active Python process.
-
-    This exception contains the exit status of this subprocess.
-
-    Parameters
-    ----------
-    python_args : _HINT_COMMAND_WORDS
-        Iterable of zero or more shell words to passed to this new Python
-        subprocess.
-    popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
-        Dictionary of all keyword arguments to be passed to the
-        :meth:`subprocess.Popen.__init__` method. Defaults to ``None``, in
-        which case the empty dictionary is assumed.
+    Tuple[str, str]
+        All standard output and error (in that order) captured from this
+        subprocess, stripped of all trailing newlines (as under most POSIX
+        shells) *and* decoded with the current locale's preferred encoding
+        (e.g., UTF-8).
 
     Raises
     ----------
     CalledProcessError
-        If the subprocess running this command report non-zero exit status.
+        If the subprocess running this command reports non-zero exit status.
     '''
 
-    # Defer heavyweight imports.
-    from beartype._util.py.utilpyinterpreter import get_interpreter_filename
+    # If these keyword arguments are empty, default to the empty dictionary
+    # *BEFORE* setting dictionary keys below.
+    if popen_kwargs is None:
+        popen_kwargs = {}
 
-    # Absolute filename of the executable binary for the active Python process.
-    interpreter_filename = get_interpreter_filename()
+    # Enable capturing of both standard output and error.
+    popen_kwargs['capture_output'] = True
 
-    # Tuple of one or more shell words running a new Python subprocess.
-    command_words = (interpreter_filename,) + tuple(python_args)
+    # Enable raising of a "CalledProcessError" exception when this command
+    # reports non-zero exit status.
+    popen_kwargs['check'] = True
 
-    # Run this new Python subprocess.
-    return run_command_forward_output(
-        command_words=command_words, popen_kwargs=popen_kwargs)
+    # Sanitize these arguments.
+    popen_kwargs = _init_popen_kwargs(command_words, popen_kwargs)
+
+    # "subprocess.CompletedProcess" object encapsulating the result of running
+    # this command.
+    command_result = subprocess_run(command_words, **popen_kwargs)
+
+    # Standard output and error emitted by this command, stripped of all
+    # trailing newlines.
+    command_stdout = command_result.stdout.rstrip('\n')
+    command_stderr = command_result.stderr.rstrip('\n')
+
+    # Return this standard output and error.
+    return command_stdout, command_stderr
+
+# ....................{ PRIVATE ~ constants                }....................
+_INIT_POPEN_KWARGS_POPEN_KWARGS_NAMES_CLOSE_FDS_CONFLICTING = frozenset((
+    'stdin', 'stdout', 'stderr', 'close_fds'))
+'''
+Frozen set of the names of all keyword parameters which if passed would prevent
+the :func:`_init_popen_kwargs` function from safely defaulting the ``close_fds``
+parameter to false under **vanilla Microsoft Windows** (i.e., *not* running the
+Cygwin POSIX compatibility layer).
+
+See Also
+----------
+:func:`_init_popen_kwargs`
+    Further details.
+'''
 
 # ....................{ PRIVATE                            }....................
 def _init_popen_kwargs(

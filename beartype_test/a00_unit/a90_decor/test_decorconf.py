@@ -153,10 +153,11 @@ def test_decor_conf_is_debug(capsys) -> None:
         assert code_line in stdout_line
 
 # ....................{ TESTS ~ strategy                   }....................
-def test_decor_conf_strategy() -> None:
+def test_decor_conf_strategy_O0() -> None:
     '''
     Test the :func:`beartype.beartype` decorator passed the optional ``conf``
-    parameter passed the optional ``strategy`` parameter.
+    parameter passed the optional ``strategy`` parameter whose value is the
+    **no-time strategy** (i.e., :attr:`beartype.BeartypeStrategy.O0).
     '''
 
     # ..................{ IMPORTS                            }..................

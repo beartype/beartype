@@ -45,7 +45,7 @@ def get_interpreter_filename() -> str:
     '''
 
     # Avoid circular import dependencies.
-    # from beartype._util.path.utilfile import 
+    # from beartype._util.path.utilfile import
 
     # If Python failed to query this filename, raise an exception.
     #

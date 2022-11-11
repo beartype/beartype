@@ -163,19 +163,31 @@ def resolve_pep563(
     # Else, that callable is pure-Python.
 
     # ..................{ DETECTION                          }..................
+    # Module directly defining that callable if that callable is defined by a
+    # module that exists *OR* "None" otherwise (i.e., if that callable declared
+    # itself to be either dynamically defined in memory by setting its
+    # "__module" attribute to "None" *OR* statically defined on disk by a
+    # non-existent module, in which case that callable should have set its
+    # "__module__" attribute to "None" instead).
+    #
+    # Note that shockingly many callables erroneously declare themselves to be
+    # statically defined on disk by non-existent modules. This includes methods
+    # synthesized by the standard "typing.NamedTuple" class -- which set their
+    # "__module__" attributes to the non-existent module "namedtuple_Foo". :O
+    func_module = sys_modules.get(func.__module__)
+
     # If it is *NOT* the case that...
     if not (
-        # This callable was declared by on on-disk module *AND*...
-        func.__module__ is not None and
-        # This callable's module defined an "annotations" attribute to be
-        # the "__future__.annotations" object. In this case, that module
-        # enabled PEP 563 support with a leading statement resembling:
+        # That callable's module exists *AND*...
+        func_module and
+        # That callable's module defined an "annotations" attribute to be
+        # the "__future__.annotations" object, that module enabled PEP 563
+        # support with a leading statement resembling:
         #     from __future__ import annotations
-        getattr(sys_modules[func.__module__], 'annotations', None) is (
-            __future__.annotations)
-    ):
-    # Then this callable's hints are *NOT* postponed under PEP 563. In this
+        getattr(func_module, 'annotations', None) is _FUTURE_ANNOTATIONS
+    # Then that callable's hints are *NOT* postponed under PEP 563. In this
     # case, silently reduce to a noop.
+    ):
         return
     # Else, these hints are postponed under PEP 563. In this case, resolve these
     # hints to their referents.
@@ -688,6 +700,13 @@ def resolve_pep563(
     #     f'\n\t------[ RESOLVED  ]------\n\t{func_hints_resolved}'
     # )
     func.__annotations__ = func_hints_resolved
+
+# ....................{ PRIVATE ~ constants                }....................
+_FUTURE_ANNOTATIONS = __future__.annotations
+'''
+:attr:`__future__.annotations` object, globalized as a private constant of this
+submodule to negligibly optimize repeated lookups of this object.
+'''
 
 # ....................{ PRIVATE ~ resolvers                }....................
 #FIXME: We currently no longer require this. See above for further commentary.

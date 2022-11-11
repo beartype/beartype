@@ -16,14 +16,22 @@ third-party static type-checkers and hence :pep:`561`.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import (
+    skip,
     skip_if_ci,
     skip_if_pypy,
     skip_unless_package,
     skip_unless_pathable,
 )
 
-# ....................{ TESTS                              }....................
+# ....................{ TESTS ~ mypy                       }....................
 #FIXME: Consider submitting as a StackOverflow post. Dis iz l33t, yo!
+#FIXME: Sadly, diz iz no longer l33t. Mypy broke its runtime API. This test now
+#spuriously fails under CI with a non-human-readable exception message
+#resembling:
+#       TypeError: 'mypy' is not a package
+#
+#The solution? Refactor this test ala the existing test_pep561_pyright() test,
+#which thankfully already does everything we want here. Rejoice!
 
 # If the third-party "mypy" package is unavailable, skip this test. Note that:
 # * "mypy" is the reference standard for static type-checking in Python.
@@ -43,12 +51,8 @@ from beartype_test._util.mark.pytskip import (
 #   with PyPy for inscrutable reasons that should presumably be fixed at some
 #   future point. See also:
 #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
-# * Tests are *NOT* running remotely under GitHub Actions-based continuous
-#   integration (CI). For unknown reasons, this test now spuriously fails under
-#   CI with a non-human-readable exception message resembling:
-#       TypeError: 'mypy' is not a package
+# @skip('Currently broken under mypy >= 0.990.')
 @skip_unless_package('mypy')
-@skip_if_ci()
 @skip_if_pypy()
 def test_pep561_mypy() -> None:
     '''
@@ -57,47 +61,47 @@ def test_pep561_mypy() -> None:
     type checker as of this test) against this project's top-level package.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
+    from beartype._util.py.utilpyinterpreter import get_interpreter_filename
+    from beartype_test._util.cmd.pytcmdrun import (
+        run_command_return_stdout_stderr)
     from beartype_test._util.path.pytpathmain import (
         get_main_mypy_config_file,
         get_main_package_dir,
     )
-    from mypy import api
 
-    # List of all command-line options (i.e., "-"-prefixed strings) to be
-    # effectively passed to the external "mypy" command.
-    #
-    # Note this iterable *MUST* be defined as a list rather than tuple. If a
-    # tuple, the function called below raises an exception. Hot garbage!
-    MYPY_OPTIONS = [
+    # Tuple of all shell words with which to run the external "mypy" command.
+    MYPY_ARGS = (
+        # Absolute filename of the executable running the active Python process.
+        get_interpreter_filename(),
+
+        # Fully-qualified name of the "mypy" package to be run.
+        '-m', 'mypy',
+
         # Absolute dirname of this project's top-level mypy configuration.
         # Since our "tox" configuration isolates testing to a temporary
         # directory, mypy is unable to find its configuration without help.
         '--config-file', str(get_main_mypy_config_file()),
-    ]
 
-    # List of all command-line arguments (i.e., non-options) to be effectively
-    # passed to the external "mypy" command.
-    #
-    # Note this iterable *MUST* be defined as a list rather than tuple. If a
-    # tuple, the function called below raises an exception. Steaming trash!
-    MYPY_ARGUMENTS = [
         # Absolute dirname of this project's top-level package.
         str(get_main_package_dir()),
-    ]
+    )
 
-    # Tuple of all command-line options to be effectively passed to the
-    # external "mypy" command.
+    # Run the external "pyright" command in the current ${PATH} with these
+    # options and arguments,  raising an exception on subprocess failure while
+    # forwarding all standard output and error output by this subprocess to the
+    # standard output and error file handles of the active Python process.
     #
     # Note that we intentionally do *NOT* assert that call to have exited with
     # a successful exit code. Although mypy does exit with success on local
     # developer machines, it inexplicably does *NOT* under remote GitHub
     # Actions-based continuous integration despite "mypy_stderr" being empty.
     # Ergo, we conveniently ignore the former in favour of the latter.
-    mypy_stdout, mypy_stderr, _ = api.run(MYPY_OPTIONS + MYPY_ARGUMENTS)
-    # mypy_stdout, mypy_stderr, mypy_exit = api.run(MYPY_OPTIONS + MYPY_ARGUMENTS)
+    mypy_stdout, mypy_stderr = run_command_return_stdout_stderr(
+        command_words=MYPY_ARGS)
 
-    # Assert "mypy" to have emitted *NO* warnings or errors to "stderr".
+    # Assert "mypy" to have emitted *NO* warnings or errors to either standard
+    # output or error.
     #
     # Note that "mypy" predominantly emits both warnings and errors to "stdout"
     # rather than "stderr", despite this contravening sane POSIX semantics.
@@ -106,8 +110,7 @@ def test_pep561_mypy() -> None:
     # stderr to stdout is a trivial shell fragment (e.g., "2>&1"), but let's
     # break everything just because some guy can't shell. See also:
     #     https://github.com/python/mypy/issues/1051
-    assert not mypy_stderr
-
+    #
     # Assert "mypy" to have emitted *NO* warnings or errors to "stdout".
     # Unfortunately, doing so is complicated by the failure of "mypy" to
     # conform to sane POSIX semantics. Specifically:
@@ -117,10 +120,75 @@ def test_pep561_mypy() -> None:
     #
     # Ergo, asserting this string to start with "Success:" suffices. Note this
     # assertion depends on "mypy" internals and is thus fragile, but that we
-    # have *NO* sane alternative.
-    assert mypy_stdout.startswith('Success: ')
+    # have *NO* sane alternative. Specifically, if either...
+    if (
+        # Mypy emitted one or more characters to standard error *OR*...
+        mypy_stderr or
+        # Mypy emitted standard output that does *NOT* start with this prefix...
+        not mypy_stdout.startswith('Success: ')
+    ):
+        # Print this string to standard output for debuggability, which pytest
+        # will then implicitly capture and reprint on the subsequent assertion
+        # failure.
+        print(mypy_stdout)
 
+        # Force an unconditional assertion failure.
+        assert False
 
+    #FIXME: Preserved for posterity. Sadly, diz iz no longer l33t. Mypy broke
+    #its runtime API. This test now spuriously fails under CI with a
+    #non-human-readable exception message resembling:
+    #    TypeError: 'mypy' is not a package
+    #
+    #Submit an upstream issue reporting this to mypy devs, please.
+    # from mypy import api
+    #
+    # # List of all shell words with which to run the external "mypy" command.
+    # #
+    # # Note this iterable *MUST* be defined as a list rather than tuple. If a
+    # # tuple, the function called below raises an exception. Hot garbage!
+    # MYPY_ARGS = [
+    #     # Absolute dirname of this project's top-level mypy configuration.
+    #     # Since our "tox" configuration isolates testing to a temporary
+    #     # directory, mypy is unable to find its configuration without help.
+    #     '--config-file', str(get_main_mypy_config_file()),
+    #
+    #     # Absolute dirname of this project's top-level package.
+    #     str(get_main_package_dir()),
+    # ]
+    #
+    # # Note that we intentionally do *NOT* assert that call to have exited with
+    # # a successful exit code. Although mypy does exit with success on local
+    # # developer machines, it inexplicably does *NOT* under remote GitHub
+    # # Actions-based continuous integration despite "mypy_stderr" being empty.
+    # # Ergo, we conveniently ignore the former in favour of the latter.
+    # mypy_stdout, mypy_stderr, _ = api.run(MYPY_OPTIONS + MYPY_ARGUMENTS)
+    # # mypy_stdout, mypy_stderr, mypy_exit = api.run(MYPY_OPTIONS + MYPY_ARGUMENTS)
+    #
+    # # Assert "mypy" to have emitted *NO* warnings or errors to "stderr".
+    # #
+    # # Note that "mypy" predominantly emits both warnings and errors to "stdout"
+    # # rather than "stderr", despite this contravening sane POSIX semantics.
+    # # They did this because some guy complained about not being able to
+    # # trivially grep "mypy" output, regardless of the fact that redirecting
+    # # stderr to stdout is a trivial shell fragment (e.g., "2>&1"), but let's
+    # # break everything just because some guy can't shell. See also:
+    # #     https://github.com/python/mypy/issues/1051
+    # assert not mypy_stderr
+    #
+    # # Assert "mypy" to have emitted *NO* warnings or errors to "stdout".
+    # # Unfortunately, doing so is complicated by the failure of "mypy" to
+    # # conform to sane POSIX semantics. Specifically:
+    # # * If "mypy" succeeds, "mypy" emits to "stdout" a single line resembling:
+    # #       Success: no issues found in 83 source files
+    # # * If "mypy" fails, "mypy" emits to "stdout" *ANY* other line(s).
+    # #
+    # # Ergo, asserting this string to start with "Success:" suffices. Note this
+    # # assertion depends on "mypy" internals and is thus fragile, but that we
+    # # have *NO* sane alternative.
+    # assert mypy_stdout.startswith('Success: ')
+
+# ....................{ TESTS ~ pyright                    }....................
 # If the external third-party "pyright" command is *NOT* pathable (i.e., an
 # executable command residing in the ${PATH} of the local filesystem), skip this
 # test. Note that:
@@ -175,18 +243,18 @@ def test_pep561_pyright() -> None:
             mine, support will be minimal.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.meta import PACKAGE_NAME
     from beartype._util.py.utilpyversion import get_python_version_major_minor
     from beartype_test._util.cmd.pytcmdrun import run_command_forward_output
 
-    # List of all shell words with which to run the external "pyright" command.
+    # Tuple of all shell words with which to run the external "pyright" command.
     PYRIGHT_ARGS = (
         # Basename of the external "pyright" command to be run.
         'pyright',
 
         #FIXME: Note that we *COULD* additionally pass the "--verifytypes"
-        #option, which exposes further "pyright" compliants. Let's avoid doing
+        #option, which exposes further "pyright" complaints. Let's avoid doing
         #so until someone explicitly requests we do so, please. This has dragged
         #on long enough, people!
 

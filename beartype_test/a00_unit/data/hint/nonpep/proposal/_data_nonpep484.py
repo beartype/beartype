@@ -16,19 +16,6 @@ PEP-noncompliant type hints include:
   returning :class:`dict` instances annotated by PEP-compliant type hints.
 '''
 
-# ....................{ IMPORTS                            }....................
-from typing import (
-    NamedTuple,
-)
-
-# ....................{ GLOBALS                            }....................
-NamedTupleType = NamedTuple(
-    'NamedTupleType', [('fumarole', str), ('enrolled', int)])
-'''
-PEP-compliant user-defined :func:`collections.namedtuple` instance typed with
-PEP-compliant annotations.
-'''
-
 # ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
@@ -42,9 +29,12 @@ def add_data(data_module: 'ModuleType') -> None:
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     import sys
     from beartype import BeartypeConf
+    from beartype.typing import (
+        NamedTuple,
+    )
     from beartype._cave._cavefast import (
         EllipsisType,
         FunctionType,
@@ -60,6 +50,12 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPithSatisfiedMetadata,
         HintPithUnsatisfiedMetadata,
     )
+
+    # ....................{ LOCALS                         }....................
+    # PEP-compliant user-defined "collections.namedtuple" instance typed with
+    # PEP-compliant type hints.
+    NamedTupleType = NamedTuple(
+        'NamedTupleType', [('fumarole', str), ('enrolled', int)])
 
     # ..................{ TUPLES                             }..................
     # Add PEP 484-specific PEP-noncompliant test type hints to this dictionary
