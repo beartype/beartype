@@ -1215,7 +1215,7 @@ MethodUnboundTypes = (
 )
 '''
 Tuple of all **unbound method types** (i.e., types whose instances are callable
-objects bound to neither instances nor classes)
+objects bound to neither instances nor classes).
 
 Unbound decorator objects (e.g., non-callable instances of the builtin
 :class:`classmethod`, :class:`property`, or :class:`staticmethod` decorator
@@ -1303,6 +1303,19 @@ CallableCTypes = (
 '''
 Tuple of all **C-based callable types** (i.e., types whose instances are
 callable objects implemented in low-level C rather than high-level Python).
+'''
+
+
+CallablePyTypes = (
+    FunctionType,
+    MethodBoundInstanceOrClassType,
+)
+'''
+Tuple of all **pure-Python callable types** (i.e., types whose instances are
+callable objects implemented in high-level Python rather than low-level C).
+
+**This tuple is empty under PyPy,** which unconditionally compiles *all*
+pure-Python callables into C-based callables.
 '''
 
 

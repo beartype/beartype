@@ -16,7 +16,6 @@ third-party static type-checkers and hence :pep:`561`.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import (
-    skip,
     skip_if_ci,
     skip_if_pypy,
     skip_unless_package,
@@ -51,7 +50,6 @@ from beartype_test._util.mark.pytskip import (
 #   with PyPy for inscrutable reasons that should presumably be fixed at some
 #   future point. See also:
 #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
-# @skip('Currently broken under mypy >= 0.990.')
 @skip_unless_package('mypy')
 @skip_if_pypy()
 def test_pep561_mypy() -> None:

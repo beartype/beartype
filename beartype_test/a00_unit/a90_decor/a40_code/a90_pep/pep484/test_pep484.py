@@ -16,8 +16,56 @@ to :pep:`484`-compliant type hints.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+# ....................{ TESTS ~ argument : namedtuple      }....................
+def test_decor_pep484_arg_namedtuple() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator against all edge cases of
+    instances of user-defined subclasses of the :pep:`484`-compliant
+    :attr:`typing.NamedTuple` superclass, which are instances rather than types
+    and thus invalid as actual type hints.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from typing import (
+        NamedTuple,
+        Optional,
+    )
+    from pytest import raises
+
+    # ..................{ LOCALS                             }..................
+    @beartype
+    class WindsContend(NamedTuple):
+        '''
+        Arbitrary named tuple type-checked by :func:`beartype.beartype`.
+        '''
+
+        starbeams: Optional[str]
+        '''
+        Standard instance variable passed by the :class:`NamedTuple` metaclass
+        to the the implicit ``__new__()`` method synthesized for this subclass.
+        '''
+
+    # Arbitrary instance of this named tuple exercising all edge cases.
+    dart_through_them = WindsContend(
+        starbeams='Or the star-beams dart through them. Winds contend')
+
+    # ..................{ PASS                               }..................
+    # Assert this dataclass defines the expected attributes.
+    assert dart_through_them.starbeams == (
+        'Or the star-beams dart through them. Winds contend')
+
+    # ..................{ FAIL                               }..................
+    # Assert that attempting to instantiate an instance of this dataclass with a
+    # parameter violating the corresponding type hint annotating the field of
+    # the same name raises the expected exception.
+    with raises(BeartypeCallHintParamViolation):
+        WindsContend(starbeams=0xBABECAFE)
+
 # ....................{ TESTS ~ decor : no_type_check      }....................
-def test_pep484_decor_no_type_check() -> None:
+def test_decor_pep484_no_type_check() -> None:
     '''
     Test the :func:`beartype.beartype` decorator against all edge cases of the
     :pep:`484`-compliant :attr:`typing.no_type_check` decorator.
@@ -44,7 +92,7 @@ def test_pep484_decor_no_type_check() -> None:
     assert of_beechen_green is of_beechen_green_beartyped
 
 # ....................{ TESTS ~ hint : noreturn            }....................
-def test_pep484_hint_noreturn() -> None:
+def test_decor_pep484_hint_noreturn() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on synchronous callables
     against all edge cases of the :pep:`484`-compliant :attr:`typing.NoReturn`
@@ -115,7 +163,7 @@ def test_pep484_hint_noreturn() -> None:
             return 'And makes gaps even two can pass abreast.'
 
 
-async def test_pep484_hint_noreturn_async() -> None:
+async def test_decor_pep484_hint_noreturn_async() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on asynchronous callables
     against all edge cases of the :pep:`484`-compliant :attr:`typing.NoReturn`
@@ -133,7 +181,7 @@ async def test_pep484_hint_noreturn_async() -> None:
         raise ValueError('The work of hunters is another thing:')
 
 # ....................{ TESTS ~ hint : sequence            }....................
-def test_pep484_hint_sequence_args_1_cached() -> None:
+def test_decor_pep484_hint_sequence_args_1_cached() -> None:
     '''
     Test that a `subtle issue <issue #5_>`__ of the :func:`beartype.beartype`
     decorator with respect to metadata describing **PEP-compliant standard

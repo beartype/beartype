@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,23 +10,24 @@ This submodule unit tests :pep:`577` support implemented in the
 :func:`beartype.beartype` decorator.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
-# ....................{ TESTS ~ validators                }....................
+# ....................{ TESTS                              }....................
 @skip_if_python_version_less_than('3.8.0')
-def test_is_hint_pep577() -> None:
+def test_decor_pep577_hint() -> None:
     '''
     Test :pep:`557` support implemented in the :func:`beartype.beartype`
     decorator if the active Python interpreter targets Python >= 3.8 *or* skip
     otherwise.
     '''
 
-    # Defer heavyweight imports.
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
     from dataclasses import (
@@ -40,6 +41,7 @@ def test_is_hint_pep577() -> None:
     )
     from pytest import raises
 
+    # ..................{ LOCALS                             }..................
     @beartype
     @dataclass
     class SoSolemnSoSerene(object):
@@ -83,6 +85,7 @@ def test_is_hint_pep577() -> None:
     great_mountain = SoSolemnSoSerene(
         but_for_such_faith='So solemn, so serene, that man may be,')
 
+    # ..................{ PASS                               }..................
     # Assert this dataclass defines the expected attributes.
     assert great_mountain.that_man_may_be == (
         'So solemn, so serene, that man may be,')
@@ -92,8 +95,9 @@ def test_is_hint_pep577() -> None:
     # Assert this dataclass defines *NO* unexpected attributes.
     assert not hasattr(great_mountain, 'but_for_such_faith')
 
-    # Assert that attempting to instantiate an instance of this dataclass with
-    # a parameter violating the corresponding type hint annotating the field of
+    # ..................{ FAIL                               }..................
+    # Assert that attempting to instantiate an instance of this dataclass with a
+    # parameter violating the corresponding type hint annotating the field of
     # the same name raises the expected exception.
     with raises(BeartypeCallHintParamViolation):
         SoSolemnSoSerene(but_for_such_faith=0xBEEFBABE)

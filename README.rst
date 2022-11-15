@@ -3254,14 +3254,27 @@ Let's type-check like `greased lightning`_:
        def my_selfreferential_method(self) -> list['MyOtherClass']:
            return [self] * 42
 
+   # ..................{              GENERICS               }..................
+   # Decorate PEP 585 generics with @beartype. Note this requires Python ≥ 3.9.
+   @beartype
+   class MyPep585Generic(tuple[int, float]):
+       def __new__(cls, integer: int, real: float) -> tuple[int, float]:
+           return tuple.__new__(cls, (integer, real))
+
+   # Decorate PEP 484 generics with @beartype, too.
+   @beartype
+   class MyPep484Generic(typing.Tuple[str, ...]):
+       def __new__(cls, *args: str) -> typing.Tuple[str, ...]:
+           return tuple.__new__(cls, args)
+
    # ..................{              DATACLASSES            }..................
    # Import the requisite machinery. Note this requires Python ≥ 3.8.
    from dataclasses import dataclass, InitVar
 
-   # Decorate dataclasses with @beartype – which then automatically decorates
-   # all methods and properties of those dataclasses with @beartype, including
-   # the __init__() constructors created by @dataclass. Fields are type-checked
-   # *ONLY* at initialization time and thus *NOT* type-checked when reassigned.
+   # Decorate dataclasses with @beartype, which then automatically decorates all
+   # methods and properties of those dataclasses with @beartype – including the
+   # __init__() constructors created by @dataclass. Fields are type-checked only
+   # at instantiation time. Fields are *NOT* type-checked when reassigned.
    #
    # Decoration order is significant. List @beartype before @dataclass, please.
    @beartype
@@ -3277,18 +3290,15 @@ Let's type-check like `greased lightning`_:
                self.field_must_satisfy_pep604_union = (
                    field_must_satisfy_builtin_type)
 
-   # ..................{              GENERICS               }..................
-   # Decorate PEP 585 generics with @beartype. Note this requires Python ≥ 3.9.
-   @beartype
-   class MyPep585Generic(tuple[int, float]):
-       def __new__(cls, integer: int, real: float) -> tuple[int, float]:
-           return tuple.__new__(cls, (integer, real))
+   # ..................{              NAMED TUPLES           }..................
+   # Import the requisite machinery.
+   from typing import NamedTuple
 
-   # Decorate PEP 484 generics with @beartype, too.
+   # Decorate named tuples with @beartype.
    @beartype
-   class MyPep484Generic(typing.Tuple[str, ...]):
-       def __new__(cls, *args: str) -> typing.Tuple[str, ...]:
-           return tuple.__new__(cls, args)
+   class MyNamedTuple(NamedTuple):
+       # Annotate fields with PEP-compliant type hints.
+       field_must_satisfy_builtin_type: str
 
    # ..................{             CONFIGURATION           }..................
    # Import beartype's configuration API to configure runtime type-checking.

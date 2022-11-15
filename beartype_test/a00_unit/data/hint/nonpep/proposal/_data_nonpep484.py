@@ -16,6 +16,18 @@ PEP-noncompliant type hints include:
   returning :class:`dict` instances annotated by PEP-compliant type hints.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: *WOOPS.* We should have read the standards a bit closer. Neither
+#"typing.NamedTuple" or "typing.TypedDict" are intended for direct use as type
+#hints. To quote official "typing" documentation:
+#    These are not used in annotations. They are building blocks for declaring
+#    types.
+#
+#Of course, all types *ARE* valid type hints. "typing.NamedTuple" and
+#"typing.TypedDict" subclasses are types and thus also valid type hints. So, the
+#superficial testing we perform below is certainly useful; we just don't need to
+#do anything further, really. Phew!
+
 # ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''

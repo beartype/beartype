@@ -40,7 +40,15 @@ def is_func_unbeartypeable(func: Callable) -> bool:
     # Return true only if either...
     return (
         # This callable is unannotated *OR*...
-        not func.__annotations__ or
+        #
+        # Note that the "__annotations__" dunder attribute is guaranteed to
+        # exist *ONLY* for standard pure-Python callables. Various other
+        # callables of interest (e.g., functions exported by the standard
+        # "operator" module) do *NOT* necessarily declare that attribute. Since
+        # this tester is commonly called in general-purpose contexts where this
+        # guarantee does *NOT* necessarily hold, we intentionally access that
+        # attribute safely albeit somewhat more slowly via getattr().
+        not getattr(func, '__annotations__', None) or
         # This callable is decorated by the @typing.no_type_check decorator
         # defining this dunder instance variable on this callable *OR*...
         is_func_pep484_notypechecked(func) or

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,20 +11,20 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.cls.pep.utilpep557` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 def test_is_type_pep557() -> None:
     '''
     Test the
     :func:`beartype._util.cls.pep.utilpep557.is_type_pep557` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilTypeException
     from beartype._util.cls.pep.utilpep557 import is_type_pep557
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
