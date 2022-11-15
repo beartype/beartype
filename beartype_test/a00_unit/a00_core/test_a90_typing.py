@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -28,13 +28,13 @@ testing the behaviour of these attributes to the subsequent
 :mod:`a60_api.typing` subpackage.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 def test_api_typing() -> None:
     '''
     Test the public API of the :mod:`beartype.meta` submodule.
@@ -44,15 +44,16 @@ def test_api_typing() -> None:
     submodules. See the class docstring for relevant commentary.
     '''
 
-    # Defer heavyweight imports.
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
     import typing as official_typing
     from beartype import typing as beartype_typing
     from beartype._util.py.utilpyversion import (
-        IS_PYTHON_3_7,
-        IS_PYTHON_AT_LEAST_3_8,
         IS_PYTHON_AT_LEAST_3_9,
+        IS_PYTHON_AT_LEAST_3_8,
     )
 
+    # ..................{ LOCALS                             }..................
     # Frozen set of the basenames of all erroneously publicized public
     # attributes of all "typing" modules across all Python versions. Ideally,
     # these attributes would have been privatized by prefixing these basenames
@@ -85,6 +86,7 @@ def test_api_typing() -> None:
         'collections',
         'collections_abc',
         'contextlib',
+        'defaultdict',
         'functools',
         'io',
         'operator',
@@ -97,8 +99,8 @@ def test_api_typing() -> None:
 
     # Dictionaries mapping from the basenames of all public attributes declared
     # by the "beartype.typing" and "typing" modules to those attributes.
-    beartype_typing_attr_name_to_value = {
-        # This public attribute declared by the "beartype.typing" submodule.
+    BEARTYPE_TYPING_ATTR_NAME_TO_VALUE = {
+        # Public attribute declared by the "beartype.typing" submodule.
         beartype_typing_attr_name: getattr(
             beartype_typing, beartype_typing_attr_name)
         # For the basename of each attribute declared by this submodule...
@@ -110,8 +112,8 @@ def test_api_typing() -> None:
         if beartype_typing_attr_name[0] not in '@_'
         # Else, this attribute is public and thus unignorable.
     }
-    official_typing_attr_name_to_value = {
-        # This public attribute declared by the "beartype.typing" submodule.
+    OFFICIAL_TYPING_ATTR_NAME_TO_VALUE = {
+        # Public attribute declared by the "typing" submodule.
         official_typing_attr_name: getattr(
             official_typing, official_typing_attr_name)
         # For the basename of each attribute declared by this submodule...
@@ -131,20 +133,21 @@ def test_api_typing() -> None:
         # Else, this attribute is public and thus unignorable.
     }
 
-    # Assert these two modules expose the same number of public attributes.
-    # Since a simple assertion statement would produce non-human-readable
-    # output, we expand this assertion to identify all differing attributes.
-    beartype_typing_attr_names = beartype_typing_attr_name_to_value.keys()
-    official_typing_attr_names = official_typing_attr_name_to_value.keys()
-    different_typing_attr_names = (
-        beartype_typing_attr_names ^ official_typing_attr_names)
-    assert different_typing_attr_names == set()
-
     # Set of the basenames of all public attributes declared by the "typing"
-    # module whose values differ from those declared by the "beartype.typing"
+    # module whose *VALUES* differ from those declared by the "beartype.typing"
     # submodule.
     TYPING_ATTR_UNEQUAL_NAMES = set()
 
+    # Sets of all public attributes exposed by "beartype.typing" and "typing".
+    BEARTYPE_TYPING_ATTR_NAMES = BEARTYPE_TYPING_ATTR_NAME_TO_VALUE.keys()
+    OFFICIAL_TYPING_ATTR_NAMES = OFFICIAL_TYPING_ATTR_NAME_TO_VALUE.keys()
+
+    # Set of all desynchronized public attributes (i.e., exposed in exactly one
+    # of either "beartype.typing" or "typing" but *NOT* both).
+    DIFFERENT_TYPING_ATTR_NAMES = (
+        BEARTYPE_TYPING_ATTR_NAMES ^ OFFICIAL_TYPING_ATTR_NAMES)
+
+    # ..................{ LOCALS ~ version                   }..................
     # If the active Python interpreter targets Python >= 3.8...
     if IS_PYTHON_AT_LEAST_3_8:
         # Since this interpreter supports PEP 544, add all inefficient PEP
@@ -162,9 +165,8 @@ def test_api_typing() -> None:
         })
 
         # If the active Python interpreter targets Python >= 3.9 and thus
-        # supports PEP 585, add all "typing" attributes deprecated by PEP 585
-        # to this set. Note these deprecated attributes are intentionally
-        # omitted:
+        # supports PEP 585, add all "typing" attributes deprecated by PEP 585 to
+        # this set. Note these deprecated attributes are intentionally omitted:
         # * "Match", as "typing.Match is re.Match". Yes, it is a simple alias.
         # * "Pattern", as "typing.Pattern is re.Pattern". Ditto.
         if IS_PYTHON_AT_LEAST_3_9:
@@ -211,15 +213,28 @@ def test_api_typing() -> None:
     # module whose values are identical to those declared by the
     # "beartype.typing" submodule.
     TYPING_ATTR_EQUAL_NAMES = (
-        beartype_typing_attr_name_to_value.keys() - TYPING_ATTR_UNEQUAL_NAMES)
+        BEARTYPE_TYPING_ATTR_NAME_TO_VALUE.keys() - TYPING_ATTR_UNEQUAL_NAMES)
+
+    # ..................{ ASSERTS                            }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: When this assertion fails, the culprit is *USUALLY* the "typing"
+    # module for the active Python module, which has probably erroneously
+    # publicized one or more public attributes. In this case, the names of these
+    # attributes *MUST* be manually added to the
+    # "OFFICIAL_TYPING_ATTR_PUBLIC_BAD_NAMES" set defined far above.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # Assert that these two modules expose the same number of public attributes.
+    # Since a simple assertion statement would produce non-human-readable
+    # output, we expand this assertion to identify all differing attributes.
+    assert DIFFERENT_TYPING_ATTR_NAMES == set()
 
     # For the basename of each typing attribute whose values are identical
     # across these two modules...
     for typing_attr_equal_name in TYPING_ATTR_EQUAL_NAMES:
         # Assert these values are indeed identical.
         assert (
-            beartype_typing_attr_name_to_value[typing_attr_equal_name] is
-            official_typing_attr_name_to_value[typing_attr_equal_name]
+            BEARTYPE_TYPING_ATTR_NAME_TO_VALUE[typing_attr_equal_name] is
+            OFFICIAL_TYPING_ATTR_NAME_TO_VALUE[typing_attr_equal_name]
         )
 
     # For the basename of each typing attribute whose values differ across
@@ -227,6 +242,6 @@ def test_api_typing() -> None:
     for typing_attr_unequal_name in TYPING_ATTR_UNEQUAL_NAMES:
         # Assert these values are indeed different.
         assert (
-            beartype_typing_attr_name_to_value[typing_attr_unequal_name] is not
-            official_typing_attr_name_to_value[typing_attr_unequal_name]
+            BEARTYPE_TYPING_ATTR_NAME_TO_VALUE[typing_attr_unequal_name] is not
+            OFFICIAL_TYPING_ATTR_NAME_TO_VALUE[typing_attr_unequal_name]
         )

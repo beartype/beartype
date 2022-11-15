@@ -11,6 +11,14 @@ format, instrumenting most high-level installation tasks for this package.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: Strongly consider migrating to Hatch:
+#    https://hatch.pypa.io
+#We can't *STAND* poetry, but Hatch looks to be another breed entirely.
+#Crucially, PyPA itself has officially adopted Hatch (which is a huge boost),
+#Hatch supports dynamic retrieval of version specifiers from Python modules,
+#support for PEPs denigrated by poetry authors, and probably much more.
+#Basically, Hatch looks like everything we wish poetry was.
+
 #FIXME: Generate documentation from the NumPy-style docstrings embedded
 #throughout this codebase, presumably with Sphinx + napoleon.
 #FIXME: Publish generated documentation to readthedocs.org.

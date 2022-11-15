@@ -85,11 +85,11 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 # "import_typing_attr_or_none('Annotated')").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_7_2 as _IS_PYTHON_AT_LEAST_3_7_2,
-    IS_PYTHON_AT_LEAST_3_8   as _IS_PYTHON_AT_LEAST_3_8,
-    IS_PYTHON_AT_LEAST_3_9   as _IS_PYTHON_AT_LEAST_3_9,
-    IS_PYTHON_AT_LEAST_3_10  as _IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_LEAST_3_11  as _IS_PYTHON_AT_LEAST_3_11,
+    IS_PYTHON_AT_LEAST_3_10  as _IS_PYTHON_AT_LEAST_3_10,
+    IS_PYTHON_AT_LEAST_3_9   as _IS_PYTHON_AT_LEAST_3_9,
+    IS_PYTHON_AT_LEAST_3_8   as _IS_PYTHON_AT_LEAST_3_8,
+    IS_PYTHON_AT_LEAST_3_7_2 as _IS_PYTHON_AT_LEAST_3_7_2,
 )
 
 # ....................{ IMPORTS ~ all                      }....................
@@ -165,18 +165,24 @@ if _IS_PYTHON_AT_LEAST_3_8:
             is_typeddict as is_typeddict,  # pyright: ignore[reportGeneralTypeIssues]
         )
 
-        #FIXME: Uncomment once these PEPs go live:
-        # # If the active Python interpreter targets Python >= 3.11...
-        # if _IS_PYTHON_AT_LEAST_3_11:
-        #     from typing import (  # type: ignore[attr-defined]
-        #            LiteralString as LiteralString,
-        #            Self as Self,
-        #            TypeVarTuple as TypeVarTuple,
-        #            dataclass_transform,
-        #         #FIXME: Technically, this is already live -- but pyright insists
-        #         #it isn't. We don't particularly feel like fighting that.
-        #            reveal_type as reveal_type,
-        #     )
+        # If the active Python interpreter targets Python >= 3.11...
+        if _IS_PYTHON_AT_LEAST_3_11:
+            from typing import (  # type: ignore[attr-defined]
+                   LiteralString as LiteralString,
+                   Never as Never,
+                   NotRequired as NotRequired,
+                   Required as Required,
+                   Self as Self,
+                   TypeVarTuple as TypeVarTuple,
+                   Unpack as Unpack,
+                   assert_never as assert_never,
+                   assert_type as assert_type,
+                   clear_overloads as clear_overloads,
+                   dataclass_transform as dataclass_transform,
+                   reveal_type as reveal_type,
+                   get_overloads as get_overloads,
+                   reveal_type as reveal_type,
+            )
 
 # ....................{ PEP ~ 544                          }....................
 # If this interpreter is either performing static type-checking (e.g., via mypy)
