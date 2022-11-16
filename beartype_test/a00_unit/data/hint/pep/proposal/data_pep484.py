@@ -31,35 +31,6 @@ from beartype._cave._cavefast import (
     RegexMatchType,
     RegexCompiledType,
 )
-from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignAny,
-    HintSignByteString,
-    HintSignCallable,
-    HintSignContextManager,
-    HintSignDict,
-    HintSignForwardRef,
-    HintSignGeneric,
-    HintSignHashable,
-    HintSignList,
-    HintSignMatch,
-    HintSignMutableSequence,
-    HintSignNewType,
-    HintSignNone,
-    HintSignOptional,
-    HintSignPattern,
-    HintSignSequence,
-    HintSignSized,
-    HintSignTuple,
-    HintSignType,
-    HintSignTypeVar,
-    HintSignUnion,
-)
-from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
-    HINT_PEP484_FORWARDREF_TYPE)
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_10,
-    IS_PYTHON_AT_LEAST_3_9,
-)
 from beartype_test.a00_unit.data.data_type import (
     Class,
     Subclass,
@@ -296,12 +267,43 @@ def add_data(data_module: 'ModuleType') -> None:
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer heavyweight imports.
+    # Defer fixture-specific imports.
     from beartype.door import (
         CallableTypeHint,
         NewTypeTypeHint,
         TypeVarTypeHint,
         UnionTypeHint,
+    )
+    from beartype._data.hint.pep.sign.datapepsigns import (
+        HintSignAny,
+        HintSignByteString,
+        HintSignCallable,
+        HintSignContextManager,
+        HintSignDict,
+        HintSignForwardRef,
+        HintSignGeneric,
+        HintSignHashable,
+        HintSignList,
+        HintSignMatch,
+        HintSignMutableSequence,
+        HintSignNewType,
+        HintSignNone,
+        HintSignOptional,
+        HintSignPattern,
+        HintSignSequence,
+        HintSignSized,
+        HintSignTuple,
+        HintSignType,
+        HintSignTypeVar,
+        HintSignUnion,
+    )
+    from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
+        HINT_PEP484_FORWARDREF_TYPE)
+    from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_MOST_3_10,
+        IS_PYTHON_AT_LEAST_3_11,
+        IS_PYTHON_AT_LEAST_3_10,
+        IS_PYTHON_AT_LEAST_3_9,
     )
 
     # ..................{ BOOLEANS                           }..................
@@ -1225,7 +1227,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Empty tuple. Yes, this is ridiculous, useless, and non-orthogonal
         # with standard sequence syntax, which supports no comparable notion of
         # an "empty {insert-type-here}" (e.g., empty list). For example:
-        #     >>> import typing
+        #     >>> from typing import List
         #     >>> List[()]
         #     TypeError: Too few parameters for List; actual 0, expected 1
         #     >>> List[[]]

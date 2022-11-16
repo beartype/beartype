@@ -45,23 +45,47 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
     is_hint_pep585_generic,
 )
 from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_11,
     IS_PYTHON_AT_MOST_3_9,
     IS_PYTHON_AT_LEAST_3_9,
 )
 from beartype._data.datatyping import TupleTypes
 
 # ....................{ GETTERS ~ args                     }....................
-# If the active Python interpreter targets Python >= 3.9, implement this
-# getter to directly access the "__args__" dunder attribute.
-if IS_PYTHON_AT_LEAST_3_9:
-    _HINT_PEP585_ARGS_EMPTY_TUPLE = ((),)
-    '''
-    Tuple containing only the empty tuple, to be returned from the
-    :func:`get_hint_pep_args` getter when passed a :pep:`585`-compliant type
-    hint subscripted by the empty tuple (e.g., ``tuple[()]``).
-    '''
+# If the active Python interpreter targets Python >= 3.11, implement this
+# getter to directly access the "__args__" dunder attribute in a suitable way.
+if IS_PYTHON_AT_LEAST_3_11:
+    #FIXME: Unit test this edge case up, please.
+    def get_hint_pep_args(hint: object) -> tuple:
 
+        # Return the value of the "__args__" dunder attribute if this hint
+        # defines this attribute *OR* "None" otherwise.
+        hint_args = getattr(hint, '__args__', None)
 
+        # If this hint does *NOT* define this attribute, return the empty tuple.
+        if hint_args is None:
+            return ()
+        # Else, this hint defines this attribute.
+        #
+        # If this hint appears to be unsubscripted, then this hint *WAS*
+        # actually subscripted by the empty tuple (e.g., "tuple[()]",
+        # "typing.Tuple[()]"). Python 3.11 made the unfortunate decision of
+        # ambiguously conflating unsubscripted type hints (e.g., "tuple",
+        # "typing.Tuple") with type hints subscripted by the empty tuple,
+        # preventing downstream consumers from reliably distinguishing these two
+        # orthogonal cases. Disambiguate these two cases on behalf of callers by
+        # returning a tuple containing only the empty tuple rather than
+        # returning the empty tuple itself.
+        elif not hint_args:
+            return _HINT_ARGS_EMPTY_TUPLE
+        # Else, this hint is either subscripted *OR* is unsubscripted but not
+        # PEP 585-compliant.
+
+        # In this case, return this tuple as is.
+        return hint_args
+# Else if the active Python interpreter targets Python >= 3.9, implement this
+# getter to directly access the "__args__" dunder attribute in a suitable way.
+elif IS_PYTHON_AT_LEAST_3_9:
     def get_hint_pep_args(hint: object) -> tuple:
 
         # Return the value of the "__args__" dunder attribute if this hint
@@ -78,7 +102,7 @@ if IS_PYTHON_AT_LEAST_3_9:
         # type hints to behave like PEP 484-compliant type hints by returning a
         # tuple containing only the empty tuple.
         if not hint_args and isinstance(hint, HintGenericSubscriptedType):
-            return _HINT_PEP585_ARGS_EMPTY_TUPLE
+            return _HINT_ARGS_EMPTY_TUPLE
         # Else, this hint is either subscripted *OR* is unsubscripted but not
         # PEP 585-compliant.
 
@@ -89,16 +113,19 @@ if IS_PYTHON_AT_LEAST_3_9:
 else:
     def get_hint_pep_args(hint: object) -> tuple:
 
-        # in python < 3.9, and unparametrized Generic would have the attribute
-        # `_special` set to True (but the actual __args__ are often a TypeVar).
-        # Because we want to differentiate between unparametrized and parametrized
-        # Generics, we check whether the hint is `_special` and if so, we return
-        # the empty tuple (instead of the TypeVar).
+        # Under python < 3.9, unparametrized generics have the attribute
+        # "_special" set to True despite the actual "__args__" typically being a
+        # "TypeVar" instance. Because we want to differentiate between
+        # unparametrized and parametrized generics, check whether the hint is
+        # "_special" and if so, we return the empty tuple instead of that
+        # "TypeVar" instance.
         if getattr(hint, '_special', False):
             return ()
+
         # Return the value of the "__args__" dunder attribute if this hint
         # defines this attribute *OR* the empty tuple otherwise.
         return getattr(hint, '__args__', ())
+
 
 # Document this function regardless of implementation details above.
 get_hint_pep_args.__doc__ = '''
@@ -785,3 +812,16 @@ def get_hint_pep_origin_type_isinstanceable_or_none(
         # Else, "None".
         None
     )
+
+# ....................{ PRIVATE ~ args                     }....................
+_HINT_ARGS_EMPTY_TUPLE = ((),)
+'''
+Tuple containing only the empty tuple, to be returned from the
+:func:`get_hint_pep_args` getter when passed either:
+
+* A :pep:`585`-compliant type hint subscripted by the empty tuple (e.g.,
+  ``tuple[()]``).
+* A :pep:`484`-compliant type hint subscripted by the empty tuple (e.g.,
+  ``typing.Tuple[()]``) under Python >= 3.11, which applied the :pep:`585`
+  approach throughout the :mod:`typing` module.
+'''

@@ -1,4 +1,5 @@
-#!/usr/bin/env python3 --------------------( LICENSE                            )--------------------
+#!/usr/bin/env python3
+#--------------------( LICENSE                             )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 

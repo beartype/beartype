@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,14 +10,14 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.hint.pep.utilpepget` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
-# ....................{ TESTS ~ attr                      }....................
+# ....................{ TESTS ~ attr                       }....................
 def test_get_hint_pep_args() -> None:
     '''
     Test the
@@ -25,11 +25,13 @@ def test_get_hint_pep_args() -> None:
     getter.
     '''
 
-    # Defer heavyweight imports.
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
     from beartype._util.hint.pep.utilpepget import get_hint_pep_args
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
 
+    # ....................{ PASS                           }....................
     # For each PEP-compliant hint, assert this getter returns...
     for hint_pep_meta in HINTS_PEP_META:
         # Tuple of all arguments subscripting this hint.
@@ -43,6 +45,12 @@ def test_get_hint_pep_args() -> None:
         else:
             assert hint_args == ()
 
+    # ....................{ PASS ~ pep : 484               }....................
+    #FIXME: Explicitly validate that this getter handles both PEP 484- and 585-
+    #compliant empty tuples by returning "_HINT_ARGS_EMPTY_TUPLE" as expected,
+    #please. This is sufficiently critical that we *NEED* to ensure this.
+
+    # ....................{ FAIL                           }....................
     # Assert this getter returns *NO* type variables for non-"typing" hints.
     for not_hint_pep in NOT_HINTS_PEP:
         assert get_hint_pep_args(not_hint_pep) == ()
@@ -55,7 +63,7 @@ def test_get_hint_pep_typevars() -> None:
     getter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._data.hint.pep.sign.datapepsigns import HintSignTypeVar
     from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_typevars,
@@ -84,14 +92,14 @@ def test_get_hint_pep_typevars() -> None:
     for not_hint_pep in NOT_HINTS_PEP:
         assert get_hint_pep_typevars(not_hint_pep) == ()
 
-# ....................{ TESTS ~ sign                      }....................
+# ....................{ TESTS ~ sign                       }....................
 def test_get_hint_pep_sign() -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_sign` getter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPepSignException
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
     from beartype_test.a00_unit.data.hint.data_hint import (
@@ -117,7 +125,7 @@ def test_get_hint_pep_sign() -> None:
             # Localize this return value to simplify debugging.
             hint_nonpep_sign = get_hint_pep_sign(hint_nonpep)
 
-# ....................{ TESTS ~ origin : type             }....................
+# ....................{ TESTS ~ origin : type              }....................
 def test_get_hint_pep_type_isinstanceable() -> None:
     '''
     Test the
@@ -125,7 +133,7 @@ def test_get_hint_pep_type_isinstanceable() -> None:
     getter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPepException
     from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_origin_type_isinstanceable)
@@ -160,7 +168,7 @@ def test_get_hint_pep_type_isinstanceable_or_none() -> None:
     getter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPepException
     from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_origin_type_isinstanceable_or_none)

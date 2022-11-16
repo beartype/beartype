@@ -168,20 +168,20 @@ if _IS_PYTHON_AT_LEAST_3_8:
         # If the active Python interpreter targets Python >= 3.11...
         if _IS_PYTHON_AT_LEAST_3_11:
             from typing import (  # type: ignore[attr-defined]
-                   LiteralString as LiteralString,
-                   Never as Never,
-                   NotRequired as NotRequired,
-                   Required as Required,
-                   Self as Self,
-                   TypeVarTuple as TypeVarTuple,
-                   Unpack as Unpack,
-                   assert_never as assert_never,
-                   assert_type as assert_type,
-                   clear_overloads as clear_overloads,
-                   dataclass_transform as dataclass_transform,
-                   reveal_type as reveal_type,
-                   get_overloads as get_overloads,
-                   reveal_type as reveal_type,
+                   LiteralString as LiteralString,  # pyright: ignore[reportGeneralTypeIssues]
+                   Never as Never,  # pyright: ignore[reportGeneralTypeIssues]
+                   NotRequired as NotRequired,  # pyright: ignore[reportGeneralTypeIssues]
+                   Required as Required,  # pyright: ignore[reportGeneralTypeIssues]
+                   Self as Self,  # pyright: ignore[reportGeneralTypeIssues]
+                   TypeVarTuple as TypeVarTuple,  # pyright: ignore[reportGeneralTypeIssues]
+                   Unpack as Unpack,  # pyright: ignore[reportGeneralTypeIssues]
+                   assert_never as assert_never,  # pyright: ignore[reportGeneralTypeIssues]
+                   assert_type as assert_type,  # pyright: ignore[reportGeneralTypeIssues]
+                   clear_overloads as clear_overloads,  # pyright: ignore[reportGeneralTypeIssues]
+                   dataclass_transform as dataclass_transform,  # pyright: ignore[reportGeneralTypeIssues]
+                   reveal_type as reveal_type,  # pyright: ignore[reportGeneralTypeIssues]
+                   get_overloads as get_overloads,  # pyright: ignore[reportGeneralTypeIssues]
+                   reveal_type as reveal_type,  # pyright: ignore[reportGeneralTypeIssues]
             )
 
 # ....................{ PEP ~ 544                          }....................
