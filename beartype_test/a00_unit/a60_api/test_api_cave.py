@@ -236,7 +236,7 @@ def test_api_cave_type_core() -> None:
     third-party dependencies) published by the :mod:`beartype.cave` submodule.
     '''
 
-    # Defer heavyweight imports. For each simple type published by the beartype
+    # Defer test-specific imports. For each simple type published by the beartype
     # cave, assert below that:
     # * This type is a simple type.
     # * An object expected to be of this type is of this type.
@@ -513,7 +513,7 @@ def test_api_cave_tuple_core() -> None:
     :mod:`beartype.cave` submodule.
     '''
 
-    # Defer heavyweight imports. For each tuple type published by the beartype
+    # Defer test-specific imports. For each tuple type published by the beartype
     # cave, assert below that:
     # * This tuple contains only simple types.
     # * One or more objects expected to be of one or more types in this tuple
@@ -650,7 +650,7 @@ def test_api_cave_tuple_nonetypeor() -> None:
     other attributes defined by that submodule to warrant distinct unit tests.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     # from beartype import cave
     from beartype.cave import (
         AnyType, CallableTypes, MappingMutableType, NoneType, NoneTypeOr)
@@ -706,7 +706,7 @@ def test_api_cave_lib_numpy() -> None:
     importable *or* reduce to a noop otherwise.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     import numpy
     from beartype import cave
 

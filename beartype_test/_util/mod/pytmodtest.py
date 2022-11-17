@@ -33,7 +33,7 @@ def is_package_beartype_vale_usable() -> bool:
       validators.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.mod.lib.utiltyping import is_typing_attr
 
     # Return true only if the "Annotated" type hint is importable from either
@@ -48,7 +48,7 @@ def is_package_sphinx() -> bool:
     the active Python interpreter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.meta import _LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX
     from beartype._util.mod.utilmodtest import is_module_version_at_least
 
@@ -65,7 +65,7 @@ def is_package_typing_extensions() -> bool:
     interpreter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.meta import (
         _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS)
     from beartype._util.mod.utilmodtest import is_module_version_at_least
@@ -85,7 +85,7 @@ def is_package_numpy() -> bool:
     the active Python interpreter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.meta import _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY
     from beartype._util.mod.utilmodtest import is_module_version_at_least
 

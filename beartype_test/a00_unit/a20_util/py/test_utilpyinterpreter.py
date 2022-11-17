@@ -22,7 +22,7 @@ def test_is_py_pypy() -> None:
     Test the :func:`beartype._util.py.utilpyinterpreter.is_py_pypy` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.py.utilpyinterpreter import is_py_pypy
 
     # Assert this tester returns a boolean.

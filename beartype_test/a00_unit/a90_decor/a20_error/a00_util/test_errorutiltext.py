@@ -23,7 +23,7 @@ def test_represent_pith() -> None:
     :func:`beartype._decor._error._util.errorutiltext.represent_pith` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._decor._error._util.errorutiltext import represent_pith
 
     # Custom type to be represented below.

@@ -27,7 +27,7 @@ def test_hint_signs_origin_isinstanceable_args() -> None:
     type hint factories published by the :mod:`typing` module.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     import typing
     from beartype._data.hint.pep.sign.datapepsignset import (
         HINT_SIGNS_ORIGIN_ISINSTANCEABLE_ARGS_1,

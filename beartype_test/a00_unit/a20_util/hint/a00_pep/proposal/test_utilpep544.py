@@ -24,7 +24,7 @@ def test_is_hint_pep544_protocol() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.pep.proposal.utilpep544 import (
         is_hint_pep544_protocol)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8

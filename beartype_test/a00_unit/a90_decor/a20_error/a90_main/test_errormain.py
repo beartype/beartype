@@ -25,7 +25,7 @@ def test_get_beartype_violation() -> None:
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import BeartypeConf
     from beartype.roar import (
         BeartypeCallHintParamViolation,

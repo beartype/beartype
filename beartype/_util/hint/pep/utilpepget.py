@@ -52,10 +52,9 @@ from beartype._util.py.utilpyversion import (
 from beartype._data.datatyping import TupleTypes
 
 # ....................{ GETTERS ~ args                     }....................
-# If the active Python interpreter targets Python >= 3.11, implement this
-# getter to directly access the "__args__" dunder attribute in a suitable way.
-if IS_PYTHON_AT_LEAST_3_11:
-    #FIXME: Unit test this edge case up, please.
+# If the active Python interpreter targets Python >= 3.9, implement this
+# getter to directly access the "__args__" dunder attribute.
+if IS_PYTHON_AT_LEAST_3_9:
     def get_hint_pep_args(hint: object) -> tuple:
 
         # Return the value of the "__args__" dunder attribute if this hint
@@ -69,39 +68,20 @@ if IS_PYTHON_AT_LEAST_3_11:
         #
         # If this hint appears to be unsubscripted, then this hint *WAS*
         # actually subscripted by the empty tuple (e.g., "tuple[()]",
-        # "typing.Tuple[()]"). Python 3.11 made the unfortunate decision of
-        # ambiguously conflating unsubscripted type hints (e.g., "tuple",
-        # "typing.Tuple") with type hints subscripted by the empty tuple,
-        # preventing downstream consumers from reliably distinguishing these two
-        # orthogonal cases. Disambiguate these two cases on behalf of callers by
-        # returning a tuple containing only the empty tuple rather than
-        # returning the empty tuple itself.
+        # "typing.Tuple[()]"). Why? Because:
+        # * Python 3.11 made the unfortunate decision of ambiguously conflating
+        #   unsubscripted type hints (e.g., "tuple", "typing.Tuple") with type
+        #   hints subscripted by the empty tuple, preventing downstream
+        #   consumers from reliably distinguishing these two orthogonal cases.
+        # * Python 3.9 made a similar decision but constrained to only PEP
+        #   585-compliant empty tuple type hints (i.e., "tuple[()]"). PEP
+        #   484-compliant empty tuple type hints (i.e., "typing.Tuple[()]")
+        #   continued to correctly declare an "__args__" dunder attribute of
+        #   "((),)" until Python 3.11.
+        #
+        # Disambiguate these two cases on behalf of callers by returning a tuple
+        # containing only the empty tuple rather than returning the empty tuple.
         elif not hint_args:
-            return _HINT_ARGS_EMPTY_TUPLE
-        # Else, this hint is either subscripted *OR* is unsubscripted but not
-        # PEP 585-compliant.
-
-        # In this case, return this tuple as is.
-        return hint_args
-# Else if the active Python interpreter targets Python >= 3.9, implement this
-# getter to directly access the "__args__" dunder attribute in a suitable way.
-elif IS_PYTHON_AT_LEAST_3_9:
-    def get_hint_pep_args(hint: object) -> tuple:
-
-        # Return the value of the "__args__" dunder attribute if this hint
-        # defines this attribute *OR* the empty tuple otherwise.
-        hint_args = getattr(hint, '__args__', ())
-
-        # If this hint appears to be unsubscripted but is PEP 585-compliant,
-        # then this hint *WAS* actually subscripted by the empty tuple (e.g.,
-        # "tuple[()]"). For unknown reasons, the "HintGenericSubscriptedType"
-        # superclass erroneously reduces the empty tuple subscripting such hints
-        # to... literally nothing. Since doing so violates orthogonality with
-        # equivalent PEP 484-compliant type hints that do correctly preserve
-        # their arguments (e.g., "Tuple[()]"), silently coerce PEP 585-compliant
-        # type hints to behave like PEP 484-compliant type hints by returning a
-        # tuple containing only the empty tuple.
-        if not hint_args and isinstance(hint, HintGenericSubscriptedType):
             return _HINT_ARGS_EMPTY_TUPLE
         # Else, this hint is either subscripted *OR* is unsubscripted but not
         # PEP 585-compliant.

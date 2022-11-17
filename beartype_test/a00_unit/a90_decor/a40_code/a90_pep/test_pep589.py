@@ -44,7 +44,7 @@ def test_is_hint_pep589() -> None:
     :beartype._util.hint.pep.proposal.utilpep589.is_hint_pep589` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.pep.proposal.utilpep589 import is_hint_pep589
     from beartype_test._util.mod.pytmodtyping import (
         import_typing_attr_or_none_safe)

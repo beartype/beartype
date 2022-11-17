@@ -25,7 +25,7 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import (
         BeartypeDecorHintPep3119Exception,
         BeartypeDecorHintPep484585Exception,

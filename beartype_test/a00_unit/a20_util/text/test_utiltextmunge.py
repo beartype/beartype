@@ -23,7 +23,7 @@ def test_uppercase_char_first():
     function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.text.utiltextmunge import uppercase_char_first
     from pytest import raises
 
@@ -41,7 +41,7 @@ def test_number_lines():
     function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.text.utiltextmunge import number_lines
     from pytest import raises
     from re import search
@@ -76,7 +76,7 @@ def test_replace_str_substrs():
     function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.text.utiltextmunge import replace_str_substrs
     from beartype.roar._roarexc import _BeartypeUtilTextException
     from pytest import raises
@@ -106,7 +106,7 @@ def test_suffix_unless_suffixed():
     function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.text.utiltextmunge import suffix_unless_suffixed
     from pytest import raises
 

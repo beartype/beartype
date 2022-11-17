@@ -23,7 +23,7 @@ def test_is_func_beartyped() -> None:
     :func:`beartype._util.func.lib.utilbeartypefunc.is_func_beartyped` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype._util.func.lib.utilbeartypefunc import is_func_beartyped
 
@@ -57,7 +57,7 @@ def test_set_func_beartyped() -> None:
     :func:`beartype._util.func.lib.utilbeartypefunc.set_func_beartyped` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.lib.utilbeartypefunc import (
         is_func_beartyped,
         set_func_beartyped,

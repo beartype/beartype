@@ -27,7 +27,7 @@ def test_pep484_ref__data_pass() -> None:
     user-defined classes referred to by these references.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype_test.a00_unit.data.hint.data_hintref import (
         TheDarkestEveningOfTheYear,
         but_i_have_promises,
@@ -104,7 +104,7 @@ def test_pep484_ref__decor_fail() -> None:
     references.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintForwardRefException
     from beartype_test._util.pytroar import raises_uncached
@@ -156,7 +156,7 @@ def test_pep484_ref__call_fail() -> None:
     references.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintForwardRefException
     from beartype.typing import Union
@@ -225,7 +225,7 @@ def test_pep484_ref__call_param_fail() -> None:
     erroneous edge cases.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import (
         BeartypeCallHintForwardRefException,

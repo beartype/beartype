@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,17 +11,29 @@ conditionally reduce to a noop when the active Python interpreter is building
 documentation for the third-party :mod:`sphinx` package.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_unless_package
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytskip import (
+    skip_if_python_version_greater_than_or_equal_to,
+    skip_unless_package,
+)
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 #FIXME: *NON-IDEAL.* This test manually invokes Sphinx internals. Instead, this
 #test should be fundamentally refactored from the ground up to leverage the
 #public (and increasingly documented) "sphinx.testing" subpackage.
+
+#FIXME: This test is currently skipped under Python >= 3.11, due to both Sphinx
+#itself *AND* Sphinx dependencies (e.g., Babel) importing from multiple modules
+#deprecated by Python 3.11. Since safely ignoring the specific
+#"DeprecationWarning" warnings while *NOT* ignoring all other warnings is
+#non-trivial and thus a waste of volunteer time, we prefer to simply avoid
+#Sphinx altogether under Python >= 3.11 for the moment. Revisit this in >+ 2023
+#once the dust has settled and Sphinx & friends have corrected themselves.
+@skip_if_python_version_greater_than_or_equal_to('3.11.0')
 @skip_unless_package('sphinx')
 def test_beartype_in_sphinx(tmp_path) -> None:
     '''
@@ -39,8 +51,8 @@ def test_beartype_in_sphinx(tmp_path) -> None:
         test, created in the base temporary directory.
     '''
 
-    # ..................{ SPHINX-BUILD                      }..................
-    # Defer heavyweight imports.
+    # ..................{ SPHINX-BUILD                       }..................
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype._util.mod.lib.utilsphinx import (
         _SPHINX_AUTODOC_SUBPACKAGE_NAME)
@@ -100,7 +112,7 @@ def test_beartype_in_sphinx(tmp_path) -> None:
     assert is_success(sphinx_build_exit_code), (
         f'"sphinx-build" exit code {sphinx_build_exit_code} != 0.')
 
-    # ..................{ VALIDATION                        }..................
+    # ..................{ VALIDATION                         }..................
     def thou_art_there() -> str:
         '''
         Arbitrary callable *not* decorated by the :func:`beartype.beartype`
@@ -117,7 +129,7 @@ def test_beartype_in_sphinx(tmp_path) -> None:
     # rather than erroneously reducing to a noop.
     assert thou_art_there_beartyped is not thou_art_there
 
-    # ..................{ OPTIMIZATION                      }..................
+    # ..................{ OPTIMIZATION                       }..................
     # Crudely unimport the Sphinx "autodoc" extension. Doing so optimizes
     # subsequent invocations of the @beartype decorator by reducing the
     # beartype._util.mod.lib.utilsphinx.is_sphinx_autodocing() tester

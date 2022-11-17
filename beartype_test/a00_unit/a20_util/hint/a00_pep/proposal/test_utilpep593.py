@@ -24,7 +24,7 @@ def test_is_hint_pep593_beartype() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import (
         BeartypeDecorHintPepException,
         BeartypeValeLambdaWarning,

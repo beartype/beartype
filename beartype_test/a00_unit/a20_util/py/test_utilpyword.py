@@ -22,7 +22,7 @@ def test_word_size() -> None:
     Test the :func:`beartype._util.py.utilpyword.WORD_SIZE` constant.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.py.utilpyword import WORD_SIZE
 
     # Assert the active Python interpreter to be either 32- or 64-bit.

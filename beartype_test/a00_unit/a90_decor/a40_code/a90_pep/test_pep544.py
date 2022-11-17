@@ -28,7 +28,7 @@ def test_pep544_pass() -> None:
     support :pep:`544`) *or* skip otherwise.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from abc import abstractmethod
     from beartype import beartype
     from typing import Protocol, runtime_checkable
@@ -76,7 +76,7 @@ def test_pep544_fail() -> None:
     support :pep:`544`) *or* skip otherwise.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from abc import abstractmethod
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintPep3119Exception
@@ -121,7 +121,7 @@ def test_pep544_hint_subprotocol_elision() -> None:
     '''
 
     # ..................{ IMPORTS                           }..................
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from abc import abstractmethod
     from beartype import beartype
     from typing import (
@@ -250,7 +250,7 @@ def test_is_hint_pep544_protocol() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.pep.proposal.utilpep544 import (
         is_hint_pep544_protocol)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
@@ -298,7 +298,7 @@ def test_is_hint_pep544_io_generic() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.pep.proposal.utilpep544 import (
         is_hint_pep484_generic_io)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
@@ -323,7 +323,7 @@ def test_get_hint_pep544_io_protocol_from_generic() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep544Exception
     from beartype._util.hint.pep.proposal.utilpep544 import (
         reduce_hint_pep484_generic_io_to_pep544_protocol)

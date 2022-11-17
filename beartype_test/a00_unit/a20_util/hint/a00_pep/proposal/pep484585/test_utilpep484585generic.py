@@ -25,7 +25,7 @@ def test_is_hint_pep484585_generic() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
         is_hint_pep484585_generic)
@@ -52,7 +52,7 @@ def test_get_hint_pep484585_generic_type_or_none() -> None:
     getter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
         get_hint_pep484585_generic_type_or_none)
@@ -91,7 +91,7 @@ def test_get_hint_pep484585_generic_bases_unerased() -> None:
     getter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPepException
     from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (

@@ -120,7 +120,7 @@ def skip_unless_pathable(command_basename: str):
         decorator reducing to a noop otherwise.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype_test._util.cmd.pytcmdpath import is_pathable
 
     # Skip this test if *NO* command with this basename resides in the ${PATH}.
@@ -142,7 +142,7 @@ def skip_if_ci():
         CI-hosted *or* the identity decorator reducing to a noop otherwise.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype_test._util.pytci import is_ci
 
     # Skip this test if the active Python interpreter is CI-hosted.
@@ -209,7 +209,7 @@ def skip_if_pypy():
         *or* the identity decorator reducing to a noop otherwise.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.py.utilpyinterpreter import is_py_pypy
 
     # Skip this test if the active Python interpreter is PyPy.
@@ -241,7 +241,7 @@ def skip_if_python_version_greater_than_or_equal_to(version: str):
     '''
     assert isinstance(version, str), f'{repr(version)} not string.'
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.meta import _convert_version_str_to_tuple
 
     # Machine-readable required version of Python as a tuple of integers.
@@ -278,7 +278,7 @@ def skip_if_python_version_less_than(version: str):
     '''
     assert isinstance(version, str), f'{repr(version)} not string.'
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.meta import _convert_version_str_to_tuple
 
     # Machine-readable required version of Python as a tuple of integers.

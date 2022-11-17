@@ -21,7 +21,7 @@ def test_beartypecall() -> None:
     Test the :func:`beartype._check.checkcall.BeartypeCall` dataclass.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import BeartypeConf
     from beartype.roar import BeartypeDecorWrappeeException
     from beartype._check.checkcall import BeartypeCall

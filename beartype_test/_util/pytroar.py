@@ -52,7 +52,7 @@ def raises_uncached(exception_cls: TypeException) -> 'ExceptionInfo':
         Official :class:`pytest.nodes.ExceptionInfo` documentation.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.error.utilerror import (
         EXCEPTION_PLACEHOLDER)
 

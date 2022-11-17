@@ -22,7 +22,7 @@ def test_api_conf_strategy() -> None:
     Test the public :func:`beartype.BeartypeStrategy` enumeration.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import BeartypeStrategy
 
     # Assert this enumeration declares the expected members.
@@ -38,7 +38,7 @@ def test_api_conf_dataclass() -> None:
     '''
 
     # ....................{ IMPORTS                        }....................
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import BeartypeConf, BeartypeStrategy
     from beartype.roar import BeartypeConfException
     from pytest import raises

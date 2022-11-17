@@ -22,7 +22,7 @@ def test_is_type_or_types() -> None:
     Test the :func:`beartype._util.cls.utilclstest.is_type_or_types` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cls.utilclstest import is_type_or_types
 
     # Assert this tester accepts an arbitrary type.
@@ -50,7 +50,7 @@ def test_is_type_builtin() -> None:
     Test the :func:`beartype._util.cls.utilclstest.is_type_builtin` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cls.utilclstest import is_type_builtin
     from beartype_test.a00_unit.data.data_type import (
         TYPES_BUILTIN, TYPES_NONBUILTIN)
@@ -69,7 +69,7 @@ def test_is_type_subclass() -> None:
     Test the :func:`beartype._util.cls.utilclstest.is_type_subclass` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cls.utilclstest import is_type_subclass
     from beartype_test.a00_unit.data.data_type import Class, Subclass
 

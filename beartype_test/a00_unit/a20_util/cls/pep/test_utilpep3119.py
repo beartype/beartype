@@ -25,7 +25,7 @@ def test_die_unless_type_isinstanceable() -> None:
     validator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep3119Exception
     from beartype._util.cls.pep.utilpep3119 import (
         die_unless_type_isinstanceable)
@@ -56,7 +56,7 @@ def test_die_unless_type_issubclassable() -> None:
     validator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep3119Exception
     from beartype._util.cls.pep.utilpep3119 import (
         die_unless_type_issubclassable)

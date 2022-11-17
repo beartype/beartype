@@ -23,7 +23,7 @@ def test_api_vale_isequal_pass() -> None:
     Test successful usage of the :mod:`beartype.vale.IsEqual` factory.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.vale import IsEqual
     from beartype.vale._core._valecore import BeartypeValidator
 
@@ -90,7 +90,7 @@ def test_api_vale_isequal_fail() -> None:
     Test unsuccessful usage of the :mod:`beartype.vale.IsEqual` factory.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeValeSubscriptionException
     from beartype.vale import IsEqual
     from pytest import raises

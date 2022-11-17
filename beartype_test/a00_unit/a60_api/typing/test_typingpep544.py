@@ -28,7 +28,7 @@ def test_typingpep544_metaclass() -> None:
     :class:`beartype.typing._typingpep544._CachingProtocolMeta` metaclass.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from abc import abstractmethod
     from beartype.typing import (
         Any,
@@ -60,7 +60,7 @@ def test_typingpep544_superclass() -> None:
     Test the public :class:`beartype.typing.Protocol` superclass.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.typing import (
         Protocol as ProtocolFast,
         TypeVar,
@@ -102,7 +102,7 @@ def test_typingpep544_subclass() -> None:
     :class:`beartype.typing.Protocol` superclass.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from abc import abstractmethod
     from beartype.typing import (
         AnyStr,
@@ -164,7 +164,7 @@ def test_typingpep544_protocols_typing() -> None:
     :class:`beartype.typing._typingpep544._CachingProtocolMeta` metaclass.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from decimal import Decimal
     from fractions import Fraction
     from beartype.typing import (
@@ -240,7 +240,7 @@ def test_typingpep544_protocol_custom_direct() -> None:
     :func:`beartype.beartype` decorator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from abc import abstractmethod
     from beartype import beartype
     from beartype.roar import (
@@ -311,7 +311,7 @@ def test_typingpep544_protocol_custom_direct_typevar() -> None:
     one or more type variables under the :func:`beartype.beartype` decorator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from abc import abstractmethod
     from beartype import beartype
     from beartype.typing import (
@@ -352,7 +352,7 @@ def test_typingpep544_protocol_custom_indirect() -> None:
     :func:`beartype.beartype` decorator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from abc import abstractmethod
     from beartype import beartype
     from beartype.roar import (
@@ -443,7 +443,7 @@ def test_typingpep544_pep593_integration() -> None:
     within a :pep:`593`-compliant .
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from abc import abstractmethod
     from beartype import beartype
     from beartype.roar import BeartypeException

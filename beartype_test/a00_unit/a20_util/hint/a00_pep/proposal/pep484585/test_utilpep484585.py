@@ -24,7 +24,7 @@ def test_is_hint_pep484585_tuple_empty() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
         is_hint_pep484585_tuple_empty)
     from typing import Tuple

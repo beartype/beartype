@@ -24,7 +24,7 @@ def test_decor_noop_unhinted_sync() -> None:
     annotations declared with the ``def`` rather than ``async def`` keyword).
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
 
     # Undecorated unannotated function.
@@ -50,7 +50,7 @@ def test_decor_noop_redecorated_sync() -> None:
     decorator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
 
     # Arbitrary function.
@@ -73,7 +73,7 @@ async def test_decor_noop_unhinted_async() -> None:
     annotations declared with the ``async def`` rather than ``def`` keywords).
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from asyncio import sleep
     from beartype import beartype
 
@@ -102,7 +102,7 @@ async def test_decor_noop_redecorated_async() -> None:
     this decorator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from asyncio import sleep
     from beartype import beartype
 
@@ -128,7 +128,7 @@ def test_decor_noop_hint_ignorable_iter() -> None:
     generically exercising non-trivial edge cases with iteration.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype_test.a00_unit.data.hint.data_hint import HINTS_IGNORABLE
 
@@ -163,7 +163,7 @@ def test_decor_noop_hint_ignorable_order() -> None:
     iteration in the :func:`test_decor_noop_hint_ignorable_iter` test.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype._cave._cavefast import AnyType
     from typing import Any

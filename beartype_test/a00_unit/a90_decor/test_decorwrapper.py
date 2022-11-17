@@ -36,7 +36,7 @@ def test_wrapper_fail_obj_large() -> None:
         https://github.com/beartype/beartype/issues/91
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
     from beartype.typing import List

@@ -24,7 +24,7 @@ def test_is_func_pep484_notypechecked() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.pep.utilpep484func import (
         is_func_pep484_notypechecked)
     from typing import no_type_check

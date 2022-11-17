@@ -37,7 +37,7 @@ def test_resolve_pep563_fail() -> None:
     :func:`beartype.peps.resolve_pep563` resolver.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.peps import resolve_pep563
     from beartype.roar import BeartypePep563Exception
     from pytest import raises
@@ -73,7 +73,7 @@ def test_pep563_class_self_reference_reloaded() -> None:
        https://github.com/beartype/beartype/issues/152
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     #
     # Note that the "data_pep563_club" submodule is intentionally imported as
     # an attribute rather than importing the requisite attributes from that
@@ -130,7 +130,7 @@ def test_pep563_class_self_reference_override() -> None:
     declaring that class.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_club import (
         DREAMS, Karma)
 
@@ -147,7 +147,7 @@ def test_pep563_module() -> None:
     :func:`beartype.beartype` decorator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         get_minecraft_end_txt,
@@ -204,7 +204,7 @@ def test_pep563_closure_nonnested() -> None:
     :func:`beartype.beartype` decorator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         get_minecraft_end_txt_closure)
 
@@ -264,7 +264,7 @@ def test_pep563_closure_nested() -> None:
     :func:`beartype.beartype` decorator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         get_minecraft_end_txt_closure_factory)
 
@@ -295,7 +295,7 @@ def test_pep563_class() -> None:
     :func:`beartype.beartype` decorator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import (
         MinecraftEndTxtUnscrambler)
 
@@ -332,7 +332,7 @@ def test_pep563_class() -> None:
 #     otherwise.
 #     '''
 #
-#     # Defer heavyweight imports.
+#     # Defer test-specific imports.
 #     from beartype import beartype
 #     from beartype.roar import BeartypeDecorHintPepException
 #     from beartype_test.a00_unit.data.pep.pep563.data_pep563_poem import player_was_love

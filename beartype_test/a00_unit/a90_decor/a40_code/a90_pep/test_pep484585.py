@@ -27,7 +27,7 @@ async def test_decor_async_coroutine() -> None:
     Test decorating coroutines with the :func:`beartype.beartype` decorator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from asyncio import sleep
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintPep585Exception
@@ -105,7 +105,7 @@ async def test_decor_async_generator() -> None:
     decorator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from asyncio import sleep
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintPep484585Exception
@@ -244,7 +244,7 @@ def test_decor_sync_generator() -> None:
     decorator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintPep484585Exception
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9

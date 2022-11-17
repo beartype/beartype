@@ -27,9 +27,14 @@ def test_get_hint_pep_args() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+    from beartype._util.hint.pep.utilpepget import (
+        _HINT_ARGS_EMPTY_TUPLE,
+        get_hint_pep_args,
+    )
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
+    from typing import Tuple
 
     # ....................{ PASS                           }....................
     # For each PEP-compliant hint, assert this getter returns...
@@ -45,10 +50,20 @@ def test_get_hint_pep_args() -> None:
         else:
             assert hint_args == ()
 
-    # ....................{ PASS ~ pep : 484               }....................
+    # ....................{ PASS ~ pep                     }....................
     #FIXME: Explicitly validate that this getter handles both PEP 484- and 585-
     #compliant empty tuples by returning "_HINT_ARGS_EMPTY_TUPLE" as expected,
     #please. This is sufficiently critical that we *NEED* to ensure this.
+
+    # Assert that this getter when passed a PEP 484-compliant empty tuple type
+    # hint returns a tuple containing an empty tuple for disambiguity.
+    assert get_hint_pep_args(Tuple[()]) == _HINT_ARGS_EMPTY_TUPLE
+
+    # If Python >= 3.9, the active Python interpreter supports PEP 585. In this
+    # case, assert that this getter when passed a PEP 585-compliant empty tuple
+    # type hint returns a tuple containing an empty tuple for disambiguity.
+    if IS_PYTHON_AT_LEAST_3_9:
+        assert get_hint_pep_args(tuple[()]) == _HINT_ARGS_EMPTY_TUPLE
 
     # ....................{ FAIL                           }....................
     # Assert this getter returns *NO* type variables for non-"typing" hints.

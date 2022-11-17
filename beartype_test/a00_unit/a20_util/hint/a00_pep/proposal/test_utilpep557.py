@@ -24,7 +24,7 @@ def test_get_hint_pep557_initvar_arg() -> None:
     getter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep557Exception
     from beartype._util.hint.pep.proposal.utilpep557 import (
         get_hint_pep557_initvar_arg)

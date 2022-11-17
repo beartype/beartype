@@ -353,7 +353,7 @@ def test_door_is_subhint(
         declared by the :func:`hint_subhint_cases` fixture.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.door import is_subhint
 
     # For each subhint relation to be tested...

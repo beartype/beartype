@@ -28,7 +28,7 @@ def test_is_hint_pep585_builtin() -> None:
     function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.pep.proposal.utilpep585 import (
         is_hint_pep585_builtin)
     from beartype_test.a00_unit.data.hint.pep.data_pep import (
@@ -47,7 +47,7 @@ def test_is_hint_pep585_generic() -> None:
     function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.pep.proposal.utilpep585 import (
         is_hint_pep585_generic)
     from beartype_test.a00_unit.data.hint.pep.data_pep import (
@@ -66,7 +66,7 @@ def test_get_hint_pep585_generic_typevars() -> None:
     function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep585Exception
     from beartype._util.hint.pep.proposal.utilpep585 import (
         get_hint_pep585_generic_typevars)

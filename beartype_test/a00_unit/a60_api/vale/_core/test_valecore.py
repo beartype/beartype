@@ -23,7 +23,7 @@ def test_api_vale_validator_pass() -> None:
     :class:`beartype.vale._core._valecore.BeartypeValidator` class.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.vale._core._valecore import BeartypeValidator
 
     # Arbitrary valid data validator.
@@ -89,7 +89,7 @@ def test_api_vale_validator_fail() -> None:
     :class:`beartype.vale._core._valecore.BeartypeValidator` class.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeValeSubscriptionException
     from beartype.vale._core._valecore import BeartypeValidator
     from pytest import raises

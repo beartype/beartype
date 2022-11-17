@@ -22,7 +22,7 @@ def test_is_object_hashable() -> None:
     Test the :func:`beartype._util.utilobject.is_object_hashable` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.utilobject import is_object_hashable
     from beartype_test.a00_unit.data.hint.data_hint import (
         NOT_HINTS_HASHABLE, NOT_HINTS_UNHASHABLE,)
@@ -42,7 +42,7 @@ def test_get_object_basename_scoped() -> None:
     getter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilObjectNameException
     from beartype._util.utilobject import get_object_basename_scoped
     from beartype_test.a00_unit.data.data_type import (

@@ -69,7 +69,7 @@ def iter_hints_piths_meta() -> 'Generator[HintPithMetadata]':
         Metadata describing the currently iterated hint.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.utilobject import is_object_context_manager
     from beartype_test.a00_unit.data.hint.data_hint import HINTS_META
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (

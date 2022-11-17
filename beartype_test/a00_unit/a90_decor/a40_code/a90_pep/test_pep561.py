@@ -36,7 +36,7 @@ def test_pep561_pytyped() -> None:
        https://www.python.org/dev/peps/pep-0561
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     import beartype
     from beartype._util.mod.utilmodget import get_module_filename
     from pathlib import Path

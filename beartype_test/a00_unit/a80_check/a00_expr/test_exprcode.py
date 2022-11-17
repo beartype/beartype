@@ -23,7 +23,7 @@ def test_make_check_code_decoration() -> None:
     function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._check.expr.exprmake import make_check_expr
     from beartype._conf.confcls import BEARTYPE_CONF_DEFAULT
 

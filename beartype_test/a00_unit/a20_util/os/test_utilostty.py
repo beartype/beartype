@@ -22,7 +22,7 @@ def test_is_stdout_terminal() -> None:
     Test the :func:`beartype._util.os.utilostty.is_stdout_terminal` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.os.utilostty import is_stdout_terminal
 
     # Assert this tester returns a boolean.

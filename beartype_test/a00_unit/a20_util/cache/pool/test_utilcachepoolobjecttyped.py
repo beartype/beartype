@@ -25,7 +25,7 @@ def test_objecttyped_pool_pass() -> None:
     :mod:`beartype._util.cache.pool.utilcachepoolobjecttyped` submodule.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cache.pool.utilcachepoolobjecttyped import (
         acquire_object_typed, release_object_typed)
 
@@ -103,7 +103,7 @@ def test_objecttyped_pool_fail() -> None:
     :mod:`beartype._util.cache.pool.utilcachepoolobjecttyped` submodule.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cache.pool.utilcachepoolobjecttyped import (
         acquire_object_typed)
     from beartype.roar._roarexc import _BeartypeUtilCachedObjectTypedException

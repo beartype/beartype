@@ -23,7 +23,7 @@ def test_unwrap_func() -> None:
     :func:`beartype._util.func.utilfuncwrap.unwrap_func` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.utilfuncwrap import unwrap_func
     from functools import wraps
 

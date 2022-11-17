@@ -42,7 +42,7 @@ def test_doc_readme(monkeypatch) -> None:
         modified for the duration of this test.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from docutils.core import publish_parts
     from docutils.utils import Reporter
     from beartype_test._util.path.pytpathmain import get_main_readme_file

@@ -40,7 +40,7 @@ def die_unless_basename(pathname: str) -> None:
         Further details.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype_test._util.pytroar import BeartypeTestPathException
 
     # If this pathname is *NOT* a pure basename, raise an exception.

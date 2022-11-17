@@ -24,7 +24,7 @@ def test_deprecate_module_attr() -> None:
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.mod.utilmoddeprecate import deprecate_module_attr
     from pytest import raises, warns
 

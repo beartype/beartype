@@ -23,7 +23,7 @@ def test_cacheunboundedstrong() -> None:
     :class:`beartype._util.cache.map.utilmapbig.CacheUnboundedStrong` class.
     """
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 
     # Initially empty unbounded cache.

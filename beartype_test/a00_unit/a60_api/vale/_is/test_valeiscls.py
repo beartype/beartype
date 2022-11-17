@@ -23,7 +23,7 @@ def test_api_vale_isinstance_pass() -> None:
     Test successful usage of the :class:`beartype.vale.IsInstance` factory.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.vale import IsInstance
     from beartype.vale._core._valecore import BeartypeValidator
     from beartype._util.utilobject import get_object_name
@@ -116,7 +116,7 @@ def test_api_vale_isinstance_fail() -> None:
     Test unsuccessful usage of the :class:`beartype.vale.IsInstance` factory.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeValeSubscriptionException
     from beartype.vale import IsInstance
     from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
@@ -153,7 +153,7 @@ def test_api_vale_issubclass_pass() -> None:
     Test successful usage of the :class:`beartype.vale.IsSubclass` factory.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.vale import IsSubclass
     from beartype.vale._core._valecore import BeartypeValidator
     from beartype._util.utilobject import get_object_name
@@ -238,7 +238,7 @@ def test_api_vale_issubclass_fail() -> None:
     Test unsuccessful usage of the :class:`beartype.vale.IsSubclass` factory.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeValeSubscriptionException
     from beartype.vale import IsSubclass
     from beartype_test.a00_unit.data.data_type import NonIssubclassableClass

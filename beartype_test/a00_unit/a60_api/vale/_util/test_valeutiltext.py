@@ -23,7 +23,7 @@ def test_api_vale_format_diagnosis_line() -> None:
     :func:`beartype.vale._util._valeutiltext.format_diagnosis_line` formatter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.vale._util._valeutiltext import format_diagnosis_line
 
     # Assert this formatter accepts a true boolean value.

@@ -46,7 +46,7 @@ def test_api_deprecations() -> None:
     subpackages of the :mod:`beartype` package (including itself).
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.mod.utilmodimport import import_module_attr
     from pytest import warns
 

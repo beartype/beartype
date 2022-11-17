@@ -22,7 +22,7 @@ def test_is_os_macos() -> None:
     Test the :func:`beartype._util.os.utilostest.is_os_macos` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.os.utilostest import is_os_macos
 
     # Assert this tester returns a boolean.
@@ -35,7 +35,7 @@ def test_is_os_windows_vanilla() -> None:
     Test the :func:`beartype._util.os.utilostest.is_os_windows_vanilla` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.os.utilostest import is_os_windows_vanilla
 
     # Assert this tester returns a boolean.

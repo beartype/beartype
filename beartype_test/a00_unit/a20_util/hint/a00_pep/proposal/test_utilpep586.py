@@ -55,7 +55,7 @@ def test_is_hint_pep586() -> None:
     validator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep586Exception
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype._util.hint.pep.proposal.utilpep586 import (

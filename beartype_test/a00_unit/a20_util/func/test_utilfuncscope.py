@@ -126,7 +126,7 @@ def test_is_func_nested() -> None:
     :func:`beartype._util.func.utilfuncscope.is_func_nested` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.utilfuncscope import is_func_nested
 
     # Nested callable returned by the above callable.
@@ -157,7 +157,7 @@ def test_is_func_nested() -> None:
 #     :func:`beartype._util.func.utilfuncget.get_func_wrappee` function.
 #     '''
 #
-#     # Defer heavyweight imports.
+#     # Defer test-specific imports.
 #     from beartype.roar._roarexc import _BeartypeUtilCallableException
 #     from beartype._util.func.utilfuncget import get_func_wrappee
 #     from functools import wraps
@@ -192,7 +192,7 @@ def test_get_func_locals() -> None:
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype.typing import Union
     from beartype._util.func.utilfuncmake import make_func
@@ -292,7 +292,7 @@ def test_add_func_scope_attr() -> None:
     :func:`beartype._util.func.utilfuncscope.add_func_scope_attr` adder.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.utilfuncscope import add_func_scope_attr
 
     # Arbitrary scope to add attributes to.

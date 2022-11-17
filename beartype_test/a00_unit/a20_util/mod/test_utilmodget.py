@@ -23,7 +23,7 @@ def test_die_unless_module_attr_name() -> None:
     validator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
     from beartype._util.mod.utilmodget import (
         get_object_module_line_number_begin)

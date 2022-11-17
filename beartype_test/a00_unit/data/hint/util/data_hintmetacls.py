@@ -357,7 +357,7 @@ class HintPepMetadata(HintNonpepMetadata):
         **kwargs
     ) -> None:
 
-        # Defer heavyweight imports.
+        # Defer test-specific imports.
         from beartype._data.hint.pep.sign.datapepsigncls import HintSign
         from beartype.door import TypeHint
 

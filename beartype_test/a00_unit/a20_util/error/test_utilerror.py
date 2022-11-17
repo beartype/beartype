@@ -36,7 +36,7 @@ def test_reraise_exception_cached() -> None:
     function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cache.utilcachecall import callable_cached
     from beartype._util.error.utilerror import reraise_exception_placeholder
 

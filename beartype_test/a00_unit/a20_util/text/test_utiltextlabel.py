@@ -24,7 +24,7 @@ def test_label_type() -> None:
     function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.text.utiltextlabel import label_type
     from beartype_test.a00_unit.data.data_type import Class
 
@@ -46,7 +46,7 @@ def test_prefix_callable() -> None:
     function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.text.utiltextlabel import prefix_callable
     from beartype_test.a00_unit.data.data_type import (
         async_coroutine_factory,

@@ -118,7 +118,7 @@ def test_api_vale_isattr_pass() -> None:
     Test successful usage of the :mod:`beartype.vale.IsAttr` factory.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.vale import IsAttr, IsEqual
     from beartype.vale._core._valecore import BeartypeValidator
 
@@ -196,7 +196,7 @@ def test_api_vale_isattr_fail() -> None:
     Test unsuccessful usage of the :mod:`beartype.vale.IsAttr` factory.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeValeSubscriptionException
     from beartype.vale import IsAttr, IsEqual
     from pytest import raises

@@ -202,7 +202,7 @@ def run_command_forward_output(
         If the subprocess running this command report non-zero exit status.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype_test._util.cmd.pytcmdexit import is_failure
 
     # 0-based exit status reported by running this command.
@@ -252,7 +252,7 @@ def run_command_forward_output_return_status(
         Exit status returned by this subprocess.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype_test._util.cmd.pytcmdexit import FAILURE_DEFAULT
 
     # Sanitize these arguments.
@@ -413,7 +413,7 @@ def _init_popen_kwargs(
         This dictionary of keyword arguments sanitized.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.kind.utilkinddict import is_mapping_keys_any
     from beartype._util.os.utilostest import is_os_windows_vanilla
 

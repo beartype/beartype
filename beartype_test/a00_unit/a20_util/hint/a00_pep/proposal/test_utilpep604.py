@@ -23,7 +23,7 @@ def test_is_hint_pep604() -> None:
     :mod:`beartype._util.hint.pep.proposal.utilpep604.is_hint_pep604` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.pep.proposal.utilpep604 import is_hint_pep604
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 

@@ -22,7 +22,7 @@ def test_join_delimited() -> None:
     Test the :func:`beartype._util.text.utiltextjoin.join_delimited` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.text.utiltextjoin import join_delimited
 
     # Assert that joining a sequence of no strings returns the empty string.
@@ -90,7 +90,7 @@ def test_join_delimited_disjunction() -> None:
     function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.text.utiltextjoin import join_delimited_disjunction
 
     # Assert that joining a sequence of no strings returns the empty string.

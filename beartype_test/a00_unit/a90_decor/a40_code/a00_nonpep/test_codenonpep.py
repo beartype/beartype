@@ -29,7 +29,7 @@ def test_nonpep_param_kind_positional_or_keyword_pass() -> None:
     annotated with PEP-noncompliant type hints.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
 
     # Decorated callable to be exercised.
@@ -51,7 +51,7 @@ def test_nonpep_param_kind_variadic_and_keyword_only_pass() -> None:
     keyword-only parameter, all annotated with PEP-noncompliant type hints.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
 
     # Decorated callable to be exercised.
@@ -80,7 +80,7 @@ def test_nonpep_param_kind_variadic_fail() -> None:
     PEP-noncompliant type hints.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
     from pytest import raises

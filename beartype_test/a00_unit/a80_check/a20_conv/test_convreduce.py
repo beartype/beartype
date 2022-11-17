@@ -24,7 +24,7 @@ def test_reduce_hint() -> None:
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import (
         BeartypeDecorHintNonpepNumpyException,
         BeartypeDecorHintNonpepNumpyWarning,
@@ -172,7 +172,7 @@ def test_reduce_hint() -> None:
             # type raises the expected exception.
             with raises(BeartypeDecorHintNonpepNumpyException):
                 reduce_hint(NDArray[
-                    'From my wings are shaken the dews that waken'], *args)
+                    'From_my_wings_are_shaken_the_dews_that_waken'], *args)
         # Else, beartype only shallowly supports "numpy.typing.NDArray" type
         # hints under the active Python interpreter. In this case...
         else:

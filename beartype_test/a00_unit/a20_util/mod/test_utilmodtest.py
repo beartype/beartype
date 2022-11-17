@@ -23,7 +23,7 @@ def test_die_unless_module_attr_name() -> None:
     validator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
     from beartype._util.mod.utilmodtest import die_unless_module_attr_name
     from pytest import raises
@@ -52,7 +52,7 @@ def test_is_module() -> None:
     Test the :func:`beartype._util.mod.utilmodtest.is_module` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeModuleUnimportableWarning
     from beartype._util.mod.utilmodtest import is_module
     from pytest import warns

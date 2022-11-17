@@ -24,7 +24,7 @@ def test_die_unless_hint_pep593() -> None:
     validator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep593Exception
     from beartype._util.hint.pep.proposal.utilpep593 import (
         die_unless_hint_pep593)
@@ -55,7 +55,7 @@ def test_get_hint_pep593_metadata() -> None:
     getter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep593Exception
     from beartype._util.hint.pep.proposal.utilpep593 import (
         get_hint_pep593_metadata)
@@ -90,7 +90,7 @@ def test_get_hint_pep593_metahint() -> None:
     getter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep593Exception
     from beartype._util.hint.pep.proposal.utilpep593 import (
         get_hint_pep593_metahint)

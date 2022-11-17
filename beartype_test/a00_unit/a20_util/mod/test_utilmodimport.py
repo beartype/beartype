@@ -23,7 +23,7 @@ def test_import_module_or_none() -> None:
     :func:`beartype._util.mod.utilmodget.import_module_or_none` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     import beartype
     from beartype.roar import BeartypeModuleUnimportableWarning
     from beartype._util.mod.utilmodimport import import_module_or_none
@@ -60,7 +60,7 @@ def test_import_module_attr() -> None:
     :func:`beartype._util.mod.utilmodget.import_module_attr` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
     from beartype._util.mod.utilmodimport import import_module_attr
     from pytest import raises
@@ -87,7 +87,7 @@ def test_import_module_attr_or_none() -> None:
     :func:`beartype._util.mod.utilmodget.import_module_attr_or_none` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeModuleUnimportableWarning
     from beartype.roar._roarexc import _BeartypeUtilModuleException
     from beartype._util.mod.utilmodimport import import_module_attr_or_none

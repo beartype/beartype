@@ -23,7 +23,7 @@ def test_add_func_scope_type_pass() -> None:
     :func:`beartype._check.expr._exprscope.add_func_scope_type` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._cave._cavefast import NoneType, RegexCompiledType
     from beartype._check.expr._exprscope import add_func_scope_type
@@ -63,7 +63,7 @@ def test_add_func_scope_type_fail() -> None:
     :func:`beartype._check.expr._exprscope.add_func_scope_type` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep3119Exception
     from beartype._check.expr._exprscope import add_func_scope_type
     from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
@@ -95,7 +95,7 @@ def test_add_func_scope_types_pass() -> None:
     :func:`beartype._check.expr._exprscope.add_func_scope_types` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._cave._cavefast import CallableTypes, ModuleOrStrTypes
     from beartype._cave._cavemap import NoneTypeOr
@@ -172,7 +172,7 @@ def test_add_func_scope_types_fail() -> None:
     :func:`beartype._check.expr._exprscope.add_func_scope_types` function.
     '''
 
-    # Defer heavyweight imports
+    # Defer test-specific imports
     from beartype.roar import BeartypeDecorHintNonpepException
     from beartype._check.expr._exprscope import add_func_scope_types
     from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
@@ -242,7 +242,7 @@ def test_express_func_scope_type_forwardref() -> None:
     function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintForwardRefException
     from beartype._decor._cache.cachetype import bear_typistry
     from beartype._check.checkmagic import ARG_NAME_TYPISTRY

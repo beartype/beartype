@@ -24,7 +24,7 @@ def test_get_hint_pep484_typevar_bound_or_none() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484Exception
     from beartype._util.hint.pep.proposal.pep484.utilpep484typevar import (
         get_hint_pep484_typevar_bound_or_none)

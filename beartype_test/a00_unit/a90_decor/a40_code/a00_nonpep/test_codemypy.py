@@ -28,7 +28,7 @@ def test_decor_mypy_notimplemented() -> None:
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintReturnViolation
     from beartype_test._util.pytroar import raises_uncached

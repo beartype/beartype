@@ -23,7 +23,7 @@ def test_import_typing_attr() -> None:
     importer.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
     from beartype._util.mod.lib.utiltyping import import_typing_attr
     from beartype._util.mod.utilmodimport import import_module_attr_or_none

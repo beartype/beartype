@@ -23,7 +23,7 @@ def test_represent_object():
     function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.text.utiltextrepr import represent_object
 
     # Arbitrary class defining an unpunctuated representation (i.e.,

@@ -108,19 +108,13 @@ jobs:
           - py38-coverage
           - py39-coverage
           - py310-coverage
-          #FIXME: Uncomment after Python 3.11 CI behaves as expected. Currently,
-          #Python 3.11 CI unexpectedly fails on attempting to compile NumPy
-          #wheels from within a Docker environment, which is clearly something
-          #this workflow should *NEVER* attempt. Since it currently is and we
-          #have insufficient time to diagnose this, avoid Python 3.11 for now.
-          # - py311-coverage
+          - py311-coverage
           #FIXME: Uncomment after we resolve tests currently broken under *ANY*
           #PyPy version. All tests used to pass under PyPy 3.7 and 3.8, but were
           #recently broken by work generalizing @beartype to decorate builtin
           #method descriptors (e.g., @property, @classmethod, @staticmethod).
           # - pypy37-coverage
           # - pypy38-coverage
-          #FIXME: Uncomment after PyPy 3.9 goes live.
           # - pypy39-coverage
 
         # Map each "tox" environment name listed in the "tox-env" list above to

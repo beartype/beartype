@@ -23,7 +23,7 @@ def test_iter_func_args() -> None:
     :func:`beartype._util.func.arg.utilfuncargtest.iter_func_args` generator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.arg.utilfuncargiter import (
         ArgKind,

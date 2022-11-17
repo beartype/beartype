@@ -29,7 +29,7 @@ def test_door_die_if_unbearable() -> None:
     '''
 
     # ....................{ IMPORTS                        }....................
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.door import die_if_unbearable
     from beartype.roar import (
         BeartypeConfException,
@@ -105,7 +105,7 @@ def test_door_typehint_die_if_unbearable() -> None:
     exhaustively tested by preceding unit tests.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.door import TypeHint
     from beartype.roar import (
         BeartypeDoorHintViolation,
@@ -155,7 +155,7 @@ def test_door_is_bearable() -> None:
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.door import is_bearable
     from beartype.roar import (
         BeartypeConfException,
@@ -246,7 +246,7 @@ def test_door_typehint_is_bearable() -> None:
     exhaustively tested by preceding unit tests.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.door import TypeHint
     from beartype.roar import BeartypeDoorNonpepException
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (

@@ -23,7 +23,7 @@ def test_is_identifier() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.text.utiltextident import is_identifier
 
     # Assert this tester accepts an unqualified Python identifier prefixed by

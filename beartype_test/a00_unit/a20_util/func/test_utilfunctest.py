@@ -23,7 +23,7 @@ def test_is_func_lambda() -> None:
     :func:`beartype._util.func.utilfunctest.is_func_lambda` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.utilfunctest import is_func_lambda
 
     def intimations_of_immortality(): 'from Recollections of Early Childhood'
@@ -44,7 +44,7 @@ def test_is_func_async() -> None:
     :func:`beartype._util.func.utilfunctest.is_func_async` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.utilfunctest import is_func_async
     from beartype_test.a00_unit.data.data_type import (
@@ -88,7 +88,7 @@ def test_is_func_coro() -> None:
     :func:`beartype._util.func.utilfunctest.is_func_coro` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.utilfunctest import is_func_coro
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype_test.a00_unit.data.data_type import (
@@ -125,7 +125,7 @@ def test_is_func_async_generator() -> None:
     :func:`beartype._util.func.utilfunctest.is_func_async_generator` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.utilfunctest import is_func_async_generator
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype_test.a00_unit.data.data_type import (
@@ -170,7 +170,7 @@ def test_is_func_sync_generator() -> None:
     :func:`beartype._util.func.utilfunctest.is_func_sync_generator` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.utilfunctest import is_func_sync_generator
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype_test.a00_unit.data.data_type import (
@@ -216,7 +216,7 @@ def test_die_unless_func_classmethod() -> None:
     validator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.utilfunctest import die_unless_func_classmethod
     from beartype_test.a00_unit.data.data_type import (
@@ -245,7 +245,7 @@ def test_is_func_classmethod() -> None:
     :func:`beartype._util.func.utilfunctest.is_func_classmethod` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.utilfunctest import is_func_classmethod
     from beartype_test.a00_unit.data.data_type import (
         CALLABLES,
@@ -272,7 +272,7 @@ def test_die_unless_func_property() -> None:
     validator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.utilfunctest import die_unless_func_property
     from beartype_test.a00_unit.data.data_type import (
@@ -300,7 +300,7 @@ def test_is_func_property() -> None:
     :func:`beartype._util.func.utilfunctest.is_func_property` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.utilfunctest import is_func_property
     from beartype_test.a00_unit.data.data_type import (
         CALLABLES,
@@ -326,7 +326,7 @@ def test_die_unless_func_staticmethod() -> None:
     validator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.utilfunctest import die_unless_func_staticmethod
     from beartype_test.a00_unit.data.data_type import (
@@ -355,7 +355,7 @@ def test_is_func_staticmethod() -> None:
     :func:`beartype._util.func.utilfunctest.is_func_staticmethod` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.utilfunctest import is_func_staticmethod
     from beartype_test.a00_unit.data.data_type import (
         CALLABLES,
@@ -381,7 +381,7 @@ def test_die_unless_func_python() -> None:
     :func:`beartype._util.func.utilfunctest.die_unless_func_python` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.utilfunctest import die_unless_func_python
     from beartype_test.a00_unit.data.data_type import CALLABLES_C
@@ -402,7 +402,7 @@ def test_is_func_python() -> None:
     :func:`beartype._util.func.utilfunctest.is_func_python` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.utilfunctest import is_func_python
 
     # Assert this tester accepts pure-Python callables.

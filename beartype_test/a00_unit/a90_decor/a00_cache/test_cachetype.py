@@ -25,7 +25,7 @@ def test_typistry_singleton_pass() -> None:
     :attr:`beartype._decor._cache.cachetype.bear_typistry` singleton.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._decor._cache.cachetype import bear_typistry
     from beartype._util.utilobject import get_object_type_name
@@ -58,7 +58,7 @@ def test_typistry_singleton_fail() -> None:
     :attr:`beartype._decor._cache.cachetype.bear_typistry` singleton.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._decor._cache.cachetype import bear_typistry
 
@@ -97,7 +97,7 @@ def test_typistry_singleton_fail() -> None:
 #     '''
 #     assert isinstance(hint_expr, str), '{repr(hint_expr)} not string.'
 #
-#     # Defer heavyweight imports.
+#     # Defer test-specific imports.
 #     from beartype._decor._cache.cachetype import bear_typistry
 #     from beartype._decor._wrapper.wrappersnip import ARG_NAME_TYPISTRY
 #

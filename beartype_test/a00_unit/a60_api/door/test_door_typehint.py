@@ -112,7 +112,7 @@ def test_door_typehint_new() -> None:
     Test the :meth:`beartype.door.TypeHint.__new__` factory method.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.door import TypeHint
     from beartype.roar import BeartypeDoorNonpepException
     from pytest import raises
@@ -157,7 +157,7 @@ def test_door_typehint_mapping() -> None:
     the kind of low-level type hint passed to that factory method.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.door import TypeHint
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata)
@@ -226,7 +226,7 @@ def test_door_typehint_equals(
         declared by the :func:`hint_subhint_cases` fixture.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.door import TypeHint
 
     # Intentionally import from "typing" rather than "beartype.typing" to
@@ -406,7 +406,7 @@ def test_door_typehint_is_ignorable() -> None:
     Test the :meth:`beartype.door.TypeHint.is_ignorable` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.door import TypeHint
     from beartype.roar import BeartypeDoorException, BeartypeDoorNonpepException
     from beartype_test.a00_unit.data.hint.data_hint import HINTS_IGNORABLE

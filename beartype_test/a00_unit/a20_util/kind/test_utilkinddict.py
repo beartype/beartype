@@ -156,7 +156,7 @@ def test_die_if_mappings_two_items_collide() -> None:
     validator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilMappingException
     from beartype._util.kind.utilkinddict import (
         die_if_mappings_two_items_collide)
@@ -185,7 +185,7 @@ def test_is_mapping_keys_all() -> None:
     :func:`beartype._util.kind.utilkinddict.is_mapping_keys_all` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilMappingException
     from beartype._util.kind.utilkinddict import is_mapping_keys_all
 
@@ -210,7 +210,7 @@ def test_is_mapping_keys_any() -> None:
     :func:`beartype._util.kind.utilkinddict.is_mapping_keys_any` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilMappingException
     from beartype._util.kind.utilkinddict import is_mapping_keys_any
 
@@ -234,7 +234,7 @@ def test_update_mapping() -> None:
     Test the :func:`beartype._util.kind.utilkinddict.update_mapping` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.kind.utilkinddict import update_mapping
 
     # Shallow copies of arbitrary mappings to be modified below.
@@ -264,7 +264,7 @@ def test_merge_mappings_two() -> None:
     passed exactly two mappings.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.kind.utilkinddict import merge_mappings
 
     # Assert this function merges two empty mappings into a new empty mapping.
@@ -296,7 +296,7 @@ def test_merge_mappings_three() -> None:
     passed exactly three mappings.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.kind.utilkinddict import merge_mappings
 
     # Assert this function merges three empty mappings into a new empty

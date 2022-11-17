@@ -24,7 +24,7 @@ submodule.
 #     :class:`beartype.vale._core._valecore.BeartypeValidatorConjunction` class.
 #     '''
 #
-#     # Defer heavyweight imports.
+#     # Defer test-specific imports.
 #     from beartype.roar import BeartypeValeSubscriptionException
 #     from beartype.vale._core._valecore import BeartypeValidator
 #     from beartype.vale._core._valecorebinary import (

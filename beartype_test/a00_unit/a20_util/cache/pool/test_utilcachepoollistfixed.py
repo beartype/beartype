@@ -24,7 +24,7 @@ def test_listfixed_pool_pass() -> None:
     :mod:`beartype._util.cache.pool.utilcachepoollistfixed` submodule.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cache.pool.utilcachepoollistfixed import (
         acquire_fixed_list, release_fixed_list)
 
@@ -65,7 +65,7 @@ def test_listfixed_pool_fail() -> None:
     :mod:`beartype._util.cache.pool.utilcachepoollistfixed` submodule.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cache.pool.utilcachepoollistfixed import (
         acquire_fixed_list)
     from beartype.roar._roarexc import _BeartypeUtilCachedFixedListException
@@ -88,7 +88,7 @@ def test_listfixed_type_pass() -> None:
     :mod:`beartype._util.cache.pool.utilcachepoollistfixed.FixedList` type.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cache.pool.utilcachepoollistfixed import FixedList
 
     # Fixed list to be tested.
@@ -126,7 +126,7 @@ def test_listfixed_type_fail() -> None:
     :mod:`beartype._util.cache.pool.utilcachepoollistfixed.FixedList` type.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cache.pool.utilcachepoollistfixed import FixedList
     from beartype.roar._roarexc import _BeartypeUtilCachedFixedListException
 

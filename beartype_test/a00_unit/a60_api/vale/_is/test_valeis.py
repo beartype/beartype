@@ -24,7 +24,7 @@ def test_api_vale_is_pass() -> None:
     '''
 
     # ....................{ IMPORTS                        }....................
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype._util.func.utilfuncmake import make_func
     from beartype.vale import Is
@@ -189,7 +189,7 @@ def test_api_vale_is_fail() -> None:
     Test unsuccessful usage of the :mod:`beartype.vale.Is` factory.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeValeSubscriptionException
     from beartype.vale import Is
     from pytest import raises
@@ -246,7 +246,7 @@ def test_api_vale_decor_fail() -> None:
     otherwise.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintPep593Exception
     from beartype.vale import Is

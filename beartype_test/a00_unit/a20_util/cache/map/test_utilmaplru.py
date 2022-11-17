@@ -26,7 +26,7 @@ def test_lrucachestrong_one_pass() -> None:
     LRU cache caching at most one key-value pair.
     """
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cache.map.utilmaplru import CacheLruStrong
 
     # Arbitrary key-value pair.
@@ -62,7 +62,7 @@ def test_lrucachestrong_two_pass() -> None:
     LRU cache caching at most two key-value pairs.
     """
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cache.map.utilmaplru import CacheLruStrong
 
     # Arbitrary key-value pair.
@@ -128,7 +128,7 @@ def test_lrucachestrong_fail() -> None:
     :func:`beartype._util.cache.map.utilmaplru.CacheLruStrong` class.
     """
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cache.map.utilmaplru import CacheLruStrong
 
     # Confirm behaviour for a non-integer size.

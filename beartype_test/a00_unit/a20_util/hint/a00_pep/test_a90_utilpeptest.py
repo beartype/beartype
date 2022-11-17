@@ -29,7 +29,7 @@ def test_is_hint_pep_typevars() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_typevars
     from beartype_test.a00_unit.data.hint.data_hint import HINTS_NONPEP
     from beartype_test.a00_unit.data.hint.pep.data_pep import (
@@ -51,7 +51,7 @@ def test_is_hint_pep_typing() -> None:
     :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_typing` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.pep.utilpeptest import (
         is_hint_pep_typing)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
@@ -76,7 +76,7 @@ def test_is_hint_pep_type_typing() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.pep.utilpeptest import (
         is_hint_pep_type_typing)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
@@ -100,7 +100,7 @@ def test_is_hint_pep() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.pep.utilpeptest import is_hint_pep
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.nonpep.data_nonpep import (
@@ -129,7 +129,7 @@ def test_is_hint_pep_args() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_args
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_pep import (
@@ -153,7 +153,7 @@ def test_is_hint_pep_args() -> None:
 #     tester.
 #     '''
 #
-#     # Defer heavyweight imports.
+#     # Defer test-specific imports.
 #     from beartype._util.hint.pep.utilpeptest import is_hint_pep_uncached
 #     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 #     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
@@ -192,7 +192,7 @@ def test_is_hint_pep_supported() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_supported
     from beartype_test.a00_unit.data.hint.data_hint import (
         NOT_HINTS_UNHASHABLE, NOT_HINTS_PEP)
@@ -222,7 +222,7 @@ def test_die_if_hint_pep_unsupported() -> None:
     validator.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import (
         BeartypeDecorHintPepException,
         BeartypeDecorHintPepUnsupportedException,

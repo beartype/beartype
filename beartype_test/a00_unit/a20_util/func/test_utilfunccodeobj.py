@@ -50,7 +50,7 @@ def test_get_func_codeobj() -> None:
     :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._cave._cavefast import CallableCodeObjectType
     from beartype._util.func.utilfunccodeobj import get_func_codeobj
@@ -118,7 +118,7 @@ def test_get_func_codeobj_or_none() -> None:
     function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._cave._cavefast import CallableCodeObjectType
     from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none

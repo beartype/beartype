@@ -25,7 +25,7 @@ def test_decor_wrappee_type_descriptor() -> None:
     builtin method decorators).
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
     from beartype.typing import NoReturn
@@ -221,7 +221,7 @@ def test_decor_arg_name_fail() -> None:
     parameters whose names are reserved for internal use by this decorator).
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorParamNameException
     from pytest import raises
@@ -240,7 +240,7 @@ def test_decor_arg_call_keyword_unknown_fail() -> None:
     wrapper functions passed unrecognized keyword parameters.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from pytest import raises
 
@@ -268,7 +268,7 @@ def test_decor_wrappee_type_fail() -> None:
     **invalid wrappee** (i.e., object *not* decoratable by this decorator).
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorWrappeeException
     from pytest import raises

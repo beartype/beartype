@@ -24,7 +24,7 @@ def test_get_func_classmethod_wrappee() -> None:
     getter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.utilfuncget import get_func_classmethod_wrappee
     from beartype_test.a00_unit.data.data_type import CALLABLES
@@ -71,7 +71,7 @@ def test_get_func_staticmethod_wrappee() -> None:
     getter.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.utilfuncget import get_func_staticmethod_wrappee
     from beartype_test.a00_unit.data.data_type import CALLABLES

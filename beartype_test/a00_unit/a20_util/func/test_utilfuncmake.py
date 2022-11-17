@@ -28,7 +28,7 @@ AND_SEE_THE_GREAT_ACHILLES = 'whom we knew'
 #     :func:`beartype._util.func.utilfuncmake.copy_func_shallow` function.
 #     '''
 #
-#     # Defer heavyweight imports.
+#     # Defer test-specific imports.
 #     from beartype.roar import BeartypeDecorWrapperException
 #     from beartype._util.func.utilfuncmake import copy_func_shallow
 #
@@ -120,7 +120,7 @@ def test_make_func_pass(capsys) -> None:
         Official ``capsys`` reference documentation.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.utilfuncmake import make_func
     from beartype.typing import Optional
     from linecache import cache as linecache_cache
@@ -220,7 +220,7 @@ def test_make_func_fail() -> None:
     :func:`beartype._util.func.utilfuncmake.make_func` function.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorWrapperException
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.utilfuncmake import make_func

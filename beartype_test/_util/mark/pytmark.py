@@ -67,7 +67,7 @@ def ignore_warnings(warning_cls: type) -> 'Callable':
           subclass of that class.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.utilobject import get_object_type_name
 
     # If this object is *NOT* a class, raise an exception.

@@ -23,7 +23,7 @@ def test_key_pool_pass() -> None:
     :class:`beartype._util.cache.pool.utilcachepool.KeyPool` type.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cache.pool.utilcachepool import KeyPool
     from beartype.roar._roarexc import _BeartypeUtilCachedKeyPoolException
     from io import StringIO
@@ -114,7 +114,7 @@ def test_key_pool_fail() -> None:
     :class:`beartype._util.cache.pool.utilcachepool.KeyPool` type.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.cache.pool.utilcachepool import KeyPool
     from beartype.roar._roarexc import _BeartypeUtilCachedKeyPoolException
     from pytest import raises

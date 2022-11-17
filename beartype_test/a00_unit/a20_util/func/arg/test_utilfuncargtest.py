@@ -23,7 +23,7 @@ def test_is_func_argless() -> None:
     :func:`beartype._util.func.arg.utilfuncargtest.is_func_argless` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.arg.utilfuncargtest import is_func_argless
     from beartype_test.a00_unit.data.func.data_func import (
         func_args_0,
@@ -48,7 +48,7 @@ def test_is_func_arg_variadic() -> None:
     tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.arg.utilfuncargtest import is_func_arg_variadic
 
     #FIXME: Generalize these callables into the
@@ -86,7 +86,7 @@ def test_is_func_arg_name() -> None:
     :func:`beartype._util.func.arg.utilfuncargtest.is_func_arg_name` tester.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._util.func.arg.utilfuncargtest import is_func_arg_name
     from beartype_test.a00_unit.data.func.data_func import (
         func_args_5_flex_mandatory_varpos_kwonly_varkw)

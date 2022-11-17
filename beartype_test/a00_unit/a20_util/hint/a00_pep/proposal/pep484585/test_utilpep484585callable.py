@@ -30,7 +30,7 @@ def test_get_hint_pep484585_callable_params_and_return() -> None:
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484585Exception
     from beartype.typing import Any
     from beartype._data.hint.pep.sign.datapepsigns import HintSignCallable

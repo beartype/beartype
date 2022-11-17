@@ -26,7 +26,7 @@ def test_arg_kind_flex() -> None:
     parameters) annotated with PEP-compliant type hints.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from typing import Union
 
@@ -59,7 +59,7 @@ def test_arg_kind_flex_varkw() -> None:
         https://github.com/beartype/beartype/issues/78
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from typing import Union
 
@@ -98,7 +98,7 @@ def test_arg_kind_kwonly_mixed() -> None:
     with PEP-compliant type hints.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintViolation
     from beartype.typing import Union
@@ -133,7 +133,7 @@ def test_arg_kind_flex_varpos_kwonly() -> None:
     parameter, all annotated with PEP-compliant type hints.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintViolation
     from beartype.typing import Union
@@ -193,7 +193,7 @@ def test_arg_kind_posonly() -> None:
     positional-only parameters annotated with PEP-compliant type hints.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintViolation
     from beartype_test.a00_unit.data.pep.data_pep570 import pep570_posonly
@@ -222,7 +222,7 @@ def test_arg_kind_posonly_flex_varpos_kwonly() -> None:
     parameter, all annotated with PEP-compliant type hints.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype_test.a00_unit.data.pep.data_pep570 import (
         pep570_posonly_flex_varpos_kwonly)

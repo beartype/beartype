@@ -30,7 +30,7 @@ def is_ci_github_actions() -> bool:
     Actions-based continuous integration (CI) workflow.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from os import environ
 
     # Return true only if the current shell environment declares a GitHub

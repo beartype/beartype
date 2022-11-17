@@ -25,7 +25,7 @@ def test_coerce_func_hint_root() -> None:
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import BeartypeConf
     from beartype._check.checkcall import BeartypeCall
     from beartype._check.conv.convcoerce import coerce_func_hint_root
@@ -69,7 +69,7 @@ def test_coerce_hint_any() -> None:
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype._check.conv.convcoerce import coerce_hint_any
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_LEAST_3_10,

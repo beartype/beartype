@@ -43,7 +43,7 @@ def test_codemain() -> None:
        https://github.com/beartype/beartype/issues/5
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import (
         BeartypeCallHintViolation,

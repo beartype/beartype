@@ -50,7 +50,7 @@ def test_sphinx_build(make_app, tmp_path) -> None:
         test, created in the base temporary directory.
     '''
 
-    # Defer heavyweight imports.
+    # Defer test-specific imports.
     from beartype_test._util.path.pytpathmain import get_main_sphinx_source_dir
     from sphinx.testing.path import path
 
