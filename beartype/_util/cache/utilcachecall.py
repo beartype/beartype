@@ -370,8 +370,8 @@ def property_cached(func: _CallableT) -> _CallableT:
     #. This value is returned.
 
     On each subsequent access of this property, this cached value is returned as
-    is *without* calling this method. Hence, this method is called at most once
-    for each object exposing this property.
+    is *without* calling the decorated method. Hence, the decorated method is
+    called at most once for each object exposing this property.
 
     Caveats
     ----------
@@ -386,15 +386,15 @@ def property_cached(func: _CallableT) -> _CallableT:
     3.8.** This decorator is substantially more efficient in both space and time
     than that decorator -- which is, of course, the entire point of caching.
 
-    **This decorator does not destroy bound property methods.** Technically,
-    the most efficient means of caching a property value into an instance is to
+    **This decorator does not destroy bound property methods.** Technically, the
+    most efficient means of caching a property value into an instance is to
     replace the property method currently bound to that instance with an
     instance variable initialized to that value (e.g., as documented by this
     `StackOverflow answer`_). Since a property should only ever be treated as an
     instance variable, there superficially exists little harm in dynamically
     changing the type of the former to the latter. Sadly, doing so introduces
-    numerous subtle issues with no plausible workaround. In particular,
-    replacing property methods by instance variables:
+    numerous subtle issues with *no* plausible workaround. Notably, replacing
+    property methods by instance variables:
 
     * Permits callers to erroneously set **read-only properties** (i.e.,
       properties lacking setter methods), a profound violation of one of the

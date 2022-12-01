@@ -111,11 +111,11 @@ class _IsEqualFactory(_BeartypeValidatorFactoryABC):
     Disambiguity. When subscripted by variadic positional (i.e., one or more)
     objects, this class internally treats those objects as items of a tuple to
     validate equality against rather than as independent objects to iteratively
-    validate equality against. Since this is non-intuitive, callers should
-    avoid subscripting this class by multiple objects. Although non-intuitive,
-    this is also unavoidable. The ``__class_getitem__()`` dunder method obeys
-    the same semantics as the ``__getitem__()`` dunder method, which is unable
-    to differentiate between being subscripted two or more objects and being
+    validate equality against. Since this is non-intuitive, callers should avoid
+    subscripting this class by multiple objects. Although non-intuitive, this is
+    also unavoidable. The ``__class_getitem__()`` dunder method obeys the same
+    semantics as the ``__getitem__()`` dunder method, which is unable to
+    differentiate between being subscripted two or more objects and being
     subscripted by a tuple of two or more objects. Since being able to validate
     equality against tuples of two or more objects is essential and since this
     class being subscripted by two or more objects would trivially reduce to

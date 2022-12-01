@@ -225,13 +225,25 @@ def is_type_builtin(
     # declaring all builtin types.
     return cls_module_name == BUILTINS_MODULE_NAME
 
-
+# ....................{ TESTERS ~ subclass                 }....................
 def is_type_subclass(
     cls: object, base_classes: TypeOrTupleTypes) -> bool:
     '''
-    ``True`` only if the passed object is a subclass of either the passed class
-    if passed one class *or* at least one of the passed classes if passed a
-    tuple of classes.
+    ``True`` only if the passed object is an inclusive subclass of the passed
+    superclass(es).
+
+    Specifically, this tester returns ``True`` only if either:
+
+    * If ``base_classes`` is a single superclass, the passed class is either:
+
+      * That superclass itself *or*...
+      * A subclass of that superclass.
+
+    * Else, ``base_classes`` is a tuple of one or more superclasses. In this
+      case, the passed class is either:
+
+      * One of those superclasses themselves *or*...
+      * A subclass of one of those superclasses.
 
     Caveats
     ----------
@@ -252,7 +264,7 @@ def is_type_subclass(
     obj : object
         Object to be inspected.
     base_classes : TestableTypes
-        Class(es) to test whether this object is a subclass of defined as
+        Superclass(es) to test whether this object is a subclass of defined as
         either:
 
         * A single class.
@@ -261,10 +273,72 @@ def is_type_subclass(
     Returns
     ----------
     bool
-        ``True`` only if this object is a subclass of these class(es).
+        ``True`` only if this object is an inclusive subclass of these
+        superclass(es).
     '''
     assert isinstance(base_classes, TestableTypesTuple), (
         f'{repr(base_classes)} neither class nor tuple of classes.')
 
-    # One-liners for tremendous bravery.
-    return isinstance(cls, type) and issubclass(cls, base_classes)
+    # Return true only if...
+    return (
+        # This object is a class *AND*...
+        isinstance(cls, type) and
+        # This class either is this superclass(es) or a subclass of this
+        # superclass(es).
+        issubclass(cls, base_classes)
+    )
+
+
+#FIXME: Unit test us up, please.
+def is_type_subclass_proper(
+    cls: object, base_classes: TypeOrTupleTypes) -> bool:
+    '''
+    ``True`` only if the passed object is a proper subclass of the passed
+    superclass(es).
+
+    Specifically, this tester returns ``True`` only if either:
+
+    * If ``base_classes`` is a single superclass, the passed class is a subclass
+      of that superclass (but *not* that superclass itself).
+    * Else, ``base_classes`` is a tuple of one or more superclasses. In this
+      case, the passed class is a subclass of one of those superclasses (but
+      *not* one of those superclasses themselves).
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+    base_classes : TestableTypes
+        Superclass(es) to test whether this object is a subclass of defined as
+        either:
+
+        * A single class.
+        * A tuple of one or more classes.
+
+    Returns
+    ----------
+    bool
+        ``True`` only if this object is a proper subclass of these
+        superclass(es).
+    '''
+    assert isinstance(base_classes, TestableTypesTuple), (
+        f'{repr(base_classes)} neither class nor tuple of classes.')
+
+    # Return true only if...
+    return (
+        # This object is a class *AND*...
+        isinstance(cls, type) and
+        # This class either is this superclass(es) or a subclass of this
+        # superclass(es) *AND*...
+        issubclass(cls, base_classes) and
+        # It is *NOT* the case that...
+        not (
+            # If the caller passed a tuple of one or more superclasses, this
+            # class is one of these superclasses themselves;
+            cls in base_classes
+            if isinstance(base_classes, tuple) else
+            # Else, the caller passed a single superclass. In this case, this
+            # class is this superclass itself.
+            cls is base_classes
+        )
+    )

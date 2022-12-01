@@ -63,11 +63,9 @@ HintSignFinal = _HintSign(name='Final')
 HintSignForwardRef = _HintSign(name='ForwardRef')
 HintSignGeneric = _HintSign(name='Generic')
 HintSignLiteral = _HintSign(name='Literal')
-HintSignLiteralString = _HintSign(name='LiteralString')
 HintSignOptional = _HintSign(name='Optional')
 HintSignParamSpec = _HintSign(name='ParamSpec')
 HintSignProtocol = _HintSign(name='Protocol')
-HintSignSelf = _HintSign(name='Self')
 HintSignTuple = _HintSign(name='Tuple')
 HintSignType = _HintSign(name='Type')
 HintSignTypeVar = _HintSign(name='TypeVar')
@@ -132,35 +130,41 @@ HintSignGenerator = _HintSign(name='Generator')
 # get_origin   <-- unusable as a type hint
 # get_type_hints   <-- unusable as a type hint
 # is_typeddict   <-- unusable as a type hint
+HintSignLiteralString = _HintSign(name='LiteralString')
+HintSignNever = _HintSign(name='Never')
 HintSignNewType = _HintSign(name='NewType')
 # no_type_check   <-- unusable as a type hint
 # no_type_check_decorator   <-- unusable as a type hint
 
 # Note that "NoReturn" is contextually valid *ONLY* as a top-level return hint.
-# Since this use case is extremely limited, we explicitly generate code for
-# this use case outside of the general-purpose code generation pathway for
-# standard type hints. Since "NoReturn" is an unsubscriptable singleton, we
-# explicitly detect this type hint with an identity test and thus require *NO*
-# sign to uniquely identify this type hint.
+# Since this use case is extremely limited, we explicitly generate code for this
+# use case outside of the general-purpose code generation pathway for standard
+# type hints. Since "NoReturn" is an unsubscriptable singleton, we explicitly
+# detect this type hint with an identity test and thus require *NO* sign to
+# uniquely identify this type hint.
 #
 # Theoretically, explicitly defining a sign uniquely identifying this type hint
-# could erroneously encourage us to use that sign elsewhere, which we should
-# avoid, because "NoReturn" is invalid in almost all possible contexts.
-# Pragmatically, doing so nonetheless improves orthogonality when detecting and
-# validating PEP-compliant type hints, which ultimately matters more than our
-# subjective feels about the matter. Wisely, we choose the practical approach.
+# could erroneously encourage us to use that sign elsewhere; we should avoid
+# that, as "NoReturn" is invalid in almost all possible contexts. Pragmatically,
+# doing so nonetheless improves orthogonality when detecting and validating
+# PEP-compliant type hints, which ultimately matters more than our subjective
+# feelings about the matter. Wisely, we choose pragmatics.
 #
 # In short, "NoReturn" is insane.
 HintSignNoReturn = _HintSign(name='NoReturn')
 
+HintSignNotRequired = _HintSign(name='NotRequired')
 # overload   <-- unusable as a type hint
 HintSignParamSpecArgs = _HintSign(name='ParamSpecArgs')
 HintSignParamSpecKwargs = _HintSign(name='ParamSpecKwargs')
+HintSignRequired = _HintSign(name='Required')
 # runtime_checkable   <-- unusable as a type hint
+HintSignSelf = _HintSign(name='Self')
 # Text   <-- not actually a type hint (literal alias for "str")
 # TYPE_CHECKING   <-- unusable as a type hint
 HintSignTypeAlias = _HintSign(name='TypeAlias')
 HintSignTypeGuard = _HintSign(name='TypeGuard')
+HintSignUnpack = _HintSign(name='Unpack')
 
 # Wrapper namespace for re type aliases.
 #

@@ -148,12 +148,12 @@ def __getattr__(attr_deprecated_name: str) -> object:
 
     Warns
     ----------
-    :class:`DeprecationWarning`
+    DeprecationWarning
         If this attribute is deprecated.
 
     Raises
     ----------
-    :exc:`AttributeError`
+    AttributeError
         If this attribute is unrecognized and thus erroneous.
     '''
 
@@ -174,6 +174,23 @@ def __getattr__(attr_deprecated_name: str) -> object:
         from beartype import door
         attr_nondeprecated_name_to_value = {'door': door}
         attr_nondeprecated_name_to_value.update(globals())
+    #FIXME: To support attribute-based deferred importation ala "lazy loading"
+    #of heavyweight subpackages like "beartype.door" and "beartype.vale", it
+    #looks like we'll need to manually add support here for that: e.g.,
+    #    elif attr_deprecated_name in {'cave', 'claw', 'door', 'vale',}:
+    #        #FIXME: Dynamically import this attribute here... somehow. Certainly, if
+    #        #such functionality does *NOT* exist, add it to the existing
+    #        #"utilmodimport" submodule: e.g.,
+    #        attr_value = import_module_attr(f'beartype.{attr_deprecated_name}')
+    #        attr_nondeprecated_name_to_value = {attr_deprecated_name: attr_value}
+    #FIXME: Rename "attr_deprecated_name" to merely "attr_name", please.
+    #FIXME: Revise docstring accordingly, please.
+    #FIXME: Exhaustively test this, please. Because we'll never manage to keep
+    #this in sync, we *ABSOLUTELY* should author a unit test that:
+    #* Decides the set of all public subpackages of "beartype".
+    #* Validates that each subpackage in this set is accessible as a
+    #  "beartype.{subpackage_name}" attribute.
+
     # Else, this deprecated attribute is any other attribute.
 
     # Return the value of this deprecated attribute and emit a warning.

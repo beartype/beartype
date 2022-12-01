@@ -360,14 +360,12 @@ if IS_PYTHON_AT_LEAST_3_8:
                 # This attribute is either...
                 ) and (
                     # Undefined by the passed object *OR*...
-                    #
-                    # This method has been specifically "blocked" (i.e.,
-                    # ignored) by the passed object from being type-checked as
-                    # part of this protocol. For unknown and presumably
-                    # indefensible reasons, PEP 544 explicitly supports a
-                    # fragile, unreadable, and error-prone idiom enabling
-                    # objects to leave methods "undefined." What this madness!
                     not hasattr(inst, cls_attr_name) or
+                    # Defined by the passed object as a "blocked" (i.e., omitted
+                    # from being type-checked as part of this protocol) method.
+                    # For unknown and indefensible reasons, PEP 544 explicitly
+                    # supports this fragile, unreadable, and error-prone idiom
+                    # enabling objects to leave methods "undefined." What this!?
                     (
                         #FIXME: Unit test this up, please.
                         # A callable *AND*...

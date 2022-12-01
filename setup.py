@@ -155,10 +155,9 @@ _CLASSIFIERS = [
     'Typing :: Typed',
 ]
 '''
-List of all PyPI-specific trove classifier strings synopsizing this
-package.
+List of all PyPI-specific trove classifier strings synopsizing this project.
 
-Each such string *must* be contain either two or three `` :: `` substrings
+Each such string *must* contain either two or three ``" :: "`` substrings
 delimiting human-readable capitalized English words formally recognized by the
 :mod:`distutils`-specific ``register`` command.
 

@@ -582,8 +582,8 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     #       False
     #
     # Ergo, the "typing.Generic" ABC uniquely identifies many but *NOT* all
-    # generics. While non-ideal, the failure of PEP 585-compliant generics
-    # to subclass a common superclass leaves us with little alternative.
+    # generics. While non-ideal, the failure of PEP 585-compliant generics to
+    # subclass a common superclass leaves us with little alternative.
     if is_hint_pep484585_generic(hint):
         return HintSignGeneric
     # Else, this hint is *NOT* a PEP 484- or 585-compliant generic.

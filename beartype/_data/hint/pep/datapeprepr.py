@@ -196,6 +196,7 @@ HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN: Dict[str, HintSign] = {
     #     numpy.ndarray[typing.Any, numpy.dtype[+ScalarType]]
     #     >>> repr(npt.NDArray[np.float64])
     #     repr: numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]
+    #
     # Ergo, unsubscripted "numpy.typing.NDArray" type hints present themselves
     # as implicitly subscripted through their representation.
     'numpy.ndarray': HintSignNumpyArray,
@@ -561,8 +562,8 @@ def _init() -> None:
         #   "ns__").
         for hint_sign_name in dir(datapepsigns):
             # If this name is *NOT* prefixed by the substring prefixing the
-            # names of all signs, this name is *NOT* the name of a sign. In
-            # this case, silently continue to the next sign.
+            # names of all signs, this name is *NOT* the name of a sign. In this
+            # case, silently continue to the next sign.
             if not hint_sign_name.startswith('HintSign'):
                 continue
 

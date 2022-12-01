@@ -8,6 +8,23 @@
 #the "beartype.claw._clawast" submodule as to how we might go about performing
 #static analysis at runtime via the third-party "executing" submodule. \o/
 
+#FIXME: [PEP 484]: Support subscripted bounded type variables. We didn't even
+#know this was a thing -- but it makes sense. An example is probably the best
+#way to explain this madness. Witness!
+#    from beartype import beartype
+#    from typing import Iterable
+#    
+#    T = TypeVar('T', bound=Iterable)
+#    
+#    @beartype
+#    def stringify_iterable_items(arg: T[int]) -> T[str]:
+#        return type(arg)(str(item) for item in arg)
+#
+#Clearly, @beartype should just quietly reduce both the "T[int]" and "T[str]"
+#type hints that we can't really do anything with to "Iterable[int]" and
+#"Iterable[str]" type hints, which we can. Does @beartype currently do that?
+#Probably... not. At the least, we should begin testing this exhaustively.
+
 #FIXME: [PEP 585] It looks like CPython's stdlib quietly extended PEP 585
 #support to a variety of undocumented classes, including:
 #* "asyncio.Future[T]".
