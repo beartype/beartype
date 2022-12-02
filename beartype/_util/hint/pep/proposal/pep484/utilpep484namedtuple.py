@@ -22,7 +22,51 @@ from beartype._util.cls.utilclstest import is_type_subclass_proper
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
-#FIXME: Actually call us in the get_hint_pep_sign_or_none() getter, please.
+#FIXME: Actually call this tester in the get_hint_pep_sign_or_none() getter to
+#map "typing.NamedTuple" subclasses to the "HintSignNamedTuple" sign, please.
+#FIXME: Actually type-check type hints identified by the "HintSignNamedTuple"
+#sign. Specifically, for each "typing.NamedTuple" subclass identified by that
+#sign, type-check that subclass as follows:
+#* If that subclass is decorated by @beartype, reduce to the standard trivial
+#  isinstance() check. Since @beartype already type-checks instances of that
+#  subclass on instantiation, *NO* further type-checking is required or desired.
+#* Else, that subclass is *NOT* decorated by @beartype. In this case, matters
+#  become considerably non-trivial. Why? Because:
+#  * This situation commonly arises when type-checking "typing.NamedTuple"
+#    subclasses *NOT* under user control (e.g., defined by upstream third-party
+#    packages in an app stack). Since these subclasses are *NOT* under user
+#    control, there exists *NO* safe means for @beartype to monkey-patch these
+#    subclasses with itself. Ergo, instances of these subclasses are guaranteed
+#    to *NOT* be type-checked at instantiation time.
+#  * The prior point implies that @beartype must instead type-check instances of
+#    these subclasses at @beartype call time. However, the naive approach to
+#    doing so is likely to prove inefficient. The naive approach is simply to
+#    type-check *ALL* fields of these instances *EVERY* time these instances are
+#    type-checked at @beartype call time. Since these fields could themselves
+#    refer to other "typing.NamedTuple" subclasses, combinatorial explosion
+#    violating O(1) constraints becomes a real possibility here.
+#  * *RECURSION.* Both direct and indirect recursion are feasible here. Both
+#    require PEP 563 and are thus unlikely. Nonetheless:
+#    * Direct recursion occurs under PEP 563 as follows:
+#          from __future__ import annotations
+#          from typing import NamedTuple
+#
+#          class DirectlyRecursiveNamedTuple(NamedTuple):
+#              uhoh: DirectlyRecursiveNamedTuple
+#    * Indirect recursion occurs  as PEP 563 follows:
+#          from typing import NamedTuple
+#
+#          class IndirectlyRecursiveNamedTuple(NamedTuple):
+#              uhoh: YetAnotherNamedTuple
+#
+#          class YetAnotherNamedTuple(NamedTuple):
+#              ohboy: IndirectlyRecursiveNamedTuple
+#
+#Guarding against both combinatorial explosion *AND* recursion is imperative. To
+#do so, we'll need to fundamentally refactor our existing breadth-first search
+#(BFS) over type hints into a new depth-first search (DFS) over type hints.
+#We've extensively documented this in the "beartype._check.expr.__init__"
+#submodule. Simply know that this will be non-trivial, albeit fun and needed!
 def is_hint_pep484_namedtuple_subclass(hint: object) -> bool:
     '''
     ``True`` only if the passed object is a :pep:`484`-compliant **named tuple

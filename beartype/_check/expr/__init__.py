@@ -163,6 +163,104 @@
 #(and thus object dictionary) to maintain. Cue painless forehead slap.
 #FIXME: See additional commentary at this front-facing issue:
 #    https://github.com/beartype/beartype/issues/31#issuecomment-799938621
+#FIXME: Actually, *FORGET EVERYTHING ABOVE.* We actually do want to
+#fundamentally refactor this iterative BFS into an iterative DFS. Why? Because
+#we increasingly need to guard against both combinatorial explosion *AND*
+#recursion. That's imperative -- and we basically *CANNOT* do that with the
+#current naive BFS approach. Yes, implementing a DFS is somewhat more work. But
+#it's *NOT* infeasible. It's very feasible. More importantly, it's necessary.
+#Since @beartype should eventually handle recursive type hints, we'll need
+#recursion guards anyway. Specifically:
+#* Guarding against recursion would be trivial if we were actually using a
+#  depth-first algorithm. While delving, you'd just maintain a local set of the
+#  IDs of all type hints previously visited. You'd then avoid delving into
+#  anything if the ID of that thing is already in that set. Likewise, after
+#  delving into that thing, you'd then pop the ID of that thing off that set.
+#* Likewise, handling combinatorial explosion would *ALSO* be trivial if we were
+#  actually using a depth-first algorithm. By "combinatorial explosion," we are
+#  referring to what happens if we try to type-check dataclass and
+#  "typing.NamedTuple" instances that are *NOT* decorated by @beartype.
+#  Type-checking those instances has to happen at @beartype call time,
+#  obviously. There are actually two kinds of combinatorial explosion at play
+#  here:
+#  * Combinatorial explosion while type-checking at @beartype call time. This is
+#    avoidable by simply type-checking *EXACTLY ONE* random field of each
+#    "NamedTuple" instance on each call. Simple. "NamedTuple" instances are
+#    literally just tuples, so random access is trivial. (Type-checking random
+#    fields of dataclass instances is less trivial but still feasible; just pass
+#    a list whose values are dataclass field names as a private
+#    @beartype-specific parameter to type-checking @beartype wrapper functions.
+#    That list then effectively maps from 0-based indices to dataclass field
+#    names. We then perform random access on that list to generate random field
+#    names, which can then be accessed with reasonable efficiency.)
+#  * Combinatorial explosion while generating type-checking code at @beartype
+#    decoration time. This is the problem, folks. Why? Because we currently
+#    employ a breadth-first search (BFS), which requires generating the entire
+#    tree of all type hints to be visited. Currently, that's fine, because type
+#    hints are typically compact; exhausting memory is unlikely. But as soon as
+#    we start generating type-checking code for "NamedTuple" instances *NOT*
+#    decorated by @beartype, we have to begin visiting *ALL* type hints
+#    annotating *ALL* fields of those type hints by adding those hints to our
+#    BFS tree. Suddenly, combinatorial explosion becomes a very real thing.
+#
+#The solution is to radically transform our existing BFS search into a DFS
+#search. Again, this is something we would need to do eventually anyway to
+#handle recursive type hints, because how can you guard against recursion in an
+#iterative BFS anyway? And... anyway, DFS is simply the right approach. It's
+#what we should have done all along, clearly. It's also non-trivial, which is
+#why we didn't do it all along.
+#
+#For example, for each type hint visited by a DFS, we'll need to additionally
+#record metadata like:
+#* "_HINT_META_INDEX_ARGS_INDEX_NEXT", the 0-based index into the
+#  "hint.__args__" tuple (listing all child type hints for the currently visited
+#  type hint "hint") of the next child type hint of the associated parent type
+#  hint to be visited. When "_HINT_META_INDEX_ARGS_INDEX_NEXT ==
+#  len(hint.__args__)", the DFS has successfully visited all child type hints of
+#  the currently visited type hint "hint" and should now iteratively recurse up
+#  (rather than down) the DFS stack.
+#* "_HINT_META_INDEX_CODE", the Python code snippet type-checking the currently
+#  visited hint. This code snippet will be gradually filled in as child type
+#  hints of the currently visited type hint are themselves visited. Indeed, this
+#  implies that the currently visited parent type hint *MUST* always be able to
+#  access the "_HINT_META_INDEX_CODE" entry of the most recently visited child
+#  type hint of that parent -- which, in turn, implies that the entire
+#  "hints_meta" FixedList of each child type hint must be temporarily preserved.
+#  Specifically, when recursing up the DFS stack, each parent type hint will:
+#  1. Access the "hints_meta" FixedList of its most recently visited child type
+#     to fill in its own "_HINT_META_INDEX_CODE".
+#  2. Pop that "hints_meta" FixedList of its most recently visited child type
+#     hint off the DFS stack.
+#
+#Some type hints like unions will additionally require hint-specific entries in
+#their "hints_meta" FixedList. The code for a union *CANNOT* be efficiently
+#generated until *ALL* child type hints of that union have been. Although
+#hint-specific entries could be appended to the "hints_meta" FixedList
+#structure, doing so would rapidly increase the memory consumption of all other
+#types of hints for no particularly good reason. Instead, a single new
+#hint-specific entry should be added:
+#* "_HINT_META_INDEX_DATA", an arbitrary object required by this kind of hint.
+#  In the case of unions, this will be an instance of a dataclass resembling:
+#      @dataclass
+#      def _HintMetaDataUnion(object):
+#          HINTS_CHILD_NONPEP = set()
+#          '''
+#          Set of all previously visited PEP-noncompliant child type hints
+#          (e.g., isinstanceable classes) of this parent union type hint.
+#          '''
+#
+#          HINTS_CHILD_PEP = set()
+#          '''
+#          Set of all previously visited PEP-compliant child type hints of this
+#          parent union type hint.
+#          '''
+#
+#   Naturally, "_HintMetaDataUnion" instances should be cached with the standard
+#   acquire_object() and release_object() approach. *shrug*
+#
+#Note that a DFS still needs to expensively interpolate code snippets into
+#format templates. There's *NO* way around that; since dynamic code generation
+#is what we've gotten ourselves into here, string munging is a necessary "good."
 
 #FIXME: Note that there exist four possible approaches to random item selection
 #for arbitrary containers depending on container type. Either the actual pith
