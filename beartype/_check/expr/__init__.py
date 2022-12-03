@@ -258,6 +258,16 @@
 #   Naturally, "_HintMetaDataUnion" instances should be cached with the standard
 #   acquire_object() and release_object() approach. *shrug*
 #
+#Oh! Wait. Nevermind. We don't actually need "_HINT_META_INDEX_DATA" or
+#"_HintMetaDataUnion". It's true that we would need both if we needed to handle
+#unions strictly with a classical DFS approach -- but there's *NO* pragmatic
+#reason to do so. Instead, we'll just continue handling unions as we currently
+#do: by iterating over child type hints of unions and separating them into
+#PEP-compliant and PEP-noncompliant sets. So, basically a mini-BFS over unions
+#*BEFORE* we then delve into their PEP-compliant child type hints in the
+#standard DFS way. That's fine, because we're *NOT* purists here. Whatever is
+#fastest and simplest (in that order) is what wins.
+#
 #Note that a DFS still needs to expensively interpolate code snippets into
 #format templates. There's *NO* way around that; since dynamic code generation
 #is what we've gotten ourselves into here, string munging is a necessary "good."

@@ -73,7 +73,6 @@ def represent_object(
 
     # Optional parameters.
     max_len: int = 96,
-    is_strip_from_newline_first: bool = True,
 ) -> str:
     """
     Pretty-printed quasi-human-readable variant of the string returned by the
@@ -85,8 +84,8 @@ def represent_object(
     #. Obtains this object's representation by calling ``repr(object)``.
     #. If this representation is neither suffixed by a punctuation character
        (i.e., character in the standard :attr:`string.punctuation` set) *nor*
-       representing a byte-string whose representations are prefixed by `b'`
-       and suffixed by `'` (e.g., `b'Check, mate.'`), double-quotes this
+       representing a byte-string whose representations are prefixed by ``b'``
+       and suffixed by ``'`` (e.g., ``b'Check, mate.'``), double-quotes this
        representation for disambiguity with preceding characters -- notably,
        sequence indices. Since strings returned by this function commonly
        follow sequence indices in error messages, failing to disambiguate the
@@ -103,7 +102,7 @@ def represent_object(
        Double-quoting the "7" suffices to demarcate values from indices.
     #. If this representation exceeds the passed maximum length, replaces the
        suffix of this representation exceeding this length with an ellipses
-       (i.e., `"..."` substring).
+       (i.e., ``"..."`` substring).
 
     Caveats
     ----------
