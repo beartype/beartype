@@ -20,7 +20,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from abc import ABCMeta as _ABCMeta
-from weakref import ref as _weakref_ref
 
 # ....................{ SUPERCLASS                         }....................
 class BeartypeException(Exception, metaclass=_ABCMeta):
@@ -463,52 +462,15 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
             weak reference to this culprit.
         '''
 
+        # Avoid circular import dependencies.
+        from beartype._util.py.utilpyweakref import make_obj_weakref_and_repr
+
         # Initialize the superclass with the passed message.
         super().__init__(message)
 
-        #FIXME: Unit test this madness up, please.
-        # If this culprit is "None", substitute "None" for this non-"None"
-        # placeholder. Since the "weakref.ref" class ambiguously returns "None"
-        # when this culprit has already been garbage-collected, this placeholder
-        # enables the "culprit" property to subsequently disambiguate between
-        # these two common edge cases.
-        if culprit is None:
-            self._culprit = _BEARTYPE_CALL_HINT_VIOLATION_CULPRIT_NONE
-        # Else, this culprit is *NOT* "None". In this case...
-        else:
-            # Attempt to classify a weak reference to this culprit for safety.
-            try:
-                self._culprit = _weakref_ref(culprit)
-            # If doing so raises a "TypeError", this culprit *CANNOT* be weakly
-            # referred to. Sadly, builtin variable-sized C-based types (e.g.,
-            # "dict", "int", "list", "tuple") *CANNOT* be weakly referred to.
-            # This constraint is officially documented by the "weakref" module:
-            #     Several built-in types such as list and dict do not directly
-            #     support weak references but can add support through
-            #     subclassing. CPython implementation detail: Other built-in
-            #     types such as tuple and int do not support weak references
-            #     even when subclassed.
-            #
-            # Since this edge case is common, permitting this exception to
-            # unwind the call stack is unacceptable; likewise, even coercing
-            # this exception into non-fatal warnings would generic excessive
-            # warning spam and is thus also unacceptable. The only sane solution
-            # remaining is to silently store the machine-readable representation
-            # of this culprit and return that rather than this culprit from the
-            # "culprit" property.
-            except TypeError:
-                # Avoid circular import dependencies.
-                from beartype._util.text.utiltextrepr import represent_object
-
-                # Store only the truncated representation of this culprit rather
-                # than the standard repr() to minimize space consumption.
-                self._culprit = represent_object(
-                    obj=culprit,
-                    # Store at most 1KB of the full representation, which should
-                    # certainly suffice for most use cases. Note that the
-                    # default of 96B is far too small to be useful here.
-                    max_len=1000,
-                )
+        #FIXME: Docstring us up, please.
+        self._culprit_weakref, self._culprit_repr = make_obj_weakref_and_repr(
+            culprit)
 
     # ..................{ PROPERTIES                         }..................
     # Read-only properties intentionally providing no corresponding setters.
@@ -549,36 +511,13 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
             If this culprit has already been garbage-collected.
         '''
 
-        # Culprit to be returned, defaulting to this previously stored culprit.
-        culprit = self._culprit
+        # Avoid circular import dependencies.
+        from beartype._util.py.utilpyweakref import get_obj_weakref_or_repr
 
-        # If this culprit is the singleton placeholder implying this culprit to
-        # have been "None" when previously passed to the __init__() method,
-        # substitute this placeholder for "None". See that method for details.
-        if culprit is _BEARTYPE_CALL_HINT_VIOLATION_CULPRIT_NONE:
-            culprit = None
-        # Else, this culprit is *NOT* that placeholder. In this case...
-        elif isinstance(culprit, _weakref_ref):
-            # Culprit weakly referred to by this weak reference if this culprit
-            # is still alive *OR* "None" otherwise (i.e., if this culprit has
-            # already been garbage-collected).
-            culprit = culprit()
-
-            # If this culprit has been garbage-collected, raise an exception.
-            if culprit is None:
-                #FIXME: Non-ideal, actually. It's strongly preferable to always
-                #return *SOMETHING* rather than raising an exception. Ergo,
-                #here's what we're going to do:
-                #* Unconditionally also store "self._culprit_repr" in the
-                #  __init__() method above.
-                #* Return that rather than raising an exception here. Ergo, do
-                #  *NOT* bother defining a new
-                #  "BeartypeCallHintViolationCulpritDead" class.
-                #* Revise docstrings above to note this, please.
-                # raise BeartypeCallHintViolationCulpritDead(
-                #     'Culprit garbage-collected.')
-                pass
-            # Else, this culprit is still alive.
+        # Strong reference to the culprit previously passed to the __init__()
+        # method if that culprit is alive *OR* its representation otherwise.
+        culprit = get_obj_weakref_or_repr(
+            obj_weakref=self._culprit_weakref, obj_repr=self._culprit_repr)
 
         # Return this culprit.
         return culprit
@@ -838,15 +777,6 @@ class BeartypeValeValidationException(BeartypeValeException):
     '''
 
     pass
-
-# ....................{ PROPERTIES ~ constants             }....................
-_BEARTYPE_CALL_HINT_VIOLATION_CULPRIT_NONE = object()
-'''
-Singleton substitute for the ``None`` singleton, enabling
-:class:`BeartypeCallHintViolation` exceptions to differentiate between weak
-references to ``None`` and weak references whose referents are already dead
-(i.e., have already been garbage-collected).
-'''
 
 # ....................{ PRIVATE ~ check                      }..................
 class _BeartypeCheckException(BeartypeException):
