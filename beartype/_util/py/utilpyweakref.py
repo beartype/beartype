@@ -10,6 +10,28 @@ allowing those objects to be garbage-collected at *any* time) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: The constraints of the standard "weakref" module are, frankly,
+#ludicrous. Consider politely requesting that "weakref" extend support to both
+#mutable and immutable C-based containers (e.g., lists, strings, tuples) as
+#follows:
+#
+#* In the "weakref" submodule:
+#  * Define a new trivial "_WeakRefWrapper" dataclass containing a single
+#    public "wrappee" field strongly referring to some C-based container.
+#* In the weakref.ref.__init__() method:
+#  * Detect whether the passed object is a C-based container.
+#  * If so:
+#    * Locally instantiate a new instance of the "_WeakRefConductor" class.
+#    * Set the "wrappee" field of this instance to the passed object.
+#    * Create and return a new weak reference to this "_WeakRefConductor".
+#  * Else, create and return a new weak reference to the passed object.
+#* In the weakref.ref.__call__() method:
+#  * If the object being weakly referred to by this "ref" instance is an
+#    instance of the "_WeakRefConductor" class, return the value of the
+#    "wrappee" field of that instance.
+#  * Else, fallback to the current approach.
+
 # ....................{ IMPORTS                            }....................
 # from beartype.roar._roarexc import (
 #     _BeartypeUtilPathException,
@@ -24,9 +46,6 @@ from beartype.typing import (
 from weakref import ref as weakref_ref
 
 # ....................{ GETTERS                            }....................
-#FIXME: Unit test this madness up, please.
-#FIXME: Docstring us up, please.
-#FIXME: Call this in "_roarexc", please.
 def make_obj_weakref_and_repr(obj: object) -> Tuple[object, str]:
     '''
     2-tuple ``(weakref, repr)`` weakly referring to the passed object.
@@ -46,8 +65,8 @@ def make_obj_weakref_and_repr(obj: object) -> Tuple[object, str]:
           * If this object supports weak references, a **weak reference** (i.e.,
             :class:`weakref.ref` instance) to this object.
           * If this object prohibits weak references (e.g., due to being a
-            commonplace C-based variable-sized container like a tuple or
-            string), ``None``.
+            common C-based variable-sized container like a tuple or string),
+            ``None``.
 
         * ``repr`` is the machine-readable representation of this object,
           truncated to ~10KB to minimize space consumption in the worst case of
@@ -106,9 +125,46 @@ def make_obj_weakref_and_repr(obj: object) -> Tuple[object, str]:
 
 
 #FIXME: Unit test us up, please.
-#FIXME: Docstring us up, please.
 def get_obj_weakref_or_repr(obj_weakref: object, obj_repr: str) -> object:
     '''
+    Object weakly referred to by the passed object if this object is indeed a
+    weak reference to another existing object *or* the passed machine-readable
+    representation otherwise (i.e., if this object is either ``None`` *or* is a
+    weak reference to a dead garbage-collected object).
+
+    This function is typically passed the pair of objects returned by a prior
+    call to the companion :func:`make_obj_weakref_and_repr` function.
+
+    Parameters
+    ----------
+    obj_weakref : object
+        Either:
+
+        * If the **referent** (i.e., target object being weakly referred to) is
+          the ``None`` singleton, the :data:`_WEAKREF_NONE` placeholder.
+        * Else if the referent supports weak references, a weak reference to
+          that object.
+        * Else, ``None``.
+    obj_repr : str
+        Machine-readable representation of that object, typically truncated to
+        some number of characters to avoid worst-case space consumption.
+
+    Returns
+    ----------
+    object
+        Either:
+
+        * If this weak reference is the :data:`_WEAKREF_NONE` placeholder, the
+          ``None`` singleton.
+        * Else if this referent support weak references, either:
+
+          * If this referent is still alive (i.e., has yet to be
+            garbage-collected), this referent.
+          * Else, this referent is now dead (i.e., has already been
+            garbage-collected). In this case, the passed representation.
+
+        * Else, this referent does *not* support weak references (i.e., this
+          weak reference is ``None``). In this case, the passed representation.
     '''
     assert isinstance(obj_repr, str), f'{repr(obj_repr)} not string.'
 
