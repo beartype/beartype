@@ -512,11 +512,11 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
         '''
 
         # Avoid circular import dependencies.
-        from beartype._util.py.utilpyweakref import get_obj_weakref_or_repr
+        from beartype._util.py.utilpyweakref import get_weakref_obj_or_repr
 
         # Strong reference to the culprit previously passed to the __init__()
         # method if that culprit is alive *OR* its representation otherwise.
-        culprit = get_obj_weakref_or_repr(
+        culprit = get_weakref_obj_or_repr(
             obj_weakref=self._culprit_weakref, obj_repr=self._culprit_repr)
 
         # Return this culprit.

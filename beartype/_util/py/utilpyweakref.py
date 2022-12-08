@@ -10,28 +10,6 @@ allowing those objects to be garbage-collected at *any* time) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: The constraints of the standard "weakref" module are, frankly,
-#ludicrous. Consider politely requesting that "weakref" extend support to both
-#mutable and immutable C-based containers (e.g., lists, strings, tuples) as
-#follows:
-#
-#* In the "weakref" submodule:
-#  * Define a new trivial "_WeakRefWrapper" dataclass containing a single
-#    public "wrappee" field strongly referring to some C-based container.
-#* In the weakref.ref.__init__() method:
-#  * Detect whether the passed object is a C-based container.
-#  * If so:
-#    * Locally instantiate a new instance of the "_WeakRefConductor" class.
-#    * Set the "wrappee" field of this instance to the passed object.
-#    * Create and return a new weak reference to this "_WeakRefConductor".
-#  * Else, create and return a new weak reference to the passed object.
-#* In the weakref.ref.__call__() method:
-#  * If the object being weakly referred to by this "ref" instance is an
-#    instance of the "_WeakRefConductor" class, return the value of the
-#    "wrappee" field of that instance.
-#  * Else, fallback to the current approach.
-
 # ....................{ IMPORTS                            }....................
 # from beartype.roar._roarexc import (
 #     _BeartypeUtilPathException,
@@ -125,7 +103,7 @@ def make_obj_weakref_and_repr(obj: object) -> Tuple[object, str]:
 
 
 #FIXME: Unit test us up, please.
-def get_obj_weakref_or_repr(obj_weakref: object, obj_repr: str) -> object:
+def get_weakref_obj_or_repr(obj_weakref: object, obj_repr: str) -> object:
     '''
     Object weakly referred to by the passed object if this object is indeed a
     weak reference to another existing object *or* the passed machine-readable

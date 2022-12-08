@@ -50,10 +50,10 @@ from abc import ABCMeta, abstractmethod
 # ....................{ FUNCTIONS                          }....................
 def _check_methods(C: type, *methods: str):
     '''
-    Private utility function called by abstract base classes (ABCs)
-    implementing structural subtyping by detecting whether the passed class or
-    some superclass of that class defines all of the methods with the passed
-    method names.
+    Private utility function called by abstract base classes (ABCs) implementing
+    structural subtyping by detecting whether the passed class or some
+    superclass of that class defines all of the methods with the passed method
+    names.
 
     For safety, this function has been duplicated as is from its eponymous
     counterpart in the private stdlib :mod:`_colletions_abc` module.
@@ -76,7 +76,7 @@ def _check_methods(C: type, *methods: str):
 
     mro = C.__mro__
     for method in methods:
-        for B in mro:
+        for B in mro:  # pyright: ignore[reportGeneralTypeIssues]
             if method in B.__dict__:
                 if B.__dict__[method] is None:
                     return NotImplemented

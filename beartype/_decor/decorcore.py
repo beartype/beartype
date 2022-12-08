@@ -718,7 +718,7 @@ def _beartype_type(
 
     # For the unqualified name and value of each direct (i.e., *NOT* indirectly
     # inherited) attribute of this class...
-    for attr_name, attr_value in cls.__dict__.items():
+    for attr_name, attr_value in cls.__dict__.items():  # pyright: ignore[reportGeneralTypeIssues]
         # If this attribute is beartypeable...
         if isinstance(attr_value, TYPES_BEARTYPEABLE):
             # This attribute decorated with type-checking configured by this
