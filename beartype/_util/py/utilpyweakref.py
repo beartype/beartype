@@ -11,16 +11,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-# from beartype.roar._roarexc import (
-#     _BeartypeUtilPathException,
-#     _BeartypeUtilPythonException,
-# )
+from beartype.roar._roarexc import _BeartypeUtilPythonWeakrefException
 from beartype.typing import (
     Tuple,
 )
-# from beartype._util.cache.utilcachecall import callable_cached
-# from platform import python_implementation
-# from sys import executable as sys_executable
 from weakref import ref as weakref_ref
 
 # ....................{ GETTERS                            }....................
@@ -102,7 +96,6 @@ def make_obj_weakref_and_repr(obj: object) -> Tuple[object, str]:
 
 
 
-#FIXME: Unit test us up, please.
 def get_weakref_obj_or_repr(obj_weakref: object, obj_repr: str) -> object:
     '''
     Object weakly referred to by the passed object if this object is indeed a
@@ -120,8 +113,8 @@ def get_weakref_obj_or_repr(obj_weakref: object, obj_repr: str) -> object:
 
         * If the **referent** (i.e., target object being weakly referred to) is
           the ``None`` singleton, the :data:`_WEAKREF_NONE` placeholder.
-        * Else if the referent supports weak references, a weak reference to
-          that object.
+        * Else if the referent supports weak references, a **weak reference**
+          (i.e., :class:`weakref.ref` instance) to that object.
         * Else, ``None``.
     obj_repr : str
         Machine-readable representation of that object, typically truncated to
@@ -143,35 +136,50 @@ def get_weakref_obj_or_repr(obj_weakref: object, obj_repr: str) -> object:
 
         * Else, this referent does *not* support weak references (i.e., this
           weak reference is ``None``). In this case, the passed representation.
+
+    Raises
+    ----------
+    _BeartypeUtilPythonWeakrefException
+        If ``obj_weakref`` is invalid: i.e., neither ``None``,
+        :data:`_WEAKREF_NONE`, nor a weak reference.
     '''
     assert isinstance(obj_repr, str), f'{repr(obj_repr)} not string.'
 
-    # Object to be returned.
-    obj = None
-
-    # If this object is the singleton placeholder implying this object to
-    # have been "None" when previously passed to the make_obj_weakref_and_repr()
-    # factory, substitute this placeholder for "None". See that factory.
+    # If this weak reference is "None", the prior call to
+    # make_obj_weakref_and_repr() was passed an object that could *NOT* be
+    # weakly referred to (e.g., C-based container). In this case, fallback to
+    # the machine-readable representation of that object.
+    if obj_weakref is None:
+        return obj_repr
+    # Else, this weak reference is *NOT* "None".
     #
-    # Else, this object is *NOT* that placeholder. In this case...
-    if obj_weakref is not _WEAKREF_NONE:
-        #FIXME: Raise a proper private exception instead, please.
-        assert isinstance(obj_weakref, weakref_ref), (
-            f'{repr(obj_weakref)} neither weak reference nor "None".')
+    # If this weak reference is "_WEAKREF_NONE", the prior call to
+    # make_obj_weakref_and_repr() was passed the "None" singleton. In this case,
+    # substitute this placeholder for "None". See that factory.
+    elif obj_weakref is _WEAKREF_NONE:
+        return None
+    # Else, this weak reference is *NOT* that placeholder.
+    #
+    # If this weak reference is *NOT* a weak reference, raise an exception.
+    elif not isinstance(obj_weakref, weakref_ref):
+        raise _BeartypeUtilPythonWeakrefException(
+            f'Weak reference {repr(obj_weakref)} invalid '
+            f'(i.e., neither weak reference, "None", nor "_WEAKREF_NONE").'
+        )
+    # Else, this weak reference is a weak reference.
 
-        # Culprit weakly referred to by this weak reference if this object
-        # is still alive *OR* "None" otherwise (i.e., if this object has
-        # already been garbage-collected).
-        obj = obj_weakref()
+    # Object weakly referred to by this weak reference if this object is alive
+    # *OR* "None" otherwise (i.e., if this object was garbage-collected).
+    obj = obj_weakref()
 
-        # If this object has already been garbage-collected, fallback to the
-        # machine-readable representation of this object instead.
-        if obj is None:
-            obj = obj_repr
-        # Else, this object is still alive.
-
-    # Return this object.
-    return obj
+    # Return either...
+    return (
+        # If this object is still alive, this object;
+        obj if obj is not None else
+        # Else, this object is now dead. In this case, the machine-readable
+        # representation of this object instead.
+        obj_repr
+    )
 
 # ....................{ PROPERTIES ~ constants             }....................
 _WEAKREF_NONE = object()

@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import (
     _BeartypeUtilPathException,
-    _BeartypeUtilPythonException,
+    _BeartypeUtilPythonInterpreterException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from platform import python_implementation
@@ -40,7 +40,7 @@ def get_interpreter_filename() -> str:
     ----------
     _BeartypeUtilPathException
         If Python successfully queried this filename but no such file exists.
-    _BeartypeUtilPythonException
+    _BeartypeUtilPythonInterpreterException
         If Python failed to query this filename.
     '''
 
@@ -54,7 +54,7 @@ def get_interpreter_filename() -> str:
     #     If Python is unable to retrieve the real path to its executable,
     #     sys.executable will be an empty string or None.
     if not sys_executable:
-        raise _BeartypeUtilPythonException(
+        raise _BeartypeUtilPythonInterpreterException(
             'Absolute filename of Python interpreter unknown.')
     # Else, Python successfully queried this filename.
 
