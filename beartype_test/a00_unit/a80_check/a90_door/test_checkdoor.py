@@ -25,7 +25,7 @@ from beartype_test._util.mark.pytmark import ignore_warnings
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
 def test_door_die_if_unbearable() -> None:
     '''
-    Test the :class:`beartype.door.die_if_unbearable` raiser.
+    Test the :class:`beartype.door.die_if_unbearable` raiser function.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -97,7 +97,7 @@ def test_door_die_if_unbearable() -> None:
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
 def test_door_typehint_die_if_unbearable() -> None:
     '''
-    Test the :meth:`beartype.door.TypeHint.die_if_unbearable` raiser.
+    Test the :meth:`beartype.door.TypeHint.die_if_unbearable` raiser method.
 
     This test intentionally tests only the core functionality of this tester to
     avoid violating Don't Repeat Yourself (DRY). This tester internally defers
@@ -105,6 +105,7 @@ def test_door_typehint_die_if_unbearable() -> None:
     exhaustively tested by preceding unit tests.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.door import TypeHint
     from beartype.roar import (
@@ -118,6 +119,7 @@ def test_door_typehint_die_if_unbearable() -> None:
     from contextlib import suppress
     from pytest import raises
 
+    # ....................{ PASS                           }....................
     # For each predefined unignorable type hint and associated metadata...
     for hint_pith_meta in iter_hints_piths_meta():
         # Type hint to be type-checked.
@@ -151,7 +153,7 @@ def test_door_typehint_die_if_unbearable() -> None:
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
 def test_door_is_bearable() -> None:
     '''
-    Test the :class:`beartype.door.is_bearable` tester.
+    Test the :class:`beartype.door.is_bearable` tester function.
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -238,7 +240,7 @@ def test_door_is_bearable() -> None:
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
 def test_door_typehint_is_bearable() -> None:
     '''
-    Test the :meth:`beartype.door.TypeHint.is_bearable` tester.
+    Test the :meth:`beartype.door.TypeHint.is_bearable` tester method.
 
     This test intentionally tests only the core functionality of this tester to
     avoid violating Don't Repeat Yourself (DRY). This tester internally defers
@@ -246,6 +248,7 @@ def test_door_typehint_is_bearable() -> None:
     exhaustively tested by preceding unit tests.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.door import TypeHint
     from beartype.roar import BeartypeDoorNonpepException
@@ -255,6 +258,7 @@ def test_door_typehint_is_bearable() -> None:
         iter_hints_piths_meta)
     from contextlib import suppress
 
+    # ....................{ PASS                           }....................
     # For each predefined unignorable type hint and associated metadata...
     for hint_pith_meta in iter_hints_piths_meta():
         # Type hint to be type-checked.

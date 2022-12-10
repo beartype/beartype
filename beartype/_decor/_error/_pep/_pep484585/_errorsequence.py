@@ -89,17 +89,17 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
     assert sleuth.hint_sign is HintSignTuple, (
         f'{repr(sleuth.hint_sign)} not tuple hint.')
 
-    # Human-readable string describing the failure of this pith to be a tuple
-    # if this pith is not a tuple *OR* "None" otherwise.
+    # Human-readable string describing the failure of this pith to be a tuple if
+    # this pith is not a tuple *OR* "None" otherwise.
     pith_cause = get_cause_or_none_type_instance_origin(sleuth)
 
     # If this pith is *NOT* a tuple, return this string.
     if pith_cause is not None:
         return pith_cause
     # Else, this pith is a tuple.
-
+    #
     # If this hint is a tuple...
-    if (
+    elif (
         # Subscripted by exactly two child hints *AND*...
         len(sleuth.hint_childs) == 2 and
         # The second child hint is just an unquoted ellipsis...
@@ -151,8 +151,8 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
                 continue
             # Else, this child hint is unignorable.
 
-            # Human-readable string describing the failure of this tuple item
-            # to satisfy this child hint if this item actually fails to satisfy
+            # Human-readable string describing the failure of this tuple item to
+            # satisfy this child hint if this item actually fails to satisfy
             # this child hint *or* "None" otherwise.
             # print(f'tuple pith: {pith_item}\ntuple hint child: {hint_child}')
             # sleuth_copy = sleuth.permute(pith=pith_item, hint=hint_child)
@@ -169,8 +169,8 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
             # Else, this item is *NOT* the cause of this failure. Silently
             # continue to the next.
 
-    # Return "None", as all items of this fixed-length tuple are valid,
-    # implying this pith to deeply satisfy this hint.
+    # Return "None"; all items of this fixed-length tuple are valid, implying
+    # this pith to deeply satisfy this hint.
     return None
 
 # ....................{ GETTERS ~ private                  }....................

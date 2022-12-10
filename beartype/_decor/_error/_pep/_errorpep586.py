@@ -73,10 +73,7 @@ def get_cause_or_none_literal(sleuth: CauseSleuth) -> Optional[str]:
     # Human-readable string describing the failure of this pith to be an
     # instance of one or more of these types if this pith is not such an
     # instance *OR* "None" otherwise.
-    # Human-readable string describing the failure of this pith to satisfy this
-    # hint if this pith fails to satisfy this hint *or* "None" otherwise.
-    pith_cause = sleuth.permute(
-        pith=sleuth.pith, hint=hint_literal_types).get_cause_or_none()
+    pith_cause = sleuth.permute(hint=hint_literal_types).get_cause_or_none()
 
     # If this pith is *NOT* such an instance, return this string.
     if pith_cause is not None:

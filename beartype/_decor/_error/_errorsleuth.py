@@ -12,6 +12,57 @@ associated with this object) classes.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: *YIKES.* Tragically, the existing CauseSleuth.get_cause_or_none() method
+#completely fails to suffice to define the "culprit" parameter for the
+#"BeartypeCallHintViolation" exception. We'll need to fundamentally refactor
+#*ALL* of this as follows:
+#* Define a new "CauseSleuth.cause" instance variable declared as:
+#      self.cause: Optional[str] = None
+#* Rename the get_cause_or_none() method to find_cause().
+#* Refactor find_cause() to have the signature:
+#      def find_cause() -> CauseSleuth: ...
+#* Rename all get_cause_or_none_*() functions defined elsewhere to have names
+#  resembling find_cause_*(). Do this carefully, please. *sweat*
+#* Here's the arduous part. Refactor *ALL* find_cause_*() functions to instead:
+#  * Set the "cause" instance variable of the responsible "CauseSleuth" object
+#    to the desired cause rather than returning that cause. Sometimes this will
+#    simply be the current "sleuth" object. Sometimes this will be a child
+#    permutation of that "sleuth" object, instead. Static type-checks will help
+#    here, surprisingly.
+#  * Test the "cause" instance variable (rather than the object returned by the
+#    find_cause() method) against "None". *THIS IS CRITICAL AND EASILY
+#    OVERLOOKED.* You just know we'll blow this up somewhere. Gah!
+#  * Return the responsible "CauseSleuth" instance rather than that string.
+#
+#Extremely non-trivial, but extremely necessary. Let's do this, everybody.
+
+#FIXME: The recursive "CauseSleuth" class strongly overlaps with the equally
+#recursive (and substantially superior) "beartype.door.TypeHint" class. Ideally:
+#* Define a new private "beartype.door._doorerror" submodule.
+#* Shift the "CauseSleuth" class to
+#  "beartype.door._doorerror._TypeHintUnbearability".
+#* Shift the _TypeHintUnbearability.get_cause_or_none() method to a new
+#  *PRIVATE* TypeHint._get_cause_or_none() method.
+#* Preserve most of the remainder of the "_TypeHintUnbearability" class as a
+#  dataclass encapsulating metadata describing the current type-checking
+#  violation. That metadata (e.g., "cause_indent") is inappropriate for
+#  general-purpose type hints. Exceptions include:
+#  * "hint", "hint_sign", and "hint_childs" -- all of which are subsumed by the
+#    "TypeHint" dataclass and should thus be excised.
+#* Refactor the TypeHint._get_cause_or_none() method to accept an instance of
+#  the "_TypeHintUnbearability" dataclass: e.g.,
+#      class TypeHint(...):
+#          def _get_unbearability_cause_or_none(
+#              self, unbearability: _TypeHintUnbearability) -> Optional[str]:
+#              ...
+#* Refactor existing get_cause_or_none_*() getters (e.g.,
+#  get_cause_or_none_sequence_args_1(), get_cause_or_none_union()) into
+#  _get_unbearability_cause_or_none() methods of the corresponding "TypeHint"
+#  subclasses, please.
+#
+#This all seems quite reasonable. Now, let's see whether it is. *gulp*
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype.typing import (
@@ -211,19 +262,20 @@ class CauseSleuth(object):
         ----------
         This getter is intentionally generalized to support objects both
         satisfying and *not* satisfying hints as equally valid use cases. While
-        the parent :func:`.errormain.get_beartype_violation` function
+        the parent
+        :func:`beartype._decor._error.errormain.get_beartype_violation` function
         calling this getter is *always* passed an object *not* satisfying the
-        passed hint, this getter is under no such constraints. Why? Because
-        this getter is also called to find which of an arbitrary number of
-        objects transitively nested in the object passed to
-        :func:`.errormain.get_beartype_violation` fails to satisfy the
-        corresponding hint transitively nested in the hint passed to that
-        function.
+        passed hint, this getter is under no such constraints. Why? Because this
+        getter is also called to find which of an arbitrary number of objects
+        transitively nested in the object passed to
+        :func:`beartype._decor._error.errormain.get_beartype_violation` fails to
+        satisfy the corresponding hint transitively nested in the hint passed to
+        that function.
 
         For example, consider the PEP-compliant type hint ``List[Union[int,
         str]]`` describing a list whose items are either integers or strings
         and the list ``list(range(256)) + [False,]`` consisting of the integers
-        0 through 255 followed by boolean ``False``. Since this list is a
+        0 through 255 followed by boolean ``False``. Since that list is a
         standard sequence, the
         :func:`._peperrorsequence.get_cause_or_none_sequence_args_1`
         function must decide the cause of this list's failure to comply with
@@ -243,7 +295,7 @@ class CauseSleuth(object):
             Either:
 
             * If this object fails to satisfy this hint, human-readable string
-            describing the failure of this object to do so.
+              describing the failure of this object to do so.
             * Else, ``None``.
 
         Raises
@@ -278,9 +330,9 @@ class CauseSleuth(object):
 
                 # Defer to the getter function specific to tuple unions.
                 get_cause_or_none = get_cause_or_none_instance_types_tuple
-            # Else, this hint *NOT* is a tuple union. In this case, assume this
-            # hint to be an isinstanceable class. If this is *NOT* the case,
-            # the getter deferred to below raises a human-readable exception.
+            # Else, this hint is *NOT* a tuple union. In this case, assume this
+            # hint to be an isinstanceable class. If this is *NOT* the case, the
+            # getter deferred to below raises a human-readable exception.
             else:
                 # Avoid circular import dependencies.
                 from beartype._decor._error._errortype import (
@@ -290,7 +342,7 @@ class CauseSleuth(object):
                 get_cause_or_none = get_cause_or_none_instance_type
         # Else, this hint is PEP-compliant.
         #
-        # If this hint is neither...
+        # If this hint...
         elif (
             # Originates from an origin type and may thus be shallowly
             # type-checked against that type *AND is either...
@@ -309,8 +361,8 @@ class CauseSleuth(object):
             from beartype._decor._error._errortype import (
                 get_cause_or_none_type_instance_origin)
 
-            # Defer to the getter function supporting hints originating
-            # from origin types.
+            # Defer to the getter function supporting hints originating from
+            # origin types.
             get_cause_or_none = get_cause_or_none_type_instance_origin
         # Else, this hint is either subscripted *OR* unsubscripted but not
         # originating from a standard type origin. In either case, this hint
