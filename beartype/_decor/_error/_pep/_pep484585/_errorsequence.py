@@ -17,9 +17,9 @@ from beartype.typing import Optional
 from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1)
-from beartype._decor._error._errorsleuth import CauseSleuth
+from beartype._decor._error._errorsleuth import ViolationCause
 from beartype._decor._error._errortype import (
-    get_cause_or_none_type_instance_origin)
+    find_cause_type_instance_origin)
 from beartype._decor._error._util.errorutilcolor import color_type
 from beartype._decor._error._util.errorutiltext import represent_pith
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
@@ -28,7 +28,7 @@ from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextlabel import label_obj_type
 
 # ....................{ GETTERS ~ sequence                 }....................
-def get_cause_or_none_sequence_args_1(sleuth: CauseSleuth) -> Optional[str]:
+def find_cause_sequence_args_1(sleuth: ViolationCause) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed **PEP-compliant single-argument variadic sequence
@@ -41,10 +41,10 @@ def get_cause_or_none_sequence_args_1(sleuth: CauseSleuth) -> Optional[str]:
 
     Parameters
     ----------
-    sleuth : CauseSleuth
+    sleuth : ViolationCause
         Type-checking error cause sleuth.
     '''
-    assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_sign in HINT_SIGNS_SEQUENCE_ARGS_1, (
         f'{repr(sleuth.hint)} not 1-argument sequence hint.')
 
@@ -57,7 +57,7 @@ def get_cause_or_none_sequence_args_1(sleuth: CauseSleuth) -> Optional[str]:
     # Human-readable string describing the failure of this pith to be an
     # instance of the type originating this hint (e.g., "list" for "list[str]")
     # if this pith is not an instance of this type *OR* "None" otherwise.
-    pith_cause = get_cause_or_none_type_instance_origin(sleuth)
+    pith_cause = find_cause_type_instance_origin(sleuth)
 
     # Return either...
     return (
@@ -66,11 +66,11 @@ def get_cause_or_none_sequence_args_1(sleuth: CauseSleuth) -> Optional[str]:
         if pith_cause is not None else
         # Else, this pith is an instance of this type and is thus a sequence.
         # In this case, defer to the getter function supporting sequences.
-        _get_cause_or_none_sequence(sleuth)
+        _find_cause_sequence(sleuth)
     )
 
 
-def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
+def find_cause_tuple(sleuth: ViolationCause) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed **PEP-compliant tuple type hint** (i.e.,
@@ -82,16 +82,16 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
 
     Parameters
     ----------
-    sleuth : CauseSleuth
+    sleuth : ViolationCause
         Type-checking error cause sleuth.
     '''
-    assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_sign is HintSignTuple, (
         f'{repr(sleuth.hint_sign)} not tuple hint.')
 
     # Human-readable string describing the failure of this pith to be a tuple if
     # this pith is not a tuple *OR* "None" otherwise.
-    pith_cause = get_cause_or_none_type_instance_origin(sleuth)
+    pith_cause = find_cause_type_instance_origin(sleuth)
 
     # If this pith is *NOT* a tuple, return this string.
     if pith_cause is not None:
@@ -109,7 +109,7 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
     # tuple accepting a variadic number of items all satisfying the
     # child hint "{typename}". Since this case semantically reduces to a simple
     # sequence, defer to the getter function supporting simple sequences.
-        return _get_cause_or_none_sequence(sleuth)
+        return _find_cause_sequence(sleuth)
     # Else, this hint is of the fixed-length form "Tuple[{typename1}, ...,
     # {typenameN}]", typing a tuple accepting a fixed number of items each
     # satisfying a unique child hint.
@@ -156,9 +156,9 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
             # this child hint *or* "None" otherwise.
             # print(f'tuple pith: {pith_item}\ntuple hint child: {hint_child}')
             # sleuth_copy = sleuth.permute(pith=pith_item, hint=hint_child)
-            # pith_item_cause = sleuth_copy.get_cause_or_none()
+            # pith_item_cause = sleuth_copy.find_cause()
             pith_item_cause = sleuth.permute(
-                pith=pith_item, hint=hint_child).get_cause_or_none()
+                pith=pith_item, hint=hint_child).find_cause()
 
             # If this item is the cause of this failure, return a substring
             # describing this failure by embedding this failure (itself
@@ -174,7 +174,7 @@ def get_cause_or_none_tuple(sleuth: CauseSleuth) -> Optional[str]:
     return None
 
 # ....................{ GETTERS ~ private                  }....................
-def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> Optional[str]:
+def _find_cause_sequence(sleuth: ViolationCause) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed **PEP-compliant variadic sequence type hint** (i.e.,
@@ -187,16 +187,16 @@ def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> Optional[str]:
 
     Parameters
     ----------
-    sleuth : CauseSleuth
+    sleuth : ViolationCause
         Type-checking error cause sleuth.
     '''
     # Assert this type hint to describe a variadic sequence. See the parent
-    # get_cause_or_none_sequence_args_1() and get_cause_or_none_tuple()
+    # find_cause_sequence_args_1() and find_cause_tuple()
     # functions for derivative logic.
     #
     # Note that this pith need *NOT* be validated to be an instance of the
     # expected variadic sequence, as the caller guarantees this to be the case.
-    assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
     assert (
         sleuth.hint_sign in HINT_SIGNS_SEQUENCE_ARGS_1 or (
             sleuth.hint_sign is HintSignTuple and
@@ -263,7 +263,7 @@ def _get_cause_or_none_sequence(sleuth: CauseSleuth) -> Optional[str]:
                 # satisfy this child hint if this item actually fails to
                 # satisfy this child hint *or* "None" otherwise.
                 pith_item_cause = sleuth.permute(
-                    pith=pith_item, hint=hint_child).get_cause_or_none()
+                    pith=pith_item, hint=hint_child).find_cause()
 
                 # If this item is the cause of this failure, return a substring
                 # describing this failure by embedding this failure (itself

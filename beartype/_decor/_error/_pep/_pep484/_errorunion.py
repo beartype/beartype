@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype.typing import Optional
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
-from beartype._decor._error._errorsleuth import CauseSleuth
+from beartype._decor._error._errorsleuth import ViolationCause
 from beartype._decor._error._util.errorutilcolor import color_hint
 from beartype._decor._error._util.errorutiltext import represent_pith
 from beartype._util.hint.pep.utilpepget import (
@@ -29,7 +29,7 @@ from beartype._util.text.utiltextmunge import (
 )
 
 # ....................{ GETTERS                            }....................
-def get_cause_or_none_union(sleuth: CauseSleuth) -> Optional[str]:
+def find_cause_union(sleuth: ViolationCause) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed PEP-compliant union type hint if this object actually
@@ -38,10 +38,10 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> Optional[str]:
 
     Parameters
     ----------
-    sleuth : CauseSleuth
+    sleuth : ViolationCause
         Type-checking error cause sleuth.
     '''
-    assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_sign in HINT_SIGNS_UNION, (
         f'{repr(sleuth.hint)} not union sign.')
 
@@ -97,7 +97,7 @@ def get_cause_or_none_union(sleuth: CauseSleuth) -> Optional[str]:
             pith_cause_hint_child = sleuth.permute(
                 hint=hint_child,
                 cause_indent=CAUSE_INDENT_CHILD,
-            ).get_cause_or_none()
+            ).find_cause()
 
             # If this pith deeply satisfies this child hint, return "None".
             if pith_cause_hint_child is None:

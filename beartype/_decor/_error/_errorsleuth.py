@@ -13,19 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: *YIKES.* Tragically, the existing CauseSleuth.get_cause_or_none() method
+#FIXME: *YIKES.* Tragically, the existing ViolationCause.find_cause() method
 #completely fails to suffice to define the "culprit" parameter for the
 #"BeartypeCallHintViolation" exception. We'll need to fundamentally refactor
 #*ALL* of this as follows:
-#* Define a new "CauseSleuth.cause" instance variable declared as:
-#      self.cause: Optional[str] = None
-#* Rename the get_cause_or_none() method to find_cause().
 #* Refactor find_cause() to have the signature:
-#      def find_cause() -> CauseSleuth: ...
-#* Rename all get_cause_or_none_*() functions defined elsewhere to have names
-#  resembling find_cause_*(). Do this carefully, please. *sweat*
+#      def find_cause() -> ViolationCause: ...
 #* Here's the arduous part. Refactor *ALL* find_cause_*() functions to instead:
-#  * Set the "cause" instance variable of the responsible "CauseSleuth" object
+#  * Set the "cause" instance variable of the responsible "ViolationCause" object
 #    to the desired cause rather than returning that cause. Sometimes this will
 #    simply be the current "sleuth" object. Sometimes this will be a child
 #    permutation of that "sleuth" object, instead. Static type-checks will help
@@ -33,31 +28,36 @@ This private submodule is *not* intended for importation by downstream callers.
 #  * Test the "cause" instance variable (rather than the object returned by the
 #    find_cause() method) against "None". *THIS IS CRITICAL AND EASILY
 #    OVERLOOKED.* You just know we'll blow this up somewhere. Gah!
-#  * Return the responsible "CauseSleuth" instance rather than that string.
+#  * Return the responsible "ViolationCause" instance rather than that string.
+#* In the get_beartype_violation() function:
+#  * Set the "culprit" parameter for the "BeartypeCallHintViolation" exception
+#    as follows:
+#        cause = ViolationCause(...).find_cause()
+#        culprit = cause.pith  # <-- pretty sure that's right... pretty. sure.
 #
 #Extremely non-trivial, but extremely necessary. Let's do this, everybody.
 
-#FIXME: The recursive "CauseSleuth" class strongly overlaps with the equally
+#FIXME: The recursive "ViolationCause" class strongly overlaps with the equally
 #recursive (and substantially superior) "beartype.door.TypeHint" class. Ideally:
 #* Define a new private "beartype.door._doorerror" submodule.
-#* Shift the "CauseSleuth" class to
+#* Shift the "ViolationCause" class to
 #  "beartype.door._doorerror._TypeHintUnbearability".
-#* Shift the _TypeHintUnbearability.get_cause_or_none() method to a new
-#  *PRIVATE* TypeHint._get_cause_or_none() method.
+#* Shift the _TypeHintUnbearability.find_cause() method to a new
+#  *PRIVATE* TypeHint._find_cause() method.
 #* Preserve most of the remainder of the "_TypeHintUnbearability" class as a
 #  dataclass encapsulating metadata describing the current type-checking
 #  violation. That metadata (e.g., "cause_indent") is inappropriate for
 #  general-purpose type hints. Exceptions include:
 #  * "hint", "hint_sign", and "hint_childs" -- all of which are subsumed by the
 #    "TypeHint" dataclass and should thus be excised.
-#* Refactor the TypeHint._get_cause_or_none() method to accept an instance of
+#* Refactor the TypeHint._find_cause() method to accept an instance of
 #  the "_TypeHintUnbearability" dataclass: e.g.,
 #      class TypeHint(...):
 #          def _get_unbearability_cause_or_none(
 #              self, unbearability: _TypeHintUnbearability) -> Optional[str]:
 #              ...
-#* Refactor existing get_cause_or_none_*() getters (e.g.,
-#  get_cause_or_none_sequence_args_1(), get_cause_or_none_union()) into
+#* Refactor existing find_cause_*() getters (e.g.,
+#  find_cause_sequence_args_1(), find_cause_union()) into
 #  _get_unbearability_cause_or_none() methods of the corresponding "TypeHint"
 #  subclasses, please.
 #
@@ -89,7 +89,7 @@ from beartype._check.conv.convsanify import sanify_hint_child
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 
 # ....................{ CLASSES                            }....................
-class CauseSleuth(object):
+class ViolationCause(object):
     '''
     **Type-checking error cause sleuth** (i.e., object recursively fabricating
     the human-readable string describing the failure of the pith associated
@@ -98,6 +98,12 @@ class CauseSleuth(object):
 
     Attributes
     ----------
+    cause : Optional[str]
+        Either:
+
+        * If this pith violates this hint, a human-readable string describing
+          this violation.
+        * If this pith satisfies this hint, ``None``.
     cause_indent : str
         **Indentation** (i.e., string of zero or more spaces) preceding each
         line of the string returned by this getter if this string spans
@@ -146,6 +152,7 @@ class CauseSleuth(object):
     # * Prevent accidental declaration of erroneous instance variables.
     # * Minimize space and time complexity.
     __slots__ = (
+        'cause',
         'cause_indent',
         'conf',
         'exception_prefix',
@@ -209,6 +216,7 @@ class CauseSleuth(object):
         self.random_int = random_int
 
         # Nullify all remaining parameters for safety.
+        self.cause: Optional[str] = None
         self.hint_sign: Any = None
         self.hint_childs: Tuple = None  # type: ignore[assignment]
 
@@ -252,11 +260,11 @@ class CauseSleuth(object):
         self._hint = hint
 
     # ..................{ GETTERS                            }..................
-    def get_cause_or_none(self) -> Optional[str]:
+    def find_cause(self) -> Optional[str]:
         '''
-        Human-readable string describing the failure of this pith to satisfy
-        this PEP-compliant type hint if this pith fails to satisfy this pith
-        *or* ``None`` otherwise (i.e., if this pith satisfies this hint).
+        Human-readable string describing how this pith violates this type hint
+        if this pith violates this hint *or* ``None`` otherwise (i.e., if this
+        pith satisfies this hint).
 
         Design
         ----------
@@ -277,15 +285,15 @@ class CauseSleuth(object):
         and the list ``list(range(256)) + [False,]`` consisting of the integers
         0 through 255 followed by boolean ``False``. Since that list is a
         standard sequence, the
-        :func:`._peperrorsequence.get_cause_or_none_sequence_args_1`
+        :func:`._peperrorsequence.find_cause_sequence_args_1`
         function must decide the cause of this list's failure to comply with
         this hint by finding the list item that is neither an integer nor a
         string, implemented by by iteratively passing each list item to the
-        :func:`._peperrorunion.get_cause_or_none_union` function. Since
+        :func:`._peperrorunion.find_cause_union` function. Since
         the first 256 items of this list are integers satisfying this hint,
-        :func:`._peperrorunion.get_cause_or_none_union` returns
+        :func:`._peperrorunion.find_cause_union` returns
         ``None`` to
-        :func:`._peperrorsequence.get_cause_or_none_sequence_args_1`
+        :func:`._peperrorsequence.find_cause_sequence_args_1`
         before finally finding the non-compliant boolean item and returning the
         human-readable cause.
 
@@ -309,7 +317,7 @@ class CauseSleuth(object):
         '''
 
         # Getter function returning the desired string.
-        get_cause_or_none: Callable[[CauseSleuth], Optional[str]] = None  # type: ignore[assignment]
+        find_cause: Callable[[ViolationCause], Optional[str]] = None  # type: ignore[assignment]
 
         # If this hint is ignorable, all possible objects satisfy this hint,
         # implying this hint *CANNOT* by definition be the cause of this
@@ -326,20 +334,20 @@ class CauseSleuth(object):
             if isinstance(self.hint, tuple):
                 # Avoid circular import dependencies.
                 from beartype._decor._error._errortype import (
-                    get_cause_or_none_instance_types_tuple)
+                    find_cause_instance_types_tuple)
 
                 # Defer to the getter function specific to tuple unions.
-                get_cause_or_none = get_cause_or_none_instance_types_tuple
+                find_cause = find_cause_instance_types_tuple
             # Else, this hint is *NOT* a tuple union. In this case, assume this
             # hint to be an isinstanceable class. If this is *NOT* the case, the
             # getter deferred to below raises a human-readable exception.
             else:
                 # Avoid circular import dependencies.
                 from beartype._decor._error._errortype import (
-                    get_cause_or_none_instance_type)
+                    find_cause_instance_type)
 
                 # Defer to the getter function specific to classes.
-                get_cause_or_none = get_cause_or_none_instance_type
+                find_cause = find_cause_instance_type
         # Else, this hint is PEP-compliant.
         #
         # If this hint...
@@ -359,11 +367,11 @@ class CauseSleuth(object):
         ):
             # Avoid circular import dependencies.
             from beartype._decor._error._errortype import (
-                get_cause_or_none_type_instance_origin)
+                find_cause_type_instance_origin)
 
             # Defer to the getter function supporting hints originating from
             # origin types.
-            get_cause_or_none = get_cause_or_none_type_instance_origin
+            find_cause = find_cause_type_instance_origin
         # Else, this hint is either subscripted *OR* unsubscripted but not
         # originating from a standard type origin. In either case, this hint
         # was type-checked deeply.
@@ -374,16 +382,16 @@ class CauseSleuth(object):
 
             # Getter function returning the desired string for this attribute
             # if any *OR* "None" otherwise.
-            get_cause_or_none = PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.get(
+            find_cause = PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.get(
                 self.hint_sign, None)  # type: ignore[arg-type]
 
             # If no such function has been implemented to handle this attribute
             # yet, raise an exception.
-            if get_cause_or_none is None:
+            if find_cause is None:
                 raise _BeartypeCallHintPepRaiseException(
                     f'{self.exception_prefix} type hint '
                     f'{repr(self.hint)} unsupported (i.e., no '
-                    f'"get_cause_or_none_"-prefixed getter function defined '
+                    f'"find_cause_"-prefixed getter function defined '
                     f'for this category of hint).'
                 )
             # Else, a getter function has been implemented to handle this
@@ -391,10 +399,10 @@ class CauseSleuth(object):
 
         # Call this getter function with ourselves and return the string
         # returned by this getter.
-        return get_cause_or_none(self)
+        return find_cause(self)
 
     # ..................{ PERMUTERS                          }..................
-    def permute(self, **kwargs) -> 'CauseSleuth':
+    def permute(self, **kwargs) -> 'ViolationCause':
         '''
         Shallow copy of this object such that each the passed keyword argument
         overwrites the instance variable of the same name in this copy.
@@ -406,7 +414,7 @@ class CauseSleuth(object):
 
         Returns
         ----------
-        CauseSleuth
+        ViolationCause
             Shallow copy of this object such that each keyword argument
             overwrites the instance variable of the same name in this copy.
 
@@ -418,7 +426,7 @@ class CauseSleuth(object):
 
         Examples
         ----------
-            >>> sleuth = CauseSleuth(
+            >>> sleuth = ViolationCause(
             ...     pith=[42,]
             ...     hint=typing.List[int],
             ...     cause_indent='',
@@ -449,4 +457,4 @@ class CauseSleuth(object):
                 kwargs[arg_name] = getattr(self, arg_name)
 
         # Return a new instance of this class initialized with these arguments.
-        return CauseSleuth(**kwargs)
+        return ViolationCause(**kwargs)

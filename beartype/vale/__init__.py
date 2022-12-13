@@ -78,14 +78,14 @@ Instead, callers are expected to (in order):
 #  * Range.
 #  * DivisibleBy.
 
-#FIXME: Add a new BeartypeValidator.get_cause_or_none() method with the same
-#signature and docstring as the existing CauseSleuth.get_cause_or_none()
-#method. This new BeartypeValidator.get_cause_or_none() method should then be
+#FIXME: Add a new BeartypeValidator.find_cause() method with the same
+#signature and docstring as the existing ViolationCause.find_cause()
+#method. This new BeartypeValidator.find_cause() method should then be
 #called by the "_peperrorannotated" submodule to generate human-readable
 #exception messages. Note that this implies that:
 #* The BeartypeValidator.__init__() method will need to additionally accept a new
-#  mandatory "get_cause_or_none: Callable[[], Optional[str]]" parameter, which
-#  that method should then localize to "self.get_cause_or_none".
+#  mandatory "find_cause: Callable[[], Optional[str]]" parameter, which
+#  that method should then localize to "self.find_cause".
 #* Each __class_getitem__() dunder method of each "_BeartypeValidatorFactoryABC" subclass will need
 #  to additionally define and pass that callable when creating and returning
 #  its "BeartypeValidator" instance.

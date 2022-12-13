@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype.typing import Optional
 from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
-from beartype._decor._error._errorsleuth import CauseSleuth
+from beartype._decor._error._errorsleuth import ViolationCause
 from beartype._decor._error._util.errorutiltext import represent_pith
 from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,
@@ -24,7 +24,7 @@ from beartype._util.hint.pep.proposal.utilpep593 import (
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
 
 # ....................{ GETTERS                            }....................
-def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
+def find_cause_annotated(sleuth: ViolationCause) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed :pep:`593`-compliant :mod:`beartype`-specific
@@ -36,10 +36,10 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
 
     Parameters
     ----------
-    sleuth : CauseSleuth
+    sleuth : ViolationCause
         Type-checking error cause sleuth.
     '''
-    assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_sign is HintSignAnnotated, (
         f'{sleuth.hint_sign} not HintSignAnnotated.')
 
@@ -52,7 +52,7 @@ def get_cause_or_none_annotated(sleuth: CauseSleuth) -> Optional[str]:
     # Human-readable string describing the failure of this pith to satisfy this
     # hint if this pith fails to satisfy this hint *or* "None" otherwise.
     pith_cause = sleuth.permute(
-        pith=sleuth.pith, hint=metahint).get_cause_or_none()
+        pith=sleuth.pith, hint=metahint).find_cause()
 
     # If this pith fails to satisfy this hint, return this cause as is.
     if pith_cause is not None:

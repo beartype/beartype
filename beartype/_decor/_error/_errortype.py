@@ -20,7 +20,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignType,
 )
-from beartype._decor._error._errorsleuth import CauseSleuth
+from beartype._decor._error._errorsleuth import ViolationCause
 from beartype._decor._error._util.errorutilcolor import color_hint
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.cls.pep.utilpep3119 import (
@@ -40,7 +40,7 @@ from beartype._util.text.utiltextlabel import label_type
 from beartype._decor._error._util.errorutiltext import represent_pith
 
 # ....................{ GETTERS ~ instance : type          }....................
-def get_cause_or_none_instance_type(sleuth: CauseSleuth) -> Optional[str]:
+def find_cause_instance_type(sleuth: ViolationCause) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to be an instance of the passed isinstanceable class if this object is
@@ -49,10 +49,10 @@ def get_cause_or_none_instance_type(sleuth: CauseSleuth) -> Optional[str]:
 
     Parameters
     ----------
-    sleuth : CauseSleuth
+    sleuth : ViolationCause
         Type-checking error cause sleuth.
     '''
-    assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
 
     # If this hint is *NOT* an isinstanceable type, raise an exception.
     die_unless_type_isinstanceable(
@@ -75,8 +75,8 @@ def get_cause_or_none_instance_type(sleuth: CauseSleuth) -> Optional[str]:
     )
 
 
-def get_cause_or_none_instance_type_forwardref(
-    sleuth: CauseSleuth) -> Optional[str]:
+def find_cause_instance_type_forwardref(
+    sleuth: ViolationCause) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed **forward reference type hint** (i.e., string whose
@@ -86,10 +86,10 @@ def get_cause_or_none_instance_type_forwardref(
 
     Parameters
     ----------
-    sleuth : CauseSleuth
+    sleuth : ViolationCause
         Type-checking error cause sleuth.
     '''
-    assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_sign is HintSignForwardRef, (
         f'{sleuth.hint_sign} not forward reference.')
 
@@ -102,12 +102,12 @@ def get_cause_or_none_instance_type_forwardref(
     )
 
     # Defer to the getter function handling isinstanceable classes. Neato!
-    return get_cause_or_none_instance_type(
+    return find_cause_instance_type(
         sleuth.permute(hint=hint_forwardref_type))
 
 
-def get_cause_or_none_type_instance_origin(
-    sleuth: CauseSleuth) -> Optional[str]:
+def find_cause_type_instance_origin(
+    sleuth: ViolationCause) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to satisfy the passed **PEP-compliant originative type hint** (i.e.,
@@ -117,10 +117,10 @@ def get_cause_or_none_type_instance_origin(
 
     Parameters
     ----------
-    sleuth : CauseSleuth
+    sleuth : ViolationCause
         Type-checking error cause sleuth.
     '''
-    assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
 
     # Isinstanceable origin type originating this hint if any *OR* "None"
     # otherwise.
@@ -137,12 +137,12 @@ def get_cause_or_none_type_instance_origin(
     # Else, this hint originates from such a type.
 
     # Defer to the getter function handling non-"typing" classes. Presto!
-    return get_cause_or_none_instance_type(
+    return find_cause_instance_type(
         sleuth.permute(hint=hint_origin_type_isinstanceable))
 
 # ....................{ GETTERS ~ instance : types         }....................
-def get_cause_or_none_instance_types_tuple(
-    sleuth: CauseSleuth) -> Optional[str]:
+def find_cause_instance_types_tuple(
+    sleuth: ViolationCause) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to be an instance of one or more isinstanceable classes in the passed tuple
@@ -151,10 +151,10 @@ def get_cause_or_none_instance_types_tuple(
 
     Parameters
     ----------
-    sleuth : CauseSleuth
+    sleuth : ViolationCause
         Type-checking error cause sleuth.
     '''
-    assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
 
     # If this hint is *NOT* a tuple union, raise an exception.
     die_unless_hint_nonpep_tuple(
@@ -178,7 +178,7 @@ def get_cause_or_none_instance_types_tuple(
     )
 
 # ....................{ GETTERS ~ subclass : type          }....................
-def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
+def find_cause_subclass_type(sleuth: ViolationCause) -> Optional[str]:
     '''
     Human-readable string describing the failure of the passed arbitrary object
     to subclass the passed issubclassable superclass if this object is
@@ -187,10 +187,10 @@ def get_cause_or_none_subclass_type(sleuth: CauseSleuth) -> Optional[str]:
 
     Parameters
     ----------
-    sleuth : CauseSleuth
+    sleuth : ViolationCause
         Type-checking error cause sleuth.
     '''
-    assert isinstance(sleuth, CauseSleuth), f'{repr(sleuth)} not cause sleuth.'
+    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
     assert sleuth.hint_sign is HintSignType, (
         f'{sleuth.hint_sign} not HintSignType.')
 

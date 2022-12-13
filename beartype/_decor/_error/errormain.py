@@ -97,7 +97,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
     HINT_SIGNS_UNION,
 )
-from beartype._decor._error._errorsleuth import CauseSleuth
+from beartype._decor._error._errorsleuth import ViolationCause
 from beartype._decor._error._util.errorutilcolor import (
     color_hint,
     color_repr,
@@ -115,11 +115,11 @@ from beartype._data.datatyping import TypeException
 # ....................{ MAPPINGS                           }....................
 # Initialized with automated inspection below in the _init() function.
 PEP_HINT_SIGN_TO_GET_CAUSE_FUNC: Dict[
-    HintSign, Callable[[CauseSleuth], Optional[str]]] = {}
+    HintSign, Callable[[ViolationCause], Optional[str]]] = {}
 '''
 Dictionary mapping each **sign** (i.e., arbitrary object uniquely identifying a
 PEP-compliant type) to a private getter function defined by this submodule
-whose signature matches that of the :func:`_get_cause_or_none` function and
+whose signature matches that of the :func:`_find_cause` function and
 which is dynamically dispatched by that function to describe type-checking
 failures specific to that unsubscripted :mod:`typing` attribute.
 '''
@@ -300,7 +300,7 @@ def get_beartype_violation(
     # Human-readable string describing the failure of this pith to satisfy this
     # hint if this pith fails to satisfy this hint *OR* "None" otherwise (i.e.,
     # if this pith satisfies this hint).
-    exception_cause = CauseSleuth(
+    exception_cause = ViolationCause(
         func=func,
         conf=conf,
         pith=pith_value,
@@ -308,7 +308,7 @@ def get_beartype_violation(
         cause_indent='',
         exception_prefix=exception_prefix,
         random_int=random_int,
-    ).get_cause_or_none()
+    ).find_cause()
 
     # If this pith satisfies this hint, *SOMETHING HAS GONE TERRIBLY AWRY.* In
     # theory, this should never happen, as the parent wrapper function
@@ -362,7 +362,7 @@ def get_beartype_violation(
 _CAUSE_TRIM_OBJECT_REPR_MAX_LEN = 8000
 '''
 Maximum length of arbitrary object representations suffixing human-readable
-strings returned by the :func:`_get_cause_or_none` getter function, intended to
+strings returned by the :func:`_find_cause` getter function, intended to
 be sufficiently long to assist in identifying type-check failures but not so
 excessively long as to prevent human-readability.
 '''
@@ -375,53 +375,53 @@ def _init() -> None:
 
     # Defer heavyweight imports.
     from beartype._decor._error._errortype import (
-        get_cause_or_none_instance_type_forwardref,
-        get_cause_or_none_subclass_type,
-        get_cause_or_none_type_instance_origin,
+        find_cause_instance_type_forwardref,
+        find_cause_subclass_type,
+        find_cause_type_instance_origin,
     )
     from beartype._decor._error._pep._pep484._errornoreturn import (
-        get_cause_or_none_noreturn)
+        find_cause_noreturn)
     from beartype._decor._error._pep._pep484._errorunion import (
-        get_cause_or_none_union)
+        find_cause_union)
     from beartype._decor._error._pep._pep484585._errorgeneric import (
-        get_cause_or_none_generic)
+        find_cause_generic)
     from beartype._decor._error._pep._pep484585._errorsequence import (
-        get_cause_or_none_sequence_args_1,
-        get_cause_or_none_tuple,
+        find_cause_sequence_args_1,
+        find_cause_tuple,
     )
     from beartype._decor._error._pep._errorpep586 import (
-        get_cause_or_none_literal)
+        find_cause_literal)
     from beartype._decor._error._pep._errorpep593 import (
-        get_cause_or_none_annotated)
+        find_cause_annotated)
 
     # Map each originative sign to the appropriate getter *BEFORE* any other
     # mappings. This is merely a generalized fallback subsequently replaced by
     # sign-specific getters below.
     for pep_sign_origin_isinstanceable in HINT_SIGNS_ORIGIN_ISINSTANCEABLE:
         PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_origin_isinstanceable] = (
-            get_cause_or_none_type_instance_origin)
+            find_cause_type_instance_origin)
 
     # Map each 1-argument sequence sign to its corresponding getter.
     for pep_sign_sequence_args_1 in HINT_SIGNS_SEQUENCE_ARGS_1:
         PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_sequence_args_1] = (
-            get_cause_or_none_sequence_args_1)
+            find_cause_sequence_args_1)
 
     # Map each union-specific sign to its corresponding getter.
     for pep_sign_type_union in HINT_SIGNS_UNION:
         PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_type_union] = (
-            get_cause_or_none_union)
+            find_cause_union)
 
     # Map each sign validated by a unique getter to that getter *AFTER* all
     # other mappings. These sign-specific getters are intended to replace all
     # other automated mappings above.
     PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.update({
-        HintSignAnnotated: get_cause_or_none_annotated,
-        HintSignForwardRef: get_cause_or_none_instance_type_forwardref,
-        HintSignGeneric: get_cause_or_none_generic,
-        HintSignLiteral: get_cause_or_none_literal,
-        HintSignNoReturn: get_cause_or_none_noreturn,
-        HintSignTuple: get_cause_or_none_tuple,
-        HintSignType: get_cause_or_none_subclass_type,
+        HintSignAnnotated: find_cause_annotated,
+        HintSignForwardRef: find_cause_instance_type_forwardref,
+        HintSignGeneric: find_cause_generic,
+        HintSignLiteral: find_cause_literal,
+        HintSignNoReturn: find_cause_noreturn,
+        HintSignTuple: find_cause_tuple,
+        HintSignType: find_cause_subclass_type,
     })
 
 
