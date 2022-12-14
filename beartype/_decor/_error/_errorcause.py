@@ -17,8 +17,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #completely fails to suffice to define the "culprit" parameter for the
 #"BeartypeCallHintViolation" exception. We'll need to fundamentally refactor
 #*ALL* of this as follows:
-#* Refactor find_cause() to have the signature:
-#      def find_cause() -> ViolationCause: ...
 #* Here's the arduous part. Refactor *ALL* find_cause_*() functions to instead:
 #  * Set the "cause" instance variable of the responsible "ViolationCause" object
 #    to the desired cause rather than returning that cause. Sometimes this will
@@ -98,17 +96,16 @@ class ViolationCause(object):
 
     Attributes
     ----------
-    cause : Optional[str]
-        Either:
-
-        * If this pith violates this hint, a human-readable string describing
-          this violation.
-        * If this pith satisfies this hint, ``None``.
     cause_indent : str
         **Indentation** (i.e., string of zero or more spaces) preceding each
         line of the string returned by this getter if this string spans
         multiple lines *or* ignored otherwise (i.e., if this string is instead
         embedded in the current line).
+    cause_str_or_none : Optional[str]
+        If this pith either:
+
+        * Violates this hint, a human-readable string describing this violation.
+        * Satisfies this hint, ``None``.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring the
@@ -152,8 +149,8 @@ class ViolationCause(object):
     # * Prevent accidental declaration of erroneous instance variables.
     # * Minimize space and time complexity.
     __slots__ = (
-        'cause',
         'cause_indent',
+        'cause_str_or_none',
         'conf',
         'exception_prefix',
         'func',
@@ -216,7 +213,7 @@ class ViolationCause(object):
         self.random_int = random_int
 
         # Nullify all remaining parameters for safety.
-        self.cause: Optional[str] = None
+        self.cause_str_or_none: Optional[str] = None
         self.hint_sign: Any = None
         self.hint_childs: Tuple = None  # type: ignore[assignment]
 
@@ -255,26 +252,26 @@ class ViolationCause(object):
 
             # Tuple of the zero or more arguments subscripting this hint.
             self.hint_childs = get_hint_pep_args(hint)
+        # Else, this hint is PEP-noncompliant (e.g., isinstanceable class).
 
         # Classify this hint *AFTER* all other assignments above.
         self._hint = hint
 
     # ..................{ GETTERS                            }..................
-    def find_cause(self) -> Optional[str]:
+    def find_cause(self) -> 'ViolationCause':
         '''
-        Human-readable string describing how this pith violates this type hint
-        if this pith violates this hint *or* ``None`` otherwise (i.e., if this
-        pith satisfies this hint).
+        Dataclass instance describing how this pith either violates or satisfies
+        this type hint.
 
         Design
         ----------
-        This getter is intentionally generalized to support objects both
+        This method is intentionally generalized to support objects both
         satisfying and *not* satisfying hints as equally valid use cases. While
         the parent
         :func:`beartype._decor._error.errormain.get_beartype_violation` function
-        calling this getter is *always* passed an object *not* satisfying the
-        passed hint, this getter is under no such constraints. Why? Because this
-        getter is also called to find which of an arbitrary number of objects
+        calling this method is *always* passed an object *not* satisfying the
+        passed hint, this method is under no such constraints. Why? Because this
+        method is also called to find which of an arbitrary number of objects
         transitively nested in the object passed to
         :func:`beartype._decor._error.errormain.get_beartype_violation` fails to
         satisfy the corresponding hint transitively nested in the hint passed to
@@ -291,20 +288,17 @@ class ViolationCause(object):
         string, implemented by by iteratively passing each list item to the
         :func:`._peperrorunion.find_cause_union` function. Since
         the first 256 items of this list are integers satisfying this hint,
-        :func:`._peperrorunion.find_cause_union` returns
-        ``None`` to
+        :func:`._peperrorunion.find_cause_union` returns a dataclass instance
+        whose :attr:`cause` field is ``None`` up to
         :func:`._peperrorsequence.find_cause_sequence_args_1`
         before finally finding the non-compliant boolean item and returning the
         human-readable cause.
 
         Returns
         ----------
-        Optional[str]
-            Either:
-
-            * If this object fails to satisfy this hint, human-readable string
-              describing the failure of this object to do so.
-            * Else, ``None``.
+        ViolationCause
+            Dataclass instance describing how this pith either violates or
+            satisfies this type hint.
 
         Raises
         ----------
@@ -317,7 +311,7 @@ class ViolationCause(object):
         '''
 
         # Getter function returning the desired string.
-        find_cause: Callable[[ViolationCause], Optional[str]] = None  # type: ignore[assignment]
+        cause_finder: Callable[[ViolationCause], Optional[str]] = None  # type: ignore[assignment]
 
         # If this hint is ignorable, all possible objects satisfy this hint,
         # implying this hint *CANNOT* by definition be the cause of this
@@ -337,7 +331,7 @@ class ViolationCause(object):
                     find_cause_instance_types_tuple)
 
                 # Defer to the getter function specific to tuple unions.
-                find_cause = find_cause_instance_types_tuple
+                cause_finder = find_cause_instance_types_tuple
             # Else, this hint is *NOT* a tuple union. In this case, assume this
             # hint to be an isinstanceable class. If this is *NOT* the case, the
             # getter deferred to below raises a human-readable exception.
@@ -347,7 +341,7 @@ class ViolationCause(object):
                     find_cause_instance_type)
 
                 # Defer to the getter function specific to classes.
-                find_cause = find_cause_instance_type
+                cause_finder = find_cause_instance_type
         # Else, this hint is PEP-compliant.
         #
         # If this hint...
@@ -357,8 +351,7 @@ class ViolationCause(object):
             self.hint_sign in HINT_SIGNS_ORIGIN_ISINSTANCEABLE and (
                 # Unsubscripted *OR*...
                 not is_hint_pep_args(self.hint) or
-                #FIXME: Remove this branch *AFTER* deeply supporting all
-                #hints.
+                #FIXME: Remove this branch *AFTER* deeply supporting all hints.
                 # Currently unsupported with deep type-checking...
                 self.hint_sign not in HINT_SIGNS_SUPPORTED_DEEP
             )
@@ -371,7 +364,7 @@ class ViolationCause(object):
 
             # Defer to the getter function supporting hints originating from
             # origin types.
-            find_cause = find_cause_type_instance_origin
+            cause_finder = find_cause_type_instance_origin
         # Else, this hint is either subscripted *OR* unsubscripted but not
         # originating from a standard type origin. In either case, this hint
         # was type-checked deeply.
@@ -382,12 +375,12 @@ class ViolationCause(object):
 
             # Getter function returning the desired string for this attribute
             # if any *OR* "None" otherwise.
-            find_cause = PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.get(
+            cause_finder = PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.get(
                 self.hint_sign, None)  # type: ignore[arg-type]
 
             # If no such function has been implemented to handle this attribute
             # yet, raise an exception.
-            if find_cause is None:
+            if cause_finder is None:
                 raise _BeartypeCallHintPepRaiseException(
                     f'{self.exception_prefix} type hint '
                     f'{repr(self.hint)} unsupported (i.e., no '
@@ -399,7 +392,7 @@ class ViolationCause(object):
 
         # Call this getter function with ourselves and return the string
         # returned by this getter.
-        return find_cause(self)
+        return cause_finder(self)
 
     # ..................{ PERMUTERS                          }..................
     def permute(self, **kwargs) -> 'ViolationCause':

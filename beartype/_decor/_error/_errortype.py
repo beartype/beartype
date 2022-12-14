@@ -20,7 +20,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignType,
 )
-from beartype._decor._error._errorsleuth import ViolationCause
+from beartype._decor._error._errorcause import ViolationCause
 from beartype._decor._error._util.errorutilcolor import color_hint
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.cls.pep.utilpep3119 import (
@@ -40,163 +40,188 @@ from beartype._util.text.utiltextlabel import label_type
 from beartype._decor._error._util.errorutiltext import represent_pith
 
 # ....................{ GETTERS ~ instance : type          }....................
-def find_cause_instance_type(sleuth: ViolationCause) -> Optional[str]:
+def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
     '''
-    Human-readable string describing the failure of the passed arbitrary object
-    to be an instance of the passed isinstanceable class if this object is
-    *not* an instance of this class *or* ``None`` otherwise (i.e., if this
-    object is an instance of this class).
+    Output cause describing whether the pith of the passed input cause either is
+    or is not an instance of the isinstanceable type of that cause.
 
     Parameters
     ----------
-    sleuth : ViolationCause
-        Type-checking error cause sleuth.
+    cause : ViolationCause
+        Input cause providing this data.
+
+    Returns
+    ----------
+    ViolationCause
+        Output cause type-checking this data.
     '''
-    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
+    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
 
     # If this hint is *NOT* an isinstanceable type, raise an exception.
     die_unless_type_isinstanceable(
-        cls=sleuth.hint,
+        cls=cause.hint,
         exception_cls=_BeartypeCallHintPepRaiseException,
-        exception_prefix=sleuth.exception_prefix,
+        exception_prefix=cause.exception_prefix,
     )
     # Else, this hint is an isinstanceable type.
 
-    # If this pith is an instance of this type, return "None".
-    if isinstance(sleuth.pith, sleuth.hint):
-        return None
-    # Else, this pith is *NOT* an instance of this type.
+    # Output cause to be returned, permuted from this input cause such that the
+    # output cause justification is either...
+    cause_type = cause.permute(cause_str_or_none=(
+        # If this pith is an instance of this type, "None";
+        None
+        if isinstance(cause.pith, cause.hint) else
+        # Else, this pith is *NOT* an instance of this type. In this case, a
+        # substring describing this failure to be embedded in a longer string.
+        (
+            f'{represent_pith(cause.pith)} not instance of '
+            f'{color_hint(label_type(cause.hint))}'
+        )
+    ))
 
-    # Return a substring describing this failure intended to be embedded in a
-    # longer string.
-    return (
-        f'{represent_pith(sleuth.pith)} not instance of '
-        f'{color_hint(label_type(sleuth.hint))}'
-    )
+    # Return this output cause.
+    return cause_type
 
 
 def find_cause_instance_type_forwardref(
-    sleuth: ViolationCause) -> Optional[str]:
+    cause: ViolationCause) -> ViolationCause:
     '''
-    Human-readable string describing the failure of the passed arbitrary object
-    to satisfy the passed **forward reference type hint** (i.e., string whose
-    value is the name of a user-defined class which has yet to be defined) if
-    this object actually fails to satisfy this hint *or* ``None`` otherwise
-    (i.e., if this object satisfies this hint).
+    Output cause describing whether the pith of the passed input cause either is
+    or is not an instance of the class referred to by the **forward reference
+    type hint** (i.e., string whose value is the name of a user-defined class
+    which has yet to be defined) of that cause.
 
     Parameters
     ----------
-    sleuth : ViolationCause
-        Type-checking error cause sleuth.
+    cause : ViolationCause
+        Input cause providing this data.
+
+    Returns
+    ----------
+    ViolationCause
+        Output cause type-checking this data.
     '''
-    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign is HintSignForwardRef, (
-        f'{sleuth.hint_sign} not forward reference.')
+    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert cause.hint_sign is HintSignForwardRef, (
+        f'{cause.hint_sign} not forward reference.')
 
     # Class referred to by this forward reference.
     hint_forwardref_type = import_pep484585_forwardref_type_relative_to_object(
-        hint=sleuth.hint,
-        obj=sleuth.func,
+        hint=cause.hint,
+        obj=cause.func,
         exception_cls=BeartypeCallHintForwardRefException,
-        exception_prefix=sleuth.exception_prefix,
+        exception_prefix=cause.exception_prefix,
     )
 
-    # Defer to the getter function handling isinstanceable classes. Neato!
-    return find_cause_instance_type(
-        sleuth.permute(hint=hint_forwardref_type))
+    # Defer to the function handling isinstanceable classes. Neato!
+    return find_cause_instance_type(cause.permute(hint=hint_forwardref_type))
 
 
-def find_cause_type_instance_origin(
-    sleuth: ViolationCause) -> Optional[str]:
+def find_cause_type_instance_origin(cause: ViolationCause) -> ViolationCause:
     '''
-    Human-readable string describing the failure of the passed arbitrary object
-    to satisfy the passed **PEP-compliant originative type hint** (i.e.,
-    PEP-compliant type hint originating from a non-:mod:`typing` class) if this
-    object actually fails to satisfy this hint *or* ``None`` otherwise (i.e.,
-    if this object satisfies this hint).
+    Output cause describing whether the pith of the passed input cause either is
+    or is not an instance of the isinstanceable type underlying the
+    **PEP-compliant originative type hint** (i.e., PEP-compliant type hint
+    originating from a non-:mod:`typing` class) of that cause.
 
     Parameters
     ----------
-    sleuth : ViolationCause
-        Type-checking error cause sleuth.
-    '''
-    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
+    cause : ViolationCause
+        Input cause providing this data.
 
-    # Isinstanceable origin type originating this hint if any *OR* "None"
-    # otherwise.
+    Returns
+    ----------
+    ViolationCause
+        Output cause type-checking this data.
+    '''
+    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+
+    # Isinstanceable origin type originating this hint if any *OR* "None".
     hint_origin_type_isinstanceable = (
-        get_hint_pep_origin_type_isinstanceable_or_none(sleuth.hint))
+        get_hint_pep_origin_type_isinstanceable_or_none(cause.hint))
 
     # If this hint does *NOT* originate from such a type, raise an exception.
     if hint_origin_type_isinstanceable is None:
         raise _BeartypeCallHintPepRaiseException(
-            f'{sleuth.exception_prefix}type hint '
-            f'{repr(sleuth.hint)} not originated from '
+            f'{cause.exception_prefix}type hint '
+            f'{repr(cause.hint)} not originated from '
             f'isinstanceable origin type.'
         )
     # Else, this hint originates from such a type.
 
     # Defer to the getter function handling non-"typing" classes. Presto!
     return find_cause_instance_type(
-        sleuth.permute(hint=hint_origin_type_isinstanceable))
+        cause.permute(hint=hint_origin_type_isinstanceable))
 
 # ....................{ GETTERS ~ instance : types         }....................
-def find_cause_instance_types_tuple(
-    sleuth: ViolationCause) -> Optional[str]:
+def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
     '''
-    Human-readable string describing the failure of the passed arbitrary object
-    to be an instance of one or more isinstanceable classes in the passed tuple
-    of classes if this object is *not* an instance of such a class *or*
-    ``None`` otherwise (i.e., if this object is an instance of such a class).
+    Output cause describing whether the pith of the passed input cause either is
+    or is not an instance of one or more isinstanceable types in the tuple of
+    these types of that cause.
 
     Parameters
     ----------
-    sleuth : ViolationCause
-        Type-checking error cause sleuth.
+    cause : ViolationCause
+        Input cause providing this data.
+
+    Returns
+    ----------
+    ViolationCause
+        Output cause type-checking this data.
     '''
-    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
+    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
 
     # If this hint is *NOT* a tuple union, raise an exception.
     die_unless_hint_nonpep_tuple(
-        hint=sleuth.hint,
-        exception_prefix=sleuth.exception_prefix,
+        hint=cause.hint,
+        exception_prefix=cause.exception_prefix,
         exception_cls=_BeartypeCallHintPepRaiseException,
     )
     # Else, this hint is a tuple union.
 
-    # If this pith is an instance of one or more types in this tuple union,
-    # return "None".
-    if isinstance(sleuth.pith, sleuth.hint):
-        return None
-    # Else, this pith is an instance of *NO* types in this tuple union.
+    # Output cause to be returned, permuted from this input cause such that the
+    # output cause justification is either...
+    cause_types_tuple = cause.permute(cause_str_or_none=(
+        # If this pith is an instance of one or more types in this tuple union,
+        # "None";
+        None
+        if isinstance(cause.pith, cause.hint) else
+        # Else, this pith is an instance of *NO* types in this tuple union. In
+        # this case, a substring describing this failure to be embedded in a
+        # longer string.
+        (
+            f'{represent_pith(cause.pith)} not instance of '
+            f'{color_hint(join_delimited_disjunction_types(cause.hint))}'
+        )
+    ))
 
-    # Return a substring describing this failure intended to be embedded in a
-    # longer string.
-    return (
-        f'{represent_pith(sleuth.pith)} not instance of '
-        f'{color_hint(join_delimited_disjunction_types(sleuth.hint))}'
-    )
+    # Return this output cause.
+    return cause_types_tuple
 
 # ....................{ GETTERS ~ subclass : type          }....................
-def find_cause_subclass_type(sleuth: ViolationCause) -> Optional[str]:
+def find_cause_subclass_type(cause: ViolationCause) -> Optional[str]:
     '''
-    Human-readable string describing the failure of the passed arbitrary object
-    to subclass the passed issubclassable superclass if this object is
-    *not* a subclass of this superclass *or* ``None`` otherwise (i.e., if this
-    object is a subclass of this superclass).
+    Output cause describing whether the pith of the passed input cause either is
+    or is not a subclass of the issubclassable type of that cause.
 
     Parameters
     ----------
-    sleuth : ViolationCause
-        Type-checking error cause sleuth.
+    cause : ViolationCause
+        Input cause providing this data.
+
+    Returns
+    ----------
+    ViolationCause
+        Output cause type-checking this data.
     '''
-    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign is HintSignType, (
-        f'{sleuth.hint_sign} not HintSignType.')
+    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert cause.hint_sign is HintSignType, (
+        f'{cause.hint_sign} not HintSignType.')
 
     # Superclass this pith is required to be a subclass of.
     hint_superclass = get_hint_pep484585_subclass_superclass(
-        hint=sleuth.hint, exception_prefix=sleuth.exception_prefix)
+        hint=cause.hint, exception_prefix=cause.exception_prefix)
 
     # If this superclass is neither a class nor tuple of classes, this
     # superclass *MUST* by process of elimination and the validation already
@@ -207,37 +232,44 @@ def find_cause_subclass_type(sleuth: ViolationCause) -> Optional[str]:
         # reference.
         hint_superclass = import_pep484585_forwardref_type_relative_to_object(
             hint=hint_superclass,  # type: ignore[arg-type]
-            obj=sleuth.func,
+            obj=cause.func,
             exception_cls=BeartypeCallHintForwardRefException,
-            exception_prefix=sleuth.exception_prefix,
+            exception_prefix=cause.exception_prefix,
         )
 
         # If this superclass is *NOT* issubclassable, raise an exception.
         die_unless_type_issubclassable(
             cls=hint_superclass,
             exception_cls=_BeartypeCallHintPepRaiseException,
-            exception_prefix=sleuth.exception_prefix,
+            exception_prefix=cause.exception_prefix,
         )
         # Else, this superclass is issubclassable.
     # In either case, this superclass is now issubclassable.
 
-    # If this pith subclasses this superclass, return "None".
-    if is_type_subclass(sleuth.pith, hint_superclass):
-        return None
-    # Else, this pith does *NOT* subclass this superclass.
+    # Output cause to be returned, permuted from this input cause.
+    cause_subclass_type = cause.permute()
 
-    # Description of this superclasses, defined as either...
-    hint_superclass_label = (
-        # If this superclass is a class, a description of this class;
-        label_type(hint_superclass)
-        if isinstance(hint_superclass, type) else
-        # Else, this superclass is a tuple of classes. In this case, a
-        # description of these classes...
-        join_delimited_disjunction_types(hint_superclass)
-    )
+    # If this pith subclasses this superclass, set the output cause
+    # justification to "None".
+    if is_type_subclass(cause_subclass_type.pith, hint_superclass):
+        cause_subclass_type.cause_str_or_none = None
+    # Else, this pith does *NOT* subclass this superclass. In this case...
+    else:
+        # Description of this superclasses, defined as either...
+        hint_superclass_label = (
+            # If this superclass is a class, a description of this class;
+            label_type(hint_superclass)
+            if isinstance(hint_superclass, type) else
+            # Else, this superclass is a tuple of classes. In this case, a
+            # description of these classes...
+            join_delimited_disjunction_types(hint_superclass)
+        )
 
-    # Return a substring describing this failure.
-    return (
-        f'{represent_pith(sleuth.pith)} not subclass of '
-        f'{hint_superclass_label}'
-    )
+        # Substring describing this failure to be embedded in a longer string.
+        cause_subclass_type.cause_str_or_none = (
+            f'{represent_pith(cause_subclass_type.pith)} not subclass of '
+            f'{hint_superclass_label}'
+        )
+
+    # Return this output cause.
+    return cause_subclass_type

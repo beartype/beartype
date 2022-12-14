@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype.typing import Optional
 from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
-from beartype._decor._error._errorsleuth import ViolationCause
+from beartype._decor._error._errorcause import ViolationCause
 from beartype._decor._error._util.errorutiltext import represent_pith
 from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,

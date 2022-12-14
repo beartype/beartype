@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Optional
-from beartype._decor._error._errorsleuth import ViolationCause
+from beartype._decor._error._errorcause import ViolationCause
 from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
 from beartype._util.hint.pep.proposal.utilpep586 import (
     get_hint_pep586_literals)

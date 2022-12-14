@@ -17,7 +17,7 @@ from beartype.typing import Optional
 from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1)
-from beartype._decor._error._errorsleuth import ViolationCause
+from beartype._decor._error._errorcause import ViolationCause
 from beartype._decor._error._errortype import (
     find_cause_type_instance_origin)
 from beartype._decor._error._util.errorutilcolor import color_type

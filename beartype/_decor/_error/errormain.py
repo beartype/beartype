@@ -97,7 +97,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
     HINT_SIGNS_UNION,
 )
-from beartype._decor._error._errorsleuth import ViolationCause
+from beartype._decor._error._errorcause import ViolationCause
 from beartype._decor._error._util.errorutilcolor import (
     color_hint,
     color_repr,

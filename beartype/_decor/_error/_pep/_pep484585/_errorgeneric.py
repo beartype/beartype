@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import Optional
 from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
 from beartype._decor._error._errortype import find_cause_instance_type
-from beartype._decor._error._errorsleuth import ViolationCause
+from beartype._decor._error._errorcause import ViolationCause
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
     get_hint_pep484585_generic_type,
     iter_hint_pep484585_generic_bases_unerased_tree,

@@ -445,7 +445,7 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
 
     # ..................{ INITIALIZERS                       }..................
     #FIXME: Refactor code elsewhere to unconditionally pass "culprit", please.
-    #Pick up on Monday at the "beartype._decor._error._errorsleuth" submodule!
+    #Pick up on Monday at the "beartype._decor._error._errorcause" submodule!
     def __init__(self, message: str, culprit = None) -> None:
     # def __init__(self, message: str, culprit: object) -> None:
         '''
