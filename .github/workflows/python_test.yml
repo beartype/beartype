@@ -144,14 +144,10 @@ jobs:
             python-version: "3.8"
           - tox-env: py39-coverage
             python-version: "3.9"
-          #FIXME: Relax this pinned constraint back to merely Python 3.10
-          #*AFTER* mypy resolves the following issue:
-          #    https://github.com/python/mypy/issues/13627
           - tox-env: py310-coverage
-            python-version: "3.10.6"
-          #FIXME: Reduce to simply "3.11" after Python 3.11 goes live.
-          # - tox-env: py311-coverage
-          #   python-version: "3.11.0-alpha - 3.11.0"
+            python-version: "3.10"
+          - tox-env: py311-coverage
+            python-version: "3.11"
           #- tox-env: pypy37-coverage
           #  python-version: "pypy-3.7"
           #- tox-env: pypy38-coverage
@@ -195,8 +191,8 @@ jobs:
           python-version: "${{ matrix.python-version }}"
       - name: 'Displaying Python metadata...'
         run: |
-          python -VV
-          python -m site
+          python3 -VV
+          python3 -m site
       # ..................{ INSTALL                          }..................
       # Note that:
       # * This command *MUST* be platform-agnostic by running under both:
@@ -208,10 +204,10 @@ jobs:
       #   remaining dependencies (e.g., "tox").
       - name: 'Upgrading packager dependencies...'
         run: |
-          python -m pip --quiet install --upgrade pip setuptools wheel
+          python3 -m pip --quiet install --upgrade pip setuptools wheel
       - name: 'Installing package dependencies...'
         run: |
-          python -m pip --quiet install --upgrade ${{ env._PIP_PACKAGE_NAMES }}
+          python3 -m pip --quiet install --upgrade ${{ env._PIP_PACKAGE_NAMES }}
       # ..................{ TYPE-CHECK                       }..................
       # Type-check this package *BEFORE* testing this package. Why? Because
       # "tox" internally creates a copy of this package residing at a temporary
@@ -237,7 +233,7 @@ jobs:
       - name: 'Type-checking package with "mypy:"...'
         run: |
           # Manually install "mypy" in the standard way.
-          python -m pip --quiet install mypy
+          python3 -m pip --quiet install mypy
           # Log this "mypy" version for debuggability.
           mypy --version
           # Run this "mypy" instance against our main package.
@@ -286,7 +282,7 @@ jobs:
           #   our top-level "tox.ini" configuration, forcing CI failures for
           #   unavailable Python environments. See also:
           #       https://github.com/tox-dev/tox/issues/903
-          python -m tox --skip-missing-interpreters=false
+          python3 -m tox --skip-missing-interpreters=false
       - name: 'Publishing test coverage to Codecov...'
         uses: 'codecov/codecov-action@v1'
         with:
