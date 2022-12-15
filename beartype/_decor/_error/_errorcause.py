@@ -17,16 +17,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #completely fails to suffice to define the "culprit" parameter for the
 #"BeartypeCallHintViolation" exception. We'll need to fundamentally refactor
 #*ALL* of this as follows:
-#* Here's the arduous part. Refactor *ALL* find_cause_*() functions to instead:
-#  * Set the "cause" instance variable of the responsible "ViolationCause" object
-#    to the desired cause rather than returning that cause. Sometimes this will
-#    simply be the current "sleuth" object. Sometimes this will be a child
-#    permutation of that "sleuth" object, instead. Static type-checks will help
-#    here, surprisingly.
-#  * Test the "cause" instance variable (rather than the object returned by the
-#    find_cause() method) against "None". *THIS IS CRITICAL AND EASILY
-#    OVERLOOKED.* You just know we'll blow this up somewhere. Gah!
-#  * Return the responsible "ViolationCause" instance rather than that string.
 #* In the get_beartype_violation() function:
 #  * Set the "culprit" parameter for the "BeartypeCallHintViolation" exception
 #    as follows:
@@ -164,6 +154,7 @@ class ViolationCause(object):
 
     _INIT_PARAM_NAMES = frozenset((
         'cause_indent',
+        'cause_str_or_none',
         'conf',
         'exception_prefix',
         'func',
@@ -183,6 +174,8 @@ class ViolationCause(object):
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     def __init__(
         self,
+
+        # Mandatory parameters.
         func: Callable,
         conf: BeartypeConf,
         pith: Any,
@@ -190,6 +183,9 @@ class ViolationCause(object):
         cause_indent: str,
         exception_prefix: str,
         random_int: Optional[int],
+
+        # Optional parameters.
+        cause_str_or_none: Optional[str] = None,
     ) -> None:
         '''
         Initialize this object.
@@ -203,6 +199,8 @@ class ViolationCause(object):
             f'{repr(exception_prefix)} not string.')
         assert isinstance(random_int, NoneTypeOr[int]), (
             f'{repr(random_int)} not integer or "None".')
+        assert isinstance(cause_str_or_none, NoneTypeOr[str]), (
+            f'{repr(cause_str_or_none)} not string or "None".')
 
         # Classify all passed parameters.
         self.func = func
@@ -211,9 +209,9 @@ class ViolationCause(object):
         self.cause_indent = cause_indent
         self.exception_prefix = exception_prefix
         self.random_int = random_int
+        self.cause_str_or_none = cause_str_or_none
 
         # Nullify all remaining parameters for safety.
-        self.cause_str_or_none: Optional[str] = None
         self.hint_sign: Any = None
         self.hint_childs: Tuple = None  # type: ignore[assignment]
 

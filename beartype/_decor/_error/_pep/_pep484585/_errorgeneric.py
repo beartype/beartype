@@ -13,89 +13,79 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Optional
 from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
-from beartype._decor._error._errortype import find_cause_instance_type
 from beartype._decor._error._errorcause import ViolationCause
+from beartype._decor._error._errortype import find_cause_instance_type
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
     get_hint_pep484585_generic_type,
     iter_hint_pep484585_generic_bases_unerased_tree,
 )
 
 # ....................{ GETTERS                            }....................
-def find_cause_generic(sleuth: ViolationCause) -> Optional[str]:
+def find_cause_generic(cause: ViolationCause) -> ViolationCause:
     '''
-    Human-readable string describing the failure of the passed arbitrary object
-    to satisfy the passed :pep:`484`- or :pep:`585`-compliant **generic**
+    Output cause describing whether the pith of the passed input cause either
+    satisfies or violates the :pep:`484`- or :pep:`585`-compliant **generic**
     (i.e., type hint subclassing a combination of one or more of the
     :mod:`typing.Generic` superclass, the :mod:`typing.Protocol` superclass,
-    and/or other :mod:`typing` non-class pseudo-superclasses) if this object
-    actually fails to satisfy this hint *or* ``None`` otherwise (i.e., if this
-    object satisfies this hint).
+    and/or other :mod:`typing` non-class pseudo-superclasses) of that cause.
 
     Parameters
     ----------
-    sleuth : ViolationCause
-        Type-checking error cause sleuth.
+    cause : ViolationCause
+        Input cause providing this data.
+
+    Returns
+    ----------
+    ViolationCause
+        Output cause type-checking this data.
     '''
-    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign is HintSignGeneric, (
-        f'{repr(sleuth.hint_sign)} not generic.')
+    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert cause.hint_sign is HintSignGeneric, (
+        f'{repr(cause.hint_sign)} not generic.')
+    # print(f'[find_cause_generic] cause.pith: {cause.pith}')
+    # print(f'[find_cause_generic] cause.hint [pre-reduction]: {cause.hint}')
 
-    # Reduce this hint to the object originating this generic (if any) by
-    # stripping all child type hints subscripting this hint from this hint.
-    # print(f'[find_cause_generic] sleuth.pith: {sleuth.pith}')
-    # print(f'[find_cause_generic] sleuth.hint [pre-reduction]: {sleuth.hint}')
-    sleuth.hint = get_hint_pep484585_generic_type(
-        hint=sleuth.hint, exception_prefix=sleuth.exception_prefix)
-    # print(f'[find_cause_generic] sleuth.hint [post-reduction]: {sleuth.hint}')
+    # Origin type originating this generic, deduced by stripping all child type
+    # hints subscripting this hint from this hint.
+    hint_type = get_hint_pep484585_generic_type(
+        hint=cause.hint, exception_prefix=cause.exception_prefix)
 
-    # Human-readable string describing the failure of this pith to be an
-    # instance of this type if this pith is not an instance of this type *OR*
-    # "None" otherwise (i.e., if this pith is not an instance of this type).
-    pith_cause = find_cause_instance_type(sleuth)
+    # Shallow output cause to be returned, type-checking only whether this pith
+    # is instance of this origin type.
+    cause_shallow = cause.permute(hint=hint_type)
+    cause_shallow = find_cause_instance_type(cause_shallow)
+    # print(f'[find_cause_generic] cause.hint [post-reduction]: {cause.hint}')
 
-    # If this pith is *NOT* an instance of this type, return this string.
-    if pith_cause is not None:
-        return pith_cause
+    # If this pith is *NOT* an instance of this type, return this cause.
+    if cause_shallow.cause_str_or_none is not None:
+        return cause_shallow
     # Else, this pith is an instance of this type.
-
-    #FIXME: *OKAY.* This overly simplistic algorithm has become extremely
-    #desynchronized from the considerably less simplistic algorithm performed by
-    #"_pephint". To synchronize the two, let's:
-    #* Shift the everything in "_pephint" beginning with the line
-    #  "hint_bases = acquire_fixed_list(...)" and ending with the end of the
-    #  following "while ..." statement into a new
-    #  iter_hint_pep484585_generic_bases_unerased_recursive() iterator
-    #  implemented as a generator comprehension. Yes, that's probably painfully
-    #  slow -- but this simply needs to work and the code duplication here is
-    #  clearly encouraging painful and non-trivial issues. Ergo, just do this.
-    #* Refactor "_pephint" to defer to that iterator.
-    #* Iterate over that iterator below rather than the current logic we're
-    #  performing, please.
-    #FIXME: After doing so, remove the now useless
-    #get_hint_pep484_generic_base_erased_from_unerased() getter, please.
 
     # For each unignorable unerased transitive pseudo-superclass originally
     # declared as an erased superclass of this generic...
     for hint_child in iter_hint_pep484585_generic_bases_unerased_tree(
-        hint=sleuth.hint, exception_prefix=sleuth.exception_prefix):
-        # Human-readable string describing the failure of this pith to satisfy
-        # this pseudo-superclass if this pith actually fails to satisfy
-        # this pseudo-superclass *or* "None" otherwise.
+        hint=cause.hint, exception_prefix=cause.exception_prefix):
+        # Deep output cause to be returned, permuted from this input cause.
+        cause_deep = cause.permute(hint=hint_child).find_cause()
         # print(f'tuple pith: {pith_item}\ntuple hint child: {hint_child}')
-        pith_base_cause = sleuth.permute(hint=hint_child).find_cause()
 
-        # If this pseudo-superclass is the cause of this failure, return a
-        # substring describing this failure by embedding this failure in a
-        # longer string.
-        if pith_base_cause is not None:
-            return f'generic base {repr(hint_child)} {pith_base_cause}'
+        # If this pseudo-superclass is the cause of this failure...
+        if cause_deep.cause_str_or_none is not None:
+            # Human-readable string prefixing this failure with additional
+            # metadata describing this pseudo-superclass.
+            cause_deep.cause_str_or_none = (
+                f'generic base {repr(hint_child)} '
+                f'{cause_deep.cause_str_or_none}'
+            )
+
+            # Return this cause.
+            return cause_deep
         # Else, this pseudo-superclass is *NOT* the cause of this failure.
         # Silently continue to the next.
         # print(f'[find_cause_generic] Ignoring satisfied base {hint_child}...')
 
-    # Return "None", as this pith satisfies both this generic itself *AND* all
-    # pseudo-superclasses subclassed by this generic, implying this pith to
-    # deeply satisfy this hint.
-    return None
+    # Return this cause as is. This pith satisfies both this generic itself
+    # *AND* all pseudo-superclasses subclassed by this generic, implying this
+    # pith to deeply satisfy this hint.
+    return cause

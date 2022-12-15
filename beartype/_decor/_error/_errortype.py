@@ -67,12 +67,12 @@ def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
 
     # Output cause to be returned, permuted from this input cause such that the
     # output cause justification is either...
-    cause_type = cause.permute(cause_str_or_none=(
+    cause_return = cause.permute(cause_str_or_none=(
         # If this pith is an instance of this type, "None";
         None
         if isinstance(cause.pith, cause.hint) else
         # Else, this pith is *NOT* an instance of this type. In this case, a
-        # substring describing this failure to be embedded in a longer string.
+        # human-readable string describing this failure.
         (
             f'{represent_pith(cause.pith)} not instance of '
             f'{color_hint(label_type(cause.hint))}'
@@ -80,7 +80,7 @@ def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
     ))
 
     # Return this output cause.
-    return cause_type
+    return cause_return
 
 
 def find_cause_instance_type_forwardref(
@@ -121,8 +121,8 @@ def find_cause_type_instance_origin(cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing whether the pith of the passed input cause either is
     or is not an instance of the isinstanceable type underlying the
-    **PEP-compliant originative type hint** (i.e., PEP-compliant type hint
-    originating from a non-:mod:`typing` class) of that cause.
+    **originative type hint** (i.e., PEP-compliant type hint originating from a
+    non-:mod:`typing` class) of that cause.
 
     Parameters
     ----------
@@ -137,11 +137,10 @@ def find_cause_type_instance_origin(cause: ViolationCause) -> ViolationCause:
     assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
 
     # Isinstanceable origin type originating this hint if any *OR* "None".
-    hint_origin_type_isinstanceable = (
-        get_hint_pep_origin_type_isinstanceable_or_none(cause.hint))
+    hint_type = get_hint_pep_origin_type_isinstanceable_or_none(cause.hint)
 
     # If this hint does *NOT* originate from such a type, raise an exception.
-    if hint_origin_type_isinstanceable is None:
+    if hint_type is None:
         raise _BeartypeCallHintPepRaiseException(
             f'{cause.exception_prefix}type hint '
             f'{repr(cause.hint)} not originated from '
@@ -150,8 +149,7 @@ def find_cause_type_instance_origin(cause: ViolationCause) -> ViolationCause:
     # Else, this hint originates from such a type.
 
     # Defer to the getter function handling non-"typing" classes. Presto!
-    return find_cause_instance_type(
-        cause.permute(hint=hint_origin_type_isinstanceable))
+    return find_cause_instance_type(cause.permute(hint=hint_type))
 
 # ....................{ GETTERS ~ instance : types         }....................
 def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
@@ -182,7 +180,7 @@ def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
 
     # Output cause to be returned, permuted from this input cause such that the
     # output cause justification is either...
-    cause_types_tuple = cause.permute(cause_str_or_none=(
+    cause_return = cause.permute(cause_str_or_none=(
         # If this pith is an instance of one or more types in this tuple union,
         # "None";
         None
@@ -196,8 +194,8 @@ def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
         )
     ))
 
-    # Return this output cause.
-    return cause_types_tuple
+    # Return this cause.
+    return cause_return
 
 # ....................{ GETTERS ~ subclass : type          }....................
 def find_cause_subclass_type(cause: ViolationCause) -> Optional[str]:
@@ -247,12 +245,12 @@ def find_cause_subclass_type(cause: ViolationCause) -> Optional[str]:
     # In either case, this superclass is now issubclassable.
 
     # Output cause to be returned, permuted from this input cause.
-    cause_subclass_type = cause.permute()
+    cause_return = cause.permute()
 
     # If this pith subclasses this superclass, set the output cause
     # justification to "None".
-    if is_type_subclass(cause_subclass_type.pith, hint_superclass):
-        cause_subclass_type.cause_str_or_none = None
+    if is_type_subclass(cause_return.pith, hint_superclass):
+        cause_return.cause_str_or_none = None
     # Else, this pith does *NOT* subclass this superclass. In this case...
     else:
         # Description of this superclasses, defined as either...
@@ -265,11 +263,11 @@ def find_cause_subclass_type(cause: ViolationCause) -> Optional[str]:
             join_delimited_disjunction_types(hint_superclass)
         )
 
-        # Substring describing this failure to be embedded in a longer string.
-        cause_subclass_type.cause_str_or_none = (
-            f'{represent_pith(cause_subclass_type.pith)} not subclass of '
+        # Human-readable string describing this failure.
+        cause_return.cause_str_or_none = (
+            f'{represent_pith(cause_return.pith)} not subclass of '
             f'{hint_superclass_label}'
         )
 
-    # Return this output cause.
-    return cause_subclass_type
+    # Return this cause.
+    return cause_return

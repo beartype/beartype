@@ -13,7 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype.typing import Optional
 from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
 from beartype._decor._error._errorcause import ViolationCause
 from beartype._decor._error._util.errorutiltext import represent_pith
@@ -24,77 +23,87 @@ from beartype._util.hint.pep.proposal.utilpep593 import (
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
 
 # ....................{ GETTERS                            }....................
-def find_cause_annotated(sleuth: ViolationCause) -> Optional[str]:
+def find_cause_annotated(cause: ViolationCause) -> ViolationCause:
     '''
-    Human-readable string describing the failure of the passed arbitrary object
-    to satisfy the passed :pep:`593`-compliant :mod:`beartype`-specific
+    Output cause describing whether the pith of the passed input cause either
+    satisfies or violates the :pep:`593`-compliant :mod:`beartype`-specific
     **metahint** (i.e., type hint annotating a standard class with one or more
     :class:`beartype.vale._core._valecore.BeartypeValidator` objects, each
     produced by subscripting the :class:`beartype.vale.Is` class or a subclass
-    of that class) if this object actually fails to satisfy this hint *or*
-    ``None`` otherwise (i.e., if this object satisfies this hint).
+    of that class) of that cause.
 
     Parameters
     ----------
-    sleuth : ViolationCause
-        Type-checking error cause sleuth.
+    cause : ViolationCause
+        Input cause providing this data.
+
+    Returns
+    ----------
+    ViolationCause
+        Output cause type-checking this data.
     '''
-    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign is HintSignAnnotated, (
-        f'{sleuth.hint_sign} not HintSignAnnotated.')
+    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert cause.hint_sign is HintSignAnnotated, (
+        f'{cause.hint_sign} not "HintSignAnnotated".')
 
     # Defer heavyweight imports.
     from beartype.vale._core._valecore import BeartypeValidator
 
-    # PEP-compliant type hint annotated by this metahint.
-    metahint = get_hint_pep593_metahint(sleuth.hint)
+    # Type hint annotated by this metahint.
+    metahint = get_hint_pep593_metahint(cause.hint)
 
-    # Human-readable string describing the failure of this pith to satisfy this
-    # hint if this pith fails to satisfy this hint *or* "None" otherwise.
-    pith_cause = sleuth.permute(
-        pith=sleuth.pith, hint=metahint).find_cause()
+    # Tuple of zero or more arbitrary objects annotating this metahint.
+    hint_validators = get_hint_pep593_metadata(cause.hint)
 
-    # If this pith fails to satisfy this hint, return this cause as is.
-    if pith_cause is not None:
-        return pith_cause
-    # Else, this pith satisfies this hint.
+    # Shallow output cause to be returned, type-checking only whether this pith
+    # satisfies this metahint.
+    cause_shallow = cause.permute(hint=metahint).find_cause()
 
-    # For each arbitrary object annotating this metahint...
-    for hint_validator in get_hint_pep593_metadata(sleuth.hint):
-        # If this object is *NOT* beartype-specific, raise an exception.
+    # If this pith fails to satisfy this metahint, return this cause as is.
+    if cause_shallow.cause_str_or_none is not None:
+        return cause_shallow
+    # Else, this pith satisfies this metahint.
+
+    # Deep output cause to be returned, permuted from this input cause.
+    cause_deep = cause.permute()
+
+    # For each beartype validator annotating this metahint...
+    for hint_validator in hint_validators:
+        # If this is *NOT* a beartype validator, raise an exception.
         #
-        # Note that this object should already be beartype-specific, as the
+        # Note that this object should already be a beartype validator, as the
         # @beartype decorator enforces this constraint at decoration time.
         if not isinstance(hint_validator, BeartypeValidator):
             raise _BeartypeCallHintPepRaiseException(
-                f'{sleuth.exception_prefix}PEP 593 type hint '
-                f'{repr(sleuth.hint)} argument {repr(hint_validator)} '
+                f'{cause_deep.exception_prefix}PEP 593 type hint '
+                f'{repr(cause_deep.hint)} argument {repr(hint_validator)} '
                 f'not beartype validator '
                 f'(i.e., "beartype.vale.Is*[...]" object).'
             )
-        # Else, this object is beartype-specific.
-
+        # Else, this is a beartype validator.
+        #
         # If this pith fails to satisfy this validator and is thus the cause of
         # this failure...
-        if not hint_validator.is_valid(sleuth.pith):
+        elif not hint_validator.is_valid(cause_deep.pith):
             #FIXME: Unit test this up, please.
             # Human-readable string diagnosing this failure.
             hint_diagnosis = hint_validator.get_diagnosis(
-                obj=sleuth.pith,
+                obj=cause_deep.pith,
                 indent_level_outer=CODE_INDENT_1,
                 indent_level_inner='',
             )
 
-            # Return a human-readable string describing this failure.
-            return (
-                f'{represent_pith(sleuth.pith)} violates validator '
+            # Human-readable string describing this failure.
+            cause_deep.cause_str_or_none = (
+                f'{represent_pith(cause_deep.pith)} violates validator '
                 f'{repr(hint_validator)}:\n'
                 f'{hint_diagnosis}'
             )
+
+            # Immediately halt iteration.
+            break
         # Else, this pith satisfies this validator. Ergo, this validator is
         # *NOT* the cause of this failure. Silently continue to the next.
 
-    # Return "None", as this pith satisfies both this non-"typing" class itself
-    # *AND* all validators annotating that class, implying this pith to deeply
-    # satisfy this metahint.
-    return None
+    # Return this output cause.
+    return cause_deep

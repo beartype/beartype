@@ -18,24 +18,32 @@ from beartype._decor._error._util.errorutiltext import represent_pith
 from beartype._util.text.utiltextlabel import prefix_callable
 
 # ....................{ GETTERS                            }....................
-def find_cause_noreturn(sleuth: ViolationCause) -> str:
+def find_cause_noreturn(cause: ViolationCause) -> ViolationCause:
     '''
-    Human-readable string describing the failure of the decorated callable to
+    Output cause describing describing the failure of the decorated callable to
     *not* return a value in violation of the :pep:`484`-compliant
     :attr:`typing.NoReturn` type hint.
 
     Parameters
     ----------
-    sleuth : ViolationCause
-        Type-checking error cause sleuth.
-    '''
-    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign is HintSignNoReturn, (
-        f'{repr(sleuth.hint)} not HintSignNoReturn.')
+    cause : ViolationCause
+        Input cause providing this data.
 
-    # Return a substring describing this failure intended to be embedded in a
-    # longer string.
-    return (
-        f'{prefix_callable(sleuth.func)} with PEP 484 return type hint '
-        f'"typing.NoReturn" returned {represent_pith(sleuth.pith)}'
-    )
+    Returns
+    ----------
+    ViolationCause
+        Output cause type-checking this data.
+    '''
+    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert cause.hint_sign is HintSignNoReturn, (
+        f'{repr(cause.hint)} not "HintSignNoReturn".')
+
+    # Output cause to be returned, permuted from this input cause such that the
+    # justification is a human-readable string describing this failure.
+    cause_return = cause.permute(cause_str_or_none=(
+        f'{prefix_callable(cause.func)} with PEP 484 return type hint '
+        f'"typing.NoReturn" returned {represent_pith(cause.pith)}'
+    ))
+
+    # Return this cause.
+    return cause_return

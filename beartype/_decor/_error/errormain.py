@@ -297,9 +297,7 @@ def get_beartype_violation(
         die_unless_hint(hint=hint, exception_prefix=exception_prefix)
         # Else, this type hint is supported.
 
-    # Human-readable string describing the failure of this pith to satisfy this
-    # hint if this pith fails to satisfy this hint *OR* "None" otherwise (i.e.,
-    # if this pith satisfies this hint).
+    # Cause describing the failure of this pith to satisfy this hint.
     exception_cause = ViolationCause(
         func=func,
         conf=conf,
@@ -315,7 +313,7 @@ def get_beartype_violation(
     # performing type checking should *ONLY* call this child helper function
     # when this pith does *NOT* satisfy this hint. In this case, raise an
     # exception encouraging the end user to submit an upstream issue with us.
-    if not exception_cause:
+    if not exception_cause.cause_str_or_none:
         pith_value_repr = represent_object(
             obj=pith_value, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)
         raise _BeartypeCallHintPepRaiseDesynchronizationException(
@@ -332,7 +330,7 @@ def get_beartype_violation(
 
     # This failure suffixed by a period if *NOT* yet suffixed by a period.
     exception_cause_suffixed = suffix_unless_suffixed(
-        text=exception_cause, suffix='.')
+        text=exception_cause.cause_str_or_none, suffix='.')
 
     # Exception message embedding this cause.
     exception_message = (
@@ -346,8 +344,12 @@ def get_beartype_violation(
     exception_message = strip_text_ansi_if_configured(
         text=exception_message, conf=conf)
 
+    #FIXME: Unit test that the caller receives the expected culprit, please.
     # Exception of the desired class embedding this cause.
-    exception = exception_cls(exception_message)  # type: ignore[misc]
+    exception = exception_cls(  # type: ignore[misc]
+        message=exception_message,
+        culprit=exception_cause.pith,
+    )
 
     # Return this exception to the @beartype-generated type-checking wrapper
     # (which directly calls this function), which will then squelch the

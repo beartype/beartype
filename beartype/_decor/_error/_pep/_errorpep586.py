@@ -12,7 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Optional
 from beartype._decor._error._errorcause import ViolationCause
 from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
 from beartype._util.hint.pep.proposal.utilpep586 import (
@@ -21,28 +20,31 @@ from beartype._util.text.utiltextjoin import join_delimited_disjunction
 from beartype._decor._error._util.errorutiltext import represent_pith
 
 # ....................{ GETTERS                            }....................
-def find_cause_literal(sleuth: ViolationCause) -> Optional[str]:
+def find_cause_literal(cause: ViolationCause) -> ViolationCause:
     '''
-    Human-readable string describing the failure of the passed arbitrary object
-    to satisfy the passed :pep:`586`-compliant :mod:`beartype`-specific
-    **literal** (i.e., :attr:`typing.Literal` type hint) if this object
-    actually fails to satisfy this hint *or* ``None`` otherwise (i.e., if this
-    object satisfies this hint).
+    Output cause describing whether the pith of the passed input cause either
+    satisfies or violates the :pep:`586`-compliant :mod:`beartype`-specific
+    **literal** (i.e., :attr:`typing.Literal` type hint) of that cause.
 
     Parameters
     ----------
-    sleuth : ViolationCause
-        Type-checking error cause sleuth.
+    cause : ViolationCause
+        Input cause providing this data.
+
+    Returns
+    ----------
+    ViolationCause
+        Output cause type-checking this data.
     '''
-    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign is HintSignLiteral, (
-        f'{repr(sleuth.hint_sign)} not HintSignLiteral.')
+    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert cause.hint_sign is HintSignLiteral, (
+        f'{repr(cause.hint_sign)} not "HintSignLiteral".')
 
     # Tuple of zero or more literal objects subscripting this hint,
     # intentionally replacing the current such tuple due to the non-standard
     # implementation of the third-party "typing_extensions.Literal" factory.
     hint_childs = get_hint_pep586_literals(
-        hint=sleuth.hint, exception_prefix=sleuth.exception_prefix)
+        hint=cause.hint, exception_prefix=cause.exception_prefix)
 
     # If this pith is equal to any literal object subscripting this hint, this
     # pith satisfies this hint. Specifically, if there exists at least one...
@@ -55,29 +57,29 @@ def find_cause_literal(sleuth: ViolationCause) -> Optional[str]:
             # to be an instance of the same type as this literal *BEFORE*
             # validated as equal to this literal, due to subtle edge cases in
             # equality comparison that could yield false positives.
-            isinstance(sleuth.pith, type(hint_literal)) and
+            isinstance(cause.pith, type(hint_literal)) and
             # This pith is equal to this literal.
-            sleuth.pith == hint_literal
+            cause.pith == hint_literal
         )
         # For each literal object subscripting this hint...
         for hint_literal in hint_childs
-    # Then return "None", as this pith deeply satisfies this hint.
     ):
-        return None
+        # Then return this cause unmodified, as this pith deeply satisfies this
+        # hint.
+        return cause
     # Else, this pith fails to satisfy this hint.
 
-    # Isinstanceable tuple of the types of all literals subscripting this hint.
+    # Tuple union of the types of all literals subscripting this hint.
     hint_literal_types = tuple(
         type(hint_literal) for hint_literal in hint_childs)
 
-    # Human-readable string describing the failure of this pith to be an
-    # instance of one or more of these types if this pith is not such an
-    # instance *OR* "None" otherwise.
-    pith_cause = sleuth.permute(hint=hint_literal_types).find_cause()
+    # Shallow output cause to be returned, type-checking only whether this pith
+    # is an instance of one or more of these types.
+    cause_shallow = cause.permute(hint=hint_literal_types).find_cause()
 
     # If this pith is *NOT* such an instance, return this string.
-    if pith_cause is not None:
-        return pith_cause
+    if cause_shallow.cause_str_or_none is not None:
+        return cause_shallow
     # Else, this pith is such an instance and thus shallowly satisfies this
     # hint. Since this pith fails to satisfy this hint, this pith must by
     # deduction be unequal to all literals subscripting this hint.
@@ -87,5 +89,10 @@ def find_cause_literal(sleuth: ViolationCause) -> Optional[str]:
     cause_literals_unsatisfied = join_delimited_disjunction(
         repr(hint_literal) for hint_literal in hint_childs)
 
-    # Return a human-readable string describing this failure.
-    return f'{represent_pith(sleuth.pith)} != {cause_literals_unsatisfied}.'
+    # Deep output cause to be returned, permuted from this input cause such that
+    # the justification is a human-readable string describing this failure.
+    cause_deep = cause.permute(cause_str_or_none=(
+        f'{represent_pith(cause.pith)} != {cause_literals_unsatisfied}.'))
+
+    # Return this cause.
+    return cause_deep

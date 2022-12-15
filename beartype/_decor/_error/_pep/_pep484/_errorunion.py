@@ -13,7 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype.typing import Optional
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._decor._error._errorcause import ViolationCause
 from beartype._decor._error._util.errorutilcolor import color_hint
@@ -29,39 +28,42 @@ from beartype._util.text.utiltextmunge import (
 )
 
 # ....................{ GETTERS                            }....................
-def find_cause_union(sleuth: ViolationCause) -> Optional[str]:
+def find_cause_union(cause: ViolationCause) -> ViolationCause:
     '''
-    Human-readable string describing the failure of the passed arbitrary object
-    to satisfy the passed PEP-compliant union type hint if this object actually
-    fails to satisfy this hint *or* ``None`` otherwise (i.e., if this object
-    satisfies this hint).
+    Output cause describing whether the pith of the passed input cause either
+    satisfies or violates the PEP-compliant union type hint of that cause.
 
     Parameters
     ----------
-    sleuth : ViolationCause
-        Type-checking error cause sleuth.
+    cause : ViolationCause
+        Input cause providing this data.
+
+    Returns
+    ----------
+    ViolationCause
+        Output cause type-checking this data.
     '''
-    assert isinstance(sleuth, ViolationCause), f'{repr(sleuth)} not cause sleuth.'
-    assert sleuth.hint_sign in HINT_SIGNS_UNION, (
-        f'{repr(sleuth.hint)} not union sign.')
+    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
+    assert cause.hint_sign in HINT_SIGNS_UNION, (
+        f'{repr(cause.hint)} not union sign.')
+
+    # Indentation preceding each line of the strings returned by child getter
+    # functions called by this parent getter function, offset to visually
+    # demarcate child from parent causes in multiline strings.
+    CAUSE_INDENT_CHILD = cause.cause_indent + '  '
 
     # Subset of all classes shallowly associated with these child hints (i.e.,
     # by being either these child hints in the case of non-"typing" classes
     # *OR* the classes originating these child hints in the case of
     # PEP-compliant type hints) that this pith fails to shallowly satisfy.
-    hint_classes_unsatisfied = set()
+    hint_types_violated = set()
 
     # List of all human-readable strings describing the failure of this pith to
     # satisfy each of these child hints.
-    causes_union = []
-
-    # Indentation preceding each line of the strings returned by child getter
-    # functions called by this parent getter function, offset to visually
-    # demarcate child from parent causes in multiline strings.
-    CAUSE_INDENT_CHILD = sleuth.cause_indent + '  '
+    cause_strs = []
 
     # For each subscripted argument of this union...
-    for hint_child in sleuth.hint_childs:
+    for hint_child in cause.hint_childs:
         # If this child hint is ignorable, continue to the next.
         if is_hint_ignorable(hint_child):
             continue
@@ -71,42 +73,43 @@ def find_cause_union(sleuth: ViolationCause) -> Optional[str]:
         if is_hint_pep(hint_child):
             # Non-"typing" class originating this child hint if any *OR* "None"
             # otherwise.
-            hint_child_origin_type = get_hint_pep_origin_type_isinstanceable_or_none(
-                hint_child)
+            hint_child_origin_type = (
+                get_hint_pep_origin_type_isinstanceable_or_none(hint_child))
 
             # If...
             if (
                 # This child hint originates from a non-"typing" class *AND*...
                 hint_child_origin_type is not None and
                 # This pith is *NOT* an instance of this class...
-                not isinstance(sleuth.pith, hint_child_origin_type)
+                not isinstance(cause.pith, hint_child_origin_type)
             # Then this pith fails to satisfy this child hint. In this case...
             ):
                 # Add this class to the subset of all classes this pith does
                 # *NOT* satisfy.
-                hint_classes_unsatisfied.add(hint_child_origin_type)
+                hint_types_violated.add(hint_child_origin_type)
 
                 # Continue to the next child hint.
                 continue
             # Else, this pith is an instance of this class and thus shallowly
             # (but *NOT* necessarily deeply) satisfies this child hint.
 
-            # Human-readable string describing the failure of this pith to
-            # deeply satisfy this child hint if this pith actually fails to
-            # deeply satisfy this child hint *or* "None" otherwise.
-            pith_cause_hint_child = sleuth.permute(
+            # Child hint output cause to be returned, type-checking only whether
+            # this pith deeply satisfies this child hint.
+            cause_child = cause.permute(
                 hint=hint_child,
                 cause_indent=CAUSE_INDENT_CHILD,
             ).find_cause()
 
-            # If this pith deeply satisfies this child hint, return "None".
-            if pith_cause_hint_child is None:
+            # If this pith deeply satisfies this child hint, return this cause
+            # as is.
+            if cause_child.cause_str_or_none is None:
                 # print('Union child {!r} pith {!r} deeply satisfied!'.format(hint_child, pith))
-                return None
-            # Else, this pith does *NOT* deeply satisfy this child hint.
+                return cause
+            # Else, this pith deeply violates this child hint.
 
-            # Append a cause as a discrete bullet-prefixed line.
-            causes_union.append(pith_cause_hint_child)
+            # Append the cause of this violation as a bullet-prefixed line to
+            # the running list of these lines.
+            cause_strs.append(cause_child.cause_str_or_none)
         # Else, this child hint is PEP-noncompliant. In this case...
         else:
             # Assert this child hint to be a non-"typing" class. Note that
@@ -114,28 +117,28 @@ def find_cause_union(sleuth: ViolationCause) -> Optional[str]:
             # subscripted arguments of unions are either PEP-compliant type
             # hints or non-"typing" classes.
             assert isinstance(hint_child, type), (
-                f'{sleuth.exception_prefix}union type hint '
-                f'{repr(sleuth.hint)} child hint {repr(hint_child)} invalid '
+                f'{cause.exception_prefix}union type hint '
+                f'{repr(cause.hint)} child hint {repr(hint_child)} invalid '
                 f'(i.e., neither type hint nor non-"typing" class).')
             # Else, this child hint is a non-"typing" type.
 
             # If this pith is an instance of this class, this pith satisfies
-            # this hint. In this case, return "None".
-            if isinstance(sleuth.pith, hint_child):
-                return None
+            # this hint. In this case, return this cause as is.
+            if isinstance(cause.pith, hint_child):
+                return cause
 
             # Else, this pith is *NOT* an instance of this class, implying this
             # pith to *NOT* satisfy this hint. In this case, add this class to
             # the subset of all classes this pith does *NOT* satisfy.
-            hint_classes_unsatisfied.add(hint_child)
+            hint_types_violated.add(hint_child)
 
-    # If this pith fails to shallowly satisfy one or more classes, concatenate
-    # these failures onto a discrete bullet-prefixed line.
-    if hint_classes_unsatisfied:
+    # If this pith fails to shallowly satisfy one or more of the types of this
+    # union, concatenate these failures onto one discrete bullet-prefixed line.
+    if hint_types_violated:
         # Human-readable comma-delimited disjunction of the names of these
         # classes (e.g., "bool, float, int, or str").
         cause_types_unsatisfied = join_delimited_disjunction_types(
-            hint_classes_unsatisfied)
+            hint_types_violated)
 
         # Prepend this cause as a discrete bullet-prefixed line.
         #
@@ -162,42 +165,49 @@ def find_cause_union(sleuth: ViolationCause) -> Optional[str]:
         # child hints of the average "typing.Union" in general *AND* due to the
         # fact that this function is only called when a catastrophic type-check
         # failure has already occurred.
-        causes_union.insert(0, f'not {color_hint(cause_types_unsatisfied)}')
+        cause_strs.insert(0, f'not {color_hint(cause_types_unsatisfied)}')
+    # Else, this pith shallowly satisfies *ALL* the types of this union.
 
     # If prior logic appended *NO* causes, raise an exception.
-    if not causes_union:
+    if not cause_strs:
         raise _BeartypeCallHintPepRaiseException(
-            f'{sleuth.exception_prefix}type hint '
-            f'{repr(sleuth.hint)} failure causes unknown.'
+            f'{cause.exception_prefix}type hint '
+            f'{repr(cause.hint)} failure causes unknown.'
         )
     # Else, prior logic appended one or more strings describing these failures.
 
     # Truncated object representation of this pith.
-    pith_repr = represent_pith(sleuth.pith)
+    pith_repr = represent_pith(cause.pith)
 
-    # If prior logic appended one cause, return this cause as a single-line
-    # substring intended to be embedded in a longer string.
-    if len(causes_union) == 1:
-        return f'{pith_repr} {causes_union[0]}'
-    # Else, prior logic appended two or more causes.
-
-    # Return a multiline string comprised of...
-    return '{}:\n{}'.format(
-        # This truncated object representation.
-        pith_repr,
-        # The newline-delimited concatenation of each cause as a discrete
-        # bullet-prefixed line...
-        '\n'.join(
-            '{}* {}'.format(
-                # Indented by the current indent.
-                sleuth.cause_indent,
-                # Whose first character is uppercased.
-                uppercase_char_first(
-                    # Suffixed by a period if *NOT* yet suffixed by a period.
-                    suffix_unless_suffixed(text=cause_union, suffix='.')
+    # Output cause to be returned, permuted from this input cause such that the
+    # output cause justification is either...
+    cause_return = cause.permute(cause_str_or_none=(
+        # If prior logic appended one cause, a single-line
+        # substring intended to be embedded in a longer string;
+        f'{pith_repr} {cause_strs[0]}'
+        if len(cause_strs) == 1 else
+        # Else, prior logic appended two or more causes. In this case, a
+        # multiline string comprised of...
+        '{}:\n{}'.format(
+            # This truncated object representation followed by...
+            pith_repr,
+            # The newline-delimited concatenation of each cause as a discrete
+            # bullet-prefixed line...
+            '\n'.join(
+                '{}* {}'.format(
+                    # Indented by the current indent...
+                    cause.cause_indent,
+                    # Whose first character is uppercased...
+                    uppercase_char_first(
+                        # Suffixed by a period if not yet suffixed by a period.
+                        suffix_unless_suffixed(text=cause_str, suffix='.')
+                    )
                 )
+                # '{}* {}.'.format(cause_indent, uppercase_char_first(cause_union))
+                for cause_str in cause_strs
             )
-            # '{}* {}.'.format(cause_indent, uppercase_char_first(cause_union))
-            for cause_union in causes_union
         )
-    )
+    ))
+
+    # Return this cause.
+    return cause_return
