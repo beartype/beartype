@@ -258,8 +258,8 @@ class ViolationCause(object):
     # ..................{ GETTERS                            }..................
     def find_cause(self) -> 'ViolationCause':
         '''
-        Dataclass instance describing how this pith either violates or satisfies
-        this type hint.
+        Output cause describing whether the pith of this input cause either
+        satisfies or violates the type hint of this input cause.
 
         Design
         ----------
@@ -295,8 +295,7 @@ class ViolationCause(object):
         Returns
         ----------
         ViolationCause
-            Dataclass instance describing how this pith either violates or
-            satisfies this type hint.
+            Output cause type-checking this pith against this type hint.
 
         Raises
         ----------
@@ -308,20 +307,20 @@ class ViolationCause(object):
               handle this category of PEP-compliant type hint yet.
         '''
 
-        # Getter function returning the desired string.
-        cause_finder: Callable[[ViolationCause], Optional[str]] = None  # type: ignore[assignment]
-
-        # If this hint is ignorable, all possible objects satisfy this hint,
-        # implying this hint *CANNOT* by definition be the cause of this
-        # failure. In this case, immediately report None.
+        # If this hint is ignorable, all possible objects satisfy this hint.
+        # Since this hint *CANNOT* (by definition) be the cause of this failure,
+        # return the same cause as is.
         if is_hint_ignorable(self.hint):
-            return None
+            return self
         # Else, this hint is unignorable.
-        #
+
+        # Getter function returning the desired string.
+        cause_finder: Callable[[ViolationCause], ViolationCause] = None  # type: ignore[assignment]
+
         # If *NO* sign uniquely identifies this hint, this hint is either
         # PEP-noncompliant *OR* only contextually PEP-compliant in certain
         # specific use cases. In either case...
-        elif self.hint_sign is None:
+        if self.hint_sign is None:
             # If this hint is a tuple union...
             if isinstance(self.hint, tuple):
                 # Avoid circular import dependencies.

@@ -43,7 +43,10 @@ import numbers as _numbers
 import re as _re
 from beartype.roar import BeartypeCallUnavailableTypeException
 from beartype._cave._caveabc import BoolType
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_9,
+    IS_PYTHON_AT_LEAST_3_8,
+)
 from collections import deque as _deque
 from collections.abc import (
     Collection as _Collection,
@@ -64,7 +67,6 @@ from enum import (
     EnumMeta as _EnumMeta,
 )
 from io import IOBase as _IOBase
-from sys import exc_info as _exc_info
 from typing import Any
 
 # Note that:
@@ -84,7 +86,6 @@ from typing import Any
 from types import (
     AsyncGeneratorType as _AsyncGeneratorType,
     BuiltinFunctionType as _BuiltinFunctionType,
-    CellType as _CellType,
     CoroutineType as _CoroutineType,
     FrameType as _FrameType,
     FunctionType as _FunctionType,
@@ -218,10 +219,53 @@ callables to which those callables are compiled for efficiency).
 '''
 
 
-ClosureVarCellType = _CellType
-'''
-Type of all **pure-Python closure cell variables.**
-'''
+# If the active Python interpreter targets Python >= 3.8...
+if IS_PYTHON_AT_LEAST_3_8:
+    # Defer version-specific imports.
+    from types import CellType as _CellType
+
+    # Alias this type to this standard type.
+    #
+    # Note that this is explicitly required for "nuitka" support, which supports
+    # this standard type but *NOT* the non-standard approach used to deduce this
+    # type under Python 3.7 leveraged below.
+    ClosureVarCellType = _CellType
+    '''
+    Type of all **pure-Python closure cell variables.**
+    '''
+# Else, the active Python interpreter only targets Python 3.7. In this case...
+else:
+    def _closure_varcell_factory():
+        '''
+        Arbitrary function returning a closure-specific cell variable exposed by
+        an arbitrary closure isolated to this function.
+        '''
+
+        # Arbitrary outer local variable.
+        cell_variable = 42
+
+        def closure():
+            '''
+            Arbitrary closure exposing a closure-specific cell variable.
+            '''
+
+            nonlocal cell_variable
+
+        return closure.__closure__[0]  # pyright: ignore[reportOptionalSubscript]
+
+
+    # Although Python >= 3.7 now exposes an explicit closure cell variable type
+    # via the standard "types.CellType" object, this is of no benefit to older
+    # versions of Python. Ergo, the type of an arbitrary method wrapper
+    # guaranteed to *ALWAYS* exist is obtained instead.
+    ClosureVarCellType = type(_closure_varcell_factory())  # type: ignore[misc]
+    '''
+    Type of all **pure-Python closure cell variables.**
+    '''
+
+
+    # Delete this factory function for safety.
+    del _closure_varcell_factory
 
 # ....................{ TYPES ~ call : exception           }....................
 ExceptionTracebackType = _TracebackType

@@ -176,7 +176,7 @@ def die_if_unbearable(
         # Wrap this exception in a more readable higher-level exception.
         raise BeartypeDoorHintViolation(
             message=exception_message,
-            culprit=exception.culprit,
+            culprits=exception.culprits,
         ) from exception
     # Else, this closure raised another exception. In this case, percolate this
     # exception back up this call stack.

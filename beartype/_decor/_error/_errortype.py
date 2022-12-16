@@ -14,7 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeCallHintForwardRefException
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype.typing import Optional
 from beartype._cave._cavefast import TestableTypes
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
@@ -198,7 +197,7 @@ def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
     return cause_return
 
 # ....................{ GETTERS ~ subclass : type          }....................
-def find_cause_subclass_type(cause: ViolationCause) -> Optional[str]:
+def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing whether the pith of the passed input cause either is
     or is not a subclass of the issubclassable type of that cause.
