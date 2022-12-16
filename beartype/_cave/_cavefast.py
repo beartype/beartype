@@ -84,6 +84,7 @@ from typing import Any
 from types import (
     AsyncGeneratorType as _AsyncGeneratorType,
     BuiltinFunctionType as _BuiltinFunctionType,
+    CellType as _CellType,
     CoroutineType as _CoroutineType,
     FrameType as _FrameType,
     FunctionType as _FunctionType,
@@ -216,6 +217,12 @@ Type of all **code objects** (i.e., C-based objects underlying all pure-Python
 callables to which those callables are compiled for efficiency).
 '''
 
+
+ClosureVarCellType = _CellType
+'''
+Type of all **pure-Python closure cell variables.**
+'''
+
 # ....................{ TYPES ~ call : exception           }....................
 ExceptionTracebackType = _TracebackType
 '''
@@ -229,39 +236,6 @@ CallableFrameType = _FrameType
 Type of all **call stack frame objects** (i.e., C-based objects
 encapsulating each call to each callable on the current call stack).
 '''
-
-# ....................{ TYPES ~ call : closure             }....................
-def _closure_varcell_factory():
-    '''
-    Arbitrary function returning a closure-specific cell variable exposed by an
-    arbitrary closure isolated to this function.
-    '''
-
-    # Arbitrary outer local variable.
-    cell_variable = 42
-
-    def closure():
-        '''
-        Arbitrary closure exposing a closure-specific cell variable.
-        '''
-
-        nonlocal cell_variable
-
-    return closure.__closure__[0]  # pyright: ignore[reportOptionalSubscript]
-
-
-# Although Python >= 3.7 now exposes an explicit closure cell variable type via
-# the standard "types.CellType" object, this is of no benefit to older versions
-# of Python. Ergo, the type of an arbitrary method wrapper guaranteed to
-# *ALWAYS* exist is obtained instead.
-ClosureVarCellType = type(_closure_varcell_factory())
-'''
-Type of all **pure-Python closure cell variables.**
-'''
-
-
-# Delete this factory function for safety.
-del _closure_varcell_factory
 
 # ....................{ TYPES ~ call : function            }....................
 FunctionType = _FunctionType
