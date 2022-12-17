@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -20,13 +20,13 @@ decoration time. Why? Because mocking subverts our assumptions and expectations
 about classes used as annotations.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype import beartype
 
 #FIXME: Uncomment to debug that this module is actually being imported.
 # print('Some phantom, some faint image; till the breast')
 
-# ....................{ VALIDATION                        }....................
+# ....................{ VALIDATION                         }....................
 def till_the_breast() -> str:
     '''
     Arbitrary callable *not* decorated by the :func:`beartype.beartype`

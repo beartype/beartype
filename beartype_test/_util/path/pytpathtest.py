@@ -15,7 +15,10 @@ encapsulating test-specific paths unique to this test suite).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.meta import PACKAGE_NAME
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype_test._util.path.pytpathlib import DirRelative  #, FileRelative
+from beartype_test._util.path.pytpathlib import (
+    DirRelative,
+    FileRelative,
+)
 from pathlib import Path
 
 # ....................{ GETTERS ~ dir                      }....................
@@ -76,6 +79,19 @@ def get_test_func_data_lib_dir() -> Path:
 
 
 @callable_cached
+def get_test_func_data_lib_nuitka_dir() -> Path:
+    '''
+    :mod:`Path` encapsulating the absolute dirname of the **low-level nuitka
+    functional test data directory** (i.e., directory providing sample code
+    used throughout this project's :mod:`nuitka`-specific functional tests) if
+    found *or* raise an exception otherwise.
+    '''
+
+    # Nascent ascendency!
+    return DirRelative(get_test_func_data_lib_dir(), 'nuitka')
+
+
+@callable_cached
 def get_test_func_data_lib_sphinx_dir() -> Path:
     '''
     :mod:`Path` encapsulating the absolute dirname of the **low-level Sphinx
@@ -86,3 +102,17 @@ def get_test_func_data_lib_sphinx_dir() -> Path:
 
     # Flamboyant buoyancy!
     return DirRelative(get_test_func_data_lib_dir(), 'sphinx')
+
+# ....................{ GETTERS ~ file : func : lib        }....................
+@callable_cached
+def get_test_func_data_lib_nuitka_file() -> Path:
+    '''
+    :mod:`Path` encapsulating the absolute filename of the **low-level nuitka
+    functional test data file** (i.e., file providing sample code used
+    throughout this project's :mod:`nuitka`-specific functional tests) if found
+    *or* raise an exception otherwise.
+    '''
+
+    # Ergastically eristic!
+    return FileRelative(
+        get_test_func_data_lib_nuitka_dir(), 'beartype_nuitka.py')

@@ -16,7 +16,10 @@ documentation for the third-party :mod:`sphinx` package.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip, skip_unless_package
+from beartype_test._util.mark.pytskip import (
+    skip,
+    skip_unless_package,
+)
 
 # ....................{ TESTS                              }....................
 #FIXME: Reenable this once we resolve how to actually do so. Currently, the

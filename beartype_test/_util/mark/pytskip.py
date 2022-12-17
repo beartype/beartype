@@ -120,7 +120,7 @@ def skip_unless_pathable(command_basename: str):
         decorator reducing to a noop otherwise.
     '''
 
-    # Defer test-specific imports.
+    # Defer heavyweight imports.
     from beartype_test._util.cmd.pytcmdpath import is_pathable
 
     # Skip this test if *NO* command with this basename resides in the ${PATH}.
@@ -142,11 +142,34 @@ def skip_if_ci():
         CI-hosted *or* the identity decorator reducing to a noop otherwise.
     '''
 
-    # Defer test-specific imports.
+    # Defer heavyweight imports.
     from beartype_test._util.pytci import is_ci
 
     # Skip this test if the active Python interpreter is CI-hosted.
     return skip_if(is_ci(), reason='Incompatible with CI workflows.')
+
+# ....................{ SKIP ~ os                          }....................
+def skip_unless_os_linux():
+    '''
+    Skip the decorated test or fixture unless the active Python interpreter is
+    running under a Linux distribution.
+
+    Equivalently, skip the decorated test or fixture if this interpreter is
+    running under either Microsoft Windows *or* Apple macOS.
+
+    Returns
+    ----------
+    pytest.skipif
+        Decorator skipping this text or fixture unless this interpreter is
+        running under a Linux distribution *or* the identity decorator reducing
+        to a noop otherwise.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.os.utilostest import is_os_linux
+
+    # Skip this test unless the current platform is Linux
+    return skip_if(not is_os_linux(), reason='OS not Linux.')
 
 # ....................{ SKIP ~ pep                         }....................
 #FIXME: Currently unused, but preserved in the likelihood of us requiring

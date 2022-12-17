@@ -51,7 +51,7 @@ def test_beartype_in_sphinx(tmp_path) -> None:
         test, created in the base temporary directory.
     '''
 
-    # ..................{ SPHINX-BUILD                       }..................
+    # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype import beartype
     from beartype._util.mod.lib.utilsphinx import (
@@ -65,6 +65,7 @@ def test_beartype_in_sphinx(tmp_path) -> None:
     # command-line arguments) underlying the external "sphinx-build" command.
     from sphinx.cmd.build import main as sphinx_build
 
+    # ..................{ SPHINX-BUILD                       }..................
     # List of all command-line options (i.e., "-"-prefixed strings) to be
     # effectively passed to the external "sphinx-build" command.
     #
@@ -99,8 +100,8 @@ def test_beartype_in_sphinx(tmp_path) -> None:
         # containing a sample Sphinx structure exercising edge cases in the
         # @beartype decorator.
         str(get_test_func_data_lib_sphinx_dir()),
-        # Absolute or relative dirname of a test-specific temporary directory
-        # to which Sphinx will emit ignorable rendered documentation files.
+        # Absolute or relative dirname of a test-specific temporary directory to
+        # which Sphinx will emit ignorable rendered documentation files.
         str(tmp_path),
     ]
 

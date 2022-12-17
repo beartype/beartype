@@ -17,6 +17,18 @@ from sys import platform as sys_platform
 
 # ....................{ TESTERS                            }....................
 @callable_cached
+def is_os_linux() -> bool:
+    '''
+    ``True`` only if the current platform is a **Linux distribution.**
+
+    This tester is memoized for efficiency.
+    '''
+
+    return platform_system() == 'Linux'
+
+
+
+@callable_cached
 def is_os_macos() -> bool:
     '''
     ``True`` only if the current platform is **Apple macOS**, the operating

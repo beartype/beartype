@@ -45,7 +45,7 @@ from beartype_test._util.mark.pytskip import (
 #   absolutely isn't, but what you gonna do, right?
 #
 # Skip this "mypy"-specific functional test unless all of the following apply:
-# * The "mypy" package is unimportable under the active Python interpreter.
+# * The "mypy" package is importable under the active Python interpreter.
 # * The active Python interpreter is *NOT* PyPy. mypy is currently incompatible
 #   with PyPy for inscrutable reasons that should presumably be fixed at some
 #   future point. See also:
@@ -59,6 +59,7 @@ def test_pep561_mypy() -> None:
     type checker as of this test) against this project's top-level package.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.py.utilpyinterpreter import get_interpreter_filename
     from beartype_test._util.cmd.pytcmdrun import (
@@ -68,6 +69,7 @@ def test_pep561_mypy() -> None:
         get_main_package_dir,
     )
 
+    # ....................{ COMMAND                        }....................
     # Tuple of all shell words with which to run the external "mypy" command.
     MYPY_ARGS = (
         # Absolute filename of the executable running the active Python process.
@@ -98,6 +100,7 @@ def test_pep561_mypy() -> None:
     mypy_stdout, mypy_stderr = run_command_return_stdout_stderr(
         command_words=MYPY_ARGS)
 
+    # ....................{ ASSERT                         }....................
     # Assert "mypy" to have emitted *NO* warnings or errors to either standard
     # output or error.
     #
@@ -241,11 +244,13 @@ def test_pep561_pyright() -> None:
             mine, support will be minimal.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.meta import PACKAGE_NAME
     from beartype._util.py.utilpyversion import get_python_version_major_minor
     from beartype_test._util.cmd.pytcmdrun import run_command_forward_output
 
+    # ....................{ COMMAND                        }....................
     # Tuple of all shell words with which to run the external "pyright" command.
     PYRIGHT_ARGS = (
         # Basename of the external "pyright" command to be run.

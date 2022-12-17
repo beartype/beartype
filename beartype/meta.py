@@ -359,6 +359,15 @@ LIBS_TESTTIME_OPTIONAL = (
     #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
     'mypy >=0.800; platform_python_implementation != "PyPy"',
 
+    #FIXME: Let's avoid attempting to remotely compile with nuitka under GitHub
+    #Actions-hosted continuous integration (CI) for the moment. Doing so is
+    #non-trivial enough under local testing workflows. *sigh*
+    # Require a reasonably recent version of nuitka if the current platform is a
+    # Linux distribution *AND* the active Python interpreter targets Python >=
+    # 3.8. For questionable reasons best ignored, nuitka fails to compile
+    # beartype under Python <= 3.7.
+    # 'nuitka >=1.2.6; sys_platform == "linux" and python_version >= "3.8.0"',
+
     #FIXME: Consider dropping the 'and platform_python_implementation != "PyPy"'
     #clause now that "tox.ini" installs NumPy wheels from a third-party vendor
     #explicitly supporting PyPy.
