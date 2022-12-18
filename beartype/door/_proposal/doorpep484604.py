@@ -70,21 +70,22 @@ class UnionTypeHint(_TypeHintSubscripted):
         # hint is the "typing.Any" catch-all.
         if not isinstance(other, UnionTypeHint):
             return other._hint is Any
-        # Else, that hint is a partially ordered union type hint.
+        # Else, that hint is also a union type hint.
 
-        # FIXME: O(n^2) complexity ain't that great. Perhaps that's unavoidable
-        # here, though? Contemplate optimizations, please.
-
-        # every branch in this Union must be a member of the other Union
-        for branch in self._branches:
-            # If any item in this Union is not present in other_hint._branches,
-            # this hint is incompatible with that hint.
-            if not any(
-                branch <= other_branch for other_branch in other._branches):
-                return False
-
-        # Else, we're good.
-        return True
+        # Return true only if *EVERY* child type hint of this union is a subhint
+        # of at least one other child type hint of the passed other union.
+        #
+        # Note that this test has O(n**2) time complexity. Although non-ideal,
+        # this is also unavoidable. Thankfully, since most real-world unions are
+        # subscripted by only a small number of child type hints, this is also
+        # mostly ignorable in practice.
+        return all(
+            any(
+                this_branch.is_subhint(that_branch)
+                for that_branch in other._branches
+            )
+            for this_branch in self._branches
+        )
 
     # ..................{ PRIVATE ~ properties               }..................
     @property
