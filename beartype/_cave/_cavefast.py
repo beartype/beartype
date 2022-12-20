@@ -192,7 +192,7 @@ Depressingly, this type must now be manually redefined everywhere.
 '''
 
 
-NotImplementedType: type = type(NotImplemented)
+NotImplementedType: type = type(NotImplemented)  # type: ignore[misc]
 '''
 Type of the ``NotImplemented`` singleton.
 '''
@@ -222,7 +222,7 @@ callables to which those callables are compiled for efficiency).
 # If the active Python interpreter targets Python >= 3.8...
 if IS_PYTHON_AT_LEAST_3_8:
     # Defer version-specific imports.
-    from types import CellType as _CellType
+    from types import CellType as _CellType  # type: ignore[attr-defined]
 
     # Alias this type to this standard type.
     #

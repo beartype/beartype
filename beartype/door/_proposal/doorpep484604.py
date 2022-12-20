@@ -45,6 +45,7 @@ class UnionTypeHint(_TypeHintSubscripted):
         #applicable to *ALL* type hints and should thus reside in the "TypeHint"
         #superclass. Do so as follows, please:
         #* Define TypeHint.is_subhint() to resemble:
+        #      @callable_cached
         #      def is_subhint(self, other: TypeHint) -> bool:
         #
         #          # If the passed object is *NOT* a type hint wrapper, raise an exception.
@@ -62,7 +63,9 @@ class UnionTypeHint(_TypeHintSubscripted):
         #          raise NotImplementedError(  # pragma: no cover
         #              'Abstract method TypeHint._is_subhint() undefined.')
         #* Rename all subclass is_subhint() methods to _is_subhint().
-        #* Remove all "die_unless_typehint(other)" calls from those methods.
+        #* Remove from those methods:
+        #  * All "die_unless_typehint(other)" calls.
+        #  * All @callable_cached decorations.
         #* Reduce all "other._hint is Any" tests to just "False" in those
         #  methods.
 
@@ -85,6 +88,39 @@ class UnionTypeHint(_TypeHintSubscripted):
                 for that_branch in other._branches
             )
             for this_branch in self._branches
+        )
+
+
+    #FIXME: Document why this is required, please.
+    #FIXME: Unit test us up, please.
+    # Note that we intentionally avoid typing this method as returning
+    # "Union[bool, NotImplementedType]". Why? Because mypy in particular has
+    # epileptic fits about "NotImplementedType". This is *NOT* worth the agony!
+    @callable_cached
+    def __eq__(self, other: object) -> bool:
+
+        # Return true only if either...
+        return (
+            # If that object is *NOT* an instance of the same class, it is both
+            # the case that...
+            #
+            # Note that this conditional implements the trivial boolean
+            # syllogism that we all know: "If A <= B and B <= A, then A == B".
+            (  # type: ignore[return-value]
+                # This union is a subhint of that object.
+                self.is_subhint(other) and
+                # That object is a subhint of this union.
+                other.is_subhint(self)
+            )
+            if isinstance(other, TypeHint) else
+            # Else, that object is *NOT* an instance of the same class. In this
+            # case, defer to either:
+            # * If the class of that object defines a similar __eq__() method
+            #   supporting the "TypeHint" API, that method.
+            # * Else, Python's builtin C-based fallback equality comparator that
+            #   merely compares whether two objects are identical (i.e., share
+            #   the same object ID).
+            NotImplemented
         )
 
     # ..................{ PRIVATE ~ properties               }..................

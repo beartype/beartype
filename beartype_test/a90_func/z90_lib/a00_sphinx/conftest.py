@@ -1,21 +1,18 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2022 Beartype authors.
 # See "LICENSE" for further details.
 
 
 '''
-:mod:`pytest` **Sphinx test configuration** (i.e., early-time configuration
-guaranteed to be run by :mod:`pytest` *after* passed command-line arguments are
-parsed).
+:mod:`pytest` **Sphinx test plugin** (i.e., early-time configuration guaranteed
+to be run by :mod:`pytest` *after* passed command-line arguments are parsed).
 
 :mod:`pytest` implicitly imports *all* functionality defined by this module
 into *all* submodules of this subpackage.
 '''
 
-# ....................{ IMPORTS                           }....................
-
-# ....................{ PLUGINS                           }....................
+# ....................{ IMPORTS                            }....................
 # Attempt to...
 try:
     # Import the Sphinx-specific make_app() fixture required to portably test

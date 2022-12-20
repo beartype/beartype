@@ -193,6 +193,9 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         return f'TypeHint({repr(self._hint)})'
 
     # ..................{ DUNDERS ~ compare : equals         }..................
+    # Note that we intentionally avoid typing this method as returning
+    # "Union[bool, NotImplementedType]". Why? Because mypy in particular has
+    # epileptic fits about "NotImplementedType". This is *NOT* worth the agony!
     @callable_cached
     def __eq__(self, other: object) -> bool:
         '''
@@ -205,13 +208,15 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         :meth:`dict.get`) that are expected to be ``O(1)`` fast.
         '''
 
-        # If that object is *NOT* an instance of the same class, defer to the
-        # __eq__() method defined by the class of that object instead.
+        # If that object is *NOT* an instance of the same class, defer to
+        # either:
+        # * If the class of that object defines a similar __eq__() method
+        #   supporting the "TypeHint" API, that method.
+        # * Else, Python's builtin C-based fallback equality comparator that
+        #   merely compares whether two objects are identical (i.e., share the
+        #   same object ID).
         if not isinstance(other, TypeHint):
-            # FIXME: Actually, don't we need to return "NotImplemented" here for
-            # Python to implicitly defer to the __eq__() method defined by the
-            # class of that object instead? Pretty sure. Investigate, please!
-            return False
+            return NotImplemented
         # Else, that object is an instance of the same class.
         #
         # If *ALL* of the child type hints subscripting both of these parent
@@ -242,7 +247,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
 
     def __ne__(self, other: object) -> bool:
-        return not self.__eq__(other)
+        return not (self == other)
 
     # ..................{ DUNDERS ~ compare : rich           }..................
     def __le__(self, other: object) -> bool:

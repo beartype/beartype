@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) API object-oriened
+**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) API object-oriented
 unit tests.**
 
 This submodule unit tests the subset of the public API of the public
@@ -16,95 +16,6 @@ This submodule unit tests the subset of the public API of the public
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import fixture
-
-# ....................{ FIXTURES                           }....................
-@fixture(scope='session')
-def hint_equality_cases() -> 'Iterable[Tuple[object, object, bool]]':
-    '''
-    Session-scoped fixture returning an iterable of **hint equality cases**
-    (i.e., 3-tuples ``(hint_a, hint_b, is_equal)`` describing the equality
-    relations between two PEP-compliant type hints), efficiently cached across
-    all tests requiring this fixture.
-
-    This iterable is intentionally defined by the return of this fixture rather
-    than as a global constant of this submodule. Why? Because the former safely
-    defers all heavyweight imports required to define this iterable to the call
-    of the first unit test requiring this fixture, whereas the latter unsafely
-    performs those imports at pytest test collection time.
-
-    Returns
-    --------
-    Iterable[Tuple[object, object, bool]]
-        Iterable of one or more 3-tuples ``(hint_a, hint_b, is_equal)``,
-        where:
-
-        * ``hint_a`` is the PEP-compliant type hint to be passed as the first
-          parameter to the :meth:`beartype.door.TypeHint.__equals__` tester.
-        * ``hint_b`` is the PEP-compliant type hint to be passed as the second
-          parameter to the :meth:`beartype.door.TypeHint.__equals__` tester.
-        * ``is_equal`` is ``True`` only if these hints are equal according to
-          that tester.
-    '''
-
-    # ..................{ IMPORTS                            }..................
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-
-    # Intentionally import from "typing" rather than "beartype.typing" to
-    # guarantee PEP 484-compliant type hints.
-    from typing import (
-        Any,
-        List,
-        Tuple,
-        Union,
-    )
-
-    # ..................{ LISTS                              }..................
-    HINT_EQUALITY_CASES = [
-        (tuple, Tuple, True),
-        (list, list, True),
-        (list, List, True),
-        (list, List[Any], True),
-
-        #FIXME: *UGH.* This used to pass, but we're honestly not quite sure why.
-        #To get this to pass now, it looks like we'll need to override
-        #UnionTypeHint._make_args() to coerce its arguments into a set and then
-        #back into a tuple to destroy arbitrary user-defined orderings: e.g.,
-        #    class UnionTypeHint(...):
-        #        def _make_args(self) -> Tuple[object, ...]:
-        #            args_ordered = super()._make_args()
-        #            return tuple(set(args_ordered))
-
-        # (Union[int, str], Union[str, int], True),
-
-        (Union[int, str], Union[str, list], False),
-        (tuple, Tuple[Any, ...], True),
-    ]
-
-    # If the active Python interpreter targets Python >= 3.9 and thus supports
-    # both PEP 585 and 593...
-    if IS_PYTHON_AT_LEAST_3_9:
-        from beartype.typing import Annotated
-        from collections.abc import (
-            Awaitable as AwaitableABC,
-            Sequence as SequenceABC,
-        )
-
-        # Append cases exercising version-specific relations.
-        HINT_EQUALITY_CASES.extend((
-            # PEP 585-compliant type hints.
-            (tuple[str, ...], Tuple[str, ...], True),
-            (list[str], List[str], True),
-            (AwaitableABC[SequenceABC[int]], AwaitableABC[SequenceABC[int]], True),
-
-            # PEP 593-compliant type hints.
-            (Annotated[int, "hi"], Annotated[int, "hi"], True),
-            (Annotated[int, "hi"], Annotated[int, "low"], False),
-            (Annotated[int, "hi"], Annotated[int, "low"], False),
-        ))
-
-    # Return this mutable list coerced into an immutable tuple for safety.
-    return tuple(HINT_EQUALITY_CASES)
 
 # ....................{ TESTS ~ dunder ~ creation          }....................
 def test_door_typehint_new() -> None:
@@ -215,13 +126,13 @@ def test_door_typehint_repr() -> None:
 
 # ....................{ TESTS ~ dunders : compare          }....................
 def test_door_typehint_equals(
-    hint_equality_cases: 'Iterable[Tuple[object, object, bool]]') -> None:
+    door_cases_equality: 'Iterable[Tuple[object, object, bool]]') -> None:
     '''
     Test the :meth:`beartype.door.TypeHint.__equals__` dunder method.
 
     Parameters
     ----------
-    hint_equality_cases : Iterable[Tuple[object, object, bool]]
+    door_cases_equality : Iterable[Tuple[object, object, bool]]
         Iterable of one or more 3-tuples ``(hint_a, hint_b, is_equal)``,
         declared by the :func:`hint_subhint_cases` fixture.
     '''
@@ -244,7 +155,7 @@ def test_door_typehint_equals(
     nonhint = b'Of insects, beasts, and birds, becomes its spoil;'
 
     # For each equality relation to be tested...
-    for hint_a, hint_b, IS_EQUAL in hint_equality_cases:
+    for hint_a, hint_b, IS_EQUAL in door_cases_equality:
         # "TypeHint" instances encapsulating these hints.
         typehint_a = TypeHint(hint_a)
         typehint_b = TypeHint(hint_b)
