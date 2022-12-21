@@ -48,6 +48,7 @@ def door_cases_equality() -> 'Iterable[Tuple[object, object, bool]]':
     '''
 
     # ..................{ IMPORTS                            }..................
+    # Defer fixture-specific imports.
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
     # Intentionally import from "typing" rather than "beartype.typing" to
@@ -61,24 +62,37 @@ def door_cases_equality() -> 'Iterable[Tuple[object, object, bool]]':
 
     # ..................{ LISTS                              }..................
     HINT_EQUALITY_CASES = [
+        # ..................{ HINTS ~ argless : bare         }..................
+        # PEP 484-compliant unsubscripted type hints, which are necessarily
+        # equal to themselves.
         (tuple, Tuple, True),
         (list, list, True),
         (list, List, True),
+
+        # ..................{ HINTS ~ arg : sequence         }..................
+        # PEP 484-compliant sequence type hints.
         (list, List[Any], True),
-
-        #FIXME: *UGH.* This used to pass, but we're honestly not quite sure why.
-        #To get this to pass now, it looks like we'll need to override
-        #UnionTypeHint._make_args() to coerce its arguments into a set and then
-        #back into a tuple to destroy arbitrary user-defined orderings: e.g.,
-        #    class UnionTypeHint(...):
-        #        def _make_args(self) -> Tuple[object, ...]:
-        #            args_ordered = super()._make_args()
-        #            return tuple(set(args_ordered))
-
-        # (Union[int, str], Union[str, int], True),
-
-        (Union[int, str], Union[str, list], False),
         (tuple, Tuple[Any, ...], True),
+
+        # ..................{ HINTS ~ arg : union            }..................
+        # PEP 484-compliant union type hints.
+        (Union[int, str], Union[str, list], False),
+
+        # Test that union equality ignores order.
+        (Union[int, str], Union[str, int], True),
+
+        # Test that union equality compares child type hints collectively rather
+        # than individually. See commentary preceding the UnionTypeHint.__eq__()
+        # method for further details.
+        #
+        # Note that this pair of cases tests numerous edge cases, including:
+        # * Equality comparison of non-unions against unions. Although
+        #   "Union[int]" superficially appears to be a union, Python reduces
+        #   "Union[int]" to simply "int" at runtime.
+        (Union[bool, int], Union[int], True),
+
+        #FIXME: Resolve this, please. Currently, this is failing. *sigh*
+        # (Union[int], Union[bool, int], True),
     ]
 
     # If the active Python interpreter targets Python >= 3.9 and thus supports
@@ -136,6 +150,7 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     '''
 
     # ..................{ IMPORTS                            }..................
+    # Defer fixture-specific imports.
     import collections.abc
     import typing
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars

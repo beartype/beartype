@@ -69,12 +69,6 @@ class UnionTypeHint(_TypeHintSubscripted):
         #* Reduce all "other._hint is Any" tests to just "False" in those
         #  methods.
 
-        # If that hint is *NOT* also a union type hint, return true only if that
-        # hint is the "typing.Any" catch-all.
-        if not isinstance(other, UnionTypeHint):
-            return other._hint is Any
-        # Else, that hint is also a union type hint.
-
         # Return true only if *EVERY* child type hint of this union is a subhint
         # of at least one other child type hint of the passed other union.
         #
@@ -83,21 +77,60 @@ class UnionTypeHint(_TypeHintSubscripted):
         # subscripted by only a small number of child type hints, this is also
         # mostly ignorable in practice.
         return all(
-            any(
-                this_branch.is_subhint(that_branch)
-                for that_branch in other._branches
+            # For each child type hint subscripting this union...
+            (
+                # If that other type hint is itself a union, true only if...
+                any(
+                    # For at least one other child type hint subscripting that
+                    # other union, this child type hint is a subhint of that
+                    # other child type hint.
+                    this_branch.is_subhint(that_branch)
+                    for that_branch in other._branches
+                ) if isinstance(other, UnionTypeHint) else
+                # Else, that other type hint is *NOT* a union. In this case,
+                # true only if this child type hint is a subhint of that other
+                # type hint.
+                #
+                # Note that this is a common edge case. Examples include:
+                # * "TypeHint(Union[...]) <= TypeHint(Any)". Although "Any" is
+                #   *NOT* a union, *ALL* unions are subhints of "Any".
+                # * "TypeHint(Union[A, B]) <= TypeHint(Union[A])" where "A" is
+                #   the superclass of "B". Since Python reduces "Union[A]" to
+                #   just "A", this is exactly equivalent to the comparison
+                #   "TypeHint(Union[A, B]) <= TypeHint(A)". Although "A" is
+                #   *NOT* a union, this example clearly demonstrates that a
+                #   union may be a subhint of a non-union that is *NOT* "Any" --
+                #   contrary to intuition. Examples include:
+                #   * "TypeHint(Union[int, bool]) <= TypeHint(Union[int])".
+                this_branch.is_subhint(other)
             )
             for this_branch in self._branches
         )
 
 
-    #FIXME: Document why this is required, please.
     #FIXME: Unit test us up, please.
+    # Override the default equality comparison with a union-specific comparison.
+    # Union equality compares child type hints collectively (i.e., with respect
+    # to *ALL* children subscripting those unions as a unified whole) rather
+    # than individually (i.e., with respect to only each child subscripting
+    # those unions as a distinct member). The default equality comparison
+    # only compares child type hints individually. Although doing so suffices
+    # for most type hints, unions are effectively sets of child type hints.
+    # Individuality is irrelevant; only the collective matters. Welcome to the
+    # Union Borg. We do hope you enjoy your stay, Locutius of QA.
+    #
     # Note that we intentionally avoid typing this method as returning
     # "Union[bool, NotImplementedType]". Why? Because mypy in particular has
     # epileptic fits about "NotImplementedType". This is *NOT* worth the agony!
     @callable_cached
     def __eq__(self, other: object) -> bool:
+
+        #FIXME: Note that this could probably be marginally optimized by
+        #duplicating the iteration performed by the is_subhint() tester here,
+        #refactored to perform the desired dual comparison. However, efficiency
+        #is *NOT* a prominent concern for the DOOR API. Since performing this
+        #optimization would violate DRY while *NOT* improving the Big-Oh
+        #computational complexity of this operation, we avoid doing so.
 
         # Return true only if either...
         return (

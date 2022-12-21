@@ -205,11 +205,10 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         This tester is memoized for efficiency, as Python implicitly calls this
         dunder method on hashable-based container lookups (e.g.,
-        :meth:`dict.get`) that are expected to be ``O(1)`` fast.
+        :meth:`dict.get`) expected to be ``O(1)`` fast.
         '''
 
-        # If that object is *NOT* an instance of the same class, defer to
-        # either:
+        # If that object is *NOT* a type hint wrapper, defer to either:
         # * If the class of that object defines a similar __eq__() method
         #   supporting the "TypeHint" API, that method.
         # * Else, Python's builtin C-based fallback equality comparator that
@@ -217,8 +216,16 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         #   same object ID).
         if not isinstance(other, TypeHint):
             return NotImplemented
-        # Else, that object is an instance of the same class.
-        #
+        # Else, that object is also a type hint wrapper.
+
+        #FIXME: *OKAY.* Refactor this as follows:
+        #* Shift all of the following into a new
+        #  _TypeHintOriginIsinstanceable.__eq__() implementation, please.
+        #* Shift the existing UnionTypeHint.__eq__() implementation here. That
+        #  implementation turns out to be the most general-purpose approach --
+        #  albeit overly inefficient for the common case, which is why we'll
+        #  preserve this approach below for most type hints.
+
         # If *ALL* of the child type hints subscripting both of these parent
         # type hints are ignorable, return true only if these parent type hints
         # both originate from the same isinstanceable class.
@@ -241,6 +248,9 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # Return true only if all child type hints of these hints are equal.
         return all(
             self_child == other_child
+            #FIXME: Probably more efficient and maintainable to write this as:
+            #    for this_child in self
+            #    for that_child in other
             for self_child, other_child in zip(
                 self._args_wrapped_tuple, other._args_wrapped_tuple)
         )

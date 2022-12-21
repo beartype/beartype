@@ -151,7 +151,7 @@ def test_door_typehint_equals(
     # "hint_equality_cases" iterable.
     typehint_unequal = TypeHint(Generator[Union[list, str], str, None])
 
-    # Arbitrary non-hint object.
+    # Arbitrary non-hint object. Note that strings are valid type hints!
     nonhint = b'Of insects, beasts, and birds, becomes its spoil;'
 
     # For each equality relation to be tested...
@@ -166,12 +166,12 @@ def test_door_typehint_equals(
 
         # Assert this tester returns the expected boolean for each such hint and
         # another arbitrary hint guaranteed to be unequal to these hints. In
-        # other words, this performs a smoke test.
+        # other words, perform a smoke test.
         assert typehint_a != typehint_unequal
         assert typehint_b != typehint_unequal
 
         # Assert this tester returns the expected boolean for each such hint and
-        # an arbitrary non-hint. In other words, this performs a smoke test.
+        # an arbitrary non-hint. In other words, perform another smoke test.
         assert typehint_a != nonhint
         assert typehint_b != nonhint
 
