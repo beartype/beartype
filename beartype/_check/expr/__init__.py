@@ -295,6 +295,262 @@
 #configuration setting). Some users might simply prefer to *ALWAYS* look up a
 #fixed 0-based index (e.g., "0", "-1"). For the moment, however, the above
 #probably makes the most sense as a reasonably general-purpose default.
+#FIXME: [THIS-IS-BOSS] *AH-HA.* First, note that the above
+#_get_dict_nonempty_random_key() concept, while clever, is largely useless. Why?
+#Because *ALL* builtin C-based reiterables (e.g., dict, set) are slotted. We'd
+#might as well just ignore that and leap straight to a general-purpose answer.
+#
+#Indeed, we've *FINALLY* realized how to genuinely perform iterative access to
+#arbitrary non-sequence containers in an O(1) manner *WITHOUT* introducing
+#memory leaks or requiring asynchronous background shenanigans. The core conceit
+#is quite simple, really. Internally:
+#
+#* @beartype maintains two global dictionaries:
+#  * A global "_REITERABLE_ID_TO_WEAKPROXY" dictionary mapping from the object
+#    ID of each reiterable that has been previously type-checked by @beartype to
+#    at least once to a strong reference to a "weakref.proxy" instance safely
+#    proxying that reiterable.
+#  * A global "_REITERABLE_ID_TO_ITER" dictionary mapping from the object ID of
+#    each reiterable that has been previously type-checked by @beartype to
+#    at least once to a strong reference to an iterator over that
+#    "weakref.proxy" instance safely proxying that reiterable.
+#
+#  This approach substantially reduces the negative harms associated with memory
+#  leaks -- although one worst-case memory leak *DOES* still remain. Notably,
+#  since these proxies are themselves discrete objects, storing strong
+#  references to both these proxies and these iterators could under worst-case
+#  behaviour consume all available space. Ergo, this dictionary will need to be
+#  efficiently maintained as a large (but still limited) LRU cache. Ideally, the
+#  real-world size of this cache should be bound to a maximum of (say) 1MB space
+#  consumption. Since only proxy shim objects and iterators over those objects
+#  are stored (and we expect the size of these proxies and iterators to be quite
+#  small), this cache *SHOULD* be able to support an exceedingly large number of
+#  proxies before becoming full.
+#
+#  Since this dictionary is only leveraged for type-checking, thread
+#  synchronization is irrelevant (although, of course, care should be taken to
+#  ensure that this dictionary remains internally consistent regardless of
+#  thread preemption).
+#* @beartype provides a trivial _get_reiterable_item_next() getter for use in
+#  dynamically generated type-checking code, which will then call that getter
+#  rather than iter() on reiterables to retrieve an effectively random item from
+#  those reiterables. Internally, this getter leverages the above global
+#  dictionaries as follows:
+#      # Note that this getter assumes the passed reiterable to be *NON-EMPTY.*
+#      # It is the caller's responsibility to ensure that (e.g., by explicitly
+#      # calling "len(reiterable)" or "bool(reiterable)" *BEFORE* calling this
+#      # getter). Trivial, but worth noting. For efficiency, this getter
+#      # intentionally does *NOT* explicitly validate that constraint.
+#      def _get_reiterable_item_next(
+#          reiterable: _BeartypeReiterableTypes) -> object:
+#
+#          #FIXME: Curiously, some C-based containers *DO* support weak
+#          #references. Crucially, this includes sets, frozensets, arrays, and
+#          #deques. Dicts, however, do *NOT*. Are dicts the only notable
+#          #exceptions? Not quite. *ANY* user-defined reiterable defining
+#          #"__slots__" that does *NOT* contain the string '__weakref__' also
+#          #does *NOT* support weak references. In short, we can really only
+#          #perform the following for a small subset of type hints: e.g.,
+#          #* "typing.Deque".
+#          #* "typing.FrozenSet".
+#          #* "typing.Set".
+#          #
+#          #Aaaaaaand... we're pretty sure that's it. Three is better than
+#          #nothing, of course. But... that's still not that great. We could try
+#          #to dynamically test for weak-referenceability -- except we're pretty
+#          #sure that that *CANNOT* be done efficiently in the general case.
+#          #We'd need to either:
+#          #* Call dir(), which dynamically creates and returns a new dict.
+#          #  That's right out.
+#          #* Access "__dict__" directly, which is only defined for pure-Python
+#          #  instances. That attribute does *NOT* exist for C-based instances.
+#          #
+#          #Actually, the most efficient detection heuristic would probably be:
+#          #* Define yet another global
+#          #  "_REITERABLE_TYPE_TO_IS_WEAKREFFABLE" dictionary mapping from
+#          #  reiterable types to boolean "True" only if those types can be
+#          #  weakly referenced. This dictionary can be pre-initialized for
+#          #  efficiency with the most common builtin C-based reiterable types
+#          #  in a global context as follows:
+#          #      _REITERABLE_TYPE_TO_IS_WEAKREFFABLE = {
+#          #          DefaultDict: False,
+#          #          dict: False,
+#          #          deque: True,
+#          #          frozenset: True,
+#          #          set: True,
+#          #      }
+#          #  We don't bother LRU-bounding that. Size is irrelevant here.
+#          #* Likewise, define yet another globl
+#          #  "_REITERABLE_TYPE_TO_IS_LENGTHHINTED" dictionary mapping from
+#          #  reiterable types to boolean "True" only if those types define
+#          #  iterators defining semantically meaningful __length_hint__()
+#          #  dunder methods. Since detecting that at runtime is infeasible, we
+#          #  simply preallocate that to those we do know about:
+#          #      _REITERABLE_TYPE_TO_IS_LENGTHHINTED = {
+#          #          deque: True,  # <-- unsure if true, actually *shrug*
+#          #          frozenset: True,
+#          #          set: True,
+#          #      }
+
+#          #* Given that, we then efficiently detect weak-referenceability:
+#
+#          REITERABLE_TYPE = reiterable.__class__
+#
+#          #FIXME: Again, optimize ...get() method access, please.
+#          reiterable_is_weakreffable = (
+#              _REITERABLE_TYPE_TO_IS_WEAKREFFABLE.get(REITERABLE_TYPE))
+#
+#          if reiterable_is_weakreffable is None:
+#              reiterable_dict = getattr(reiterable, '__dict__')
+#              #FIXME: Alternately, we could try just taking a weak proxy
+#              #of this reiterable and catching exceptions. Although
+#              #slower, this caching operation only occurs once per type.
+#              #For now, let's run with this faster heuristic.
+#              if not reiterable_dict:
+#                  reiterable_is_weakreffable = False
+#              else:
+#                  reiterable_slots = reiterable_dict.get('__slots__')
+#                  reiterable_is_weakreffable = (
+#                      reiterable_slots and
+#                      '__weakref__' not in reiterable_slots
+#                  )
+#              _REITERABLE_TYPE_TO_IS_WEAKREFFABLE[REITERABLE_TYPE] = (
+#                  reiterable_is_weakreffable)
+#
+#          # If this reiterable is a C-based container that does *NOT* support
+#          # weak references, reduce to simply returning the first item of this
+#          # reiterable.
+#          if not reiterable_is_weakreffable:
+#              return next(iter(reiterable))
+#
+#          REITERABLE_ID = id(reiterable)
+#
+#          #FIXME: Optimize by storing and calling a bound
+#          #"_REITERABLE_ID_TO_ITER_get" method instead, please.
+#          reiterable_iter = _REITERABLE_ID_TO_ITER.get(REITERABLE_ID)
+#
+#          if reiterable_iter:
+#              #FIXME: Note that this can be conditionally optimized for
+#              #iterators that define the PEP 424-compliant __length_hint__()
+#              #dunder method -- which thankfully appears to be *ALL* iterators
+#              #over C-based reiterables (e.g., dicts, sets). For these objects,
+#              #__length_hint__() provides the number of remaining items in the
+#              #iterator. Ergo, this can be optimized as follows:
+#              #    if reiterable_iter.__length_hint__():
+#              #        return next(reiterable_iter)
+#              #    else:
+#              #        ...
+#              #
+#              #The issue, of course, is that that *ONLY* works for strict type
+#              #hints constrained to C-based iterables (e.g.,
+#              #"typing.Dict[...]"). General-purpose type hints like
+#              #"typing.Mapping[...]" would be inapplicable, sadly. For the
+#              #latter, dynamically testing for the existence of a semantically
+#              #meaningful __length_hint__() getter would consume far more time
+#              #than calling that getter would actually save. *shrug*
+#              try:
+#                  return next(reiterable_iter)
+#              except StopIteration:
+#                  #FIXME: Violates DRY a bit, but more efficient. *shrug*
+#                  reiterable_weakproxy = _REITERABLE_ID_TO_WEAKPROXY[
+#                      REITERABLE_ID]
+#                  _REITERABLE_ID_TO_ITER[REITERABLE_ID] = iter(
+#                      reiterable_weakproxy)
+#                  return next(reiterable_iter)
+#
+#          if len(_REITERABLE_ID_TO_WEAKPROXY) >= _REITERABLE_CACHE_MAX_LEN:
+#               #FIXME: Efficiently kick out the least-used item from both the
+#               #"_REITERABLE_ID_TO_WEAKPROXY" and "_REITERABLE_ID_TO_ITER"
+#               #dictionaries here. Research exactly how to do that. Didn't we
+#               #already implement an efficient LRU somewhere in @beartype?
+#
+#          reiterable_weakproxy = _REITERABLE_ID_TO_WEAKPROXY[REITERABLE_ID] = (
+#              proxy(reiterable))
+#          _REITERABLE_ID_TO_ITER[REITERABLE_ID] = iter(reiterable_weakproxy)
+#          return next(reiterable_iter)
+#FIXME: Pretty boss, if we do say so. And we do. There are also considerable
+#opportunities for both macro- and microoptimization. The biggest
+#macrooptimization would be doing away entirely with the
+#"_REITERABLE_ID_TO_WEAKPROXY" cache. Strictly speaking, we only actually need
+#the "_REITERABLE_ID_TO_ITER" cache. Doing away with the
+#"_REITERABLE_ID_TO_WEAKPROXY" cache is *PROBABLY* the right thing to do in most
+#cases. Why? Because we don't necessarily expect that @beartype type-checkers
+#will exhaust all available items for most reiterables. But we *DO* know that
+#all reiterables that will be type-checked will be type-checked at least once.
+#In other words, the trailing code in _get_reiterable_item_next() is guaranteed
+#to *ALWAYS* happen at least once per reiterable (so we should optimize that);
+#conversely, the leading code that restarts iteration from the beginning only
+#happens in edge cases for smaller reiterables passed or returned frequently
+#between @beartype-decorated callables (so we shouldn't bother optimizing that).
+#Optimizing away "_REITERABLE_ID_TO_WEAKPROXY" then yields:
+#
+#      #FIXME: Don't even bother calling this getter with "dict" objects. The
+#      #caller should explicitly perform an "isinstance(pith, dict)" check to
+#      #switch to more efficient "next(iter(pith.keys())" and
+#      #"next(iter(pith.values())" logic when the pith is a "dict" object.
+#      def _get_reiterable_item_next(
+#          reiterable: _BeartypeReiterableTypes) -> object:
+#
+#          REITERABLE_TYPE = reiterable.__class__
+#
+#          #FIXME: Again, optimize ...get() method access, please.
+#          reiterable_is_weakreffable = (
+#              _REITERABLE_TYPE_TO_IS_WEAKREFFABLE.get(REITERABLE_TYPE))
+#
+#          if reiterable_is_weakreffable is None:
+#              reiterable_dict = getattr(reiterable, '__dict__')
+#              #FIXME: Alternately, we could try just taking a weak proxy
+#              #of this reiterable and catching exceptions. Although
+#              #slower, this caching operation only occurs once per type.
+#              #For now, let's run with this faster heuristic.
+#              if not reiterable_dict:
+#                  reiterable_is_weakreffable = False
+#              else:
+#                  reiterable_slots = reiterable_dict.get('__slots__')
+#                  reiterable_is_weakreffable = (
+#                      reiterable_slots and
+#                      '__weakref__' not in reiterable_slots
+#                  )
+#              _REITERABLE_TYPE_TO_IS_WEAKREFFABLE[REITERABLE_TYPE] = (
+#                  reiterable_is_weakreffable)
+#
+#          # If this reiterable is a C-based container that does *NOT* support
+#          # weak references, reduce to simply returning the first item of this
+#          # reiterable.
+#          if not reiterable_is_weakreffable:
+#              return next(iter(reiterable))
+#
+#          REITERABLE_ID = id(reiterable)
+#
+#          #FIXME: Optimize by storing and calling a bound
+#          #"_REITERABLE_ID_TO_ITER_get" method instead, please.
+#          reiterable_iter = _REITERABLE_ID_TO_ITER.get(REITERABLE_ID)
+#
+#          if reiterable_iter:
+#              #FIXME: Optimize us up, yo!
+#              if _REITERABLE_TYPE_TO_IS_LENGTHHINTED.get(REITERABLE_TYPE):
+#                  if reiterable_iter.__length_hint__():
+#                      return next(reiterable_iter)
+#              else:
+#                  try:
+#                      return next(reiterable_iter)
+#                  except StopIteration:
+#                      pass
+#          elif len(_REITERABLE_ID_TO_ITER) >= _REITERABLE_CACHE_MAX_LEN:
+#               #FIXME: Efficiently kick out the least-used item from the
+#               #"_REITERABLE_ID_TO_ITER" dictionary here. Research exactly how
+#               #to do that. Didn't we already implement an efficient LRU
+#               #somewhere in @beartype?
+#
+#          reiterable_iter = _REITERABLE_ID_TO_ITER[REITERABLE_ID] = iter(
+#              proxy(reiterable))
+#          return next(reiterable_iter)
+#
+#Seems legitimately boss, yes? Everything above is feasible and *REASONABLY*
+#efficient -- but is that efficient enough? Honestly, that's probably fast
+#enough for *MOST* use cases. If users justifiably complain about performance
+#degradations, we could always provide a new "BeartypeConf" parameter defaulting
+#to enabled to control this behaviour. *shrug*
 
 #FIXME: Note that randomly checking mapping (e.g., "dict") keys and/or values
 #will be non-trivial, as there exists no out-of-the-box O(1) approach in either
