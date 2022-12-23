@@ -42,16 +42,17 @@ class CallableTypeHint(_TypeHintSubscripted):
     '''
 
     # ..................{ INITIALIZERS                       }..................
-    def _munge_args(self):
-        '''
-        Perform argument validation for a callable.
-        '''
+    def _make_args(self) -> tuple:
 
-        # Note that a "Callable" without any arguments this may be unreachable,
-        # as a bare "Callable" will go to "ClassTypeHint". Nonetheless, this
-        # remains handled for completeness and safety.
-        if len(self._args) == 0:  # pragma: no cover
-            self._args = (..., Any,)
+        # Tuple of the zero or more low-level child type hints subscripting
+        # (indexing) the low-level parent type hint wrapped by this wrapper.
+        args = super()._make_args()
+
+        # Note that this branch may be literally unreachable, as an
+        # unsubscripted "Callable" should already be implicitly handled by the
+        # "ClassTypeHint" subclass. Nonetheless, this branch exists for safety.
+        if len(args) == 0:  # pragma: no cover
+            args = (..., Any,)
         else:
             # Parameters type hint(s) subscripting this callable type hint.
             self._callable_params = get_hint_pep484585_callable_params(
@@ -91,14 +92,17 @@ class CallableTypeHint(_TypeHintSubscripted):
             #FIXME: Note this will fail if "self._callable_params" is a PEP
             #612-compliant "typing.ParamSpec(...)" or "typing.Concatenate[...]"
             #object, as neither are tuples and thus *NOT* addable here.
+            #FIXME: *AFTER* resolving that issue, remove the trailing pragma
+            #"# type: ignore[operator]" from the following line.
+
             # Recreate the tuple of child type hints subscripting this parent
             # callable type hint from the tuple of argument type hints
             # introspected above. Why? Because the latter is saner than the
             # former in edge cases (e.g., ellipsis, empty argument lists).
-            self._args = self._callable_params + (callable_return,)  # pyright: ignore[reportGeneralTypeIssues]
+            args = self._callable_params + (callable_return,)  # type: ignore[operator]
 
-        # Perform superclass validation.
-        super()._munge_args()
+        # Return these child hints.
+        return args
 
     # ..................{ PROPERTIES ~ bools                 }..................
     # FIXME: Remove this by instead adding support for ignoring ignorable

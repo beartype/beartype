@@ -17,11 +17,7 @@ from beartype.door._doorcls import (
     TypeHint,
     _TypeHintSubscripted,
 )
-from beartype.door._doortest import die_unless_typehint
-from beartype.typing import (
-    Any,
-    Iterable,
-)
+from beartype.typing import Iterable
 from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ SUBCLASSES                         }....................
@@ -33,35 +29,53 @@ class UnionTypeHint(_TypeHintSubscripted):
     union type hint).
     '''
 
-    # ..................{ TESTERS                            }..................
-    @callable_cached
-    def is_subhint(self, other: TypeHint) -> bool:
+    # ..................{ PRIVATE ~ properties               }..................
+    @property
+    def _branches(self) -> Iterable[TypeHint]:
+        return self._args_wrapped_tuple
 
-        # If the passed object is *NOT* a type hint wrapper, raise an exception.
-        die_unless_typehint(other)
-        # Else, the passed object is a type hint wrapper.
+    # ..................{ PRIVATE ~ testers                  }..................
+    #FIXME: Unit test us up, please.
+    # Override the default equality comparison with a union-specific comparison.
+    # Union equality compares child type hints collectively (i.e., with respect
+    # to *ALL* children subscripting those unions as a unified whole) rather
+    # than individually (i.e., with respect to only each child subscripting
+    # those unions as a distinct member). The default equality comparison
+    # only compares child type hints individually. Although doing so suffices
+    # for most type hints, unions are effectively sets of child type hints.
+    # Individuality is irrelevant; only the collective matters. Welcome to the
+    # Union Borg. We do hope you enjoy your stay, Locutius of QA.
+    #
+    # Note that we intentionally avoid typing this method as returning
+    # "Union[bool, NotImplementedType]". Why? Because mypy in particular has
+    # epileptic fits about "NotImplementedType". This is *NOT* worth the agony!
+    def _is_equal(self, other: TypeHint) -> bool:
+
+        #FIXME *OH, YES.* This is actually a general-purpose solution for
+        #equality testing more appropriate than the current default
+        #implementation for __eq__(). You know what to do, everyone!
+
+        # Return true only if both...
+        #
+        # Note that this conditional implements the trivial boolean syllogism
+        # that we all know and adore: "If A <= B and B <= A, then A == B".
+        return (
+            # This union is a subhint of that object.
+            self.is_subhint(other) and
+            # That object is a subhint of this union.
+            other.is_subhint(self)
+        )
+
+
+    def _is_le_branch(self, branch: TypeHint) -> bool:
+        raise NotImplementedError('UnionTypeHint._is_le_branch() unsupported.')  # pragma: no cover
+
+
+    def _is_subhint(self, other: TypeHint) -> bool:
 
         #FIXME: Generalize. The test for "other._hint is Any" is generally
         #applicable to *ALL* type hints and should thus reside in the "TypeHint"
         #superclass. Do so as follows, please:
-        #* Define TypeHint.is_subhint() to resemble:
-        #      @callable_cached
-        #      def is_subhint(self, other: TypeHint) -> bool:
-        #
-        #          # If the passed object is *NOT* a type hint wrapper, raise an exception.
-        #          die_unless_typehint(other)
-        #
-        #          # If that hint is the "typing.Any" catch-all, return true.
-        #          if other._hint is Any:
-        #              return True
-        #          # Else, that hint is *NOT* the "typing.Any" catch-all.
-        #
-        #          # Defer to the subclass-specific implementation of this test.
-        #          return self._is_subhint(other)
-        #* Define TypeHint._is_subhint() to resemble:
-        #      def _is_subhint(self, other: TypeHint) -> bool:
-        #          raise NotImplementedError(  # pragma: no cover
-        #              'Abstract method TypeHint._is_subhint() undefined.')
         #* Rename all subclass is_subhint() methods to _is_subhint().
         #* Remove from those methods:
         #  * All "die_unless_typehint(other)" calls.
@@ -106,61 +120,3 @@ class UnionTypeHint(_TypeHintSubscripted):
             )
             for this_branch in self._branches
         )
-
-
-    #FIXME: Unit test us up, please.
-    # Override the default equality comparison with a union-specific comparison.
-    # Union equality compares child type hints collectively (i.e., with respect
-    # to *ALL* children subscripting those unions as a unified whole) rather
-    # than individually (i.e., with respect to only each child subscripting
-    # those unions as a distinct member). The default equality comparison
-    # only compares child type hints individually. Although doing so suffices
-    # for most type hints, unions are effectively sets of child type hints.
-    # Individuality is irrelevant; only the collective matters. Welcome to the
-    # Union Borg. We do hope you enjoy your stay, Locutius of QA.
-    #
-    # Note that we intentionally avoid typing this method as returning
-    # "Union[bool, NotImplementedType]". Why? Because mypy in particular has
-    # epileptic fits about "NotImplementedType". This is *NOT* worth the agony!
-    @callable_cached
-    def __eq__(self, other: object) -> bool:
-
-        #FIXME: Note that this could probably be marginally optimized by
-        #duplicating the iteration performed by the is_subhint() tester here,
-        #refactored to perform the desired dual comparison. However, efficiency
-        #is *NOT* a prominent concern for the DOOR API. Since performing this
-        #optimization would violate DRY while *NOT* improving the Big-Oh
-        #computational complexity of this operation, we avoid doing so.
-
-        # Return true only if either...
-        return (
-            # If that object is *NOT* an instance of the same class, it is both
-            # the case that...
-            #
-            # Note that this conditional implements the trivial boolean
-            # syllogism that we all know: "If A <= B and B <= A, then A == B".
-            (  # type: ignore[return-value]
-                # This union is a subhint of that object.
-                self.is_subhint(other) and
-                # That object is a subhint of this union.
-                other.is_subhint(self)
-            )
-            if isinstance(other, TypeHint) else
-            # Else, that object is *NOT* an instance of the same class. In this
-            # case, defer to either:
-            # * If the class of that object defines a similar __eq__() method
-            #   supporting the "TypeHint" API, that method.
-            # * Else, Python's builtin C-based fallback equality comparator that
-            #   merely compares whether two objects are identical (i.e., share
-            #   the same object ID).
-            NotImplemented
-        )
-
-    # ..................{ PRIVATE ~ properties               }..................
-    @property
-    def _branches(self) -> Iterable[TypeHint]:
-        return self._args_wrapped_tuple
-
-    # ..................{ PRIVATE ~ testers                  }..................
-    def _is_le_branch(self, branch: TypeHint) -> bool:
-        raise NotImplementedError('UnionTypeHint._is_le_branch() unsupported.')  # pragma: no cover

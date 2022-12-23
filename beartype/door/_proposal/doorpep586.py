@@ -16,44 +16,14 @@ from beartype.door._doorcls import (
     TypeHint,
     _TypeHintSubscripted,
 )
-from beartype.door._doortest import die_unless_typehint
 from beartype.typing import Tuple
-from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ SUBCLASSES                         }....................
-#FIXME: Insufficient. We also need to override __eq__(), because Literal hints
-#do *NOT* provide a sane _args_wrapped_tuple() required by the default __eq__().
 class LiteralTypeHint(_TypeHintSubscripted):
     '''
     **Literal type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`586`-compliant :attr:`typing.Literal` type hint).
     '''
-
-    # ..................{ TESTERS                            }..................
-    @callable_cached
-    def is_subhint(self, other: TypeHint) -> bool:
-
-        # If the other hint is *NOT* also a wrapper, raise an exception.
-        die_unless_typehint(other)
-        # Else, the other hint is also a wrapper.
-
-        # If the other hint is also a Literal, check that our args are a subset
-        # of theirs.
-        if isinstance(other, LiteralTypeHint):
-            return all(arg in other._args for arg in self._args)
-        # Else, the other hint is *NOT* also a Literal.
-        #
-        # If the other hint is just an origin, check that our args are *ALL*
-        # instances of that origin.
-        elif other._is_args_ignorable:
-            return all(isinstance(x, other._origin) for x in self._args)
-        # Else, the other hint is *NOT* just an origin.
-
-        # Return true only if the type of each child hint subscripting this
-        # parent hint is a subhint and thus inclusive subclass of the other
-        # hint.
-        return all(
-            TypeHint(type(hint_child)) <= other for hint_child in self._args)
 
     # ..................{ PRIVATE ~ properties               }..................
     @property
@@ -74,3 +44,32 @@ class LiteralTypeHint(_TypeHintSubscripted):
     @property
     def _is_args_ignorable(self) -> bool:
         return False
+
+    # ..................{ PRIVATE ~ testers                  }..................
+    def _is_subhint(self, other: TypeHint) -> bool:
+
+        # If the other hint is also a literal, return true only if the set of
+        # all child hints subscripting this literal is a subset of the set of
+        # all child hints subscripting that literal.
+        if isinstance(other, LiteralTypeHint):
+            return all(
+                this_hint_child in other._args
+                for this_hint_child in self._args
+            )
+        # Else, the other hint is *NOT* also a literal.
+        #
+        # If the other hint is just an origin, check that *ALL* child hints
+        # subscripting this literal are instances of that origin.
+        elif other._is_args_ignorable:
+            return all(
+                isinstance(this_hint_child, other._origin)
+                for this_hint_child in self._args
+            )
+        # Else, the other hint is *NOT* just an origin.
+
+        # Return true only if the type of each child hint subscripting this
+        # literal is a subhint of the other hint.
+        return all(
+            TypeHint(type(this_hint_child)).is_subhint(other)
+            for this_hint_child in self._args
+        )

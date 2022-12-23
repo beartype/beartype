@@ -485,9 +485,10 @@
 #Optimizing away "_REITERABLE_ID_TO_WEAKPROXY" then yields:
 #
 #      #FIXME: Don't even bother calling this getter with "dict" objects. The
-#      #caller should explicitly perform an "isinstance(pith, dict)" check to
+#      #caller should explicitly perform an "pith.__class__ is dict" check to
 #      #switch to more efficient "next(iter(pith.keys())" and
-#      #"next(iter(pith.values())" logic when the pith is a "dict" object.
+#      #"next(iter(pith.values())" logic when the pith is a "dict" object. Note
+#      #that user-defined "dict" subclasses are fine, however. *facepalm*
 #      def _get_reiterable_item_next(
 #          reiterable: _BeartypeReiterableTypes) -> object:
 #
@@ -541,6 +542,15 @@
 #               #"_REITERABLE_ID_TO_ITER" dictionary here. Research exactly how
 #               #to do that. Didn't we already implement an efficient LRU
 #               #somewhere in @beartype?
+#               #FIXME: *AH-HA!* Forget LRU. Seriously. LRU would impose too
+#               #much overhead here, as we'd need to update the LRU on each
+#               #access. Instead, let's just friggin *CLEAR* the entire cache
+#               #here. Yes, that's right! Nuke it from orbit, bois! So, what?
+#               #Right? Who cares if we start over from zero? Nobody! It's
+#               #minimal overhead to just start iterating things all over again.
+#               #And if the cache is full up, that's a good indication that the
+#               #caller has gone off the rails a bit, anyway.
+#               _REITERABLE_ID_TO_ITER.clear()  # <-- *BOOM STICK*
 #
 #          reiterable_iter = _REITERABLE_ID_TO_ITER[REITERABLE_ID] = iter(
 #              proxy(reiterable))

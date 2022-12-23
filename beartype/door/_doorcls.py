@@ -154,22 +154,8 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # Origin class, that may or may not be subscripted.
         self._origin: type = get_hint_pep_origin_or_none(hint) or hint  # type: ignore
 
-        # FIXME: Consider refactoring as follows:
-        # * Rename _munge_args() to _make_args().
-        # * Define TypeHint._make_args() to resemble:
-        #      def _make_args(self) -> tuple:
-        #          return get_hint_pep_args(self._hint)
-        # * Call that below as follows:
-        #      self._args = self._make_args(hint)
-        # * Redefine that in subclasses to resemble:
-        #      def _make_args(self) -> tuple:
-        #          args = super._make_args()
-        #          ...
-        #          return args
-
         # Tuple of all low-level child type hints of this hint.
-        self._args = get_hint_pep_args(hint)
-        self._munge_args()
+        self._args = self._make_args()
 
     # ..................{ DUNDERS                            }..................
     def __hash__(self) -> int:
@@ -206,6 +192,16 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         This tester is memoized for efficiency, as Python implicitly calls this
         dunder method on hashable-based container lookups (e.g.,
         :meth:`dict.get`) expected to be ``O(1)`` fast.
+
+        Parameters
+        ----------
+        other : object
+            Other type hint to be tested against this type hint.
+
+        Returns
+        ----------
+        bool
+            ``True`` only if this type hint is equal to that other hint.
         '''
 
         # If that object is *NOT* a type hint wrapper, defer to either:
@@ -218,42 +214,8 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             return NotImplemented
         # Else, that object is also a type hint wrapper.
 
-        #FIXME: *OKAY.* Refactor this as follows:
-        #* Shift all of the following into a new
-        #  _TypeHintOriginIsinstanceable.__eq__() implementation, please.
-        #* Shift the existing UnionTypeHint.__eq__() implementation here. That
-        #  implementation turns out to be the most general-purpose approach --
-        #  albeit overly inefficient for the common case, which is why we'll
-        #  preserve this approach below for most type hints.
-
-        # If *ALL* of the child type hints subscripting both of these parent
-        # type hints are ignorable, return true only if these parent type hints
-        # both originate from the same isinstanceable class.
-        elif self._is_args_ignorable and other._is_args_ignorable:
-            return self._origin == other._origin
-        # Else, one or more of the child type hints subscripting either of these
-        # parent type hints are unignorable.
-        #
-        # If either...
-        elif (
-            # These hints have differing signs *OR*...
-            self._hint_sign is not other._hint_sign or
-            # These hints have a differing number of child type hints...
-            len(self._args_wrapped_tuple) != len(other._args_wrapped_tuple)
-        ):
-            # Then these hints are unequal.
-            return False
-        # Else, these hints share the same sign and number of child type hints.
-
-        # Return true only if all child type hints of these hints are equal.
-        return all(
-            self_child == other_child
-            #FIXME: Probably more efficient and maintainable to write this as:
-            #    for this_child in self
-            #    for that_child in other
-            for self_child, other_child in zip(
-                self._args_wrapped_tuple, other._args_wrapped_tuple)
-        )
+        # Defer to the subclass-specific implementation of this test.
+        return self._is_equal(other)
 
 
     def __ne__(self, other: object) -> bool:
@@ -609,7 +571,65 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         return is_bearable(obj=obj, hint=self._hint, conf=conf)
 
     # ..................{ TESTERS ~ subhint                  }..................
-    @callable_cached
+    #FIXME: *EXTREMELY NON-IDEAL.* Restore caching, please. Sadly, enabling
+    #caching on this specific tester currently induces infinite recursion. Why?
+    #Because the @callable_cached decorator internally caches the passed "other"
+    #argument as the key of a dictionary (makes sense). Subsequent calls to this
+    #method when passed the same argument lookup that "other" in that
+    #dictionary. Since dictionary lookups implicitly call other.__eq__() to
+    #resolve key collisions *AND* since the UnionTypeHint.__eq__() method has
+    #been overridden in terms of TypeHint.is_subhint(), infinite recursion
+    #results. A number of solutions present themselves:
+    #1. IDEAL SOLUTION. This approach may *NOT* actually work. But if it does,
+    #   it's ideal. Basically, we refactor the UnionTypeHint._is_equal() method
+    #   to resemble the UnionTypeHint._is_subhint() method; that is to say, the
+    #   former should perform iteration resembling the latter. Or... maybe not?
+    #   That doesn't sound particularly useful, actually.
+    #2. *DEFINE A NEW CACHING DECORATOR.* Yeah. That's probably what we'll need
+    #   to do here. We do *NOT* actually need to resolve cached key collisions
+    #   using equality comparison; since "TypeHint" objects are all singletons,
+    #   we only need to compare object identity -- which, ironically, is the
+    #   default __eq__() implementation! Somehow, we need to either:
+    #   * Augment the existing @callable_cached with a new optional parameter
+    #     resembling "is_args_equal_by_id: bool = False". When true,
+    #     @callable_cached should lookup cached arguments *NOT* by those
+    #     arguments but rather by their IDs: e.g.,
+    #         elif len(args) == 1:
+    #             args_flat = (
+    #                 args[0]
+    #                 if not is_args_equal_by_id else
+    #                 id(args[0])
+    #             )
+    #         # Else, one or more positional arguments are passed. In this case,
+    #         # reuse this tuple as is.
+    #         else:
+    #             #FIXME: Raise a non-fatal warning here if
+    #             #"is_args_equal_by_id" is "True", as this becomes inefficient.
+    #             args_flat = args
+    #
+    #     In theory, that should absolutely work. The ten-foot elephant in the
+    #     room, however, is that we'll then need to generalize the
+    #     @callable_cached decorator to accept arguments -- which means yet
+    #     another absurd layer of decorator indirection and inefficiency.
+    #
+    #     Then just replace *ALL* @callable_cached decorations throughout this
+    #     submodule with this partial defined in "utilcachecall":
+    #         callable_cached_by_id = partial(
+    #             callable_cached(is_args_equal_by_id=True))
+    #   * Alternately, since this approach is really *ONLY* required by this
+    #     specific is_subhint() method, what we can (and arguably really should
+    #     do) is just to define a new @callable_cached_args_1_by_id decorator
+    #     that:
+    #     * Requires the decorated callable to accept only a single argument.
+    #     * Hard-codes its implementation accordingly.
+    #     That said, this is kinda awful, too. We're now violating DRY for an
+    #     extremely non-trivial decorator. Don't do this, please. That's right:
+    #     let's just generalize the @callable_cached decorator accordingly.
+    #   * Have TypeHint.__eq__() perform the default object identity comparison
+    #     when the caller is the _callable_cached() wrapper. (Yes, this is
+    #     absurd. Don't do this, please.)
+
+    # @callable_cached
     def is_subhint(self, other: 'TypeHint') -> bool:
         '''
         ``True`` only if this type hint is a **subhint** of the passed type
@@ -637,12 +657,16 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         die_unless_typehint(other)
         # Else, that object is a type hint wrapper.
 
-        # Return true only if this type hint is a subhint of *ANY* branch of the
-        # passed type hint.
-        return any(
-            self._is_le_branch(other_branch)
-            for other_branch in other._branches
-        )
+        # If that other hint is the "typing.Any" catch-all (which, by
+        # definition, is the superhint of *ALL* hints -- including "Any"
+        # itself), this hint is necessarily a subhint of that hint. In this
+        # case, return true.
+        if other._hint is Any:
+            return True
+        # Else, that other hint is *NOT* the "typing.Any" catch-all.
+
+        # Defer to the subclass-specific implementation of this test.
+        return self._is_subhint(other)
 
 
     def is_superhint(self, other: 'TypeHint') -> bool:
@@ -676,12 +700,129 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         return other.is_subhint(self)
 
     # ..................{ PRIVATE                            }..................
-    def _munge_args(self):
+    # Subclasses are encouraged to override these concrete methods defaulting to
+    # general-purpose implementations suitable for most subclasses.
+
+    # ..................{ PRIVATE ~ factories                }..................
+    def _make_args(self) -> tuple:
         '''
-        Used by subclasses to validate :attr:`_args` and :attr:`_origin`.
+        Tuple of the zero or more low-level child type hints subscripting
+        (indexing) the low-level parent type hint wrapped by this wrapper, which
+        the :meth:`TypeHint.__init__` method assigns to the :attr:`_args`
+        instance variable of this wrapper.
+
+        Subclasses are advised to override this method to set the :attr:`_args`
+        instance variable of this wrapper in a subclass-specific manner.
         '''
 
-        pass
+        # We are the one-liner. We are the codebase.
+        return get_hint_pep_args(self._hint)
+
+    # ..................{ PRIVATE ~ testers                  }..................
+    def _is_equal(self, other: 'TypeHint') -> bool:
+        '''
+        ``True`` only if the low-level type hint wrapped by this wrapper is
+        semantically equivalent to the other low-level type hint wrapped by the
+        passed wrapper.
+
+        Subclasses are advised to override this method to implement the public
+        :meth:`is_subhint` tester method (which internally defers to this
+        private tester method) in a subclass-specific manner. Since the default
+        implementation is guaranteed to suffice for *all* possible use cases,
+        subclasses should override this method only for efficiency reasons; the
+        default implementation calls the :meth:`is_subhint` method twice and is
+        thus *not* necessarily the optimal implementation for subclasses.
+        Notably, the default implementation exploits the well-known syllogism
+        between two partially ordered items ``A`` and ``B``:
+
+        * If ``A <= B`` and ``A >= B``, then ``A == B``.
+
+        This private tester method is *not* memoized for efficiency, as the
+        caller is guaranteed to be the public :meth:`__eq__` tester method,
+        which is already memoized.
+
+        Parameters
+        ----------
+        other : TypeHint
+            Other type hint to be tested against this type hint.
+
+        Returns
+        ----------
+        bool
+            ``True`` only if this type hint is equal to that other hint.
+        '''
+
+        #FIXME: *OKAY.* Refactor this as follows:
+        #* Shift all of the following into a new
+        #  _TypeHintOriginIsinstanceable.__eq__() implementation, please.
+        #* Shift the existing UnionTypeHint.__eq__() implementation here. That
+        #  implementation turns out to be the most general-purpose approach --
+        #  albeit overly inefficient for the common case, which is why we'll
+        #  preserve this approach below for most type hints.
+
+        # If *ALL* of the child type hints subscripting both of these parent
+        # type hints are ignorable, return true only if these parent type hints
+        # both originate from the same isinstanceable class.
+        if self._is_args_ignorable and other._is_args_ignorable:
+            return self._origin == other._origin
+        # Else, one or more of the child type hints subscripting either of these
+        # parent type hints are unignorable.
+        #
+        # If either...
+        elif (
+            # These hints have differing signs *OR*...
+            self._hint_sign is not other._hint_sign or
+            # These hints have a differing number of child type hints...
+            len(self._args_wrapped_tuple) != len(other._args_wrapped_tuple)
+        ):
+            # Then these hints are unequal.
+            return False
+        # Else, these hints share the same sign and number of child type hints.
+
+        # Return true only if all child type hints of these hints are equal.
+        return all(
+            this_child == that_child
+            #FIXME: Probably more efficient and maintainable to write this as:
+            #    for this_child in self
+            #    for that_child in other
+            for this_child, that_child in zip(
+                self._args_wrapped_tuple, other._args_wrapped_tuple)
+        )
+
+
+    def _is_subhint(self, other: 'TypeHint') -> bool:
+        '''
+        ``True`` only if this type hint is a **subhint** of the passed type
+        hint.
+
+        Subclasses are advised to override this method to implement the public
+        :meth:`is_subhint` tester method (which internally defers to this
+        private tester method) in a subclass-specific manner.
+
+        This private tester method is *not* memoized for efficiency, as the
+        caller is guaranteed to be the public :meth:`is_subhint` tester method,
+        which is already memoized.
+
+        Parameters
+        ----------
+        other : TypeHint
+            Other type hint to be tested against this type hint.
+
+        Returns
+        ----------
+        bool
+            ``True`` only if this type hint is a subhint of that other hint.
+
+        See Also
+        ----------
+        :func:`beartype.door.is_subhint`
+            Further details.
+        '''
+
+        # Return true only if this hint is a subhint of *ANY* branch of that
+        # other hint.
+        return any(
+            self._is_le_branch(that_branch) for that_branch in other._branches)
 
     # ..................{ PRIVATE ~ properties : read-only   }..................
     # Read-only properties intentionally defining *NO* corresponding setter.
@@ -828,9 +969,12 @@ class _TypeHintSubscripted(TypeHint):
         #
         #Sadly, that refactoring currently raises non-trivial test failures.
         #Let's investigate at a later time, please.
-        return all(x._origin is Any for x in self._args_wrapped_tuple)
+        return all(
+            hint_child._origin is Any
+            for hint_child in self._args_wrapped_tuple
+        )
 
-    # ..................{ PRIVATE ~ methods                  }..................
+    # ..................{ PRIVATE ~ testers                  }..................
     def _is_le_branch(self, branch: TypeHint) -> bool:
 
         # If the other branch was *NOT* subscripted, we assume it was
@@ -880,9 +1024,14 @@ class _TypeHintOriginIsinstanceable(_TypeHintSubscripted):
         pass
 
     # ..................{ PRIVATE ~ methods                  }..................
-    def _munge_args(self):
+    def _make_args(self) -> tuple:
 
-        if len(self._args) != self._args_len_expected:
+        # Tuple of the zero or more low-level child type hints subscripting
+        # (indexing) the low-level parent type hint wrapped by this wrapper.
+        args = super()._make_args()
+
+        # If this hint was subscripted by an unexpected number of child hints...
+        if len(args) != self._args_len_expected:
             #FIXME: This seems sensible, but currently provokes test failures.
             #Let's investigate further at a later time, please.
             # # If this hint was subscripted by *NO* parameters, comply with PEP
@@ -900,8 +1049,12 @@ class _TypeHintOriginIsinstanceable(_TypeHintSubscripted):
             # exception if constructed improperly.
             raise BeartypeDoorException(  # pragma: no cover
                 f'{type(self)} type must have {self._args_len_expected} '
-                f'argument(s), but got {len(self._args)}.'
+                f'argument(s), but got {len(args)}.'
             )
+        # Else, this hint was subscripted by the expected number of child hints.
+
+        # Return these child hints.
+        return args
 
 
 class _TypeHintOriginIsinstanceableArgs1(_TypeHintOriginIsinstanceable):

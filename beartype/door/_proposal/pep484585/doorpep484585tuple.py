@@ -62,26 +62,33 @@ class _TupleTypeHint(_TypeHintSubscripted):
         super().__init__(hint)
 
 
-    def _munge_args(self) -> None:
-        '''
-        Perform argument validation for a tuple.
+    def _make_args(self) -> tuple:
 
-        Specifically, remove any PEP-noncompliant type hints from the arguments,
-        and set internal flags accordingly.
-        '''
+        # Tuple of the zero or more low-level child type hints subscripting
+        # (indexing) the low-level parent type hint wrapped by this wrapper.
+        args = super()._make_args()
 
+        # Validate these child hints. Specifically, remove any
+        # PEP-noncompliant child hints from this tuple and set associated flags.
+        #
         # e.g. `Tuple` without any arguments
         # This may be unreachable (since a bare Tuple will go to ClassTypeHint),
         # but it's here for completeness and safety.
-        if len(self._args) == 0:  # pragma: no cover
+        if len(args) == 0:  # pragma: no cover
+            args = (Any,)
             self._is_variable_length = True
-            self._args = (Any,)
-        elif len(self._args) == 1 and self._args[0] == ():
+        #FIXME: This is non-portable and thus basically broken. Ideally, empty
+        #tuples should instead be detected by explicitly calling the
+        #is_hint_pep484585_tuple_empty() tester.
+        elif len(args) == 1 and args[0] == ():
+            args = ()
             self._is_empty_tuple = True
-            self._args = ()
-        elif len(self._args) == 2 and self._args[1] is Ellipsis:
+        elif len(args) == 2 and args[1] is Ellipsis:
+            args = (args[0],)
             self._is_variable_length = True
-            self._args = (self._args[0],)
+
+        # Return these child hints.
+        return args
 
     # ..................{ PRIVATE ~ properties               }..................
     @property
@@ -109,22 +116,27 @@ class _TupleTypeHint(_TypeHintSubscripted):
         elif branch._is_empty_tuple:
             return self._is_empty_tuple
         elif branch._is_variable_length:
-            branch_type = branch._args_wrapped_tuple[0]
+            that_hint = branch._args_wrapped_tuple[0]
+
             if self._is_variable_length:
-                return branch_type <= self._args_wrapped_tuple[0]
+                return that_hint.is_subhint(self._args_wrapped_tuple[0])
+
             return all(
-                child <= branch_type for child in self._args_wrapped_tuple)
+                this_child.is_subhint(that_hint)
+                for this_child in self._args_wrapped_tuple
+            )
         elif self._is_variable_length:
             return (
-                branch._is_variable_length
-                and self._args_wrapped_tuple[0] <= branch._args_wrapped_tuple[0]
+                branch._is_variable_length and
+                self._args_wrapped_tuple[0].is_subhint(
+                    branch._args_wrapped_tuple[0])
             )
         elif len(self._args) != len(branch._args):
             return False
 
         return all(
-            self_child <= branch_child
-            for self_child, branch_child in zip(
+            this_child <= that_child
+            for this_child, that_child in zip(
                 self._args_wrapped_tuple, branch._args_wrapped_tuple
             )
         )

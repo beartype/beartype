@@ -51,19 +51,6 @@ class AnnotatedTypeHint(TypeHint):
         # Wrapper wrapping the first argument subscripting this hint.
         self._metahint_wrapper = TypeHint(get_hint_pep593_metahint(hint))
 
-    # ..................{ DUNDERS ~ compare : equals         }..................
-    @callable_cached
-    def __eq__(self, other: object) -> bool:
-
-        if not isinstance(other, TypeHint):
-            return False
-
-        return (
-            isinstance(other, AnnotatedTypeHint)
-            and self._metahint_wrapper == other._metahint_wrapper
-            and self._metadata == other._metadata
-        )
-
     # ..................{ PRIVATE ~ properties               }..................
     @property
     def _is_args_ignorable(self) -> bool:
@@ -72,6 +59,15 @@ class AnnotatedTypeHint(TypeHint):
         return False
 
     # ..................{ PRIVATE ~ testers                  }..................
+    def _is_equal(self, other: TypeHint) -> bool:
+
+        return (
+            isinstance(other, AnnotatedTypeHint)
+            and self._metahint_wrapper == other._metahint_wrapper
+            and self._metadata == other._metadata
+        )
+
+
     def _is_le_branch(self, branch: TypeHint) -> bool:
 
         # If the other type is not annotated, we ignore annotations on this
