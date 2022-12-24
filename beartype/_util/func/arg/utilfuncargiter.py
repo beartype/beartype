@@ -144,14 +144,6 @@ parameter's **default value** specified as either:
 # Delete the above counter for safety and sanity in equal measure.
 del __arg_meta_index_counter
 
-# ....................{ PRIVATE ~ constants                }....................
-_ARGS_DEFAULTS_KWONLY_EMPTY: Dict[str, object] = {}
-'''
-Empty dictionary suitable for use as the default dictionary mapping the name of
-each optional keyword-only parameter accepted by a callable to the default
-value assigned to that parameter.
-'''
-
 # ....................{ GENERATORS                         }....................
 def iter_func_args(
     # Mandatory parameters.
@@ -554,3 +546,11 @@ def iter_func_args(
             args_name[args_index_kind_last_after],
             ArgMandatory,
         )
+
+# ....................{ PRIVATE ~ constants                }....................
+_ARGS_DEFAULTS_KWONLY_EMPTY: Dict[str, object] = {}
+'''
+Empty dictionary suitable for use as the default dictionary mapping the name of
+each optional keyword-only parameter accepted by a callable to the default
+value assigned to that parameter.
+'''

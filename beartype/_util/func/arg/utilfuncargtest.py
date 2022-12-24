@@ -19,63 +19,7 @@ from beartype._data.datatyping import Codeobjable, TypeException
 from collections.abc import Callable
 from inspect import CO_VARARGS, CO_VARKEYWORDS
 
-# ....................{ PRIVATE                            }....................
-_ARGS_DEFAULTS_KWONLY_EMPTY: Dict[str, object] = {}
-'''
-Empty dictionary suitable for use as the default dictionary mapping the name of
-each optional keyword-only parameter accepted by a callable to the default
-value assigned to that parameter.
-'''
-
 # ....................{ VALIDATORS                         }....................
-#FIXME: Uncomment as needed.
-# def die_unless_func_argless(
-#     # Mandatory parameters.
-#     func: Codeobjable,
-#
-#     # Optional parameters.
-#     func_label: str = 'Callable',
-#     exception_cls: Type[Exception] = _BeartypeUtilCallableException,
-# ) -> None:
-#     '''
-#     Raise an exception unless the passed pure-Python callable is
-#     **argument-less** (i.e., accepts *no* arguments).
-#
-#     Parameters
-#     ----------
-#     func : Codeobjable
-#         Pure-Python callable, frame, or code object to be inspected.
-#     func_label : str, optional
-#         Human-readable label describing this callable in exception messages
-#         raised by this validator. Defaults to ``'Callable'``.
-#     exception_cls : type, optional
-#         Type of exception to be raised if this callable is neither a
-#         pure-Python function nor method. Defaults to
-#         :class:`_BeartypeUtilCallableException`.
-#
-#     Raises
-#     ----------
-#     exception_cls
-#         If this callable either:
-#
-#         * Is *not* callable.
-#         * Is callable but is *not* pure-Python.
-#         * Is a pure-Python callable accepting one or more parameters.
-#     '''
-#
-#     # If this callable accepts one or more arguments, raise an exception.
-#     if is_func_argless(
-#         func=func, func_label=func_label, exception_cls=exception_cls):
-#         assert isinstance(func_label, str), f'{repr(func_label)} not string.'
-#         assert isinstance(exception_cls, type), (
-#             f'{repr(exception_cls)} not class.')
-#
-#         raise exception_cls(
-#             f'{func_label} {repr(func)} not argument-less '
-#             f'(i.e., accepts one or more arguments).'
-#         )
-
-
 def die_unless_func_args_len_flexible_equal(
     # Mandatory parameters.
     func: Codeobjable,
@@ -149,6 +93,55 @@ def die_unless_func_args_len_flexible_equal(
             f'Callable {repr(func)} flexible argument count '
             f'{func_args_len_flexible_actual} != {func_args_len_flexible}.'
         )
+    # Else, this callable accepts exactly this number of flexible parameters.
+
+
+#FIXME: Uncomment as needed.
+# def die_unless_func_argless(
+#     # Mandatory parameters.
+#     func: Codeobjable,
+#
+#     # Optional parameters.
+#     func_label: str = 'Callable',
+#     exception_cls: Type[Exception] = _BeartypeUtilCallableException,
+# ) -> None:
+#     '''
+#     Raise an exception unless the passed pure-Python callable is
+#     **argument-less** (i.e., accepts *no* arguments).
+#
+#     Parameters
+#     ----------
+#     func : Codeobjable
+#         Pure-Python callable, frame, or code object to be inspected.
+#     func_label : str, optional
+#         Human-readable label describing this callable in exception messages
+#         raised by this validator. Defaults to ``'Callable'``.
+#     exception_cls : type, optional
+#         Type of exception to be raised if this callable is neither a
+#         pure-Python function nor method. Defaults to
+#         :class:`_BeartypeUtilCallableException`.
+#
+#     Raises
+#     ----------
+#     exception_cls
+#         If this callable either:
+#
+#         * Is *not* callable.
+#         * Is callable but is *not* pure-Python.
+#         * Is a pure-Python callable accepting one or more parameters.
+#     '''
+#
+#     # If this callable accepts one or more arguments, raise an exception.
+#     if is_func_argless(
+#         func=func, func_label=func_label, exception_cls=exception_cls):
+#         assert isinstance(func_label, str), f'{repr(func_label)} not string.'
+#         assert isinstance(exception_cls, type), (
+#             f'{repr(exception_cls)} not class.')
+#
+#         raise exception_cls(
+#             f'{func_label} {repr(func)} not argument-less '
+#             f'(i.e., accepts one or more arguments).'
+#         )
 
 # ....................{ TESTERS ~ kind                     }....................
 def is_func_argless(
@@ -358,3 +351,11 @@ def is_func_arg_name(func: Callable, arg_name: str) -> bool:
         # For the name of any parameter accepted by this callable.
         for arg_meta in iter_func_args(func)
     )
+
+# ....................{ PRIVATE                            }....................
+_ARGS_DEFAULTS_KWONLY_EMPTY: Dict[str, object] = {}
+'''
+Empty dictionary suitable for use as the default dictionary mapping the name of
+each optional keyword-only parameter accepted by a callable to the default
+value assigned to that parameter.
+'''

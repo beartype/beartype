@@ -18,30 +18,25 @@ This private submodule is *not* intended for importation by downstream callers.
 #decorator is *INSANELY* fast for this edge case -- substantially faster than
 #the current general-purpose @callable_cached approach.
 
-#FIXME: Generalize @callable_cached to support variadic parameters by appending
-#to "params_flat":
-#  1. A placeholder sentinel object after all positional and keyword arguments.
-#  2. Those variadic parameters.
+#FIXME: Generalize @callable_cached to support variadic positional parameters by
+#appending to "params_flat":
+#1. A placeholder sentinel object after all non-variadic positional parameters.
+#2. Those variadic parameters.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
-from beartype.roar._roarwarn import _BeartypeUtilCallableCachedKwargsWarning
 from beartype.typing import (
     Dict,
     TypeVar,
 )
 from beartype._util.func.arg.utilfuncargtest import (
-    # is_func_argless,
+    die_unless_func_args_len_flexible_equal,
     is_func_arg_variadic,
 )
 from beartype._util.text.utiltextlabel import label_callable
-from beartype._util.utilobject import (
-    SENTINEL,
-    Iota,
-)
+from beartype._util.utilobject import SENTINEL
 from collections.abc import Callable
 from functools import wraps
-from warnings import warn
 
 # ....................{ PRIVATE ~ hints                    }....................
 _CallableT = TypeVar('_CallableT', bound=Callable)
@@ -49,13 +44,14 @@ _CallableT = TypeVar('_CallableT', bound=Callable)
 Type variable bound to match *only* callables.
 '''
 
-# ....................{ DECORATORS                         }....................
+# ....................{ DECORATORS ~ callable              }....................
 def callable_cached(func: _CallableT) -> _CallableT:
     '''
-    **Memoize** (i.e., efficiently cache and return all previously returned
-    values of the passed callable as well as all previously raised exceptions
-    of that callable previously rather than inefficiently recalling that
-    callable) the passed callable.
+    **Memoize** (i.e., efficiently re-raise all exceptions previously raised by
+    the decorated callable when passed the same parameters (i.e., parameters
+    that evaluate as equals) as a prior call to that callable if any *or* return
+    all values previously returned by that callable otherwise rather than
+    inefficiently recalling that callable) the passed callable.
 
     Specifically, this decorator (in order):
 
@@ -92,10 +88,14 @@ def callable_cached(func: _CallableT) -> _CallableT:
 
     Caveats
     ----------
-    **The decorated callable must accept no variadic parameters** (i.e.,
-    either variadic positional or keyword arguments). While memoizing variadic
-    parameters would of course be feasible, this decorator has yet to implement
-    support for memoizing variadic parameters.
+    **The decorated callable must accept no keyword parameters.** While this
+    decorator previously memoized keyword parameters, doing so incurred
+    significant performance penalties defeating the purpose of caching. This
+    decorator now intentionally memoizes *only* positional parameters.
+
+    **The decorated callable must accept no variadic positional parameters.**
+    While memoizing variadic parameters would of course be feasible, this
+    decorator has yet to implement support for doing so.
 
     **The decorated callable should not be a property method** (i.e., either a
     property getter, setter, or deleter subsequently decorated by the
@@ -103,24 +103,14 @@ def callable_cached(func: _CallableT) -> _CallableT:
     memoize property methods; pragmatically, doing so would be sufficiently
     inefficient as to defeat the intention of memoizing in the first place.
 
-    **Order of keyword arguments passed to the decorated callable is
-    significant.** This decorator recaches return values produced by calls to
-    the decorated callable when passed the same keyword arguments in differing
-    order (e.g., ``muh_func(muh_kw=0, mah_kw=1)`` and ``muh_func(mah_kw=1,
-    muh_kw=0)``, cached as two distinct calls by this decorator despite these
-    calls ultimately receiving the same arguments).
-
     Efficiency
     ----------
     For efficiency, consider calling the decorated callable with only:
 
-    * **Positional arguments.** While technically supported, every call to the
-      decorated callable passed one or more keyword arguments reduces both the
-      space and time efficiency of the memoization performed by that callable.
     * **Hashable** (i.e., immutable) arguments. While technically supported,
       every call to the decorated callable passed one or more unhashable
       arguments (e.g., mutable containers like lists and dictionaries) will
-      *not* be memoized. Equivalently, only calls passed only hashable
+      silently *not* be memoized. Equivalently, only calls passed only hashable
       arguments will be memoized. This flexibility enables decorated callables
       to accept unhashable PEP-compliant type hints. Although *all*
       PEP-noncompliant and *most* PEP-compliant type hints are hashable, some
@@ -138,12 +128,12 @@ def callable_cached(func: _CallableT) -> _CallableT:
 
     **This decorator is intentionally not implemented in terms of the stdlib**
     :func:`functools.lru_cache` **decorator,** as that decorator is inefficient
-    in the special case of unbounded caching with ``maxsize=None``, mostly as
+    in the special case of unbounded caching with ``maxsize=None``. Why? Because
     that decorator insists on unconditionally recording irrelevant statistics
-    such as cache misses and hits. While bounding the number of cached values
-    is advisable in the general case (e.g., to avoid exhausting memory merely
-    for optional caching), the callable parameters and return values cached by
-    this package are sufficiently small in size to render bounding irrelevant.
+    like cache misses and hits. While bounding the number of cached values is
+    advisable in the general case (e.g., to avoid exhausting memory merely for
+    optional caching), parameters and returns cached by this package are
+    sufficiently small in size to render such bounding irrelevant.
 
     Consider the
     :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_type_typing`
@@ -170,10 +160,8 @@ def callable_cached(func: _CallableT) -> _CallableT:
     Raises
     ----------
     _BeartypeUtilCallableCachedException
-        If any parameter passed to this callable is **variadic**, including:
-
-        * A variadic positional argument resembling ``*args``.
-        * A variadic keyword argument resembling ``**kwargs``.
+        If this callable accepts a variadic positional parameter (e.g.,
+        ``*args``).
     '''
     assert callable(func), f'{repr(func)} not callable.'
 
@@ -190,6 +178,11 @@ def callable_cached(func: _CallableT) -> _CallableT:
             f'variadic arguments uncacheable.'
         )
     # Else, this wrappee accepts *NO* variadic arguments.
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize against the @method_cached_arg_by_id decorator
+    # below. For speed, this decorator violates DRY by duplicating logic.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that call
@@ -208,17 +201,9 @@ def callable_cached(func: _CallableT) -> _CallableT:
     args_flat_to_exception_get = args_flat_to_exception.get
 
     @wraps(func)
-    def _callable_cached(*args, **kwargs):
+    def _callable_cached(*args):
         f'''
         Memoized variant of the {func.__name__}() callable.
-
-        Warns
-        ----------
-        _BeartypeUtilCallableCachedKwargsWarning
-            If one or more keyword arguments were passed. While technically
-            supported, keyword arguments are substantially more space- and
-            time-intensive to memoize than equivalent positional arguments,
-            partially defeating the purpose of memoization in the first place.
 
         See Also
         ----------
@@ -226,88 +211,42 @@ def callable_cached(func: _CallableT) -> _CallableT:
             Further details.
         '''
 
-        # Flatten the passed tuple of positional arguments and dictionary of
-        # keyword arguments into a single tuple containing both positional and
-        # keyword arguments. To minimize space consumption, this tuple contains
-        # these arguments as is with *NO* nested containers.
-        #
-        # For example, when a decorated callable with signature:
-        #    def muh_func(muh_arg1, muh_arg2, muh_arg3, muh_arg4)
-        # ...is called as:
-        #    muh_func('a', 'b', muh_arg3=0, muh_arg4=1)
-        # ...this closure receives these variadic arguments:
-        #    *args = ('a', 'b')
-        #    *kwargs = {'muh_arg3': 0, 'muh_arg4': 1}
-        # ...which the following logic flattens into this tuple:
-        #    args_flat = (
-        #        'a', 'b',
-        #        _SENTINEL_KWARGS_KEYS, 'muh_arg3', 'muh_arg4',
-        #        _SENTINEL_KWARGS_VALUES, 0, 1,
-        #    )
-        #
-        # If one or more keyword arguments are passed, construct this flattened
-        # tuple by concatenating together:
-        #
-        # * The passed tuple of positional arguments.
-        # * A sentinel tuple differentiating the preceding positional arguments
-        #   from subsequent keyword argument names.
-        # * The names of all passed keyword arguments coerced into a tuple.
-        # * A sentinel tuple differentiating the preceding keyword argument
-        #   names from subsequent keyword argument values.
-        # * The values of all passed keyword arguments coerced into a tuple.
-        if kwargs:
-            args_flat = (
-                args +
-                _SENTINEL_KWARGS_KEYS   + tuple(kwargs.keys()) +
-                _SENTINEL_KWARGS_VALUES + tuple(kwargs.values())
-            )
-
-            # Emit a non-fatal warning to warn callers of the performance
-            # pitfalls associated with memoizing keyword arguments.
-            warn(
-                (
-                    f'@callable_cached {func.__name__}() inefficiently passed '
-                    f'keyword arguments: {kwargs}'
-                ),
-                _BeartypeUtilCallableCachedKwargsWarning
-            )
-        # Else, only positional arguments are passed.
-        #
-        # If passed only one positional argument, minimize space consumption by
-        # flattening this tuple of only that argument into that argument. Since
-        # tuple items are necessarily hashable, this argument is necessarily
-        # hashable as well and thus permissible as a dictionary key below.
-        elif len(args) == 1:
-            args_flat = args[0]
-        # Else, one or more positional arguments are passed. In this case,
-        # reuse this tuple as is.
-        else:
-            args_flat = args
+        # Object representing all passed positional arguments to be used as the
+        # key of various memoized dictionaries, defined as either...
+        args_flat = (
+            # If passed only one positional argument, minimize space consumption
+            # by flattening this tuple of only that argument into that argument.
+            # Since tuple items are necessarily hashable, this argument is
+            # necessarily hashable and thus permissible as a dictionary key;
+            args[0]
+            if len(args) == 1 else
+            # Else, one or more positional arguments are passed. In this case,
+            # reuse this tuple as is.
+            args
+        )
 
         # Attempt to...
         try:
-            #FIXME: Optimize the args_flat_to_exception_get() case, please.
-            #Since "None" is *NOT* a valid exception, we shouldn't need a
-            #sentinel for safety here. Instead, this should suffice:
-            #    exception = args_flat_to_exception_get(args_flat)
-            #
-            #    # If this callable previously raised an exception when called with
-            #    # these parameters, re-raise the same exception.
-            #    if exception:
-            #        raise exception
-
             # Exception raised by a prior call to the decorated callable when
             # passed these parameters *OR* the sentinel placeholder otherwise
             # (i.e., if this callable either has yet to be called with these
             # parameters *OR* has but failed to raise an exception).
             #
-            # Note that this call raises a "TypeError" exception if any item of
-            # this flattened tuple is unhashable.
-            exception = args_flat_to_exception_get(args_flat, SENTINEL)
+            # Note that:
+            # * This statement raises a "TypeError" exception if any item of
+            #   this flattened tuple is unhashable.
+            # * A sentinel placeholder (e.g., "SENTINEL") is *NOT* needed here.
+            #   The values of the "args_flat_to_exception" dictionary are
+            #   guaranteed to *ALL* be exceptions. Since "None" is *NOT* an
+            #   exception, disambiguation between "None" and valid dictionary
+            #   values is *NOT* needed here. Although a sentinel placeholder
+            #   could still be employed, doing so would slightly reduce
+            #   efficiency for *NO* real-world gain.
+            exception = args_flat_to_exception_get(args_flat)
 
             # If this callable previously raised an exception when called with
             # these parameters, re-raise the same exception.
-            if exception is not SENTINEL:
+            if exception:
                 raise exception  # pyright: ignore[reportGeneralTypeIssues]
             # Else, this callable either has yet to be called with these
             # parameters *OR* has but failed to raise an exception.
@@ -329,7 +268,7 @@ def callable_cached(func: _CallableT) -> _CallableT:
                 # Call this parameter with these parameters and cache the value
                 # returned by this call to these parameters.
                 return_value = args_flat_to_return_value[args_flat] = func(
-                    *args, **kwargs)
+                    *args)
             # If this call raised an exception...
             except Exception as exception:
                 # Cache this exception to these parameters.
@@ -344,7 +283,7 @@ def callable_cached(func: _CallableT) -> _CallableT:
             #FIXME: If testing, emit a non-fatal warning or possibly even raise
             #a fatal exception. In either case, we want our test suite to notify
             #us about this.
-            return func(*args, **kwargs)
+            return func(*args)
 
         # Return this value.
         return return_value
@@ -352,7 +291,223 @@ def callable_cached(func: _CallableT) -> _CallableT:
     # Return this wrapper.
     return _callable_cached  # type: ignore[return-value]
 
+# ....................{ DECORATORS ~ method                }....................
+#FIXME: Unit test us up, please.
+#FIXME: Consider optimizing most usages of @callable_cached throughout the
+#codebase with this substantially faster decorator instead, please.
+def method_cached_arg_by_id(func: _CallableT) -> _CallableT:
+    '''
+    **Memoize** (i.e., efficiently re-raise all exceptions previously raised by
+    the decorated method when passed the same *exact* parameters (i.e.,
+    parameters whose object IDs are equals) as a prior call to that method if
+    any *or* return all values previously returned by that method otherwise
+    rather than inefficiently recalling that method) the passed method.
 
+    Caveats
+    ----------
+    **This decorator is only intended to decorate bound methods** (i.e., either
+    class or instance methods bound to a class or instance). This decorator is
+    *not* intended to decorate functions or static methods.
+
+    **This decorator is only intended to decorate a method whose sole argument
+    is guaranteed to be a memoized singleton** (e.g.,
+    :class:`beartype.door.TypeHint` singletons). In this case, the object
+    identifier of that argument uniquely identifies that argument across *all*
+    calls to that method -- enabling this decorator to memoize that method.
+    Conversely, if that argument is *not* guaranteed to be a memoized singleton,
+    this decorator will fail to memoize that method while wasting considerable
+    space and time attempting to do so. In short, care is warranted.
+
+    This decorator is a micro-optimized variant of the more general-purpose
+    :func:`callable_cached` decorator, which should be preferred in most cases.
+    This decorator mostly exists for one specific edge case that the
+    :func:`callable_cached` decorator *cannot* by definition support:
+    user-defined classes implementing the ``__eq__`` dunder method to internally
+    call another method decorated by :func:`callable_cached` accepting an
+    instance of the same class. This design pattern appears astonishingly
+    frequently, including in our prominent :class:`beartype.door.TypeHint`
+    class. This edge case provokes infinite recursion. Consider this
+    minimal-length example (MLE) exhibiting the issue:
+
+    .. code-block:: python
+
+       from beartype._util.cache.utilcachecall import callable_cached
+
+       class MuhClass(object):
+           def __eq__(self, other: object) -> bool:
+               return isinstance(other, MuhClass) and self._is_equal(other)
+
+           @callable_cached
+           def _is_equal(self, other: 'MuhClass') -> bool:
+               return True
+
+    :func:`callable_cached` internally caches the ``other`` argument passed to
+    the ``_is_equal()`` method as keys of various internal dictionaries. When
+    passed the same ``other`` argument, subsequent calls to that method lookup
+    that ``other`` argument in those dictionaries. Since dictionary lookups
+    implicitly call the ``other.__eq__()`` method to resolve key collisions
+    *and* since the ``__eq__()`` method has been overridden in terms of the
+    ``_is_equal()`` method, infinite recursion results.
+
+    This decorator circumvents this issue by internally looking up the object
+    identifier of the passed argument rather than that argument itself, which
+    then avoids implicitly calling the ``__eq__()`` method of that argument.
+
+    Parameters
+    ----------
+    func : _CallableT
+        Callable to be memoized.
+
+    Returns
+    ----------
+    _CallableT
+        Closure wrapping this callable with memoization.
+
+    Raises
+    ----------
+    _BeartypeUtilCallableCachedException
+        If this callable accepts either:
+
+        * *No* parameters.
+        * Two or more parameters.
+        * A variadic positional parameter (e.g., ``*args``).
+
+    See Also
+    ----------
+    :func:`callable_cached`
+        Further details.
+    '''
+    assert callable(func), f'{repr(func)} not callable.'
+
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfuncwrap import unwrap_func
+
+    # Lowest-level wrappee callable wrapped by this wrapper callable.
+    func_wrappee = unwrap_func(func)
+
+    # If this wrappee accepts either zero, one, *OR* three or more flexible
+    # parameters (i.e., parameters passable as either positional or keyword
+    # arguments), raise an exception.
+    die_unless_func_args_len_flexible_equal(
+        func=func_wrappee,
+        func_args_len_flexible=2,
+        exception_cls=_BeartypeUtilCallableCachedException,
+        # Avoid unnecessary callable unwrapping as a negligible optimization.
+        is_unwrapping=False,
+    )
+    # Else, this wrappee accepts exactly one flexible parameter.
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize against the @callable_cached decorator above. For
+    # speed, this decorator violates DRY by duplicating logic.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # If this wrappee accepts variadic arguments, raise an exception.
+    if is_func_arg_variadic(func_wrappee):
+        raise _BeartypeUtilCallableCachedException(
+            f'@method_cached_arg_by_id {label_callable(func)} '
+            f'variadic arguments uncacheable.'
+        )
+    # Else, this wrappee accepts *NO* variadic arguments.
+
+    # Dictionary mapping a tuple of all flattened parameters passed to each
+    # prior call of the decorated callable with the value returned by that call
+    # if any (i.e., if that call did *NOT* raise an exception).
+    args_flat_to_return_value: Dict[tuple, object] = {}
+
+    # get() method of this dictionary, localized for efficiency.
+    args_flat_to_return_value_get = args_flat_to_return_value.get
+
+    # Dictionary mapping a tuple of all flattened parameters passed to each
+    # prior call of the decorated callable with the exception raised by that
+    # call if any (i.e., if that call raised an exception).
+    args_flat_to_exception: Dict[tuple, Exception] = {}
+
+    # get() method of this dictionary, localized for efficiency.
+    args_flat_to_exception_get = args_flat_to_exception.get
+
+    @wraps(func)
+    def _method_cached(self_or_cls, arg):
+        f'''
+        Memoized variant of the {func.__name__}() callable.
+
+        See Also
+        ----------
+        :func:`callable_cached`
+            Further details.
+        '''
+
+        # Object identifiers of the sole positional parameters passed to the
+        # decorated method.
+        args_flat = (id(self_or_cls), id(arg))
+
+        # Attempt to...
+        try:
+            # Exception raised by a prior call to the decorated callable when
+            # passed these parameters *OR* the sentinel placeholder otherwise
+            # (i.e., if this callable either has yet to be called with these
+            # parameters *OR* has but failed to raise an exception).
+            #
+            # Note that:
+            # * This statement raises a "TypeError" exception if any item of
+            #   this flattened tuple is unhashable.
+            # * A sentinel placeholder (e.g., "SENTINEL") is *NOT* needed here.
+            #   The values of the "args_flat_to_exception" dictionary are
+            #   guaranteed to *ALL* be exceptions. Since "None" is *NOT* an
+            #   exception, disambiguation between "None" and valid dictionary
+            #   values is *NOT* needed here. Although a sentinel placeholder
+            #   could still be employed, doing so would slightly reduce
+            #   efficiency for *NO* real-world gain.
+            exception = args_flat_to_exception_get(args_flat)
+
+            # If this callable previously raised an exception when called with
+            # these parameters, re-raise the same exception.
+            if exception:
+                raise exception  # pyright: ignore[reportGeneralTypeIssues]
+            # Else, this callable either has yet to be called with these
+            # parameters *OR* has but failed to raise an exception.
+
+            # Value returned by a prior call to the decorated callable when
+            # passed these parameters *OR* a sentinel placeholder otherwise
+            # (i.e., if this callable has yet to be passed these parameters).
+            return_value = args_flat_to_return_value_get(
+                args_flat, SENTINEL)
+
+            # If this callable has already been called with these parameters,
+            # return the value returned by that prior call.
+            if return_value is not SENTINEL:
+                return return_value
+            # Else, this callable has yet to be called with these parameters.
+
+            # Attempt to...
+            try:
+                # Call this parameter with these parameters and cache the value
+                # returned by this call to these parameters.
+                return_value = args_flat_to_return_value[args_flat] = func(
+                    self_or_cls, arg)
+            # If this call raised an exception...
+            except Exception as exception:
+                # Cache this exception to these parameters.
+                args_flat_to_exception[args_flat] = exception
+
+                # Re-raise this exception.
+                raise exception
+        # If one or more objects either passed to *OR* returned from this call
+        # are unhashable, perform this call as is *WITHOUT* memoization. While
+        # non-ideal, stability is better than raising a fatal exception.
+        except TypeError:
+            #FIXME: If testing, emit a non-fatal warning or possibly even raise
+            #a fatal exception. In either case, we want our test suite to notify
+            #us about this.
+            return func(self_or_cls, arg)
+
+        # Return this value.
+        return return_value
+
+    # Return this wrapper.
+    return _method_cached  # type: ignore[return-value]
+
+# ....................{ DECORATORS ~ property              }....................
 def property_cached(func: _CallableT) -> _CallableT:
     '''
     **Memoize** (i.e., efficiently cache and return all previously returned
@@ -525,24 +680,4 @@ Alternatives include (in order of decreasing efficiency):
    if not hasattr(self, {property_name!r}):
        setattr(self, {property_name!r}, __property_method(self))
    return getattr(self, {property_name!r})
-'''
-
-# ....................{ PRIVATE ~ constant : sentinel      }....................
-_SENTINEL_KWARGS_KEYS = (Iota(),)
-'''
-Sentinel tuple signifying subsequent keyword argument names.
-
-This tuple is internally leveraged by the :func:`callable_cached` decorator to
-differentiate keyword argument names from preceding positional arguments in the
-flattened tuple of all parameters passed to the decorated callable.
-'''
-
-
-_SENTINEL_KWARGS_VALUES = (Iota(),)
-'''
-Sentinel tuple signifying subsequent keyword argument values.
-
-This tuple is internally leveraged by the :func:`callable_cached` decorator to
-differentiate keyword argument names from preceding positional arguments in the
-flattened tuple of all parameters passed to the decorated callable.
 '''

@@ -308,21 +308,3 @@ class _BeartypeUtilCallableWarning(_BeartypeUtilWarning):
     '''
 
     pass
-
-
-class _BeartypeUtilCallableCachedKwargsWarning(_BeartypeUtilCallableWarning):
-    '''
-    **Beartype decorator memoization decorator keyword argument warnings.**
-
-    This warning is emitted from callables memoized by the
-    :func:`beartype._util.cache.utilcachecall.callable_cached` decorator on
-    calls receiving one or more keyword arguments. Memoizing keyword arguments
-    is substantially more space- and time-intensive than memoizing the
-    equivalent positional arguments, partially defeating the purpose of
-    memoization in the first place.
-
-    This warning denotes a critical internal issue and should thus *never* be
-    emitted to end users.
-    '''
-
-    pass

@@ -15,13 +15,8 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.roar._roarwarn import _BeartypeUtilCallableCachedKwargsWarning
-from beartype_test._util.mark.pytmark import ignore_warnings
 
 # ....................{ TESTS                              }....................
-# Prevent pytest from capturing and displaying all expected non-fatal
-# beartype-specific warnings emitted by the @callable_cached decorator.
-@ignore_warnings(_BeartypeUtilCallableCachedKwargsWarning)
 def test_callable_cached() -> None:
     '''
     Test the
@@ -62,18 +57,6 @@ def test_callable_cached() -> None:
         still_i_rise(bitter, twisted, lies) is
         still_i_rise(bitter, twisted, lies))
 
-    # Assert that memoizing two calls passed the same positional and keyword
-    # arguments in the same order caches and returns the same value.
-    assert (
-        still_i_rise(bitter, twisted=twisted, lies=lies) is
-        still_i_rise(bitter, twisted=twisted, lies=lies))
-
-    # Assert that memoizing two calls passed the same keyword arguments in the
-    # same order cache and return the same value.
-    assert (
-        still_i_rise(bitter=bitter, twisted=twisted, lies=lies) is
-        still_i_rise(bitter=bitter, twisted=twisted, lies=lies))
-
     # Assert that memoizing a call expected to raise an exception does so.
     with raises(ValueError) as exception_first_info:
         still_i_rise(bitter, twisted, dust)
@@ -82,12 +65,6 @@ def test_callable_cached() -> None:
     with raises(ValueError) as exception_next_info:
         still_i_rise(bitter, twisted, dust)
         assert exception_first_info is exception_next_info
-
-    # Assert that memoizing two calls passed the same keyword arguments in a
-    # differing order cache and return differing values.
-    assert (
-       still_i_rise(bitter=bitter, twisted=twisted, lies=lies) is not
-       still_i_rise(twisted=twisted, lies=lies, bitter=bitter))
 
     # Assert that passing one or more unhashable parameters to this callable
     # succeeds with the expected return value.
@@ -108,14 +85,6 @@ def test_callable_cached() -> None:
         @callable_cached
         def see_me_broken(*args):
             return args
-
-    # Assert that attempting to memoize a callable accepting one or more
-    # variadic keyword parameters fails with the expected exception.
-    with raises(_BeartypeUtilCallableCachedException):
-        @callable_cached
-        def my_soulful_cries(**kwargs):
-            return kwargs
-
 
 
 def test_property_cached() -> None:

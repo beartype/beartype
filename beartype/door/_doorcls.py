@@ -42,6 +42,7 @@ from beartype._conf.confcls import (
 from beartype._data.datatyping import CallableMethodGetitemArg
 from beartype._util.cache.utilcachecall import (
     callable_cached,
+    method_cached_arg_by_id,
     property_cached,
 )
 from beartype._util.hint.pep.utilpepget import (
@@ -571,65 +572,17 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         return is_bearable(obj=obj, hint=self._hint, conf=conf)
 
     # ..................{ TESTERS ~ subhint                  }..................
-    #FIXME: *EXTREMELY NON-IDEAL.* Restore caching, please. Sadly, enabling
-    #caching on this specific tester currently induces infinite recursion. Why?
-    #Because the @callable_cached decorator internally caches the passed "other"
-    #argument as the key of a dictionary (makes sense). Subsequent calls to this
-    #method when passed the same argument lookup that "other" in that
-    #dictionary. Since dictionary lookups implicitly call other.__eq__() to
-    #resolve key collisions *AND* since the UnionTypeHint.__eq__() method has
-    #been overridden in terms of TypeHint.is_subhint(), infinite recursion
-    #results. A number of solutions present themselves:
-    #1. IDEAL SOLUTION. This approach may *NOT* actually work. But if it does,
-    #   it's ideal. Basically, we refactor the UnionTypeHint._is_equal() method
-    #   to resemble the UnionTypeHint._is_subhint() method; that is to say, the
-    #   former should perform iteration resembling the latter. Or... maybe not?
-    #   That doesn't sound particularly useful, actually.
-    #2. *DEFINE A NEW CACHING DECORATOR.* Yeah. That's probably what we'll need
-    #   to do here. We do *NOT* actually need to resolve cached key collisions
-    #   using equality comparison; since "TypeHint" objects are all singletons,
-    #   we only need to compare object identity -- which, ironically, is the
-    #   default __eq__() implementation! Somehow, we need to either:
-    #   * Augment the existing @callable_cached with a new optional parameter
-    #     resembling "is_args_equal_by_id: bool = False". When true,
-    #     @callable_cached should lookup cached arguments *NOT* by those
-    #     arguments but rather by their IDs: e.g.,
-    #         elif len(args) == 1:
-    #             args_flat = (
-    #                 args[0]
-    #                 if not is_args_equal_by_id else
-    #                 id(args[0])
-    #             )
-    #         # Else, one or more positional arguments are passed. In this case,
-    #         # reuse this tuple as is.
-    #         else:
-    #             #FIXME: Raise a non-fatal warning here if
-    #             #"is_args_equal_by_id" is "True", as this becomes inefficient.
-    #             args_flat = args
-    #
-    #     In theory, that should absolutely work. The ten-foot elephant in the
-    #     room, however, is that we'll then need to generalize the
-    #     @callable_cached decorator to accept arguments -- which means yet
-    #     another absurd layer of decorator indirection and inefficiency.
-    #
-    #     Then just replace *ALL* @callable_cached decorations throughout this
-    #     submodule with this partial defined in "utilcachecall":
-    #         callable_cached_by_id = partial(
-    #             callable_cached(is_args_equal_by_id=True))
-    #   * Alternately, since this approach is really *ONLY* required by this
-    #     specific is_subhint() method, what we can (and arguably really should
-    #     do) is just to define a new @callable_cached_args_1_by_id decorator
-    #     that:
-    #     * Requires the decorated callable to accept only a single argument.
-    #     * Hard-codes its implementation accordingly.
-    #     That said, this is kinda awful, too. We're now violating DRY for an
-    #     extremely non-trivial decorator. Don't do this, please. That's right:
-    #     let's just generalize the @callable_cached decorator accordingly.
-    #   * Have TypeHint.__eq__() perform the default object identity comparison
-    #     when the caller is the _callable_cached() wrapper. (Yes, this is
-    #     absurd. Don't do this, please.)
-
-    # @callable_cached
+    #FIXME: Unit test @method_cached_arg_by_id, please.
+    #FIXME: Document why this decorator is *ABSOLUTELY* required here, please.
+    #Notably, using the @callable_cached decorator here induces infinite
+    #recursion. Why? Because the @callable_cached decorator internally caches
+    #the passed "other" argument as the key of a dictionary (makes sense).
+    #Subsequent calls to this method when passed the same argument lookup that
+    #"other" in that dictionary. Since dictionary lookups implicitly call
+    #other.__eq__() to resolve key collisions *AND* since the
+    #UnionTypeHint.__eq__() method has been overridden in terms of
+    #TypeHint.is_subhint(), infinite recursion results.
+    @method_cached_arg_by_id
     def is_subhint(self, other: 'TypeHint') -> bool:
         '''
         ``True`` only if this type hint is a **subhint** of the passed type
