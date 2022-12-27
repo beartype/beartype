@@ -34,29 +34,29 @@ standardized by the :mod:`typing` module.
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.door._doorcls import (
+from beartype.door._cls.doorsuper import (
     TypeHint as TypeHint)
 from beartype.door._doorcheck import (
     die_if_unbearable as die_if_unbearable,
     is_bearable as is_bearable,
     is_subhint as is_subhint,
 )
-from beartype.door._proposal.doorpep484604 import (
+from beartype.door._cls.pep.doorpep484604 import (
     UnionTypeHint as UnionTypeHint)
-from beartype.door._proposal.doorpep586 import (
+from beartype.door._cls.pep.doorpep586 import (
     LiteralTypeHint as LiteralTypeHint)
-from beartype.door._proposal.doorpep593 import (
+from beartype.door._cls.pep.doorpep593 import (
     AnnotatedTypeHint as AnnotatedTypeHint)
-from beartype.door._proposal.pep484.doorpep484class import (
+from beartype.door._cls.pep.pep484.doorpep484class import (
     ClassTypeHint as ClassTypeHint)
-from beartype.door._proposal.pep484.doorpep484newtype import (
+from beartype.door._cls.pep.pep484.doorpep484newtype import (
     NewTypeTypeHint as NewTypeTypeHint)
-from beartype.door._proposal.pep484.doorpep484typevar import (
+from beartype.door._cls.pep.pep484.doorpep484typevar import (
     TypeVarTypeHint as TypeVarTypeHint)
-from beartype.door._proposal.pep484585.doorpep484585callable import (
+from beartype.door._cls.pep.pep484585.doorpep484585callable import (
     CallableTypeHint as CallableTypeHint)
 
 #FIXME: Actually, let's *NOT* publicly expose this for the moment. Why? Because
 #we still need to split this into fixed and variadic tuple subclasses.
-# from beartype.door._proposal.pep484585.doorpep484585tuple import (
+# from beartype.door._cls.pep.pep484585.doorpep484585tuple import (
 #     _TupleTypeHint as _TupleTypeHint)

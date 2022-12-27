@@ -12,24 +12,22 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._doorcls import (
-    TypeHint,
+from beartype.door._cls.doorsub import (
     _TypeHintOriginIsinstanceableArgs1,
     _TypeHintOriginIsinstanceableArgs2,
     _TypeHintOriginIsinstanceableArgs3,
     _TypeHintSubscripted,
 )
-from beartype.door._proposal.pep484.doorpep484class import (
-    ClassTypeHint)
-from beartype.door._proposal.doorpep484604 import UnionTypeHint
-from beartype.door._proposal.doorpep586 import LiteralTypeHint
-from beartype.door._proposal.doorpep593 import AnnotatedTypeHint
-from beartype.door._proposal.pep484.doorpep484newtype import NewTypeTypeHint
-from beartype.door._proposal.pep484.doorpep484typevar import TypeVarTypeHint
-from beartype.door._proposal.pep484585.doorpep484585callable import (
+from beartype.door._cls.doorsuper import TypeHint
+from beartype.door._cls.pep.pep484.doorpep484class import ClassTypeHint
+from beartype.door._cls.pep.doorpep484604 import UnionTypeHint
+from beartype.door._cls.pep.doorpep586 import LiteralTypeHint
+from beartype.door._cls.pep.doorpep593 import AnnotatedTypeHint
+from beartype.door._cls.pep.pep484.doorpep484newtype import NewTypeTypeHint
+from beartype.door._cls.pep.pep484.doorpep484typevar import TypeVarTypeHint
+from beartype.door._cls.pep.pep484585.doorpep484585callable import (
     CallableTypeHint)
-from beartype.door._proposal.pep484585.doorpep484585tuple import (
-    _TupleTypeHint)
+from beartype.door._cls.pep.pep484585.doorpep484585tuple import _TupleTypeHint
 from beartype.roar import (
     BeartypeDoorNonpepException,
     # BeartypeDoorPepUnsupportedException,
@@ -200,7 +198,7 @@ def _init() -> None:
 
         # Sanitize the fully-qualified module name of this public subclass from
         # the private submodule declaring this subclass (e.g.,
-        # "beartype.door._proposal.doorpep484604.UnionTypeHintbeartype") to the
+        # "beartype.door._cls.pep.doorpep484604.UnionTypeHintbeartype") to the
         # public "beartype.door" subpackage to both improve the readability of
         # exception messages and discourage end users from accessing that
         # private submodule.

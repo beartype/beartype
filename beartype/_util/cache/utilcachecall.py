@@ -292,9 +292,6 @@ def callable_cached(func: _CallableT) -> _CallableT:
     return _callable_cached  # type: ignore[return-value]
 
 # ....................{ DECORATORS ~ method                }....................
-#FIXME: Unit test us up, please.
-#FIXME: Consider optimizing most usages of @callable_cached throughout the
-#codebase with this substantially faster decorator instead, please.
 def method_cached_arg_by_id(func: _CallableT) -> _CallableT:
     '''
     **Memoize** (i.e., efficiently re-raise all exceptions previously raised by

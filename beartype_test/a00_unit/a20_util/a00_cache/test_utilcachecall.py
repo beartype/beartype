@@ -30,9 +30,12 @@ def test_callable_cached() -> None:
     from pytest import raises
 
     # ..................{ CALLABLES                          }..................
-    # Callable memoized by this decorator.
     @callable_cached
     def still_i_rise(bitter, twisted, lies):
+        '''
+        Arbitrary callable memoized by this decorator.
+        '''
+
         # If an arbitrary condition, raise an exception whose value depends on
         # these parameters to exercise this decorator's conditional caching of
         # exceptions.
@@ -44,7 +47,7 @@ def test_callable_cached() -> None:
         return bitter + twisted + lies
 
     # ..................{ LOCALS                             }..................
-    # Objects to be passed as parameters below.
+    # Hashable objects to be passed as parameters below.
     bitter  = ('You', 'may', 'write', 'me', 'down', 'in', 'history',)
     twisted = ('With', 'your', 'bitter,', 'twisted,', 'lies.',)
     lies    = ('You', 'may', 'trod,', 'me,', 'in', 'the', 'very', 'dirt',)
@@ -69,14 +72,14 @@ def test_callable_cached() -> None:
     # Assert that passing one or more unhashable parameters to this callable
     # succeeds with the expected return value.
     assert still_i_rise(
-        ('Just', 'like', 'moons',),
-        ('and', 'like', 'suns',),
-        ('With the certainty of tides',),
-    ) == (
+        ['Just', 'like', 'moons',],
+        ['and', 'like', 'suns',],
+        ['With the certainty of tides',],
+    ) == [
         'Just', 'like', 'moons',
         'and', 'like', 'suns',
         'With the certainty of tides',
-    )
+    ]
 
     # ..................{ ASSERTS ~ fail                     }..................
     # Assert that attempting to memoize a callable accepting one or more
@@ -84,6 +87,102 @@ def test_callable_cached() -> None:
     with raises(_BeartypeUtilCallableCachedException):
         @callable_cached
         def see_me_broken(*args):
+            return args
+
+
+def test_method_cached_arg_by_id() -> None:
+    '''
+    Test the
+    :func:`beartype._util.cache.utilcachecall.method_cached_arg_by_id`
+    decorator.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
+    from beartype._util.cache.utilcachecall import method_cached_arg_by_id
+    from pytest import raises
+
+    # ..................{ CLASSES                            }..................
+    class LikeDust(object):
+        '''
+        Arbitrary class containing an arbitrary callable memoized by this
+        decorator.
+        '''
+
+        @method_cached_arg_by_id
+        def just_like_moons(self, and_like_suns):
+            '''
+            Arbitrary callable memoized by this decorator.
+            '''
+
+            # If an arbitrary condition, raise an exception whose value depends
+            # on these parameters to exercise this decorator's conditional
+            # caching of exceptions.
+            if len(and_like_suns) == 6:
+                raise ValueError(and_like_suns)
+
+            # Else, return a value depending on these parameters to exercise
+            # this decorator's conditional caching of return values.
+            return [id(self), and_like_suns]
+
+    # ..................{ LOCALS                             }..................
+    # Instance of this class.
+    like_air = LikeDust()
+
+    # Hashable objects to be passed as parameters below.
+    moons = ('Just', 'like', 'moons', 'and', 'like', 'suns,')
+    tides = ('With', 'the', 'certainty,', 'of,', 'tides,',)
+
+    # Shallow copies of hashable objects defined above.
+    #
+    # Note that copying a list in a manner guaranteeing even a shallow copy is
+    # surprisingly non-trivial. See this relevant StackOverflow answer:
+    #     https://stackoverflow.com/a/15214661/2809027
+    tides_copy = tuple(list(tides))
+
+    # Unhashable objects to be passed as parameters below.
+    hopes = ['Just', 'like', 'hopes,', 'springing,', 'high',]
+
+    # ..................{ ASSERTS ~ pass                     }..................
+    # Assert that memoizing two calls passed the same positional arguments
+    # caches and returns the same value.
+    assert (
+        like_air.just_like_moons(tides) is
+        like_air.just_like_moons(tides))
+
+    # Assert that memoizing two calls passed a copy of the above arguments
+    # caches and returns a different value.
+    assert (
+        like_air.just_like_moons(tides_copy) is not
+        like_air.just_like_moons(tides))
+
+    # Assert that memoizing a call expected to raise an exception does so.
+    with raises(ValueError) as exception_first_info:
+        like_air.just_like_moons(moons)
+
+    # Assert that repeating that call reraises the same exception.
+    with raises(ValueError) as exception_next_info:
+        like_air.just_like_moons(moons)
+        assert exception_first_info is exception_next_info
+
+    # Assert that passing one or more unhashable parameters to this callable
+    # succeeds with the expected return value.
+    assert like_air.just_like_moons(hopes) == [id(like_air), hopes]
+
+    # ..................{ ASSERTS ~ fail                     }..................
+    # Assert that attempting to memoize a callable accepting *NO* parameters
+    # fails with the expected exception.
+    with raises(_BeartypeUtilCallableCachedException):
+        @method_cached_arg_by_id
+        def into_a_daybreak_thats_wondrously_clear():
+            return 0
+
+    # Assert that attempting to memoize a callable accepting one or more
+    # variadic positional parameters fails with the expected exception.
+    with raises(_BeartypeUtilCallableCachedException):
+        @method_cached_arg_by_id
+        def leaving_behind_nights_of_terror_and_fear(*args):
             return args
 
 

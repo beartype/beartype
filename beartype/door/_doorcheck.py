@@ -52,7 +52,7 @@ from beartype._util.mod.lib.utiltyping import import_typing_attr_or_fallback
 
 # ....................{ HINTS                              }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: Synchronize with similar logic in "beartype.door._doorcls".
+# CAUTION: Synchronize with similar logic in "beartype.door._cls.doorsuper".
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #FIXME: This approach is *PHENOMENAL.* No. Seriously, We could implement a
@@ -242,7 +242,7 @@ def is_subhint(subhint: object, superhint: object) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype.door._doorcls import TypeHint
+    from beartype.door._cls.doorsuper import TypeHint
 
     # The one-liner is mightier than the... many-liner.
     return TypeHint(subhint).is_subhint(TypeHint(superhint))

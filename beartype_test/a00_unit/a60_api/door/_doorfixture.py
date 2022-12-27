@@ -50,6 +50,7 @@ def door_cases_equality() -> 'Iterable[Tuple[object, object, bool]]':
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+    from numbers import Number
 
     # Intentionally import from "typing" rather than "beartype.typing" to
     # guarantee PEP 484-compliant type hints.
@@ -77,22 +78,20 @@ def door_cases_equality() -> 'Iterable[Tuple[object, object, bool]]':
         # ..................{ HINTS ~ arg : union            }..................
         # PEP 484-compliant union type hints.
         (Union[int, str], Union[str, list], False),
+        (Union[Number, int], Union[Number, float], True),
 
         # Test that union equality ignores order.
         (Union[int, str], Union[str, int], True),
 
         # Test that union equality compares child type hints collectively rather
-        # than individually. See commentary preceding the UnionTypeHint.__eq__()
-        # method for further details.
+        # than individually.
         #
         # Note that this pair of cases tests numerous edge cases, including:
         # * Equality comparison of non-unions against unions. Although
         #   "Union[int]" superficially appears to be a union, Python reduces
         #   "Union[int]" to simply "int" at runtime.
         (Union[bool, int], Union[int], True),
-
-        #FIXME: Resolve this, please. Currently, this is failing. *sigh*
-        # (Union[int], Union[bool, int], True),
+        (Union[int], Union[bool, int], True),
     ]
 
     # If the active Python interpreter targets Python >= 3.9 and thus supports

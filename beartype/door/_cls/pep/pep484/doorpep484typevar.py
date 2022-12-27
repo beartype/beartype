@@ -12,8 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._doorcls import TypeHint
-from beartype.door._proposal.doorpep484604 import UnionTypeHint
+from beartype.door._cls.doorsuper import TypeHint
+from beartype.door._cls.pep.doorpep484604 import UnionTypeHint
 # from beartype.roar import BeartypeDoorPepUnsupportedException
 from beartype.typing import (
     TYPE_CHECKING,

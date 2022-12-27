@@ -93,7 +93,7 @@ class _TypeHintMeta(ABCMeta):
 
         # ................{ IMPORTS                            }................
         # Avoid circular import dependencies.
-        from beartype.door._doorcls import TypeHint
+        from beartype.door._cls.doorsuper import TypeHint
 
         # ................{ TRIVIALITIES                       }................
         # If this class is a concrete subclass of the "TypeHint" abstract base

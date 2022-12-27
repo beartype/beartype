@@ -12,10 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.door._doorcls import (
-    TypeHint,
-    _TypeHintSubscripted,
-)
+from beartype.door._cls.doorsub import _TypeHintSubscripted
+from beartype.door._cls.doorsuper import TypeHint
 from beartype.typing import Tuple
 
 # ....................{ SUBCLASSES                         }....................
