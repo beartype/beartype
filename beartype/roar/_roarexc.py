@@ -551,8 +551,7 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
         culprits = tuple(
             get_weakref_obj_or_repr(
                 obj_weakref=culprit_weakref, obj_repr=culprit_repr)
-            for culprit_weakref, culprit_repr in 
-                self._culprits_weakref_and_repr
+            for culprit_weakref, culprit_repr in self._culprits_weakref_and_repr
         )
 
         # Return these culprits.

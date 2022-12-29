@@ -33,13 +33,6 @@ from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.func.utilfunctest import is_func_coro
 from beartype._util.func.utilfuncwrap import unwrap_func
 
-# ....................{ GLOBALS ~ private                  }....................
-_TypeStackOrNone = NoneTypeOr[tuple]
-'''
-2-tuple ``(type, type(None)``, globally cached for negligible space and time
-efficiency gains on validating passed parameters below.
-'''
-
 # ....................{ CLASSES                            }....................
 class BeartypeCall(object):
     '''
@@ -408,3 +401,10 @@ class BeartypeCall(object):
         else:
             self.func_wrapper_code_call_prefix = ''
             self.func_wrapper_code_signature_prefix = ''
+
+# ....................{ GLOBALS ~ private                  }....................
+_TypeStackOrNone = NoneTypeOr[tuple]
+'''
+2-tuple ``(type, type(None)``, globally cached for negligible space and time
+efficiency gains on validating passed parameters below.
+'''

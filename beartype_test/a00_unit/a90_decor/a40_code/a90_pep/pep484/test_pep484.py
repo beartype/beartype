@@ -99,6 +99,7 @@ def test_decor_pep484_hint_noreturn() -> None:
     type hint, which is valid *only* as an unsubscripted return annotation.
     '''
 
+    # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import (
@@ -111,6 +112,7 @@ def test_decor_pep484_hint_noreturn() -> None:
     )
     from beartype_test._util.pytroar import raises_uncached
 
+    # ..................{ LOCALS                             }..................
     # Exception guaranteed to be raised *ONLY* by the mending_wall() function.
     class BeforeIBuiltAWallIdAskToKnow(Exception): pass
 
@@ -121,19 +123,11 @@ def test_decor_pep484_hint_noreturn() -> None:
         raise BeforeIBuiltAWallIdAskToKnow(
             "Something there is that doesn't love a wall,")
 
-    # Assert this callable raises the expected exception when called.
-    with raises_uncached(BeforeIBuiltAWallIdAskToKnow):
-        mending_wall()
-
     # Callable explicitly returning a value incorrectly annotating its return
     # as "NoReturn".
     @beartype
     def frozen_ground_swell() -> NoReturn:
         return 'That sends the frozen-ground-swell under it,'
-
-    # Assert this callable raises the expected exception when called.
-    with raises_uncached(BeartypeCallHintViolation):
-        frozen_ground_swell()
 
     # Callable implicitly returning a value incorrectly annotating its return
     # as "NoReturn".
@@ -141,10 +135,20 @@ def test_decor_pep484_hint_noreturn() -> None:
     def we_do_not_need_the_wall() -> NoReturn:
         'There where it is we do not need the wall:'
 
+    # ..................{ PASS                               }..................
+    # Assert this callable raises the expected exception when called.
+    with raises_uncached(BeforeIBuiltAWallIdAskToKnow):
+        mending_wall()
+
+    # Assert this callable raises the expected exception when called.
+    with raises_uncached(BeartypeCallHintViolation):
+        frozen_ground_swell()
+
     # Assert this callable raises the expected exception when called.
     with raises_uncached(BeartypeCallHintViolation):
         we_do_not_need_the_wall()
 
+    # ..................{ FAIL                               }..................
     # Assert this decorator raises the expected exception when decorating a
     # synchronous callable returning a value incorrectly annotating its return
     # as "NoReturn".
