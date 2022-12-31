@@ -1232,6 +1232,7 @@ Type-check *anything* at *any* time against *any* type hint. When the
 
 .. # FIXME: Document the new "beartype.peps" submodule as well, please!
 
+.. _beartype.door.die_if_unbearable:
 .. _die_if_unbearable:
 
 *def* beartype.door.\ **die_if_unbearable**\ (obj: object, hint: object, \*,
@@ -1261,6 +1262,7 @@ conf: beartype.BeartypeConf_ = BeartypeConf()) -> None
 
     See ``help(beartype.door.die_if_unbearable)`` for further details.
 
+.. _beartype.door.is_bearable:
 .. _is_bearable:
 
 *def* beartype.door.\ **is_bearable**\ (obj: object, hint: object, \*, conf:
@@ -1925,6 +1927,203 @@ Configuration API
       **Linear-time strategy** (i.e., the ``O(n)`` strategy, type-checking *all*
       items of a container). This strategy is **currently unimplemented.** (*To
       be implemented by a future beartype release.*)
+
+Beartype Exceptions
+-------------------
+
+Beartype is fastidious to a fault. Exception handling is no... exception.
+<sup>punny *or* funny? you decide.</sup>
+
+Beartype only raises:
+
+* **Beartype-specific exceptions.** For your safety and ours, *all* exceptions
+  raised by beartype *always* subclass the beartype.roar.BeartypeException_
+  abstract base class (ABC) – allowing you to trivially differentiate beartype
+  from non-beartype exceptions.
+* **Disambiguous exceptions.** For your sanity and ours, *every* exception
+  raised by beartype means one thing and one thing only. Beartype *never* reuses
+  the same exception class to mean two different things – allowing you to
+  trivially catch and handle the exact exception you're interested in.
+
+Exceptions: because when things go wrong, they *really* go wrong.
+
+Exception API
+~~~~~~~~~~~~~
+
+.. _beartype.roar.BeartypeException:
+
+*class* beartype.roar.\ **BeartypeException**\ (Exception)
+
+    **Beartype exception root superclass.** *All* exceptions raised by beartype
+    are guaranteed to be instances of concrete subclasses of this abstract base
+    class (ABC) whose class names strictly match either:
+
+    * ``Beartype{subclass_name}Exception`` for non-type-checking violations
+      (e.g., ``BeartypeDecorHintPep3119Exception``).
+    * ``Beartype{subclass_name}Violation`` for type-checking violations
+      (e.g., ``BeartypeCallHintReturnViolation``).
+
+.. _beartype.roar.BeartypeDecorException:
+
+*class* beartype.roar.\ **BeartypeDecorException**\ (BeartypeException)
+
+    **Beartype decorator exception superclass.** *All* exceptions raised by
+    the ``@beartype`` decorator at decoration time (i.e., while dynamically
+    generating type-checking wrappers for decorated callables and classes) are
+    guaranteed to be instances of concrete subclasses of this abstract base
+    class (ABC). Since decoration-time exceptions are typically raised from
+    module scope early in the lifetime of a Python process, you are unlikely to
+    manually catch and handle decorator exceptions.
+
+    A detailed list of subclasses of this ABC is thus quite inconsequential.
+    Very well. Leycec_ admits he was too tired to type it all out. Leycec_ also
+    admits he played exploitative video games all night instead... *again*.
+    Leycec_ is grateful nobody actually reads these API notes. <sup>checkmate,
+    GitHub</sup>
+
+.. _beartype.roar.BeartypeCallHintException:
+
+*class* beartype.roar.\ **BeartypeCallHintException**\ (BeartypeCallException)
+
+    **Beartype type-checking exception superclass.** Beartype type-checkers
+    (including beartype.door.die_if_unbearable_ and ``@beartype``\ -decorated
+    callables) raise instances of concrete subclasses of this abstract base
+    class (ABC) when failing a type-check at call time (e.g., due to passing a
+    parameter or returning a value violating a type hint annotating that
+    parameter or return). *All* exceptions raised when type-checking are
+    guaranteed to be instances of this ABC. Since type-checking exceptions are
+    typically raised from function and method scopes later in the lifetime of a
+    Python process, you are *much* more likely to manually catch and handle
+    type-checking exceptions than other types of beartype exceptions.
+
+    In fact, you're encouraged to do so. Repeat after Kermode Bear: "Exceptions
+    are fun, everybody." *Gotta catch 'em all!*
+
+.. _beartype.roar.BeartypeCallHintForwardRefException:
+
+*class* beartype.roar.\ **BeartypeCallHintForwardRefException**\
+(BeartypeCallHintException)
+
+    **Beartype type-checking forward reference exception.** Beartype
+    type-checkers raise instances of this exception type when a **forward
+    reference type hint** (i.e., string referring to a class that has yet to be
+    defined) erroneously references either:
+
+    * An attribute that does *not* exist.
+    * An attribute that exists but whose value is *not* actually a class.
+
+    As we gaze forward in time, so too do we glimpse ourselves – unshaven and
+    shabbily dressed – in the rear-view mirror:
+
+    .. code-block:: python
+
+       >>> from beartype import beartype
+       >>> from beartype.roar import BeartypeCallHintForwardRefException
+       >>> @beartype
+       ... def i_am_spirit_bear(favourite_foodstuff: 'salmon.of.course') -> None: pass
+       >>> try:
+       ...     i_am_spirit_bear('Why do you eat all my salmon, Spirit Bear?')
+       ... except BeartypeCallHintForwardRefException as exception:
+       ...     print(exception)
+       Forward reference "salmon.of.course" unimportable.
+
+.. _beartype.roar.BeartypeCallHintViolation:
+
+*class* beartype.roar.\ **BeartypeCallHintViolation**(BeartypeCallHintException)
+
+    **Beartype type-checking violation.** This is the most important beartype
+    exception you never hope to see – and thus the beartype exception you are
+    most likely to see. When your code explodes at midnight, instances of this
+    exception type were probably lighting the fuse behind your back.
+
+    Beartype type-checkers raise one instance of this exception type for each
+    **type-checking violation** (i.e., when an object to be type-checked
+    violates the type hint annotating that object). Because type-checking
+    violations are why we are all here, instances of this exception type provide
+    additional read-only public properties. Inspect these properties at runtime
+    to resolve any lingering doubts about which coworkers you need to blame in
+    Git commit messages:
+
+    .. _beartype.roar.BeartypeCallHintViolation.culprits:
+
+    * **culprits**\ : Tuple[object, ...]
+
+      Tuple of one or more **culprits** (i.e., irresponsible objects that
+      violated the type hints annotating those objects during a type-check).
+
+      Specifically, this property returns either:
+
+      * If a container (e.g., dictionary, list, set, tuple) is responsible for
+        this violation, the 2-tuple ``(culprit_root, culprit_leaf)`` where:
+
+        * ``culprit_root`` is the outermost such container. Typically, this is
+          the passed parameter or returned value indirectly violating this type
+          hint.
+        * ``culprit_leaf`` is the innermost item transitively contained in
+          ``culprit_root`` directly violating this type hint.
+
+      * If a non-container (e.g., scalar, class instance) is responsible for
+        this violation, the 1-tuple ``(culprit,)`` where ``culprit`` is that
+        non-container.
+
+      Caveats apply, however. This property makes a good-faith effort to list
+      all culprits responsible for this type-checking violation. In two edge
+      cases beyond the purview of beartype's half-lidded eyes, this property
+      instead only lists truncated snapshots of the machine-readable
+      representations of those culprits (e.g., the first 10,000 characters or so
+      of their `repr()` strings). This occurs for each culprit that:
+
+      * Has **already been garbage-collected.** To avoid memory leaks, this
+        property only weakly rather than strongly refers to these culprits. This
+        property is thus best accessed only where these culprits are accessible.
+        *Technically*, this property is safely accessible from any context.
+        *Practically*, this property is most usefully accessed only from the
+        ``except ...:`` block directly catching this violation. Notably, this
+        property is guaranteed to refer to these culprits only for the
+        duration of the ``except ...:`` block directly catching this violation.
+        Since these culprits may be garbage-collected at any time thereafter,
+        this property *cannot* be guaranteed to refer to these culprits outside
+        that block. If this property is accessed from any other context and ore
+        or more of these culprits are already dead, this property dynamically
+        reduces the corresponding item(s) of this tuple to only the
+        machine-readable representations of those culprits. (This exception
+        stored the representations of those culprits inside itself when it was
+        first raised. Like a gruesome time capsule, they return to haunt you.)
+      * Is a **builtin variable-sized C-based object** (e.g., ``dict``, ``int``,
+        ``list``, ``tuple``) Long-standing CPython limitations prevent beartype
+        from weakly referring to those objects. Openly riot on the `CPython bug
+        tracker`_ if this displeases you as much as it does Kermode Bear.
+
+      Let us examine what this means for your malding CTO:
+
+      .. code-block:: python
+
+         >>> from beartype import beartype
+         >>> from beartype.roar import BeartypeCallHintViolation
+         >>> from beartype.typing import List
+         >>> from weakref import ref
+
+         >>> @beartype
+         ... def we_are_all_spirit_bear(
+         ...     best_bear_dens: List[List[str]]) -> None: pass
+
+         >>> try:
+         ...     we_are_all_spirit_bear(
+         ...         [[b'Why do you sleep in my pinball room, Spirit Bear?']])
+         ... except BeartypeCallHintViolation as exception:
+         ...     root_culprit = exception.culprits[0]
+         ...     leaf_culprit = exception.culprits[1]
+         ...     print(f'root culprit: {type(root_culprit)} value {root_culprit}')
+         ...     print(f'leaf culprit: {type(leaf_culprit)} value {leaf_culprit}')
+         root culprit: <class 'str'> value [['Why do you sleep in my pinball room, Spirit Bear?']]
+         leaf culprit: <class 'str'> value b'Why do you sleep in my pinball room, Spirit Bear?'
+
+      We see that beartype correctly identified the root culprit as the passed
+      list of lists of byte-strings (rather than strings) *and* the leaf culprit
+      as that byte-string. We also see that beartype only returned the `repr()`
+      of both culprits rather than those culprits. Why? Because CPython
+      prohibits weak references to lists *and* byte-strings. This is why we
+      facepalm ourselves in the morning.
 
 Beartype Validators
 -------------------
@@ -5892,6 +6091,10 @@ rather than Python runtime) include:
    https://numba.pydata.org
 .. _PyPy:
    https://www.pypy.org
+
+.. # ------------------( LINKS ~ py : interpreter : cpython  )------------------
+.. _CPython bug tracker:
+   https://github.com/python/cpython/issues
 
 .. # ------------------( LINKS ~ py : lang                   )------------------
 .. _generic alias parameters:
