@@ -2049,9 +2049,10 @@ Exception API
     **type-checking violation** (i.e., when an object to be type-checked
     violates the type hint annotating that object). Because type-checking
     violations are why we are all here, instances of this exception type provide
-    additional read-only public properties. Inspect these properties at runtime
-    to resolve any lingering doubts about which coworkers you need to blame in
-    Git commit messages:
+    additional read-only public properties.
+
+    Inspect these properties at runtime to resolve any lingering doubts about
+    which coworkers you need to blame in your next Git commit:
 
     .. _BeartypeCallHintViolation.culprits:
 
@@ -2062,46 +2063,45 @@ Exception API
 
       Specifically, this property returns either:
 
-      * If a container (e.g., dictionary, list, set, tuple) is responsible for
-        this violation, the 2-tuple ``(culprit_root, culprit_leaf)`` where:
+      * If a standard container (e.g., ``dict``, ``list``, ``set``, ``tuple``)
+        is responsible for this violation, the 2-tuple ``(root_culprit,
+        leaf_culprit)`` where:
 
-        * ``culprit_root`` is the outermost such container. Typically, this is
-          the passed parameter or returned value indirectly violating this type
+        * ``root_culprit`` is the outermost such container. This is usually the
+          passed parameter or returned value indirectly violating this type
           hint.
-        * ``culprit_leaf`` is the innermost item transitively contained in
-          ``culprit_root`` directly violating this type hint.
+        * ``leaf_culprit`` is the innermost item nested in ``root_culprit``
+          directly violating this type hint.
 
       * If a non-container (e.g., scalar, class instance) is responsible for
         this violation, the 1-tuple ``(culprit,)`` where ``culprit`` is that
         non-container.
 
-      Caveats apply, however. This property makes a good-faith effort to list
-      all culprits responsible for this type-checking violation. In two edge
-      cases beyond the purview of beartype's half-lidded eyes, this property
-      instead only lists truncated snapshots of the machine-readable
-      representations of those culprits (e.g., the first 10,000 characters or so
-      of their `repr()` strings). This occurs for each culprit that:
+      **Caveats apply.** This property makes a good-faith effort to list the
+      most significant culprits responsible for this type-checking violation. In
+      two edge cases beyond our control, however, this property falls back to
+      listing truncated snapshots of the machine-readable representations of
+      those culprits (e.g., the first 10,000 characters or so of their `repr()`
+      strings). This safe fallback is triggered for each culprit that:
 
       * Has **already been garbage-collected.** To avoid memory leaks, this
-        property only weakly rather than strongly refers to these culprits. This
-        property is thus best accessed only where these culprits are accessible.
+        property only weakly (rather than strongly) refers to these culprits and
+        is thus best accessed only where these culprits are accessible.
         *Technically*, this property is safely accessible from any context.
-        *Practically*, this property is most usefully accessed only from the
-        ``except ...:`` block directly catching this violation. Notably, this
-        property is guaranteed to refer to these culprits only for the
-        duration of the ``except ...:`` block directly catching this violation.
-        Since these culprits may be garbage-collected at any time thereafter,
-        this property *cannot* be guaranteed to refer to these culprits outside
-        that block. If this property is accessed from any other context and ore
-        or more of these culprits are already dead, this property dynamically
-        reduces the corresponding item(s) of this tuple to only the
-        machine-readable representations of those culprits. (This exception
-        stored the representations of those culprits inside itself when it was
-        first raised. Like a gruesome time capsule, they return to haunt you.)
+        *Practically*, this property is most usefully accessed from the
+        ``except ...:`` block directly catching this violation. Since these
+        culprits may be garbage-collected at any time thereafter, this property
+        *cannot* be guaranteed to refer to these culprits outside that block. If
+        this property is accessed from any other context and one or more of
+        these culprits have sadly passed away, this property dynamically reduces
+        the corresponding item(s) of this tuple to only the machine-readable
+        representations of those culprits. (This exception stored the
+        representations of those culprits inside itself when first raised. Like
+        a gruesome time capsule, they return to haunt you.)
       * Is a **builtin variable-sized C-based object** (e.g., ``dict``, ``int``,
-        ``list``, ``tuple``) Long-standing CPython limitations prevent beartype
-        from weakly referring to those objects. Openly riot on the `CPython bug
-        tracker`_ if this displeases you as much as it does Kermode Bear.
+        ``list``, ``str``). Long-standing limitations in CPython itself prevent
+        beartype from weakly referring to those objects. Openly riot on the
+        `CPython bug tracker`_ if this displeases you. *You are not alone.*
 
       Let us examine what this means for your malding CTO:
 
@@ -2128,14 +2128,14 @@ Exception API
 
       We see that beartype correctly identified the root culprit as the passed
       list of lists of byte-strings (rather than strings) *and* the leaf culprit
-      as that byte-string. We also see that beartype only returned the `repr()`
-      of both culprits rather than those culprits. Why? Because CPython
-      prohibits weak references to both lists and byte-strings.
-      
+      as that byte-string. We also see that beartype only returned the
+      ``repr()`` of both culprits rather than those culprits. Why? Because
+      CPython prohibits weak references to both lists *and* byte-strings.
+
       This is why we facepalm ourselves in the morning. We did it this morning.
       We'll do it next morning, too. Until the weakref_ module improves,
-      leycec's forehead will be swollen with an angry mass of red welts that are
-      unsightly and slightly festering (unbeknownst to his wife).
+      leycec's forehead *will* be swollen with an angry mass of unsightly red
+      welts that are now festering unbeknownst to his wife.
 
       *First introduced in beartype 0.12.0.*
 
