@@ -1652,6 +1652,8 @@ Configuration API
          def muh_colorless_func() -> str:
              return b'In the kingdom of the blind, you are now king.'
 
+      *First introduced in beartype 0.12.0.*
+
     .. _BeartypeConf.is_debug:
 
     * **is_debug**\ : bool = False
@@ -1718,6 +1720,8 @@ Configuration API
          (line 0024)
          (line 0025)     return __beartype_pith_0
 
+      *First introduced in beartype 0.10.0.*
+
     .. _BeartypeConf.is_pep484_tower:
 
     * **is_pep484_tower**\ : bool = False
@@ -1769,6 +1773,8 @@ Configuration API
          # This is still fine, too.
          crunch_numbers([3.1, 4.1, 5.9])
 
+      *First introduced in beartype 0.12.0.*
+
     .. _BeartypeConf.strategy:
 
     * **strategy**\ : BeartypeStrategy_ = BeartypeStrategy.O1_
@@ -1792,6 +1798,8 @@ Configuration API
 
       Defaults to BeartypeStrategy.O1_, the constant-time ``O(1)`` strategy –
       maximizing scalability at a cost of also maximizing false positives.
+
+      *First introduced in beartype 0.10.0.*
 
 .. _BeartypeStrategy:
 
@@ -1931,7 +1939,7 @@ Configuration API
 Beartype Exceptions
 -------------------
 
-Beartype is fastidious to a fault. Exception handling is no... exception.
+Beartype is fastidious to a fault. Exception handling is no... *exception*.
 <sup>punny *or* funny? you decide.</sup>
 
 Beartype only raises:
@@ -1945,11 +1953,12 @@ Beartype only raises:
   the same exception class to mean two different things – allowing you to
   trivially catch and handle the exact exception you're interested in.
 
-Exceptions: because when things go wrong, they *really* go wrong.
+Exceptions: when things go wrong, even Reddit goes down. DON'T LET THAT HAPPEN.
 
 Exception API
 ~~~~~~~~~~~~~
 
+.. _BeartypeException:
 .. _beartype.roar.BeartypeException:
 
 *class* beartype.roar.\ **BeartypeException**\ (Exception)
@@ -1963,7 +1972,7 @@ Exception API
     * ``Beartype{subclass_name}Violation`` for type-checking violations
       (e.g., ``BeartypeCallHintReturnViolation``).
 
-.. _beartype.roar.BeartypeDecorException:
+.. _BeartypeDecorException:
 
 *class* beartype.roar.\ **BeartypeDecorException**\ (BeartypeException)
 
@@ -1981,7 +1990,7 @@ Exception API
     Leycec_ is grateful nobody actually reads these API notes. <sup>checkmate,
     GitHub</sup>
 
-.. _beartype.roar.BeartypeCallHintException:
+.. _BeartypeCallHintException:
 
 *class* beartype.roar.\ **BeartypeCallHintException**\ (BeartypeCallException)
 
@@ -1999,7 +2008,7 @@ Exception API
     In fact, you're encouraged to do so. Repeat after Kermode Bear: "Exceptions
     are fun, everybody." *Gotta catch 'em all!*
 
-.. _beartype.roar.BeartypeCallHintForwardRefException:
+.. _BeartypeCallHintForwardRefException:
 
 *class* beartype.roar.\ **BeartypeCallHintForwardRefException**\
 (BeartypeCallHintException)
@@ -2027,9 +2036,9 @@ Exception API
        ...     print(exception)
        Forward reference "salmon.of.course" unimportable.
 
-.. _beartype.roar.BeartypeCallHintViolation:
+.. _BeartypeCallHintViolation:
 
-*class* beartype.roar.\ **BeartypeCallHintViolation**(BeartypeCallHintException)
+*class* beartype.roar.\ **BeartypeCallHintViolation**\ (BeartypeCallHintException)
 
     **Beartype type-checking violation.** This is the most important beartype
     exception you never hope to see – and thus the beartype exception you are
@@ -2044,7 +2053,7 @@ Exception API
     to resolve any lingering doubts about which coworkers you need to blame in
     Git commit messages:
 
-    .. _beartype.roar.BeartypeCallHintViolation.culprits:
+    .. _BeartypeCallHintViolation.culprits:
 
     * **culprits**\ : Tuple[object, ...]
 
@@ -2101,7 +2110,6 @@ Exception API
          >>> from beartype import beartype
          >>> from beartype.roar import BeartypeCallHintViolation
          >>> from beartype.typing import List
-         >>> from weakref import ref
 
          >>> @beartype
          ... def we_are_all_spirit_bear(
@@ -2122,8 +2130,14 @@ Exception API
       list of lists of byte-strings (rather than strings) *and* the leaf culprit
       as that byte-string. We also see that beartype only returned the `repr()`
       of both culprits rather than those culprits. Why? Because CPython
-      prohibits weak references to lists *and* byte-strings. This is why we
-      facepalm ourselves in the morning.
+      prohibits weak references to both lists and byte-strings.
+      
+      This is why we facepalm ourselves in the morning. We did it this morning.
+      We'll do it next morning, too. Until the weakref_ module improves,
+      leycec's forehead will be swollen with an angry mass of red welts that are
+      unsightly and slightly festering (unbeknownst to his wife).
+
+      *First introduced in beartype 0.12.0.*
 
 Beartype Validators
 -------------------
@@ -6261,6 +6275,8 @@ rather than Python runtime) include:
 .. # ------------------( LINKS ~ py : stdlib                 )------------------
 .. _linecache:
    https://docs.python.org/3/library/linecache.html
+.. _weakref:
+   https://docs.python.org/3/library/weakref.html
 
 .. # ------------------( LINKS ~ py : stdlib : abc           )------------------
 .. _abc:

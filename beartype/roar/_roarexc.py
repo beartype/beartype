@@ -496,7 +496,6 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
     # ..................{ PROPERTIES                         }..................
     # Read-only properties intentionally providing no corresponding setters.
 
-    #FIXME: Unit test us up, please.
     @property
     def culprits(self) -> tuple:
         '''
@@ -555,6 +554,7 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
                 obj_weakref=culprit_weakref, obj_repr=culprit_repr)
             for culprit_weakref, culprit_repr in self._culprits_weakref_and_repr
         )
+        # print(f'culprits_weakref_and_repr: {self._culprits_weakref_and_repr}')
 
         # Return these culprits.
         return culprits
