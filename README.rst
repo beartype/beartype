@@ -2064,8 +2064,8 @@ Exception API
       Specifically, this property returns either:
 
       * If a standard container (e.g., ``dict``, ``list``, ``set``, ``tuple``)
-        is responsible for this violation, the 2-tuple ``(root_culprit,
-        leaf_culprit)`` where:
+        is responsible for this violation, the 2-tuple
+        ``(root_culprit, leaf_culprit)`` where:
 
         * ``root_culprit`` is the outermost such container. This is usually the
           passed parameter or returned value indirectly violating this type
@@ -2094,14 +2094,14 @@ Exception API
         *cannot* be guaranteed to refer to these culprits outside that block. If
         this property is accessed from any other context and one or more of
         these culprits have sadly passed away, this property dynamically reduces
-        the corresponding item(s) of this tuple to only the machine-readable
-        representations of those culprits. (This exception stored the
+        the corresponding items of this tuple to only the machine-readable
+        representations of those culprits. :superscript:`This exception stored the
         representations of those culprits inside itself when first raised. Like
-        a gruesome time capsule, they return to haunt you.)
+        a gruesome time capsule, they return to haunt you.`
       * Is a **builtin variable-sized C-based object** (e.g., ``dict``, ``int``,
         ``list``, ``str``). Long-standing limitations in CPython itself prevent
         beartype from weakly referring to those objects. Openly riot on the
-        `CPython bug tracker`_ if this displeases you. *You are not alone.*
+        `CPython bug tracker`_ if this displeases you.
 
       Let us examine what this means for your malding CTO:
 
@@ -2123,7 +2123,7 @@ Exception API
          ...     leaf_culprit = exception.culprits[1]
          ...     print(f'root culprit: {type(root_culprit)} value {root_culprit}')
          ...     print(f'leaf culprit: {type(leaf_culprit)} value {leaf_culprit}')
-         root culprit: <class 'str'> value [['Why do you sleep in my pinball room, Spirit Bear?']]
+         root culprit: <class 'str'> value [[b'Why do you sleep in my pinball room, Spirit Bear?']]
          leaf culprit: <class 'str'> value b'Why do you sleep in my pinball room, Spirit Bear?'
 
       We see that beartype correctly identified the root culprit as the passed
