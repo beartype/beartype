@@ -1720,8 +1720,6 @@ Configuration API
          (line 0024)
          (line 0025)     return __beartype_pith_0
 
-      *First introduced in beartype 0.10.0.*
-
     .. _BeartypeConf.is_pep484_tower:
 
     * **is_pep484_tower**\ : bool = False
@@ -1798,8 +1796,6 @@ Configuration API
 
       Defaults to BeartypeStrategy.O1_, the constant-time ``O(1)`` strategy –
       maximizing scalability at a cost of also maximizing false positives.
-
-      *First introduced in beartype 0.10.0.*
 
 .. _BeartypeStrategy:
 
@@ -2077,6 +2073,43 @@ Exception API
         this violation, the 1-tuple ``(culprit,)`` where ``culprit`` is that
         non-container.
 
+      Let us examine what the latter means for the plucky intern (who will do
+      this after fetching more pumpkin spice lattes for the team engrossed in a
+      high-level morale-building "Best of 200" ping pong competition):
+
+      .. code-block:: python
+
+         # Import the requisite machinery.
+         from beartype import beartype
+         from beartype.roar import BeartypeCallHintViolation
+
+         # Arbitrary user-defined classes.
+         class SpiritBearIGiveYouSalmonToGoAway(object): pass
+         class SpiritBearIGiftYouHoneyNotToStay(object): pass
+
+         # Arbitrary instance of one of these classes.
+         SPIRIT_BEAR_REFUSE_TO_GO_AWAY = SpiritBearIGiftYouHoneyNotToStay()
+
+         # Callable annotated to accept instances of the *OTHER* class.
+         @beartype
+         def when_spirit_bear_hibernates_in_your_bed(
+             best_bear_den: SpiritBearIGiveYouSalmonToGoAway) -> None: pass
+
+         # Call this callable with this invalid instance.
+         try:
+             when_spirit_bear_hibernates_in_your_bed(
+                 SPIRIT_BEAR_REFUSE_TO_GO_AWAY)
+         # *MAGIC HAPPENS HERE*. Catch violations and inspect their "culprits"!
+         except BeartypeCallHintViolation as violation:
+             # Assert that one culprit was responsible for this violation.
+             assert len(violation.culprits) == 1
+
+             # The one culprit: don't think we don't see you hiding there!
+             culprit = violation.culprits[0]
+
+             # Assert that this culprit is the same instance passed above.
+             assert culprit is SPIRIT_BEAR_REFUSE_TO_GO_AWAY
+
       **Caveats apply.** This property makes a good-faith effort to list the
       most significant culprits responsible for this type-checking violation. In
       two edge cases beyond our control, however, this property falls back to
@@ -2107,24 +2140,36 @@ Exception API
 
       .. code-block:: python
 
-         >>> from beartype import beartype
-         >>> from beartype.roar import BeartypeCallHintViolation
-         >>> from beartype.typing import List
+         # Import the requisite machinery.
+         from beartype import beartype
+         from beartype.roar import BeartypeCallHintViolation
+         from beartype.typing import List
 
-         >>> @beartype
-         ... def we_are_all_spirit_bear(
-         ...     best_bear_dens: List[List[str]]) -> None: pass
+         # Callable annotated to accept a standard container.
+         @beartype
+         def we_are_all_spirit_bear(
+             best_bear_dens: List[List[str]]) -> None: pass
 
-         >>> try:
-         ...     we_are_all_spirit_bear(
-         ...         [[b'Why do you sleep in my pinball room, Spirit Bear?']])
-         ... except BeartypeCallHintViolation as exception:
-         ...     root_culprit = exception.culprits[0]
-         ...     leaf_culprit = exception.culprits[1]
-         ...     print(f'root culprit: {type(root_culprit)} value {root_culprit}')
-         ...     print(f'leaf culprit: {type(leaf_culprit)} value {leaf_culprit}')
-         root culprit: <class 'str'> value [[b'Why do you sleep in my pinball room, Spirit Bear?']]
-         leaf culprit: <class 'str'> value b'Why do you sleep in my pinball room, Spirit Bear?'
+         # Standard container deeply violating the above type hint.
+         SPIRIT_BEAR_DO_AS_HE_LIKE = [
+             [b'Why do you sleep in my pinball room, Spirit Bear?']]
+
+         # Call this callable with this invalid container.
+         try:
+             we_are_all_spirit_bear(SPIRIT_BEAR_DO_AS_HE_LIKE)
+         # Shoddy magic happens here. Catch violations and try (but fail) to
+         # inspect the original culprits, because they were containers!
+         except BeartypeCallHintViolation as violation:
+             # Assert that two culprits were responsible for this violation.
+             assert len(violation.culprits) == 2
+
+             # Root and leaf culprits. We just made these words up, people.
+             root_culprit = violation.culprits[0]
+             leaf_culprit = violation.culprits[1]
+
+             # Assert that these culprits are, in fact, just repr() strings.
+             assert root_culprit == repr(SPIRIT_BEAR_DO_AS_HE_LIKE)
+             assert leaf_culprit == repr(SPIRIT_BEAR_DO_AS_HE_LIKE[0][0])
 
       We see that beartype correctly identified the root culprit as the passed
       list of lists of byte-strings (rather than strings) *and* the leaf culprit
