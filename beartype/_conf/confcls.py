@@ -110,6 +110,10 @@ class BeartypeConf(object):
 
         # Optional keyword-only parameters.
         *,
+
+        #FIXME: Uncomment us when implementing O(n) type-checking, please.
+        # cutoff_multiplier: Union[int, None] = 1000,
+
         is_color: Optional[bool] = None,
         is_debug: bool = False,
         is_pep484_tower: bool = False,
@@ -135,6 +139,43 @@ class BeartypeConf(object):
 
         Parameters
         ----------
+        cutoff_multiplier : Union[int, None] = 1000
+            **Cutoff multiplier** (i.e., positive integer instructing
+            :mod:`beartype` to prematurely halt the current type-check when the
+            total running time of the active Python interpreter exceeds this
+            integer multiplied by the running time consumed by both the current
+            type-check and all prior type-checks *and* the current strategy is
+            either :attr:`BeartypeStrategy.Ologn` or
+            :attr:`BeartypeStrategy.On`) *or* ``None`` if :mod:`beartype` should
+            never prematurely halt runtime type-checks.
+
+            Let:
+
+            * ``T`` be the total time this interpreter has been running.
+            * ``b`` be the total time :mod:`beartype` has spent type-checking in
+              this interpreter.
+
+            Clearly, ``b <= T``. Generally, ``b <<<<<<< T`` (i.e., type-checks
+            consume much less time than the total time consumed by the process).
+            However, worst-case behaviour in which ``b ~= T`` (i.e., type-checks
+            consume most of the total time) can be easily exhibited. How? By
+            passing the :func:`beartype.door.is_bearable` tester an absurdly
+            large nested container with :attr:`BeartypeStrategy.On` enabled.
+
+            This cutoff multiplier mitigates that worst-case behaviour.
+            Specifically, :mod:`beartype` will prematurely halt any iterative
+            type-check across a container when this constraint is triggered:
+
+            .. code-block:: python
+
+               b * cutoff_multiplier >= T
+
+            Ignored when the current strategy is :attr:`BeartypeStrategy.O1`, as
+            that strategy is already effectively instantaneous; imposing
+            deadlines and thus bureaucratic bookkeeping on that strategy would
+            only uselessly reduce its efficiency.
+
+            Defaults to 1000.
         is_color : Optional[bool]
             Tri-state boolean governing how and whether beartype colours
             **type-checking violations** (i.e.,

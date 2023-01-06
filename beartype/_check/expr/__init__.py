@@ -1,19 +1,10 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
-# ....................{ TODO                              }....................
-#FIXME: Add support for Python 3.10-specific PEPs and thus:
-#* PEP 604-compliance (e.g., "def square(number: int | float): pass"). Note
-#  PEP 604 thankfully preserves backward compatibility with "typing.Union":
-#      The existing typing.Union and | syntax should be equivalent.
-#           int | str == typing.Union[int, str]
-#  This means that we should:
-#  * Require no changes to the "beartype" package to support PEP 604.
-#  * Add unit tests explicitly support PEP 604 compliance under Python >= 3.10
-#    to the "beartype_test" package.
-#  * Note this support in documentation.
+# ....................{ TODO                               }....................
+#FIXME: [PEP] Add support for Python 3.10-specific PEPs and thus:
 #* PEP 612-compliance. Since we don't currently support callable annotations,
 #  we probably can't extend that non-existent support to PEP 612. Nonetheless,
 #  we *ABSOLUTELY* should ensure that we do *NOT* raise exceptions when passed
@@ -42,7 +33,13 @@
 #  Lastly, note that (much like "typing.NoReturn") "typing.TypeGuard"
 #  subscriptions are *ONLY* usable as return annotations. Raise exceptions, yo.
 
-#FIXME: *WOOPS.* The "LRUDuffleCacheStrong" class designed below assumes that
+#FIXME: [O(n)] Ah-ha! We now know how to implement O(log n) and O(n)
+#type-checking in a scaleable manner that preserves @beartype's strong
+#performance guarantees. How? With a timed deadline cutoff. Specifically:
+#* Define a new "BeartypeConf.cutoff_multiplier" instance variable, which we've
+#  already conveniently documented.
+
+#FIXME: [DFS] The "LRUDuffleCacheStrong" class designed below assumes that
 #calculating the semantic height of a type hint (e.g., 3 for the complex hint
 #Optional[int, dict[Union[bool, tuple[int, ...], Sequence[set]], list[str]])
 #is largely trivial. It isn't -- at all. Computing that without a context-free
@@ -180,9 +177,8 @@
 #  actually using a depth-first algorithm. By "combinatorial explosion," we are
 #  referring to what happens if we try to type-check dataclass and
 #  "typing.NamedTuple" instances that are *NOT* decorated by @beartype.
-#  Type-checking those instances has to happen at @beartype call time,
-#  obviously. There are actually two kinds of combinatorial explosion at play
-#  here:
+#  Type-checking those instances has to happen at @beartype call time, clearly.
+#  There are actually two kinds of combinatorial explosion at play here:
 #  * Combinatorial explosion while type-checking at @beartype call time. This is
 #    avoidable by simply type-checking *EXACTLY ONE* random field of each
 #    "NamedTuple" instance on each call. Simple. "NamedTuple" instances are
