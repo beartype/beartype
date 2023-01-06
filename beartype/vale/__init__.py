@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
-# Copyright (c) 2014-2022 Beartype authors.
+# --------------------( LICENSE                            )--------------------
+# Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
@@ -26,7 +26,7 @@ Instead, callers are expected to (in order):
    #. One or more subscriptions of classes declared by this submodule.
 '''
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: [FEATURE] Add a new "beartype.vale.IsInline" validator factory,
 #elegantly resolving issue #82 and presumably other future issues, too. The
 #core idea here is that "beartype.vale.IsInline" will enable callers to
@@ -129,13 +129,13 @@ Instead, callers are expected to (in order):
 #Well, so much for brilliant. It's slow and big, so it seems doubtful anyone
 #would actually do that. Nonetheless, that's food for thought for you.
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes
 # should be locally imported at module scope *ONLY* under alternate private
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.vale._is._valeis import _IsFactory
 from beartype.vale._is._valeistype import (
     _IsInstanceFactory,
@@ -144,7 +144,7 @@ from beartype.vale._is._valeistype import (
 from beartype.vale._is._valeisobj import _IsAttrFactory
 from beartype.vale._is._valeisoper import _IsEqualFactory
 
-# ....................{ SINGLETONS                        }....................
+# ....................{ SINGLETONS                         }....................
 # Public factory singletons instantiating these private factory classes.
 Is = _IsFactory(basename='Is')
 IsAttr = _IsAttrFactory(basename='IsAttr')

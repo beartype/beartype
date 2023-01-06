@@ -1935,21 +1935,22 @@ Configuration API
 Beartype Exceptions
 -------------------
 
-Beartype is fastidious to a fault. Exception handling is no... *exception*.
-<sup>punny *or* funny? you decide.</sup>
-
 Beartype only raises:
 
-* **Beartype-specific exceptions.** For your safety and ours, *all* exceptions
-  raised by beartype *always* subclass the beartype.roar.BeartypeException_
-  abstract base class (ABC) – allowing you to trivially differentiate beartype
-  from non-beartype exceptions.
+* **Beartype-specific exceptions.** For your safety and ours, exceptions raised
+  beartype are easily distinguished from exceptions raised by everybody else.
+  *All* exceptions raised by beartype are instances of:
+
+  * Public types importable from the ``beartype.roar`` subpackage.
+  * The beartype.roar.BeartypeException_ abstract base class (ABC).
+
 * **Disambiguous exceptions.** For your sanity and ours, *every* exception
   raised by beartype means one thing and one thing only. Beartype *never* reuses
   the same exception class to mean two different things – allowing you to
   trivially catch and handle the exact exception you're interested in.
 
-Exceptions: when things go wrong, even Reddit goes down. DON'T LET THAT HAPPEN.
+Beartype is fastidious to a fault. Exception handling is no... *exception*.
+<sup>punny *or* funny? you decide.</sup>
 
 Exception API
 ~~~~~~~~~~~~~

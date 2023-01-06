@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2014-2022 Beartype authors.
+# Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
-**Beartype configuration class hierarchy** (i.e., public dataclasses defining
-beartype's configuration API, enabling end users to selectively configure
-:mod:`beartype` with optional runtime type-checking behaviours).
+**Beartype configuration class hierarchy** (i.e., public dataclasses enabling
+users to configure :mod:`beartype` with optional runtime behaviours).
 
 Most of the public attributes defined by this private submodule are explicitly
 exported to external users in our top-level :mod:`beartype.__init__` submodule.

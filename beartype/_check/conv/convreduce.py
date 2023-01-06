@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2014-2022 Beartype authors.
+# Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
@@ -14,10 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Any
 from beartype._cave._cavefast import NoneType
-from beartype._conf.confcls import (
-    BEARTYPE_CONF_DEFAULT,
-    BeartypeConf,
-)
+from beartype._conf.confcls import BeartypeConf
 from beartype._data.datatyping import (
     Pep484TowerComplex,
     Pep484TowerFloat,
@@ -97,6 +94,11 @@ def reduce_hint(
     '''
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
 
+    #FIXME: Leverage the "BeartypeHintable" protocol here to detect user-defined
+    #types complying with our plugin API, please.
+    # if isinstance(hint, type):
+    #     hint_reduction = getattr(hint, '__beartype_hint__')
+
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.
     hint_sign = get_hint_pep_sign_or_none(hint)
@@ -112,7 +114,7 @@ def reduce_hint(
     # Since this includes *ALL* isinstanceable classes (including both
     # user-defined classes and builtin types), this is *ALWAYS* detected first.
     if hint_sign is None:
-        # If... 
+        # If...
         if (
             # This configuration enables support for the PEP 484-compliant
             # implicit numeric tower *AND*...

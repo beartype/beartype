@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                           )--------------------
-# Copyright (c) 2014-2022 Beartype authors.
+# Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
 """
