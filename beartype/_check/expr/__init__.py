@@ -36,8 +36,77 @@
 #FIXME: [O(n)] Ah-ha! We now know how to implement O(log n) and O(n)
 #type-checking in a scaleable manner that preserves @beartype's strong
 #performance guarantees. How? With a timed deadline cutoff. Specifically:
-#* Define a new "BeartypeConf.cutoff_multiplier" instance variable, which we've
-#  already conveniently documented.
+#* Define a new "BeartypeConf.check_time_max_multiplier" instance variable,
+#  which we've already conveniently documented.
+#* Note this critical formula in the documentation for that variable (with the
+#  equality flipped so as to express the condition under which @beartype
+#  continues to perform type-checks):
+#      b * check_time_max_multiplier < T
+#
+#  Naturally, real life isn't quite that convenient. We don't actually have
+#  either "b" or "T". We need to dynamically compute them on each check. What we
+#  *DO* have is:
+#  * "B", the total time consumed by all *PRIOR* @beartype type-checks.
+#  * "t", the current time.
+#  * "s", the initial time at which the current round of @beartype type-checks
+#    was started (e.g., for the current call to a @beartype-decorated callable).
+#  * "Z", the initial time at which the active Python interpreter was started.
+#
+#  For convenience, additionally let:
+#  * "K" be "check_time_max_multiplier" for readability.
+#
+#  Note that "t - s" yields the total time consumed by the *CURRENT* round of
+#  @beartype type-checks. Ergo, "B + t - s" yields the total time consumed by
+#  *ALL* @beartype type-checks. Given that, "b" and "T" can both then be
+#  expressed in terms of these known quantities:
+#      b = B + t - s
+#      T =     t - Z
+#
+#  Then the above formula expands to:
+#      (B + t - s) * K < t - Z     (4 total arithmetic operations)
+#
+#  Note that "t" *MUST* be localized as a local instance variable (e.g., as
+#  "time_curr = time()) to avoid erroneous recomputation of that time. Also, "K"
+#  and "Z" are constants. Ideally, we would be able to simplify away some of
+#  this. Superficially, simplification yields *NO* significant joys:
+#      Bk + Kt - Ks - t + Z < 0
+#      Bk + Z + t(K - 1) < Ks      (6 total arithmetic operations)
+#
+#  However, "K - 1" is clearly also a constant. Let "L = K - 1". Then:
+#      KB + Z + Lt < Ks            (5 total arithmetic operations)
+#      KB - Ks + Z + Lt < 0
+#      K(B - s) + Lt < -Z          (5 total arithmetic operations)
+#
+#  Ah-ha! But "-Z" is also a constant. Let "Y = -Z". Then we have:
+#      K(B - s) + Lt < Y           (4 total arithmetic operations)
+#
+#  This is considerably better. Since "t" only appears once, we no longer need
+#  to localize the result of calling the time() function and can instead simply
+#  embed that call directly -- a significant savings in both time and code
+#  complexity.
+#
+#  Can we do better? Possibly. Note that "s ~= t" for most intents and purposes.
+#  In particular, "s - Z ~= t - Z" (with respect to orders of magnitude, which
+#  is all the right side of that equation is attempting to capture, anyway).
+#  We can then resimplify as follows:
+#      (B + t - s) * K < s - Z     (4 total arithmetic operations)
+#      KB + Kt - Ks - s < -Z
+#      KB + Kt - Ks - s < -Z
+#      K(B + t) - s(K + 1) < Y
+#      K(B + t) - Ls < Y           (4 total arithmetic operations)
+#
+#  Amusingly, that fails to help (and in fact reduces accuracy). Gah! The best
+#  we can do from here is to eliminate the need for "Y" from above as follows:
+#      K(B - s) + Lt < -Z          (5 total arithmetic operations)
+#      K(B - s) < -Lt - Z
+#      K(B - s) < -(Lt + Z)
+#      -K(B - s) > Lt + Z
+#      K(s - B) > Lt + Z           (4 total arithmetic operations)
+#      K(s - B) - Lt > Z           (4 total arithmetic operations)
+#
+#  Furthermore, note that "K" and "L = K - 1" don't actually need to be passed
+#  anywhere. They're *NOT* variables; they're just hard-coded in at code
+#  generation time, which is nice.
 
 #FIXME: [DFS] The "LRUDuffleCacheStrong" class designed below assumes that
 #calculating the semantic height of a type hint (e.g., 3 for the complex hint

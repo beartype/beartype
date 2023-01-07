@@ -112,7 +112,7 @@ class BeartypeConf(object):
         *,
 
         #FIXME: Uncomment us when implementing O(n) type-checking, please.
-        # cutoff_multiplier: Union[int, None] = 1000,
+        # check_time_max_multiplier: Union[int, None] = 1000,
 
         is_color: Optional[bool] = None,
         is_debug: bool = False,
@@ -139,7 +139,7 @@ class BeartypeConf(object):
 
         Parameters
         ----------
-        cutoff_multiplier : Union[int, None] = 1000
+        check_time_max_multiplier : Union[int, None] = 1000
             **Cutoff multiplier** (i.e., positive integer instructing
             :mod:`beartype` to prematurely halt the current type-check when the
             total running time of the active Python interpreter exceeds this
@@ -168,7 +168,7 @@ class BeartypeConf(object):
 
             .. code-block:: python
 
-               b * cutoff_multiplier >= T
+               b * check_time_max_multiplier >= T
 
             Ignored when the current strategy is :attr:`BeartypeStrategy.O1`, as
             that strategy is already effectively instantaneous; imposing
