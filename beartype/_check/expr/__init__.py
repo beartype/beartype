@@ -104,9 +104,129 @@
 #      K(s - B) > Lt + Z           (4 total arithmetic operations)
 #      K(s - B) - Lt > Z           (4 total arithmetic operations)
 #
-#  Furthermore, note that "K" and "L = K - 1" don't actually need to be passed
-#  anywhere. They're *NOT* variables; they're just hard-coded in at code
-#  generation time, which is nice.
+#  Furthermore, note that:
+#  * "s" is internally localized at the start of the body of each
+#    @beartype-decorated callable.
+#  * "t" is simply a call to the time() function.
+#  * "K" and "L = K - 1" don't actually need to be passed anywhere. They're
+#    *NOT* variables; they're just hard-coded in at code generation time.
+#  * "B and Z", on the other hand, *DO* need to passed to each
+#    @beartype-decorated callable under the O(n) strategy.
+#  * Moreover, "B" *MUST* be updated by each @beartype-decorated callable under
+#    the O(n) strategy.
+#
+#  Ah-ha! With respect to each call to a @beartype-decorated callable under the
+#  O(n) strategy, the quantity "K(s - B)" is actually a constant. Since "Z" is
+#  also a constant, we simply localize these two constants at the start of the
+#  body of each such callable into a new constant "J = K(s - B) - Z". This then
+#  yields:
+#      K(s - B) - Lt > Z           (4 total arithmetic operations)
+#      K(s - B) - Z > Lt
+#      J > Lt
+#      Lt < J                      (1 total arithmetic operation)
+#
+#  And... that's all she wrote, folks. While that condition holds, @beartype
+#  continues performing O(n) type-checks. It should be noted that this
+#  simplified conditional trivially follows from only a few steps of the
+#  original conditional like so:
+#      (B + t - s) * K < t - Z
+#      KB + Kt - Ks < t - Z
+#      Kt - t < Ks - KB - Z
+#      t(K - 1) < K(s - B) - Z
+#* Altogether, the above implies that each @beartype-decorated callable under
+#  the O(n) strategy should be passed a new hidden "__beartype_times" parameter.
+#  This parameter is a 2-list "(process_time_start, beartype_time_total)",
+#  where:
+#  * "process_time_start" is simply "Z".
+#  * "beartype_time_total" is simply "B".
+#
+#  This 2-list is a global list exposed to each @beartype-decorated callable via
+#  this "__beartype_times" parameter. Declare this global list in a separate
+#  submodule -- say, a new "exprtime" submodule -- as follows:
+#      from time import monotonic
+#
+#      CHECK_TIMES = [monotonic(), 0.0]
+#      '''
+#      **Type-checking wall-clock time accumulator** (i.e., list whose items
+#      allow :mod:`beartype`-generated type-checkers under non-constant
+#      strategies like :attr:`beartype.BeartypeStrategy.On` to record how much
+#      time the active Python process has devoted to :mod:`beartype`, enabling
+#      :mod:`beartype` to prematurely halt type-checking when those
+#      type-checkers exceed scheduled deadlines).
+#
+#      Specifically, this global is a 2-list
+#      ``(process_time_start, beartype_time_total)``, where:
+#
+#      * ``process_time_start`` is the initial time at which the active Python
+#        process was started, denominated in fractional seconds.
+#      * ``beartype_time_total`` is the total time consumed by all *prior*
+#        :mod:`beartype`-generated type-checks, denominated in fractional
+#        seconds.
+#      '''
+#* Now, note the naive implementation of an O(n) type-check for a callable
+#  accepting a parameter annotated by the type hint "list[str]":
+#      @beartype(conf=BeartypeConf(strategy=BeartypeStrategy.On))
+#      def muh_callable(muh_param: list[str]) -> None:
+#          ...
+#
+#          if not (
+#              isinstance(muh_param, list) and
+#              all(isinstance(muh_item, str) for muh_item in list)
+#          ):
+#              raise get_beartype_violation(...)
+#          ...
+#
+#  Trivial. Now, note the non-naive implementation of the same O(n) type-check
+#  respecting the "check_time_max_multiplier" configuration setting:
+#      from beartype._check._expr.exprtime import CHECK_TIMES
+#      from time import monotonic
+#
+#      @beartype(conf=BeartypeConf(strategy=BeartypeStrategy.On))
+#      def muh_callable(
+#          muh_param: list[str],
+#          __beartype_check_times = CHECK_TIMES,
+#          __beartype_get_time_monotonic = monotonic,
+#      ) -> None:
+#          # Constant "J" in the inequality "Lt < J" governing @beartype's
+#          # deadline scheduler for non-constant type-checking, denominated in
+#          # fractional seconds.
+#          CHECK_TIME_START = __beartype_get_time_monotonic()
+#          CHECK_TIME_MAX = (
+#              {check_time_max_multiplier}(
+#                  CHECK_TIME_START - __beartype_check_times[1]
+#              ) - __beartype_check_times[0]
+#          )
+#
+#          ...
+#
+#          if not (
+#              isinstance(muh_param, list) and
+#              # For each item of this iterable...
+#              all(
+#                  (
+#                      # If @beartype has yet to exceed its scheduled deadline
+#                      # for non-constant type-checks *AND*...
+#                      (
+#                          {check_time_max_multiplier - 1} *
+#                          __beartype_get_time_monotonic() < CHECK_TIME_MAX
+#                      ) and
+#                      isinstance(muh_item, str)
+#                  )
+#                  for muh_item in list
+#              )
+#          # *AND* @beartype has yet to exceed its scheduled deadline for
+#          # non-constant type-checks...
+#          ) and ({check_time_max_multiplier - 1}*monotonic() < CHECK_TIME_MAX):
+#              raise get_beartype_violation(...)
+#          # Else, this pith either satisfies this hint *OR* @beartype has
+#          # exceeded its scheduled deadline for non-constant type-checks.
+#
+#          # Update the total time consumed by @beartype type-checks.
+#          __beartype_check_times[1] += (
+#              __beartype_get_time_monotonic() - CHECK_TIME_START)
+#          ...
+#
+#Seriously trivial, everybody. \o/
 
 #FIXME: [DFS] The "LRUDuffleCacheStrong" class designed below assumes that
 #calculating the semantic height of a type hint (e.g., 3 for the complex hint
