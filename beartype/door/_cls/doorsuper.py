@@ -66,7 +66,6 @@ else:
 #FIXME: Subclass all applicable "collections.abc" ABCs for explicitness, please.
 #FIXME: Document all public and private attributes of this class, please.
 class TypeHint(Generic[T], metaclass=_TypeHintMeta):
-# class TypeHint(Generic[T], metaclass=ABCMeta):
     '''
     Abstract base class (ABC) of all **type hint wrapper** (i.e., high-level
     object encapsulating a low-level type hint augmented with a magically
@@ -369,6 +368,18 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
     # ..................{ PROPERTIES ~ read-only             }..................
     # Read-only properties intentionally defining *NO* corresponding setter.
+
+    #FIXME: Unit test us up, please.
+    @property
+    def args(self) -> tuple:
+        '''
+        Tuple of the zero or more low-level child type hints subscripting
+        (indexing) the low-level parent type hint wrapped by this wrapper.
+        '''
+
+        # Who could argue with a working one-liner? Not you. Surely, not you.
+        return self._args
+
 
     @property
     def hint(self) -> T:
