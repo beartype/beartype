@@ -66,6 +66,28 @@ class CallableTypeHint(_TypeHintSubscripted):
             # PEP-compliant type hint in general and thus *CANNOT* be wrapped by
             # the "TypeHint" wrapper.
             if self._callable_params is Ellipsis:
+                #FIXME: *NO.* This is bad. Although an ellipsis is obviously
+                #*NOT* a type hint in and of itself, an ellipsis is absolutely a
+                #valid argument of a callable type hint and must *NOT* be
+                #stripped. Preserve this ellipsis as is, please. We're exposing
+                #this via the public "args" property, after all.
+                #
+                #Instead, override the _args_wrapped_tuple() property to
+                #dynamically replace ellipsis with "typing.Any" hints: e.g.,
+                #    #FIXME: Does this need caching? Probably not, thankfully.
+                #    @property
+                #    def _args_wrapped_tuple(self) -> Tuple[TypeHint, ...]:
+                #        args_wrapped_tuple = []
+                #
+                #        if self._callable_params is Ellipsis:
+                #            args_wrapped_tuple.append(TypeHint(Any))
+                #        else:
+                #            for callable_param in self._callable_params:
+                #                args_wrapped_tuple.append(TypeHint(callable_param))
+                #
+                #        args_wrapped_tuple.append(self._callable_return)
+                #        return tuple(args_wrapped_tuple)
+
                 # e.g. `Callable[..., Any]`
                 self._callable_params = ()
             # Else...

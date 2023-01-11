@@ -27,7 +27,7 @@ class LiteralTypeHint(_TypeHintSubscripted):
     @property
     def _args_wrapped_tuple(self) -> Tuple[TypeHint, ...]:
 
-        # Return the empty tuple, thus presenting Literal type hints as having
+        # Return the empty tuple, thus presenting "Literal" type hints as having
         # *NO* child type hints. Why? Because the arguments subscripting a
         # Literal type hint are *NOT* generally PEP-compliant type hints and
         # thus *CANNOT* be safely wrapped by "TypeHint" instances. These

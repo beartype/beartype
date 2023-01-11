@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.plug import BeartypeHintable
 from beartype.typing import Any
 from beartype._cave._cavefast import NoneType
 from beartype._conf.confcls import BeartypeConf
@@ -94,11 +95,26 @@ def reduce_hint(
     '''
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
 
-    #FIXME: Leverage the "BeartypeHintable" protocol here to detect user-defined
-    #types complying with our plugin API, please.
-    # if isinstance(hint, type):
-    #     hint_reduction = getattr(hint, '__beartype_hint__')
+    # ..................{ PLUGIN                             }..................
+    # Beartype plugin API. Respect external user-defined classes satisfying the
+    # beartype plugin API *BEFORE* handling these classes in any way.
 
+    #FIXME: Only do this under Python >= 3.8, where this actually makes sense.
+    # If this hint...
+    if (
+        # Is a class *AND*...
+        isinstance(hint, type) and 
+        # This class satisfies the "BeartypeHintable" protocol and thus defines
+        # the __beartype_hint__() class method instructing beartype to
+        # dynamically reduce this class to the arbitrary hint returned by that
+        # class method...
+        isinstance(hint, BeartypeHintable) 
+    ):
+        # Reduce this hint to the hint returned by that class method *BEFORE*
+        # introspecting this hint below.
+        hint = hint.__beartype_hint__()
+
+    # ..................{ SIGN                               }..................
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.
     hint_sign = get_hint_pep_sign_or_none(hint)

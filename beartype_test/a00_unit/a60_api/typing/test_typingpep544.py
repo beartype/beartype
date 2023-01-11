@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,14 +10,14 @@ This submodule unit tests both the public *and* private API of the private
 :mod:`beartype.typing._typingpep544` subpackage for sanity.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 # If the active Python interpreter targets Python < 3.8, this interpreter fails
 # to support PEP 544. In this case, skip all tests declared below.
 
@@ -230,7 +230,7 @@ def test_typingpep544_protocols_typing() -> None:
     _assert_isinstance(
         int, float, bool, Decimal, Fraction, target_t=SupportsRound)
 
-# ....................{ TESTS ~ custom : direct           }....................
+# ....................{ TESTS ~ custom : direct            }....................
 @skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_protocol_custom_direct() -> None:
     '''
@@ -342,7 +342,7 @@ def test_typingpep544_protocol_custom_direct_typevar() -> None:
     # Assert @beartype wrapped this callable with the expected type-checking.
     assert myabs(-1) == 1
 
-# ....................{ TESTS ~ custom : indirect         }....................
+# ....................{ TESTS ~ custom : indirect          }....................
 @skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_protocol_custom_indirect() -> None:
     '''
@@ -431,7 +431,7 @@ def test_typingpep544_protocol_custom_indirect() -> None:
     with raises(BeartypeCallHintReturnViolation):
         _lies_all_lies(OneCod())
 
-# ....................{ TESTS ~ pep 593                   }....................
+# ....................{ TESTS ~ pep 593                    }....................
 # If the active Python interpreter targets Python < 3.9 and thus fails to
 # support PEP 593, skip all PEP 593-specific tests declared below.
 

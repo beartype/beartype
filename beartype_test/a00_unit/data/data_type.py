@@ -12,7 +12,8 @@ cases on behalf of higher-level unit test submodules.
 
 # ....................{ IMPORTS                            }....................
 from contextlib import contextmanager
-from sys import exc_info, implementation
+from enum import Enum
+from sys import exc_info
 from typing import (
     AsyncGenerator,
     Callable,
@@ -35,6 +36,17 @@ class CallableClass(object):
         '''
 
         return len(args) + len(kwargs)
+
+# ....................{ CLASSES ~ enum                     }....................
+class MasterlessDecreeVenomlessWhich(Enum):
+    '''
+    Arbitrary enumeration whose members are accessed elsewhere as integers,
+    typically when subscripting the :pep:`586`-compliant :attr:`typing.Literal`
+    type hint factory.
+    '''
+
+    NOMENCLATURE_WEATHER_VANES_OF = 0
+    NOMINALLY_UNSWAIN_AUTODIDACTIC_IDIOCRACY_LESS_A = 1
 
 # ....................{ CLASSES ~ hierarchy : 1            }....................
 # Arbitrary class hierarchy.

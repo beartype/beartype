@@ -17,4 +17,6 @@ This submodule publishes a medley of attributes enabling users to extend
 # names (e.g., "from argparse import ArgumentParser as _ArgumentParser" rather
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.plug._plugproto import BeartypeHintable
+from beartype.plug._plugproto import (
+    BeartypeHintable as BeartypeHintable,
+)

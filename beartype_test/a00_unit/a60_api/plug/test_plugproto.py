@@ -17,7 +17,7 @@ to end users and thus critically important.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# .....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 def test_beartypehintable() -> None:
     '''
     Test the :class:`beartype.plug._plugproto.BeartypeHintable` protocol.
@@ -26,6 +26,7 @@ def test_beartypehintable() -> None:
     # .....................{ IMPORTS                       }....................
     # Defer test-specific imports.
     from beartype.plug._plugproto import BeartypeHintable
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
     # .....................{ CLASSES                       }....................
     class NorWhenTheFlakesBurn(BeartypeHintable):
@@ -68,9 +69,14 @@ def test_beartypehintable() -> None:
         pass
 
     # .....................{ ASSERTS                       }....................
-    # Assert that classes satisfying this protocol actually do.
-    assert isinstance(NorWhenTheFlakesBurn, BeartypeHintable)
-    assert isinstance(InTheSinkingSun, BeartypeHintable)
+    # If the active Python interpreter targets Python >= 3.8 and thus supports
+    # PEP 544-compliant protocols via the "typing.Protocol" superclass...
+    if IS_PYTHON_AT_LEAST_3_8:
+        # Assert that classes explicitly satisfying this protocol actually do.
+        assert isinstance(NorWhenTheFlakesBurn, BeartypeHintable)
 
-    # Assert that classes violating this protocol actually do.
-    assert not isinstance(OrTheStarBeamsDartThroughThem, BeartypeHintable)
+        # Assert that classes implicitly satisfying this protocol actually do.
+        assert isinstance(InTheSinkingSun, BeartypeHintable)
+
+        # Assert that classes violating this protocol actually do.
+        assert not isinstance(OrTheStarBeamsDartThroughThem, BeartypeHintable)

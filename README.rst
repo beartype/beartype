@@ -1188,6 +1188,16 @@ constants. Let's cheatsheet this.
    >>> union_hint <= TypeHint(int | str | bool | None)
    True  # <-- madness continues.
 
+   # DOOR hints publish the low-level type hints they wrap.
+   >>> union_hint.hint
+   int | str | None  # <-- makes sense.
+
+   # DOOR hints publish tuples of the low-level child type hints subscripting
+   # (indexing) the low-level parent type hints they wrap -- unlike normal type
+   # hints, which unreliably publish similar tuples under differing names.
+   >>> union_hint.args
+   (int, str, NoneType)  # <-- sense continues to be made.
+
    # DOOR hints are semantically self-caching.
    >>> TypeHint(int | str | bool | None) is TypeHint(None | bool | str | int)
    True  # <-- blowing minds over here.

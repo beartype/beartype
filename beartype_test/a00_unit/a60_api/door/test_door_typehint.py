@@ -23,6 +23,7 @@ def test_door_typehint_new() -> None:
     Test the :meth:`beartype.door.TypeHint.__new__` factory method.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.door import TypeHint
     from beartype.roar import BeartypeDoorNonpepException
@@ -35,6 +36,7 @@ def test_door_typehint_new() -> None:
         List,
     )
 
+    # ....................{ PASS                           }....................
     # Assert that recreating a type hint against identical input yields the same
     # previously memoized type hint.
     assert TypeHint(List[Any]) is TypeHint(List[Any])
@@ -53,6 +55,7 @@ def test_door_typehint_new() -> None:
     # yielding the same previously memoized type hint.
     assert TypeHint(TypeHint(int)) is TypeHint(int)
 
+    # ....................{ FAIL                           }....................
     # Assert this factory raises the expected exception when passed an object
     # that is *not* a PEP-compliant type hint.
     with raises(BeartypeDoorNonpepException):
@@ -68,6 +71,7 @@ def test_door_typehint_mapping() -> None:
     the kind of low-level type hint passed to that factory method.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.door import TypeHint
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
@@ -75,8 +79,10 @@ def test_door_typehint_mapping() -> None:
     from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
         iter_hints_piths_meta)
 
+    # ....................{ ASSERTS                        }....................
     # For each predefined type hint and associated metadata...
     for hint_pith_meta in iter_hints_piths_meta():
+        # ....................{ METADATA                   }....................
         # Metadata describing this type hint.
         hint_meta = hint_pith_meta.hint_meta
 
@@ -103,6 +109,7 @@ def test_door_typehint_mapping() -> None:
         # Assert that this instance is of the expected subclass.
         assert isinstance(wrapper, hint_meta.typehint_cls)
 
+        # ....................{ PROPERTIES                 }....................
         # Assert that the type hint wrapped by this instance is the same hint.
         wrapper_hint = wrapper.hint
         # print(f'wrapper_hint: {repr(wrapper_hint), id(wrapper_hint), type(wrapper_hint)}')
@@ -312,9 +319,38 @@ def test_door_typehint_len():
     assert len(TypeHint(Union[int, str])) == 2
 
 # ....................{ TESTS ~ properties                 }....................
+#FIXME: Implement this up, please. We'll want to pay particular attention to
+#edge cases in those "TypeHint" implementations overriding the _make_args()
+#superclass method. In all likelihood, this will warrant yet another fixture.
+# def test_door_typehint_args() -> None:
+#     '''
+#     Test the read-only :meth:`beartype.door.TypeHint.args` property.
+#     '''
+#
+#     # Defer test-specific imports.
+#     from beartype.door import TypeHint
+#     from beartype.roar import BeartypeDoorException, BeartypeDoorNonpepException
+#     from beartype_test.a00_unit.data.hint.data_hint import HINTS_IGNORABLE
+#     from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
+#     from contextlib import suppress
+#
+#     # Assert this method:
+#     # * Accepts unignorable PEP-compliant type hints.
+#     # * Rejects ignorable PEP-compliant type hints.
+#     for hint_pep_meta in HINTS_PEP_META:
+#         #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
+#         #all currently unsupported type hints. Most of these will be
+#         #"BeartypeDoorNonpepException", but there are some covariant type hints
+#         #(e.g. numpy.dtype[+ScalarType]) that will raise a "not invariant"
+#         #exception in the "TypeVarTypeHint" subclass.
+#         with suppress(BeartypeDoorException):
+#             assert TypeHint(hint_pep_meta.hint).is_ignorable is (
+#                 hint_pep_meta.is_ignorable)
+
+
 def test_door_typehint_is_ignorable() -> None:
     '''
-    Test the :meth:`beartype.door.TypeHint.is_ignorable` tester.
+    Test the read-only :meth:`beartype.door.TypeHint.is_ignorable` property.
     '''
 
     # Defer test-specific imports.
@@ -324,14 +360,14 @@ def test_door_typehint_is_ignorable() -> None:
     from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
     from contextlib import suppress
 
-    # Assert this method accepts ignorable type hints.
+    # Assert this property accepts ignorable type hints.
     for hint_ignorable in HINTS_IGNORABLE:
         #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
         #all currently unsupported type hints.
         with suppress(BeartypeDoorNonpepException):
             assert TypeHint(hint_ignorable).is_ignorable is True
 
-    # Assert this method:
+    # Assert this property:
     # * Accepts unignorable PEP-compliant type hints.
     # * Rejects ignorable PEP-compliant type hints.
     for hint_pep_meta in HINTS_PEP_META:

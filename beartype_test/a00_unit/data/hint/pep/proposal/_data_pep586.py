@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -7,23 +7,13 @@
 Project-wide :pep:`586`-compliant **type hint test data.**
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype_test._util.mod.pytmodtyping import (
     is_typing_attrs,
     iter_typing_attrs,
 )
-from enum import Enum
 
-# ....................{ ENUMERATIONS                      }....................
-class _MasterlessDecreeVenomlessWhich(Enum):
-    '''
-    Arbitrary enumeration whose members are accessed below as literals.
-    '''
-
-    NOMENCLATURE_WEATHER_VANES_OF = 0
-    NOMINALLY_UNSWAIN_AUTODIDACTIC_IDIOCRACY_LESS_A = 1
-
-# ....................{ ADDERS                            }....................
+# ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
     Add :pep:`586`-compliant type hint test data to various global containers
@@ -43,25 +33,27 @@ def add_data(data_module: 'ModuleType') -> None:
     # print('Testing "Literal"...')
     # Else, this interpreter supports PEP 586.
 
-    # ..................{ IMPORTS                           }..................
-    # Defer attribute-dependent imports.
+    # ..................{ IMPORTS                            }..................
+    # Defer data-dependent imports.
     from beartype.typing import List
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignList,
         HintSignLiteral,
     )
+    from beartype_test.a00_unit.data.data_type import (
+        MasterlessDecreeVenomlessWhich)
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
         HintPithSatisfiedMetadata,
         HintPithUnsatisfiedMetadata,
     )
 
-    # ..................{ FACTORIES                         }..................
+    # ..................{ FACTORIES                          }..................
     # For each "Literal" type hint factory importable from a typing module...
     for Literal in iter_typing_attrs('Literal'):
         # Add PEP 586-specific test type hints to this tuple global.
         data_module.HINTS_PEP_META.extend((
-            # ..............{ LITERALS                          }..............
+            # ..............{ LITERALS                           }..............
             # Literal "None" singleton. Look, this is ridiculous. What you do?
             HintPepMetadata(
                 hint=Literal[None],
@@ -223,7 +215,7 @@ def add_data(data_module: 'ModuleType') -> None:
             # Literal arbitrary enumeration member.
             HintPepMetadata(
                 hint=Literal[
-                    _MasterlessDecreeVenomlessWhich.
+                    MasterlessDecreeVenomlessWhich.
                     NOMENCLATURE_WEATHER_VANES_OF
                 ],
                 pep_sign=HintSignLiteral,
@@ -231,17 +223,17 @@ def add_data(data_module: 'ModuleType') -> None:
                 piths_meta=(
                     # Enumeration member accessed by the same syntax.
                     HintPithSatisfiedMetadata(
-                        _MasterlessDecreeVenomlessWhich.
+                        MasterlessDecreeVenomlessWhich.
                         NOMENCLATURE_WEATHER_VANES_OF
                     ),
                     # Enumeration member accessed by different syntax but
                     # semantically equal to the same enumeration member.
                     HintPithSatisfiedMetadata(
-                        _MasterlessDecreeVenomlessWhich(0)),
+                        MasterlessDecreeVenomlessWhich(0)),
                     # Enumeration member *NOT* equal to the same member.
                     HintPithUnsatisfiedMetadata(
                         pith=(
-                            _MasterlessDecreeVenomlessWhich.
+                            MasterlessDecreeVenomlessWhich.
                             NOMINALLY_UNSWAIN_AUTODIDACTIC_IDIOCRACY_LESS_A
                         ),
                         # Match that the exception message raised for this
@@ -258,12 +250,12 @@ def add_data(data_module: 'ModuleType') -> None:
                         # object embeds the representation of the expected
                         # type.
                         exception_str_match_regexes=(
-                            r'\b_MasterlessDecreeVenomlessWhich\b',),
+                            r'\bMasterlessDecreeVenomlessWhich\b',),
                     ),
                 ),
             ),
 
-            # ..............{ LITERALS ~ nested                 }..............
+            # ..............{ LITERALS ~ nested                  }..............
             # List of literal arbitrary Unicode strings.
             HintPepMetadata(
                 hint=List[Literal[
@@ -307,7 +299,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
 
-            # ..............{ LITERALS ~ union                  }..............
+            # ..............{ LITERALS ~ union                   }..............
             # Literal union of two or more arbitrary literal objects.
             HintPepMetadata(
                 hint=Literal[
@@ -317,7 +309,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     b"Worthy, 'vain truthiness of (very invective-elected)",
                     'Thanklessly classed, nominal',
                     (
-                        _MasterlessDecreeVenomlessWhich.
+                        MasterlessDecreeVenomlessWhich.
                         NOMENCLATURE_WEATHER_VANES_OF
                     ),
                 ],
@@ -333,7 +325,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                     HintPithSatisfiedMetadata('Thanklessly classed, nominal'),
                     HintPithSatisfiedMetadata(
-                        _MasterlessDecreeVenomlessWhich.
+                        MasterlessDecreeVenomlessWhich.
                         NOMENCLATURE_WEATHER_VANES_OF
                     ),
                     # Arbitrary object of the same type as one or more literal
@@ -366,7 +358,7 @@ def add_data(data_module: 'ModuleType') -> None:
                             r'\bint\b',
                             r'\bbytes\b',
                             r'\bstr\b',
-                            r'\b_MasterlessDecreeVenomlessWhich\b',
+                            r'\bMasterlessDecreeVenomlessWhich\b',
                         ),
                     ),
                 ),

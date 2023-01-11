@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -15,14 +15,14 @@ These hints include:
   forward references to standard classes).
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
     HintNonpepMetadata,
     HintPithSatisfiedMetadata,
     HintPithUnsatisfiedMetadata,
 )
 
-# ....................{ ADDERS                            }....................
+# ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
     Add :mod:`beartype`-specific PEP-noncompliant type hint test data to
@@ -34,11 +34,47 @@ def add_data(data_module: 'ModuleType') -> None:
         Module to be added to.
     '''
 
-    # ..................{ TUPLES                            }..................
+    #FIXME: Shift into a PEP-compliant beartype-specific submodule, please.
+    #Doing so will enable us to detect that third-party beartype plugins are
+    #correctly detected with respect to signs and so on.
+
+    # # ..................{ IMPORTS                            }..................
+    # # Defer data-specific imports.
+    # from beartype.plug._plugproto import BeartypeHintable
+    # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+    #
+    # # If the active Python interpreter targets Python >= 3.9 and thus defines
+    # # the PEP 593-compliant "typing.Annotated" type hint factory...
+    # if IS_PYTHON_AT_LEAST_3_9:
+    #     # Defer version-specific imports.
+    #     from beartype.typing import Annotated
+    #     from beartype.vale import Is
+    #
+    #     # .....................{ CLASSES                   }....................
+    #     class StringNonempty(str, BeartypeHintable):
+    #         '''
+    #         **Non-empty string** (i.e., :class:`str` subclass satisfying the
+    #         :class:`BeartypeHintable` protocol by defining the
+    #         :meth:`__beartype_hint__` class method to return a type hint
+    #         constraining instances of this subclass to non-empty strings).
+    #         '''
+    #
+    #         @classmethod
+    #         def __beartype_hint__(cls) -> object:
+    #             '''
+    #             Arbitrary beartype type hint transform reducing to an arbitrary
+    #             PEP-compliant type hint.
+    #             '''
+    #
+    #             # Magnificent one-liner: we invoke thee!
+    #             return Annotated[StringNonempty, Is[lambda text: bool(text)]]
+
+    # ..................{ TUPLES                             }..................
     # Add beartype-specific PEP-noncompliant test type hints to this dictionary
     # global.
     data_module.HINTS_NONPEP_META.extend((
-        # ................{ TUPLE UNION                       }................
+        # ................{ PLUGIN                             }................
+        # ................{ TUPLE UNION                        }................
         # Beartype-specific tuple unions (i.e., tuples containing one or more
         # isinstanceable classes).
 
