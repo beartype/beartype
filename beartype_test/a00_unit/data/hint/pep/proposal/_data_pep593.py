@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -7,13 +7,13 @@
 Project-wide :pep:`593`-compliant **type hint test data.**
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype_test._util.mod.pytmodtyping import (
     is_typing_attrs,
     iter_typing_attrs,
 )
 
-# ....................{ ADDERS                            }....................
+# ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
     Add :pep:`593`-compliant type hint test data to various global containers
@@ -33,8 +33,8 @@ def add_data(data_module: 'ModuleType') -> None:
     # print('Testing "Annotated"...')
     # Else, this interpreter supports PEP 593.
 
-    # ..................{ IMPORTS                           }..................
-    # Defer attribute-dependent imports.
+    # ..................{ IMPORTS                            }..................
+    # Defer data-specific imports.
     from beartype.typing import (
         Any,
         List,
@@ -64,7 +64,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPithUnsatisfiedMetadata,
     )
 
-    # ..................{ VALIDATORS ~ is                   }..................
+    # ..................{ VALIDATORS ~ is                    }..................
     # Beartype-specific validators defined as lambda functions.
     IsLengthy = Is[lambda text: len(text) > 30]
     IsSentence = Is[lambda text: text and text[-1] == '.']
@@ -81,7 +81,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # via the domain-specific language (DSL) implemented by those validators.
     IsLengthyOrUnquotedSentence = IsLengthy | (IsSentence & ~IsQuoted)
 
-    # ..................{ VALIDATORS ~ isattr               }..................
+    # ..................{ VALIDATORS ~ isattr                }..................
     # Arbitrary list to validate equality against below.
     AMPLY_IMPISH = ['Amply imp-ish', 'blandishments to']
 
@@ -112,15 +112,17 @@ def add_data(data_module: 'ModuleType') -> None:
     SORDIDLY_FLABBY_WRMCASTINGS.this_mobbed_triste_of = [
         'An atomical caroller', 'carousing Thanatos', '(nucl‐eating',]
 
-    # ..................{ FACTORIES                         }..................
+    # ..................{ FACTORIES                          }..................
     # For each "Annotated" type hint factory importable from a typing module...
     for Annotated in iter_typing_attrs('Annotated'):
-        # ................{ ANNOTATED                         }................
+        # ..................{ LOCALS                         }..................
+        # Local variables requiring an "Annotated" type hint factory.
+
         # Annotated of an isinstanceable type annotated by one beartype-specific
         # validator defined as a lambda function.
         AnnotatedStrIsLength = Annotated[str, IsLengthy]
 
-        # ................{ SETS                              }................
+        # ................{ SETS                               }................
         # Add PEP 593-specific deeply ignorable test type hints to that global.
         data_module.HINTS_PEP_IGNORABLE_DEEP.update((
             # Annotated of shallowly ignorable type hints.
@@ -140,10 +142,10 @@ def add_data(data_module: 'ModuleType') -> None:
             Union[str, List[int], NewType('MetaType', Annotated[object, 53])],
         ))
 
-        # ................{ TUPLES                            }................
+        # ................{ TUPLES                             }................
         # Add PEP 593-specific test type hints to this tuple global.
         data_module.HINTS_PEP_META.extend((
-            # ..............{ ANNOTATED                         }..............
+            # ..............{ ANNOTATED                          }..............
             # Hashable annotated of an isinstanceable type annotated by an
             # arbitrary hashable object.
             HintPepMetadata(
@@ -174,8 +176,8 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
 
-            # Unhashable annotated of an isinstanceable type annotated by
-            # an unhashable mutable container.
+            # Unhashable annotated of an isinstanceable type annotated by an
+            # unhashable mutable container.
             HintPepMetadata(
                 hint=Annotated[str, []],
                 pep_sign=HintSignAnnotated,
@@ -189,7 +191,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
 
-            # ..............{ ANNOTATED ~ beartype : is         }..............
+            # ..............{ ANNOTATED ~ beartype : is          }..............
             # Annotated of an isinstanceable type annotated by one
             # beartype-specific validator defined as a lambda function.
             HintPepMetadata(
@@ -285,7 +287,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
 
-            # ..............{ ANNOTATED ~ beartype : is : &     }..............
+            # ..............{ ANNOTATED ~ beartype : is : &      }..............
             # Annotated of an isinstanceable type annotated by two or more
             # validators all defined as functions, specified with "&"-delimited
             # operator syntax.
@@ -343,7 +345,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
 
-            # ..............{ ANNOTATED ~ beartype : is : |     }..............
+            # ..............{ ANNOTATED ~ beartype : is : |      }..............
             # Annotated of an isinstanceable type annotated by two or more
             # validators all defined as functions, specified with "|"-delimited
             # operator syntax such that the first such validator short-circuits
@@ -367,7 +369,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
 
-            # ..............{ ANNOTATED ~ beartype : is : nest  }..............
+            # ..............{ ANNOTATED ~ beartype : is : nest   }..............
             # Annotated of an annotated of an isinstanceable type, each
             # annotated by a beartype-specific validator defined as a function.
             HintPepMetadata(
@@ -419,7 +421,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
 
-            # ..............{ ANNOTATED ~ beartype : isattr     }..............
+            # ..............{ ANNOTATED ~ beartype : isattr      }..............
             # Annotated of an isinstanceable type annotated by one
             # beartype-specific attribute validator.
             HintPepMetadata(
@@ -442,7 +444,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
 
-            # ..............{ ANNOTATED ~ beartype : isequal    }..............
+            # ..............{ ANNOTATED ~ beartype : isequal     }..............
             # Annotated of an isinstanceable type annotated by one
             # beartype-specific equality validator.
             HintPepMetadata(
@@ -470,7 +472,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
 
-            # ..............{ ANNOTATED ~ beartype : isinstance }..............
+            # ..............{ ANNOTATED ~ beartype : isinstance  }..............
             # Annotated of an isinstanceable type annotated by one
             # beartype-specific type instance validator.
             HintPepMetadata(
@@ -500,7 +502,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
 
-            # ..............{ ANNOTATED ~ beartype : issubclass }..............
+            # ..............{ ANNOTATED ~ beartype : issubclass  }..............
             # Annotated of an isinstanceable type annotated by one
             # beartype-specific type inheritance validator.
             HintPepMetadata(

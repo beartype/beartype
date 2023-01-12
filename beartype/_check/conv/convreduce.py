@@ -37,6 +37,7 @@ from beartype._util.hint.pep.proposal.utilpep544 import (
 from beartype._util.hint.pep.proposal.utilpep557 import (
     get_hint_pep557_initvar_arg)
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from collections.abc import Mapping
 
 # ....................{ REDUCERS                           }....................
@@ -99,20 +100,39 @@ def reduce_hint(
     # Beartype plugin API. Respect external user-defined classes satisfying the
     # beartype plugin API *BEFORE* handling these classes in any way.
 
-    #FIXME: Only do this under Python >= 3.8, where this actually makes sense.
-    # If this hint...
-    if (
-        # Is a class *AND*...
-        isinstance(hint, type) and 
-        # This class satisfies the "BeartypeHintable" protocol and thus defines
-        # the __beartype_hint__() class method instructing beartype to
-        # dynamically reduce this class to the arbitrary hint returned by that
-        # class method...
-        isinstance(hint, BeartypeHintable) 
-    ):
-        # Reduce this hint to the hint returned by that class method *BEFORE*
-        # introspecting this hint below.
-        hint = hint.__beartype_hint__()
+    #FIXME: Temporarily disabled until commentary below is resolved. Gah!
+    # # If this hint...
+    # if (
+    #     # Is a class *AND*...
+    #     isinstance(hint, type) and 
+    #     (
+    #         # If the active Python interpreter targets Python >= 3.8 and thus
+    #         # supports PEP 544-compliant protocols via the "typing.Protocol"
+    #         # superclass, true only if this class satisfies the
+    #         # "BeartypeHintable" protocol and thus defines the
+    #         # __beartype_hint__() class method instructing beartype to reduce
+    #         # this class to the arbitrary hint returned by that class method;
+    #         isinstance(hint, BeartypeHintable)
+    #         if IS_PYTHON_AT_LEAST_3_8 else
+    #
+    #         #FIXME: *YIKES.* It turns out that some so-called "types" (e.g.,
+    #         #"numpy.typing.NDArray[float64]") are not issubclassable. We could
+    #         #check for that, of course. But... this is all turning out to be a
+    #         #bit nightmare-ish. Instead, let's just defer to a standard dynamic
+    #         #getattr() lookup on this hint for __beartype_hint__(). That'll be
+    #         #both the safest, simplest, and most efficient approach. Woops. More
+    #         #fool us for attempting to employ typing machinery here. *sigh*
+    #
+    #         # Else, the active Python interpreter targets Python < 3.7 and thus
+    #         # fails to support PEP 544-compliant protocols via the
+    #         # "typing.Protocol" superclass. In this case, true only if this
+    #         # class subclasses the "BeartypeHintable" abstract base class (ABC).
+    #         issubclass(hint, BeartypeHintable) 
+    #     )
+    #  ):
+    #     # Reduce this hint to the hint returned by that class method *BEFORE*
+    #     # introspecting this hint below.
+    #     hint = hint.__beartype_hint__()  # type: ignore[attr-defined]
 
     # ..................{ SIGN                               }..................
     # Sign uniquely identifying this hint if this hint is identifiable *OR*

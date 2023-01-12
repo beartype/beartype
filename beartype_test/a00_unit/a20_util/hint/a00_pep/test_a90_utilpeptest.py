@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,18 +10,18 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.hint.pep.utilpeptest` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from pytest import raises
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 # Fine-grained tests are intentionally performed *BEFORE* coarse-grained tests,
 # dramatically improving readability of test failures.
 
-# ....................{ TESTS ~ kind : typevar            }....................
+# ....................{ TESTS ~ kind : typevar             }....................
 def test_is_hint_pep_typevars() -> None:
     '''
     Test the
@@ -44,7 +44,7 @@ def test_is_hint_pep_typevars() -> None:
     for nonhint_pep in HINTS_NONPEP:
         assert is_hint_pep_typevars(nonhint_pep) is False
 
-# ....................{ TESTS ~ typing                    }....................
+# ....................{ TESTS ~ typing                     }....................
 def test_is_hint_pep_typing() -> None:
     '''
     Test the
@@ -93,7 +93,7 @@ def test_is_hint_pep_type_typing() -> None:
     for not_hint_pep in NOT_HINTS_PEP:
         assert is_hint_pep_type_typing(not_hint_pep) is False
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 def test_is_hint_pep() -> None:
     '''
     Test the :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep`
@@ -115,6 +115,12 @@ def test_is_hint_pep() -> None:
     # "typing" module as normal types indistinguishable from non-"typing" types
     # and thus effectively non-PEP-compliant for all practical intents.
     for hint_nonpep_meta in HINTS_NONPEP_META:
+        # if is_hint_pep(hint_nonpep_meta.hint) is True:
+        #     from beartype._util.hint.pep.utilpepget import (
+        #         get_hint_pep_sign_or_none)
+        #     hint = hint_nonpep_meta.hint
+        #     print(f'hint {hint} sign: {get_hint_pep_sign_or_none(hint)}')
+
         assert is_hint_pep(hint_nonpep_meta.hint) is False
 
     # Assert this tester rejects non-PEP-compliant type hints.
@@ -184,7 +190,7 @@ def test_is_hint_pep_args() -> None:
 #     for not_hint_pep in NOT_HINTS_PEP:
 #         assert is_hint_pep_uncached(not_hint_pep) is True
 
-# ....................{ TESTS ~ supported                 }....................
+# ....................{ TESTS ~ supported                  }....................
 def test_is_hint_pep_supported() -> None:
     '''
     Test the

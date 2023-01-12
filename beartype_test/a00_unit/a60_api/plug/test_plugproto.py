@@ -80,3 +80,18 @@ def test_beartypehintable() -> None:
 
         # Assert that classes violating this protocol actually do.
         assert not isinstance(OrTheStarBeamsDartThroughThem, BeartypeHintable)
+    # Else, the active Python interpreter targets Python < 3.7 and thus fails to
+    # support PEP 544-compliant protocols via the "typing.Protocol" superclass.
+    # In this case...
+    else:
+        # Assert that classes explicitly satisfying this protocol actually do --
+        # albeit via standard subclass relations rather than full-blown
+        # structural subtyping.
+        assert issubclass(NorWhenTheFlakesBurn, BeartypeHintable)
+
+        # Assert that classes implicitly satisfying this protocol do *NOT*, as
+        # Python <= 3.7 lacks support for structural subtyping.
+        assert not issubclass(InTheSinkingSun, BeartypeHintable)
+
+        # Assert that classes violating this protocol actually do.
+        assert not issubclass(OrTheStarBeamsDartThroughThem, BeartypeHintable)

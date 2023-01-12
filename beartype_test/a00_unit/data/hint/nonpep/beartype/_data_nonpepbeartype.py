@@ -15,13 +15,6 @@ These hints include:
   forward references to standard classes).
 '''
 
-# ....................{ IMPORTS                            }....................
-from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    HintNonpepMetadata,
-    HintPithSatisfiedMetadata,
-    HintPithUnsatisfiedMetadata,
-)
-
 # ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
@@ -34,46 +27,21 @@ def add_data(data_module: 'ModuleType') -> None:
         Module to be added to.
     '''
 
-    #FIXME: Shift into a PEP-compliant beartype-specific submodule, please.
-    #Doing so will enable us to detect that third-party beartype plugins are
-    #correctly detected with respect to signs and so on.
-
-    # # ..................{ IMPORTS                            }..................
-    # # Defer data-specific imports.
-    # from beartype.plug._plugproto import BeartypeHintable
-    # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-    #
-    # # If the active Python interpreter targets Python >= 3.9 and thus defines
-    # # the PEP 593-compliant "typing.Annotated" type hint factory...
-    # if IS_PYTHON_AT_LEAST_3_9:
-    #     # Defer version-specific imports.
-    #     from beartype.typing import Annotated
-    #     from beartype.vale import Is
-    #
-    #     # .....................{ CLASSES                   }....................
-    #     class StringNonempty(str, BeartypeHintable):
-    #         '''
-    #         **Non-empty string** (i.e., :class:`str` subclass satisfying the
-    #         :class:`BeartypeHintable` protocol by defining the
-    #         :meth:`__beartype_hint__` class method to return a type hint
-    #         constraining instances of this subclass to non-empty strings).
-    #         '''
-    #
-    #         @classmethod
-    #         def __beartype_hint__(cls) -> object:
-    #             '''
-    #             Arbitrary beartype type hint transform reducing to an arbitrary
-    #             PEP-compliant type hint.
-    #             '''
-    #
-    #             # Magnificent one-liner: we invoke thee!
-    #             return Annotated[StringNonempty, Is[lambda text: bool(text)]]
+    # ..................{ IMPORTS                            }..................
+    # Defer data-specific imports.
+    from beartype.plug._plugproto import BeartypeHintable
+    from beartype.vale import Is
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+        HintNonpepMetadata,
+        HintPithSatisfiedMetadata,
+        HintPithUnsatisfiedMetadata,
+    )
+    from beartype_test._util.mod.pytmodtyping import iter_typing_attrs
 
     # ..................{ TUPLES                             }..................
     # Add beartype-specific PEP-noncompliant test type hints to this dictionary
     # global.
     data_module.HINTS_NONPEP_META.extend((
-        # ................{ PLUGIN                             }................
         # ................{ TUPLE UNION                        }................
         # Beartype-specific tuple unions (i.e., tuples containing one or more
         # isinstanceable classes).
@@ -129,3 +97,97 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
     ))
+
+    # ..................{ VALIDATORS ~ is                    }..................
+    # Beartype-specific validators defined as lambda functions.
+    IsNonempty = Is[lambda text: bool(text)]
+
+    # ..................{ FACTORIES                          }..................
+    # For each "Annotated" type hint factory importable from a typing module...
+    for Annotated in iter_typing_attrs('Annotated'):
+        # ..................{ LOCALS ~ plugin                }..................
+        # Local variables requiring an "Annotated" type hint factory
+        # additionally exercising beartype's plugin API.
+
+        class StringNonempty(str, BeartypeHintable):
+            '''
+            **Non-empty string** (i.e., :class:`str` subclass satisfying the
+            :class:`BeartypeHintable` protocol by defining the
+            :meth:`__beartype_hint__` class method to return a type hint
+            constraining instances of this subclass to non-empty strings).
+            '''
+
+            @classmethod
+            def __beartype_hint__(cls) -> object:
+                '''
+                Beartype type hint transform reducing to an annotated of this
+                subclass validating instances of this subclass to be non-empty.
+                '''
+
+                # Munificent one-liner: I invoke thee!
+                return Annotated[StringNonempty, IsNonempty]
+
+        #FIXME: Temporarily disabled. Why? Because "StringNonempty" is a
+        #generic. Why? Because "BeartypeHintable" is a protocol. We... didn't
+        #think about that. Yikes! We strongly doubt most users want to make all
+        #of their classes generics. We certainly don't. Sadly, this means we'll
+        #now need to:
+        #* Rename the Python >= 3.8-specific "BeartypeHintable" protocol to be a
+        #  new private "_BeartypeHintableProtocol" protocol. Under Python 3.7,
+        #  "_BeartypeHintableProtocol" should simply fallback to "None".
+        #  * *ACTUALLY.* Let's just remove the Python >= 3.8-specific
+        #    "BeartypeHintable" protocol entirely. We can't safely use it under
+        #    Python < 3.7 and we don't particularly need it under Python >= 3.8,
+        #    because we can simply perform a getattr() instead. *sigh*
+        #* Preserve the Python 3.7-specific "BeartypeHintable" ABC as is.
+        #* Shift the pertinent docstrings into the latter ABC.
+        #* Refactor tests elsewhere accordingly, please.
+        #* Refactor the "convreduce" implementation to preferentially leverage
+        #  "_BeartypeHintableProtocol" if that attribute is non-"None".
+        #* Uncomment the logic below, which should now behave as expected.
+        #
+        #Facepalm: engage! 
+
+        # # ................{ TUPLES                             }................
+        # # Add PEP 593-specific test type hints to this tuple global.
+        # data_module.HINTS_NONPEP_META.extend((
+        #     # ..............{ ANNOTATED ~ beartype : is : plugin }..............
+        #     # Note that beartype's plugin API straddles the fine line between
+        #     # PEP-compliant and PEP-noncompliant type hints. Superficially, most
+        #     # isinstanceable types are PEP-noncompliant and thus exercised in
+        #     # unit tests via the "HintNonpepMetadata" dataclass. Semantically,
+        #     # isinstanceable type satisfying the "BeartypeHintable" protocol
+        #     # define __beartype_hint__() class methods returning PEP-compliant
+        #     # type hints instead exercised in unit tests via the
+        #     # "HintPepMetadata" dataclass. To avoid confusion, these types are:
+        #     # Superficially accepted as PEP-noncompliant. Treating them instead
+        #     # as PEP-compliant would be feasible but require non-trivial
+        #     # replacement of these types with the type hints returned by their
+        #     # __beartype_hint__() class methods. Doing so would also probably
+        #     # break literally everything. Did we mention that?
+        #
+        #     # Isinstanceable type satisfying the "BeartypeHintable" protocol,
+        #     # whose __beartype_hint__() class method returns an annotated of an
+        #     # isinstanceable type annotated by one beartype-specific validator
+        #     # defined as a lambda function.
+        #     HintNonpepMetadata(
+        #         hint=StringNonempty,
+        #         piths_meta=(
+        #             # String constant satisfying this validator.
+        #             HintPithSatisfiedMetadata(
+        #                 "Impell no pretty‐spoked fellahs’ prudently"),
+        #             # Byte-string constant *NOT* an instance of the expected
+        #             # type.
+        #             HintPithUnsatisfiedMetadata(
+        #                 pith=b'Impudent Roark-sparkful',
+        #                 # Match that the exception message raised for this
+        #                 # object embeds the code for this validator's lambda
+        #                 # function.
+        #                 exception_str_match_regexes=(
+        #                     r'Is\[.*\bbool\(text\).*\]',),
+        #             ),
+        #             # Empty string constant violating this validator.
+        #             HintPithUnsatisfiedMetadata(''),
+        #         ),
+        #     ),
+        # ))
