@@ -103,6 +103,7 @@ def reduce_hint(
     #FIXME: Temporarily disabled until commentary below is resolved. Gah!
     # # If this hint...
     # if (
+    #     #FIXME: Yikes. This isn't safe either. Just getattr() this, people.
     #     # Is a class *AND*...
     #     isinstance(hint, type) and 
     #     (

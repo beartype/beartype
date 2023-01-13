@@ -29,7 +29,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer data-specific imports.
-    from beartype.plug._plugproto import BeartypeHintable
+    from beartype.plug import BeartypeHintable
     from beartype.vale import Is
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintNonpepMetadata,
@@ -125,7 +125,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 '''
 
                 # Munificent one-liner: I invoke thee!
-                return Annotated[StringNonempty, IsNonempty]
+                return Annotated[cls, IsNonempty]
 
         #FIXME: Temporarily disabled. Why? Because "StringNonempty" is a
         #generic. Why? Because "BeartypeHintable" is a protocol. We... didn't

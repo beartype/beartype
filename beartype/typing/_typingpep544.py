@@ -12,6 +12,25 @@ replacement for :class:`typing.Protocol` that can lead to significant
 performance improvements.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: *YIKES.* Our "beartype.typing.Protocol" implementation is broken yet
+#again -- but this time for @classmethod-decorated callables. Consider this:
+#    from beartype.typing import Protocol
+#    class BrokenProtocol(Protocol):
+#        @classmethod
+#        def broken_classmethod(cls) -> object:
+#            pass
+#
+#Now define an arbitrary class violating that protocol:
+#    class BrokenClass(object): pass
+#
+#Now attempt to demonstrate that this class violates that protocol:
+#    >>> isinstance(BrokenClass, BrokenProtocol)
+#    True  # <----- WAAAAAAAAAT
+#
+#This issue is almost certainly related to classmethods. We clearly never tested
+#that. Classmethods clearly require explicit handling and caching. *sigh*
+
 # ....................{ IMPORTS                            }....................
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_8,
