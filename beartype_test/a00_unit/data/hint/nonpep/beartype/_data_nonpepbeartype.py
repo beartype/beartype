@@ -127,26 +127,20 @@ def add_data(data_module: 'ModuleType') -> None:
                 # Munificent one-liner: I invoke thee!
                 return Annotated[cls, IsNonempty]
 
-        #FIXME: Temporarily disabled. Why? Because "StringNonempty" is a
-        #generic. Why? Because "BeartypeHintable" is a protocol. We... didn't
-        #think about that. Yikes! We strongly doubt most users want to make all
-        #of their classes generics. We certainly don't. Sadly, this means we'll
-        #now need to:
-        #* Rename the Python >= 3.8-specific "BeartypeHintable" protocol to be a
-        #  new private "_BeartypeHintableProtocol" protocol. Under Python 3.7,
-        #  "_BeartypeHintableProtocol" should simply fallback to "None".
-        #  * *ACTUALLY.* Let's just remove the Python >= 3.8-specific
-        #    "BeartypeHintable" protocol entirely. We can't safely use it under
-        #    Python < 3.7 and we don't particularly need it under Python >= 3.8,
-        #    because we can simply perform a getattr() instead. *sigh*
-        #* Preserve the Python 3.7-specific "BeartypeHintable" ABC as is.
-        #* Shift the pertinent docstrings into the latter ABC.
-        #* Refactor tests elsewhere accordingly, please.
-        #* Refactor the "convreduce" implementation to preferentially leverage
-        #  "_BeartypeHintableProtocol" if that attribute is non-"None".
-        #* Uncomment the logic below, which should now behave as expected.
+        #FIXME: *WOOPS.* Didn't thank about recursion, did we? Clearly, the
+        #__beartype_hint__() method should only be called once per type.
+        #However, the "StringNonempty" class defined above is invoking infinite
+        #recursion -- probably due to returning a type hint embedding itself,
+        #which @beartype then inspects the child type hints of, which include
+        #"cls == StringNonempty", which then recalls __beartype_hint__() during
+        #reduction, and so on ad naseum.
         #
-        #Facepalm: engage! 
+        #Sadly, this may require us to refactor our current BFS into a DFS.
+        #Doing so would then enable us to define a set of all hints that should
+        #*NOT* be subject to reduction by __beartype_hint__(); that set is, of
+        #course, the current set of all parent type hints of the current type
+        #hint. Short of that, however, it's non-trivial to see how we could
+        #possibly do this under our current BFS architecture. *WOOPS.*
 
         # # ................{ TUPLES                             }................
         # # Add PEP 593-specific test type hints to this tuple global.

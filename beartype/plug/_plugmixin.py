@@ -39,13 +39,13 @@ class BeartypeHintable(object):
     and then replaces those hints with the new type hints returned by those
     methods. In pseudo-code, this logic crudely resembles: e.g.,
 
-    .. code-block::
+    .. code-block:: python
 
        # "__beartype_hint__" attribute of this type hint if any *OR* "None".
        beartype_hinter = getattr(hint, '__beartype_hint__')
 
-       # If this hint defines this attribute *AND* this attribute is callable,
-       # replace this hint by the new type hint returned by this callable.
+       # If this hint defines this method, replace this hint with the new type
+       # hint created and returned by this method.
        if callable(beartype_hinter):
            hint = beartype_hinter()
 

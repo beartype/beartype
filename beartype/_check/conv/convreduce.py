@@ -100,40 +100,44 @@ def reduce_hint(
     # Beartype plugin API. Respect external user-defined classes satisfying the
     # beartype plugin API *BEFORE* handling these classes in any way.
 
-    #FIXME: Temporarily disabled until commentary below is resolved. Gah!
-    # # If this hint...
-    # if (
-    #     #FIXME: Yikes. This isn't safe either. Just getattr() this, people.
-    #     # Is a class *AND*...
-    #     isinstance(hint, type) and 
-    #     (
-    #         # If the active Python interpreter targets Python >= 3.8 and thus
-    #         # supports PEP 544-compliant protocols via the "typing.Protocol"
-    #         # superclass, true only if this class satisfies the
-    #         # "BeartypeHintable" protocol and thus defines the
-    #         # __beartype_hint__() class method instructing beartype to reduce
-    #         # this class to the arbitrary hint returned by that class method;
-    #         isinstance(hint, BeartypeHintable)
-    #         if IS_PYTHON_AT_LEAST_3_8 else
+    # Beartype-specific __beartype_hint__() dunder method defined by this hint
+    # if any *OR* "None" otherwise.
     #
-    #         #FIXME: *YIKES.* It turns out that some so-called "types" (e.g.,
-    #         #"numpy.typing.NDArray[float64]") are not issubclassable. We could
-    #         #check for that, of course. But... this is all turning out to be a
-    #         #bit nightmare-ish. Instead, let's just defer to a standard dynamic
-    #         #getattr() lookup on this hint for __beartype_hint__(). That'll be
-    #         #both the safest, simplest, and most efficient approach. Woops. More
-    #         #fool us for attempting to employ typing machinery here. *sigh*
+    # Note that usage of the low-level getattr() builtin is intentional. *ALL*
+    # alternative higher-level approaches suffer various deficits, including:
+    # * Obstructing monkey-patching. The current approach trivializes
+    #   monkey-patching by third parties, enabling users to readily add
+    #   __beartype_hint__() support to third-party packages *NOT* under their
+    #   direct control. Alternative higher-level approaches obstruct that by
+    #   complicating (or just outright prohibiting) monkey-patching.
+    # * Abstract base classes (ABCs) assume that hints that are classes are
+    #   issubclassable (i.e., safely passable as the first arguments of the
+    #   issubclass() builtin). Sadly, various real-world hints that are classes
+    #   are *NOT* issubclassable. This includes the core
+    #   "typing.NDArray[{dtype}]" type hints, astonishingly. Of course, even
+    #   this edge case could be surmounted by explicitly testing for
+    #   issubclassability (e.g., by calling our existing
+    #   is_type_issubclassable() tester); since that tester internally leverages
+    #   the inefficient Easier to Ask for Forgiveness than Permission (EAFP)
+    #   paradigm, doing so would impose a measurable performance penalty. This
+    #   only compounds the monkey-patching complications that an ABC imposes.
+    # * PEP 544-compliant protocols assume that the active Python interpreter
+    #   supports PEP 544, which Python 3.7 does not. While Python 3.7 has
+    #   probably hit its End of Life (EOL) by the time you are reading this,
+    #   additional issue exist. On the one hand, protocols impose even *MORE* of
+    #   a performance burden than ABCs. On the other hand, protocols ease the
+    #   user-oriented burden of monkey-patching.
     #
-    #         # Else, the active Python interpreter targets Python < 3.7 and thus
-    #         # fails to support PEP 544-compliant protocols via the
-    #         # "typing.Protocol" superclass. In this case, true only if this
-    #         # class subclasses the "BeartypeHintable" abstract base class (ABC).
-    #         issubclass(hint, BeartypeHintable) 
-    #     )
-    #  ):
-    #     # Reduce this hint to the hint returned by that class method *BEFORE*
-    #     # introspecting this hint below.
-    #     hint = hint.__beartype_hint__()  # type: ignore[attr-defined]
+    # In short, this low-level approach effectively imposes *NO* burdens at all.
+    # There exists *NO* reason to prefer higher-level alternatives.
+    beartype_hinter = getattr(hint, '__beartype_hint__', None)
+
+    # If this hint defines this method, replace this hint with the new type hint
+    # created and returned by this method.
+    if callable(beartype_hinter):
+        hint = beartype_hinter()
+    # Else, this hint does *NOT* define this method. In this case, preserve this
+    # hint as is.
 
     # ..................{ SIGN                               }..................
     # Sign uniquely identifying this hint if this hint is identifiable *OR*

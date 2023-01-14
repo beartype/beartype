@@ -456,6 +456,32 @@
 #Note that a DFS still needs to expensively interpolate code snippets into
 #format templates. There's *NO* way around that; since dynamic code generation
 #is what we've gotten ourselves into here, string munging is a necessary "good."
+#FIXME: *OKAY.* It's time to contemplate the unthinkable, folks. Note that our
+#existing make_check_expr() code generation function internally calls the
+#_enqueue_hint_child() closure on each child. You should now be thinking: "Why
+#didn't we simply implement this recursively?" Because that is what I am now
+#thinking, people. Specifically, since we're *ALREADY* paying function call
+#costs, there's little reason not to simply go full-blown recursion and
+#implement this accordingly.
+#
+#Note that this is *NOT* to say that we should go FULL-FULL-BLOWN
+#object-oriented via the DOOR API. That would impose substantial slowdown.
+#Instead, rather, we should begin considering a family of low-level
+#sign-specific functions that generate code for each sign category: e.g.,
+#* _make_check_expr_union() for "HintSignUnion" hints.
+#* _make_check_expr_sequence_1_arg() for "HintSignSequence" hints.
+#* And so on.
+#
+#Then define a private dictionary mapping from signs to those functions. Viola!
+#Misery has been substantially reduced.
+#
+#That said, the current approach still offers benefits. Since all state is
+#centralized into a single function, sharing state between different
+#code-generating "subfunctions" is trivial; they're just local variables. This
+#suggests that we should initially:
+#* Attempt to generalize the current single-function approach from BFS to DFS.
+#* If that fails, do *NOT* hesitate to generalize to a multi-function recursive
+#  approach. However we can implement this is how we must implement this.
 
 #FIXME: Note that there exist four possible approaches to random item selection
 #for arbitrary containers depending on container type. Either the actual pith
