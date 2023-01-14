@@ -12,7 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.plug import BeartypeHintable
 from beartype.typing import Any
 from beartype._cave._cavefast import NoneType
 from beartype._conf.confcls import BeartypeConf
