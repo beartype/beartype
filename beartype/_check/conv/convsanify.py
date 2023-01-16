@@ -23,7 +23,6 @@ from beartype._check.conv.convreduce import reduce_hint
 from beartype._conf.confcls import BeartypeConf
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
-from beartype._util.hint.utilhinttest import die_unless_hint
 
 # ....................{ SANIFIERS ~ root                   }....................
 #FIXME: Unit test us up, please.
@@ -123,13 +122,6 @@ def sanify_func_hint_root(
             exception_prefix=exception_prefix,
         )
     )
-
-    # If this object is neither a PEP-noncompliant type hint *NOR* supported
-    # PEP-compliant type hint, raise an exception.
-    #
-    # Note that this function call is effectively memoized and thus efficient.
-    die_unless_hint(hint=hint, exception_prefix=exception_prefix)
-    # Else, this object is a supported PEP-compliant type hint.
 
     # Reduce this hint to a lower-level PEP-compliant type hint if this hint is
     # reducible *OR* this hint as is otherwise. Reductions simplify subsequent
@@ -241,13 +233,6 @@ def sanify_hint_root(
     # passed hint is *NOT* necessarily PEP-compliant, perform this coercion
     # *BEFORE* validating this hint to be PEP-compliant.
     hint = coerce_hint_root(hint=hint, exception_prefix=exception_prefix)
-
-    # If this object is neither a PEP-noncompliant type hint *NOR* supported
-    # PEP-compliant type hint, raise an exception.
-    #
-    # Note that this function call is effectively memoized and thus efficient.
-    die_unless_hint(hint=hint, exception_prefix=exception_prefix)
-    # Else, this object is a supported PEP-compliant type hint.
 
     # Reduce this hint to a lower-level PEP-compliant type hint if this hint is
     # reducible *OR* this hint as is otherwise. See

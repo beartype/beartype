@@ -384,10 +384,9 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # Sanitize this hint to either:
             # * If this hint is PEP-noncompliant, the PEP-compliant type hint
             #   converted from this PEP-noncompliant type hint.
-            # * Else if this hint is both PEP-compliant and supported, this hint
-            #   as is.
-            # * Else, raise an exception (i.e., if this hint is neither
-            #   PEP-noncompliant nor a supported PEP-compliant hint).
+            # * If this hint is both PEP-compliant and supported, this hint as
+            #   is.
+            # * Else, raise an exception.
             #
             # Do this first *BEFORE* passing this hint to any further callables.
             hint = sanify_func_hint_root(
@@ -569,10 +568,9 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
             # Sanitize this hint to either:
             # * If this hint is PEP-noncompliant, the PEP-compliant type hint
             #   converted from this PEP-noncompliant type hint.
-            # * Else if this hint is both PEP-compliant and supported, this hint
-            #   as is.
-            # * Else, raise an exception (i.e., if this hint is neither
-            #   PEP-noncompliant nor a supported PEP-compliant hint).
+            # * If this hint is both PEP-compliant and supported, this hint as
+            #   is.
+            # * Else, raise an exception.
             #
             # Do this first *BEFORE* passing this hint to any further callables.
             hint = sanify_func_hint_root(

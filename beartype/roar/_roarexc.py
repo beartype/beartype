@@ -868,118 +868,12 @@ class _BeartypeUtilException(BeartypeException):
     pass
 
 
-class _BeartypeUtilCallableException(_BeartypeUtilException):
-    '''
-    **Beartype callable utility exception.**
-
-    This exception is raised by public functions of the private
-    :mod:`beartype._util.utilfunc` subpackage.
-
-    This exception denotes a critical internal issue and should thus *never* be
-    raised -- let alone allowed to percolate up the call stack to end users.
-    '''
-
-    pass
-
-
 class _BeartypeUtilExceptionException(_BeartypeUtilException):
     '''
     **Beartype exception utility exception.**
 
     This exception is raised by public functions of the private
     :mod:`beartype.roar._roarexc` subpackage.
-
-    This exception denotes a critical internal issue and should thus *never* be
-    raised -- let alone allowed to percolate up the call stack to end users.
-    '''
-
-    pass
-
-
-class _BeartypeUtilMappingException(_BeartypeUtilException):
-    '''
-    **Beartype mapping utility exception.**
-
-    This exception is raised by public functions of the private
-    :mod:`beartype._util.kind.utilkinddict` submodule.
-
-    This exception denotes a critical internal issue and should thus *never* be
-    raised -- let alone allowed to percolate up the call stack to end users.
-    '''
-
-    pass
-
-
-class _BeartypeUtilModuleException(_BeartypeUtilException):
-    '''
-    **Beartype module utility exception.**
-
-    This exception is raised by public functions of the private
-    :mod:`beartype._util.mod.utilmodget` subpackage when dynamically importing
-    an unimportable external user-defined module, typically due to a
-    **PEP-compliant forward reference type hint** (i.e., string whose value is
-    the name of a user-defined class that has yet to be defined) erroneously
-    referencing a non-existent module or module attribute.
-
-    This exception denotes a critical internal issue and should thus *never* be
-    raised -- let alone allowed to percolate up the call stack to end users.
-    '''
-
-    pass
-
-
-class _BeartypeUtilPathException(_BeartypeUtilException):
-    '''
-    **Beartype path utility exception.**
-
-    This exception is raised by public functions of the private
-    :mod:`beartype._util.path` subpackage on various fatal edge cases.
-
-    This exception denotes a critical internal issue and should thus *never* be
-    raised -- let alone allowed to percolate up the call stack to end users.
-    '''
-
-    pass
-
-
-class _BeartypeUtilTextException(_BeartypeUtilException):
-    '''
-    **Beartype text utility exception.**
-
-    This exception is raised by public functions of the private
-    :mod:`beartype._util.text` subpackage on various fatal edge cases.
-
-    This exception denotes a critical internal issue and should thus *never* be
-    raised -- let alone allowed to percolate up the call stack to end users.
-    '''
-
-    pass
-
-
-class _BeartypeUtilTypeException(_BeartypeUtilException):
-    '''
-    **Beartype class utility exception.**
-
-    This exception is raised by public functions of the private
-    :mod:`beartype._util.cls.utilclstest` subpackage.
-
-    This exception denotes a critical internal issue and should thus *never* be
-    raised -- let alone allowed to percolate up the call stack to end users.
-    '''
-
-    pass
-
-# ....................{ PRIVATE ~ util : call                }..................
-class _BeartypeCallHintRaiseException(_BeartypeUtilException):
-    '''
-    Abstract base class of all **beartype human-readable exception raiser
-    exceptions.**
-
-    Instances of subclasses of this exception are raised by private utility
-    **exception raiser functions** (i.e., functions raising human-readable
-    exceptions from wrapper functions when either passed a parameter or
-    returning a value annotated by a type hint fails the runtime type-check
-    required by that hint) when an unexpected failure occurs.
 
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
@@ -1080,6 +974,24 @@ class _BeartypeUtilCachedObjectTypedException(_BeartypeUtilCachedException):
     pass
 
 # ....................{ PRIVATE ~ util : call                }..................
+class _BeartypeCallHintRaiseException(_BeartypeUtilException):
+    '''
+    Abstract base class of all **beartype human-readable exception raiser
+    exceptions.**
+
+    Instances of subclasses of this exception are raised by private utility
+    **exception raiser functions** (i.e., functions raising human-readable
+    exceptions from wrapper functions when either passed a parameter or
+    returning a value annotated by a type hint fails the runtime type-check
+    required by that hint) when an unexpected failure occurs.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
 class _BeartypeCallHintPepRaiseException(_BeartypeCallHintRaiseException):
     '''
     **Beartype PEP-compliant human-readable exception raiser exception.**
@@ -1116,6 +1028,94 @@ class _BeartypeCallHintPepRaiseDesynchronizationException(
       function re-type-checking this pith triggered a false positive by
       erroneously misdetecting this pith as satisfying this type check when in
       fact this pith fails to do so.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+# ....................{ PRIVATE ~ util : kind                }..................
+class _BeartypeUtilCallableException(_BeartypeUtilException):
+    '''
+    **Beartype callable utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.utilfunc` subpackage.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilMappingException(_BeartypeUtilException):
+    '''
+    **Beartype mapping utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.kind.utilkinddict` submodule.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilModuleException(_BeartypeUtilException):
+    '''
+    **Beartype module utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.mod.utilmodget` subpackage when dynamically importing
+    an unimportable external user-defined module, typically due to a
+    **PEP-compliant forward reference type hint** (i.e., string whose value is
+    the name of a user-defined class that has yet to be defined) erroneously
+    referencing a non-existent module or module attribute.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilPathException(_BeartypeUtilException):
+    '''
+    **Beartype path utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.path` subpackage on various fatal edge cases.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilTextException(_BeartypeUtilException):
+    '''
+    **Beartype text utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.text` subpackage on various fatal edge cases.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilTypeException(_BeartypeUtilException):
+    '''
+    **Beartype class utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.cls.utilclstest` subpackage.
 
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.

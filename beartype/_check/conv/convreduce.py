@@ -5,14 +5,23 @@
 
 '''
 Project-wide **PEP-agnostic type hint reducers** (i.e., low-level callables
-converting type hints from one format into another, either permanently or
-temporarily and either losslessly or in a lossy manner).
+*temporarily* converting type hints from one format into another, either
+losslessly or in a lossy manner).
+
+Type hint reductions imposed by this submodule are purely internal to
+:mod:`beartype` itself and thus transient in nature. These reductions are *not*
+permanently applied to the ``__annotations__`` dunder dictionaries of the
+classes and callables annotated by these type hints.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Any
+from beartype.typing import (
+    Any,
+    # Callable,
+    # Tuple,
+)
 from beartype._cave._cavefast import NoneType
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.datatyping import (
@@ -36,7 +45,8 @@ from beartype._util.hint.pep.proposal.utilpep544 import (
 from beartype._util.hint.pep.proposal.utilpep557 import (
     get_hint_pep557_initvar_arg)
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+from beartype._util.hint.utilhinttest import die_unless_hint
+# from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from collections.abc import Mapping
 
 # ....................{ REDUCERS                           }....................
@@ -95,49 +105,6 @@ def reduce_hint(
     '''
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
 
-    # ..................{ PLUGIN                             }..................
-    # Beartype plugin API. Respect external user-defined classes satisfying the
-    # beartype plugin API *BEFORE* handling these classes in any way.
-
-    # Beartype-specific __beartype_hint__() dunder method defined by this hint
-    # if any *OR* "None" otherwise.
-    #
-    # Note that usage of the low-level getattr() builtin is intentional. *ALL*
-    # alternative higher-level approaches suffer various deficits, including:
-    # * Obstructing monkey-patching. The current approach trivializes
-    #   monkey-patching by third parties, enabling users to readily add
-    #   __beartype_hint__() support to third-party packages *NOT* under their
-    #   direct control. Alternative higher-level approaches obstruct that by
-    #   complicating (or just outright prohibiting) monkey-patching.
-    # * Abstract base classes (ABCs) assume that hints that are classes are
-    #   issubclassable (i.e., safely passable as the first arguments of the
-    #   issubclass() builtin). Sadly, various real-world hints that are classes
-    #   are *NOT* issubclassable. This includes the core
-    #   "typing.NDArray[{dtype}]" type hints, astonishingly. Of course, even
-    #   this edge case could be surmounted by explicitly testing for
-    #   issubclassability (e.g., by calling our existing
-    #   is_type_issubclassable() tester); since that tester internally leverages
-    #   the inefficient Easier to Ask for Forgiveness than Permission (EAFP)
-    #   paradigm, doing so would impose a measurable performance penalty. This
-    #   only compounds the monkey-patching complications that an ABC imposes.
-    # * PEP 544-compliant protocols assume that the active Python interpreter
-    #   supports PEP 544, which Python 3.7 does not. While Python 3.7 has
-    #   probably hit its End of Life (EOL) by the time you are reading this,
-    #   additional issue exist. On the one hand, protocols impose even *MORE* of
-    #   a performance burden than ABCs. On the other hand, protocols ease the
-    #   user-oriented burden of monkey-patching.
-    #
-    # In short, this low-level approach effectively imposes *NO* burdens at all.
-    # There exists *NO* reason to prefer higher-level alternatives.
-    beartype_hinter = getattr(hint, '__beartype_hint__', None)
-
-    # If this hint defines this method, replace this hint with the new type hint
-    # created and returned by this method.
-    if callable(beartype_hinter):
-        hint = beartype_hinter()
-    # Else, this hint does *NOT* define this method. In this case, preserve this
-    # hint as is.
-
     # ..................{ SIGN                               }..................
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.
@@ -176,6 +143,12 @@ def reduce_hint(
                 Pep484TowerComplex
             )
         # Else, this hint is truly unidentifiable.
+        else:
+            # If this hint is *NOT* a valid type hint, raise an exception.
+            #
+            # Note this function call is effectively memoized and thus fast.
+            die_unless_hint(hint=hint, exception_prefix=exception_prefix)
+            # Else, this hint is a valid type hint.
 
         # Return this hint as is unmodified.
         return hint

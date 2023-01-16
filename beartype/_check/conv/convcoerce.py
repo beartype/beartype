@@ -5,8 +5,13 @@
 
 '''
 Project-wide **PEP-agnostic type hint coercers** (i.e., mid-level callables
-converting type hints from one format into another, either permanently or
-temporarily and either losslessly or in a lossy manner).
+*permanently* converting type hints from one format into another, either
+losslessly or in a lossy manner).
+
+Type hint coercions imposed by this submodule are externalized outside
+:mod:`beartype` as globally scoped changes accessible to other modules. These
+coercions are permanently applied to the ``__annotations__`` dunder dictionaries
+of the classes and callables annotated by these type hints.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -166,8 +171,8 @@ def coerce_func_hint_root(
         # mypy idiosyncrasies merely to annotate an otherwise normal binary
         # dunder method is one expectation too far.
         #
-        # Ideally, official CPython developers would resolve this by declaring
-        # a new "types.NotImplementedType" type global resembling the existing
+        # Ideally, official CPython developers would resolve this by declaring a
+        # new "types.NotImplementedType" type global resembling the existing
         # "types.NoneType" type global. Since that has yet to happen, mypy has
         # instead taken the surprisingly sensible course of silently ignoring
         # this edge case by effectively performing the same type expansion as

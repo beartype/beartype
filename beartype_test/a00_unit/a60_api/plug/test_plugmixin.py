@@ -7,7 +7,7 @@
 **Beartype plugin mixin unit tests.**
 
 This submodule unit tests protocols defined by the private
-:func:`beartype.plug._plugmixin` submodule, most of which are publicly exported
+:func:`beartype.plug._plughintable` submodule, most of which are publicly exported
 to end users and thus critically important.
 '''
 
@@ -20,7 +20,7 @@ to end users and thus critically important.
 # ....................{ TESTS                              }....................
 def test_beartypehintable() -> None:
     '''
-    Test the :class:`beartype.plug._plugmixin.BeartypeHintable` mixin.
+    Test the :class:`beartype.plug._plughintable.BeartypeHintable` mixin.
     '''
 
     # .....................{ IMPORTS                       }....................
