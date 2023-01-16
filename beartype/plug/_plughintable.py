@@ -15,6 +15,10 @@ downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.typing import (
+    Optional,
+    Tuple,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ MIXINS                             }....................
@@ -87,7 +91,8 @@ def is_hint_beartypehintable(hint: object) -> bool:
     # Return true only if this hint defines the "__beartype_hint__" attribute.
     return hasattr(hint, '__beartype_hint__')
 
-# ....................{ GETTERS                            }....................
+# ....................{ TRANSFORMERS ~ more than meets the }....................
+# ....................{                                eye }....................
 #FIXME: Document us up, please.
 #FIXME: Unit test us up, please.
 #FIXME: Significant complications exist suggesting that we should immediately
@@ -129,7 +134,7 @@ def is_hint_beartypehintable(hint: object) -> bool:
 #  * On the passed root type hint:
 #       if is_hint_beartypehintable(hint_root):
 #           hint_parent_beartypehintables = {hint_root,}
-#           hint_root = reduce_hint_beartypehintable(hint_root)
+#           hint_root = transform_hint_beartypehintable(hint_root)
 #
 #       hint_root = reduce_hint(hint_root)
 #  * On each child type hint:
@@ -149,15 +154,65 @@ def is_hint_beartypehintable(hint: object) -> bool:
 #           else:
 #               hint_parent_beartypehintables |= {hint_child,}
 #
-#           hint_child = reduce_hint_beartypehintable(hint_child)
+#           hint_child = transform_hint_beartypehintable(hint_child)
 #
 #       hint_child = sanify_hint_child(hint_root)
+#FIXME: Wow. What a fascinatingly non-trivial issue. The above doesn't work,
+#either. Why? Two reasons:
+#* sanify_*_root() functions *MUST* continue to perform reduction -- including
+#  calling both reduce_hint() and transform_hint_beartypehintable(). Why? Because
+#  reduction *MUST* be performed before deciding "is_hint_ignorable", which
+#  *MUST* be decided before generating code. This is non-optional.
+#* transform_hint_beartypehintable() *CANNOT* be performed in either:
+#  * reduce_hint(), because reduce_hint() is memoized but
+#    transform_hint_beartypehintable() is non-memoizable by definition.
+#  * coerce_*_hint(), because coerce_*_hint() is permanently applied to
+#    "__annotations__" but transform_hint_beartypehintable() should *NEVER* be.
+#
+#Altogether, this suggests that:
+#* All sanify_*() functions *MUST* call transform_hint_beartypehintable()
+#  directly, outside of calls to either reduce_hint() and coerce_*_hint().
+#* Frozensets should be used. Doing so enables memoization, if we wanted.
+#* Call transform_hint_beartypehintable() from sanify_hint_child(), whose
+#  signature *MUST* be augmented accordingly (i.e., to both accept and return
+#  "hints_parent_beartypehintable: Optional[frozenset]").
+#* Call transform_hint_beartypehintable() from sanify_*hint_root(), whose
+#  signatures *MUST* be augmented accordingly (i.e., to additionally return
+#  "Optional[frozenset]").
+#* Augment make_check_expr() to:
+#  * Accept an additional
+#    "hints_parent_beartypehintable: Optional[frozenset]," parameter.
+#  * Add yet another new entry to each "hint_meta" FixedList as follows:
+#    * Define a new "HINT_META_INDEX_HINTS_PARENT_BEARTYPEHINTABLE" constant.
+#    * For the root "hint_meta", initialize the value of:
+#          hint_root_meta[HINT_META_INDEX_HINTS_PARENT_BEARTYPEHINTABLE] = (
+#              hints_parent_beartypehintable)
+#* Restore unit testing in "_data_nonpepbeartype", please.
+#
+#That should more or less do it, folks. Phew! It's still sufficiently
+#non-trivial that we want to defer this until *AFTER* beartype 0.12.0, though.
+
+#FIXME: Unit test us up, please.
+#FIXME: Document us up, please.
 @callable_cached
-def reduce_hint_beartypehintable(hint: object) -> object:
+def transform_hint_beartypehintable(
+    hint: object,
+    hints_parent_beartypehintable: Optional[frozenset],
+) -> Tuple[object, Optional[frozenset]]:
 
     # ..................{ PLUGIN                             }..................
     # Beartype plugin API. Respect external user-defined classes satisfying the
     # beartype plugin API *BEFORE* handling these classes in any way.
+
+    # If this hint has already been transformed by a prior call to this
+    # function, preserve this hint as is. Doing so avoids infinite recursion and
+    # is, indeed, the entire point of the "hints_parent_beartypehintable" set.
+    if (
+        hints_parent_beartypehintable and
+        hint in hints_parent_beartypehintable
+    ):
+        return (hint, hints_parent_beartypehintable)
+    # Else, this hint has *NOT* yet been transformed by such a call.
 
     # Beartype-specific "__beartype_hint__" attribute defined by this hint if
     # any *OR* "None" otherwise.
@@ -189,53 +244,28 @@ def reduce_hint_beartypehintable(hint: object) -> object:
     #
     # In short, this low-level approach effectively imposes *NO* burdens at all.
     # There exists *NO* reason to prefer higher-level alternatives.
-    beartypehintable_reducer = getattr(hint, '__beartype_hint__', None)
+    __beartype_hint__ = getattr(hint, '__beartype_hint__', None)
 
-    # If this hint defines the "__beartype_hint__" attribute...
-    if beartypehintable_reducer is not None:
-        #FIXME: Define a new private exception type, please.
-        # # If this attribute is *NOT* callable, raise an exception.
-        # if not callable(beartypehintable_reducer):
-        #     raise SomeExceptiot(...)
-        # # Else, this attribute is callable.
-
-        # Replace this hint with the new type hint returned by this callable.
-        hint = beartypehintable_reducer()
-    # Else, this hint does *NOT* define this attribute. In this case, preserve
+    # If this hint does *NOT* define the "__beartype_hint__" attribute, preserve
     # this hint as is.
+    if __beartype_hint__ is None:
+        return (hint, hints_parent_beartypehintable)
+    # Else, this hint defines the "__beartype_hint__" attribute.
 
-    # Return this possibly reduced hint.
-    return hint
+    #FIXME: Define a new private exception type, please.
+    # # If this attribute is *NOT* callable, raise an exception.
+    # if not callable(beartypehintable_reducer):
+    #     raise SomeExceptiot(...)
+    # # Else, this attribute is callable.
 
-# ....................{ PRIVATE ~ reducers                 }....................
-#FIXME: Document us up, please.
-#FIXME: Unit test us up, please.
-#FIXME: Call us above, please.
-#FIXME: *WOOPS.* This doesn't work at all, sadly. Why? Because reduce_hint() is
-#memoized, but this function needs to have side effects -- namely, it needs at
-#add items to the passed set. Contemplate alternatives, which will probably mean
-#shifting this into an unmemoized function of either the "convcoerce" or
-#"convsanify" submodules.
-# def _reduce_hintable(
-#     hint: object,
-#     hintables_reduced: Optional[set],
-#     __beartype_hint__: Callable[[], object],
-# ) -> Tuple[hint, set]:
-#
-#     # If this __beartype_hint__() method is *NOT* callable, raise an exception.
-#     if not callable(__beartype_hint__):
-#         raise SomeExceptiot(...)
-#     # Else, this __beartype_hint__() method is callable.
-#
-#     if hint_meta is not None:
-#        hint_meta_hintables = hint_meta[HINT_META_INDEX_HINTABLES]
-#
-#        if hint_meta_hintables is None:
-#            hint_meta_hintables = hint_meta[
-#                HINT_META_INDEX_HINTABLES] = set()
-#
-#        if hint in hint_meta_hintables:
-#            return hint
-#
-#     hint_meta_hintables.add(hint)
-#     return __beartype_hint__()
+    # Replace this hint with the new type hint returned by this callable.
+    hint = __beartype_hint__()
+
+    if hints_parent_beartypehintable is None:
+        hints_parent_beartypehintable = frozenset((hint,))
+    else:
+        #FIXME: Unsure if this works for frozensets. Probably not. *sigh*
+        hints_parent_beartypehintable |= {hint,}
+
+    # Return this transformed hint.
+    return (hint, hints_parent_beartypehintable)
