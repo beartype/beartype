@@ -4,6 +4,21 @@
 # See "LICENSE" for further details.
 
 # ....................{ TODO                               }....................
+#FIXME: [SPEED] There exists a significant optimization that we *ABSOLUTELY*
+#should implement. Currently, the "hints_meta" data structure is represented as
+#a FixedList of size j, each item of which is a k-length tuple. If you briefly
+#consider it, however, that structure could equivalently be represented as a
+#FixedList of size j * k, where we simply store the items previously stored in
+#each k-length tuple directly in that FixedList itself.
+#
+#Iterating forward and backward by single hints over that FixedList is still
+#trivial. Rather than incrementing or decrementing an index by 1, we instead
+#increment or decrement an index by k.
+#
+#The resulting structure is guaranteed to be considerably more space-efficient,
+#due to being both contiguous in memory and requiring only a single object
+#(and thus object dictionary) to maintain. Cue painless forehead slap.
+
 #FIXME: [PEP] Add support for Python 3.10-specific PEPs and thus:
 #* PEP 612-compliance. Since we don't currently support callable annotations,
 #  we probably can't extend that non-existent support to PEP 612. Nonetheless,
@@ -333,20 +348,6 @@
 #To test, we locally change a simple "import" statement in the parent
 #"_pepcode" submodule and then revert that import before committing. Rinse
 #until tests pass, which will presumably take several weeks at least.
-#FIXME: Note that there exists a significant optimization that we *ABSOLUTELY*
-#should add to these new modules. Currently, the "hints_meta" data structure is
-#represented as a FixedList of size j, each item of which is a k-length tuple.
-#If you briefly consider it, however, that structure could equivalently be
-#represented as a FixedList of size j * k, where we simply store the items
-#previously stored in each k-length tuple directly in that FixedList itself.
-#
-#Iterating forward and backward by single hints over that FixedList is still
-#trivial. Rather than incrementing or decrementing an index by 1, we instead
-#increment or decrement an index by k.
-#
-#The resulting structure is guaranteed to be considerably more space-efficient,
-#due to being both contiguous in memory and requiring only a single object
-#(and thus object dictionary) to maintain. Cue painless forehead slap.
 #FIXME: See additional commentary at this front-facing issue:
 #    https://github.com/beartype/beartype/issues/31#issuecomment-799938621
 #FIXME: Actually, *FORGET EVERYTHING ABOVE.* We actually do want to

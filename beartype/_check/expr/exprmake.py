@@ -565,8 +565,9 @@ def make_check_expr(
         # Create and insert a new tuple of metadata describing this child hint
         # at this index of this list.
         #
-        # Note that this assignment is guaranteed to be safe, as "FIXED_LIST_SIZE_MEDIUM" is
-        # guaranteed to be substantially larger than "hints_meta_index_last".
+        # Note that this assignment is guaranteed to be safe, as
+        # "FIXED_LIST_SIZE_MEDIUM" is guaranteed to be substantially larger than
+        # "hints_meta_index_last".
         hints_meta[hints_meta_index_last] = (
             hint_child,
             hint_child_placeholder,
@@ -616,6 +617,7 @@ def make_check_expr(
             f'Current hint metadata {repr(hint_curr_meta)} at '
             f'index {hints_meta_index_curr} not tuple.')
 
+        #FIXME: [SPEED] Optimize by reducing to a single tuple unpacking.
         # Localize metadatum for both efficiency and f-string purposes.
         hint_curr             = hint_curr_meta[_HINT_META_INDEX_HINT]
         hint_curr_placeholder = hint_curr_meta[_HINT_META_INDEX_PLACEHOLDER]

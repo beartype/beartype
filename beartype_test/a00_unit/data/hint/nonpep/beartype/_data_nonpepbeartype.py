@@ -197,7 +197,7 @@ def add_data(data_module: 'ModuleType') -> None:
         #  * *WE'RE PRETTY SURE WE'RE CURRENTLY NOT CALLING* reduce_hint() *ON
         #    THE ROOT HINT FROM WITHIN* make_check_expr(). Why? Because
         #    make_check_expr() avoids doing so for efficiency, since the caller
-        #    has already done so. Maybe? In so, we'll need to change that;
+        #    has already done so. Maybe? If so, we'll need to change that;
         #    regardless of efficiency, either:
         #    * The caller should no longer be calling sanify_hint_root().
         #      Instead, *ONLY* make_check_expr() should be calling

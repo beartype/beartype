@@ -223,6 +223,7 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         # ..................{ HINTS ~ argless : any          }..................
         # PEP 484-compliant catch-all type hint.
         (MuhThing, Any, True),
+        (Tuple[object, ...], Any, True),
         (Union[int, MuhThing], Any, True),
 
         # Although *ALL* type hints are subhints of "Any", "Any" is only a

@@ -140,10 +140,15 @@ one documentation-time dependency <Sphinx_>`__. Beartype supports `all actively
 developed Python versions <Python status_>`__, `all Python package managers
 <Install_>`__, and `multiple platform-specific package managers <Install_>`__.
 
-    Beartype `powers quality assurance across the Python ecosystem <beartype
-    dependents_>`__.
+.. #FIXME: So sad! @beartype's Libraries.io listing has gone stale for nearly a
+.. #year. And they've been shockingly unresponsive about this. Things seem...
+.. #not all right with their service. Until they resolve whatever Python-related
+.. #breakage has ruptured on their end, let's quietly disable this link and
+.. #pretend this never happened. *sigh*
+.. #    Beartype `powers quality assurance across the Python ecosystem <beartype
+.. #    dependents_>`__.
 
-.. # ------------------( TABLE OF CONTENTS                  )------------------
+.. # ------------------( TABLE OF CONTENTS                   )------------------
 .. # Blank line. By default, Docutils appears to only separate the subsequent
 .. # table of contents heading from the prior paragraph by less than a single
 .. # blank line, hampering this table's readability and aesthetic comeliness.

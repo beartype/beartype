@@ -16,6 +16,7 @@ documentation for the third-party :mod:`sphinx` package.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytmark import ignore_warnings
 from beartype_test._util.mark.pytskip import (
     skip_if_python_version_greater_than_or_equal_to,
     skip_unless_package,
@@ -26,14 +27,7 @@ from beartype_test._util.mark.pytskip import (
 #test should be fundamentally refactored from the ground up to leverage the
 #public (and increasingly documented) "sphinx.testing" subpackage.
 
-#FIXME: This test is currently skipped under Python >= 3.11, due to both Sphinx
-#itself *AND* Sphinx dependencies (e.g., Babel) importing from multiple modules
-#deprecated by Python 3.11. Since safely ignoring the specific
-#"DeprecationWarning" warnings while *NOT* ignoring all other warnings is
-#non-trivial and thus a waste of volunteer time, we prefer to simply avoid
-#Sphinx altogether under Python >= 3.11 for the moment. Revisit this in >+ 2023
-#once the dust has settled and Sphinx & friends have corrected themselves.
-@skip_if_python_version_greater_than_or_equal_to('3.11.0')
+@ignore_warnings(DeprecationWarning)
 @skip_unless_package('sphinx')
 def test_beartype_in_sphinx(tmp_path) -> None:
     '''
@@ -82,12 +76,16 @@ def test_beartype_in_sphinx(tmp_path) -> None:
         # Although technically arbitrary, this is the typical default mode.
         '-b', 'html',
 
-        # Treat non-fatal warnings as fatal errors. This is *CRITICAL.* By
-        # default, Sphinx insanely emits non-fatal warnings for fatal "autodoc"
-        # errors resembling:
-        #     WARNING: autodoc: failed to import module 'beartype_sphinx'; the following exception was raised:
-        #     No module named 'beartype_sphinx'
-        '-W',
+        #FIXME: Reinstate this at some point, please. Sadly, Sphinx is currently
+        #emitting ignorable "DeprecationWarning" warnings that we *DO* genuinely
+        #need to ignore. Does Sphinx provide some means of treating only *SOME*
+        #warnings as errors or is it truly just an unconditional global thing?
+        # # Treat non-fatal warnings as fatal errors. This is *CRITICAL.* By
+        # # default, Sphinx insanely emits non-fatal warnings for fatal "autodoc"
+        # # errors resembling:
+        # #     WARNING: autodoc: failed to import module 'beartype_sphinx'; the following exception was raised:
+        # #     No module named 'beartype_sphinx'
+        # '-W',
     ]
 
     # List of all command-line arguments (i.e., non-options) to be effectively
