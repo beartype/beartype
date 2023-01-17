@@ -48,7 +48,7 @@ type checker <Usage_>`__ emphasizing efficiency, usability, and thrilling puns.
    # Import the @beartype decorator.
    >>> from beartype import beartype
 
-   # Annotate @beartype-decorated callables with type hints.
+   # Annotate @beartype-decorated classes and callables with type hints.
    >>> @beartype
    ... def quote_wiggum(lines: list[str]) -> None:
    ...     print('“{}”\n\t— Police Chief Wiggum'.format("\n ".join(lines)))
