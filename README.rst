@@ -567,10 +567,10 @@ check only a random integer nested in a single triply-nested list passed to
 each call of that function. This is the worst-case cost of a single call to a
 function decorated by an ``O(1)`` runtime type checker.
 
-.. _beartype realtime:
-
 What does "near-real-time" even mean?
 -------------------------------------
+
+.. _beartype realtime:
 
 Beartype type-checks objects at runtime in around **1µs** (i.e., one
 microsecond, one millionth of a second), the standard high-water mark for
@@ -1102,13 +1102,13 @@ guide you on your maiden voyage through the misty archipelagos of type hinting:
 .. #
 .. #  * `typing.Union`_, enabling .
 
-.. _beartype.door:
-
 Beartype Object-oriented API
 ----------------------------
 
+.. _beartype.door:
+
 .. # FIXME: Synopsize this in our introduction and cheatsheet, please!
-.. # FIXME: Synopsize class decoration in our introduction and sheatsheet, too!
+.. # FIXME: Synopsize class decoration in our introduction, too!
 
 Most Python projects only annotate objects with type hints. The actual usage of
 those type hints is left to other projects.
@@ -2203,6 +2203,8 @@ Exception API
 Beartype Validators
 -------------------
 
+.. _beartype.vale:
+
 .. parsed-literal::
 
    Validate anything with two-line type hints
@@ -2308,8 +2310,6 @@ tradeoffs:
 
 Wherever you can, prefer declarative validators for efficiency. Everywhere
 else, default to functional validators for generality.
-
-.. _beartype.vale:
 
 Validator API
 ~~~~~~~~~~~~~
