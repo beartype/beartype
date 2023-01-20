@@ -1104,6 +1104,11 @@ Beartype Object-oriented API
 
 .. _beartype.door:
 
+.. #FIXME: Shift these anchor links to document these exact attributes *AFTER*
+.. #we actually define documentation for these attributes below.
+.. _beartype.door.TypeHint.die_if_unbearable:
+.. _beartype.door.TypeHint.is_unbearable:
+
 .. # FIXME: Synopsize this in our introduction and cheatsheet, please!
 .. # FIXME: Synopsize class decoration in our introduction, too!
 
@@ -1123,7 +1128,7 @@ Enter the **DOOR** (\ **D**\ ecidedly **O**\ bject-\ **o**\ riented
 comparing, and type-checking type hints in ``O(1)`` time with negligible
 constants. Let's cheatsheet this.
 
-.. code-block:: python
+.. code-block:: pycon
 
    # This is DOOR. It's a Pythonic API providing an object-oriented interface
    # to low-level type hints that basically have no interface whatsoever.
@@ -1252,13 +1257,14 @@ conf: beartype.BeartypeConf_ = BeartypeConf()) -> None
 
     **Type-hint exception raiser,** either:
 
-    * Raising a human-readable exception if the passed arbitrary object ``obj``
-      violates the passed PEP-compliant type hint ``hint`` under the passed
-      beartype configuration ``conf``.
+    * Raising a **typing-checking violation** (i.e., human-readable
+      beartype.roar.BeartypeCallHintViolation_ exception) if the passed
+      arbitrary object ``obj`` violates the passed type hint ``hint`` under the
+      passed beartype configuration ``conf``.
     * Reducing to a noop otherwise (i.e., if ``obj`` satisfies ``hint`` under
       ``conf``).
 
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> from beartype.door import die_if_unbearable
        >>> from beartype.typing import List, Sequence, Optional, Union
@@ -1287,7 +1293,7 @@ beartype.BeartypeConf_ = BeartypeConf()) -> bool
       ``conf``.
     * ``False`` otherwise.
 
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> from beartype.door import is_bearable
        >>> from beartype.typing import List, Sequence, Optional, Union
@@ -1302,7 +1308,7 @@ beartype.BeartypeConf_ = BeartypeConf()) -> bool
     thus be safely called wherever that builtin is called with the same exact
     parameters in the same exact order:
 
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> from beartype.door import is_bearable
        >>> is_bearable('I surrender and volunteer for treason.', str)
@@ -1317,7 +1323,7 @@ beartype.BeartypeConf_ = BeartypeConf()) -> bool
     the superclass(es) to be tested against with a ``type[{superclass}]`` or
     ``typing.Union[type[{superclass1}], ..., type[{superclassN}]]`` type hint:
 
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> from beartype.door import is_bearable
        >>> from beartype.typing import Type, Union
@@ -1343,7 +1349,7 @@ bool
       is a **superhint** of the first hint.
     * ``False`` otherwise.
 
-    .. code-block:: python
+    .. code-block:: pycon
 
        # Import the requisite machinery.
        >>> from beartype.door import is_subhint
@@ -1527,6 +1533,11 @@ and floats. ``new_func()`` thus preserves backward compatibility with
 Beartype Configuration
 ----------------------
 
+.. #FIXME: *UGH.* Literally cannot believe we haven't documented the critical
+.. #@beartype.beartype decorator anywhere. Once we do, shift this anchor link
+.. #there, please. *sigh*
+.. _beartype.beartype:
+
 Define your own app-specific ``@beartype`` decorator – **configured** for your
 exact use case:
 
@@ -1629,10 +1640,9 @@ Configuration API
     * **is_color**\ : Optional[bool] = None
 
       Tri-state boolean governing how and whether beartype colours
-      **type-checking violations** (i.e.,
-      ``beartype.roar.BeartypeCallHintViolation`` exceptions) with
-      POSIX-compliant ANSI escape sequences for readability. Specifically, if
-      this boolean is:
+      **type-checking violations** (i.e., human-readable
+      beartype.roar.BeartypeCallHintViolation_ exceptions) with POSIX-compliant
+      ANSI escape sequences for readability. Specifically, if this boolean is:
 
       * ``False``, beartype *never* colours type-checking violations
         raised by callables configured with this configuration.
@@ -1983,7 +1993,7 @@ Exception API
 
 .. _BeartypeDecorException:
 
-*class* beartype.roar.\ **BeartypeDecorException**\ (BeartypeException)
+*class* beartype.roar.\ **BeartypeDecorException**\ (BeartypeException_)
 
     **Beartype decorator exception superclass.** *All* exceptions raised by
     the ``@beartype`` decorator at decoration time (i.e., while dynamically
@@ -2020,7 +2030,7 @@ Exception API
 .. _BeartypeCallHintForwardRefException:
 
 *class* beartype.roar.\ **BeartypeCallHintForwardRefException**\
-(BeartypeCallHintException)
+(BeartypeCallHintException_)
 
     **Beartype type-checking forward reference exception.** Beartype
     type-checkers raise instances of this exception type when a **forward
@@ -2033,7 +2043,7 @@ Exception API
     As we gaze forward in time, so too do we glimpse ourselves – unshaven and
     shabbily dressed – in the rear-view mirror:
 
-    .. code-block:: python
+    .. code-block:: pycon
 
        >>> from beartype import beartype
        >>> from beartype.roar import BeartypeCallHintForwardRefException
@@ -2045,23 +2055,31 @@ Exception API
        ...     print(exception)
        Forward reference "salmon.of.course" unimportable.
 
+.. _beartype.roar.BeartypeCallHintViolation:
 .. _BeartypeCallHintViolation:
 
-*class* beartype.roar.\ **BeartypeCallHintViolation**\ (BeartypeCallHintException)
+*class* beartype.roar.\ **BeartypeCallHintViolation**\
+(BeartypeCallHintException_)
 
     **Beartype type-checking violation.** This is the most important beartype
     exception you never hope to see – and thus the beartype exception you are
     most likely to see. When your code explodes at midnight, instances of this
-    exception type were probably lighting the fuse behind your back.
+    exception class were probably lighting the fuse behind your back.
 
-    Beartype type-checkers raise one instance of this exception type for each
-    **type-checking violation** (i.e., when an object to be type-checked
-    violates the type hint annotating that object). Because type-checking
-    violations are why we are all here, instances of this exception type provide
-    additional read-only public properties.
+    Beartype type-checkers raise an instance of this exception class when an
+    object to be type-checked violates the type hint annotating that object.
+    Beartype type-checkers include:
 
-    Inspect these properties at runtime to resolve any lingering doubts about
-    which coworkers you need to blame in your next Git commit:
+    * The beartype.door.die_if_unbearable_ function.
+    * The beartype.door.TypeHint.die_if_unbearable_ method.
+    * User-defined functions and methods decorated by the beartype.beartype_
+      decorator -- which then themselves become beartype type-checkers.
+
+    Because type-checking violations are why we are all here, instances of this
+    exception class offer additional read-only public properties to assist you
+    in debugging. Inspect these properties at runtime to resolve any lingering
+    doubts about which coworker(s) you intend to blame in your next twenty Git
+    commits:
 
     .. _BeartypeCallHintViolation.culprits:
 
