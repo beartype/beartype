@@ -506,21 +506,25 @@ documentation.
 '''
 
 # ....................{ METADATA ~ libs : doc              }....................
-_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX = '4.1.0'
+_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX = '4.2.0'
 '''
 Human-readable minimum version as a ``.``-delimited string of :mod:`sphinx`
 required to build package documentation.
 
 Specifically, this project requires:
 
-* :mod:sphinx` >= 4.1.0, which first supported the
-  ``autodoc_typehints = 'both'`` option.
+* :mod:sphinx` >= 4.2.0, which resolved a `severe compatibility issue`_ with
+  Python >= 3.10.
+
+.. _severe compatibility issue:
+   https://github.com/sphinx-doc/sphinx/issues/9816
 '''
 
 
 LIBS_DOCTIME_MANDATORY = (
     f'sphinx >={_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX}',
-    f'autoapi >=0.9.0',
+    f'{SPHINX_THEME_NAME} >={SPHINX_THEME_VERSION_MINIMUM}',
+    'autoapi >=0.9.0',
 )
 '''
 **Mandatory developer documentation build-time package dependencies** (i.e.,
@@ -543,12 +547,15 @@ See Also
 '''
 
 
-LIBS_DOCTIME_MANDATORY_RTD = (
-    f'sphinx =={_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX}',
-    (
-        f'{SPHINX_THEME_NAME} =={SPHINX_THEME_VERSION_MINIMUM}'
-    ),
-)
+#FIXME: For future use, we still preserve an RTD-specific list of requirements.
+#It's unclear whether we actually require this, however. Consider excising. The
+#prior approach of pinning exact Sphinx versions failed painfully by
+#accidentally constraining us to obsolete Sphinx versions known to be broken.
+LIBS_DOCTIME_MANDATORY_RTD = LIBS_DOCTIME_MANDATORY
+# LIBS_DOCTIME_MANDATORY_RTD = (
+#     f'sphinx =={_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX}',
+#     f'{SPHINX_THEME_NAME} =={SPHINX_THEME_VERSION_MINIMUM}',
+# )
 '''
 **Mandatory Read The Docs (RTD) documentation build-time package dependencies**
 (i.e., dependencies required to automatically build documentation for this
