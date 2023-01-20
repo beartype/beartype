@@ -16,10 +16,7 @@
 |beartype-banner|
 =================
 
-|codecov-badge| |ci-badge|
-
-.. #FIXME: Re-enable after actually defining RtD-hosted documentation, please.
-.. #    |rtd-badge|
+|codecov-badge| |ci-badge| |rtd-badge|
 
 **Beartype** is an `open-source <beartype license_>`__ `PEP-compliant
 <Compliance_>`__ `near-real-time <beartype realtime_>`__ `pure-Python runtime
@@ -1773,7 +1770,7 @@ Configuration API
          from beartype import beartype, BeartypeConf
 
          # Dynamically create a new @beartowertype decorator enabling the tower.
-         beartowertype = beartype(conf=BeartypeConf(is_pep484_tower=False))
+         beartowertype = beartype(conf=BeartypeConf(is_pep484_tower=True))
 
          # Decorate with this decorator rather than @beartype everywhere.
          @beartowertype

@@ -175,6 +175,13 @@ Beartype is releasable to all supported platforms as follows:
 
    * First line is of the format ``"beartype {version} released."``, where
      ``{version}`` is the current value of the ``beartype.__version__`` global.
+   * Next line lists all GitHub Sponsors at the Papa Bear tier and higher.
+     **THIS IS CRITICALLY VITAL. DO _NOT_ NEGLECT THIS WONDERFUL USERBASE.** As
+     of now, relevant Sponsors include:
+
+     * [**ZeroGuard:** The Modern Threat Hunting
+       Platform](https://zeroguard.com).
+
    * Remaining lines are a changelog synopsizing the significant changes
      implemented by this release -- ideally in GitHub-flavoured Markdown (GHFM)
      format, as depicted below. Note that this format requires enabling the
@@ -192,7 +199,20 @@ Beartype is releasable to all supported platforms as follows:
       **PEP numbers compliance**.
 
       This major release resolves **some issues** and merges **some pull
-      requests.** Noteworthy changes include:
+      requests.** But first, a quiet word from our wondrous sponsors. They are
+      monocled QA wizards who serve justice while crushing bugs for humanity.
+      High fives, please!
+
+      ## Beartype Sponsors
+
+      * [**ZeroGuard:** The Modern Threat Hunting
+        Platform](https://zeroguard.com). *All the signals, All the time.*
+
+      Thunderous applause echoes through the cavernous confines of the Bear Den.
+      :clap: :polar_bear: :clap:
+
+      And now... the moment we've waited for. A heinous display of plaintext
+      that assaults all five senses simultaneously.
 
       ## Compatibility Improved
 

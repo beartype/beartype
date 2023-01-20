@@ -59,6 +59,17 @@ SPHINX_BUILD_ARGS=(
     # Convert non-fatal warnings into fatal errors for safety.
     -W
 
+    # Unconditionally rebuild *EVERY* target output documentation regardless of
+    # whether the source input files providing that documentation have been
+    # modified or not. By default, Sphinx only conditionally rebuilds target
+    # documentation whose underlying source files have since been modified.
+    -a
+
+    #FIXME: This appears to redundantly do the same thing as "-a" and is thus
+    #currently disabled. That said, if and when caching issues arise, consider
+    #uncommenting this as well just to be sure. *shrug*
+    -E
+
     # Parallelize the build process across *ALL* available CPU cores.
     -j auto
 
@@ -74,15 +85,6 @@ SPHINX_BUILD_ARGS=(
     # Enable "nit-picky mode," generating one warning for each broken reference
     # (e.g., interdocument or intrasection link).
     #-n
-
-    #FIXME: Comment and uncomment this as needed. Notably:
-    #* Uncomment this when locally debugging.
-    #* Comment this before commiting to Git.
-    # Unconditionally rebuild *EVERY* target output documentation regardless of
-    # whether the source input files providing that documentation have been
-    # modified or not. By default, Sphinx only conditionally rebuilds target
-    # documentation whose underlying source files have since been modified.
-    -a
 )
 echo "Running: ${SPHINX_BUILD_ARGS[*]}"
 

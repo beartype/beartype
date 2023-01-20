@@ -14,6 +14,9 @@
 .. |beartype-contributors| image:: https://contrib.rocks/image?repo=beartype/beartype
    :target: https://github.com/beartype/beartype/graphs/contributors
    :alt: Beartype contributors
+.. |beartype-stars| image:: https://star-history.com/#beartype/beartype&Date
+   :target: https://github.com/beartype/beartype/stargazers
+   :alt: Beartype stargazers
 
 .. # ------------------( IMAGES ~ badge                      )------------------
 .. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
@@ -37,6 +40,15 @@
 .. # ------------------( IMAGES ~ downstream                 )------------------
 .. # Insert links to GitHub Sponsors funding at the icon level here, please!
 
+.. # ------------------( SUBSTITUTIONS                       )------------------
+.. # Non-breaking space, defined as a reST substitution substituting all "|_|"
+.. # substrings with the non-breaking space Unicode character. Note that the
+.. # ":trim:" directive silently removes all whitespace surrounding this "|_|".
+.. # See also this StackOverflow answer strongly inspiring this substitution:
+.. #     https://stackoverflow.com/a/12145490/2809027
+.. |_| unicode:: 0xA0
+   :trim:
+
 .. # ------------------( LINKS ~ beartype : funding          )------------------
 .. _BETSE:
    https://github.com/betsee/betse
@@ -59,25 +71,25 @@
 
 .. # ------------------( LINKS ~ beartype : local            )------------------
 .. _beartype license:
-   LICENSE
+   https://github.com/beartype/beartype/blob/main/LICENSE
 
 .. # ------------------( LINKS ~ beartype : local : module   )------------------
 .. _beartype errormain:
-   beartype/_decor/_code/_pep/_error/errormain.py
+   https://github.com/beartype/beartype/blob/main/beartype/_decor/_code/_pep/_error/errormain.py
 .. _beartype pephint:
-   beartype/_decor/_code/_pep/_pephint.py
+   https://github.com/beartype/beartype/blob/main/beartype/_decor/_code/_pep/_pephint.py
 .. _beartype test data pep:
-   beartype_test/unit/data/hint/pep/proposal/
+   https://github.com/beartype/beartype/blob/main/beartype_test/unit/data/hint/pep/proposal/
 .. _beartype test data pep 484:
-   beartype_test/unit/data/hint/pep/proposal/data_hintpep484.py
+   https://github.com/beartype/beartype/blob/main/beartype_test/unit/data/hint/pep/proposal/data_hintpep484.py
 .. _@callable_cached:
-   beartype/_util/cache/utilcachecall.py
+   https://github.com/beartype/beartype/blob/main/beartype/_util/cache/utilcachecall.py
 .. _beartype util data pep:
-   beartype/_util/hint/data/pep/proposal/
+   https://github.com/beartype/beartype/blob/main/beartype/_util/hint/data/pep/proposal/
 .. _beartype util data pep parent:
-   beartype/_util/hint/data/pep/utilhintdatapep.py
+   https://github.com/beartype/beartype/blob/main/beartype/_util/hint/data/pep/utilhintdatapep.py
 .. _beartype util pep:
-   beartype/_util/hint/pep/proposal
+   https://github.com/beartype/beartype/blob/main/beartype/_util/hint/pep/proposal
 
 .. # ------------------( LINKS ~ beartype : package          )------------------
 .. _beartype Anaconda:
@@ -116,6 +128,8 @@
    https://github.com/beartype/beartype/actions?workflow=tests
 
 .. # ------------------( LINKS ~ beartype : user             )------------------
+.. _patrick-kidger:
+   https://github.com/patrick-kidger
 .. _harens:
    https://github.com/harens
 .. _leycec:
@@ -150,6 +164,10 @@
    https://en.wikipedia.org/wiki/Continuous_integration
 .. _duck typing:
    https://en.wikipedia.org/wiki/Duck_typing
+.. _dynamic typing:
+   https://en.wikipedia.org/wiki/Type_system
+.. _dynamically-typed:
+   https://en.wikipedia.org/wiki/Type_system
 .. _gratis versus libre:
    https://en.wikipedia.org/wiki/Gratis_versus_libre
 .. _memory safety:
@@ -166,9 +184,8 @@
    https://en.wikipedia.org/wiki/Set_theory
 .. _shield wall:
    https://en.wikipedia.org/wiki/Shield_wall
-.. _dynamic typing:
-.. _dynamically-typed:
 .. _static typing:
+   https://en.wikipedia.org/wiki/Type_system
 .. _statically-typed:
    https://en.wikipedia.org/wiki/Type_system
 .. _topological sort:
@@ -189,6 +206,8 @@
    https://en.wikipedia.org/wiki/Euler%E2%80%93Mascheroni_constant
 .. _coupon collector's problem:
    https://en.wikipedia.org/wiki/Coupon_collector%27s_problem
+.. _Big O:
+   https://en.wikipedia.org/wiki/Big_O_notation
 
 .. # ------------------( LINKS ~ math : set                  )------------------
 .. _conjunction:
@@ -258,6 +277,10 @@
 .. _PyPy:
    https://www.pypy.org
 
+.. # ------------------( LINKS ~ py : interpreter : cpython  )------------------
+.. _CPython bug tracker:
+   https://github.com/python/cpython/issues
+
 .. # ------------------( LINKS ~ py : lang                   )------------------
 .. _generic alias parameters:
    https://docs.python.org/3/library/stdtypes.html#genericalias.__parameters__
@@ -301,6 +324,10 @@
    https://github.com/beartype/bearboto3
 .. _mypy-boto3:
    https://mypy-boto3.readthedocs.io
+
+.. # ------------------( LINKS ~ py : package : jax          )------------------
+.. _jax.numpy:
+   https://jax.readthedocs.io/en/latest/notebooks/thinking_in_jax.html
 
 .. # ------------------( LINKS ~ py : package : numpy        )------------------
 .. _NumPy:
@@ -397,8 +424,10 @@
 .. # ------------------( LINKS ~ py : pep : 484              )------------------
 .. _PEP 484:
    https://www.python.org/dev/peps/pep-0484
+.. _implicit numeric tower:
+   https://peps.python.org/pep-0484/#the-numeric-tower
 .. _relative forward references:
-   https://www.python.org/dev/peps/pep-0484/#id28
+   https://peps.python.org/pep-0484/#forward-references
 .. _type aliases:
    https://www.python.org/dev/peps/pep-0484/#type-aliases
 
@@ -413,6 +442,12 @@
    https://docs.conda.io/en/latest/miniconda.html
 .. _PyPI:
    https://pypi.org
+
+.. # ------------------( LINKS ~ py : stdlib                 )------------------
+.. _linecache:
+   https://docs.python.org/3/library/linecache.html
+.. _weakref:
+   https://docs.python.org/3/library/weakref.html
 
 .. # ------------------( LINKS ~ py : stdlib : abc           )------------------
 .. _abc:
@@ -758,7 +793,7 @@
 .. _pytype:
    https://github.com/google/pytype
 
-.. # ------------------( LINKS ~ py : type : static          )------------------
+.. # ------------------( LINKS ~ py : type : static : pyright)------------------
 .. _pyright:
    https://github.com/Microsoft/pyright
 .. _pyright plugins:
@@ -777,6 +812,14 @@
    https://mypy.readthedocs.io/en/stable/extending_mypy.html
 .. _type narrowing:
    https://mypy.readthedocs.io/en/stable/type_narrowing.html
+
+.. # ------------------( LINKS ~ py : type : tensor          )------------------
+.. _jaxtyping:
+   https://github.com/google/jaxtyping
+.. _nptyping:
+   https://github.com/ramonhagenaars/nptyping
+.. _TorchTyping:
+   https://github.com/patrick-kidger/torchtyping
 
 .. # ------------------( LINKS ~ soft : ide                  )------------------
 .. _PyCharm:
