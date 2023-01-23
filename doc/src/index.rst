@@ -20,9 +20,7 @@
 
 .. # ------------------( MAIN                                )------------------
 
-=================
 |beartype-banner|
-=================
 
 |codecov-badge| |ci-badge| |rtd-badge|
 
@@ -153,13 +151,6 @@ developed Python versions <Python status_>`__, `all Python package managers
 .. #    Beartype `powers quality assurance across the Python ecosystem <beartype
 .. #    dependents_>`__.
 
-.. # ------------------( TABLES OF CONTENTS                  )------------------
-.. # Project-wide tables of contents (TOCs). See also official documentation on
-.. # the Sphinx-specific "toctree::" directive:
-.. #     https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-toctree
-
-.. #FIXME: Resume here tomorrow, please.
-
 Let's Type This
 ---------------
 
@@ -190,6 +181,130 @@ Let's Type This
 .. # * :ref:`modindex`
 .. # * :ref:`search`
 
+.. # ------------------( TABLES OF CONTENTS                  )------------------
+.. # Project-wide tables of contents (TOCs). See also official documentation on
+.. # the Sphinx-specific "toctree::" directive:
+.. #     https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-toctree
+
+|
+
+.. # Table of contents, excluding the above document heading. While the
+.. # official reStructuredText documentation suggests that a language-specific
+.. # heading will automatically prepend this table, this does *NOT* appear to
+.. # be the case. Instead, this heading must be explicitly declared.
+
+.. contents:: **Contents**
+   :local:
+
+.. # ------------------( DESCRIPTION                        )------------------
+
+#######
+Install
+#######
+
+Let's install beartype with pip_:
+
+.. code-block:: bash
+
+   pip3 install beartype
+
+Let's install beartype with Anaconda_:
+
+.. code-block:: bash
+
+   conda config --add channels conda-forge
+   conda install beartype
+
+`Commemorate this moment in time <Badge_>`__ with |bear-ified|, our
+over\ *bear*\ ing project shield. What says quality like `a bear on a badge
+<Badge_>`__, amirite?
+
+********
+Platform
+********
+
+Beartype is also installable with platform-specific package managers, because
+sometimes you just need this thing to work.
+
+macOS
+=====
+
+Let's install beartype with Homebrew_ on macOS_ courtesy `our third-party
+tap <beartype Homebrew_>`__:
+
+.. code-block:: bash
+
+   brew install beartype/beartype/beartype
+
+Let's install beartype with MacPorts_ on macOS_:
+
+.. code-block:: bash
+
+   sudo port install py-beartype
+
+A big bear hug to `our official macOS package maintainer @harens <harens_>`__
+for `packaging beartype for our Apple-appreciating audience <beartype
+MacPorts_>`__.
+
+Linux
+=====
+
+Let's install beartype with ``emerge`` on Gentoo_ courtesy `a third-party
+overlay <beartype Gentoo_>`__, because source-based Linux distributions are the
+CPU-bound nuclear option:
+
+.. code-block:: bash
+
+   emerge --ask app-eselect/eselect-repository
+   mkdir -p /etc/portage/repos.conf
+   eselect repository enable raiagent
+   emerge --sync raiagent
+   emerge beartype
+
+*What could be simpler?* O_o
+
+*****
+Badge
+*****
+
+If you're feeling the quality assurance and want to celebrate, consider
+signaling that you're now publicly *bear-*\ ified:
+
+  YummySoft is now |bear-ified|!
+
+All this magic and possibly more can be yours with:
+
+* **Markdown**:
+
+  .. code-block:: md
+
+     YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.readthedocs.io)!
+
+* **reStructuredText**:
+
+  .. code-block:: rst
+
+     YummySoft is now |bear-ified|!
+
+     .. # See https://docutils.sourceforge.io/docs/ref/rst/directives.html#image
+     .. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
+        :align: top
+        :target: https://beartype.readthedocs.io
+        :alt: bear-ified
+
+* **Raw HTML**:
+
+  .. code-block:: html
+
+     YummySoft is now <a href="https://beartype.readthedocs.io"><img
+       src="https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg"
+       alt="bear-ified"
+       style="vertical-align: middle;"></a>!
+
+Let a soothing pastel bear give your users the reassuring **OK** sign.
+
+.. #FIXME: Resume here tomorrow, please.
+
 .. parsed-literal::
 
    Look for the bare necessities,
@@ -197,3 +312,19 @@ Let's Type This
    Forget about your worries and your strife.
 
                            — `The Jungle Book`_.
+
+.. # ------------------( IMAGES                              )------------------
+.. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.png
+   :target: https://github.com/beartype/beartype
+   :alt: beartype —[ the bare-metal type checker ]—
+
+.. # ------------------( IMAGES ~ badge                      )------------------
+.. |ci-badge| image:: https://github.com/beartype/beartype/workflows/test/badge.svg
+   :target: https://github.com/beartype/beartype/actions?workflow=test
+   :alt: beartype continuous integration (CI) status
+.. |codecov-badge| image:: https://codecov.io/gh/beartype/beartype/branch/main/graph/badge.svg?token=E6F4YSY9ZQ
+   :target: https://codecov.io/gh/beartype/beartype
+   :alt: beartype test coverage status
+.. |rtd-badge| image:: https://readthedocs.org/projects/beartype/badge/?version=latest
+   :target: https://beartype.readthedocs.io/en/latest/?badge=latest
+   :alt: beartype Read The Docs (RTD) status

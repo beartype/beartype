@@ -8,9 +8,6 @@
 .. # documents in this project via the "rst_epilog" setting in "conf.py").
 
 .. # ------------------( IMAGES                              )------------------
-.. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.png
-   :target: https://beartype.readthedocs.io
-   :alt: beartype —[ the bare-metal type checker ]—
 .. |beartype-contributors| image:: https://contrib.rocks/image?repo=beartype/beartype
    :target: https://github.com/beartype/beartype/graphs/contributors
    :alt: Beartype contributors
@@ -23,15 +20,6 @@
    :align: top
    :target: https://beartype.readthedocs.io
    :alt: bear-ified
-.. |ci-badge| image:: https://github.com/beartype/beartype/workflows/test/badge.svg
-   :target: https://github.com/beartype/beartype/actions?workflow=test
-   :alt: beartype continuous integration (CI) status
-.. |codecov-badge| image:: https://codecov.io/gh/beartype/beartype/branch/main/graph/badge.svg?token=E6F4YSY9ZQ
-   :target: https://codecov.io/gh/beartype/beartype
-   :alt: beartype test coverage status
-.. |rtd-badge| image:: https://readthedocs.org/projects/beartype/badge/?version=latest
-   :target: https://beartype.readthedocs.io/en/latest/?badge=latest
-   :alt: beartype Read The Docs (RTD) status
 
 .. # ------------------( IMAGES ~ screenshot                 )------------------
 .. |VSCode-Pylance-type-checking-setting| image:: https://user-images.githubusercontent.com/217028/164616311-c4a24889-0c53-4726-9051-29be7263ee9b.png
