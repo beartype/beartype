@@ -151,8 +151,9 @@ developed Python versions <Python status_>`__, `all Python package managers
 .. #    Beartype `powers quality assurance across the Python ecosystem <beartype
 .. #    dependents_>`__.
 
-Let's Type This
----------------
+.. #FIXME: Currently unused, but we still adore this section heading. Preserved!
+.. # Let's Type This
+.. # ***************
 
 .. # Leading TOC entry self-referentially referring back to this document,
 .. # enabling users to trivially navigate back to this document from elsewhere.
@@ -192,8 +193,13 @@ Let's Type This
 .. # official reStructuredText documentation suggests that a language-specific
 .. # heading will automatically prepend this table, this does *NOT* appear to
 .. # be the case. Instead, this heading must be explicitly declared.
+.. #
+.. # Dismantled, this is:
+.. # * ":class: ...", a Furo-specific directive instructing Furo to *NOT* emit
+.. #   a prominent human-readable red warning. We don't particularly care, Furo.
 
 .. contents:: **Contents**
+   :class: this-will-duplicate-information-and-it-is-still-useful-here.
    :local:
 
 .. # ------------------( DESCRIPTION                        )------------------
@@ -227,7 +233,7 @@ Beartype is also installable with platform-specific package managers, because
 sometimes you just need this thing to work.
 
 macOS
-=====
+#####
 
 Let's install beartype with Homebrew_ on macOS_ courtesy `our third-party
 tap <beartype Homebrew_>`__:
@@ -247,7 +253,7 @@ for `packaging beartype for our Apple-appreciating audience <beartype
 MacPorts_>`__.
 
 Linux
-=====
+#####
 
 Let's install beartype with ``emerge`` on Gentoo_ courtesy `a third-party
 overlay <beartype Gentoo_>`__, because source-based Linux distributions are the
