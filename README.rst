@@ -480,10 +480,10 @@ whenever:
     Python is beneficial by default.
 
     **Beartype is unopinionated.** That's because beartype `operates
-    exclusively at the higher level of pure-Python callables <Versus Static
-    Type Checkers_>`__ rather than the lower level of individual statements
-    *inside* pure-Python callables. Unlike static type checkers, beartype
-    can't be opinionated about things that no one should be.
+    exclusively at the higher level of pure-Python callables and classes <Versus
+    Static Type Checkers_>`__ rather than the lower level of individual
+    statements *inside* pure-Python callables and class. Unlike static type
+    checkers, beartype can't be opinionated about things that no one should be.
 
 If none of the above *still* apply, still use beartype. It's `free
 as in beer and speech <gratis versus libre_>`__, `cost-free at installation-

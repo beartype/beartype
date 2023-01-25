@@ -100,12 +100,16 @@
 .. # ------------------( LINKS ~ beartype : remote           )------------------
 .. _beartype:
    https://github.com/beartype/beartype
-.. _beartype issues:
-   https://github.com/beartype/beartype/issues
 .. _beartype 1.0.0:
    https://github.com/beartype/beartype/issues/7
 .. _beartype codebase:
    https://github.com/beartype/beartype/tree/main/beartype
+.. _beartype issues:
+   https://github.com/beartype/beartype/issues
+.. _beartype mascot:
+   https://github.com/beartype/beartype-assets/tree/main/banner
+.. _beartype mascot artist:
+   https://github.com/felix-hilden
 .. _beartype organization:
    https://github.com/beartype
 .. _beartype profiler:
