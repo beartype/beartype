@@ -78,17 +78,16 @@ def test_pep561_mypy() -> None:
         # Fully-qualified name of the "mypy" package to be run.
         '-m', 'mypy',
 
-        # Absolute dirname of this project's top-level mypy configuration.
-        # Since our "tox" configuration isolates testing to a temporary
-        # directory, mypy is unable to find its configuration without help.
+        # Absolute dirname of this project's top-level mypy configuration. Since
+        # our "tox" configuration isolates testing to a temporary directory,
+        # mypy is unable to find its configuration without assistance.
         '--config-file', str(get_main_mypy_config_file()),
 
         # Absolute dirname of this project's top-level package.
         str(get_main_package_dir()),
     )
 
-    # Run the external "pyright" command in the current ${PATH} with these
-    # options and arguments,  raising an exception on subprocess failure while
+    # Run this command, raising an exception on subprocess failure while
     # forwarding all standard output and error output by this subprocess to the
     # standard output and error file handles of the active Python process.
     #
@@ -276,8 +275,7 @@ def test_pep561_pyright() -> None:
         PACKAGE_NAME,
     )
 
-    # Run the external "pyright" command in the current ${PATH} with these
-    # options and arguments,  raising an exception on subprocess failure while
+    # Run this command, raising an exception on subprocess failure while
     # forwarding all standard output and error output by this subprocess to the
     # standard output and error file handles of the active Python process.
     run_command_forward_output(command_words=PYRIGHT_ARGS)

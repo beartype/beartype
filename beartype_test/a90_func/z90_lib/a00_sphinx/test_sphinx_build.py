@@ -22,6 +22,9 @@ from beartype_test._util.mark.pytskip import (
 )
 
 # ....................{ TESTS                              }....................
+#FIXME: *NON-IDEAL.* This test manually invokes Sphinx internals. Instead, this
+#test should be fundamentally refactored from the ground up to leverage the
+#public (and increasingly documented) "sphinx.testing" subpackage.
 #FIXME: Reenable this once we resolve how to actually do so. Currently, the
 #make_app() call below is failing with a low-level exception raised from the
 #third-party "autoapi" Sphinx extension, seemingly due to a deprecation:
