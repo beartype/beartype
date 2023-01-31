@@ -21,10 +21,6 @@
    :target: https://beartype.readthedocs.io
    :alt: bear-ified
 
-.. # ------------------( IMAGES ~ screenshot                 )------------------
-.. |VSCode-Pylance-type-checking-setting| image:: https://user-images.githubusercontent.com/217028/164616311-c4a24889-0c53-4726-9051-29be7263ee9b.png
-   :alt: Disabling pyright-based VSCode Pylance type-checking
-
 .. # ------------------( IMAGES ~ downstream                 )------------------
 .. # Insert links to GitHub Sponsors funding at the icon level here, please!
 
