@@ -1289,12 +1289,13 @@ guide you on your maiden voyage through the misty archipelagos of type hinting:
 Usage
 #####
 
-Beartype isn't just the standards-compliant ``@beartype.beartype`` decorator.
+Beartype isn't just the ``@beartype.beartype`` decorator.
+
 Beartype is a menagerie of public APIs for type-checking, introspecting, and
 manipulating type hints at runtime – all accessible under the ``beartype``
-package installed when you installed beartype.
-
-Beartype: *more than meets the eye.*
+package installed when you installed beartype. But all beartype documentation
+begins with ``@beartype.beartype``, just as all rivers run to the sea.
+:superscript:`False! Do endorheic basins mean nothing to you, Ecclesiastes 1:7?`
 
 *******************
 Beartype Decoration
@@ -1321,15 +1322,166 @@ Unlike most decorators, ``@beartype.beartype`` has three modes of operation:
 * `Configuration mode <beartype.beartype conf_>`__, in which you create your own
   app-specific ``@beartype`` decorator – **configured** for your exact use case.
 
+Callable Mode...
+################
+
 .. _beartype.beartype func:
+
+*def* beartype.\ **beartype**\ (func: collections.abc.Callable_) ->
+collections.abc.Callable_
+
+In callable mode, ``@beartype`` dynamically generates a new **callable** (i.e.,
+pure-Python function or method) runtime type-checking the passed callable.
+
+...as Decorator
+***************
+
+Because laziness prevails, ``@beartype`` is *usually* invoked as a decorator.
+Simply prefix the callable to be runtime type-checked with the line
+``@beartype``. In this standard use pattern, ``@beartype`` silently:
+
+#. Replaces the decorated callable with a new callable of the same name and
+   signature.
+#. Preserves the original callable as the ``__wrapped__`` instance variable of
+   that new callable.
+
+An example explicates a thousand words.
+
+.. code-block:: pycon
+
+   # Import the requisite machinery.
+   >>> from beartype import beartype
+
+   # Decorate a function with @beartype.
+   >>> @beartype
+   ... def bother_free_is_no_bother_to_me(bothersome_string: str) -> str:
+   ...     return f'Oh, bother. {bothersome_string}'
+
+   # Call that function with runtime type-checking enabled.
+   >>> bother_free_is_no_bother_to_me(b'Could you spare a small smackerel?')
+   BeartypeCallHintParamViolation: @beartyped bother_free_is_no_bother_to_me()
+   parameter bothersome_string=b'Could you spare a small smackerel?' violates
+   type hint <class 'str'>, as bytes b'Could you spare a small smackerel?' not
+   instance of str.
+
+   # Call that function with runtime type-checking disabled. WHY YOU DO THIS!?
+   >>> bother_free_is_no_bother_to_me.__wrapped__(
+   ...     b'Could you spare a small smackerel?')
+   "Oh, bother. b'Could you spare a small smackerel?'"
+
+Because ``@beartype`` preserves the original callable as ``__wrapped__``,
+``@beartype`` seamlessly integrates with other well-behaved decorators that
+respect that same pseudo-standard. This means that ``@beartype`` can *usually*
+be listed in any arbitrary order when chained (i.e., combined) with other
+decorators.
+
+Because this is the NP-hard timeline, however, assumptions are risky. If you
+doubt anything, the safest approach is just to list ``@beartype`` as the
+**last** (i.e., bottommost) decorator. Doing so:
+
+* Ensures that ``@beartype`` is called first on the decorated callable before
+  other decorators have a chance to really muck things up. Other decorators:
+  *always the source of all your problems.*
+* Improves both space and time efficiency. Unwrapping ``__wrapped__`` callables
+  added by prior decorators is an ``O(k)`` operation for ``k`` the number of
+  previously run decorators. Moreover, builtin decorators like ``@classmethod``,
+  ``@property``, and ``@staticmethod`` create method descriptors; when run
+  *after* a builtin decorator, ``@beartype`` has no recourse but to:
+
+  #. Destroy the original method descriptor created by that builtin decorator.
+  #. Create a new method type-checking the original method.
+  #. Create a new method descriptor wrapping that method by calling the same
+     builtin decorator.
+
+An example is brighter than a thousand Suns! :superscript:`astronomers throwing
+chalk here`
+
+.. code-block:: pycon
+
+   # Import the requisite machinery.
+   >>> from beartype import beartype
+
+   # Decorate class methods with @beartype in either order.
+   >>> class BlastItAll(object):
+   ...     @classmethod
+   ...     @beartype  # <-- GOOD. this is the best of all possible worlds.
+   ...     def good_idea(cls, we_will_dynamite: str) -> str:
+   ...         return we_will_dynamite
+   ...
+   ...     @beartype  # <-- BAD. technically, fine. pragmatically, slower.
+   ...     @classmethod
+   ...     def save_time(cls, whats_the_charge: str) -> str:
+   ...         return whats_the_charge
+
+...as Function
+**************
+
+Because Python means not caring what anyone else thinks, ``@beartype`` can also
+be called as a function. This is useful in unthinkable edge cases like
+monkey-patching *other* people's code with runtime type-checking. You usually
+shouldn't do this, but you usually shouldn't do a lot of things that you do when
+you're the sort of Pythonista that reads tortuous documentation like this.
+
+.. code-block:: pycon
+
+   # Import the requisite machinery.
+   >>> from beartype import beartype
+
+   # A function somebody else defined. Note the bad lack of @beartype.
+   >>> def oh_bother_free_where_art_thou(botherfull_string: str) -> str:
+   ...     return f'Oh, oh! Help and bother! {botherfull_string}'
+
+   # Monkey-patch that function with runtime type-checking. *MUHAHAHA.*
+   >>> oh_bother_free_where_art_thou = beartype(oh_bother_free_where_art_thou)
+
+   # Call that function with runtime type-checking enabled.
+   >>> oh_bother_free_where_art_thou(b"I'm stuck!")
+   BeartypeCallHintParamViolation: @beartyped oh_bother_free_where_art_thou()
+   parameter botherfull_string=b"I'm stuck!" violates type hint <class 'str'>,
+   as bytes b"I'm stuck!" not instance of str.
+
+One ``beartype()`` to monkey-patch them all and in the darkness type-check them.
+
+...as Noop
+**********
+
+``@beartype`` silently reduces to a noop under common edge cases. When *any* of
+the following apply, ``@beartype`` preserves the decorated callable as is by
+just returning that callable unmodified:
+
+* That callable is **unannotated** (i.e., *no* parameters or return values in
+  the signature of that callable are annotated by type hints).
+* That callable has already been decorated by ``@@beartype``.
+* That callable has already been decorated by the :pep:`484`\ -compliant
+  @typing.no_type_check_ decorator.
+* Beartype has been configured with the **no-time strategy** (i.e.,
+  _BeartypeStrategy.O0).
+* Sphinx_ is currently autogenerating documentation (i.e., Sphinx's
+  `"autodoc" extension <sphinx.ext.autodoc_>`__ is currently running).
+
+Laziness **+** efficiency **==** ``@beartype``.
+
+Class Mode
+##########
+
 .. _beartype.beartype type:
+
+*def* beartype.\ **beartype**\ (cls: type) -> type
+
+.. # In class mode, ``@beartype`` dynamically replaces each method of the passed
+.. # generates one new method runtime
+.. # type-checking each method of the passed **type** (i.e., pure-Python class).
+
+Configuration Mode
+##################
+
 .. _beartype.beartype conf:
 
 *def* beartype.\ **beartype**\ (conf: beartype.BeartypeConf_) ->
-Callable[[BeartypeableT], BeartypeableT]
+collections.abc.Callable[[T], T]
 
-Define your own app-specific ``@beartype`` decorator – **configured** for your
-exact use case:
+In configuration mode, ``@beartype`` dynamically generates a new ``@beartype``
+decorator configured for your special needs.
 
 .. code-block:: python
 
