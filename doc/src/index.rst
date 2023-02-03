@@ -26,7 +26,7 @@
 
 **Beartype** is an `open-source <beartype license_>`__ `PEP-compliant
 <Compliance_>`__ `near-real-time <beartype realtime_>`__ `pure-Python runtime
-type-checker <Introduction_>`__ emphasizing efficiency, usability, and thrilling puns.
+type-checker <ELI5_>`__ emphasizing efficiency, usability, and thrilling puns.
 
 .. #FIXME: Once we actually receive a sponsor at this tier, please remove this
 .. #placeholder as well as the icon links below. kthx
@@ -128,11 +128,10 @@ type-checker <Introduction_>`__ emphasizing efficiency, usability, and thrilling
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by
 `enforcing type safety at the granular level of functions and methods
-<Introduction_>`__ against `type hints standardized by the Python community
+<ELI5_>`__ against `type hints standardized by the Python community
 <Compliance_>`__ in `O(1) non-amortized worst-case time with negligible constant
 factors <Timings_>`__. If the prior sentence was unreadable jargon, `see our
-friendly and approachable FAQ for a human-readable synopsis <Frequently Asked
-Questions (FAQ)_>`__.
+friendly and approachable FAQ for a human-readable synopsis <FAQ_>`__.
 
 Beartype is `portably implemented <beartype codebase_>`__ in `Python 3
 <Python_>`__, `continuously stress-tested <beartype tests_>`__ via `GitHub
@@ -401,9 +400,12 @@ first-class concern, generated wrappers are guaranteed to:
   the cost of an additional stack frame (in the worst case) as equivalent
   type-checking implemented by hand, *which no one should ever do.*
 
-################################
-Frequently Asked Questions (FAQ)
-################################
+###
+FAQ
+###
+
+Beartype now answers all your Frequently Asked Questions (FAQ) about life,
+beartype, and why Canada is so painfully cold.
 
 *****************
 What is beartype?
@@ -494,7 +496,7 @@ tox_ configuration, and `continuous integration (CI) <continuous
 integration_>`__. If you have any time, money, or motivation left, `annotate
 callables and classes with PEP-compliant type hints <Compliance_>`__ and
 `decorate those callables and classes with the @beartype.beartype decorator
-<Introduction_>`__.
+<ELI5_>`__.
 
 Prefer beartype over other runtime and static type-checkers whenever you lack
 perfect control over the objects passed to or returned from your callables –
@@ -1109,9 +1111,9 @@ reducing static type-checker spam that went rotten decades ago: e.g.,
 
 Beartype: *because you no longer care what static type-checkers think.*
 
-############
-Introduction
-############
+####
+ELI5
+####
 
 Beartype makes type-checking painless, portable, and purportedly fun. Just:
 
@@ -1285,9 +1287,9 @@ guide you on your maiden voyage through the misty archipelagos of type hinting:
 .. #
 .. #  * `typing.Union`_, enabling .
 
-#####
-Usage
-#####
+###
+API
+###
 
 Beartype isn't just the ``@beartype.beartype`` decorator.
 
@@ -1317,8 +1319,7 @@ Unlike most decorators, ``@beartype.beartype`` has three modes of operation:
   or method wrapping the original function or method with runtime type-checking.
 * `Class mode <beartype.beartype type_>`__, in which you decorate a class with
   ``@beartype``, which then decorates all methods declared by that class with
-  ``@beartype``. This is mostly just syntactic sugar – but sometimes you just
-  gotta dip your paws into the honey pot.
+  ``@beartype``.
 * `Configuration mode <beartype.beartype conf_>`__, in which you create your own
   app-specific ``@beartype`` decorator – **configured** for your exact use case.
 
@@ -1377,9 +1378,9 @@ decorators.
 
 Because this is the NP-hard timeline, however, assumptions are risky. If you
 doubt anything, the safest approach is just to list ``@beartype`` as the
-**last** (i.e., bottommost) decorator. Doing so:
+**last** (i.e., bottommost) decorator. This:
 
-* Ensures that ``@beartype`` is called first on the decorated callable before
+* Ensures that ``@beartype`` is called first on the decorated callable *before*
   other decorators have a chance to really muck things up. Other decorators:
   *always the source of all your problems.*
 * Improves both space and time efficiency. Unwrapping ``__wrapped__`` callables
@@ -1468,9 +1469,87 @@ Class Mode
 
 *def* beartype.\ **beartype**\ (cls: type) -> type
 
-.. # In class mode, ``@beartype`` dynamically replaces each method of the passed
-.. # generates one new method runtime
-.. # type-checking each method of the passed **type** (i.e., pure-Python class).
+In class mode, ``@beartype`` dynamically replaces *each* method of the passed
+pure-Python class with a new method runtime type-checking the original method.
+
+As with `callable mode <Callable Mode_>`__, simply prefix the class to be
+runtime type-checked with the line ``@beartype``. In this standard use pattern,
+``@beartype`` silently iterates over all instance, class, and static methods
+declared by the decorated class and, for each such method:
+
+#. Replaces that method with a new method of the same name and signature.
+#. Preserves the original method as the ``__wrapped__`` instance variable of
+   that new method.
+
+...versus Callable Mode
+***********************
+
+Superficially, this is just syntactic sugar – but sometimes you gotta dip your
+paws into the honey pot.
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype import beartype
+
+   # Decorate a class with @beartype.
+   @beartype
+   class IAmABearOfNoBrainAtAll(object):
+       def i_have_been_foolish(self) -> str:
+           return 'A fly can't bird, but a bird can fly.'
+
+       def and_deluded(self) -> str:
+           return 'Ask me a riddle and I reply.'
+
+   # ...or just decorate class methods directly with @beartype.
+   # The class above is *EXACTLY* equivalent to the class below.
+   class IAmABearOfNoBrainAtAll(object):
+       @beartype
+       def i_have_been_foolish(self) -> str:
+           return 'A fly can't bird, but a bird can fly.'
+
+       @beartype
+       def and_deluded(self) -> str:
+           return 'Ask me a riddle and I reply.'
+
+Pragmatically, this is *not* just syntactic sugar. You *must* decorate classes
+(rather than merely methods) with ``@beartype`` to type-check the following:
+
+* **Class-centric type hints** (i.e., type hints like the :pep:`673`\ -compliant
+  typing.Self_ attribute that describe the decorated class itself). To
+  type-check these kinds of type hints, ``@beartype`` needs access to the class.
+  ``@beartype`` lacks access to the class when decorating methods directly.
+  Instead, you *must* decorate classes by ``@beartype`` for classes declaring
+  one or more methods annotated by one or more class-centric type hints.
+* **Dataclasses.** The standard dataclasses.dataclass_ decorator dynamically
+  generates and adds new dunder methods (e.g., ``__init__()``, ``__eq__()``,
+  ``__hash__()``) to the decorated class. These methods do *not* physically
+  exist and thus *cannot* be decorated directly with ``@beartype``. Instead, you
+  *must* decorate dataclasses first by ``@beartype`` and then by
+  ``@dataclasses.dataclass``. Order is significant, of course. ``</sigh>``
+
+When decorating classes, ``@beartype`` should *usually* be listed as the
+**first** (i.e., topmost) decorator. This ensures that ``@beartype`` is called
+last on the decorated class *after* other decorators have a chance to
+dynamically monkey-patch that class (e.g., by adding new methods to that class).
+``@beartype`` will then type-check the monkey-patched functionality as well.
+
+Come for the working examples. Stay for the wild hand-waving.
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype import beartype
+   from dataclasses import dataclass
+
+   # Decorate a dataclass first with @beartype and then with @dataclass. If you
+   # accidentally reverse this order of decoration, methods added by @dataclass
+   # like __init__() will *NOT* be type-checked by @beartype. (Blame Guido.)
+   @beartype
+   @dataclass
+   class SoTheyWentOffTogether(object):
+       a_little_boy_and_his_bear: str | bytes
+       will_always_be_playing:    str | None = None
 
 Configuration Mode
 ##################
@@ -1481,7 +1560,8 @@ Configuration Mode
 collections.abc.Callable[[T], T]
 
 In configuration mode, ``@beartype`` dynamically generates a new ``@beartype``
-decorator configured for your special needs.
+decorator configured for your special needs. You too shall cackle villainously
+as you feel the growing power of your keyboard.
 
 .. code-block:: python
 
@@ -1501,8 +1581,8 @@ decorator configured for your special needs.
 
 Configuration: *because you know best*.
 
-Configuration API
-#################
+BeartypeConf
+************
 
 .. _beartype.BeartypeConf:
 
@@ -1761,7 +1841,10 @@ Configuration API
       Defaults to BeartypeStrategy.O1_, the constant-time ``O(1)`` strategy –
       maximizing scalability at a cost of also maximizing false positives.
 
-.. _BeartypeStrategy:
+BeartypeStrategy
+****************
+
+.. _beartype.BeartypeStrategy:
 
 *class* beartype.\ **BeartypeStrategy**\ (enum.Enum)
 

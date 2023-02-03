@@ -3568,7 +3568,7 @@ Let's type-check like `greased lightning`_:
    # Decoration order is significant. List @beartype before @dataclass, please.
    @beartype
    @dataclass
-   class MyDataclass:
+   class MyDataclass(object):
        # Annotate fields with PEP-compliant type hints.
        field_must_satisfy_builtin_type: InitVar[str]
        field_must_satisfy_pep604_union: str | None = None
