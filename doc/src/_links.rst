@@ -428,8 +428,14 @@
 .. # ------------------( LINKS ~ py : service                )------------------
 .. _Anaconda:
    https://docs.conda.io/en/latest/miniconda.html
+
+.. # ------------------( LINKS ~ py : service : pypi         )------------------
 .. _PyPI:
    https://pypi.org
+.. _PyPI cheese shop:
+   https://pypi.org
+.. _cheese shop sketch:
+   https://en.wikipedia.org/wiki/Cheese_Shop_sketch
 
 .. # ------------------( LINKS ~ py : stdlib                 )------------------
 .. _linecache:

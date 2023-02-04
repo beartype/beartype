@@ -142,13 +142,8 @@ one documentation-time dependency <Sphinx_>`__. Beartype supports `all actively
 developed Python versions <Python status_>`__, `all Python package managers
 <Install_>`__, and `multiple platform-specific package managers <Install_>`__.
 
-.. #FIXME: So sad! @beartype's Libraries.io listing has gone stale for nearly a
-.. #year. And they've been shockingly unresponsive about this. Things seem...
-.. #not all right with their service. Until they resolve whatever Python-related
-.. #breakage has ruptured on their end, let's quietly disable this link and
-.. #pretend this never happened. *sigh*
-.. #    Beartype `powers quality assurance across the Python ecosystem <beartype
-.. #    dependents_>`__.
+    Beartype `powers quality assurance across the Python ecosystem <beartype
+    dependents_>`__.
 
 .. #FIXME: Currently unused, but we still adore this section heading. Preserved!
 .. # Let's Type This
@@ -166,6 +161,7 @@ developed Python versions <Python status_>`__, `all Python package managers
    :caption: Contents
 
    Bear with Us <self>
+   install
 
 .. #FIXME: Uncomment *AFTER* re-enabling "autoapi" support in "conf.py" and
 .. #resolving outstanding issues with that support. *gulp*
@@ -201,116 +197,11 @@ developed Python versions <Python status_>`__, `all Python package managers
    :class: this-will-duplicate-information-and-it-is-still-useful-here.
    :local:
 
-.. # ------------------( DESCRIPTION                        )------------------
+.. # ------------------( DESCRIPTION                         )------------------
 
-#######
-Install
-#######
-
-Let's install beartype with pip_:
-
-.. code-block:: bash
-
-   pip3 install beartype
-
-Let's install beartype with Anaconda_:
-
-.. code-block:: bash
-
-   conda config --add channels conda-forge
-   conda install beartype
-
-`Commemorate this moment in time <Badge_>`__ with |bear-ified|, our
-over\ *bear*\ ing project shield. What says quality like `a bear on a badge
-<Badge_>`__, amirite?
-
-********
-Platform
-********
-
-Beartype is also installable with platform-specific package managers, because
-sometimes you just need this thing to work.
-
-macOS
-#####
-
-Let's install beartype with Homebrew_ on macOS_ courtesy `our third-party
-tap <beartype Homebrew_>`__:
-
-.. code-block:: bash
-
-   brew install beartype/beartype/beartype
-
-Let's install beartype with MacPorts_ on macOS_:
-
-.. code-block:: bash
-
-   sudo port install py-beartype
-
-A big bear hug to `our official macOS package maintainer @harens <harens_>`__
-for `packaging beartype for our Apple-appreciating audience <beartype
-MacPorts_>`__.
-
-Linux
-#####
-
-Let's install beartype with ``emerge`` on Gentoo_ courtesy `a third-party
-overlay <beartype Gentoo_>`__, because source-based Linux distributions are the
-CPU-bound nuclear option:
-
-.. code-block:: bash
-
-   emerge --ask app-eselect/eselect-repository
-   mkdir -p /etc/portage/repos.conf
-   eselect repository enable raiagent
-   emerge --sync raiagent
-   emerge beartype
-
-*What could be simpler?* O_o
-
-*****
-Badge
-*****
-
-If you're feeling the quality assurance and want to celebrate, consider
-signaling that you're now publicly *bear-*\ ified:
-
-  YummySoft is now |bear-ified|!
-
-All this magic and possibly more can be yours with:
-
-* **Markdown**:
-
-  .. code-block:: md
-
-     YummySoft is now [![bear-ified](https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg)](https://beartype.readthedocs.io)!
-
-* **reStructuredText**:
-
-  .. code-block:: rst
-
-     YummySoft is now |bear-ified|!
-
-     .. # See https://docutils.sourceforge.io/docs/ref/rst/directives.html#image
-     .. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
-        :align: top
-        :target: https://beartype.readthedocs.io
-        :alt: bear-ified
-
-* **Raw HTML**:
-
-  .. code-block:: html
-
-     YummySoft is now <a href="https://beartype.readthedocs.io"><img
-       src="https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg"
-       alt="bear-ified"
-       style="vertical-align: middle;"></a>!
-
-Let a soothing pastel bear give your users the reassuring **OK** sign.
-
-########
-Overview
-########
+####
+ELI5
+####
 
 .. parsed-literal::
 
@@ -340,9 +231,9 @@ instead stressing expense-free strategies at both:
   decoration time, beartype guarantees `O(1) non-amortized worst-case runtime
   complexity with negligible constant factors <Timings_>`__.
 
-***************************
-Versus Static Type-checkers
-***************************
+******************************
+...versus Static Type-checkers
+******************************
 
 Like `competing static type-checkers <Static type-checkers_>`__ operating at
 the coarse-grained application level via ad-hoc heuristic type inference (e.g.,
@@ -384,9 +275,9 @@ overhead <Timings_>`__. Unlike static type-checkers:
     * Metaclasses.
     * Monkey patches.
 
-****************************
-Versus Runtime Type-checkers
-****************************
+*******************************
+...versus Runtime Type-checkers
+*******************************
 
 Unlike `comparable runtime type-checkers <Runtime type-checkers_>`__ (e.g.,
 pydantic_, typeguard_), beartype decorates callables with dynamically generated
@@ -399,6 +290,181 @@ first-class concern, generated wrappers are guaranteed to:
 * Be either more efficient (in the common case) or exactly as efficient minus
   the cost of an additional stack frame (in the worst case) as equivalent
   type-checking implemented by hand, *which no one should ever do.*
+
+*******
+lolwut?
+*******
+
+Beartype makes type-checking painless, portable, and purportedly fun. Just:
+
+    Decorate functions and methods `annotated by standard type hints <Standard
+    Hints_>`__ with the @beartype.beartype_ decorator, which wraps those
+    functions and methods in performant type-checking dynamically generated
+    on-the-fly.
+
+    When `standard type hints <Standard Hints_>`__ fail to support your use
+    case, annotate functions and methods with `beartype-specific validator type
+    hints <Beartype Validators_>`__ instead. Validators enforce runtime
+    constraints on the internal structure and contents of parameters and returns
+    via simple caller-defined lambda functions and declarative expressions – all
+    seamlessly composable with `standard type hints <Standard Hints_>`__ in an
+    `expressive domain-specific language (DSL) <Validator Syntax_>`__ designed
+    just for you.
+
+"Embrace the bear," says the bear peering over your shoulder as you read this.
+
+Standard Hints
+##############
+
+Beartype supports *most* `type hints standardized by the developer community
+through Python Enhancement Proposals (PEPs) <Compliance_>`__. Since type hinting
+is its own special hell, we'll start by wading into the thalassophobia-inducing
+waters of type-checking with a sane example – the O(1) ``@beartype`` way.
+
+Toy Example
+***********
+
+Let's type-check a ``"Hello, Jungle!"`` toy example. Just:
+
+#. Import the ``@beartype.beartype`` decorator:
+
+   .. code-block:: python
+
+      from beartype import beartype
+
+#. Decorate any annotated function with that decorator:
+
+   .. code-block:: python
+
+      from sys import stderr, stdout
+      from typing import TextIO
+
+      @beartype
+      def hello_jungle(
+          sep: str = ' ',
+          end: str = '\n',
+          file: TextIO = stdout,
+          flush: bool = False,
+      ):
+          '''
+          Print "Hello, Jungle!" to a stream, or to sys.stdout by default.
+
+          Optional keyword arguments:
+          file:  a file-like object (stream); defaults to the current sys.stdout.
+          sep:   string inserted between values, default a space.
+          end:   string appended after the last value, default a newline.
+          flush: whether to forcibly flush the stream.
+          '''
+
+          print('Hello, Jungle!', sep, end, file, flush)
+
+#. Call that function with valid parameters and caper as things work:
+
+   .. code-block:: pycon
+
+      >>> hello_jungle(sep='...ROOOAR!!!!', end='uhoh.', file=stderr, flush=True)
+      Hello, Jungle! ...ROOOAR!!!! uhoh.
+
+#. Call that function with invalid parameters and cringe as things blow up with
+   human-readable exceptions exhibiting the single cause of failure:
+
+   .. code-block:: pycon
+
+      >>> hello_jungle(sep=(
+      ...     b"What? Haven't you ever seen a byte-string separator before?"))
+      BeartypeCallHintPepParamException: @beartyped hello_jungle() parameter
+      sep=b"What? Haven't you ever seen a byte-string separator before?"
+      violates type hint <class 'str'>, as value b"What? Haven't you ever seen
+      a byte-string separator before?" not str.
+
+Industrial Example
+******************
+
+Let's wrap the `third-party numpy.empty_like() function <numpy.empty_like_>`__
+with automated runtime type checking to demonstrate beartype's support for
+non-trivial combinations of nested type hints compliant with different PEPs:
+
+.. code-block:: python
+
+   from beartype import beartype
+   from collections.abc import Sequence
+   from typing import Optional, Union
+   import numpy as np
+
+   @beartype
+   def empty_like_bear(
+       prototype: object,
+       dtype: Optional[np.dtype] = None,
+       order: str = 'K',
+       subok: bool = True,
+       shape: Optional[Union[int, Sequence[int]]] = None,
+   ) -> np.ndarray:
+       return np.empty_like(prototype, dtype, order, subok, shape)
+
+Note the non-trivial hint for the optional ``shape`` parameter, synthesized from
+a `PEP 484-compliant optional <typing.Optional_>`__ of a `PEP 484-compliant
+union <typing.Union_>`__ of a builtin type and a `PEP 585-compliant subscripted
+abstract base class (ABC) <collections.abc.Sequence_>`__, accepting as valid
+either:
+
+* The ``None`` singleton.
+* An integer.
+* A sequence of integers.
+
+Let's call that wrapper with both valid and invalid parameters:
+
+.. code-block:: pycon
+
+   >>> empty_like_bear(([1,2,3], [4,5,6]), shape=(2, 2))
+   array([[94447336794963,              0],
+          [             7,             -1]])
+   >>> empty_like_bear(([1,2,3], [4,5,6]), shape=([2], [2]))
+   BeartypeCallHintPepParamException: @beartyped empty_like_bear() parameter
+   shape=([2], [2]) violates type hint typing.Union[int,
+   collections.abc.Sequence, NoneType], as ([2], [2]):
+   * Not <class "builtins.NoneType"> or int.
+   * Tuple item 0 value [2] not int.
+
+Note the human-readable message of the raised exception, containing a bulleted
+list enumerating the various ways this invalid parameter fails to satisfy its
+type hint, including the types and indices of the first container item failing
+to satisfy the nested ``Sequence[int]`` hint.
+
+See a `subsequent section <Implementation_>`__ for actual code dynamically
+generated by beartype for real-world use cases resembling those above. Fun!
+
+****************************
+Would You Like to Know More?
+****************************
+
+If you know `type hints <PEP 484_>`__, you know beartype. Since beartype is
+driven by `tool-agnostic community standards <PEP 0_>`__, the public API for
+beartype is *basically* just those standards. As the user, all you need to know
+is that decorated callables magically raise human-readable exceptions when you
+pass parameters or return values violating the PEP-compliant type hints
+annotating those parameters or returns.
+
+If you don't know `type hints <PEP 484_>`__, this is your moment to go deep on
+the hardest hammer in Python's SQA_ toolbox. Here are a few friendly primers to
+guide you on your maiden voyage through the misty archipelagos of type hinting:
+
+* `"Python Type Checking (Guide)" <RealPython_>`__, a comprehensive third-party
+  introduction to the subject. Like most existing articles, this guide predates
+  ``O(1)`` runtime type checkers and thus discusses only static type checking.
+  Thankfully, the underlying syntax and semantics cleanly translate to runtime
+  type checking.
+* `"PEP 484 -- Type Hints" <PEP 484_>`__, the defining standard, holy grail,
+  and first testament of type hinting `personally authored by Python's former
+  Benevolent Dictator for Life (BDFL) himself, Guido van Rossum <Guido van
+  Rossum_>`__. Since it's surprisingly approachable and covers all the core
+  conceits in detail, we recommend reading at least a few sections of interest.
+  Since it's really a doctoral thesis by another name, we can't recommend
+  reading it in entirety. *So it goes.*
+
+.. #FIXME: Concatenate the prior list item with this when I am no exhausted.
+.. #  Instead, here's the highlights reel:
+.. #
+.. #  * `typing.Union`_, enabling .
 
 ###
 FAQ
@@ -1111,182 +1177,6 @@ reducing static type-checker spam that went rotten decades ago: e.g.,
 
 Beartype: *because you no longer care what static type-checkers think.*
 
-####
-ELI5
-####
-
-Beartype makes type-checking painless, portable, and purportedly fun. Just:
-
-    Decorate functions and methods `annotated by standard type hints <Standard
-    Hints_>`__ with the ``@beartype.beartype`` decorator, which wraps those
-    functions and methods in performant type-checking dynamically generated
-    on-the-fly.
-
-    When `standard type hints <Standard Hints_>`__ fail to support your use
-    case, annotate functions and methods with `beartype-specific validator type
-    hints <Beartype Validators_>`__ instead. Validators enforce runtime
-    constraints on the internal structure and contents of parameters and returns
-    via simple caller-defined lambda functions and declarative expressions – all
-    seamlessly composable with `standard type hints <Standard Hints_>`__ in an
-    `expressive domain-specific language (DSL) <Validator Syntax_>`__ designed
-    just for you.
-
-"Embrace the bear," says the bear peering over your shoulder as you read this.
-
-**************
-Standard Hints
-**************
-
-Beartype supports *most* `type hints standardized by the developer community
-through Python Enhancement Proposals (PEPs) <Compliance_>`__. Since type hinting
-is its own special hell, we'll start by wading into the thalassophobia-inducing
-waters of type-checking with a sane example – the O(1) ``@beartype`` way.
-
-Toy Example
-###########
-
-Let's type-check a ``"Hello, Jungle!"`` toy example. Just:
-
-#. Import the ``@beartype.beartype`` decorator:
-
-   .. code-block:: python
-
-      from beartype import beartype
-
-#. Decorate any annotated function with that decorator:
-
-   .. code-block:: python
-
-      from sys import stderr, stdout
-      from typing import TextIO
-
-      @beartype
-      def hello_jungle(
-          sep: str = ' ',
-          end: str = '\n',
-          file: TextIO = stdout,
-          flush: bool = False,
-      ):
-          '''
-          Print "Hello, Jungle!" to a stream, or to sys.stdout by default.
-
-          Optional keyword arguments:
-          file:  a file-like object (stream); defaults to the current sys.stdout.
-          sep:   string inserted between values, default a space.
-          end:   string appended after the last value, default a newline.
-          flush: whether to forcibly flush the stream.
-          '''
-
-          print('Hello, Jungle!', sep, end, file, flush)
-
-#. Call that function with valid parameters and caper as things work:
-
-   .. code-block:: pycon
-
-      >>> hello_jungle(sep='...ROOOAR!!!!', end='uhoh.', file=stderr, flush=True)
-      Hello, Jungle! ...ROOOAR!!!! uhoh.
-
-#. Call that function with invalid parameters and cringe as things blow up with
-   human-readable exceptions exhibiting the single cause of failure:
-
-   .. code-block:: pycon
-
-      >>> hello_jungle(sep=(
-      ...     b"What? Haven't you ever seen a byte-string separator before?"))
-      BeartypeCallHintPepParamException: @beartyped hello_jungle() parameter
-      sep=b"What? Haven't you ever seen a byte-string separator before?"
-      violates type hint <class 'str'>, as value b"What? Haven't you ever seen
-      a byte-string separator before?" not str.
-
-Industrial Example
-##################
-
-Let's wrap the `third-party numpy.empty_like() function <numpy.empty_like_>`__
-with automated runtime type checking to demonstrate beartype's support for
-non-trivial combinations of nested type hints compliant with different PEPs:
-
-.. code-block:: python
-
-   from beartype import beartype
-   from collections.abc import Sequence
-   from typing import Optional, Union
-   import numpy as np
-
-   @beartype
-   def empty_like_bear(
-       prototype: object,
-       dtype: Optional[np.dtype] = None,
-       order: str = 'K',
-       subok: bool = True,
-       shape: Optional[Union[int, Sequence[int]]] = None,
-   ) -> np.ndarray:
-       return np.empty_like(prototype, dtype, order, subok, shape)
-
-Note the non-trivial hint for the optional ``shape`` parameter, synthesized from
-a `PEP 484-compliant optional <typing.Optional_>`__ of a `PEP 484-compliant
-union <typing.Union_>`__ of a builtin type and a `PEP 585-compliant subscripted
-abstract base class (ABC) <collections.abc.Sequence_>`__, accepting as valid
-either:
-
-* The ``None`` singleton.
-* An integer.
-* A sequence of integers.
-
-Let's call that wrapper with both valid and invalid parameters:
-
-.. code-block:: pycon
-
-   >>> empty_like_bear(([1,2,3], [4,5,6]), shape=(2, 2))
-   array([[94447336794963,              0],
-          [             7,             -1]])
-   >>> empty_like_bear(([1,2,3], [4,5,6]), shape=([2], [2]))
-   BeartypeCallHintPepParamException: @beartyped empty_like_bear() parameter
-   shape=([2], [2]) violates type hint typing.Union[int,
-   collections.abc.Sequence, NoneType], as ([2], [2]):
-   * Not <class "builtins.NoneType"> or int.
-   * Tuple item 0 value [2] not int.
-
-Note the human-readable message of the raised exception, containing a bulleted
-list enumerating the various ways this invalid parameter fails to satisfy its
-type hint, including the types and indices of the first container item failing
-to satisfy the nested ``Sequence[int]`` hint.
-
-See a `subsequent section <Implementation_>`__ for actual code dynamically
-generated by beartype for real-world use cases resembling those above. Fun!
-
-****************************
-Would You Like to Know More?
-****************************
-
-If you know `type hints <PEP 484_>`__, you know beartype. Since beartype is
-driven by `tool-agnostic community standards <PEP 0_>`__, the public API for
-beartype is *basically* just those standards. As the user, all you need to know
-is that decorated callables magically raise human-readable exceptions when you
-pass parameters or return values violating the PEP-compliant type hints
-annotating those parameters or returns.
-
-If you don't know `type hints <PEP 484_>`__, this is your moment to go deep on
-the hardest hammer in Python's SQA_ toolbox. Here are a few friendly primers to
-guide you on your maiden voyage through the misty archipelagos of type hinting:
-
-* `"Python Type Checking (Guide)" <RealPython_>`__, a comprehensive third-party
-  introduction to the subject. Like most existing articles, this guide predates
-  ``O(1)`` runtime type checkers and thus discusses only static type checking.
-  Thankfully, the underlying syntax and semantics cleanly translate to runtime
-  type checking.
-* `"PEP 484 -- Type Hints" <PEP 484_>`__, the defining standard, holy grail,
-  and first testament of type hinting `personally authored by Python's former
-  Benevolent Dictator for Life (BDFL) himself, Guido van Rossum <Guido van
-  Rossum_>`__. Since it's surprisingly approachable and covers all the core
-  conceits in detail, we recommend reading at least a few sections of interest.
-  Since it's really a doctoral thesis by another name, we can't recommend
-  reading it in entirety. *So it goes.*
-
-.. #FIXME: Concatenate the prior list item with this when I am no exhausted.
-.. #  Instead, here's the highlights reel:
-.. #
-.. #  * `typing.Union`_, enabling .
-
 ###
 API
 ###
@@ -1303,7 +1193,7 @@ begins with ``@beartype.beartype``, just as all rivers run to the sea.
 Beartype Decoration
 *******************
 
-.. _beartype.beartype:
+.. _@beartype.beartype:
 
 .. # FIXME: Revise all hard-code references to this decorator (e.g.,
 .. # "``@beartype``", "``@beartype.beartype``) into actual beartype.beartype_
@@ -1323,8 +1213,8 @@ Unlike most decorators, ``@beartype.beartype`` has three modes of operation:
 * `Configuration mode <beartype.beartype conf_>`__, in which you create your own
   app-specific ``@beartype`` decorator – **configured** for your exact use case.
 
-Callable Mode...
-################
+Callable Mode
+#############
 
 .. _beartype.beartype func:
 
@@ -2537,7 +2427,7 @@ Exception API
 
     * The beartype.door.die_if_unbearable_ function.
     * The beartype.door.TypeHint.die_if_unbearable_ method.
-    * User-defined functions and methods decorated by the beartype.beartype_
+    * User-defined functions and methods decorated by the @beartype.beartype_
       decorator -- which then themselves become beartype type-checkers.
 
     Because type-checking violations are why we are all here, instances of this
