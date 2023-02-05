@@ -68,6 +68,7 @@ sys.path.insert(0, str(_ROOT_DIR))
 # * https://protips.readthedocs.io/git-tag-version.html
 #   "Inferring Release Number from Git Tags", detailing a clever one-liner
 #   harvesting this specifier from the most recent git tag.
+from beartype import beartype
 from beartype.meta import (
     AUTHORS,
     COPYRIGHT,
@@ -75,6 +76,7 @@ from beartype.meta import (
     SPHINX_THEME_NAME,
     VERSION,
 )
+from beartype.typing import Optional
 from beartype._util.mod.utilmodtest import is_module
 # from warnings import warn
 
@@ -218,23 +220,30 @@ extensions = [
 # ....................{ EXTENSIONS ~ optional              }....................
 # Third-party Sphinx extensions conditionally used if externally installed.
 
-# If the third-party Sphinx extension defining the custom HTML theme preferred
-# by this documentation is importable under the active Python interpreter,
-# enable this theme for substantially improved rendering.
-if is_module(SPHINX_THEME_NAME):
-    # Set the HTML theme to this theme.
+# ....................{ EXTENSIONS ~ optional : theme      }....................
+# Fully-qualified name of the package providing the third-party Sphinx extension
+# defining the custom HTML theme preferred by this documentation, globally
+# substituting hyphens with underscores to produce a valid Python identifier.
+_SPHINX_THEME_MODULE_NAME = SPHINX_THEME_NAME.replace('-', '_')
+
+# If this package is importable under the active Python interpreter, enable this
+# theme for improved HTML rendering.
+if is_module(_SPHINX_THEME_MODULE_NAME):
+    # Set the HTML theme to this package.
     #
-    # Note that we intentionally do *NOT* do this, which other themes require:
-    #     Register the fully-qualified name of this extension.
+    # Note that we do *NOT* do this, which non-theme extensions require:
+    #     # Register the fully-qualified name of this extension.
     #     extensions.append(SPHINX_THEME_NAME)
-    # Why? Because doing so induces this exception from Furo:
+    #
+    # Why? Because doing so induces this exception from modern themes like Furo
+    # and PyData:
     #     Extension error (furo):
     #     Handler <function _builder_inited at 0x7f9be7bf2040> for event
     #     'builder-inited' threw an exception (exception: Did you list 'furo' in
     #     the `extensions` in conf.py? If so, please remove it. Furo does not
     #     work with non-HTML builders and specifying it as an `html_theme` is
     #     sufficient.)
-    html_theme = SPHINX_THEME_NAME
+    html_theme = _SPHINX_THEME_MODULE_NAME
 # Else, this theme is unavailable. In this case, fallback to Sphinx's default
 # HTML theme *AND*...
 else:
@@ -246,11 +255,64 @@ else:
     # Emit a non-fatal warning informing end users of this fallback.
     print(
         (
-            'WARNING: '
-            f'Optional Sphinx extension "{SPHINX_THEME_NAME}" not found; '
-            'falling back to default Sphinx HTML theme.'
+            f'WARNING: Optional Sphinx extension "{SPHINX_THEME_NAME}" '
+            f'not found; falling back to default Sphinx HTML theme.'
         ),
     )
+
+# ....................{ EXTENSIONS ~ optional : non-theme  }....................
+@beartype
+def _register_extension_or_warn(
+    # Mandatory parameters.
+    extension_name: str,
+
+    # Optional parameters.
+    warning_message: Optional[str] = None,
+) -> None:
+    '''
+    Register the extension with the passed package name if that package is
+    importable under the active Python interpreter *or* print a non-fatal
+    warning otherwise (i.e., if that package is unimportable).
+
+    Parameters
+    ----------
+    extension_name : str
+        Fully-qualified name of the package providing this extension.
+    warning_message : Optional[str]
+        Human-readable message to be printed when this package is unimportable.
+        Defaults to ``None``, in which case a standard message is printed.
+    '''
+
+    # If this package is importable under the active Python interpreter, append
+    # the name of this package to the list of all Sphinx extensions to enable.
+    if is_module(extension_name):
+        extensions.append(extension_name)
+    # Else, this package is unimportable. In this case, print the passed
+    # non-fatal warning message.
+    else:
+        # Substring unconditionally prefixing this warning message.
+        WARNING_MESSAGE_PREFIX = (
+            f'WARNING: Optional Sphinx extension "{extension_name}" not found.')
+
+        # Replace this warning message with either...
+        warning_message = (
+            # If the caller passed a warning message, this message prefixed by
+            # this substring;
+            f'{WARNING_MESSAGE_PREFIX} {warning_message}'
+            # Else, this prefix as is.
+            if warning_message else
+            WARNING_MESSAGE_PREFIX
+        )
+
+        # Print this warning message.
+        print(warning_message)
+
+
+# Register the third-party "sphinxext-opengraph" extension if available. This
+# extension autogenerates Open Graph metadata describing this documentation.
+# Social media and search engine giants commonly consume this metadata to
+# optimize both the ranking and presentation of links to this documentation.
+_register_extension_or_warn('sphinxext.opengraph')
 
 # ....................{ EXTENSIONS ~ autodoc               }....................
 # "autoapi.extension"-specific settings. See also:
@@ -388,6 +450,42 @@ html_logo = 'https://raw.githubusercontent.com/beartype/beartype-assets/main/bad
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+# Dictionary mapping from the names of theme-specific options to those options.
+html_context = {
+   # Default the current theme to dark rather than light. Embrace the darkness!
+   'default_mode': 'dark',
+}
+
+# Dictionary mapping from the names of theme-specific options to those options.
+# We have *NO* idea why Sphinx supports both this and the parallel
+# "html_context" dictionary -- but it does. (Just pretend this isn't happening.)
+html_theme_options = {
+    # ....................{ pydata-sphinx-theme            }....................
+    # HTML options specific to the "pydata-sphinx-theme" theme.
+
+    #FIXME: Add favicon support here, please. See also:
+    #    https://pydata-sphinx-theme.readthedocs.io/en/v0.7.2/user_guide/configuring.html#adding-favicons
+    #FIXME: Add an "Edit this Page" link, please. Pretty cool! See also:
+    #    https://pydata-sphinx-theme.readthedocs.io/en/v0.7.2/user_guide/configuring.html#add-an-edit-this-page-button
+    #FIXME: Add a link to our PyPI page as well. Ideally, we'd do so using an
+    #"icon_links" dictionary. If no PyPI icon exists, however, we'll need to
+    #resort to an "external_links" dictionary instead. (See below.) *sigh*
+
+    # List of one or more icon link descriptions. See also:
+    #     https://pydata-sphinx-theme.readthedocs.io/en/v0.7.2/user_guide/configuring.html#configure-icon-links
+    'icon_links': [
+        {
+            'name': 'GitHub',
+            'url': 'https://github.com/beartype/beartype',
+            'icon': 'fab fa-github-square',
+        },
+    ],
+
+    # 'external_links': [
+    #     {'name': 'link-one-name', 'url': 'https://<link-one>'},
+    # ]
+}
 
 # ....................{ BUILD ~ html : mathjax             }....................
 # URL to the top-level "MathJax.js" script providing MathJax. If unspecified,

@@ -149,20 +149,46 @@ developed Python versions <Python status_>`__, `all Python package managers
 .. # Let's Type This
 .. # ***************
 
+.. # ------------------( TABLES OF CONTENTS                  )------------------
+.. # Project-wide tables of contents (TOCs). See also official documentation on
+.. # the Sphinx-specific "toctree::" directive:
+.. #     https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-toctree
+
+.. # FIXME: *AH-HA!* The left sidebar is empty, which frankly doesn't make sense.
+.. # To resolve this, let's:
+.. # * First, try updating to the newest version of the PyData theme.
+.. # * If that fails, it looks like we'll manually need to add a new
+.. #   "_templates/sidebar-nav-bs.html" file resembling this:
+.. #   https://github.com/holoviz/holoviews/blob/main/doc/_templates/sidebar-nav-bs.html
+.. #   See this related link as well:
+.. #   https://github.com/pydata/pydata-sphinx-theme/issues/90#issuecomment-1181250562
+.. # * Let's necrobump document this for others struggling with similar issues
+.. #   at this related issue:
+.. #   https://github.com/pydata/pydata-sphinx-theme/issues/221
+.. #   Humorously, note that the Holoviews guy forgot how he did this. *lolbro*
+.. #   In particular, gently suggest that the current behaviour makes *NO SENSE*
+.. #   and that the other behaviour that literally everyone is copy-pasting into
+.. #   their projects is a substantial improvement. Indeed, let's just promote
+.. #   this to a feature request for a theme-specific option to enable this.
+
 .. # Leading TOC entry self-referentially referring back to this document,
 .. # enabling users to trivially navigate back to this document from elsewhere.
 .. #
-.. # Note that the ":hidden:" option adds this entry to the TOC sidebar while
-.. # omitting this entry from the TOC displayed inline in this document. This is
-.. # sensible; since any user currently viewing this document has *NO* need to
-.. # navigate to the current document, this inline TOC omits this entry.
+.. # Note that:
+.. # * The ":hidden:" option adds this entry to the TOC sidebar while omitting
+.. #   this entry from the TOC displayed inline in this document. This is
+.. #   sensible; since any user currently viewing this document has *NO* need to
+.. #   navigate to the current document, this inline TOC omits this entry.
 .. toctree::
+   :caption: Bear with Us
    :hidden:
-   :caption: Contents
+   :titlesonly:
+   :maxdepth: 2
 
-   Bear with Us <self>
+   Bearpedia <self>
    install
 
+.. #   :hidden:
 .. #FIXME: Uncomment *AFTER* re-enabling "autoapi" support in "conf.py" and
 .. #resolving outstanding issues with that support. *gulp*
 .. # .. toctree::
@@ -177,24 +203,14 @@ developed Python versions <Python status_>`__, `all Python package managers
 .. # * :ref:`modindex`
 .. # * :ref:`search`
 
-.. # ------------------( TABLES OF CONTENTS                  )------------------
-.. # Project-wide tables of contents (TOCs). See also official documentation on
-.. # the Sphinx-specific "toctree::" directive:
-.. #     https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-toctree
-
 |
 
 .. # Table of contents, excluding the above document heading. While the
 .. # official reStructuredText documentation suggests that a language-specific
 .. # heading will automatically prepend this table, this does *NOT* appear to
 .. # be the case. Instead, this heading must be explicitly declared.
-.. #
-.. # Dismantled, this is:
-.. # * ":class: ...", a Furo-specific directive instructing Furo to *NOT* emit
-.. #   a prominent human-readable red warning. We don't particularly care, Furo.
 
-.. contents:: **Contents**
-   :class: this-will-duplicate-information-and-it-is-still-useful-here.
+.. contents:: **Bear With Us**
    :local:
 
 .. # ------------------( DESCRIPTION                         )------------------
@@ -221,6 +237,10 @@ beyond `importation and usage of a single configuration-free decorator
 applications, stacks, modules, and scripts already annotating callables with
 `PEP-compliant industry-standard type hints <Compliance_>`__.
 
+**********
+Comparison
+**********
+
 Beartype is zero-cost. Beartype inflicts *no* harmful developer tradeoffs,
 instead stressing expense-free strategies at both:
 
@@ -231,9 +251,8 @@ instead stressing expense-free strategies at both:
   decoration time, beartype guarantees `O(1) non-amortized worst-case runtime
   complexity with negligible constant factors <Timings_>`__.
 
-******************************
 ...versus Static Type-checkers
-******************************
+##############################
 
 Like `competing static type-checkers <Static type-checkers_>`__ operating at
 the coarse-grained application level via ad-hoc heuristic type inference (e.g.,
@@ -275,9 +294,8 @@ overhead <Timings_>`__. Unlike static type-checkers:
     * Metaclasses.
     * Monkey patches.
 
-*******************************
 ...versus Runtime Type-checkers
-*******************************
+###############################
 
 Unlike `comparable runtime type-checkers <Runtime type-checkers_>`__ (e.g.,
 pydantic_, typeguard_), beartype decorates callables with dynamically generated
@@ -291,9 +309,9 @@ first-class concern, generated wrappers are guaranteed to:
   the cost of an additional stack frame (in the worst case) as equivalent
   type-checking implemented by hand, *which no one should ever do.*
 
-*******
-lolwut?
-*******
+**********
+Quickstart
+**********
 
 Beartype makes type-checking painless, portable, and purportedly fun. Just:
 

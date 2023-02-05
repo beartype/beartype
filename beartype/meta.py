@@ -474,7 +474,7 @@ See Also
 '''
 
 # ....................{ METADATA ~ libs : theme            }....................
-SPHINX_THEME_NAME = 'furo'
+SPHINX_THEME_NAME = 'pydata-sphinx-theme'
 '''
 Name of the third-party Sphinx extension providing the custom HTML theme
 preferred by this documentation.
@@ -486,23 +486,70 @@ selected the theme with:
 #. The most frequent git commit history.
 #. The open issues and pull requests (PRs).
 #. The most GitHub stars as a crude proxy for aggregate rating.
+#. **IS NOT STRONGLY OPINIONATED** (i.e., is configurable with standard Sphinx
+   settings and directives).
 
-Furo handily bested all other themes across all three criteria. Furo is very
-well-maintained, frequently closes out open issues and merges open PRs, and
-sports the highest quantity of GitHub stars by an overwhelming margin.
-
-See Also
+Furo
 ----------
-https://github.com/pradyunsg/furo
-    Upstream GitHub-hosted repository.
+Furo_ handily bested all other themes across the first three criteria. Furo is
+very well-maintained, frequently closes out open issues and merges open PRs, and
+sports the highest quantity of GitHub stars by an overwhelming margin. Sadly,
+Furo handily loses against literally unmaintained themes across the final
+criteria. Furo is absurdly strongly opinionated to an authoritarian degree we
+rarely find in open-source software. Why? Because it's principal maintainer is.
+Like maintainer, like software. Furo routinely ignores standard Sphinx settings
+and directives due to subjective opinions held by its maintainer, including:
+
+* Most user-defined ``:toctree:`` settings used to configure both global and
+  local tables of contents (TOCs) and thus the leftmost navigation sidebar,
+  effectively preventing users from using that sidebar to navigate to anything.
+  We are *not* kidding. ``:toctree:`` settings ignored by Furo include:
+
+  * ``:maxdepth:``. Internally, Furo forces the ``:titlesonly:`` setting by
+    passing ``titles_only=True`` to Sphinx's ``toctree()`` function at runtime.
+    Doing so effectively coerces ``:maxdepth: 1``, thus intentionally hiding
+    *all* document structure from the navigation sidebar -- where (usually)
+    *all* document structure is displayed. Users thus have no means of directly
+    jumping from the root landing page to child leaf documents, significantly
+    obstructing user experience (UX) and usability. See also this `feature
+    request <Furo discussion_>`__ to relax these constraints, to which the Furo
+    maintainer caustically replies:
+
+        No, there isn't any (supported) way to do this.
+
+        Separating the page content hierarchy and site structure was an explicit
+        design goal.
+
+We fundamentally disagree with those goals and have thus permanently switched
+away from Furo. Unjustified opinions are the little death of sanity.
+
+PyData
+======
+Furo and PyData are neck-and-neck with respect to git commit history; both are
+extremely well-maintained. Furo leaps ahead with respect to both issue and PR
+resolution, however; PyData has an extreme number of open issues and PRs, where
+Furo enjoys none. Moreover, Furo also enjoys dramatically more GitHub stars.
+
+Nonetheless, PyData is *not* strongly opinionated; Furo is. PyData does *not*
+silently ignore standard Sphinx settings and directives for largely indefensible
+reasons. Consequently, PyData wins by default. In fact, *any* other theme
+(including even unmaintained dead themes) wins by default; *no* other theme (to
+my limited knowledge) forcefully ignores standard Sphinx settings and directives
+to the extent that Furo does.
+
+PyData wins by *literally* doing nothing. Laziness prevails. All hail La-Z-Boy.
+
+.. _Furo:
+   https://github.com/pradyunsg/furo
+.. _Furo discussion:
+   https://github.com/pradyunsg/furo/discussions/146
 '''
 
 
-SPHINX_THEME_VERSION_MINIMUM = '2022.6.21'
+SPHINX_THEME_VERSION_MINIMUM = '0.7.2'
 '''
-Human-readable minimum version as a ``.``-delimited string of the **Furo Sphinx
-theme** (i.e., :mod:`furo`) optionally leveraged when building package
-documentation.
+Machine-readable minimum version as a ``.``-delimited string of the above Sphinx
+theme optionally leveraged when building package documentation.
 '''
 
 # ....................{ METADATA ~ libs : doc              }....................
@@ -525,6 +572,7 @@ LIBS_DOCTIME_MANDATORY = (
     f'sphinx >={_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX}',
     f'{SPHINX_THEME_NAME} >={SPHINX_THEME_VERSION_MINIMUM}',
     'autoapi >=0.9.0',
+    'sphinxext-opengraph >= 0.7.5',
 )
 '''
 **Mandatory developer documentation build-time package dependencies** (i.e.,

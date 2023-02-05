@@ -12,6 +12,17 @@
 Install
 #######
 
+.. # FIXME: Non-ideal. Ideally, this should be fully refactored from the ground
+.. # up to leverage React-style tabs implemented by the high-quality third-party 
+.. # "sphinx-design" extension, available here:
+.. #     https://github.com/executablebooks/sphinx-design
+.. #
+.. # The idea here is that rather than enumerate all instructions as an
+.. # iterative series of subsections, we instead isolate each platform-specific
+.. # set of instructions to its own tab. The default tab displays "pip"
+.. # instructions, of course. Users are then free to switch tabs to an alternate
+.. # platform listing instructions for that platform. Score one for sanity.
+
 Install beartype with pip_, because `PyPI <beartype PyPI_>`__ is the `cheese
 shop <PyPI cheese shop_>`__ and you too enjoy a `fine Venezuelan beaver cheese
 <cheese shop sketch_>`__ while mashing disconsolately on your keyboard late on
@@ -35,6 +46,21 @@ in places that rain alot."
 `Commemorate this moment in time <Badge_>`__ with |bear-ified|, our
 over\ *bear*\ ing project shield. What says quality like `a bear on a badge
 <Badge_>`__, amirite?
+
+.. # ------------------( TABLES OF CONTENTS                  )------------------
+.. # Project-wide tables of contents (TOCs). See also official documentation on
+.. # the Sphinx-specific "toctree::" directive:
+.. #     https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-toctree
+
+|
+
+.. # Table of contents, excluding the above document heading. While the
+.. # official reStructuredText documentation suggests that a language-specific
+.. # heading will automatically prepend this table, this does *NOT* appear to
+.. # be the case. Instead, this heading must be explicitly declared.
+
+.. contents:: **Bear With Us**
+   :local:
 
 ********
 Platform
