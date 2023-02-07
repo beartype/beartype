@@ -261,7 +261,12 @@ else:
     )
 
 # ....................{ EXTENSIONS ~ optional : non-theme  }....................
-@beartype
+#FIXME: Restore @beartype once working. For unknown reasons, ReadTheDocs (RTD)
+#fails with non-human-readable exceptions *REMOTELY* when we attempt to decorate
+#a function defined in this file by @beartype. We have tried in vain to
+#replicate this locally (e.g., in our test_sphinx_docs_other() functional test).
+#Until we can, attempting to resolve this is mostly an exercise in futility.
+#@beartype
 def _register_extension_or_warn(
     # Mandatory parameters.
     extension_name: str,

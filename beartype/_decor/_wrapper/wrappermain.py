@@ -470,9 +470,10 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             reraise_exception_placeholder(
                 exception=exception,
                 #FIXME: Embed the kind of parameter as well (e.g.,
-                #"positional-only", "keyword-only", "variadic positional"), ideally
-                #by improving the existing prefix_callable_decorated_arg()
-                #function to introspect this kind from that callable's code object.
+                #"positional-only", "keyword-only", "variadic positional"),
+                #ideally by improving the existing
+                #prefix_callable_decorated_arg() function to introspect this
+                #kind from that callable's code object.
                 target_str=prefix_callable_decorated_arg(
                     func=bear_call.func_wrappee, arg_name=arg_name),
             )

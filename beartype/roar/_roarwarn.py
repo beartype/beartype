@@ -71,7 +71,7 @@ class BeartypeClawWarning(BeartypeWarning):
     pass
 
 
-class BeartypeClawDecorationWarning(BeartypeClawWarning):
+class BeartypeClawDecorWarning(BeartypeClawWarning):
     '''
     **Beartype import hook decoration warning.**
 
@@ -83,8 +83,35 @@ class BeartypeClawDecorationWarning(BeartypeClawWarning):
 
     pass
 
+# ....................{ DECORATOR ~ hint                   }....................
+class BeartypeDecorHintWarning(BeartypeWarning):
+    '''
+    Abstract base class of all **beartype decorator type hint warnings.**
+
+    Instances of subclasses of this warning are emitted at decoration time from
+    the :func:`beartype.beartype` decorator on receiving a callable annotated
+    by a suspicious (but *not* necessarily erroneous) type hint warranting
+    non-fatal warnings *without* raising fatal exceptions.
+    '''
+
+    pass
+
+
+class BeartypeDecorHintForwardRefWarning(BeartypeDecorHintWarning):
+    '''
+    **Beartype decorator forward reference type hint warning.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated by a
+    suspicious (but *not* necessarily erroneous) **forward reference type hint**
+    (i.e., string whose value is the name of a user-defined class that has yet
+    to be declared).
+    '''
+
+    pass
+
 # ....................{ DECORATOR ~ hint : pep             }....................
-class BeartypeDecorHintPepWarning(BeartypeWarning):
+class BeartypeDecorHintPepWarning(BeartypeDecorHintWarning):
     '''
     Abstract base class of all **beartype decorator PEP-compliant type hint
     warnings.**

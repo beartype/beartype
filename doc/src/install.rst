@@ -13,7 +13,7 @@ Install
 #######
 
 .. # FIXME: Non-ideal. Ideally, this should be fully refactored from the ground
-.. # up to leverage React-style tabs implemented by the high-quality third-party 
+.. # up to leverage React-style tabs implemented by the high-quality third-party
 .. # "sphinx-design" extension, available here:
 .. #     https://github.com/executablebooks/sphinx-design
 .. #
@@ -89,22 +89,35 @@ A big bear hug to `our official macOS package maintainer @harens <harens_>`__
 for `packaging beartype for our Apple-appreciating audience <beartype
 MacPorts_>`__.
 
-Linux
-#####
+Arch Linux
+##########
 
-Let's install beartype with ``emerge`` on Gentoo_ courtesy `a third-party
-overlay <beartype Gentoo_>`__, because source-based Linux distributions are the
-CPU-bound nuclear option:
+Let's install beartype with ``pacman`` on `Arch Linux`_ – where beartype is now
+`officially packaged <beartype Arch_>`__ in the `Arch User Repository (AUR)
+<AUR_>`__ itself:
 
 .. code-block:: bash
 
-   emerge --ask app-eselect/eselect-repository
-   mkdir -p /etc/portage/repos.conf
-   eselect repository enable raiagent
-   emerge --sync raiagent
+   git clone https://aur.archlinux.org/python-beartype.git
+   cd python-beartype
+   makepkg -si
+
+Truly, Arch Linux has now seen the face of quality assurance. It looks like a
+grizzled bear with patchy fur, one twitchy eye, and a gimpy leg that
+spasmodically flails around.
+
+Gentoo Linux
+############
+
+Let's install beartype with ``emerge`` on `Gentoo Linux`_ – where beartype is
+now `officially packaged <beartype Gentoo_>`__ in the Portage tree itself:
+
+.. code-block:: bash
+
    emerge beartype
 
-*What could be simpler?* O_o
+Source-based Linux distributions are the CPU-bound nuclear option. *What could
+be simpler?* O_o
 
 *****
 Badge

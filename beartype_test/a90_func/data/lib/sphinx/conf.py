@@ -18,7 +18,6 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
 
-
 # -- Project information -----------------------------------------------------
 
 project = 'beartype_sphinx'
@@ -35,7 +34,7 @@ release = '0.0.1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    # ..................{ BUILTIN                           }..................
+    # ..................{ BUILTIN                            }..................
     # Builtin extensions unconditionally available under *ALL* reasonably
     # modern versions of Sphinx uniquely prefixed by "sphinx.ext.".
 
@@ -65,3 +64,21 @@ html_theme = 'alabaster'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+# ....................{ TESTS                              }....................
+from beartype import beartype
+
+@beartype
+def sphinx_conf_beartyped_func() -> str:
+    '''
+    Arbitrary callable annotated by one or more arbitrary type hints.
+
+    This callable exercises an edge case in the :mod:`beartype` codebase in
+    which decorating callables defined in Sphinx-specific ``conf.py`` files
+    previously caused :mod:`beartype` to raise non-human-readable exceptions.
+    '''
+
+    return 'Bother-free is the way to be.'
+
+# Call this function to ensure that it is, indeed, callable.
+sphinx_conf_beartyped_func()

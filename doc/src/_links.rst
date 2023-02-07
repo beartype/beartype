@@ -78,8 +78,10 @@
 .. # ------------------( LINKS ~ beartype : package          )------------------
 .. _beartype Anaconda:
    https://anaconda.org/conda-forge/beartype
+.. _beartype Arch:
+   https://aur.archlinux.org/packages/python-beartype
 .. _beartype Gentoo:
-   https://github.com/leycec/raiagent
+   https://packages.gentoo.org/packages/dev-python/beartype
 .. _beartype Homebrew:
    https://github.com/beartype/homebrew-beartype
 .. _beartype MacPorts:
@@ -224,8 +226,14 @@
    http://catb.org/jargon/html/O/on-the-gripping-hand.html
 
 .. # ------------------( LINKS ~ os : linux                  )------------------
-.. _Gentoo:
+.. _Gentoo Linux:
    https://www.gentoo.org
+
+.. # ------------------( LINKS ~ os : linux : arch           )------------------
+.. _Arch Linux:
+   https://archlinux.org
+.. _AUR:
+   https://aur.archlinux.org/packages/python-beartype
 
 .. # ------------------( LINKS ~ os : macos                  )------------------
 .. _macOS:

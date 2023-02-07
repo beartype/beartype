@@ -12,7 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintForwardRefException
+from beartype.roar import (
+    BeartypeDecorHintForwardRefException,
+    BeartypeDecorHintForwardRefWarning,
+)
 from beartype.typing import Union
 from beartype._data.datatyping import TypeException
 from beartype._util.cls.utilclstest import die_unless_type
@@ -21,8 +24,9 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
     get_hint_pep484_forwardref_type_basename,
     is_hint_pep484_forwardref,
 )
-from beartype._util.mod.utilmodget import get_object_module_name
+from beartype._util.mod.utilmodget import get_object_module_name_or_none
 from beartype._util.mod.utilmodimport import import_module_attr
+from warnings import warn
 
 # ....................{ HINTS                              }....................
 HINT_PEP484585_FORWARDREF_TYPES = (str, HINT_PEP484_FORWARDREF_TYPE)
@@ -218,16 +222,52 @@ def get_hint_pep484585_forwardref_classname_relative_to_object(
     # Possibly unqualified classname referred to by this forward reference.
     forwardref_classname = get_hint_pep484585_forwardref_classname(hint)
 
-    # Return either...
-    return (
-        # If this classname contains one or more "." characters and is thus
-        # already hopefully fully-qualified, this classname as is;
-        forwardref_classname
-        if '.' in forwardref_classname else
-        # Else, the "."-delimited concatenation of the fully-qualified name of
-        # the module declaring this class with this unqualified classname.
-        f'{get_object_module_name(obj)}.{forwardref_classname}'
+    # If this classname contains one or more "." characters and is thus already
+    # (...hopefully) fully-qualified, return this classname as is.
+    if '.' in forwardref_classname:
+        return forwardref_classname
+    # Else, this classname contains *NO* "." characters and is thus *NOT*
+    # fully-qualified.
+
+    # Fully-qualified name of the module declaring the passed object if any *OR*
+    # "None" otherwise.
+    #
+    # Note that, although *ALL* objects should define the "__module__" instance
+    # variable underlying the call to this getter function, *SOME* real-world
+    # objects do not. For unknown reasons, these include:
+    # * Objects defined in Sphinx-specific "conf.py" configuration files. In
+    #   all likelihood, Sphinx is running these files in some sort of arcane and
+    #   non-standard manner (over which we have *NO* control).
+    obj_module_name = get_object_module_name_or_none(obj)
+
+    # If this object is declared by a module, canonicalize the name of this
+    # reference by returning the "."-delimited concatenation of the
+    # fully-qualified name of this module with this unqualified classname.
+    if obj_module_name:
+        return f'{get_object_module_name_or_none(obj)}.{forwardref_classname}'
+    # Else, this object is *NOT* declared by a module.
+
+    #FIXME: Unit test up this edge case, please.
+    #FIXME: Actually, it might be preferable to either:
+    #* Return "None" instead and force the caller to deal with this.
+    #* Perhaps raise a truly human-readable exception instead. Non-ideal, but
+    #  preferable to raising a non-human-readable exception.
+
+    # Emit a non-fatal warning.
+    #
+    # Note that we intentionally do *NOT* raise a fatal exception, as this edge
+    # case occurs in real-world contexts beyond our control. (See above.)
+    warn(
+        (
+            f'Relative forward reference "{forwardref_classname}" not '
+            f'canonicalizeable against module-less {repr(obj)}.'
+        ),
+        BeartypeDecorHintForwardRefWarning,
     )
+
+    # Return this uncanonicalized forward reference as is. Although doing so is
+    # almost certainly the wrong thing to do, doing so is the least wrong thing.
+    return forwardref_classname
 
 # ....................{ IMPORTERS                          }....................
 #FIXME: Unit test us up, please.

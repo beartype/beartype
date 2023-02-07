@@ -95,7 +95,9 @@ from beartype.roar._roarexc import (
 from beartype.roar._roarwarn import (
     BeartypeWarning as BeartypeWarning,
     BeartypeClawWarning as BeartypeClawWarning,
-    BeartypeClawDecorationWarning as BeartypeClawDecorationWarning,
+    BeartypeClawDecorWarning as BeartypeClawDecorWarning,
+    BeartypeDecorHintWarning as BeartypeDecorHintWarning,
+    BeartypeDecorHintForwardRefWarning as BeartypeDecorHintForwardRefWarning,
     BeartypeDecorHintPepWarning as BeartypeDecorHintPepWarning,
     BeartypeDecorHintPepDeprecationWarning as BeartypeDecorHintPepDeprecationWarning,
     BeartypeDecorHintPep585DeprecationWarning as BeartypeDecorHintPep585DeprecationWarning,
