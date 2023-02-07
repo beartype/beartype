@@ -66,10 +66,6 @@ html_theme = 'alabaster'
 html_static_path = ['_static']
 
 # ....................{ TESTS                              }....................
-from beartype import beartype
-
-<<<<<<< HEAD
-=======
 #FIXME: Ugh! This decoration raises non-human-readable exceptions. The culprit
 #appears to be PEP 563. For unknown reasons, Sphinx appears to be forcing PEP
 #563 for this file in a subversive way. Since this file does *NOT* contain an
@@ -84,22 +80,24 @@ from beartype import beartype
 #
 #Clearly, the right thing to do is just reduce @beartype to a noop when run from
 #this file -- because the alternative is madness. Ergo, we need to improve our
-#Sphinx detection to also detect this file. Shouldn't be terribly arduous...
-#FIXME: Oh, and note that this only occurs under Python < 3.11. Under Python
-#3.11, Sphinx actually behaves itself and this works as expected. So, maybe we
-#only want to detect this file under Python < 3.11? Double check that, please.
->>>>>>> 47e3d7b (`README.rst` -> Read the Docs (RTD) x 12.)
-@beartype
-def sphinx_conf_beartyped_func() -> str:
-    '''
-    Arbitrary callable annotated by one or more arbitrary type hints.
+#Sphinx detection to also detect this file. Shouldn't be terribly arduous... or
+#it might be, because Sphinx appears to be exec()-ing this file. (Madness!)
+#Still, there should be some deterministic remnant of this perfidious behaviour
+#on the call stack, we should think. *sigh*
 
-    This callable exercises an edge case in the :mod:`beartype` codebase in
-    which decorating callables defined in Sphinx-specific ``conf.py`` files
-    previously caused :mod:`beartype` to raise non-human-readable exceptions.
-    '''
-
-    return 'Bother-free is the way to be.'
-
-# Call this function to ensure that it is, indeed, callable.
-sphinx_conf_beartyped_func()
+# from beartype import beartype
+#
+# @beartype
+# def sphinx_conf_beartyped_func() -> str:
+#     '''
+#     Arbitrary callable annotated by one or more arbitrary type hints.
+#
+#     This callable exercises an edge case in the :mod:`beartype` codebase in
+#     which decorating callables defined in Sphinx-specific ``conf.py`` files
+#     previously caused :mod:`beartype` to raise non-human-readable exceptions.
+#     '''
+#
+#     return 'Bother-free is the way to be.'
+#
+# # Call this function to ensure that it is, indeed, callable.
+# sphinx_conf_beartyped_func()
