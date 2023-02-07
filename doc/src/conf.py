@@ -266,6 +266,8 @@ else:
 #a function defined in this file by @beartype. We have tried in vain to
 #replicate this locally (e.g., in our test_sphinx_docs_other() functional test).
 #Until we can, attempting to resolve this is mostly an exercise in futility.
+#FIXME: Actually, that test does now replicate this issue. Let's investigate
+#further via that test when time permits, please.
 #@beartype
 def _register_extension_or_warn(
     # Mandatory parameters.

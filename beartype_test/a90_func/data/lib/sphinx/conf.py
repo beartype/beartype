@@ -68,6 +68,27 @@ html_static_path = ['_static']
 # ....................{ TESTS                              }....................
 from beartype import beartype
 
+<<<<<<< HEAD
+=======
+#FIXME: Ugh! This decoration raises non-human-readable exceptions. The culprit
+#appears to be PEP 563. For unknown reasons, Sphinx appears to be forcing PEP
+#563 for this file in a subversive way. Since this file does *NOT* contain an
+#actual "from futures import __annotations__" line, @beartype fails to detect
+#that Sphinx has activated PEP 563. The result is pure chaos. We'll probably
+#have to do something insane like either:
+#* Detect when @beartype is running under Sphinx. We already do that, don't we?
+#  Sadly, that detection appears to be failing when run from a "conf.py" file.
+#  If that detection actually worked, then this decoration would just silently
+#  reduce to a noop -- but it's not, so it's not. *shrug*
+#* Detect if the name of the calling script is "conf.py". Ugh! This is terrible.
+#
+#Clearly, the right thing to do is just reduce @beartype to a noop when run from
+#this file -- because the alternative is madness. Ergo, we need to improve our
+#Sphinx detection to also detect this file. Shouldn't be terribly arduous...
+#FIXME: Oh, and note that this only occurs under Python < 3.11. Under Python
+#3.11, Sphinx actually behaves itself and this works as expected. So, maybe we
+#only want to detect this file under Python < 3.11? Double check that, please.
+>>>>>>> 47e3d7b (`README.rst` -> Read the Docs (RTD) x 12.)
 @beartype
 def sphinx_conf_beartyped_func() -> str:
     '''
