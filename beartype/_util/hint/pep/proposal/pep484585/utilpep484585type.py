@@ -136,12 +136,14 @@ def get_hint_pep484585_subclass_superclass(
         # print(f'hint_superclass union arg: {hint_superclass}')
         die_unless_type_or_types_issubclassable(
             type_or_types=hint_superclass, exception_prefix=exception_prefix)  # type: ignore[arg-type]
+    # Else, this superclass is *NOT* a union of superclasses.
+    #
     # If this superclass is actually a forward reference to a superclass,
     # silently accept this reference as is. This conditional exists only to
     # avoid raising a subsequent exception.
     elif hint_superclass_sign is HintSignForwardRef:
         pass
-    # Else, this superclass is *NOT* a union of superclasses...
+    # Else, this superclass is *NOT* a forward reference to a superclass.
     #
     # If this superclass is a class...
     elif isinstance(hint_superclass, type):

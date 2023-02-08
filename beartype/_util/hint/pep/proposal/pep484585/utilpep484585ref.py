@@ -12,10 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import (
-    BeartypeDecorHintForwardRefException,
-    BeartypeDecorHintForwardRefWarning,
-)
+from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import Union
 from beartype._data.datatyping import TypeException
 from beartype._util.cls.utilclstest import die_unless_type
@@ -26,9 +23,10 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
 )
 from beartype._util.mod.utilmodget import get_object_module_name_or_none
 from beartype._util.mod.utilmodimport import import_module_attr
-from warnings import warn
 
 # ....................{ HINTS                              }....................
+#FIXME: Shift into "datatyping", please. When doing so, note that
+#"HINT_PEP484_FORWARDREF_TYPE" should be shifted as well. :}
 HINT_PEP484585_FORWARDREF_TYPES = (str, HINT_PEP484_FORWARDREF_TYPE)
 '''
 Tuple union of all :pep:`484`- or :pep:`585`-compliant **forward reference
@@ -51,6 +49,7 @@ harms space and time complexity at runtime with *no* concomitant benefits.
 '''
 
 
+#FIXME: Shift into "datatyping", please.
 HINT_PEP484585_FORWARDREF_UNION = Union[str, HINT_PEP484_FORWARDREF_TYPE]
 '''
 Union of all :pep:`484`- or :pep:`585`-compliant **forward reference types**
@@ -187,9 +186,9 @@ def get_hint_pep484585_forwardref_classname_relative_to_object(
     typically has yet to be defined) canonicalized if this hint is unqualified
     relative to the module declaring the passed object (e.g., callable, class).
 
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation mostly reduces to
+    an efficient one-liner.
 
     Parameters
     ----------
@@ -208,10 +207,12 @@ def get_hint_pep484585_forwardref_classname_relative_to_object(
     Raises
     ----------
     BeartypeDecorHintForwardRefException
-        If this forward reference is *not* actually a forward reference.
-    _BeartypeUtilModuleException
-        If ``module_obj`` does *not* define the ``__module__`` dunder instance
-        variable.
+        If either:
+
+        * This forward reference is *not* actually a forward reference.
+        * This forward reference is **relative** (i.e., contains *no* ``.``
+          delimiters) and the passed ``obj`` does *not* define the
+          ``__module__`` dunder instance variable.
 
     See Also
     ----------
@@ -234,7 +235,11 @@ def get_hint_pep484585_forwardref_classname_relative_to_object(
     #
     # Note that, although *ALL* objects should define the "__module__" instance
     # variable underlying the call to this getter function, *SOME* real-world
-    # objects do not. For unknown reasons, these include:
+    # objects do not. For this reason, we intentionally call the
+    # get_object_module_name_or_none() rather than get_object_module_name()
+    # function, explicitly detect "None", and raise a human-readable exception;
+    # doing so produces significantly more readable exceptions than merely
+    # calling get_object_module_name(). Problematic objects include:
     # * Objects defined in Sphinx-specific "conf.py" configuration files. In
     #   all likelihood, Sphinx is running these files in some sort of arcane and
     #   non-standard manner (over which we have *NO* control).
@@ -247,27 +252,11 @@ def get_hint_pep484585_forwardref_classname_relative_to_object(
         return f'{get_object_module_name_or_none(obj)}.{forwardref_classname}'
     # Else, this object is *NOT* declared by a module.
 
-    #FIXME: Unit test up this edge case, please.
-    #FIXME: Actually, it might be preferable to either:
-    #* Return "None" instead and force the caller to deal with this.
-    #* Perhaps raise a truly human-readable exception instead. Non-ideal, but
-    #  preferable to raising a non-human-readable exception.
-
-    # Emit a non-fatal warning.
-    #
-    # Note that we intentionally do *NOT* raise a fatal exception, as this edge
-    # case occurs in real-world contexts beyond our control. (See above.)
-    warn(
-        (
-            f'Relative forward reference "{forwardref_classname}" not '
-            f'canonicalizeable against module-less {repr(obj)}.'
-        ),
-        BeartypeDecorHintForwardRefWarning,
+    # Raise a human-readable exception. (See above.)
+    raise BeartypeDecorHintForwardRefException(
+        f'Relative forward reference "{forwardref_classname}" not '
+        f'canonicalizeable against module-less {repr(obj)}.'
     )
-
-    # Return this uncanonicalized forward reference as is. Although doing so is
-    # almost certainly the wrong thing to do, doing so is the least wrong thing.
-    return forwardref_classname
 
 # ....................{ IMPORTERS                          }....................
 #FIXME: Unit test us up, please.

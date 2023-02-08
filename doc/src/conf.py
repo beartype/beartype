@@ -108,8 +108,7 @@ version = VERSION
 suppress_warnings = [
     #FIXME: *THIS IS TERRIBLE.* Generally speaking, we do want Sphinx to inform
     #us about cross-referencing failures. Remove this hack entirely after Sphinx
-    #resolves this open issue:
-    #    https://github.com/sphinx-doc/sphinx/issues/4961
+    #resolves this open issue: https://github.com/sphinx-doc/sphinx/issues/4961
     # Squelch mostly ignorable warnings resembling:
     #     WARNING: more than one target found for cross-reference 'TypeHint':
     #     beartype.door._doorcls.TypeHint, beartype.door.TypeHint
@@ -315,11 +314,13 @@ def _register_extension_or_warn(
         print(warning_message)
 
 
-# Register the third-party "sphinxext-opengraph" extension if available. This
-# extension autogenerates Open Graph metadata describing this documentation.
-# Social media and search engine giants commonly consume this metadata to
-# optimize both the ranking and presentation of links to this documentation.
-_register_extension_or_warn('sphinxext.opengraph')
+#FIXME: Uncomment *AFTER* this extension resolves this currently open issue:
+#    https://github.com/wpilibsuite/sphinxext-opengraph/issues/98
+# # Register the third-party "sphinxext-opengraph" extension if available. This
+# # extension autogenerates Open Graph metadata describing this documentation.
+# # Social media and search engine giants commonly consume this metadata to
+# # optimize both the ranking and presentation of links to this documentation.
+# _register_extension_or_warn('sphinxext.opengraph')
 
 # ....................{ EXTENSIONS ~ autodoc               }....................
 # "autoapi.extension"-specific settings. See also:

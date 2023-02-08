@@ -3,8 +3,7 @@
 .. # See "LICENSE" for further details.
 .. #
 .. # ------------------( SYNOPSIS                            )------------------
-.. # Root reStructuredText (reST) document transitively referencing all other
-.. # child reST documents for this project.
+.. # Child reStructuredText (reST) document detailing installation instructions.
 
 .. # ------------------( MAIN                                )------------------
 
@@ -61,6 +60,8 @@ over\ *bear*\ ing project shield. What says quality like `a bear on a badge
 
 .. contents:: **Bear With Us**
    :local:
+
+.. # ------------------( DESCRIPTION                         )------------------
 
 ********
 Platform

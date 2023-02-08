@@ -8,7 +8,8 @@ Project-wide :pep:`484` and :pep:`585` **subclass type hint utility unit
 tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.hint.pep.proposal.pep484585.utilpep484585type` submodule.
+:mod:`beartype._util.hint.pep.proposal.pep484585.utilpep484585type`
+submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,26 +21,30 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS ~ kind : subclass            }....................
 def test_get_hint_pep484585_subclass_superclass() -> None:
     '''
-    Test the
-    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585type.get_hint_pep484585_subclass_superclass`
-    tester.
+    Test the ``get_hint_pep484585_subclass_superclass`` getter defined by the
+    :mod:`beartype._util.hint.pep.proposal.pep484585.utilpep484585type`
+    submodule.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import (
         BeartypeDecorHintPep3119Exception,
         BeartypeDecorHintPep484585Exception,
         BeartypeDecorHintPep585Exception,
     )
-    from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
-        HINT_PEP484_FORWARDREF_TYPE)
+    from beartype.typing import (
+        ForwardRef,
+        Type,
+        Union,
+    )
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
         get_hint_pep484585_subclass_superclass)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.data_type import NonIssubclassableClass
     from pytest import raises
-    from typing import Type, Union
 
+    # ....................{ PASS                           }....................
     # Assert this getter returns the expected object when passed a PEP
     # 484-compliant subclass type hint subscripted by a class.
     assert get_hint_pep484585_subclass_superclass(Type[str], '') is str
@@ -52,10 +57,14 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
 
     # Assert this getter returns the expected object when passed a PEP
     # 484-compliant subclass type hint subscripted by a forward reference to a
-    # class.
+    # class. Sadly, the expected object differs by Python version. *sigh*
     assert get_hint_pep484585_subclass_superclass(Type['bytes'], '') == (
-        HINT_PEP484_FORWARDREF_TYPE('bytes'))
+        'bytes'
+        if IS_PYTHON_AT_LEAST_3_9 else 
+        ForwardRef('bytes')
+    )
 
+    # ....................{ FAIL                           }....................
     # Assert this getter raises the expected exception when passed a PEP
     # 484-compliant subclass type hint subscripted by a non-issubclassable
     # class.
@@ -68,9 +77,11 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
     with raises(BeartypeDecorHintPep484585Exception):
         get_hint_pep484585_subclass_superclass('Caustically', '')
 
+    # ....................{ VERSION                        }....................
     # If the active Python interpreter targets Python >= 3.9 and thus supports
     # PEP 585...
     if IS_PYTHON_AT_LEAST_3_9:
+        # ....................{ PASS                       }....................
         # Assert this getter returns the expected object when passed a PEP
         # 585-compliant subclass type hint subscripted by a class.
         assert get_hint_pep484585_subclass_superclass(type[bool], '') is bool
@@ -87,6 +98,7 @@ def test_get_hint_pep484585_subclass_superclass() -> None:
         assert get_hint_pep484585_subclass_superclass(type['complex'], '') == (
             'complex')
 
+        # ....................{ FAIL                       }....................
         # Assert this getter raises the expected exception when passed a PEP
         # 585-compliant subclass type hint subscripted by a non-issubclassable
         # class.
