@@ -7,11 +7,11 @@
 
 .. # ------------------( MAIN                                )------------------
 
-.. # _ELI5:
+.. _eli5:eli5:
 
-####
-ELI5
-####
+############################
+Explain Like I'm Five (ELI5)
+############################
 
 .. parsed-literal::
 
@@ -29,7 +29,7 @@ Beartype is unopinionated. Beartype inflicts *no* developer constraints
 beyond `importation and usage of a single configuration-free decorator
 <Cheatsheet_>`__. Beartype is trivially integrated into new and existing
 applications, stacks, modules, and scripts already annotating callables with
-`PEP-compliant industry-standard type hints <Compliance_>`__.
+`PEP-compliant industry-standard type hints <Features_>`__.
 
 .. # ------------------( TABLES OF CONTENTS                  )------------------
 .. # Project-wide tables of contents (TOCs). See also official documentation on
@@ -56,8 +56,11 @@ Beartype is zero-cost. Beartype inflicts *no* harmful developer tradeoffs,
 instead stressing expense-free strategies at both:
 
 * **Installation time.** Beartype has no install-time or runtime dependencies,
-  `supports standard Python package managers <Install_>`__, and happily
-  coexists with competing static type-checkers and other runtime type-checkers.
+  :ref:`supports standard Python package managers <install:install>`, and
+  happily coexists with competing static type-checkers and other runtime
+  type-checkers... which, of course, is irrelevant, as you would never *dream*
+  of installing competing alternatives. Why would you, right? Am I right?
+  ``</nervous_chuckle>``
 * **Runtime.** Thanks to aggressive memoization and dynamic code generation at
   decoration time, beartype guarantees `O(1) non-amortized worst-case runtime
   complexity with negligible constant factors <Timings_>`__.

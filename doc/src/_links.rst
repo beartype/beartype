@@ -122,6 +122,8 @@
    https://github.com/patrick-kidger
 .. _harens:
    https://github.com/harens
+.. _@leycec:
+   https://github.com/leycec
 .. _leycec:
    https://github.com/leycec
 

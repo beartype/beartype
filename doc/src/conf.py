@@ -68,7 +68,7 @@ sys.path.insert(0, str(_ROOT_DIR))
 # * https://protips.readthedocs.io/git-tag-version.html
 #   "Inferring Release Number from Git Tags", detailing a clever one-liner
 #   harvesting this specifier from the most recent git tag.
-from beartype import beartype
+# from beartype import beartype
 from beartype.meta import (
     AUTHORS,
     COPYRIGHT,
@@ -476,17 +476,34 @@ html_theme_options = {
     #    https://pydata-sphinx-theme.readthedocs.io/en/v0.7.2/user_guide/configuring.html#adding-favicons
     #FIXME: Add an "Edit this Page" link, please. Pretty cool! See also:
     #    https://pydata-sphinx-theme.readthedocs.io/en/v0.7.2/user_guide/configuring.html#add-an-edit-this-page-button
-    #FIXME: Add a link to our PyPI page as well. Ideally, we'd do so using an
-    #"icon_links" dictionary. If no PyPI icon exists, however, we'll need to
-    #resort to an "external_links" dictionary instead. (See below.) *sigh*
 
     # List of one or more icon link descriptions. See also:
-    #     https://pydata-sphinx-theme.readthedocs.io/en/v0.7.2/user_guide/configuring.html#configure-icon-links
+    # * Official theme-specific documentation for this setting:
+    #   https://pydata-sphinx-theme.readthedocs.io/en/v0.7.2/user_guide/configuring.html#configure-icon-links
+    # * Official search engine for icons published by the third-party
+    #   "FontAwesome 5 Free" project and supported by this setting:
+    #   https://fontawesome.com/icons?d=gallery&m=free
+    #
+    # Note that:
+    # * This theme requires long-form FontAwesome styles (e.g., "fa-brand",
+    #   "fa-solid") to be abbreviated to these three-letter abbreviations:
+    #   * "fa-brand" -> "fab".
+    #   * "fa-solid" -> "fas".
     'icon_links': [
         {
             'name': 'GitHub',
             'url': 'https://github.com/beartype/beartype',
             'icon': 'fab fa-github-square',
+        },
+        {
+            'name': 'PyPI',
+            'url': 'https://pypi.org/project/beartype',
+            'icon': 'fab fa-python',
+        },
+        {
+            'name': 'Libraries.io',
+            'url': 'https://libraries.io/pypi/beartype',
+            'icon': 'fas fa-chart-area',
         },
     ],
 
