@@ -26,8 +26,8 @@
 
 |codecov-badge| |ci-badge| |rtd-badge|
 
-**Beartype** is an `open-source <beartype license_>`__ `PEP-compliant
-<Features_>`__ :ref:`near-real-time <faq:realtime>` :ref:`pure-Python runtime
+**Beartype** is an `open-source <beartype license_>`__ :ref:`PEP-compliant
+<pep:pep>` :ref:`near-real-time <faq:realtime>` :ref:`pure-Python runtime
 type-checker <eli5:eli5>` emphasizing efficiency, usability, and thrilling puns.
 
 .. #FIXME: Once we actually receive a sponsor at this tier, please remove this
@@ -130,8 +130,8 @@ type-checker <eli5:eli5>` emphasizing efficiency, usability, and thrilling puns.
 Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by
 :ref:`enforcing type safety at the granular level of functions and methods
-<eli5:eli5>` against `type hints standardized by the Python community
-<Features_>`__ in `O(1) non-amortized worst-case time with negligible constant
+<eli5:eli5>` against :ref:`type hints standardized by the Python community
+<pep:pep>` in `O(1) non-amortized worst-case time with negligible constant
 factors <Timings_>`__. If the prior sentence was unreadable jargon, see
 :ref:`our friendly and approachable FAQ for a human-readable synopsis
 <faq:faq>`.
@@ -193,6 +193,7 @@ developed Python versions <Python status_>`__, :ref:`all Python package managers
    Install <install>
    ELI5 <eli5>
    FAQ <faq>
+   Features <pep>
 
 .. #   :hidden:
 .. #FIXME: Uncomment *AFTER* re-enabling "autoapi" support in "conf.py" and

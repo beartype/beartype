@@ -360,80 +360,80 @@
    https://tox.readthedocs.io
 
 .. # ------------------( LINKS ~ py : pep                    )------------------
-.. _PEP 0:
-   https://www.python.org/dev/peps
+.. _PEPs:
+   https://peps.python.org
 .. _PEP 20:
-   https://www.python.org/dev/peps/pep-0020
+   https://peps.python.org/pep-0020
 .. _PEP 362:
-   https://www.python.org/dev/peps/pep-0362
+   https://peps.python.org/pep-0362
 .. _PEP 483:
-   https://www.python.org/dev/peps/pep-0483
+   https://peps.python.org/pep-0483
 .. _PEP 526:
-   https://www.python.org/dev/peps/pep-0526
+   https://peps.python.org/pep-0526
 .. _PEP 544:
-   https://www.python.org/dev/peps/pep-0544
+   https://peps.python.org/pep-0544
 .. _PEP 557:
-   https://www.python.org/dev/peps/pep-0557
+   https://peps.python.org/pep-0557
 .. _PEP 561:
-   https://www.python.org/dev/peps/pep-0561
+   https://peps.python.org/pep-0561
 .. _PEP 563:
-   https://www.python.org/dev/peps/pep-0563
+   https://peps.python.org/pep-0563
 .. _PEP 570:
-   https://www.python.org/dev/peps/pep-0570
+   https://peps.python.org/pep-0570
 .. _PEP 572:
-   https://www.python.org/dev/peps/pep-0572
+   https://peps.python.org/pep-0572
 .. _PEP 585:
-   https://www.python.org/dev/peps/pep-0585
+   https://peps.python.org/pep-0585
 .. _PEP 586:
-   https://www.python.org/dev/peps/pep-0586
+   https://peps.python.org/pep-0586
 .. _PEP 589:
-   https://www.python.org/dev/peps/pep-0589
+   https://peps.python.org/pep-0589
 .. _PEP 591:
-   https://www.python.org/dev/peps/pep-0591
+   https://peps.python.org/pep-0591
 .. _PEP 593:
-   https://www.python.org/dev/peps/pep-0593
+   https://peps.python.org/pep-0593
 .. _PEP 604:
-   https://www.python.org/dev/peps/pep-0604
+   https://peps.python.org/pep-0604
 .. _PEP 612:
-   https://www.python.org/dev/peps/pep-0612
+   https://peps.python.org/pep-0612
 .. _PEP 613:
-   https://www.python.org/dev/peps/pep-0613
+   https://peps.python.org/pep-0613
 .. _PEP 646:
-   https://www.python.org/dev/peps/pep-0646
+   https://peps.python.org/pep-0646
 .. _PEP 647:
-   https://www.python.org/dev/peps/pep-0647
+   https://peps.python.org/pep-0647
 .. _PEP 673:
-   https://www.python.org/dev/peps/pep-0673
+   https://peps.python.org/pep-0673
 .. _PEP 675:
-   https://www.python.org/dev/peps/pep-0675
+   https://peps.python.org/pep-0675
 .. _PEP 681:
-   https://www.python.org/dev/peps/pep-0681
+   https://peps.python.org/pep-0681
 .. _PEP 3102:
-   https://www.python.org/dev/peps/pep-3102
+   https://peps.python.org/pep-3102
 .. _PEP 3141:
-   https://www.python.org/dev/peps/pep-3141
+   https://peps.python.org/pep-3141
 
 .. # ------------------( LINKS ~ py : pep : 3119             )------------------
 .. _PEP 3119:
-   https://www.python.org/dev/peps/pep-3119
+   https://peps.python.org/pep-3119
 .. _virtual base classes:
-   https://www.python.org/dev/peps/pep-3119/#id33
+   https://peps.python.org/pep-3119/#id33
 
 .. # ------------------( LINKS ~ py : pep : 484              )------------------
 .. _PEP 484:
-   https://www.python.org/dev/peps/pep-0484
+   https://peps.python.org/pep-0484
 .. _implicit numeric tower:
    https://peps.python.org/pep-0484/#the-numeric-tower
 .. _relative forward references:
    https://peps.python.org/pep-0484/#forward-references
 .. _type aliases:
-   https://www.python.org/dev/peps/pep-0484/#type-aliases
+   https://peps.python.org/pep-0484/#type-aliases
 
 .. # ------------------( LINKS ~ py : pep : 560              )------------------
 .. _PEP 560:
-   https://www.python.org/dev/peps/pep-0560
+   https://peps.python.org/pep-0560
 .. _mro_entries:
-   https://www.python.org/dev/peps/pep-0560/#id20
+   https://peps.python.org/pep-0560/#id20
 
 .. # ------------------( LINKS ~ py : service                )------------------
 .. _Anaconda:

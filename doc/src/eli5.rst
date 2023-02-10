@@ -29,7 +29,7 @@ Beartype is unopinionated. Beartype inflicts *no* developer constraints
 beyond `importation and usage of a single configuration-free decorator
 <Cheatsheet_>`__. Beartype is trivially integrated into new and existing
 applications, stacks, modules, and scripts already annotating callables with
-`PEP-compliant industry-standard type hints <Features_>`__.
+:ref:`PEP-compliant industry-standard type hints <pep:pep>`.
 
 .. # ------------------( TABLES OF CONTENTS                  )------------------
 .. # Project-wide tables of contents (TOCs). See also official documentation on
@@ -64,6 +64,8 @@ instead stressing expense-free strategies at both:
 * **Runtime.** Thanks to aggressive memoization and dynamic code generation at
   decoration time, beartype guarantees `O(1) non-amortized worst-case runtime
   complexity with negligible constant factors <Timings_>`__.
+
+.. _eli5:static:
 
 ...versus Static Type-checkers
 ##############################
@@ -148,10 +150,11 @@ Beartype makes type-checking painless, portable, and purportedly fun. Just:
 Standard Hints
 ##############
 
-Beartype supports *most* `type hints standardized by the developer community
-through Python Enhancement Proposals (PEPs) <Compliance_>`__. Since type hinting
-is its own special hell, we'll start by wading into the thalassophobia-inducing
-waters of type-checking with a sane example – the O(1) ``@beartype`` way.
+Beartype supports *most* :ref:`type hints standardized by the developer
+community through Python Enhancement Proposals (PEPs) <pep:pep>`. Since type
+hinting is its own special hell, we'll start by wading into the
+thalassophobia-inducing waters of type-checking with a sane example – the
+``O(1) @beartype`` way.
 
 Toy Example
 ***********
@@ -270,7 +273,7 @@ Would You Like to Know More?
 ****************************
 
 If you know `type hints <PEP 484_>`__, you know beartype. Since beartype is
-driven by `tool-agnostic community standards <PEP 0_>`__, the public API for
+driven by `tool-agnostic community standards <PEPs_>`__, the public API for
 beartype is *basically* just those standards. As the user, all you need to know
 is that decorated callables magically raise human-readable exceptions when you
 pass parameters or return values violating the PEP-compliant type hints

@@ -496,14 +496,19 @@ html_theme_options = {
             'icon': 'fab fa-github-square',
         },
         {
+            'name': 'Libraries.io',
+            'url': 'https://libraries.io/pypi/beartype',
+            'icon': 'fas fa-chart-area',
+        },
+        {
             'name': 'PyPI',
             'url': 'https://pypi.org/project/beartype',
             'icon': 'fab fa-python',
         },
         {
-            'name': 'Libraries.io',
-            'url': 'https://libraries.io/pypi/beartype',
-            'icon': 'fas fa-chart-area',
+            'name': 'Anaconda',
+            'url': 'https://anaconda.org/conda-forge/beartype',
+            'icon': 'fab fa-circle',
         },
     ],
 

@@ -124,10 +124,10 @@ When should I use beartype?
 Use beartype to assure the quality of Python code beyond what tests alone can
 assure. If you have yet to test, do that first with a pytest_-based test suite,
 tox_ configuration, and `continuous integration (CI) <continuous
-integration_>`__. If you have any time, money, or motivation left, `annotate
-callables and classes with PEP-compliant type hints <Features_>`__ and
-:ref:`decorate those callables and classes with the @beartype.beartype decorator
-<eli5:eli5>`.
+integration_>`__. If you have any time, money, or motivation left,
+:ref:`annotate callables and classes with PEP-compliant type hints <pep:pep>`
+and :ref:`decorate those callables and classes with the @beartype.beartype
+decorator <eli5:eli5>`.
 
 Prefer beartype over other runtime and static type-checkers whenever you lack
 perfect control over the objects passed to or returned from your callables –
@@ -143,8 +143,7 @@ common developer scenarios like:
 If none of the above apply, prefer beartype over static type-checkers
 whenever:
 
-* You want to `check types decidable only at runtime <Versus Static
-  Type-checkers_>`__.
+* You want to :ref:`check types decidable only at runtime <eli5:static>`.
 * You want to write code rather than fight a static type-checker, because
   `static type inference <type inference_>`__ of a `dynamically-typed`_ language
   is guaranteed to fail and frequently does. If you've ever cursed the sky after
@@ -166,17 +165,17 @@ whenever:
     **Beartype believes dynamic typing is beneficial by default,** because
     Python is beneficial by default.
 
-    **Beartype is unopinionated.** That's because beartype `operates exclusively
-    at the higher level of pure-Python callables and classes <Versus Static
-    Type-checkers_>`__ rather than the lower level of individual statements
-    *inside* pure-Python callables and class. Unlike static type-checkers,
-    beartype can't be opinionated about things that no one should be.
+    **Beartype is unopinionated.** That's because beartype :ref:`operates
+    exclusively at the higher level of pure-Python callables and classes
+    <eli5:static>` rather than the lower level of individual statements *inside*
+    pure-Python callables and class. Unlike static type-checkers, beartype can't
+    be opinionated about things that no one should be.
 
 If none of the above *still* apply, still use beartype. It's `free as in beer
-and speech <gratis versus libre_>`__, `cost-free at installation- and runtime
-<Overview_>`__, and transparently stacks with existing type-checking solutions.
-Leverage beartype until you find something that suites you better, because
-beartype is *always* better than nothing.
+and speech <gratis versus libre_>`__, :ref:`cost-free at installation- and
+runtime <eli5:comparison>`, and transparently stacks with existing type-checking
+solutions. Leverage beartype until you find something that suites you better,
+because beartype is *always* better than nothing.
 
 *******************************
 Does beartype do any bad stuff?
