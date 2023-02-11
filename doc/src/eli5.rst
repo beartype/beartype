@@ -25,9 +25,9 @@ Beartype is a novel first line of defense. In Python's vast arsenal of
 against breaches in type safety by improper parameter and return values
 violating developer expectations.
 
-Beartype is unopinionated. Beartype inflicts *no* developer constraints
-beyond `importation and usage of a single configuration-free decorator
-<Cheatsheet_>`__. Beartype is trivially integrated into new and existing
+Beartype is unopinionated. Beartype inflicts *no* developer constraints beyond
+:ref:`importation and usage of a single configuration-free decorator
+<tldr:tldr>`. Beartype is trivially integrated into new and existing
 applications, stacks, modules, and scripts already annotating callables with
 :ref:`PEP-compliant industry-standard type hints <pep:pep>`.
 

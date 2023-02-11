@@ -508,7 +508,7 @@ html_theme_options = {
         {
             'name': 'Anaconda',
             'url': 'https://anaconda.org/conda-forge/beartype',
-            'icon': 'fab fa-circle',
+            'icon': 'far fa-circle',
         },
     ],
 

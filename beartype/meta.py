@@ -473,7 +473,41 @@ See Also
     Further details.
 '''
 
-# ....................{ METADATA ~ libs : theme            }....................
+# ....................{ METADATA ~ libs : doc : sphinx     }....................
+_SPHINX_VERSION_MINIMUM = '4.2.0'
+'''
+Machine-readable minimum (inclusive) version as a ``.``-delimited string of
+:mod:`sphinx` required to build package documentation.
+
+Specifically, this project requires:
+
+* :mod:sphinx` >= 4.2.0, which resolved a `severe compatibility issue`_ with
+  Python >= 3.10.
+
+.. _severe compatibility issue:
+   https://github.com/sphinx-doc/sphinx/issues/9816
+'''
+
+
+#FIXME: Once "pydata-sphinx-theme" 0.13.0 is released:
+#* Relax this restriction (e.g., by simply commenting this global out both here
+#  and below).
+#* Bump "_SPHINX_THEME_VERSION_MINIMUM >= '0.13.0'" below.
+_SPHINX_VERSION_MAXIMUM_EXCLUSIVE = '6.0.0'
+'''
+Machine-readable maximum (exclusive) version as a ``.``-delimited string of
+:mod:`sphinx` required to build package documentation.
+
+Specifically, this project requires:
+
+* :mod:sphinx` < 6.0.0, which `currently conflicts with our Sphinx theme <theme
+  conflict_>`__.
+
+.. _theme conflict:
+   https://github.com/sphinx-doc/sphinx/issues/9816
+'''
+
+# ....................{ METADATA ~ libs : doc : theme      }....................
 SPHINX_THEME_NAME = 'pydata-sphinx-theme'
 '''
 Name of the third-party Sphinx extension providing the custom HTML theme
@@ -546,31 +580,16 @@ PyData wins by *literally* doing nothing. Laziness prevails. All hail La-Z-Boy.
 '''
 
 
-SPHINX_THEME_VERSION_MINIMUM = '0.7.2'
+_SPHINX_THEME_VERSION_MINIMUM = '0.7.2'
 '''
-Machine-readable minimum version as a ``.``-delimited string of the above Sphinx
-theme optionally leveraged when building package documentation.
+Machine-readable minimum (inclusive) version as a ``.``-delimited string of the
+above Sphinx theme optionally leveraged when building package documentation.
 '''
 
 # ....................{ METADATA ~ libs : doc              }....................
-_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX = '4.2.0'
-'''
-Human-readable minimum version as a ``.``-delimited string of :mod:`sphinx`
-required to build package documentation.
-
-Specifically, this project requires:
-
-* :mod:sphinx` >= 4.2.0, which resolved a `severe compatibility issue`_ with
-  Python >= 3.10.
-
-.. _severe compatibility issue:
-   https://github.com/sphinx-doc/sphinx/issues/9816
-'''
-
-
 LIBS_DOCTIME_MANDATORY = (
-    f'sphinx >={_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX}',
-    f'{SPHINX_THEME_NAME} >={SPHINX_THEME_VERSION_MINIMUM}',
+    f'sphinx >={_SPHINX_VERSION_MINIMUM}, <{_SPHINX_VERSION_MAXIMUM_EXCLUSIVE}',
+    f'{SPHINX_THEME_NAME} >={_SPHINX_THEME_VERSION_MINIMUM}',
     'autoapi >=0.9.0',
     'sphinxext-opengraph >= 0.7.5',
 )
@@ -601,8 +620,8 @@ See Also
 #accidentally constraining us to obsolete Sphinx versions known to be broken.
 LIBS_DOCTIME_MANDATORY_RTD = LIBS_DOCTIME_MANDATORY
 # LIBS_DOCTIME_MANDATORY_RTD = (
-#     f'sphinx =={_LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX}',
-#     f'{SPHINX_THEME_NAME} =={SPHINX_THEME_VERSION_MINIMUM}',
+#     f'sphinx =={_SPHINX_VERSION_MINIMUM}',
+#     f'{SPHINX_THEME_NAME} =={_SPHINX_THEME_VERSION_MINIMUM}',
 # )
 '''
 **Mandatory Read The Docs (RTD) documentation build-time package dependencies**

@@ -191,6 +191,7 @@ developed Python versions <Python status_>`__, :ref:`all Python package managers
 
    Bearpedia <self>
    Install <install>
+   tl;dr <tldr>
    ELI5 <eli5>
    FAQ <faq>
    Features <pep>
