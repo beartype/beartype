@@ -3234,6 +3234,14 @@ to destroy everything you hold dear (in ascending order of justice):
 
       # ...instead of this.
       #from typing import Dict, FrozenSet, List, Set, Tuple, Type
+      
+      # Note, basic python: `from beartype import typing`
+      # doesn't let you `from typing import ...` from prior import!
+      from beartype import typing
+      from typing import __file__ as fname; print(fname)
+      # Ex: .../python3.8/typing.py 😞
+      from beartype.typing import __file__ as fname; print(fname)
+      # Ex: .../site-packages/beartype/typing/__init__.py 😎
 
    The public ``beartype.typing`` API is a mypy_-compliant replacement for
    the typing_ API offering improved forward compatibility with future Python
