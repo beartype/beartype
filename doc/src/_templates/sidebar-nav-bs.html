@@ -20,8 +20,9 @@ uselessly displays a blank left sidebar.
   projects such as this, which the template below is more-or-less shamelessly
   copy-pasted from:
   https://github.com/pydata/pydata-sphinx-theme/issues/90#issuecomment-1181250562
-* Open issue discussing this boilerplate pablum. Naturally, nothing was done.
-  Fascinatingly:
+* Open issue discussing this boilerplate pablum. Naturally, nothing was done:
+  https://github.com/pydata/pydata-sphinx-theme/issues/221
+  Fascinatingly, from the same issue:
   * Theme load @jorisvandenbossche claims this is desirable behaviour, because:
     "That is because for the root index.html, this TOC is actually already
     shown, but in the header. This theme basically tries to look at the global
@@ -49,11 +50,9 @@ uselessly displays a blank left sidebar.
     {{ generate_nav_html("sidebar",
                          startdepth=0,
                          maxdepth=theme_navigation_depth|int,
+                         show_nav_level=theme_show_nav_level|int,
                          collapse=theme_collapse_navigation|tobool,
                          includehidden=True,
                          titles_only=True) }}
   </div>
-  <!-- FIXME: Pass the "show_nav_level" option listed below above, please. For
-       unknown reasons, doing so currently raises an exception. *shrug* -->
-                         <!-- show_nav_level=theme_show_nav_level|int, -->
 </nav>

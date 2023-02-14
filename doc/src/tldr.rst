@@ -16,8 +16,6 @@ Too Long; Didn't Read (tl;dr)
 Let's type-check like `greased lightning`_! Thanks to cheatsheets like this, you
 no longer have to know how to use software to use software. ``\o/``
 
-Beartype: *it just sorta works.* 
-
 .. code-block:: python
 
    # ..................{              IMPORTS                }..................
@@ -395,3 +393,5 @@ Beartype: *it just sorta works.*
    # Combine NumPy type hints with standard type hints, too.
    ) -> tuple[NumpyArrayFloat, int]:
        return (param_must_satisfy_numpy, len(param_must_satisfy_numpy))
+
+Beartype: *it just sorta works.*

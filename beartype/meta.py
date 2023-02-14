@@ -500,8 +500,8 @@ Machine-readable maximum (exclusive) version as a ``.``-delimited string of
 
 Specifically, this project requires:
 
-* :mod:sphinx` < 6.0.0, which `currently conflicts with our Sphinx theme <theme
-  conflict_>`__.
+* :mod:sphinx` < 6.0.0, as more recent versions `currently conflicts with our
+  Sphinx theme <theme conflict_>`__.
 
 .. _theme conflict:
    https://github.com/sphinx-doc/sphinx/issues/9816
@@ -580,10 +580,16 @@ PyData wins by *literally* doing nothing. Laziness prevails. All hail La-Z-Boy.
 '''
 
 
-_SPHINX_THEME_VERSION_MINIMUM = '0.7.2'
+_SPHINX_THEME_VERSION_MINIMUM = '0.12.0'
 '''
 Machine-readable minimum (inclusive) version as a ``.``-delimited string of the
 above Sphinx theme optionally leveraged when building package documentation.
+
+Specifically, this project requires:
+
+* :mod:pydata_sphinx_theme` >= 0.12.0, as our circumvention of both
+  pydata/pydata-sphinx-theme#90 and pydata/pydata-sphinx-theme#221 assumes a
+  reasonably recent version of this theme. ``</sigh>``
 '''
 
 # ....................{ METADATA ~ libs : doc              }....................
