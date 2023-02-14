@@ -10,16 +10,13 @@
 
 .. _faq:faq:
 
-################################
-Frequently Asked Questions (FAQ)
-################################
+##############################
+Ask a Bear Bro Anything (ABBA)
+##############################
 
-Beartype now answers all your many questions about life, love, and typing while
-trying to do both. For example:
-
-    **Q:** "Why is it so cold in leycec_\ 's cottage in the Canadian wilderness?"
-
-    **A:** "Not even Polo the polar bear knows."
+Beartype now answers your many pressing questions about life, love, and typing.
+Maximize your portfolio of crushed bugs by devoutly memorizing the answers to
+these... **frequently asked questions (FAQ)!**
 
 .. # ------------------( TABLES OF CONTENTS                  )------------------
 .. # Project-wide tables of contents (TOCs). See also official documentation on
@@ -741,3 +738,11 @@ reducing static type-checker spam that went rotten decades ago: e.g.,
 
 Beartype: *because you no longer care what static type-checkers think.*
 
+***********************************************************************************
+Why is it so cold in @leycec's poorly insulated cottage in the Canadian wilderness?
+***********************************************************************************
+
+Not even Poło the polar bear knows.
+
+Also, anyone else notice that this question answers itself? Anybody? No? Nobody?
+It is just me? ``</snowflakes_fall_silently>``

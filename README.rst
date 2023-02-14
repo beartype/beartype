@@ -137,6 +137,16 @@ one documentation-time dependency <Sphinx_>`__. Beartype supports `all actively
 developed Python versions <Python status_>`__, `all Python package managers
 <Install_>`__, and `multiple platform-specific package managers <Install_>`__.
 
+    ⚠
+
+    `Beartype documentation is currently transitioning to ReadTheDocs (RTD)
+    <beartype RTD_>`__. Since the monolithic document you are reading now has
+    been known to induce migraines in 22% of Canada's devops population, please
+    see `our new bear den at ReadTheDocs (RTD) <beartype RTD_>`__ instead. It's
+    not quite as complete as this document, but it *is* readable, structured,
+    and soothing to the deep ridges of your cerebral neocortex. Does that not
+    count for something?
+
     Beartype `powers quality assurance across the Python ecosystem <beartype
     dependents_>`__.
 
@@ -6027,6 +6037,8 @@ rather than Python runtime) include:
    https://github.com/beartype/beartype/blob/main/bin/profile.bash
 .. _beartype pulls:
    https://github.com/beartype/beartype/pulls
+.. _beartype RTD:
+   https://beartype.readthedocs.io
 .. _beartype tests:
    https://github.com/beartype/beartype/actions?workflow=tests
 
