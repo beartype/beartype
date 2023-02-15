@@ -50,9 +50,11 @@ uselessly displays a blank left sidebar.
     {{ generate_nav_html("sidebar",
                          startdepth=0,
                          maxdepth=theme_navigation_depth|int,
-                         show_nav_level=theme_show_nav_level|int,
                          collapse=theme_collapse_navigation|tobool,
                          includehidden=True,
                          titles_only=True) }}
   </div>
+<!--
+                         show_nav_level=theme_show_nav_level|int,
+-->
 </nav>

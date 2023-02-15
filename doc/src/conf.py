@@ -488,6 +488,7 @@ html_theme_options = {
     # * This theme requires long-form FontAwesome styles (e.g., "fa-brand",
     #   "fa-solid") to be abbreviated to these three-letter abbreviations:
     #   * "fa-brand" -> "fab".
+    #   * "fa-regular" -> "far".
     #   * "fa-solid" -> "fas".
     'icon_links': [
         {
@@ -508,6 +509,11 @@ html_theme_options = {
         {
             'name': 'Anaconda',
             'url': 'https://anaconda.org/conda-forge/beartype',
+            'icon': 'far fa-circle',
+        },
+        {
+            'name': 'ReadTheDocs',
+            'url': 'https://readthedocs.org/projects/beartype',
             'icon': 'far fa-circle',
         },
     ],
