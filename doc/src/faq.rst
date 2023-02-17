@@ -19,12 +19,6 @@ Maximize your portfolio of crushed bugs by devoutly memorizing the answers to
 these... **frequently asked questions (FAQ)!**
 
 .. # ------------------( TABLES OF CONTENTS                  )------------------
-.. # Project-wide tables of contents (TOCs). See also official documentation on
-.. # the Sphinx-specific "toctree::" directive:
-.. #     https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-toctree
-
-|
-
 .. # Table of contents, excluding the above document heading. While the
 .. # official reStructuredText documentation suggests that a language-specific
 .. # heading will automatically prepend this table, this does *NOT* appear to
@@ -738,9 +732,9 @@ reducing static type-checker spam that went rotten decades ago: e.g.,
 
 Beartype: *because you no longer care what static type-checkers think.*
 
-***********************************************************************************
-Why is it so cold in @leycec's poorly insulated cottage in the Canadian wilderness?
-***********************************************************************************
+*****************************************************************************
+Why is @leycec's poorly insulated cottage in the Canadian wilderness so cold?
+*****************************************************************************
 
 Not even Poło the polar bear knows.
 

@@ -7,14 +7,6 @@
 .. # common URI links in reST format, automatically exposed to all other reST
 .. # documents in this project via the "rst_epilog" setting in "conf.py").
 
-.. # ------------------( IMAGES                              )------------------
-.. |beartype-contributors| image:: https://contrib.rocks/image?repo=beartype/beartype
-   :target: https://github.com/beartype/beartype/graphs/contributors
-   :alt: Beartype contributors
-.. |beartype-stars| image:: https://star-history.com/#beartype/beartype&Date
-   :target: https://github.com/beartype/beartype/stargazers
-   :alt: Beartype stargazers
-
 .. # ------------------( IMAGES ~ badge                      )------------------
 .. |bear-ified| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg
    :align: top

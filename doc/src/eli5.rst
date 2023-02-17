@@ -32,12 +32,6 @@ applications, stacks, modules, and scripts already annotating callables with
 :ref:`PEP-compliant industry-standard type hints <pep:pep>`.
 
 .. # ------------------( TABLES OF CONTENTS                  )------------------
-.. # Project-wide tables of contents (TOCs). See also official documentation on
-.. # the Sphinx-specific "toctree::" directive:
-.. #     https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-toctree
-
-|
-
 .. # Table of contents, excluding the above document heading. While the
 .. # official reStructuredText documentation suggests that a language-specific
 .. # heading will automatically prepend this table, this does *NOT* appear to
@@ -146,6 +140,8 @@ Beartype makes type-checking painless, portable, and purportedly fun. Just:
     just for you.
 
 "Embrace the bear," says the bear peering over your shoulder as you read this.
+
+.. _eli5:typing:
 
 Standard Hints
 ##############

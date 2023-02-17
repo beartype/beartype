@@ -2328,8 +2328,8 @@ tradeoffs:
   function costs, but is special-purpose and thus supports only a narrow band
   of validation scenarios.
 
-Wherever you can, prefer declarative validators for efficiency. Everywhere
-else, default to functional validators for generality.
+Wherever you can, prefer *declarative* validators for efficiency. Everywhere
+else, fallback to *functional* validators for generality.
 
 Validator API
 ~~~~~~~~~~~~~
@@ -5916,7 +5916,7 @@ rather than Python runtime) include:
 .. # Note: intentionally sorted in lexicographic order to avoid bias.
 
 * mypy_.
-* Pyre_, published by FaceBook. :sup:`...yah.`
+* Pyre_, published by Meta. :sup:`...yah.`
 * pyright_, published by Microsoft.
 * pytype_, published by Google.
 

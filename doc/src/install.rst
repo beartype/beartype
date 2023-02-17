@@ -47,12 +47,6 @@ over\ *bear*\ ing project shield. What says quality like `a bear on a badge
 <Badge_>`__, amirite?
 
 .. # ------------------( TABLES OF CONTENTS                  )------------------
-.. # Project-wide tables of contents (TOCs). See also official documentation on
-.. # the Sphinx-specific "toctree::" directive:
-.. #     https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-toctree
-
-|
-
 .. # Table of contents, excluding the above document heading. While the
 .. # official reStructuredText documentation suggests that a language-specific
 .. # heading will automatically prepend this table, this does *NOT* appear to
