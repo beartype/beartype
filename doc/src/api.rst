@@ -1505,10 +1505,10 @@ uncomfortable details you may regret reading.
 Validator Overview
 ##################
 
-Beartype validators are **zero-cost code generators.** Like the rest of
-beartype (but unlike other validation frameworks), beartype validators
-dynamically generate optimally efficient pure-Python type-checking logic with
-*no* hidden function or method calls, undocumented costs, or runtime overhead.
+Beartype validators are **zero-cost code generators.** Like the rest of beartype
+(but unlike other validation frameworks), beartype validators dynamically
+generate optimally efficient pure-Python type-checking logic with *no* hidden
+function or method calls, undocumented costs, or runtime overhead.
 
 Beartype validator code is thus **call-explicit.** Since pure-Python function
 and method calls are notoriously slow in CPython_, the code we generate only
@@ -1844,6 +1844,408 @@ Validator API
 .. [#enum_type]
    You don't want to know the type of enum.Enum_ members. Srsly. You don't. OK?
    You do? Very well. It's enum.Enum_. :superscript:`mic drop`
+
+Validator Syntax
+################
+
+Beartype validators support a rich domain-specific language (DSL) leveraging
+familiar Python operators. Dynamically create new validators on-the-fly from
+existing validators, fueling reuse and preserving DRY_:
+
+* **Negation** (i.e., ``not``). Negating any validator with the ``~`` operator
+  creates a new validator returning ``True`` only when the negated validator
+  returns ``False``:
+
+  .. code-block:: python
+
+     # Type hint matching only strings containing *no* periods, semantically
+     # equivalent to this type hint:
+     #     PeriodlessString = Annotated[str, Is[lambda text: '.' not in text]]
+     PeriodlessString = Annotated[str, ~Is[lambda text: '.' in text]]
+
+* **Conjunction** (i.e., ``and``). And-ing two or more validators with the
+  ``&`` operator creates a new validator returning ``True`` only when *all* of
+  the and-ed validators return ``True``:
+
+  .. code-block:: python
+
+     # Type hint matching only non-empty strings containing *no* periods,
+     # semantically equivalent to this type hint:
+     #     NonemptyPeriodlessString = Annotated[
+     #         str, Is[lambda text: text and '.' not in text]]
+     SentenceFragment = Annotated[str, (
+          Is[lambda text: bool(text)] &
+         ~Is[lambda text: '.' in text]
+     )]
+
+* **Disjunction** (i.e., ``or``). Or-ing two or more validators with the ``|``
+  operator creates a new validator returning ``True`` only when at least one of
+  the or-ed validators returns ``True``:
+
+  .. code-block:: python
+
+     # Type hint matching only empty strings *and* non-empty strings containing
+     # one or more periods, semantically equivalent to this type hint:
+     #     EmptyOrPeriodfullString = Annotated[
+     #         str, Is[lambda text: not text or '.' in text]]
+     EmptyOrPeriodfullString = Annotated[str, (
+         ~Is[lambda text: bool(text)] |
+          Is[lambda text: '.' in text]
+     )]
+
+* **Enumeration** (i.e., ``,``). Delimiting two or or more validators with
+  commas at the top level of a typing.Annotated_ type hint is an alternate
+  syntax for and-ing those validators with the ``&`` operator, creating a new
+  validator returning ``True`` only when *all* of those delimited validators
+  return ``True``.
+
+  .. code-block:: python
+
+     # Type hint matching only non-empty strings containing *no* periods,
+     # semantically equivalent to the "SentenceFragment" defined above.
+     SentenceFragment = Annotated[str,
+          Is[lambda text: bool(text)],
+         ~Is[lambda text: '.' in text],
+     ]
+
+  Since the ``&`` operator is more explicit *and* usable in a wider variety of
+  syntactic contexts, the ``&`` operator is generally preferable to enumeration
+  (all else being equal).
+* **Interoperability.** As PEP-compliant type hints, validators are safely
+  interoperable with other PEP-compliant type hints and usable wherever other
+  PEP-compliant type hints are usable. Standard type hints are subscriptable
+  with validators, because validators *are* standard type hints:
+
+  .. code-block:: python
+
+     # Type hint matching only sentence fragments defined as either Unicode or
+     # byte strings, generalizing "SentenceFragment" type hints defined above.
+     SentenceFragment = Union[
+         Annotated[bytes, Is[lambda text: b'.' in text]],
+         Annotated[str,   Is[lambda text: u'.' in text]],
+     ]
+
+`Standard Python precedence rules <_operator precedence>`__ may apply.
+
+DSL: *it's not just a telecom acronym anymore.*
+
+Validator Caveats
+#################
+
+.. note::
+
+   **Validators require:**
+
+   * **Beartype.** Currently, all *other* static and runtime type checkers
+     silently ignore beartype validators during type-checking. This includes
+     mypy_ – which we could possibly solve by bundling a `mypy plugin`_ with
+     beartype that extends mypy_ to statically analyze declarative beartype
+     validators (e.g., ``beartype.vale.IsAttr``, ``beartype.vale.IsEqual``). We
+     leave this as an exercise to the idealistic doctoral thesis candidate.
+     :superscript:`Please do this for us, someone who is not us.`
+   * Either **Python ≥ 3.9** *or* `typing_extensions ≥ 3.9.0.0
+     <typing_extensions_>`__. Validators piggyback onto the typing.Annotated_
+     class first introduced with Python 3.9.0 and since backported to older
+     Python versions by the `third-party "typing_extensions" package
+     <typing_extensions_>`__, which beartype also transparently supports.
+
+Validator Showcase
+##################
+
+Observe the disturbing (yet alluring) utility of beartype validators in action
+as they unshackle type hints from the fetters of PEP compliance. Begone,
+foulest standards!
+
+Full-Fat O(n) Matching
+**********************
+
+Let's validate **all integers in a list of integers in O(n) time**, because
+validators mean you no longer have to accept the QA scraps we feed you:
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype import beartype
+   from beartype.vale import Is
+   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+
+   # Type hint matching all integers in a list of integers in O(n) time. Please
+   # never do this. You now want to, don't you? Why? You know the price! Why?!?
+   IntList = Annotated[list[int], Is[lambda lst: all(
+       isinstance(item, int) for item in lst)]]
+
+   # Type-check all integers in a list of integers in O(n) time. How could you?
+   @beartype
+   def sum_intlist(my_list: IntList) -> int:
+       '''
+       The slowest possible integer summation over the passed list of integers.
+
+       There goes your whole data science pipeline. Yikes! So much cringe.
+       '''
+
+       return sum(my_list)  # oh, gods what have you done
+
+Welcome to **full-fat type-checking.** In `our disastrous roadmap to beartype
+1.0.0 <beartype 1.0.0_>`__, we reluctantly admit that we'd like to augment the
+``@beartype`` decorator with a new parameter enabling full-fat type-checking.
+But don't wait on us. Force the issue now by just doing it yourself and then
+mocking us all over Gitter! *Fight the bear, man.*
+
+There are good reasons to believe that :ref:`O(1) type-checking is preferable
+<faq:O1>`. Violating that core precept exposes your codebase to scalability and
+security concerns. But you're the Big Boss, you swear you know best, and (in any
+case) we can't stop you because we already let the unneutered tomcat out of his
+trash bin by `publishing this API into the badlands of PyPI <beartype PyPI_>`__.
+
+Trendy String Matching
+**********************
+
+Let's accept strings either at least 80 characters long *or* both quoted and
+suffixed by a period. Look, it doesn't matter. Just do it already,
+``@beartype``!
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype import beartype
+   from beartype.vale import Is
+   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+
+   # Validator matching only strings at least 80 characters in length.
+   IsLengthy = Is[lambda text: len(text) >= 80]
+
+   # Validator matching only strings suffixed by a period.
+   IsSentence = Is[lambda text: text and text[-1] == '.']
+
+   # Validator matching only single- or double-quoted strings.
+   def _is_quoted(text): return text.count('"') >= 2 or text.count("'") >= 2
+   IsQuoted = Is[_is_quoted]
+
+   # Combine multiple validators by just listing them sequentially.
+   @beartype
+   def desentence_lengthy_quoted_sentence(
+       text: Annotated[str, IsLengthy, IsSentence, IsQuoted]]) -> str:
+       '''
+       Strip the suffixing period from a lengthy quoted sentence... 'cause.
+       '''
+
+       return text[:-1]  # this is horrible
+
+   # Combine multiple validators by just "&"-ing them sequentially. Yes, this
+   # is exactly identical to the prior function. We do this because we can.
+   @beartype
+   def desentence_lengthy_quoted_sentence_part_deux(
+       text: Annotated[str, IsLengthy & IsSentence & IsQuoted]]) -> str:
+       '''
+       Strip the suffixing period from a lengthy quoted sentence... again.
+       '''
+
+       return text[:-1]  # this is still horrible
+
+   # Combine multiple validators with as many "&", "|", and "~" operators as
+   # you can possibly stuff into a module that your coworkers can stomach.
+   # (They will thank you later. Possibly much later.)
+   @beartype
+   def strip_lengthy_or_quoted_sentence(
+       text: Annotated[str, IsLengthy | (IsSentence & ~IsQuoted)]]) -> str:
+       '''
+       Strip the suffixing character from a string that is lengthy and/or a
+       quoted sentence, because your web app deserves only the best data.
+       '''
+
+       return text[:-1]  # this is frankly outrageous
+
+Type Hint Arithmetic
+********************
+
+    **Subtitle:** *From Set Theory They Shall Grow*
+
+:pep:`484` standardized the typing.Union_ factory `disjunctively
+<disjunction_>`__ matching any of several equally permissible type hints ala
+Python's builtin ``or`` operator or the overloaded ``|`` operator for sets.
+That's great, because set theory is the beating heart behind type theory.
+
+But that's just disjunction_. What about intersection_ (e.g., ``and``, ``&``),
+`complementation <relative set complement_>`__ (e.g., ``not``, ``~``), or any
+of the vast multitude of *other* set theoretic operations? Can we logically
+connect simple type hints validating trivial constraints into complex type
+hints validating non-trivial constraints via PEP-standardized analogues of
+unary and binary operators?
+
+**Nope.** They don't exist yet. But that's okay. You use beartype, which means
+you don't have to wait for official Python developers to get there first.
+You're already there. :superscript:`...woah`
+
+Type Hint Elision
+=================
+
+Python's core type hierarchy conceals an ugly history of secretive backward
+compatibility. In this subsection, we uncover the two filthiest, flea-infested,
+backwater corners of the otherwise well-lit atrium that is the Python language
+– and how exactly you can finalize them. Both obstruct type-checking, readable
+APIs, and quality assurance in the post-Python 2.7 era.
+
+Guido doesn't want you to know. But you want to know, don't you? You are about
+to enter another dimension, a dimension not only of syntax and semantics but of
+shame. A journey into a hideous land of annotation wrangling. Next stop... *the
+Beartype Zone.* Because guess what?
+
+* **Booleans are integers.** They shouldn't be. Booleans aren't integers in most
+  high-level languages. Wait. Are you telling me booleans are literally integers
+  in Python? Surely you jest. That can't be. You can't *add* booleans, can you?
+  What would that even mean if you could? Observe and cower, rigorous data
+  scientists.
+
+  .. code-block:: python
+
+     >>> True + 3.1415
+     4.141500000000001    # <-- oh. by. god.
+     >>> isinstance(False, int)
+     True                 # <-- when nothing is true, everything is true
+
+* **Strings are infinitely recursive sequences of...** yup, it's strings. They
+  shouldn't be. Strings aren't infinitely recursive data structures in any
+  other language devised by incautious mortals – high-level or not. Wait. Are
+  you telling me strings are both indistinguishable from full-blown immutable
+  sequences containing arbitrary items *and* infinitely recurse into themselves
+  like that sickening non-Euclidean Hall of Mirrors I puked all over when I was
+  a kid? Surely you kid. That can't be. You can't infinitely index into strings
+  *and* pass and return the results to and from callables expecting either
+  ``Sequence[Any]`` or ``Sequence[str]`` type hints, can you? Witness and
+  tremble, stricter-than-thou QA evangelists.
+
+  .. code-block:: python
+
+     >>> 'yougottabekiddi—'[0][0][0][0][0][0][0][0][0][0][0][0][0][0][0]
+     'y'                 # <-- pretty sure we just broke the world
+     >>> from collections.abc import Sequence
+     >>> isinstance("Ph'nglui mglw'nafh Cthu—"[0][0][0][0][0], Sequence)
+     True                # <-- ...curse you, curse you to heck and back
+
+When we annotate a callable as accepting an ``int``, we *never* want that
+callable to also silently accept a ``bool``. Likewise, when we annotate another
+callable as accepting a ``Sequence[Any]`` or ``Sequence[str]``, we *never* want
+that callable to also silently accept a ``str``. These are sensible
+expectations – just not in Python, where madness prevails.
+
+To resolve these counter-intuitive concerns, we need the equivalent of the
+`relative set complement (or difference) <relative set complement_>`__. We now
+call this thing... **type elision!** Sounds pretty hot, right? We know.
+
+Booleans ≠ Integers
+-------------------
+
+Let's first validate **non-boolean integers** with a beartype validator
+effectively declaring a new ``int - bool`` class (i.e., the subclass of all
+integers that are *not* booleans):
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype import beartype
+   from beartype.vale import IsInstance
+   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+
+   # Type hint matching any non-boolean integer. This day all errata die.
+   IntNonbool = Annotated[int, ~IsInstance[bool]]   # <--- bruh
+
+   # Type-check zero or more non-boolean integers summing to a non-boolean
+   # integer. Beartype wills it. So it shall be.
+   @beartype
+   def sum_ints(*args: IntNonbool) -> IntNonbool:
+       '''
+       I cast thee out, mangy booleans!
+
+       You plague these shores no more.
+       '''
+
+       return sum(args)
+
+Strings ≠ Sequences
+-------------------
+
+Let's next validate **non-string sequences** with beartype validators
+effectively declaring a new ``Sequence - str`` class (i.e., the subclass of all
+sequences that are *not* strings):
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype import beartype
+   from beartype.vale import IsInstance
+   from collections.abc import Sequence
+   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+
+   # Type hint matching any non-string sequence. Your day has finally come.
+   SequenceNonstr = Annotated[Sequence, ~IsInstance[str]]   # <--- we doin this
+
+   # Type hint matching any non-string sequence *WHOSE ITEMS ARE ALL STRINGS.*
+   SequenceNonstrOfStr = Annotated[Sequence[str], ~IsInstance[str]]
+
+   # Type-check a non-string sequence of arbitrary items coerced into strings
+   # and then joined on newline to a new string. (Beartype got your back, bro.)
+   @beartype
+   def join_objects(my_sequence: SequenceNonstr) -> str:
+       '''
+       Your tide of disease ends here, :class:`str` class!
+       '''
+
+       return '\n'.join(map(str, my_sequence))  # <-- no idea how that works
+
+   # Type-check a non-string sequence whose items are all strings joined on
+   # newline to a new string. It isn't much, but it's all you ask.
+   @beartype
+   def join_strs(my_sequence: SequenceNonstrOfStr) -> str:
+       '''
+       I expectorate thee up, sequence of strings.
+       '''
+
+       return '\n'.join(my_sequence)  # <-- do *NOT* do this to a string
+
+Tensor Property Matching
+************************
+
+Let's validate `the same two-dimensional NumPy array of floats of arbitrary
+precision as in the lead example above <Beartype Validators_>`__ with an
+efficient declarative validator avoiding the additional stack frame imposed by
+the functional validator in that example:
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype import beartype
+   from beartype.vale import IsAttr, IsEqual, IsSubclass
+   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+
+   # Type hint matching only two-dimensional NumPy arrays of floats of
+   # arbitrary precision. This time, do it faster than anyone has ever
+   # type-checked NumPy arrays before. (Cue sonic boom, Chuck Yeager.)
+   import numpy as np
+   Numpy2DFloatArray = Annotated[np.ndarray,
+       IsAttr['ndim', IsEqual[2]] &
+       IsAttr['dtype', IsAttr['type', IsSubclass[np.floating]]]
+   ]
+
+   # Annotate @beartype-decorated callables with beartype validators.
+   @beartype
+   def polygon_area(polygon: Numpy2DFloatArray) -> float:
+       '''
+       Area of a two-dimensional polygon of floats defined as a set of
+       counter-clockwise points, calculated via Green's theorem.
+
+       *Don't ask.*
+       '''
+
+       # Calculate and return the desired area. Pretend we understand this.
+       polygon_rolled = np.roll(polygon, -1, axis=0)
+       return np.abs(0.5*np.sum(
+           polygon[:,0]*polygon_rolled[:,1] -
+           polygon_rolled[:,0]*polygon[:,1]))
 
 .. #FIXME: Resume here tomorrow, please.
 

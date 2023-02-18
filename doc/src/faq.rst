@@ -214,6 +214,8 @@ minutes`` to check a single list once. Yes, it's an uncommonly large list...
 *but it's still just a list.* This is the worst-case cost of a single call to a
 function decorated by a naïve runtime type-checker.
 
+.. _faq:O1:
+
 ***********************************
 Does beartype actually do anything?
 ***********************************
@@ -223,7 +225,7 @@ Generally, as little as it can while still satisfying the accepted definition of
 over the expected data structure of objects passed to and returned from
 @beartype-decorated functions and methods <Beartype just does random stuff?
 Really?_>`__. Colloquially, beartype type-checks randomly sampled data.
-RNGesus_, show your humble disciples the way. ``</ahem>``
+RNGesus_, show your humble disciples the way!
 
 Consider `the prior example of a function annotated as accepting a triply-nested
 list of integers passed a list containing 1,000 nested lists each containing
@@ -257,7 +259,7 @@ call to a function decorated by an ``O(1)`` runtime type-checker.
 How much does all this *really* cost?
 *************************************
 
-What substring of `"Beartype is free we swear it would we lie" <Does beartype do
+What substring of `"beartype is free we swear it would we lie" <Does beartype do
 any bad stuff?_>`__ did you not grep?
 
 *...very well.* Let's pontificate.

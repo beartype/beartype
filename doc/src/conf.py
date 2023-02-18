@@ -514,7 +514,7 @@ html_theme_options = {
         {
             'name': 'ReadTheDocs',
             'url': 'https://readthedocs.org/projects/beartype',
-            'icon': 'far fa-circle',
+            'icon': 'fas fa-book',
         },
     ],
 

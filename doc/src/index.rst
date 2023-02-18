@@ -154,13 +154,12 @@ developed Python versions <Python status_>`__, :ref:`all Python package managers
 .. # the Sphinx-specific "toctree::" directive:
 .. #     https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-toctree
 
-####################
-The Tree of Beartype
-####################
+###############
+The Typing Tree
+###############
 
 Welcome to the **Bearpedia** – your one-stop "free as in freedom" shop for
-beartype's ponderous documentation. It's "`Typing <typing_>`__ or bust!" as
-you...
+beartype's ponderous documentation. It's "typing_ or bust!" as you...
 
 .. # Root TOC tree, including:
 .. # * "... <self>", an entry self-referentially referring back to this document
@@ -183,7 +182,7 @@ you...
    FAQ <faq>
    Features <pep>
 
-Let's type this.
+*Let's type this.*
 
 .. # Table of contents, excluding the above document heading. While the
 .. # official reStructuredText documentation suggests that a language-specific
