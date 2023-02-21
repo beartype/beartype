@@ -11,6 +11,15 @@
 #   List of all options supported in this file.
 
 # ....................{ TODO                               }....................
+#FIXME: [THEME] Consider generalizing our theme from the somewhat low-level
+#"pydata-sphinx-theme" theme to the substantially higher-level
+#"sphinx-book-theme". The latter is built in terms of the former, but layers on
+#additional functionality for interactive Jupyter BinderHub-based cell content.
+#That would be just fantastic, because we have so *UTTERLY* much "code-block"
+#content distributed across our documentation; rendering that as interactive
+#content that users could actually run would be a *HUGE* win. See also:
+#    https://github.com/executablebooks/sphinx-book-theme
+
 #FIXME: [EXTENSION] Add "sphinx-notfound-page" support to enable us to provide
 #a sane 404 page for non-existent pages. In fact, we already appear to have a
 #"404.rst" document. Well, isn't that noice. Because we can't be bothered to

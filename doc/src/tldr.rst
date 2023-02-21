@@ -13,8 +13,8 @@
 Too Long; Didn't Read (tl;dr)
 #############################
 
-Let's type-check like `greased lightning`_! Thanks to cheatsheets like this, you
-no longer have to know how to use software to use software. ``\o/``
+Let's type-check like `greased lightning`_! Thanks to cheatsheets like this,
+you no longer have to know how to use software to use software. ``\o/``
 
 .. code-block:: python
 

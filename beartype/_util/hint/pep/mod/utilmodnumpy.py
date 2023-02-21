@@ -260,6 +260,7 @@ def reduce_hint_numpy_ndarray(
         #     DeprecationWarning: Converting `np.inexact` or `np.floating` to a
         #     dtype is deprecated. The current result is `float64` which is not
         #     strictly correct.
+        #
         # We instead follow mypy's lead presumably defined somewhere in the
         # incredibly complex innards of NumPy's mypy plugin -- which we
         # admittedly failed to grep despite ~~wasting~~ "investing" several
@@ -282,6 +283,7 @@ def reduce_hint_numpy_ndarray(
         #     True
         #     >>> numpy.dtype(numpy.float64) is numpy.dtype(numpy.float64)
         #     True
+        #
         # Ergo, the call to this constructor here is guaranteed to already
         # effectively be memoized.
         try:

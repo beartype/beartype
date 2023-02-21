@@ -1179,9 +1179,9 @@ that legally pries apart all type hints. Cry havoc, the bears of API war!
 .. # TypeHint Comparison
 .. # ~~~~~~~~~~~~~~~~~~~
 
-*******************
-Beartype Exceptions
-*******************
+***************
+Beartype Errors
+***************
 
 Beartype only raises:
 
@@ -1197,11 +1197,17 @@ Beartype only raises:
   the same exception class to mean two different things – allowing you to
   trivially catch and handle the exact exception you're interested in.
 
-Beartype is fastidious to a fault. Exception handling is no... *exception*.
-<sup>punny *or* funny? you decide.</sup>
+Likewise, beartype only emits beartype-specific warnings and disambiguous
+warnings. Beartype is fastidious to a fault. Error handling is no...
+*exception*. <sup>punny *or* funny? you decide.</sup>
 
 Exception API
 #############
+
+Beartype raises fatal exceptions whenever something explodes. Most are
+self-explanatory – but some assume prior knowledge of arcane type-hinting
+standards *or* require non-trivial resolutions warranting further discussion.
+This is their story.
 
 .. _BeartypeException:
 .. _beartype.roar.BeartypeException:
@@ -1441,7 +1447,155 @@ Exception API
 
       *First introduced in beartype 0.12.0.*
 
-.. _beartype.vale:
+Warning API
+###########
+
+Beartype emits non-fatal warnings whenever something looks it might explode in
+your lap later... *but has yet to do so.* Since it is dangerous to go alone, let
+beartype's words of anxiety-provoking wisdom be your guide. The codebase you
+save might be your own.
+
+PEP 585 Deprecations
+********************
+
+Beartype may occasionally emit non-fatal :pep:`585` deprecation warnings under
+Python ≥ 3.9 resembling:
+
+.. code-block::
+
+   /home/kumamon/beartype/_util/hint/pep/utilpeptest.py:377:
+   BeartypeDecorHintPep585DeprecationWarning: PEP 484 type hint
+   typing.List[int] deprecated by PEP 585 scheduled for removal in the first
+   Python version released after October 5th, 2025. To resolve this, import
+   this hint from "beartype.typing" rather than "typing". See this discussion
+   for further details and alternatives:
+       https://github.com/beartype/beartype#pep-585-deprecations
+
+This is that discussion topic. Let's dissect this like a mantis shrimp
+repeatedly punching out giant kraken.
+
+What Does This Mean?
+====================
+
+The :pep:`585` standard first introduced by Python 3.9.0 deprecated (obsoleted)
+*most* of the :pep:`484` standard first introduced by Python 3.5.0 in the
+official typing_ module. All deprecated type hints are slated to "be removed
+from the typing_ module in the first Python version released 5 years after the
+release of Python 3.9.0." Spoiler: Python 3.9.0 was released on October 5th,
+2020. Altogether, this means that:
+
+.. caution::
+
+   **Most of the "typing" module will be removed in 2025 or 2026.**
+
+If your codebase currently imports from the typing_ module, *most* of those
+imports will break under an upcoming Python release. This is what beartype is
+shouting about. Bad Changes™ are coming to dismantle your working code.
+
+Are We on the Worst Timeline?
+=============================
+
+Season Eight of *Game of Thrones* previously answered this question, but let's
+try again. You have three options to avert the looming disaster that threatens
+to destroy everything you hold dear (in ascending order of justice):
+
+#. **Import from** ``beartype.typing`` **instead.** The easiest (and best)
+   solution is to globally replace all imports from the standard typing_ module
+   with equivalent imports from our ``beartype.typing`` module. So:
+
+   .. code-block:: python
+
+      # Just do this...
+      from beartype import typing
+
+      # ...instead of this.
+      #import typing
+
+      # Likewise, just do this...
+      from beartype.typing import Dict, FrozenSet, List, Set, Tuple, Type
+
+      # ...instead of this.
+      #from typing import Dict, FrozenSet, List, Set, Tuple, Type
+
+   The public ``beartype.typing`` API is a mypy_-compliant replacement for the
+   typing_ API offering improved forward compatibility with future Python
+   releases. For example:
+
+   * ``beartype.typing.Set is set`` under Python ≥ 3.9 for :pep:`585`
+     compliance.
+   * ``beartype.typing.Set is typing.Set`` under Python < 3.9 for :pep:`484`
+     compliance.
+
+#. **Drop Python < 3.9.** The next easiest (but worst) solution is to brutally
+   drop support for Python < 3.9 by globally replacing all deprecated
+   :pep:`484`\ -compliant type hints with equivalent :pep:`585`\ -compliant type
+   hints (e.g., ``typing.List[int]`` with ``list[int]``). This is really only
+   ideal for closed-source proprietary projects with a limited userbase. All
+   other projects should prefer saner solutions outlined below.
+#. **Hide warnings.** The reprehensible (but understandable) middle-finger
+   way is to just squelch all deprecation warnings with an ignore warning
+   filter targeting the
+   ``BeartypeDecorHintPep585DeprecationWarning`` category. On the one hand,
+   this will still fail in 2025 or 2026 with fiery explosions and thus only
+   constitutes a temporary workaround at best. On the other hand, this has the
+   obvious advantage of preserving Python < 3.9 support with minimal to no
+   refactoring costs. The two ways to do this have differing tradeoffs
+   depending on who you want to suffer most – your developers or your userbase:
+
+   .. code-block:: python
+
+      # Do it globally for everyone, whether they want you to or not!
+      # This is the "Make Users Suffer" option.
+      from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
+      from warnings import filterwarnings
+      filterwarnings("ignore", category=BeartypeDecorHintPep585DeprecationWarning)
+      ...
+
+      # Do it locally only for you! (Hope you like increasing your
+      # indentation level in every single codebase module.)
+      # This is the "Make Yourself Suffer" option.
+      from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
+      from warnings import catch_warnings, filterwarnings
+      with catch_warnings():
+          filterwarnings("ignore", category=BeartypeDecorHintPep585DeprecationWarning)
+          ...
+
+#. **Type aliases.** The hardest (but best) solution is to use `type aliases`_
+   to conditionally annotate callables with either :pep:`484` *or* :pep:`585`
+   type hints depending on the major version of the current Python interpreter.
+   Since this is life, the hard way is also the best way – but also hard. Unlike
+   the **drop Python < 3.9** approach, this approach preserves backward
+   compatibility with Python < 3.9. Unlike the **hide warnings** approach, this
+   approach also preserves forward compatibility with Python ≥ 3.14159265. `Type
+   aliases`_ means defining a new private ``{your_package}._typing`` submodule
+   resembling:
+
+   .. code-block:: python
+
+      # In "{your_package}._typing":
+      from sys import version_info
+
+      if version_info >= (3, 9):
+          List = list
+          Tuple = tuple
+          ...
+      else:
+          from typing import List, Tuple, ...
+
+   Then globally refactor all deprecated :pep:`484` imports from typing_ to
+   ``{your_package}._typing`` instead:
+
+   .. code-block:: python
+
+      # Instead of this...
+      from typing import List, Tuple
+
+      # ...just do this.
+      from {your_package}._typing import List, Tuple
+
+   What could be simpler? :superscript:`...gagging noises faintly heard`
+
+.. _api:beartype.vale:
 
 *******************
 Beartype Validators
@@ -1543,7 +1697,7 @@ tradeoffs:
   ``@beartype``\ -decorated callable annotated by that validator, but is
   Turing-complete and thus supports all possible validation scenarios.
 * **Declarative validators,** created by subscripting any *other* class in the
-  beartype.vale_ subpackage (e.g., `beartype.vale.IsEqual`_) with arguments
+  ``beartype.vale`` subpackage (e.g., `beartype.vale.IsEqual`_) with arguments
   specific to that class. Each declarative validator generates efficient inline
   code calling *no* hidden functions and thus incurring no function costs, but
   is special-purpose and thus supports only a narrow band of validation
@@ -1585,7 +1739,7 @@ Validator API
 
 .. _beartype.vale.IsAttr:
 
-*class* beartype.vale.\ **IsAttr**\ [str, `beartype.vale.* <beartype.vale_>`__\ ]
+*class* beartype.vale.\ **IsAttr**\ [str, beartype.vale.*]
 
     **Declarative attribute validator.** A PEP-compliant type hint enforcing any
     arbitrary runtime constraint on any named object attribute, created by
@@ -1844,6 +1998,8 @@ Validator API
 .. [#enum_type]
    You don't want to know the type of enum.Enum_ members. Srsly. You don't. OK?
    You do? Very well. It's enum.Enum_. :superscript:`mic drop`
+
+.. _api:beartype.vale syntax:
 
 Validator Syntax
 ################
@@ -2206,6 +2362,8 @@ sequences that are *not* strings):
 
        return '\n'.join(my_sequence)  # <-- do *NOT* do this to a string
 
+.. _api:tensor:
+
 Tensor Property Matching
 ************************
 
@@ -2246,6 +2404,161 @@ the functional validator in that example:
        return np.abs(0.5*np.sum(
            polygon[:,0]*polygon_rolled[:,1] -
            polygon_rolled[:,0]*polygon[:,1]))
+
+Validator Alternatives
+######################
+
+If the unbridled power of beartype validators leaves you variously queasy,
+uneasy, and suspicious of our core worldview, beartype also supports
+third-party type hints like `typed NumPy arrays <NumPy Type Hints_>`__.
+
+Whereas beartype validators are verbose, expressive, and general-purpose, the
+following hints are terse, inexpressive, and domain-specific. Since beartype
+internally converts these hints to their equivalent validators, `similar
+caveats apply <Validator Caveats_>`__. Notably, these hints require:
+
+* Either **Python ≥ 3.9** *or* `typing_extensions ≥ 3.9.0.0
+  <typing_extensions_>`__.
+* **Beartype,** which hopefully goes without saying.
+
+NumPy Type Hints
+****************
+
+Beartype conditionally supports `NumPy type hints (i.e., annotations created by
+subscripting (indexing) various attributes of the "numpy.typing" subpackage)
+<numpy.typing_>`__ when these optional runtime dependencies are *all*
+satisfied:
+
+* Python ≥ 3.8.0.
+* beartype ≥ 0.8.0.
+* `NumPy ≥ 1.21.0 <NumPy_>`__.
+* Either **Python ≥ 3.9** *or* `typing_extensions ≥ 3.9.0.0
+  <typing_extensions_>`__.
+
+Beartype internally converts `NumPy type hints <numpy.typing_>`__ into
+`equivalent beartype validators <Beartype Validators_>`__ at decoration time.
+`NumPy type hints currently only validate dtypes <numpy.typing_>`__, a common
+but limited use case. `Beartype validators <Beartype Validators_>`__ validate
+*any* arbitrary combinations of array constraints – including dtypes, shapes,
+contents, and... well, *anything.* Which is alot. `NumPy type hints
+<numpy.typing.NDArray_>`__ are thus just syntactic sugar for `beartype
+validators <Beartype Validators_>`__ – albeit quasi-portable syntactic sugar
+also supported by mypy_.
+
+Wherever you can, prefer `NumPy type hints <numpy.typing_>`__ for portability.
+Everywhere else, default to `beartype validators <Beartype Validators_>`__ for
+generality. Combine them for the best of all possible worlds:
+
+.. code-block:: python
+
+   # Import the requisite machinery.
+   from beartype import beartype
+   from beartype.vale import IsAttr, IsEqual
+   from numpy import floating
+   from numpy.typing import NDArray
+   from typing import Annotated   # <--------------- if Python ≥ 3.9.0
+   #from typing_extensions import Annotated   # <--- if Python < 3.9.0
+
+   # Beartype validator + NumPy type hint matching all two-dimensional NumPy
+   # arrays of floating-point numbers of any arbitrary precision.
+   NumpyFloat64Array = Annotated[NDArray[floating], IsAttr['ndim', IsEqual[2]]]
+
+Rejoice! A one-liner solves everything yet again.
+
+Typed NumPy Arrays
+==================
+
+Type NumPy arrays by subscripting (indexing) the numpy.typing.NDArray_ class
+with one of three possible types of objects:
+
+* An **array dtype** (i.e., instance of the numpy.dtype_ class).
+* A **scalar dtype** (i.e., concrete subclass of the numpy.generic_ abstract
+  base class (ABC)).
+* A **scalar dtype ABC** (i.e., abstract subclass of the numpy.generic_ ABC).
+
+Beartype generates fundamentally different type-checking code for these types,
+complying with both mypy_ semantics (which behaves similarly) and our userbase
+(which demands this behaviour). May there be hope for our future…
+
+*class* numpy.typing.\ **NDArray**\ [numpy.dtype]
+
+    **NumPy array typed by array dtype.** A PEP-noncompliant type hint enforcing
+    object equality against any **array dtype** (i.e., numpy.dtype_ instance),
+    created by subscripting (indexing) the numpy.typing.NDArray_ class with that
+    array dtype.
+
+    Prefer this variant when validating the exact data type of an array:
+
+    .. code-block:: python
+
+       # Import the requisite machinery.
+       from beartype import beartype
+       from numpy import dtype
+       from numpy.typing import NDArray
+
+       # NumPy type hint matching all NumPy arrays of 32-bit big-endian integers,
+       # semantically equivalent to this beartype validator:
+       #     NumpyInt32BigEndianArray = Annotated[
+       #         np.ndarray, IsAttr['dtype', IsEqual[dtype('>i4')]]]
+       NumpyInt32BigEndianArray = NDArray[dtype('>i4')]
+
+*class* numpy.typing.\ **NDArray**\ [numpy.dtype.type]
+
+    **NumPy array typed by scalar dtype.** A PEP-noncompliant type hint
+    enforcing object equality against any **scalar dtype** (i.e., concrete
+    subclass of the numpy.generic_ ABC), created by subscripting (indexing) the
+    numpy.typing.NDArray_ class with that scalar dtype.
+
+    Prefer this variant when validating the exact scalar precision of an array:
+
+    .. code-block:: python
+
+       # Import the requisite machinery.
+       from beartype import beartype
+       from numpy import float64
+       from numpy.typing import NDArray
+
+       # NumPy type hint matching all NumPy arrays of 64-bit floats, semantically
+       # equivalent to this beartype validator:
+       #     NumpyFloat64Array = Annotated[
+       #         np.ndarray, IsAttr['dtype', IsAttr['type', IsEqual[float64]]]]
+       NumpyFloat64Array = NDArray[float64]
+
+    Common scalar dtypes include:
+
+    * **Fixed-precision integer dtypes** (e.g., ``numpy.int32``,
+      ``numpy.int64``).
+    * **Fixed-precision floating-point dtypes** (e.g.,
+      ``numpy.float32``, ``numpy.float64``).
+
+*class* numpy.typing.\ **NDArray**\ [type[numpy.dtype.type]]
+
+    **NumPy array typed by scalar dtype ABC.** A PEP-noncompliant type hint
+    enforcing type inheritance against any **scalar dtype ABC** (i.e.,
+    abstract subclass of the numpy.generic_ ABC), created by subscripting
+    (indexing) the numpy.typing.NDArray_ class with that ABC.
+
+    Prefer this variant when validating only the *kind* of scalars (without
+    reference to exact precision) in an array:
+
+    .. code-block:: python
+
+       # Import the requisite machinery.
+       from beartype import beartype
+       from numpy import floating
+       from numpy.typing import NDArray
+
+       # NumPy type hint matching all NumPy arrays of floats of arbitrary
+       # precision, equivalent to this beartype validator:
+       #     NumpyFloatArray = Annotated[
+       #         np.ndarray, IsAttr['dtype', IsAttr['type', IsSubclass[floating]]]]
+       NumpyFloatArray = NDArray[floating]
+
+    Common scalar dtype ABCs include:
+
+    * numpy.integer_, the superclass of all fixed-precision integer dtypes.
+    * numpy.floating_, the superclass of all fixed-precision floating-point
+      dtypes.
 
 .. #FIXME: Resume here tomorrow, please.
 

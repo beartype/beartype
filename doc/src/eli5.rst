@@ -131,13 +131,13 @@ Beartype makes type-checking painless, portable, and purportedly fun. Just:
     on-the-fly.
 
     When `standard type hints <Standard Hints_>`__ fail to support your use
-    case, annotate functions and methods with `beartype-specific validator type
-    hints <Beartype Validators_>`__ instead. Validators enforce runtime
+    case, annotate functions and methods with :ref:`beartype-specific validator
+    type hints <api:beartype.vale>` instead. Validators enforce runtime
     constraints on the internal structure and contents of parameters and returns
     via simple caller-defined lambda functions and declarative expressions – all
     seamlessly composable with `standard type hints <Standard Hints_>`__ in an
-    `expressive domain-specific language (DSL) <Validator Syntax_>`__ designed
-    just for you.
+    :ref:`expressive domain-specific language (DSL) <api:beartype.vale syntax>`
+    designed just for you.
 
 "Embrace the bear," says the bear peering over your shoulder as you read this.
 
