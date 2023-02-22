@@ -56,18 +56,18 @@ instead stressing expense-free strategies at both:
   of installing competing alternatives. Why would you, right? Am I right?
   ``</nervous_chuckle>``
 * **Runtime.** Thanks to aggressive memoization and dynamic code generation at
-  decoration time, beartype guarantees `O(1) non-amortized worst-case runtime
-  complexity with negligible constant factors <Timings_>`__.
+  decoration time, beartype guarantees :ref:`O(1) non-amortized worst-case
+  runtime complexity with negligible constant factors <math:time>`.
 
 .. _eli5:static:
 
 ...versus Static Type-checkers
 ##############################
 
-Like `competing static type-checkers <Static type-checkers_>`__ operating at
-the coarse-grained application level via ad-hoc heuristic type inference (e.g.,
-Pyre_, mypy_, pyright_, pytype_), beartype effectively `imposes no runtime
-overhead <Timings_>`__. Unlike static type-checkers:
+Like :ref:`competing static type-checkers <moar:static>` operating at the
+coarse-grained application level via ad-hoc heuristic type inference (e.g.,
+Pyre_, mypy_, pyright_, pytype_), beartype effectively :ref:`imposes no runtime
+overhead <math:time>`. Unlike static type-checkers:
 
 * Beartype operates exclusively at the fine-grained callable level of
   pure-Python functions and methods via the standard decorator design pattern.
@@ -107,14 +107,14 @@ overhead <Timings_>`__. Unlike static type-checkers:
 ...versus Runtime Type-checkers
 ###############################
 
-Unlike `comparable runtime type-checkers <Runtime type-checkers_>`__ (e.g.,
-pydantic_, typeguard_), beartype decorates callables with dynamically generated
-wrappers efficiently type-checking each parameter passed to and value returned
-from those callables in constant time. Since "performance by default" is our
-first-class concern, generated wrappers are guaranteed to:
+Unlike :ref:`comparable runtime type-checkers <moar:runtime>` (e.g., pydantic_,
+typeguard_), beartype decorates callables with dynamically generated wrappers
+efficiently type-checking each parameter passed to and value returned from those
+callables in constant time. Since "performance by default" is our first-class
+concern, generated wrappers are guaranteed to:
 
-* Exhibit `O(1) non-amortized worst-case time complexity with negligible
-  constant factors <Timings_>`__.
+* Exhibit :ref:`O(1) non-amortized worst-case time complexity with negligible
+  constant factors <math:time>`.
 * Be either more efficient (in the common case) or exactly as efficient minus
   the cost of an additional stack frame (in the worst case) as equivalent
   type-checking implemented by hand, *which no one should ever do.*

@@ -4,7 +4,7 @@
 .. #
 .. # ------------------( SYNOPSIS                            )------------------
 .. # Child reStructuredText (reST) document answering frequently asked
-.. # questions.
+.. # questions (FAQ).
 
 .. # ------------------( MAIN                                )------------------
 
@@ -344,11 +344,11 @@ beartype generates code at decoration time performing these checks at call time
 Beartype thus performs one check for each possibly nested type hint for each
 annotated parameter or return object for each call to each decorated callable.
 This deep randomness gives us soft statistical expectations as to the number of
-calls needed to check everything. Specifically, `it can be shown that beartype
-type-checks on average <Nobody Expects the Linearithmic Time_>`__ *all* child
-objects transitively reachable from parent objects passed to and returned from
-callables in ``O(n log n)`` calls to those callables for ``n`` such objects.
-Praise RNGesus_!
+calls needed to check everything. Specifically, :ref:`it can be shown that
+beartype type-checks on average <math:math>` *all* child objects transitively
+reachable from parent objects passed to and returned from callables in
+:math:`O(n \log n)` calls to those callables for :math:`n` such objects. Praise
+RNGesus_!
 
 Beartype avoids false positives and rarely duplicates work when those objects
 remain unchanged over multiple calls to those callables, which is good. Sadly,
@@ -524,10 +524,10 @@ Bask in the array of options at your disposal! :superscript:`...get it?
 
 You have more than a few options here. If you want to type-check:
 
-* The ``dtype`` of a NumPy array, prefer the `official
+* The ``dtype`` of a NumPy array, prefer the :ref:`official
   "numpy.typing.NDArray[{dtype}]" type hint factory bundled with NumPy
-  explicitly supported by beartype <NumPy Type Hints_>`__ – also referred to as
-  a `typed NumPy array <NumPy Type Hints_>`__.
+  explicitly supported by beartype <api:numpy>` – also referred to as a
+  :ref:`typed NumPy array <api:numpy>`.
 * The ``shape`` of a NumPy array (and possibly more), you have two additional
   sub-options here depending on whether:
 
@@ -539,7 +539,7 @@ You have more than a few options here. If you want to type-check:
     * Prefer the unofficial ``nptyping.NDArray[{nptyping.dtype},
       nptyping.Shape[...]]`` type hint factory implicitly supported by beartype.
 
-    Beartype fully supports `typed NumPy arrays <NumPy Type Hints_>`__. Because
+    Beartype fully supports :ref:`typed NumPy arrays <api:numpy>`. Because
     beartype cares.
 
   * You don't mind static type-checkers ignoring that ``shape`` *or* you mind

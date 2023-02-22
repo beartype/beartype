@@ -16,15 +16,6 @@
 .. # ------------------( IMAGES ~ downstream                 )------------------
 .. # Insert links to GitHub Sponsors funding at the icon level here, please!
 
-.. # ------------------( SUBSTITUTIONS                       )------------------
-.. # Non-breaking space, defined as a reST substitution substituting all "|_|"
-.. # substrings with the non-breaking space Unicode character. Note that the
-.. # ":trim:" directive silently removes all whitespace surrounding this "|_|".
-.. # See also this StackOverflow answer strongly inspiring this substitution:
-.. #     https://stackoverflow.com/a/12145490/2809027
-.. |_| unicode:: 0xA0
-   :trim:
-
 .. # ------------------( LINKS ~ beartype : funding          )------------------
 .. _BETSE:
    https://github.com/betsee/betse
@@ -102,12 +93,16 @@
    https://github.com/felix-hilden
 .. _beartype organization:
    https://github.com/beartype
-.. _beartype profiler:
-   https://github.com/beartype/beartype/blob/main/bin/profile.bash
 .. _beartype pulls:
    https://github.com/beartype/beartype/pulls
 .. _beartype tests:
    https://github.com/beartype/beartype/actions?workflow=tests
+
+.. # ------------------( LINKS ~ beartype : remote : time    )------------------
+.. _beartype profiler:
+   https://github.com/beartype/beartype/blob/main/bin/profile.bash
+.. _beartype profiler Cisco:
+   https://github.com/beartype/beartype/issues/58#issuecomment-940100279
 
 .. # ------------------( LINKS ~ beartype : user             )------------------
 .. _patrick-kidger:
@@ -210,6 +205,8 @@
 .. # ------------------( LINKS ~ meme                        )------------------
 .. _RNGesus:
    https://knowyourmeme.com/memes/rngesus
+.. _Up:
+   https://www.youtube.com/watch?v=F2bk_9T482g
 .. _goes up to eleven:
    https://www.youtube.com/watch?v=uMSV4OteqBE
 .. _greased lightning:

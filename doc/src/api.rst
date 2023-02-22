@@ -2421,6 +2421,8 @@ caveats apply <Validator Caveats_>`__. Notably, these hints require:
   <typing_extensions_>`__.
 * **Beartype,** which hopefully goes without saying.
 
+.. _api:numpy:
+
 NumPy Type Hints
 ****************
 
@@ -2560,20 +2562,11 @@ complying with both mypy_ semantics (which behaves similarly) and our userbase
     * numpy.floating_, the superclass of all fixed-precision floating-point
       dtypes.
 
-.. #FIXME: Resume here tomorrow, please.
-
-.. # ------------------( IMAGES                              )------------------
-.. |beartype-banner| image:: https://raw.githubusercontent.com/beartype/beartype-assets/main/banner/logo.png
-   :target: https://github.com/beartype/beartype
-   :alt: beartype —[ the bare-metal type-checker ]—
-
-.. # ------------------( IMAGES ~ badge                      )------------------
-.. |ci-badge| image:: https://github.com/beartype/beartype/workflows/test/badge.svg
-   :target: https://github.com/beartype/beartype/actions?workflow=test
-   :alt: beartype continuous integration (CI) status
-.. |codecov-badge| image:: https://codecov.io/gh/beartype/beartype/branch/main/graph/badge.svg?token=E6F4YSY9ZQ
-   :target: https://codecov.io/gh/beartype/beartype
-   :alt: beartype test coverage status
-.. |rtd-badge| image:: https://readthedocs.org/projects/beartype/badge/?version=latest
-   :target: https://beartype.readthedocs.io/en/latest/?badge=latest
-   :alt: beartype Read The Docs (RTD) status
+.. # ------------------( SUBSTITUTIONS                       )------------------
+.. # Non-breaking space, defined as a reST substitution substituting all "|_|"
+.. # substrings with the non-breaking space Unicode character. Note that the
+.. # ":trim:" directive silently removes all whitespace surrounding this "|_|".
+.. # See also this StackOverflow answer strongly inspiring this substitution:
+.. #     https://stackoverflow.com/a/12145490/2809027
+.. |_| unicode:: 0xA0
+   :trim:
