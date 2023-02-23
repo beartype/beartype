@@ -8,11 +8,22 @@
 
 .. # ------------------( MAIN                                )------------------
 
-###################
-Math for the Masses
-###################
+##############################
+Maths: It's Plural, Apparently
+##############################
 
-Math time, people. :sup:`it's happening`
+Math(s) time, people. :sup:`it's happening.`
+
+.. # ------------------( TABLES OF CONTENTS                  )------------------
+.. # Table of contents, excluding the above document heading. While the
+.. # official reStructuredText documentation suggests that a language-specific
+.. # heading will automatically prepend this table, this does *NOT* appear to
+.. # be the case. Instead, this heading must be explicitly declared.
+
+.. contents:: **Bear With Us**
+   :local:
+
+.. # ------------------( DESCRIPTION                         )------------------
 
 .. _math:time:
 
@@ -96,9 +107,8 @@ surely fair, impartial, and unbiased use cases <beartype profiler_>`__:
    * ``usec`` = microseconds = 10\ :sup:`-6` seconds.
    * ``nsec`` = nanoseconds = 10\ :sup:`-9` seconds.
 
-****************
 Timings Overview
-****************
+################
 
 Beartype is:
 
@@ -128,9 +138,8 @@ time needed to first decorate and then repeatedly call a decorated function.
 They're back-loaded. Although the initial cost of decoration is essentially
 free, each type-checked call thereafter incurs significant overhead.
 
-*******************
 Timings Lower Bound
-*******************
+###################
 
 In general, ``@beartype`` adds anywhere from 1µsec (i.e., :math:`10^{-6}`
 seconds) in the worst case to 0.01µsec (i.e., :math:`10^{-8}` seconds) in the
@@ -140,7 +149,7 @@ seems reasonable – but is it?
 Let's delve deeper.
 
 Formulaic Formulas: They're Back in Fashion
-###########################################
+*******************************************
 
 Let's formalize how exactly we arrive at the call-time overheads above.
 
@@ -173,7 +182,7 @@ decorated call: e.g.,
 Again, this superficially *seems* reasonable – but is it? Let's delve deeper.
 
 Function Call Overhead: The New Glass Ceiling
-#############################################
+*********************************************
 
 The added cost of calling ``@beartype``\ -decorated callables is a residual
 artifact of the added cost of **stack frames** (i.e., function and method calls)
@@ -261,9 +270,9 @@ average adds call-time overhead of 0.3µsec to each decorated call: e.g.,
                                &= 2.959999999999998 * 10^{-7}s
 
 Holy Balls of Flaming Dumpster Fires
-####################################
+************************************
 
-Above, we saw that ``@beartype`` on average only adds call-time overhead of
+We saw above that ``@beartype`` on average only adds call-time overhead of
 0.388µsec to each decorated call. But :math:`0.388µsec - 0.3µsec = 0.088µsec`,
 so ``@beartype`` only adds 0.1µsec (generously rounding up) of *additional*
 call-time overhead above and beyond that necessarily added by the fastest
@@ -279,9 +288,9 @@ remains the fastest possible runtime type-checker for now and all eternity.
 *Amen.*
 
 But, But... That's Not Good Enough!
-###################################
+***********************************
 
-*Yeah.* None of us are pleased with the performance of the official CPython
+*Yeah.* None of us are best pleased with the performance of the official CPython
 interpreter anymore, are we? CPython is that geriatric old man down the street
 that everyone puts up with because they've seen `"Up!" <Up_>`__ and he means
 well and he didn't really mean to beat your equally geriatric 20-year-old tomcat
@@ -333,9 +342,9 @@ of an arbitrary container on average. Formally, let:
 
 Then:
 
-.. math:: E(T) = n \log n + \gamma n + \frac{1}{2} + O\left(\frac{1}{n}\right)
+.. math:: E(T) = n \log n + \gamma n + \frac{1}{2} + O \left( \frac{1}{n} \right)
 
-The summation :math:`\frac{1}{2} + O\left(\frac{1}{n}\right) \le 1` is
+The summation :math:`\frac{1}{2} + O \left( \frac{1}{n} \right) \le 1` is
 negligible. While non-negligible, the term :math:`\gamma n` grows significantly
 slower than the term :math:`n \log n`. So this reduces to:
 

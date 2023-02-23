@@ -180,7 +180,8 @@ beartype's ponderous documentation. It's "typing_ or bust!" as you...
    API <api>
    FAQ <faq>
    BigData™ <pep>
-   Maths <math>
+   Paws-Deep <code>
+   Math <math>
    Moar <moar>
 
 *Let's type this.*
