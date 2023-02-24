@@ -437,7 +437,7 @@ against either:
   *not* correspond to actual Boto3_ types and thus break runtime type-checkers
   (including beartype) when used as type hints.
 * **Beartype** by fabricating your own :ref:`PEP-compliant beartype validators
-  <api:beartype.vale>`, enabling beartype to validate arbitrary objects against
+  <vale:vale>`, enabling beartype to validate arbitrary objects against
   actual Boto3_ types at runtime when used as type hints. You already require
   beartype, so no additional third-party dependencies are required. Those
   validators are silently ignored by static type-checkers; they do *not* enable
@@ -451,7 +451,7 @@ favors tonight. You know this. Yet again you reach for the hot butter knife.
 Bring to *bear* :superscript:`cough` the combined powers of `PEP 484-compliant
 type aliases <type aliases_>`__, the `PEP 484-compliant "typing.TYPE_CHECKING"
 boolean global <typing.TYPE_CHECKING_>`__, and :ref:`beartype validators
-<api:beartype.vale>` to satisfy both static and runtime type-checkers:
+<vale:vale>` to satisfy both static and runtime type-checkers:
 
 .. code-block:: python
 
@@ -566,7 +566,7 @@ we give thanks. If:
   work, we didn't have to. Bless your runtime API, @patrick-kidger.
 
 * You mind adding an additional mandatory runtime dependency to your app. In
-  this case, prefer :ref:`beartype validators <api:beartype.vale>`. For example,
+  this case, prefer :ref:`beartype validators <vale:vale>`. For example,
   validate callable parameters and returns as either floating-point *or*
   integral PyTorch tensors via the `functional validator factory
   beartype.vale.Is[...] <beartype.vale.Is_>`__:

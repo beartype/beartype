@@ -36,8 +36,8 @@ Beartype Timings
    `Additional timings performed by an unbiased third party employed by Cisco
    Systems support the claims below <beartype profiler Cisco_>`__. Notably,
    beartype is substantially faster than pydantic_ – the most popular competing
-   runtime type-checker – by **several orders of magnitude**, despite pydantic_
-   being Cythonized to native machine code in those timings.
+   runtime type-checker – by **several orders of magnitude.** Yes, pydantic_ was
+   Cythonized to native machine code in those timings. Believe!
 
 Let's profile beartype against other runtime type-checkers with `a battery of
 surely fair, impartial, and unbiased use cases <beartype profiler_>`__:
