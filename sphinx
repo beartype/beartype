@@ -27,7 +27,8 @@ SPHINX_BUILD_ARGS=(
 
     # ..................{ SPHINX ~ mode                      }..................
     # Generate HTML documentation.
-    -M html
+    -b dirhtml
+    # -M html
 
     # ..................{ SPHINX ~ paths                     }..................
     # Relative dirname of the directory containing source documentation in

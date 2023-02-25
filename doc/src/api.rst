@@ -34,14 +34,25 @@ begins with :func:`beartype.beartype`, just like all rivers run to the sea.
 .. #     https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-toctree
 
 .. # Child TOC tree.
+.. #
+.. # Note that child documents *MUST* reside in the same subdirectory as this
+.. # parent document. Although Sphinx locally supports child documents residing
+.. # in a different subdirectory (e.g., "doc/srcapi/"), Sphinx remotely fails
+.. # when this is the case under ReadTheDocs (RTD) with fatal warnings ala:
+.. #     WARNING: toctree contains reference to nonexisting document "api/decor"
+.. #
+.. # See also this StackOverflow post, where the only valid solution is to
+.. # flatten the Sphinx document structure as we have necessarily done:
+.. #     https://stackoverflow.com/a/51283544/2809027
+
 .. toctree::
    :hidden:
    :caption: Bear with Us
 
-   Beartype Decorator </api/decor>
-   Beartype Validators <api/vale>
-   Beartype DOOR <api/door>
-   Beartype Errors <api/roar>
+   Beartype Decorator <api_decor>
+   Beartype Validators <api_vale>
+   Beartype DOOR <api_door>
+   Beartype Errors <api_roar>
 
 .. #FIXME: Uncomment *AFTER* re-enabling "autoapi" support in "conf.py" and
 .. #resolving outstanding issues with that support. *gulp*

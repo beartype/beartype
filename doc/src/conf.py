@@ -49,9 +49,9 @@ from pathlib import Path
 #     https://stackoverflow.com/a/44569249/2809027
 # Dismantled, this is:
 #
-# * ".resolve(...)", creating and returning a new high-level "Path"
-#   object canonicalizing the relative dirname with which the original "Path"
-#   object was instantiated into an absolute dirname.
+# * ".resolve(...)", creating and returning a new high-level "Path" object
+#   canonicalizing the relative dirname with which the original "Path" object
+#   was instantiated into an absolute dirname.
 # * "strict=True", raising a "FileNotFoundError" if this directory does *NOT*
 #   exist.
 _DOC_SRC_DIR = Path(__file__).parent.resolve(strict=True)
@@ -139,10 +139,13 @@ templates_path = ['_templates']
 # List of pathname patterns relative to this "doc/src/" subdirectory matching
 # all files and directories to be ignored when finding source files. Note this
 # list also affects the "html_static_path" and "html_extra_path" settings.
+#
+# Note that this global obsoletes the prior "unused_doc", which served a similar
+# goal -- albeit in a less general-purpose manner.
 exclude_patterns = [
     # Ignore our URI repository, which magical logic below dynamically includes
     # on all pages through the classic "rst_epilog" trick.
-    _LINKS_FILENAME,
+    '_links.rst',
 ]
 
 # ....................{ SETTINGS ~ rst                     }....................
