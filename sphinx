@@ -64,7 +64,7 @@ SPHINX_BUILD_ARGS=(
     # whether the source input files providing that documentation have been
     # modified or not. By default, Sphinx only conditionally rebuilds target
     # documentation whose underlying source files have since been modified.
-    # -a
+    -a
 
     #FIXME: This appears to redundantly do the same thing as "-a" and is thus
     #currently disabled. That said, if and when caching issues arise, consider

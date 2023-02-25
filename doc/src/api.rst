@@ -15,17 +15,19 @@
 Beartype API: It Bears Bookmarking
 ##################################
 
-Beartype isn't just the ``@beartype.beartype`` decorator.
+Beartype isn't just the :func:`beartype.beartype` decorator.
 
 Beartype is a menagerie of public APIs for type-checking, introspecting, and
 manipulating type hints at runtime – all accessible under the ``beartype``
 package installed when you installed beartype. But all beartype documentation
-begins with ``@beartype.beartype``, just like all rivers run to the sea.
+begins with :func:`beartype.beartype`, just like all rivers run to the sea.
 [#endorheic_basins]_
 
 .. [#endorheic_basins]
-   That's a lie, actually. Numerous river tributaries just empty into deserts.
-   Do `endorheic basins`_ mean nothing to you, beartype? *The more you know.*
+   That's a lie, actually. Numerous river tributaries just pour out into
+   deserts. Do `endorheic basins`_ mean nothing to you, beartype?
+
+   Wikipedia: *the more you click, the less you know.*
 
 .. # ------------------( TABLES OF CONTENTS                  )------------------
 .. # Project-wide tables of contents (TOCs). See also official documentation on
