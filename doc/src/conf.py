@@ -146,6 +146,19 @@ exclude_patterns = [
 ]
 
 # ....................{ SETTINGS ~ rst                     }....................
+#FIXME: Comment this out entirely *AFTER* unpinning "pydata-sphinx-theme" to
+#support newer versions of that theme. The version we've pinned to fails to
+#support the "announcement" key of the "html_theme_options" global, sadly.
+# String of arbitrary reStructuredText (reST) to be implicitly prepended to the
+# contents of *ALL* reST documents rendered by this configuration, initialized
+# to the empty string for safety.
+rst_prolog = '''
+.. tip::
+
+   `Feed the bear <GitHub Sponsors_>`__! `Animals wearing jewelry
+   <beadspace9_>`__! *What is even going on with this banner!?!?*
+'''
+
 # String of arbitrary reStructuredText (reST) to be implicitly appended to the
 # contents of *ALL* reST documents rendered by this configuration, initialized
 # to the empty string for safety.
@@ -470,21 +483,40 @@ html_static_path = ['_static']
 
 # Dictionary mapping from the names of theme-specific options to those options.
 html_context = {
-   # Default the current theme to dark rather than light. Embrace the darkness!
-   'default_mode': 'dark',
+    # ....................{ PYDATA                         }....................
+    # HTML options specific to the "pydata-sphinx-theme" theme.
+
+    # Default the current theme to dark rather than light. Embrace the darkness!
+    'default_mode': 'dark',
+
+    # ....................{ PYDATA ~ edit                  }....................
+    # HTML options supporting the "use_edit_page_button" setting enabled below.
+
+    'github_user': 'beartype',
+    'github_repo': 'beartype',
+    'github_version': 'main',
+    'doc_path': 'doc/src',
 }
 
 # Dictionary mapping from the names of theme-specific options to those options.
 # We have *NO* idea why Sphinx supports both this and the parallel
 # "html_context" dictionary -- but it does. (Just pretend this isn't happening.)
 html_theme_options = {
-    # ....................{ pydata-sphinx-theme            }....................
+    # ....................{ PYDATA                         }....................
     # HTML options specific to the "pydata-sphinx-theme" theme.
 
     #FIXME: Add favicon support here, please. See also:
     #    https://pydata-sphinx-theme.readthedocs.io/en/v0.7.2/user_guide/configuring.html#adding-favicons
-    #FIXME: Add an "Edit this Page" link, please. Pretty cool! See also:
-    #    https://pydata-sphinx-theme.readthedocs.io/en/v0.7.2/user_guide/configuring.html#add-an-edit-this-page-button
+
+    # Announcement banner defined as a string of arbitrary HTML, temporarily
+    # displayed at the top of each page until the user begins scrolling.
+    'announcement': (
+        '<p>'
+        '<a href="https://github.com/sponsors/leycec">Feed the bear</a>! '
+        '<a href="https://beadspace9.ca">Animals wearing jewelry</a>! '
+        '<i>What is even going on with this banner!?!?</i>'
+        '</p>',
+    ),
 
     # List of one or more icon link descriptions. See also:
     # * Official theme-specific documentation for this setting:
@@ -527,9 +559,17 @@ html_theme_options = {
         },
     ],
 
-    # 'external_links': [
-    #     {'name': 'link-one-name', 'url': 'https://<link-one>'},
-    # ]
+    # Add an "Edit this Page" button to the secondary sidebar of each page,
+    # enabling users to trivially submit an automated pull request (PR) politely
+    # requesting modifications to the contents of that page.
+    #
+    # Note that enabling this also requires adding various URIs and paths to
+    # the "html_context" global describing the remote host hosting this git
+    # repository (e.g., GitHub).
+    #
+    # See also upstream documentation on this subject:
+    #     https://pydata-sphinx-theme.readthedocs.io/en/latest/user_guide/source-buttons.html
+    'use_edit_page_button': True,
 }
 
 # ....................{ BUILD ~ html : mathjax             }....................

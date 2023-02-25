@@ -23,6 +23,8 @@
    https://github.com/betsee/betsee
 .. _GitHub Sponsors:
    https://github.com/sponsors/leycec
+.. _beartype sponsorship:
+   https://github.com/sponsors/leycec
 .. _Paul Allen:
    https://en.wikipedia.org/wiki/Paul_Allen
 .. _Paul Allen Discovery Center:
@@ -33,8 +35,8 @@
    https://www.alleninstitute.org/what-we-do/frontiers-group
 .. _Tufts University:
    https://www.tufts.edu
-.. _beartype sponsorship:
-   https://github.com/sponsors/leycec
+.. _beadspace9:
+   https://beadspace9.ca
 
 .. # ------------------( LINKS ~ beartype : local            )------------------
 .. _beartype license:
@@ -147,6 +149,8 @@
    https://en.wikipedia.org/wiki/Type_system
 .. _dynamically-typed:
    https://en.wikipedia.org/wiki/Type_system
+.. _endorheic basins:
+   https://en.wikipedia.org/wiki/Endorheic_basin
 .. _gratis versus libre:
    https://en.wikipedia.org/wiki/Gratis_versus_libre
 .. _memory safety:

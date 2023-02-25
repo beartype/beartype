@@ -20,9 +20,7 @@
 
 .. # ------------------( MAIN                                )------------------
 
-#################
 |beartype-banner|
-#################
 
 |codecov-badge| |ci-badge| |rtd-badge|
 
