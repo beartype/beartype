@@ -146,18 +146,15 @@ exclude_patterns = [
 ]
 
 # ....................{ SETTINGS ~ rst                     }....................
-#FIXME: Comment this out entirely *AFTER* unpinning "pydata-sphinx-theme" to
-#support newer versions of that theme. The version we've pinned to fails to
-#support the "announcement" key of the "html_theme_options" global, sadly.
 # String of arbitrary reStructuredText (reST) to be implicitly prepended to the
 # contents of *ALL* reST documents rendered by this configuration, initialized
 # to the empty string for safety.
-rst_prolog = '''
-.. tip::
-
-   `Feed the bear <GitHub Sponsors_>`__! `Animals wearing jewelry
-   <beadspace9_>`__! *What is even going on with this banner!?!?*
-'''
+# rst_prolog = '''
+# .. tip::
+#
+#    `Feed the bear <GitHub Sponsors_>`__! `Animals wearing jewelry
+#    <beadspace9_>`__! *What is even going on with this banner!?!?*
+# '''
 
 # String of arbitrary reStructuredText (reST) to be implicitly appended to the
 # contents of *ALL* reST documents rendered by this configuration, initialized
@@ -515,7 +512,7 @@ html_theme_options = {
         '<a href="https://github.com/sponsors/leycec">Feed the bear</a>! '
         '<a href="https://beadspace9.ca">Animals wearing jewelry</a>! '
         '<i>What is even going on with this banner!?!?</i>'
-        '</p>',
+        '</p>'
     ),
 
     # List of one or more icon link descriptions. See also:
