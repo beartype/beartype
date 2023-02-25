@@ -178,7 +178,7 @@ beartype's ponderous documentation. It's "typing_ or bust!" as you...
    API <api>
    FAQ <faq>
    BigData™ <pep>
-   Paws-Deep <code>
+   Code <code>
    Math <math>
    Moar <moar>
 

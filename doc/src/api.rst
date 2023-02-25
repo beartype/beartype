@@ -38,7 +38,7 @@ begins with :func:`beartype.beartype`, just like all rivers run to the sea.
    :hidden:
    :caption: Bear with Us
 
-   Beartype Decorator <api/decor>
+   Beartype Decorator </api/decor>
    Beartype Validators <api/vale>
    Beartype DOOR <api/door>
    Beartype Errors <api/roar>

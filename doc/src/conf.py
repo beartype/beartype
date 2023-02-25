@@ -511,7 +511,7 @@ html_theme_options = {
         '<p>'
         '<a href="https://github.com/sponsors/leycec">Feed the bear</a>! '
         '<a href="https://beadspace9.ca">Animals wearing jewelry</a>! '
-        '<i>What is even going on with this banner!?!?</i>'
+        'What is even going on with this banner?'
         '</p>'
     ),
 

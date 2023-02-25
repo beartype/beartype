@@ -69,7 +69,7 @@ SPHINX_BUILD_ARGS=(
     #FIXME: This appears to redundantly do the same thing as "-a" and is thus
     #currently disabled. That said, if and when caching issues arise, consider
     #uncommenting this as well just to be sure. *shrug*
-    # -E
+    -E
 
     # Parallelize the build process across *ALL* available CPU cores.
     -j auto
