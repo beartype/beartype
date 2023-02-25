@@ -25,9 +25,8 @@ begins with :func:`beartype.beartype`, just like all rivers run to the sea.
 
 .. [#endorheic_basins]
    That's a lie, actually. Numerous river tributaries just pour out into
-   deserts. Do `endorheic basins`_ mean nothing to you, beartype?
-
-   Wikipedia: *the more you click, the less you know.*
+   deserts. Do `endorheic basins`_ mean nothing to you, beartype? Wikipedia:
+   *the more you click, the less you know.*
 
 .. # ------------------( TABLES OF CONTENTS                  )------------------
 .. # Project-wide tables of contents (TOCs). See also official documentation on
