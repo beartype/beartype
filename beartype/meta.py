@@ -492,7 +492,7 @@ Specifically, this project requires:
 #FIXME: Once "pydata-sphinx-theme" 0.13.0 is released:
 #* Relax this restriction (e.g., by simply commenting this global out both here
 #  and below).
-#* Bump "_SPHINX_THEME_VERSION_MINIMUM >= '0.13.0'" below.
+#* Bump "_SPHINX_THEME_VERSION_MAXIMUM >= '0.13.0'" below.
 _SPHINX_VERSION_MAXIMUM_EXCLUSIVE = '6.0.0'
 '''
 Machine-readable maximum (exclusive) version as a ``.``-delimited string of
@@ -580,7 +580,8 @@ PyData wins by *literally* doing nothing. Laziness prevails. All hail La-Z-Boy.
 '''
 
 
-_SPHINX_THEME_VERSION_MINIMUM = '0.7.2'
+# _SPHINX_THEME_VERSION_MAXIMUM = '0.7.2'
+_SPHINX_THEME_VERSION_MAXIMUM = '0.12.0'
 '''
 Machine-readable maximum (inclusive) version as a ``.``-delimited string of the
 above Sphinx theme optionally leveraged when building package documentation.
@@ -601,7 +602,7 @@ of this theme. Specifically, this project requires:
 # ....................{ METADATA ~ libs : doc              }....................
 LIBS_DOCTIME_MANDATORY = (
     f'sphinx >={_SPHINX_VERSION_MINIMUM}, <{_SPHINX_VERSION_MAXIMUM_EXCLUSIVE}',
-    f'{SPHINX_THEME_NAME} >={_SPHINX_THEME_VERSION_MINIMUM}',
+    f'{SPHINX_THEME_NAME} <={_SPHINX_THEME_VERSION_MAXIMUM}',
     'autoapi >=0.9.0',
     'sphinxext-opengraph >= 0.7.5',
 )
@@ -633,7 +634,7 @@ See Also
 LIBS_DOCTIME_MANDATORY_RTD = LIBS_DOCTIME_MANDATORY
 # LIBS_DOCTIME_MANDATORY_RTD = (
 #     f'sphinx =={_SPHINX_VERSION_MINIMUM}',
-#     f'{SPHINX_THEME_NAME} =={_SPHINX_THEME_VERSION_MINIMUM}',
+#     f'{SPHINX_THEME_NAME} =={_SPHINX_THEME_VERSION_MAXIMUM}',
 # )
 '''
 **Mandatory Read The Docs (RTD) documentation build-time package dependencies**
