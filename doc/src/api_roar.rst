@@ -19,9 +19,8 @@ Beartype Errors
 
 ::
 
-   ...is that black bear growling or
-      is it just me?
-         — frequent last words in Canada
+   ...is that bear growling or is it just me?
+           — common last words in Canada
 
 Beartype only raises:
 

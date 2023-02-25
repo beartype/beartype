@@ -514,7 +514,7 @@ html_theme_options = {
         '<p>'
         '<a href="https://github.com/sponsors/leycec">Feed the bear</a>! '
         '<a href="https://beadspace9.ca">Animals wearing jewelry</a>! '
-        'What is even going on with this banner?'
+        'What is even going on with this banner!?'
         '</p>'
     ),
 
@@ -571,6 +571,16 @@ html_theme_options = {
     #     https://pydata-sphinx-theme.readthedocs.io/en/latest/user_guide/source-buttons.html
     'use_edit_page_button': True,
 }
+
+#FIXME: This setting is currently undocumented but appears to internally govern
+#the "n_links_before_dropdown" parameter passed to the
+#generate_header_nav_html() function. Submit an issue requesting documentation!
+# Increase the maximum number of links displayed by "pydata-sphinx-theme" in the
+# top-most navigation bar. "pydata-sphinx-theme" displays all remaining links in
+# a dropdown entitled "More" that, when clicked, vertically lists those links.
+# "pydata-sphinx-theme" defaults this global to 5, which is insufficient for the
+# larger number of links required for this documentation.
+theme_header_links_before_dropdown = 10
 
 # ....................{ BUILD ~ html : mathjax             }....................
 # URL to the top-level "MathJax.js" script providing MathJax. If unspecified,

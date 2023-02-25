@@ -23,7 +23,7 @@ Beartype Decoration
 
    wrap anything with runtime type-checking
        ...except that, of course.
-          — wise bear named Bearfucius
+          — Thus Spake Bearathustra, Book I
 
 .. # FIXME: Revise all hard-code references to this decorator (e.g.,
 .. # "``@beartype``", "``@beartype.beartype``) into actual beartype.beartype_

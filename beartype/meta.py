@@ -257,14 +257,27 @@ For the list of all contributors regardless of copyright assignment or
 attribution, see the top-level ``AUTHORS.md`` file.
 '''
 
-# ....................{ METADATA ~ urls                    }....................
-URL_HOMEPAGE = 'https://github.com/beartype/beartype'
+# ....................{ METADATA ~ urls : docs             }....................
+URL_HOMEPAGE = 'https://beartype.readthedocs.io'
 '''
 URL of this package's homepage.
 '''
 
 
-URL_DOWNLOAD = f'{URL_HOMEPAGE}/archive/{VERSION}.tar.gz'
+URL_PEP585_DEPRECATIONS = (
+    f'{URL_HOMEPAGE}/en/latest/api_roar/#pep-585-deprecations')
+'''
+URL documenting :pep:`585` deprecations of :pep:`484` type hints.
+'''
+
+# ....................{ METADATA ~ urls : repo             }....................
+URL_REPO = 'https://github.com/beartype/beartype'
+'''
+URL of this package's git repository.
+'''
+
+
+URL_DOWNLOAD = f'{URL_REPO}/archive/{VERSION}.tar.gz'
 '''
 URL of the source tarball for the current version of this package.
 
@@ -276,19 +289,19 @@ have yet to be stabilized and hence tagged. Hence, this URL is typically valid
 '''
 
 
-URL_FORUMS = f'{URL_HOMEPAGE}/discussions'
+URL_FORUMS = f'{URL_REPO}/discussions'
 '''
 URL of this package's user forums.
 '''
 
 
-URL_ISSUES = f'{URL_HOMEPAGE}/issues'
+URL_ISSUES = f'{URL_REPO}/issues'
 '''
 URL of this package's issue tracker.
 '''
 
 
-URL_RELEASES = f'{URL_HOMEPAGE}/releases'
+URL_RELEASES = f'{URL_REPO}/releases'
 '''
 URL of this package's release list.
 '''

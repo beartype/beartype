@@ -11,6 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.meta import URL_PEP585_DEPRECATIONS
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
@@ -344,12 +345,12 @@ def warn_if_hint_pep_deprecated(
         #See also: https://docs.python.org/3/library/warnings.html#warnings.warn
         warn(
             (
-                f'PEP 484 type hint {repr(hint)} deprecated by PEP 585 '
-                f'scheduled for removal in the first Python version '
-                f'released after October 5th, 2025. To resolve this, import '
-                f'this hint from "beartype.typing" rather than "typing". '
-                f'See this discussion for further details and alternatives:\n'
-                f'    https://github.com/beartype/beartype#pep-585-deprecations'
+                f'PEP 484 type hint {repr(hint)} deprecated by PEP 585. '
+                f'This hint is scheduled for removal in the first Python '
+                f'version released after October 5th, 2025. To resolve this, '
+                f'import this hint from "beartype.typing" rather than "typing". '
+                f'For further commentary and alternatives, see also:\n'
+                f'    {URL_PEP585_DEPRECATIONS}'
             ),
             BeartypeDecorHintPep585DeprecationWarning,
         )
