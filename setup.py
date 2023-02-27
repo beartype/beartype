@@ -251,13 +251,11 @@ _SETUP_OPTIONS = {
     # Dictionary mapping from arbitrary human-readable terse names describing
     # various package-related URLs to those URLs.
     'project_urls': {
-        'Source':   meta.URL_HOMEPAGE,
-        'Issues':   meta.URL_ISSUES,
-        'Forums':   meta.URL_FORUMS,
-        'Releases': meta.URL_RELEASES,
-
-        #FIXME: Uncomment after we actually have meaningful RTD documentation.
-        # 'Documentation': 'https://beartype.readthedocs.io',
+        'Documentation': meta.URL_HOMEPAGE,
+        'Source':        meta.URL_REPO,
+        'Issues':        meta.URL_ISSUES,
+        'Forums':        meta.URL_FORUMS,
+        'Releases':      meta.URL_RELEASES,
     },
 
     # ..................{ PYPI                               }..................

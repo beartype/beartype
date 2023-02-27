@@ -593,8 +593,8 @@ PyData wins by *literally* doing nothing. Laziness prevails. All hail La-Z-Boy.
 '''
 
 
-# _SPHINX_THEME_VERSION_MAXIMUM = '0.7.2'
-_SPHINX_THEME_VERSION_MAXIMUM = '0.12.0'
+_SPHINX_THEME_VERSION_MAXIMUM = '0.7.2'
+# _SPHINX_THEME_VERSION_MAXIMUM = '0.12.0'
 '''
 Machine-readable maximum (inclusive) version as a ``.``-delimited string of the
 above Sphinx theme optionally leveraged when building package documentation.

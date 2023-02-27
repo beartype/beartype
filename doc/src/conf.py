@@ -152,12 +152,12 @@ exclude_patterns = [
 # String of arbitrary reStructuredText (reST) to be implicitly prepended to the
 # contents of *ALL* reST documents rendered by this configuration, initialized
 # to the empty string for safety.
-# rst_prolog = '''
-# .. tip::
-#
-#    `Feed the bear <GitHub Sponsors_>`__! `Animals wearing jewelry
-#    <beadspace9_>`__! *What is even going on with this banner!?!?*
-# '''
+rst_prolog = '''
+.. tip::
+
+   `Feed the bear <GitHub Sponsors_>`__! `Animals wearing jewelry
+   <beadspace9_>`__! *What is even going on with this banner!?*
+'''
 
 # String of arbitrary reStructuredText (reST) to be implicitly appended to the
 # contents of *ALL* reST documents rendered by this configuration, initialized
@@ -514,7 +514,7 @@ html_theme_options = {
         '<p>'
         '<a href="https://github.com/sponsors/leycec">Feed the bear</a>! '
         '<a href="https://beadspace9.ca">Animals wearing jewelry</a>! '
-        'What is even going on with this banner!?'
+        '<i>What is even going on with this banner!?</i>'
         '</p>'
     ),
 
@@ -575,6 +575,12 @@ html_theme_options = {
 #FIXME: This setting is currently undocumented but appears to internally govern
 #the "n_links_before_dropdown" parameter passed to the
 #generate_header_nav_html() function. Submit an issue requesting documentation!
+#FIXME: As expected, this is ignored. Until resolved, let's try temporarily
+#resolving this on our end by overriding the "navbar-nav.html" template. See:
+#    https://github.com/pydata/pydata-sphinx-theme/blob/157c9ab2c93e755141e48d13b5f193c6169d9dd8/src/pydata_sphinx_theme/theme/pydata_sphinx_theme/components/navbar-nav.html#L8
+#
+#Issue, please!
+
 # Increase the maximum number of links displayed by "pydata-sphinx-theme" in the
 # top-most navigation bar. "pydata-sphinx-theme" displays all remaining links in
 # a dropdown entitled "More" that, when clicked, vertically lists those links.
