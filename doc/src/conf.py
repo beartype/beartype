@@ -11,6 +11,15 @@
 #   List of all options supported in this file.
 
 # ....................{ TODO                               }....................
+#FIXME: [CODE] Politely suggest that "pydata-sphinx-theme' incorporate
+#functionality for wrapping long function signatures. Thankfully, this has
+#already been (possibly elegantly) achieved by the competing Sphinx-Immaterial
+#theme via CSS governed by well-documented "conf.py" globals. See also:
+#    https://sphinx-immaterial.readthedocs.io/en/stable/apidoc/format_signatures.html
+#FIXME: [CODE] Thankfully, somebody's already implemented a crude CSS hack
+#enabling this for Python signatures. Let's incorporate this when time admits:
+#    https://github.com/sphinx-doc/sphinx/issues/1514#issuecomment-742703082
+
 #FIXME: [THEME] Consider generalizing our theme from the somewhat low-level
 #"pydata-sphinx-theme" theme to the substantially higher-level
 #"sphinx-book-theme". The latter is built in terms of the former, but layers on

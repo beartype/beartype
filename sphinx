@@ -27,8 +27,13 @@ SPHINX_BUILD_ARGS=(
 
     # ..................{ SPHINX ~ mode                      }..................
     # Generate HTML documentation.
-    -b dirhtml
-    # -M html
+    #
+    # Note that we intentionally prefer the "html" to "dirhtml" build type when
+    # locally revising documentation, despite ReadTheDocs (RTD) preferring the
+    # latter. Why? Because the latter incorrectly links to directories rather
+    # than HTML files in directories when generating local documentation.
+    -M html
+    # -b dirhtml
 
     # ..................{ SPHINX ~ paths                     }..................
     # Relative dirname of the directory containing source documentation in

@@ -47,11 +47,11 @@ Beartype Decorator API
 ######################
 
 .. py:decorator::
-   beartype.beartype([ \
-       cls: type[, \
-       func: collections.abc.Callable[, \
-       conf: beartype.BeartypeConf \
-   ]]]) -> object
+   beartype.beartype( \
+       cls: Optional[type] = None, \
+       func: Optional[collections.abc.Callable] = None, \
+       conf: beartype.BeartypeConf = beartype.BeartypeConf() \
+   ) -> object
 
    Augment the passed object with performant runtime type-checking. Unlike most
    decorators, ``@beartype`` has three orthogonal modes of operation:
@@ -326,9 +326,9 @@ Configuration Mode
 *def* beartype.\ **beartype**\ (conf: beartype.BeartypeConf_) ->
 collections.abc.Callable[[T], T]
 
-In configuration mode, ``@beartype`` dynamically generates a new ``@beartype``
-decorator configured for your special needs. You too shall cackle villainously
-as you feel the growing power of your keyboard.
+In configuration mode, :func:`.beartype` dynamically generates a new
+:func:`.beartype` decorator – configured uniquely for your exact use case. You
+too may cackle villainously as you feel the unbridled power of your keyboard.
 
 .. code-block:: python
 
@@ -348,268 +348,267 @@ as you feel the growing power of your keyboard.
 
 Configuration: *because you know best*.
 
-BeartypeConf
-============
+Beartype Configuration API
+==========================
 
-.. _beartype.BeartypeConf:
+.. py:class::
+   beartype.BeartypeConf( \
+       *, \
+       is_color: Optional[bool] = None, \
+       is_debug: bool = False, \
+       is_pep484_tower: bool = False, \
+       strategy: BeartypeStrategy = BeartypeStrategy.O1, \
+   )
 
-| *class* beartype.\ **BeartypeConf**\ (
-| |_| |_| |_| |_| \*,
-| |_| |_| |_| |_| `is_color <BeartypeConf.is_color_>`__: Optional[bool] = None,
-| |_| |_| |_| |_| `is_debug <BeartypeConf.is_debug_>`__: bool = False,
-| |_| |_| |_| |_| `is_pep484_tower <BeartypeConf.is_pep484_tower_>`__: bool = False,
-| |_| |_| |_| |_| `strategy <BeartypeConf.strategy_>`__: BeartypeStrategy_ = BeartypeStrategy.O1_,
-| )
+   **Beartype configuration** (i.e., self-caching dataclass instance
+   encapsulating all flags, options, settings, and other metadata configuring
+   each type-checking operation performed by beartype – including each
+   decoration of a callable or class by the :func:`.beartype` decorator).
 
-    **Beartype configuration** (i.e., self-caching dataclass instance
-    encapsulating all flags, options, settings, and other metadata configuring
-    each type-checking operation performed by beartype – including each
-    decoration of a callable or class by the ``@beartype.beartype`` decorator).
+   The default configuration ``BeartypeConf()`` configures beartype to:
 
-    The default configuration ``BeartypeConf()`` configures beartype to:
+   * Perform :math:`O(1)` constant-time type-checking for safety, scalability,
+     and efficiency.
+   * Disable support for `PEP 484's implicit numeric tower <implicit numeric
+     tower_>`__.
+   * Disable developer-specific debugging logic.
+   * Conditionally output color when standard output is attached to a terminal.
 
-    * Conditionally output color when standard output is attached to a terminal.
-    * Disable developer-specific debugging logic.
-    * Disable support for `PEP 484's implicit numeric tower <implicit numeric
-      tower_>`__.
-    * Perform ``O(1)`` constant-time type-checking for safety, scalability, and
-      efficiency.
+   Beartype configurations are immutable objects memoized (i.e., cached) on the
+   unordered set of all passed parameters:
 
-    Beartype configurations are immutable objects memoized (i.e., cached) on the
-    unordered set of all passed parameters:
+   .. code-block:: pycon
 
-    .. code-block:: pycon
+      >>> from beartype import BeartypeConf
+      >>> BeartypeConf() is BeartypeConf()
+      True
+      >>> BeartypeConf(is_color=False) is BeartypeConf(is_color=False)
+      True
 
-       >>> from beartype import BeartypeConf
-       >>> BeartypeConf() is BeartypeConf()
-       True
-       >>> BeartypeConf(is_color=False) is BeartypeConf(is_color=False)
-       True
+   Beartype configurations are comparable under equality:
 
-    Beartype configurations are comparable under equality:
+   .. code-block:: pycon
 
-    .. code-block:: pycon
+      >>> BeartypeConf(is_color=False) == BeartypeConf(is_color=True)
+      False
 
-       >>> BeartypeConf(is_color=False) == BeartypeConf(is_color=True)
-       False
+   Beartype configurations are hashable and thus suitable for use as dictionary
+   keys and set members:
 
-    Beartype configurations are hashable and thus suitable for use as dictionary
-    keys and set members:
+   .. code-block:: pycon
 
-    .. code-block:: pycon
+      >>> BeartypeConf(is_color=False) == BeartypeConf(is_color=True)
+      False
+      >>> confs = {BeartypeConf(), BeartypeConf(is_color=False)}
+      >>> BeartypeConf() in confs
+      True
 
-       >>> BeartypeConf(is_color=False) == BeartypeConf(is_color=True)
-       False
-       >>> confs = {BeartypeConf(), BeartypeConf(is_color=False)}
-       >>> BeartypeConf() in confs
-       True
+   Beartype configurations support meaningful :func:`repr` output:
 
-    Beartype configurations support meaningful ``repr()`` output:
+   .. code-block:: pycon
 
-    .. code-block:: pycon
+      >>> repr(BeartypeConf())
+      'BeartypeConf(is_color=None, is_debug=False, is_pep484_tower=False, strategy=<BeartypeStrategy.O1: 2>)'
 
-       >>> repr(BeartypeConf())
-       'BeartypeConf(is_color=None, is_debug=False, is_pep484_tower=False, strategy=<BeartypeStrategy.O1: 2>)'
+   Beartype configurations expose read-only public properties of the same
+   names as the above parameters:
 
-    Beartype configurations expose read-only public properties of the same
-    names as the above parameters:
+   .. code-block:: pycon
 
-    .. code-block:: pycon
+      >>> BeartypeConf().is_color
+      None
+      >>> BeartypeConf().strategy
+      <BeartypeStrategy.O1: 2>
 
-       >>> BeartypeConf().is_color
-       None
-       >>> BeartypeConf().strategy
-       <BeartypeStrategy.O1: 2>
+   Beartype configurations support these optional keyword-only parameters at
+   instantiation time:
 
-    Beartype configurations support these optional keyword-only parameters at
-    instantiation time:
+   .. _BeartypeConf.is_color:
 
-    .. _BeartypeConf.is_color:
+   * **is_color**\ : Optional[bool] = None
 
-    * **is_color**\ : Optional[bool] = None
+     Tri-state boolean governing how and whether beartype colours
+     **type-checking violations** (i.e., human-readable
+     beartype.roar.BeartypeCallHintViolation_ exceptions) with POSIX-compliant
+     ANSI escape sequences for readability. Specifically, if this boolean is:
 
-      Tri-state boolean governing how and whether beartype colours
-      **type-checking violations** (i.e., human-readable
-      beartype.roar.BeartypeCallHintViolation_ exceptions) with POSIX-compliant
-      ANSI escape sequences for readability. Specifically, if this boolean is:
+     * ``False``, beartype *never* colours type-checking violations
+       raised by callables configured with this configuration.
+     * ``True``, beartype *always* colours type-checking violations
+       raised by callables configured with this configuration.
+     * ``None``, beartype conditionally colours type-checking violations
+       raised by callables configured with this configuration only when
+       standard output is attached to an interactive terminal.
 
-      * ``False``, beartype *never* colours type-checking violations
-        raised by callables configured with this configuration.
-      * ``True``, beartype *always* colours type-checking violations
-        raised by callables configured with this configuration.
-      * ``None``, beartype conditionally colours type-checking violations
-        raised by callables configured with this configuration only when
-        standard output is attached to an interactive terminal.
+     Defaults to ``None``.
 
-      Defaults to ``None``.
+     The standard use case is to dynamically define your own app-specific
+     ``@beartype`` decorator unconditionally disabling colours in type-checking
+     violations, usually due to one or more frameworks in your application
+     stack failing to support ANSI escape sequences. Please file upstream
+     issues with those frameworks requesting ANSI support. In the meanwhile,
+     behold the monochromatic powers of... ``@monobeartype``!
 
-      The standard use case is to dynamically define your own app-specific
-      ``@beartype`` decorator unconditionally disabling colours in type-checking
-      violations, usually due to one or more frameworks in your application
-      stack failing to support ANSI escape sequences. Please file upstream
-      issues with those frameworks requesting ANSI support. In the meanwhile,
-      behold the monochromatic powers of... ``@monobeartype``!
+     .. code-block:: python
 
-      .. code-block:: python
+        # Import the requisite machinery.
+        from beartype import beartype, BeartypeConf
 
-         # Import the requisite machinery.
-         from beartype import beartype, BeartypeConf
+        # Dynamically create a new @monobeartype decorator disabling colour.
+        monobeartype = beartype(conf=BeartypeConf(is_color=False))
 
-         # Dynamically create a new @monobeartype decorator disabling colour.
-         monobeartype = beartype(conf=BeartypeConf(is_color=False))
+        # Decorate with this decorator rather than @beartype everywhere.
+        @monobeartype
+        def muh_colorless_func() -> str:
+            return b'In the kingdom of the blind, you are now king.'
 
-         # Decorate with this decorator rather than @beartype everywhere.
-         @monobeartype
-         def muh_colorless_func() -> str:
-             return b'In the kingdom of the blind, you are now king.'
+     *First introduced in beartype 0.12.0.*
 
-      *First introduced in beartype 0.12.0.*
+   .. _BeartypeConf.is_debug:
 
-    .. _BeartypeConf.is_debug:
+   * **is_debug**\ : bool = False
 
-    * **is_debug**\ : bool = False
+     ``True`` only if debugging the ``@beartype`` decorator. If you're curious
+     as to what exactly (if anything) ``@beartype`` is doing on your behalf,
+     temporarily enable this boolean. Specifically, enabling this boolean:
 
-      ``True`` only if debugging the ``@beartype`` decorator. If you're curious
-      as to what exactly (if anything) ``@beartype`` is doing on your behalf,
-      temporarily enable this boolean. Specifically, enabling this boolean:
+     * Caches the body of each type-checking wrapper function dynamically
+       generated by ``@beartype`` with the standard linecache_ module, enabling
+       these function bodies to be introspected at runtime *and* improving the
+       readability of tracebacks whose call stacks contain one or more calls to
+       these ``@beartype.beartype``\ -decorated functions.
+     * Prints the definition (including both the signature and body) of each
+       type-checking wrapper function dynamically generated by ``@beartype`` to
+       standard output.
+     * Appends to the declaration of each **hidden parameter** (i.e., whose
+       name is prefixed by ``"__beartype_"`` and whose value is that of an
+       external attribute internally referenced in the body of that function)
+       a comment providing the machine-readable representation of the initial
+       value of that parameter, stripped of newlines and truncated to a
+       hopefully sensible length. Since the low-level string munger called to
+       do so is shockingly slow, these comments are conditionally embedded in
+       type-checking wrapper functions *only* when this boolean is enabled.
 
-      * Caches the body of each type-checking wrapper function dynamically
-        generated by ``@beartype`` with the standard linecache_ module, enabling
-        these function bodies to be introspected at runtime *and* improving the
-        readability of tracebacks whose call stacks contain one or more calls to
-        these ``@beartype.beartype``\ -decorated functions.
-      * Prints the definition (including both the signature and body) of each
-        type-checking wrapper function dynamically generated by ``@beartype`` to
-        standard output.
-      * Appends to the declaration of each **hidden parameter** (i.e., whose
-        name is prefixed by ``"__beartype_"`` and whose value is that of an
-        external attribute internally referenced in the body of that function)
-        a comment providing the machine-readable representation of the initial
-        value of that parameter, stripped of newlines and truncated to a
-        hopefully sensible length. Since the low-level string munger called to
-        do so is shockingly slow, these comments are conditionally embedded in
-        type-checking wrapper functions *only* when this boolean is enabled.
+     Defaults to ``False``. Eye-gouging sample output or it didn't happen, so:
 
-      Defaults to ``False``. Eye-gouging sample output or it didn't happen, so:
+     .. code-block:: pycon
 
-      .. code-block:: pycon
+        # Import the requisite machinery.
+        >>> from beartype import beartype, BeartypeConf
 
-         # Import the requisite machinery.
-         >>> from beartype import beartype, BeartypeConf
+        # Dynamically create a new @bugbeartype decorator enabling debugging.
+        # Insider D&D jokes in my @beartype? You'd better believe. It's happening.
+        >>> bugbeartype = beartype(conf=BeartypeConf(is_debug=True))
 
-         # Dynamically create a new @bugbeartype decorator enabling debugging.
-         # Insider D&D jokes in my @beartype? You'd better believe. It's happening.
-         >>> bugbeartype = beartype(conf=BeartypeConf(is_debug=True))
+        # Decorate with this decorator rather than @beartype everywhere.
+        >>> @bugbeartype
+        ... def muh_bugged_func() -> str:
+        ...     return b'Consistency is the bugbear that frightens little minds.'
+        (line 0001) def muh_bugged_func(
+        (line 0002)     *args,
+        (line 0003)     __beartype_func=__beartype_func, # is <function muh_bugged_func at 0x7f52733bad40>
+        (line 0004)     __beartype_conf=__beartype_conf, # is "BeartypeConf(is_color=None, is_debug=True, is_pep484_tower=False, strategy=<BeartypeStrategy...
+        (line 0005)     __beartype_get_violation=__beartype_get_violation, # is <function get_beartype_violation at 0x7f5273081d80>
+        (line 0006)     **kwargs
+        (line 0007) ):
+        (line 0008)     # Call this function with all passed parameters and localize the value
+        (line 0009)     # returned from this call.
+        (line 0010)     __beartype_pith_0 = __beartype_func(*args, **kwargs)
+        (line 0011)
+        (line 0012)     # Noop required to artificially increase indentation level. Note that
+        (line 0013)     # CPython implicitly optimizes this conditional away. Isn't that nice?
+        (line 0014)     if True:
+        (line 0015)         # Type-check this passed parameter or return value against this
+        (line 0016)         # PEP-compliant type hint.
+        (line 0017)         if not isinstance(__beartype_pith_0, str):
+        (line 0018)             raise __beartype_get_violation(
+        (line 0019)                 func=__beartype_func,
+        (line 0020)                 conf=__beartype_conf,
+        (line 0021)                 pith_name='return',
+        (line 0022)                 pith_value=__beartype_pith_0,
+        (line 0023)             )
+        (line 0024)
+        (line 0025)     return __beartype_pith_0
 
-         # Decorate with this decorator rather than @beartype everywhere.
-         >>> @bugbeartype
-         ... def muh_bugged_func() -> str:
-         ...     return b'Consistency is the bugbear that frightens little minds.'
-         (line 0001) def muh_bugged_func(
-         (line 0002)     *args,
-         (line 0003)     __beartype_func=__beartype_func, # is <function muh_bugged_func at 0x7f52733bad40>
-         (line 0004)     __beartype_conf=__beartype_conf, # is "BeartypeConf(is_color=None, is_debug=True, is_pep484_tower=False, strategy=<BeartypeStrategy...
-         (line 0005)     __beartype_get_violation=__beartype_get_violation, # is <function get_beartype_violation at 0x7f5273081d80>
-         (line 0006)     **kwargs
-         (line 0007) ):
-         (line 0008)     # Call this function with all passed parameters and localize the value
-         (line 0009)     # returned from this call.
-         (line 0010)     __beartype_pith_0 = __beartype_func(*args, **kwargs)
-         (line 0011)
-         (line 0012)     # Noop required to artificially increase indentation level. Note that
-         (line 0013)     # CPython implicitly optimizes this conditional away. Isn't that nice?
-         (line 0014)     if True:
-         (line 0015)         # Type-check this passed parameter or return value against this
-         (line 0016)         # PEP-compliant type hint.
-         (line 0017)         if not isinstance(__beartype_pith_0, str):
-         (line 0018)             raise __beartype_get_violation(
-         (line 0019)                 func=__beartype_func,
-         (line 0020)                 conf=__beartype_conf,
-         (line 0021)                 pith_name='return',
-         (line 0022)                 pith_value=__beartype_pith_0,
-         (line 0023)             )
-         (line 0024)
-         (line 0025)     return __beartype_pith_0
+   .. _BeartypeConf.is_pep484_tower:
 
-    .. _BeartypeConf.is_pep484_tower:
+   * **is_pep484_tower**\ : bool = False
 
-    * **is_pep484_tower**\ : bool = False
+     ``True`` only if enabling support for `PEP 484's implicit numeric tower
+     <implicit numeric tower_>`__ (i.e., lossy conversion of integers to
+     floating-point numbers as well as both integers and floating-point
+     numbers to complex numbers). Specifically, enabling this instructs
+     beartype to automatically expand:
 
-      ``True`` only if enabling support for `PEP 484's implicit numeric tower
-      <implicit numeric tower_>`__ (i.e., lossy conversion of integers to
-      floating-point numbers as well as both integers and floating-point
-      numbers to complex numbers). Specifically, enabling this instructs
-      beartype to automatically expand:
+     * All ``float`` type hints to ``float | int``, thus implicitly accepting
+       both integers and floating-point numbers for objects annotated as only
+       accepting floating-point numbers.
+     * All ``complex`` type hints to ``complex | float | int``, thus
+       implicitly accepting integers, floating-point, and complex numbers for
+       objects annotated as only accepting complex numbers.
 
-      * All ``float`` type hints to ``float | int``, thus implicitly accepting
-        both integers and floating-point numbers for objects annotated as only
-        accepting floating-point numbers.
-      * All ``complex`` type hints to ``complex | float | int``, thus
-        implicitly accepting integers, floating-point, and complex numbers for
-        objects annotated as only accepting complex numbers.
+     Defaults to ``False`` to minimize precision error introduced by lossy
+     conversions from integers to floating-point numbers to complex numbers.
+     Since most integers do *not* have exact representations as floating-point
+     numbers, each conversion of an integer into a floating-point number
+     typically introduces a small precision error that accumulates over
+     multiple conversions and operations into a larger precision error.
+     Enabling this improves the usability of public APIs at a cost of
+     introducing precision errors.
 
-      Defaults to ``False`` to minimize precision error introduced by lossy
-      conversions from integers to floating-point numbers to complex numbers.
-      Since most integers do *not* have exact representations as floating-point
-      numbers, each conversion of an integer into a floating-point number
-      typically introduces a small precision error that accumulates over
-      multiple conversions and operations into a larger precision error.
-      Enabling this improves the usability of public APIs at a cost of
-      introducing precision errors.
+     The standard use case is to dynamically define your own app-specific
+     ``@beartype`` decorator unconditionally enabling support for the implicit
+     numeric tower, usually as a convenience to your userbase who do *not*
+     particularly care about the above precision concerns. Behold the
+     permissive powers of... ``@beartowertype``!
 
-      The standard use case is to dynamically define your own app-specific
-      ``@beartype`` decorator unconditionally enabling support for the implicit
-      numeric tower, usually as a convenience to your userbase who do *not*
-      particularly care about the above precision concerns. Behold the
-      permissive powers of... ``@beartowertype``!
+     .. code-block:: python
 
-      .. code-block:: python
+        # Import the requisite machinery.
+        from beartype import beartype, BeartypeConf
 
-         # Import the requisite machinery.
-         from beartype import beartype, BeartypeConf
+        # Dynamically create a new @beartowertype decorator enabling the tower.
+        beartowertype = beartype(conf=BeartypeConf(is_pep484_tower=True))
 
-         # Dynamically create a new @beartowertype decorator enabling the tower.
-         beartowertype = beartype(conf=BeartypeConf(is_pep484_tower=True))
+        # Decorate with this decorator rather than @beartype everywhere.
+        @beartowertype
+        def crunch_numbers(numbers: list[float]) -> float:
+            return sum(numbers)
 
-         # Decorate with this decorator rather than @beartype everywhere.
-         @beartowertype
-         def crunch_numbers(numbers: list[float]) -> float:
-             return sum(numbers)
+        # This is now fine.
+        crunch_numbers([3, 1, 4, 1, 5, 9])
 
-         # This is now fine.
-         crunch_numbers([3, 1, 4, 1, 5, 9])
+        # This is still fine, too.
+        crunch_numbers([3.1, 4.1, 5.9])
 
-         # This is still fine, too.
-         crunch_numbers([3.1, 4.1, 5.9])
+     *First introduced in beartype 0.12.0.*
 
-      *First introduced in beartype 0.12.0.*
+   .. _BeartypeConf.strategy:
 
-    .. _BeartypeConf.strategy:
+   * **strategy**\ : BeartypeStrategy_ = BeartypeStrategy.O1_
 
-    * **strategy**\ : BeartypeStrategy_ = BeartypeStrategy.O1_
+     **Type-checking strategy** (i.e., BeartypeStrategy_ enumeration member
+     dictating how many items are type-checked at each nesting level of each
+     container and thus how responsively beartype type-checks containers). This
+     setting governs the core tradeoff in runtime type-checking between:
 
-      **Type-checking strategy** (i.e., BeartypeStrategy_ enumeration member
-      dictating how many items are type-checked at each nesting level of each
-      container and thus how responsively beartype type-checks containers). This
-      setting governs the core tradeoff in runtime type-checking between:
+     * **Overhead** in the amount of time that beartype spends type-checking.
+     * **Completeness** in the number of objects that beartype type-checks.
 
-      * **Overhead** in the amount of time that beartype spends type-checking.
-      * **Completeness** in the number of objects that beartype type-checks.
+     As beartype gracefully scales up to check larger and larger containers,
+     so beartype simultaneously scales down to check fewer and fewer items of
+     those containers. This scalability preserves performance regardless of
+     container size while increasing the likelihood of false negatives (i.e.,
+     failures to catch invalid items in large containers) as container size
+     increases. You can either type-check a small number of objects nearly
+     instantaneously *or* you can type-check a large number of objects slowly.
+     Pick one.
 
-      As beartype gracefully scales up to check larger and larger containers,
-      so beartype simultaneously scales down to check fewer and fewer items of
-      those containers. This scalability preserves performance regardless of
-      container size while increasing the likelihood of false negatives (i.e.,
-      failures to catch invalid items in large containers) as container size
-      increases. You can either type-check a small number of objects nearly
-      instantaneously *or* you can type-check a large number of objects slowly.
-      Pick one.
+     Defaults to BeartypeStrategy.O1_, the constant-time ``O(1)`` strategy –
+     maximizing scalability at a cost of also maximizing false positives.
 
-      Defaults to BeartypeStrategy.O1_, the constant-time ``O(1)`` strategy –
-      maximizing scalability at a cost of also maximizing false positives.
-
-BeartypeStrategy
-================
+Beartype Strategy API
+=====================
 
 .. _beartype.BeartypeStrategy:
 
