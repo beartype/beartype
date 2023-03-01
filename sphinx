@@ -91,7 +91,7 @@ SPHINX_BUILD_ARGS=(
     #standard pure-Python modules guaranteed to exist (e.g., "typing").
     # Enable "nit-picky mode," generating one warning for each broken reference
     # (e.g., interdocument or intrasection link).
-    #-n
+    -n
 
     #FIXME: Uncomment to assist in debugging, please.
     # Increase verbosity.

@@ -477,6 +477,16 @@ napoleon_custom_sections = [
 # pygments_style = "autumn"
 # pygments_dark_style = "monokai"
 
+# ....................{ LANG ~ python                      }....................
+# Wrap Python callable and class signatures exceeding this maximum number of
+# plaintext characters such that each parameter of those signatures is then
+# delegated its own discrete line.
+#
+# Note that this is currently only a prospective PR likely to be merged and is
+# thus merely something we're currently excited about. See also:
+#    https://github.com/sphinx-doc/sphinx/pull/11011
+python_maximum_signature_line_length = 80
+
 # ....................{ BUILD ~ html                       }....................
 #FIXME: Define the "html_favicon" setting as well -- once we actually create a
 #favicon, of course. *sigh*

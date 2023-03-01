@@ -45,9 +45,9 @@ Beartype Code Generation: It's All for You
 ******************************************
 
 Beartype dynamically generates type-checking code unique to each class and
-callable decorated by the ``@beartype`` decorator. Let's bearsplain why the code
-``@beartype`` generates for real-world use cases is the fastest possible code
-type-checking those cases.
+callable decorated by the :func:`beartype.beartype` decorator. Let's bearsplain
+why the code :func:`beartype.beartype` generates for real-world use cases is the
+fastest possible code type-checking those cases.
 
 Identity Decoration
 ###################
@@ -78,8 +78,9 @@ Let's define a trivial function annotated by *no* type hints:
    def law_of_the_jungle(strike_first_and_then_give_tongue):
        return strike_first_and_then_give_tongue
 
-Let's decorate that function by ``@beartype`` and verify that ``@beartype``
-reduced to the identity decorator by returning that function unmodified:
+Let's decorate that function by :func:`beartype.beartype` and verify that
+:func:`beartype.beartype` reduced to the identity decorator by returning that
+function unmodified:
 
 .. code-block:: pycon
 
@@ -87,13 +88,15 @@ reduced to the identity decorator by returning that function unmodified:
    >>> beartype(law_of_the_jungle) is law_of_the_jungle
    True
 
-We've verified that ``@beartype`` reduces to the identity decorator when
-decorating unannotated callables. That's but the tip of the efficiency iceberg,
-though. ``@beartype`` unconditionally reduces to a noop when:
+We've verified that :func:`beartype.beartype` reduces to the identity decorator
+when decorating unannotated callables. That's but the tip of the efficiency
+iceberg, though. :func:`beartype.beartype` unconditionally reduces to a noop
+when:
 
 * The decorated callable is itself decorated by the :pep:`484`\ -compliant
   :func:`typing.no_type_check` decorator.
-* The decorated callable has already been decorated by ``@beartype``.
+* The decorated callable has already been decorated by
+  :func:`beartype.beartype`.
 * Interpreter-wide optimization is enabled: e.g.,
 
   * `CPython is invoked with the "-O" command-line option <-O_>`__.
@@ -103,7 +106,7 @@ Shallow Identity Decoration
 ###########################
 
 Let's define a trivial function annotated by the :pep:`484`\ -compliant
-:attr:`typing.Any` type hint:
+:obj:`typing.Any` type hint:
 
 .. code-block:: python
 
@@ -112,9 +115,9 @@ Let's define a trivial function annotated by the :pep:`484`\ -compliant
    def law_of_the_jungle_2(never_order_anything_without_a_reason: Any) -> Any:
        return never_order_anything_without_a_reason
 
-Again, let's decorate that function by ``@beartype`` and verify that
-``@beartype`` reduced to the identity decorator by returning that function
-unmodified:
+Again, let's decorate that function by :func:`beartype.beartype` and verify that
+:func:`beartype.beartype` reduced to the identity decorator by returning that
+function unmodified:
 
 .. code-block:: pycon
 
@@ -122,27 +125,29 @@ unmodified:
    >>> beartype(law_of_the_jungle_2) is law_of_the_jungle_2
    True
 
-We've verified that ``@beartype`` reduces to the identity decorator when
-decorating callables annotated by :attr:`typing.Any` – a novel category of type
-hint we refer to as **shallowly ignorable type hints** (known to be ignorable by
-constant-time lookup in a predefined frozen set). That's but the snout of the
-crocodile, though. ``@beartype`` conditionally reduces to a noop when *all* type
-hints annotating the decorated callable are shallowly ignorable. These include:
+We've verified that :func:`beartype.beartype` reduces to the identity decorator
+when decorating callables annotated by :obj:`typing.Any` – a novel category of
+type hint we refer to as **shallowly ignorable type hints** (known to be
+ignorable by constant-time lookup in a predefined frozen set). That's but the
+snout of the crocodile, though. :func:`beartype.beartype` conditionally reduces
+to a noop when *all* type hints annotating the decorated callable are shallowly
+ignorable. These include:
 
-* object_, the root superclass of Python's class hierarchy. Since all objects
-  are instances of object_, object_ conveys no meaningful constraints as a type
-  hint and is thus shallowly ignorable.
-* typing.Any_, equivalent to object_.
-* typing.Generic_, equivalent to ``typing.Generic[typing.Any]``, which conveys
-  no meaningful constraints as a type hint and is thus shallowly ignorable.
-* typing.Protocol_, equivalent to ``typing.Protocol[typing.Any]`` and shallowly
-  ignorable for similar reasons.
-* typing.Union_, equivalent to ``typing.Union[typing.Any]``, equivalent to
-  ``Any``.
-* typing.Optional_, equivalent to ``typing.Optional[typing.Any]``, equivalent
-  to ``Union[Any, type(None)]``. Since any union subscripted by ignorable type
-  hints is itself ignorable, [#union_ignorable]_ typing.Optional_ is shallowly
-  ignorable as well.
+* :class:`object`, the root superclass of Python's class hierarchy. Since all
+  objects are instances of :class:`object`, :class:`object` conveys no
+  meaningful constraints as a type hint and is thus shallowly ignorable.
+* :obj:`typing.Any`, equivalent to :class:`object`.
+* :class:`typing.Generic`, equivalent to ``typing.Generic[typing.Any]``, which
+  conveys no meaningful constraints as a type hint and is thus shallowly
+  ignorable.
+* :class:`typing.Protocol`, equivalent to ``typing.Protocol[typing.Any]`` and
+  shallowly ignorable for similar reasons.
+* :obj:`typing.Union`, equivalent to ``typing.Union[typing.Any]``, equivalent to
+  :obj:`typing.Any`.
+* :obj:`typing.Optional`, equivalent to ``typing.Optional[typing.Any]``,
+  equivalent to ``Union[Any, type(None)]``. Since any union subscripted by
+  ignorable type hints is itself ignorable, [#union_ignorable]_ typing.Optional_
+  is shallowly ignorable as well.
 
 .. [#union_ignorable]
    Unions are only as narrow as their widest subscripted argument. However,
@@ -153,9 +158,9 @@ hints annotating the decorated callable are shallowly ignorable. These include:
 Deep Identity Decoration
 ########################
 
-Let's define a trivial function annotated by a non-trivial `PEP 484`_-, `585
-<PEP 585_>`__- and `593 <PEP 593_>`__-compliant type hint that superficially
-*appears* to convey meaningful constraints:
+Let's define a trivial function annotated by a non-trivial :pep:`484`\ -,
+:pep:`585`\ - and :pep:`593`\ -compliant type hint that superficially *appears*
+to convey meaningful constraints:
 
 .. code-block:: python
 
@@ -167,8 +172,8 @@ Let's define a trivial function annotated by a non-trivial `PEP 484`_-, `585
 
 Despite appearances, it can be shown by exhaustive (and frankly exhausting)
 reduction that that hint is actually ignorable. Let's decorate that function by
-``@beartype`` and verify that ``@beartype`` reduced to the identity decorator by
-returning that function unmodified:
+:func:`beartype.beartype` and verify that :func:`beartype.beartype` reduced to
+the identity decorator by returning that function unmodified:
 
 .. code-block:: pycon
 
@@ -176,22 +181,22 @@ returning that function unmodified:
    >>> beartype(law_of_the_jungle_3) is law_of_the_jungle_3
    True
 
-We've verified that ``@beartype`` reduces to the identity decorator when
-decorating callables annotated by the above object – a novel category of type
-hint we refer to as **deeply ignorable type hints** (known to be ignorable only
-by recursive linear-time inspection of subscripted arguments). That's but the
-trunk of the elephant, though. ``@beartype`` conditionally reduces to a noop
-when *all* type hints annotating the decorated callable are deeply ignorable.
-These include:
+We've verified that :func:`beartype.beartype` reduces to the identity decorator
+when decorating callables annotated by the above object – a novel category of
+type hint we refer to as **deeply ignorable type hints** (known to be ignorable
+only by recursive linear-time inspection of subscripted arguments). That's but
+the trunk of the elephant, though. :func:`beartype.beartype` conditionally
+reduces to a noop when *all* type hints annotating the decorated callable are
+deeply ignorable. These include:
 
-* Parametrizations of typing.Generic_ and typing.Protocol_ by type variables.
-  Since typing.Generic_, typing.Protocol_, *and* type variables all fail to
-  convey any meaningful constraints in and of themselves, these
-  parametrizations are safely ignorable in all contexts.
-* Calls to typing.NewType_ passed an ignorable type hint.
-* Subscriptions of typing.Annotated_ whose first argument is ignorable.
-* Subscriptions of typing.Optional_ and typing.Union_ by at least one ignorable
-  argument.
+* Parametrizations of :class:`typing.Generic` and :class:`typing.Protocol` by
+  type variables. Since :class:`typing.Generic`, :class:`typing.Protocol`, *and*
+  type variables all fail to convey any meaningful constraints in and of
+  themselves, these parametrizations are safely ignorable in all contexts.
+* Calls to :obj:`typing.NewType` passed an ignorable type hint.
+* Subscriptions of :obj:`typing.Annotated` whose first argument is ignorable.
+* Subscriptions of :obj:`typing.Optional` and :obj:`typing.Union` by at least
+  one ignorable argument.
 
 Constant Decoration
 ###################
@@ -212,7 +217,8 @@ Let's define a trivial function annotated by type hints that are builtin types:
    def law_of_the_jungle_4(he_must_be_spoken_for_by_at_least_two: int):
        return he_must_be_spoken_for_by_at_least_two
 
-Let's see the wrapper function ``@beartype`` dynamically generated from that:
+Let's see the wrapper function :func:`beartype.beartype` dynamically generated
+from that:
 
 .. code-block:: pycon
 
@@ -249,13 +255,13 @@ Let's see the wrapper function ``@beartype`` dynamically generated from that:
 Let's dismantle this bit by bit:
 
 * The code comments above are verbatim as they appear in the generated code.
-* ``law_of_the_jungle_4()`` is the ad-hoc function name ``@beartype`` assigned
-  this wrapper function.
+* ``law_of_the_jungle_4()`` is the ad-hoc function name
+  :func:`beartype.beartype` assigned this wrapper function.
 * ``__beartype_func`` is the original ``law_of_the_jungle_4()`` function.
 * ``__beartypistry`` is a thread-safe global registry of all types, tuples of
   types, and forward references to currently undeclared types visitable from
-  type hints annotating callables decorated by ``@beartype``. We'll see more
-  about the ``__beartypistry`` in a moment. For know, just know that
+  type hints annotating callables decorated by :func:`beartype.beartype`. We'll
+  see more about the ``__beartypistry`` in a moment. For know, just know that
   ``__beartypistry`` is a private singleton of the beartype package. This object
   is frequently accessed and thus localized to the body of this wrapper rather
   than accessed as a global variable, which would be mildly slower.
@@ -289,7 +295,8 @@ classes rather than builtin types:
    def law_of_the_jungle_5(a_cub_may_be_bought_at_a_price: ArgumentParser):
        return a_cub_may_be_bought_at_a_price
 
-Let's see the wrapper function ``@beartype`` dynamically generated from that:
+Let's see the wrapper function :func:`beartype.beartype` dynamically generated
+from that:
 
 .. code-block:: python
 
@@ -331,9 +338,9 @@ on line 20:
            if not isinstance(__beartype_pith_0, __beartypistry['argparse.ArgumentParser']):
 
 Since we annotated that function with a pure-Python class rather than builtin
-type, ``@beartype`` registered that class with the ``__beartypistry`` at
-decoration time and then subsequently looked that class up with its
-fully-qualified classname at call time to perform this type-check.
+type, :func:`beartype.beartype` registered that class with the
+``__beartypistry`` at decoration time and then subsequently looked that class up
+with its fully-qualified classname at call time to perform this type-check.
 
 So good so far... so what! Let's spelunk harder.
 
@@ -341,7 +348,7 @@ Constant Shallow Sequence Decoration
 ************************************
 
 Let's define a trivial function annotated by type hints that are :pep:`585`\
---compliant builtin types subscripted by ignorable arguments:
+-compliant builtin types subscripted by ignorable arguments:
 
 .. code-block:: python
 
@@ -351,7 +358,8 @@ Let's define a trivial function annotated by type hints that are :pep:`585`\
    def law_of_the_jungle_6(all_the_jungle_is_thine: list[object]):
        return all_the_jungle_is_thine
 
-Let's see the wrapper function ``@beartype`` dynamically generated from that:
+Let's see the wrapper function :func:`beartype.beartype` dynamically generated
+from that:
 
 .. code-block:: python
 
@@ -386,8 +394,8 @@ Let's see the wrapper function ``@beartype`` dynamically generated from that:
        return __beartype_func(*args, **kwargs)
 
 We are still within the realm of normalcy. Correctly detecting this type hint
-to be subscripted by an ignorable argument, ``@beartype`` only bothered
-type-checking this parameter to be an instance of this builtin type:
+to be subscripted by an ignorable argument, :func:`beartype.beartype` only
+bothered type-checking this parameter to be an instance of this builtin type:
 
 .. code-block:: python
 
@@ -409,7 +417,8 @@ Let's define a trivial function annotated by type hints that are :pep:`585`\
    def law_of_the_jungle_7(kill_everything_that_thou_canst: list[str]):
        return kill_everything_that_thou_canst
 
-Let's see the wrapper function ``@beartype`` dynamically generated from that:
+Let's see the wrapper function :func:`beartype.beartype` dynamically generated
+from that:
 
 .. code-block:: python
 
@@ -468,8 +477,9 @@ We have now diverged from normalcy. Let's dismantle this iota by iota:
   leading items with indices in this range while ignoring trailing items. Given
   the practical infeasibility of storing big sequences in memory, this seems an
   acceptable real-world tradeoff. Suck it, big sequences!
-* As before, ``@beartype`` first type-checks this parameter to be a list.
-* ``@beartype`` then type-checks this parameter to either be:
+* As before, :func:`beartype.beartype` first type-checks this parameter to be a
+  list.
+* :func:`beartype.beartype` then type-checks this parameter to either be:
 
   * ``not __beartype_pith_0``, an empty list.
   * ``isinstance(__beartype_pith_0[__beartype_random_int %
@@ -494,7 +504,8 @@ because *we are typing masochists*:
        list[list[list[str]]])):
        return pull_thorns_from_all_wolves_paws
 
-Let's see the wrapper function ``@beartype`` dynamically generated from that:
+Let's see the wrapper function :func:`beartype.beartype` dynamically generated
+from that:
 
 .. code-block:: python
 
@@ -560,9 +571,9 @@ denizens of the fathomless void begins. Let's dismantle this pascal by pascal:
   len(__beartype_pith_1)]``, a similar expression localizing repeatedly
   accessed random items of the second nested list.
 * The same ``__beartype_random_int`` pseudo-randomly indexes all three lists.
-* Under older Python interpreters lacking :pep:`572` support, ``@beartype``
-  generates equally valid (albeit less efficient) code repeating each
-  nested list item access.
+* Under older Python interpreters lacking :pep:`572` support,
+  :func:`beartype.beartype` generates equally valid (albeit less efficient) code
+  repeating each nested list item access.
 
 In the kingdom of the linear-time runtime type checkers, the constant-time
 runtime type checker really stands out like a sore giant squid, doesn't it?
@@ -700,7 +711,7 @@ Moar Depth
 
    **This section is badly outdated.** It's bad. *Real* bad. If you'd like us to
    revise this to actually reflect reality, just `drop us a line at our issue
-   tracker <beartype issues_>`__. @leycec promises satisfaction.
+   tracker <beartype issues_>`__. @leycec_ promises satisfaction.
 
 So, you want to help beartype deeply type-check even *more* type hints than she
 already does? Let us help you help us, because you are awesome.
@@ -720,15 +731,15 @@ These type-checkers are (in the order that callables decorated by beartype
 perform them at runtime):
 
 #. **Testing phase.** In this fast first pass, each callable decorated by
-   ``@beartype`` only *tests* whether all parameters passed to and values
-   returned from the current call to that callable satisfy all type hints
+   :func:`beartype.beartype` only *tests* whether all parameters passed to and
+   values returned from the current call to that callable satisfy all type hints
    annotating that callable. This phase does *not* raise human-readable
    exceptions (in the event that one or more parameters or return values fails
-   to satisfy these hints). ``@beartype`` highly optimizes this phase by
-   dynamically generating one wrapper function wrapping each decorated callable
-   with unique pure-Python performing these tests in O(1) constant-time. This
-   phase is *always* unconditionally performed by code dynamically generated and
-   returned by:
+   to satisfy these hints). :func:`beartype.beartype` highly optimizes this
+   phase by dynamically generating one wrapper function wrapping each decorated
+   callable with unique pure-Python performing these tests in O(1)
+   constant-time. This phase is *always* unconditionally performed by code
+   dynamically generated and returned by:
 
    * The fast-as-lightning ``pep_code_check_hint()`` function declared in the
      `"beartype._decor._code._pep._pephint" submodule <beartype pephint_>`__,
@@ -739,20 +750,20 @@ perform them at runtime):
      micro-optimizations.
 
 #. **Error phase.** In this slow second pass, each call to a callable decorated
-   by ``@beartype`` that fails the fast first pass (due to one or more
-   parameters or return values failing to satisfy these hints) recursively
+   by :func:`beartype.beartype` that fails the fast first pass (due to one or
+   more parameters or return values failing to satisfy these hints) recursively
    discovers the exact underlying cause of that failure and raises a
-   human-readable exception precisely detailing that cause. ``@beartype`` does
-   *not* optimize this phase whatsoever. Whereas the implementation of the first
-   phase is uniquely specific to each decorated callable and constrained to O(1)
-   constant-time non-recursive operation, the implementation of the second phase
-   is generically shared between all decorated callables and generalized to O(n)
-   linear-time recursive operation. Efficiency no longer matters when you're
-   raising exceptions. Exception handling is slow in any language and doubly
-   slow in `dynamically-typed`_ (and mostly interpreted) languages like Python,
-   which means that performance is mostly a non-concern in "cold" code paths
-   guaranteed to raise exceptions. This phase is only *conditionally* performed
-   when the first phase fails by:
+   human-readable exception precisely detailing that cause.
+   :func:`beartype.beartype` does *not* optimize this phase whatsoever. Whereas
+   the implementation of the first phase is uniquely specific to each decorated
+   callable and constrained to O(1) constant-time non-recursive operation, the
+   implementation of the second phase is generically shared between all
+   decorated callables and generalized to O(n) linear-time recursive operation.
+   Efficiency no longer matters when you're raising exceptions. Exception
+   handling is slow in any language and doubly slow in `dynamically-typed`_ (and
+   mostly interpreted) languages like Python, which means that performance is
+   mostly a non-concern in "cold" code paths guaranteed to raise exceptions.
+   This phase is only *conditionally* performed when the first phase fails by:
 
    * The slow-as-molasses ``get_beartype_violation()`` function declared in the
      `"beartype._decor._error.errormain" submodule <beartype errormain_>`__,
@@ -768,14 +779,14 @@ runtime performance and readable errors at a cost of developer pain. This is
 good! :sup:`...what?`
 
 Secondly, the same separation of concerns also complicates the development of
-``@beartype``. This is bad. Since ``@beartype`` internally implements two
-divergent type-checkers, deeply type-checking a new category of type hint
-requires adding that support to (wait for it) two divergent type-checkers –
-which, being fundamentally distinct codebases sharing little code in common,
-requires violating the `Don't Repeat Yourself (DRY) principle <DRY_>`__ by
-reinventing the wheel in the second type-checker. Such is the high price of
-high-octane performance. You probably thought this would be easier and funner.
-So did we.
+:func:`beartype.beartype`. This is bad. Since :func:`beartype.beartype`
+internally implements two divergent type-checkers, deeply type-checking a new
+category of type hint requires adding that support to (wait for it) two
+divergent type-checkers – which, being fundamentally distinct codebases sharing
+little code in common, requires violating the `Don't Repeat Yourself (DRY)
+principle <DRY_>`__ by reinventing the wheel in the second type-checker. Such is
+the high price of high-octane performance. You probably thought this would be
+easier and funner. So did we.
 
 Thirdly, this needs to be tested. After surmounting the above roadblocks by
 deeply type-checking that new category of type hint in *both* type-checkers,
@@ -816,9 +827,9 @@ you will want to at least:
 * Define a new data utility submodule for this PEP residing under the
   `"beartype._util.data.hint.pep.proposal" subpackage <beartype util data
   pep_>`__ adding various signs (i.e., arbitrary objects uniquely identifying
-  type hints compliant with this PEP) to various global variables defined by
-  the parent `"beartype._util.data.hint.pep.utilhintdatapep" submodule
-  <_beartype util data pep parent>`__.
+  type hints compliant with this PEP) to various global variables defined by the
+  parent `"beartype._util.data.hint.pep.utilhintdatapep" submodule <_beartype
+  util data pep parent>`__.
 * Define a new test data submodule for this PEP residing under the
   `"beartype_test.unit.data.hint.pep.proposal" subpackage <beartype test data
   pep_>`__.

@@ -325,6 +325,8 @@
    https://numpy.org
 .. _numpy.dtype:
    https://numpy.org/doc/stable/reference/arrays.dtypes.html
+.. _numpy.dtype.type:
+   https://numpy.org/doc/stable/reference/arrays.dtypes.html
 .. _numpy.empty_like:
    https://numpy.org/doc/stable/reference/generated/numpy.empty_like.html
 .. _numpy.floating:

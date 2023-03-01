@@ -28,8 +28,8 @@ Beartype only raises:
   beartype are easily distinguished from exceptions raised by everybody else.
   *All* exceptions raised by beartype are instances of:
 
-  * Public types importable from the ``beartype.roar`` subpackage.
-  * The beartype.roar.BeartypeException_ abstract base class (ABC).
+  * Public types importable from the :mod:`beartype.roar` subpackage.
+  * The :exc:`beartype.roar.BeartypeException` abstract base class (ABC).
 
 * **Disambiguous exceptions.** For your sanity and ours, *every* exception
   raised by beartype means one thing and one thing only. Beartype *never* reuses
@@ -39,7 +39,6 @@ Beartype only raises:
 Likewise, beartype only emits beartype-specific warnings and disambiguous
 warnings. Beartype is fastidious to a fault. Error handling is no...
 *exception*. <sup>punny *or* funny? you decide.</sup>
-
 
 .. # ------------------( TABLES OF CONTENTS                  )------------------
 .. # Table of contents, excluding the above document heading. While the
