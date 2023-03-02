@@ -506,10 +506,9 @@ You only have two options here. Choose wisely, wily scientist. If:
   * Require the `third-party "jaxtyping" package <jaxtyping_>`__.
   * Annotate callables with type hint factories published by ``jaxtyping``
     (e.g., ``jaxtyping.Float[jaxtyping.Array, '{metadata1 ... metadataN}']``).
-
-  Beartype fully supports `typed JAX arrays <jaxtyping_>`__. Because `Google
-  mathematician @patrick-kidger <patrick-kidger_>`__ did all the hard work, we
-  didn't have to. Bless your runtime API, @patrick-kidger.
+    Beartype fully supports `typed JAX arrays <jaxtyping_>`__. Because `Google
+    mathematician @patrick-kidger <patrick-kidger_>`__ did all the hard work, we
+    didn't have to. Bless your runtime API, @patrick-kidger.
 
 * You mind adding an additional mandatory runtime dependency to your app, prefer
   :ref:`beartype validators <api:tensor>`. Since `JAX declares a broadly similar

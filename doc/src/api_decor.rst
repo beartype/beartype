@@ -426,7 +426,7 @@ Beartype Configuration API
 
    .. py:attribute:: is_color
 
-      :type: :class:`bool` | :data:`None` = :data:`None`
+          ``Type:`` :class:`bool` | :data:`None` = :data:`None`
 
       Tri-state boolean governing how and whether beartype colours
       **type-checking violations** (i.e., human-readable
@@ -468,7 +468,7 @@ Beartype Configuration API
 
    .. py:attribute:: is_debug
 
-      :type: :class:`bool` = :data:`False`
+          ``Type:`` :class:`bool` = :data:`False`
 
       :data:`True` only if debugging the :func:`.beartype` decorator. If you're
       curious as to what exactly (if anything) :func:`.beartype` is doing on
@@ -536,7 +536,7 @@ Beartype Configuration API
 
    .. py:attribute:: is_pep484_tower
 
-      :type: :class:`bool` = :data:`False`
+          ``Type:`` :class:`bool` = :data:`False`
 
       :data:`True` only if enabling support for `PEP 484's implicit numeric
       tower <implicit numeric tower_>`__ (i.e., lossy conversion of integers to
@@ -590,7 +590,7 @@ Beartype Configuration API
 
    .. py:attribute:: strategy
 
-      :type: :class:`.BeartypeStrategy` = :attr:`.BeartypeStrategy.O1`
+          ``Type:`` :class:`.BeartypeStrategy` = :attr:`.BeartypeStrategy.O1`
 
       **Type-checking strategy** (i.e., :class:`.BeartypeStrategy` enumeration
       member dictating how many items are type-checked at each nesting level of
@@ -616,7 +616,9 @@ Beartype Configuration API
 Beartype Strategy API
 =====================
 
-.. py:class:: BeartypeStrategy(enum.Enum)
+.. py:class:: BeartypeStrategy
+
+       ``Superclass(es):`` :class:`enum.Enum`
 
    Enumeration of all kinds of **type-checking strategies** (i.e., competing
    procedures for type-checking objects passed to or returned from
@@ -640,8 +642,8 @@ Beartype Strategy API
       # O(n) type-checking.
       slowmobeartype = beartype(conf=BeartypeConf(strategy=BeartypeStrategy.On))
 
-      # Type-check *ALL* items of the passed list. Do this *ONLY* when you
-      # pretend to know that this list will *ALWAYS* be ignorably small. Gulp!
+      # Type-check all items of the passed list. Do this only when you pretend
+      # to know in your guts that this list will *ALWAYS* be ignorably small.
       @bslowmobeartype
       def type_check_like_maple_syrup(liquid_gold: list[int]) -> str:
           return 'The slowest noop yet envisioned? You're not wrong.'
@@ -657,7 +659,7 @@ Beartype Strategy API
 
     .. py:attribute:: On
 
-       :type: :class:`beartype.cave.EnumMemberType`
+           ``Type:`` :class:`beartype.cave.EnumMemberType`
 
        **Linear-time strategy:** the :math:`O(n)` strategy, type-checking
        *all* items of a container.
@@ -673,7 +675,7 @@ Beartype Strategy API
 
     .. py:attribute:: Ologn
 
-       :type: :class:`beartype.cave.EnumMemberType`
+           ``Type:`` :class:`beartype.cave.EnumMemberType`
 
        **Logarithmic-time strategy:** the :math:`O(\log n)` strategy,
        type-checking a randomly selected number of items ``log(len(obj))`` of
@@ -690,7 +692,7 @@ Beartype Strategy API
 
     .. py:attribute:: O1
 
-       :type: :class:`beartype.cave.EnumMemberType`
+           ``Type:`` :class:`beartype.cave.EnumMemberType`
 
        **Constant-time strategy:** the default :math:`O(1)` strategy,
        type-checking a single randomly selected item of each container. As the
@@ -698,7 +700,7 @@ Beartype Strategy API
 
     .. py:attribute:: O0
 
-       :type: :class:`beartype.cave.EnumMemberType`
+           ``Type:`` :class:`beartype.cave.EnumMemberType`
 
        **No-time strategy,** disabling type-checking for a decorated callable by
        reducing :func:`.beartype` to the identity decorator for that callable.

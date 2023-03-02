@@ -139,8 +139,8 @@ Validator API
 
 .. py:class:: Is
 
-   *Subscription API:* beartype.vale.\ **Is**\ [\
-   :class:`collections.abc.Callable`\ [[:class:`object`\ ], :class:`bool`\ ]]
+       ``Subscription API:`` beartype.vale.\ **Is**\ [\
+       :class:`collections.abc.Callable`\ [[:class:`object`\ ], :class:`bool`\ ]]
 
    **Functional validator.** A PEP-compliant type hint enforcing any arbitrary
    runtime constraint – created by subscripting (indexing) the :class:`.Is` type
@@ -167,8 +167,8 @@ Validator API
 
 .. py:class:: IsAttr
 
-   *Subscription API:* beartype.vale.\ **IsAttr**\ [\
-   :class:`str`, ``beartype.vale.*``\ ]
+       ``Subscription API:`` beartype.vale.\ **IsAttr**\ [\
+       :class:`str`, ``beartype.vale.*``\ ]
 
    **Declarative attribute validator.** A PEP-compliant type hint enforcing any
    arbitrary runtime constraint on any named object attribute – created by
@@ -221,7 +221,7 @@ Validator API
 
 .. py:class:: IsEqual
 
-   *Subscription API:* beartype.vale.\ **IsEqual**\ [:class:`object`\ ]
+       ``Subscription API:`` beartype.vale.\ **IsEqual**\ [:class:`object`\ ]
 
    **Declarative equality validator.** A PEP-compliant type hint enforcing
    equality against any object – created by subscripting (indexing) the
@@ -279,7 +279,7 @@ Validator API
 
 .. py:class:: IsInstance
 
-   *Subscription API:* beartype.vale.\ **IsInstance**\ [:class:`type`\, ...]
+       ``Subscription API:`` beartype.vale.\ **IsInstance**\ [:class:`type`\, ...]
 
    **Declarative instance validator.** A PEP-compliant type hint enforcing
    instancing of one or more classes – created by subscripting (indexing) the
@@ -356,7 +356,7 @@ Validator API
 
 .. py:class:: IsSubclass
 
-   *Subscription API:* beartype.vale.\ **IsSubclass**\ [:class:`type`\, ...]
+       ``Subscription API:`` beartype.vale.\ **IsSubclass**\ [:class:`type`\, ...]
 
    **Declarative inheritance validator.** A PEP-compliant type hint enforcing
    subclassing of one or more superclasses (base classes) – created by

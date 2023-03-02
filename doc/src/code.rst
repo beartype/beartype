@@ -711,7 +711,7 @@ Moar Depth
 
    **This section is badly outdated.** It's bad. *Real* bad. If you'd like us to
    revise this to actually reflect reality, just `drop us a line at our issue
-   tracker <beartype issues_>`__. @leycec_ promises satisfaction.
+   tracker <beartype issues_>`__. `@leycec`_ promises satisfaction.
 
 So, you want to help beartype deeply type-check even *more* type hints than she
 already does? Let us help you help us, because you are awesome.
