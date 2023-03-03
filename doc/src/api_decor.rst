@@ -17,7 +17,7 @@
 Beartype Decoration
 *******************
 
-::
+.. code-block:: text
 
    wrap anything with runtime type-checking
        ...except that, of course.
@@ -48,8 +48,17 @@ Beartype Decorator API
    beartype( \
        cls: type | None = None, \
        func: collections.abc.Callable | None = None, \
-       conf: BeartypeConf = BeartypeConf() \
+       conf: BeartypeConf = BeartypeConf(), \
    ) -> object
+
+   :arg cls: Pure-Python class to be decorated.
+   :type cls: type | None
+   :arg func: Pure-Python function or method to be decorated.
+   :type func: collections.abc.Callable | None
+   :arg conf: Beartype configuration modifying the behaviour of ``@beartype``.
+   :type conf: beartype.BeartypeConf
+   :return: Passed class, function, or method augmented with runtime
+            type-checking.
 
    Augment the passed object with performant runtime type-checking. Unlike most
    decorators, ``@beartype`` has three orthogonal modes of operation:
@@ -76,15 +85,6 @@ Beartype Decorator API
      *last*.
 
    It's not our fault. Surely documentation would never decieve you.
-
-   :arg cls: Pure-Python class to be decorated.
-   :type cls: type | None
-   :arg func: Pure-Python function or method to be decorated.
-   :type func: collections.abc.Callable | None
-   :arg conf: Beartype configuration modifying the behaviour of ``@beartype``.
-   :type conf: beartype.BeartypeConf
-   :return: Passed class, function, or method augmented with runtime
-            type-checking.
 
 .. _callable mode:
 

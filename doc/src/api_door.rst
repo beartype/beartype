@@ -25,15 +25,17 @@
 Beartype DOOR
 *************
 
-::
+.. code-block:: text
 
    DOOR: the Decidedly Object-Oriented Runtime-checker
    DOOR: it's capitalized, so it matters
 
 Enter the **DOOR** (\ **D**\ ecidedly **O**\ bject-\ **o**\ riented **R**\
-untime-checker): the first usable public Pythonic API for introspecting,
-comparing, and type-checking type hints in :math:`O(1)` time with negligible
-constants.
+untime-checker): beartype's Pythonic API for introspecting, comparing, and
+type-checking PEP-compliant type hints in average-case :math:`O(1)` time with
+negligible constants. It's fast is what we're saying.
+
+:math:`O(1)`: *it's just how beartype jiggles.*
 
 .. # ------------------( TABLES OF CONTENTS                  )------------------
 .. # Table of contents, excluding the above document heading. While the
@@ -46,96 +48,157 @@ constants.
 
 .. # ------------------( DESCRIPTION                         )------------------
 
-Procedural API
-##############
+DOOR Overview
+#############
 
-Type-check *anything* at *any* time against *any* type hint. When the
-:func:`isinstance` and :func:`issubclass` builtins fail to scale, prefer the
-:mod:`beartype.door` procedural API.
+For efficiency, security, and scalability, the beartype codebase is like the
+Linux kernel. That's a polite way of saying our code is unreadable gibberish
+implemented:
 
-.. _beartype.door.die_if_unbearable:
-.. _die_if_unbearable:
+* **Procedurally,** mostly with module-scoped functions. Classes? We don't need
+  classes where we're going, which is nowhere you want to go.
+* **Iteratively,** mostly with ``while`` loops over :class:`tuple` instances. We
+  shouldn't have admitted that. We are not kidding. We wish we were kidding.
+  Beartype is an echo chamber of :class:`tuple` all the way down. Never do what
+  we do. This is our teaching moment.
 
-*def* beartype.door.\ **die_if_unbearable**\ (obj: object, hint: object, \*,
-conf: beartype.BeartypeConf = beartype.BeartypeConf()) -> None
+DOOR is different. DOOR has competing goals like usability, maintainability, and
+debuggability. Those things are often valuable to people that live in mythical
+lands with lavish amenities like potable ground water, functioning electrical
+grids, and Internet speed in excess of 56k dial-up. To achieve this utopian
+dream, DOOR is implemented:
 
-    **Type-hint exception raiser,** either:
+* **Object-orientedly,** with a non-trivial class hierarchy of metaclasses,
+  mixins, and abstract base classes (ABC) nested twenty levels deep defining
+  dunder methods deferring to public methods leveraging utility functions.
+  Nothing really makes sense, but nothing has to. Tests say it works. After all,
+  would tests lie? We will document everything one day.
+* **Recursively,** with methods commonly invoking themselves until the call
+  stack invariably ignites in flames. We are pretty sure we didn't just type
+  that.
 
-    * Raising a **typing-checking violation** (i.e., human-readable
-      :exc:`beartype.roar.BeartypeCallHintViolation` exception) if the passed
-      arbitrary object ``obj`` violates the passed type hint ``hint`` under the
-      passed beartype configuration ``conf``.
-    * Reducing to a noop otherwise (i.e., if ``obj`` satisfies ``hint`` under
-      ``conf``).
+This makes DOOR unsuitable for use inside beartype itself (where ruthless
+micro-optimizations have beaten up everything else), but optimum for the rest of
+the world (where rationality, sanity, and business reality reigns in the darker
+excesses of humanity). This hopefully includes you.
 
-    .. code-block:: pycon
+Don't be like beartype. Use DOOR instead.
 
-       >>> from beartype.door import die_if_unbearable
-       >>> from beartype.typing import List, Sequence, Optional, Union
-       >>> die_if_unbearable("My people ate them all!", Union[List[int], None])
-       BeartypeDoorHintViolation: Object 'My people ate them all!' violates type
-       hint typing.Optional[list[int]], as str 'My people ate them all!' not
-       list or <class "builtins.NoneType">.
-       >>> die_if_unbearable("I'm swelling with patriotic mucus!", Optional[str])
-       >>> die_if_unbearable("I'm not on trial here.", Sequence[str])
+DOOR Procedural API
+###################
 
-    For those familiar with typeguard_, this function implements the beartype
-    equivalent of the low-level typeguard.check_type_ function.
+.. code-block:: text
 
-.. _beartype.door.is_bearable:
-.. _is_bearable:
+   Type-check anything
+      against any type hint –
+           at any time,
+              anywhere.
 
-*def* beartype.door.\ **is_bearable**\ (obj: object, hint: object, \*, conf:
-beartype.BeartypeConf = beartype.BeartypeConf()) -> bool
+"Any" is the key here. When the :func:`isinstance` and :func:`issubclass`
+builtins fail to scale, prefer the :mod:`beartype.door` procedural API.
 
-    **Type-hint tester,** returning either:
+.. py:function::
+   die_if_unbearable( \
+       obj: object, \
+       hint: object, \
+       conf: beartype.BeartypeConf = beartype.BeartypeConf(), \
+   ) -> None
 
-    * :data:`True` if the passed arbitrary object ``obj`` satisfies the passed
-      PEP-compliant type hint ``hint`` under the passed beartype configuration
-      ``conf``.
-    * :data:`False` otherwise.
+   :arg obj: Arbitrary object to be type-checked against ``hint``.
+   :type obj: object
+   :arg hint: Type hint to type-check ``obj`` against.
+   :type hint: object
+   :arg conf: Beartype configuration. Defaults to the default beartype
+              configuration performing :math:`O(1)` type-checking.
+   :type conf: beartype.BeartypeConf
+   :raise beartype.roar.BeartypeCallHintViolation: If ``obj`` violates ``hint``.
 
-    .. code-block:: pycon
+   **Runtime type-checking exception raiser.** If object ``obj`` violates type
+   hint ``hint`` under configuration ``conf``, :func:`.die_if_unbearable` raises
+   a **typing-checking violation** (i.e., human-readable
+   :exc:`beartype.roar.BeartypeCallHintViolation` exception); else,
+   :func:`.die_if_unbearable` function efficiently reduces to a noop (i.e., does
+   nothing bad).
 
-       >>> from beartype.door import is_bearable
-       >>> from beartype.typing import List, Sequence, Optional, Union
-       >>> is_bearable("Kif, I’m feeling the ‘Captain's itch.’", Optional[str])
-       True
-       >>> is_bearable('I hate these filthy Neutrals, Kif.', Sequence[str])
-       True
-       >>> is_bearable('Stop exploding, you cowards.', Union[List[bool], None])
-       False
+   .. code-block:: pycon
 
-    This tester is a strict superset of the :func:`isinstance` builtin and can
-    thus be safely called wherever that builtin is called with the same exact
-    parameters in the same exact order:
+      # Import the requisite machinery.
+      >>> from beartype.door import die_if_unbearable
+      >>> from beartype.typing import List, Sequence
 
-    .. code-block:: pycon
+      # Type-check an object violating a type hint.
+      >>> die_if_unbearable("My people ate them all!", List[int] | None])
+      BeartypeDoorHintViolation: Object 'My people ate them all!' violates type
+      hint list[int] | None, as str 'My people ate them all!' not list or <class
+      "builtins.NoneType">.
 
-       >>> from beartype.door import is_bearable
-       >>> is_bearable('I surrender and volunteer for treason.', str)
-       True
-       >>> is_bearable(b'Stop exploding, you cowards.', (str, bytes))
-       True
-       >>> is_bearable('Comets, the icebergs of the sky.', bool | None)
-       False
+      # Type-check multiple objects satisfying multiple type hints.
+      >>> die_if_unbearable("I'm swelling with patriotic mucus!", str | None)
+      >>> die_if_unbearable("I'm not on trial here.", Sequence[str])
 
-    This tester is also a *spiritual* superset of the :func:`issubclass` builtin
-    and can thus be safely called wherever that builtin is called by replacing
-    the superclass(es) to be tested against with a ``type[{superclass}]`` or
-    ``typing.Union[type[{superclass1}], ..., type[{superclassN}]]`` type hint:
+   .. tip::
 
-    .. code-block:: pycon
+      For those familiar with typeguard_, this function implements the beartype
+      equivalent of the low-level typeguard.check_type_ function. For everyone
+      else, pretend you never heard us just namedrop typeguard_.
 
-       >>> from beartype.door import is_bearable
-       >>> from beartype.typing import Type, Union
-       >>> from collections.abc import Awaitable, Collection, Iterable
-       >>> is_bearable(str, Type[Iterable])
-       True
-       >>> is_bearable(bytes, Union[Type[Collection], Type[Awaitable]])
-       True
-       >>> is_bearable(bool, Union[Type[str], Type[float]])
-       False
+.. py:function::
+   is_bearable( \
+       obj: object, \
+       hint: object, \
+       conf: beartype.BeartypeConf = beartype.BeartypeConf(), \
+   ) -> bool
+
+   .. # FIXME: Pick up here tomorrow, folks!
+
+   **Runtime type-checking tester,** returning either:
+
+   * :data:`True` if the passed arbitrary object ``obj`` satisfies the passed
+     PEP-compliant type hint ``hint`` under the passed beartype configuration
+     ``conf``.
+   * :data:`False` otherwise.
+
+   .. code-block:: pycon
+
+      >>> from beartype.door import is_bearable
+      >>> from beartype.typing import List, Sequence, Optional, Union
+      >>> is_bearable("Kif, I’m feeling the ‘Captain's itch.’", Optional[str])
+      True
+      >>> is_bearable('I hate these filthy Neutrals, Kif.', Sequence[str])
+      True
+      >>> is_bearable('Stop exploding, you cowards.', Union[List[bool], None])
+      False
+
+   This tester is a strict superset of the :func:`isinstance` builtin and can
+   thus be safely called wherever that builtin is called with the same exact
+   parameters in the same exact order:
+
+   .. code-block:: pycon
+
+      >>> from beartype.door import is_bearable
+      >>> is_bearable('I surrender and volunteer for treason.', str)
+      True
+      >>> is_bearable(b'Stop exploding, you cowards.', (str, bytes))
+      True
+      >>> is_bearable('Comets, the icebergs of the sky.', bool | None)
+      False
+
+   This tester is also a *spiritual* superset of the :func:`issubclass` builtin
+   and can thus be safely called wherever that builtin is called by replacing
+   the superclass(es) to be tested against with a ``type[{superclass}]`` or
+   ``typing.Union[type[{superclass1}], ..., type[{superclassN}]]`` type hint:
+
+   .. code-block:: pycon
+
+      >>> from beartype.door import is_bearable
+      >>> from beartype.typing import Type, Union
+      >>> from collections.abc import Awaitable, Collection, Iterable
+      >>> is_bearable(str, Type[Iterable])
+      True
+      >>> is_bearable(bytes, Union[Type[Collection], Type[Awaitable]])
+      True
+      >>> is_bearable(bool, Union[Type[str], Type[float]])
+      False
 
 .. _is_subhint:
 
@@ -329,13 +392,8 @@ and floats. ``new_func()`` thus preserves backward compatibility with
 
 **Thus was Rome's API preserved in a day.**
 
-Object-oriented API
-###################
-
-.. #FIXME: Shift these anchor links to document these exact attributes *AFTER*
-.. #we actually define documentation for these attributes below.
-.. _beartype.door.TypeHint.die_if_unbearable:
-.. _beartype.door.TypeHint.is_unbearable:
+DOOR Object-oriented API
+########################
 
 .. # FIXME: Synopsize this in our introduction and cheatsheet, please!
 .. # FIXME: Synopsize class decoration in our introduction, too!

@@ -99,8 +99,7 @@ When that happens, don't be the guy that ignores this chapter.
    (including :func:`beartype.door.die_if_unbearable` and
    :func:`beartype.beartype`-decorated callables) raise instances of concrete
    subclasses of this abstract base class (ABC) at call-time – typically when
-   failing a type-check (e.g., due to passing a parameter or returning a value
-   violating a type hint annotating that parameter or return).
+   failing a type-check.
 
    *All* exceptions raised by beartype type-checkers are guaranteed to be
    instances of this ABC. Since type-checking exceptions are typically raised
@@ -123,8 +122,10 @@ When that happens, don't be the guy that ignores this chapter.
    (including :func:`beartype.door.die_if_unbearable` and
    :func:`beartype.beartype`-decorated callables) raise instances of concrete
    subclasses of this abstract base class (ABC) when failing a type-check at
-   call time (e.g., due to passing a parameter or returning a value violating a
-   type hint annotating that parameter or return).
+   call time – typically due to you passing a parameter or returning a value
+   violating a type hint annotating that parameter or return.
+
+   For once, we're not the ones to blame. The relief in our cubicle is palpable.
 
 .. py:exception:: BeartypeCallHintForwardRefException
 
