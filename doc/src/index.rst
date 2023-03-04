@@ -129,9 +129,10 @@ Beartype brings Rust_- and `C++`_-inspired `zero-cost abstractions <zero-cost
 abstraction_>`__ into the lawless world of `dynamically-typed`_ Python by
 :ref:`enforcing type safety at the granular level of functions and methods
 <eli5:eli5>` against :ref:`type hints standardized by the Python community
-<pep:pep>` in :ref:`O(1) non-amortized worst-case time with negligible constant
-factors <math:time>`. If the prior sentence was unreadable jargon, see :ref:`our
-friendly and approachable FAQ for a human-readable synopsis <faq:faq>`.
+<pep:pep>` in :math:`O(1)` :ref:`non-amortized worst-case time with negligible
+constant factors <math:time>`. If the prior sentence was unreadable jargon, see
+:ref:`our friendly and approachable FAQ for a human-readable synopsis
+<faq:faq>`.
 
 Beartype is `portably implemented <beartype codebase_>`__ in `Python 3
 <Python_>`__, `continuously stress-tested <beartype tests_>`__ via `GitHub

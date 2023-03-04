@@ -16,14 +16,18 @@
 |beartype-banner|
 =================
 
-|codecov-badge| |ci-badge| |rtd-badge|
+|rtd-badge| |ci-badge| |codecov-badge|
 
     ⚠
 
     `Beartype documentation lives at ReadTheDocs (RTD) <beartype RTD_>`__. It's
-    readable, structured, and soothing to the deep folds of your galactic brain.
+    readable, structured, and soothing to the deep folds of your big galactic
+    brain. Open your mind to an ocean of mundane knowledge. Enter...
+    **Bearpedia:**
 
-    The document you are now reading was once a monolithic ~316KB file known to
+        https://beartype.readthedocs.io
+
+    The document you are now reading was once a monolithic ~316Kb file known to
     induce migraines in 22% of the whole devops population. For your safety,
     that document no longer exists. This is how much beartype cares.
 
