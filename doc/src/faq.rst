@@ -188,7 +188,7 @@ Beartype can *always* be safely added to *any* Python package, module, app, or
 script regardless of size, scope, funding, or audience. Never worry about your
 backend Django_ server taking an impromptu swan dive on St. Patty's Day just
 because your frontend React_ client pushed a 5MB JSON file serializing a
-doubly-nested list of integers. :superscript:`Nobody could have foreseen this!`
+doubly-nested list of integers. :sup:`Nobody could have foreseen this!`
 
 The idea of competing runtime type-checkers like typeguard_ is that they
 compulsively do *everything.* If you annotate a function decorated by typeguard_
@@ -449,7 +449,7 @@ with a tremulous quaver. Excessive caffeine and inadequate gaming did you no
 favors tonight. You know this. Yet again you reach for the hot butter knife.
 
 **H-hey!** You can, okay? You can have everything that market forces demand.
-Bring to *bear* :superscript:`cough` the combined powers of `PEP 484-compliant
+Bring to *bear* :sup:`cough` the combined powers of `PEP 484-compliant
 type aliases <type aliases_>`__, the `PEP 484-compliant "typing.TYPE_CHECKING"
 boolean global <typing.TYPE_CHECKING_>`__, and :mod:`beartype validators
 <beartype.vale>` to satisfy both static and runtime type-checkers:
@@ -516,7 +516,7 @@ You only have two options here. Choose wisely, wily scientist. If:
   most NumPy-specific examples cleanly generalize to JAX. Beartype is *no*
   exception.
 
-Bask in the array of options at your disposal! :superscript:`...get it?
+Bask in the array of options at your disposal! :sup:`...get it?
 ...array? I'll stop now.`
 
 ...NumPy arrays?
@@ -657,7 +657,7 @@ type-check via the former. Just:
 
 |VSCode-Pylance-type-checking-setting|
 
-:superscript:`Pretend that reads "off" rather than "strict". Pretend we took
+:sup:`Pretend that reads "off" rather than "strict". Pretend we took
 this screenshot.`
 
 There are tradeoffs here, because that's just how the code rolls. On:

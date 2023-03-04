@@ -84,8 +84,8 @@ excesses of humanity). This hopefully includes you.
 
 Don't be like beartype. Use DOOR instead.
 
-DOOR Procedural API
-###################
+DOOR Procedures
+###############
 
 .. code-block:: text
 
@@ -96,6 +96,9 @@ DOOR Procedural API
 
 "Any" is the key here. When the :func:`isinstance` and :func:`issubclass`
 builtins fail to scale, prefer the :mod:`beartype.door` procedural API.
+
+Procedural API
+**************
 
 .. py:function::
    die_if_unbearable( \
@@ -108,17 +111,20 @@ builtins fail to scale, prefer the :mod:`beartype.door` procedural API.
    :type obj: object
    :arg hint: Type hint to type-check ``obj`` against.
    :type hint: object
-   :arg conf: Beartype configuration. Defaults to the default beartype
-              configuration performing :math:`O(1)` type-checking.
+   :arg conf: Beartype configuration. Defaults to the default configuration
+              performing :math:`O(1)` type-checking.
    :type conf: beartype.BeartypeConf
    :raise beartype.roar.BeartypeCallHintViolation: If ``obj`` violates ``hint``.
 
-   **Runtime type-checking exception raiser.** If object ``obj`` violates type
-   hint ``hint`` under configuration ``conf``, :func:`.die_if_unbearable` raises
-   a **typing-checking violation** (i.e., human-readable
-   :exc:`beartype.roar.BeartypeCallHintViolation` exception); else,
-   :func:`.die_if_unbearable` function efficiently reduces to a noop (i.e., does
-   nothing bad).
+   **Runtime type-checking exception raiser.** If object ``obj``:
+
+   * Satisfies type hint ``hint`` under configuration ``conf``,
+     :func:`.die_if_unbearable` raises a **typing-checking violation** (i.e.,
+     human-readable :exc:`beartype.roar.BeartypeCallHintViolation` exception).
+   * Violates type hint ``hint`` under configuration ``conf``,
+     :func:`.die_if_unbearable` reduces to a noop (i.e., does nothing bad).
+
+   Release the bloodthirsty examples!
 
    .. code-block:: pycon
 
@@ -142,6 +148,7 @@ builtins fail to scale, prefer the :mod:`beartype.door` procedural API.
       equivalent of the low-level typeguard.check_type_ function. For everyone
       else, pretend you never heard us just namedrop typeguard_.
 
+
 .. py:function::
    is_bearable( \
        obj: object, \
@@ -149,152 +156,204 @@ builtins fail to scale, prefer the :mod:`beartype.door` procedural API.
        conf: beartype.BeartypeConf = beartype.BeartypeConf(), \
    ) -> bool
 
-   .. # FIXME: Pick up here tomorrow, folks!
+   :arg obj: Arbitrary object to be type-checked against ``hint``.
+   :type obj: object
+   :arg hint: Type hint to type-check ``obj`` against.
+   :type hint: object
+   :arg conf: Beartype configuration. Defaults to the default configuration
+              performing :math:`O(1)` type-checking.
+   :type conf: beartype.BeartypeConf
+   :return bool: :data:`True` only if ``obj`` satisfies ``hint``.
 
-   **Runtime type-checking tester,** returning either:
+   **Runtime type-checking tester.** If object ``obj``:
 
-   * :data:`True` if the passed arbitrary object ``obj`` satisfies the passed
-     PEP-compliant type hint ``hint`` under the passed beartype configuration
-     ``conf``.
-   * :data:`False` otherwise.
+   * Satisfies type hint ``hint`` under configuration ``conf``,
+     :func:`.is_bearable` returns :data:`True`.
+   * Violates type hint ``hint`` under configuration ``conf``,
+     :func:`.is_bearable` returns :data:`False`.
+
+   An example paints a thousand docstrings. :sup:`...what does that even mean?`
 
    .. code-block:: pycon
 
+      # Import the requisite machinery.
       >>> from beartype.door import is_bearable
-      >>> from beartype.typing import List, Sequence, Optional, Union
-      >>> is_bearable("Kif, I’m feeling the ‘Captain's itch.’", Optional[str])
+      >>> from beartype.typing import List, Sequence
+
+      # Type-check an object violating a type hint.
+      >>> is_bearable('Stop exploding, you cowards.', List[bool] | None)
+      False
+
+      # Type-check multiple objects satisfying multiple type hints.
+      >>> is_bearable("Kif, I’m feeling the ‘Captain's itch.’", str | None)
       True
       >>> is_bearable('I hate these filthy Neutrals, Kif.', Sequence[str])
       True
-      >>> is_bearable('Stop exploding, you cowards.', Union[List[bool], None])
-      False
 
-   This tester is a strict superset of the :func:`isinstance` builtin and can
-   thus be safely called wherever that builtin is called with the same exact
-   parameters in the same exact order:
+   :func:`.is_bearable` is a strict superset of the :func:`isinstance` builtin.
+   :func:`.is_bearable` can thus be safely called wherever :func:`isinstance` is
+   called with the same exact parameters in the same exact order:
 
    .. code-block:: pycon
 
+      # Requisite machinery: I import you.
       >>> from beartype.door import is_bearable
+
+      # These two statements are semantically equivalent.
       >>> is_bearable('I surrender and volunteer for treason.', str)
       True
-      >>> is_bearable(b'Stop exploding, you cowards.', (str, bytes))
+      >>> isinstance('I surrender and volunteer for treason.', str)
       True
-      >>> is_bearable('Comets, the icebergs of the sky.', bool | None)
-      False
 
-   This tester is also a *spiritual* superset of the :func:`issubclass` builtin
-   and can thus be safely called wherever that builtin is called by replacing
-   the superclass(es) to be tested against with a ``type[{superclass}]`` or
-   ``typing.Union[type[{superclass1}], ..., type[{superclassN}]]`` type hint:
+      # These two statements are semantically equivalent, too.
+      >>> is_bearable(b'A moment of weakness is all it takes.', (str, bytes))
+      True
+      >>> isinstance(b'A moment of weakness is all it takes.', (str, bytes))
+      True
+
+      # These two statements are semantically equivalent, yet again. *shockface*
+      >>> is_bearable('Comets: the icebergs of the sky.', bool | None)
+      False
+      >>> isinstance('Comets: the icebergs of the sky.', bool | None)
+      True
+
+   :func:`.is_bearable` is also a *spiritual* superset of the :func:`issubclass`
+   builtin. :func:`.is_bearable` can be safely called wherever
+   :func:`issubclass` is called by replacing the superclass(es) to be tested
+   against with a ``type[{cls}]`` or ``type[{cls1}] | ... | type[{clsN}]`` type
+   hint:
 
    .. code-block:: pycon
 
+      # Machinery. It is requisite.
       >>> from beartype.door import is_bearable
-      >>> from beartype.typing import Type, Union
+      >>> from beartype.typing import Type
       >>> from collections.abc import Awaitable, Collection, Iterable
+
+      # These two statements are semantically equivalent.
       >>> is_bearable(str, Type[Iterable])
       True
-      >>> is_bearable(bytes, Union[Type[Collection], Type[Awaitable]])
+      >>> issubclass(str, Iterable)
       True
-      >>> is_bearable(bool, Union[Type[str], Type[float]])
+
+      # These two statements are semantically equivalent, too.
+      >>> is_bearable(bytes, Type[Collection] | Type[Awaitable])
+      True
+      >>> issubclass(bytes, (Collection, Awaitable))
+      True
+
+      # These two statements are semantically equivalent, yet again. *ohbygods*
+      >>> is_bearable(bool, Type[str] | Type[float])
+      False
+      >>> issubclass(bool, (str, float))
+      True
+
+
+.. py:function::
+   is_subhint(subhint: object, superhint: object) -> bool
+
+   :arg subhint: Type hint to tested as a subhint.
+   :type subhint: object
+   :arg superhint: Type hint to tested as a superhint.
+   :type superhint: object
+   :return bool: :data:`True` only if ``subhint`` is a subhint of ``superhint``.
+
+   **Subhint tester.** If type hint:
+
+   * ``subhint`` is a **subhint** of type hint ``superhint``,
+     :func:`.is_subhint` returns :data:`True`; else, :func:`.is_subhint` returns
+     :data:`False`.
+   * ``superhint`` is a **superhint** of type hint ``subhint``,
+     :func:`.is_subhint` returns :data:`True`; else, :func:`.is_subhint` returns
+     :data:`False`. This is an alternative way of expressing the same relation
+     as the prior condition – just with the jargon reversed. Jargon gonna
+     jargon.
+
+   .. code-block:: pycon
+
+      # Import us up the machinery.
+      >>> from beartype.door import is_subhint
+      >>> from beartype.typing import Any
+      >>> from collections.abc import Callable, Sequence
+
+      # A type hint matching any callable accepting no arguments and returning
+      # a list is a subhint of a type hint matching any callable accepting any
+      # arguments and returning a sequence of any types.
+      >>> is_subhint(Callable[[], list], Callable[..., Sequence[Any]])
+      True
+
+      # A type hint matching any callable accepting no arguments and returning
+      # a list, however, is *NOT* a subhint of a type hint matching any
+      # callable accepting any arguments and returning a sequence of integers.
+      >>> is_subhint(Callable[[], list], Callable[..., Sequence[int]])
       False
 
-.. _is_subhint:
+      # Booleans are subclasses and thus subhints of integers.
+      >>> is_subhint(bool, int)
+      True
 
-*def* beartype.door.\ **is_subhint**\ (subhint: object, superhint: object) ->
-bool
+      # The converse, however, is *NOT* true.
+      >>> is_subhint(int, bool)
+      False
 
-    **Subhint tester,** returning either:
+      # All classes are subclasses and thus subhints of themselves.
+      >>> is_subhint(int, int)
+      True
 
-    * :data:`True` if the first passed PEP-compliant type hint is a **subhint**
-      of the second passed PEP-compliant type hint, in which case the second
-      hint is a **superhint** of the first hint.
-    * :data:`False` otherwise.
+   Equivalently, :func:`.is_subhint` returns :data:`True` only if *all* of the
+   following conditions are satisfied:
 
-    .. code-block:: pycon
+   * **Commensurability.** ``subhint`` and ``superhint`` are **semantically
+     related** by conveying broadly similar intentions, enabling these two hints
+     to be reasonably compared. For example:
 
-       # Import the requisite machinery.
-       >>> from beartype.door import is_subhint
+     * ``callable.abc.Iterable[str]`` and ``callable.abc.Sequence[int]`` are
+       semantically related. These two hints both convey container semantics.
+       Despite their differing child hints, these two hints are broadly similar
+       enough to be reasonably comparable.
+     * ``callable.abc.Iterable[str]`` and ``callable.abc.Callable[[], int]``
+       are *not* semantically related. Whereas the first hints conveys a
+       container semantic, the second hint conveys a callable semantic. Since
+       these two semantics are unrelated, these two hints are dissimilar
+       enough to *not* be reasonably comparable.
 
-       # A type hint matching any callable accepting no arguments and returning
-       # a list is a subhint of a type hint matching any callable accepting any
-       # arguments and returning a sequence of any types.
-       >>> is_subhint(Callable[[], list], Callable[..., Sequence[Any]])
-       True
+   * **Narrowness.** The first hint is either **narrower** than or
+     **semantically equivalent** to the second hint. Equivalently:
 
-       # A type hint matching any callable accepting no arguments and returning
-       # a list, however, is *NOT* a subhint of a type hint matching any
-       # callable accepting any arguments and returning a sequence of integers.
-       >>> is_subhint(Callable[[], list], Callable[..., Sequence[int]])
-       False
+     * The first hint matches **less than or equal to** the total number of all
+       possible objects matched by the second hint.
+     * In `incomprehensible set theoretic jargon <set theory_>`__, the size of
+       the countably infinite set of all possible objects matched by the first
+       hint is **less than or equal to** that of those matched by the second
+       hint.
 
-       # Booleans are subclasses and thus subhints of integers.
-       >>> is_subhint(bool, int)
-       True
+   :func:`.is_subhint` supports a variety of real-world use cases, including:
 
-       # The converse, however, is *NOT* true.
-       >>> is_subhint(int, bool)
-       False
-
-       # All classes are subclasses and thus subhints of themselves.
-       >>> is_subhint(int, int)
-       True
-
-    Equivalently, this tester returns :data:`True` only if *all* of the
-    following conditions apply:
-
-    * **Commensurability.** These two hints are **semantically related** (i.e.,
-      convey broadly similar semantics enabling these two hints to be reasonably
-      compared). For example:
-
-      * ``callable.abc.Iterable[str]`` and ``callable.abc.Sequence[int]`` are
-        semantically related. These two hints both convey container semantics.
-        Despite their differing child hints, these two hints are broadly similar
-        enough to be reasonably comparable.
-      * ``callable.abc.Iterable[str]`` and ``callable.abc.Callable[[], int]``
-        are *not* semantically related. Whereas the first hints conveys a
-        container semantic, the second hint conveys a callable semantic. Since
-        these two semantics are unrelated, these two hints are dissimilar
-        enough to *not* be reasonably comparable.
-
-    * **Narrowness.** The first hint is either **narrower** than or
-      **semantically equivalent** to the second hint. Equivalently:
-
-      * The first hint matches **less than or equal to** the total number of all
-        possible objects matched by the second hint.
-      * In `incomprehensible set theoretic jargon <set theory_>`__, the size of
-        the countably infinite set of all possible objects matched by the first
-        hint is **less than or equal to** that of those matched by the second
-        hint.
-
-    This tester supports a wide variety of practical use cases – including:
-
-    * **Multiple dispatch.** A pure-Python decorator can implement `multiple
-      dispatch`_ over multiple overloaded implementations of the same callable
-      by calling this function. An overload of the currently called callable can
-      be dispatched to if the types of the passed parameters are all
-      **subhints** of the type hints annotating that overload.
-    * Formal verification of **API compatibility** across version bumps.
-      Automated tooling like linters, continuous integration (CI), ``git``
-      hooks, and integrated development environments (IDEs) can raise
-      pre-release alerts prior to accidental publication of API breakage by
-      calling this function. A Python API preserves backward compatibility if
-      each type hint annotating each public class or callable of the current
-      version of that API is a **superhint** of the type hint annotating the
-      same class or callable of the prior release of that API.
+   * **Multiple dispatch.** A pure-Python decorator can implement `multiple
+     dispatch`_ over multiple overloaded implementations of the same callable
+     by calling this function. An overload of the currently called callable can
+     be dispatched to if the types of the passed parameters are all
+     **subhints** of the type hints annotating that overload.
+   * Formal verification of **API compatibility** across version bumps.
+     Automated tooling like linters, continuous integration (CI), ``git`` hooks,
+     and integrated development environments (IDEs) can raise pre-release alerts
+     prior to accidental publication of API breakage by calling this function. A
+     Python API preserves backward compatibility if each type hint annotating
+     each public class or callable of the current version of that API is a
+     **superhint** of the type hint annotating the same class or callable of the
+     prior release of that API.
 
 Procedural Showcase
 *******************
 
-By the power of beartype, you too shall catch all bugs.
+By the power of beartype, you too shall catch all the bugs.
 
 Detect API Breakage
 ===================
 
 Detect breaking API changes in arbitrary callables via type hints alone in ten
-lines of code: :superscript:`...ignoring imports, docstrings, comments, and
-blank lines to make us look better`
+lines of code – ignoring imports, docstrings, comments, and blank lines to make
+us look better.
 
 .. code-block:: python
 
@@ -353,7 +412,7 @@ blank lines to make us look better`
        # All annotated parameters and returns preserve backward compatibility.
        return True
 
-The proof is in the real-world pudding:
+The proof is in the real-world pudding.
 
 .. code-block:: pycon
 
@@ -392,11 +451,8 @@ and floats. ``new_func()`` thus preserves backward compatibility with
 
 **Thus was Rome's API preserved in a day.**
 
-DOOR Object-oriented API
-########################
-
-.. # FIXME: Synopsize this in our introduction and cheatsheet, please!
-.. # FIXME: Synopsize class decoration in our introduction, too!
+DOOR Classes
+############
 
 Introspect and compare type hints with an object-oriented hierarchy of Pythonic
 classes. When the standard :mod:`typing` module has you scraping your
@@ -404,14 +460,16 @@ fingernails on the nearest whiteboard in chicken scratch, prefer the
 :mod:`beartype.door` object-oriented API.
 
 You've already seen that type hints do *not* define a usable public Pythonic
-API. This was by design. Type hints were *never* intended to be used at runtime.
+API. That was by design. Type hints were *never* intended to be used at runtime.
 But that's a bad design. Runtime is all that matters, ultimately. If the app
 doesn't run, it's broke – regardless of what the static type-checker says. Now,
 beartype breaks a trail through the spiny gorse of unusable PEP standards.
 
+Object-oriented Cheatsheet
+**************************
+
 Open the locked cathedral of type hints with :mod:`beartype.door`: your QA
-crowbar that legally pries apart all type hints. Cry havoc, the bears of API
-war!
+crowbar that legally pries open all type hints. Cry havoc, the bugbears of war!
 
 .. code-block:: pycon
 
@@ -484,8 +542,8 @@ war!
    >>> union_hint.hint
    int | str | None  # <-- makes sense.
 
-   # DOOR hints publish tuples of the low-level child type hints subscripting
-   # (indexing) the low-level parent type hints they wrap -- unlike normal type
+   # DOOR hints publish tuples of the original child type hints subscripting
+   # (indexing) the original parent type hints they wrap -- unlike normal type
    # hints, which unreliably publish similar tuples under differing names.
    >>> union_hint.args
    (int, str, NoneType)  # <-- sense continues to be made.
@@ -494,10 +552,15 @@ war!
    >>> TypeHint(int | str | bool | None) is TypeHint(None | bool | str | int)
    True  # <-- blowing minds over here.
 
+:mod:`beartype.door`: never leave :mod:`typing` without it.
+
+Object-oriented Overview
+************************
+
 :class:`.TypeHint` wrappers:
 
-* Are **immutable**, **hashable**, and safely usable both as dictionary keys and
-  in sets.
+* Are **immutable**, **hashable**, and thus safely usable both as dictionary
+  keys and set members.
 * Support efficient **lookup** of child type hints – just like **dictionaries**
   and **sets**.
 * Support efficient **iteration** over and **random access** of child type hints
@@ -509,4 +572,291 @@ war!
   :class:`.TypeHint` methods and properties run in (possibly `amortized
   <amortized analysis_>`__) **constant time** with negligible constants.
 
-:mod:`beartype.door`: never leave :mod:`typing` without it.
+Open the DOOR to a whole new world. :sup:`Sing along, everybody! “A whole new
+worl– *choking noises*”`
+
+Object-oriented API
+*******************
+
+.. py:class:: TypeHint(hint: object)
+
+   :arg hint: Type hint to be introspected.
+   :type hint: object
+   
+   **Type hint introspector,** wrapping the passed type hint ``hint`` (which, by
+   design, is *mostly* unusable at runtime) with an object-oriented Pythonic API
+   designed explicitly for runtime use.
+
+   :class:`TypeHint` wrappers are instantiated in the standard way. Appearences
+   can be deceiving, however. In truth, :class:`TypeHint` is actually an
+   abstract base class (ABC) that magically employs exploitative metaclass
+   trickery to instantiate a concrete subclass of itself appropriate for this
+   particular kind of ``hint``.
+   
+   :class:`TypeHint` is thus a **type hint introspector factory.** What you read
+   next may shock you.
+   
+   .. code-block:: pycon 
+
+      >>> from beartype.door import TypeHint
+      >>> from beartype.typing import Optional, Union
+
+      >>> type(TypeHint(str | list))
+      beartype.door.UnionTypeHint  # <-- UnionTypeHint, I am your father.
+
+      >>> type(TypeHint(Union[str, list]))
+      beartype.door.UnionTypeHint  # <-- NOOOOOOOOOOOOOOOOOOOOOOO!!!!!!!!
+
+      >>> type(TypeHint(Optional[str]))
+      beartype.door.UnionTypeHint  # <-- Search your MRO. You know it to be true.
+
+   :class:`TypeHint` wrappers cache efficient **singletons** of themselves. On
+   the first instantiation of :class:`TypeHint` by ``hint``, a new instance
+   unique to ``hint`` is created and cached; on each subsequent instantiation,
+   the previously cached instance is returned. Observe and tremble in ecstasy as
+   your introspection eats less space and time.
+
+   .. code-block:: pycon 
+
+      >>> from beartype.door import TypeHint
+      >>> TypeHint(list[int]) is TypeHint(list[int])
+      True  # <-- you caching monster. how could you? we trusted you!
+
+   .. # ..................{ PROPERTIES                       }..................
+
+   :class:`TypeHint` wrappers expose these public **read-only properties**:
+
+   .. py:attribute:: args
+
+          ``Type:`` :class:`tuple`
+
+      Tuple of the zero or more **original child type hints** subscripting the
+      original type hint wrapped by this wrapper.
+
+      .. code-block:: pycon 
+
+         >>> from beartype.door import TypeHint
+         >>> TypeHint(list).args
+         ()  # <-- i believe this
+         >>> TypeHint(list[int]).args
+         (int,)  # <-- fair play to you, beartype!
+         >>> TypeHint(tuple[int, complex]).args
+         (int, complex)  # <-- the mind is willing, but the code is weak.
+
+      :class:`TypeHint` wrappers also expose the tuple of the zero or more
+      **child type wrappers** wrapping these original child type hints with yet
+      more :class:`TypeHint` wrappers. As yet, there exists *no* comparable
+      property providing this tuple. Instead, this tuple is accessed via dunder
+      methods – including ``__iter__()``, ``__getitem__()``, and ``__len__()``.
+      Simply pass any :class:`TypeHint` wrapper to a standard Python container
+      like :class:`list`, :class:`set`, or :class:`tuple`.
+      
+      This makes more sense than it seems. Throw us a frickin' bone here.
+
+      .. code-block:: pycon
+
+         >>> from beartype.door import TypeHint
+         >>> tuple(TypeHint(list))
+         ()  # <-- is this the real life? is this just fantasy? ...why not both?
+         >>> tuple(TypeHint(list[int]))
+         (TypeHint(<class 'int'>),)  # <-- the abyss is staring back at us here.
+         >>> tuple(TypeHint(tuple[int, complex]))
+         (TypeHint(<class 'int'>), TypeHint(<class 'complex'>))  # <-- make the bad documentation go away, beartype
+
+      This property is memoized (cached) for both space and time efficiency.
+
+
+   .. py:attribute:: hint
+
+          ``Type:`` :class:`object`
+
+      **Original type hint** wrapped by this wrapper at instantiation time.
+
+      .. code-block:: pycon 
+
+         >>> from beartype.door import TypeHint
+         >>> TypeHint(list[int]).hint
+         list[int]
+
+      Seriously. That's it. That's the property. This isn't *Principia
+      Mathematica*. To you who are about to fall asleep on your keyboards and
+      wake up to find your ``git`` repositories empty, beartype salutes you.
+
+
+   .. py:attribute:: is_ignorable
+
+          ``Type:`` :class:`bool`
+
+      :data:`True` only if this type hint is **ignorable** (i.e., conveys *no*
+      meaningful semantics despite superficially appearing to do so). While one
+      might expect the set of all ignorable type hints to be both finite and
+      small, one would be wrong. That set is actually **countably infinite** in
+      size. Countably infinitely many type hints are ignorable. That's alot.
+      These include:
+
+      * :obj:`typing.Any`, by design. Anything is ignorable. You heard it here.
+      * :class:`object`, the root superclass of all types. All objects are
+        instances of :class:`object`, so :class:`object` conveys no semantic
+        meaning. Much like `@leycec`_ on Monday morning, squint when you see
+        :class:`object`.
+      * The unsubscripted :obj:`typing.Optional` singleton, which expands to the
+        implicit ``Optional[Any]`` type hint under :pep:`484`. But :pep:`484`
+        also stipulates that all ``Optional[t]`` type hints expand to ``Union[t,
+        type(None)]`` type hints for arbitrary arguments ``t``. So,
+        ``Optional[Any]`` expands to merely ``Union[Any, type(None)]``. Since
+        all unions subscripted by :obj:`typing.Any` reduce to merely
+        :obj:`typing.Any`, the unsubscripted :obj:`typing.Optional` singleton
+        also reduces to merely :obj:`typing.Any`. This intentionally excludes
+        the ``Optional[type(None)]`` type hint, which the standard :mod:`typing`
+        module reduces to merely ``type(None)``.
+      * The unsubscripted :obj:`typing.Union` singleton, which reduces to
+        :obj:`typing.Any` by the same argument.
+      * Any subscription of :obj:`typing.Union` by one or more ignorable type
+        hints. There exists a countably infinite number of such subscriptions,
+        many of which are non-trivial to find by manual inspection. The
+        ignorability of a union is a transitive property propagated "virally"
+        from child to parent type hints. Consider:
+
+        * ``Union[Any, bool, str]``. Since :obj:`typing.Any` is ignorable, this
+          hint is trivially ignorable by manual inspection.
+        * ``Union[str, List[int], NewType('MetaType', Annotated[object, 53])]``.
+          Although several child type hints of this union are non-ignorable, the
+          deeply nested :class:`object` child type hint is ignorable by the
+          argument above. It transitively follows that the ``Annotated[object,
+          53]`` parent type hint subscripted by :class:`object`, the
+          :obj:`typing.NewType` parent type hint aliased to ``Annotated[object,
+          53]``, *and* the entire union subscripted by that
+          :obj:`typing.NewType` are themselves all ignorable as well.
+
+      * Any subscription of :obj:`typing.Annotated` by one or more ignorable
+        type hints. As with :obj:`typing.Union`, there exists a countably
+        infinite number of such subscriptions. See the prior item. Or don't. You
+        know. It's all a little boring and tedious, frankly. Are you even
+        reading this? You are, aren't you? Well, dunk me in a bucket full of
+        honey. Post a discussion thread on the beartype repository for your
+        chance to win a dancing cat emoji today!
+      * The :class:`typing.Generic` and :class:`typing.Protocol` superclasses,
+        both of which impose no constraints *in and of themselves.* Since all
+        possible objects satisfy both superclasses. both superclasses are
+        equivalent to the ignorable :class:`object` root superclass: e.g.,
+
+        .. code-block:: pycon
+
+           >>> from typing as Protocol
+           >>> isinstance(object(), Protocol)
+           True  # <-- uhh...
+           >>> isinstance('wtfbro', Protocol)
+           True  # <-- pretty sure you lost me there.
+           >>> isinstance(0x696969, Protocol)
+           True  # <-- so i'll just be leaving then, shall i?
+
+      * Any subscription of either the :class:`typing.Generic` or
+        :class:`typing.Protocol` superclasses, regardless of whether the child
+        type hints subscripting those superclasses are ignorable or not.
+        Subscripting a type that conveys no meaningful semantics continues to
+        convey no meaningful semantics. [*Shocked Pikachu face.*] For
+        example, the type hints ``typing.Generic[typing.Any]`` and
+        ``typing.Generic[str]`` are both equally ignorable – despite the
+        :class:`str` class being otherwise unignorable in most type hinting
+        contexts.
+      * And frankly many more. And... *now we know why this property exists.*
+
+      This property is memoized (cached) for both space and time efficiency.
+
+   .. # ..................{ METHODS                          }..................
+
+   :class:`TypeHint` wrappers expose these public **methods**:
+
+   .. py:method::
+      die_if_unbearable( \
+          obj: object, \
+          conf: beartype.BeartypeConf = beartype.BeartypeConf(), \
+      ) -> None
+
+      :arg obj: Arbitrary object to be type-checked against this type hint.
+      :type obj: object
+      :arg conf: Beartype configuration. Defaults to the default configuration
+                 performing :math:`O(1)` type-checking.
+      :type conf: beartype.BeartypeConf
+      :raise beartype.roar.BeartypeCallHintViolation: If ``obj`` violates this
+                                                      type hint.
+
+      Shorthand for calling the :func:`beartype.door.die_if_unbearable` function
+      as ``die_if_unbearable(obj=obj, hint=self.hint, conf=conf)``. Behold: an
+      example.
+
+      .. code-block:: pycon
+
+         # This object-oriented approach...
+         >>> from beartype.door import TypeHint
+         >>> TypeHint(bytes | None).die_if_unbearable(
+         ...     "You can't lose hope when it's hopeless.")
+         BeartypeDoorHintViolation: Object "You can't lose hope when it's
+         hopeless." violates type hint bytes | None, as str "You can't lose
+         hope when it's hopeless." not bytes or <class "builtins.NoneType">.
+
+         # ...is equivalent to this procedural approach.
+         >>> from beartype.door import die_if_unbearable
+         >>> die_if_unbearable(
+         ...     obj="You can't lose hope when it's hopeless.", hint=bytes | None)
+         BeartypeDoorHintViolation: Object "You can't lose hope when it's
+         hopeless." violates type hint bytes | None, as str "You can't lose
+         hope when it's hopeless." not bytes or <class "builtins.NoneType">.
+
+
+   .. py:method::
+      is_bearable( \
+          obj: object, \
+          conf: beartype.BeartypeConf = beartype.BeartypeConf(), \
+      ) -> bool
+
+      :arg obj: Arbitrary object to be type-checked against this type hint.
+      :type obj: object
+      :arg conf: Beartype configuration. Defaults to the default configuration
+                 performing :math:`O(1)` type-checking.
+      :type conf: beartype.BeartypeConf
+      :return bool: :data:`True` only if ``obj`` satisfies this type hint.
+
+      Shorthand for calling the :func:`beartype.door.is_bearable` function as
+      ``is_bearable(obj=obj, hint=self.hint, conf=conf)``. Awaken the example!
+
+      .. code-block:: pycon
+
+         # This object-oriented approach...
+         >>> from beartype.door import TypeHint
+         >>> TypeHint(int | float).is_bearable(
+         ...     "It's like a party in my mouth and everyone's throwing up.")
+         False
+
+         # ...is equivalent to this procedural approach.
+         >>> from beartype.door import is_bearable
+         >>> is_bearable(
+         ...     obj="It's like a party in my mouth and everyone's throwing up.",
+         ...     hint=int | float,
+         ... )
+         False
+
+
+   .. py:method::
+      is_subhint(superhint: object) -> bool
+
+      :arg superhint: Type hint to tested as a superhint.
+      :type superhint: object
+      :return bool: :data:`True` only if this type hint is a subhint of
+                    ``superhint``.
+
+      Shorthand for calling the :func:`beartype.door.is_subhint` function as
+      ``is_subhint(subhint=self.hint, superhint=superhint)``. I love the smell
+      of examples in the morning.
+
+      .. code-block:: pycon
+
+         # This object-oriented approach...
+         >>> from beartype.door import TypeHint
+         >>> TypeHint(tuple[bool]).is_subhint(tuple[int])
+         True
+
+         # ...is equivalent to this procedural approach.
+         >>> from beartype.door import is_subhint
+         >>> is_subhint(subhint=tuple[bool], superhint=tuple[int])
+         True

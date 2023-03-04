@@ -230,7 +230,7 @@ Prior official funding sources (*yes, they once existed*) include:
    untimely death of `Microsoft co-founder Paul Allen <Paul Allen_>`__, during
    which beartype was maintained as the private ``@type_check`` decorator
    in the `Bioelectric Tissue Simulation Engine (BETSE) <BETSE_>`__.
-   :superscript:`Phew!`
+   :sup:`Phew!`
 
 .. # FIXME: Consider replacing this hand-rolled list that we've predictably
 .. # failed to properly maintain with an automated avatar-heavy list

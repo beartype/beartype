@@ -38,6 +38,42 @@
 .. _beadspace9:
    https://beadspace9.ca
 
+.. # ------------------( LINKS ~ beartype : github           )------------------
+.. _beartype:
+   https://github.com/beartype/beartype
+.. _beartype 1.0.0:
+   https://github.com/beartype/beartype/issues/7
+.. _beartype codebase:
+   https://github.com/beartype/beartype/tree/main/beartype
+.. _beartype issues:
+   https://github.com/beartype/beartype/issues
+.. _beartype mascot:
+   https://github.com/beartype/beartype-assets/tree/main/banner
+.. _beartype mascot artist:
+   https://github.com/felix-hilden
+.. _beartype organization:
+   https://github.com/beartype
+.. _beartype pulls:
+   https://github.com/beartype/beartype/pulls
+.. _beartype tests:
+   https://github.com/beartype/beartype/actions?workflow=tests
+
+.. # ------------------( LINKS ~ beartype : github : time    )------------------
+.. _beartype profiler:
+   https://github.com/beartype/beartype/blob/main/bin/profile.bash
+.. _beartype profiler Cisco:
+   https://github.com/beartype/beartype/issues/58#issuecomment-940100279
+
+.. # ------------------( LINKS ~ beartype : github : user    )------------------
+.. _patrick-kidger:
+   https://github.com/patrick-kidger
+.. _harens:
+   https://github.com/harens
+.. _@leycec:
+   https://github.com/leycec
+.. _leycec:
+   https://github.com/leycec
+
 .. # ------------------( LINKS ~ beartype : local            )------------------
 .. _beartype license:
    https://github.com/beartype/beartype/blob/main/LICENSE
@@ -79,42 +115,6 @@
    https://libraries.io
 .. _beartype dependents:
    https://libraries.io/pypi/beartype/dependents
-
-.. # ------------------( LINKS ~ beartype : remote           )------------------
-.. _beartype:
-   https://github.com/beartype/beartype
-.. _beartype 1.0.0:
-   https://github.com/beartype/beartype/issues/7
-.. _beartype codebase:
-   https://github.com/beartype/beartype/tree/main/beartype
-.. _beartype issues:
-   https://github.com/beartype/beartype/issues
-.. _beartype mascot:
-   https://github.com/beartype/beartype-assets/tree/main/banner
-.. _beartype mascot artist:
-   https://github.com/felix-hilden
-.. _beartype organization:
-   https://github.com/beartype
-.. _beartype pulls:
-   https://github.com/beartype/beartype/pulls
-.. _beartype tests:
-   https://github.com/beartype/beartype/actions?workflow=tests
-
-.. # ------------------( LINKS ~ beartype : remote : time    )------------------
-.. _beartype profiler:
-   https://github.com/beartype/beartype/blob/main/bin/profile.bash
-.. _beartype profiler Cisco:
-   https://github.com/beartype/beartype/issues/58#issuecomment-940100279
-
-.. # ------------------( LINKS ~ beartype : user             )------------------
-.. _patrick-kidger:
-   https://github.com/patrick-kidger
-.. _harens:
-   https://github.com/harens
-.. _@leycec:
-   https://github.com/leycec
-.. _leycec:
-   https://github.com/leycec
 
 .. # ------------------( LINKS ~ github                      )------------------
 .. _GitHub Actions:

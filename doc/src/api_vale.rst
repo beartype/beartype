@@ -165,6 +165,7 @@ Validator API
    simple builtin scalars like integers and strings to complex data structures
    defined by third-party packages like NumPy arrays and Pandas DataFrames.
 
+
 .. py:class:: IsAttr
 
        ``Subscription API:`` beartype.vale.\ **IsAttr**\ [\
@@ -218,6 +219,7 @@ Validator API
    * :class:`beartype.vale.IsEqual`, in which case this :class:`.IsAttr` class
      validates the desired object attribute to be equal to the object
      subscripting that :class:`.IsEqual` class. See above example.
+
 
 .. py:class:: IsEqual
 
@@ -276,6 +278,7 @@ Validator API
    Sure, :obj:`typing.Literal` is mostly useless, but it's standardized across
    type checkers in a mostly useless way. Everywhere else, default to
    :class:`.IsEqual`.
+
 
 .. py:class:: IsInstance
 
@@ -337,8 +340,8 @@ Validator API
    right there.
 
    That sounded intellectual and thus boring. Yet, the disturbing fact that
-   Python booleans are integers :superscript:`...yup` while Python strings are
-   infinitely recursive sequences of strings :superscript:`...yup` means that
+   Python booleans are integers :sup:`...yup` while Python strings are
+   infinitely recursive sequences of strings :sup:`...yup` means that
    `type hint arithmetic <Type Hint Elision_>`__ can save your codebase from
    Guido's younger self. Consider this instance validator matching only
    non-boolean integers, which *cannot* be expressed with any isinstanceable
@@ -353,6 +356,7 @@ Validator API
    Wherever you can, prefer isinstanceable type hints. Sure, they're inflexible,
    but they're inflexibly standardized across type checkers. Everywhere else,
    default to :class:`.IsInstance`.
+
 
 .. py:class:: IsSubclass
 
@@ -418,7 +422,7 @@ Validator API
 
 .. [#enum_type]
    You don't want to know the type of :class:`enum.Enum` members. Srsly. You
-   don't. Okay... you do? Very well. It's :class:`enum.Enum`. :superscript:`mic
+   don't. Okay... you do? Very well. It's :class:`enum.Enum`. :sup:`mic
    drop`
 
 .. _vale:vale syntax:
@@ -520,7 +524,7 @@ Validator Caveats
      beartype that extends mypy_ to statically analyze declarative beartype
      validators (e.g., :class:`beartype.vale.IsAttr`,
      :class:`beartype.vale.IsEqual`). We leave this as an exercise to the
-     idealistic doctoral thesis candidate. :superscript:`Please do this for us,
+     idealistic doctoral thesis candidate. :sup:`Please do this for us,
      someone who is not us.`
    * Either **Python ≥ 3.9** *or* `typing_extensions ≥ 3.9.0.0
      <typing_extensions_>`__. Validators piggyback onto the
@@ -655,7 +659,7 @@ unary and binary operators?
 
 **Nope.** They don't exist yet. But that's okay. You use beartype, which means
 you don't have to wait for official Python developers to get there first.
-You're already there. :superscript:`...woah`
+You're already there. :sup:`...woah`
 
 Type Hint Elision
 =================

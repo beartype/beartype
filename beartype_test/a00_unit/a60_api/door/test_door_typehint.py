@@ -27,14 +27,15 @@ def test_door_typehint_new() -> None:
     # Defer test-specific imports.
     from beartype.door import TypeHint
     from beartype.roar import BeartypeDoorNonpepException
+    from beartype.typing import (
+        Any,
+        Union,
+    )
     from pytest import raises
 
     # Intentionally import from "typing" rather than "beartype.typing" to
     # guarantee PEP 484-compliant type hints.
-    from typing import (
-        Any,
-        List,
-    )
+    from typing import List
 
     # ....................{ PASS                           }....................
     # Assert that recreating a type hint against identical input yields the same
@@ -54,6 +55,11 @@ def test_door_typehint_new() -> None:
     # Assert that nested type hint invocations internally avoid nesting by
     # yielding the same previously memoized type hint.
     assert TypeHint(TypeHint(int)) is TypeHint(int)
+
+    # Assert that public concrete subclasses of the "TypeHint" abstract base
+    # class (ABC) pretend to reside in the top-level public "beartype.door"
+    # subpackage rather than in a leaf private subpackage of that package.
+    assert TypeHint(Union[int, str]).__class__.__module__ == 'beartype.door'
 
     # ....................{ FAIL                           }....................
     # Assert this factory raises the expected exception when passed an object
@@ -203,13 +209,13 @@ def test_door_typehint_rich_fail() -> None:
     assert not a > b
     assert not a >= b
 
-    with raises(TypeError, match="not supported between"):
+    with raises(TypeError, match='not supported between'):
         a <= 1
-    with raises(TypeError, match="not supported between"):
+    with raises(TypeError, match='not supported between'):
         a < 1
-    with raises(TypeError, match="not supported between"):
+    with raises(TypeError, match='not supported between'):
         a >= 1
-    with raises(TypeError, match="not supported between"):
+    with raises(TypeError, match='not supported between'):
         a > 1
 
 # ....................{ TESTS ~ dunders : iterable         }....................

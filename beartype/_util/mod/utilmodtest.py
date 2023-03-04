@@ -15,6 +15,10 @@ from beartype.meta import _convert_version_str_to_tuple
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype._data.datatyping import TypeException
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+from warnings import (
+    catch_warnings,
+    simplefilter,
+)
 
 # ....................{ VALIDATORS                         }....................
 def die_unless_module_attr_name(
@@ -225,6 +229,26 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
             get_distribution,
             parse_requirements,
         )
+
+        #FIXME: This appears to be required to circumvent Python 3.7-specific
+        #issues, but appears to also be inducing unrelated test failures. We
+        #can't be bothered at the moment. *sigh*
+        # # With a warning filter ignoring deprecation warnings now emitted from
+        # # the "pkg_resources.__init__" submodule on first importation...
+        # #
+        # # See also this StackOverflow answer:
+        # #     https://stackoverflow.com/a/56475961/2809027
+        # with catch_warnings():
+        #     simplefilter('ignore', category=DeprecationWarning)
+        #
+        #     # Defer imports from optional third-party dependencies.
+        #     from pkg_resources import (
+        #         DistributionNotFound,
+        #         UnknownExtra,
+        #         VersionConflict,
+        #         get_distribution,
+        #         parse_requirements,
+        #     )
 
         # Setuptools-specific requirements string constraining this module.
         module_requirement_str = f'{module_name} >= {version_minimum}'

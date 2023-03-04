@@ -4,9 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) metaclass hierarchy**
-(i.e., metaclass hierarchy driving our object-oriented type hint class
-hierarchy, especially with respect to instantiation, mapping, and memoization).
+**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) metaclass
+hierarchy** (i.e., metaclass hierarchy driving our object-oriented type hint
+class hierarchy, especially with respect to instantiation, mapping, and
+memoization).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -22,7 +23,6 @@ from threading import RLock
 # ....................{ METACLASSES                        }....................
 #FIXME: Unit test us up, please.
 class _TypeHintMeta(ABCMeta):
-# class SingletonMeta(type):
     '''
     **Singleton abstract base class (ABC) metaclass** (i.e., the standard
     :class:`abc.ABCMeta` metaclass augmented with caching to implement the
@@ -139,19 +139,17 @@ class _TypeHintMeta(ABCMeta):
             id(hint)
         )
 
-        #FIXME: Revise commentary, please.
-        # Previously cached type hint wrapper wrapping this hint if this hint
-        # has already been wrapped at least once by an instance of the
-        # "TypeHint" class under the active Python interpreter *OR* "None"
-        # otherwise (i.e., if this hist has yet to be wrapped such an instance).
+        # Type hint wrapper wrapping this hint, efficiently cached such that
+        # each hint that evaluates to the same key is wrapped by the same
+        # instance of the "TypeHint" class under this Python interpreter.
         wrapper = (
             _HINT_KEY_TO_WRAPPER.cache_or_get_cached_func_return_passed_arg(
                 # Cache this wrapper singleton under this key.
                 key=hint_key,
                 # If a wrapper singleton has yet to be instantiated for this
-                # hint, do so by calling this private factory method passed...
+                # hint, do so by calling this private factory method...
                 value_factory=cls._make_wrapper,
-                # ...this hint.
+                # ...with this hint passed as the sole parameter to that method.
                 arg=hint,
             ))
 

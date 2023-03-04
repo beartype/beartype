@@ -55,10 +55,10 @@ Beartype Decorator API
    :type cls: type | None
    :arg func: Pure-Python function or method to be decorated.
    :type func: collections.abc.Callable | None
-   :arg conf: Beartype configuration modifying the behaviour of ``@beartype``.
+   :arg conf: Beartype configuration. Defaults to the default configuration
+              performing :math:`O(1)` type-checking.
    :type conf: beartype.BeartypeConf
-   :return: Passed class, function, or method augmented with runtime
-            type-checking.
+   :return: Passed class or callable wrapped with runtime type-checking.
 
    Augment the passed object with performant runtime type-checking. Unlike most
    decorators, ``@beartype`` has three orthogonal modes of operation:
@@ -159,7 +159,7 @@ doubt anything, the safest approach is just to list ``@beartype`` as the
   #. Create a new method descriptor wrapping that method by calling the same
      builtin decorator.
 
-An example is brighter than a thousand Suns! :superscript:`astronomers throwing
+An example is brighter than a thousand Suns! :sup:`astronomers throwing
 chalk here`
 
 .. code-block:: pycon
@@ -657,130 +657,130 @@ Beartype Strategy API
 
    This enumeration defines these members:
 
-    .. py:attribute:: On
+   .. py:attribute:: On
 
-           ``Type:`` :class:`beartype.cave.EnumMemberType`
+          ``Type:`` :class:`beartype.cave.EnumMemberType`
 
-       **Linear-time strategy:** the :math:`O(n)` strategy, type-checking
-       *all* items of a container.
+      **Linear-time strategy:** the :math:`O(n)` strategy, type-checking
+      *all* items of a container.
 
-       .. note::
+      .. note::
 
-          **This strategy is currently unimplemented.** Still, interested users
-          are advised to opt-in to this strategy now; your code will then
-          type-check as desired on the first beartype release supporting this
-          strategy.
+         **This strategy is currently unimplemented.** Still, interested users
+         are advised to opt-in to this strategy now; your code will then
+         type-check as desired on the first beartype release supporting this
+         strategy.
 
-          Beartype: *We're here for you, fam.*
+         Beartype: *We're here for you, fam.*
 
-    .. py:attribute:: Ologn
+   .. py:attribute:: Ologn
 
-           ``Type:`` :class:`beartype.cave.EnumMemberType`
+          ``Type:`` :class:`beartype.cave.EnumMemberType`
 
-       **Logarithmic-time strategy:** the :math:`O(\log n)` strategy,
-       type-checking a randomly selected number of items ``log(len(obj))`` of
-       each container ``obj``.
+      **Logarithmic-time strategy:** the :math:`O(\log n)` strategy,
+      type-checking a randomly selected number of items ``log(len(obj))`` of
+      each container ``obj``.
 
-       .. note::
+      .. note::
 
-          **This strategy is currently unimplemented.** Still, interested users
-          are advised to opt-in to this strategy now; your code will then
-          type-check as desired on the first beartype release supporting this
-          strategy.
+         **This strategy is currently unimplemented.** Still, interested users
+         are advised to opt-in to this strategy now; your code will then
+         type-check as desired on the first beartype release supporting this
+         strategy.
 
-          Beartype: *We're here for you, fam.*
+         Beartype: *We're here for you, fam.*
 
-    .. py:attribute:: O1
+   .. py:attribute:: O1
 
-           ``Type:`` :class:`beartype.cave.EnumMemberType`
+          ``Type:`` :class:`beartype.cave.EnumMemberType`
 
-       **Constant-time strategy:** the default :math:`O(1)` strategy,
-       type-checking a single randomly selected item of each container. As the
-       default, this strategy need *not* be explicitly enabled.
+      **Constant-time strategy:** the default :math:`O(1)` strategy,
+      type-checking a single randomly selected item of each container. As the
+      default, this strategy need *not* be explicitly enabled.
 
-    .. py:attribute:: O0
+   .. py:attribute:: O0
 
-           ``Type:`` :class:`beartype.cave.EnumMemberType`
+          ``Type:`` :class:`beartype.cave.EnumMemberType`
 
-       **No-time strategy,** disabling type-checking for a decorated callable by
-       reducing :func:`.beartype` to the identity decorator for that callable.
-       This strategy is functionally equivalent to but more general-purpose than
-       the standard :func:`typing.no_type_check` decorator; whereas
-       :func:`typing.no_type_check` only applies to callables, this strategy
-       applies to *any* context accepting a beartype configuration such as:
+      **No-time strategy,** disabling type-checking for a decorated callable by
+      reducing :func:`.beartype` to the identity decorator for that callable.
+      This strategy is functionally equivalent to but more general-purpose than
+      the standard :func:`typing.no_type_check` decorator; whereas
+      :func:`typing.no_type_check` only applies to callables, this strategy
+      applies to *any* context accepting a beartype configuration such as:
 
-       * The :func:`.beartype` decorator decorating a class.
-       * The :func:`beartype.door.is_bearable` function.
-       * The :func:`beartype.door.die_if_unbearable` function.
-       * The :meth:`beartype.door.TypeHint.is_bearable` method.
-       * The :meth:`beartype.door.TypeHint.die_if_unbearable` method.
+      * The :func:`.beartype` decorator decorating a class.
+      * The :func:`beartype.door.is_bearable` function.
+      * The :func:`beartype.door.die_if_unbearable` function.
+      * The :meth:`beartype.door.TypeHint.is_bearable` method.
+      * The :meth:`beartype.door.TypeHint.die_if_unbearable` method.
 
-       Just like in real life, there exist valid use cases for doing absolutely
-       nothing – including:
+      Just like in real life, there exist valid use cases for doing absolutely
+      nothing – including:
 
-       * **Blacklisting callables.** While seemingly useless, this strategy
-         allows callers to selectively prevent callables that would otherwise be
-         type-checked (e.g., due to class decorations or import hooks) from
-         being type-checked:
+      * **Blacklisting callables.** While seemingly useless, this strategy
+        allows callers to selectively prevent callables that would otherwise be
+        type-checked (e.g., due to class decorations or import hooks) from
+        being type-checked:
 
-         .. code-block:: python
+        .. code-block:: python
 
-            # Import the requisite machinery.
-            from beartype import beartype, BeartypeConf, BeartypeStrategy
+           # Import the requisite machinery.
+           from beartype import beartype, BeartypeConf, BeartypeStrategy
 
-            # Dynamically create a new @nobeartype decorator disabling type-checking.
-            nobeartype = beartype(conf=BeartypeConf(strategy=BeartypeStrategy.O0))
+           # Dynamically create a new @nobeartype decorator disabling type-checking.
+           nobeartype = beartype(conf=BeartypeConf(strategy=BeartypeStrategy.O0))
 
-            # Automatically decorate all methods of this class...
-            @beartype
-            class TypeCheckedClass(object):
-                # Including this method, which raises a type-checking violation
-                # due to returning a non-"None" value.
-                def type_checked_method(self) -> None:
-                    return 'This string is not "None". Apparently, that is a problem.'
+           # Automatically decorate all methods of this class...
+           @beartype
+           class TypeCheckedClass(object):
+               # Including this method, which raises a type-checking violation
+               # due to returning a non-"None" value.
+               def type_checked_method(self) -> None:
+                   return 'This string is not "None". Apparently, that is a problem.'
 
-                # Excluding this method, which raises *NO* type-checking
-                # violation despite returning a non-"None" value.
-                @nobeartype
-                def non_type_checked_method(self) -> None:
-                    return 'This string is not "None". Thankfully, no one cares.'
+               # Excluding this method, which raises *NO* type-checking
+               # violation despite returning a non-"None" value.
+               @nobeartype
+               def non_type_checked_method(self) -> None:
+                   return 'This string is not "None". Thankfully, no one cares.'
 
-       * **Eliding overhead.** Beartype :ref:`already exhibits near-real-time
-         overhead of less than 1µs (one microsecond, one millionth of a second)
-         per call of type-checked callables <faq:realtime>`. When even that
-         negligible overhead isn't negligible enough, brave callers considering
-         an occupational change may globally disable *all* type-checking
-         performed by beartype. Prepare your resume beforehand. Also, do so
-         *only* under production builds intended for release; development builds
-         intended for testing should preserve type-checking.
+      * **Eliding overhead.** Beartype :ref:`already exhibits near-real-time
+        overhead of less than 1µs (one microsecond, one millionth of a second)
+        per call of type-checked callables <faq:realtime>`. When even that
+        negligible overhead isn't negligible enough, brave callers considering
+        an occupational change may globally disable *all* type-checking
+        performed by beartype. Prepare your resume beforehand. Also, do so
+        *only* under production builds intended for release; development builds
+        intended for testing should preserve type-checking.
 
-         Either:
+        Either:
 
-         * `Pass Python the "-O" command-line option <-O_>`__, which beartype
-           respects.
-         * `Run Python under the "PYTHONOPTIMIZE" environment variable
-           <PYTHONOPTIMIZE_>`__, which beartype also respects.
-         * Define a new ``@maybebeartype`` decorator disabling type-checking when
-           an app-specific constant ``I_AM_RELEASE_BUILD`` defined elsewhere is
-           enabled:
+        * `Pass Python the "-O" command-line option <-O_>`__, which beartype
+          respects.
+        * `Run Python under the "PYTHONOPTIMIZE" environment variable
+          <PYTHONOPTIMIZE_>`__, which beartype also respects.
+        * Define a new ``@maybebeartype`` decorator disabling type-checking when
+          an app-specific constant ``I_AM_RELEASE_BUILD`` defined elsewhere is
+          enabled:
 
-           .. code-block:: python
+          .. code-block:: python
 
-              # Import the requisite machinery.
-              from beartype import beartype, BeartypeConf, BeartypeStrategy
+             # Import the requisite machinery.
+             from beartype import beartype, BeartypeConf, BeartypeStrategy
 
-              # Let us pretend you know what you are doing for a hot moment.
-              from your_app import I_AM_RELEASE_BUILD
+             # Let us pretend you know what you are doing for a hot moment.
+             from your_app import I_AM_RELEASE_BUILD
 
-              # Dynamically create a new @maybebeartype decorator disabling
-              # type-checking when "I_AM_RELEASE_BUILD" is enabled.
-              maybebeartype = beartype(conf=BeartypeConf(strategy=(
-                  BeartypeStrategy.O0
-                  if I_AM_RELEASE_BUILD else
-                  BeartypeStrategy.O1
-              ))
+             # Dynamically create a new @maybebeartype decorator disabling
+             # type-checking when "I_AM_RELEASE_BUILD" is enabled.
+             maybebeartype = beartype(conf=BeartypeConf(strategy=(
+                 BeartypeStrategy.O0
+                 if I_AM_RELEASE_BUILD else
+                 BeartypeStrategy.O1
+             ))
 
-              # Decorate with this decorator rather than @beartype everywhere.
-              @maybebeartype
-              def muh_performance_critical_func(big_list: list[int]) -> int:
-                  return sum(big_list)
+             # Decorate with this decorator rather than @beartype everywhere.
+             @maybebeartype
+             def muh_performance_critical_func(big_list: list[int]) -> int:
+                 return sum(big_list)

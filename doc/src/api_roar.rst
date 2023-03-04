@@ -38,7 +38,7 @@ Beartype only raises:
 
 Likewise, beartype only emits beartype-specific warnings and disambiguous
 warnings. Beartype is fastidious to a fault. Error handling is no...
-*exception*. :superscript:`punny *or* funny? you decide.`
+*exception*. :sup:`punny *or* funny? you decide.`
 
 .. # ------------------( TABLES OF CONTENTS                  )------------------
 .. # Table of contents, excluding the above document heading. While the
@@ -88,7 +88,7 @@ When that happens, don't be the guy that ignores this chapter.
    A detailed list of subclasses of this ABC is quite inconsequential. Very
    well. `@leycec`_ admits he was too tired to type it all out. `@leycec`_ also
    admits he played exploitative video games all night instead... *again*.
-   `@leycec`_ is grateful nobody reads these API notes. :superscript:`checkmate,
+   `@leycec`_ is grateful nobody reads these API notes. :sup:`checkmate,
    readthedocs.`
 
 .. py:exception:: BeartypeCallException
@@ -464,4 +464,4 @@ to destroy everything you hold dear (in ascending order of justice):
       # ...just do this.
       from {your_package}._typing import List, Tuple
 
-   What could be simpler? :superscript:`...gagging noises faintly heard`
+   What could be simpler? :sup:`...gagging noises faintly heard`

@@ -20,7 +20,7 @@ from beartype.door._doorcheck import (
     die_if_unbearable,
     is_bearable,
 )
-from beartype.door._doormeta import _TypeHintMeta
+from beartype.door._cls.doormeta import _TypeHintMeta
 from beartype.door._doortest import die_unless_typehint
 from beartype.door._doortyping import T
 from beartype.typing import (
@@ -395,7 +395,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     @property
     def is_ignorable(self) -> bool:
         '''
-        ``True`` only if this type hint is **ignorable** (i.e., conveys
+        :data:`True` only if this type hint is **ignorable** (i.e., conveys
         *no* meaningful semantics despite superficially appearing to do so).
 
         While one might expect the set of all ignorable type hints to be both
@@ -465,12 +465,12 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
           unignorable in most type hinting contexts.
         * And frankly many more. And... *now we know why this tester exists.*
 
-        This tester method is memoized for efficiency.
+        This property is memoized for efficiency.
 
         Returns
         ----------
         bool
-            ``True`` only if this type hint is ignorable.
+            :data:`True` only if this type hint is ignorable.
         '''
 
         # Mechanic: Somebody set up us the bomb.

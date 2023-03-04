@@ -89,10 +89,11 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
 
     # If this hint appears to be currently unsupported...
     if wrapper_subclass is None:
-        # FIXME: This condition is kinda intense. Should we really be conflating
-        # typing attributes that aren't types with objects that are types? Let's
-        # investigate exactly which kinds of type hints require this and
-        # contemplate something considerably more elegant.
+        #FIXME: This condition is kinda intense. Should we really be conflating
+        #typing attributes that aren't types with objects that are types? Let's
+        #investigate exactly which kinds of type hints require this and
+        #contemplate something considerably more elegant.
+
         # If either...
         if (
             # This hint is a PEP-noncompliant class *OR*...
@@ -198,11 +199,10 @@ def _init() -> None:
 
         # Sanitize the fully-qualified module name of this public subclass from
         # the private submodule declaring this subclass (e.g.,
-        # "beartype.door._cls.pep.doorpep484604.UnionTypeHintbeartype") to the
-        # public "beartype.door" subpackage to both improve the readability of
-        # exception messages and discourage end users from accessing that
-        # private submodule.
-        typehint_cls.__class__.__module__ = 'beartype.door'
+        # "beartype.door._cls.pep.doorpep484604.UnionTypeHint") to the public
+        # "beartype.door" subpackage to both improve the readability of
+        # exceptions and discourage users from violating privacy encapsulation.
+        typehint_cls.__module__ = 'beartype.door'
 
 
 # Initialize this submodule.

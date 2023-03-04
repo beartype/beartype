@@ -9,14 +9,14 @@
 
 .. _pep:pep:
 
-##############
-Enter the Bear
-##############
+####################################
+Big Data™: It's a Big Bear After All
+####################################
 
 Beartype complies with vast swaths of Python's `typing`_ landscape and
 lint-filled laundry list of `Python Enhancement Proposals (PEPs) <PEPs_>`__ –
 but nobody's perfect. Not even the hulking form of beartype does everything.
-:superscript:`</audience_gasps>`
+:sup:`</audience_gasps>`
 
 Let's chart exactly *what* beartype complies with and *when* beartype first did
 so. Introducing... Beartype's **feature matrix of bloated doom!** It will bore
