@@ -284,8 +284,6 @@ jobs:
           #       https://github.com/tox-dev/tox/issues/903
           python3 -m tox --skip-missing-interpreters=false
       - name: 'Publishing test coverage to Codecov...'
-        uses: 'codecov/codecov-action@v1'
+        uses: 'codecov/codecov-action@v3'
         with:
           name: "${{ matrix.platform }}-${{ matrix.python-version }}"
-          # file: ./coverage.xml
-          # name: ${{ runner.os }}-${{ matrix.python-version }}

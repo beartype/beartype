@@ -161,6 +161,7 @@ def beartype_object(
     :func:`beartype._decor.decormain.beartype`
         Memoized parent decorator wrapping this unmemoized child decorator.
     '''
+    # print(f'Decorating object {repr(obj)}...')
 
     # If this object is a class, return this class decorated with type-checking.
     #
@@ -181,12 +182,14 @@ def beartype_object(
     #
     # In all cases, "cls_curr" conveys *NO* meaningful semantics.
     if isinstance(obj, type):
+        # print(f'Decorating type {repr(obj)}...')
         return _beartype_type(  # type: ignore[return-value]
             cls=obj,
             conf=conf,
             cls_stack=cls_stack,
         )
     # Else, this object is a non-class.
+    # print(f'Decorating non-type {repr(obj)}...')
 
     # Type of this object.
     obj_type = type(obj)
@@ -234,6 +237,43 @@ def beartype_object(
         raise BeartypeDecorWrappeeException(
             f'Uncallable {repr(obj)} not decoratable by @beartype.')
     # Else, this object is callable.
+
+    #FIXME: Support pseudo-callables (i.e., objects masquerading as functions by
+    #defining the __call__() dunder method) by:
+    #* Rename the existing _beartype_descriptor() function to
+    #  _beartype_decorator_builtin() for disambiguity.
+    #* Define a new _beartype_method_bound() method with a similar API as that
+    #  of _beartype_decorator_builtin(). Notably, however,
+    #  _beartype_method_bound() should raise an exception if the passed callable
+    #  is *NOT* a bound instance method. Harvest the implementation from
+    #  commentary embedded in the _beartype_decorator_builtin() function.
+    #* Add an additional test here for such callables. Notably, if this object
+    #  does *NOT* provide a pure-Python code object, then this object should
+    #  (probably) be assumed to be a pseudo-callable: e.g.,
+    #     elif not is_func_python(obj):
+    #         obj_call_method = getattr(obj, '__call__')
+    #
+    #         #FIXME: Find the existing exception that we're raising in the
+    #         #@beartype codebase that contains the substring "or pure-Python
+    #         #callable backed by __call__() dunder method." Revise that
+    #         #exception message as follows:
+    #         #* Remove that substring.
+    #         #* Rename "pure-Python callable" to "pure-Python function".
+    #         if obj_call_method is None:
+    #             raise BeartypeDecorWrappeeException(
+    #                 f'Callable {repr(obj)} not pure-Python callable backed '
+    #                 f'by code object (i.e., either C-based callable or '
+    #                 f'pure-Python callable backed by __call__() dunder method).'
+    #             )
+    #
+    #         #FIXME: Pretty sure this works, but uncertain. Gah!
+    #         obj.__call__ = _beartype_method_bound(
+    #             method_bound=obj_call_method,
+    #             conf=conf,
+    #             cls_stack=cls_stack,
+    #         )
+    #         return obj
+    #* Implement extensive tests, please.
 
     # Return a new callable decorating that callable with type-checking.
     return _beartype_func(  # type: ignore[return-value]
