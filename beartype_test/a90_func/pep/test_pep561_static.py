@@ -100,7 +100,7 @@ def test_pep561_mypy() -> None:
         command_words=MYPY_ARGS)
 
     # ....................{ ASSERT                         }....................
-    # Assert "mypy" to have emitted *NO* warnings or errors to either standard
+    # If "mypy" emitted *NO* warnings or errors to either standard
     # output or error.
     #
     # Note that "mypy" predominantly emits both warnings and errors to "stdout"
@@ -124,69 +124,17 @@ def test_pep561_mypy() -> None:
     if (
         # Mypy emitted one or more characters to standard error *OR*...
         mypy_stderr or
-        # Mypy emitted standard output that does *NOT* start with this prefix...
-        not mypy_stdout.startswith('Success: ')
+        # Mypy emitted standard output that does *NOT* contain this substring...
+        'Success: no issues found' not in mypy_stdout
     ):
         # Print this string to standard output for debuggability, which pytest
-        # will then implicitly capture and reprint on the subsequent assertion
-        # failure.
+        # then captures and reprints on this subsequent assertion failure.
         print(mypy_stdout)
 
         # Force an unconditional assertion failure.
         assert False
-
-    #FIXME: Preserved for posterity. Sadly, diz iz no longer l33t. Mypy broke
-    #its runtime API. This test now spuriously fails under CI with a
-    #non-human-readable exception message resembling:
-    #    TypeError: 'mypy' is not a package
-    #
-    #Submit an upstream issue reporting this to mypy devs, please.
-    # from mypy import api
-    #
-    # # List of all shell words with which to run the external "mypy" command.
-    # #
-    # # Note this iterable *MUST* be defined as a list rather than tuple. If a
-    # # tuple, the function called below raises an exception. Hot garbage!
-    # MYPY_ARGS = [
-    #     # Absolute dirname of this project's top-level mypy configuration.
-    #     # Since our "tox" configuration isolates testing to a temporary
-    #     # directory, mypy is unable to find its configuration without help.
-    #     '--config-file', str(get_main_mypy_config_file()),
-    #
-    #     # Absolute dirname of this project's top-level package.
-    #     str(get_main_package_dir()),
-    # ]
-    #
-    # # Note that we intentionally do *NOT* assert that call to have exited with
-    # # a successful exit code. Although mypy does exit with success on local
-    # # developer machines, it inexplicably does *NOT* under remote GitHub
-    # # Actions-based continuous integration despite "mypy_stderr" being empty.
-    # # Ergo, we conveniently ignore the former in favour of the latter.
-    # mypy_stdout, mypy_stderr, _ = api.run(MYPY_OPTIONS + MYPY_ARGUMENTS)
-    # # mypy_stdout, mypy_stderr, mypy_exit = api.run(MYPY_OPTIONS + MYPY_ARGUMENTS)
-    #
-    # # Assert "mypy" to have emitted *NO* warnings or errors to "stderr".
-    # #
-    # # Note that "mypy" predominantly emits both warnings and errors to "stdout"
-    # # rather than "stderr", despite this contravening sane POSIX semantics.
-    # # They did this because some guy complained about not being able to
-    # # trivially grep "mypy" output, regardless of the fact that redirecting
-    # # stderr to stdout is a trivial shell fragment (e.g., "2>&1"), but let's
-    # # break everything just because some guy can't shell. See also:
-    # #     https://github.com/python/mypy/issues/1051
-    # assert not mypy_stderr
-    #
-    # # Assert "mypy" to have emitted *NO* warnings or errors to "stdout".
-    # # Unfortunately, doing so is complicated by the failure of "mypy" to
-    # # conform to sane POSIX semantics. Specifically:
-    # # * If "mypy" succeeds, "mypy" emits to "stdout" a single line resembling:
-    # #       Success: no issues found in 83 source files
-    # # * If "mypy" fails, "mypy" emits to "stdout" *ANY* other line(s).
-    # #
-    # # Ergo, asserting this string to start with "Success:" suffices. Note this
-    # # assertion depends on "mypy" internals and is thus fragile, but that we
-    # # have *NO* sane alternative.
-    # assert mypy_stdout.startswith('Success: ')
+    # Else, "mypy" emitted *NO* warnings or errors to either standard output or
+    # error. In this case, encourage this test to succeed by reducing to a noop.
 
 # ....................{ TESTS ~ pyright                    }....................
 # If the external third-party "pyright" command is *NOT* pathable (i.e., an

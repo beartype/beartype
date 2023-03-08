@@ -140,6 +140,28 @@ from typing import (
 # subset of supported Python versions and *NOT* deprecated by a subsequent
 # Python version under their original names.
 
+#FIXME: mypy is now emitting non-fatal warnings about our failing to import from
+#"typing_extensions", which is both an overly strongly opinionated position for
+#mypy to stake out *AND* a bad opinion at that, because "typing_extensions"
+#fails to comply with the runtime API of the "typing" module and is thus mostly
+#unusable at runtime. These warnings resemble:
+#    beartype/typing/__init__.py:145: note: Use `from typing_extensions import Final` instead
+#    beartype/typing/__init__.py:145: note: See https://mypy.readthedocs.io/en/stable/runtime_troubles.html#using-new-additions-to-the-typing-module
+#    beartype/typing/__init__.py:145: note: Use `from typing_extensions import Literal` instead
+#
+#That's not the worst, however. mypy is erroneously ignoring our intentional
+#"# type: ignore[attr-defined]" pragmas here. It's likely that the ultimate
+#culprit is our use of beartype-specific "IS_PYTHON_AT_LEAST_*" boolean globals.
+#Instead, mypy appears to only support hard-coded tests against the
+#"sys.version_info" tuple: e.g.,
+#    if sys.version_info >= (3, 8):
+#
+#To resolve this, we should consider:
+#* Abandoning our usage of beartype-specific "IS_PYTHON_AT_LEAST_*" boolean
+#  globals for hard-coded tests against the "sys.version_info" tuple (above).
+#* Submitting an upstream issue requesting that mypy respect the
+#  "# type: ignore[attr-defined]" pragma rather than emitting warnings here.
+
 # If the active Python interpreter targets Python >= 3.8...
 if _IS_PYTHON_AT_LEAST_3_8:
     from typing import (  # type: ignore[attr-defined]
