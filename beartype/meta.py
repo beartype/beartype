@@ -407,10 +407,26 @@ LIBS_TESTTIME_OPTIONAL = (
     #
     # See also this upstream NumPy issue:
     #     https://github.com/numpy/numpy/issues/15947
-    'numpy; sys_platform != "darwin" and platform_python_implementation != "PyPy"',
+    (
+        'numpy; '
+        'sys_platform != "darwin" and '
+        'platform_python_implementation != "PyPy"'
+    ),
 
     # Required by our optional "test_sphinx" functional test.
-    'sphinx',
+    #
+    # Note that Sphinx currently provokes unrelated test failures under Python
+    # 3.7, due to dynamic importation functionality in the @beartype codebase
+    # invoking the third-party "pkg_resources" package, which then erupts with
+    # an obscure deprecation warning caused by Sphinx. Since *ALL* of this only
+    # applies to Python 3.7, we crudely circumvent this nonsense by simply
+    # avoiding installing Sphinx under Python 3.7. The exception resembles:
+    #     FAILED
+    #     ../../../beartype_test/a00_unit/a20_util/test_utilobject.py::test_is_object_hashable
+    #     - beartype.roar.BeartypeModuleUnimportableWarning: Ignoring module
+    #     "pkg_resources.__init__" importation exception DeprecationWarning:
+    #     Deprecated call to `pkg_resources.declare_namespace('sphinxcontrib')`.
+    'sphinx; python_version >= "3.8.0"',
 
     # Required to exercise beartype validators and thus functionality requiring
     # beartype validators (e.g., "numpy.typing.NDArray" type hints) under
@@ -614,8 +630,17 @@ of this theme. Specifically, this project requires:
 
 # ....................{ METADATA ~ libs : doc              }....................
 LIBS_DOCTIME_MANDATORY = (
-    f'sphinx >={_SPHINX_VERSION_MINIMUM}, <{_SPHINX_VERSION_MAXIMUM_EXCLUSIVE}',
+    # Sphinx itself.
+    (
+        f'sphinx '
+        f'>={_SPHINX_VERSION_MINIMUM}, '
+        f'<{_SPHINX_VERSION_MAXIMUM_EXCLUSIVE}'
+    ),
+
+    # Third-party Sphinx theme.
     f'{SPHINX_THEME_NAME} <={_SPHINX_THEME_VERSION_MAXIMUM}',
+
+    # Third-party Sphinx extensions.
     'autoapi >=0.9.0',
     'sphinxext-opengraph >= 0.7.5',
 )

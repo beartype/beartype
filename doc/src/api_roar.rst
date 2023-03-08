@@ -376,17 +376,17 @@ to destroy everything you hold dear (in ascending order of justice):
 
    .. code-block:: python
 
-      # Just do this...
-      from beartype import typing
-
-      # ...instead of this.
-      #import typing
-
-      # Likewise, just do this...
+      # If you prefer attribute imports, just do this...
       from beartype.typing import Dict, FrozenSet, List, Set, Tuple, Type
 
       # ...instead of this.
       #from typing import Dict, FrozenSet, List, Set, Tuple, Type
+
+      # Or if you prefer module imports, just do this...
+      from beartype import typing
+
+      # ...instead of this.
+      #import typing
 
    The public :mod:`beartype.typing` API is a mypy_-compliant replacement for
    the :mod:`typing` API offering improved forward compatibility with future
