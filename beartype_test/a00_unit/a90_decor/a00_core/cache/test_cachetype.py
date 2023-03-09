@@ -15,8 +15,6 @@ This submodule unit tests the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises
-from typing import Tuple, Union
 
 # ....................{ TESTS ~ singleton                  }....................
 def test_typistry_singleton_pass() -> None:
@@ -29,6 +27,7 @@ def test_typistry_singleton_pass() -> None:
     from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._decor._cache.cachetype import bear_typistry
     from beartype._util.utilobject import get_object_type_name
+    from pytest import raises
 
     # Assert that dictionary syntax also implicitly registers a type. Since
     # this approach explicitly prohibits re-registration for safety, we define
@@ -61,6 +60,7 @@ def test_typistry_singleton_fail() -> None:
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._decor._cache.cachetype import bear_typistry
+    from pytest import raises
 
     # Assert that keys that are *NOT* strings are *NOT* registrable.
     with raises(_BeartypeDecorBeartypistryException):

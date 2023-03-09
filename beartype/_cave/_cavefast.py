@@ -328,14 +328,14 @@ itself).
 MethodBoundInstanceOrClassType = _MethodType
 '''
 Type of all **pure-Python bound instance and class methods** (i.e., methods
-implemented in pure Python, bound to either instances of classes or classes and
-implicitly passed those instances or classes as their first parameters).
+implemented in pure Python, bound to either instances of classes or classes
+*and* implicitly passed those instances or classes as their first parameters).
 
 Caveats
 ----------
 There exists *no* corresponding :class:`MethodUnboundInstanceType` type, as
-unbound pure-Python instance methods are ambiguously implemented as functions
-of type :class:`FunctionType` indistinguishable from conventional functions.
+unbound pure-Python instance methods are ambiguously implemented as functions of
+type :class:`FunctionType` indistinguishable from conventional functions.
 Indeed, `official documentation <PyInstanceMethod_Type documentation_>`__ for
 the ``PyInstanceMethod_Type`` C type explicitly admits that:
 

@@ -18,19 +18,21 @@ concerns (e.g., PEP-compliance, PEP-noncompliance).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ pass : wrappee : static    }....................
-def test_decor_wrappee_type_descriptor() -> None:
+def test_decor_wrappee_type_decorator_builtin() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator on all
     **C-based unbound builtin method descriptors** (i.e., methods decorated by
     builtin method decorators).
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
     from beartype.typing import NoReturn
     from pytest import raises
 
+    # ....................{ CLASSES                        }....................
     class OrDidASeaOfFire(object):
         '''
         Arbitrary class declaring a class method, static method, property
@@ -139,10 +141,11 @@ def test_decor_wrappee_type_descriptor() -> None:
 
             raise ValueError('And their place is not known.')
 
-
+    # ....................{ LOCALS                         }....................
     # Instance of this class.
     the_race = OrDidASeaOfFire()
 
+    # ....................{ PASS                           }....................
     # Assert this class method accessed on both this instance and this class
     # returns the expected value.
     assert (
@@ -165,16 +168,14 @@ def test_decor_wrappee_type_descriptor() -> None:
     )
 
     # Assert this static method docstring has been preserved as is.
-    assert OrDidASeaOfFire.the_wilderness_has_a_mysterious_tongue.__doc__ is not None
-    assert OrDidASeaOfFire.the_wilderness_has_a_mysterious_tongue.__doc__.startswith('''
+    assert (
+        OrDidASeaOfFire.the_wilderness_has_a_mysterious_tongue.__doc__ is not
+        None
+    )
+    assert (
+        OrDidASeaOfFire.the_wilderness_has_a_mysterious_tongue.__doc__.startswith('''
             Arbitrary static method''')
-
-    # Assert this static method accessed on both this instance and this class
-    # when passed an invalid parameter raises the expected exception.
-    with raises(BeartypeCallHintParamViolation):
-        OrDidASeaOfFire.the_wilderness_has_a_mysterious_tongue(b'his work and dwelling')
-    with raises(BeartypeCallHintParamViolation):
-        the_race.the_wilderness_has_a_mysterious_tongue(b'his work and dwelling')
+    )
 
     # Assert this property getter method accessed on this instance returns the
     # expected value.
@@ -191,6 +192,21 @@ def test_decor_wrappee_type_descriptor() -> None:
     assert the_race.where_the_old_earthquake_daemon == (
         "Vanish, like smoke before the tempest's stream,")
 
+    # Assert this property method docstring has been preserved as is.
+    assert OrDidASeaOfFire.where_the_old_earthquake_daemon.__doc__ is not None
+    assert OrDidASeaOfFire.where_the_old_earthquake_daemon.__doc__.startswith('''
+            Arbitrary property getter method''')
+
+    # ....................{ FAIL                           }....................
+    # Assert this static method accessed on both this instance and this class
+    # when passed an invalid parameter raises the expected exception.
+    with raises(BeartypeCallHintParamViolation):
+        OrDidASeaOfFire.the_wilderness_has_a_mysterious_tongue(
+            b'his work and dwelling')
+    with raises(BeartypeCallHintParamViolation):
+        the_race.the_wilderness_has_a_mysterious_tongue(
+            b'The voiceless lightning in these solitudes')
+
     # Assert this property setter method accessed on this instance when passed
     # an invalid parameter raises the expected exception.
     with raises(BeartypeCallHintParamViolation):
@@ -198,7 +214,7 @@ def test_decor_wrappee_type_descriptor() -> None:
             b'And their place is not known. Below, vast caves')
 
     # Assert this property deleter method accessed on this instance raises the
-            # expected exception.
+    # expected exception.
     with raises(ValueError) as exception_info:
         del the_race.where_the_old_earthquake_daemon
 
@@ -207,11 +223,6 @@ def test_decor_wrappee_type_descriptor() -> None:
 
     # Assert this exception message is the expected string.
     assert exception_message == 'And their place is not known.'
-
-    # Assert this property method docstring has been preserved as is.
-    assert OrDidASeaOfFire.where_the_old_earthquake_daemon.__doc__ is not None
-    assert OrDidASeaOfFire.where_the_old_earthquake_daemon.__doc__.startswith('''
-            Arbitrary property getter method''')
 
 # ....................{ TESTS ~ fail : arg                 }....................
 def test_decor_arg_name_fail() -> None:

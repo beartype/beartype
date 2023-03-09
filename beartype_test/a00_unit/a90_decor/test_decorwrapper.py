@@ -30,9 +30,11 @@ def test_wrapper_fail_obj_large() -> None:
     deeply nested data structure, passed a worst-case structure exposing
     performance regressions in this wrapper function.
 
-    This test guards against regressions in this issue, kindly submitted by
-    Cuban type-checking maestro @mvaled (Manuel Vázquez Acosta):
+    This test guards against performance regressions in an `issue kindly
+    submitted by Cuban type-checking maestro @mvaled (Manuel Vázquez Acosta)
+    <issue_>`__.
 
+    .. _issue:
         https://github.com/beartype/beartype/issues/91
     '''
 

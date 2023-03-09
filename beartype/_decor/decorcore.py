@@ -27,6 +27,7 @@ from beartype.roar import (
 )
 from beartype.typing import no_type_check
 from beartype._cave._cavefast import (
+    MethodBoundInstanceOrClassType,
     MethodDecoratorBuiltinTypes,
     MethodDecoratorClassType,
     MethodDecoratorPropertyType,
@@ -224,7 +225,7 @@ def beartype_object(
     #   * Descriptors created by @staticmethod are technically callable but
     #     C-based and thus unsuitable for decoration.
     if obj_type in MethodDecoratorBuiltinTypes:
-        return _beartype_descriptor(  # type: ignore[return-value]
+        return _beartype_decorator_builtin(  # type: ignore[return-value]
             descriptor=obj,
             conf=conf,
             cls_stack=cls_stack,
@@ -240,8 +241,6 @@ def beartype_object(
 
     #FIXME: Support pseudo-callables (i.e., objects masquerading as functions by
     #defining the __call__() dunder method) by:
-    #* Rename the existing _beartype_descriptor() function to
-    #  _beartype_decorator_builtin() for disambiguity.
     #* Define a new _beartype_method_bound() method with a similar API as that
     #  of _beartype_decorator_builtin(). Notably, however,
     #  _beartype_method_bound() should raise an exception if the passed callable
@@ -416,7 +415,7 @@ def beartype_object_nonfatal(
     return obj
 
 # ....................{ PRIVATE ~ beartypers : func        }....................
-def _beartype_descriptor(
+def _beartype_decorator_builtin(
     # Mandatory parameters.
     descriptor: BeartypeableT,
     conf: BeartypeConf,
@@ -425,7 +424,9 @@ def _beartype_descriptor(
     **kwargs
 ) -> BeartypeableT:
     '''
-    Decorate the passed C-based unbound method descriptor with dynamically
+    Decorate the passed **builtin decorator object** (i.e., C-based unbound
+    method descriptor produced by the builtin :class:`classmethod`,
+    :class:`property`, or :class:`staticmethod` decorators) with dynamically
     generated type-checking.
 
     Parameters
@@ -436,16 +437,23 @@ def _beartype_descriptor(
         Beartype configuration configuring :func:`beartype.beartype` uniquely
         specific to this descriptor.
 
-    All remaining keyword parameters are passed as is to the
-    :func:`_beartype_func` decorator.
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`_beartype_func` decorator internally called by this higher-level
+    decorator on the pure-Python function encapsulated in this descriptor.
 
     Returns
     ----------
     BeartypeableT
         New pure-Python callable wrapping this descriptor with type-checking.
+
+    Raises
+    ----------
+    BeartypeDecorWrappeeException
+        If this descriptor is neither a class, property, or static method
+        descriptor.
     '''
-    assert isinstance(descriptor, MethodDecoratorBuiltinTypes), (
-        f'{repr(descriptor)} not builtin method descriptor.')
+    # assert isinstance(descriptor, MethodDecoratorBuiltinTypes), (
+    #     f'{repr(descriptor)} not builtin method descriptor.')
     # assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
 
     # Type of this descriptor.
@@ -533,38 +541,71 @@ def _beartype_descriptor(
         return staticmethod(func_checked)  # type: ignore[return-value]
     # Else, this descriptor is *NOT* a static method.
 
-    #FIXME: Unconvinced this edge case is required or desired. Does @beartype
-    #actually need to decorate instance method descriptors? Nonetheless, this
-    #is sufficiently useful to warrant preservation... probably.
-    #FIXME: Unit test us up, please.
-    # # If this descriptor is an instance method...
-    # #
-    # # Note that instance method descriptors are intentionally tested first, as
-    # # most methods are instance methods.
-    # if descriptor_type is MethodBoundInstanceOrClassType:
-    #     # Pure-Python unbound function decorating the similarly pure-Python
-    #     # unbound function wrapped by this descriptor with type-checking.
-    #     descriptor_func = _beartype_func(func=descriptor.__func__, conf=conf)
-    #
-    #     # New instance method descriptor rebinding this function to the
-    #     # instance of the class bound to the prior descriptor.
-    #     descriptor_new = MethodBoundInstanceOrClassType(
-    #         descriptor_func, descriptor.__self__)  # type: ignore[return-value]
-    #
-    #     # Propagate the docstring from the prior to new descriptor.
-    #     descriptor_new.__doc__ = descriptor.__doc__
-    #
-    #     # Return this new descriptor, implicitly destroying the prior
-    #     # descriptor.
-    #     return descriptor_new
-    # Else, this descriptor is *NOT* an instance method.
-
     # Raise a fallback exception. This should *NEVER happen. This *WILL* happen.
     raise BeartypeDecorWrappeeException(
         f'Builtin method descriptor {repr(descriptor)} '
         f'not decoratable by @beartype '
         f'(i.e., neither property, class method, nor static method descriptor).'
     )
+
+
+#FIXME: Unit test us up, please.
+def _beartype_method_bound(
+    # Mandatory parameters.
+    descriptor: BeartypeableT,
+    conf: BeartypeConf,
+
+    # Variadic keyword parameters.
+    **kwargs
+) -> BeartypeableT:
+    '''
+    Decorate the passed **builtin decorator object** (i.e., C-based unbound
+    method descriptor produced by the builtin :class:`classmethod`,
+    :class:`property`, or :class:`staticmethod` decorators) with dynamically
+    generated type-checking.
+
+    Parameters
+    ----------
+    descriptor : BeartypeableT
+        Descriptor to be decorated by :func:`beartype.beartype`.
+    conf : BeartypeConf
+        Beartype configuration configuring :func:`beartype.beartype` uniquely
+        specific to this descriptor.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`_beartype_func` decorator internally called by this higher-level
+    decorator on the pure-Python function encapsulated in this descriptor.
+
+    Returns
+    ----------
+    BeartypeableT
+        New pure-Python callable wrapping this descriptor with type-checking.
+
+    Raises
+    ----------
+    BeartypeDecorWrappeeException
+        If this descriptor is neither a class, property, or static method
+        descriptor.
+    '''
+    assert isinstance(descriptor, MethodBoundInstanceOrClassType), (
+        f'{repr(descriptor)} not builtin bound method descriptor.')
+
+    # Pure-Python unbound function decorating the similarly pure-Python unbound
+    # function wrapped by this descriptor with type-checking.
+    descriptor_func = _beartype_func(func=descriptor.__func__, conf=conf)
+
+    # New instance method descriptor rebinding this function to the instance of
+    # the class bound to the prior descriptor.
+    descriptor_new = MethodBoundInstanceOrClassType(
+        descriptor_func, descriptor.__self__)  # type: ignore[return-value]
+
+    #FIXME: Almost certainly insufficient. Also propagate "__annotations__" and
+    #so on as well. Consider calling update_wrapper() instead, honestly.
+    # Propagate the docstring from the prior to the new descriptor.
+    descriptor_new.__doc__ = descriptor.__doc__
+
+    # Return this new descriptor, implicitly destroying the prior descriptor.
+    return descriptor_new  # type: ignore[return-value]
 
 
 def _beartype_func(
