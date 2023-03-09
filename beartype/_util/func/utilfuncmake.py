@@ -317,7 +317,8 @@ def make_func(
         # Ultimately, sane lookup >>> slightly uniquer filename.
         linecache_cache[func_filename] = (  # type: ignore[assignment]
             len(func_code),  # type: ignore[assignment]  # Y u gotta b diff'rnt Python 3.7? WHY?!
-            None,  # mtime, but should be None to avoid being discarded
+            None,  # usually mtime for determining when to discard files, but
+                   # providing None instructs linecache to no-op (never discard)
             func_code.splitlines(keepends=True),
             func_filename,
         )
