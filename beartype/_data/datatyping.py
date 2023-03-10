@@ -24,6 +24,7 @@ from beartype.typing import (
     Union,
 )
 from beartype._cave._cavefast import (
+    # MethodBoundInstanceOrClassType,
     MethodDecoratorClassType,
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
@@ -67,6 +68,12 @@ BeartypeableT = TypeVar(
         # A C-based unbound static method descriptor (i.e., a pure-Python
         # unbound function decorated by the builtin @staticmethod decorator).
         MethodDecoratorStaticType,
+
+        #FIXME: Currently unused, but preserved for posterity.
+        # # A C-based bound method descriptor (i.e., a pure-Python unbound
+        # # function bound to an object instance on Python's instantiation of that
+        # # object) *OR*...
+        # MethodBoundInstanceOrClassType,
     ],
 )
 '''

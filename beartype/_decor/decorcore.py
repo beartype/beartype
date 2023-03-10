@@ -559,9 +559,9 @@ def _beartype_method_bound(
     **kwargs
 ) -> BeartypeableT:
     '''
-    Decorate the passed **builtin decorator object** (i.e., C-based unbound
-    method descriptor produced by the builtin :class:`classmethod`,
-    :class:`property`, or :class:`staticmethod` decorators) with dynamically
+    Decorate the passed **builtin bound method object** (i.e., C-based bound
+    method descriptor produced by Python on instantiation for each instance and
+    class method defined by the class being instantiated) with dynamically
     generated type-checking.
 
     Parameters
@@ -580,19 +580,13 @@ def _beartype_method_bound(
     ----------
     BeartypeableT
         New pure-Python callable wrapping this descriptor with type-checking.
-
-    Raises
-    ----------
-    BeartypeDecorWrappeeException
-        If this descriptor is neither a class, property, or static method
-        descriptor.
     '''
     assert isinstance(descriptor, MethodBoundInstanceOrClassType), (
         f'{repr(descriptor)} not builtin bound method descriptor.')
 
     # Pure-Python unbound function decorating the similarly pure-Python unbound
     # function wrapped by this descriptor with type-checking.
-    descriptor_func = _beartype_func(func=descriptor.__func__, conf=conf)
+    descriptor_func = _beartype_func(func=descriptor.__func__, conf=conf)  # pyright: ignore[reportGeneralTypeIssues]
 
     # New instance method descriptor rebinding this function to the instance of
     # the class bound to the prior descriptor.
