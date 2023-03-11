@@ -52,6 +52,7 @@ from beartype._util.func.lib.utilbeartypefunc import (
     set_func_beartyped,
 )
 from beartype._util.func.utilfuncmake import make_func
+from beartype._util.func.utilfunctest import is_func_python
 from beartype._util.mod.utilmodget import get_object_module_line_number_begin
 from beartype._util.utilobject import get_object_name
 from traceback import format_exc
@@ -238,41 +239,64 @@ def beartype_object(
         raise BeartypeDecorWrappeeException(
             f'Uncallable {repr(obj)} not decoratable by @beartype.')
     # Else, this object is callable.
+    #
+    # If this object is *NOT* a pure-Python function, this object *COULD* still
+    # be a pseudo-callable (i.e., object defining the pure-Python __call__()
+    # dunder method). In this case...
 
-    #FIXME: Support pseudo-callables (i.e., objects masquerading as functions by
-    #defining the __call__() dunder method) by:
-    #* Define a new _beartype_method_bound() method with a similar API as that
-    #  of _beartype_decorator_builtin(). Notably, however,
-    #  _beartype_method_bound() should raise an exception if the passed callable
-    #  is *NOT* a bound instance method. Harvest the implementation from
-    #  commentary embedded in the _beartype_decorator_builtin() function.
-    #* Add an additional test here for such callables. Notably, if this object
-    #  does *NOT* provide a pure-Python code object, then this object should
-    #  (probably) be assumed to be a pseudo-callable: e.g.,
-    #     elif not is_func_python(obj):
-    #         obj_call_method = getattr(obj, '__call__')
-    #
-    #         #FIXME: Find the existing exception that we're raising in the
-    #         #@beartype codebase that contains the substring "or pure-Python
-    #         #callable backed by __call__() dunder method." Revise that
-    #         #exception message as follows:
-    #         #* Remove that substring.
-    #         #* Rename "pure-Python callable" to "pure-Python function".
-    #         if obj_call_method is None:
-    #             raise BeartypeDecorWrappeeException(
-    #                 f'Callable {repr(obj)} not pure-Python callable backed '
-    #                 f'by code object (i.e., either C-based callable or '
-    #                 f'pure-Python callable backed by __call__() dunder method).'
-    #             )
-    #
-    #         #FIXME: Pretty sure this works, but uncertain. Gah!
-    #         obj.__call__ = _beartype_method_bound(
-    #             method_bound=obj_call_method,
-    #             conf=conf,
-    #             cls_stack=cls_stack,
-    #         )
-    #         return obj
-    #* Implement extensive tests, please.
+    #FIXME: Unit test this up, please.
+    elif not is_func_python(obj):
+        # print(f'@beartyping pseudo-callable {repr(obj)}...')
+
+        # __call__() dunder method defined by this object if this object defines
+        # this method *OR* "None" otherwise.
+        obj_call_method = getattr(obj, '__call__')
+
+        # If this object does *NOT* define this method, this object is *NOT* a
+        # pseudo-callable. In this case, raise an exception.
+        #
+        # Note this edge case should *NEVER* occur. By definition, this object
+        # has already been validated to be callable. But this object is *NOT* a
+        # pure-Python function. Since the only other category of callable in
+        # Python is a pseudo-callable, this object *MUST* be a pseudo-callable.
+        # That said, languages change; it's not inconceivable that Python could
+        # introduce yet another kind of callable object under future versions.
+        if obj_call_method is None:
+            raise BeartypeDecorWrappeeException(
+                f'Callable {repr(obj)} not pseudo-callable (i.e., callable '
+                f'object defining __call__() dunder method).'
+            )
+        # Else, this object is a pseudo-callable.
+
+        # Replace the existing bound method descriptor to this __call__() dunder
+        # method  with a new bound method descriptor to a new __call__() dunder
+        # method wrapping the old method with runtime type-checking.
+        #
+        # Note that:
+        # * This is a monkey-patch. Since the caller is intentionally decorating
+        #   this pseudo-callable with @beartype, this is exactly what the caller
+        #   wanted. Probably.
+        # * This monkey-patches the *CLASS* of this object rather than this
+        #   object itself. Why? Because Python. For an unknown reason
+        #   (presumably, efficiency), Python accesses dunder methods on the
+        #   *CLASS* of an object rather than on the object itself. Of course,
+        #   this implies that *ALL* instances of this pseudo-callable (rather
+        #   than merely the passed instance) will be monkey-patched. This may
+        #   *NOT* necessarily be what the caller wanted. Unfortunately, the only
+        #   alternative would be for @beartype to raise an exception when passed
+        #   a pseudo-callable. Since doing something beneficial is generally
+        #   preferable to doing something harmful, @beartype prefers the former.
+        #   See also official documentation on the subject:
+        #       https://docs.python.org/3/reference/datamodel.html#special-method-names
+        obj.__class__.__call__ = _beartype_method_bound(  # type: ignore[assignment,method-assign]
+            descriptor=obj_call_method,
+            conf=conf,
+            cls_stack=cls_stack,
+        )
+
+        # Return this monkey-patched object.
+        return obj  # type: ignore[return-value]
+    # Else, this object is a pure-Python function.
 
     # Return a new callable decorating that callable with type-checking.
     return _beartype_func(  # type: ignore[return-value]
@@ -549,7 +573,6 @@ def _beartype_decorator_builtin(
     )
 
 
-#FIXME: Unit test us up, please.
 def _beartype_method_bound(
     # Mandatory parameters.
     descriptor: BeartypeableT,
@@ -584,19 +607,54 @@ def _beartype_method_bound(
     assert isinstance(descriptor, MethodBoundInstanceOrClassType), (
         f'{repr(descriptor)} not builtin bound method descriptor.')
 
+    # Pure-Python unbound function encapsulated by this descriptor.
+    descriptor_func_old = descriptor.__func__
+
     # Pure-Python unbound function decorating the similarly pure-Python unbound
-    # function wrapped by this descriptor with type-checking.
-    descriptor_func = _beartype_func(func=descriptor.__func__, conf=conf)  # pyright: ignore[reportGeneralTypeIssues]
+    # function encapsulated by this descriptor with type-checking.
+    #
+    # Note that doing so:
+    # * Implicitly propagates dunder attributes (e.g., "__annotations__",
+    #   "__doc__") from the original function onto this new function. Good.
+    # * Does *NOT* implicitly propagate the same dunder attributes from the
+    #   original descriptor encapsulating the original function to the new
+    #   descriptor (created below) encapsulating this wrapper function. Bad!
+    #   Thankfully, only one such attribute exists as of this time: "__doc__".
+    #   We propagate this attribute manually below.
+    descriptor_func_new = _beartype_func(func=descriptor_func_old, conf=conf)  # pyright: ignore[reportGeneralTypeIssues]
 
     # New instance method descriptor rebinding this function to the instance of
     # the class bound to the prior descriptor.
+    #
+    # Note that:
+    # * This is required, as the "__func__" attribute of method descriptors is
+    #   read-only. Attempting to do so raises this non-human-readable exception:
+    #     AttributeError: readonly attribute
+    #   This implies that the passed descriptor *CANNOT* be meaningfully
+    #   modified. Our only recourse is to define an entirely new descriptor,
+    #   effectively discarding the passed descriptor, which will then be
+    #   subsequently garbage-collected. This is wasteful. This is Python.
+    # * This can also be implemented by abusing the descriptor protocol:
+    #       descriptor_new = descriptor_func_new.__get__(descriptor.__self__)
+    #   That said, there exist *NO* benefits to doing so. Indeed, doing so only
+    #   reduces the legibility and maintainability of this operation.
     descriptor_new = MethodBoundInstanceOrClassType(
-        descriptor_func, descriptor.__self__)  # type: ignore[return-value]
+        descriptor_func_new, descriptor.__self__)  # type: ignore[return-value]
 
-    #FIXME: Almost certainly insufficient. Also propagate "__annotations__" and
-    #so on as well. Consider calling update_wrapper() instead, honestly.
-    # Propagate the docstring from the prior to the new descriptor.
-    descriptor_new.__doc__ = descriptor.__doc__
+    #FIXME: Actually, Python doesn't appear to support this at the moment.
+    #Attempting to do so raises this exception:
+    #    AttributeError: attribute '__doc__' of 'method' objects is not writable
+    #
+    #See also this open issue on the Python bug tracker requesting this be
+    #resolved. Sadly, Python has yet to resolve this:
+    #    https://bugs.python.org/issue47153
+    # # Propagate the docstring from the prior to the new descriptor.
+    # #
+    # # Note that Python guarantees this attribute to exist. If the original
+    # # function had a docstring, this attribute is non-"None"; else, this
+    # # attribute is "None". In either case, this attribute exists. Ergo,
+    # # additional validation is neither required nor desired.
+    # descriptor_new.__doc__ = descriptor.__doc__
 
     # Return this new descriptor, implicitly destroying the prior descriptor.
     return descriptor_new  # type: ignore[return-value]

@@ -349,12 +349,12 @@ class BeartypeCall(object):
 
         # Annotations dictionary *AFTER* resolving all postponed hints.
         #
-        # The functools.update_wrapper() function underlying the
-        # @functools.wrap decorator underlying all sane decorators propagates
-        # this dictionary by default from lower-level wrappees to higher-level
-        # wrappers. We intentionally classify the annotations dictionary of
-        # this higher-level wrapper, which *SHOULD* be the superset of that of
-        # this lower-level wrappee (and thus more reflective of reality).
+        # The functools.update_wrapper() function underlying the @functools.wrap
+        # decorator underlying all sane decorators propagates this dictionary by
+        # default from lower-level wrappees to higher-level wrappers. We
+        # intentionally classify the annotations dictionary of this higher-level
+        # wrapper, which *SHOULD* be the superset of that of this lower-level
+        # wrappee (and thus more reflective of reality).
         self.func_arg_name_to_hint = func.__annotations__
 
         # dict.get() method bound to this dictionary.

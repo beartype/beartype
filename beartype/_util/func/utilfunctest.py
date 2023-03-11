@@ -103,11 +103,7 @@ def die_unless_func_python(
 
         # Raise a human-readable exception.
         raise exception_cls(
-            f'{exception_prefix}{repr(func)} not '
-            f'pure-Python callable backed by code object '
-            f'(i.e., either C-based callable or pure-Python callable backed by '
-            f'__call__() dunder method).'
-        )
+            f'{exception_prefix}{repr(func)} not pure-Python function.')
     # Else, this callable is pure-Python.
 
 # ....................{ VALIDATORS ~ descriptors           }....................
