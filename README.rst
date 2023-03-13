@@ -22,8 +22,8 @@
 
     `Beartype documentation lives at ReadTheDocs (RTD) <beartype RTD_>`__. It's
     readable, structured, and soothing to the deep folds of your big galactic
-    brain. Open your mind to an ocean of mundane knowledge. Enter...
-    **Bearpedia:**
+    brain. Open your mind to an ocean of mundane knowledge that will exhaust
+    you at work. Enter... **the Bearpedia:**
 
         https://beartype.readthedocs.io
 

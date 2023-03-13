@@ -17,12 +17,11 @@ concerns (e.g., PEP-compliance, PEP-noncompliance).
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ pass : wrappee : static    }....................
-def test_decor_wrappee_type_decorator_builtin() -> None:
+# ....................{ TESTS ~ wrappee                    }....................
+def test_decor_wrappee_decorator_builtin() -> None:
     '''
-    Test successful usage of the :func:`beartype.beartype` decorator on all
-    **C-based unbound builtin method descriptors** (i.e., methods decorated by
-    builtin method decorators).
+    Test the :func:`beartype.beartype` decorator on **C-based unbound builtin
+    method descriptors** (i.e., methods decorated by builtin method decorators).
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -223,6 +222,74 @@ def test_decor_wrappee_type_decorator_builtin() -> None:
 
     # Assert this exception message is the expected string.
     assert exception_message == 'And their place is not known.'
+
+
+def test_decor_wrappee_callable_pseudo() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator on **pseudo-callables** (i.e.,
+    objects defining the pure-Python ``__call__()`` dunder method).
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from pytest import raises
+
+    # ....................{ CLASSES                        }....................
+    class WildWestWind(object):
+        '''
+        Arbitrary **pseudo-callable** (i.e., object defining the pure-Python
+        ``__call__()`` dunder method).
+        '''
+
+        def __call__(self, leaves_dead: str) -> str:
+            '''Arbitrary docstring.'''
+
+            return f'{leaves_dead}: O thou,'
+
+    # ....................{ LOCALS                         }....................
+    # Arbitrary pseudo-callables instance of this class.
+    autumns_being   = WildWestWind()
+    unseen_presence = WildWestWind()
+
+    # ....................{ PASS                           }....................
+    # Pseudo-callable wrapped with runtime type-checking.
+    autumns_being_typed = beartype(autumns_being)
+
+    # Assert that both the original and new pseudo-callables accept and return
+    # strings.
+    assert autumns_being(
+        "O wild West Wind, thou breath of Autumn's being,") == (
+        "O wild West Wind, thou breath of Autumn's being,: O thou,")
+    assert autumns_being_typed(
+        'Thou, from whose unseen presence the leaves dead') == (
+        'Thou, from whose unseen presence the leaves dead: O thou,')
+    assert unseen_presence(
+        'Pestilence-stricken multitudes: O thou,') == (
+        'Pestilence-stricken multitudes: O thou,: O thou,')
+
+    # ....................{ FAIL                           }....................
+    # Assert that both the original and new pseudo-callables raise the expected
+    # exception when passed invalid parameters.
+    #
+    # Note that the original pseudo-callable has been augmented with runtime
+    # type-checking despite *NOT* being passed to @beartype. Is this expected?
+    # Yes. Is this desirable? Maybe not. Either way, there's nothing @beartype
+    # can particularly do about it. Why? Because Python ignores the __call__()
+    # dunder method defined on objects; Python only respects the __call__()
+    # dunder method defined on the types of objects. Because of this, @beartype
+    # has *NO* recourse but to globally monkey-patch the type of the passed
+    # pseudo-callable (rather than that pseudo-callable itself).
+    with raises(BeartypeCallHintParamViolation):
+        autumns_being(
+            b'Are driven, like ghosts from an enchanter fleeing,')
+    with raises(BeartypeCallHintParamViolation):
+        autumns_being_typed(
+            b'Yellow, and black, and pale, and hectic red,')
+    with raises(BeartypeCallHintParamViolation):
+        unseen_presence(
+            b'Who chariotest to their dark wintry bed')
 
 # ....................{ TESTS ~ fail : arg                 }....................
 def test_decor_arg_name_fail() -> None:

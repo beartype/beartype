@@ -243,8 +243,6 @@ def beartype_object(
     # If this object is *NOT* a pure-Python function, this object *COULD* still
     # be a pseudo-callable (i.e., object defining the pure-Python __call__()
     # dunder method). In this case...
-
-    #FIXME: Unit test this up, please.
     elif not is_func_python(obj):
         # print(f'@beartyping pseudo-callable {repr(obj)}...')
 
@@ -262,7 +260,7 @@ def beartype_object(
         # That said, languages change; it's not inconceivable that Python could
         # introduce yet another kind of callable object under future versions.
         if obj_call_method is None:
-            raise BeartypeDecorWrappeeException(
+            raise BeartypeDecorWrappeeException(  # pragma: no cover
                 f'Callable {repr(obj)} not pseudo-callable (i.e., callable '
                 f'object defining __call__() dunder method).'
             )
@@ -277,12 +275,12 @@ def beartype_object(
         #   this pseudo-callable with @beartype, this is exactly what the caller
         #   wanted. Probably.
         # * This monkey-patches the *CLASS* of this object rather than this
-        #   object itself. Why? Because Python. For an unknown reason
-        #   (presumably, efficiency), Python accesses dunder methods on the
-        #   *CLASS* of an object rather than on the object itself. Of course,
-        #   this implies that *ALL* instances of this pseudo-callable (rather
-        #   than merely the passed instance) will be monkey-patched. This may
-        #   *NOT* necessarily be what the caller wanted. Unfortunately, the only
+        #   object itself. Why? Because Python. For unknown reasons (so, speed
+        #   is what we're saying), Python accesses dunder methods on the *CLASS*
+        #   of an object rather than on the object itself. Of course, this
+        #   implies that *ALL* instances of this pseudo-callable (rather than
+        #   merely the passed instance) will be monkey-patched. This may *NOT*
+        #   necessarily be what the caller wanted. Unfortunately, the only
         #   alternative would be for @beartype to raise an exception when passed
         #   a pseudo-callable. Since doing something beneficial is generally
         #   preferable to doing something harmful, @beartype prefers the former.
