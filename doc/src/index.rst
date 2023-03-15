@@ -229,9 +229,8 @@ Prior official funding sources (*yes, they once existed*) include:
    Group`_ under the administrative purview of the `Paul Allen Discovery
    Center`_ at `Tufts University`_ over the period 2015—2018 preceding the
    untimely death of `Microsoft co-founder Paul Allen <Paul Allen_>`__, during
-   which beartype was maintained as the private ``@type_check`` decorator
-   in the `Bioelectric Tissue Simulation Engine (BETSE) <BETSE_>`__.
-   :sup:`Phew!`
+   which beartype was maintained as the private ``@type_check`` decorator in the
+   `Bioelectric Tissue Simulation Engine (BETSE) <BETSE_>`__. :sup:`Phew!`
 
 .. # FIXME: Consider replacing this hand-rolled list that we've predictably
 .. # failed to properly maintain with an automated avatar-heavy list

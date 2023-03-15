@@ -144,7 +144,7 @@ def beartype_object(
         Nonetheless, this tuple intentionally preserves *all* of those other
         nested classes. Why? Because :pep:`563` resolution can only find the
         parent callable lexically containing that nested class hierarchy on the
-        current call stack (if any) treating the total number of classes
+        current call stack (if any) by leveraging the total number of classes
         lexically nesting the currently decorated class as input metadata, as
         trivially provided by the length of this tuple.
 
@@ -240,60 +240,16 @@ def beartype_object(
             f'Uncallable {repr(obj)} not decoratable by @beartype.')
     # Else, this object is callable.
     #
-    # If this object is *NOT* a pure-Python function, this object *COULD* still
-    # be a pseudo-callable (i.e., object defining the pure-Python __call__()
-    # dunder method). In this case...
+    # If this object is *NOT* a pure-Python function, attempt to monkey-patch
+    # runtime type-checking into this object by replacing all bound method
+    # descriptors of this object with comparable descriptors calling
+    # @beartype-generated runtime type-checking wrapper functions.
     elif not is_func_python(obj):
-        # print(f'@beartyping pseudo-callable {repr(obj)}...')
-
-        # __call__() dunder method defined by this object if this object defines
-        # this method *OR* "None" otherwise.
-        obj_call_method = getattr(obj, '__call__')
-
-        # If this object does *NOT* define this method, this object is *NOT* a
-        # pseudo-callable. In this case, raise an exception.
-        #
-        # Note this edge case should *NEVER* occur. By definition, this object
-        # has already been validated to be callable. But this object is *NOT* a
-        # pure-Python function. Since the only other category of callable in
-        # Python is a pseudo-callable, this object *MUST* be a pseudo-callable.
-        # That said, languages change; it's not inconceivable that Python could
-        # introduce yet another kind of callable object under future versions.
-        if obj_call_method is None:
-            raise BeartypeDecorWrappeeException(  # pragma: no cover
-                f'Callable {repr(obj)} not pseudo-callable (i.e., callable '
-                f'object defining __call__() dunder method).'
-            )
-        # Else, this object is a pseudo-callable.
-
-        # Replace the existing bound method descriptor to this __call__() dunder
-        # method  with a new bound method descriptor to a new __call__() dunder
-        # method wrapping the old method with runtime type-checking.
-        #
-        # Note that:
-        # * This is a monkey-patch. Since the caller is intentionally decorating
-        #   this pseudo-callable with @beartype, this is exactly what the caller
-        #   wanted. Probably.
-        # * This monkey-patches the *CLASS* of this object rather than this
-        #   object itself. Why? Because Python. For unknown reasons (so, speed
-        #   is what we're saying), Python accesses dunder methods on the *CLASS*
-        #   of an object rather than on the object itself. Of course, this
-        #   implies that *ALL* instances of this pseudo-callable (rather than
-        #   merely the passed instance) will be monkey-patched. This may *NOT*
-        #   necessarily be what the caller wanted. Unfortunately, the only
-        #   alternative would be for @beartype to raise an exception when passed
-        #   a pseudo-callable. Since doing something beneficial is generally
-        #   preferable to doing something harmful, @beartype prefers the former.
-        #   See also official documentation on the subject:
-        #       https://docs.python.org/3/reference/datamodel.html#special-method-names
-        obj.__class__.__call__ = _beartype_method_bound(  # type: ignore[assignment,method-assign]
-            descriptor=obj_call_method,
+        return _monkeypatch_object(  # type: ignore[return-value]
+            obj=obj,
             conf=conf,
             cls_stack=cls_stack,
         )
-
-        # Return this monkey-patched object.
-        return obj  # type: ignore[return-value]
     # Else, this object is a pure-Python function.
 
     # Return a new callable decorating that callable with type-checking.
@@ -788,11 +744,8 @@ def _beartype_type(
         specific to this class.
     cls_stack : TypeStack
         **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
-        ``None``). Defaults to ``None``. See also :func:`beartype_object`.
-
-    Note this function intentionally accepts *no* ``cls_curr`` parameter, unlike
-    most functions defined by this submodule. See :func:`beartype_object` for
-    further details.
+        ``None``). Defaults to ``None``. See also the :func:`beartype_object`
+        decorator for further commentary.
 
     Returns
     ----------
@@ -884,3 +837,99 @@ def _beartype_type(
 
     # Return this class as is.
     return cls  # type: ignore[return-value]
+
+# ....................{ PRIVATE ~ patchers                 }....................
+#FIXME: Generalize to iteratively monkey-patch *ALL* bound method descriptors of
+#this object. Currently, this method only monkey-patches the __call__() method.
+#Note that doing so will prove slightly non-trivial, as we'll need to handle
+#both:
+#* Special dunder methods like __call__() and __getitem__(), which Python
+#  ignores unless defined on the *CLASS* of this object rather than this object
+#  itself.
+#* All other methods, which should be defined on this object itself for safety.
+def _monkeypatch_object(
+    # Mandatory parameters.
+    obj: BeartypeableT,
+    conf: BeartypeConf,
+
+    # Variadic keyword parameters.
+    **kwargs
+) -> BeartypeableT:
+    '''
+    Monkey-patch the passed **arbitrary object** (i.e., pure-Python object
+    assumed *not* to be handled by other higher-level decorators defined by this
+    submodule and thus neither a class, function, nor builtin decorator
+    descriptor) with dynamically generated type-checking.
+
+    For each bound method descriptor encapsulating a method bound to this
+    object, this function monkey-patches (i.e., replaces) that descriptor with a
+    comparable descriptor calling a new :func:`beartype.beartype`-generated
+    runtime type-checking wrapper function wrapping the original method.
+
+    Parameters
+    ----------
+    obj : BeartypeableT
+        Object to be monkey-patched by :func:`beartype.beartype`.
+    conf : BeartypeConf
+        Beartype configuration configuring :func:`beartype.beartype` uniquely
+        specific to this descriptor.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`_beartype_func` decorator internally called by this higher-level
+    decorator on the pure-Python function encapsulated in this descriptor.
+
+    Returns
+    ----------
+    BeartypeableT
+        The object monkey-patched by :func:`beartype.beartype`.
+    '''
+    # print(f'@beartyping pseudo-callable {repr(obj)}...')
+
+    # __call__() dunder method defined by this object if this object defines
+    # this method *OR* "None" otherwise.
+    obj_call_method = getattr(obj, '__call__')
+
+    # If this object does *NOT* define this method, this object is *NOT* a
+    # pseudo-callable. In this case, raise an exception.
+    #
+    # Note this edge case should *NEVER* occur. By definition, this object has
+    # already been validated to be callable. But this object is *NOT* a
+    # pure-Python function. Since the only other category of callable in Python
+    # is a pseudo-callable, this object *MUST* be a pseudo-callable. That said,
+    # languages change; it's not inconceivable that Python could introduce yet
+    # another kind of callable object under future versions.
+    if obj_call_method is None:
+        raise BeartypeDecorWrappeeException(  # pragma: no cover
+            f'Callable {repr(obj)} not pseudo-callable (i.e., callable '
+            f'object defining __call__() dunder method).'
+        )
+    # Else, this object is a pseudo-callable.
+
+    # Replace the existing bound method descriptor to this __call__() dunder
+    # method  with a new bound method descriptor to a new __call__() dunder
+    # method wrapping the old method with runtime type-checking.
+    #
+    # Note that:
+    # * This is a monkey-patch. Since the caller is intentionally decorating
+    #   this pseudo-callable with @beartype, this is exactly what the caller
+    #   wanted. Probably.
+    # * This monkey-patches the *CLASS* of this object rather than this object
+    #   itself. Why? Because Python. For unknown reasons (so, speed is what
+    #   we're saying), Python accesses dunder methods on the *CLASS* of an
+    #   object rather than on the object itself. Of course, this implies that
+    #   *ALL* instances of this pseudo-callable (rather than
+    #   merely the passed instance) will be monkey-patched. This may *NOT*
+    #   necessarily be what the caller wanted. Unfortunately, the only
+    #   alternative would be for @beartype to raise an exception when passed a
+    #   pseudo-callable. Since doing something beneficial is generally
+    #   preferable to doing something harmful, @beartype prefers the former. See
+    #   also official documentation on the subject:
+    #       https://docs.python.org/3/reference/datamodel.html#special-method-names
+    obj.__class__.__call__ = _beartype_method_bound(  # type: ignore[assignment,method-assign]
+        descriptor=obj_call_method,
+        conf=conf,
+        **kwargs,
+    )
+
+    # Return this monkey-patched object.
+    return obj  # type: ignore[return-value]
