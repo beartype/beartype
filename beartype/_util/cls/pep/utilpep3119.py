@@ -175,7 +175,7 @@ def die_unless_type_isinstanceable(
     # Attempt to pass this class as the second parameter to isinstance().
     try:
         isinstance(None, cls)  # type: ignore[arg-type]
-    # If doing so raises a "TypeError" exception, this class is *NOT*
+    # If doing so raised a "TypeError" exception, this class is *NOT*
     # isinstanceable. In this case, raise a human-readable exception.
     #
     # See the docstring for further discussion.
@@ -220,6 +220,12 @@ def die_unless_type_isinstanceable(
 
         # Raise this exception chained onto this lower-level exception.
         raise exception_cls(exception_message) from exception
+    # If doing so raised any exception *OTHER* than a "TypeError" exception,
+    # this class may or may not be isinstanceable. Since we have no means of
+    # differentiating the two, we err on the side of caution. Avoid returning a
+    # false negative by quietly ignoring this exception.
+    except Exception:
+        pass
 
 
 #FIXME: Unit test us up.
@@ -288,7 +294,7 @@ def die_unless_type_or_types_isinstanceable(
         # isinstance().
         try:
             isinstance(None, type_or_types)  # type: ignore[arg-type]
-        # If doing so raises a "TypeError" exception, this class is *NOT*
+        # If doing so raised a "TypeError" exception, this class is *NOT*
         # isinstanceable. In this case, raise a human-readable exception.
         #
         # See the die_unless_type_isinstanceable() docstring for details.
@@ -319,6 +325,12 @@ def die_unless_type_or_types_isinstanceable(
             # Although this should *NEVER* happen (as we should have already
             # raised an exception above), we nonetheless do so for safety.
             raise exception_cls(f'{exception_message}.') from exception
+        # If doing so raised any exception *OTHER* than a "TypeError" exception,
+        # this class may or may not be isinstanceable. Since we have no means of
+        # differentiating the two, we err on the side of caution. Avoid
+        # returning a false negative by quietly ignoring this exception.
+        except Exception:
+            pass
 
 # ....................{ RAISERS ~ subclass                 }....................
 def die_unless_type_issubclassable(
@@ -396,7 +408,7 @@ def die_unless_type_issubclassable(
     # Attempt to pass this class as the second parameter to issubclass().
     try:
         issubclass(type, cls)  # type: ignore[arg-type]
-    # If doing so raises a "TypeError" exception, this class is *NOT*
+    # If doing so raised a "TypeError" exception, this class is *NOT*
     # issubclassable. In this case, raise a human-readable exception.
     #
     # See the die_unless_type_isinstanceable() docstring for details.
@@ -416,6 +428,12 @@ def die_unless_type_issubclassable(
 
         # Raise this exception chained onto this lower-level exception.
         raise exception_cls(exception_message) from exception
+    # If doing so raised any exception *OTHER* than a "TypeError" exception,
+    # this class may or may not be issubclassable. Since we have no means of
+    # differentiating the two, we err on the side of caution. Avoid returning a
+    # false negative by quietly ignoring this exception.
+    except Exception:
+        pass
 
 
 #FIXME: Unit test us up.
@@ -484,7 +502,7 @@ def die_unless_type_or_types_issubclassable(
         # issubclass().
         try:
             issubclass(type, type_or_types)  # type: ignore[arg-type]
-        # If doing so raises a "TypeError" exception, this class is *NOT*
+        # If doing so raised a "TypeError" exception, this class is *NOT*
         # issubclassable. In this case, raise a human-readable exception.
         #
         # See the die_unless_type_isinstanceable() docstring for details.
@@ -515,6 +533,12 @@ def die_unless_type_or_types_issubclassable(
             # Although this should *NEVER* happen (as we should have already
             # raised an exception above), we nonetheless do so for safety.
             raise exception_cls(f'{exception_message}.') from exception
+        # If doing so raised any exception *OTHER* than a "TypeError" exception,
+        # this class may or may not be issubclassable. Since we have no means of
+        # differentiating the two, we err on the side of caution. Avoid
+        # returning a false negative by quietly ignoring this exception.
+        except Exception:
+            pass
 
 # ....................{ TESTERS                            }....................
 def is_type_or_types_isinstanceable(cls: object) -> bool:
@@ -589,12 +613,20 @@ def is_type_or_types_isinstanceable(cls: object) -> bool:
         isinstance(None, cls)  # type: ignore[arg-type]
 
         # If the prior function call raised *NO* exception, this class is
-        # probably but *NOT* necessarily isinstanceable.
-        return True
+        # probably but *NOT* necessarily isinstanceable. Return true.
     # If the prior function call raised a "TypeError" exception, this class is
     # *NOT* isinstanceable. In this case, return false.
     except TypeError:
         return False
+    # If the prior function call raised any exception *OTHER* than a "TypeError"
+    # exception, this class may or may not be isinstanceable. Since we have no
+    # means of differentiating the two, we err on the side of caution. Avoid
+    # returning a false negative by safely returning true.
+    except Exception:
+        return True
+
+    # Look. Just do it. *sigh*
+    return True
 
 
 def is_type_or_types_issubclassable(cls: object) -> bool:
@@ -661,9 +693,17 @@ def is_type_or_types_issubclassable(cls: object) -> bool:
         issubclass(type, cls)  # type: ignore[arg-type]
 
         # If the prior function call raised *NO* exception, this class is
-        # probably but *NOT* necessarily issubclassable.
-        return True
+        # probably but *NOT* necessarily issubclassable. Return true.
     # If the prior function call raised a "TypeError" exception, this class is
     # *NOT* issubclassable. In this case, return false.
     except TypeError:
         return False
+    # If the prior function call raised any exception *OTHER* than a "TypeError"
+    # exception, this class may or may not be issubclassable. Since we have no
+    # means of differentiating the two, we err on the side of caution. Avoid
+    # returning a false negative by safely returning true.
+    except Exception:
+        pass
+
+    # Look. Just do it. *sigh*
+    return True

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,47 +10,72 @@ This submodule unit tests :pep:`544` support implemented in the
 :func:`beartype.beartype` decorator.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
-from pytest import raises
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 @skip_if_python_version_less_than('3.8.0')
-def test_pep544_pass() -> None:
+def test_pep544_decor() -> None:
     '''
-    Test successful usage of :pep:`544` support implemented in the
-    :func:`beartype.beartype` decorator if the active Python interpreter
-    targets at least Python 3.8.0 (i.e., the first major Python version to
-    support :pep:`544`) *or* skip otherwise.
+    Test :pep:`544` support implemented in the :func:`beartype.beartype`
+    decorator if the active Python interpreter targets at least Python 3.8.0
+    (i.e., the first major Python version to support :pep:`544`) *or* skip
+    otherwise.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from abc import abstractmethod
     from beartype import beartype
+    from beartype.roar import BeartypeDecorHintPep3119Exception
+    from pytest import raises
     from typing import Protocol, runtime_checkable
 
-    # User-defined runtime protocol declaring arbitrary methods.
+    # ....................{ PROTOCOLS                      }....................
     @runtime_checkable
     class Easter1916(Protocol):
+        '''
+        User-defined runtime protocol declaring arbitrary methods.
+        '''
+
         def i_have_met_them_at_close_of_day(self) -> str:
             return 'Coming with vivid faces'
 
         @abstractmethod
         def from_counter_or_desk_among_grey(self) -> str: pass
 
-    # User-defined class structurally (i.e., implicitly) satisfying *WITHOUT*
-    # explicitly subclassing this user-defined protocol.
+
     class Easter1916Structural(object):
+        '''
+        User-defined class structurally (i.e., implicitly) satisfying *without*
+        explicitly subclassing this user-defined protocol.
+        '''
+
         def i_have_met_them_at_close_of_day(self) -> str:
             return 'Eighteenth-century houses.'
 
         def from_counter_or_desk_among_grey(self) -> str:
             return 'I have passed with a nod of the head'
 
+
+    class TwoTrees(Protocol):
+        '''
+        User-defined protocol declaring arbitrary methods, but intentionally
+        *not* decorated by the :func:`typing.runtime_checkable` decorator and
+        thus unusable at runtime by :mod:`beartype`.
+        '''
+
+        def holy_tree(self) -> str:
+            return 'Beloved, gaze in thine own heart,'
+
+        @abstractmethod
+        def bitter_glass(self) -> str: pass
+
+    # ....................{ FUNCTIONS                      }....................
     # @beartype-decorated callable annotated by this user-defined protocol.
     @beartype
     def or_polite_meaningless_words(lingered_awhile: Easter1916) -> str:
@@ -59,6 +84,7 @@ def test_pep544_pass() -> None:
             lingered_awhile.from_counter_or_desk_among_grey()
         )
 
+    # ....................{ PASS                           }....................
     # Assert this callable returns the expected string when passed this
     # user-defined class structurally satisfying this protocol.
     assert or_polite_meaningless_words(Easter1916Structural()) == (
@@ -66,39 +92,14 @@ def test_pep544_pass() -> None:
         'I have passed with a nod of the head'
     )
 
-
-@skip_if_python_version_less_than('3.8.0')
-def test_pep544_fail() -> None:
-    '''
-    Test unsuccessful usage of :pep:`544` support implemented in the
-    :func:`beartype.beartype` decorator if the active Python interpreter
-    targets at least Python 3.8.0 (i.e., the first major Python version to
-    support :pep:`544`) *or* skip otherwise.
-    '''
-
-    # Defer test-specific imports.
-    from abc import abstractmethod
-    from beartype import beartype
-    from beartype.roar import BeartypeDecorHintPep3119Exception
-    from typing import Protocol
-
-    # User-defined protocol declaring arbitrary methods, but intentionally
-    # *NOT* decorated by the @typing.runtime_checkable decorator and thus
-    # unusable at runtime by @beartype.
-    class TwoTrees(Protocol):
-        def holy_tree(self) -> str:
-            return 'Beloved, gaze in thine own heart,'
-
-        @abstractmethod
-        def bitter_glass(self) -> str: pass
-
+    # ....................{ FAIL                           }....................
     # @beartype-decorated callable annotated by this user-defined protocol.
     with raises(BeartypeDecorHintPep3119Exception):
         @beartype
         def times_of_old(god_slept: TwoTrees) -> str:
             return god_slept.holy_tree() + god_slept.bitter_glass()
 
-# ....................{ TESTS ~ protocol                  }....................
+# ....................{ TESTS ~ protocol                   }....................
 @skip_if_python_version_less_than('3.8.0')
 def test_pep544_hint_subprotocol_elision() -> None:
     '''
@@ -120,7 +121,7 @@ def test_pep544_hint_subprotocol_elision() -> None:
     This relevant issue: https://github.com/beartype/beartype/issues/76
     '''
 
-    # ..................{ IMPORTS                           }..................
+    # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from abc import abstractmethod
     from beartype import beartype
@@ -133,7 +134,7 @@ def test_pep544_hint_subprotocol_elision() -> None:
     # without violating privacy encapsulation.
     _ProtocolMeta = type(Protocol)
 
-    # ..................{ METACLASSES                       }..................
+    # ..................{ METACLASSES                        }..................
     class UndesirableProtocolMeta(_ProtocolMeta):
         '''
         Undesirable :class:`typing.Protocol`-compliant metaclass additionally
@@ -174,7 +175,7 @@ def test_pep544_hint_subprotocol_elision() -> None:
             # Unconditionally return true.
             return True
 
-    # ..................{ PROTOCOLS                         }..................
+    # ..................{ PROTOCOLS                          }..................
     @runtime_checkable
     class PileAroundIt(
         Protocol,
@@ -204,7 +205,7 @@ def test_pep544_hint_subprotocol_elision() -> None:
         def and_wind(self, among_the_accumulated_steeps: str) -> str:
             pass
 
-    # ..................{ STRUCTURAL                        }..................
+    # ..................{ STRUCTURAL                         }..................
     class ADesertPeopledBy(object):
         '''
         Arbitrary concrete class structurally satisfying *without* subclassing
@@ -220,7 +221,7 @@ def test_pep544_hint_subprotocol_elision() -> None:
     # Arbitrary instance of this class.
     the_storms_alone = ADesertPeopledBy()
 
-    # ..................{ BEARTYPE                          }..................
+    # ..................{ BEARTYPE                           }..................
     @beartype
     def blue_as_the_overhanging_heaven(that_spread: OfFrozenFloods) -> str:
         '''
@@ -242,7 +243,7 @@ def test_pep544_hint_subprotocol_elision() -> None:
     assert not hasattr(
         the_storms_alone, 'is_checked_by_undesirable_protocol_meta')
 
-# ....................{ TESTS ~ testers                   }....................
+# ....................{ TESTS ~ testers                    }....................
 def test_is_hint_pep544_protocol() -> None:
     '''
     Test the
@@ -315,7 +316,7 @@ def test_is_hint_pep544_io_generic() -> None:
     # Assert this tester rejects standard type hints in either case.
     assert is_hint_pep484_generic_io(Union[int, str]) is False
 
-# ....................{ TESTS ~ getters                   }....................
+# ....................{ TESTS ~ getters                    }....................
 def test_get_hint_pep544_io_protocol_from_generic() -> None:
     '''
     Test the
@@ -331,6 +332,7 @@ def test_get_hint_pep544_io_protocol_from_generic() -> None:
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
         PEP484_GENERICS_IO)
+    from pytest import raises
     from typing import Union
 
     # For each PEP 484-compliant "typing" IO generic base class...
