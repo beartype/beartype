@@ -105,7 +105,8 @@ is_hint_pep484_newtype_pre_python310.__doc__ = '''
     '''
 
 # ....................{ GETTERS                            }....................
-def get_hint_pep484_newtype_class(hint: Any) -> type:
+def get_hint_pep484_newtype_class(
+    hint: Any, exception_prefix: str = '') -> type:
     '''
     User-defined class aliased by the passed :pep:`484`-compliant **new type**
     (i.e., object created and returned by the :func:`typing.NewType` type hint
@@ -119,6 +120,9 @@ def get_hint_pep484_newtype_class(hint: Any) -> type:
     ----------
     hint : object
         Object to be inspected.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Returns
     ----------
@@ -143,7 +147,7 @@ def get_hint_pep484_newtype_class(hint: Any) -> type:
     # exception.
     if get_hint_pep_sign(hint) is not HintSignNewType:
         raise BeartypeDecorHintPep484Exception(
-            f'Type hint {repr(hint)} not "typing.NewType".')
+            f'{exception_prefix}type hint {repr(hint)} not "typing.NewType".')
     # Else, this object is a PEP 484-compliant "NewType" hint.
 
     # Return the unqualified classname referred to by this reference. Note

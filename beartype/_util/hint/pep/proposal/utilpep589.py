@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.py.utilpyversion import IS_PYTHON_3_8
+from collections.abc import Mapping
 
 # ....................{ TESTERS                            }....................
 # The implementation of the "typing.TypedDict" attribute substantially varies
@@ -53,7 +54,7 @@ def is_hint_pep589(hint: object) -> bool:
        :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_sign_or_none`
        getter, which internally calls this unmemoized tester.
     #. Compare the object returned by that getter against the
-       :attr:`from beartype._util.data.hint.pep.sign.datapepsigns.HintSignTypedDict`
+       :attr:`beartype._util.data.hint.pep.sign.datapepsigns.HintSignTypedDict`
        sign.
 
     Parameters
@@ -139,3 +140,46 @@ def is_hint_pep589(hint: object) -> bool:
             )
         )
     )
+
+# ....................{ REDUCERS                           }....................
+#FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
+#shallowly type-checking such hints by reduction to untyped dictionaries
+#remains the sanest temporary work-around.
+#FIXME: The PEP 589 edict that "any TypedDict type is consistent with
+#"Mapping[str, object]" suggests that we should trivially reduce this hint
+#to "Mapping[str, object]" rather than merely "Mapping" *AFTER* we deeply
+#type-check mappings. Doing so will get us slightly deeper type-checking of
+#typed dictionaries, effectively for free. Note that:
+#* Care should be taken to ensure that the "Mapping" factory appropriate
+#  for the active Python interpreter is used. PEP 585 gonna PEP 585.
+#* We should cache "Mapping[str, object]" to a private global above rather
+#  than return a new "Mapping[str, object]" type hint on each call. Right?
+def reduce_hint_pep589(hint: object, exception_prefix: str = '') -> object:
+    '''
+    Reduce the passed :pep:`589`-compliant **typed dictionary** (i.e.,
+    :class:`typing.TypedDict` subclass) to a lower-level type hint currently
+    supported by :mod:`beartype`.
+
+    This reducer is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Typed dictionary to be reduced.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Returns
+    ----------
+    object
+        Lower-level type hint currently supported by :mod:`beartype`.
+    '''
+
+    # Silently ignore all child type hints annotating this dictionary by
+    # reducing this hint to the "Mapping" superclass. Yes, "Mapping" rather than
+    # "dict". By PEP 589 edict:
+    #     First, any TypedDict type is consistent with Mapping[str, object].
+    return Mapping

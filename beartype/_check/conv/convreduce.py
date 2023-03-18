@@ -19,8 +19,8 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     Any,
-    # Callable,
-    # Tuple,
+    Callable,
+    Dict,
 )
 from beartype._cave._cavefast import NoneType
 from beartype._conf.confcls import BeartypeConf
@@ -28,6 +28,7 @@ from beartype._data.datatyping import (
     Pep484TowerComplex,
     Pep484TowerFloat,
 )
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignDataclassInitVar,
@@ -38,16 +39,18 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypedDict,
 )
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
+    get_hint_pep484_newtype_class)
 from beartype._util.hint.pep.proposal.utilpep544 import (
     is_hint_pep484_generic_io,
     reduce_hint_pep484_generic_io_to_pep544_protocol,
 )
 from beartype._util.hint.pep.proposal.utilpep557 import (
     get_hint_pep557_initvar_arg)
+from beartype._util.hint.pep.proposal.utilpep589 import reduce_hint_pep589
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.utilhinttest import die_unless_hint
 # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-from collections.abc import Mapping
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Improve documentation to list all reductions performed by this reducer.
@@ -232,44 +235,6 @@ def reduce_hint(
             reduce_hint_pep484585_subclass_superclass_if_ignorable)
         hint = reduce_hint_pep484585_subclass_superclass_if_ignorable(
             hint=hint, exception_prefix=exception_prefix)
-    # ..................{ PEP 589                            }..................
-    #FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
-    #shallowly type-checking such hints by reduction to untyped dictionaries
-    #remains the sanest temporary work-around.
-    #FIXME: The PEP 589 edict that "any TypedDict type is consistent with
-    #"Mapping[str, object]" suggests that we should trivially reduce this hint
-    #to "Mapping[str, object]" rather than merely "Mapping" *AFTER* we deeply
-    #type-check mappings. Doing so will get us slightly deeper type-checking of
-    #typed dictionaries, effectively for free. Note that:
-    #* Care should be taken to ensure that the "Mapping" factory appropriate
-    #  for the active Python interpreter is used. PEP 585 gonna PEP 585.
-    #* We should cache "Mapping[str, object]" to a private global above rather
-    #  than return a new "Mapping[str, object]" type hint on each call. Right?
-
-    # If this hint is a PEP 589-compliant typed dictionary (i.e.,
-    # "typing.TypedDict" or "typing_extensions.TypedDict" subclass), silently
-    # ignore all child type hints annotating this dictionary by reducing this
-    # hint to the "Mapping" superclass. Yes, "Mapping" rather than "dict". By
-    # PEP 589 edict:
-    #     First, any TypedDict type is consistent with Mapping[str, object].
-    #
-    # Typed dictionaries are largely discouraged in the typing community, due
-    # to their non-standard semantics and syntax. Ergo, typed dictionaries are
-    # reasonably uncommon and thus detected late.
-    elif hint_sign is HintSignTypedDict:
-        return Mapping
-    # ..................{ PEP 484 ~ new type                 }..................
-    # If this hint is a PEP 484-compliant new type, reduce this hint to the
-    # user-defined class aliased by this hint. Although this logic could also
-    # be performed elsewhere, doing so here simplifies matters.
-    #
-    # New type hints are functionally useless for most meaningful purposes and
-    # thus fairly rare in the wild. Ergo, detect these late.
-    elif hint_sign is HintSignNewType:
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
-            get_hint_pep484_newtype_class)
-        hint = get_hint_pep484_newtype_class(hint)
     # ..................{ PEP 484 ~ io                       }..................
     # If this hint is a PEP 484-compliant IO generic base class *AND* the
     # active Python interpreter targets Python >= 3.8 and thus supports PEP
@@ -286,16 +251,71 @@ def reduce_hint(
     elif is_hint_pep484_generic_io(hint):
         hint = reduce_hint_pep484_generic_io_to_pep544_protocol(
             hint=hint, exception_prefix=exception_prefix)
+    # ..................{ FALLBACK                           }..................
+    # Else, this hint was *NOT* reduced hint.
+    else:
+        # Callable reducing this hint if a callable reducing hints with this
+        # sign was previously registered *OR* "None" otherwise (i.e., if *NO*
+        # such callable was registered, in which case this hint is preserved).
+        hint_reducer = _HINT_SIGN_TO_REDUCER.get(hint_sign)
+
+        # If a callable reducing hints with this sign was previously registered,
+        # reduce this hint to a lower-level hint via this callable.
+        if hint_reducer is not None:
+            hint = hint_reducer(  # type: ignore[call-arg]
+                hint=hint, exception_prefix=exception_prefix)  # pyright: ignore[reportGeneralTypeIssues]
+        # Else, *NO* such callable was registered. Preserve this hint as is!
+
+    # Return this possibly reduced hint.
+    return hint
+
+# ....................{ PRIVATE ~ globals                  }....................
+#FIXME: After dropping Python 3.7 support:
+#* Replace "Callable[[object, str], object]" here with a callback protocol:
+#      https://mypy.readthedocs.io/en/stable/protocols.html#callback-protocols
+#  Why? Because the current approach forces positional arguments. But we call
+#  these callables with keyword arguments above! Chaos ensues.
+#* Remove the "# type: ignore[call-arg]" pragmas above, which are horrible.
+#* Remove the "# type: ignore[dict-item]" pragmas above, which are horrible.
+_HINT_SIGN_TO_REDUCER: Dict[HintSign, Callable[[object, str], object]] = {
+    # ..................{ PEP 484                            }..................
+    # If this hint is a PEP 484-compliant new type, reduce this hint to the
+    # user-defined class aliased by this hint. Although this logic could also
+    # be performed elsewhere, doing so here simplifies matters.
+    HintSignNewType: get_hint_pep484_newtype_class,  # type: ignore[dict-item]
+
     # ..................{ PEP 557                            }..................
     # If this hint is a dataclass-specific initialization-only instance
     # variable (i.e., instance of the PEP 557-compliant "dataclasses.InitVar"
     # class introduced by Python 3.8.0), reduce this functionally useless hint
     # to the functionally useful child type hint subscripting this parent hint.
-    #
-    # "InitVar" instances are stupefyingly rare and thus detected even later.
-    elif hint_sign is HintSignDataclassInitVar:
-        hint = get_hint_pep557_initvar_arg(
-            hint=hint, exception_prefix=exception_prefix)
+    HintSignDataclassInitVar: get_hint_pep557_initvar_arg,  # type: ignore[dict-item]
 
-    # Return this possibly reduced hint.
-    return hint
+    # ..................{ PEP 589                            }..................
+    #FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
+    #shallowly type-checking such hints by reduction to untyped dictionaries
+    #remains the sanest temporary work-around.
+
+    # If this hint is a PEP 589-compliant typed dictionary (i.e.,
+    # "typing.TypedDict" or "typing_extensions.TypedDict" subclass), silently
+    # ignore all child type hints annotating this dictionary by reducing this
+    # hint to the "Mapping" superclass. Yes, "Mapping" rather than "dict". By
+    # PEP 589 edict:
+    #     First, any TypedDict type is consistent with Mapping[str, object].
+    #
+    # Typed dictionaries are largely discouraged in the typing community, due to
+    # their non-standard semantics and syntax. Ergo, typed dictionaries are
+    HintSignTypedDict: reduce_hint_pep589,
+}
+'''
+Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
+to that sign's **reducer** (i.e., callable reducing those higher-level hints to
+lower-level type hints).
+
+Each value of this dictionary should be a callable with signature resembling:
+
+.. code-block:: python
+
+   def reduce_pep{pep_number}_hint(
+       hint: object, exception_prefix: str) -> object:
+'''

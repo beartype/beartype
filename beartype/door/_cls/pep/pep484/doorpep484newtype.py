@@ -29,19 +29,30 @@ class NewTypeTypeHint(ClassTypeHint):
         # Initialize the superclass with all passed parameters.
         super().__init__(hint)
 
-        supertype = get_hint_pep484_newtype_class(hint)
+        # User-defined class aliased by this "NewType" type hint.
+        newtype_class = get_hint_pep484_newtype_class(hint)
 
         # We want to "create" an origin for this NewType that treats the newtype
         # as a subclass of its supertype. For example, if the hint is
         # "NewType("MyType", str)", then the origin should be
         # "class MyString(str): pass".
         try:
-            # We create a literal subclass here, which would be non-ideal due to
-            # explosive space and time consumption. Thankfully, however,
-            # "TypeHint" wrappers are cached. Ergo, this subclass should only be
-            # created and cached once per new-type.
+            #FIXME: Define a new get_hint_pep484_newtype_name() getter ala:
+            #    def get_hint_pep484_newtype_name(
+            #        hint: Any, exception_prefix: str = '') -> type:
+            #        #FIXME: Does this suffice? Does "NewType" guarantee the
+            #        #"__name__" instance variable to exist? No idea. *sigh*
+            #        return getattr(hint, '__name__')
+            #Then, call that below in lieu of the "name = getattr(...)" call.
+
+            # Dynamically synthesize a new subclass.
+            #
+            # Note that this would typically be non-ideal due to explosive space
+            # and time consumption. Thankfully, however, "TypeHint" wrappers are
+            # cached; the "_TypeHintMeta" metaclass guarantees this __init__()
+            # method to be called exactly once for each "NewType" type hint.
             name = getattr(hint, '__name__', str(hint))
-            self._origin = type(name, (supertype,), {})
+            self._origin = type(name, (newtype_class,), {})
         # Not all types are subclassable (e.g., "Any").
         except TypeError:
-            self._origin = supertype
+            self._origin = newtype_class
