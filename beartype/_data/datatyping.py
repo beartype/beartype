@@ -17,6 +17,7 @@ from beartype.typing import (
     Callable,
     Dict,
     Iterable,
+    Mapping,
     Optional,
     Tuple,
     Type,
@@ -169,6 +170,12 @@ func_wrapper_scope, hint_forwardrefs_class_basename)``, where:
   of :pep:`484`-compliant relative forward references visitable from this hint
   (e.g., ``('MuhClass', 'YoClass')`` given the hint ``Union['MuhClass',
   List['YoClass']]``).
+'''
+
+# ....................{ HINTS ~ dict                       }....................
+MappingKeysStr = Mapping[str, object]
+'''
+PEP-compliant type hint matching a mapping whose keys are *all* strings.
 '''
 
 # ....................{ HINTS ~ iterable                   }....................

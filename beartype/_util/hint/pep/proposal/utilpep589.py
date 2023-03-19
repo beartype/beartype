@@ -10,9 +10,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._data.datatyping import MappingKeysStr
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.py.utilpyversion import IS_PYTHON_3_8
-from collections.abc import Mapping
 
 # ....................{ TESTERS                            }....................
 # The implementation of the "typing.TypedDict" attribute substantially varies
@@ -145,15 +145,6 @@ def is_hint_pep589(hint: object) -> bool:
 #FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
 #shallowly type-checking such hints by reduction to untyped dictionaries
 #remains the sanest temporary work-around.
-#FIXME: The PEP 589 edict that "any TypedDict type is consistent with
-#"Mapping[str, object]" suggests that we should trivially reduce this hint
-#to "Mapping[str, object]" rather than merely "Mapping" *AFTER* we deeply
-#type-check mappings. Doing so will get us slightly deeper type-checking of
-#typed dictionaries, effectively for free. Note that:
-#* Care should be taken to ensure that the "Mapping" factory appropriate
-#  for the active Python interpreter is used. PEP 585 gonna PEP 585.
-#* We should cache "Mapping[str, object]" to a private global above rather
-#  than return a new "Mapping[str, object]" type hint on each call. Right?
 def reduce_hint_pep589(hint: object, exception_prefix: str = '') -> object:
     '''
     Reduce the passed :pep:`589`-compliant **typed dictionary** (i.e.,
@@ -179,7 +170,7 @@ def reduce_hint_pep589(hint: object, exception_prefix: str = '') -> object:
     '''
 
     # Silently ignore all child type hints annotating this dictionary by
-    # reducing this hint to the "Mapping" superclass. Yes, "Mapping" rather than
+    # reducing this hint to a "Mapping" type hint. Yes, "Mapping" rather than
     # "dict". By PEP 589 edict:
     #     First, any TypedDict type is consistent with Mapping[str, object].
-    return Mapping
+    return MappingKeysStr
