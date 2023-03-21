@@ -42,9 +42,21 @@ def test_decor_pep591_hint() -> None:
         Arbitrary dataclass type-checked by :func:`beartype.beartype`.
         '''
 
-        # Final field passed by the @dataclass decorator to __init__().
         which_art_moving_everywhere: Final[str] = (
             'Destroyer and preserver; hear, oh hear!')
+        '''
+        Field annotated by the :obj:`typing.Final` type hint factory subscripted
+        by an arbitrary child type hint, passed by the :func:`.dataclass`
+        decorator to :meth:`.__init__`.
+        '''
+
+        heaven_and_ocean: Final = (
+            b'Shook from the tangled boughs of Heaven and Ocean,')
+        '''
+        Field annotated by the unsubscripted :obj:`typing.Final` type hint
+        factory, passed by the :func:`.dataclass` decorator to
+        :meth:`.__init__`.
+        '''
 
     # Arbitrary instance of this dataclass exercising all edge cases.
     destroyer_and_preserver = WildSpirit()
@@ -53,6 +65,8 @@ def test_decor_pep591_hint() -> None:
     # Assert this dataclass defines the expected attributes.
     assert destroyer_and_preserver.which_art_moving_everywhere == (
         'Destroyer and preserver; hear, oh hear!')
+    assert destroyer_and_preserver.heaven_and_ocean == (
+        b'Shook from the tangled boughs of Heaven and Ocean,')
 
     #FIXME: Refactor this to test that redefinition fails *AFTER* @beartype
     #fully supports PEP 591. *sigh*

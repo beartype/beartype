@@ -75,8 +75,12 @@ def reduce_hint_pep591(hint: object, exception_prefix: str = '') -> object:
     # codebases attempting to migrate to @beartype. Doing nothing is preferable.
     if hint_args_len == 0:
         hint = object
-    # Else if this hint is subscripted by two or more child type hints, raise an
-    # exception.
+    # If, this hint is subscripted by exactly one child type hint, reduce this
+    # hint to that child hint.
+    elif hint_args_len == 1:
+        hint = hint_args[0]
+    # Else, this hint is subscripted by two or more child type hints. In this
+    # case, raise an exception.
     #
     # Note that "typing.Final" already prohibits subscription by two or more
     # arguments. Ergo, this should *NEVER* happen: e.g.,
@@ -84,12 +88,11 @@ def reduce_hint_pep591(hint: object, exception_prefix: str = '') -> object:
     #     >>> typing.Final[int, float]
     #     TypeError: typing.Final accepts only single type. Got (<class 'int'>,
     #     <class 'float'>).
-    elif hint_args_len >= 2:
+    else:
         raise BeartypeDecorHintPep591Exception(
             f'{exception_prefix}PEP 591 type hint {repr(hint)} '
-            f'subscripted by two or more child type hints.'
+            f'erroneously subscripted by {hint_args_len} child type hints.'
         )
-    # Else, this hint is subscripted by exactly one child type hint.
 
-    # Return this child hint as is.
-    return hint_args[0]
+    # Return this reduced hint.
+    return hint
