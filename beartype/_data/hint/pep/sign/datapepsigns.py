@@ -17,8 +17,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # CAUTION: Attributes imported here at module scope *MUST* be explicitly
 # deleted from this module's namespace below.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype._data.hint.pep.sign.datapepsigncls import (
-    HintSign as _HintSign)
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign as _HintSign
 
 # ....................{ SIGNS ~ explicit                   }....................
 # Signs with explicit analogues in the stdlib "typing" module.
@@ -122,6 +121,15 @@ HintSignNamedTuple = _HintSign(name='NamedTuple')
 HintSignTypedDict = _HintSign(name='TypedDict')
 HintSignGenerator = _HintSign(name='Generator')
 
+# Other concrete types.
+HintSignMatch = _HintSign(name='Match')
+HintSignPattern = _HintSign(name='Pattern')
+
+# Other concrete type aliases.
+HintSignIO = HintSignGeneric
+HintSignBinaryIO = HintSignGeneric
+HintSignTextIO = HintSignGeneric
+
 # One-off things.
 # AnyStr   <-- not a unique type hint (just a constrained "TypeVar")
 # cast   <-- unusable as a type hint
@@ -170,8 +178,6 @@ HintSignUnpack = _HintSign(name='Unpack')
 #
 # Note that "typing.__all__" intentionally omits the "Match" and "Pattern"
 # attributes, which it oddly considers to comprise another namespace. *shrug*
-HintSignMatch = _HintSign(name='Match')
-HintSignPattern = _HintSign(name='Pattern')
 
 # ....................{ SIGNS ~ implicit                   }....................
 # Signs with *NO* explicit analogues in the stdlib "typing" module but

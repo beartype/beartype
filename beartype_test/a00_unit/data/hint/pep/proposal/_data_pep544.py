@@ -65,7 +65,12 @@ def add_data(data_module: 'ModuleType') -> None:
         TypeVar,
         runtime_checkable,
     )
-    from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
+    from beartype._data.hint.pep.sign.datapepsigns import (
+        HintSignBinaryIO,
+        HintSignGeneric,
+        HintSignIO,
+        HintSignTextIO,
+    )
     from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES_STANDARD
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
@@ -329,7 +334,7 @@ def add_data(data_module: 'ModuleType') -> None:
             # Unsubscripted "IO" abstract base class (ABC).
             HintPepMetadata(
                 hint=IO,
-                pep_sign=HintSignGeneric,
+                pep_sign=HintSignIO,
                 generic_type=IO,
                 is_typevars=True,
                 piths_meta=(
@@ -348,7 +353,7 @@ def add_data(data_module: 'ModuleType') -> None:
             # Unsubscripted "BinaryIO" abstract base class (ABC).
             HintPepMetadata(
                 hint=BinaryIO,
-                pep_sign=HintSignGeneric,
+                pep_sign=HintSignBinaryIO,
                 generic_type=BinaryIO,
                 piths_meta=binaryio_piths_meta,
             ),
@@ -356,7 +361,7 @@ def add_data(data_module: 'ModuleType') -> None:
             # Unsubscripted "TextIO" abstract base class (ABC).
             HintPepMetadata(
                 hint=TextIO,
-                pep_sign=HintSignGeneric,
+                pep_sign=HintSignTextIO,
                 generic_type=TextIO,
                 piths_meta=(
                     # Open read-only text file handle to this submodule.
@@ -375,7 +380,7 @@ def add_data(data_module: 'ModuleType') -> None:
             # All possible subscriptions of the "IO" abstract base class (ABC).
             HintPepMetadata(
                 hint=IO[Any],
-                pep_sign=HintSignGeneric,
+                pep_sign=HintSignIO,
                 generic_type=IO,
                 piths_meta=(
                     # Open read-only binary file handle to this submodule.
@@ -391,13 +396,13 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
             HintPepMetadata(
                 hint=IO[bytes],
-                pep_sign=HintSignGeneric,
+                pep_sign=HintSignIO,
                 generic_type=IO,
                 piths_meta=binaryio_piths_meta,
             ),
             HintPepMetadata(
                 hint=IO[str],
-                pep_sign=HintSignGeneric,
+                pep_sign=HintSignIO,
                 generic_type=IO,
                 piths_meta=(
                     # Open read-only text file handle to this submodule.
@@ -417,7 +422,7 @@ def add_data(data_module: 'ModuleType') -> None:
             # Parametrization of the "IO" abstract base class (ABC).
             HintPepMetadata(
                 hint=IO[AnyStr],
-                pep_sign=HintSignGeneric,
+                pep_sign=HintSignIO,
                 generic_type=IO,
                 is_typevars=True,
                 piths_meta=(

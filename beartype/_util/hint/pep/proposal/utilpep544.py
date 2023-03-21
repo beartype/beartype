@@ -329,7 +329,8 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
 
     This reducer is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    to an efficient one-liner thanks to caching internally performed by this
+    reducer.
 
     Parameters
     ----------

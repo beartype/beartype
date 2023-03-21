@@ -29,6 +29,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAsyncIterator,
     HintSignAsyncGenerator,
     HintSignAwaitable,
+    HintSignBinaryIO,
     HintSignByteString,
     HintSignCallable,
     HintSignChainMap,
@@ -48,6 +49,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGenerator,
     # HintSignGeneric,
     # HintSignHashable,
+    HintSignIO,
     HintSignItemsView,
     HintSignIterable,
     HintSignIterator,
@@ -74,6 +76,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignSet,
     # HintSignSized,
     HintSignPattern,
+    HintSignTextIO,
     HintSignTuple,
     HintSignType,
     HintSignTypeVar,
@@ -113,24 +116,31 @@ HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: Dict[str, HintSign] = {
     # semantics rather than *NO* such semantics, which would then substantially
     # break and complicate dynamic code generation for no benefit whatsoever.
     'None': HintSignNone,
+
+    # PEP 484-compliant abstract base classes (ABCs) requiring non-standard and
+    # non-trivial type-checking. Although most types are trivially type-checked
+    # by the isinstance() builtin, these types break the mold in various ways.
+    "<class 'typing.BinaryIO'>": HintSignBinaryIO,
+    "<class 'typing.IO'>": HintSignIO,
+    "<class 'typing.TextIO'>": HintSignTextIO,
 }
 '''
 Dictionary mapping from the **possibly unsubscripted PEP-compliant type hint
 representation prefix** (i.e., unsubscripted prefix of the machine-readable
 strings returned by the :func:`repr` builtin for PEP-compliant type hints
 permissible in both subscripted and unsubscripted forms) of each hint uniquely
-identifiable by that representations to its identifying sign.
+identifiable by that representation to its identifying sign.
 
 Notably, this dictionary maps from the representation prefixes of:
 
-* *All* :pep:`484`-compliant type hints. Whereas *all* :pep:`585`-compliant
-  type hints (e.g., ``list[str]``) are necessarily subscripted and thus omitted
-  from this dictionary, *all* :pep:`484`-compliant type hints support at least
+* *All* :pep:`484`-compliant type hints. Whereas *all* :pep:`585`-compliant type
+  hints (e.g., ``list[str]``) are necessarily subscripted and thus omitted from
+  this dictionary, *all* :pep:`484`-compliant type hints support at least
   unsubscripted form and most :pep:`484`-compliant type hints support
   subscription as well. Moreover, the unsubscripted forms of most
   :pep:`484`-compliant type hints convey deep semantics and thus require
-  detection as PEP-compliant (e.g., ``typing.List``, requiring detection and
-  reduction to ``list``).
+  detection as PEP-compliant (e.g., :obj:`typing.List`, requiring detection and
+  reduction to :class:`list`).
 '''
 
 

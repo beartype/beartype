@@ -22,7 +22,6 @@ from beartype.typing import (
     Callable,
     Dict,
 )
-from beartype._cave._cavefast import NoneType
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.datatyping import (
     Pep484TowerComplex,
@@ -31,32 +30,38 @@ from beartype._data.datatyping import (
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
+    # HintSignBinaryIO,
     HintSignDataclassInitVar,
+    HintSignFinal,
+    HintSignGeneric,
+    # HintSignIO,
     HintSignNewType,
+    HintSignNone,
     HintSignNumpyArray,
+    # HintSignTextIO,
     HintSignType,
     HintSignTypeVar,
     HintSignTypedDict,
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.mod.utilmodnumpy import reduce_hint_numpy_ndarray
+from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
+    reduce_hint_pep484_none)
+from beartype._util.hint.pep.proposal.pep484.utilpep484generic import (
+    reduce_hint_pep484_generic)
 from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
     get_hint_pep484_newtype_class)
 from beartype._util.hint.pep.proposal.pep484.utilpep484typevar import (
     reduce_hint_pep484_typevar)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
     reduce_hint_pep484585_subclass_superclass_if_ignorable)
-from beartype._util.hint.pep.proposal.utilpep544 import (
-    is_hint_pep484_generic_io,
-    reduce_hint_pep484_generic_io_to_pep544_protocol,
-)
 from beartype._util.hint.pep.proposal.utilpep557 import (
     get_hint_pep557_initvar_arg)
 from beartype._util.hint.pep.proposal.utilpep589 import reduce_hint_pep589
+from beartype._util.hint.pep.proposal.utilpep591 import reduce_hint_pep591
 from beartype._util.hint.pep.proposal.utilpep593 import reduce_hint_pep593
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.utilhinttest import die_unless_hint
-# from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Improve documentation to list all reductions performed by this reducer.
@@ -161,33 +166,6 @@ def reduce_hint(
 
         # Return this hint as is unmodified.
         return hint
-    # ..................{ PEP 484                            }..................
-    # If this is the PEP 484-compliant "None" singleton, reduce this hint to
-    # the type of that singleton. While *NOT* explicitly defined by the
-    # "typing" module, PEP 484 explicitly supports this singleton:
-    #     When used in a type hint, the expression None is considered
-    #     equivalent to type(None).
-    #
-    # The "None" singleton is used to type callables lacking an explicit
-    # "return" statement and thus absurdly common. Ergo, detect this early.
-    elif hint is None:
-        hint = NoneType
-    # ..................{ PEP 484 ~ io                       }..................
-    # If this hint is a PEP 484-compliant IO generic base class *AND* the active
-    # Python interpreter targets Python >= 3.8 and thus supports PEP
-    # 544-compliant protocols, reduce this functionally useless hint to the
-    # corresponding functionally useful beartype-specific PEP 544-compliant
-    # protocol implementing this hint.
-    #
-    # IO generic base classes are extremely rare and thus detected even later.
-    #
-    # Note that PEP 484-compliant IO generic base classes are technically
-    # usable under Python < 3.8 (e.g., by explicitly subclassing those classes
-    # from third-party classes). Ergo, we can neither safely emit warnings nor
-    # raise exceptions on visiting these classes under *ANY* Python version.
-    elif is_hint_pep484_generic_io(hint):
-        hint = reduce_hint_pep484_generic_io_to_pep544_protocol(
-            hint=hint, exception_prefix=exception_prefix)
     # ..................{ FALLBACK                           }..................
     #FIXME: This could be optimized a bit. In particular, the above
     #"is_hint_pep484_generic_io()"-based reduction is quite uncommon whereas
@@ -222,10 +200,32 @@ def reduce_hint(
 #* Remove the "# type: ignore[dict-item]" pragmas above, which are horrible.
 _HINT_SIGN_TO_REDUCER: Dict[HintSign, Callable[[object, str], object]] = {
     # ..................{ PEP 484                            }..................
+    # If this hint is a PEP 484-compliant IO generic base class *AND* the active
+    # Python interpreter targets Python >= 3.8 and thus supports PEP
+    # 544-compliant protocols, reduce this functionally useless hint to the
+    # corresponding functionally useful beartype-specific PEP 544-compliant
+    # protocol implementing this hint.
+    #
+    # Note that PEP 484-compliant IO generic base classes are technically usable
+    # under Python < 3.8 (e.g., by explicitly subclassing those classes from
+    # third-party classes). Ergo, we can neither safely emit warnings nor raise
+    # exceptions on visiting these classes under *ANY* Python version.
+    HintSignGeneric: reduce_hint_pep484_generic,  # type: ignore[dict-item]
+
     # If this hint is a PEP 484-compliant new type, reduce this hint to the
     # user-defined class aliased by this hint. Although this logic could also
     # be performed elsewhere, doing so here simplifies matters.
     HintSignNewType: get_hint_pep484_newtype_class,  # type: ignore[dict-item]
+
+    # If this is the PEP 484-compliant "None" singleton, reduce this hint to
+    # the type of that singleton. While *NOT* explicitly defined by the
+    # "typing" module, PEP 484 explicitly supports this singleton:
+    #     When used in a type hint, the expression None is considered
+    #     equivalent to type(None).
+    #
+    # The "None" singleton is used to type callables lacking an explicit
+    # "return" statement and thus absurdly common.
+    HintSignNone: reduce_hint_pep484_none,  # type: ignore[dict-item]
 
     #FIXME: Remove this branch *AFTER* deeply type-checking type variables.
     # If this type variable was parametrized by one or more bounded
@@ -265,8 +265,18 @@ _HINT_SIGN_TO_REDUCER: Dict[HintSign, Callable[[object, str], object]] = {
     #     First, any TypedDict type is consistent with Mapping[str, object].
     #
     # Typed dictionaries are largely discouraged in the typing community, due to
-    # their non-standard semantics and syntax. Ergo, typed dictionaries are
+    # their non-standard semantics and syntax.
     HintSignTypedDict: reduce_hint_pep589,  # type: ignore[dict-item]
+
+    # ..................{ PEP 591                            }..................
+    #FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
+    #shallowly type-checking such hints by reduction to untyped dictionaries
+    #remains the sanest temporary work-around.
+
+    # If this hint is a PEP 591-compliant "typing.Final[...]" type hint,
+    # silently reduce this hint to its subscripted argument (e.g., from
+    # "typing.Final[int]" to merely "int").
+    HintSignFinal: reduce_hint_pep591,  # type: ignore[dict-item]
 
     # ..................{ PEP 593                            }..................
     # If this hint is a PEP 593-compliant beartype-agnostic type metahint,

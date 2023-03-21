@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+# --------------------( LICENSE                            )--------------------
+# Copyright (c) 2014-2023 Beartype authors.
+# See "LICENSE" for further details.
+
+'''
+**Beartype** :pep:`591` **unit tests.**
+
+This submodule unit tests :pep:`591` support implemented in the
+:func:`beartype.beartype` decorator.
+'''
+
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: To raise human-readable test errors, avoid importing from
+# package-specific submodules at module scope.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
+
+# ....................{ TESTS                              }....................
+@skip_if_python_version_less_than('3.8.0')
+def test_decor_pep591_hint() -> None:
+    '''
+    Test :pep:`557` support implemented in the :func:`beartype.beartype`
+    decorator if the active Python interpreter targets Python >= 3.8 *or* skip
+    otherwise.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from beartype.typing import Final
+    from dataclasses import dataclass
+    from pytest import raises
+
+    # ..................{ LOCALS                             }..................
+    @beartype
+    @dataclass
+    class WildSpirit(object):
+        '''
+        Arbitrary dataclass type-checked by :func:`beartype.beartype`.
+        '''
+
+        # Final field passed by the @dataclass decorator to __init__().
+        which_art_moving_everywhere: Final[str] = (
+            'Destroyer and preserver; hear, oh hear!')
+
+    # Arbitrary instance of this dataclass exercising all edge cases.
+    destroyer_and_preserver = WildSpirit()
+
+    # ..................{ PASS                               }..................
+    # Assert this dataclass defines the expected attributes.
+    assert destroyer_and_preserver.which_art_moving_everywhere == (
+        'Destroyer and preserver; hear, oh hear!')
+
+    #FIXME: Refactor this to test that redefinition fails *AFTER* @beartype
+    #fully supports PEP 591. *sigh*
+    # Assert that attempting to redefine this final field currently silently
+    # succeeds, despite technically violating PEP 591.
+    destroyer_and_preserver.which_art_moving_everywhere = (
+        "Loose clouds like earth's decaying leaves are shed,")
+
+    # ..................{ FAIL                               }..................
+    # Assert that attempting to instantiate an instance of this dataclass with a
+    # parameter violating the corresponding type hint annotating the field of
+    # the same name raises the expected exception.
+    with raises(BeartypeCallHintParamViolation):
+        WildSpirit(which_art_moving_everywhere=(
+            b"Thou on whose stream, mid the steep sky's commotion,"))

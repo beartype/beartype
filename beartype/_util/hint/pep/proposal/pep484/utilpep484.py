@@ -10,6 +10,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._cave._cavefast import NoneType
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
@@ -181,3 +182,47 @@ def is_hint_pep484_ignorable_or_none(
 
     # Return "None", as this hint is unignorable only under PEP 484.
     return None
+
+# ....................{ REDUCERS                           }....................
+#FIXME: Replace the ambiguous parameter:
+#* "hint: object" with the unambiguous parameter "hint: Literal[None]" *AFTER*
+#  we drop support for Python 3.7. *sigh*
+
+# Note that this reducer is intentionally typed as returning "type" rather than
+# "NoneType". While the former would certainly be preferable, mypy erroneously
+# emits false positives when this reducer is typed as returning "NoneType":
+#     beartype/_util/hint/pep/proposal/pep484/utilpep484.py:190: error: Variable
+#     "beartype._cave._cavefast.NoneType" is not valid as a type [valid-type]
+def reduce_hint_pep484_none(
+    hint: object, exception_prefix: str = '') -> type:
+    '''
+    Reduce the passed :pep:`484`-compliant :data:`None` type hint to the type of
+    that type hint (i.e., the builtin :class:`types.NoneType` class).
+
+    While *not* explicitly defined by the :mod:`typing` module, :pep:`484`
+    explicitly supports this singleton:
+
+        When used in a type hint, the expression :data:`None` is considered
+        equivalent to ``type(None)``.
+
+    This reducer is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Type variable to be reduced.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Returns
+    ----------
+    NoneType
+        Type of the :data:`None` singleton.
+    '''
+    assert hint is None, f'Type hint {hint} not "None" singleton.'
+
+    # Unconditionally return the type of the "None" singleton.
+    return NoneType

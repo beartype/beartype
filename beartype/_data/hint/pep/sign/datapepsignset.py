@@ -22,6 +22,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAsyncIterator,
     HintSignAsyncIterable,
     HintSignAwaitable,
+    HintSignBinaryIO,
     HintSignByteString,
     HintSignCallable,
     HintSignChainMap,
@@ -35,11 +36,13 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignDefaultDict,
     HintSignDeque,
     HintSignDict,
+    HintSignFinal,
     HintSignForwardRef,
     HintSignFrozenSet,
     HintSignGenerator,
     HintSignGeneric,
     HintSignHashable,
+    HintSignIO,
     HintSignItemsView,
     HintSignIterable,
     HintSignIterator,
@@ -64,6 +67,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignSequence,
     HintSignSet,
     HintSignSized,
+    HintSignTextIO,
     HintSignTuple,
     HintSignType,
     HintSignTypedDict,
@@ -474,12 +478,15 @@ _HINT_SIGNS_SUPPORTED_SHALLOW = frozenset((
     #FIXME: Shift into "HINT_SIGNS_SUPPORTED_DEEP" *AFTER* deeply type-checking
     #typed dictionaries.
     HintSignTypedDict,
+
+    # ..................{ PEP 591                            }..................
+    HintSignFinal,
 ))
 '''
-Frozen set of all **shallowly supported non-originative signs** (i.e.,
-arbitrary objects uniquely identifying PEP-compliant type hints *not*
-originating from an isinstanceable type for which the :func:`beartype.beartype`
-decorator generates shallow type-checking code).
+Frozen set of all **shallowly supported non-originative signs** (i.e., arbitrary
+objects uniquely identifying PEP-compliant type hints *not* originating from an
+isinstanceable type for which the :func:`beartype.beartype` decorator generates
+shallow type-checking code).
 '''
 
 
@@ -489,9 +496,12 @@ HINT_SIGNS_SUPPORTED_DEEP = frozenset((
     # syntactic contexts and thus intentionally omitted here. See the
     # "datapepsigns" submodule for further commentary.
     HintSignAny,
+    HintSignBinaryIO,
     HintSignForwardRef,
+    HintSignIO,
     HintSignNewType,
     HintSignNone,
+    HintSignTextIO,
 
     # Note that "typing.Union" implicitly subsumes "typing.Optional" *ONLY*
     # under Python <= 3.9. The implementations of the "typing" module under

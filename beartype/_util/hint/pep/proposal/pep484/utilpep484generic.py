@@ -415,3 +415,55 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     # we defer ignoring these superclasses to the caller -- which necessarily
     # already (and hopefully efficiently) ignores ignorable superclasses.
     return hint_bases[1:-1]
+
+# ....................{ REDUCERS                           }....................
+def reduce_hint_pep484_generic(
+    hint: object, exception_prefix: str = '') -> object:
+    '''
+    Reduce the passed :pep:`484`-compliant **generic** (i.e., object that may
+    *not* actually be a class originally subclassing at least one PEP-compliant
+    type hint defined by the :mod:`typing` module) to a more suitable type hint
+    better supported by :mod:`beartype` if necessary.
+
+    This reducer is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Generic to be reduced.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Returns
+    ----------
+    object
+        More suitable type hint better supported by :mod:`beartype`.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.utilpep544 import (
+        is_hint_pep484_generic_io,
+        reduce_hint_pep484_generic_io_to_pep544_protocol,
+    )
+
+    # If this hint is a PEP 484-compliant IO generic base class *AND* the active
+    # Python interpreter targets Python >= 3.8 and thus supports PEP
+    # 544-compliant protocols, reduce this functionally useless hint to the
+    # corresponding functionally useful beartype-specific PEP 544-compliant
+    # protocol implementing this hint.
+    #
+    # IO generic base classes are extremely rare and thus detected even later.
+    #
+    # Note that PEP 484-compliant IO generic base classes are technically
+    # usable under Python < 3.8 (e.g., by explicitly subclassing those classes
+    # from third-party classes). Ergo, we can neither safely emit warnings nor
+    # raise exceptions on visiting these classes under *ANY* Python version.
+    if is_hint_pep484_generic_io(hint):
+        hint = reduce_hint_pep484_generic_io_to_pep544_protocol(
+            hint=hint, exception_prefix=exception_prefix)
+
+    # Return this possibly reduced hint.
+    return hint

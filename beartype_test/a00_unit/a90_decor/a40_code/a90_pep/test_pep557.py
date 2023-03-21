@@ -30,14 +30,14 @@ def test_decor_pep577_hint() -> None:
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintParamViolation
+    from beartype.typing import (
+        ClassVar,
+        Optional,
+    )
     from dataclasses import (
         InitVar,
         dataclass,
         field,
-    )
-    from typing import (
-        ClassVar,
-        Optional,
     )
     from pytest import raises
 
