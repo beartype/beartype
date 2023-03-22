@@ -57,7 +57,7 @@ class BeartypeCall(object):
     memoized callables** (e.g.,
     :func:`beartype._check.expr.exprmake.make_func_wrapper_code`) **and
     higher-level callables** (e.g.,
-    :func:`beartype._decor._wrapper.wrappermain.generate_code`). Instead, memoized
+    :func:`beartype._decor._wrap.wrapmain.generate_code`). Instead, memoized
     callables *must* return that state as additional return values up the call
     stack to those higher-level callables. By definition, memoized callables
     are *not* recalled on subsequent calls passed the same parameters. Since

@@ -61,7 +61,7 @@ def test_reduce_hint() -> None:
 
     # ..................{ LOCALS                             }..................
     # Positional arguments to be passed to all calls to reduce_hints() below.
-    args = (BEARTYPE_CONF_DEFAULT, '')
+    args = (BEARTYPE_CONF_DEFAULT, None, '')
 
     # ..................{ CORE                               }..................
     # Assert this reducer preserves an isinstanceable type as is.
@@ -73,16 +73,19 @@ def test_reduce_hint() -> None:
     # ..................{ PEP 484 ~ tower                    }..................
     # Assert this reducer expands the builtin "float" and "complex" types to
     # their corresponding numeric towers when configured to do so.
-    assert reduce_hint(float, BeartypeConf(is_pep484_tower=True), '') is (
+    assert reduce_hint(
+        float, BeartypeConf(is_pep484_tower=True), None, '') is (
         Pep484TowerFloat)
-    assert reduce_hint(complex, BeartypeConf(is_pep484_tower=True), '') is (
+    assert reduce_hint(
+        complex, BeartypeConf(is_pep484_tower=True), None, '') is (
         Pep484TowerComplex)
 
     # Assert this reducer preserves the builtin "float" and "complex" types as
     # is when configured to disable the implicit numeric tower.
-    assert reduce_hint(float,   BeartypeConf(is_pep484_tower=False), '') is float
-    assert reduce_hint(complex, BeartypeConf(is_pep484_tower=False), '') is (
-        complex)
+    assert reduce_hint(
+        float,   BeartypeConf(is_pep484_tower=False), None, '') is float
+    assert reduce_hint(
+        complex, BeartypeConf(is_pep484_tower=False), None, '') is complex
 
     # ..................{ PEP 484 ~ typevar                  }..................
     # Assert this reducer preserves unbounded type variables as is.

@@ -41,7 +41,7 @@ from beartype._data.datatyping import (
     TypeWarning,
 )
 from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
-from beartype._decor._wrapper.wrappermain import generate_code
+from beartype._decor._wrap.wrapmain import generate_code
 from beartype._check.checkcall import BeartypeCall
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,

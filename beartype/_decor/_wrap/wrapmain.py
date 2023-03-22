@@ -44,7 +44,7 @@ from beartype._decor._cache.cachetype import (
     register_typistry_forwardref,
 )
 from beartype._check.checkcall import BeartypeCall
-from beartype._decor._wrapper.wrappersnip import (
+from beartype._decor._wrap.wrapsnip import (
     CODE_INIT_ARGS_LEN,
     CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
     CODE_RETURN_CHECK_PREFIX,
@@ -54,7 +54,7 @@ from beartype._decor._wrapper.wrappersnip import (
     PARAM_KIND_TO_CODE_LOCALIZE,
     PEP484_CODE_CHECK_NORETURN,
 )
-from beartype._decor._wrapper._wrappercode import make_func_wrapper_code
+from beartype._decor._wrap._wrapcode import make_func_wrapper_code
 from beartype._util.error.utilerror import (
     EXCEPTION_PLACEHOLDER,
     reraise_exception_placeholder,
@@ -87,7 +87,7 @@ from collections.abc import (
 def generate_code(
     bear_call: BeartypeCall,
 
-    # "beartype._decor._wrapper.wrappersnip" string globals required only for
+    # "beartype._decor._wrap.wrapsnip" string globals required only for
     # their bound "str.format" methods.
     CODE_RETURN_UNCHECKED_format: Callable = CODE_RETURN_UNCHECKED.format,
 ) -> str:

@@ -12,7 +12,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Any
+from beartype.typing import (
+    Any,
+)
 from beartype._check.checkcall import BeartypeCall
 from beartype._check.conv.convcoerce import (
     coerce_func_hint_root,
@@ -138,16 +140,16 @@ def sanify_func_hint_root(
     # * PEP-compliant but semantically deficient and thus equally harmful (in
     #   the general sense).
     #
-    # In either case, coerced type hints are generally harmful in *ALL*
-    # possible contexts for *ALL* possible consumers (including other competing
-    # runtime type-checkers). Reduced type hints, however, are *NOT* harmful in
-    # any sense whatsoever; they're simply non-trivial for @beartype to support
-    # in their current form and thus temporarily reduced in-memory into a more
+    # In either case, coerced type hints are generally harmful in *ALL* possible
+    # contexts for *ALL* possible consumers (including other competing runtime
+    # type-checkers). Reduced type hints, however, are *NOT* harmful in any
+    # sense whatsoever; they're simply non-trivial for @beartype to support in
+    # their current form and thus temporarily reduced in-memory into a more
     # convenient form for beartype-specific type-checking purposes elsewhere.
     #
     # Note that parameters are intentionally passed positionally to both
     # optimize memoization efficiency and circumvent memoization warnings.
-    hint = reduce_hint(hint, bear_call.conf, exception_prefix)
+    hint = reduce_hint(hint, bear_call.conf, arg_name, exception_prefix)
 
     # Return this sanified hint.
     return hint
@@ -237,7 +239,7 @@ def sanify_hint_root(
     # Reduce this hint to a lower-level PEP-compliant type hint if this hint is
     # reducible *OR* this hint as is otherwise. See
     # sanify_func_hint_root() for further commentary.
-    hint = reduce_hint(hint, conf, exception_prefix)
+    hint = reduce_hint(hint, conf, None, exception_prefix)
 
     # Return this sanified hint.
     return hint
@@ -283,7 +285,7 @@ def sanify_hint_child(
     hint = coerce_hint_any(hint)
 
     # Return this hint reduced.
-    return reduce_hint(hint, conf, exception_prefix)
+    return reduce_hint(hint, conf, None, exception_prefix)
 
 # ....................{ PRIVATE ~ mappings                 }....................
 _HINT_REPR_TO_HINT = CacheUnboundedStrong()

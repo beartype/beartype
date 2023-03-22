@@ -206,7 +206,7 @@ def die_if_hint_pep_unsupported(
     BeartypeDecorHintPep484Exception
         If this object is the PEP-compliant :attr:`typing.NoReturn` type hint,
         which is contextually valid in only a single use case and thus
-        supported externally by the :mod:`beartype._decor._wrapper.wrappermain`
+        supported externally by the :mod:`beartype._decor._wrap.wrapmain`
         submodule rather than with general-purpose automation.
     '''
 
@@ -231,8 +231,9 @@ def die_if_hint_pep_unsupported(
     # *ONLY* as a return annotation, raise an exception specific to this hint.
     if hint is NoReturn:
         raise BeartypeDecorHintPep484Exception(
-            f'{exception_prefix}return type hint "{repr(hint)}" invalid (i.e., '
-            f'"typing.NoReturn" valid only as non-nested return annotation).'
+            f'{exception_prefix}PEP 484 type hint "{repr(hint)}" '
+            f'invalid in this type hint context (i.e., '
+            f'"{repr(hint)}" valid only as non-nested return annotation).'
         )
     # Else, this is any PEP-compliant type hint other than "typing.NoReturn".
 

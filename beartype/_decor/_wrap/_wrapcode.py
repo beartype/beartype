@@ -17,7 +17,7 @@ from beartype._check.checkmagic import ARG_NAME_GETRANDBITS
 from beartype._check.expr.exprmake import make_check_expr
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.datatyping import CodeGenerated
-from beartype._decor._wrapper.wrappersnip import (
+from beartype._decor._wrap.wrapsnip import (
     CODE_HINT_ROOT_PREFIX,
     CODE_HINT_ROOT_SUFFIX,
     CODE_HINT_ROOT_SUFFIX_RANDOM_INT,

@@ -71,6 +71,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTuple,
     HintSignType,
     HintSignTypedDict,
+    HintSignTypeGuard,
     HintSignTypeVar,
     HintSignUnion,
     HintSignValuesView,
@@ -481,6 +482,9 @@ _HINT_SIGNS_SUPPORTED_SHALLOW = frozenset((
 
     # ..................{ PEP 591                            }..................
     HintSignFinal,
+
+    # ..................{ PEP 647                            }..................
+    HintSignTypeGuard,
 ))
 '''
 Frozen set of all **shallowly supported non-originative signs** (i.e., arbitrary

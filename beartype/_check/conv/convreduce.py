@@ -21,6 +21,7 @@ from beartype.typing import (
     Any,
     Callable,
     Dict,
+    Optional,
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.datatyping import (
@@ -64,12 +65,11 @@ from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.utilhinttest import die_unless_hint
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Improve documentation to list all reductions performed by this reducer.
-#Sadly, this documentation is currently quite out-of-date. What? It happens!
 @callable_cached
 def reduce_hint(
     hint: Any,
     conf: BeartypeConf,
+    arg_name: Optional[str],
     exception_prefix: str,
 ) -> object:
     '''
@@ -77,18 +77,7 @@ def reduce_hint(
     type hint if this hint is reducible *or* this hint as is otherwise (i.e., if
     this hint is irreducible).
 
-    Specifically, if the passed hint is:
-
-    * *Not* PEP-compliant, this hint is returned as is unmodified.
-    * PEP 593-compliant (i.e., :class:`typing.Annotated`) but beartype-agnostic
-      (i.e., its second argument is *not* an instance of the
-      :class:`beartype.vale._core._valecore.BeartypeValidator` class produced by
-      subscripting the :class:`beartype.vale.Is` class), this hint is reduced
-      to the first argument subscripting this hint. Doing so ignores *all*
-      irrelevant annotations on this hint (e.g., reducing
-      ``typing.Annotated[str, 50, False]`` to simply ``str``).
-
-    This function is memoized for efficiency.
+    This reducer is memoized for efficiency.
 
     Parameters
     ----------
@@ -97,6 +86,13 @@ def reduce_hint(
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
+    arg_name : Optional[str]
+        Either:
+
+        * If this hint annotates a parameter of some callable, the name of that
+          parameter.
+        * If this hint annotates the return of some callable, ``"return"``.
+        * Else, :data:`None`.
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
@@ -134,6 +130,18 @@ def reduce_hint(
     #
     # Since this includes *ALL* isinstanceable classes (including both
     # user-defined classes and builtin types), this is *ALWAYS* detected first.
+
+    #FIXME: Refactor this into a proper reducer registered with the
+    #"_HINT_SIGN_TO_REDUCER" dictionary as a key-value pair resembling:
+    #    None: reduce_hint_class,  # type: ignore[dict-item]
+    #
+    #Doing so will require:
+    #* Refactoring *ALL* currently defined reducers to accept variadic arguments
+    #  (i.e., "*args, **kwargs"). Trivial, thankfully. See the newly defined
+    #  reduce_hint_pep647() function as an example.
+    #* Passing "conf=conf" to these reducers below.
+    #* Defining a new reduce_hint_class() reducer elsewhere whose body is the
+    #  body of this "if" conditional.
     if hint_sign is None:
         # If...
         if (
@@ -167,12 +175,6 @@ def reduce_hint(
         # Return this hint as is unmodified.
         return hint
     # ..................{ FALLBACK                           }..................
-    #FIXME: This could be optimized a bit. In particular, the above
-    #"is_hint_pep484_generic_io()"-based reduction is quite uncommon whereas
-    #this reduction here is extremely common. Ergo, this should be refactored to
-    #attempt this reduction first and only fallback to attempting the above
-    #"is_hint_pep484_generic_io()"-based reduction if "hint_reducer is None".
-
     # Else, this hint was *NOT* reduced hint.
     else:
         # Callable reducing this hint if a callable reducing hints with this
