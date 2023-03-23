@@ -51,11 +51,11 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
 from beartype._util.hint.pep.proposal.pep484.utilpep484generic import (
     reduce_hint_pep484_generic)
 from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
-    get_hint_pep484_newtype_class)
+    reduce_hint_pep484_newtype)
 from beartype._util.hint.pep.proposal.pep484.utilpep484typevar import (
     reduce_hint_pep484_typevar)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
-    reduce_hint_pep484585_subclass_superclass_if_ignorable)
+    reduce_hint_pep484585_type)
 from beartype._util.hint.pep.proposal.utilpep557 import (
     get_hint_pep557_initvar_arg)
 from beartype._util.hint.pep.proposal.utilpep589 import reduce_hint_pep589
@@ -214,10 +214,9 @@ _HINT_SIGN_TO_REDUCER: Dict[HintSign, Callable[[object, str], object]] = {
     # exceptions on visiting these classes under *ANY* Python version.
     HintSignGeneric: reduce_hint_pep484_generic,  # type: ignore[dict-item]
 
-    # If this hint is a PEP 484-compliant new type, reduce this hint to the
-    # user-defined class aliased by this hint. Although this logic could also
-    # be performed elsewhere, doing so here simplifies matters.
-    HintSignNewType: get_hint_pep484_newtype_class,  # type: ignore[dict-item]
+    # If this hint is a PEP 484-compliant new type, reduce this new type to the
+    # user-defined class aliased by this new type.
+    HintSignNewType: reduce_hint_pep484_newtype,  # type: ignore[dict-item]
 
     # If this is the PEP 484-compliant "None" singleton, reduce this hint to
     # the type of that singleton. While *NOT* explicitly defined by the
@@ -238,20 +237,22 @@ _HINT_SIGN_TO_REDUCER: Dict[HintSign, Callable[[object, str], object]] = {
     # If this hint is a PEP 484- or 585-compliant subclass type hint subscripted
     # by an ignorable child type hint (e.g., "object", "typing.Any"), silently
     # ignore this argument by reducing this hint to the "type" superclass.
-    # While this logic could be performed elsewhere, doing so here simplifies
-    # matters dramatically. Note that this reduction *CANNOT* be performed by
-    # the is_hint_ignorable() tester, as subclass type hints subscripted by
-    # ignorable child type hints are *NOT* ignorable; they're simply safely
-    # reducible to the "type" superclass.
-    #
-    # Subclass type hints are reasonably uncommon and thus detected late.
-    HintSignType: reduce_hint_pep484585_subclass_superclass_if_ignorable,  # type: ignore[dict-item]
+    # 
+    # Note that:
+    # * This reduction could be performed elsewhere, but remains here as doing
+    #   so here dramatically simplifies matters elsewhere.
+    # * This reduction *CANNOT* be performed by the is_hint_ignorable() tester,
+    #   as subclass type hints subscripted by ignorable child type hints are
+    #   *NOT* ignorable; they're reducible to the "type" superclass.
+    HintSignType: reduce_hint_pep484585_type,  # type: ignore[dict-item]
 
     # ..................{ PEP 557                            }..................
     # If this hint is a dataclass-specific initialization-only instance
     # variable (i.e., instance of the PEP 557-compliant "dataclasses.InitVar"
     # class introduced by Python 3.8.0), reduce this functionally useless hint
     # to the functionally useful child type hint subscripting this parent hint.
+
+    #FIXME: Pick up here tomorrow, please.
     HintSignDataclassInitVar: get_hint_pep557_initvar_arg,  # type: ignore[dict-item]
 
     # ..................{ PEP 589                            }..................
@@ -297,10 +298,25 @@ Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
 to that sign's **reducer** (i.e., callable reducing those higher-level hints to
 lower-level type hints).
 
-Each value of this dictionary should be a callable with signature resembling:
+Each value of this dictionary should be a valid reducer, defined as a function
+with signature resembling:
 
 .. code-block:: python
 
    def reduce_pep{pep_number}_hint(
-       hint: object, exception_prefix: str) -> object:
+       hint: object,
+       conf: BeartypeConf,
+       arg_name: Optional[str],
+       exception_prefix: str,
+       *args, **kwargs
+   ) -> object:
+
+Note that:
+
+* Reducers should explicitly accept *only* those parameters they explicitly
+  require. Ergo, a reducer requiring *only* the ``hint`` parameter should omit
+  all of the other parameters referenced above.
+* Reducers do *not* need to validate the passed type hint as being of the
+  expected sign. By design, a reducer is only ever passed a type hint of the
+  expected sign.
 '''

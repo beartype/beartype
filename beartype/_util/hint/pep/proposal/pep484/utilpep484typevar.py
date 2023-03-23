@@ -124,7 +124,7 @@ def get_hint_pep484_typevar_bound_or_none(
 # ....................{ REDUCERS                           }....................
 #FIXME: Remove this function *AFTER* deeply type-checking type variables.
 def reduce_hint_pep484_typevar(
-    hint: TypeVar, exception_prefix: str = '') -> object:
+    hint: TypeVar, exception_prefix: str, *args, **kwargs) -> object:
     '''
     Reduce the passed :pep:`484`-compliant **type variable** (i.e.,
     :class:`typing.TypedDict` instance) to a lower-level type hint currently
@@ -142,6 +142,8 @@ def reduce_hint_pep484_typevar(
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
 
+    All remaining passed arguments are silently ignored.
+
     Returns
     ----------
     object
@@ -153,8 +155,7 @@ def reduce_hint_pep484_typevar(
     #
     # Note that this function call is intentionally passed positional rather
     # positional keywords for efficiency with respect to @callable_cached.
-    hint_bound = get_hint_pep484_typevar_bound_or_none(
-        hint, exception_prefix)
+    hint_bound = get_hint_pep484_typevar_bound_or_none(hint, exception_prefix)
     # print(f'Reducing PEP 484 type variable {repr(hint)} to {repr(hint_bound)}...')
     # print(f'Reducing non-beartype PEP 593 type hint {repr(hint)}...')
 

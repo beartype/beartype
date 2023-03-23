@@ -418,7 +418,7 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_generic(
-    hint: object, exception_prefix: str = '') -> object:
+    hint: object, exception_prefix: str, *args, **kwargs) -> object:
     '''
     Reduce the passed :pep:`484`-compliant **generic** (i.e., object that may
     *not* actually be a class originally subclassing at least one PEP-compliant
@@ -435,7 +435,9 @@ def reduce_hint_pep484_generic(
         Generic to be reduced.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        exception message.
+
+    All remaining passed arguments are silently ignored.
 
     Returns
     ----------
@@ -464,6 +466,10 @@ def reduce_hint_pep484_generic(
     if is_hint_pep484_generic_io(hint):
         hint = reduce_hint_pep484_generic_io_to_pep544_protocol(
             hint=hint, exception_prefix=exception_prefix)
+    # Else, this hint is either *NOT* a PEP 484-compliant IO generic base class
+    # *OR* is but the active Python interpreter targets Python < 3.8 and thus
+    # fails to support PEP 544-compliant protocols. In either case, preserve
+    # this hint as is.
 
     # Return this possibly reduced hint.
     return hint

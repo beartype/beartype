@@ -31,7 +31,7 @@ from beartype._util.hint.nonpep.utilnonpeptest import (
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     import_pep484585_forwardref_type_relative_to_object)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
-    get_hint_pep484585_subclass_superclass)
+    get_hint_pep484585_type_superclass)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
@@ -217,12 +217,12 @@ def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:
         f'{cause.hint_sign} not HintSignType.')
 
     # Superclass this pith is required to be a subclass of.
-    hint_superclass = get_hint_pep484585_subclass_superclass(
+    hint_superclass = get_hint_pep484585_type_superclass(
         hint=cause.hint, exception_prefix=cause.exception_prefix)
 
     # If this superclass is neither a class nor tuple of classes, this
     # superclass *MUST* by process of elimination and the validation already
-    # performed above by the get_hint_pep484585_subclass_superclass() getter be
+    # performed above by the get_hint_pep484585_type_superclass() getter be
     # a forward reference to a class. In this case...
     if not isinstance(hint_superclass, TestableTypes):
         # Reduce this superclass to the class referred to by this forward

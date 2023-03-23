@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype.typing import (
-    Any,
+    # Any,
     Tuple,
     TypeVar,
     Union,
@@ -46,7 +46,7 @@ subscripting (indexing) a subclass type hint).
 '''
 
 # ....................{ GETTERS                            }....................
-def get_hint_pep484585_subclass_superclass(
+def get_hint_pep484585_type_superclass(
     hint: object,
     exception_prefix: str,
 ) -> _HINT_PEP484585_SUBCLASS_ARGS_1_UNION:
@@ -110,13 +110,18 @@ def get_hint_pep484585_subclass_superclass(
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_args,
+        get_hint_pep_sign,
         get_hint_pep_sign_or_none,
     )
 
-    # If this is *NOT* a subclass type hint, raise an exception.
-    _die_unless_hint_pep484585_subclass(
-        hint=hint, exception_prefix=exception_prefix)
-    # Else, this is either a subclass type hint.
+    # If this is neither a PEP 484- *NOR* PEP 585-compliant subclass type hint,
+    # raise an exception.
+    if get_hint_pep_sign(hint) is not HintSignType:
+        raise BeartypeDecorHintPep484585Exception(
+            f'{exception_prefix}{repr(hint)} '
+            f'neither PEP 484 nor 585 subclass type hint.'
+        )
+    # Else, this is a subclass type hint.
 
     # Superclass subscripting this hint.
     hint_superclass = get_hint_pep484585_args_1(
@@ -173,10 +178,8 @@ def get_hint_pep484585_subclass_superclass(
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up.
-def reduce_hint_pep484585_subclass_superclass_if_ignorable(
-    hint: Any,
-    exception_prefix: str,
-) -> Any:
+def reduce_hint_pep484585_type(
+    hint: object, exception_prefix: str, *args, **kwargs) -> object:
     '''
     Reduce the passed :pep:`484`- or :pep:`585`-compliant **subclass type
     hint** (i.e., hint constraining objects to subclass that superclass) to the
@@ -197,6 +200,8 @@ def reduce_hint_pep484585_subclass_superclass_if_ignorable(
         Human-readable label prefixing the representation of this object in the
         exception message.
 
+    All remaining passed arguments are silently ignored.
+
     Raises
     ----------
     BeartypeDecorHintPep484585Exception
@@ -206,11 +211,6 @@ def reduce_hint_pep484585_subclass_superclass_if_ignorable(
 
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhinttest import is_hint_ignorable
-
-    # If this is *NOT* a subclass type hint, raise an exception.
-    _die_unless_hint_pep484585_subclass(
-        hint=hint, exception_prefix=exception_prefix)
-    # Else, this is either a subclass type hint.
 
     # If this hint is the unsubscripted PEP 484-compliant subclass type hint,
     # immediately reduce this hint to the "type" superclass.
@@ -231,7 +231,7 @@ def reduce_hint_pep484585_subclass_superclass_if_ignorable(
     # Superclass subscripting this hint.
     #
     # Note that we intentionally do *NOT* call the high-level
-    # get_hint_pep484585_subclass_superclass() getter here, as the
+    # get_hint_pep484585_type_superclass() getter here, as the
     # validation performed by that function would raise exceptions for
     # various child type hints that are otherwise permissible (e.g.,
     # "typing.Any").
@@ -253,37 +253,3 @@ def reduce_hint_pep484585_subclass_superclass_if_ignorable(
 
     # Return this possibly reduced type hint.
     return hint
-
-# ....................{ PRIVATE ~ validators               }....................
-def _die_unless_hint_pep484585_subclass(
-    hint: object, exception_prefix: str) -> None:
-    '''
-    Raise an exception unless the passed object is a :pep:`484`- or
-    :pep:`585`-compliant **subclass type hint** (i.e., hint constraining
-    objects to subclass that superclass).
-
-    Parameters
-    ----------
-    hint : object
-        Object to be validated.
-    exception_prefix : str
-        Human-readable label prefixing the representation of this object in the
-        exception message.
-
-    Raises
-    ----------
-    BeartypeDecorHintPep484585Exception
-        If this hint is neither a :pep:`484`- nor :pep:`585`-compliant subclass
-        type hint.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
-
-    # If this is neither a PEP 484- nor PEP 585-compliant subclass type hint,
-    # raise an exception.
-    if get_hint_pep_sign(hint) is not HintSignType:
-        raise BeartypeDecorHintPep484585Exception(
-            f'{exception_prefix}{repr(hint)} '
-            f'neither PEP 484 nor 585 subclass type hint.'
-        )

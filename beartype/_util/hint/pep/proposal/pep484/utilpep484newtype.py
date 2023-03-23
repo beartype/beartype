@@ -105,7 +105,7 @@ is_hint_pep484_newtype_pre_python310.__doc__ = '''
     '''
 
 # ....................{ GETTERS                            }....................
-def get_hint_pep484_newtype_class(
+def get_hint_pep484_newtype_alias(
     hint: Any, exception_prefix: str = '') -> type:
     '''
     User-defined class aliased by the passed :pep:`484`-compliant **new type**
@@ -155,3 +155,35 @@ def get_hint_pep484_newtype_class(
     # instance variable unique to closures created by the typing.NewType()
     # closure factory function.
     return hint.__supertype__
+
+# ....................{ REDUCERS                           }....................
+def reduce_hint_pep484_newtype(
+    hint: object, exception_prefix: str, *args, **kwargs) -> type:
+    '''
+    Reduce the passed :pep:`484`-compliant **new type** (i.e., object created
+    and returned by the :func:`typing.NewType` type hint factory) to the
+    # user-defined class aliased by this new type.
+
+    This reducer is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Final type hint to be reduced.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message.
+
+    All remaining passed arguments are silently ignored.
+
+    Returns
+    ----------
+    type
+        User-defined class aliased by this :pep:`484`-compliant new type.
+    '''
+
+    # Reduce this new type to the user-defined class aliased by this new type.
+    return get_hint_pep484_newtype_alias(
+        hint=hint, exception_prefix=exception_prefix)

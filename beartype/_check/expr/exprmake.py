@@ -110,7 +110,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
     iter_hint_pep484585_generic_bases_unerased_tree,
 )
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
-    get_hint_pep484585_subclass_superclass)
+    get_hint_pep484585_type_superclass)
 from beartype._util.hint.pep.proposal.utilpep586 import (
     die_unless_hint_pep586,
     get_hint_pep586_literals,
@@ -1595,7 +1595,7 @@ def make_check_expr(
                     #* Unit test such type hints to indeed be ignorable.
 
                     # Superclass this pith is required to be a subclass of.
-                    hint_child = get_hint_pep484585_subclass_superclass(
+                    hint_child = get_hint_pep484585_type_superclass(
                         hint=hint_curr,
                         exception_prefix=_EXCEPTION_PREFIX,
                     )
@@ -1612,7 +1612,7 @@ def make_check_expr(
                     # Else, this superclass is *NOT* actually a class. By
                     # process of elimination and the validation already
                     # performed above by the
-                    # get_hint_pep484585_subclass_superclass() getter, this
+                    # get_hint_pep484585_type_superclass() getter, this
                     # superclass *MUST* be a forward reference to a class.
                     else:
                         # Render this forward reference accessible to the body

@@ -174,10 +174,10 @@ def is_hint_pep484_ignorable_or_none(
         # Avoid circular import dependencies.
         from beartype._util.hint.utilhinttest import is_hint_ignorable
         from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
-            get_hint_pep484_newtype_class)
+            get_hint_pep484_newtype_alias)
 
         # Return true only if this hint aliases an ignorable child type hint.
-        return is_hint_ignorable(get_hint_pep484_newtype_class(hint))
+        return is_hint_ignorable(get_hint_pep484_newtype_alias(hint))
     # Else, this hint is *NOT* a PEP 484-compliant new type.
 
     # Return "None", as this hint is unignorable only under PEP 484.
@@ -193,8 +193,7 @@ def is_hint_pep484_ignorable_or_none(
 # emits false positives when this reducer is typed as returning "NoneType":
 #     beartype/_util/hint/pep/proposal/pep484/utilpep484.py:190: error: Variable
 #     "beartype._cave._cavefast.NoneType" is not valid as a type [valid-type]
-def reduce_hint_pep484_none(
-    hint: object, exception_prefix: str = '') -> type:
+def reduce_hint_pep484_none(hint: object, *args, **kwargs) -> type:
     '''
     Reduce the passed :pep:`484`-compliant :data:`None` type hint to the type of
     that type hint (i.e., the builtin :class:`types.NoneType` class).
@@ -213,9 +212,8 @@ def reduce_hint_pep484_none(
     ----------
     hint : object
         Type variable to be reduced.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+
+    All remaining passed arguments are silently ignored.
 
     Returns
     ----------

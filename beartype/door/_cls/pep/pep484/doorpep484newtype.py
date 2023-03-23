@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.pep.pep484.doorpep484class import ClassTypeHint
 from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
-    get_hint_pep484_newtype_class)
+    get_hint_pep484_newtype_alias)
 
 # ....................{ SUBCLASSES                         }....................
 class NewTypeTypeHint(ClassTypeHint):
@@ -30,7 +30,7 @@ class NewTypeTypeHint(ClassTypeHint):
         super().__init__(hint)
 
         # User-defined class aliased by this "NewType" type hint.
-        newtype_class = get_hint_pep484_newtype_class(hint)
+        newtype_class = get_hint_pep484_newtype_alias(hint)
 
         # We want to "create" an origin for this NewType that treats the newtype
         # as a subclass of its supertype. For example, if the hint is
