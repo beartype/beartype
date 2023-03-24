@@ -150,6 +150,11 @@ is_hint_pep585_builtin.__doc__ = '''
     :mod:`collections.abc` submodule like :class:`collections.abc.Iterable` or
     :class:`collections.abc.Sequence`).
 
+    Note that this additionally includes all third-party type hints whose
+    classes subclass the :class:`types.GenericAlias` superclass, including:
+
+    * ``numpy.typing.NDArray[...]`` type hints.
+
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
     to an efficient one-liner.
@@ -158,11 +163,10 @@ is_hint_pep585_builtin.__doc__ = '''
     ----------
     **This test returns false for** :pep:`585`-compliant **generics,** which
     fail to satisfy the same API as all other :pep:`585`-compliant type hints.
-    Why? Because :pep:`560`-type erasure erases this API on
-    :pep:`585`-compliant generics immediately after those generics are
-    declared, preventing their subsequent detection as :pep:`585`-compliant.
-    Instead, :pep:`585`-compliant generics are only detectable by calling
-    either:
+    Why? Because :pep:`560`-type erasure erases this API on :pep:`585`-compliant
+    generics immediately after those generics are declared, preventing their
+    subsequent detection as :pep:`585`-compliant. Instead, :pep:`585`-compliant
+    generics are only detectable by calling either:
 
     * The high-level PEP-agnostic
       :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep484585_generic`

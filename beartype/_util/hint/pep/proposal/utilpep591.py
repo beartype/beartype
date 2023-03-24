@@ -18,7 +18,8 @@ from beartype.roar import BeartypeDecorHintPep591Exception
 #FIXME: Remove *AFTER* deeply type-checking "Final[...]" type hints. For now,
 #shallowly type-checking such hints by reduction to their subscripted arguments
 #remains the sanest temporary work-around.
-def reduce_hint_pep591(hint: object, exception_prefix: str = '') -> object:
+def reduce_hint_pep591(
+    hint: object, exception_prefix: str, *args, **kwargs) -> object:
     '''
     Reduce the passed :pep:`591`-compliant **final type hint** (i.e.,
     subscription of the :obj:`typing.Final` type hint factory) to a lower-level
@@ -35,6 +36,8 @@ def reduce_hint_pep591(hint: object, exception_prefix: str = '') -> object:
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
+
+    All remaining passed arguments are silently ignored.
 
     Returns
     ----------

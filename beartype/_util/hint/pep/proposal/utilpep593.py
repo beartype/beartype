@@ -190,7 +190,8 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
-def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
+def get_hint_pep593_metadata(
+    hint: Any, exception_prefix: str = '') -> Tuple[Any, ...]:
     '''
     Tuple of one or more arbitrary objects annotating the passed
     :pep:`593`-compliant **type metahint** (i.e., subscription of the
@@ -208,6 +209,9 @@ def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
     ----------
     hint : object
         `PEP 593`-compliant type metahint to be inspected.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Returns
     ----------
@@ -226,7 +230,7 @@ def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
     '''
 
     # If this object is *NOT* a metahint, raise an exception.
-    die_unless_hint_pep593(hint)
+    die_unless_hint_pep593(hint=hint, exception_prefix=exception_prefix)
     # Else, this object is a metahint.
 
     # Return the tuple of one or more objects annotating this metahint. By
@@ -239,7 +243,7 @@ def get_hint_pep593_metadata(hint: Any) -> Tuple[Any, ...]:
 
 
 #FIXME: Unit test us up, please.
-def get_hint_pep593_metahint(hint: Any) -> Any:
+def get_hint_pep593_metahint(hint: Any, exception_prefix: str = '') -> Any:
     '''
     PEP-compliant type hint annotated by the passed :pep:`593`-compliant **type
     metahint** (i.e., subscription of the :attr:`typing.Annotated` singleton).
@@ -257,6 +261,9 @@ def get_hint_pep593_metahint(hint: Any) -> Any:
     ----------
     hint : object
         :pep:`593`-compliant type metahint to be inspected.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Returns
     ----------
@@ -275,7 +282,7 @@ def get_hint_pep593_metahint(hint: Any) -> Any:
     '''
 
     # If this object is *NOT* a metahint, raise an exception.
-    die_unless_hint_pep593(hint)
+    die_unless_hint_pep593(hint=hint, exception_prefix=exception_prefix)
     # Else, this object is a metahint.
 
     # Return the PEP-compliant type hint annotated by this metahint.
@@ -292,7 +299,8 @@ def get_hint_pep593_metahint(hint: Any) -> Any:
     return hint.__origin__
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pep593(hint: object, exception_prefix: str = '') -> object:
+def reduce_hint_pep593(
+    hint: object, exception_prefix: str, *args, **kwargs) -> object:
     '''
     Reduce the passed :pep:`593`-compliant **type metahint** (i.e., subscription
     of either the :attr:`typing.Annotated` or
@@ -310,7 +318,9 @@ def reduce_hint_pep593(hint: object, exception_prefix: str = '') -> object:
         Type variable to be reduced.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        exception message.
+
+    All remaining passed arguments are silently ignored.
 
     Returns
     ----------
@@ -328,5 +338,5 @@ def reduce_hint_pep593(hint: object, exception_prefix: str = '') -> object:
         # Else, this metahint is beartype-agnostic and thus irrelevant to us. In
         # this case, ignore all annotations on this hint by reducing this hint
         # to the lower-level hint it annotates.
-        get_hint_pep593_metahint(hint)
+        get_hint_pep593_metahint(hint=hint, exception_prefix=exception_prefix)
     )

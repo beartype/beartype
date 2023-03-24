@@ -34,23 +34,13 @@ from beartype._util.utilobject import is_object_hashable
 from warnings import warn
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Ideally, this reducer would be memoized. Sadly, the
-#"numpy.typing.NDArray" type hint itself fails to memoize. Memoization here
-#would just consume all available memory. *sigh*
-#The solution is the exact same as for PEP 585 type hints, which similarly fail
-#to memoize: forcefully coerce "numpy.typing.NDArray" type hints that have the
-#same repr() into the same previously cached "numpy.typing.NDArray" type hint.
-#This is particularly vital here, as the process of manually reducing each
-#identical "numpy.typing.NDArray" type hint to the same underlying beartype
-#validator consumes dramatically more *TIME* than a caching solution.
-
-# @callable_cached
+#FIXME: Refactor this function to make this function *EFFECTIVELY* cached. How?
+#By splitting this function up into smaller functions -- each of which is
+#actually cached by @callable_cached and thus called with positional arguments.
 def reduce_hint_numpy_ndarray(
-    # Mandatory parameters.
     hint: Any,
-
-    # Optional parameters.
-    exception_prefix: str = '',
+    exception_prefix: str,
+    *args, **kwargs
 ) -> Any:
     '''
     Reduce the passed **PEP-noncompliant typed NumPy array** (i.e.,
@@ -73,9 +63,11 @@ def reduce_hint_numpy_ndarray(
     ----------
     hint : object
         PEP-noncompliant typed NumPy array to return the data type of.
-    exception_prefix : Optional[str]
+    exception_prefix : str
         Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        exception message.
+
+    All remaining passed arguments are silently ignored.
 
     Raises
     ----------

@@ -4,7 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **PEP-noncompliant type hint** utilities.
+Project-wide **PEP-noncompliant type hint tester** (i.e., callable validating an
+arbitrary object to be a PEP-noncompliant type hint) utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

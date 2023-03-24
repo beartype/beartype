@@ -182,10 +182,22 @@ def is_hint_uncached(hint: object) -> bool:
         is_hint_pep585_builtin)
     from beartype._util.hint.pep.proposal.utilpep604 import is_hint_pep604
 
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Avoid detecting the kind of this hint by calling any of the
+    # get_hint_pep_sign_*() family of memoized getters. Doing so would consume
+    # excess time and space when this hint is uncached, as passing this hint to
+    # any of those getters would then cache against a hint that it is
+    # functionally useless to cache against.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     # Return true only if this hint is either...
     return (
         # PEP 585-compliant (e.g., "list[str]"), this hint is *NOT* self-caching
         # (e.g., "list[str] is not list[str]").
+        #
+        # Note that this additionally includes all third-party type hints that
+        # derive from the "types.GenericAlias" superclass, including:
+        # * "numpy.typing.NDArray[...]" type hints.
         is_hint_pep585_builtin(hint) or
         # PEP 604-compliant (e.g., "int | str"), this hint is *NOT* self-caching
         # (e.g., "int | str is not int | str").

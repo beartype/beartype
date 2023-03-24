@@ -19,15 +19,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     Any,
-    Callable,
+    # Callable,
     Dict,
     Optional,
 )
 from beartype._conf.confcls import BeartypeConf
-from beartype._data.datatyping import (
-    Pep484TowerComplex,
-    Pep484TowerFloat,
-)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
@@ -57,12 +53,13 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484typevar import (
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
     reduce_hint_pep484585_type)
 from beartype._util.hint.pep.proposal.utilpep557 import (
-    get_hint_pep557_initvar_arg)
+    reduce_hint_pep557_initvar)
 from beartype._util.hint.pep.proposal.utilpep589 import reduce_hint_pep589
 from beartype._util.hint.pep.proposal.utilpep591 import reduce_hint_pep591
 from beartype._util.hint.pep.proposal.utilpep593 import reduce_hint_pep593
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
-from beartype._util.hint.utilhinttest import die_unless_hint
+from beartype._util.hint.pep.utilpepreduce import reduce_hint_pep_unsigned
+from collections.abc import Callable
 
 # ....................{ REDUCERS                           }....................
 @callable_cached
@@ -113,81 +110,26 @@ def reduce_hint(
         :func:`beartype._util.hint.pep.mod.utilmodnumpy.reduce_hint_numpy_ndarray`
         function for further details.
     '''
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
 
-    # ..................{ SIGN                               }..................
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.
     hint_sign = get_hint_pep_sign_or_none(hint)
 
-    # This reduction is intentionally implemented as a linear series of tests,
-    # ordered in descending likelihood of a match for efficiency. While
-    # alternatives (that are more readily readable and maintainable) do exist,
-    # these alternatives all appear to be substantially less efficient.
-    #
-    # ..................{ NON-PEP                            }..................
-    # If this hint is unidentifiable...
-    #
-    # Since this includes *ALL* isinstanceable classes (including both
-    # user-defined classes and builtin types), this is *ALWAYS* detected first.
+    # Callable reducing this hint if a callable reducing hints of this sign was
+    # previously registered *OR* "None" otherwise (i.e., if *NO* such callable
+    # was registered, in which case this hint is preserved as is).
+    hint_reducer = _HINT_SIGN_TO_REDUCER.get(hint_sign)
 
-    #FIXME: Refactor this into a proper reducer registered with the
-    #"_HINT_SIGN_TO_REDUCER" dictionary as a key-value pair resembling:
-    #    None: reduce_hint_class,  # type: ignore[dict-item]
-    #
-    #Doing so will require:
-    #* Refactoring *ALL* currently defined reducers to accept variadic arguments
-    #  (i.e., "*args, **kwargs"). Trivial, thankfully. See the newly defined
-    #  reduce_hint_pep647() function as an example.
-    #* Passing "conf=conf" to these reducers below.
-    #* Defining a new reduce_hint_class() reducer elsewhere whose body is the
-    #  body of this "if" conditional.
-    if hint_sign is None:
-        # If...
-        if (
-            # This configuration enables support for the PEP 484-compliant
-            # implicit numeric tower *AND*...
-            conf.is_pep484_tower and
-            # This hint is either the builtin "float" or "complex" classes
-            # governed by this tower...
-            (hint is float or hint is complex)
-        # Then expand this hint to the corresponding numeric tower.
-        ):
-            # Expand this hint to match...
-            hint = (
-                # If this hint is the builtin "float" class, both the builtin
-                # "float" and "int" classes;
-                Pep484TowerFloat
-                if hint is float else
-                # Else, this hint is the builtin "complex" class by the above
-                # condition; in this case, the builtin "complex", "float", and
-                # "int" classes.
-                Pep484TowerComplex
-            )
-        # Else, this hint is truly unidentifiable.
-        else:
-            # If this hint is *NOT* a valid type hint, raise an exception.
-            #
-            # Note this function call is effectively memoized and thus fast.
-            die_unless_hint(hint=hint, exception_prefix=exception_prefix)
-            # Else, this hint is a valid type hint.
-
-        # Return this hint as is unmodified.
-        return hint
-    # ..................{ FALLBACK                           }..................
-    # Else, this hint was *NOT* reduced hint.
-    else:
-        # Callable reducing this hint if a callable reducing hints with this
-        # sign was previously registered *OR* "None" otherwise (i.e., if *NO*
-        # such callable was registered, in which case this hint is preserved).
-        hint_reducer = _HINT_SIGN_TO_REDUCER.get(hint_sign)
-
-        # If a callable reducing hints with this sign was previously registered,
-        # reduce this hint to a lower-level hint via this callable.
-        if hint_reducer is not None:
-            hint = hint_reducer(  # type: ignore[call-arg]
-                hint=hint, exception_prefix=exception_prefix)  # pyright: ignore[reportGeneralTypeIssues]
-        # Else, *NO* such callable was registered. Preserve this hint as is!
+    # If a callable reducing hints of this sign was previously registered,
+    # reduce this hint to another hint via this callable.
+    if hint_reducer is not None:
+        hint = hint_reducer(  # type: ignore[call-arg]
+            hint=hint,  # pyright: ignore[reportGeneralTypeIssues]
+            conf=conf,
+            arg_name=arg_name,
+            exception_prefix=exception_prefix,
+        )
+    # Else, *NO* such callable was registered. Preserve this hint as is, you!
 
     # Return this possibly reduced hint.
     return hint
@@ -200,7 +142,18 @@ def reduce_hint(
 #  these callables with keyword arguments above! Chaos ensues.
 #* Remove the "# type: ignore[call-arg]" pragmas above, which are horrible.
 #* Remove the "# type: ignore[dict-item]" pragmas above, which are horrible.
-_HINT_SIGN_TO_REDUCER: Dict[HintSign, Callable[[object, str], object]] = {
+_HINT_SIGN_TO_REDUCER: Dict[Optional[HintSign], Callable] = {
+    # ..................{ NON-PEP                            }..................
+    # If this hint is identified by *NO* sign, this hint is either an
+    # isinstanceable type *OR* a hint unrecognized by beartype. In either case,
+    # apply the following reductions:
+    #
+    # * If this configuration enables support for the PEP 484-compliant implicit
+    #   numeric tower:
+    #   * Expand the "float" type hint to the "float | int" union.
+    #   * Expand the "complex" type hint to the "complex | float | int" union.
+    None: reduce_hint_pep_unsigned,
+
     # ..................{ PEP 484                            }..................
     # If this hint is a PEP 484-compliant IO generic base class *AND* the active
     # Python interpreter targets Python >= 3.8 and thus supports PEP
@@ -212,11 +165,11 @@ _HINT_SIGN_TO_REDUCER: Dict[HintSign, Callable[[object, str], object]] = {
     # under Python < 3.8 (e.g., by explicitly subclassing those classes from
     # third-party classes). Ergo, we can neither safely emit warnings nor raise
     # exceptions on visiting these classes under *ANY* Python version.
-    HintSignGeneric: reduce_hint_pep484_generic,  # type: ignore[dict-item]
+    HintSignGeneric: reduce_hint_pep484_generic,
 
     # If this hint is a PEP 484-compliant new type, reduce this new type to the
     # user-defined class aliased by this new type.
-    HintSignNewType: reduce_hint_pep484_newtype,  # type: ignore[dict-item]
+    HintSignNewType: reduce_hint_pep484_newtype,
 
     # If this is the PEP 484-compliant "None" singleton, reduce this hint to
     # the type of that singleton. While *NOT* explicitly defined by the
@@ -226,34 +179,32 @@ _HINT_SIGN_TO_REDUCER: Dict[HintSign, Callable[[object, str], object]] = {
     #
     # The "None" singleton is used to type callables lacking an explicit
     # "return" statement and thus absurdly common.
-    HintSignNone: reduce_hint_pep484_none,  # type: ignore[dict-item]
+    HintSignNone: reduce_hint_pep484_none,
 
     #FIXME: Remove this branch *AFTER* deeply type-checking type variables.
     # If this type variable was parametrized by one or more bounded
     # constraints, reduce this hint to these constraints.
-    HintSignTypeVar: reduce_hint_pep484_typevar,  # type: ignore[dict-item]
+    HintSignTypeVar: reduce_hint_pep484_typevar,
 
     # ..................{ PEP (484|585)                      }..................
     # If this hint is a PEP 484- or 585-compliant subclass type hint subscripted
     # by an ignorable child type hint (e.g., "object", "typing.Any"), silently
     # ignore this argument by reducing this hint to the "type" superclass.
-    # 
+    #
     # Note that:
     # * This reduction could be performed elsewhere, but remains here as doing
     #   so here dramatically simplifies matters elsewhere.
     # * This reduction *CANNOT* be performed by the is_hint_ignorable() tester,
     #   as subclass type hints subscripted by ignorable child type hints are
     #   *NOT* ignorable; they're reducible to the "type" superclass.
-    HintSignType: reduce_hint_pep484585_type,  # type: ignore[dict-item]
+    HintSignType: reduce_hint_pep484585_type,
 
     # ..................{ PEP 557                            }..................
     # If this hint is a dataclass-specific initialization-only instance
     # variable (i.e., instance of the PEP 557-compliant "dataclasses.InitVar"
     # class introduced by Python 3.8.0), reduce this functionally useless hint
     # to the functionally useful child type hint subscripting this parent hint.
-
-    #FIXME: Pick up here tomorrow, please.
-    HintSignDataclassInitVar: get_hint_pep557_initvar_arg,  # type: ignore[dict-item]
+    HintSignDataclassInitVar: reduce_hint_pep557_initvar,
 
     # ..................{ PEP 589                            }..................
     #FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
@@ -269,7 +220,7 @@ _HINT_SIGN_TO_REDUCER: Dict[HintSign, Callable[[object, str], object]] = {
     #
     # Typed dictionaries are largely discouraged in the typing community, due to
     # their non-standard semantics and syntax.
-    HintSignTypedDict: reduce_hint_pep589,  # type: ignore[dict-item]
+    HintSignTypedDict: reduce_hint_pep589,
 
     # ..................{ PEP 591                            }..................
     #FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
@@ -279,19 +230,19 @@ _HINT_SIGN_TO_REDUCER: Dict[HintSign, Callable[[object, str], object]] = {
     # If this hint is a PEP 591-compliant "typing.Final[...]" type hint,
     # silently reduce this hint to its subscripted argument (e.g., from
     # "typing.Final[int]" to merely "int").
-    HintSignFinal: reduce_hint_pep591,  # type: ignore[dict-item]
+    HintSignFinal: reduce_hint_pep591,
 
     # ..................{ PEP 593                            }..................
     # If this hint is a PEP 593-compliant beartype-agnostic type metahint,
     # ignore all annotations on this hint by reducing this hint to the
     # lower-level hint it annotates.
-    HintSignAnnotated: reduce_hint_pep593,  # type: ignore[dict-item]
+    HintSignAnnotated: reduce_hint_pep593,
 
     # ..................{ NON-PEP ~ numpy                    }..................
     # If this hint is a PEP-noncompliant typed NumPy array (e.g.,
     # "numpy.typing.NDArray[np.float64]"), reduce this hint to the equivalent
     # well-supported beartype validator.
-    HintSignNumpyArray: reduce_hint_numpy_ndarray,  # type: ignore[dict-item]
+    HintSignNumpyArray: reduce_hint_numpy_ndarray,
 }
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints

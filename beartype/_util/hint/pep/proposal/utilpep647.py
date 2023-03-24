@@ -46,7 +46,7 @@ def reduce_hint_pep647(
           parameter.
         * If this hint annotates the return of some callable, ``"return"``.
         * Else, :data:`None`.
-    exception_prefix : str, optional
+    exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
 
