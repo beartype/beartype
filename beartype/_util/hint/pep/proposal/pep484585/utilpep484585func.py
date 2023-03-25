@@ -14,11 +14,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
+from beartype._data.datatyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignCoroutine
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_RETURN_GENERATOR_ASYNC,
     HINT_SIGNS_RETURN_GENERATOR_SYNC,
 )
+from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.func.utilfunctest import (
     is_func_coro,
     is_func_async_generator,
@@ -29,8 +31,11 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.text.utiltextlabel import (
     prefix_callable_decorated_return)
-from beartype._data.datatyping import TypeException
-from collections.abc import Callable
+from collections.abc import (
+    AsyncGenerator,
+    Callable,
+    Generator,
+)
 
 # ....................{ REDUCERS ~ return                  }....................
 def reduce_hint_pep484585_func_return(
@@ -105,10 +110,17 @@ def reduce_hint_pep484585_func_return(
     #
     # If the decorated callable is an asynchronous generator...
     elif is_func_async_generator(func):
-        #FIXME: Unit test this up, please!
-        # If this hint is semantically invalid as the return annotation of this
-        # callable, raise an exception.
-        if hint_sign not in HINT_SIGNS_RETURN_GENERATOR_ASYNC:
+        # If this hint is neither...
+        if not (
+            # A PEP-compliant type hint acceptable as the return annotation of
+            # an synchronous generator *NOR*...
+            hint_sign in HINT_SIGNS_RETURN_GENERATOR_ASYNC or
+            # The "collections.abc.AsyncGenerator" abstract base class (ABC) or
+            # a subclass of that ABC...
+            is_type_subclass(hint, AsyncGenerator)
+        # Then this hint is semantically invalid as the return annotation of
+        # this callable. In this case, raise an exception.
+        ):
             _die_of_hint_return_invalid(
                 func=func,
                 exception_suffix=(
@@ -127,10 +139,17 @@ def reduce_hint_pep484585_func_return(
     #
     # If the decorated callable is a synchronous generator...
     elif is_func_sync_generator(func):
-        #FIXME: Unit test this up, please!
-        # If this hint is semantically invalid as the return annotation of this
-        # callable, raise an exception.
-        if hint_sign not in HINT_SIGNS_RETURN_GENERATOR_SYNC:
+        # If this hint is neither...
+        if not (
+            # A PEP-compliant type hint acceptable as the return annotation of a
+            # synchronous generator *NOR*...
+            hint_sign in HINT_SIGNS_RETURN_GENERATOR_SYNC or
+            # The "collections.abc.Generator" abstract base class (ABC) or a
+            # subclass of that ABC...
+            is_type_subclass(hint, Generator)
+        # Then this hint is semantically invalid as the return annotation of
+        # this callable. In this case, raise an exception.
+        ):
             _die_of_hint_return_invalid(
                 func=func,
                 exception_suffix=(
@@ -191,5 +210,5 @@ def _die_of_hint_return_invalid(
     # Raise an exception of this type with a message suffixed by this suffix.
     raise exception_cls(
         f'{prefix_callable_decorated_return(func)}type hint '
-        f'{repr(hint)} contextually invalid{exception_suffix}.'
+        f'{repr(hint)} contextually invalid{exception_suffix}'
     )
