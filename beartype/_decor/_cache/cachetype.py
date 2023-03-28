@@ -36,22 +36,6 @@ prefix, this prefix suffices to uniquely distinguish key-value pairs whose
 values are types from pairs whose values are tuples.
 '''
 
-# ....................{ CONSTANTS ~ code                   }....................
-_CODE_TYPISTRY_HINT_NAME_TO_HINT_PREFIX = f'{ARG_NAME_TYPISTRY}['
-'''
-Substring prefixing a Python expression mapping from the subsequent string to
-an arbitrary object cached by the beartypistry singleton via the private
-beartypistry parameter.
-'''
-
-
-_CODE_TYPISTRY_HINT_NAME_TO_HINT_SUFFIX = ']'
-'''
-Substring prefixing a Python expression mapping from the subsequent string to
-an arbitrary object cached by the beartypistry singleton via the private
-beartypistry parameter.
-'''
-
 # ....................{ REGISTRARS ~ forwardref            }....................
 #FIXME: Unit test us up.
 # Note this function intentionally does *NOT* accept an optional "hint_labal"
@@ -371,4 +355,20 @@ See Also
 ----------
 :class:`Beartypistry`
     Further details.
+'''
+
+# ....................{ PRIVATE ~ constants                }....................
+_CODE_TYPISTRY_HINT_NAME_TO_HINT_PREFIX = f'{ARG_NAME_TYPISTRY}['
+'''
+Substring prefixing a Python expression mapping from the subsequent string to
+an arbitrary object cached by the beartypistry singleton via the private
+beartypistry parameter.
+'''
+
+
+_CODE_TYPISTRY_HINT_NAME_TO_HINT_SUFFIX = ']'
+'''
+Substring prefixing a Python expression mapping from the subsequent string to
+an arbitrary object cached by the beartypistry singleton via the private
+beartypistry parameter.
 '''

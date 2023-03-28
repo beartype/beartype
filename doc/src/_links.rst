@@ -340,6 +340,12 @@
 .. _numpy.typing.NDArray:
    https://numpy.org/devdocs/reference/typing.html#ndarray
 
+.. # ------------------( LINKS ~ py : package : panderas     )------------------
+.. _pandera:
+   https://pandera.readthedocs.io
+.. _pandera.DataFrame:
+   https://pandera.readthedocs.io/en/stable/reference/generated/pandera.typing.html?highlight=typing
+
 .. # ------------------( LINKS ~ py : package : sphinx       )------------------
 .. _Sphinx:
    https://www.sphinx-doc.org
