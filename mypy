@@ -13,12 +13,12 @@
 # pathnames of this script and hence this script's directory.
 #
 # --------------------( CAVEATS                            )--------------------
-# *tHIS SCRIPT ONLY STATICALLY TYPE-CHECKS THIS PROJECT'S CODEBASE.* Notably,
-# this script avoids statically type-checking this project's test suite as
-# well. Why? Because we only statically type-check this project's codebase for
-# PEP 561-compliance and downstream consumers themselves statically
-# type-checking beartype-dependent codebases. No such concerns apply to this
-# test suite, which is clearly *NEVER* intended for external reuse.
+# *THIS SCRIPT ONLY STATICALLY TYPE-CHECKS THIS PROJECT'S MAIN CODEBASE.*
+# Namely, this script avoids statically type-checking this project's test suite
+# as well. Why? Because we only statically type-check this project's codebase
+# for PEP 561-compliance and downstream consumers themselves statically
+# type-checking codebases dependent on this project. No such concerns apply to
+# this test suite, which is clearly *NEVER* intended for external reuse.
 #
 # This test suite also conditionally statically type-checks this project's
 # codebase as a functional test when the "mypy" package is importable. While

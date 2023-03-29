@@ -1,11 +1,11 @@
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 #
-# --------------------( SYNOPSIS                          )--------------------
+# --------------------( SYNOPSIS                           )--------------------
 # Template with which setuptools generates this project's "MANIFEST" file.
 
-# ....................{ TODO                              }....................
+# ....................{ TODO                               }....................
 #FIXME: Add a new functional test exercising the correctness of this file,
 #probably by manually running a shell command resembling:
 #    $ python3 setup.py sdist bdist_wheel
@@ -13,7 +13,7 @@
 #Python interpreter. It's likely that we'll then have to parse the output of
 #that command for lines suggestive of syntactic errors in this file. *shrug*
 
-# ....................{ INCLUDE                           }....................
+# ....................{ INCLUDE                            }....................
 # Include all requisite top-level install-time files.
 include .coveragerc
 include .mypy.ini
@@ -30,7 +30,7 @@ include tox.ini
 # Include all requisite package-level install-time files.
 include beartype/py.typed
 
-# ....................{ INCLUDE ~ recursive               }....................
+# ....................{ INCLUDE ~ recursive                }....................
 # Include all requisite project-specific test packages.
 #
 # Note that these packages are *ONLY* required at test time and hence omitted
@@ -41,7 +41,7 @@ recursive-include beartype_test *
 # Include all optional documentation.
 recursive-include doc *
 
-# ....................{ EXCLUDE                           }....................
+# ....................{ EXCLUDE                            }....................
 # Exclude all ignorable cache files.
 recursive-exclude * __pycache__
 recursive-exclude * *.pyc

@@ -19,10 +19,6 @@ format, instrumenting most high-level installation tasks for this package.
 #support for PEPs denigrated by poetry authors, and probably much more.
 #Basically, Hatch looks like everything we wish poetry was.
 
-#FIXME: Generate documentation from the NumPy-style docstrings embedded
-#throughout this codebase, presumably with Sphinx + napoleon.
-#FIXME: Publish generated documentation to readthedocs.org.
-
 # ....................{ KLUDGES ~ path                     }....................
 # Explicitly register all files and subdirectories of the root directory
 # containing this top-level "setup.py" script to be importable modules and
@@ -67,11 +63,11 @@ _register_dir()
 # Explicitly notify the "beartype.__init__" submodule that it is being imported
 # at install time from this script. Doing so prevents that submodule from
 # implicitly importing from *ANY* "beartype" submodule other than the
-# "beartype.meta" submodule, which is the *ONLY* "beartype" submodule
-# guaranteed by sheer force of will to be safely importable at install time.
-# All other "beartype" submodules should be assumed to be unsafe to import
-# below due to potentially importing one or more optional runtime dependencies
-# yet to be installed (e.g., the third-party "typing_extensions" package).
+# "beartype.meta" submodule, which is the *ONLY* "beartype" submodule guaranteed
+# by sheer force of will to be safely importable at install time. All other
+# "beartype" submodules should be assumed to be unsafe to import below due to
+# potentially importing one or more optional runtime dependencies yet to be
+# installed (e.g., the third-party "typing_extensions" package).
 #
 # Naturally, there exist a countably infinite number of ways to notify the
 # "beartype.__init__" submodule that it is being imported at install time. To

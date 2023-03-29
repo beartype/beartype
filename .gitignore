@@ -1,20 +1,19 @@
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 #
-# --------------------( SYNOPSIS                          )--------------------
+# --------------------( SYNOPSIS                           )--------------------
 # Git-specific dotfile instructing git to avoid tracking repository paths
 # matching one or more glob expressions listed below by default.
 #
-# --------------------( SEE ALSO                          )--------------------
+# --------------------( SEE ALSO                           )--------------------
 # For further details, see:
-#
 # * "man gitignore" for high-level commentary.
 # * "man 7 glob" for low-level commentary on glob syntax. Note, in particular,
 #   that glob() and hence ".gitignore" files support only a proper subset of
 #   full glob syntax supported by POSIX-compatible shells (e.g., bash, zsh).
 
-# ....................{ DIRECTORIES ~ top-level           }....................
+# ....................{ DIRECTORIES ~ top-level            }....................
 # Ignore all top-level Buildout-specific state directories.
 /develop-eggs/
 /downloads/
@@ -92,7 +91,7 @@
 /env.bak/
 /venv.bak/
 
-# ....................{ DIRECTORIES ~ general             }....................
+# ....................{ DIRECTORIES ~ general              }....................
 # Ignore all Buildout-specific state subdirectories.
 parts/
 
@@ -108,7 +107,7 @@ __pycache__/
 # Ignore all Rope-specific project subdirectories.
 .ropeproject/
 
-# ....................{ FILES ~ top-level                 }....................
+# ....................{ FILES ~ top-level                  }....................
 # Ignore all top-level Buildout-specific state files.
 /.installed.cfg
 
@@ -148,7 +147,7 @@ __pycache__/
 /.env
 /.venv
 
-# ....................{ FILES ~ general                   }....................
+# ....................{ FILES ~ general                    }....................
 # Ignore all Django-specific private files.
 local_settings.py
 

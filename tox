@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 #
-# --------------------( SYNOPSIS                          )--------------------
+# --------------------( SYNOPSIS                           )--------------------
 # Bash shell script wrapping this project's tox-based test suite, passing
 # sane default options suitable for interactive terminal testing and otherwise
 # passing all passed arguments as is to the "tox" command.
@@ -12,7 +12,7 @@
 # canonical ${BASH_SOURCE} string global, reliably providing the absolute
 # pathnames of this script and hence this script's directory.
 #
-# --------------------( CAVEATS                           )--------------------
+# --------------------( CAVEATS                            )--------------------
 # *THE HIGHER-LEVEL "tox" SCRIPT SHOULD TYPICALLY BE RUN INSTEAD.* This
 # lower-level script only exercises this project against the single Python
 # interpreter associated with the "pytest" command and is thus suitable *ONLY*
@@ -20,11 +20,11 @@
 # this project against all installed Python interpreters and is thus suitable
 # as a full-blown correctness check (e.g., before submitting pull requests).
 
-# ....................{ PREAMBLE                          }....................
+# ....................{ PREAMBLE                           }....................
 # Enable strictness for sanity.
 set -e
 
-# ....................{ ARRAYS                            }....................
+# ....................{ ARRAYS                             }....................
 # Array of all arguments with which to invoke Python.
 #
 # Note that the "-X dev" option enabling the Python Development Mode (PDM) need
@@ -37,7 +37,7 @@ PYTHON_ARGS=( command python3 )
 # PYTHON_ARGS=( command python3.11 )
 # PYTHON_ARGS=( command pypy3.7 )
 
-# ....................{ FUNCTIONS                         }....................
+# ....................{ FUNCTIONS                          }....................
 # str canonicalize_path(str pathname)
 #
 # Canonicalize the passed pathname.
@@ -57,7 +57,7 @@ import os, sys
 print(os.path.realpath(os.path.expanduser(sys.argv[1])))" "${pathname}"
 }
 
-# ....................{ PATHS                             }....................
+# ....................{ PATHS                              }....................
 # Absolute or relative filename of this script.
 script_filename="$(canonicalize_path "${BASH_SOURCE[0]}")"
 
@@ -65,7 +65,7 @@ script_filename="$(canonicalize_path "${BASH_SOURCE[0]}")"
 # script, equivalent to the top-level directory for this project.
 script_dirname="$(dirname "${script_filename}")"
 
-# ....................{ MAIN                              }....................
+# ....................{ MAIN                               }....................
 # Temporarily change the current working directory to that of this project.
 pushd "${script_dirname}" >/dev/null
 

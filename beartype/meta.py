@@ -101,7 +101,7 @@ justification of this constant's current value.
 '''
 
 
-PYTHON_VERSION_MINOR_MAX = 11
+PYTHON_VERSION_MINOR_MAX = 12
 '''
 Maximum minor stable version of this major version of Python currently released
 (e.g., ``5`` if Python 3.5 is the most recent stable version of Python 3.x).
@@ -139,7 +139,6 @@ tuple of integers.
 # Python version.
 #
 # The "sys" module exposes three version-related constants for this purpose:
-#
 # * "hexversion", an integer intended to be specified in an obscure (albeit
 #   both efficient and dependable) hexadecimal format: e.g.,
 #    >>> sys.hexversion
@@ -209,7 +208,7 @@ if _PYTHON_VERSION_PARTS < PYTHON_VERSION_MIN_PARTS:
 # For further details, see http://semver.org.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-VERSION = '0.12.1'
+VERSION = '0.13.0'
 '''
 Human-readable package version as a ``.``-delimited string.
 '''
@@ -243,7 +242,10 @@ comma-delimited string.
 
 For brevity, this string *only* lists authors explicitly assigned copyrights.
 For the list of all contributors regardless of copyright assignment or
-attribution, see the top-level ``AUTHORS.md`` file.
+attribution, see the `contributors graph`_ for this project.
+
+.. _contributors graph::
+   https://github.com/beartype/beartype/graphs/contributors
 '''
 
 
@@ -254,7 +256,10 @@ Legally binding copyright line excluding the license-specific prefix (e.g.,
 
 For brevity, this string *only* lists authors explicitly assigned copyrights.
 For the list of all contributors regardless of copyright assignment or
-attribution, see the top-level ``AUTHORS.md`` file.
+attribution, see the `contributors graph`_ for this project.
+
+.. _contributors graph::
+   https://github.com/beartype/beartype/graphs/contributors
 '''
 
 # ....................{ METADATA ~ urls : docs             }....................
@@ -529,7 +534,7 @@ Machine-readable maximum (exclusive) version as a ``.``-delimited string of
 
 Specifically, this project requires:
 
-* :mod:sphinx` < 6.0.0, as more recent versions `currently conflicts with our
+* :mod:sphinx` < 6.0.0, as more recent versions `currently conflict with our
   Sphinx theme <theme conflict_>`__.
 
 .. _theme conflict:

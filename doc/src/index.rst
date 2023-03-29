@@ -232,21 +232,6 @@ Prior official funding sources (*yes, they once existed*) include:
    which beartype was maintained as the private ``@type_check`` decorator in the
    `Bioelectric Tissue Simulation Engine (BETSE) <BETSE_>`__. :sup:`Phew!`
 
-.. # FIXME: Consider replacing this hand-rolled list that we've predictably
-.. # failed to properly maintain with an automated avatar-heavy list
-.. # synthesized by the @all-contributors bot. See also:
-.. #     https://github.com/all-contributors/all-contributors
-.. # Note, however, that we'll almost certainly need to also run this first:
-.. #     https://dev.to/tlylt/automatically-add-all-existing-repo-contributors-with-all-contributors-cli-5hdj
-.. # FIXME: Indeed, we're not particularly fond of any existing solution we've
-.. # found (including the above). For now, let's just leave this disabled. :{
-
-.. # Authors
-.. # =======
-.. #
-.. # beartype is developed with the grateful assistance of a volunteer community
-.. # of enthusiasts, including (*in chronological order of issue or pull request*):
-
 #######
 History
 #######

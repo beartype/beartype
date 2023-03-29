@@ -1,8 +1,8 @@
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 #
-# --------------------( SYNOPSIS                          )--------------------
+# --------------------( SYNOPSIS                           )--------------------
 # Project-wide "coverage" configuration, applied to all invocations of the
 # third-party "coverage" package collecting test coverage statistics.
 #
@@ -11,28 +11,28 @@
 # configured via this configuration file. Of course, *NOTE THAT ONE SHOULD
 # NEVER USE "pytest-cov"* for the reasons discussed in "tox.ini".
 #
-# --------------------( CAVEATS                           )--------------------
+# --------------------( CAVEATS                            )--------------------
 # This configuration does *NOT* apply to the third-party Codecov service, which
 # instead leverages its own ad-hoc ".codecov.yml" format. *sigh* 
 #
-# --------------------( SEE ALSO                          )--------------------
+# --------------------( SEE ALSO                           )--------------------
 # https://pytest-cov.readthedocs.io/en/latest/config.html
 #     "pytest-cov" documentation on this file and configuration in general.
 # https://coverage.readthedocs.io/en/latest/config.html
 #     "coverage" documentation on this file.
 
-# ....................{ RUN                                }...................
+# ....................{ RUN                                 }...................
 # Low-level settings configuring how coverage is measured.
 [run]
 
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: "coverage" is fragile and well-known to silently fail to behave as
 # expected if the option "source = ." is *NOT* explicitly specified here.
 # Notably, enabling the following option succeeds when generating CLI-based
 # reports but inexplicably fails when generating XML-formatted reports:
 #     # Comma- or newline-separated list of package names to be measured.
 #     source_pkgs = beartype
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # Comma- or newline-separated list of all pathnames and/or package names to be
 # measured. Note that this should typically *NEVER* be modified.
 source = .
@@ -52,7 +52,7 @@ omit = beartype_test/*
 # See also: https://coverage.readthedocs.io/en/latest/branch.html#branch
 branch = True
 
-# ....................{ REPORT                             }...................
+# ....................{ REPORT                              }...................
 # High-level settings configuring how coverage reports measurements.
 [report]
 
@@ -75,7 +75,7 @@ precision = 2
 # missing lines for each covered submodule to coverage reports.
 show_missing = True
 
-# ....................{ REPORT ~ format                    }...................
+# ....................{ REPORT ~ format                     }...................
 # Low-level settings configuring how coverage emits format-specific reports.
 [html]
 directory = ./coverage.html

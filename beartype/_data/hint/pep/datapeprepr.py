@@ -340,13 +340,13 @@ HINTS_REPR_IGNORABLE_SHALLOW: FrozenSet[str] = {  # type: ignore[assignment]
 
     # ....................{ NON-PEP ~ pandera              }....................
     # ...the "pandera.typing" subpackage. Specifically, unconditionally ignore
-    # *ALL* type hints published by the "pandera.typing" subpackage. Why?
-    # Because Pandera insanely publishes its own Pandera-specific
-    # PEP-noncompliant runtime type-checking decorator @pandera.check_types()
-    # that supports *ONLY* Pandera-specific PEP-noncompliant "pandera.typing"
-    # type hints. Since Pandera users are already accustomed to decorating *ALL*
-    # Pandera-based callables (i.e., callables accepting one or more parameters
-    # and/or returning one or more values which are Pandera objects) by
+    # *ALL* type hints published by that subpackage. Why? Because Pandera
+    # insanely publishes its own Pandera-specific PEP-noncompliant runtime
+    # type-checking decorator @pandera.check_types() that supports *ONLY*
+    # Pandera-specific PEP-noncompliant "pandera.typing" type hints. Since
+    # Pandera users are already accustomed to decorating *ALL* Pandera-based
+    # callables (i.e., callables accepting one or more parameters and/or
+    # returning one or more values annotated by Pandera type hints) with
     # @pandera.check_types(), attempting to type-check the same objects already
     # type-checked by that decorator would only inefficiently and needlessly
     # slow @beartype down. Moreover, doing so is infeasible. Pandera type hints
