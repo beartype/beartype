@@ -86,7 +86,7 @@ class BeartypeTestException(BeartypeException, metaclass=_ABCMeta):
 
 class BeartypeTestPathException(BeartypeTestException):
     '''
-    **Beartype test path exceptions.**
+    **Beartype test path exception.**
 
     This exception is raised at test time from callables and classes defined by
     the :mod:`beartype_test._util.path` subpackage.
@@ -98,7 +98,7 @@ class BeartypeTestPathException(BeartypeTestException):
 
 class BeartypeTestMarkException(BeartypeTestException):
     '''
-    **Beartype test mark exceptions.**
+    **Beartype test mark exception.**
 
     This exception is raised at test time from decorators defined by the
     :mod:`beartype_test._util.mark` subpackage.

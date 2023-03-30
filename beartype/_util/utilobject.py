@@ -101,7 +101,6 @@ def is_object_hashable(obj: object) -> bool:
     return True
 
 # ....................{ GETTERS ~ name                     }....................
-#FIXME: Unit test us up, please.
 def get_object_name(obj: Any) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited string unambiguously
@@ -169,7 +168,6 @@ def get_object_name(obj: Any) -> str:
     )
 
 # ....................{ GETTERS ~ basename                 }....................
-#FIXME: Unit test us up, please.
 def get_object_basename_scoped(obj: Any) -> str:
     '''
     **Lexically scoped name** (i.e., ``.``-delimited string unambiguously

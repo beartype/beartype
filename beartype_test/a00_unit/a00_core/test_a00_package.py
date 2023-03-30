@@ -30,12 +30,16 @@ def test_api_beartype() -> None:
     Test the public API of the :mod:`beartype` package itself.
     '''
 
-    # Import this package and relevant types from the beartype cave.
+    # Defer test-specific imports.
     import beartype
     from beartype._cave._cavefast import DecoratorTypes
+    from enum import Enum
 
     # Assert this package's public attributes to be of the expected types.
     assert isinstance(beartype.beartype, DecoratorTypes)
+    assert isinstance(beartype.BeartypeConf, type)
+    assert isinstance(beartype.BeartypeStrategy, type)
+    assert issubclass(beartype.BeartypeStrategy, Enum)
     assert isinstance(beartype.__version__, str)
     assert isinstance(beartype.__version_info__, tuple)
 

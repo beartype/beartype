@@ -16,7 +16,6 @@ tests as either failed, parametrized, or skipped.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import pytest
-from beartype_test._util.pytroar import BeartypeTestMarkException
 
 # ....................{ MARKS                              }....................
 noop = pytest.mark.noop
@@ -69,6 +68,7 @@ def ignore_warnings(warning_cls: type) -> 'Callable':
 
     # Defer test-specific imports.
     from beartype._util.utilobject import get_object_type_name
+    from beartype_test._util.pytroar import BeartypeTestMarkException
 
     # If this object is *NOT* a class, raise an exception.
     if not isinstance(warning_cls, type):

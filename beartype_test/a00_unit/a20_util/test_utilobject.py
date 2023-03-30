@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype object utility unit tests.**
+Project-wide **object utility unit tests.**
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.utilobject` submodule.
@@ -42,6 +42,7 @@ def test_get_object_basename_scoped() -> None:
     getter.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilObjectNameException
     from beartype._util.utilobject import get_object_basename_scoped
@@ -51,6 +52,7 @@ def test_get_object_basename_scoped() -> None:
     )
     from pytest import raises
 
+    # ....................{ PASS                           }....................
     # Assert this getter returns the fully-qualified names of non-nested
     # callables unmodified.
     for callable_obj in CALLABLES:
@@ -62,8 +64,48 @@ def test_get_object_basename_scoped() -> None:
     assert get_object_basename_scoped(closure_factory()) == (
         'closure_factory.closure')
 
+    # ....................{ FAIL                           }....................
     # Assert this getter raises "AttributeError" exceptions when passed objects
     # declaring neither "__qualname__" nor "__name__" dunder attributes.
     with raises(_BeartypeUtilObjectNameException):
         get_object_basename_scoped(
             'From the ice-gulfs that gird his secret throne,')
+
+
+def test_get_object_name() -> None:
+    '''
+    Test usage of the
+    :func:`beartype._util.utilobject.get_object_name` getter.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from functools import partial
+    from beartype.roar._roarexc import _BeartypeUtilObjectNameException
+    from beartype._util.utilobject import get_object_name
+    from pytest import raises
+
+    # ....................{ LOCALS                         }....................
+    def meet_in_the_vale(and_one_majestic_river: str) -> str:
+        '''
+        Arbitrary function.
+        '''
+
+        return and_one_majestic_river
+
+    # Function partial of the above function.
+    breath_and_blood = partial(
+        meet_in_the_vale, 'The breath and blood of distant lands, for ever')
+
+    # ....................{ PASS                           }....................
+    # Assert this getter returns the expected name for this function partial.
+    assert get_object_name(meet_in_the_vale) == (
+        'beartype_test.a00_unit.a20_util.test_utilobject.'
+        'test_get_object_name.meet_in_the_vale'
+    )
+
+    # ....................{ FAIL                           }....................
+    # Assert this getter raises "AttributeError" exceptions when passed objects
+    # declaring neither "__qualname__" nor "__name__" dunder attributes.
+    with raises(_BeartypeUtilObjectNameException):
+        get_object_name(breath_and_blood)
