@@ -418,7 +418,10 @@ LIBS_TESTTIME_OPTIONAL = (
         'platform_python_implementation != "PyPy"'
     ),
 
-    # Required by our optional "test_sphinx" functional test.
+    # Required by optional Pandera-specific integration tests.
+    'pandera',
+
+    # Required by optional Sphinx-specific integration tests.
     #
     # Note that Sphinx currently provokes unrelated test failures under Python
     # 3.7, due to dynamic importation functionality in the @beartype codebase

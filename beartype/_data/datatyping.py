@@ -30,6 +30,7 @@ from beartype._cave._cavefast import (
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
 )
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from types import (
     CodeType,
     FrameType,
@@ -176,6 +177,16 @@ func_wrapper_scope, hint_forwardrefs_class_basename)``, where:
 MappingKeysStr = Mapping[str, object]
 '''
 PEP-compliant type hint matching a mapping whose keys are *all* strings.
+'''
+
+
+HintSignTrie = Dict[str, Union[HintSign, 'HintSignTrie']]
+'''
+PEP-compliant type hint matching a **sign trie** (i.e.,
+dictionary-of-dictionaries tree data structure enabling efficient mapping from
+the machine-readable representations of type hints created by an arbitrary
+number of type hint factories defined by an external third-party package to
+their identifying sign).
 '''
 
 # ....................{ HINTS ~ iterable                   }....................

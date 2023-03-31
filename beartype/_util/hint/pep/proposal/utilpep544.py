@@ -22,7 +22,7 @@ from beartype.typing import (
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES_STANDARD
-from beartype._util.cls.utilclstest import is_type_builtin
+from beartype._util.cls.utilclstest import is_type_builtin_or_fake
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
 # ....................{ PRIVATE ~ mappings                 }....................
@@ -189,13 +189,11 @@ if IS_PYTHON_AT_LEAST_3_8:
             #
             # Since builtin types are obviously *NOT* PEP 544-compliant
             # protocols, explicitly exclude all such types. Why, Guido? Why?
-            not is_type_builtin(
-                cls=hint,
-                # Do *NOT* ignore fake builtins for the purposes of this
-                # test. Why? Because even fake builtins (e.g., "type(None)")
-                # erroneously masquerade as PEP 544-compliant protocols! :o
-                is_ignore_fake=False,
-            )
+            #
+            # Do *NOT* ignore fake builtins for the purposes of this test. Why?
+            # Because even fake builtins (e.g., "type(None)") erroneously
+            # masquerade as PEP 544-compliant protocols! :o
+            not is_type_builtin_or_fake(hint)
         )
 
 

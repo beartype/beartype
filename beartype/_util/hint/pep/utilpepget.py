@@ -20,12 +20,17 @@ from beartype.roar import (
 from beartype.typing import (
     Any,
     Optional,
+    Union,
 )
-from beartype._cave._cavefast import HintGenericSubscriptedType
-from beartype._data.datatyping import TypeException
+# from beartype._cave._cavefast import HintGenericSubscriptedType
+from beartype._data.datatyping import (
+    HintSignTrie,
+    TypeException,
+)
 from beartype._data.hint.pep.datapeprepr import (
     HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN,
     HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN,
+    HINT_REPR_PREFIX_TRIE_ARGS_0_OR_MORE_TO_SIGN,
     HINT_TYPE_NAME_TO_SIGN,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
@@ -490,11 +495,11 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     hint_sign = HINT_TYPE_NAME_TO_SIGN.get(hint_type_name)
 
     # If this hint is identifiable by its classname, return this sign.
-    if hint_sign is not None:
+    if hint_sign:
         return hint_sign
     # Else, this hint is *NOT* identifiable by its classname.
 
-    # ..................{ PHASE ~ repr                       }..................
+    # ..................{ PHASE ~ repr : str                 }..................
     # This phase attempts to map from the unsubscripted machine-readable
     # representation of this hint to a sign identifying *ALL* hints of that
     # representation.
@@ -521,7 +526,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
 
     # If this hint is identifiable by its possibly unsubscripted
     # representation, return this sign.
-    if hint_sign is not None:
+    if hint_sign:
         return hint_sign
     # Else, this hint is *NOT* identifiable by its possibly unsubscripted
     # representation.
@@ -536,11 +541,63 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
 
         # If this hint is identifiable by its necessarily subscripted
         # representation, return this sign.
-        if hint_sign is not None:
+        if hint_sign:
             return hint_sign
         # Else, this hint is *NOT* identifiable by its necessarily subscripted
         # representation.
     # Else, this representation (and thus this hint) is unsubscripted.
+
+    # ..................{ PHASE ~ repr : trie                }..................
+    # This phase attempts to (in order):
+    #
+    # 1. Split the unsubscripted machine-readable representation of this hint
+    #    on the "." delimiter into an iterable of module names.
+    # 2. Iteratively attempt to lookup each such module name in a trie mapping
+    #    from these names to a sign identifying *ALL* hints in that module.
+    #
+    # Note that:
+    # * This phase is principally intended to ignore PEP-noncompliant type hints
+    #   defined by third-party packages in an efficient and robust manner.
+    #   Well, reasonably efficient and robust... anyway. *sigh*
+    # * This phase must be performed *BEFORE* the subsequent phase that detects
+    #   generics. Generics defined in modules mapped by tries should
+    #   preferentially be identified as their module-specific signs rather than
+    #   as generics. (See the prior note.)
+    #
+    # Since doing so requires splitting a string and iterating over substrings,
+    # this phase is significantly slower than the prior phase and thus *NOT*
+    # performed almost last. Since this phase identifies an extremely small
+    # subset of hints, efficiency is (mostly) incidental.
+
+    # Iterable of module names split from the unsubscripted machine-readable
+    # representation of this hint. For example, doing so splits
+    # 'pandera.typing.DataFrame[DataFrameSchema()]' into
+    # '("pandera", "typing", "DataFrame",)'.
+    hint_repr_module_names = hint_repr_prefix.split('.')
+
+    # Possibly nested trie describing the current module name in this iterable.
+    hint_repr_module_name_trie = HINT_REPR_PREFIX_TRIE_ARGS_0_OR_MORE_TO_SIGN
+
+    # For each module name in this iterable...
+    for hint_repr_module_name in hint_repr_module_names:
+        # Possibly nested trie describing this module name in this iterable.
+        hint_repr_module_name_trie = hint_repr_module_name_trie.get(  # type: ignore
+            hint_repr_module_name)
+
+        # If this trie does *NOT* exist, this module is *NOT* mapped to a sign.
+        # In this case, immediately halt iteration.
+        if hint_repr_module_name_trie is None:
+            break
+        # Else, this trie exists. In this case, this module *MIGHT* be mapped to
+        # a sign. Further inspection is required, however.
+        #
+        # If this trie is actually a target sign, this module maps to this sign.
+        # In this case, return this sign.
+        elif hint_repr_module_name_trie.__class__ is HintSign:
+            return hint_repr_module_name_trie  # type: ignore[return-value]
+        # Else, this trie is another nested trie. In this case, continue
+        # iterating deeper into this trie.
+    # Else, this hint is *NOT* identified by a trie of module names.
 
     # ..................{ PHASE ~ manual                     }..................
     # This phase attempts to manually identify the signs of all hints *NOT*
@@ -595,6 +652,8 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # If this hint is a PEP 589-compliant typed dictionary, return that sign.
     elif is_hint_pep589(hint):
         return HintSignTypedDict
+    # Else, this hint is *NOT* a PEP 589-compliant typed dictionary.
+    #
     # If the active Python interpreter targets Python < 3.10 (and thus defines
     # PEP 484-compliant "NewType" type hints as closures returned by that
     # function that are sufficiently dissimilar from all other type hints to

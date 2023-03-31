@@ -523,22 +523,27 @@ def _init() -> None:
     for module_type_builtin_fake in MODULES_TYPES_BUILTIN_FAKE:
         # For each builtin (i.e., globally accessible object implicitly imported
         # by the active Python interpreter into *EVERY* lexical context)...
-        for builtin in module_type_builtin_fake.__dict__.values():
-            # Type of this builtin if this builtin is *NOT* a type or this
-            # builtin type as is.
-            type_builtin = get_object_type_unless_type(builtin)
+        for builtin_name, builtin in module_type_builtin_fake.__dict__.items():
+            # Either:
+            # * If this builtin is already a class, this builtin as is.
+            # * If this builtin is *NOT* already a class, this builtin's class.
+            builtin_type = get_object_type_unless_type(builtin)
 
             # If...
             if (
                 # This builtin type insists itself to be defined by the
                 # "builtins" module and thus be a builtin *AND*...
-                type_builtin.__module__ == BUILTINS_MODULE_NAME and
+                builtin_type.__module__ == BUILTINS_MODULE_NAME and
                 # The "builtins" module contains *NO* globally-scoped attribute
                 # whose name is that of this type...
-                type_builtin.__name__ not in builtins.__dict__
+                builtin_type.__name__ not in builtins.__dict__
             # Add this cheatin', lyin', no-good fake builtin type to this set.
             ):
-                TYPES_BUILTIN_FAKE_SET.add(type_builtin)
+                # if builtin_type.__name__ == 'PyCapsule':
+                #     print(f'Auto-detected fake PyCapsule {repr(builtin_name)}...')
+                    # continue
+                # print(f'Auto-detected fake builtin type {repr(builtin_type)}...')
+                TYPES_BUILTIN_FAKE_SET.add(builtin_type)
 
     # Frozen set of all fake builtin types.
     TYPES_BUILTIN_FAKE = frozenset((TYPES_BUILTIN_FAKE_SET))
@@ -548,6 +553,7 @@ def _init() -> None:
         # Arbitrary non-builtin type.
         Class,
     )) | TYPES_BUILTIN_FAKE
+    # print(f'Auto-detected non-builtin types: {repr(TYPES_NONBUILTIN)}')
 
 
 # Initialize this submodule.

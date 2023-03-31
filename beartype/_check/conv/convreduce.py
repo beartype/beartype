@@ -35,13 +35,15 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNewType,
     HintSignNone,
     HintSignNumpyArray,
+    HintSignPanderaAny,
     # HintSignTextIO,
     HintSignType,
     HintSignTypeVar,
     HintSignTypedDict,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.pep.mod.utilmodnumpy import reduce_hint_numpy_ndarray
+from beartype._util.hint.nonpep.mod.utilmodnumpy import reduce_hint_numpy_ndarray
+from beartype._util.hint.nonpep.mod.utilmodpandera import reduce_hint_pandera
 from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
     reduce_hint_pep484_none)
 from beartype._util.hint.pep.proposal.pep484.utilpep484generic import (
@@ -107,7 +109,7 @@ def reduce_hint(
     ----------
     BeartypeDecorHintNonpepNumpyException
         See the
-        :func:`beartype._util.hint.pep.mod.utilmodnumpy.reduce_hint_numpy_ndarray`
+        :func:`beartype._util.hint.nonpep.mod.utilmodnumpy.reduce_hint_numpy_ndarray`
         function for further details.
     '''
 
@@ -243,6 +245,12 @@ _HINT_SIGN_TO_REDUCER: Dict[Optional[HintSign], Callable] = {
     # "numpy.typing.NDArray[np.float64]"), reduce this hint to the equivalent
     # well-supported beartype validator.
     HintSignNumpyArray: reduce_hint_numpy_ndarray,
+
+    # ..................{ NON-PEP ~ pandera                  }..................
+    # If this hint is *ANY* PEP-noncompliant Pandera type hint (e.g.,
+    # "pandera.typing.DataFrame[...]"), reduce this hint to an arbitrary
+    # PEP-compliant ignorable type hint. See this reducer for commentary.
+    HintSignPanderaAny: reduce_hint_pandera,
 }
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,13 +10,13 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.cls.utilclstest` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS ~ tester                     }....................
 def test_is_type_or_types() -> None:
     '''
     Test the :func:`beartype._util.cls.utilclstest.is_type_or_types` tester.
@@ -45,25 +45,6 @@ def test_is_type_or_types() -> None:
         (dict, 'To hear—an old and solemn harmony;', float)) is False
 
 
-def test_is_type_builtin() -> None:
-    '''
-    Test the :func:`beartype._util.cls.utilclstest.is_type_builtin` tester.
-    '''
-
-    # Defer test-specific imports.
-    from beartype._util.cls.utilclstest import is_type_builtin
-    from beartype_test.a00_unit.data.data_type import (
-        TYPES_BUILTIN, TYPES_NONBUILTIN)
-
-    # Assert this tester accepts all builtin types.
-    for type_builtin in TYPES_BUILTIN:
-        assert is_type_builtin(type_builtin) is True
-
-    # Assert this tester rejects non-builtin types.
-    for type_nonbuiltin in TYPES_NONBUILTIN:
-        assert is_type_builtin(type_nonbuiltin) is False
-
-
 def test_is_type_subclass() -> None:
     '''
     Test the :func:`beartype._util.cls.utilclstest.is_type_subclass` tester.
@@ -90,3 +71,50 @@ def test_is_type_subclass() -> None:
     # an exception.
     assert is_type_subclass(
         "Thou many-colour'd, many-voiced vale,", str) is False
+
+# ....................{ TESTS ~ tester : builtin           }....................
+def test_is_type_builtin() -> None:
+    '''
+    Test the :func:`beartype._util.cls.utilclstest.is_type_builtin` tester.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.cls.utilclstest import is_type_builtin
+    from beartype_test.a00_unit.data.data_type import (
+        TYPES_BUILTIN,
+        TYPES_NONBUILTIN,
+    )
+
+    # Assert this tester accepts all builtin types.
+    for type_builtin in TYPES_BUILTIN:
+        assert is_type_builtin(type_builtin) is True
+
+    # Assert this tester rejects non-builtin types.
+    for type_nonbuiltin in TYPES_NONBUILTIN:
+        assert is_type_builtin(type_nonbuiltin) is False
+
+
+def test_is_type_builtin_or_fake() -> None:
+    '''
+    Test the :func:`beartype._util.cls.utilclstest.is_type_builtin_or_fake`
+    tester.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.cls.utilclstest import is_type_builtin_or_fake
+    from beartype_test.a00_unit.data.data_type import (
+        TYPES_BUILTIN,
+        TYPES_BUILTIN_FAKE,
+        Class,
+    )
+
+    # Assert this tester accepts all non-fake builtin types.
+    for type_builtin in TYPES_BUILTIN:
+        assert is_type_builtin_or_fake(type_builtin) is True
+
+    # Assert this tester accepts all fake builtin types, too.
+    for type_builtin_fake in TYPES_BUILTIN_FAKE:
+        assert is_type_builtin_or_fake(type_builtin_fake) is True
+
+    # Assert this tester rejects an arbitrary non-builtin type.
+    assert is_type_builtin_or_fake(Class) is False

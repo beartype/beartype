@@ -165,8 +165,22 @@ class BeartypeDecorHintNonpepNumpyException(BeartypeDecorHintNonpepException):
 
     This exception is raised at decoration time from the
     :func:`beartype.beartype` decorator on receiving a callable annotated by an
-    **invalid NumPy type hint** (e.g., ``numpy.typed.NDArray[...]`` type hint
+    **invalid NumPy type hint** (e.g., ``numpy.typing.NDArray[...]`` type hint
     subscripted by an invalid number of arguments).
+    '''
+
+    pass
+
+
+class BeartypeDecorHintNonpepPanderaException(BeartypeDecorHintNonpepException):
+    '''
+    **Beartype decorator PEP-noncompliant Pandera type hint exception.**
+
+    This exception is raised at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated by an
+    **invalid Pandera type hint** (e.g., ``pandera.typing.DataFrame[...]`` type
+    hint annotating a parameter or return of a callable *not* decorated by the
+    PEP-noncompliant :func:`pandera.check_types` decorator).
     '''
 
     pass

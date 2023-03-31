@@ -22,14 +22,13 @@ from beartype.roar import (
     BeartypeDecorHintNonpepNumpyException,
     BeartypeDecorHintNonpepNumpyWarning,
 )
-from beartype.typing import Any, FrozenSet
-from beartype._data.hint.pep.sign.datapepsigns import HintSignNumpyArray
-from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.mod.lib.utiltyping import import_typing_attr_or_none
-from beartype._util.hint.pep.utilpepget import (
-    get_hint_pep_args,
-    get_hint_pep_sign_or_none,
+from beartype.typing import (
+    Any,
+    FrozenSet,
 )
+from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+from beartype._util.mod.lib.utiltyping import import_typing_attr_or_none
 from beartype._util.utilobject import is_object_hashable
 from warnings import warn
 
@@ -45,11 +44,11 @@ def reduce_hint_numpy_ndarray(
     '''
     Reduce the passed **PEP-noncompliant typed NumPy array** (i.e.,
     subscription of the third-party :attr:`numpy.typing.NDArray` type hint
-    factory) to the equivalent beartype validator validating arbitrary objects
-    be instances of that array type -- which has the substantial merit of
-    already being well-supported, well-tested, and well-known to generate
-    optimally efficient type-checking by the :func:`beartype.beartype`
-    decorator.
+    factory) to the equivalent PEP-compliant beartype validator validating
+    arbitrary objects be instances of that array type -- which has the
+    substantial merit of already being well-supported, well-tested, and
+    well-known to generate optimally efficient type-checking by the
+    :func:`beartype.beartype` decorator.
 
     Technically, beartype could instead explicitly handle typed NumPy arrays
     throughout the codebase. Of course, doing so would yield *no* tangible
@@ -62,12 +61,18 @@ def reduce_hint_numpy_ndarray(
     Parameters
     ----------
     hint : object
-        PEP-noncompliant typed NumPy array to return the data type of.
+        PEP-noncompliant typed NumPy array to be reduced.
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
 
     All remaining passed arguments are silently ignored.
+
+    Returns
+    ----------
+    object
+        This PEP-noncompliant typed NumPy array reduced to a PEP-compliant type
+        hint supported by :mod:`beartype`.
 
     Raises
     ----------
@@ -81,7 +86,6 @@ def reduce_hint_numpy_ndarray(
             sufficiently old that it fails to declare the
             :attr:`typing_extensions.Annotated` attribute.
 
-        * This hint is *not* a typed NumPy array.
         * This hint is a typed NumPy array but either:
 
           * *Not* subscripted by exactly two arguments.
@@ -92,20 +96,6 @@ def reduce_hint_numpy_ndarray(
             * An object coercible into a NumPy data type by passing to the
               :meth:`numpy.dtype.__init__` method.
     '''
-
-    # ..................{ SIGN                               }..................
-    # Sign uniquely identifying this hint if this hint is identifiable *OR*
-    # "None" otherwise.
-    hint_sign = get_hint_pep_sign_or_none(hint)
-
-    # If this hint is *NOT* a typed NumPy array, raise an exception.
-    if hint_sign is not HintSignNumpyArray:
-        raise BeartypeDecorHintNonpepNumpyException(
-            f'{exception_prefix}type hint {repr(hint)} not typed NumPy array '
-            f'(i.e., subscription of the '
-            f'"numpy.typing.NDArray" type hint factory).'
-        )
-    # Else, this hint is a typed NumPy array.
 
     # ..................{ IMPORTS                            }..................
     # Defer heavyweight imports until *AFTER* validating this hint to be a

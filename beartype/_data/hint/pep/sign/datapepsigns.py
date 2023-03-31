@@ -199,6 +199,22 @@ HintSignDataclassInitVar = _HintSign(name='DataclassInitVar')
 # ...the "numpy.typing" subpackage.
 HintSignNumpyArray = _HintSign(name='NumpyArray')   # <-- "numpy.typing.NDArray"
 
+# ....................{ SIGNS ~ implicit : lib : pandera   }....................
+# ...the "pandera.typing" subpackage. Specifically, define a single sign
+# unconditionally matching *ALL* type hints published by the "pandera.typing"
+# subpackage. Why? Because Pandera insanely publishes its own Pandera-specific
+# PEP-noncompliant runtime type-checking decorator @pandera.check_types() that
+# supports *ONLY* Pandera-specific PEP-noncompliant "pandera.typing" type hints.
+# Since Pandera users are already accustomed to decorating *ALL* Pandera-based
+# callables (i.e., callables accepting one or more parameters and/or returning
+# one or more values which are Pandera objects) by @pandera.check_types(),
+# attempting to type-check the same objects already type-checked by that
+# decorator would only inefficiently and needlessly slow @beartype down. Ergo,
+# we ignore *ALL* Pandera type hints by:
+# * Defining this catch-all singleton for Pandera type hints here.
+# * Denoting this singleton to be unconditionally ignorable elsewhere.
+HintSignPanderaAny = _HintSign(name='PanderaAny')   # <-- "pandera.typing.*"
+
 # ....................{ CLEANUP                            }....................
 # Prevent all attributes imported above from polluting this namespace. Why?
 # Logic elsewhere subsequently assumes a one-to-one mapping between the

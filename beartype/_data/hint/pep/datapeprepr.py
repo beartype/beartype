@@ -16,7 +16,9 @@ from beartype.typing import (
     Dict,
     FrozenSet,
     Set,
+    Union,
 )
+from beartype._data.datatyping import HintSignTrie
 from beartype._data.hint.pep.sign import datapepsigns
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
@@ -68,6 +70,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNumpyArray,
     # HintSignOptional,
     HintSignOrderedDict,
+    HintSignPanderaAny,
     HintSignParamSpec,
     # HintSignParamSpecArgs,
     # HintSignProtocol,
@@ -230,6 +233,29 @@ Notably, this dictionary maps from the representation prefixes of:
   detected as PEP-compliant.
 '''
 
+# ....................{ MAPPINGS ~ repr : trie             }....................
+#FIXME: Augment the get_hint_pep_sign() function to leverage this, please.
+# The majority of this trie is defined by explicit key-value pairs here.
+HINT_REPR_PREFIX_TRIE_ARGS_0_OR_MORE_TO_SIGN: HintSignTrie = {
+    # ..................{ NON-PEP ~ lib : pandera            }..................
+    # All PEP-noncompliant "pandera.typing" type hints are permissible in
+    # both subscripted and unsubscripted forms.
+    'pandera': {
+        'typing': HintSignPanderaAny,
+    }
+}
+'''
+**Sign trie** (i.e., dictionary-of-dictionaries tree data structure enabling
+efficient mapping from the machine-readable representations of type hints
+created by an arbitrary number of type hint factories defined by an external
+third-party package to their identifying sign) from the **possibly unsubscripted
+PEP-compliant type hint representation prefix** (i.e., unsubscripted prefix of
+the machine-readable strings returned by the :func:`repr` builtin for
+PEP-compliant type hints permissible in both subscripted and unsubscripted
+forms) of each hint uniquely identifiable by that representation to its
+identifying sign.
+'''
+
 # ....................{ MAPPINGS ~ type                    }....................
 # The majority of this dictionary is initialized with automated inspection
 # below in the _init() function. The *ONLY* key-value pairs explicitly defined
@@ -337,25 +363,6 @@ HINTS_REPR_IGNORABLE_SHALLOW: FrozenSet[str] = {  # type: ignore[assignment]
     # ....................{ NON-PEP                        }....................
     # Machine-readable representations of shallowly ignorable type hints
     # published by PEP-noncompliant third-party type hints, including...
-
-    # ....................{ NON-PEP ~ pandera              }....................
-    # ...the "pandera.typing" subpackage. Specifically, unconditionally ignore
-    # *ALL* type hints published by that subpackage. Why? Because Pandera
-    # insanely publishes its own Pandera-specific PEP-noncompliant runtime
-    # type-checking decorator @pandera.check_types() that supports *ONLY*
-    # Pandera-specific PEP-noncompliant "pandera.typing" type hints. Since
-    # Pandera users are already accustomed to decorating *ALL* Pandera-based
-    # callables (i.e., callables accepting one or more parameters and/or
-    # returning one or more values annotated by Pandera type hints) with
-    # @pandera.check_types(), attempting to type-check the same objects already
-    # type-checked by that decorator would only inefficiently and needlessly
-    # slow @beartype down. Moreover, doing so is infeasible. Pandera type hints
-    # are extremely non-standard and thus *NOT* reasonably type-checkable by any
-    # standards-compliant static or runtime type-checkers. Ergo, we fallback to
-    # unconditionally ignoring *ALL* Pandera type hints.
-
-    #FIXME: Unit test us up, please. *sigh*
-    'pandera.typing.',
 }
 '''
 Frozen set of all **shallowly ignorable PEP-compliant type hint

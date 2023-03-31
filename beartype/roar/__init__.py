@@ -60,6 +60,7 @@ from beartype.roar._roarexc import (
     BeartypeDecorHintForwardRefException as BeartypeDecorHintForwardRefException,
     BeartypeDecorHintNonpepException as BeartypeDecorHintNonpepException,
     BeartypeDecorHintNonpepNumpyException as BeartypeDecorHintNonpepNumpyException,
+    BeartypeDecorHintNonpepPanderaException as BeartypeDecorHintNonpepPanderaException,
     BeartypeDecorHintPepException as BeartypeDecorHintPepException,
     BeartypeDecorHintPepSignException as BeartypeDecorHintPepSignException,
     BeartypeDecorHintPepUnsupportedException as BeartypeDecorHintPepUnsupportedException,
