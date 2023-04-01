@@ -107,8 +107,8 @@ def die_unless_module_attr_name(
 # ....................{ TESTERS                            }....................
 def is_module(module_name: str) -> bool:
     '''
-    ``True`` only if the module or C extension with the passed fully-qualified
-    name is importable under the active Python interpreter.
+    :data:`True` only if the module or C extension with the passed
+    fully-qualified name is importable under the active Python interpreter.
 
     Caveats
     ----------
@@ -123,7 +123,7 @@ def is_module(module_name: str) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this module is importable.
+        :data:`True` only if this module is importable.
 
     Warns
     ----------
@@ -146,9 +146,9 @@ def is_module(module_name: str) -> bool:
 #*BASICALLY* guaranteed to be importable.
 def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
     '''
-    ``True`` only if the module or C extension with the passed fully-qualified
-    name is both importable under the active Python interpreter *and* at least
-    as new as the passed version.
+    :data:`True` only if the module or C extension with the passed
+    fully-qualified name is both importable under the active Python interpreter
+    *and* at least as new as the passed version.
 
     Caveats
     ----------
@@ -166,7 +166,7 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if:
+        :data:`True` only if:
 
         * This module is importable.
         * This module's version is at least the passed version.
@@ -321,7 +321,7 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
 #FIXME: Unit test us up, please.
 def is_package(package_name: str) -> bool:
     '''
-    ``True`` only if the package with the passed fully-qualified name is
+    :data:`True` only if the package with the passed fully-qualified name is
     importable under the active Python interpreter.
 
     Caveats
@@ -337,7 +337,7 @@ def is_package(package_name: str) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this package is importable.
+        :data:`True` only if this package is importable.
 
     Warns
     ----------

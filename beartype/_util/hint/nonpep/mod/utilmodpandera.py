@@ -18,9 +18,14 @@ This private submodule is *not* intended for importation by downstream callers.
 # be computationally expensive, particularly for imports transitively importing
 # C extensions (e.g., anything from NumPy or SciPy).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype.roar import BeartypeDecorHintNonpepPanderaException
 
 # ....................{ REDUCERS                           }....................
-def reduce_hint_pandera(hint: object, *args, **kwargs) -> object:
+def reduce_hint_pandera(
+    hint: object,
+    exception_prefix: str,
+    *args, **kwargs
+) -> object:
     '''
     Reduce the passed **PEP-noncompliant Pandera type hint** (i.e.,
     subscription of *any* PEP-noncompliant type hint factory published by the
@@ -46,6 +51,44 @@ def reduce_hint_pandera(hint: object, *args, **kwargs) -> object:
     This reducer is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
     to an efficient one-liner.
+
+    Motivation
+    ----------
+    The core issue with Pandera type hints is somewhat more subtle than the glib
+    hand-waving performed above. Yes, Pandera type hints *are* PEP-noncompliant,
+    but they're more than just that. Pandera type hints fundamentally contravene
+    established semantics for PEP-compliant generics. Generally speaking,
+    generics are *not* simply descriptive type hints; they're full-blown classes
+    intended to be instantiated as objects throughout the codebase using those
+    generics as type hints. The unsubscripted portion of a generic hint is an
+    instanceable class (e.g., the "list" in "list[str]" is itself an
+    instanceable class). @beartype expects any object annotated by a generic
+    type hint to be an instance of that generic: e.g.,
+
+    .. code-block:: pycon
+
+       # A PEP 585-compliant generic.
+       >>> class ListOfStrings(list[str]): pass
+
+       # An instance of this generic satisfies this generic used as a type hint.
+       >>> from beartype import beartype
+       >>> @beartype
+       ... def accept_list_of_strings(lst: ListOfStrings): return 'Okie-dokie!'
+       >>> accept_list_of_strings(ListOfStrings())
+       'Okie-dokie!'
+
+    Pandera type hints violate this expectation. Syntactically, Pandera type
+    hints are PEP-compliant generics (of course); semantically, Pandera type
+    hints are PEP-noncompliant generics, because the objects they describe
+    (i.e., Pandas data frames) are *not* instances of these generics. Pandas
+    data frames are instances of the Pandera-agnostic
+    "pandas.core.frame.DataFrame" non-generic class rather than Pandera-specific
+    "pandera.typing.pandas.DataFrame" generic.
+
+    Pandera type hints *should* have been instead defined as PEP 544-compliant
+    protocols that exploit ephemeral duck typing. Since they weren't, downstream
+    consumers like @beartype must now pretend that Pandera type hints are the
+    Pandas types they semantically alias by reducing the former to the latter.
 
     Caveats
     ----------
@@ -91,6 +134,9 @@ def reduce_hint_pandera(hint: object, *args, **kwargs) -> object:
     ----------
     hint : object
         PEP-noncompliant typed NumPy array to return the data type of.
+    exception_prefix : str
+        Human-readable label prefixing the representation of this object in the
+        exception message.
 
     All remaining passed arguments are silently ignored.
 
@@ -98,7 +144,86 @@ def reduce_hint_pandera(hint: object, *args, **kwargs) -> object:
     ----------
     object
         Arbitrary PEP-compliant ignorable type hint.
+
+    Raises
+    ----------
+    BeartypeDecorHintNonpepPanderaException
+        If either:
+
+        * This hint is *not* a PEP 484- or 585-compliant generic.
+        * This hint is a PEP 484- or 585-compliant generic *not* subclassing one
+          or more Pandas-specific superclasses.
     '''
 
-    # Make the bad type hints go away, Typing Daddy.
-    return object
+    #FIXME: Revise documentation above, please.
+    #FIXME: Update return annotations above, please.
+    #FIXME: Unit test us up, please.
+    #FIXME: Extricate this logic into a new callable memoized by
+    #@callable_cached for efficiency, please -- say:
+    #    # In "utilpep484585generic":
+    #    @callable_cached
+    #    def get_hint_pep484585_generic_type_base_first_in_module(
+    #        hint: object,
+    #        module_name: str,
+    #        exception_cls: TypeException,
+    #        exception_prefix: str,
+    #    ) -> type:
+    #        '''
+    #        First type in the method resolution order (MRO) of the
+    #        unsubscripted generic type underlying the passed possibly
+    #        subscripted PEP 484- or 585-compliant generic type hint.
+    #        '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+        get_hint_pep484585_generic_type)
+    from beartype._util.mod.utilmodget import get_object_module_name_or_none
+
+    # Either:
+    # * If this Pandera generic is unsubscripted, this unsubscripted generic
+    #   type as is.
+    # * If this Pandera generic is subscripted, the unsubscripted generic type
+    #   underlying this subscripted generic (e.g., the type
+    #   "pandera.typing.pandas.DataFrame" given the type hint
+    #   "pandera.typing.DataFrame[...]").
+    hint_type = get_hint_pep484585_generic_type(
+        hint=hint,
+        exception_cls=BeartypeDecorHintNonpepPanderaException,
+        exception_prefix=exception_prefix,
+    )
+
+    # Fully-qualified name of the module to be searched for.
+    module_name = 'pandas'
+
+    # Fully-qualified name of the module to be searched for suffixed by a "."
+    # delimiter. This is a micro-optimization improving lookup speed.
+    module_name_prefix = f'{module_name}.'
+
+    # For each superclass of this unsubscripted generic type...
+    for hint_base in hint_type.__mro__:
+        # Fully-qualified name of the module declaring this superclass if any
+        # *OR* "None" otherwise (i.e., if this type is only defined in-memory).
+        hint_base_module_name = get_object_module_name_or_none(hint_base)
+
+        # If this module exists *AND* either...
+        if hint_base_module_name and (
+            # This module is the desired module itself *OR*...
+            hint_base_module_name == module_name_prefix or
+            # This module is a submodule of the desired module...
+            hint_base_module_name.startswith(module_name_prefix)
+        # Then return this superclass.
+        ):
+            # print(f'Found generic {repr(hint)} type {repr(hint_type)} "{module_name}" superclass {repr(hint_base)}!')
+            return hint_base
+        # Else, this is *NOT* a Pandas module. In this case, continue to the
+        # next superclass.
+    # Else, *NO* superclass of this Pandera generic is a Pandas type.
+
+    # Raise an exception.
+    raise BeartypeDecorHintNonpepPanderaException(
+        f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
+        f'type {repr(hint_type)} subclasses no "{module_name}" type '
+        f'(i.e., type method resolution order (MRO) '
+        f'{repr(hint_type.__mro__)} has no type with '
+        f'module name prefixed by "{module_name}").'
+    )

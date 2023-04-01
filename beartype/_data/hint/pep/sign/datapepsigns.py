@@ -215,6 +215,9 @@ HintSignNumpyArray = _HintSign(name='NumpyArray')   # <-- "numpy.typing.NDArray"
 # * Denoting this singleton to be unconditionally ignorable elsewhere.
 HintSignPanderaAny = _HintSign(name='PanderaAny')   # <-- "pandera.typing.*"
 
+#FIXME: Excise us up, please.
+# HintSignPanderaAny = HintSignGeneric
+
 # ....................{ CLEANUP                            }....................
 # Prevent all attributes imported above from polluting this namespace. Why?
 # Logic elsewhere subsequently assumes a one-to-one mapping between the

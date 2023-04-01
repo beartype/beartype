@@ -689,11 +689,11 @@ def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
 
     Caveats
     ----------
-    **The high-level** :func:`get_hint_pep_origin_type_isinstanceable`
-    function should always be called in lieu of this low-level function.**
-    Whereas the former is guaranteed to return either a class or ``None``, this
-    function enjoys no such guarantees and instead returns what the caller can
-    only safely assume to be an arbitrary object.
+    **The high-level** :func:`get_hint_pep_origin_type_isinstanceable` function
+    should always be called in lieu of this low-level function.** Whereas the
+    former is guaranteed to return either a class or ``None``, this function
+    enjoys no such guarantees and instead returns what the caller can only
+    safely assume to be an arbitrary object.
 
     If this function *must* be called, **this function should always be called
     in lieu of attempting to directly access the low-level** ``__origin__``

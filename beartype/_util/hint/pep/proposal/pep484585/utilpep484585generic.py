@@ -152,17 +152,17 @@ def get_hint_pep484585_generic_bases_unerased(
     ``__orig_mro__`` dunder attribute listing the original method resolution
     order (MRO) of that subclass had that tuple *not* been modified.
 
-    Naturally, :pep:`560` did no such thing. The original MRO remains
-    obfuscated and effectively inaccessible. While computing that MRO would
-    technically be feasible, doing so would also be highly non-trivial,
-    expensive, and fragile. Instead, this function retrieves *only* the tuple
-    of :mod:`typing`-specific pseudo-superclasses that this object's class
-    originally attempted (but failed) to subclass.
+    Naturally, :pep:`560` did no such thing. The original MRO remains obfuscated
+    and effectively inaccessible. While computing that MRO would technically be
+    feasible, doing so would also be highly non-trivial, expensive, and fragile.
+    Instead, this function retrieves *only* the tuple of :mod:`typing`-specific
+    pseudo-superclasses that this object's class originally attempted (but
+    failed) to subclass.
 
-    You are probably now agitatedly cogitating to yourself in the darkness:
-    "But @leycec: what do you mean :pep:`560`? Wasn't :pep:`560` released
-    *after* :pep:`484`? Surely no public API defined by the Python stdlib would
-    be so malicious as to silently alter the tuple of base classes listed by a
+    You are probably now agitatedly cogitating to yourself in the darkness: "But
+    @leycec: what do you mean :pep:`560`? Wasn't :pep:`560` released *after*
+    :pep:`484`? Surely no public API defined by the Python stdlib would be so
+    malicious as to silently alter the tuple of base classes listed by a
     user-defined subclass?"
 
     As we've established both above and elsewhere throughout the codebase,
@@ -185,22 +185,19 @@ def get_hint_pep484585_generic_bases_unerased(
     types listed as base classes in user-defined subclasses as follows:
 
     * All base classes whose origin is a builtin container (e.g.,
-      ``typing.List[T]``) are reduced to that container (e.g.,
-      :class:`list`).
+      ``typing.List[T]``) are reduced to that container (e.g., :class:`list`).
     * All base classes derived from an abstract base class declared by the
       :mod:`collections.abc` subpackage (e.g., ``typing.Iterable[T]``) are
-      reduced to that abstract base class (e.g.,
-      ``collections.abc.Iterable``).
+      reduced to that abstract base class (e.g., ``collections.abc.Iterable``).
     * All surviving base classes that are parametrized (e.g.,
       ``typing.Generic[S, T]``) are stripped of that parametrization (e.g.,
       :class:`typing.Generic`).
 
-    Since there exists no counterpart to the :class:`typing.Generic`
-    superclass, the :mod:`typing` module preserves that superclass in
-    unparametrized form. Naturally, this is useless, as an unparametrized
-    :class:`typing.Generic` superclass conveys no meaningful type information.
-    All other superclasses are reduced to their non-:mod:`typing`
-    counterparts: e.g.,
+    Since there exists no counterpart to the :class:`typing.Generic` superclass,
+    the :mod:`typing` module preserves that superclass in unparametrized form.
+    Naturally, this is useless, as an unparametrized :class:`typing.Generic`
+    superclass conveys no meaningful type information. All other superclasses
+    are reduced to their non-:mod:`typing` counterparts: e.g.,
 
         .. code-block:: python
 
@@ -216,13 +213,13 @@ def get_hint_pep484585_generic_bases_unerased(
         (typing.List[T], typing.Iterable[T], typing.Generic[T])
         # Guess which we prefer?
 
-    So, we prefer the generally useful ``__orig_bases__`` dunder tuple over
-    the generally useless ``__mro__`` dunder tuple. Note, however, that the
-    latter *is* still occasionally useful and thus occasionally returned by
-    this getter. For inexplicable reasons, **single-inherited protocols**
-    (i.e., classes directly subclassing *only* the :pep:`544`-compliant
-    :attr:`typing.Protocol` abstract base class (ABC)) are *not* subject to
-    type erasure and thus constitute a notable exception to this heuristic:
+    So, we prefer the generally useful ``__orig_bases__`` dunder tuple over the
+    generally useless ``__mro__`` dunder tuple. Note, however, that the latter
+    *is* still occasionally useful and thus occasionally returned by this
+    getter. For inexplicable reasons, **single-inherited protocols** (i.e.,
+    classes directly subclassing *only* the :pep:`544`-compliant
+    :attr:`typing.Protocol` abstract base class (ABC)) are *not* subject to type
+    erasure and thus constitute a notable exception to this heuristic:
 
         .. code-block:: python
 
@@ -234,8 +231,8 @@ def get_hint_pep484585_generic_bases_unerased(
         AttributeError: type object 'UserDefinedProtocol' has no attribute
         '__orig_bases__'
 
-    Welcome to :mod:`typing` hell, where even :mod:`typing` types lie broken
-    and misshapen on the killing floor of overzealous theory-crafting purists.
+    Welcome to :mod:`typing` hell, where even :mod:`typing` types lie broken and
+    misshapen on the killing floor of overzealous theory-crafting purists.
 
     Parameters
     ----------
@@ -351,10 +348,10 @@ def get_hint_pep484585_generic_type(
     Caveats
     ----------
     **This getter returns false positives in edge cases.** That is, this getter
-    returns non-``None`` values for both generics and non-generics (notably,
+    returns non-``None`` values for both generics and non-generics -- notably,
     non-generics defining the ``__origin__`` dunder attribute to an
-    isinstanceable class). Callers *must* perform subsequent tests to
-    distinguish these two cases.
+    isinstanceable class. Callers *must* perform subsequent tests to distinguish
+    these two cases.
 
     Parameters
     ----------
@@ -403,12 +400,12 @@ def get_hint_pep484585_generic_type(
 def get_hint_pep484585_generic_type_or_none(hint: object) -> Optional[type]:
     '''
     Either the passed :pep:`484`- or :pep:`585`-compliant **generic** (i.e.,
-    class superficially subclassing at least one PEP-compliant type hint that
-    is possibly *not* an actual class) if **unsubscripted** (i.e., indexed by
-    *no* arguments or type variables), the unsubscripted generic underlying
-    this generic if **subscripted** (i.e., indexed by one or more child type
-    hints and/or type variables), *or* ``None`` otherwise (i.e., if this hint
-    is *not* a generic).
+    class superficially subclassing at least one PEP-compliant type hint that is
+    possibly *not* an actual class) if **unsubscripted** (i.e., indexed by *no*
+    arguments or type variables), the unsubscripted generic underlying this
+    generic if **subscripted** (i.e., indexed by one or more child type hints
+    and/or type variables), *or* ``None`` otherwise (i.e., if this hint is *not*
+    a generic).
 
     Specifically, this getter returns (in order):
 
@@ -425,10 +422,10 @@ def get_hint_pep484585_generic_type_or_none(hint: object) -> Optional[type]:
     Caveats
     ----------
     **This getter returns false positives in edge cases.** That is, this getter
-    returns non-``None`` values for both generics and non-generics (notably,
+    returns non-``None`` values for both generics and non-generics -- notably,
     non-generics defining the ``__origin__`` dunder attribute to an
-    isinstanceable class). Callers *must* perform subsequent tests to
-    distinguish these two cases.
+    isinstanceable class. Callers *must* perform subsequent tests to distinguish
+    these two cases.
 
     Parameters
     ----------
@@ -532,12 +529,12 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
         >>> class UserProtocol(t.Protocol[t.AnyStr]): pass
         >>> class UserSubprotocol(UserProtocol[str], t.Protocol): pass
         >>> UserSubprotocol.__orig_bases__
-        (UserProtocol[str], typing.Protocol)
+        (UserProtocol[str], typing.Protocol)  # <-- good
         >>> UserProtocolUnerased = UserSubprotocol.__orig_bases__[0]
         >>> UserProtocolUnerased is UserProtocol
         False
         >>> isinstance(UserProtocolUnerased, type)
-        False
+        False  # <-- bad
 
     :pep:`585`-compliant generics suffer no such issues:
 
@@ -548,7 +545,7 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
         (UserGeneric[int],)
         >>> UserGenericUnerased = UserSubgeneric.__orig_bases__[0]
         >>> isinstance(UserGenericUnerased, type)
-        True
+        True  # <-- good
         >>> UserGenericUnerased.__mro__
         (UserGeneric, list, object)
         >>> is_hint_pep585_builtin(UserGenericUnerased)
@@ -627,7 +624,7 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
 
     # Initialize this list to these direct pseudo-superclasses of this generic.
     hint_bases[0:hint_bases_index_past_last] = hint_bases_direct
-    # print(f'generic pseudo-superclasses [initial]: {repr(hint_childs)}')
+    # print(f'generic pseudo-superclasses [initial]: {repr(hint_bases_direct}')
 
     # While the 0-based index of the next visited pseudo-superclass does *NOT*
     # exceed that of the last pseudo-superclass in this list, there remains one
@@ -706,17 +703,15 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
                 yield hint_base
         # Else, this pseudo-superclass is ignorable.
         # else:
-        #     print(f'Ignoring generic {hint} base...')
-        #     print(f'Is generic {hint} base type? {isinstance(hint_base, type)}')
+        #     print(f'Ignoring generic {repr(hint)} base {repr(hint_base)}...')
+        #     print(f'Is generic {hint} base {repr(hint_base)} type? {isinstance(hint_base, type)}')
 
-        # Nullify the previously visited pseudo-superclass in
-        # this list for safety.
+        # Nullify the previously visited pseudo-superclass in this list.
         hint_bases[hint_bases_index_curr] = None
 
-        # Increment the 0-based index of the next visited
-        # pseudo-superclass in this list *BEFORE* visiting that
-        # pseudo-superclass but *AFTER* performing all other
-        # logic for the currently visited pseudo-superclass.
+        # Increment the 0-based index of the next visited pseudo-superclass in
+        # this list *BEFORE* visiting that pseudo-superclass but *AFTER*
+        # performing all other logic for the current pseudo-superclass.
         hint_bases_index_curr += 1
 
     # Release this list. Pray for salvation, for we find none here.

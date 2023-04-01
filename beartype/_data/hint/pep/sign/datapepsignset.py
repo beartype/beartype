@@ -60,6 +60,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNone,
     HintSignOptional,
     HintSignOrderedDict,
+    # HintSignPanderaAny,
     HintSignParamSpec,
     HintSignPattern,
     HintSignProtocol,

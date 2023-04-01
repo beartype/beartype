@@ -624,6 +624,7 @@ def make_check_expr(
         pith_curr_expr        = hint_curr_meta[_HINT_META_INDEX_PITH_EXPR]
         pith_curr_var_name    = hint_curr_meta[_HINT_META_INDEX_PITH_VAR_NAME]
         indent_curr           = hint_curr_meta[_HINT_META_INDEX_INDENT]
+        # print(f'Visiting type hint {repr(hint_curr)}...')
 
         # If this is a child hint rather than the root hint, sanify (i.e.,
         # sanitize) this hint if this hint is reducible *OR* preserve this hint
@@ -688,7 +689,7 @@ def make_check_expr(
 
             # Sign uniquely identifying this hint.
             hint_curr_sign = get_hint_pep_sign(hint_curr)
-            # print(f'Type-checking PEP type hint {repr(hint_curr)} sign {repr(hint_curr_sign)}...')
+            # print(f'Visiting PEP type hint {repr(hint_curr)} sign {repr(hint_curr_sign)}...')
 
             # If this hint is deprecated, emit a non-fatal warning.
             # print(f'Testing {hint_curr_exception_prefix} hint {repr(hint_curr)} for deprecation...')
@@ -1649,7 +1650,8 @@ def make_check_expr(
                 # * PEP 585-compliant generic (i.e., user-defined class
                 #   subclassing at least one non-class PEP 585-compliant
                 #   pseudo-superclasses) *OR*...
-                # Then this hint is a PEP-compliant generic. In this case...
+                #
+                # ...then this hint is a PEP-compliant generic. In this case...
                 elif hint_curr_sign is HintSignGeneric:
                     #FIXME: *THIS IS NON-IDEAL.* Ideally, we should propagate
                     #*ALL* child type hints subscripting a generic up to *ALL*
@@ -1666,9 +1668,9 @@ def make_check_expr(
                     # Reduce this hint to the object originating this generic
                     # (if any) by stripping all child type hints subscripting
                     # this hint from this hint. Why? Because these child type
-                    # hints convey *NO* meaningful semantics and are thus
-                    # safely ignorable. Consider this simple example, in which
-                    # the subscription "[int]" not only conveys *NO* meaningful
+                    # hints convey *NO* meaningful semantics and are thus safely
+                    # ignorable. Consider this simple example, in which the
+                    # subscription "[int]" not only conveys *NO* meaningful
                     # semantics but actually conveys paradoxically conflicting
                     # semantics contradicting the original generic declaration:
                     #     class ListOfListsOfStrs(list[list[str]]): pass
@@ -1683,6 +1685,7 @@ def make_check_expr(
                     #   originating this generic (e.g., "typing.IO").
                     hint_curr = get_hint_pep484585_generic_type(
                         hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
+                    # print(f'Visiting generic type {repr(hint_curr)}...')
 
                     # Initialize the code type-checking this pith against this
                     # generic to the substring prefixing all such code.
@@ -1695,6 +1698,8 @@ def make_check_expr(
                             hint=hint_curr,
                             exception_prefix=_EXCEPTION_PREFIX,
                     )):
+                        # print(f'Visiting generic type hint {repr(hint_curr)} unerased base {repr(hint_child)}...')
+
                         # Generate and append code type-checking this pith
                         # against this superclass.
                         func_curr_code += (

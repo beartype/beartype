@@ -16,11 +16,9 @@ annotations *not* compliant with annotation-centric PEPs).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip, skip_unless_package
+from beartype_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS                              }....................
-#FIXME: Remove after no longer broke, please.
-# @skip('Currently broke af, yo!')
 @skip_unless_package('pandera')
 def test_decor_pandera() -> None:
     '''
@@ -84,7 +82,7 @@ def test_decor_pandera() -> None:
 
     # ....................{ LOCALS                         }....................
     # Pandas data frame containing arbitrary sample data satisfying the
-    # "PanderasModel" defined below.
+    # "PanderaModel" defined below.
     pandas_dataframe_good = DataFrame({
         'Hexspeak': (
             0xCAFED00D,
@@ -104,11 +102,11 @@ def test_decor_pandera() -> None:
     })
 
     # Pandas data frame containing arbitrary sample data violating the
-    # "PanderasModel" defined below.
+    # "PanderaModel" defined below.
     pandas_dataframe_bad = DataFrame()
 
     # ....................{ LOCALS                         }....................
-    class PanderasModel(DataFrameModel):
+    class PanderaModel(DataFrameModel):
         '''
         Pandera model validating the ``pandas_dataframe_good`` defined above.
         '''
@@ -117,11 +115,30 @@ def test_decor_pandera() -> None:
         OdeToTheWestWind: Series[String]
         PercyByssheShelley: Series[Timestamp]
 
+    #FIXME: Preserved for debuggability. Uncomment as needed, please.
+    # hint = PanderaDataFrame[PanderaModel]
+    # hint_origin = hint.__origin__
+    # # print(f'\nrepr(hint): {repr(hint)}')
+    # # print(f'\ndir(hint): {dir(hint)}')
+    # # print(f'\ntype(hint): {type(hint)}')
+    # # from pandera.typing.pandas import DataFrame as NestedPanderaDataFrame
+    # # print(f'\nis hint_origin a pandera dataframe? {hint_origin is NestedPanderaDataFrame}')
+    # # print(f'\nrepr(hint_origin): {repr(hint_origin)}')
+    # # print(f'\ndir(hint_origin): {dir(hint_origin)}')
+    # print(f'\nmro(hint_origin): {hint_origin.__mro__}')
+    # # print(f'\ntype(hint_origin): {type(hint_origin)}')
+    # print(f'\nhint_origin.__orig_bases__: {hint_origin.__orig_bases__}')
+    # print(f'is pandas dataframe a pandera dataframe? {isinstance(pandas_dataframe_good, hint_origin)}')
+    # print(f'is pandas dataframe an orig dataframe? {isinstance(pandas_dataframe_good, hint_origin.__orig_bases__)}')
+    # # print(f'is pandas dataframe a pandera dataframe? {isinstance(pandas_dataframe_good, NestedPanderaDataFrame)}')
+    # # print(f'is pandas dataframe an orig dataframe? {isinstance(pandas_dataframe_good, NestedPanderaDataFrame.__orig_bases__)}')
+    # from beartype import BeartypeConf
+    # @beartype(conf=BeartypeConf(is_debug=True))
 
     @beartype
     @check_types
     def to_the_zeniths_height(
-        dataframe: PanderaDataFrame[PanderasModel],
+        dataframe: PanderaDataFrame[PanderaModel],
         of_some_fierce_maenad: str,
     ) -> str:
         '''

@@ -52,7 +52,7 @@ def get_type_locals(
         them for this purpose.
 
     We fail to grok that suggestion, because we lack a galactic brain. A
-    minimal length example (MLE) refutes all of the above by demonstrating that
+    minimal-length example (MLE) refutes all of the above by demonstrating that
     superclass attributes are *not* local to subclasses:
 
     .. code-block:: python
