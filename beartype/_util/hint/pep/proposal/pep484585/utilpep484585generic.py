@@ -314,7 +314,7 @@ def get_hint_pep484585_generic_bases_unerased(
     # Return this tuple of these pseudo-superclasses.
     return hint_pep_generic_bases_unerased
 
-# ....................{ GETTERS                            }....................
+# ....................{ GETTERS ~ type                     }....................
 #FIXME: Unit test us up, please.
 def get_hint_pep484585_generic_type(
     # Mandatory parameters.
@@ -468,6 +468,131 @@ def get_hint_pep484585_generic_type_or_none(hint: object) -> Optional[type]:
 
     # Return the "None" singleton.
     return None
+
+# ....................{ FINDERS                            }....................
+#FIXME: Unit test us up, please.
+@callable_cached
+def find_hint_pep484585_generic_module_base_first(
+    hint: object,
+    module_name: str,
+    exception_cls: TypeException,
+    exception_prefix: str,
+) -> type:
+    '''
+    Iteratively find and return the first **unerased superclass** (i.e.,
+    unerased pseudo-superclass that is an actual superclass) transitively
+    defined under the third-party package or module with the passed name
+    subclassed by the unsubscripted generic type underlying the passed
+    :pep:`484`- or :pep:`585`-compliant **generic** (i.e., object that may *not*
+    actually be a class despite subclassing at least one PEP-compliant type hint
+    that also may *not* actually be a class).
+
+    This finder is memoized for efficiency.
+
+    Motivation
+    ----------
+    This finder is typically called to reduce **descriptive generics** (i.e.,
+    generics defined in third-party packages intended to be used *only* as
+    descriptive type hints rather than actually instantiated as objects as most
+    generics are) to the isinstanceable classes those generics describe.
+    Although the mere existence of descriptive generics should be considered to
+    be a semantic (if not syntactic) violation of :pep:`484`, the widespread
+    proliferation of descriptive generics leaves :mod:`beartype` with little
+    choice but to grin wanly and bear the pain they subject us to. As example,
+    this finder is currently called elsewhere to:
+
+    * Reduce Pandera type hints (e.g., `pandera.typing.DataFrame[...]`) to the
+      Pandas types they describe (e.g., `pandas.DataFrame`).
+    * Reduce NumPy type hints (e.g., `numpy.typing.NDArray[...]`) to the
+      NumPy types they describe (e.g., `numpy.ndarray`).
+
+    See examples below for further discussion.
+
+    Parameters
+    ----------
+    hint : object
+        Generic type hint to be inspected.
+    module_name : str
+        Fully-qualified name of the third-party package or module to find the
+        first class in this generic type hint of.
+    exception_cls : TypeException
+        Type of exception to be raised. Defaults to
+        :exc:`BeartypeDecorHintPep484585Exception`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
+
+    Returns
+    ----------
+    type
+        First unerased superclass transitively defined under this package or
+        module subclassed by the unsubscripted generic type underlying this
+        generic type hint.
+
+    Examples
+    ----------
+        >>> from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+        ...     find_hint_pep484585_generic_base_first_in_module)
+
+        # Reduce a Pandera type hint to the Pandas type it describes.
+        >>> from pandera import DataFrameModel
+        >>> from pandera.typing import DataFrame
+        >>> class MuhModel(DataFrameModel): pass
+        >>> find_hint_pep484585_generic_base_first_in_module(
+        ...     hint=DataFrame[MuhModel], module_name='pandas', ...)
+        <class 'pandas.DataFrame'>
+    '''
+    assert isinstance(module_name, str), f'{repr(module_name)} not string.'
+
+    # Avoid circular import dependencies.
+    from beartype._util.mod.utilmodget import get_object_module_name_or_none
+
+    # Either:
+    # * If this generic is unsubscripted, this unsubscripted generic type as is.
+    # * If this generic is subscripted, the unsubscripted generic type
+    #   underlying this subscripted generic (e.g., the type
+    #   "pandera.typing.pandas.DataFrame" given the type hint
+    #   "pandera.typing.DataFrame[...]").
+    hint_type = get_hint_pep484585_generic_type(
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+
+    # Fully-qualified name of the module to be searched for.
+    module_name = 'pandas'
+
+    # Fully-qualified name of the module to be searched for suffixed by a "."
+    # delimiter. This is a micro-optimization improving lookup speed below.
+    module_name_prefix = f'{module_name}.'
+
+    # For each superclass of this unsubscripted generic type...
+    for hint_base in hint_type.__mro__:
+        # Fully-qualified name of the module declaring this superclass if any
+        # *OR* "None" otherwise (i.e., if this type is only defined in-memory).
+        hint_base_module_name = get_object_module_name_or_none(hint_base)
+
+        # If this module exists *AND* either...
+        if hint_base_module_name and (
+            # This module is the desired module itself *OR*...
+            hint_base_module_name == module_name_prefix or
+            # This module is a submodule of the desired module...
+            hint_base_module_name.startswith(module_name_prefix)
+        # Then return this superclass.
+        ):
+            # print(f'Found generic {repr(hint)} type {repr(hint_type)} "{module_name}" superclass {repr(hint_base)}!')
+            return hint_base
+        # Else, this is *NOT* the desired module. In this case, continue to the
+        # next superclass.
+    # Else, *NO* superclass of this generic resides in the desired module.
+
+    # Raise an exception of the passed type.
+    raise exception_cls(
+        f'{exception_prefix}PEP 484 or 585 generic {repr(hint)} '
+        f'type {repr(hint_type)} subclasses no "{module_name}" type '
+        f'(i.e., type with module name prefixed by "{module_name}" not '
+        f'found in method resolution order (MRO) {repr(hint_type.__mro__)}).'
+    )
 
 # ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.
