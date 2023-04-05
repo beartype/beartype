@@ -110,14 +110,17 @@ def get_hint_pep484585_generic_bases_unerased(
     exception_prefix: str = '',
 ) -> Tuple[object, ...]:
     '''
-    Tuple of all **unerased pseudo-superclasses** (i.e., PEP-compliant objects
-    originally listed as superclasses prior to their implicit type erasure
-    under :pep:`560`) of the passed :pep:`484`- or :pep:`585`-compliant
-    **generic** (i.e., class superficially subclassing at least one
-    PEP-compliant type hint that is possibly *not* an actual class) if this
-    object is a generic *or* raise an exception otherwise (i.e., if this object
-    is either not a class *or* is a class subclassing no non-class
+    Tuple of the one or more **unerased pseudo-superclasses** (i.e.,
+    PEP-compliant objects originally listed as superclasses prior to their
+    implicit type erasure under :pep:`560`) of the passed :pep:`484`- or
+    :pep:`585`-compliant **generic** (i.e., class superficially subclassing at
+    least one PEP-compliant type hint that is possibly *not* an actual class) if
+    this object is a generic *or* raise an exception otherwise (i.e., if this
+    object is either not a class *or* is a class subclassing no non-class
     PEP-compliant objects).
+
+    This getter is guaranteed to return a non-empty tuple. By definition, a
+    generic is a type subclassing one or more generic superclasses.
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -276,12 +279,6 @@ def get_hint_pep484585_generic_bases_unerased(
          object)
     '''
 
-    #FIXME: Refactor get_hint_pep585_generic_bases_unerased() and
-    #get_hint_pep484_generic_bases_unerased() to:
-    #* Raise "BeartypeDecorHintPep484585Exception" instead.
-    #* Accept an optional "exception_prefix" parameter, which we should pass
-    #  here.
-
     # Tuple of either...
     #
     # Note this implicitly raises a "BeartypeDecorHintPepException" if this
@@ -290,11 +287,23 @@ def get_hint_pep484585_generic_bases_unerased(
     hint_pep_generic_bases_unerased = (
         # If this is a PEP 585-compliant generic, all unerased
         # pseudo-superclasses of this PEP 585-compliant generic.
-        get_hint_pep585_generic_bases_unerased(hint)
+        #
+        # Note that this unmemoized getter accepts keyword arguments.
+        get_hint_pep585_generic_bases_unerased(
+            hint=hint,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        )
         if is_hint_pep585_generic(hint) else
         # Else, this *MUST* be a PEP 484-compliant generic. In this case, all
         # unerased pseudo-superclasses of this PEP 484-compliant generic.
-        get_hint_pep484_generic_bases_unerased(hint)
+        #
+        # Note that this memoized getter prohibits keyword arguments.
+        get_hint_pep484_generic_bases_unerased(
+            hint,
+            exception_cls,
+            exception_prefix,
+        )
     )
 
     # If this generic subclasses *NO* pseudo-superclass, raise an exception.
@@ -470,13 +479,14 @@ def get_hint_pep484585_generic_type_or_none(hint: object) -> Optional[type]:
     return None
 
 # ....................{ FINDERS                            }....................
-#FIXME: Unit test us up, please.
-@callable_cached
 def find_hint_pep484585_generic_module_base_first(
+    # Mandatory parameters.
     hint: object,
     module_name: str,
-    exception_cls: TypeException,
-    exception_prefix: str,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
+    exception_prefix: str = '',
 ) -> type:
     '''
     Iteratively find and return the first **unerased superclass** (i.e.,
@@ -487,7 +497,14 @@ def find_hint_pep484585_generic_module_base_first(
     actually be a class despite subclassing at least one PEP-compliant type hint
     that also may *not* actually be a class).
 
-    This finder is memoized for efficiency.
+    This finder is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator). Although doing so *would* dramatically
+    improve the efficiency of this finder, doing so:
+
+    * Would require all passed parameters be passed positionally, which becomes
+      rather cumbersome given the number of requisite parameters.
+    * Is (currently) unnecessary, as all callers of this function are themselves
+      already memoized.
 
     Motivation
     ----------
@@ -559,15 +576,32 @@ def find_hint_pep484585_generic_module_base_first(
         exception_prefix=exception_prefix,
     )
 
-    # Fully-qualified name of the module to be searched for.
-    module_name = 'pandas'
-
     # Fully-qualified name of the module to be searched for suffixed by a "."
     # delimiter. This is a micro-optimization improving lookup speed below.
     module_name_prefix = f'{module_name}.'
 
-    # For each superclass of this unsubscripted generic type...
-    for hint_base in hint_type.__mro__:
+    # Tuple of the one or more unerased pseudo-superclasses which this
+    # unsubscripted generic type originally subclassed prior to type erasure.
+    #
+    # Note that we could also inspect the method-resolution order (MRO) of this
+    # type via the "hint.__mro__" dunder tuple, but that doing so would only
+    # needlessly reduce the efficiency of the following iteration by
+    # substantially increasing the number of iterations required to find the
+    # desired superclass and thus the worst-case complexity of that iteration.
+    hint_type_bases = get_hint_pep484585_generic_bases_unerased(
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+
+    # For each unerased pseudo-superclass of this unsubscripted generic type...
+    for hint_base in hint_type_bases:
+        # If this pseudo-superclass is *NOT* an actual superclass, silently
+        # ignore this non-superclass and continue to the next pseudo-superclass.
+        if not isinstance(hint_base, type):
+            continue
+        # Else, this pseudo-superclass is an actual superclass.
+
         # Fully-qualified name of the module declaring this superclass if any
         # *OR* "None" otherwise (i.e., if this type is only defined in-memory).
         hint_base_module_name = get_object_module_name_or_none(hint_base)

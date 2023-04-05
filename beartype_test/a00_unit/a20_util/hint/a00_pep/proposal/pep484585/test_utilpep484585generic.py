@@ -129,3 +129,74 @@ def test_get_hint_pep484585_generic_bases_unerased() -> None:
     for not_hint_pep in NOT_HINTS_PEP:
         with raises(BeartypeDecorHintPepException):
             assert get_hint_pep484585_generic_bases_unerased(not_hint_pep)
+
+# ....................{ TESTS ~ finders                    }....................
+def test_find_hint_pep484585_generic_module_base_first() -> None:
+    '''
+    Test the
+    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585generic.find_hint_pep484585_generic_module_base_first`
+    finder.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPep484585Exception
+    from beartype.typing import (
+        Generic,
+        TypeVar,
+    )
+    from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+        find_hint_pep484585_generic_module_base_first)
+    from pytest import raises
+
+    # Arbitrary type variable referenced below.
+    T = TypeVar('T')
+
+    # ....................{ CLASSES                        }....................
+    class ToWhichThisClosingNight(object):
+        '''
+        Arbitrary superclass.
+        '''
+
+        pass
+
+
+    class OfTheDyingYear(Generic[T], str, ToWhichThisClosingNight):
+        '''
+        Arbitrary generic subclassing:
+
+        * The generic superclass subscripted by a type variable.
+        * An arbitrary type *not* defined by the :mod:`beartype_test` package.
+        * An arbitrary type defined by the :mod:`beartype_test` package.
+        '''
+
+        pass
+
+    # ....................{ LOCALS                         }....................
+    # Tuple of all generic type hints to be tested below, including...
+    TEST_GENERICS = (
+        # An unsubscripted generic.
+        OfTheDyingYear,
+        # A subscripted generic (subscripted by an arbitrary type).
+        OfTheDyingYear[int],
+    )
+
+    # ....................{ ASSERTS                        }....................
+    # For each such generic type hint...
+    for test_generic in TEST_GENERICS:
+        # ....................{ PASS                       }....................
+        # Assert that this finder passed this generic returns the first unerased
+        # superclass of this generic declared by this package.
+        assert find_hint_pep484585_generic_module_base_first(
+            hint=test_generic, module_name='beartype_test') is (
+            ToWhichThisClosingNight)
+
+        # ....................{ FAIL                       }....................
+        # Assert that this finder passed this generic and the name of a
+        # hypothetical module guaranteed *NOT* to exist raises the expected
+        # exception.
+        with raises(BeartypeDecorHintPep484585Exception):
+            find_hint_pep484585_generic_module_base_first(
+                hint=test_generic,
+                module_name='will_be.the.dome_of.a_vast_sepulchre',
+            )

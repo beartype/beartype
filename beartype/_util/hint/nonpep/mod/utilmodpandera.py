@@ -21,7 +21,6 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintNonpepPanderaException
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Unit test us up, please.
 def reduce_hint_pandera(
     hint: object,
     exception_prefix: str,
@@ -176,10 +175,10 @@ def reduce_hint_pandera(
     # Note that we intentionally pass positional rather than keyword arguments
     # as a microoptimization for improved cache-time efficiency. Gah!
     return find_hint_pep484585_generic_module_base_first(
-        hint,
-        _PANDAS_MODULE_NAME,
-        BeartypeDecorHintNonpepPanderaException,
-        exception_prefix,
+        hint=hint,
+        module_name=_PANDAS_MODULE_NAME,
+        exception_cls=BeartypeDecorHintNonpepPanderaException,
+        exception_prefix=exception_prefix,
     )
 
 # ....................{ PRIVATE ~ constants                }....................

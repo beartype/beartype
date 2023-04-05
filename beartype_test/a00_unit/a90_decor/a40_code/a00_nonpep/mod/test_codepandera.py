@@ -105,7 +105,7 @@ def test_decor_pandera() -> None:
     # "PanderaModel" defined below.
     pandas_dataframe_bad = DataFrame()
 
-    # ....................{ LOCALS                         }....................
+    # ....................{ CLASSES                        }....................
     class PanderaModel(DataFrameModel):
         '''
         Pandera model validating the ``pandas_dataframe_good`` defined above.
@@ -135,6 +135,7 @@ def test_decor_pandera() -> None:
     # from beartype import BeartypeConf
     # @beartype(conf=BeartypeConf(is_debug=True))
 
+    # ....................{ FUNCTIONS                      }....................
     @beartype
     @check_types
     def to_the_zeniths_height(
@@ -142,9 +143,9 @@ def test_decor_pandera() -> None:
         of_some_fierce_maenad: str,
     ) -> str:
         '''
-        Arbitrary callable accepting both a parameter annotated by a Pandera
-        type hint *and* a parameter annotated by a non-Pandera PEP-compliant
-        type hint.
+        Arbitrary callable decorated first by :mod:`beartype` and then by
+        :mod:`pandera`, accepting a parameter annotated by a Pandera type hint
+        *and* a parameter annotated by a non-Pandera PEP-compliant type hint.
 
         This callable exercises that:
 
@@ -158,27 +159,99 @@ def test_decor_pandera() -> None:
         return f'{of_some_fierce_maenad}, even from the dim verge'
     # print(f'PanderaDataFrame[pandera_schema]: {repr(PanderaDataFrame[pandera_schema])}')
 
-    # ....................{ PASS                           }....................
-    # Assert that calling this callable with valid parameters returns the
-    # expected value.
-    assert to_the_zeniths_height(
-        dataframe=pandas_dataframe_good,
-        of_some_fierce_maenad='Of some fierce Maenad',
-    ) == 'Of some fierce Maenad, even from the dim verge'
 
-    # ....................{ FAIL                           }....................
-    # Assert that calling this callable with an invalid parameter managed by
-    # @beartype raises the expected @beartype exception.
-    with raises(BeartypeCallHintParamViolation):
-        to_the_zeniths_height(
+    @check_types
+    @beartype
+    def all_thy_congregated_might(
+        dataframe: PanderaDataFrame[PanderaModel],
+        of_some_fierce_maenad: str,
+    ) -> str:
+        '''
+        Arbitrary callable decorated first by :mod:`pandera` and then by
+        :mod:`beartype`, accepting a parameter annotated by a Pandera type hint
+        *and* a parameter annotated by a non-Pandera PEP-compliant type hint.
+
+        This callable exercises that order of decoration is insignificant.
+        '''
+
+        # Return this string parameter appended by an arbitrary constant.
+        return f'{of_some_fierce_maenad}, even from the dim verge'
+
+
+    @beartype
+    def from_whose_solid_atmosphere(
+        dataframe: PanderaDataFrame[PanderaModel],
+        of_some_fierce_maenad: str,
+    ) -> str:
+        '''
+        Arbitrary callable decorated by :mod:`beartype` but *not* by
+        :mod:`pandera`, accepting a parameter annotated by a Pandera type hint
+        *and* a parameter annotated by a non-Pandera PEP-compliant type hint.
+
+        This callable exercises that the :func:`beartype.beartype` decorator at
+        least shallowly type-checks all passed parameters regardless of whether
+        this callable is also decorated by the :func:`pandera.check_types`
+        decorator.
+        '''
+
+        # Return this string parameter appended by an arbitrary constant.
+        return f'{of_some_fierce_maenad}, even from the dim verge'
+
+
+    # Tuple of all functions defined above decorated by @pandera.check_types.
+    TEST_FUNCS_PANDERA = (
+        to_the_zeniths_height,
+        all_thy_congregated_might,
+    )
+
+    # Tuple of all functions defined above.
+    TEST_FUNCS = TEST_FUNCS_PANDERA + (
+        from_whose_solid_atmosphere,
+    )
+
+    # ....................{ ASSERTS                        }....................
+    # For each function defined above to be tested...
+    for test_func in TEST_FUNCS:
+        # ....................{ PASS                       }....................
+        # Assert that calling this function with valid parameters returns the
+        # expected value.
+        assert test_func(
             dataframe=pandas_dataframe_good,
-            of_some_fierce_maenad=b'The locks of the approaching storm.',
-        )
-
-    # Assert that calling this callable with an invalid parameter managed by
-    # Pandera raises the expected Pandera exception.
-    with raises(SchemaError):
-        to_the_zeniths_height(
-            dataframe=pandas_dataframe_bad,
             of_some_fierce_maenad='Of some fierce Maenad',
-        )
+        ) == 'Of some fierce Maenad, even from the dim verge'
+
+        # ....................{ FAIL                       }....................
+        # Assert that calling this function with an invalid parameter managed by
+        # @beartype raises the expected @beartype exception.
+        with raises(BeartypeCallHintParamViolation):
+            test_func(
+                dataframe=pandas_dataframe_good,
+                of_some_fierce_maenad=b'The locks of the approaching storm.',
+            )
+
+        # Assert that calling this function with an invalid parameter shallowly
+        # type-checked by @beartype raises an... exception.
+        #
+        # Currently, Pandera currently fails to perform similar shallow
+        # type-checking. Instead, Pandera silently ignores parameters that are
+        # *NOT* of the expected type. Since this behaviour is both bizarre and
+        # erroneous, future releases of Pandera are likely to at least shallowly
+        # type-check parameters annotated by Pandera type hints. For forward
+        # compatibility, we avoid asserting the exact type of this exception.
+        with raises(Exception):
+            test_func(
+                dataframe='Black rain, and fire, and hail will burst: oh hear!',
+                of_some_fierce_maenad=b'The locks of the approaching storm.',
+            )
+
+    # ....................{ ASSERTS ~ pandera              }....................
+    # For each function defined above decorated by @pandera.check_types...
+    for test_func_pandera in TEST_FUNCS_PANDERA:
+        # ....................{ FAIL                       }....................
+        # Assert that calling this function with an invalid parameter managed by
+        # Pandera raises the expected Pandera exception.
+        with raises(SchemaError):
+            test_func_pandera(
+                dataframe=pandas_dataframe_bad,
+                of_some_fierce_maenad='Of some fierce Maenad',
+            )

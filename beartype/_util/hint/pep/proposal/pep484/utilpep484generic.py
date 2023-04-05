@@ -16,6 +16,7 @@ from beartype.typing import (
     Any,
     Generic,
 )
+from beartype._data.datatyping import TypeException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
 
@@ -158,7 +159,14 @@ def get_hint_pep484_generic_base_erased_from_unerased(hint: Any) -> type:
 
 
 @callable_cached
-def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
+def get_hint_pep484_generic_bases_unerased(
+    # Mandatory parameters.
+    hint: Any,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep484Exception,
+    exception_prefix: str = '',
+) -> tuple:
     '''
     Tuple of all unerased :mod:`typing` **pseudo-superclasses** (i.e.,
     :mod:`typing` objects originally listed as superclasses prior to their
@@ -172,6 +180,12 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     ----------
     hint : object
         Object to be inspected.
+    exception_cls : TypeException
+        Type of exception to be raised. Defaults to
+        :exc:`BeartypeDecorHintPep484Exception`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
 
     Returns
     ----------
@@ -189,7 +203,7 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
 
     Raises
     ----------
-    BeartypeDecorHintPep484Exception
+    :exc:`exception_cls`
         If this hint is either:
 
         * *Not* a :mod:`typing` generic.
@@ -342,14 +356,14 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
 
     # If this hint is *NOT* a PEP 484-compliant generic, raise an exception.
     if not is_hint_pep484_generic(hint):
-        raise BeartypeDecorHintPep484Exception(
-            f'Type hint {repr(hint)} neither '
+        raise exception_cls(
+            f'{exception_prefix}type hint {repr(hint)} neither '
             f'PEP 484 generic nor PEP 544 protocol.'
         )
     # Else, this hint is a PEP 484-compliant generic.
 
-    # Unerased pseudo-superclasses of this generic if any *OR* "None"
-    # otherwise (e.g., if this generic is a single-inherited protocol).
+    # Unerased pseudo-superclasses of this generic if any *OR* "None" otherwise
+    # (e.g., if this generic is a single-inherited protocol).
     hint_bases = getattr(hint, '__orig_bases__', None)
 
     # If this generic erased its superclasses, return these superclasses as is.
@@ -361,12 +375,6 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     # Unerased superclasses of this generic defined by the method resolution
     # order (MRO) for this generic.
     hint_bases = hint.__mro__
-
-    # Substring prefixing all exceptions raised below.
-    EXCEPTION_STR_PREFIX = (
-        f'PEP 484 generic {repr(hint)} '
-        f'method resolution order {repr(hint_bases)} '
-    )
 
     # If this MRO lists strictly less than four classes, raise an exception.
     # The MRO for any unerased generic should list at least four classes:
@@ -381,21 +389,23 @@ def get_hint_pep484_generic_bases_unerased(hint: Any) -> tuple:
     #       class ProtocolCustomABC(ProtocolCustomSuperclass, ABC): pass
     # * The "object" root superclass.
     if len(hint_bases) < 4:
-        raise BeartypeDecorHintPep484Exception(
-            f'{EXCEPTION_STR_PREFIX}lists less than four types.')
+        raise exception_cls(
+            f'{exception_prefix}PEP 484 generic {repr(hint)} '
+            f'subclasses less than four superclasses {repr(hint_bases)}.'
+        )
     # Else, this MRO lists at least four classes.
     #
     # If any class listed by this MRO fails to comply with the above
     # expectations, raise an exception.
-    elif hint_bases[0] != hint:
-        raise BeartypeDecorHintPep484Exception(
-            f'{EXCEPTION_STR_PREFIX}first type '
-            f'{repr(hint_bases[0])} not {repr(hint)}.'
+    elif hint_bases[0] is not hint:
+        raise exception_cls(
+            f'{exception_prefix}PEP 484 generic {repr(hint)} '
+            f'first superclass {repr(hint_bases[0])} != {repr(hint)}.'
         )
-    elif hint_bases[-1] != object:
-        raise BeartypeDecorHintPep484Exception(
-            f'{EXCEPTION_STR_PREFIX}last type '
-            f'{repr(hint_bases[-1])} not {repr(object)}.'
+    elif hint_bases[-1] is not object:
+        raise exception_cls(
+            f'{exception_prefix}PEP 484 generic {repr(hint)} '
+            f'last superclass {repr(hint_bases[-1])} != {repr(object)}.'
         )
     # Else, all classes listed by this MRO comply with the above expectations.
 

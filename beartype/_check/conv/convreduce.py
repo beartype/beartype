@@ -278,4 +278,14 @@ Note that:
 * Reducers do *not* need to validate the passed type hint as being of the
   expected sign. By design, a reducer is only ever passed a type hint of the
   expected sign.
+* Reducers should *not* be memoized (e.g., by the
+  :func:`beartype._util.cache.utilcachecall.callable_cached` decorator). Since
+  the higher-level :func:`.reduce_hint` function that is the sole entry point to
+  calling all lower-level reducers is itself memoized, reducers themselves do
+  neither require nor benefit from memoization. Moreover, even if they did
+  either require or benefit from memoization, they couldn't be -- at least, not
+  directly. Why? Because :func:`.reduce_hint` necessarily passes keyword
+  arguments to all reducers. But memoized functions *cannot* receive keyword
+  arguments (without destroying efficiency and thus the entire impetus for
+  memoization). Ergo, reducers *cannot* be memoized.
 '''

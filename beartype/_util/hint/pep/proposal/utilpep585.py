@@ -16,6 +16,7 @@ from beartype.typing import (
     Set,
 )
 from beartype._cave._cavefast import HintGenericSubscriptedType
+from beartype._data.datatyping import TypeException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from beartype._util.utilobject import Iota
@@ -32,7 +33,14 @@ objects against this object via equality tests.
 '''
 
 # ....................{ VALIDATORS                         }....................
-def die_unless_hint_pep585_generic(hint: object) -> None:
+def die_unless_hint_pep585_generic(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep585Exception,
+    exception_prefix: str = '',
+) -> None:
     '''
     Raise an exception unless the passed object is a :pep:`585`-compliant
     **generic** (i.e., class superficially subclassing at least one subscripted
@@ -42,17 +50,23 @@ def die_unless_hint_pep585_generic(hint: object) -> None:
     ----------
     hint : object
         Object to be validated.
+    exception_cls : TypeException
+        Type of exception to be raised. Defaults to
+        :exc:`BeartypeDecorHintPep585Exception`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
 
     Raises
     ----------
-    BeartypeDecorHintPep585Exception
+    :exc:`exception_cls`
         If this object is *not* a :pep:`585`-compliant generic.
     '''
 
     # If this object is *NOT* a PEP 585-compliant generic, raise an exception.
     if not is_hint_pep585_generic(hint):
-        raise BeartypeDecorHintPep585Exception(
-            f'Type hint {repr(hint)} not PEP 585 generic.')
+        raise exception_cls(
+            f'{exception_prefix}type hint {repr(hint)} not PEP 585 generic.')
     # Else, this object is a PEP 585-compliant generic.
 
 # ....................{ TESTERS                            }....................
@@ -204,7 +218,14 @@ is_hint_pep585_generic.__doc__ = '''
     '''
 
 # ....................{ GETTERS                            }....................
-def get_hint_pep585_generic_bases_unerased(hint: Any) -> tuple:
+def get_hint_pep585_generic_bases_unerased(
+    # Mandatory parameters.
+    hint: Any,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep585Exception,
+    exception_prefix: str = '',
+) -> tuple:
     '''
     Tuple of all unerased :pep:`585`-compliant **pseudo-superclasses** (i.e.,
     :mod:`typing` objects originally listed as superclasses prior to their
@@ -220,6 +241,12 @@ def get_hint_pep585_generic_bases_unerased(hint: Any) -> tuple:
     ----------
     hint : object
         Object to be inspected.
+    exception_cls : TypeException
+        Type of exception to be raised. Defaults to
+        :exc:`BeartypeDecorHintPep585Exception`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
 
     Returns
     ----------
@@ -229,7 +256,7 @@ def get_hint_pep585_generic_bases_unerased(hint: Any) -> tuple:
 
     Raises
     ----------
-    BeartypeDecorHintPep585Exception
+    :exc:`exception_cls`
         If this hint is *not* a :pep:`585`-compliant generic.
 
     See Also
@@ -247,7 +274,11 @@ def get_hint_pep585_generic_bases_unerased(hint: Any) -> tuple:
     hint = get_hint_pep484585_generic_type_or_none(hint)
 
     # If this hint is *NOT* a PEP 585-compliant generic, raise an exception.
-    die_unless_hint_pep585_generic(hint)
+    die_unless_hint_pep585_generic(
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
 
     # Return the tuple of all unerased pseudo-superclasses of this generic.
     # While the "__orig_bases__" dunder instance variable is *NOT* guaranteed
