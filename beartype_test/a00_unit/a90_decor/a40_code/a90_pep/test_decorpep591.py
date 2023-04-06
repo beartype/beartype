@@ -19,7 +19,7 @@ from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS                              }....................
 @skip_if_python_version_less_than('3.8.0')
-def test_decor_pep591_hint() -> None:
+def test_decor_pep591() -> None:
     '''
     Test :pep:`557` support implemented in the :func:`beartype.beartype`
     decorator if the active Python interpreter targets Python >= 3.8 *or* skip

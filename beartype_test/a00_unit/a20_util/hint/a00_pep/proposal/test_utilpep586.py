@@ -1,24 +1,25 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`586` **type hint utility unit tests.**
+**Beartype** :pep:`586` **utility unit tests.**
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.hint.pep.proposal.utilpep586` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from enum import Enum
 from pytest import raises
 
-# ....................{ CONSTANTS                         }....................
+# ....................{ PRIVATE ~ constants                }....................
+#FIXME: Shift these into the unit test defined below, please.
 class _Color(Enum):
     '''
     Arbitrary enumeration accessed as given in a prominent :pep:`586` example.
@@ -47,7 +48,7 @@ For conformance, the items of this tuple are copied verbatim from a prominent
 subsection.
 '''
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 def test_is_hint_pep586() -> None:
     '''
     Test the
@@ -61,6 +62,11 @@ def test_is_hint_pep586() -> None:
     from beartype._util.hint.pep.proposal.utilpep586 import (
         die_unless_hint_pep586)
     from typing import Optional
+
+    # Assert this validator raises the expected exception when passed an
+    # object that is *NOT* a literal.
+    with raises(BeartypeDecorHintPep586Exception):
+        die_unless_hint_pep586(Optional[str])
 
     # If the active Python interpreter targets at least Python >= 3.9 and thus
     # supports PEP 586...
@@ -95,8 +101,3 @@ def test_is_hint_pep586() -> None:
         with raises(BeartypeDecorHintPep586Exception):
             die_unless_hint_pep586(Literal[
                 26, "hello world", b"hello world", True, object(), _Color.RED])
-
-    # Assert this validator raises the expected exception when passed an
-    # object that is *NOT* a literal.
-    with raises(BeartypeDecorHintPep586Exception):
-        die_unless_hint_pep586(Optional[str])

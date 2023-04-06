@@ -17,7 +17,7 @@ This submodule unit tests :pep:`3119` support implemented in the
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_pep3119_decor() -> None:
+def test_decor_pep3119() -> None:
     '''
     Test :pep:`3119` support implemented in the :func:`beartype.beartype`
     decorator -- particularly with respect to **partially initialized

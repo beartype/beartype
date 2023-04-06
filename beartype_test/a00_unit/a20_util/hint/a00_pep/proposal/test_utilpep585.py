@@ -4,13 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 585`_ **unit tests.**
+**Beartype** :pep:`585` **utility unit tests.**
 
-This submodule unit tests `PEP 585`_ support implemented in the
-:func:`beartype.beartype` decorator.
-
-.. _PEP 585:
-   https://www.python.org/dev/peps/pep-0585
+This submodule unit tests the public API of the private
+:mod:`beartype._util.hint.pep.proposal.utilpep585` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -18,7 +15,6 @@ This submodule unit tests `PEP 585`_ support implemented in the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises
 
 # ....................{ TESTS ~ kind : builtin            }....................
 def test_is_hint_pep585_builtin() -> None:
@@ -72,6 +68,7 @@ def test_get_hint_pep585_generic_typevars() -> None:
         get_hint_pep585_generic_typevars)
     from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
+    from pytest import raises
 
     # Assert this getter...
     for hint_pep_meta in HINTS_PEP_META:

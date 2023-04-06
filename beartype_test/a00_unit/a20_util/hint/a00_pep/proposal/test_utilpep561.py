@@ -4,13 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** `PEP 561`_ **unit tests.**
+**Beartype** :pep:`561` **utility unit tests.**
 
-This submodule unit tests `PEP 561`_ support implemented in the :mod:`beartype`
-package.
-
-.. _PEP 561:
-   https://www.python.org/dev/peps/pep-0561
+This submodule unit tests :pep:`561` support implemented in the
+:func:`beartype.beartype` decorator.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -22,18 +19,15 @@ package.
 # ....................{ TESTS                             }....................
 def test_pep561_pytyped() -> None:
     '''
-    Test `PEP 561`_ support implemented in the :mod:`beartype` package by
+    Test :pep:`561` support implemented in the :mod:`beartype` package by
     asserting that this package provides the ``py.typed`` file required by
-    `PEP 561`_.
+    :pep:`561`.
 
     Note that this unit test exercises a necessary but *not* sufficient
-    condition for this package to comply with `PEP 561`_. The comparable
+    condition for this package to comply with :pep:`561`. The comparable
     :mod:`beartype_test.a90_func.pep.test_pep561` submodule defines a
     functional test exercising the remaining necessary condition: **the
     absence of static type-checking errors across this package.**
-
-    .. _PEP 561:
-       https://www.python.org/dev/peps/pep-0561
     '''
 
     # Defer test-specific imports.

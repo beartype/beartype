@@ -38,12 +38,15 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPanderaAny,
     # HintSignTextIO,
     HintSignType,
+    HintSignTypeGuard,
     HintSignTypeVar,
     HintSignTypedDict,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.hint.nonpep.mod.utilmodnumpy import reduce_hint_numpy_ndarray
-from beartype._util.hint.nonpep.mod.utilmodpandera import reduce_hint_pandera
+from beartype._util.hint.nonpep.mod.utilmodnumpy import (
+    reduce_hint_numpy_ndarray)
+from beartype._util.hint.nonpep.mod.utilmodpandera import (
+    reduce_hint_pandera)
 from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
     reduce_hint_pep484_none)
 from beartype._util.hint.pep.proposal.pep484.utilpep484generic import (
@@ -59,6 +62,7 @@ from beartype._util.hint.pep.proposal.utilpep557 import (
 from beartype._util.hint.pep.proposal.utilpep589 import reduce_hint_pep589
 from beartype._util.hint.pep.proposal.utilpep591 import reduce_hint_pep591
 from beartype._util.hint.pep.proposal.utilpep593 import reduce_hint_pep593
+from beartype._util.hint.pep.proposal.utilpep647 import reduce_hint_pep647
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpepreduce import reduce_hint_pep_unsigned
 from collections.abc import Callable
@@ -239,6 +243,14 @@ _HINT_SIGN_TO_REDUCER: Dict[Optional[HintSign], Callable] = {
     # ignore all annotations on this hint by reducing this hint to the
     # lower-level hint it annotates.
     HintSignAnnotated: reduce_hint_pep593,
+
+    # ..................{ PEP 647                            }..................
+    # If this hint is a PEP 647-compliant "typing.TypeGuard[...]" type hint,
+    # either:
+    # * If this hint annotates the return of some callable, reduce this hint to
+    #   the standard "bool" type.
+    # * Else, raise an exception.
+    HintSignTypeGuard: reduce_hint_pep647,
 
     # ..................{ NON-PEP ~ numpy                    }..................
     # If this hint is a PEP-noncompliant typed NumPy array (e.g.,

@@ -28,8 +28,10 @@ def reduce_hint_pep647(
     '''
     Reduce the passed :pep:`647`-compliant **type guard** (i.e.,
     subscription of the :obj:`typing.TypeGuard` type hint factory) to the
-    builtin :class:`bool` class, as advised by :pep:`647` when performing
-    runtime type-checking.
+    builtin :class:`bool` class as advised by :pep:`647` when performing
+    runtime type-checking if this hint annotates the return of some callable
+    (i.e., if ``arg_name`` is ``"return"``) *or* raise an exception otherwise
+    (i.e., if this hint annotates the return of *no* callable).
 
     This reducer is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces

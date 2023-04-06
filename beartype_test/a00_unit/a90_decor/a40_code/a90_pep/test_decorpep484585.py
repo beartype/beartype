@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype decorator :pep:`484`- and :pep:`585`-compliant type hint unit tests.
+**Beartype decorator** :pep:`484`- and :pep:`585`-compliant **unit tests**.
 
-This submodule unit tests the :func:`beartype.beartype` decorator with respect
-to :pep:`484`- and :pep:`585`-compliant type hints.
+This submodule unit tests :pep:`484` and :pep:`585` support implemented in the
+:func:`beartype.beartype` decorator.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -135,6 +135,22 @@ async def test_decor_async_generator() -> None:
     )
 
     # ....................{ LOCALS                         }....................
+    #FIXME: Refactor this unwieldy and unmaintainable DRY violation by iterating
+    #over a tuple of all return type hints to be tested: e.g.,
+    #    RETURN_HINTS = (
+    #        AsyncGeneratorUnsubscripted,
+    #        Pep484AsyncGenerator[Union[str, float], None],
+    #    )
+    #
+    #    for return_hint in RETURN_HINTS:
+    #        @beartype
+    #        async def some_kind_of_spiritual_thing(
+    #            said_the: Union[str, int],
+    #            bigger_greener_bat: Union[str, float]
+    #        ) -> return_hint:
+    #            await sleep(0)
+    #            yield said_the + bigger_greener_bat
+
     # Decorated asynchronous generators whose returns are annotated with PEP
     # 484-compliant "AsyncGenerator[...]", "AsyncIterable[...]", and
     # "AsyncIterator[...]" type hints (respectively).
@@ -307,6 +323,22 @@ def test_decor_sync_generator() -> None:
     )
 
     # ....................{ LOCALS                         }....................
+    #FIXME: Refactor this unwieldy and unmaintainable DRY violation by iterating
+    #over a tuple of all return type hints to be tested: e.g.,
+    #    RETURN_HINTS = (
+    #        GeneratorUnsubscripted,
+    #        Pep484Generator[Union[str, float], None],
+    #    )
+    #
+    #    for return_hint in RETURN_HINTS:
+    #        @beartype
+    #        def western_logocentric_stuff(
+    #            said_the: Union[str, int],
+    #            bigger_greener_bat: Union[str, float]
+    #        ) -> return_hint:
+    #            await sleep(0)
+    #            yield said_the + bigger_greener_bat
+
     # Decorated synchronous generators whose returns are annotated with PEP
     # 484-compliant "Generator[...]", "Iterable[...]", and "Iterator[...]" type
     # hints (respectively).
