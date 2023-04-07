@@ -60,7 +60,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNone,
     HintSignOptional,
     HintSignOrderedDict,
-    # HintSignPanderaAny,
+    HintSignPanderaAny,
     HintSignParamSpec,
     HintSignPattern,
     HintSignProtocol,
@@ -486,6 +486,12 @@ _HINT_SIGNS_SUPPORTED_SHALLOW = frozenset((
 
     # ..................{ PEP 647                            }..................
     HintSignTypeGuard,
+
+    #FIXME: Excise us up, please. This should *NOT* be required.
+    # ..................{ NON-PEP ~ lib : pandera            }..................
+    # All PEP-noncompliant pandera type hints are subsequently reduced to
+    # isinstanceable pandas types at hint reduction time.
+    # HintSignPanderaAny,
 ))
 '''
 Frozen set of all **shallowly supported non-originative signs** (i.e., arbitrary

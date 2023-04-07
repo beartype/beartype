@@ -29,10 +29,14 @@ def test_decor_pep647() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
-    from beartype.roar import BeartypeDecorHintPep647Exception
+    from beartype.roar import (
+        BeartypeCallHintReturnViolation,
+        BeartypeDecorHintPep647Exception,
+    )
     from beartype.typing import (
         List,
         TypeGuard,
+        Tuple,
     )
     from pytest import raises
 
@@ -48,6 +52,16 @@ def test_decor_pep647() -> None:
         '''
 
         return all(isinstance(item, str) for item in lst)
+
+
+    @beartype
+    def is_typeguard_bad(tup: Tuple[object, ...]) -> TypeGuard[Tuple[int, ...]]:
+        '''
+        :pep:`647`-compliant type guard erroneously (presumably, accidentally)
+        violating :pep:`647` by returning a non-boolean object.
+        '''
+
+        return "Lull'd by the coil of his crystalline streams,"
 
     # ....................{ PASS                           }....................
     # Assert that the above function passed lists both satisfying and violating
@@ -67,3 +81,8 @@ def test_decor_pep647() -> None:
         @beartype
         def the_blue_mediterranean(where_he_lay: TypeGuard[str]) -> bool:
             return where_he_lay
+
+    # Assert that @beartype raises the expected violation when calling a
+    # callable erroneously violating a PEP 647-compliant type guard.
+    with raises(BeartypeCallHintReturnViolation):
+        is_typeguard_bad(('Beside a', 'pumice isle', 'in', "Baiae's bay,",))

@@ -69,7 +69,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
     reduce_hint_pep484585_func_return)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     get_hint_pep484585_forwardref_classname_relative_to_object)
-from beartype._check.conv.convsanify import sanify_func_hint_root
+from beartype._check.conv.convsanify import sanify_hint_root_func
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.text.utiltextlabel import (
@@ -389,7 +389,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # * Else, raise an exception.
             #
             # Do this first *BEFORE* passing this hint to any further callables.
-            hint = sanify_func_hint_root(
+            hint = sanify_hint_root_func(
                 hint=hint, arg_name=arg_name, bear_call=bear_call)
 
             # If this hint is ignorable, continue to the next parameter.
@@ -574,7 +574,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
             # * Else, raise an exception.
             #
             # Do this first *BEFORE* passing this hint to any further callables.
-            hint = sanify_func_hint_root(
+            hint = sanify_hint_root_func(
                 hint=hint, arg_name='return', bear_call=bear_call)
 
             # If this PEP-compliant hint is unignorable, generate and return a

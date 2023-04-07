@@ -130,7 +130,7 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep_args,
     warn_if_hint_pep_deprecated,
 )
-from beartype._check.conv.convsanify import sanify_hint_child
+from beartype._check.conv.convsanify import sanify_hint_any
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
@@ -634,7 +634,7 @@ def make_check_expr(
         # calling "beartype._decor._wrap.wrapmain" submodule and thus need
         # *NOT* be inefficiently resanified here.
         if hints_meta_index_curr:
-            hint_curr = sanify_hint_child(
+            hint_curr = sanify_hint_any(
                 hint=hint_curr,
                 conf=conf,
                 exception_prefix=_EXCEPTION_PREFIX,
@@ -1533,7 +1533,7 @@ def make_check_expr(
                         # If this is *NOT* a beartype validator, raise an
                         # exception.
                         #
-                        # Note that the previously called sanify_hint_child()
+                        # Note that the previously called sanify_hint_any()
                         # function validated only the first such to be a
                         # beartype validator. All remaining arguments have yet
                         # to be validated, so we do so now for consistency and

@@ -16,7 +16,7 @@ from beartype.typing import (
     Dict,
     FrozenSet,
     Set,
-    Union,
+    # Union,
 )
 from beartype._data.datatyping import HintSignTrie
 from beartype._data.hint.pep.sign import datapepsigns
@@ -234,7 +234,6 @@ Notably, this dictionary maps from the representation prefixes of:
 '''
 
 # ....................{ MAPPINGS ~ repr : trie             }....................
-#FIXME: Augment the get_hint_pep_sign() function to leverage this, please.
 # The majority of this trie is defined by explicit key-value pairs here.
 HINT_REPR_PREFIX_TRIE_ARGS_0_OR_MORE_TO_SIGN: HintSignTrie = {
     # ..................{ NON-PEP ~ lib : pandera            }..................

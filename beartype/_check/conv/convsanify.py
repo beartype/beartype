@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     Any,
+    Optional,
 )
 from beartype._check.checkcall import BeartypeCall
 from beartype._check.conv.convcoerce import (
@@ -29,7 +30,7 @@ from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
 # ....................{ SANIFIERS ~ root                   }....................
 #FIXME: Unit test us up, please.
 #FIXME: Revise docstring in accordance with recent dramatic improvements.
-def sanify_func_hint_root(
+def sanify_hint_root_func(
     # Mandatory parameters.
     hint: object,
     arg_name: str,
@@ -63,13 +64,13 @@ def sanify_func_hint_root(
 
     Caveats
     ----------
-    This function *cannot* be meaningfully memoized, since the passed type hint
+    This sanifier *cannot* be meaningfully memoized, since the passed type hint
     is *not* guaranteed to be cached somewhere. Only functions passed cached
     type hints can be meaningfully memoized. Even if this function *could* be
     meaningfully memoized, there would be no benefit; this function is only
     called once per parameter or return of the currently decorated callable.
 
-    This function is intended to be called *after* all possibly
+    This sanifier is intended to be called *after* all possibly
     :pep:`563`-compliant **deferred type hints** (i.e., type hints persisted as
     evaluatable strings rather than actual type hints) annotating this callable
     if any have been evaluated into actual type hints.
@@ -108,7 +109,7 @@ def sanify_func_hint_root(
     '''
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with the sanify_hint_root() sanitizer, please.
+    # CAUTION: Synchronize with the sanify_hint_root_contextfree() sanitizer.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # PEP-compliant type hint coerced (i.e., permanently converted in the
@@ -157,7 +158,7 @@ def sanify_func_hint_root(
 
 #FIXME: Unit test us up, please.
 #FIXME: Revise docstring in accordance with recent dramatic improvements.
-def sanify_hint_root(
+def sanify_hint_root_contextfree(
     hint: object,
     conf: BeartypeConf,
     exception_prefix: str,
@@ -168,34 +169,16 @@ def sanify_hint_root(
     type hint) if this hint is reducible *or* this hint as is otherwise (i.e.,
     if this hint is irreducible).
 
-    Specifically, this function:
+    This sanifier is principally intended to be called by a **context-free
+    type-checker factory** (i.e., a function creating and returning a runtime
+    type-checker type-checking this hint, outside the context of any standard
+    type hinting annotation like a user-defined class variable, callable
+    parameter or return, or assignment statement). Such factories include:
 
-    * If this hint is a **PEP-noncompliant tuple union** (i.e., tuple of one or
-      more standard classes and forward references to standard classes):
-
-      * Coerces this tuple union into the equivalent :pep:`484`-compliant
-        union.
-      * Replaces this tuple union in the ``__annotations__`` dunder tuple of
-        this callable with this :pep:`484`-compliant union.
-      * Returns this :pep:`484`-compliant union.
-
-    * Else if this hint is already PEP-compliant, preserves and returns this
-      hint unmodified as is.
-    * Else (i.e., if this hint is neither PEP-compliant nor -noncompliant and
-      thus invalid as a type hint), raise an exception.
-
-    Caveats
-    ----------
-    This function *cannot* be meaningfully memoized, since the passed type hint
-    is *not* guaranteed to be cached somewhere. Only functions passed cached
-    type hints can be meaningfully memoized. Even if this function *could* be
-    meaningfully memoized, there would be no benefit; this function is only
-    called once per parameter or return of the currently decorated callable.
-
-    This function is intended to be called *after* all possibly
-    :pep:`563`-compliant **deferred type hints** (i.e., type hints persisted as
-    evaluatable strings rather than actual type hints) annotating this callable
-    if any have been evaluated into actual type hints.
+    * The private :func:`beartype._check.checkmake.make_func_tester` factory,
+      internally called by:
+      * The public :func:`beartype.door.is_bearable` function.
+      * The public :meth:`beartype.door.TypeHint.is_bearable` method.
 
     Parameters
     ----------
@@ -224,10 +207,15 @@ def sanify_hint_root(
 
         * A PEP-noncompliant type hint.
         * A supported PEP-compliant type hint.
+
+    See Also
+    ----------
+    :func:`.sanify_hint_root_func`
+        Further details.
     '''
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with the sanify_func_hint_root() sanitizer, please.
+    # CAUTION: Synchronize with the sanify_hint_root_func() sanitizer, please.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # PEP-compliant type hint coerced from this possibly PEP-noncompliant type
@@ -238,17 +226,21 @@ def sanify_hint_root(
 
     # Reduce this hint to a lower-level PEP-compliant type hint if this hint is
     # reducible *OR* this hint as is otherwise. See
-    # sanify_func_hint_root() for further commentary.
+    # sanify_hint_root_func() for further commentary.
     hint = reduce_hint(hint, conf, None, exception_prefix)
 
     # Return this sanified hint.
     return hint
 
-# ....................{ SANIFIERS ~ child                  }....................
-def sanify_hint_child(
+# ....................{ SANIFIERS ~ any                    }....................
+def sanify_hint_any(
+    # Mandatory parameters.
     hint: object,
     conf: BeartypeConf,
     exception_prefix: str,
+
+    # Optional parameters.
+    arg_name: Optional[str] = None,
 ) -> Any:
     '''
     PEP-compliant type hint sanified (i.e., sanitized) from the passed
@@ -264,6 +256,16 @@ def sanify_hint_child(
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
+    arg_name : Optional[str]
+        Either:
+
+        * If this hint directly annotates a callable parameter (as the root type
+          hint of that parameter), the name of this parameter.
+        * If this hint directly annotates a callable return (as the root type
+          hint of that return), the magic string ``"return"``.
+        * Else, :data:`None`.
+
+        Defaults to :data:`None`.
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
@@ -275,7 +277,7 @@ def sanify_hint_child(
     '''
 
     # This sanifier covers the proper subset of logic performed by the
-    # sanify_hint_root() sanifier applicable to child type hints.
+    # sanify_hint_root_contextfree() sanifier applicable to child type hints.
 
     # PEP-compliant type hint coerced (i.e., permanently converted in the
     # annotations dunder dictionary of the passed callable) from this possibly
@@ -285,7 +287,7 @@ def sanify_hint_child(
     hint = coerce_hint_any(hint)
 
     # Return this hint reduced.
-    return reduce_hint(hint, conf, None, exception_prefix)
+    return reduce_hint(hint, conf, arg_name, exception_prefix)
 
 # ....................{ PRIVATE ~ mappings                 }....................
 _HINT_REPR_TO_HINT = CacheUnboundedStrong()

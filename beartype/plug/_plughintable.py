@@ -100,7 +100,7 @@ def is_hint_beartypehintable(hint: object) -> bool:
 #* The "beartype._decor._error" subpackage will need to implement a comparable
 #  mechanism as the "beartype._check.expr" subpackage for detecting and avoiding
 #  recursion in this reduction. Curiously, "beartype._decor._error" only ever
-#  calls the sanify_hint_child() sanifier in a single place. That simplifies
+#  calls the sanify_hint_any() sanifier in a single place. That simplifies
 #  things a bit. Still, we'll need to add a similar "set" somewhere in that
 #  subpackage tracking which "BeartypeHintable" objects have already been
 #  reduced.
@@ -124,7 +124,7 @@ def is_hint_beartypehintable(hint: object) -> bool:
 #Examining the code calling sanify_*_root() functions, it superficially looks
 #like we might want to consider *NO LONGER DEFINING OR CALLING* sanify_*_root()
 #functions. Like, seriously. The logic performed by those functions has become
-#trivial. They're practically one-liners. That said, sanify_hint_child() is
+#trivial. They're practically one-liners. That said, sanify_hint_any() is
 #still extremely useful and should be preserved exactly as is. Consider:
 #* High-level functions calling sanify_*_root() functions should instead just
 #  call either coerce_func_hint_root() or coerce_hint_root() based on context.
@@ -141,10 +141,10 @@ def is_hint_beartypehintable(hint: object) -> bool:
 #       # This exact logic is likely to be duplicated into
 #       # "beartype._decor._error". That's not particularly a problem -- just
 #       # something worth noting. One approach to preserving DRY here would be
-#       # to shift this "if" statement into sanify_hint_child(). Of course,
+#       # to shift this "if" statement into sanify_hint_any(). Of course,
 #       # everything then becomes non-trivial, because we would then need to
 #       # both pass *AND* return "hint_parent_beartypehintables" sets to and
-#       # from the sanify_hint_child() function. *sigh*
+#       # from the sanify_hint_any() function. *sigh*
 #       if (
 #           is_hint_beartypehintable(hint_child) and
 #           hint_child not in hint_parent_beartypehintables
@@ -156,7 +156,7 @@ def is_hint_beartypehintable(hint: object) -> bool:
 #
 #           hint_child = transform_hint_beartypehintable(hint_child)
 #
-#       hint_child = sanify_hint_child(hint_root)
+#       hint_child = sanify_hint_any(hint_root)
 #FIXME: Wow. What a fascinatingly non-trivial issue. The above doesn't work,
 #either. Why? Two reasons:
 #* sanify_*_root() functions *MUST* continue to perform reduction -- including
@@ -173,7 +173,7 @@ def is_hint_beartypehintable(hint: object) -> bool:
 #* All sanify_*() functions *MUST* call transform_hint_beartypehintable()
 #  directly, outside of calls to either reduce_hint() and coerce_*_hint().
 #* Frozensets should be used. Doing so enables memoization, if we wanted.
-#* Call transform_hint_beartypehintable() from sanify_hint_child(), whose
+#* Call transform_hint_beartypehintable() from sanify_hint_any(), whose
 #  signature *MUST* be augmented accordingly (i.e., to both accept and return
 #  "hints_parent_beartypehintable: Optional[frozenset]").
 #* Call transform_hint_beartypehintable() from sanify_*hint_root(), whose

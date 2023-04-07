@@ -189,7 +189,7 @@ def get_beartype_violation(
 
         * If the object failing to satisfy this hint is a passed parameter, the
           name of this parameter.
-        * Else, the magic string ``return`` implying this object to be the
+        * Else, the magic string ``"return"`` implying this object to be the
           value returned from this callable.
     pith_value : object
         Passed parameter or returned value violating this hint.
@@ -291,20 +291,13 @@ def get_beartype_violation(
     # PEP-compliant type hint annotating this parameter or return value.
     hint = func.__annotations__[pith_name]
 
-    # If this hint is *NOT* the PEP 484-compliant "typing.NoReturn" type hint
-    # permitted *ONLY* as a return annotation, this is a standard type hint
-    # generally supported by both parameters and return values. In this case...
-    if hint is not NoReturn:
-        # If this hint is unsupported, raise an exception.
-        die_unless_hint(hint=hint, exception_prefix=exception_prefix)
-        # Else, this type hint is supported.
-
     # ....................{ CAUSE                          }....................
     # Cause describing the failure of this pith to satisfy this hint.
     violation_cause = ViolationCause(
         func=func,
         conf=conf,
         pith=pith_value,
+        pith_name=pith_name,
         hint=hint,
         cause_indent='',
         exception_prefix=exception_prefix,

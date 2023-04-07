@@ -295,8 +295,6 @@
    https://www.djangoproject.com
 .. _NetworkX:
    https://networkx.org
-.. _Pandas:
-   https://pandas.pydata.org
 .. _PyTorch:
    https://pytorch.org
 .. _SymPy:
@@ -340,11 +338,23 @@
 .. _numpy.typing.NDArray:
    https://numpy.org/devdocs/reference/typing.html#ndarray
 
+.. # ------------------( LINKS ~ py : package : pandas       )------------------
+.. # Note that "pandas" is officially lowercase.
+.. _pandas:
+   https://pandas.pydata.org
+.. _pandas.DataFrame:
+   https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html
+
 .. # ------------------( LINKS ~ py : package : panderas     )------------------
+.. # Note that "pandera" is officially lowercase.
 .. _pandera:
    https://pandera.readthedocs.io
-.. _pandera.DataFrame:
-   https://pandera.readthedocs.io/en/stable/reference/generated/pandera.typing.html?highlight=typing
+.. _pandera.check_types:
+   https://pandera.readthedocs.io/en/stable/reference/generated/pandera.decorators.check_types.html
+.. _pandera.typing:
+   https://pandera.readthedocs.io/en/stable/reference/generated/pandera.typing.html
+.. _pandera.typing.DataFrame:
+   https://pandera.readthedocs.io/en/stable/dataframe_models.html
 
 .. # ------------------( LINKS ~ py : package : sphinx       )------------------
 .. _Sphinx:
