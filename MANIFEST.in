@@ -16,7 +16,6 @@
 # ....................{ INCLUDE                            }....................
 # Include all requisite top-level install-time files.
 include .coveragerc
-include .mypy.ini
 include .readthedocs.yml
 include LICENSE
 include MANIFEST.in

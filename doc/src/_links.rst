@@ -151,8 +151,14 @@
    https://en.wikipedia.org/wiki/Type_system
 .. _endorheic basins:
    https://en.wikipedia.org/wiki/Endorheic_basin
+.. _generative pre-trained transformer:
+   https://en.wikipedia.org/wiki/Generative_pre-trained_transformer
 .. _gratis versus libre:
    https://en.wikipedia.org/wiki/Gratis_versus_libre
+.. _large language model:
+   https://en.wikipedia.org/wiki/Large_language_model
+.. _machine learning:
+   https://en.wikipedia.org/wiki/Machine_learning
 .. _memory safety:
    https://en.wikipedia.org/wiki/Memory_safety
 .. _multiple dispatch:
@@ -215,6 +221,8 @@
    https://www.youtube.com/watch?v=uMSV4OteqBE
 .. _greased lightning:
    https://www.youtube.com/watch?v=H-kL8A4RNQ8
+.. _led zeppelin:
+   https://rateyourmusic.com/release/album/led-zeppelin/led-zeppelin
 .. _ludicrous speed:
    https://www.youtube.com/watch?v=6tTvklMXeFE
 .. _the gripping hand:

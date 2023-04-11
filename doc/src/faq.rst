@@ -635,15 +635,15 @@ This is why we beartype.
 ...pandas data frames?
 ######################
 
-Type-check any pandas_ object (including any `DataFrame <pandas.DataFrame_>`__)
-with `type hints <pandera.typing_>`__ published by the `third-party pandera
-package <pandera_>`__ – the leading industry-standard for *blah, blah, blah*...
-hey, wait. Is this HR speak in beartype's FAQ!? Yes. It's true. We are shilling.
+Type-check *any* pandas_ object with `type hints <pandera.typing_>`__ published
+by the `third-party pandera package <pandera_>`__ – the industry standard for
+Pythonic data validation and *blah, blah, blah*... hey wait. Is this HR speak in
+the beartype FAQ!? Yes. It's true. We are shilling.
 
 Because caring is sharing code that works, beartype transparently supports *all*
-`pandera type hints <pandera.typing_>`__. Seeing is believing. Soon, you too
-will believe that machine-learning pipelines can be domesticated. Arise, huge
-example! Stun the disbelievers throwing peanuts at our issue tracker.
+`pandera type hints <pandera.typing_>`__. Soon, you too will believe that
+machine-learning pipelines can be domesticated. Arise, huge example! Stun the
+disbelievers throwing peanuts at `our issue tracker <beartype issues_>`__.
 
 .. code-block:: python
 
@@ -680,7 +680,7 @@ example! Stun the disbelievers throwing peanuts at our issue tracker.
        PercyByssheShelley: Series[Timestamp]
 
    # Custom callable you define. Here, we type-check the passed data frame, the
-   # passed non-pandas object, and the returned column of this data frame.
+   # passed non-pandas object, and the returned series of this data frame.
    @beartype
    @pa.check_types
    def convert_dataframe_column_to_series(
@@ -744,16 +744,25 @@ There be dragons belching flames over the hapless village, however:
 * If you forget the pandera.check_types_ decorator (but still apply the
   :func:`beartype.beartype` decorator), :func:`beartype.beartype` will only
   **shallowly type-check** (i.e., validate the types but *not* the contents of)
-  pandas objects. This is better than nothing, but... look. No API is perfect.
+  pandas_ objects. This is better than nothing, but... look. No API is perfect.
   We didn't make crazy. We only integrate with crazy. The lesson here is to
   never forget the pandera.check_types_ decorator.
 * If you forget the :func:`beartype.beartype` decorator (but still apply the
   pandera.check_types_ decorator), pandera.check_types_ will **silently ignore
-  everything** except pandas objects. Seriously. This is the worst case. This is
-  literally the blimp crashing and burning on the cover of *Led Zeppelin I*.
+  everything** except pandas_ objects. This is the worst case. This is literally
+  `the blimp crashing and burning on the cover <led zeppelin_>`__ of *Led
+  Zeppelin I*. The lesson here is to never forget the :func:`beartype.beartype`
+  decorator.
 
-Forget nothing by instead defining a new convenience ``@bearpanderatype``
-decorator that automates all the special madness away:
+There are two lessons here. Both suck. Nobody should need to read fifty
+paragraphs full of flaming dragons just to validate pandas_ objects. Moreover,
+you are thinking: "It smells like boilerplate." You are *not* wrong. It is
+textbook boilerplate. Thankfully, your concerns can all be fixed with even more
+boilerplate. Did we mention none of this is our fault?
+
+Define a new ``@bearpanderatype`` decorator internally applying both the
+:func:`beartype.beartype` and pandera.check_types_ decorators; then use that
+instead of either of those. Automate away the madness with more madness:
 
 .. code-block:: python
 
@@ -762,11 +771,13 @@ decorator that automates all the special madness away:
        return beartype(pa.check_types(*args, **kwargs))
 
    # Knowledge is power. Clench it with your iron fist until it pops.
-   @bearpanderatype
+   @bearpanderatype  # <-- less boilerplate means more power
    def convert_dataframe_column_to_series(...) -> ...: ...
 
-Open pandera_'s box today to find out what you've won. *Spoiler: it's a codebase
-that works.*
+pandas_ + pandera_ + :mod:`beartype`: BFFs at last. Type-check pandas_ data
+frames in `ML <machine learning_>`__ pipelines for the good of `LLaMa-kind
+<large language model_>`__. Arise, bug-free `GPT <generative pre-trained
+transformer_>`__! Overthrow all huma— *message ends*
 
 ...under VSCode?
 ################
