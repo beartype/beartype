@@ -98,9 +98,9 @@ def beartype_object(
             decorated by this decorator).
 
         * Else, this beartypeable was decorated directly by this decorator. In
-          this case, ``None``.
+          this case, :data:`None`.
 
-        Defaults to ``None``.
+        Defaults to :data:`None`.
 
         Note that this decorator requires *both* the root and currently
         decorated class to correctly resolve edge cases under :pep:`563`: e.g.,
@@ -260,12 +260,15 @@ def beartype_object(
     )
 
 
-#FIXME: Generalize to accept a "cls_stack" parameter, please.
 #FIXME: Unit test us up, please.
 def beartype_object_nonfatal(
+    # Mandatory parameters.
     obj: BeartypeableT,
-    conf: BeartypeConf,
     warning_category: TypeWarning,
+
+    # Optional parameters.
+    cls_stack: TypeStack = None,
+    **kwargs
 ) -> BeartypeableT:
     '''
     Decorate the passed **beartypeable** (i.e., pure-Python callable or class)
@@ -293,51 +296,60 @@ def beartype_object_nonfatal(
 
       * Emit a warning for each callable or class that :func:`beartype.beartype`
         fails to generate a type-checking wrapper for.
-      * Proceed to the next callable or class.
+      * Continue to the next callable or class.
 
     Parameters
     ----------
     obj : BeartypeableT
         **Beartypeable** (i.e., pure-Python callable or class) to be decorated.
-    conf : BeartypeConf, optional
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all flags, options, settings, and other metadata configuring the
-        current decoration of the decorated callable or class).
     warning_category : TypeWarning
         Category of the non-fatal warning to emit if :func:`beartype.beartype`
         fails to generate a type-checking wrapper for this callable or class.
+    cls_stack : TypeStack
+        **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
+        ``None``). Defaults to ``None``. See also the :func:`.beartype_object`
+        decorator for further commentary.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.beartype_object` decorator internally called by this higher-level
+    decorator on the passed beartypeable.
 
     Returns
     ----------
     BeartypeableT
         Either:
 
-        * If the passed object is a class, this existing class embellished with
-          dynamically generated type-checking.
-        * If the passed object is a callable, a new callable wrapping that
-          callable with dynamically generated type-checking.
+        * If :func:`.beartype_object` raises an exception, the passed object
+          unmodified as is.
+        * If :func:`.beartype_object` raises no exception:
+          * If the passed object is a class, this existing class embellished with
+            dynamically generated type-checking.
+          * If the passed object is a callable, a new callable wrapping that
+            callable with dynamically generated type-checking.
 
     Warns
     ----------
     warning_category
-        If :func:`beartype.beartype` fails to generate a type-checking wrapper
+        If :func:`.beartype_object` fails to generate a type-checking wrapper
         for this callable or class by raising a fatal exception, this function
         coerces that exception into a non-fatal warning describing that error.
-
-    See Also
-    ----------
-    :func:`beartype._decor.decormain.beartype`
-        Memoized parent decorator wrapping this unmemoized child decorator.
     '''
 
     # Attempt to decorate the passed beartypeable.
     try:
-        return beartype_object(obj, conf)
+        return beartype_object(obj, **kwargs)
     # If doing so unexpectedly raises an exception, coerce that fatal exception
     # into a non-fatal warning for nebulous safety.
     except Exception as exception:
         assert isinstance(warning_category, Warning), (
             f'{repr(warning_category)} not warning category.')
+
+        #FIXME: Unconditionally munge this error message by:
+        #* Globally replacing *EACH* newline (i.e., "\n" substring) in this
+        #  message with a newline followed by four spaces (i.e., "\n    ").
+        #* Stripping all ANSI colors. While colors are useful for exception
+        #  messages that typically percolate down to the terminal, warnings are
+        #  another breed entirely. Maybe? Maybe.
 
         # Original error message to be embedded in the warning message to be
         # emitted, defined as either...
@@ -350,15 +362,11 @@ def beartype_object_nonfatal(
             # Else, this exception is *NOT* beartype-specific. In this case,
             # this exception's message is probably *NOT* human-readable as is.
             # Prepend that non-human-readable message by this exception's
-            # traceback to for disambiguity and debuggability. Note that the
+            # traceback for disambiguity and debuggability. Note that the
             # format_exc() function appends this exception's message to this
             # traceback and thus suffices as is.
             format_exc()
         )
-
-        #FIXME: Unconditionally parse this warning message by globally replacing
-        #*EACH* newline (i.e., "\n" substring) in this message with a newline
-        #followed by four spaces (i.e., "\n    ").
 
         #FIXME: Inadequate, really. Instead defer to the:
         #* "label_callable(func=obj, is_contextualized=True)" function if this
@@ -369,7 +377,14 @@ def beartype_object_nonfatal(
         #
         #This suggests we probably just want to define a new higher-level
         #label_object() function with signature resembling:
-        #    label_object(obj: object, is_contextualized: Optional[bool] = None)
+        #    def label_object(
+        #        # Mandatory parameters.
+        #        obj: object,
+        #
+        #        # Optional parameters.
+        #        cls_stack: TypeStack = None,
+        #        is_line_number: bool = False,
+        #    ) -> str
         #FIXME: Note that we'll want to capitalize the first character of the
         #string returned by the label_object() function, please.
 
@@ -380,9 +395,32 @@ def beartype_object_nonfatal(
         # underlying source code module file.
         obj_lineno = get_object_module_line_number_begin(obj)
 
+        #FIXME: Replace our existing usage of the oddball prefix "@beartyped" in
+        #exception messages with this much more readable alternative, please.
+
+        # Human-readable string describing the type of this object as either...
+        obj_type = (
+            # If this object is a pure-Python class, an appropriate string;
+            'class' if isinstance(obj, type) else
+            # If this object is either a pure-Python function *OR* method, an
+            # appropriate string;
+            (
+                'function' if cls_stack is None else 'method'
+            ) if is_func_python(obj) else
+            # Else, this object is neither a pure-Python class, function, *NOR*
+            # method. In this case, fallback to a sane placeholder.
+            'object'
+        )
+
+        from beartype._util.text.utiltextmunge import uppercase_char_first
+
+        # This string with the first character capitalized.
+        obj_type_capitalized = uppercase_char_first(obj_type)
+
         # Warning message to be emitted.
         warning_message = (
-            error_message
+            f'{obj_type_capitalized} {obj_name} at line number {obj_lineno}:\n'
+            f'{error_message}'
         )
 
         # Emit this message under this category.
@@ -390,7 +428,7 @@ def beartype_object_nonfatal(
 
     # Return this object unmodified, as @beartype failed to successfully wrap
     # this object with a type-checking class or callable. So it goes, fam.
-    return obj
+    return obj  # type: ignore[return-value]
 
 # ....................{ PRIVATE ~ beartypers : func        }....................
 def _beartype_decorator_builtin(
@@ -744,7 +782,7 @@ def _beartype_type(
         specific to this class.
     cls_stack : TypeStack
         **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
-        ``None``). Defaults to ``None``. See also the :func:`beartype_object`
+        ``None``). Defaults to ``None``. See also the :func:`.beartype_object`
         decorator for further commentary.
 
     Returns
@@ -875,7 +913,7 @@ def _monkeypatch_object(
         specific to this descriptor.
 
     All remaining keyword parameters are passed as is to the lower-level
-    :func:`_beartype_func` decorator internally called by this higher-level
+    :func:`._beartype_func` decorator internally called by this higher-level
     decorator on the pure-Python function encapsulated in this descriptor.
 
     Returns

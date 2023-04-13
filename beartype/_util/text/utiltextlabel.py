@@ -143,7 +143,7 @@ def label_callable(
     return f'{func_label_prefix}{get_object_name(func)}(){func_label_suffix}'
 
 # ....................{ LABELLERS ~ type                   }....................
-def label_obj_type(obj: object) -> str:
+def label_object_type(obj: object) -> str:
     '''
     Human-readable label describing the class of the passed object.
 

@@ -24,7 +24,7 @@ from beartype._decor._error._util.errorutiltext import represent_pith
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
-from beartype._util.text.utiltextlabel import label_obj_type
+from beartype._util.text.utiltextlabel import label_object_type
 
 # ....................{ GETTERS ~ sequence                 }....................
 def find_cause_sequence_args_1(cause: ViolationCause) -> ViolationCause:
@@ -287,7 +287,7 @@ def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
                     # Human-readable substring prefixing this failure with
                     # metadata describing this item.
                     cause_deep.cause_str_or_none = (
-                        f'{color_type(label_obj_type(cause.pith))} '
+                        f'{color_type(label_object_type(cause.pith))} '
                         f'index {pith_item_index} item '
                         f'{cause_deep.cause_str_or_none}'
                     )
