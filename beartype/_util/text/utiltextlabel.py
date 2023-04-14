@@ -4,19 +4,65 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **text label** (i.e., human-readable strings describing prominent
-objects or types, typically interpolated into error messages) utilities.
+Project-wide **text label utilities** (i.e., low-level callables creating and
+returning human-readable strings describing prominent objects or types, intended
+to be embedded in human-readable error messages).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Optional
+from beartype._data.datatyping import (
+    BeartypeableT,
+    TypeStack,
+)
 from beartype._util.utilobject import (
     get_object_name,
     get_object_type_name,
 )
 from collections.abc import Callable
+
+# ....................{ LABELLERS ~ beartypeable           }....................
+def label_beartypeable_kind(obj: BeartypeableT, cls_stack: TypeStack) -> str:
+    '''
+    Human-readable label describing the **kind** (i.e.,
+    single concise noun synopsizing the category of) the passed **beartypeable**
+    (i.e., object that is currently being or has already been decorated by the
+    :func:`beartype.beartype` decorator).
+
+    Parameters
+    ----------
+    obj : BeartypeableT
+        Beartypeable to describe the kind of.
+    cls_stack : TypeStack
+        **Type stack** (i.e., tuple of zero or more arbitrary types describing
+        the chain of classes lexically containing this beartypeable if any *or*
+        ``None`` otherwise) . See also the
+        :func:`beartype._decor.decorcore.beartype_object` decorator.
+
+    Returns
+    ----------
+    str
+        Human-readable label describing the kind of this beartypeable.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfunctest import is_func_python
+
+    # Return either...
+    return (
+        # If this object is a pure-Python class, an appropriate string;
+        'class' if isinstance(obj, type) else
+        # If this object is either a pure-Python function *OR* method, an
+        # appropriate string;
+        (
+            'function' if cls_stack is None else 'method'
+        ) if is_func_python(obj) else
+        # Else, this object is neither a pure-Python class, function, *NOR*
+        # method. In this case, fallback to a sane placeholder.
+        'object'
+    )
 
 # ....................{ LABELLERS ~ callable               }....................
 def label_callable(
@@ -62,12 +108,12 @@ def label_callable(
     # Avoid circular import dependencies.
     from beartype._util.func.arg.utilfuncargget import (
         get_func_args_len_flexible)
-    from beartype._util.func.utilfuncfile import get_func_filename_or_none
     from beartype._util.func.utilfunccodeobj import get_func_codeobj
+    from beartype._util.func.utilfuncfile import get_func_filename_or_none
     from beartype._util.func.utilfunctest import (
-        is_func_lambda,
-        is_func_coro,
         is_func_async_generator,
+        is_func_coro,
+        is_func_lambda,
         is_func_sync_generator,
     )
     from beartype._util.mod.utilmodget import (
@@ -142,26 +188,34 @@ def label_callable(
     # Return that prefix followed by the fully-qualified name of that callable.
     return f'{func_label_prefix}{get_object_name(func)}(){func_label_suffix}'
 
-# ....................{ LABELLERS ~ type                   }....................
-def label_object_type(obj: object) -> str:
+# ....................{ LABELLERS ~ exception              }....................
+def label_exception(exception: Exception) -> str:
     '''
-    Human-readable label describing the class of the passed object.
+    Human-readable label describing the passed exception.
+
+    Caveats
+    ----------
+    **The label returned by this function does not describe the traceback
+    originating this exception.** To do so, consider calling the standard
+    :func:`traceback.format_exc` function instead.
 
     Parameters
     ----------
-    obj : object
-        Object whose class is to be labelled.
+    exception : Exception
+        Exception to be labelled.
 
     Returns
     ----------
     str
-        Human-readable label describing the class of this object.
+        Human-readable label describing this exception.
     '''
+    assert isinstance(exception, Exception), (
+        f'{repr(exception)} not exception.')
 
-    # Tell me why, why, why I curse the sky! ...no, srsly.
-    return label_type(type(obj))
+    # Return this exception's label.
+    return f'{exception.__class__.__qualname__}: {str(exception)}'
 
-
+# ....................{ LABELLERS ~ type                   }....................
 def label_type(cls: type) -> str:
     '''
     Human-readable label describing the passed class.
@@ -232,153 +286,21 @@ def label_type(cls: type) -> str:
     # Return this labelled classname.
     return classname
 
-# ....................{ LABELLERS ~ exception              }....................
-def label_exception(exception: Exception) -> str:
-    '''
-    Human-readable label describing the passed exception.
 
-    Caveats
-    ----------
-    **The label returned by this function does not describe the traceback
-    originating this exception.** To do so, consider calling the standard
-    :func:`traceback.format_exc` function instead.
+def label_object_type(obj: object) -> str:
+    '''
+    Human-readable label describing the class of the passed object.
 
     Parameters
     ----------
-    exception : Exception
-        Exception to be labelled.
+    obj : object
+        Object whose class is to be labelled.
 
     Returns
     ----------
     str
-        Human-readable label describing this exception.
-    '''
-    assert isinstance(exception, Exception), (
-        f'{repr(exception)} not exception.')
-
-    # Return this exception's label.
-    return f'{exception.__class__.__qualname__}: {str(exception)}'
-
-# ....................{ PREFIXERS ~ callable               }....................
-def prefix_callable(func: Callable) -> str:
-    '''
-    Human-readable label describing the passed **callable** (e.g., function,
-    method, property) suffixed by delimiting whitespace.
-
-    Parameters
-    ----------
-    func : Callable
-        Callable to be labelled.
-
-    Returns
-    ----------
-    str
-        Human-readable label describing this callable.
-    '''
-    assert callable(func), f'{repr(func)} uncallable.'
-
-    # Testify, beartype!
-    return f'{label_callable(func)} '
-
-
-def prefix_callable_decorated(func: Callable) -> str:
-    '''
-    Human-readable label describing the passed **decorated callable** (i.e.,
-    callable wrapped by the :func:`beartype.beartype` decorator with a wrapper
-    function type-checking that callable) suffixed by delimiting whitespace.
-
-    Parameters
-    ----------
-    func : Callable
-        Decorated callable to be labelled.
-
-    Returns
-    ----------
-    str
-        Human-readable label describing this decorated callable.
+        Human-readable label describing the class of this object.
     '''
 
-    # Create and return this label.
-    return f'@beartyped {prefix_callable(func)}'
-
-
-def prefix_callable_decorated_pith(
-    func: Callable, pith_name: str) -> str:
-    '''
-    Human-readable label describing either the parameter with the passed name
-    *or* return value if this name is ``return`` of the passed **decorated
-    callable** (i.e., callable wrapped by the :func:`beartype.beartype`
-    decorator with a wrapper function type-checking that callable) suffixed by
-    delimiting whitespace.
-
-    Parameters
-    ----------
-    func : Callable
-        Decorated callable to be labelled.
-    pith_name : str
-        Name of the parameter or return value of this callable to be labelled.
-
-    Returns
-    ----------
-    str
-        Human-readable label describing either the name of this parameter *or*
-        this return value.
-    '''
-    assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
-
-    # Return a human-readable label describing either...
-    return (
-        # If this name is "return", the return value of this callable.
-        prefix_callable_decorated_return(func)
-        if pith_name == 'return' else
-        # Else, the parameter with this name of this callable.
-        prefix_callable_decorated_arg(func=func, arg_name=pith_name)
-    )
-
-# ....................{ PREFIXERS ~ callable : param       }....................
-def prefix_callable_decorated_arg(
-    func: Callable, arg_name: str) -> str:
-    '''
-    Human-readable label describing the parameter with the passed name of the
-    passed **decorated callable** (i.e., callable wrapped by the
-    :func:`beartype.beartype` decorator with a wrapper function type-checking
-    that callable) suffixed by delimiting whitespace.
-
-    Parameters
-    ----------
-    func : Callable
-        Decorated callable to be labelled.
-    arg_name : str
-        Name of the parameter of this callable to be labelled.
-
-    Returns
-    ----------
-    str
-        Human-readable label describing this parameter's name.
-    '''
-    assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
-
-    # Create and return this label.
-    return f'{prefix_callable_decorated(func)}parameter "{arg_name}" '
-
-# ....................{ PREFIXERS ~ callable : return      }....................
-def prefix_callable_decorated_return(func: Callable) -> str:
-    '''
-    Human-readable label describing the return of the passed **decorated
-    callable** (i.e., callable wrapped by the :func:`beartype.beartype`
-    decorator with a wrapper function type-checking that callable) suffixed by
-    delimiting whitespace.
-
-    Parameters
-    ----------
-    func : Callable
-        Decorated callable to be labelled.
-
-    Returns
-    ----------
-    str
-        Human-readable label describing this return.
-    '''
-
-    # Create and return this label.
-    return f'{prefix_callable_decorated(func)}return '
+    # Tell me why, why, why I curse the sky! ...no, srsly.
+    return label_type(type(obj))

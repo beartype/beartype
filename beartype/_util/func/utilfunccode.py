@@ -128,7 +128,7 @@ def get_func_code_lines_or_none(
 
     # Avoid circular import dependencies.
     from beartype._util.func.utilfuncfile import is_func_file
-    from beartype._util.text.utiltextlabel import prefix_callable
+    from beartype._util.text.utiltextprefix import prefix_callable
 
     # If the passed callable exists on-disk and is thus pure-Python...
     if is_func_file(func):
@@ -198,7 +198,7 @@ def get_func_file_code_lines_or_none(
 
     # Avoid circular import dependencies.
     from beartype._util.func.utilfuncfile import is_func_file
-    from beartype._util.text.utiltextlabel import prefix_callable
+    from beartype._util.text.utiltextprefix import prefix_callable
 
     # If the passed callable exists on-disk and is thus pure-Python...
     if is_func_file(func):
@@ -277,7 +277,7 @@ if IS_PYTHON_AT_LEAST_3_9:
 
         # Avoid circular import dependencies.
         from beartype._util.func.utilfunctest import is_func_lambda
-        from beartype._util.text.utiltextlabel import prefix_callable
+        from beartype._util.text.utiltextprefix import prefix_callable
 
         # If the passed callable is a pure-Python lambda function...
         if is_func_lambda(func):

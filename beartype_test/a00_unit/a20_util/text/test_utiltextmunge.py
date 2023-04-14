@@ -27,12 +27,14 @@ def test_uppercase_char_first():
     from beartype._util.text.utiltextmunge import uppercase_char_first
     from pytest import raises
 
-    with raises(AssertionError):
-        uppercase_char_first(7)
-
+    # Assert this munger returns the expected string when passed a string.
     assert uppercase_char_first(text='beArTyPe') == "BeArTyPe"
     assert uppercase_char_first(text="<bear>") == "<bear>"
     assert uppercase_char_first(text="") == ""
+
+    # Assert this munger raises the expected exception when passed a non-string.
+    with raises(AssertionError):
+        uppercase_char_first(7)
 
 # ....................{ TESTS ~ number                     }....................
 def test_number_lines():

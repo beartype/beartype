@@ -72,11 +72,11 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
 from beartype._check.conv.convsanify import sanify_hint_root_func
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.utilkinddict import update_mapping
-from beartype._util.text.utiltextlabel import (
+from beartype._util.text.utiltextmunge import replace_str_substrs
+from beartype._util.text.utiltextprefix import (
     prefix_callable_decorated_arg,
     prefix_callable_decorated_return,
 )
-from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.utilobject import SENTINEL
 from collections.abc import (
     Callable,

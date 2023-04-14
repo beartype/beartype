@@ -388,6 +388,10 @@ def beartype_object_nonfatal(
         #FIXME: Note that we'll want to capitalize the first character of the
         #string returned by the label_object() function, please.
 
+        # Avoid circular import dependencies.
+        from beartype._util.text.utiltextlabel import label_beartypeable_kind
+        from beartype._util.text.utiltextmunge import uppercase_char_first
+
         # Fully-qualified name of this beartypeable.
         obj_name = get_object_name(obj)
 
@@ -399,20 +403,7 @@ def beartype_object_nonfatal(
         #exception messages with this much more readable alternative, please.
 
         # Human-readable string describing the type of this object as either...
-        obj_type = (
-            # If this object is a pure-Python class, an appropriate string;
-            'class' if isinstance(obj, type) else
-            # If this object is either a pure-Python function *OR* method, an
-            # appropriate string;
-            (
-                'function' if cls_stack is None else 'method'
-            ) if is_func_python(obj) else
-            # Else, this object is neither a pure-Python class, function, *NOR*
-            # method. In this case, fallback to a sane placeholder.
-            'object'
-        )
-
-        from beartype._util.text.utiltextmunge import uppercase_char_first
+        obj_type = label_beartypeable_kind(obj=obj, cls_stack=cls_stack)
 
         # This string with the first character capitalized.
         obj_type_capitalized = uppercase_char_first(obj_type)

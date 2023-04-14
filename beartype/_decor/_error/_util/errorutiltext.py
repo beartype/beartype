@@ -11,8 +11,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.text.utiltextlabel import (
-    label_type,
+from beartype._util.text.utiltextlabel import label_type
+from beartype._util.text.utiltextprefix import (
     prefix_callable_decorated,
     prefix_callable_decorated_return,
 )

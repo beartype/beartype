@@ -26,11 +26,7 @@ from beartype._util.func.utilfunctest import (
     is_func_async_generator,
     is_func_sync_generator,
 )
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
-    get_hint_pep484585_args_3)
-from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
-from beartype._util.text.utiltextlabel import (
-    prefix_callable_decorated_return)
+from beartype._util.text.utiltextprefix import prefix_callable_decorated_return
 from collections.abc import (
     AsyncGenerator,
     Callable,
@@ -69,6 +65,11 @@ def reduce_hint_pep484585_func_return(
           by a sign in the :data:`HINT_SIGNS_RETURN_GENERATOR_ASYNC` set.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
+        get_hint_pep484585_args_3)
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
+
     # Type hint annotating this callable's return, which the caller has already
     # explicitly guaranteed to exist.
     hint = func.__annotations__['return']
@@ -81,6 +82,7 @@ def reduce_hint_pep484585_func_return(
     if is_func_coro(func):
         # If this hint is "Coroutine[...]"...
         if hint_sign is HintSignCoroutine:
+
             # 3-tuple of all child type hints subscripting this hint if
             # subscripted by three such hints *OR* raise an exception.
             hint_args = get_hint_pep484585_args_3(

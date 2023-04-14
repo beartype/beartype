@@ -14,8 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep585Exception
 from beartype.typing import Tuple
-from beartype._util.text.utiltextlabel import prefix_callable_decorated_pith
-from collections.abc import Callable
 
 # ....................{ GETTERS                            }....................
 def get_hint_pep484585_args_1(hint: object, exception_prefix: str) -> object:
