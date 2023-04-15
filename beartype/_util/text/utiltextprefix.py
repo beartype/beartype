@@ -13,56 +13,50 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.text.utiltextlabel import label_callable
+from beartype._data.datakind import HINT_NAME_RETURN
+from beartype._data.datatyping import BeartypeableT
+from beartype._util.text.utiltextlabel import (
+    label_beartypeable_kind,
+    label_callable,
+)
 from collections.abc import Callable
 
-# ....................{ PREFIXERS ~ callable               }....................
-def prefix_callable(func: Callable) -> str:
+# ....................{ PREFIXERS ~ beartypeable           }....................
+def prefix_beartypeable(
+    obj: BeartypeableT,  # pyright: ignore[reportInvalidTypeVarUse]
+    **kwargs,
+) -> str:
     '''
-    Human-readable label describing the passed **callable** (e.g., function,
-    method, property) suffixed by delimiting whitespace.
+    Human-readable label describing the passed **beartypeable** (i.e., object
+    that is currently being or has already been decorated by the
+    :func:`beartype.beartype` decorator) suffixed by delimiting whitespace.
 
     Parameters
     ----------
-    func : Callable
-        Callable to be labelled.
+    obj : BeartypeableT
+        Beartypeable to be labelled.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.label_beartypeable_kind` function transitively called by this
+    higher-level function.
 
     Returns
     ----------
     str
-        Human-readable label describing this callable.
+        Human-readable label describing this beartypeable.
     '''
 
-    # Testify, beartype!
-    return f'{label_callable(func)} '
-
-
-def prefix_callable_decorated(func: Callable) -> str:
-    '''
-    Human-readable label describing the passed **decorated callable** (i.e.,
-    callable wrapped by the :func:`beartype.beartype` decorator with a wrapper
-    function type-checking that callable) suffixed by delimiting whitespace.
-
-    Parameters
-    ----------
-    func : Callable
-        Decorated callable to be labelled.
-
-    Returns
-    ----------
-    str
-        Human-readable label describing this decorated callable.
-    '''
+    # Human-readable label describing the kind the passed beartypeable.
+    beartypeable_kind = label_beartypeable_kind(obj, **kwargs)
 
     # Create and return this label.
-    return f'@beartyped {prefix_callable(func)}'
+    return f'{beartypeable_kind} {label_callable(obj)} '  # type: ignore[arg-type]
 
-
-def prefix_callable_decorated_pith(
-    func: Callable, pith_name: str) -> str:
+# ....................{ PREFIXERS ~ beartypeable : pith    }....................
+def prefix_beartypeable_pith(func: Callable, pith_name: str, **kwargs) -> str:
     '''
     Human-readable label describing either the parameter with the passed name
-    *or* return value if this name is ``return`` of the passed **decorated
+    *or* return value if this name is ``return`` of the passed **beartypeable
     callable** (i.e., callable wrapped by the :func:`beartype.beartype`
     decorator with a wrapper function type-checking that callable) suffixed by
     delimiting whitespace.
@@ -73,6 +67,10 @@ def prefix_callable_decorated_pith(
         Decorated callable to be labelled.
     pith_name : str
         Name of the parameter or return value of this callable to be labelled.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.label_beartypeable_kind` function transitively called by this
+    higher-level function.
 
     Returns
     ----------
@@ -85,18 +83,17 @@ def prefix_callable_decorated_pith(
     # Return a human-readable label describing either...
     return (
         # If this name is "return", the return value of this callable.
-        prefix_callable_decorated_return(func)
-        if pith_name == 'return' else
+        prefix_beartypeable_return(func, **kwargs)
+        if pith_name == HINT_NAME_RETURN else
         # Else, the parameter with this name of this callable.
-        prefix_callable_decorated_arg(func=func, arg_name=pith_name)
+        prefix_beartypeable_arg(func=func, arg_name=pith_name, **kwargs)
     )
 
-# ....................{ PREFIXERS ~ callable : param       }....................
-def prefix_callable_decorated_arg(
-    func: Callable, arg_name: str) -> str:
+
+def prefix_beartypeable_arg(func: Callable, arg_name: str, **kwargs) -> str:
     '''
     Human-readable label describing the parameter with the passed name of the
-    passed **decorated callable** (i.e., callable wrapped by the
+    passed **beartypeable callable** (i.e., callable wrapped by the
     :func:`beartype.beartype` decorator with a wrapper function type-checking
     that callable) suffixed by delimiting whitespace.
 
@@ -107,6 +104,10 @@ def prefix_callable_decorated_arg(
     arg_name : str
         Name of the parameter of this callable to be labelled.
 
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.label_beartypeable_kind` function transitively called by this
+    higher-level function.
+
     Returns
     ----------
     str
@@ -115,10 +116,10 @@ def prefix_callable_decorated_arg(
     assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
 
     # Create and return this label.
-    return f'{prefix_callable_decorated(func)}parameter "{arg_name}" '
+    return f'{prefix_beartypeable(func, **kwargs)}parameter "{arg_name}" '
 
-# ....................{ PREFIXERS ~ callable : return      }....................
-def prefix_callable_decorated_return(func: Callable) -> str:
+
+def prefix_beartypeable_return(func: Callable, **kwargs) -> str:
     '''
     Human-readable label describing the return of the passed **decorated
     callable** (i.e., callable wrapped by the :func:`beartype.beartype`
@@ -130,6 +131,10 @@ def prefix_callable_decorated_return(func: Callable) -> str:
     func : Callable
         Decorated callable to be labelled.
 
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.label_beartypeable_kind` function transitively called by this
+    higher-level function.
+
     Returns
     ----------
     str
@@ -137,4 +142,4 @@ def prefix_callable_decorated_return(func: Callable) -> str:
     '''
 
     # Create and return this label.
-    return f'{prefix_callable_decorated(func)}return '
+    return f'{prefix_beartypeable(func, **kwargs)}return '

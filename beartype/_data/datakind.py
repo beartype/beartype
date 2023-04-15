@@ -17,6 +17,16 @@ from beartype.typing import (
     Dict,
 )
 
+# ....................{ STRINGS                            }....................
+HINT_NAME_RETURN = 'return'
+'''
+Unique name arbitrarily assigned by Python to the key of the ``__annotations__``
+dunder attribute providing the type hint annotating the return of callables.
+
+Note that Python itself prohibits callable parameters from being named
+``"return"`` and thus guarantees this name to be safe and unambiguous.
+'''
+
 # ....................{ DICTS                              }....................
 # Note that this exact type annotation is required to avoid mypy complaints. :O
 DICT_EMPTY: Dict[Any, Any] = {}

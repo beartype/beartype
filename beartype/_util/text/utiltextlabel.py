@@ -24,7 +24,13 @@ from beartype._util.utilobject import (
 from collections.abc import Callable
 
 # ....................{ LABELLERS ~ beartypeable           }....................
-def label_beartypeable_kind(obj: BeartypeableT, cls_stack: TypeStack) -> str:
+def label_beartypeable_kind(
+    # Mandatory parameters.
+    obj: BeartypeableT,  # pyright: ignore[reportInvalidTypeVarUse]
+
+    # Optional parameters.
+    cls_stack: TypeStack = None,
+) -> str:
     '''
     Human-readable label describing the **kind** (i.e.,
     single concise noun synopsizing the category of) the passed **beartypeable**
@@ -38,7 +44,7 @@ def label_beartypeable_kind(obj: BeartypeableT, cls_stack: TypeStack) -> str:
     cls_stack : TypeStack
         **Type stack** (i.e., tuple of zero or more arbitrary types describing
         the chain of classes lexically containing this beartypeable if any *or*
-        ``None`` otherwise) . See also the
+        :data:`None`). Defaults to :data:`None`. See also the
         :func:`beartype._decor.decorcore.beartype_object` decorator.
 
     Returns
@@ -65,12 +71,13 @@ def label_beartypeable_kind(obj: BeartypeableT, cls_stack: TypeStack) -> str:
     )
 
 # ....................{ LABELLERS ~ callable               }....................
+#FIXME: Unit test up the "is_contex" parameter, which is currently untested.
 def label_callable(
     # Mandatory parameters.
     func: Callable,
 
     # Optional parameters.
-    is_contextualized: Optional[bool] = None,
+    is_context: Optional[bool] = None,
 ) -> str:
     '''
     Human-readable label describing the passed **callable** (e.g., function,
@@ -80,23 +87,23 @@ def label_callable(
     ----------
     func : Callable
         Callable to be labelled.
-    is_contextualized : Optional[bool] = None
+    is_context : Optional[bool] = None
         Either:
 
-        * ``True``, in which case this label is suffixed by additional metadata
-          contextually disambiguating that callable, including:
+        * :data:`True`, in which case this label is suffixed by additional
+          metadata contextually disambiguating that callable, including:
 
           * The line number of the first line declaring that callable in its
             underlying source code module file.
           * The absolute filename of that file.
 
-        * ``False``, in which case this label is *not* suffixed by such
+        * :data:`False`, in which case this label is *not* suffixed by such
           metadata.
-        * ``None``, in which case this label is conditionally suffixed by such
-          metadata only if that callable is a lambda function and thus
+        * :data:`None`, in which case this label is conditionally suffixed by
+          such metadata only if that callable is a lambda function and thus
           ambiguously lacks any semblance of an innate context.
 
-        Defaults to ``None``.
+        Defaults to :data:`None`.
 
     Returns
     ----------
@@ -142,8 +149,8 @@ def label_callable(
 
         # If the caller failed to request an explicit contextualization, default
         # to contextualizing this lambda function.
-        if is_contextualized is None:
-            is_contextualized = True
+        if is_context is None:
+            is_context = True
         # Else, the caller requested an explicit contextualization. In this
         # case, preserve that contextualization as is.
     # Else, the passed callable is *NOT* a pure-Python lambda function and thus
@@ -168,7 +175,7 @@ def label_callable(
         # Else, that callable is *NOT* an asynchronous generator.
 
     # If contextualizing that callable...
-    if is_contextualized:
+    if is_context:
         # Absolute filename of the source module file defining that callable if
         # that callable was defined on-disk *OR* "None" otherwise (i.e., if that
         # callable was defined in-memory).
@@ -264,9 +271,9 @@ def label_type(cls: type) -> str:
         # print(f'cls {cls} is protocol!')
         classname = f'<protocol "{classname}">'
     # Else if this class is a standard abstract base class (ABC) defined by a
-    # stdlib submodule also known to support structural subtyping (e.g.,
-    # "collections.abc.Hashable", "contextlib.AbstractContextManager"),
-    # label this ABC as a protocol.
+    # standard submodule also known to support structural subtyping (e.g.,
+    # "collections.abc.Hashable", "contextlib.AbstractContextManager"), label
+    # this ABC as a protocol.
     #
     # Note that user-defined ABCs do *NOT* generally support structural
     # subtyping. Doing so requires esoteric knowledge of undocumented and

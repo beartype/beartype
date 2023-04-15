@@ -128,7 +128,7 @@ def get_func_code_lines_or_none(
 
     # Avoid circular import dependencies.
     from beartype._util.func.utilfuncfile import is_func_file
-    from beartype._util.text.utiltextprefix import prefix_callable
+    from beartype._util.text.utiltextlabel import label_callable
 
     # If the passed callable exists on-disk and is thus pure-Python...
     if is_func_file(func):
@@ -141,7 +141,7 @@ def get_func_code_lines_or_none(
             # Reduce this fatal error to a non-fatal warning embedding a full
             # exception traceback as a formatted string.
             warn(
-                f'{prefix_callable(func)}not parsable:\n{format_exc()}',
+                f'{label_callable(func)} not parsable:\n{format_exc()}',
                 warning_cls,
             )
     # Else, the passed callable only exists in-memory.
@@ -198,7 +198,7 @@ def get_func_file_code_lines_or_none(
 
     # Avoid circular import dependencies.
     from beartype._util.func.utilfuncfile import is_func_file
-    from beartype._util.text.utiltextprefix import prefix_callable
+    from beartype._util.text.utiltextlabel import label_callable
 
     # If the passed callable exists on-disk and is thus pure-Python...
     if is_func_file(func):
@@ -241,7 +241,7 @@ def get_func_file_code_lines_or_none(
             # Reduce this fatal error to a non-fatal warning embedding a full
             # exception traceback as a formatted string.
             warn(
-                f'{prefix_callable(func)}not parsable:\n{format_exc()}',
+                f'{label_callable(func)} not parsable:\n{format_exc()}',
                 warning_cls,
             )
     # Else, the passed callable only exists in-memory.
@@ -277,7 +277,7 @@ if IS_PYTHON_AT_LEAST_3_9:
 
         # Avoid circular import dependencies.
         from beartype._util.func.utilfunctest import is_func_lambda
-        from beartype._util.text.utiltextprefix import prefix_callable
+        from beartype._util.text.utiltextlabel import label_callable
 
         # If the passed callable is a pure-Python lambda function...
         if is_func_lambda(func):
@@ -317,7 +317,7 @@ if IS_PYTHON_AT_LEAST_3_9:
                     if len(lambda_file_code) >= _LAMBDA_CODE_FILESIZE_MAX:
                         warn(
                             (
-                                f'{prefix_callable(func)}not parsable, '
+                                f'{label_callable(func)} not parsable, '
                                 f'as file size exceeds safe maximum '
                                 f'{_LAMBDA_CODE_FILESIZE_MAX}MB.'
                             ),
@@ -362,7 +362,7 @@ if IS_PYTHON_AT_LEAST_3_9:
                                 # Emit this warning.
                                 warn(
                                     (
-                                        f'{prefix_callable(func)}ambiguous, '
+                                        f'{label_callable(func)} ambiguous, '
                                         f'as that line defines '
                                         f'{len(lambdas_code)} lambdas; '
                                         f'arbitrarily selecting first '
@@ -387,7 +387,7 @@ if IS_PYTHON_AT_LEAST_3_9:
                         # superficially reasonable. Yet, we don't. See above.
                         else:
                             warn(
-                                f'{prefix_callable(func)}not found.',
+                                f'{label_callable(func)} not found.',
                                 warning_cls,
                             )
                 # Else, that lambda is dynamically defined in-memory.
@@ -403,7 +403,7 @@ if IS_PYTHON_AT_LEAST_3_9:
             #     result with RecursionError.
             except Exception:
                 warn(
-                    f'{prefix_callable(func)}not parsable:\n{format_exc()}',
+                    f'{label_callable(func)} not parsable:\n{format_exc()}',
                     warning_cls,
                 )
         # Else, the passed callable is *NOT* a pure-Python lambda function.

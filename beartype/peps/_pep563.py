@@ -36,7 +36,7 @@ from beartype._util.func.utilfuncscope import (
 )
 from beartype._util.func.utilfunctest import die_unless_func_python
 from beartype._util.text.utiltextident import is_identifier
-from beartype._util.text.utiltextprefix import prefix_callable_decorated_pith
+from beartype._util.text.utiltextprefix import prefix_beartypeable_pith
 from collections.abc import Callable
 from sys import modules as sys_modules
 
@@ -620,7 +620,7 @@ def resolve_pep563(
                 # as a string.
 
                 # Human-readable label describing this pith.
-                exception_prefix = prefix_callable_decorated_pith(
+                exception_prefix = prefix_beartypeable_pith(
                     func=func, pith_name=pith_name)
 
                 # Wrap this low-level non-human-readable exception with a

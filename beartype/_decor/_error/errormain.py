@@ -104,8 +104,8 @@ from beartype._decor._error._util.errorutilcolor import (
     strip_text_ansi_if_configured,
 )
 from beartype._decor._error._util.errorutiltext import (
-    prefix_callable_decorated_arg_value,
-    prefix_callable_decorated_return_value,
+    prefix_beartypeable_arg_value,
+    prefix_beartypeable_return_value,
 )
 from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.text.utiltextmunge import suffix_unless_suffixed
@@ -267,13 +267,13 @@ def get_beartype_violation(
     # object to be a return value, set the above local variables appropriately.
     if pith_name == 'return':
         exception_cls = BeartypeCallHintReturnViolation
-        exception_prefix = prefix_callable_decorated_return_value(
+        exception_prefix = prefix_beartypeable_return_value(
             func=func, return_value=pith_value)
     # Else, the passed object is a parameter. In this case, set the above local
     # variables appropriately.
     else:
         exception_cls = BeartypeCallHintParamViolation
-        exception_prefix = prefix_callable_decorated_arg_value(
+        exception_prefix = prefix_beartypeable_arg_value(
             func=func, arg_name=pith_name, arg_value=pith_value)
 
     # ....................{ HINTS                          }....................

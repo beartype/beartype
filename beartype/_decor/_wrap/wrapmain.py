@@ -74,8 +74,8 @@ from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextprefix import (
-    prefix_callable_decorated_arg,
-    prefix_callable_decorated_return,
+    prefix_beartypeable_arg,
+    prefix_beartypeable_return,
 )
 from beartype._util.utilobject import SENTINEL
 from collections.abc import (
@@ -472,9 +472,9 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 #FIXME: Embed the kind of parameter as well (e.g.,
                 #"positional-only", "keyword-only", "variadic positional"),
                 #ideally by improving the existing
-                #prefix_callable_decorated_arg() function to introspect this
+                #prefix_beartypeable_arg() function to introspect this
                 #kind from that callable's code object.
-                target_str=prefix_callable_decorated_arg(
+                target_str=prefix_beartypeable_arg(
                     func=bear_call.func_wrappee, arg_name=arg_name),
             )
 
@@ -629,7 +629,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
     except Exception as exception:
         reraise_exception_placeholder(
             exception=exception,
-            target_str=prefix_callable_decorated_return(
+            target_str=prefix_beartypeable_return(
                 bear_call.func_wrappee),
         )
 

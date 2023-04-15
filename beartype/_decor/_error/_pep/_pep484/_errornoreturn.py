@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._data.hint.pep.sign.datapepsigns import HintSignNoReturn
 from beartype._decor._error._errorcause import ViolationCause
 from beartype._decor._error._util.errorutiltext import represent_pith
-from beartype._util.text.utiltextprefix import prefix_callable
+from beartype._util.text.utiltextlabel import label_callable
 
 # ....................{ GETTERS                            }....................
 def find_cause_noreturn(cause: ViolationCause) -> ViolationCause:
@@ -41,7 +41,7 @@ def find_cause_noreturn(cause: ViolationCause) -> ViolationCause:
     # Output cause to be returned, permuted from this input cause such that the
     # justification is a human-readable string describing this failure.
     cause_return = cause.permute(cause_str_or_none=(
-        f'{prefix_callable(cause.func)} with PEP 484 return type hint '
+        f'{label_callable(cause.func)} with PEP 484 return type hint '
         f'"typing.NoReturn" returned {represent_pith(cause.pith)}'
     ))
 

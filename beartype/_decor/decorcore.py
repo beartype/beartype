@@ -368,25 +368,17 @@ def beartype_object_nonfatal(
             format_exc()
         )
 
-        #FIXME: Inadequate, really. Instead defer to the:
-        #* "label_callable(func=obj, is_contextualized=True)" function if this
-        #  object is *NOT* a class.
-        #* "label_class(cls=obj, is_contextualized=True)" function if this
-        #  object is a class. Of course, that function currently accepts no such
-        #  "is_contextualized" parameter. Make it so, please. *sigh*
+        #FIXME: Woops. Looks like we accidentally duplicated functionality here
+        #that already exists in the label_callable() function. Let's generalize
+        #that functionality out of label_callable() into a lower-level
+        #label_object_context() function, please.
+        #FIXME: Refactor the existing prefix_beartypeable() function to
+        #internally call either label_callable() *OR* label_type() depending on
+        #the type of the passed object. Then call that function below like so:
+        #    obj_label = prefix_beartypeable(
+        #        obj=obj, cls_stack=cls_stack, is_context=True)
         #
-        #This suggests we probably just want to define a new higher-level
-        #label_object() function with signature resembling:
-        #    def label_object(
-        #        # Mandatory parameters.
-        #        obj: object,
-        #
-        #        # Optional parameters.
-        #        cls_stack: TypeStack = None,
-        #        is_line_number: bool = False,
-        #    ) -> str
-        #FIXME: Note that we'll want to capitalize the first character of the
-        #string returned by the label_object() function, please.
+        #    obj_label_capitalized = uppercase_char_first(obj_label)
 
         # Avoid circular import dependencies.
         from beartype._util.text.utiltextlabel import label_beartypeable_kind
@@ -773,8 +765,8 @@ def _beartype_type(
         specific to this class.
     cls_stack : TypeStack
         **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
-        ``None``). Defaults to ``None``. See also the :func:`.beartype_object`
-        decorator for further commentary.
+        :data:`None`). Defaults to :data:`None`. See also the
+        :func:`.beartype_object` decorator for further commentary.
 
     Returns
     ----------

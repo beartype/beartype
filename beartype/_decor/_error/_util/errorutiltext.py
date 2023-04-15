@@ -13,14 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._util.text.utiltextlabel import label_type
 from beartype._util.text.utiltextprefix import (
-    prefix_callable_decorated,
-    prefix_callable_decorated_return,
+    prefix_beartypeable,
+    prefix_beartypeable_return,
 )
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
 
 # ....................{ PREFIXERS                          }....................
-def prefix_callable_decorated_arg_value(
+def prefix_beartypeable_arg_value(
     func: Callable, arg_name: str, arg_value: object) -> str:
     '''
     Human-readable label describing the parameter with the passed name and
@@ -51,10 +51,10 @@ def prefix_callable_decorated_arg_value(
     arg_name_value = color_repr(f'{arg_name}={represent_object(arg_value)}')
 
     # Create and return this label.
-    return f'{prefix_callable_decorated(func)}parameter {arg_name_value} '
+    return f'{prefix_beartypeable(func)}parameter {arg_name_value} '
 
 
-def prefix_callable_decorated_return_value(
+def prefix_beartypeable_return_value(
     func: Callable, return_value: object) -> str:
     '''
     Human-readable label describing the passed trimmed return value of the
@@ -80,7 +80,7 @@ def prefix_callable_decorated_return_value(
 
     # Create and return this label.
     return (
-        f'{prefix_callable_decorated_return(func)}'
+        f'{prefix_beartypeable_return(func)}'
         f'{color_repr(represent_object(return_value))} '
     )
 
