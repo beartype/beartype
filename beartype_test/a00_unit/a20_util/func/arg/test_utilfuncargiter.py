@@ -43,7 +43,7 @@ def test_iter_func_args() -> None:
     )
     from pytest import raises
 
-    # Assert this iterator returns the empty generator for an argument-less
+    # Assert this iterator returns the empty generator for an argumentless
     # callable, explicitly coerced into a tuple to trivialize testing.
     assert len(tuple(iter_func_args(func_args_0))) == 0
 

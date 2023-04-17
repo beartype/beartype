@@ -24,7 +24,6 @@ from collections.abc import Callable
 # ....................{ PREFIXERS ~ beartypeable           }....................
 def prefix_beartypeable(
     obj: BeartypeableT,  # pyright: ignore[reportInvalidTypeVarUse]
-    **kwargs,
 ) -> str:
     '''
     Human-readable label describing the passed **beartypeable** (i.e., object
@@ -47,13 +46,13 @@ def prefix_beartypeable(
     '''
 
     # Human-readable label describing the kind the passed beartypeable.
-    beartypeable_kind = label_beartypeable_kind(obj, **kwargs)
+    beartypeable_kind = label_beartypeable_kind(obj)
 
     # Create and return this label.
     return f'{beartypeable_kind} {label_callable(obj)} '  # type: ignore[arg-type]
 
 # ....................{ PREFIXERS ~ beartypeable : pith    }....................
-def prefix_beartypeable_pith(func: Callable, pith_name: str, **kwargs) -> str:
+def prefix_beartypeable_pith(func: Callable, pith_name: str) -> str:
     '''
     Human-readable label describing either the parameter with the passed name
     *or* return value if this name is ``return`` of the passed **beartypeable
@@ -68,10 +67,6 @@ def prefix_beartypeable_pith(func: Callable, pith_name: str, **kwargs) -> str:
     pith_name : str
         Name of the parameter or return value of this callable to be labelled.
 
-    All remaining keyword parameters are passed as is to the lower-level
-    :func:`.label_beartypeable_kind` function transitively called by this
-    higher-level function.
-
     Returns
     ----------
     str
@@ -83,14 +78,14 @@ def prefix_beartypeable_pith(func: Callable, pith_name: str, **kwargs) -> str:
     # Return a human-readable label describing either...
     return (
         # If this name is "return", the return value of this callable.
-        prefix_beartypeable_return(func, **kwargs)
+        prefix_beartypeable_return(func)
         if pith_name == HINT_NAME_RETURN else
         # Else, the parameter with this name of this callable.
-        prefix_beartypeable_arg(func=func, arg_name=pith_name, **kwargs)
+        prefix_beartypeable_arg(func=func, arg_name=pith_name)
     )
 
 
-def prefix_beartypeable_arg(func: Callable, arg_name: str, **kwargs) -> str:
+def prefix_beartypeable_arg(func: Callable, arg_name: str) -> str:
     '''
     Human-readable label describing the parameter with the passed name of the
     passed **beartypeable callable** (i.e., callable wrapped by the
@@ -104,10 +99,6 @@ def prefix_beartypeable_arg(func: Callable, arg_name: str, **kwargs) -> str:
     arg_name : str
         Name of the parameter of this callable to be labelled.
 
-    All remaining keyword parameters are passed as is to the lower-level
-    :func:`.label_beartypeable_kind` function transitively called by this
-    higher-level function.
-
     Returns
     ----------
     str
@@ -116,10 +107,10 @@ def prefix_beartypeable_arg(func: Callable, arg_name: str, **kwargs) -> str:
     assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
 
     # Create and return this label.
-    return f'{prefix_beartypeable(func, **kwargs)}parameter "{arg_name}" '
+    return f'{prefix_beartypeable(func)}parameter "{arg_name}" '
 
 
-def prefix_beartypeable_return(func: Callable, **kwargs) -> str:
+def prefix_beartypeable_return(func: Callable) -> str:
     '''
     Human-readable label describing the return of the passed **decorated
     callable** (i.e., callable wrapped by the :func:`beartype.beartype`
@@ -131,10 +122,6 @@ def prefix_beartypeable_return(func: Callable, **kwargs) -> str:
     func : Callable
         Decorated callable to be labelled.
 
-    All remaining keyword parameters are passed as is to the lower-level
-    :func:`.label_beartypeable_kind` function transitively called by this
-    higher-level function.
-
     Returns
     ----------
     str
@@ -142,4 +129,4 @@ def prefix_beartypeable_return(func: Callable, **kwargs) -> str:
     '''
 
     # Create and return this label.
-    return f'{prefix_beartypeable(func, **kwargs)}return '
+    return f'{prefix_beartypeable(func)}return '

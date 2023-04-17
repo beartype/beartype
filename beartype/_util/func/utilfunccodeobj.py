@@ -44,7 +44,7 @@ def get_func_codeobj(
     func: Codeobjable,
 
     # Optional parameters.
-    is_unwrapping: bool = False,
+    is_unwrap: bool = False,
     exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> CodeType:
     '''
@@ -89,7 +89,7 @@ def get_func_codeobj(
     ----------
     func : Codeobjable
         Codeobjable to be inspected.
-    is_unwrapping: bool, optional
+    is_unwrap: bool, optional
         ``True`` only if this getter implicitly calls the :func:`unwrap_func`
         function to unwrap this possibly higher-level wrapper into a possibly
         lower-level wrappee *before* returning the code object of that wrappee.
@@ -113,8 +113,7 @@ def get_func_codeobj(
 
     # Code object underlying this callable if this callable is pure-Python *OR*
     # "None" otherwise.
-    func_codeobj = get_func_codeobj_or_none(
-        func=func, is_unwrapping=is_unwrapping)
+    func_codeobj = get_func_codeobj_or_none(func=func, is_unwrap=is_unwrap)
 
     # If this callable is *NOT* pure-Python...
     if func_codeobj is None:
@@ -134,7 +133,7 @@ def get_func_codeobj_or_none(
     func: Any,
 
     # Optional parameters.
-    is_unwrapping: bool = False,
+    is_unwrap: bool = False,
 ) -> Optional[CodeType]:
     '''
     **Code object** (i.e., instance of the :class:`CodeType` type) underlying
@@ -158,7 +157,7 @@ def get_func_codeobj_or_none(
 
     Caveats
     -------
-    If ``is_unwrapping``, **this callable has worst-case time complexity**
+    If ``is_unwrap``, **this callable has worst-case time complexity**
     ``O(n)`` **for** ``n`` **the number of lower-level wrappees wrapped by this
     higher-level wrapper.** That parameter should thus be disabled in
     time-critical code paths; instead, the lowest-level wrappee returned by the
@@ -169,7 +168,7 @@ def get_func_codeobj_or_none(
     ----------
     func : Codeobjable
         Codeobjable to be inspected.
-    is_unwrapping: bool, optional
+    is_unwrap: bool, optional
         ``True`` only if this getter implicitly calls the :func:`unwrap_func`
         function to unwrap this possibly higher-level wrapper into a possibly
         lower-level wrappee *before* returning the code object of that wrappee.
@@ -190,15 +189,15 @@ def get_func_codeobj_or_none(
     :func:`get_func_codeobj`
         Further details.
     '''
-    assert is_unwrapping.__class__ is bool, f'{is_unwrapping} not boolean.'
+    assert is_unwrap.__class__ is bool, f'{is_unwrap} not boolean.'
 
     # Note that:
-    # * For efficiency, tests are intentionally ordered in decreasing
-    #   likelihood of a successful match.
+    # * For efficiency, tests are intentionally ordered in decreasing likelihood
+    #   of a successful match.
     # * An equivalent algorithm could also technically be written as a chain of
-    #   "getattr(func, '__code__', None)" calls, but that doing so would both
-    #   be less efficient *AND* render this getter less robust. Why? Because
-    #   the getattr() builtin internally calls the __getattr__() and
+    #   "getattr(func, '__code__', None)" calls, but that doing so would both be
+    #   less efficient *AND* render this getter less robust. Why? Because the
+    #   getattr() builtin internally calls the __getattr__() and
     #   __getattribute__() dunder methods (either of which could raise
     #   arbitrary exceptions) and is thus considerably less safe.
     #
@@ -213,14 +212,14 @@ def get_func_codeobj_or_none(
     # "types.FunctionType" class rather than our equivalent
     # "beartype.cave.FunctionType" class to avoid circular import issues.
     elif isinstance(func, FunctionType):
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize this with the same test below (for methods).
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # Return the code object of either:
         # * If unwrapping this function, the lowest-level wrappee wrapped by
         #   this function.
         # * Else, this function as is.
-        return (unwrap_func(func) if is_unwrapping else func).__code__  # type: ignore[attr-defined]
+        return (unwrap_func(func) if is_unwrap else func).__code__  # type: ignore[attr-defined]
     # Else, this object is *NOT* a pure-Python function.
     #
     # If this callable is a bound method, return this method's code object.
@@ -239,14 +238,14 @@ def get_func_codeobj_or_none(
 
         # If this unbound function is pure-Python...
         if isinstance(func, FunctionType):
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # CAUTION: Synchronize this with the same test above.
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # Return the code object of either:
             # * If unwrapping this function, the lowest-level wrappee wrapped
             #   by this function.
             # * Else, this function as is.
-            return (unwrap_func(func) if is_unwrapping else func).__code__  # type: ignore[attr-defined]
+            return (unwrap_func(func) if is_unwrap else func).__code__  # type: ignore[attr-defined]
     # Else, this callable is *NOT* a pure-Python bound method.
     #
     # If this object is a pure-Python generator, return this generator's code

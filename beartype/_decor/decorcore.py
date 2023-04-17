@@ -395,7 +395,7 @@ def beartype_object_nonfatal(
         #exception messages with this much more readable alternative, please.
 
         # Human-readable string describing the type of this object as either...
-        obj_type = label_beartypeable_kind(obj=obj, cls_stack=cls_stack)
+        obj_type = label_beartypeable_kind(obj)
 
         # This string with the first character capitalized.
         obj_type_capitalized = uppercase_char_first(obj_type)

@@ -14,6 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype.typing import Dict
+from beartype._util.func.arg.utilfuncargiter import (
+    ARG_META_INDEX_NAME,
+    iter_func_args,
+)
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._data.datatyping import Codeobjable, TypeException
 from collections.abc import Callable
@@ -26,7 +30,7 @@ def die_unless_func_args_len_flexible_equal(
     func_args_len_flexible: int,
 
     # Optional parameters.
-    is_unwrapping: bool = True,
+    is_unwrap: bool = True,
     exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> None:
     '''
@@ -40,7 +44,7 @@ def die_unless_func_args_len_flexible_equal(
         Pure-Python callable, frame, or code object to be inspected.
     func_args_len_flexible : int
         Number of flexible parameters to validate this callable as accepting.
-    is_unwrapping: bool, optional
+    is_unwrap: bool, optional
         ``True`` only if this validator implicitly calls the
         :func:`unwrap_func` function to unwrap this possibly higher-level
         wrapper into its possibly lowest-level wrappee *before* returning the
@@ -80,7 +84,7 @@ def die_unless_func_args_len_flexible_equal(
     # Number of flexible parameters accepted by this callable.
     func_args_len_flexible_actual = get_func_args_len_flexible(
         func=func,
-        is_unwrapping=is_unwrapping,
+        is_unwrap=is_unwrap,
         exception_cls=exception_cls,
     )
 
@@ -107,7 +111,7 @@ def die_unless_func_args_len_flexible_equal(
 # ) -> None:
 #     '''
 #     Raise an exception unless the passed pure-Python callable is
-#     **argument-less** (i.e., accepts *no* arguments).
+#     **argumentless** (i.e., accepts *no* arguments).
 #
 #     Parameters
 #     ----------
@@ -139,7 +143,7 @@ def die_unless_func_args_len_flexible_equal(
 #             f'{repr(exception_cls)} not class.')
 #
 #         raise exception_cls(
-#             f'{func_label} {repr(func)} not argument-less '
+#             f'{func_label} {repr(func)} not argumentless '
 #             f'(i.e., accepts one or more arguments).'
 #         )
 
@@ -152,7 +156,7 @@ def is_func_argless(
     exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> bool:
     '''
-    ``True`` only if the passed pure-Python callable is **argument-less**
+    ``True`` only if the passed pure-Python callable is **argumentless**
     (i.e., accepts *no* arguments).
 
     Parameters
@@ -176,7 +180,7 @@ def is_func_argless(
 
     # Code object underlying the passed pure-Python callable unwrapped.
     func_codeobj = get_func_codeobj(
-        func=func, is_unwrapping=True, exception_cls=exception_cls)
+        func=func, is_unwrap=True, exception_cls=exception_cls)
 
     # Return true only if this callable accepts neither...
     return not (
@@ -256,7 +260,7 @@ def is_func_arg_variadic_positional(func: Codeobjable) -> bool:
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_codeobj(func=func, is_unwrapping=True)
+    func_codeobj = get_func_codeobj(func=func, is_unwrap=True)
 
     # Return true only if this callable declares variadic positional arguments.
     return func_codeobj.co_flags & CO_VARARGS != 0
@@ -264,18 +268,18 @@ def is_func_arg_variadic_positional(func: Codeobjable) -> bool:
 
 def is_func_arg_variadic_keyword(func: Codeobjable) -> bool:
     '''
-    ``True`` only if the passed pure-Python callable accepts variadic
+    :data:`True` only if the passed pure-Python callable accepts variadic
     keyword arguments (e.g., "**kwargs").
 
     Parameters
     ----------
-    func : Union[Callable, CodeType, FrameType]
+    func : Codeobjable
         Pure-Python callable, frame, or code object to be inspected.
 
     Returns
     ----------
     bool
-        ``True`` only if the passed callable accepts variadic keyword
+        :data:`True` only if the passed callable accepts variadic keyword
         arguments.
 
     Raises
@@ -289,7 +293,7 @@ def is_func_arg_variadic_keyword(func: Codeobjable) -> bool:
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_codeobj(func=func, is_unwrapping=True)
+    func_codeobj = get_func_codeobj(func=func, is_unwrap=True)
 
     # Return true only if this callable declares variadic keyword arguments.
     return func_codeobj.co_flags & CO_VARKEYWORDS != 0
@@ -308,8 +312,8 @@ def is_func_arg_variadic_keyword(func: Codeobjable) -> bool:
 #        return func.__code__.co_varnames[:args_len] # <-- BOOM
 def is_func_arg_name(func: Callable, arg_name: str) -> bool:
     '''
-    ``True`` only if the passed pure-Python callable accepts an argument with
-    the passed name.
+    :data:`True` only if the passed pure-Python callable accepts an argument
+    with the passed name.
 
     Caveats
     ----------
@@ -329,7 +333,7 @@ def is_func_arg_name(func: Callable, arg_name: str) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if that callable accepts an argument with this name.
+        :data:`True` only if that callable accepts an argument with this name.
 
     Raises
     ----------
@@ -337,12 +341,6 @@ def is_func_arg_name(func: Callable, arg_name: str) -> bool:
          If the passed callable is *not* pure-Python.
     '''
     assert isinstance(arg_name, str), f'{arg_name} not string.'
-
-    # Avoid circular import dependencies.
-    from beartype._util.func.arg.utilfuncargiter import (
-        ARG_META_INDEX_NAME,
-        iter_func_args,
-    )
 
     # Return true only if...
     return any(
@@ -353,6 +351,8 @@ def is_func_arg_name(func: Callable, arg_name: str) -> bool:
     )
 
 # ....................{ PRIVATE                            }....................
+#FIXME: Redundant. Replace with the general-purpose empty dictionary global
+#"beartype._data.datakind.DICT_EMPTY", please.
 _ARGS_DEFAULTS_KWONLY_EMPTY: Dict[str, object] = {}
 '''
 Empty dictionary suitable for use as the default dictionary mapping the name of

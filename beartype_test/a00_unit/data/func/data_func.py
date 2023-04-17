@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,10 +10,11 @@ This submodule predefines sample pure-Python callables exercising known edge
 cases on behalf of higher-level unit test submodules.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
+from beartype_test.a00_unit.data.data_type import decorator_wrapping
 from typing import Union
 
-# ....................{ CALLABLES                         }....................
+# ....................{ CALLABLES                          }....................
 def func_args_0() -> str:
     '''
     Arbitrary callable accepting *no* parameters.
@@ -63,7 +64,7 @@ def func_args_3_flex_mandatory_optional_varkw(
     return "Ghastly, and scarr'd, and riven.—Is this the scene"
 
 
-# ....................{ TESTS ~ pep 3102                  }....................
+# ....................{ CALLABLES ~ pep 3102               }....................
 # Keyword-only keywords require PEP 3102 compliance, which has thankfully been
 # available since Python >= 3.0.
 
@@ -106,3 +107,20 @@ def func_args_5_flex_mandatory_varpos_kwonly_varkw(
     # Arbitrary local variable declared in the body of this callable.
     thy_soul_was_like_a_star = 'and dwelt apart:'
     return thy_soul_was_like_a_star
+
+# ....................{ CALLABLES ~ wrapped                }....................
+# Callables wrapped by a decorator wrapper reducing their signatures to the
+# standard parameter-passing idiom for decorators trivially implemented as
+# closures (i.e., *NOT* @beartype-style decorators):
+#     def wrapper(*args, **kwargs): ...
+
+func_args_0_wrapped = decorator_wrapping(
+    func_args_0)
+func_args_1_flex_mandatory_wrapped = decorator_wrapping(
+    func_args_1_flex_mandatory)
+func_args_1_varpos_wrapped = decorator_wrapping(
+    func_args_1_varpos)
+func_args_2_flex_mandatory_wrapped = decorator_wrapping(
+    func_args_2_flex_mandatory)
+func_args_3_flex_mandatory_optional_varkw_wrapped = decorator_wrapping(
+    func_args_3_flex_mandatory_optional_varkw)

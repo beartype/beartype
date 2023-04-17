@@ -11,11 +11,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype.typing import (
     Dict,
     Iterable,
     Optional,
     Tuple,
+)
+from beartype._data.datatyping import (
+    # Codeobjable,
+    TypeException,
 )
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.func.utilfuncwrap import unwrap_func
@@ -151,7 +156,8 @@ def iter_func_args(
 
     # Optional parameters.
     func_codeobj: Optional[CodeType] = None,
-    is_unwrapping: bool = True,
+    is_unwrap: bool = True,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
 # Note this generator is intentionally annotated as returning a high-level
 # "Iterable[...]" rather than a low-level "Generator[..., ..., ...]", as the
 # syntax governing the latter is overly verbose and largely unhelpful.
@@ -202,25 +208,28 @@ def iter_func_args(
     func : Callable
         Pure-Python callable to be inspected.
     func_codeobj: CodeType, optional
-        Code object underlying that callable unwrapped. Defaults to ``None``,
-        in which case this iterator internally defers to the comparatively
-        slower :func:`get_func_codeobj` function.
-    is_unwrapping: bool, optional
-        ``True`` only if this generator implicitly calls the
+        Code object underlying that callable unwrapped. Defaults to
+        :data:`None`, in which case this iterator internally defers to the
+        comparatively slower :func:`get_func_codeobj` function.
+    is_unwrap: bool, optional
+        :data:`True` only if this generator implicitly calls the
         :func:`unwrap_func` function to unwrap this possibly higher-level
         wrapper into its possibly lowest-level wrappee *before* returning the
         code object of that wrappee. Note that doing so incurs worst-case time
         complexity ``O(n)`` for ``n`` the number of lower-level wrappees
-        wrapped by this wrapper. Defaults to ``True`` for robustness. Why?
+        wrapped by this wrapper. Defaults to :data:`True` for robustness. Why?
         Because this generator *must* always introspect lowest-level wrappees
         rather than higher-level wrappers. The latter typically do *not* wrap
         the default values of the former, since this is the default behaviour
         of the :func:`functools.update_wrapper` function underlying the
         :func:`functools.wrap` decorator underlying all sane decorators. If
-        this boolean is set to ``False`` while that callable is actually a
+        this boolean is set to :data:`False` while that callable is actually a
         wrapper, this generator will erroneously misidentify optional as
         mandatory parameters and fail to yield their default values. Only set
-        this boolean to ``False`` if you pretend to know what you're doing.
+        this boolean to :data:`False` if you pretend to know what you're doing.
+    exception_cls : type, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableException`.
 
     Yields
     ----------
@@ -229,14 +238,14 @@ def iter_func_args(
 
     Raises
     ----------
-    :exc:`_BeartypeUtilCallableException`
+    :exc:`exception_cls`
          If that callable is *not* pure-Python.
     '''
 
     # ..................{ LOCALS ~ noop                      }..................
-    # If unwrapping that callable, do so *BEFORE* querying that callable for
-    # its code object to avoid desynchronization between the two.
-    if is_unwrapping:
+    # If unwrapping that callable, do so *BEFORE* obtaining the code object of
+    # that callable for safety (to avoid desynchronization between the two).
+    if is_unwrap:
         func = unwrap_func(func)
     # Else, that callable is assumed to have already been unwrapped by the
     # caller. We should probably assert that, but doing so requires an
@@ -244,7 +253,7 @@ def iter_func_args(
 
     # If passed *NO* code object, query that callable for its code object.
     if func_codeobj is None:
-        func_codeobj = get_func_codeobj(func)
+        func_codeobj = get_func_codeobj(func=func, exception_cls=exception_cls)
     # In any case, that code object is now defined.
 
     # Bit field of OR-ed binary flags describing this callable.
@@ -276,7 +285,7 @@ def iter_func_args(
     #
     # Note that this is a critical optimization when @beartype is
     # unconditionally applied with import hook automation to *ALL* physical
-    # callables declared by a package, many of which will be argument-less.
+    # callables declared by a package, many of which will be argumentless.
     if (
         args_len_posonly_or_flex +
         args_len_kwonly +

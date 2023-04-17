@@ -13,17 +13,81 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.typing import Optional
+from beartype._data.datatyping import (
+    Codeobjable,
+    TypeException,
+)
+from beartype._util.func.arg.utilfuncargiter import (
+    ARG_META_INDEX_NAME,
+    iter_func_args,
+)
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
-from beartype._util.func.utilfuncwrap import unwrap_func
-from beartype._data.datatyping import Codeobjable, TypeException
+from collections.abc import Callable
 
-# ....................{ GETTERS                            }....................
+# ....................{ GETTERS ~ arg                      }....................
+#FIXME: Unit test us up, please.
+def get_func_arg_first_name_or_none(
+    # Mandatory parameters.
+    func: Callable,
+
+    # Optional parameters.
+    is_unwrap: bool = True,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
+) -> Optional[str]:
+    '''
+    Name of the first parameter listed in the signature of the passed pure-Python
+    callable if any *or* :data:`None` otherwise (i.e., if that callable accepts
+    *no* parameters and is thus parameter-less).
+
+    Parameters
+    ----------
+    func : Codeobjable
+        Pure-Python callable, frame, or code object to be inspected.
+    is_unwrap: bool, optional
+        :data:`True` only if this getter implicitly calls the
+        :func:`.unwrap_func` function. Defaults to :data:`True` for safety. See
+        :func:`.iter_func_args` for further commentary.
+    exception_cls : type, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableException`.
+
+    Returns
+    ----------
+    Optional[str]
+        Either:
+
+        * If that callable accepts one or more parameters, the name of the first
+          parameter listed in the signature of that callable.
+        * Else, :data:`None`.
+
+    Raises
+    ----------
+    :exc:`exception_cls`
+         If that callable is *not* pure-Python.
+    '''
+
+    # For metadata describing each parameter accepted by this callable...
+    for arg_meta in iter_func_args(
+        func=func,
+        is_unwrap=is_unwrap,
+        exception_cls=exception_cls,
+    ):
+        # Return the name of this parameter.
+        return arg_meta[ARG_META_INDEX_NAME]  # type: ignore[return-value]
+    # Else, the above "return" statement was *NOT* performed. In this case, this
+    # callable accepts *NO* parameters.
+
+    # Return "None".
+    return None
+
+# ....................{ GETTERS ~ args                     }....................
 def get_func_args_len_flexible(
     # Mandatory parameters.
     func: Codeobjable,
 
     # Optional parameters.
-    is_unwrapping: bool = True,
+    is_unwrap: bool = True,
     exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> int:
     '''
@@ -35,25 +99,13 @@ def get_func_args_len_flexible(
     ----------
     func : Codeobjable
         Pure-Python callable, frame, or code object to be inspected.
-    is_unwrapping: bool, optional
-        ``True`` only if this getter implicitly calls the :func:`unwrap_func`
-        function to unwrap this possibly higher-level wrapper into its possibly
-        lowest-level wrappee *before* returning the code object of that
-        wrappee. Note that doing so incurs worst-case time complexity ``O(n)``
-        for ``n`` the number of lower-level wrappees wrapped by this wrapper.
-        Defaults to ``True`` for robustness. Why? Because this getter *must*
-        always introspect lowest-level wrappees rather than higher-level
-        wrappers. The latter typically do *not* accurately replicate the
-        signatures of the former. In particular, decorator wrappers typically
-        wrap decorated callables with variadic positional and keyword
-        parameters (e.g., ``def _decorator_wrapper(*args, **kwargs)``). Since
-        neither constitutes a flexible parameter, this getter raises an
-        exception when passed such a wrapper with this boolean set to
-        ``False``. For this reason, only set this boolean to ``False`` if you
-        pretend to know what you're doing.
+    is_unwrap: bool, optional
+        :data:`True` only if this getter implicitly calls the
+        :func:`.unwrap_func` function. Defaults to :data:`True` for safety. See
+        :func:`.iter_func_args` for further commentary.
     exception_cls : type, optional
-        Type of exception in the event of a fatal error. Defaults to
-        :class:`_BeartypeUtilCallableException`.
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableException`.
 
     Returns
     ----------
@@ -63,19 +115,15 @@ def get_func_args_len_flexible(
     Raises
     ----------
     :exc:`exception_cls`
-         If the passed callable is *not* pure-Python.
+         If that callable is *not* pure-Python.
     '''
 
-    # If unwrapping that callable, do so *BEFORE* querying that callable for
-    # its code object to avoid desynchronization between the two.
-    if is_unwrapping:
-        func = unwrap_func(func)
-    # Else, that callable is assumed to have already been unwrapped by the
-    # caller. We should probably assert that, but doing so requires an
-    # expensive call to hasattr(). What you gonna do?
-
     # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_codeobj(func=func, exception_cls=exception_cls)
+    func_codeobj = get_func_codeobj(
+        func=func,
+        is_unwrap=is_unwrap,
+        exception_cls=exception_cls,
+    )
 
     # Return the number of flexible parameters accepted by this callable.
     return func_codeobj.co_argcount

@@ -24,6 +24,7 @@ def test_label_beartypeable_kind() -> None:
     function.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.text.utiltextlabel import label_beartypeable_kind
     from beartype_test.a00_unit.data.data_type import (
@@ -31,37 +32,45 @@ def test_label_beartypeable_kind() -> None:
         Class,
         function,
     )
+    from beartype_test.a00_unit.data.func.data_func import (
+        func_args_3_flex_mandatory_optional_varkw)
 
-    # Tuple of 2-tuples "(beartypeable, cls_stack, kind)", where:
+    # ....................{ LOCALS                         }....................
+    # Tuple of 2-tuples "(beartypeable, kind)", where:
     # * "beartypeable" is an input object to be passed to this labeller.
-    # * "cls_stack" is the input class stack lexically declaring this input
-    #   object if any *OR* "None" otherwise to also be passed to this labeller.
     # * "kind" is the string expected to be returned from this labeller when
     #   passed this input object.
     BEARTYPEABLES_KINDS = (
         # Builtin type.
-        (str, None, 'class'),
+        (str, 'class'),
 
         # User-defined class.
-        (Class, None, 'class'),
+        (Class, 'class'),
 
-        # Pure-Python function.
-        (function, None, 'function'),
+        # Pure-Python argumentless function.
+        (function, 'function'),
 
-        # Pure-Python method.
-        (Class.instance_method, Class, 'method'),
+        # Pure-Python argumentative function.
+        (func_args_3_flex_mandatory_optional_varkw, 'function'),
+
+        # Pure-Python instance method.
+        (Class.instance_method, 'method'),
+
+        # Pure-Python class method.
+        (Class.class_method, 'class method'),
 
         # Object that is neither a pure-Python class, function, *NOR* method. In
         # this case, pass a pseudo-callable (i.e., object whose class defines
         # the __call__() dunder method) to exercise a *POSSIBLE* edge case.
-        (CallableClass(), None, 'object'),
+        (CallableClass(), 'object'),
     )
 
-    # For each such input object, class stack, and expected string...
-    for beartypeable, cls_stack, kind in BEARTYPEABLES_KINDS:
+    # ....................{ PASS                           }....................
+    # For each such input object and expected string...
+    for beartypeable, kind in BEARTYPEABLES_KINDS:
         # Assert this labeller returns the expected string when passed this
         # input object.
-        assert label_beartypeable_kind(beartypeable, cls_stack) == kind
+        assert label_beartypeable_kind(beartypeable) == kind
 
 
 def test_label_callable() -> None:

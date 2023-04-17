@@ -25,11 +25,7 @@ from collections.abc import Callable
 
 # ....................{ LABELLERS ~ beartypeable           }....................
 def label_beartypeable_kind(
-    # Mandatory parameters.
     obj: BeartypeableT,  # pyright: ignore[reportInvalidTypeVarUse]
-
-    # Optional parameters.
-    cls_stack: TypeStack = None,
 ) -> str:
     '''
     Human-readable label describing the **kind** (i.e.,
@@ -41,11 +37,6 @@ def label_beartypeable_kind(
     ----------
     obj : BeartypeableT
         Beartypeable to describe the kind of.
-    cls_stack : TypeStack
-        **Type stack** (i.e., tuple of zero or more arbitrary types describing
-        the chain of classes lexically containing this beartypeable if any *or*
-        :data:`None`). Defaults to :data:`None`. See also the
-        :func:`beartype._decor.decorcore.beartype_object` decorator.
 
     Returns
     ----------
@@ -55,20 +46,46 @@ def label_beartypeable_kind(
 
     # Avoid circular import dependencies.
     from beartype._util.func.utilfunctest import is_func_python
+    from beartype._util.func.arg.utilfuncargget import (
+        get_func_arg_first_name_or_none)
 
-    # Return either...
-    return (
-        # If this object is a pure-Python class, an appropriate string;
-        'class' if isinstance(obj, type) else
-        # If this object is either a pure-Python function *OR* method, an
-        # appropriate string;
-        (
-            'function' if cls_stack is None else 'method'
-        ) if is_func_python(obj) else
-        # Else, this object is neither a pure-Python class, function, *NOR*
-        # method. In this case, fallback to a sane placeholder.
-        'object'
-    )
+    #FIXME: Globalize magic strings for efficiency, please.
+
+    # If this object is a pure-Python class, return an appropriate string.
+    if isinstance(obj, type):
+        return 'class' 
+    # Else, this object is *NOT* a pure-Python class.
+    #
+    # If this object is a pure-Python callable...
+    elif is_func_python(obj):
+        # Name of the first parameter accepted by that callable if any *OR*
+        # "None" otherwise (i.e., if that callable is argumentless).
+        arg_first_name = get_func_arg_first_name_or_none(obj)
+
+        # If this is the canonical first "self" parameter typically accepted by
+        # instance methods, assume this to be an instance method.
+        #
+        # Note that this heuristic fails in uncommon edge cases -- but that
+        # that's largely irrelevant here. This function is *ONLY* intended to
+        # generate human-readable exception and warning messages. Since this is
+        # hardly mission-critical, false positives are reluctantly acceptable.
+        if arg_first_name == 'self':
+            return 'method'
+        # Else, this is *NOT* the canonical first "self" parameter.
+        #
+        # If this is the canonical first "cls" parameter typically accepted by
+        # class methods, assume this to be a class method.
+        elif arg_first_name == 'cls':
+            return 'class method'
+        # Else, this is neither the canonical first "self" nor "cls" parameter.
+        # In this case, this is assumed to be a non-method callable.
+
+        # Return an appropriate string for a non-method callable.
+        return 'function'
+    # Else, this object is neither a pure-Python class *NOR* callable.
+
+    # Return a sane placeholder.
+    return 'object'
 
 # ....................{ LABELLERS ~ callable               }....................
 #FIXME: Unit test up the "is_contex" parameter, which is currently untested.

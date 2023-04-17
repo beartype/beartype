@@ -390,7 +390,7 @@ def method_cached_arg_by_id(func: _CallableT) -> _CallableT:
         func_args_len_flexible=2,
         exception_cls=_BeartypeUtilCallableCachedException,
         # Avoid unnecessary callable unwrapping as a negligible optimization.
-        is_unwrapping=False,
+        is_unwrap=False,
     )
     # Else, this wrappee accepts exactly one flexible parameter.
 

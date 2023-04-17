@@ -12,18 +12,60 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import Any
+from beartype.typing import (
+    TYPE_CHECKING,
+    Any,
+)
 from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj_or_none)
+from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
+from beartype._util.mod.lib.utiltyping import import_typing_attr_or_fallback
 from beartype._data.datatyping import (
     Codeobjable,
     TypeException,
+)
+from collections.abc import (
+    Callable,
+    Generator,
 )
 from inspect import (
     CO_ASYNC_GENERATOR,
     CO_COROUTINE,
     CO_GENERATOR,
 )
+
+#FIXME: DRY violation. This logic is duplicated from the
+#"beartype.door._doorcheck" submodule. Ideally, this should be aggregated in
+#"beartype.typing" for public reuse.
+# Portably import the PEP 647-compliant "typing.TypeGuard" type hint factory
+# first introduced by Python >= 3.10, regardless of the current version of
+# Python and regardless of whether this submodule is currently being subject to
+# static type-checking or not. Praise be to MIT ML guru and stunning Hypothesis
+# maintainer @rsokl (Ryan Soklaski) for this brilliant circumvention. \o/
+#
+# Usage of this factory is a high priority. Hinting the return of the
+# is_bearable() tester with a type guard created by this factory effectively
+# coerces that tester in an arbitrarily complete type narrower and thus type
+# parser at static analysis time, substantially reducing complaints from static
+# type-checkers in end user code deferring to that tester.
+#
+# If this submodule is currently being statically type-checked (e.g., mypy),
+# intentionally import from the third-party "typing_extensions" module rather
+# than the standard "typing" module. Why? Because doing so eliminates Python
+# version complaints from static type-checkers (e.g., mypy, pyright). Static
+# type-checkers could care less whether "typing_extensions" is actually
+# installed or not; they only care that "typing_extensions" unconditionally
+# defines this type factory across all Python versions, whereas "typing" only
+# conditionally defines this type factory under Python >= 3.10. *facepalm*
+if TYPE_CHECKING:
+    from typing_extensions import TypeGuard
+# Else, this submodule is currently being imported at runtime by Python. In this
+# case, dynamically import this factory from whichever of the standard "typing"
+# module *OR* the third-party "typing_extensions" module declares this factory,
+# falling back to the builtin "bool" type if none do.
+else:
+    TypeGuard = import_typing_attr_or_fallback(
+        'TypeGuard', TypeHintTypeFactory(bool))
 
 # ....................{ CONSTANTS                          }....................
 FUNC_NAME_LAMBDA = '<lambda>'
@@ -306,7 +348,7 @@ def is_func_lambda(func: Any) -> bool:
     )
 
 
-def is_func_python(func: object) -> bool:
+def is_func_python(func: object) -> TypeGuard[Callable]:
     '''
     ``True`` only if the passed object is a **pure-Python callable** (i.e.,
     implemented in Python as either a function or method rather than in C as
@@ -329,7 +371,7 @@ def is_func_python(func: object) -> bool:
     return get_func_codeobj_or_none(func) is not None
 
 # ....................{ TESTERS ~ descriptor               }....................
-def is_func_classmethod(func: Any) -> bool:
+def is_func_classmethod(func: Any) -> TypeGuard[classmethod]:
     '''
     ``True`` only if the passed object is a **C-based unbound class method
     descriptor** (i.e., method decorated by the builtin :class:`classmethod`
@@ -364,7 +406,7 @@ def is_func_classmethod(func: Any) -> bool:
     return isinstance(func, classmethod)
 
 
-def is_func_property(func: Any) -> bool:
+def is_func_property(func: Any) -> TypeGuard[property]:
     '''
     ``True`` only if the passed object is a **C-based unbound property method
     descriptor** (i.e., method decorated by the builtin :class:`property`
@@ -396,7 +438,7 @@ def is_func_property(func: Any) -> bool:
     return isinstance(func, property)
 
 
-def is_func_staticmethod(func: Any) -> bool:
+def is_func_staticmethod(func: Any) -> TypeGuard[staticmethod]:
     '''
     ``True`` only if the passed object is a **C-based unbound static method
     descriptor** (i.e., method decorated by the builtin :class:`staticmethod`
@@ -430,13 +472,13 @@ def is_func_staticmethod(func: Any) -> bool:
     return isinstance(func, staticmethod)
 
 # ....................{ TESTERS ~ async                    }....................
-def is_func_async(func: object) -> bool:
+def is_func_async(func: object) -> TypeGuard[Callable]:
     '''
-    ``True`` only if the passed object is an **asynchronous callable** (i.e.,
-    awaitable factory callable implicitly creating and returning an awaitable
-    object (i.e., satisfying the :class:`collections.abc.Awaitable` protocol) by
-    being declared via the ``async def`` syntax and thus callable *only* when
-    preceded by comparable ``await`` syntax).
+    ``True`` only if the passed object is an **asynchronous callable factory**
+    (i.e., awaitable factory callable implicitly creating and returning an
+    awaitable object (i.e., satisfying the :class:`collections.abc.Awaitable`
+    protocol) by being declared via the ``async def`` syntax and thus callable
+    *only* when preceded by comparable ``await`` syntax).
 
     Parameters
     ----------
@@ -460,7 +502,7 @@ def is_func_async(func: object) -> bool:
     # Note this tester intentionally:
     # * Inlines the tests performed by the is_func_coro() and
     #   is_func_async_generator() testers for efficiency.
-    # * Calls the get_func_codeobj_or_none() with "is_unwrapping" disabled
+    # * Calls the get_func_codeobj_or_none() with "is_unwrap" disabled
     #   rather than enabled. Why? Because the asynchronicity of this possibly
     #   higher-level wrapper has *NO* relation to that of the possibly
     #   lower-level wrappee wrapped by this wrapper. Notably, it is both
@@ -491,7 +533,7 @@ def is_func_async(func: object) -> bool:
     )
 
 
-def is_func_coro(func: object) -> bool:
+def is_func_coro(func: object) -> TypeGuard[Callable]:
     '''
     ``True`` only if the passed object is an **asynchronous coroutine factory**
     (i.e., awaitable callable containing *no* ``yield`` expression implicitly
@@ -529,7 +571,7 @@ def is_func_coro(func: object) -> bool:
     )
 
 
-def is_func_async_generator(func: object) -> bool:
+def is_func_async_generator(func: object) -> TypeGuard[Callable]:
     '''
     ``True`` only if the passed object is an **asynchronous generator factory**
     (i.e., awaitable callable containing one or more ``yield`` expressions
@@ -567,7 +609,7 @@ def is_func_async_generator(func: object) -> bool:
     )
 
 # ....................{ TESTERS ~ sync                     }....................
-def is_func_sync_generator(func: object) -> bool:
+def is_func_sync_generator(func: object) -> TypeGuard[Callable]:
     '''
     ``True`` only if the passed object is an **synchronous generator factory**
     (i.e., awaitable callable containing one or more ``yield`` expressions

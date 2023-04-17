@@ -32,7 +32,7 @@ def test_is_func_argless() -> None:
         func_args_1_kwonly_mandatory,
     )
 
-    # Assert this tester accepts an argument-less callable.
+    # Assert this tester accepts an argumentless callable.
     assert is_func_argless(func_args_0) is True
 
     # Assert this tester rejects all other callables.

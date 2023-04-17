@@ -296,9 +296,9 @@ class BeartypeValidator(object):
             func=get_repr, exception_cls=BeartypeValeSubscriptionException):
             raise BeartypeValeSubscriptionException(
                 f'Representer {repr(get_repr)} neither string nor '
-                f'argument-less pure-Python callable.'
+                f'argumentless pure-Python callable.'
             )
-        # Else, this representer is an argument-less pure-Python callable.
+        # Else, this representer is an argumentless pure-Python callable.
 
         # Set this representer.
         self._get_repr = get_repr

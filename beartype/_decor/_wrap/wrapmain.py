@@ -349,7 +349,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
         # renders the latter mostly useless for our purposes.
         func=bear_call.func_wrappee_wrappee,
         func_codeobj=bear_call.func_wrappee_wrappee_codeobj,
-        is_unwrapping=False,
+        is_unwrap=False,
     )):
         # Kind and name of this parameter.
         arg_kind: ArgKind = arg_meta[ARG_META_INDEX_KIND]  # type: ignore[assignment]
