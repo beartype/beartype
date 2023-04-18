@@ -43,12 +43,12 @@ from linecache import cache as linecache_cache
 # ....................{ TESTERS                            }....................
 def is_func_file(func: Callable) -> bool:
     '''
-    ``True`` only if the passed callable is defined **on-disk** (e.g., by a
+    :data:`True` only if the passed callable is defined **on-disk** (e.g., by a
     script or module whose pure-Python source code is accessible to the active
     Python interpreter as a file on the local filesystem).
 
-    Equivalently, this tester returns ``False`` if that callable is dynamically
-    defined in-memory (e.g., by a prior call to the :func:`exec` or
+    Equivalently, this tester returns :data:`False` if that callable is
+    dynamically defined in-memory (e.g., by a prior call to the :func:`exec` or
     :func:`eval` builtins).
 
     Parameters
@@ -59,7 +59,7 @@ def is_func_file(func: Callable) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if the passed callable is defined on-disk.
+        :data:`True` only if the passed callable is defined on-disk.
     '''
 
     # One-liners for abstruse abstraction.
@@ -71,7 +71,7 @@ def get_func_filename_or_none(
     func: Callable,
 
     # Optional parameters.
-    # exception_cls: Type[Exception] = _BeartypeUtilCallableException,
+    # exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> Optional[str]:
     '''
     Absolute filename of the file on the local filesystem containing the
@@ -95,8 +95,8 @@ def get_func_filename_or_none(
         * If the passed callable was dynamically declared in-memory, ``None``.
     '''
 
-    # Code object underlying the passed callable if that callable is
-    # pure-Python *OR* "None" otherwise (i.e., if that callable is C-based).
+    # Code object underlying the passed callable if that callable is pure-Python
+    # *OR* "None" otherwise (i.e., if that callable is C-based).
     #
     # Note that we intentionally do *NOT* test whether this callable is
     # explicitly pure-Python or C-based: e.g.,
@@ -120,13 +120,13 @@ def get_func_filename_or_none(
     # Why? Because PyPy. The logic above succeeds for CPython but fails for
     # PyPy, because *ALL CALLABLES ARE C-BASED IN PYPY.* Adopting the above
     # approach would unconditionally return the C-specific placeholder string
-    # for all callables -- including those originally declared as pure-Python
-    # in a Python module. So it goes.
+    # for all callables -- including those originally declared as pure-Python in
+    # a Python module. So it goes.
     func_codeobj = get_func_codeobj_or_none(func)
 
-    # If the passed callable has *NO* code object and is thus *NOT*
-    # pure-Python, that callable was *NOT* defined by a pure-Python source code
-    # file. In this case, return "None".
+    # If the passed callable has *NO* code object and is thus *NOT* pure-Python,
+    # that callable was *NOT* defined by a pure-Python source code file. In this
+    # case, return "None".
     if not func_codeobj:
         return None
     # Else, that callable is pure-Python.
@@ -141,38 +141,31 @@ def get_func_filename_or_none(
     # this metadata. Yes, this is awful. Yes, this is the Python ecosystem.
     func_filename = getattr(func_codeobj, 'co_filename', None)
 
-    # If this code object does *NOT* offer that metadata, return "None".
-    if not func_filename:
-        return None
-    # Else, this code object offers that metadata.
-    # print(f'func_filename: {func_filename}')
-
-    # If this filename is a "<"- and ">"-bracketed placeholder string, this
-    # filename is a placeholder signifying this callable to be dynamically
-    # declared in-memory rather than by an on-disk module. In this case...
-    #
-    # Examples of such strings include:
-    # * "<string>", signifying a callable dynamically declared in-memory.
-    # * "<@beartype(...) at 0x...}>', signifying a callable dynamically
-    #   declared in-memory by the beartype._util.func.utilfuncmake.make_func()
-    #   function, possibly cached with the standard "linecache" module.
-    if (
+    # If either this code object does not provide this filename *OR*...
+    if not func_filename or (
+        # This filename is a "<"- and ">"-bracketed placeholder string, this
+        # filename is a placeholder signifying this callable to be dynamically
+        # declared in-memory rather than by an on-disk module. Examples include:
+        # * "<string>", signifying a callable dynamically declared in-memory.
+        # * "<@beartype(...) at 0x...}>', signifying a callable dynamically
+        #   declared in-memory by the
+        #   beartype._util.func.utilfuncmake.make_func() function, possibly
+        #   cached with the standard "linecache" module.
         func_filename[ 0] == '<' and
-        func_filename[-1] == '>'
+        func_filename[-1] == '>' and
+        # This in-memory callable's source code was *NOT* cached with the
+        # "linecache" module and has thus effectively been destroyed.
+        func_filename not in linecache_cache
+    # Then return "None", as this filename is useless for almost all purposes.
     ):
-        # Return either...
-        return (
-            # If this in-memory callable's source code was cached with the
-            # standard "linecache" module, this filename as is;
-            func_filename
-            if func_filename in linecache_cache else
-            # Else, this in-memory callable's source code was *NOT* cached with
-            # the "linecache" module and has thus effectively been destroyed. In
-            # this case, "None".
-            None
-        )
-    # Else, this filename if is actually that of an on-disk module.
+        return None
+    # Else, this filename is either:
+    # * That of an on-disk module, which is good.
+    # * That of an in-memory callable whose source code was cached with the
+    #   "linecache" module. Although less good, this filename *CAN* technically
+    #   be used to recover this code by querying the "linecache" module.
 
     # Return this filename as is, regardless of whether this file exists.
     # Callers are responsible for performing further validation if desired.
+    # print(f'func_filename: {func_filename}')
     return func_filename

@@ -376,7 +376,7 @@ def beartype_object_nonfatal(
         #internally call either label_callable() *OR* label_type() depending on
         #the type of the passed object. Then call that function below like so:
         #    obj_label = prefix_beartypeable(
-        #        obj=obj, cls_stack=cls_stack, is_context=True)
+        #        obj=obj, is_context=True)
         #
         #    obj_label_capitalized = uppercase_char_first(obj_label)
 

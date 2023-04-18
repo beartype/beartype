@@ -88,7 +88,7 @@ def label_beartypeable_kind(
     return 'object'
 
 # ....................{ LABELLERS ~ callable               }....................
-#FIXME: Unit test up the "is_contex" parameter, which is currently untested.
+#FIXME: Unit test up the "is_context" parameter, which is currently untested.
 def label_callable(
     # Mandatory parameters.
     func: Callable,
@@ -193,6 +193,10 @@ def label_callable(
 
     # If contextualizing that callable...
     if is_context:
+        #FIXME: Define a comparable get_type_filename_or_none() getter whose
+        #implementation should probably resemble this StackOverflow answer:
+        #    https://stackoverflow.com/a/697356/2809027
+
         # Absolute filename of the source module file defining that callable if
         # that callable was defined on-disk *OR* "None" otherwise (i.e., if that
         # callable was defined in-memory).
