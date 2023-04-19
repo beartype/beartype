@@ -16,7 +16,7 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ validator                  }....................
+# ....................{ TESTS ~ raiser                     }....................
 def test_die_unless_module_attr_name() -> None:
     '''
     Test the :func:`beartype._util.mod.utilmodtest.die_unless_module_attr_name`
@@ -77,4 +77,4 @@ def test_is_module() -> None:
     with warns(BeartypeModuleUnimportableWarning):
         assert is_module(
             'beartype_test.a00_unit.data.util.mod.data_utilmodule_bad') is (
-                False)
+            False)

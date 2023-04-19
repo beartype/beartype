@@ -35,17 +35,10 @@ from beartype._util.func.utilfuncscope import (
     is_func_nested,
 )
 from beartype._util.func.utilfunctest import die_unless_func_python
+from beartype._util.mod.utilmodget import get_object_module_or_none
 from beartype._util.text.utiltextident import is_identifier
 from beartype._util.text.utiltextprefix import prefix_beartypeable_pith
 from collections.abc import Callable
-from sys import modules as sys_modules
-
-# ....................{ CONSTANTS                          }....................
-_FROZEN_SET_EMPTY: FrozenSet[Any] = frozenset()
-'''
-Empty frozen set, globalized as a mild optimization for the body of the
-:func:`resolve_pep563` resolver.
-'''
 
 # ....................{ RESOLVERS                          }....................
 def resolve_pep563(
@@ -174,7 +167,7 @@ def resolve_pep563(
     # statically defined on disk by non-existent modules. This includes methods
     # synthesized by the standard "typing.NamedTuple" class -- which set their
     # "__module__" attributes to the non-existent module "namedtuple_Foo". :O
-    func_module = sys_modules.get(func.__module__)
+    func_module = get_object_module_or_none(func)
 
     # If it is *NOT* the case that...
     if not (
@@ -702,9 +695,16 @@ def resolve_pep563(
     func.__annotations__ = func_hints_resolved
 
 # ....................{ PRIVATE ~ constants                }....................
+_FROZEN_SET_EMPTY: FrozenSet[Any] = frozenset()
+'''
+Empty frozen set, globalized as a mild optimization for the body of the
+:func:`.resolve_pep563` resolver.
+'''
+
+
 _FUTURE_ANNOTATIONS = __future__.annotations
 '''
-:attr:`__future__.annotations` object, globalized as a private constant of this
+:obj:`__future__.annotations` object, globalized as a private constant of this
 submodule to negligibly optimize repeated lookups of this object.
 '''
 

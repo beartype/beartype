@@ -692,7 +692,8 @@ See Also
 
 
 # NegaBeartype: I challenge you!
-_ATTR_NAME_PREFIX_ID_NEGATIVE = f'{_ATTR_NAME_PREFIX_ID_POSITIVE}nega_'
+_ATTR_NAME_PREFIX_ID_NEGATIVE = (
+    f'{_ATTR_NAME_PREFIX_ID_POSITIVE}oh_pypy_you_sweet_summer_child_')
 '''
 Arbitrary substring prefixing names dynamically synthesized by the
 :func:`.add_func_scope_attr` function for attributes whose **object ids** (i.e.,

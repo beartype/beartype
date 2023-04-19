@@ -11,10 +11,81 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype._cave._cavefast import ModuleType
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype.typing import Optional
 from inspect import findsource
-from types import ModuleType
+from sys import modules as sys_modules
+
+# ....................{ GETTERS ~ object                   }....................
+def get_object_module_or_none(obj: object) -> Optional[ModuleType]:
+    '''
+    Module declaring the passed object if this object defines the ``__module__``
+    dunder instance variable *or* :data:`None` otherwise.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    Optional[ModuleType]
+        Either:
+
+        * Module declaring this object if this object declares a ``__module__``
+          dunder attribute.
+        * :data:`None` otherwise.
+    '''
+
+    # Fully-qualified name of the module defining this object if any or "None".
+    module_name = get_object_module_name_or_none(obj)
+
+    # Return either:
+    # * If a module defines this object, that module.
+    # * Else, "None".
+    return sys_modules.get(module_name) if module_name else None
+
+
+def get_object_module(obj: object) -> ModuleType:
+    '''
+    Module declaring the passed object if this object defines the ``__module__``
+    dunder instance variable *or* raise an exception otherwise (i.e., if this
+    object does *not* define that variable).
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    ModuleType
+        Module declaring this object.
+
+    Raises
+    ----------
+    _BeartypeUtilModuleException
+        If this object does *not* define the ``__module__`` dunder attribute.
+    '''
+
+    # Fully-qualified name of the module defining this object if any *OR* raise
+    # an exception otherwise.
+    module_name = get_object_module_name(obj)
+
+    # Module defining this object if any *OR* "None" otherwise.
+    module = sys_modules.get(module_name)
+
+    # If this module was *NOT* previously imported despite this object existing
+    # and thus having been imported from something, this object deceptively lies
+    # about its module. In this case, raise an exception.
+    if module is None:
+        raise _BeartypeUtilModuleException(
+            f'{repr(obj)} module "{module_name}" not found.')
+    # If this module was previously imported.
+
+    # Return this module.
+    return module
 
 # ....................{ GETTERS ~ object : line            }....................
 def get_object_module_line_number_begin(obj: object) -> int:
@@ -79,11 +150,12 @@ def get_object_module_line_number_begin(obj: object) -> int:
         f'{repr(obj)} neither callable nor class.')
 
 # ....................{ GETTERS ~ object : name            }....................
+#FIXME: Unit test us up, please.
 def get_object_module_name_or_none(obj: object) -> Optional[str]:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
     declaring package) of the module declaring the passed object if this object
-    defines the ``__module__`` dunder instance variable *or* ``None``
+    defines the ``__module__`` dunder instance variable *or* :data:`None`
     otherwise.
 
     Parameters
@@ -98,13 +170,14 @@ def get_object_module_name_or_none(obj: object) -> Optional[str]:
 
         * Fully-qualified name of the module declaring this object if this
           object declares a ``__module__`` dunder attribute.
-        * ``None`` otherwise.
+        * :data:`None` otherwise.
     '''
 
     # Let it be, speaking one-liners of wisdom.
     return getattr(obj, '__module__', None)
 
 
+#FIXME: Unit test us up, please.
 def get_object_module_name(obj: object) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
@@ -125,8 +198,7 @@ def get_object_module_name(obj: object) -> str:
     Raises
     ----------
     _BeartypeUtilModuleException
-        If this object does *not* define the ``__module__`` dunder instance
-        variable.
+        If this object does *not* define the ``__module__`` dunder attribute.
     '''
 
     # Fully-qualified name of the module declaring this object if this object
@@ -146,6 +218,7 @@ def get_object_module_name(obj: object) -> str:
     return module_name
 
 # ....................{ GETTERS ~ object : type : name     }....................
+#FIXME: Unit test us up, please.
 def get_object_type_module_name_or_none(obj: object) -> Optional[str]:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
@@ -216,8 +289,8 @@ def get_module_filename(module: ModuleType) -> str:
 def get_module_filename_or_none(module: ModuleType) -> Optional[str]:
     '''
     Absolute filename of the passed module if this module is physically defined
-    on disk *or* ``None`` otherwise (i.e., if this module is abstractly defined
-    in memory).
+    on disk *or* :data:`None` otherwise (i.e., if this module is abstractly
+    defined in memory).
 
     Parameters
     ----------
@@ -230,7 +303,7 @@ def get_module_filename_or_none(module: ModuleType) -> Optional[str]:
         Either:
 
         * Absolute filename of this module if this module resides on disk.
-        * ``None`` if this module *only* resides in memory.
+        * :data:`None` if this module *only* resides in memory.
     '''
 
     # Thus spake Onelinerthustra.

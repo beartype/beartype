@@ -16,13 +16,66 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ getter                     }....................
-def test_die_unless_module_attr_name() -> None:
+# ....................{ TESTS ~ object                     }....................
+def test_get_object_module_or_none() -> None:
     '''
-    Test the :func:`beartype._util.mod.utilmodtest.die_unless_module_attr_name`
-    validator.
+    Test the :func:`beartype._util.mod.utilmodget.get_object_module_or_none`
+    getter.
     '''
 
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.mod.utilmodget import get_object_module_or_none
+    from beartype_test.a00_unit.data import data_type
+
+    # ....................{ PASS                           }....................
+    # Assert this getter returns the expected module for:
+    # * A user-defined class.
+    # * A user-defined function.
+    assert get_object_module_or_none(data_type.Class) is data_type
+    assert get_object_module_or_none(data_type.function) is data_type
+
+    # ....................{ FAIL                           }....................
+    # Assert this getter returns "None" for an arbitrary object that is neither
+    # a class *NOR* a callable.
+    assert get_object_module_or_none(
+        'And saw in sleep old palaces and towers') is None
+
+
+def test_get_object_module() -> None:
+    '''
+    Test the :func:`beartype._util.mod.utilmodget.get_object_module` getter.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar._roarexc import _BeartypeUtilModuleException
+    from beartype._util.mod.utilmodget import get_object_module
+    from beartype_test.a00_unit.data import data_type
+    from pytest import raises
+
+    # ....................{ PASS                           }....................
+    # Assert this getter returns the expected module for:
+    # * A user-defined class.
+    # * A user-defined function.
+    assert get_object_module(data_type.Class) is data_type
+    assert get_object_module(data_type.function) is data_type
+
+    # ....................{ FAIL                           }....................
+    # Assert this getter raises the expected exception for an arbitrary object
+    # that is neither a class *NOR* a callable.
+    with raises(_BeartypeUtilModuleException):
+        get_object_module("Quivering within the wave's intenser day,")
+
+# ....................{ TESTS ~ object : line              }....................
+def test_get_object_module_line_number_begin() -> None:
+    '''
+    Test the
+    :func:`beartype._util.mod.utilmodget.get_object_module_line_number_begin`
+    getter.
+    '''
+
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
     from beartype._util.mod.utilmodget import (
@@ -33,6 +86,7 @@ def test_die_unless_module_attr_name() -> None:
     )
     from pytest import raises
 
+    # ....................{ PASS                           }....................
     # Assert this getter returns the expected line number for this callable.
     assert get_object_module_line_number_begin(
         like_snakes_that_watch_their_prey) == 20
@@ -44,6 +98,7 @@ def test_die_unless_module_attr_name() -> None:
     # Assert this getter returns the expected line number for this class.
     assert get_object_module_line_number_begin(SlowRollingOn) == 39
 
+    # ....................{ FAIL                           }....................
     # Assert this validator raises the expected exception when passed an object
     # that is neither a callable nor class.
     with raises(_BeartypeUtilModuleException):
