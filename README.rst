@@ -152,8 +152,9 @@ developed Python versions <Python status_>`__, `all Python package managers
 <beartype install_>`__, and `multiple platform-specific package managers
 <beartype install_>`__.
 
-    Beartype `powers quality assurance across the Python ecosystem <beartype
-    dependents_>`__.
+.. # FIXME: Gah! Libraries.io has fallen down and cannot get back up... *AGAIN.*
+.. #     Beartype `powers quality assurance across the Python ecosystem <beartype
+.. #     dependents_>`__.
 
 .. # FIXME: Remove *ALL* of the following URLs except those specifically
 .. # required above -- which should be most of them, frankly.

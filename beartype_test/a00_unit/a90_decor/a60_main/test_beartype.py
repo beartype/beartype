@@ -178,6 +178,10 @@ def test_beartype() -> None:
             exception_str = strip_text_ansi(exception_str)
             # print('exception message: {}'.format(exception_str))
 
+            # Assert this exception message is prefixed by a substring
+            # identifying the decorated callable with a human-readable label.
+            assert exception_str.startswith('Function ')
+
             # Assert that iterables of uncompiled regular expression expected
             # to match and *NOT* match this message are *NOT* strings, as
             # commonly occurs when accidentally omitting a trailing comma in

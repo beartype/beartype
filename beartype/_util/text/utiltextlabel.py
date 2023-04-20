@@ -13,10 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Optional
-from beartype._data.datatyping import (
-    BeartypeableT,
-    TypeStack,
-)
+from beartype._data.datatyping import BeartypeableT
 from beartype._util.utilobject import (
     get_object_name,
     get_object_type_name,
@@ -45,7 +42,13 @@ def label_beartypeable_kind(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfunctest import is_func_python
+    from beartype._util.func.utilfunctest import (
+        is_func_async,
+        is_func_async_generator,
+        is_func_coro,
+        is_func_python,
+        is_func_sync_generator,
+    )
     from beartype._util.func.arg.utilfuncargget import (
         get_func_arg_first_name_or_none)
 
@@ -53,11 +56,47 @@ def label_beartypeable_kind(
 
     # If this object is a pure-Python class, return an appropriate string.
     if isinstance(obj, type):
-        return 'class' 
+        return 'class'
     # Else, this object is *NOT* a pure-Python class.
     #
     # If this object is a pure-Python callable...
     elif is_func_python(obj):
+        # Human-readable prefix describing the exotic nature of this callable if
+        # this is callable is exotic (e.g., coroutine or generator factory)
+        # suffixed by trailing whitespace *OR* the empty string otherwise.
+        func_prefix = ''
+
+        # Human-readable suffix describing the general nature of this callable
+        # (e.g., function, method) suffixed by trailing whitespace.
+        func_suffix = ''
+
+        # If this object is an asynchronous callable factory...
+        if is_func_async(obj):
+            # If this object is a coroutine factory, use an appropriate prefix.
+            if is_func_coro(obj):
+                func_prefix = 'coroutine factory '
+            # If this object is an asynchronous generator factory, use an
+            # appropriate prefix.
+            elif is_func_async_generator(obj):
+                func_prefix = 'asynchronous generator factory '
+            # Else, this object is an unrecognized kind of asynchronous callable
+            # factory. In this case, fallback to a generic prefix.
+            #
+            # Note that this should *NEVER* occur. Since *ALL* asynchronous
+            # callable factories are either coroutine or asynchronous generator
+            # factories, one of the above conditional branches should have been
+            # entered instead. Nonetheless, preparation prevents disasters.
+            else:  # pragma: no cover
+                func_prefix = 'asynchronous '
+        # Else, this object is a synchronous callable.
+        #
+        # If this object is an synchronous generator factory, use an appropriate
+        # prefix.
+        elif is_func_sync_generator(obj):
+            func_prefix = 'generator factory '
+        # Else, this object is a standard synchronous callable. In this case,
+        # avoid prefixing this callable by a leading substring.
+
         # Name of the first parameter accepted by that callable if any *OR*
         # "None" otherwise (i.e., if that callable is argumentless).
         arg_first_name = get_func_arg_first_name_or_none(obj)
@@ -70,18 +109,21 @@ def label_beartypeable_kind(
         # generate human-readable exception and warning messages. Since this is
         # hardly mission-critical, false positives are reluctantly acceptable.
         if arg_first_name == 'self':
-            return 'method'
+            func_suffix = 'method'
         # Else, this is *NOT* the canonical first "self" parameter.
         #
         # If this is the canonical first "cls" parameter typically accepted by
         # class methods, assume this to be a class method.
         elif arg_first_name == 'cls':
-            return 'class method'
+            func_suffix = 'class method'
         # Else, this is neither the canonical first "self" nor "cls" parameter.
         # In this case, this is assumed to be a non-method callable.
+        else:
+            func_suffix = 'function'
 
-        # Return an appropriate string for a non-method callable.
-        return 'function'
+        # Return the concatenation of these substrings.
+        # print(f'func_prefix: {func_prefix}; func_suffix: {func_suffix}')
+        return f'{func_prefix}{func_suffix}'
     # Else, this object is neither a pure-Python class *NOR* callable.
 
     # Return a sane placeholder.

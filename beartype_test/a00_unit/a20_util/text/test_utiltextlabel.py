@@ -30,7 +30,10 @@ def test_label_beartypeable_kind() -> None:
     from beartype_test.a00_unit.data.data_type import (
         CallableClass,
         Class,
+        async_coroutine_factory,
+        async_generator_factory,
         function,
+        sync_generator_factory,
     )
     from beartype_test.a00_unit.data.func.data_func import (
         func_args_3_flex_mandatory_optional_varkw)
@@ -58,6 +61,18 @@ def test_label_beartypeable_kind() -> None:
 
         # Pure-Python class method.
         (Class.class_method, 'class method'),
+
+        # Pure-Python class method.
+        (Class.class_method, 'class method'),
+
+        # Pure-Python coroutine factory function.
+        (async_coroutine_factory, 'coroutine factory function'),
+
+        # Pure-Python asynchronous generator factory function.
+        (async_generator_factory, 'asynchronous generator factory function'),
+
+        # Pure-Python asynchronous generator factory function.
+        (sync_generator_factory, 'generator factory function'),
 
         # Object that is neither a pure-Python class, function, *NOR* method. In
         # this case, pass a pseudo-callable (i.e., object whose class defines

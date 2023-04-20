@@ -416,7 +416,7 @@ def _get_type_checker(
 
 # ....................{ PRIVATE ~ constants                }....................
 _TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX = (
-    'function '
+    'Function '
     'beartype.door._doorcheck._get_type_checker._die_if_unbearable() '
     'return '
 )

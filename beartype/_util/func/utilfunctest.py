@@ -37,6 +37,7 @@ from inspect import (
 #FIXME: DRY violation. This logic is duplicated from the
 #"beartype.door._doorcheck" submodule. Ideally, this should be aggregated in
 #"beartype.typing" for public reuse.
+
 # Portably import the PEP 647-compliant "typing.TypeGuard" type hint factory
 # first introduced by Python >= 3.10, regardless of the current version of
 # Python and regardless of whether this submodule is currently being subject to
@@ -113,7 +114,7 @@ def die_unless_func_python(
         Callable to be inspected.
     exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
-        :class:`_BeartypeUtilCallableException`.
+        :class:`._BeartypeUtilCallableException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -171,7 +172,7 @@ def die_unless_func_classmethod(
         Object to be inspected.
     exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
-        :class:`_BeartypeUtilCallableException`.
+        :class:`._BeartypeUtilCallableException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -474,11 +475,12 @@ def is_func_staticmethod(func: Any) -> TypeGuard[staticmethod]:
 # ....................{ TESTERS ~ async                    }....................
 def is_func_async(func: object) -> TypeGuard[Callable]:
     '''
-    ``True`` only if the passed object is an **asynchronous callable factory**
-    (i.e., awaitable factory callable implicitly creating and returning an
-    awaitable object (i.e., satisfying the :class:`collections.abc.Awaitable`
-    protocol) by being declared via the ``async def`` syntax and thus callable
-    *only* when preceded by comparable ``await`` syntax).
+    :data:`True` only if the passed object is an **asynchronous callable
+    factory** (i.e., awaitable factory callable implicitly creating and
+    returning an awaitable object (i.e., satisfying the
+    :class:`collections.abc.Awaitable` protocol) by being declared via the
+    ``async def`` syntax and thus callable *only* when preceded by comparable
+    ``await`` syntax).
 
     Parameters
     ----------
@@ -488,7 +490,7 @@ def is_func_async(func: object) -> TypeGuard[Callable]:
     Returns
     ----------
     bool
-        ``True`` only if this object is an asynchronous callable.
+        :data:`True` only if this object is an asynchronous callable.
 
     See Also
     ----------
@@ -535,9 +537,9 @@ def is_func_async(func: object) -> TypeGuard[Callable]:
 
 def is_func_coro(func: object) -> TypeGuard[Callable]:
     '''
-    ``True`` only if the passed object is an **asynchronous coroutine factory**
-    (i.e., awaitable callable containing *no* ``yield`` expression implicitly
-    creating and returning an awaitable object (i.e., satisfying the
+    :data:`True` only if the passed object is an **asynchronous coroutine
+    factory** (i.e., awaitable callable containing *no* ``yield`` expression
+    implicitly creating and returning an awaitable object (i.e., satisfying the
     :class:`collections.abc.Awaitable` protocol) by being declared via the
     ``async def`` syntax and thus callable *only* when preceded by comparable
     ``await`` syntax).
@@ -550,7 +552,7 @@ def is_func_coro(func: object) -> TypeGuard[Callable]:
     Returns
     ----------
     bool
-        ``True`` only if this object is an asynchronous coroutine factory.
+        :data:`True` only if this object is an asynchronous coroutine factory.
 
     See Also
     ----------
@@ -573,12 +575,12 @@ def is_func_coro(func: object) -> TypeGuard[Callable]:
 
 def is_func_async_generator(func: object) -> TypeGuard[Callable]:
     '''
-    ``True`` only if the passed object is an **asynchronous generator factory**
-    (i.e., awaitable callable containing one or more ``yield`` expressions
-    implicitly creating and returning an awaitable object (i.e., satisfying the
-    :class:`collections.abc.Awaitable` protocol) by being declared via the
-    ``async def`` syntax and thus callable *only* when preceded by comparable
-    ``await`` syntax).
+    :data:`True` only if the passed object is an **asynchronous generator
+    factory** (i.e., awaitable callable containing one or more ``yield``
+    expressions implicitly creating and returning an awaitable object (i.e.,
+    satisfying the :class:`collections.abc.Awaitable` protocol) by being
+    declared via the ``async def`` syntax and thus callable *only* when preceded
+    by comparable ``await`` syntax).
 
     Parameters
     ----------
@@ -588,7 +590,7 @@ def is_func_async_generator(func: object) -> TypeGuard[Callable]:
     Returns
     ----------
     bool
-        ``True`` only if this object is an asynchronous generator.
+        :data:`True` only if this object is an asynchronous generator.
 
     See Also
     ----------
@@ -611,11 +613,11 @@ def is_func_async_generator(func: object) -> TypeGuard[Callable]:
 # ....................{ TESTERS ~ sync                     }....................
 def is_func_sync_generator(func: object) -> TypeGuard[Callable]:
     '''
-    ``True`` only if the passed object is an **synchronous generator factory**
-    (i.e., awaitable callable containing one or more ``yield`` expressions
-    implicitly creating and returning a generator object (i.e., satisfying the
-    :class:`collections.abc.Generator` protocol) by being declared via the
-    ``def`` rather than ``async def`` syntax).
+    :data:`True` only if the passed object is an **synchronous generator
+    factory** (i.e., awaitable callable containing one or more ``yield``
+    expressions implicitly creating and returning a generator object (i.e.,
+    satisfying the :class:`collections.abc.Generator` protocol) by being
+    declared via the ``def`` rather than ``async def`` syntax).
 
     Parameters
     ----------
@@ -625,7 +627,7 @@ def is_func_sync_generator(func: object) -> TypeGuard[Callable]:
     Returns
     ----------
     bool
-        ``True`` only if this object is a synchronous generator.
+        :data:`True` only if this object is a synchronous generator.
 
     See Also
     ----------
