@@ -77,7 +77,7 @@ class BeartypeHintable(object):
         '''
 
         raise NotImplementedError(  # pragma: no cover
-            'Abstract class method '
+            'Abstract base class method '
             'BeartypeHintable.__beartype_hint__() undefined.'
         )
 

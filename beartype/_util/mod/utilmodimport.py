@@ -115,8 +115,8 @@ def import_module_or_none(module_name: str) -> Optional[ModuleType]:
     except Exception as exception:
         warn(
             (
-                f'Ignoring module "{module_name}" importation exception '
-                f'{exception.__class__.__name__}: {exception}'
+                f'Ignoring module "{module_name}" importation exception:\n'
+                f'\t{exception.__class__.__name__}: {exception}'
             ),
             BeartypeModuleUnimportableWarning,
         )

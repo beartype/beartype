@@ -14,11 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.meta import _convert_version_str_to_tuple
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype._data.datatyping import TypeException
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-from warnings import (
-    catch_warnings,
-    simplefilter,
-)
+from beartype._util.py.utilpyversion import IS_PYTHON_3_7
 
 # ....................{ VALIDATORS                         }....................
 def die_unless_module_attr_name(
@@ -177,145 +173,46 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
         If a module with this name exists *but* that module is unimportable
         due to raising module-scoped exceptions at importation time.
     '''
-
-    # If it is *NOT* the case that...
-    if not (
-        # This module is importable *AND*...
-        is_module(module_name) and
-        # Either...
-        (
-            # The active Python interpreter targets Python >= 3.8 and thus
-            # provides the "importlib.metadata" API required to portably
-            # inspect module versions without requiring obsolete third-party
-            # packages (e.g., "pkg_resources") *OR*...
-            IS_PYTHON_AT_LEAST_3_8 or
-            # The active Python interpreter targets Python < 3.8 but the
-            # obsolete third-party package "pkg_resources" is importable...
-            is_package('pkg_resources')
-        )
-    ):
-    # Then this module is either unimportable *OR* no API capable of inspecting
-    # module versions is importable. In either case, return false to avoid
-    # returning false positives.
-        return False
     assert isinstance(version_minimum, str), (
         f'{repr(version_minimum)} not string.')
 
-    # If the active Python interpreter targets Python >= 3.8...
-    if IS_PYTHON_AT_LEAST_3_8:
-        # Defer version-specific imports.
-        from importlib.metadata import version as get_module_version  # type: ignore[attr-defined]
+    # If this module is unimportable, return false immediately.
+    if not is_module(module_name):
+        return False
+    # Else, this module is importable.
+    #
+    # If the active Python interpreter targets Python < 3.7 and thus fails to
+    # provide the "importlib.metadata" API required to portably inspect module
+    # versions without requiring obsolete third-party packages (e.g.,
+    # "pkg_resources"), naively assume that this module satisfies this minimum
+    # version. Although doing so is clearly non-ideal:
+    #
+    # * This function is currently *ONLY* called by our test suite to decide
+    #   whether relevant tests should be skipped or not.
+    # * Python 3.7 is on the cusp of hitting its official End-Of-Life (EOL) and
+    #   thus increasingly ignorable.
+    # * The prior Python 3.7-specific implementation of this function leveraged
+    #   the fragile third-party "pkg_resources" package. That package now emits
+    #   "DeprecationWarnings" on Python 3.7, which "pytest" then implicitly
+    #   coerces into test failures.
+    elif IS_PYTHON_3_7:
+        return True
+    # Else, the active Python interpreter targets Python >= 3.8.
 
-        # Current version of this module installed under the active Python
-        # interpreter if any *OR* raise an exception otherwise (which should
-        # *NEVER* happen by prior logic testing this module to be importable).
-        version_actual = get_module_version(module_name)
+    # Defer version-specific imports.
+    from importlib.metadata import version as get_module_version  # type: ignore[attr-defined]
 
-        # Tuples of version parts parsed from version strings.
-        version_actual_parts  = _convert_version_str_to_tuple(version_actual)
-        version_minimum_parts = _convert_version_str_to_tuple(version_minimum)
+    # Current version of this module installed under the active Python
+    # interpreter if any *OR* raise an exception otherwise (which should
+    # *NEVER* happen by prior logic testing this module to be importable).
+    version_actual = get_module_version(module_name)
 
-        # Return true only if this module's version satisfies this minimum.
-        return version_actual_parts >= version_minimum_parts
-    # Else, the active Python interpreter targets Python < 3.8 but the obsolete
-    # third-party package "pkg_resources" is importable by the above logic. In
-    # this case...
-    else:
-        # Defer imports from optional third-party dependencies.
-        from pkg_resources import (
-            DistributionNotFound,
-            UnknownExtra,
-            VersionConflict,
-            get_distribution,
-            parse_requirements,
-        )
+    # Tuples of version parts parsed from version strings.
+    version_actual_parts  = _convert_version_str_to_tuple(version_actual)
+    version_minimum_parts = _convert_version_str_to_tuple(version_minimum)
 
-        #FIXME: This appears to be required to circumvent Python 3.7-specific
-        #issues, but appears to also be inducing unrelated test failures. We
-        #can't be bothered at the moment. *sigh*
-        # # With a warning filter ignoring deprecation warnings now emitted from
-        # # the "pkg_resources.__init__" submodule on first importation...
-        # #
-        # # See also this StackOverflow answer:
-        # #     https://stackoverflow.com/a/56475961/2809027
-        # with catch_warnings():
-        #     simplefilter('ignore', category=DeprecationWarning)
-        #
-        #     # Defer imports from optional third-party dependencies.
-        #     from pkg_resources import (
-        #         DistributionNotFound,
-        #         UnknownExtra,
-        #         VersionConflict,
-        #         get_distribution,
-        #         parse_requirements,
-        #     )
-
-        # Setuptools-specific requirements string constraining this module.
-        module_requirement_str = f'{module_name} >= {version_minimum}'
-
-        # Setuptools-specific requirements object parsed from this string. Yes,
-        # setuptools insanely requires this parsing to be performed through a
-        # generator -- even when only parsing a single requirements string.
-        module_requirement = None
-        for module_requirement in parse_requirements(module_requirement_str):
-            break
-
-        # Attempt to...
-        try:
-            # Setuptools-specific object describing the current version of the
-            # module satisfying this requirement if any *OR* "None" if this
-            # requirement cannot be guaranteed to be unsatisfied.
-            module_distribution = get_distribution(module_requirement)  # pyright: ignore[reportGeneralTypeIssues]
-        # If setuptools fails to find this requirement, this does *NOT*
-        # necessarily imply this requirement to be unimportable as a package.
-        # Rather, this only implies this requirement was *NOT* installed as a
-        # setuptools-managed egg. This requirement is still installable and
-        # hence importable (e.g., by manually copying this requirement's
-        # package into the "site-packages" subdirectory of the top-level
-        # directory for this Python interpreter). However, does this edge-case
-        # actually occur in reality? *YES.* PyInstaller-frozen applications
-        # embed requirements without corresponding setuptools-managed eggs.
-        # Hence, this edge-case *MUST* be handled.
-        except DistributionNotFound:
-            module_distribution = None
-        # If setuptools fails to find the distribution-packaged version of this
-        # requirement (e.g., due to having been editably installed with "sudo
-        # python3 setup.py develop"), this version may still be manually
-        # parseable from this requirement's package. Since setuptools fails to
-        # raise an exception whose type is unique to this error condition, the
-        # contents of this exception are parsed to distinguish this expected
-        # error condition from other unexpected error conditions. In the former
-        # case, a non-human-readable exception resembling the following is
-        # raised:
-        #     ValueError: "Missing 'Version:' header and/or PKG-INFO file",
-        #     networkx [unknown version] (/home/leycec/py/networkx)
-        except ValueError as version_missing:
-            # If this exception was...
-            if (
-                # ...instantiated with two arguments...
-                len(version_missing.args) == 2 and
-                # ...whose second argument is suffixed by a string indicating
-                # the version of this distribution to have been ignored rather
-                # than recorded during installation...
-                str(version_missing.args[1]).endswith(' [unknown version]')
-            # ...this exception indicates an expected ignorable error
-            # condition. Silently ignore this edge case.
-            ):
-                module_distribution = None
-            # Else, this exception indicates an unexpected and thus unignorable
-            # error condition.
-
-            # Reraise this exception, please.
-            raise
-        # If setuptools found only requirements of insufficient version, all
-        # currently installed versions of this module fail to satisfy this
-        # requirement. In this case, immediately return false.
-        except (UnknownExtra, VersionConflict):
-            return False
-        # If any other exception is raised, expose this exception as is.
-
-        # Return true only if this requirement is satisfied.
-        return module_distribution is not None
+    # Return true only if this module's version satisfies this minimum.
+    return version_actual_parts >= version_minimum_parts
 
 # ....................{ TESTERS ~ package                  }....................
 #FIXME: Unit test us up, please.

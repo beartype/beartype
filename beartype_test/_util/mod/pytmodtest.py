@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -7,18 +7,18 @@
 Test-specific **Python module detection** utilities.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype._util.cache.utilcachecall import callable_cached
 
-# ....................{ TESTERS ~ beartype                }....................
+# ....................{ TESTERS ~ beartype                 }....................
 @callable_cached
 def is_package_beartype_vale_usable() -> bool:
     '''
-    ``True`` only if **beartype validators** (i.e., subscriptions of public
+    :data:`True` only if **beartype validators** (i.e., subscriptions of public
     classes declared by the :class:`beartype.vale` subpackage) are creatable
     under the active Python interpreter.
 
@@ -40,12 +40,12 @@ def is_package_beartype_vale_usable() -> bool:
     # the official "typing" or third-party "typing_extensions" modules.
     return is_typing_attr('Annotated')
 
-# ....................{ TESTERS ~ lib                     }....................
+# ....................{ TESTERS ~ lib                      }....................
 @callable_cached
 def is_package_sphinx() -> bool:
     '''
-    ``True`` only if a reasonably recent version of Sphinx is importable under
-    the active Python interpreter.
+    :data:`True` only if a reasonably recent version of Sphinx is importable
+    under the active Python interpreter.
     '''
 
     # Defer test-specific imports.
@@ -60,7 +60,7 @@ def is_package_sphinx() -> bool:
 @callable_cached
 def is_package_typing_extensions() -> bool:
     '''
-    ``True`` only if a reasonably recent version of the third-party
+    :data:`True` only if a reasonably recent version of the third-party
     :mod:`typing_extensions` package is importable under the active Python
     interpreter.
     '''
@@ -77,27 +77,37 @@ def is_package_typing_extensions() -> bool:
         _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS,
     )
 
-# ....................{ TESTERS ~ lib : numpy             }....................
+# ....................{ TESTERS ~ lib : numpy              }....................
 @callable_cached
 def is_package_numpy() -> bool:
     '''
-    ``True`` only if a reasonably recent version of NumPy is importable under
-    the active Python interpreter.
+    :data:`True` only if a reasonably recent version of NumPy is importable
+    under the active Python interpreter.
     '''
 
     # Defer test-specific imports.
     from beartype.meta import _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY
     from beartype._util.mod.utilmodtest import is_module_version_at_least
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
-    # Return true only if this version of this package is importable.
-    return is_module_version_at_least(
-        'numpy', _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY)
+    # Return true only if...
+    return (
+        # The active Python interpreter targets Python >= 3.8 *AND*...
+        #
+        # Note that the last released version of NumPy targeting Python 3.7
+        # appears to *NOT* provide the critical "numpy.typing" subpackage and
+        # thus be critically insufficient for @beartype purposes.
+        IS_PYTHON_AT_LEAST_3_8 and
+        # This version of this package is importable.
+        is_module_version_at_least(
+            'numpy', _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY)
+    )
 
 
 @callable_cached
 def is_package_numpy_typing_ndarray_deep() -> bool:
     '''
-    ``True`` only if :attr:`numpy.typing.NDArray` type hints are deeply
+    :data:`True` only if :attr:`numpy.typing.NDArray` type hints are deeply
     supported by the :func:`beartype.beartype` decorator under the active
     Python interpreter.
 
@@ -107,7 +117,7 @@ def is_package_numpy_typing_ndarray_deep() -> bool:
       Python interpreter.
     * Beartype validators are usable under the active Python interpreter, as
       :func:`beartype.beartype` internally reduces these hints to equivalent
-      beartype validators. See :func:`is_package_beartype_vale_usable`.
+      beartype validators. See :func:`.is_package_beartype_vale_usable`.
     '''
 
     # Return true only if...
