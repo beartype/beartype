@@ -49,6 +49,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignKeysView,
     HintSignList,
     HintSignLiteral,
+    HintSignLiteralString,
     HintSignMapping,
     HintSignMappingView,
     HintSignMatch,
@@ -486,6 +487,9 @@ _HINT_SIGNS_SUPPORTED_SHALLOW = frozenset((
 
     # ..................{ PEP 647                            }..................
     HintSignTypeGuard,
+
+    # ..................{ PEP 675                            }..................
+    HintSignLiteralString,
 
     #FIXME: Excise us up, please. This should *NOT* be required.
     # ..................{ NON-PEP ~ lib : pandera            }..................

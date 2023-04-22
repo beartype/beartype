@@ -14,6 +14,18 @@ unit test submodules.
 # ....................{ TODO                               }....................
 #FIXME: In hindsight, the structure of both this submodule and subsidiary
 #submodules imported below by the _init() method is simply *ABYSMAL.* Instead:
+#* Do everything below first for low-hanging fruit *NOT* widely used throughout
+#  our test suite. This means (in order):
+#  * "HINTS_PEP_IGNORABLE_DEEP".
+#  * "HINTS_PEP_IGNORABLE_SHALLOW".
+#  * "HINTS_IGNORABLE".
+#  * "HINTS_PEP_HASHABLE".
+#  * "NOT_HINTS_NONPEP".
+#  * "HINTS_PEP_META".
+#
+#  In particular, avoid attempting to refactor "HINTS_PEP_META" until *AFTER*
+#  refactoring everything else. Refactoring "HINTS_PEP_META" will prove
+#  extremely time-consuming and thus non-trivial, sadly. *sigh*
 #* Define one new @pytest.fixture-decorated session-scoped function for each
 #  public global variable currently defined below: e.g.,
 #      # Instead of this...
@@ -40,7 +52,7 @@ unit test submodules.
 #              hints_pep_ignorable_shallow_pep593 |
 #              ...
 #          )
-#* In "beartype_test.a00_unit.conftest" submodule, import those fixtures to
+#* In the "beartype_test.a00_unit.conftest" submodule, import those fixtures to
 #  implicitly expose those fixtures to all unit tests: e.g.,
 #      from beartype_test.a00_util.data.hint.pep.data_pep import (
 #          hints_pep_ignorable_shallow,
@@ -144,11 +156,11 @@ def _init() -> None:
         _data_pep589,
         _data_pep593,
         _data_pep604,
+        _data_pep675,
     )
 
     # Submodule globals to be redefined below.
     global \
-        HINTS_META, \
         HINTS_PEP_HASHABLE, \
         HINTS_PEP_IGNORABLE_DEEP, \
         HINTS_PEP_IGNORABLE_SHALLOW, \
@@ -168,6 +180,7 @@ def _init() -> None:
         _data_pep589,
         _data_pep593,
         _data_pep604,
+        _data_pep675,
     )
 
     # Initialize all private submodules of this subpackage.

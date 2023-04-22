@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -7,10 +7,10 @@
 Project-wide :pep:`604`-compliant **type hint test data.**
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
-# ....................{ ADDERS                            }....................
+# ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
     Add :pep:`604`-compliant type hint test data to various global containers
@@ -28,7 +28,7 @@ def add_data(data_module: 'ModuleType') -> None:
         return
     # Else, this interpreter supports PEP 604.
 
-    # ..................{ IMPORTS                           }..................
+    # ..................{ IMPORTS                            }..................
     # Defer attribute-dependent imports.
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignList,
@@ -39,11 +39,9 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPithSatisfiedMetadata,
         HintPithUnsatisfiedMetadata,
     )
-    from typing import (
-        Any,
-    )
+    from beartype.typing import Any
 
-    # ..................{ SETS                              }..................
+    # ..................{ SETS                               }..................
     # Add PEP 604-specific deeply ignorable test type hints to this set global.
     data_module.HINTS_PEP_IGNORABLE_DEEP.update((
         # "|"-style unions containing any ignorable type hint.
@@ -58,10 +56,10 @@ def add_data(data_module: 'ModuleType') -> None:
         complex | int | object,
     ))
 
-    # ..................{ TUPLES                            }..................
+    # ..................{ TUPLES                             }..................
     # Add PEP 604-specific test type hints to this tuple global.
     data_module.HINTS_PEP_META.extend((
-        # ................{ |-UNION                           }................
+        # ................{ |-UNION                            }................
         # Union of one non-"typing" type and an originative "typing" type,
         # exercising a prominent edge case when raising human-readable
         # exceptions describing the failure of passed parameters or returned
@@ -118,7 +116,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ UNION ~ nested                    }................
+        # ................{ UNION ~ nested                     }................
         # Nested unions exercising edge cases induced by Python >= 3.8
         # optimizations leveraging PEP 572-style assignment expressions.
 
@@ -172,7 +170,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ UNION ~ optional                  }................
+        # ................{ UNION ~ optional                   }................
         # Optional isinstance()-able "typing" type.
         HintPepMetadata(
             hint=tuple[str, ...] | None,

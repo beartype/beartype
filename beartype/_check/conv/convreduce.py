@@ -32,6 +32,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignFinal,
     HintSignGeneric,
     # HintSignIO,
+    HintSignLiteralString,
     HintSignNewType,
     HintSignNone,
     HintSignNumpyArray,
@@ -63,6 +64,7 @@ from beartype._util.hint.pep.proposal.utilpep589 import reduce_hint_pep589
 from beartype._util.hint.pep.proposal.utilpep591 import reduce_hint_pep591
 from beartype._util.hint.pep.proposal.utilpep593 import reduce_hint_pep593
 from beartype._util.hint.pep.proposal.utilpep647 import reduce_hint_pep647
+from beartype._util.hint.pep.proposal.utilpep675 import reduce_hint_pep675
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpepreduce import reduce_hint_pep_unsigned
 from collections.abc import Callable
@@ -229,9 +231,7 @@ _HINT_SIGN_TO_REDUCER: Dict[Optional[HintSign], Callable] = {
     HintSignTypedDict: reduce_hint_pep589,
 
     # ..................{ PEP 591                            }..................
-    #FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
-    #shallowly type-checking such hints by reduction to untyped dictionaries
-    #remains the sanest temporary work-around.
+    #FIXME: Remove *AFTER* deeply type-checking final type hints.
 
     # If this hint is a PEP 591-compliant "typing.Final[...]" type hint,
     # silently reduce this hint to its subscripted argument (e.g., from
@@ -251,6 +251,20 @@ _HINT_SIGN_TO_REDUCER: Dict[Optional[HintSign], Callable] = {
     #   the standard "bool" type.
     # * Else, raise an exception.
     HintSignTypeGuard: reduce_hint_pep647,
+
+    # ..................{ PEP 675                            }..................
+    #FIXME: Remove *AFTER* deeply type-checking literal strings. Note that doing
+    #so will prove extremely non-trivial or possibly even infeasible, suggesting
+    #we will probably *NEVER* deeply type-check literal strings. It's *NOT*
+    #simply a matter of efficiently parsing ASTs at runtime; it's that as well
+    #as correctly transitively inferring literal strings across operations and
+    #calls, which effectively requires parsing the entire codebase and
+    #constructing an in-memory graph of all type relations. See also:
+    #    https://peps.python.org/pep-0675/#inferring-literalstring
+
+    # If this hint is a PEP 675-compliant "typing.LiteralString" type hint,
+    # reduce this hint to the standard "str" type.
+    HintSignLiteralString: reduce_hint_pep675,
 
     # ..................{ NON-PEP ~ numpy                    }..................
     # If this hint is a PEP-noncompliant typed NumPy array (e.g.,
