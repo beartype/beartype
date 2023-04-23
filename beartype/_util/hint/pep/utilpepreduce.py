@@ -51,13 +51,6 @@ def reduce_hint_pep_unsigned(
     ----------
     hint : object
         Final type hint to be reduced.
-    arg_name : Optional[str]
-        Either:
-
-        * If this hint annotates a parameter of some callable, the name of that
-          parameter.
-        * If this hint annotates the return of some callable, ``"return"``.
-        * Else, :data:`None`.
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
@@ -66,14 +59,8 @@ def reduce_hint_pep_unsigned(
 
     Returns
     ----------
-    Type[bool]
-        Builtin :class:`bool` class.
-
-    Raises
-    ----------
-    BeartypeDecorHintPep647Exception
-        If this type guard does *not* annotate the return of some callable
-        (i.e.,
+    object
+        PEP-compliant type hint reduced from this... PEP-compliant type hint.
     '''
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
 

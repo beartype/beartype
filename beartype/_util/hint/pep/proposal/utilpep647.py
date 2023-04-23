@@ -63,7 +63,7 @@ def reduce_hint_pep647(
     ----------
     BeartypeDecorHintPep647Exception
         If this type guard does *not* annotate the return of some callable
-        (i.e.,
+        (i.e., if ``arg_kind`` is *not* :data:`True`).
     '''
 
     # If this type guard annotates the return of some callable, reduce this type

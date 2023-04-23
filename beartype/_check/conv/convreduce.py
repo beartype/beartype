@@ -70,6 +70,73 @@ from beartype._util.hint.pep.utilpepreduce import reduce_hint_pep_unsigned
 from collections.abc import Callable
 
 # ....................{ REDUCERS                           }....................
+#FIXME: *WOOPS.* Although passing "arg_name" to this function *IS* useful, doing
+#so also effectively invalidates our efforts to memoize this function. Why?
+#Because most calls to this function will be passed different "arg_name" values.
+#Instead, consider:
+#* Replacing the "arg_name" parameter with a semantically equivalent
+#  "is_return: Optional[bool]", which is *MUCH* more readily amenable to
+#  memoization and appears to convey similar metadata. Right? We're really only
+#  interested in whether this hint annotates a return type hint or not. Maybe.
+#  Let's investigate usage of "arg_name" across the codebase to decide whether
+#  this replacement is reasonable, please. If not, more drastic surgery may be
+#  warranted. *sigh*
+#FIXME: Huzzah! We've confirmed we do, in fact, only require "arg_name" to test
+#for return type hints. Flex it!
+#FIXME: Ah-ha! Actually... we need to do something different entirely. Why?
+#Because PEP 673 (i.e., "typing.Self"), which requires a new class-specific
+#"cls_stack" parameter to resolve. This suggests we split this reduce_hint()
+#function into two new private functions. Specifically:
+#* Rename the existing "_HINT_SIGN_TO_REDUCER" global to
+#  "_HINT_SIGN_TO_REDUCE_HINT_CACHED".
+#* Copy-and-paste "_HINT_SIGN_TO_REDUCE_HINT_CACHED" to a new
+#  "_HINT_SIGN_TO_REDUCE_HINT_UNCACHED" global, which should resemble:
+#      _HINT_SIGN_TO_REDUCE_HINT_UNCACHED = {
+#          HintSignSelf: reduce_hint_pep673,
+#          HintSignTypeGuard: reduce_hint_pep647,
+#      }
+#* Remove the "HintSignTypeGuard" entry from "_HINT_SIGN_TO_REDUCE_HINT_CACHED".
+#* Preserve the signature and docstring of reduce_hint() as is.
+#* Copy-and-paste reduce_hint() into a new _reduce_hint_cached() function with
+#  signature resembling:
+#      @callable_cached
+#      def _reduce_hint_cached(
+#          hint: Any,
+#          conf: BeartypeConf,
+#          exception_prefix: str,
+#      ) -> object:
+#  This function should leverage "_HINT_SIGN_TO_REDUCE_HINT_CACHED".
+#* Define a new _reduce_hint_uncached() function with signature resembling:
+#      def _reduce_hint_uncached(
+#          hint: Any,
+#          conf: BeartypeConf,
+#          arg_name: Optional[str],
+#          cls_stack: TypeStack,
+#          exception_prefix: str,
+#      ) -> object:
+#  This function should leverage "_HINT_SIGN_TO_REDUCE_HINT_UNCACHED".
+#* Refactor reduce_hint() to call those functions: e.g.,
+#      # Note that reduce_hint() should no longer be memoized via the
+#      # @callable_cached decorator. Ergo, callers should now begin passing
+#      # keyword arguments to this function.
+#      def reduce_hint(
+#          hint: Any,
+#          conf: BeartypeConf,
+#          arg_name: Optional[str],
+#          cls_stack: TypeStack,
+#          exception_prefix: str,
+#      ) -> object:
+#          hint = reduce_hint_uncached(
+#              hint=hint,
+#              conf=conf,
+#              arg_name=arg_name,
+#              cls_stack=cls_stack,
+#              exception_prefix=exception_prefix,
+#          )
+#          hint = reduce_hint_cached(
+#              hint, conf, exception_prefix)
+#          return hint
+
 @callable_cached
 def reduce_hint(
     hint: Any,
@@ -110,13 +177,6 @@ def reduce_hint(
         * If the passed higher-level type hint is reducible, a lower-level type
           hint reduced (i.e., converted, extracted) from this hint.
         * Else, this hint as is unmodified.
-
-    Raises
-    ----------
-    BeartypeDecorHintNonpepNumpyException
-        See the
-        :func:`beartype._util.hint.nonpep.mod.utilmodnumpy.reduce_hint_numpy_ndarray`
-        function for further details.
     '''
 
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
