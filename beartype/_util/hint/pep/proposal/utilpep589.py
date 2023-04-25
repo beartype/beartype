@@ -153,8 +153,7 @@ def reduce_hint_pep589(
     supported by :mod:`beartype`.
 
     This reducer is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    :func:`callable_cached` decorator), as reducers cannot be memoized.
 
     Parameters
     ----------

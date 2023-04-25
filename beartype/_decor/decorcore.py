@@ -305,10 +305,10 @@ def beartype_object_nonfatal(
     warning_category : TypeWarning
         Category of the non-fatal warning to emit if :func:`beartype.beartype`
         fails to generate a type-checking wrapper for this callable or class.
-    cls_stack : TypeStack
+    cls_stack : TypeStack, optional
         **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
-        ``None``). Defaults to ``None``. See also the :func:`.beartype_object`
-        decorator for further commentary.
+        :data:`None`). Defaults to :data:`None`. See also the
+        :func:`.beartype_object` decorator for further commentary.
 
     All remaining keyword parameters are passed as is to the lower-level
     :func:`.beartype_object` decorator internally called by this higher-level
@@ -763,7 +763,7 @@ def _beartype_type(
     conf : BeartypeConf
         Beartype configuration configuring :func:`beartype.beartype` uniquely
         specific to this class.
-    cls_stack : TypeStack
+    cls_stack : TypeStack, optional
         **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
         :data:`None`). Defaults to :data:`None`. See also the
         :func:`.beartype_object` decorator for further commentary.

@@ -87,8 +87,8 @@ def sanify_hint_root_func(
     bear_call : BeartypeCall
         Decorated callable directly annotated by this hint.
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to :data:`EXCEPTION_PLACEHOLDER`.
+        Human-readable label prefixing exception messages raised by this
+        function. Defaults to :data:`EXCEPTION_PLACEHOLDER`.
 
     Returns
     ----------
@@ -150,7 +150,12 @@ def sanify_hint_root_func(
     #
     # Note that parameters are intentionally passed positionally to both
     # optimize memoization efficiency and circumvent memoization warnings.
-    hint = reduce_hint(hint, bear_call.conf, arg_name, exception_prefix)
+    hint = reduce_hint(
+        hint=hint,
+        conf=bear_call.conf,
+        arg_name=arg_name,
+        exception_prefix=exception_prefix,
+    )
 
     # Return this sanified hint.
     return hint
@@ -227,7 +232,7 @@ def sanify_hint_root_contextfree(
     # Reduce this hint to a lower-level PEP-compliant type hint if this hint is
     # reducible *OR* this hint as is otherwise. See
     # sanify_hint_root_func() for further commentary.
-    hint = reduce_hint(hint, conf, None, exception_prefix)
+    hint = reduce_hint(hint=hint, conf=conf, exception_prefix=exception_prefix)
 
     # Return this sanified hint.
     return hint
@@ -287,7 +292,12 @@ def sanify_hint_any(
     hint = coerce_hint_any(hint)
 
     # Return this hint reduced.
-    return reduce_hint(hint, conf, arg_name, exception_prefix)
+    return reduce_hint(
+        hint=hint,
+        conf=conf,
+        arg_name=arg_name,
+        exception_prefix=exception_prefix,
+    )
 
 # ....................{ PRIVATE ~ mappings                 }....................
 _HINT_REPR_TO_HINT = CacheUnboundedStrong()

@@ -60,43 +60,51 @@ def test_reduce_hint() -> None:
     # from typing import TypeVar
 
     # ..................{ LOCALS                             }..................
-    # Positional arguments to be passed to all calls to reduce_hints() below.
-    args = (BEARTYPE_CONF_DEFAULT, None, '')
+    # Keyword arguments to be passed to all calls to reduce_hints() below.
+    kwargs = {
+        'conf': BEARTYPE_CONF_DEFAULT,
+    }
 
     # ..................{ CORE                               }..................
     # Assert this reducer preserves an isinstanceable type as is.
-    assert reduce_hint(int, *args) is int
+    assert reduce_hint(hint=int, **kwargs) is int
 
     # Assert this reducer reduces "None" to "type(None)".
-    assert reduce_hint(None, *args) is NoneType
+    assert reduce_hint(hint=None, **kwargs) is NoneType
 
     # ..................{ PEP 484 ~ tower                    }..................
     # Assert this reducer expands the builtin "float" and "complex" types to
     # their corresponding numeric towers when configured to do so.
     assert reduce_hint(
-        float, BeartypeConf(is_pep484_tower=True), None, '') is (
-        Pep484TowerFloat)
+        hint=float,
+        conf=BeartypeConf(is_pep484_tower=True),
+    ) is Pep484TowerFloat
     assert reduce_hint(
-        complex, BeartypeConf(is_pep484_tower=True), None, '') is (
-        Pep484TowerComplex)
+        hint=complex,
+        conf=BeartypeConf(is_pep484_tower=True),
+    ) is Pep484TowerComplex
 
     # Assert this reducer preserves the builtin "float" and "complex" types as
     # is when configured to disable the implicit numeric tower.
     assert reduce_hint(
-        float,   BeartypeConf(is_pep484_tower=False), None, '') is float
+        hint=float,
+        conf=BeartypeConf(is_pep484_tower=False),
+    ) is float
     assert reduce_hint(
-        complex, BeartypeConf(is_pep484_tower=False), None, '') is complex
+        hint=complex,
+        conf=BeartypeConf(is_pep484_tower=False),
+    ) is complex
 
     # ..................{ PEP 484 ~ typevar                  }..................
     # Assert this reducer preserves unbounded type variables as is.
-    assert reduce_hint(T, *args) is T
+    assert reduce_hint(hint=T, **kwargs) is T
 
     # Assert this reducer reduces bounded type variables to their upper bound.
-    assert reduce_hint(T_BOUNDED, *args) is int
+    assert reduce_hint(hint=T_BOUNDED, **kwargs) is int
 
     # Union of all constraints parametrizing a constrained type variable,
     # reduced from that type variable.
-    typevar_constraints_union = reduce_hint(T_CONSTRAINED, *args)
+    typevar_constraints_union = reduce_hint(hint=T_CONSTRAINED, **kwargs)
 
     # Assert this union contains all constraints parametrizing this variable.
     assert str   in typevar_constraints_union.__args__
@@ -112,7 +120,7 @@ def test_reduce_hint() -> None:
         # For each PEP 484-compliant "typing" IO generic superclass...
         for pep484_generic_io in PEP484_GENERICS_IO:
             # Equivalent protocol reduced from this generic.
-            pep544_protocol_io = reduce_hint(pep484_generic_io, *args)
+            pep544_protocol_io = reduce_hint(hint=pep484_generic_io, **kwargs)
 
             # Assert this protocol is either...
             assert (
@@ -131,7 +139,7 @@ def test_reduce_hint() -> None:
         from dataclasses import InitVar
 
         # Assert this reducer reduces an "InitVar" to its subscripted argument.
-        assert reduce_hint(InitVar[str], *args) is str
+        assert reduce_hint(hint=InitVar[str], **kwargs) is str
 
     # ..................{ PEP 593                            }..................
     # "typing.Annotated" type hint factory imported from either the "typing" or
@@ -143,7 +151,7 @@ def test_reduce_hint() -> None:
     if Annotated is not None:
         # Assert this reducer reduces a beartype-agnostic metahint to the
         # lower-level hint it annotates.
-        assert reduce_hint(Annotated[int, 42], *args) is int
+        assert reduce_hint(hint=Annotated[int, 42], **kwargs) is int
 
         # If the active Python interpreter targets Python >= 3.8 and thus
         # supports the __class_getitem__() dunder method required by beartype
@@ -152,7 +160,8 @@ def test_reduce_hint() -> None:
             # Assert this reducer preserves a beartype-specific metahint as is.
             leaves_when_laid = Annotated[
                 str, IsEqual['In their noonday dreams.']]
-            assert reduce_hint(leaves_when_laid, *args) is leaves_when_laid
+            assert reduce_hint(hint=leaves_when_laid, **kwargs) is (
+                leaves_when_laid)
 
     # ..................{ NUMPY                              }..................
     # If a recent version of NumPy is importable...
@@ -165,7 +174,7 @@ def test_reduce_hint() -> None:
         # the active Python interpreter...
         if is_package_numpy_typing_ndarray_deep():
             # Beartype validator reduced from such a hint.
-            ndarray_reduced = reduce_hint(NDArray[float64], *args)
+            ndarray_reduced = reduce_hint(hint=NDArray[float64], **kwargs)
 
             # Assert this validator is a "typing{_extensions}.Annotated" hint.
             assert get_hint_pep_sign(ndarray_reduced) is HintSignAnnotated
@@ -174,12 +183,14 @@ def test_reduce_hint() -> None:
             # erroneously subscripted by an object *NOT* reducible to a data
             # type raises the expected exception.
             with raises(BeartypeDecorHintNonpepNumpyException):
-                reduce_hint(NDArray[
-                    'From_my_wings_are_shaken_the_dews_that_waken'], *args)
+                reduce_hint(
+                    hint=NDArray['From_my_wings_are_shaken_the_dews_that_waken'],
+                    **kwargs
+                )
         # Else, beartype only shallowly supports "numpy.typing.NDArray" type
         # hints under the active Python interpreter. In this case...
         else:
             # Assert this reducer reduces such a hint to the untyped NumPy
             # array class "numpy.ndarray" with a non-fatal warning.
             with warns(BeartypeDecorHintNonpepNumpyWarning):
-                assert reduce_hint(NDArray[float64], *args) is ndarray
+                assert reduce_hint(hint=NDArray[float64], **kwargs) is ndarray

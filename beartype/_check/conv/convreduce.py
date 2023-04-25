@@ -37,12 +37,14 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNone,
     HintSignNumpyArray,
     HintSignPanderaAny,
+    HintSignSelf,
     # HintSignTextIO,
     HintSignType,
     HintSignTypeGuard,
     HintSignTypeVar,
     HintSignTypedDict,
 )
+from beartype._data.datatyping import TypeStack
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.mod.utilmodnumpy import (
     reduce_hint_numpy_ndarray)
@@ -64,31 +66,17 @@ from beartype._util.hint.pep.proposal.utilpep589 import reduce_hint_pep589
 from beartype._util.hint.pep.proposal.utilpep591 import reduce_hint_pep591
 from beartype._util.hint.pep.proposal.utilpep593 import reduce_hint_pep593
 from beartype._util.hint.pep.proposal.utilpep647 import reduce_hint_pep647
+from beartype._util.hint.pep.proposal.utilpep673 import reduce_hint_pep673
 from beartype._util.hint.pep.proposal.utilpep675 import reduce_hint_pep675
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpepreduce import reduce_hint_pep_unsigned
 from collections.abc import Callable
 
 # ....................{ REDUCERS                           }....................
-#FIXME: *WOOPS.* Although passing "arg_name" to this function *IS* useful, doing
-#so also effectively invalidates our efforts to memoize this function. Why?
-#Because most calls to this function will be passed different "arg_name" values.
-#Instead, consider:
-#* Replacing the "arg_name" parameter with a semantically equivalent
-#  "is_return: Optional[bool]", which is *MUCH* more readily amenable to
-#  memoization and appears to convey similar metadata. Right? We're really only
-#  interested in whether this hint annotates a return type hint or not. Maybe.
-#  Let's investigate usage of "arg_name" across the codebase to decide whether
-#  this replacement is reasonable, please. If not, more drastic surgery may be
-#  warranted. *sigh*
-#FIXME: Huzzah! We've confirmed we do, in fact, only require "arg_name" to test
-#for return type hints. Flex it!
 #FIXME: Ah-ha! Actually... we need to do something different entirely. Why?
 #Because PEP 673 (i.e., "typing.Self"), which requires a new class-specific
 #"cls_stack" parameter to resolve. This suggests we split this reduce_hint()
 #function into two new private functions. Specifically:
-#* Rename the existing "_HINT_SIGN_TO_REDUCER" global to
-#  "_HINT_SIGN_TO_REDUCE_HINT_CACHED".
 #* Copy-and-paste "_HINT_SIGN_TO_REDUCE_HINT_CACHED" to a new
 #  "_HINT_SIGN_TO_REDUCE_HINT_UNCACHED" global, which should resemble:
 #      _HINT_SIGN_TO_REDUCE_HINT_UNCACHED = {
@@ -137,19 +125,33 @@ from collections.abc import Callable
 #              hint, conf, exception_prefix)
 #          return hint
 
-@callable_cached
 def reduce_hint(
+    # Mandatory parameters.
     hint: Any,
     conf: BeartypeConf,
-    arg_name: Optional[str],
-    exception_prefix: str,
+
+    # Optional parameters.
+    cls_stack: TypeStack = None,
+    arg_name: Optional[str] = None,
+    exception_prefix: str = '',
 ) -> object:
     '''
     Lower-level type hint reduced (i.e., converted) from the passed higher-level
     type hint if this hint is reducible *or* this hint as is otherwise (i.e., if
     this hint is irreducible).
 
-    This reducer is memoized for efficiency.
+    This reducer *cannot* be meaningfully memoized, since multiple passed
+    parameters (e.g., ``arg_name``, ``cls_stack``) are typically isolated to a
+    handful of callables across the codebase currently being decorated by
+    :mod:`beartype`. Memoizing this reducer would needlessly consume space and
+    time. To improve efficiency, this reducer is instead implemented in terms of
+    two lower-level private reducers:
+
+    * The memoized :func:`._reduce_hint_cached` reducer, responsible for
+      efficiently reducing *most* (but not all) type hints.
+    * The unmemoized :func:`._reduce_hint_uncached` reducer, responsible for
+      inefficiently reducing the small subset of type hints contextually
+      requiring these problematic parameters.
 
     Parameters
     ----------
@@ -158,16 +160,22 @@ def reduce_hint(
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
-    arg_name : Optional[str]
+    cls_stack : TypeStack, optional
+        **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
+        :data:`None`). Defaults to :data:`None`. See also the
+        :func:`.beartype_object` decorator for further commentary.
+    arg_name : Optional[str], optional
         Either:
 
         * If this hint annotates a parameter of some callable, the name of that
           parameter.
         * If this hint annotates the return of some callable, ``"return"``.
         * Else, :data:`None`.
-    exception_prefix : str
-        Human-readable label prefixing the representation of this object in the
-        exception message.
+
+        Defaults to :data:`None`.
+    exception_prefix : str, optional
+        Human-readable label prefixing exception messages raised by this
+        function. Defaults to the empty string.
 
     Returns
     ----------
@@ -179,6 +187,7 @@ def reduce_hint(
         * Else, this hint as is unmodified.
     '''
 
+    # ....................{ PRIVATE ~ reducers                 }....................
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.
     hint_sign = get_hint_pep_sign_or_none(hint)
@@ -186,7 +195,7 @@ def reduce_hint(
     # Callable reducing this hint if a callable reducing hints of this sign was
     # previously registered *OR* "None" otherwise (i.e., if *NO* such callable
     # was registered, in which case this hint is preserved as is).
-    hint_reducer = _HINT_SIGN_TO_REDUCER.get(hint_sign)
+    hint_reducer = _HINT_SIGN_TO_REDUCE_HINT_CACHED.get(hint_sign)
 
     # If a callable reducing hints of this sign was previously registered,
     # reduce this hint to another hint via this callable.
@@ -202,7 +211,15 @@ def reduce_hint(
     # Return this possibly reduced hint.
     return hint
 
-# ....................{ PRIVATE ~ globals                  }....................
+# ....................{ PRIVATE ~ hints                    }....................
+_DictReducer = Dict[Optional[HintSign], Callable]
+'''
+PEP-compliant type hint matching a **reducer dictionary** (i.e., dictionary
+mapping from each sign uniquely identifying various type hints to a callable
+reducing those higher- to lower-level hints).
+'''
+
+# ....................{ PRIVATE ~ dicts                    }....................
 #FIXME: After dropping Python 3.7 support:
 #* Replace "Callable[[object, str], object]" here with a callback protocol:
 #      https://mypy.readthedocs.io/en/stable/protocols.html#callback-protocols
@@ -210,7 +227,7 @@ def reduce_hint(
 #  these callables with keyword arguments above! Chaos ensues.
 #* Remove the "# type: ignore[call-arg]" pragmas above, which are horrible.
 #* Remove the "# type: ignore[dict-item]" pragmas above, which are horrible.
-_HINT_SIGN_TO_REDUCER: Dict[Optional[HintSign], Callable] = {
+_HINT_SIGN_TO_REDUCE_HINT_CACHED: _DictReducer = {
     # ..................{ NON-PEP                            }..................
     # If this hint is identified by *NO* sign, this hint is either an
     # isinstanceable type *OR* a hint unrecognized by beartype. In either case,
@@ -340,15 +357,15 @@ _HINT_SIGN_TO_REDUCER: Dict[Optional[HintSign], Callable] = {
 }
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
-to that sign's **reducer** (i.e., callable reducing those higher-level hints to
-lower-level type hints).
+to that sign's **cached reducer** (i.e., callable efficiently memoized by the
+:func:`.callable_cached` decorator reducing those higher- to lower-level hints).
 
 Each value of this dictionary should be a valid reducer, defined as a function
 with signature resembling:
 
 .. code-block:: python
 
-   def reduce_pep{pep_number}_hint(
+   def reduce_hint_pep{pep_number}(
        hint: object,
        conf: BeartypeConf,
        arg_name: Optional[str],
@@ -365,13 +382,41 @@ Note that:
   expected sign. By design, a reducer is only ever passed a type hint of the
   expected sign.
 * Reducers should *not* be memoized (e.g., by the
-  :func:`beartype._util.cache.utilcachecall.callable_cached` decorator). Since
-  the higher-level :func:`.reduce_hint` function that is the sole entry point to
-  calling all lower-level reducers is itself memoized, reducers themselves do
-  neither require nor benefit from memoization. Moreover, even if they did
-  either require or benefit from memoization, they couldn't be -- at least, not
+  :func:`.callable_cached` decorator). Since the higher-level
+  :func:`.reduce_hint` function that is the sole entry point to calling all
+  lower-level reducers is itself memoized, reducers themselves do neither
+  require nor benefit from memoization. Moreover, even if they did either
+  require or benefit from memoization, they couldn't be -- at least, not
   directly. Why? Because :func:`.reduce_hint` necessarily passes keyword
   arguments to all reducers. But memoized functions *cannot* receive keyword
   arguments (without destroying efficiency and thus the entire impetus for
   memoization). Ergo, reducers *cannot* be memoized.
+'''
+
+
+_HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _DictReducer = {
+    # ..................{ PEP 647                            }..................
+    # If this hint is a PEP 647-compliant "typing.TypeGuard[...]" type hint,
+    # either:
+    # * If this hint annotates the return of some callable, reduce this hint to
+    #   the standard "bool" type.
+    # * Else, raise an exception.
+    HintSignTypeGuard: reduce_hint_pep647,
+
+    # ..................{ PEP 673                            }..................
+    # If this hint is a PEP 673-compliant "typing.Self" type hint, either:
+    # * If @beartype is currently decorating a class, reduce this hint to the
+    #   most deeply nested class on the passed type stack.
+    # * Else, raise an exception.
+    HintSignSelf: reduce_hint_pep673,
+}
+'''
+Dictionary mapping from each sign uniquely identifying various type hints to
+that sign's **cached reducer** (i.e., callable efficiently memoized by the
+:func:`.callable_cached` decorator reducing those higher- to lower-level hints).
+
+See Also
+----------
+:data:`._HINT_SIGN_TO_REDUCE_HINT_CACHED`
+    Further details.
 '''
