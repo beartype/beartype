@@ -66,6 +66,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPattern,
     HintSignProtocol,
     HintSignReversible,
+    HintSignSelf,
     HintSignSequence,
     HintSignSet,
     HintSignSized,
@@ -487,6 +488,9 @@ _HINT_SIGNS_SUPPORTED_SHALLOW = frozenset((
 
     # ..................{ PEP 647                            }..................
     HintSignTypeGuard,
+
+    # ..................{ PEP 673                            }..................
+    HintSignSelf,
 
     # ..................{ PEP 675                            }..................
     HintSignLiteralString,

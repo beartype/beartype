@@ -24,12 +24,12 @@ from beartype._check.conv.convcoerce import (
 )
 from beartype._check.conv.convreduce import reduce_hint
 from beartype._conf.confcls import BeartypeConf
+from beartype._data.datatyping import TypeStack
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
 
 # ....................{ SANIFIERS ~ root                   }....................
 #FIXME: Unit test us up, please.
-#FIXME: Revise docstring in accordance with recent dramatic improvements.
 def sanify_hint_root_func(
     # Mandatory parameters.
     hint: object,
@@ -79,6 +79,9 @@ def sanify_hint_root_func(
     ----------
     hint : object
         Possibly PEP-noncompliant root type hint to be sanified.
+    cls_stack : TypeStack, optional
+        **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
+        :data:`None`). See also the :func:`.beartype_object` decorator.
     arg_name : str
         Either:
 
@@ -109,7 +112,7 @@ def sanify_hint_root_func(
     '''
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with the sanify_hint_root_contextfree() sanitizer.
+    # CAUTION: Synchronize with the sanify_hint_root_statement() sanitizer.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # PEP-compliant type hint coerced (i.e., permanently converted in the
@@ -153,6 +156,7 @@ def sanify_hint_root_func(
     hint = reduce_hint(
         hint=hint,
         conf=bear_call.conf,
+        cls_stack=bear_call.cls_stack,
         arg_name=arg_name,
         exception_prefix=exception_prefix,
     )
@@ -162,8 +166,7 @@ def sanify_hint_root_func(
 
 
 #FIXME: Unit test us up, please.
-#FIXME: Revise docstring in accordance with recent dramatic improvements.
-def sanify_hint_root_contextfree(
+def sanify_hint_root_statement(
     hint: object,
     conf: BeartypeConf,
     exception_prefix: str,
@@ -174,7 +177,7 @@ def sanify_hint_root_contextfree(
     type hint) if this hint is reducible *or* this hint as is otherwise (i.e.,
     if this hint is irreducible).
 
-    This sanifier is principally intended to be called by a **context-free
+    This sanifier is principally intended to be called by a **stateement-level
     type-checker factory** (i.e., a function creating and returning a runtime
     type-checker type-checking this hint, outside the context of any standard
     type hinting annotation like a user-defined class variable, callable
@@ -245,6 +248,7 @@ def sanify_hint_any(
     exception_prefix: str,
 
     # Optional parameters.
+    cls_stack: TypeStack = None,
     arg_name: Optional[str] = None,
 ) -> Any:
     '''
@@ -261,7 +265,13 @@ def sanify_hint_any(
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
-    arg_name : Optional[str]
+    exception_prefix : str
+        Substring prefixing exception messages raised by this function.
+    cls_stack : TypeStack, optional
+        **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
+        :data:`None`). Defaults to :data:`None`. See also the
+        :func:`.beartype_object` decorator for further commentary.
+    arg_name : Optional[str], optional
         Either:
 
         * If this hint directly annotates a callable parameter (as the root type
@@ -271,9 +281,6 @@ def sanify_hint_any(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
-    exception_prefix : str
-        Human-readable label prefixing the representation of this object in the
-        exception message.
 
     Returns
     ----------
@@ -282,7 +289,7 @@ def sanify_hint_any(
     '''
 
     # This sanifier covers the proper subset of logic performed by the
-    # sanify_hint_root_contextfree() sanifier applicable to child type hints.
+    # sanify_hint_root_statement() sanifier applicable to child type hints.
 
     # PEP-compliant type hint coerced (i.e., permanently converted in the
     # annotations dunder dictionary of the passed callable) from this possibly
@@ -295,6 +302,7 @@ def sanify_hint_any(
     return reduce_hint(
         hint=hint,
         conf=conf,
+        cls_stack=cls_stack,
         arg_name=arg_name,
         exception_prefix=exception_prefix,
     )

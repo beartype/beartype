@@ -39,11 +39,15 @@ from beartype._check.expr._exprsnip import (
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
 )
 from beartype._check.util.checkutilmake import make_func_signature
+from beartype._check.checkcall import BeartypeCall
+from beartype._data.datakind import (
+    ARG_NAME_RETURN,
+    ARG_NAME_RETURN_REPR,
+)
 from beartype._decor._cache.cachetype import (
     bear_typistry,
     register_typistry_forwardref,
 )
-from beartype._check.checkcall import BeartypeCall
 from beartype._decor._wrap.wrapsnip import (
     CODE_INIT_ARGS_LEN,
     CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
@@ -257,14 +261,6 @@ Frozen set of all **positional parameter kinds** (i.e.,
 either may *or* must be passed positionally).
 '''
 
-
-_RETURN_REPR = repr('return')
-'''
-Object representation of the magic string implying a return value in various
-Python objects (e.g., the ``__annotations__`` dunder dictionary of annotated
-callables).
-'''
-
 # ....................{ PRIVATE ~ args                     }....................
 def _code_check_args(bear_call: BeartypeCall) -> str:
     '''
@@ -314,7 +310,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
         len(bear_call.func_arg_name_to_hint) == 1 and
         # That type hint annotates that callable's return rather than a
         # parameter accepted by that callable...
-        'return' in bear_call.func_arg_name_to_hint
+        ARG_NAME_RETURN in bear_call.func_arg_name_to_hint
     ):
         return ''
     # Else, one or more callable parameters are annotated.
@@ -532,7 +528,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
     # Note that "None" is a semantically meaningful PEP 484-compliant type hint
     # equivalent to "type(None)". Ergo, we *MUST* explicitly distinguish
     # between that type hint and an unannotated return.
-    hint = bear_call.func_arg_name_to_hint_get('return', SENTINEL)
+    hint = bear_call.func_arg_name_to_hint_get(ARG_NAME_RETURN, SENTINEL)
 
     # If this return is unannotated, silently reduce to a noop.
     if hint is SENTINEL:
@@ -575,7 +571,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
             #
             # Do this first *BEFORE* passing this hint to any further callables.
             hint = sanify_hint_root_func(
-                hint=hint, arg_name='return', bear_call=bear_call)
+                hint=hint, arg_name=ARG_NAME_RETURN, bear_call=bear_call)
 
             # If this PEP-compliant hint is unignorable, generate and return a
             # snippet type-checking this return against this hint.
@@ -602,7 +598,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                 code_return_check_pith_unmemoized = _unmemoize_func_wrapper_code(
                     bear_call=bear_call,
                     func_wrapper_code=code_return_check_pith,
-                    pith_repr=_RETURN_REPR,
+                    pith_repr=ARG_NAME_RETURN_REPR,
                     hint_forwardrefs_class_basename=(
                         hint_forwardrefs_class_basename),
                 )

@@ -73,58 +73,6 @@ from beartype._util.hint.pep.utilpepreduce import reduce_hint_pep_unsigned
 from collections.abc import Callable
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Ah-ha! Actually... we need to do something different entirely. Why?
-#Because PEP 673 (i.e., "typing.Self"), which requires a new class-specific
-#"cls_stack" parameter to resolve. This suggests we split this reduce_hint()
-#function into two new private functions. Specifically:
-#* Copy-and-paste "_HINT_SIGN_TO_REDUCE_HINT_CACHED" to a new
-#  "_HINT_SIGN_TO_REDUCE_HINT_UNCACHED" global, which should resemble:
-#      _HINT_SIGN_TO_REDUCE_HINT_UNCACHED = {
-#          HintSignSelf: reduce_hint_pep673,
-#          HintSignTypeGuard: reduce_hint_pep647,
-#      }
-#* Remove the "HintSignTypeGuard" entry from "_HINT_SIGN_TO_REDUCE_HINT_CACHED".
-#* Preserve the signature and docstring of reduce_hint() as is.
-#* Copy-and-paste reduce_hint() into a new _reduce_hint_cached() function with
-#  signature resembling:
-#      @callable_cached
-#      def _reduce_hint_cached(
-#          hint: Any,
-#          conf: BeartypeConf,
-#          exception_prefix: str,
-#      ) -> object:
-#  This function should leverage "_HINT_SIGN_TO_REDUCE_HINT_CACHED".
-#* Define a new _reduce_hint_uncached() function with signature resembling:
-#      def _reduce_hint_uncached(
-#          hint: Any,
-#          conf: BeartypeConf,
-#          arg_name: Optional[str],
-#          cls_stack: TypeStack,
-#          exception_prefix: str,
-#      ) -> object:
-#  This function should leverage "_HINT_SIGN_TO_REDUCE_HINT_UNCACHED".
-#* Refactor reduce_hint() to call those functions: e.g.,
-#      # Note that reduce_hint() should no longer be memoized via the
-#      # @callable_cached decorator. Ergo, callers should now begin passing
-#      # keyword arguments to this function.
-#      def reduce_hint(
-#          hint: Any,
-#          conf: BeartypeConf,
-#          arg_name: Optional[str],
-#          cls_stack: TypeStack,
-#          exception_prefix: str,
-#      ) -> object:
-#          hint = reduce_hint_uncached(
-#              hint=hint,
-#              conf=conf,
-#              arg_name=arg_name,
-#              cls_stack=cls_stack,
-#              exception_prefix=exception_prefix,
-#          )
-#          hint = reduce_hint_cached(
-#              hint, conf, exception_prefix)
-#          return hint
-
 def reduce_hint(
     # Mandatory parameters.
     hint: Any,
@@ -174,20 +122,75 @@ def reduce_hint(
 
         Defaults to :data:`None`.
     exception_prefix : str, optional
-        Human-readable label prefixing exception messages raised by this
-        function. Defaults to the empty string.
+        Substring prefixing exception messages raised by this function. Defaults
+        to the empty string.
 
     Returns
     ----------
     object
         Either:
 
-        * If the passed higher-level type hint is reducible, a lower-level type
-          hint reduced (i.e., converted, extracted) from this hint.
+        * If the passed hint is reducible, another hint reduced from this hint.
         * Else, this hint as is unmodified.
     '''
 
-    # ....................{ PRIVATE ~ reducers                 }....................
+    # This possibly contextual hint inefficiently reduced to another hint.
+    #
+    # Note that we intentionally reduce lower-level contextual hints *BEFORE*
+    # higher-level context-free hints. In theory, order of reduction *SHOULD* be
+    # insignificant; in practice, we suspect unforeseen and unpredictable
+    # interactions between these two reductions. To reduce the likelihood of
+    # fire-breathing dragons, we reduce lower-level hints first.
+    hint = _reduce_hint_uncached(
+        hint=hint,
+        conf=conf,
+        arg_name=arg_name,
+        cls_stack=cls_stack,
+        exception_prefix=exception_prefix,
+    )
+
+    # This possibly context-free hint efficiently reduced to another hint.
+    hint = _reduce_hint_cached(hint, conf, exception_prefix)
+
+    # Return this possibly reduced hint.
+    return hint
+
+# ....................{ PRIVATE ~ reducers                 }....................
+@callable_cached
+def _reduce_hint_cached(
+    hint: Any,
+    conf: BeartypeConf,
+    exception_prefix: str,
+) -> object:
+    '''
+    Lower-level **context-free type hint** (i.e., type hint *not* contextually
+    dependent on the kind of class, attribute, callable parameter, or callable
+    return annotated by this hint) efficiently reduced (i.e., converted) from
+    the passed higher-level context-free type hint if this hint is reducible
+    *or* this hint as is otherwise (i.e., if this hint is irreducible).
+
+    This reducer is memoized for efficiency. Thankfully, this reducer is
+    responsible for reducing *most* (but not all) type hints.
+
+    Parameters
+    ----------
+    hint : Any
+        Type hint to be possibly reduced.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object).
+    exception_prefix : str
+        Substring prefixing exception messages raised by this function.
+
+    Returns
+    ----------
+    object
+        Either:
+
+        * If the passed hint is reducible, another hint reduced from this hint.
+        * Else, this hint as is unmodified.
+    '''
+
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.
     hint_sign = get_hint_pep_sign_or_none(hint)
@@ -203,6 +206,79 @@ def reduce_hint(
         hint = hint_reducer(  # type: ignore[call-arg]
             hint=hint,  # pyright: ignore[reportGeneralTypeIssues]
             conf=conf,
+            exception_prefix=exception_prefix,
+        )
+    # Else, *NO* such callable was registered. Preserve this hint as is, you!
+
+    # Return this possibly reduced hint.
+    return hint
+
+
+def _reduce_hint_uncached(
+    hint: Any,
+    conf: BeartypeConf,
+    cls_stack: TypeStack,
+    arg_name: Optional[str],
+    exception_prefix: str,
+) -> object:
+    '''
+    Lower-level **contextual type hint** (i.e., type hint contextually dependent
+    on the kind of class, attribute, callable parameter, or callable return
+    annotated by this hint) inefficiently reduced (i.e., converted) from the
+    passed higher-level context-free type hint if this hint is reducible *or*
+    this hint as is otherwise (i.e., if this hint is irreducible).
+
+    This reducer *cannot* be meaningfully memoized, since multiple passed
+    parameters (e.g., ``arg_name``, ``cls_stack``) are typically isolated to a
+    handful of callables across the codebase currently being decorated by
+    :mod:`beartype`. Thankfully, this reducer is responsible for reducing only a
+    small subset of type hints requiring these problematic parameters.
+
+    Parameters
+    ----------
+    hint : Any
+        Type hint to be possibly reduced.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object).
+    cls_stack : TypeStack
+        **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
+        :data:`None`). See also the :func:`.beartype_object` decorator.
+    arg_name : Optional[str]
+        Either:
+
+        * If this hint annotates a parameter of some callable, the name of that
+          parameter.
+        * If this hint annotates the return of some callable, ``"return"``.
+        * Else, :data:`None`.
+    exception_prefix : str
+        Substring prefixing exception messages raised by this function.
+
+    Returns
+    ----------
+    object
+        Either:
+
+        * If the passed hint is reducible, another hint reduced from this hint.
+        * Else, this hint as is unmodified.
+    '''
+
+    # Sign uniquely identifying this hint if this hint is identifiable *OR*
+    # "None" otherwise.
+    hint_sign = get_hint_pep_sign_or_none(hint)
+
+    # Callable reducing this hint if a callable reducing hints of this sign was
+    # previously registered *OR* "None" otherwise (i.e., if *NO* such callable
+    # was registered, in which case this hint is preserved as is).
+    hint_reducer = _HINT_SIGN_TO_REDUCE_HINT_UNCACHED.get(hint_sign)
+
+    # If a callable reducing hints of this sign was previously registered,
+    # reduce this hint to another hint via this callable.
+    if hint_reducer is not None:
+        hint = hint_reducer(  # type: ignore[call-arg]
+            hint=hint,  # pyright: ignore[reportGeneralTypeIssues]
+            conf=conf,
+            cls_stack=cls_stack,
             arg_name=arg_name,
             exception_prefix=exception_prefix,
         )
@@ -320,14 +396,6 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _DictReducer = {
     # ignore all annotations on this hint by reducing this hint to the
     # lower-level hint it annotates.
     HintSignAnnotated: reduce_hint_pep593,
-
-    # ..................{ PEP 647                            }..................
-    # If this hint is a PEP 647-compliant "typing.TypeGuard[...]" type hint,
-    # either:
-    # * If this hint annotates the return of some callable, reduce this hint to
-    #   the standard "bool" type.
-    # * Else, raise an exception.
-    HintSignTypeGuard: reduce_hint_pep647,
 
     # ..................{ PEP 675                            }..................
     #FIXME: Remove *AFTER* deeply type-checking literal strings. Note that doing

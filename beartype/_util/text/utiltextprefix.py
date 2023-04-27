@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.datakind import HINT_NAME_RETURN
+from beartype._data.datakind import ARG_NAME_RETURN
 from beartype._data.datatyping import BeartypeableT
 from beartype._util.text.utiltextlabel import (
     label_beartypeable_kind,
@@ -79,7 +79,7 @@ def prefix_beartypeable_pith(func: Callable, pith_name: str) -> str:
     return (
         # If this name is "return", the return value of this callable.
         prefix_beartypeable_return(func)
-        if pith_name == HINT_NAME_RETURN else
+        if pith_name == ARG_NAME_RETURN else
         # Else, the parameter with this name of this callable.
         prefix_beartypeable_arg(func=func, arg_name=pith_name)
     )

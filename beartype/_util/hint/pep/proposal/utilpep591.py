@@ -34,8 +34,8 @@ def reduce_hint_pep591(
     hint : object
         Final type hint to be reduced.
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
+        Human-readable substring prefixing exception messages raised by this
+        function.
 
     All remaining passed arguments are silently ignored.
 

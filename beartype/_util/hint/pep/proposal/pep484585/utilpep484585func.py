@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
+from beartype._data.datakind import ARG_NAME_RETURN
 from beartype._data.datatyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignCoroutine
 from beartype._data.hint.pep.sign.datapepsignset import (
@@ -72,7 +73,7 @@ def reduce_hint_pep484585_func_return(
 
     # Type hint annotating this callable's return, which the caller has already
     # explicitly guaranteed to exist.
-    hint = func.__annotations__['return']
+    hint = func.__annotations__[ARG_NAME_RETURN]
 
     # Sign uniquely identifying this hint if any *OR* "None" otherwise (e.g.,
     # if this hint is an isinstanceable class).
@@ -207,7 +208,7 @@ def _die_of_hint_return_invalid(
 
     # Type hint annotating this callable's return, which the caller has already
     # explicitly guaranteed to exist.
-    hint = func.__annotations__['return']
+    hint = func.__annotations__[ARG_NAME_RETURN]
 
     # Raise an exception of this type with a message suffixed by this suffix.
     raise exception_cls(

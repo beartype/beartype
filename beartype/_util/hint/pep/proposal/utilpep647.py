@@ -16,6 +16,7 @@ from beartype.typing import (
     Optional,
     Type,
 )
+from beartype._data.datakind import ARG_NAME_RETURN
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.
@@ -70,7 +71,7 @@ def reduce_hint_pep647(
     # guard to the builtin "bool" class. Sadly, type guards are useless at
     # runtime and exist exclusively as a means of superficially improving the
     # computational intelligence of (...wait for it) static type-checkers.
-    if arg_name == 'return':
+    if arg_name == ARG_NAME_RETURN:
         return bool
     # Else, this type guard does *NOT* annotate the return of some callable.
 

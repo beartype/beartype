@@ -23,6 +23,7 @@ from beartype._check.checkmagic import (
     ARG_NAME_RAISE_EXCEPTION,
     VAR_NAME_ARGS_LEN,
 )
+from beartype._data.datakind import ARG_NAME_RETURN_REPR
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
 
@@ -260,7 +261,7 @@ PEP484_CODE_CHECK_NORETURN = f'''
     raise {ARG_NAME_RAISE_EXCEPTION}(
         func={ARG_NAME_FUNC},
         conf={ARG_NAME_BEARTYPE_CONF},
-        pith_name='return',
+        pith_name={ARG_NAME_RETURN_REPR},
         pith_value={VAR_NAME_PITH_ROOT},
     )'''
 '''

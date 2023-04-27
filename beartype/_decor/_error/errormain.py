@@ -77,11 +77,12 @@ from beartype.roar._roarexc import (
 from beartype.typing import (
     Callable,
     Dict,
-    NoReturn,
+    # NoReturn,
     Optional,
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import BeartypeConf
+from beartype._data.datakind import ARG_NAME_RETURN
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
@@ -269,7 +270,7 @@ def get_beartype_violation(
 
     # If the name of this parameter is the magic string implying the passed
     # object to be a return value, set the above local variables appropriately.
-    if pith_name == 'return':
+    if pith_name == ARG_NAME_RETURN:
         exception_cls = BeartypeCallHintReturnViolation
         exception_prefix = prefix_beartypeable_return_value(
             func=func, return_value=pith_value)

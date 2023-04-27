@@ -17,14 +17,22 @@ from beartype.typing import (
     Dict,
 )
 
-# ....................{ STRINGS                            }....................
-HINT_NAME_RETURN = 'return'
+# ....................{ STRINGS ~ return                   }....................
+ARG_NAME_RETURN = 'return'
 '''
 Unique name arbitrarily assigned by Python to the key of the ``__annotations__``
 dunder attribute providing the type hint annotating the return of callables.
 
 Note that Python itself prohibits callable parameters from being named
 ``"return"`` and thus guarantees this name to be safe and unambiguous.
+'''
+
+
+ARG_NAME_RETURN_REPR = repr(ARG_NAME_RETURN)
+'''
+Object representation of the magic string implying a return value in various
+Python objects (e.g., the ``__annotations__`` dunder dictionary of annotated
+callables).
 '''
 
 # ....................{ DICTS                              }....................

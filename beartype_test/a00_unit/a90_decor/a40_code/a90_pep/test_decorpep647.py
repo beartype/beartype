@@ -22,7 +22,7 @@ from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 def test_decor_pep647() -> None:
     '''
     Test :pep:`647` support implemented in the :func:`beartype.beartype`
-    decorator if the active Python interpreter targets Python >= 3.8 *or* skip
+    decorator if the active Python interpreter targets Python >= 3.10 *or* skip
     otherwise.
     '''
 

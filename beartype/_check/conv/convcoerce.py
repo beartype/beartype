@@ -59,6 +59,7 @@ from beartype.typing import (
     Union,
 )
 from beartype._cave._cavefast import NotImplementedType
+from beartype._data.datakind import ARG_NAME_RETURN
 from beartype._data.func.datafunc import METHOD_NAMES_BINARY_DUNDER
 from beartype._check.checkcall import BeartypeCall
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
@@ -129,7 +130,7 @@ def coerce_func_hint_root(
     # If...
     if (
         # This hint annotates the return for the decorated callable *AND*...
-        arg_name == 'return' and
+        arg_name == ARG_NAME_RETURN and
         # The decorated callable is a binary dunder method (e.g., __eq__())...
         bear_call.func_wrapper_name in METHOD_NAMES_BINARY_DUNDER
     ):
