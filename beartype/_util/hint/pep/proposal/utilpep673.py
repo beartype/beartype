@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep673Exception
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.datatyping import TypeStack
 
 # ....................{ REDUCERS                           }....................
@@ -60,6 +61,8 @@ def reduce_hint_pep673(
         * ``cls_stack`` is :data:`None`.
         * ``cls_stack`` is non-:data:`None` but empty.
     '''
+    assert isinstance(cls_stack, NoneTypeOr[tuple]), (
+        f'{repr(cls_stack)} neither tuple nor "None".')
 
     # If either no type stack *OR* an empty type stack was passed, *NO* class is
     # currently being decorated by @beartype. It follows that either:

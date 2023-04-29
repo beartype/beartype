@@ -21,26 +21,6 @@ from beartype._conf.confcls import (
 from typing import Optional
 from collections.abc import Iterable
 
-# ....................{ PRIVATE                            }....................
-_EXCEPTION_STR_MATCH_REGEXES_MANDATORY = (
-    # Ensure *ALL* exception messages contain the substring "type hint".
-    # Exception messages *NOT* containing this substring are overly ambiguous
-    # and thus effectively erroneous.
-    r'\btype hint\b',
-)
-'''
-Tuple of all **mandatory exception matching regexes** (i.e., r''-style
-uncompiled regular expression strings, each unconditionally matching a
-substring of the exception message expected to be raised by wrapper functions
-when either passed or returning *any* possible pith).
-'''
-
-
-_NoneTypeOrType = (type, type(None))
-'''
-2-tuple matching both classes and the ``None`` singleton.
-'''
-
 # ....................{ CLASSES ~ hint : [un]satisfied     }....................
 class HintPithSatisfiedMetadata(object):
     '''
@@ -199,18 +179,23 @@ class HintNonpepMetadata(object):
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for this type hint).
     is_ignorable : bool
-        ``True`` only if this hint is safely ignorable by the
-        :func:`beartype.beartype` decorator. Defaults to ``False``.
+        :data:`True` only if this hint is safely ignorable by the
+        :func:`beartype.beartype` decorator. Defaults to :data:`False`.
+    is_needs_cls_stack : bool
+        :data:`True` only if this hint is **type stack-dependent** (i.e., if
+        :mod:`beartype` requires the tuple of all classes lexically declaring
+        the class variables or methods annotated by this hint to generate code
+        type-checking this hint). Defaults to :data:`False`.
     is_supported : bool
-        ``True`` only if this hint is currently supported by
-        the :func:`beartype.beartype` decorator. Defaults to ``True``.
+        :data:`True` only if this hint is currently supported by
+        the :func:`beartype.beartype` decorator. Defaults to :data:`False`.
     piths_meta : Iterable[HintPithSatisfiedMetadata]
         Iterable of zero or more **(un)satisfied metadata objects** (i.e.,
         :class:`HintPithSatisfiedMetadata` and
         :class:`HintPithUnsatisfiedMetadata` instances), each describing an
-        arbitrary object either satisfying or violating this hint when passed
-        as a parameter *or* returned as a value annotated by this hint.
-        Defaults to the empty tuple.
+        arbitrary object either satisfying or violating this hint when passed as
+        a parameter *or* returned as a value annotated by this hint. Defaults to
+        the empty tuple.
     '''
 
     # ..................{ INITIALIZERS                       }..................
@@ -224,6 +209,7 @@ class HintNonpepMetadata(object):
         # Optional keyword-only parameters.
         conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
         is_ignorable: bool = False,
+        is_needs_cls_stack: bool = False,
         is_supported: bool = True,
         piths_meta: 'Iterable[HintPithSatisfiedMetadata]' = (),
     ) -> None:
@@ -233,6 +219,8 @@ class HintNonpepMetadata(object):
             f'{repr(conf)} not beartype configuration.')
         assert isinstance(is_ignorable, bool), (
             f'{repr(is_ignorable)} not bool.')
+        assert isinstance(is_needs_cls_stack, bool), (
+            f'{repr(is_needs_cls_stack)} not bool.')
         assert isinstance(is_supported, bool), (
             f'{repr(is_supported)} not bool.')
         assert isinstance(piths_meta, Iterable), (
@@ -249,6 +237,7 @@ class HintNonpepMetadata(object):
         self.hint = hint
         self.conf = conf
         self.is_ignorable = is_ignorable
+        self.is_needs_cls_stack = is_needs_cls_stack
         self.is_supported = is_supported
         self.piths_meta = piths_meta
 
@@ -259,6 +248,7 @@ class HintNonpepMetadata(object):
             f'    hint={repr(self.hint)},',
             f'    conf={repr(self.conf)},',
             f'    is_ignorable={repr(self.is_ignorable)},',
+            f'    is_needs_cls_stack={repr(self.is_needs_cls_stack)},',
             f'    is_supported={repr(self.is_supported)},',
             f'    piths_meta={repr(self.piths_meta)},',
             f')',
@@ -472,6 +462,7 @@ class HintPepMetadata(HintNonpepMetadata):
             f'    isinstanceable_type={repr(self.isinstanceable_type)},',
             f'    is_args={repr(self.is_args)},',
             f'    is_ignorable={repr(self.is_ignorable)},',
+            f'    is_needs_cls_stack={repr(self.is_needs_cls_stack)},',
             f'    is_pep585_builtin={repr(self.is_pep585_builtin)},',
             f'    is_pep585_generic={repr(self.is_pep585_generic)},',
             f'    is_supported={repr(self.is_supported)},',
@@ -481,3 +472,23 @@ class HintPepMetadata(HintNonpepMetadata):
             f'    piths_meta={repr(self.piths_meta)},',
             f')',
         ))
+
+# ....................{ PRIVATE ~ constants                }....................
+_EXCEPTION_STR_MATCH_REGEXES_MANDATORY = (
+    # Ensure *ALL* exception messages contain the substring "type hint".
+    # Exception messages *NOT* containing this substring are overly ambiguous
+    # and thus effectively erroneous.
+    r'\btype hint\b',
+)
+'''
+Tuple of all **mandatory exception matching regexes** (i.e., r''-style
+uncompiled regular expression strings, each unconditionally matching a
+substring of the exception message expected to be raised by wrapper functions
+when either passed or returning *any* possible pith).
+'''
+
+
+_NoneTypeOrType = (type, type(None))
+'''
+2-tuple matching both classes and the :data:`None` singleton.
+'''

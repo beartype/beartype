@@ -49,6 +49,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import BeartypeConf
+from beartype._data.datatyping import TypeStack
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
@@ -84,6 +85,10 @@ class ViolationCause(object):
 
         * Violates this hint, a human-readable string describing this violation.
         * Satisfies this hint, ``None``.
+    cls_stack : TypeStack, optional
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring the
@@ -137,6 +142,7 @@ class ViolationCause(object):
     __slots__ = (
         'cause_indent',
         'cause_str_or_none',
+        'cls_stack',
         'conf',
         'exception_prefix',
         'func',
@@ -152,6 +158,7 @@ class ViolationCause(object):
     _INIT_PARAM_NAMES = frozenset((
         'cause_indent',
         'cause_str_or_none',
+        'cls_stack',
         'conf',
         'exception_prefix',
         'func',
@@ -175,6 +182,7 @@ class ViolationCause(object):
 
         # Mandatory parameters.
         func: Callable,
+        cls_stack: TypeStack,
         conf: BeartypeConf,
         pith: Any,
         pith_name: Optional[str],
@@ -194,6 +202,8 @@ class ViolationCause(object):
         See the class docstring for a description of these parameters.
         '''
         assert callable(func), f'{repr(func)} not callable.'
+        assert isinstance(cls_stack, NoneTypeOr[tuple]), (
+            f'{repr(cls_stack)} neither tuple nor "None".')
         assert isinstance(conf, BeartypeConf), (
             f'{repr(conf)} not configuration.')
         assert isinstance(pith_name, NoneTypeOr[str]), (
@@ -209,6 +219,7 @@ class ViolationCause(object):
 
         # Classify all passed parameters.
         self.func = func
+        self.cls_stack = cls_stack
         self.conf = conf
         self.pith = pith
         self.pith_name = pith_name
@@ -249,8 +260,9 @@ class ViolationCause(object):
         hint = sanify_hint_any(
             hint=hint,
             conf=self.conf,
-            arg_name=self.pith_name,
             exception_prefix=self.exception_prefix,
+            cls_stack=self.cls_stack,
+            arg_name=self.pith_name,
         )
 
         # If this hint is PEP-compliant...

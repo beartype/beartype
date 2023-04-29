@@ -16,7 +16,10 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._check.checkmagic import ARG_NAME_GETRANDBITS
 from beartype._check.expr.exprmake import make_check_expr
 from beartype._conf.confcls import BeartypeConf
-from beartype._data.datatyping import CodeGenerated
+from beartype._data.datatyping import (
+    CodeGenerated,
+    TypeStack,
+)
 from beartype._decor._wrap.wrapsnip import (
     CODE_HINT_ROOT_PREFIX,
     CODE_HINT_ROOT_SUFFIX,
@@ -26,7 +29,11 @@ from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ MAKERS                             }....................
 @callable_cached
-def make_func_wrapper_code(hint: object, conf: BeartypeConf) -> CodeGenerated:
+def make_func_wrapper_code(
+    hint: object,
+    conf: BeartypeConf,
+    cls_stack: TypeStack,
+) -> CodeGenerated:
     '''
     **Type-checking wrapper function code factory** (i.e., low-level callable
     dynamically generating a pure-Python code snippet type-checking the
@@ -43,6 +50,10 @@ def make_func_wrapper_code(hint: object, conf: BeartypeConf) -> CodeGenerated:
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
+    cls_stack : TypeStack
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
 
     Returns
     ----------
@@ -71,17 +82,29 @@ def make_func_wrapper_code(hint: object, conf: BeartypeConf) -> CodeGenerated:
         func_wrapper_code_expr,
         func_wrapper_scope,
         hint_forwardrefs_class_basename,
-    ) = make_check_expr(hint, conf)
+    ) = make_check_expr(hint, conf, cls_stack)
 
-    # PEP-compliant code snippet passing the value of the random integer
-    # previously generated for the current call to the exception-handling
-    # function call embedded in the "CODE_HINT_ROOT_SUFFIX" snippet,
-    # defaulting to passing *NO* such integer.
+    # Code snippet passing the value of the random integer previously generated
+    # for the current call to the exception-handling function call embedded in
+    # the "CODE_HINT_ROOT_SUFFIX" snippet, defaulting to *NOT* passing this.
     func_wrapper_code_random_int_if_any = (
         CODE_HINT_ROOT_SUFFIX_RANDOM_INT
         if ARG_NAME_GETRANDBITS in func_wrapper_scope else
         ''
     )
+
+    #FIXME: [SPEED] Optimize the following two string munging operations into a
+    #single string-munging operation resembling:
+    #    func_wrapper_code = CODE_HINT_ROOT.format(
+    #        check_expr=func_wrapper_code_expr,
+    #        random_int_if_any=func_wrapper_code_random_int_if_any
+    #    )
+    #
+    #Then define "CODE_HINT_ROOT" in the "wrapsnip" submodule to resemble:
+    #    CODE_HINT_ROOT = (
+    #        f'{CODE_HINT_ROOT_PREFIX}{{check_expr}}'
+    #        f'{CODE_HINT_ROOT_SUFFIX}'
+    #    )
 
     # Suffix this code by a Python code snippet raising a human-readable
     # exception when the root pith violates the root type hint.

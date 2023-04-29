@@ -72,7 +72,10 @@ from beartype._check.expr._exprsnip import (
     PEP593_CODE_HINT_VALIDATOR_SUFFIX,
 )
 from beartype._conf.confcls import BeartypeConf
-from beartype._data.datatyping import CodeGenerated
+from beartype._data.datatyping import (
+    CodeGenerated,
+    TypeStack,
+)
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoollistfixed import (
     FIXED_LIST_SIZE_MEDIUM,
@@ -90,7 +93,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignGeneric,
     HintSignLiteral,
-    HintSignNone,
+    # HintSignNone,
     HintSignTuple,
     HintSignType,
 )
@@ -154,11 +157,14 @@ from random import getrandbits
 
 @callable_cached
 def make_check_expr(
-    # ..................{ PARAMS ~ mandatory                 }..................
+    # ..................{ ARGS ~ mandatory                   }..................
     hint: object,
     conf: BeartypeConf,
 
-    # ..................{ PARAMS ~ optional                  }..................
+    # ..................{ ARGS ~ optional                    }..................
+    cls_stack: TypeStack = None,
+
+    # ..................{ ARGS ~ optional : speed            }..................
     # Globals defined above, declared as optional parameters for efficient
     # lookup as local attributes. Yes, this is an absurd microoptimization.
     # *fight me, github developer community*
@@ -261,6 +267,11 @@ def make_check_expr(
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
+    cls_stack : TypeStack, optional
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
+        Defaults to :data:`None`.
 
     Returns
     ----------
@@ -637,6 +648,7 @@ def make_check_expr(
             hint_curr = sanify_hint_any(
                 hint=hint_curr,
                 conf=conf,
+                cls_stack=cls_stack,
                 exception_prefix=_EXCEPTION_PREFIX,
             )
         # Else, this is the already sanified root hint.

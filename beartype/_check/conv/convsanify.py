@@ -80,8 +80,10 @@ def sanify_hint_root_func(
     hint : object
         Possibly PEP-noncompliant root type hint to be sanified.
     cls_stack : TypeStack, optional
-        **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
-        :data:`None`). See also the :func:`.beartype_object` decorator.
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
+        Defaults to :data:`None`.
     arg_name : str
         Either:
 
@@ -268,9 +270,10 @@ def sanify_hint_any(
     exception_prefix : str
         Substring prefixing exception messages raised by this function.
     cls_stack : TypeStack, optional
-        **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
-        :data:`None`). Defaults to :data:`None`. See also the
-        :func:`.beartype_object` decorator for further commentary.
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
+        Defaults to :data:`None`.
     arg_name : Optional[str], optional
         Either:
 

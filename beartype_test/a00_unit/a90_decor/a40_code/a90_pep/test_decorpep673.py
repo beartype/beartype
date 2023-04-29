@@ -48,6 +48,20 @@ def test_decor_pep673() -> None:
     #the pivotal make_check_expr() function. Sadly, doing so will sharply
     #reduce the likelihood of cache hints on calling that function and thus the
     #efficiency of that function -- but there is *NO* alternative. *sigh*
+    #FIXME: *ALMOST THERE.* The only thing we need to do now is pass "cls_stack"
+    #to get_beartype_violation(). To do so, we'll need to:
+    #* Improve the make_check_expr() function to internally:
+    #      # If type-checking the root pith requires this type stack...
+    #      if cls_stack:
+    #          # Pass this type stack to this wrapper function as an optional
+    #          # hidden parameter.
+    #          func_wrapper_scope[_ARG_NAME_CLS_STACK] = cls_stack
+    #* Define a new "CODE_HINT_ROOT_SUFFIX_CLS_STACK" global in "wrapsnip".
+    #* Improve the make_func_wrapper_code() function to internally:
+    #      # Code snippet passing the current class stack if needed to
+    #      # type-check this type hint, defaulting to *NOT* passing this.
+    #      arg_cls_stack_if_any = (
+    #          CODE_HINT_ROOT_SUFFIX_CLS_STACK if cls_stack else '')
 
     # # ....................{ CLASSES                        }....................
     # @beartype
@@ -84,8 +98,7 @@ def test_decor_pep673() -> None:
     # assert len(avoid_prolonged_exposure) == 42
     # assert avoid_prolonged_exposure[ 0] is super_happy_fun_instance
     # assert avoid_prolonged_exposure[-1] is super_happy_fun_instance
-
-    #FIXME: Shift back below, please.
+    #
     # # Assert that @beartype raises the expected violation when calling a
     # # method of a @beartype-decorated class erroneously violating a PEP
     # # 673-compliant self type hint.

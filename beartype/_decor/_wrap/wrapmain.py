@@ -69,6 +69,7 @@ from beartype._util.func.arg.utilfuncargiter import (
     ArgKind,
     iter_func_args,
 )
+from beartype._util.hint.utilhinttest import is_hint_needs_cls_stack
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
     reduce_hint_pep484585_func_return)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
@@ -325,9 +326,13 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
     is_args_positional = False
 
     # ..................{ LOCALS ~ hint                      }..................
-    # Type hint annotating this parameter if any *OR* "_PARAM_HINT_EMPTY"
+    # Type hint annotating the current parameter if any *OR* "_PARAM_HINT_EMPTY"
     # otherwise (i.e., if this parameter is unannotated).
     hint = None
+
+    # This type hint sanitized into a possibly different type hint more readily
+    # consumable by @beartype's code generator.
+    hint_sane = None
 
     # ..................{ GENERATE                           }..................
     #FIXME: Locally remove the "arg_index" local variable (and thus avoid
@@ -377,15 +382,10 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 continue
             # Else, this parameter is non-ignorable.
 
-            # Sanitize this hint to either:
-            # * If this hint is PEP-noncompliant, the PEP-compliant type hint
-            #   converted from this PEP-noncompliant type hint.
-            # * If this hint is both PEP-compliant and supported, this hint as
-            #   is.
-            # * Else, raise an exception.
-            #
-            # Do this first *BEFORE* passing this hint to any further callables.
-            hint = sanify_hint_root_func(
+            # Sanitize this hint into a possibly different type hint more
+            # readily consumable by @beartype's code generator *BEFORE* passing
+            # this hint to any further callables.
+            hint_sane = sanify_hint_root_func(
                 hint=hint, arg_name=arg_name, bear_call=bear_call)
 
             # If this hint is ignorable, continue to the next parameter.
@@ -393,7 +393,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # Note that this is intentionally tested *AFTER* this hint has been
             # coerced into a PEP-compliant type hint to implicitly ignore
             # PEP-noncompliant type hints as well (e.g., "(object, int, str)").
-            if is_hint_ignorable(hint):
+            if is_hint_ignorable(hint_sane):
                 # print(f'Ignoring {bear_call.func_name} parameter {arg_name} hint {repr(hint)}...')
                 continue
             # Else, this hint is unignorable.
@@ -432,13 +432,27 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # Else, this kind of parameter is supported. Ergo, this code is
             # non-"None".
 
+            # Type stack if required by this hint *OR* "None" otherwise. See the
+            # is_hint_needs_cls_stack() tester for further discussion.
+            #
+            # Note that the original unsanitized "hint" (e.g., "typing.Self")
+            # rather than the new sanitized "hint_sane" (e.g., the class
+            # currently being decorated by @beartype) is passed to that tester.
+            # Why? Because the latter may already have been reduced above to a
+            # different and seemingly innocuous type hint that does *NOT* appear
+            # to require a type stack but actually does. Only the original
+            # unsanitized "hint" can tell the truth.
+            cls_stack = (
+                 bear_call.cls_stack if is_hint_needs_cls_stack(hint) else None)
+            # print(f'arg "{arg_name}" hint {repr(hint)} cls_stack: {repr(cls_stack)}')
+
             # Generate a memoized parameter-agnostic code snippet type-checking
             # any parameter or return value with an arbitrary name.
             (
                 code_param_check_pith,
                 func_wrapper_scope,
                 hint_forwardrefs_class_basename,
-            ) = make_func_wrapper_code(hint, bear_call.conf)
+            ) = make_func_wrapper_code(hint_sane, bear_call.conf, cls_stack)
 
             # Merge the local scope required to check this parameter into the
             # local scope currently required by the current wrapper function.
@@ -570,12 +584,26 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
             # * Else, raise an exception.
             #
             # Do this first *BEFORE* passing this hint to any further callables.
-            hint = sanify_hint_root_func(
+            hint_sane = sanify_hint_root_func(
                 hint=hint, arg_name=ARG_NAME_RETURN, bear_call=bear_call)
 
             # If this PEP-compliant hint is unignorable, generate and return a
             # snippet type-checking this return against this hint.
-            if not is_hint_ignorable(hint):
+            if not is_hint_ignorable(hint_sane):
+                # Type stack if required by this hint *OR* "None" otherwise. See
+                # the is_hint_needs_cls_stack() tester for further discussion.
+                #
+                # Note that the original unsanitized "hint" (e.g.,
+                # "typing.Self") rather than the new sanitized "hint_sane"
+                # (e.g., the class currently being decorated by @beartype) is
+                # passed to that tester. See _code_check_args() for details.
+                cls_stack = (
+                    bear_call.cls_stack
+                    if is_hint_needs_cls_stack(hint) else
+                    None
+                )
+                # print(f'return hint {repr(hint)} cls_stack: {repr(cls_stack)}')
+
                 # Empty tuple, passed below to satisfy the
                 # _unmemoize_func_wrapper_code() API.
                 hint_forwardrefs_class_basename = ()
@@ -586,7 +614,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                     code_return_check_pith,
                     func_wrapper_scope,
                     hint_forwardrefs_class_basename,
-                ) = make_func_wrapper_code(hint, bear_call.conf)  # type: ignore[assignment]
+                ) = make_func_wrapper_code(hint_sane, bear_call.conf, cls_stack)  # type: ignore[assignment]
 
                 # Merge the local scope required to type-check this return into
                 # the local scope currently required by the current wrapper
@@ -602,6 +630,20 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                     hint_forwardrefs_class_basename=(
                         hint_forwardrefs_class_basename),
                 )
+
+                #FIXME: [SPEED] Optimize the following two string munging
+                #operations into a single string-munging operation resembling:
+                #    func_wrapper_code = CODE_RETURN_CHECK.format(
+                #        func_call_prefix=bear_call.func_wrapper_code_call_prefix,
+                #        check_expr=code_return_check_pith_unmemoized,
+                #    )
+                #
+                #Then define "CODE_RETURN_CHECK" in the "wrapsnip" submodule to
+                #resemble:
+                #    CODE_RETURN_CHECK = (
+                #        f'{CODE_RETURN_CHECK_PREFIX}{{check_expr}}'
+                #        f'{CODE_RETURN_CHECK_SUFFIX}'
+                #    )
 
                 # Python code snippet type-checking this return.
                 code_return_check_prefix = CODE_RETURN_CHECK_PREFIX.format(
@@ -625,8 +667,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
     except Exception as exception:
         reraise_exception_placeholder(
             exception=exception,
-            target_str=prefix_beartypeable_return(
-                bear_call.func_wrappee),
+            target_str=prefix_beartypeable_return(bear_call.func_wrappee),
         )
 
     # Return this code.
@@ -641,13 +682,13 @@ def _unmemoize_func_wrapper_code(
 ) -> str:
     '''
     Convert the passed memoized code snippet type-checking any parameter or
-    return of the decorated callable into a memoized code snippet type-checking
-    a specific parameter or return of that callable.
+    return of the decorated callable into an "unmemoized" code snippet
+    type-checking a specific parameter or return of that callable.
 
     Specifically, this function (in order):
 
     #. Globally replaces all references to the
-       :data:`CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER` placeholder substring
+       :data:`.CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER` placeholder substring
        cached into this code with the passed ``pith_repr`` parameter.
     #. Unmemoizes this code by globally replacing all relative forward
        reference placeholder substrings cached into this code with Python

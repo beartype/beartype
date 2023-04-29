@@ -33,6 +33,7 @@ from beartype._cave._cavefast import (
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
 )
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.datatyping import (
@@ -80,73 +81,11 @@ def beartype_object(
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring the
         current decoration of the decorated callable or class).
-    cls_stack : TypeStack
-        Either:
-
-        * If this beartypeable is an attribute (e.g., method, nested class) of a
-          class currently being decorated by the :func:`beartype.beartype`
-          decorator, the **type stack** (i.e., tuple of one or more lexically
-          nested classes that are either currently being decorated *or* have
-          already been decorated by this decorator in descending order of
-          top- to bottom-most lexically nested) such that:
-
-          * The first item of this tuple is expected to be the **root decorated
-            class** (i.e., module-scoped class initially decorated by this
-            decorator whose lexical scope encloses this beartypeable).
-          * The last item of this tuple is expected to be the **current
-            decorated class** (i.e., possibly nested class currently being
-            decorated by this decorator).
-
-        * Else, this beartypeable was decorated directly by this decorator. In
-          this case, :data:`None`.
-
+    cls_stack : TypeStack, optional
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
         Defaults to :data:`None`.
-
-        Note that this decorator requires *both* the root and currently
-        decorated class to correctly resolve edge cases under :pep:`563`: e.g.,
-
-        .. code-block:: python
-
-           from __future__ import annotations
-           from beartype import beartype
-
-           @beartype
-           class Outer(object):
-               class Inner(object):
-                   # At this time, the "Outer" class has been fully defined but
-                   # is *NOT* yet accessible as a module-scoped attribute. Ergo,
-                   # the *ONLY* means of exposing the "Outer" class to the
-                   # recursive decoration of this get_outer() method is to
-                   # explicitly pass the "Outer" class as the "cls_root"
-                   # parameter to all decoration calls.
-                   def get_outer(self) -> Outer:
-                       return Outer()
-
-        Note also that nested classes have *no* implicit access to either their
-        parent classes *or* to class variables declared by those parent classes.
-        Nested classes *only* have explicit access to module-scoped classes --
-        exactly like any other arbitrary objects: e.g.,
-
-        .. code-block:: python
-
-           class Outer(object):
-               my_str = str
-
-               class Inner(object):
-                   # This induces a fatal compile-time exception resembling:
-                   #     NameError: name 'my_str' is not defined
-                   def get_str(self) -> my_str:
-                       return 'Oh, Gods.'
-
-        Ergo, the *only* owning class of interest to :mod:`beartype` is the root
-        owning class containing other nested classes; *all* of those other
-        nested classes are semantically and syntactically irrelevant.
-        Nonetheless, this tuple intentionally preserves *all* of those other
-        nested classes. Why? Because :pep:`563` resolution can only find the
-        parent callable lexically containing that nested class hierarchy on the
-        current call stack (if any) by leveraging the total number of classes
-        lexically nesting the currently decorated class as input metadata, as
-        trivially provided by the length of this tuple.
 
     Returns
     ----------
@@ -306,9 +245,10 @@ def beartype_object_nonfatal(
         Category of the non-fatal warning to emit if :func:`beartype.beartype`
         fails to generate a type-checking wrapper for this callable or class.
     cls_stack : TypeStack, optional
-        **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
-        :data:`None`). Defaults to :data:`None`. See also the
-        :func:`.beartype_object` decorator for further commentary.
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
+        Defaults to :data:`None`.
 
     All remaining keyword parameters are passed as is to the lower-level
     :func:`.beartype_object` decorator internally called by this higher-level
@@ -764,9 +704,10 @@ def _beartype_type(
         Beartype configuration configuring :func:`beartype.beartype` uniquely
         specific to this class.
     cls_stack : TypeStack, optional
-        **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
-        :data:`None`). Defaults to :data:`None`. See also the
-        :func:`.beartype_object` decorator for further commentary.
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
+        Defaults to :data:`None`.
 
     Returns
     ----------
@@ -774,9 +715,9 @@ def _beartype_type(
         This class decorated by :func:`beartype.beartype`.
     '''
     assert isinstance(cls, type), f'{repr(cls)} not type.'
+    assert isinstance(cls_stack, NoneTypeOr[tuple]), (
+        f'{repr(cls_stack)} neither tuple nor "None".')
     # assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-    # assert isinstance(cls_root, NoneTypeOr[type]), (
-    #     f'{repr(cls_root)} neither type nor "None".')
 
     #FIXME: Insufficient. We also want to set a beartype-specific dunder
     #attribute -- say, "__beartyped" -- on this class. Additionally, if this

@@ -109,9 +109,10 @@ def reduce_hint(
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
     cls_stack : TypeStack, optional
-        **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
-        :data:`None`). Defaults to :data:`None`. See also the
-        :func:`.beartype_object` decorator for further commentary.
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
+        Defaults to :data:`None`.
     arg_name : Optional[str], optional
         Either:
 

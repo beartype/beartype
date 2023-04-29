@@ -49,6 +49,15 @@ This private submodule is *not* intended for importation by downstream callers.
 #* Refactor the original lower-level
 #  beartype._decor._error.errormain.get_beartype_violation() getter in terms of
 #  the new higher-level get_func_raiser_violation() getter.
+#* Define a new make_func_raiser_code() factory. Note that:
+#  * This factory will need to generate a code snippet raising an exception. The
+#    code for doing so is currently hard-coded elsewhere in the
+#    make_func_wrapper_code() factory. Indeed, it seems likely that either:
+#    * make_func_raiser_code() should internally call make_func_wrapper_code().
+#      This is *PROBABLY* the right approach, but research is warranted.
+#    * make_func_wrapper_code() should internally call make_func_raiser_code().
+#    It's unclear which is preferable. One should be higher-level than the other
+#    and defer to the other.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
@@ -79,30 +88,6 @@ from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from itertools import count
-
-# ....................{ PRIVATE ~ globals                  }....................
-_func_tester_name_counter = count(start=0, step=1)
-'''
-**Type-checking tester function name uniquifier** (i.e., iterator yielding the
-next integer incrementation starting at 0, leveraged by the
-:func:`make_func_tester` factory to uniquify the names of the tester functions
-created by that factory).
-'''
-
-# ....................{ PRIVATE ~ testers                  }....................
-def _func_tester_ignorable(obj: object) -> bool:
-    '''
-    **Ignorable type-checking tester function singleton** (i.e., function
-    unconditionally returning ``True``, semantically equivalent to a tester
-    testing whether an arbitrary object passed to this tester satisfies an
-    ignorable PEP-compliant type hint).
-
-    The :func:`make_func_tester` factory efficiently returns this singleton when
-    passed an ignorable type hint rather than inefficiently regenerating a
-    unique ignorable type-checking tester function for that hint.
-    '''
-
-    return True
 
 # ....................{ MAKERS                             }....................
 @callable_cached
@@ -178,7 +163,7 @@ def make_func_tester(
 
     Warns
     ----------
-    All warnings emitted by the lower-level :func:`make_check_expr` factory.
+    All warnings emitted by the lower-level :func:`.make_check_expr` factory.
     '''
 
     # If the passed "conf" is *NOT* a configuration, raise an exception.
@@ -289,3 +274,27 @@ def make_func_tester(
 
     # Return this tester function.
     return func_tester
+
+# ....................{ PRIVATE ~ globals                  }....................
+_func_tester_name_counter = count(start=0, step=1)
+'''
+**Type-checking tester function name uniquifier** (i.e., iterator yielding the
+next integer incrementation starting at 0, leveraged by the
+:func:`make_func_tester` factory to uniquify the names of the tester functions
+created by that factory).
+'''
+
+# ....................{ PRIVATE ~ testers                  }....................
+def _func_tester_ignorable(obj: object) -> bool:
+    '''
+    **Ignorable type-checking tester function singleton** (i.e., function
+    unconditionally returning ``True``, semantically equivalent to a tester
+    testing whether an arbitrary object passed to this tester satisfies an
+    ignorable PEP-compliant type hint).
+
+    The :func:`make_func_tester` factory efficiently returns this singleton when
+    passed an ignorable type hint rather than inefficiently regenerating a
+    unique ignorable type-checking tester function for that hint.
+    '''
+
+    return True

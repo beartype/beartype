@@ -24,7 +24,7 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep_supported,
 )
 
-# ....................{ VALIDATORS                         }....................
+# ....................{ RAISERS                            }....................
 def die_unless_hint(
     # Mandatory parameters.
     hint: object,
@@ -102,11 +102,11 @@ def die_unless_hint(
 @callable_cached
 def is_hint(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is a **supported type hint** (i.e.,
+    :data:`True` only if the passed object is a **supported type hint** (i.e.,
     object supported by the :func:`beartype.beartype` decorator as a valid type
     hint annotating callable parameters and return values).
 
-    This tester function is memoized for efficiency.
+    This tester is memoized for efficiency.
 
     Parameters
     ----------
@@ -116,7 +116,7 @@ def is_hint(hint: object) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this object is either:
+        :data:`True` only if this object is either:
 
         * A **PEP-compliant type hint** (i.e., :mod:`beartype`-agnostic
           annotation compliant with annotation-centric PEPs).
@@ -145,11 +145,54 @@ def is_hint(hint: object) -> bool:
         is_hint_nonpep(hint=hint, is_str_valid=True)
     )
 
-# ....................{ TESTERS ~ caching                  }....................
+
+@callable_cached
+def is_hint_ignorable(hint: object) -> bool:
+    '''
+    :data:`True` only if the passed type hint is **ignorable** (i.e., conveys
+    *no* meaningful semantics despite superficially appearing to do so).
+
+    This tester is memoized for efficiency.
+
+    Parameters
+    ----------
+    hint : object
+        Type hint to be inspected.
+
+    Returns
+    ----------
+    bool
+        :data:`True` only if this type hint is ignorable.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.utilhintget import get_hint_repr
+
+    # If this hint is shallowly ignorable, return true.
+    if get_hint_repr(hint) in HINTS_REPR_IGNORABLE_SHALLOW:
+        return True
+    # Else, this hint is *NOT* shallowly ignorable.
+
+    # If this hint is PEP-compliant...
+    if is_hint_pep(hint):
+        # Avoid circular import dependencies.
+        from beartype._util.hint.pep.utilpeptest import (
+            is_hint_pep_ignorable)
+
+        # Defer to the function testing whether this hint is an ignorable
+        # PEP-compliant type hint.
+        return is_hint_pep_ignorable(hint)
+
+    # Else, this hint is PEP-noncompliant and thus *NOT* deeply ignorable.
+    # Since this hint is also *NOT* shallowly ignorable, this hint is
+    # unignorable. In this case, return false.
+    return False
+
+
 #FIXME: Unit test us up, please.
 def is_hint_uncached(hint: object) -> bool:
     '''
-    ``True`` only if the passed type hint is **uncached** (i.e., hint *not*
+    :data:`True` only if the passed type hint is **uncached** (i.e., hint *not*
     already internally cached by its parent class or module).
 
     Caveats
@@ -169,7 +212,7 @@ def is_hint_uncached(hint: object) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this type hint is uncached.
+        :data:`True` only if this type hint is uncached.
 
     See Also
     ----------
@@ -210,14 +253,43 @@ def is_hint_uncached(hint: object) -> bool:
         is_hint_pep604(hint)
     )
 
-# ....................{ TESTERS ~ ignorable                }....................
+# ....................{ TESTERS ~ needs                    }....................
 @callable_cached
-def is_hint_ignorable(hint: object) -> bool:
+def is_hint_needs_cls_stack(hint: object) -> bool:
     '''
-    ``True`` only if the passed type hint is **ignorable** (i.e., conveys *no*
-    meaningful semantics despite superficially appearing to do so).
+    :data:`True` only if the passed type hint is **type stack-dependent** (i.e.,
+    if :mod:`beartype` requires the tuple of all classes lexically declaring the
+    class variables or methods annotated by this hint to generate code
+    type-checking this hint).
 
-    This tester function is memoized for efficiency.
+    This tester returns :data:`False` for most hints; only a small subset of
+    hints are type stack-dependent. This includes:
+
+    * :pep:`673`-compliant self type hint (i.e., :obj:`typing.Self`), which is
+      contextually valid *only* inside a lexical class declaration.
+
+    This tester is memoized for efficiency.
+
+    Motivation
+    ----------
+    **This tester should only be called to decide whether memoized callables
+    should be passed a type stack.** Passing memoized callables a type stack
+    substantially reduces the likelihood of a cache hit and thus the
+    average-case efficiency of calls to those callables. Notably:
+
+    * Most type hints do *not* require a type stack.
+    * Most type hints annotate class variables and methods of differing classes
+      and thus do *not* share the same type stack.
+
+    Ergo, passing memoized callables both a type hint *and* a type stack
+    effectively unmemoizes those callables. Thankfully, callers can elide this
+    inefficiency by calling this tester first; when this tester returns:
+
+    * :data:`False`, the caller can safely pass memoized callables a type hint
+      and :data:`None` for the type stack, thus preserving memoization. This is
+      the common case and thus absolutely worth optimizing for.
+    * :data:`True`, the caller has *no* choice but to pass memoized callables
+      both a type hint *and* a type stack. Grr!
 
     Parameters
     ----------
@@ -227,25 +299,38 @@ def is_hint_ignorable(hint: object) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this type hint is ignorable.
+        :data:`True` only if this type hint is type stack-dependent.
     '''
 
-    # If this hint is shallowly ignorable, return true.
-    if repr(hint) in HINTS_REPR_IGNORABLE_SHALLOW:
-        return True
-    # Else, this hint is *NOT* shallowly ignorable.
+    # Avoid circular import dependencies.
+    from beartype._util.hint.utilhintget import get_hint_repr
 
-    # If this hint is PEP-compliant...
-    if is_hint_pep(hint):
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpeptest import (
-            is_hint_pep_ignorable)
+    # Machine-readable representation of this hint.
+    hint_repr = get_hint_repr(hint)
 
-        # Defer to the function testing whether this hint is an ignorable
-        # PEP-compliant type hint.
-        return is_hint_pep_ignorable(hint)
-
-    # Else, this hint is PEP-noncompliant and thus *NOT* deeply ignorable.
-    # Since this hint is also *NOT* shallowly ignorable, this hint is
-    # unignorable. In this case, return false.
-    return False
+    # Return true only if this representation embeds the representation of
+    # either:
+    # * A PEP 673-compliant self type hint (i.e., "typing.Self").
+    #
+    # Note:
+    # * The fully-qualified names of exact typing modules (e.g., "typing",
+    #   "typing_extensions") is intentionally ignored. Although we could
+    #   certainly explicitly test for both, doing so would only needlessly
+    #   reduce efficiency. By omitting explicit tests for both, this tester
+    #   intentionally returns false positives for extremely edge case hints
+    #   whose representations contain syntactically related but semantically
+    #   unrelated substrings (e.g., "typing.Literal['.Self']", which is clearly
+    #   *NOT* a PEP 673-compliant self type hint but erroneously matched as one
+    #   by this heuristic). This is non-ideal but thankfully ignorable. See the
+    #   "Motivation" section of the docstring for further commentary.
+    # * That the "in" operator is known to be the fastest means of performing
+    #   substring matching in Python. Indeed:
+    #   * "in" is faster than the str.find() method *SUBSTANTIALLY* faster than
+    #     the re.match() function, which is an entire of magnitude slower than
+    #     "in".
+    #   * re.match() only begins to catch up to "in" when concurrently testing
+    #     for more than 10 or so substrings (e.g., r'(0|1|2|3|4|5|6|7|8|9)').
+    #
+    # See also the extensive timings documented at this StackOverflow question:
+    #     https://stackoverflow.com/questions/4901523/whats-a-faster-operation-re-match-search-or-str-find
+    return '.Self' in hint_repr

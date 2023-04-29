@@ -20,11 +20,11 @@ from beartype.roar import (
 from beartype.typing import (
     Any,
     Optional,
-    Union,
+    # Union,
 )
 # from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._data.datatyping import (
-    HintSignTrie,
+    # HintSignTrie,
     TypeException,
 )
 from beartype._data.hint.pep.datapeprepr import (
@@ -50,7 +50,7 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
     is_hint_pep585_generic,
 )
 from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_11,
+    # IS_PYTHON_AT_LEAST_3_11,
     IS_PYTHON_AT_MOST_3_9,
     IS_PYTHON_AT_LEAST_3_9,
 )
@@ -443,6 +443,9 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
         HintSignGeneric
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._util.hint.utilhintget import get_hint_repr
+
     # For efficiency, this tester identifies the sign of this type hint with
     # multiple phases performed in ascending order of average time complexity.
     #
@@ -509,7 +512,10 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # significantly slower than the prior phase and thus *NOT* performed first.
     # Although slow, this phase identifies the largest subset of hints.
 
-    # Parse the machine-readable representation of this hint into:
+    # Machine-readable representation of this hint.
+    hint_repr = get_hint_repr(hint)
+
+    # Parse this representation into:
     # * "hint_repr_prefix", the substring of this representation preceding the
     #   first "[" delimiter if this representation contains that delimiter *OR*
     #   this representation as is otherwise.
@@ -518,7 +524,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     #
     # Note that the str.partition() method has been profiled to be the
     # optimally efficient means of parsing trivial prefixes like these.
-    hint_repr_prefix, hint_repr_subscripted, _ = repr(hint).partition('[')
+    hint_repr_prefix, hint_repr_subscripted, _ = hint_repr.partition('[')
 
     # Sign identifying this possibly unsubscripted hint if this hint is
     # identifiable by its possibly unsubscripted representation *OR* "None".

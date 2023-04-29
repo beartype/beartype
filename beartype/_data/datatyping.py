@@ -246,5 +246,70 @@ to the :func:`isinstance` and :func:`issubclass` builtins.
 TypeStack = Optional[Tuple[type, ...]]
 '''
 PEP-compliant type hint matching a **type stack** (i.e., either tuple of zero or
-more arbitrary types *or* ``None``).
+more arbitrary types *or* :data:`None`).
+
+Objects matched by this hint are guaranteed to be either:
+
+* If the **beartypeable** (i.e., object currently being decorated by the
+  :func:`beartype.beartype` decorator) is an attribute (e.g., method, nested
+  class) of a class currently being decorated by that decorator, the **type
+  stack** (i.e., tuple of one or more lexically nested classes that are either
+  currently being decorated *or* have already been decorated by this decorator
+  in descending order of top- to bottom-most lexically nested) such that:
+
+  * The first item of this tuple is expected to be the **root decorated class**
+    (i.e., module-scoped class initially decorated by this decorator whose
+    lexical scope encloses this beartypeable).
+  * The last item of this tuple is expected to be the **current decorated
+    class** (i.e., possibly nested class currently being decorated by this
+    decorator).
+
+* Else, this beartypeable was decorated directly by this decorator. In this
+  case, :data:`None`.
+
+Parameters annotated by this hint typically default to :data:`None`.
+
+Note that :func:`beartype.beartype` requires *both* the root and currently
+decorated class to correctly resolve edge cases under :pep:`563`: e.g.,
+
+.. code-block:: python
+
+   from __future__ import annotations
+   from beartype import beartype
+
+   @beartype
+   class Outer(object):
+       class Inner(object):
+           # At this time, the "Outer" class has been fully defined but is *NOT*
+           # yet accessible as a module-scoped attribute. Ergo, the *ONLY* means
+           # of exposing the "Outer" class to the recursive decoration of this
+           # get_outer() method is to explicitly pass the "Outer" class as the
+           # "cls_root" parameter to all decoration calls.
+           def get_outer(self) -> Outer:
+               return Outer()
+
+Note also that nested classes have *no* implicit access to either their parent
+classes *or* to class variables declared by those parent classes. Nested classes
+*only* have explicit access to module-scoped classes -- exactly like any other
+arbitrary objects: e.g.,
+
+.. code-block:: python
+
+   class Outer(object):
+       my_str = str
+
+       class Inner(object):
+           # This induces a fatal compile-time exception resembling:
+           #     NameError: name 'my_str' is not defined
+           def get_str(self) -> my_str:
+               return 'Oh, Gods.'
+
+Ergo, the *only* owning class of interest to :mod:`beartype` is the root owning
+class containing other nested classes; *all* of those other nested classes are
+semantically and syntactically irrelevant. Nonetheless, this tuple intentionally
+preserves *all* of those other nested classes. Why? Because :pep:`563`
+resolution can only find the parent callable lexically containing that nested
+class hierarchy on the current call stack (if any) by leveraging the total
+number of classes lexically nesting the currently decorated class as input
+metadata, as trivially provided by the length of this tuple.
 '''

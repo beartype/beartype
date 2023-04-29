@@ -83,10 +83,10 @@ This prefix is intended to be locally suffixed in the
 :func:`beartype._check.expr.exprmake.make_func_wrapper_code` function by:
 
 #. The value of the ``hint_child_placeholder`` local variable.
-#. The :data:`CODE_HINT_ROOT_SUFFIX` suffix.
+#. The :data:`.CODE_HINT_ROOT_SUFFIX` suffix.
 '''
 
-
+# ....................{ CODE ~ suffix                      }....................
 CODE_HINT_ROOT_SUFFIX = f''':
             raise {ARG_NAME_RAISE_EXCEPTION}(
                 func={ARG_NAME_FUNC},
@@ -105,7 +105,7 @@ This snippet expects to be formatted with these named interpolations:
 * ``{random_int_if_any}``, whose value is either:
 
   * If type-checking the current type hint requires a pseudo-random integer,
-    :data:`CODE_HINT_ROOT_SUFFIX_RANDOM_INT`.
+    :data:`.CODE_HINT_ROOT_SUFFIX_RANDOM_INT`.
   * Else, the empty substring.
 
 Design
