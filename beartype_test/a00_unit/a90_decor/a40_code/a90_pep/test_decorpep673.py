@@ -43,67 +43,47 @@ def test_decor_pep673() -> None:
     )
     from pytest import raises
 
-    #FIXME: Resurrect us up, please. Doing so will possibly prove non-trivial,
-    #as we'll need to begin passing "cls_stack=bear_call.cls_stack" to
-    #the pivotal make_check_expr() function. Sadly, doing so will sharply
-    #reduce the likelihood of cache hints on calling that function and thus the
-    #efficiency of that function -- but there is *NO* alternative. *sigh*
-    #FIXME: *ALMOST THERE.* The only thing we need to do now is pass "cls_stack"
-    #to get_beartype_violation(). To do so, we'll need to:
-    #* Improve the make_check_expr() function to internally:
-    #      # If type-checking the root pith requires this type stack...
-    #      if cls_stack:
-    #          # Pass this type stack to this wrapper function as an optional
-    #          # hidden parameter.
-    #          func_wrapper_scope[_ARG_NAME_CLS_STACK] = cls_stack
-    #* Define a new "CODE_HINT_ROOT_SUFFIX_CLS_STACK" global in "wrapsnip".
-    #* Improve the make_func_wrapper_code() function to internally:
-    #      # Code snippet passing the current class stack if needed to
-    #      # type-check this type hint, defaulting to *NOT* passing this.
-    #      arg_cls_stack_if_any = (
-    #          CODE_HINT_ROOT_SUFFIX_CLS_STACK if cls_stack else '')
+    # ....................{ CLASSES                        }....................
+    @beartype
+    class GoodClassIsGood(object):
+        '''
+        Arbitrary class decorated by :func:`.beartype`.
+        '''
 
-    # # ....................{ CLASSES                        }....................
-    # @beartype
-    # class GoodClassIsGood(object):
-    #     '''
-    #     Arbitrary class decorated by :func:`.beartype`.
-    #     '''
-    #
-    #     def wonderful_method_is_wonderful(self: Self, count: int) -> List[Self]:
-    #         '''
-    #         Arbitrary method annotated by one or more :pep:`673`-compliant self
-    #         type hints, guaranteed to *not* violate runtime type-checking.
-    #         '''
-    #
-    #         return [self] * count
-    #
-    #
-    #     def horrible_method_is_horrible(self: Self) -> Self:
-    #         '''
-    #         Arbitrary method annotated by one or more :pep:`673`-compliant self
-    #         type hints, guaranteed to violate runtime type-checking.
-    #         '''
-    #
-    #         return 'Cleave themselves into chasms, while far below'
-    #
-    # # Do not taunt Super Happy Fun Instance.
-    # super_happy_fun_instance = GoodClassIsGood()
-    #
-    # # ....................{ PASS                           }....................
-    # # Assert that a method of a @beartype-decorated class satisfying a PEP
-    # # 673-compliant self type hint returns the expected object.
-    # avoid_prolonged_exposure = (
-    #     super_happy_fun_instance.wonderful_method_is_wonderful(count=42))
-    # assert len(avoid_prolonged_exposure) == 42
-    # assert avoid_prolonged_exposure[ 0] is super_happy_fun_instance
-    # assert avoid_prolonged_exposure[-1] is super_happy_fun_instance
-    #
-    # # Assert that @beartype raises the expected violation when calling a
-    # # method of a @beartype-decorated class erroneously violating a PEP
-    # # 673-compliant self type hint.
-    # with raises(BeartypeCallHintReturnViolation):
-    #     super_happy_fun_instance.horrible_method_is_horrible()
+        def wonderful_method_is_wonderful(self: Self, count: int) -> List[Self]:
+            '''
+            Arbitrary method annotated by one or more :pep:`673`-compliant self
+            type hints, guaranteed to *not* violate runtime type-checking.
+            '''
+
+            return [self] * count
+
+
+        def horrible_method_is_horrible(self: Self) -> Self:
+            '''
+            Arbitrary method annotated by one or more :pep:`673`-compliant self
+            type hints, guaranteed to violate runtime type-checking.
+            '''
+
+            return 'Cleave themselves into chasms, while far below'
+
+    # Do not taunt Super Happy Fun Instance.
+    super_happy_fun_instance = GoodClassIsGood()
+
+    # ....................{ PASS                           }....................
+    # Assert that a method of a @beartype-decorated class satisfying a PEP
+    # 673-compliant self type hint returns the expected object.
+    avoid_prolonged_exposure = (
+        super_happy_fun_instance.wonderful_method_is_wonderful(count=42))
+    assert len(avoid_prolonged_exposure) == 42
+    assert avoid_prolonged_exposure[ 0] is super_happy_fun_instance
+    assert avoid_prolonged_exposure[-1] is super_happy_fun_instance
+
+    # Assert that @beartype raises the expected violation when calling a
+    # method of a @beartype-decorated class erroneously violating a PEP
+    # 673-compliant self type hint.
+    with raises(BeartypeCallHintReturnViolation):
+        super_happy_fun_instance.horrible_method_is_horrible()
 
     # ....................{ FAIL                           }....................
     # Assert that @beartype raises the expected exception when decorating

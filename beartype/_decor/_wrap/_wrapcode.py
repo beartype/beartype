@@ -23,6 +23,7 @@ from beartype._data.datatyping import (
 from beartype._decor._wrap.wrapsnip import (
     CODE_HINT_ROOT_PREFIX,
     CODE_HINT_ROOT_SUFFIX,
+    CODE_HINT_ROOT_SUFFIX_CLS_STACK,
     CODE_HINT_ROOT_SUFFIX_RANDOM_INT,
 )
 from beartype._util.cache.utilcachecall import callable_cached
@@ -84,10 +85,14 @@ def make_func_wrapper_code(
         hint_forwardrefs_class_basename,
     ) = make_check_expr(hint, conf, cls_stack)
 
+    # Code snippet passing the current class stack if needed to type-check this
+    # type hint, defaulting to *NOT* passing this.
+    arg_cls_stack = CODE_HINT_ROOT_SUFFIX_CLS_STACK if cls_stack else ''
+
     # Code snippet passing the value of the random integer previously generated
     # for the current call to the exception-handling function call embedded in
     # the "CODE_HINT_ROOT_SUFFIX" snippet, defaulting to *NOT* passing this.
-    func_wrapper_code_random_int_if_any = (
+    arg_random_int = (
         CODE_HINT_ROOT_SUFFIX_RANDOM_INT
         if ARG_NAME_GETRANDBITS in func_wrapper_scope else
         ''
@@ -97,7 +102,7 @@ def make_func_wrapper_code(
     #single string-munging operation resembling:
     #    func_wrapper_code = CODE_HINT_ROOT.format(
     #        check_expr=func_wrapper_code_expr,
-    #        random_int_if_any=func_wrapper_code_random_int_if_any
+    #        random_int_if_any=arg_random_int
     #    )
     #
     #Then define "CODE_HINT_ROOT" in the "wrapsnip" submodule to resemble:
@@ -109,7 +114,9 @@ def make_func_wrapper_code(
     # Suffix this code by a Python code snippet raising a human-readable
     # exception when the root pith violates the root type hint.
     func_wrapper_code_suffix = CODE_HINT_ROOT_SUFFIX.format(
-        random_int_if_any=func_wrapper_code_random_int_if_any)
+        arg_cls_stack=arg_cls_stack,
+        arg_random_int=arg_random_int,
+    )
 
     # Python code snippet type-checking the root pith against the root hint.
     func_wrapper_code = (

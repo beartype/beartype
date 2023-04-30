@@ -14,14 +14,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.checkmagic import (
-    VAR_NAME_PITH_ROOT,
-    VAR_NAME_RANDOM_INT,
-)
-from beartype._check.checkmagic import (
     ARG_NAME_BEARTYPE_CONF,
+    ARG_NAME_CLS_STACK,
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
     VAR_NAME_ARGS_LEN,
+    VAR_NAME_PITH_ROOT,
+    VAR_NAME_RANDOM_INT,
 )
 from beartype._data.datakind import ARG_NAME_RETURN_REPR
 from beartype._util.func.arg.utilfuncargiter import ArgKind
@@ -49,8 +48,8 @@ CODE_INIT_ARGS_LEN = f'''
     # Localize the number of passed positional arguments for efficiency.
     {VAR_NAME_ARGS_LEN} = len(args)'''
 '''
-PEP-agnostic code snippet localizing the number of passed positional arguments
-for callables accepting one or more such arguments.
+Code snippet localizing the number of passed positional arguments for callables
+accepting one or more such arguments.
 '''
 
 # ....................{ CODE ~ check                       }....................
@@ -75,9 +74,9 @@ CODE_HINT_ROOT_PREFIX = '''
         # PEP-compliant type hint.
         if not '''
 '''
-PEP-compliant code snippet prefixing all code type-checking the **root pith**
-(i.e., value of the current parameter or return value) against the root
-PEP-compliant type hint annotating that pith.
+Code snippet prefixing all code type-checking the **root pith** (i.e., value of
+the current parameter or return value) against the root type hint annotating
+that pith.
 
 This prefix is intended to be locally suffixed in the
 :func:`beartype._check.expr.exprmake.make_func_wrapper_code` function by:
@@ -92,19 +91,25 @@ CODE_HINT_ROOT_SUFFIX = f''':
                 func={ARG_NAME_FUNC},
                 conf={ARG_NAME_BEARTYPE_CONF},
                 pith_name={CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER},
-                pith_value={VAR_NAME_PITH_ROOT},{{random_int_if_any}}
+                pith_value={VAR_NAME_PITH_ROOT},{{arg_cls_stack}}{{arg_random_int}}
             )
 '''
 '''
-PEP-compliant code snippet suffixing all code type-checking the **root pith**
-(i.e., value of the current parameter or return value) against the root
-PEP-compliant type hint annotating that pith.
+Code snippet suffixing all code type-checking the **root pith** (i.e., value of
+the current parameter or return value) against the root type hint annotating
+that pith.
 
 This snippet expects to be formatted with these named interpolations:
 
-* ``{random_int_if_any}``, whose value is either:
+* ``{arg_cls_stack}``, whose value is either:
 
-  * If type-checking the current type hint requires a pseudo-random integer,
+  * If type-checking for the current type hint requires the type stack,
+    :data:`.CODE_HINT_ROOT_SUFFIX_CLS_STACK`.
+  * Else, the empty substring.
+
+* ``{arg_random_int}``, whose value is either:
+
+  * If type-checking for the current type hint requires a pseudo-random integer,
     :data:`.CODE_HINT_ROOT_SUFFIX_RANDOM_INT`.
   * Else, the empty substring.
 
@@ -112,18 +117,29 @@ Design
 ----------
 **This string is the only code snippet defined by this submodule to raise an
 exception.** All other such snippets only test the current pith against the
-current child PEP-compliant type hint and are thus intended to be dynamically
-embedded in the conditional test initiated by the
-:data:`CODE_HINT_ROOT_PREFIX` code snippet.
+current child type hint and are thus intended to be dynamically embedded in the
+conditional test initiated by the :data:`CODE_HINT_ROOT_PREFIX` code snippet.
+'''
+
+
+CODE_HINT_ROOT_SUFFIX_CLS_STACK = f'''
+                cls_stack={ARG_NAME_CLS_STACK},'''
+'''
+Code snippet passing the value of the **type stack** (i.e., either a tuple of
+the one or more :func:`beartype.beartype`-decorated classes lexically containing
+the class variable or method annotated by a type hint type-checked by the larger
+code snippet embedding this snippet *or* :data:`None`) required by the current
+call to the exception-handling function call embedded in the
+:data:`.CODE_HINT_ROOT_SUFFIX` snippet.
 '''
 
 
 CODE_HINT_ROOT_SUFFIX_RANDOM_INT = f'''
                 random_int={VAR_NAME_RANDOM_INT},'''
 '''
-PEP-compliant code snippet passing the value of the random integer previously
+Code snippet passing the value of the random integer previously
 generated for the current call to the exception-handling function call embedded
-in the :data:`CODE_HINT_ROOT_SUFFIX` snippet.
+in the :data:`.CODE_HINT_ROOT_SUFFIX` snippet.
 '''
 
 # ....................{ CODE ~ arg                         }....................
@@ -188,8 +204,8 @@ PARAM_KIND_TO_CODE_LOCALIZE = {
 }
 '''
 Dictionary mapping from the type of each callable parameter supported by the
-:func:`beartype.beartype` decorator to a PEP-compliant code snippet localizing
-that callable's next parameter to be type-checked.
+:func:`beartype.beartype` decorator to a code snippet localizing that callable's
+next parameter to be type-checked.
 '''
 
 # ....................{ CODE ~ return ~ check              }....................
@@ -202,8 +218,8 @@ CODE_RETURN_CHECK_PREFIX = f'''
     # CPython implicitly optimizes this conditional away. Isn't that nice?
     if True:'''
 '''
-PEP-compliant code snippet calling the decorated callable and localizing the
-value returned by that call.
+Code snippet calling the decorated callable and localizing the value returned by
+that call.
 
 Note that this snippet intentionally terminates on a noop increasing the
 indentation level, enabling subsequent type-checking code to effectively ignore
@@ -224,8 +240,8 @@ https://stackoverflow.com/a/18124151/2809027
 CODE_RETURN_CHECK_SUFFIX = f'''
     return {VAR_NAME_PITH_ROOT}'''
 '''
-PEP-compliant code snippet returning from the wrapper function the successfully
-type-checked value returned from the decorated callable.
+Code snippet returning from the wrapper function the successfully type-checked
+value returned from the decorated callable.
 '''
 
 # ....................{ CODE ~ return ~ check ~ noreturn   }....................
@@ -277,6 +293,6 @@ CODE_RETURN_UNCHECKED = f'''
     # returned from this call.
     return {{func_call_prefix}}{ARG_NAME_FUNC}(*args, **kwargs)'''
 '''
-PEP-agnostic code snippet calling the decorated callable *without*
-type-checking the value returned by that call (if any).
+Code snippet calling the decorated callable *without* type-checking the value
+returned by that call (if any).
 '''

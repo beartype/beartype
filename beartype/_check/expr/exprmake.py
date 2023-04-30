@@ -24,6 +24,7 @@ from beartype.roar import (
 from beartype.typing import Optional
 from beartype._cave._cavefast import TestableTypes
 from beartype._check.checkmagic import (
+    ARG_NAME_CLS_STACK,
     ARG_NAME_GETRANDBITS,
     VAR_NAME_PREFIX_PITH,
     VAR_NAME_PITH_ROOT,
@@ -170,7 +171,6 @@ def make_check_expr(
     # *fight me, github developer community*
 
     # "beartype._check.checkmagic" globals.
-    _ARG_NAME_GETRANDBITS=ARG_NAME_GETRANDBITS,
     _CODE_INDENT_1=CODE_INDENT_1,
     _CODE_INDENT_2=CODE_INDENT_2,
     _EXCEPTION_PREFIX=EXCEPTION_PLACEHOLDER,
@@ -1923,11 +1923,19 @@ def make_check_expr(
     # Else, the breadth-first search above successfully generated code.
 
     # ..................{ CODE ~ locals                      }..................
-    # If type-checking the root pith requires a pseudo-random integer...
+    # If type-checking for the root pith requires the type stack...
+    if cls_stack:
+        # Pass the current type stack to this wrapper function as an optional
+        # hidden parameter.
+        func_wrapper_scope[ARG_NAME_CLS_STACK] = cls_stack
+    # Else, type-checking for the root pith requires *NO* type stack.
+
+    # If type-checking for the root pith requires a pseudo-random integer...
     if is_var_random_int_needed:
         # Pass the random.getrandbits() function required to generate this
         # integer to this wrapper function as an optional hidden parameter.
-        func_wrapper_scope[_ARG_NAME_GETRANDBITS] = getrandbits
+        func_wrapper_scope[ARG_NAME_GETRANDBITS] = getrandbits
+    # Else, type-checking for the root pith requires *NO* pseudo-random integer.
 
     # ..................{ CODE ~ suffix                      }..................
     # Tuple of the unqualified classnames referred to by all relative forward
