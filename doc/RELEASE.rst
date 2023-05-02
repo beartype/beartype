@@ -195,8 +195,8 @@ Beartype is releasable to all supported platforms as follows:
 
       **Beartype 0.0.1** released.
 
-      This major release brings titillating support for **this**, **that**, and
-      **PEP numbers compliance**.
+      This major release brings titillating support for **[this][this]**,
+      **[that][that]**, and **PEP numbers compliance**.
 
       This major release resolves **some issues** and merges **some pull
       requests.** But first, a quiet word from our wondrous sponsors. They are
@@ -275,6 +275,9 @@ Beartype is releasable to all supported platforms as follows:
         * `beartype.lore` subpackage.
       * Removed:
         * `beartype._boar` submodule.
+
+      [this]: https://this.com
+      [that]: https://that.com
 
 #. **Tag this commit.** An annotated tag\ [#tags]_ should be created whose:
 
