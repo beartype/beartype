@@ -30,9 +30,10 @@ python:
       extra_requirements:
         - doc-rtd
 
-  # Permit RTD to reuse Python packages installed by its system package manager,
-  # which mostly means the standard scientific stack.
-  system_packages: true
+  #FIXME: Unclear whether this is currently causing issues with "setuptools".
+  # # Permit RTD to reuse Python packages installed by its system package manager,
+  # # which mostly means the standard scientific stack.
+  # system_packages: true
 
 # ....................{ SPHINX                             }....................
 sphinx:

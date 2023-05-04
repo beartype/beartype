@@ -22,6 +22,8 @@ include MANIFEST.in
 include README.rst
 include conftest.py
 include mypy.ini
+include pyproject.toml
+include pyrightconfig.json
 include pytest.ini
 include setup.cfg
 include setup.py
