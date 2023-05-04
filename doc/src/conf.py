@@ -95,6 +95,7 @@ from beartype.meta import (
     VERSION,
 )
 from beartype.typing import Optional
+from beartype._util.mod.utilmodimport import import_module_attr
 from beartype._util.mod.utilmodtest import is_module
 # from warnings import warn
 
@@ -142,9 +143,6 @@ suppress_warnings = [
 ]
 
 # ....................{ SETTINGS ~ path                    }....................
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
-
 # List of pathname patterns relative to this "doc/src/" subdirectory matching
 # all files and directories to be ignored when finding source files. Note this
 # list also affects the "html_static_path" and "html_extra_path" settings.
@@ -274,6 +272,26 @@ if is_module(_SPHINX_THEME_MODULE_NAME):
     #     work with non-HTML builders and specifying it as an `html_theme` is
     #     sufficient.)
     html_theme = _SPHINX_THEME_MODULE_NAME
+
+    #FIXME: *KLUDGE WARNING.* Revert this to just the following one-liner *AFTER*
+    #successfully upgrading to the most recent stable release of the PyData theme:
+    #    # Add any paths that contain templates here, relative to this directory.
+    #    templates_path = ['_templates']
+
+    # String version of the currently installed version of this theme.
+    _SPHINX_THEME_MODULE_VERSION = import_module_attr(
+        f'{_SPHINX_THEME_MODULE_NAME}.__version__')
+
+    # If this version is that of a version known to supply the requisite Jinja2
+    # functionality required by project-specific templates...
+    if _SPHINX_THEME_MODULE_VERSION == '0.7.2':
+        # Add any paths that contain templates here, relative to this directory.
+        templates_path = ['_templates']
+    # Else, silently ignore these templates. Attempting to use this templates
+    # under any other version of this theme is likely to raise exceptions: e.g.,
+    #     Theme error:
+    #     An error happened in rendering the page api.
+    #     Reason: UndefinedError("'generate_nav_html' is undefined")
 # Else, this theme is unavailable. In this case, fallback to Sphinx's default
 # HTML theme *AND*...
 else:
@@ -434,12 +452,19 @@ autosectionlabel_prefix_document = True
 # (reST) documentation as a graceful fallback to a 2-tuple "(URI, inventory)",
 # where "inventory" is typically ignorable and thus "None" for our purposes.
 #
-# Note that the keys of this dictionary may be used to unambiguously reference
-# attributes of that external project in reST documentation: e.g.,
-#     # External link to Python's Comparison Manual.
-#     external:python+ref:`comparison manual <comparisons>`
+# Note that:
+# * The keys of this dictionary may be used to unambiguously reference
+#   attributes of that external project in reST documentation: e.g.,
+#       # External link to Python's Comparison Manual.
+#       external:python+ref:`comparison manual <comparisons>`
+# * The contents of this dictionary are mostly derived from this popular
+#   well-maintained Gist on the subject:
+#   https://gist.github.com/bskinn/0e164963428d4b51017cebdb6cda5209
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
+    'numpy': ('https://numpy.org/doc/stable', None),
+    'pandas': ('https://pandas.pydata.org/docs', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy', None),
 }
 
 # ....................{ EXTENSIONS ~ napoleon              }....................

@@ -779,6 +779,138 @@ frames in `ML <machine learning_>`__ pipelines for the good of `LLaMa-kind
 <large language model_>`__. Arise, bug-free `GPT <generative pre-trained
 transformer_>`__! Overthrow all huma— *message ends*
 
+...the current class?
+#####################
+
+**So.** It comes to this. You want to type-check a method parameter or return to
+be an instance of the class declaring that method. In short, you want to
+type-check a common use case like this factory:
+
+.. code-block:: python
+
+   class ClassFactory(object):
+      def __init__(self, *args) -> None:
+          self._args = args
+
+      def make_class(self, other):
+          return ClassFactory(self._args + other._args)
+
+The ``ClassFactory.make_class()`` method both accepts a parameter ``other``
+whose type is ``ClassFactory`` *and* returns a value whose type is (again)
+``ClassFactory`` – the class currently being declared. This is the age-old
+**self-referential problem**. How do you type-check the class being declared
+when that class has yet to be declared? The answer may shock your younger
+coworkers who are still impressionable and have firm ideals.
+
+You have three choices here. One of these choices is good and worthy of smiling
+cat emoji. The other two are bad; mock them in ``git`` commit messages until
+somebody refactors them into the first choice:
+
+#. **[Recommended]** The :pep:`673`\ -compliant :obj:`typing.Self` type hint
+   (introduced by Python 3.11) efficiently and reliably solves this. Annotate
+   the type of the current class as :obj:`~typing.Self` – fully supported by
+   :mod:`beartype` for all your greedy QA needs:
+
+   .. code-block:: python
+
+      # Import important stuff. Boilerplate: it's the stuff we make.
+      from beartype import beartype
+      from typing import Self  # <---------------- if Python ≥ 3.11.0
+      # from typing_extensions import Self   # <-- if Python < 3.11.0
+
+      # Decorate classes – not methods. It's rough.
+      @beartype  # <-- Yesss. Good. Feel the force. It flows like sweet honey.
+      class ClassFactory(object):
+         def __init__(self, *args: Sequence) -> None:
+             self._args = args
+
+         # @beartype  # <-- No... Oh, Gods. *NO*! The dark side grows stronger.
+         def make_class(self, other: Self) -> Self:  # <-- We are all one self.
+             return ClassFactory(self._args + other._args)
+
+   Technically, this requires Python 3.11. Pragmatically, ``typing_extensions``
+   means that you can bring Python 3.11 back with you into the past – where code
+   was simpler, Python was slower, and nothing worked as intended despite tests
+   passing.
+
+   :obj:`~typing.Self` is only contextually valid inside class declarations.
+   :mod:`beartype` raises an exception when you attempt to use
+   :obj:`~typing.Self` outside a class declaration (e.g., annotating a global
+   variable, function parameter, or function return).
+
+   :obj:`~typing.Self` can only be type-checked by **classes** decorated by
+   the :func:`beartype.beartype` decorator. Corollary: :obj:`~typing.Self`
+   *cannot* be type-checked by **methods** decorated by
+   :func:`beartype.beartype` – because the class to be type-checked has yet to
+   be declared at that early time. The pain that you feel is real.
+
+#. A :pep:`484`\ -compliant **forward reference** (i.e., type hint that is a
+   string that is the unqualified name of the current class) also solves this.
+   The only costs are inexcusable inefficiency and unreliability. This is what
+   everyone should no longer do. This is...
+
+   .. code-block:: python
+
+      # The bad old days when @beartype had to bathe in the gutter.
+      # *PLEASE DON'T DO THIS ANYMORE.* Do you want @beartype to cry?
+      from beartype import beartype
+
+      @beartype
+      class BadClassFactory(object):
+         def __init__(self, *args: Sequence) -> None:
+             self._args = args
+
+         def make_class(self, other: 'BadClassFactory') -> (  # <-- no, no, Gods, no
+             'BadClassFactory'):  # <------------------------------ please, Gods, no
+             return BadClassFactory(self._args + other._args)
+
+#. A :pep:`563`\ -compliant **postponed type hint** (i.e., type hint unparsed by
+   ``from __future__ import annotations`` back into a string that is the
+   unqualified name of the current class) also resolves this. The only costs are
+   codebase-shattering inefficiency and unreliability. Only do this over the
+   rotting corpse of :mod:`beartype`. This is...
+
+   .. code-block:: python
+
+      # Breaking the Python interpreter: feels bad, because it is bad.
+      # *PLEASE DON'T DO THIS ANYWHERE.* Do you want @beartype to be a shambling wreck?
+      from __future__ import annotations
+      from beartype import beartype
+
+      @beartype
+      class TerribadClassFactory(object):
+         def __init__(self, *args: Sequence) -> None:
+             self._args = args
+
+         def make_class(self, other: TerribadClassFactory) -> (  # <-- NO, NO, GODS, NO
+             TerribadClassFactory):  # <------------------------------ PLEASE, GODS, NO
+             return TerribadClassFactory(self._args + other._args)
+
+In theory, :mod:`beartype` nominally supports all three. In practice,
+:mod:`beartype` only perfectly supports :obj:`typing.Self`. :mod:`beartype`
+*still* grapples with slippery edge cases in the latter two, which *will* blow
+up your test suite in that next changeset you are about to commit. Even when we
+perfectly support everything in a future release, you should still strongly
+prefer :obj:`~typing.Self`. Why?
+
+**Speed.** It's why we're here. Let's quietly admit that to ourselves. If
+:mod:`beartype` were any slower, even fewer people would be reading this.
+:mod:`beartype` generates optimally efficient type-checking code for
+:obj:`~typing.Self`. It's literally just a trivial call to the
+:func:`isinstance` builtin. The same can't be said for forward references or
+postponed type hints, however. :mod:`beartype` generates suboptimal
+type-checking code for both by deferring the lookup of the referenced class to
+call time; although :mod:`beartype` caches that class after doing so, all of
+that incurs space and time costs you'd rather not pay at any space or time.
+
+:obj:`typing.Self`: it saved our issue tracker from certain doom. Now, it will
+save your codebase from our issues.
+
+.. # FIXME: Mildly funny, but inappropriate here. Save for another rainy day.
+.. #The future begins either today or tomorrow – depending on your Lorentzian frame
+.. #of reference. It's a story as familiar as the Mario twins on a toadstool bender
+.. #through the rubbish-filled back alleys of the Mushroom Kingdom.
+
 ...under VSCode?
 ################
 
