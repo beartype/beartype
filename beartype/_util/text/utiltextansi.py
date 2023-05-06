@@ -50,20 +50,20 @@ ANSI escape sequence stylizing all subsequent characters as bold.
 '''
 
 # ....................{ TESTERS                            }....................
-#FIXME: Unit test us up, please.
 def is_text_ansi(text: str) -> bool:
     '''
-    ``True`` if the passed text contains one or more ANSI escape sequences.
+    :data:`True` if the passed text contains one or more ANSI escape sequences.
 
     Parameters
     ----------
     text : str
-        Text to be tested for ANSI.
+        Text to be tested.
 
     Returns
     ----------
     bool
-        ``True`` only if this text contains one or more ANSI escape sequences.
+        :data:`True` only if this text contains one or more ANSI escape
+        sequences.
     '''
     assert isinstance(text, str), f'{repr(text)} not string.'
 
@@ -72,15 +72,14 @@ def is_text_ansi(text: str) -> bool:
     return _ANSI_REGEX.search(text) is not None
 
 # ....................{ STRIPPERS                          }....................
-#FIXME: Unit test us up, please.
 def strip_text_ansi(text: str) -> str:
     '''
-    Strip all ANSI escape sequences from the passed string.
+    Strip *all* ANSI escape sequences from the passed string.
 
     Parameters
     ----------
     text : str
-        Text to be stripped of ANSI.
+        Text to be stripped.
 
     Returns
     ----------

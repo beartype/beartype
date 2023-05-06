@@ -301,6 +301,8 @@
 .. # ------------------( LINKS ~ py : package                )------------------
 .. _Django:
    https://www.djangoproject.com
+.. _Hypothesis:
+   https://hypothesis.readthedocs.io
 .. _NetworkX:
    https://networkx.org
 .. _PyTorch:

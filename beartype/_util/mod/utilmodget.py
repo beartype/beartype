@@ -151,33 +151,6 @@ def get_object_module_line_number_begin(obj: object) -> int:
 
 # ....................{ GETTERS ~ object : name            }....................
 #FIXME: Unit test us up, please.
-def get_object_module_name_or_none(obj: object) -> Optional[str]:
-    '''
-    **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
-    declaring package) of the module declaring the passed object if this object
-    defines the ``__module__`` dunder instance variable *or* :data:`None`
-    otherwise.
-
-    Parameters
-    ----------
-    obj : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    Optional[str]
-        Either:
-
-        * Fully-qualified name of the module declaring this object if this
-          object declares a ``__module__`` dunder attribute.
-        * :data:`None` otherwise.
-    '''
-
-    # Let it be, speaking one-liners of wisdom.
-    return getattr(obj, '__module__', None)
-
-
-#FIXME: Unit test us up, please.
 def get_object_module_name(obj: object) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
@@ -216,6 +189,33 @@ def get_object_module_name(obj: object) -> str:
 
     # Return this name.
     return module_name
+
+
+#FIXME: Unit test us up, please.
+def get_object_module_name_or_none(obj: object) -> Optional[str]:
+    '''
+    **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
+    declaring package) of the module declaring the passed object if this object
+    defines the ``__module__`` dunder instance variable *or* :data:`None`
+    otherwise.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    Optional[str]
+        Either:
+
+        * Fully-qualified name of the module declaring this object if this
+          object declares a ``__module__`` dunder attribute.
+        * :data:`None` otherwise.
+    '''
+
+    # Let it be, speaking one-liners of wisdom.
+    return getattr(obj, '__module__', None)
 
 # ....................{ GETTERS ~ object : type : name     }....................
 #FIXME: Unit test us up, please.

@@ -233,30 +233,57 @@ def label_callable(
             func_label_prefix = 'asynchronous generator '
         # Else, that callable is *NOT* an asynchronous generator.
 
-    # If contextualizing that callable...
+    # If contextualizing that callable, just do it already. Go, @beartype! Go!
     if is_context:
-        #FIXME: Define a comparable get_type_filename_or_none() getter whose
-        #implementation should probably resemble this StackOverflow answer:
-        #    https://stackoverflow.com/a/697356/2809027
-
-        # Absolute filename of the source module file defining that callable if
-        # that callable was defined on-disk *OR* "None" otherwise (i.e., if that
-        # callable was defined in-memory).
-        func_filename = get_func_filename_or_none(func)
-
-        # Line number of the first line declaring that callable in that file.
-        func_lineno = get_object_module_line_number_begin(func)
-
-        # If that callable was defined on-disk, describe the location of that
-        # callable in that file.
-        if func_filename:
-            func_label_suffix += (
-                f' declared on line {func_lineno} of file "{func_filename}" ')
-        # Else, that callable was defined in-memory. In this case, avoid
-        # attempting to uselessly contextualize that callable.
+        func_label_suffix += f' {label_object_context(func)} '
 
     # Return that prefix followed by the fully-qualified name of that callable.
     return f'{func_label_prefix}{get_object_name(func)}(){func_label_suffix}'
+
+# ....................{ LABELLERS ~ context                }....................
+#FIXME: Unit test us up, please.
+def label_object_context(obj: object) -> str:
+    '''
+    Human-readable label describing the **context** (i.e., absolute filename of
+    the module or script physically declaring the passed object *and* the
+    1-based line number of the first line declaring this object in this file) of
+    this object if this object is either a callable or class declared on-disk
+    *or* the empty string otherwise (i.e., if this object is neither a callable
+    nor class *or* is either a callable or class declared in-memory).
+
+    Parameters
+    ----------
+    func : object
+        Object to label the context of.
+
+    Returns
+    ----------
+    str
+        Human-readable label describing the context of this object.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.utilobject import get_object_filename_or_none
+    from beartype._util.mod.utilmodget import (
+        get_object_module_line_number_begin)
+
+    # Absolute filename of the module or script physically declaring this object
+    # if this object was defined on-disk *OR* "None" otherwise (i.e., if this
+    # object was defined in-memory).
+    obj_filename = get_object_filename_or_none(obj)
+
+    # If this object is defined on-disk...
+    if obj_filename:
+        # Line number of the first line declaring this object in that file.
+        obj_lineno = get_object_module_line_number_begin(obj)
+
+        # Return a string describing the context of this object.
+        return f'declared on line {obj_lineno} of file "{obj_filename}"'
+    # Else, this object was defined in-memory. In this case, avoid attempting to
+    # needlessly contextualize this object.
+
+    # Let's hear it for giving up here and going home. Yeah! Go, @beartype!
+    return ''
 
 # ....................{ LABELLERS ~ exception              }....................
 def label_exception(exception: Exception) -> str:

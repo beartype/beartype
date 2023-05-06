@@ -65,7 +65,7 @@ def is_func_file(func: Callable) -> bool:
     # One-liners for abstruse abstraction.
     return get_func_filename_or_none(func) is not None
 
-# ....................{ GETTERS ~ code : lines             }....................
+# ....................{ GETTERS                            }....................
 def get_func_filename_or_none(
     # Mandatory parameters.
     func: Callable,
@@ -76,9 +76,9 @@ def get_func_filename_or_none(
     '''
     Absolute filename of the file on the local filesystem containing the
     pure-Python source code for the script or module defining the passed
-    callable if that callable is defined on-disk *or* ``None`` otherwise (i.e.,
-    if that callable is dynamically defined in-memory by a prior call to the
-    :func:`exec` or :func:`eval` builtins).
+    callable if that callable is defined on-disk *or* :data:`None` otherwise
+    (i.e., if that callable is dynamically defined in-memory by a prior call to
+    the :func:`exec` or :func:`eval` builtins).
 
     Parameters
     ----------
@@ -90,9 +90,9 @@ def get_func_filename_or_none(
     Optional[str]
         Either:
 
-        * If the passed callable was physically declared by a file, the
-          absolute filename of that file.
-        * If the passed callable was dynamically declared in-memory, ``None``.
+        * If that callable was physically declared by a file, the absolute
+          filename of that file.
+        * If that callable was dynamically declared in-memory, :data:`None`.
     '''
 
     # Code object underlying the passed callable if that callable is pure-Python

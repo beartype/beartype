@@ -72,10 +72,33 @@ def test_get_object_basename_scoped() -> None:
             'From the ice-gulfs that gird his secret throne,')
 
 
+def test_get_object_filename_or_none() -> None:
+    '''
+    Test the :func:`beartype._util.utilobject.get_object_filename_or_none`
+    getter.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.utilobject import get_object_filename_or_none
+    from beartype_test.a00_unit.data.data_type import (
+        Class,
+        function,
+    )
+
+    # Assert this getter returns the expected filename for a physical class.
+    assert 'data_type' in get_object_filename_or_none(Class)
+
+    # Assert this getter returns the expected filename for a physical callable.
+    assert 'data_type' in get_object_filename_or_none(function)
+
+    # Assert this getter returns "None" when passed an object that is neither a
+    # class *NOR* callable.
+    assert get_object_filename_or_none(Class()) is None
+
+
 def test_get_object_name() -> None:
     '''
-    Test usage of the
-    :func:`beartype._util.utilobject.get_object_name` getter.
+    Test the :func:`beartype._util.utilobject.get_object_name` getter.
     '''
 
     # ....................{ IMPORTS                        }....................

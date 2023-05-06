@@ -809,7 +809,7 @@ somebody refactors them into the first choice:
 #. **[Recommended]** The :pep:`673`\ -compliant :obj:`typing.Self` type hint
    (introduced by Python 3.11) efficiently and reliably solves this. Annotate
    the type of the current class as :obj:`~typing.Self` – fully supported by
-   :mod:`beartype` for all your greedy QA needs:
+   :mod:`beartype`:
 
    .. code-block:: python
 
@@ -836,7 +836,7 @@ somebody refactors them into the first choice:
    :obj:`~typing.Self` is only contextually valid inside class declarations.
    :mod:`beartype` raises an exception when you attempt to use
    :obj:`~typing.Self` outside a class declaration (e.g., annotating a global
-   variable, function parameter, or function return).
+   variable, function parameter, or return).
 
    :obj:`~typing.Self` can only be type-checked by **classes** decorated by
    the :func:`beartype.beartype` decorator. Corollary: :obj:`~typing.Self`
@@ -867,8 +867,9 @@ somebody refactors them into the first choice:
 #. A :pep:`563`\ -compliant **postponed type hint** (i.e., type hint unparsed by
    ``from __future__ import annotations`` back into a string that is the
    unqualified name of the current class) also resolves this. The only costs are
-   codebase-shattering inefficiency and unreliability. Only do this over the
-   rotting corpse of :mod:`beartype`. This is...
+   codebase-shattering inefficiency, non-deterministic fragility so profound
+   that even Hypothesis_ is squinting, and the ultimate death of your business
+   model. Only do this over the rotting corpse of :mod:`beartype`. This is...
 
    .. code-block:: python
 
@@ -895,13 +896,15 @@ prefer :obj:`~typing.Self`. Why?
 
 **Speed.** It's why we're here. Let's quietly admit that to ourselves. If
 :mod:`beartype` were any slower, even fewer people would be reading this.
-:mod:`beartype` generates optimally efficient type-checking code for
-:obj:`~typing.Self`. It's literally just a trivial call to the
-:func:`isinstance` builtin. The same can't be said for forward references or
-postponed type hints, however. :mod:`beartype` generates suboptimal
-type-checking code for both by deferring the lookup of the referenced class to
-call time; although :mod:`beartype` caches that class after doing so, all of
-that incurs space and time costs you'd rather not pay at any space or time.
+:mod:`beartype` generates:
+
+* Optimally efficient type-checking code for :obj:`~typing.Self`. It's literally
+  just a trivial call to the :func:`isinstance` builtin. The same *cannot* be
+  said for...
+* Suboptimal type-checking code for both forward references and postponed type
+  hints,  deferring the lookup of the referenced class to call time. Although
+  :mod:`beartype` caches that class after doing so, all of that incurs space and
+  time costs you'd rather not pay at any space or time.
 
 :obj:`typing.Self`: it saved our issue tracker from certain doom. Now, it will
 save your codebase from our issues.

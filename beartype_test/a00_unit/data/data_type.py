@@ -11,16 +11,17 @@ cases on behalf of higher-level unit test submodules.
 '''
 
 # ....................{ IMPORTS                            }....................
-from contextlib import contextmanager
-from enum import Enum
-from sys import exc_info
-from typing import (
+from beartype.typing import (
     AsyncGenerator,
     Callable,
     ContextManager,
     Coroutine,
     Generator,
 )
+from beartype._util.func.utilfuncmake import make_func
+from contextlib import contextmanager
+from enum import Enum
+from sys import exc_info
 
 # ....................{ CLASSES                            }....................
 class CallableClass(object):
@@ -185,6 +186,31 @@ class NonIssubclassableClass(object, metaclass=NonIssubclassableMetaclass):
 
     pass
 
+# ....................{ CLASSES ~ with : module name       }....................
+class ClassWithModuleNameNone(object):
+    '''
+    Arbitrary pure-Python class with a **missing module name** (i.e., whose
+    ``__module__`` dunder attribute is :data:`None`).
+    '''
+
+    pass
+
+
+class ClassWithModuleNameNonexistent(object):
+    '''
+    Arbitrary pure-Python class with a **non-existent module name** (i.e., whose
+    ``__module__`` dunder attribute refers to a file that is guaranteed to *not*
+    exist on the local filesystem).
+    '''
+
+    pass
+
+
+# Monkey-patch the above classes with "bad" module names.
+ClassWithModuleNameNone.__module__ = None
+ClassWithModuleNameNonexistent.__module__ = (
+    'If_I.were.a_dead_leaf.thou_mightest.bear')
+
 # ....................{ CALLABLES ~ async : factory        }....................
 # Note that we intentionally avoid declaring a factory function for deprecated
 # generator-based coroutines decorated by either the types.coroutine() or
@@ -242,10 +268,21 @@ async_coroutine.close()
 # ....................{ CALLABLES ~ sync                   }....................
 def function():
     '''
-    Arbitrary pure-Python function.
+    Arbitrary pure-Python function physically declared by this submodule.
     '''
 
     pass
+
+
+function_in_memory = make_func(
+    func_name='function_in_memory',
+    func_code='''
+def function_in_memory():
+    return 'And tremble and despoil themselves: oh hear!'
+''',
+    func_doc='''
+Arbitrary pure-Python function dynamically declared in-memory.
+''')
 
 
 @contextmanager

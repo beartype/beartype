@@ -23,9 +23,34 @@ from sys import modules as sys_modules
 from types import ModuleType
 from warnings import warn
 
+# ....................{ GETTERS                            }....................
+#FIXME: Unit test us up, please.
+def get_module_imported_or_none(module_name: str) -> Optional[ModuleType]:
+    '''
+    Previously imported module, package, or C extension with the passed
+    fully-qualified name if previously imported *or* :data:`None` otherwise
+    (i.e., if that module, package, or C extension has yet to be imported).
+
+    Parameters
+    ----------
+    module_name : str
+        Fully-qualified name of the previously imported module to be returned.
+
+    Returns
+    ----------
+    Either:
+
+    * If a module, package, or C extension with this fully-qualified name has
+      already been imported, that module, package, or C extension.
+    * Else, :data:`None`.
+    '''
+
+    # Donkey One-liner Country: Codebase Freeze!
+    return sys_modules.get(module_name)
+
 # ....................{ IMPORTERS                          }....................
 #FIXME: Preserved until requisite, which shouldn't be long.
-#FIXME: Unit test us up.
+#FIXME: Unit test us up, please.
 # def import_module(
 #     # Mandatory parameters.
 #     module_name: str,
@@ -75,7 +100,7 @@ from warnings import warn
 def import_module_or_none(module_name: str) -> Optional[ModuleType]:
     '''
     Dynamically import and return the module, package, or C extension with the
-    passed fully-qualified name if importable *or* return ``None`` otherwise
+    passed fully-qualified name if importable *or* return :data:`None` otherwise
     (i.e., if that module, package, or C extension is unimportable).
 
     For safety, this function also emits a non-fatal warning when that module,
@@ -87,6 +112,14 @@ def import_module_or_none(module_name: str) -> Optional[ModuleType]:
     module_name : str
         Fully-qualified name of the module to be imported.
 
+    Returns
+    ----------
+    Either:
+
+    * If a module, package, or C extension with this fully-qualified name is
+      importable, that module, package, or C extension.
+    * Else, :data:`None`.
+
     Warns
     ----------
     BeartypeModuleUnimportableWarning
@@ -97,7 +130,7 @@ def import_module_or_none(module_name: str) -> Optional[ModuleType]:
 
     # Module cached with "sys.modules" if this module has already been imported
     # elsewhere under the active Python interpreter *OR* "None" otherwise.
-    module = sys_modules.get(module_name)
+    module = get_module_imported_or_none(module_name)
 
     # If this module has already been imported, return this cached module.
     if module is not None:
@@ -205,7 +238,7 @@ def import_module_attr_or_none(
     '''
     Dynamically import and return the **module attribute** (i.e., object
     declared at module scope) with the passed fully-qualified name if
-    importable *or* return ``None`` otherwise.
+    importable *or* return :data:`None` otherwise.
 
     Parameters
     ----------
@@ -223,7 +256,7 @@ def import_module_attr_or_none(
     object
         Either:
 
-        * If *no* module prefixed this name exists, ``None``.
+        * If *no* module prefixed this name exists, :data:`None`.
         * If a module prefixed by this name exists *but* that module declares
           no attribute by this name, ``None``.
         * Else, the module attribute with this fully-qualified name.

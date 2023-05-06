@@ -206,7 +206,6 @@ def beartype_object_nonfatal(
     warning_category: TypeWarning,
 
     # Optional parameters.
-    cls_stack: TypeStack = None,
     **kwargs
 ) -> BeartypeableT:
     '''
@@ -244,11 +243,6 @@ def beartype_object_nonfatal(
     warning_category : TypeWarning
         Category of the non-fatal warning to emit if :func:`beartype.beartype`
         fails to generate a type-checking wrapper for this callable or class.
-    cls_stack : TypeStack, optional
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
-        Defaults to :data:`None`.
 
     All remaining keyword parameters are passed as is to the lower-level
     :func:`.beartype_object` decorator internally called by this higher-level
@@ -284,16 +278,19 @@ def beartype_object_nonfatal(
         assert isinstance(warning_category, Warning), (
             f'{repr(warning_category)} not warning category.')
 
-        #FIXME: Unconditionally munge this error message by:
-        #* Globally replacing *EACH* newline (i.e., "\n" substring) in this
-        #  message with a newline followed by four spaces (i.e., "\n    ").
-        #* Stripping all ANSI colors. While colors are useful for exception
-        #  messages that typically percolate down to the terminal, warnings are
-        #  another breed entirely. Maybe? Maybe.
+        # Avoid circular import dependencies.
+        from beartype._util.text.utiltextansi import strip_text_ansi
+        from beartype._util.text.utiltextlabel import label_beartypeable_kind
+        from beartype._util.text.utiltextmunge import uppercase_char_first
 
         # Original error message to be embedded in the warning message to be
-        # emitted, defined as either...
-        error_message = (
+        # emitted, stripped of *ALL* ANSI color. While colors improve the
+        # readability of exception messages that percolate down to an ANSI-aware
+        # command line, warnings are usually harvested and then regurgitated by
+        # intermediary packages into ANSI-unaware logfiles.
+        #
+        # This message is defined as either...
+        error_message = strip_text_ansi(
             # If this exception is beartype-specific, this exception's message
             # is probably human-readable as is. In this case, coerce only that
             # message directly into a warning for brevity and readability.
@@ -308,6 +305,12 @@ def beartype_object_nonfatal(
             format_exc()
         )
 
+        # Globally replace *EVERY* newline in this message with a newline
+        # followed by four spaces. Doing so visually offsets this lower-level
+        # exception message from the higher-level warning message embedding this
+        # exception message.
+        error_message.replace('\n', '\n    ')
+
         #FIXME: Woops. Looks like we accidentally duplicated functionality here
         #that already exists in the label_callable() function. Let's generalize
         #that functionality out of label_callable() into a lower-level
@@ -319,10 +322,6 @@ def beartype_object_nonfatal(
         #        obj=obj, is_context=True)
         #
         #    obj_label_capitalized = uppercase_char_first(obj_label)
-
-        # Avoid circular import dependencies.
-        from beartype._util.text.utiltextlabel import label_beartypeable_kind
-        from beartype._util.text.utiltextmunge import uppercase_char_first
 
         # Fully-qualified name of this beartypeable.
         obj_name = get_object_name(obj)

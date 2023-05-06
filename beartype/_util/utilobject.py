@@ -12,8 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilObjectNameException
+from beartype.typing import (
+    Any,
+    Optional,
+)
 from contextlib import AbstractContextManager
-from beartype.typing import Any
 
 # ....................{ CLASSES                            }....................
 class Iota(object):
@@ -36,9 +39,9 @@ erroneous and edge-case input (e.g., iterables of insufficient length).
 # ....................{ TESTERS                            }....................
 def is_object_context_manager(obj: object) -> bool:
     '''
-    ``True`` only if the passed object is a **context manager** (i.e., object
-    defining both the ``__exit__`` and ``__enter__`` dunder methods required to
-    satisfy the context manager protocol)..
+    :data:`True` only if the passed object is a **context manager** (i.e.,
+    object defining both the ``__exit__`` and ``__enter__`` dunder methods
+    required to satisfy the context manager protocol).
 
     Parameters
     ----------
@@ -48,7 +51,7 @@ def is_object_context_manager(obj: object) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this object is a context manager.
+        :data:`True` only if this object is a context manager.
     '''
 
     # One-liners for frivolous inanity.
@@ -59,8 +62,8 @@ def is_object_context_manager(obj: object) -> bool:
 # decorator, which requires all passed parameters to already be hashable.
 def is_object_hashable(obj: object) -> bool:
     '''
-    ``True`` only if the passed object is **hashable** (i.e., passable to the
-    builtin :func:`hash` function *without* raising an exception and thus
+    :data:`True` only if the passed object is **hashable** (i.e., passable to
+    the builtin :func:`hash` function *without* raising an exception and thus
     usable in hash-based containers like dictionaries and sets).
 
     Parameters
@@ -71,7 +74,7 @@ def is_object_hashable(obj: object) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this object is hashable.
+        :data:`True` only if this object is hashable.
     '''
 
     # Attempt to hash this object. If doing so raises *any* exception
@@ -263,6 +266,53 @@ def get_object_basename_scoped(obj: Any) -> str:
 
     # Remove all "<locals>" placeholder substrings as discussed above.
     return object_scoped_name.replace('<locals>.', '')
+
+# ....................{ GETTERS ~ filename                 }....................
+def get_object_filename_or_none(obj: object) -> Optional[str]:
+    '''
+    Filename of the module or script physically declaring the passed object if
+    this object is either a callable or class physically declared on-disk *or*
+    :data:`None` otherwise (i.e., if this object is neither a callable nor
+    class *or* is either a callable or class dynamically declared in-memory).
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    Optional[str]
+        Either: 
+
+        * If this object is either a callable or class physically declared
+          on-disk, the filename of the module or script physically declaring
+          this object.
+        * Else, :data:`None`.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.cls.utilclsget import get_type_filename_or_none
+    from beartype._util.func.utilfuncfile import get_func_filename_or_none
+    from beartype._util.func.utilfunctest import is_func_python
+
+    # Return either...
+    return (
+        # If this object is a pure-Python class, the absolute filename of the
+        # source module file defining that class if that class was defined
+        # on-disk *OR* "None" otherwise (i.e., if that class was defined
+        # in-memory);
+        get_type_filename_or_none(obj)
+        if isinstance(obj, type) else
+        # If this object is a pure-Python callable, the absolute filename of the
+        # absolute filename of the source module file defining that callable if
+        # that callable was defined on-disk *OR* "None" otherwise (i.e., if that
+        # callable was defined in-memory);
+        get_func_filename_or_none(obj)
+        if is_func_python(obj) else
+        # Else, "None".
+        None
+    )
 
 # ....................{ GETTERS ~ type                     }....................
 def get_object_type_unless_type(obj: object) -> type:

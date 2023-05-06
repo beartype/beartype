@@ -6,8 +6,8 @@
 '''
 **Beartype generic callable code data submodule.**
 
-This submodule predefines low-level class constants exercising known edge
-cases on behalf of the higher-level
+This submodule predefines low-level class constants exercising known edge cases
+on behalf of the higher-level
 :mod:`beartype_test.a00_unit.a20_util.func.test_utilfunccode` submodule. Unit
 tests defined in that submodule are sufficiently fragile that *no* other
 submodule should import from this submodule.

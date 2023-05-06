@@ -12,12 +12,70 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilTypeException
+from beartype.typing import Optional
 from beartype._data.datatyping import (
     LexicalScope,
     TypeException,
 )
 
-# ....................{ VALIDATORS                         }....................
+# ....................{ GETTERS                            }....................
+#FIXME: Unit test us up.
+def get_type_filename_or_none(cls: type) -> Optional[str]:
+    '''
+    Absolute filename of the file on the local filesystem containing the
+    pure-Python source code for the script or module defining the passed class
+    if that class is defined on-disk *or* :data:`None` otherwise (i.e., if that
+    class is dynamically defined in-memory by a prior call to the :func:`exec`
+    or :func:`eval` builtins).
+
+    Parameters
+    ----------
+    cls : type
+        Class to be inspected.
+
+    Returns
+    ----------
+    Optional[str]
+        Either:
+
+        * If this class was physically declared by a file, the absolute filename
+          of that file.
+        * If this class was dynamically declared in-memory, :data:`None`.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.mod.utilmodget import (
+        get_module_filename_or_none,
+        get_object_module_name_or_none,
+    )
+    from beartype._util.mod.utilmodimport import get_module_imported_or_none
+
+    # Fully-qualified name of the module declaring this type if any *OR* "None".
+    #
+    # Note that *ALL* types should be declared by *SOME* modules. Nonetheless,
+    # this is Python. It's best to assume the worst.
+    type_module_name = get_object_module_name_or_none(cls)
+
+    # If a module declares this type...
+    if type_module_name:
+        # This module if previously imported *OR* "None".
+        #
+        # Note that this module *SHOULD* necessarily already have been imported,
+        # as this type obviously exists. Nonetheless, this module will be
+        # unimportable for types dynamically declared in-memory rather than
+        # on-disk, in which case the name of this module will have been a lie.
+        type_module = get_module_imported_or_none(type_module_name)
+
+        # If this module was previously imported...
+        if type_module:
+            # Return the filename defining this module if any *OR* "None".
+            return get_module_filename_or_none(type_module)
+
+    # If all else fails, this type was probably declared in-memory rather than
+    # on-disk. In this case, fallback to merely returning "None". 
+    return None
+
+
 #FIXME: Unit test us up, please.
 def get_type_locals(
     # Mandatory parameters.

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **class-specific utility function** unit tests.
+Project-wide **class tester** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.cls.utilclstest` submodule.

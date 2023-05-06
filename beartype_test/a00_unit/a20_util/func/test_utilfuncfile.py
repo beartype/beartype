@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,17 +10,17 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.func.utilfuncfile` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS ~ tester                     }....................
 def test_is_func_file() -> None:
     '''
-    Test usage of the
-    :func:`beartype._util.func.utilfuncfile.is_func_file` function.
+    Test the
+    :func:`beartype._util.func.utilfuncfile.is_func_file` tester.
     '''
 
     # Defer test-specific imports.
@@ -43,18 +43,19 @@ def test_is_func_file() -> None:
     # Assert this tester rejects C-based callables.
     assert is_func_file(iter) is False
 
-
+# ....................{ TESTS ~ getter                     }....................
 def test_get_func_filename_or_none() -> None:
     '''
-    Test usage of the
-    :func:`beartype._util.func.utilfuncfile.get_func_filename_or_none`
-    function.
+    Test the
+    :func:`beartype._util.func.utilfuncfile.get_func_filename_or_none` getter.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.func.utilfuncfile import get_func_filename_or_none
     from beartype._util.func.utilfuncmake import make_func
 
+    # ....................{ CALLABLES                      }....................
     # Arbitrary pure-Python callable declared on-disk.
     def and_this_the_naked_countenance_of_earth():
         return 'On which I gaze, even these primeval mountains'
@@ -75,6 +76,7 @@ def test_get_func_filename_or_none() -> None:
     # by the standard "linecache" module.
     teach_the_adverting_mind = eval('lambda: "The glaciers creep"')
 
+    # ....................{ ASSERTS                        }....................
     # Assert this getter returns "None" when passed a C-based callable.
     assert get_func_filename_or_none(iter) is None
 
