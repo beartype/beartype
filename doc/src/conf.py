@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 #
 # --------------------( SYNOPSIS                           )--------------------
-# Configuration file for the Sphinx documentation builder.
+# File configuring this project for documentation by Sphinx.
 #
 # --------------------( SEE ALSO                           )--------------------
 # * https://www.sphinx-doc.org/en/master/usage/configuration.html
@@ -86,12 +86,18 @@ sys.path.insert(0, str(_ROOT_DIR))
 # * https://protips.readthedocs.io/git-tag-version.html
 #   "Inferring Release Number from Git Tags", detailing a clever one-liner
 #   harvesting this specifier from the most recent git tag.
-# from beartype import beartype
 from beartype.meta import (
     AUTHORS,
     COPYRIGHT,
     NAME,
     SPHINX_THEME_NAME,
+    URL_CONDA,
+    URL_LIBRARIES,
+    URL_PYPI,
+    URL_RTD,
+    URL_REPO,
+    URL_REPO_ORG_NAME,
+    URL_REPO_BASENAME,
     VERSION,
 )
 from beartype.typing import Optional
@@ -462,9 +468,9 @@ autosectionlabel_prefix_document = True
 #   https://gist.github.com/bskinn/0e164963428d4b51017cebdb6cda5209
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
-    'numpy': ('https://numpy.org/doc/stable', None),
+    'numpy':  ('https://numpy.org/doc/stable', None),
     'pandas': ('https://pandas.pydata.org/docs', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy', None),
+    'scipy':  ('https://docs.scipy.org/doc/scipy', None),
 }
 
 # ....................{ EXTENSIONS ~ napoleon              }....................
@@ -536,8 +542,8 @@ html_context = {
     # ....................{ PYDATA ~ edit                  }....................
     # HTML options supporting the "use_edit_page_button" setting enabled below.
 
-    'github_user': 'beartype',
-    'github_repo': 'beartype',
+    'github_user': URL_REPO_ORG_NAME,
+    'github_repo': URL_REPO_BASENAME,
     'github_version': 'main',
     'doc_path': 'doc/src',
 }
@@ -578,27 +584,27 @@ html_theme_options = {
     'icon_links': [
         {
             'name': 'GitHub',
-            'url': 'https://github.com/beartype/beartype',
+            'url': URL_REPO,
             'icon': 'fab fa-github-square',
         },
         {
-            'name': 'Libraries.io',
-            'url': 'https://libraries.io/pypi/beartype',
-            'icon': 'fas fa-chart-area',
-        },
-        {
             'name': 'PyPI',
-            'url': 'https://pypi.org/project/beartype',
+            'url': URL_PYPI,
             'icon': 'fab fa-python',
         },
         {
             'name': 'Anaconda',
-            'url': 'https://anaconda.org/conda-forge/beartype',
+            'url': URL_CONDA,
             'icon': 'far fa-circle',
         },
         {
+            'name': 'Libraries.io',
+            'url': URL_LIBRARIES,
+            'icon': 'fas fa-chart-area',
+        },
+        {
             'name': 'ReadTheDocs',
-            'url': 'https://readthedocs.org/projects/beartype',
+            'url': URL_RTD,
             'icon': 'fas fa-book',
         },
     ],
@@ -631,16 +637,3 @@ html_theme_options = {
 # "pydata-sphinx-theme" defaults this global to 5, which is insufficient for the
 # larger number of links required for this documentation.
 theme_header_links_before_dropdown = 10
-
-# ....................{ BUILD ~ html : mathjax             }....................
-# URL to the top-level "MathJax.js" script providing MathJax. If unspecified,
-# the user *MUST* locally install MathJax. Note that MathJax is locally
-# installable under:
-# * Debian systems with:
-#   $ sudo apt install libjs-mathjax
-#
-# See also:
-# * https://docs.mathjax.org/en/v2.7-latest/start.html
-#   List of all third-party Content Delivery Networks (CDNs) officially hosting
-#   MathJax assets.
-mathjax_path="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"

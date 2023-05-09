@@ -45,11 +45,8 @@ def prefix_beartypeable(
         Human-readable label describing this beartypeable.
     '''
 
-    # Human-readable label describing the kind the passed beartypeable.
-    beartypeable_kind = label_beartypeable_kind(obj)
-
-    # Create and return this label.
-    return f'{beartypeable_kind} {label_callable(obj)} '  # type: ignore[arg-type]
+    # One-liner: "I choose you!"
+    return f'{label_callable(obj)} '  # type: ignore[arg-type]
 
 # ....................{ PREFIXERS ~ beartypeable : pith    }....................
 def prefix_beartypeable_pith(func: Callable, pith_name: str) -> str:

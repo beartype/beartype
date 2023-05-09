@@ -262,10 +262,38 @@ attribution, see the `contributors graph`_ for this project.
    https://github.com/beartype/beartype/graphs/contributors
 '''
 
-# ....................{ METADATA ~ urls : docs             }....................
-URL_HOMEPAGE = 'https://beartype.readthedocs.io'
+# ....................{ METADATA ~ urls                    }....................
+URL_CONDA = f'https://anaconda.org/conda-forge/{PACKAGE_NAME}'
 '''
-URL of this package's homepage.
+URL of this project's entry on **Anaconda** (i.e., alternate third-party Python
+package repository utilized by the Anaconda Python distribution).
+'''
+
+
+URL_LIBRARIES = f'https://libraries.io/pypi/{PACKAGE_NAME}'
+'''
+URL of this project's entry on **Libraries.io** (i.e., third-party open-source
+package registrar associated with the Tidelift open-source funding agency).
+'''
+
+
+URL_PYPI = f'https://pypi.org/project/{PACKAGE_NAME}'
+'''
+URL of this project's entry on **PyPI** (i.e., official Python package
+repository, also colloquially known as the "cheeseshop").
+'''
+
+
+URL_RTD = f'https://readthedocs.org/projects/{PACKAGE_NAME}'
+'''
+URL of this project's entry on **ReadTheDocs (RTD)** (i.e., popular Python
+documentation host, shockingly hosting this project's documentation).
+'''
+
+# ....................{ METADATA ~ urls : docs             }....................
+URL_HOMEPAGE = f'https://{PACKAGE_NAME}.readthedocs.io'
+'''
+URL of this project's homepage.
 '''
 
 
@@ -276,45 +304,60 @@ URL documenting :pep:`585` deprecations of :pep:`484` type hints.
 '''
 
 # ....................{ METADATA ~ urls : repo             }....................
-URL_REPO = 'https://github.com/beartype/beartype'
+URL_REPO_ORG_NAME = PACKAGE_NAME
 '''
-URL of this package's git repository.
+Name of the **organization** (i.e., parent group or user principally responsible
+for maintaining this project, indicated as the second-to-last trailing
+subdirectory component) of the URL of this project's git repository.
+'''
+
+
+URL_REPO_BASENAME = PACKAGE_NAME
+'''
+**Basename** (i.e., trailing subdirectory component) of the URL of this
+project's git repository.
+'''
+
+
+URL_REPO = f'https://github.com/{URL_REPO_ORG_NAME}/{URL_REPO_BASENAME}'
+'''
+URL of this project's git repository.
 '''
 
 
 URL_DOWNLOAD = f'{URL_REPO}/archive/{VERSION}.tar.gz'
 '''
-URL of the source tarball for the current version of this package.
+URL of the source tarball for the current version of this project.
 
 This URL assumes a tag whose name is ``v{VERSION}`` where ``{VERSION}`` is the
-human-readable current version of this package (e.g., ``v0.4.0``) to exist.
-Typically, no such tag exists for live versions of this package -- which
+human-readable current version of this project (e.g., ``v0.4.0``) to exist.
+Typically, no such tag exists for live versions of this project -- which
 have yet to be stabilized and hence tagged. Hence, this URL is typically valid
-*only* for previously released (rather than live) versions of this package.
+*only* for previously released (rather than live) versions of this project.
 '''
 
 
 URL_FORUMS = f'{URL_REPO}/discussions'
 '''
-URL of this package's user forums.
+URL of this project's user forums.
 '''
 
 
 URL_ISSUES = f'{URL_REPO}/issues'
 '''
-URL of this package's issue tracker.
+URL of this project's issue tracker.
 '''
 
 
 URL_RELEASES = f'{URL_REPO}/releases'
 '''
-URL of this package's release list.
+URL of this project's release list.
 '''
 
 # ....................{ METADATA ~ libs : runtime          }....................
 _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY = '1.21.0'
 '''
-Minimum optional version of NumPy recommended for use with mod:`beartype`.
+Minimum optional version of NumPy recommended for use with this project.
 
 NumPy >= 1.21.0 first introduced the third-party PEP-noncompliant
 :attr:`numpy.typing.NDArray` type hint supported by the
@@ -325,7 +368,7 @@ NumPy >= 1.21.0 first introduced the third-party PEP-noncompliant
 _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS = '3.10.0.0'
 '''
 Minimum optional version of the third-party :mod:`typing_extensions` package
-recommended for use with mod:`beartype`.
+recommended for use with this project.
 
 :mod:`typing_extensions` >= 3.10.0.0 backports all :mod:`typing` attributes
 unavailable under older Python interpreters supported by the
@@ -347,7 +390,7 @@ requirements strings of the format ``{project_name}
 {comparison1}{version1},...,{comparisonN}{versionN}``, where:
 
 * ``{project_name}`` is a :mod:`setuptools`-specific project name (e.g.,
-  ``numpy``, ``scipy``).
+  ``"numpy"``, ``"scipy"``).
 * ``{comparison1}`` and ``{comparisonN}`` are :mod:`setuptools`-specific
   version comparison operators. As well as standard mathematical comparison
   operators (e.g., ``==``, ``>=``, ``<``), :mod:`setuptools` also supports the
@@ -424,11 +467,9 @@ LIBS_TESTTIME_OPTIONAL = (
     # Required by optional Sphinx-specific integration tests.
     #
     # Note that Sphinx currently provokes unrelated test failures under Python
-    # 3.7, due to dynamic importation functionality in the @beartype codebase
-    # invoking the third-party "pkg_resources" package, which then erupts with
-    # an obscure deprecation warning caused by Sphinx. Since *ALL* of this only
-    # applies to Python 3.7, we crudely circumvent this nonsense by simply
-    # avoiding installing Sphinx under Python 3.7. The exception resembles:
+    # 3.7 with  obscure deprecation warnings. Since *ALL* of this only applies
+    # to Python 3.7, we crudely circumvent this nonsense by simply avoiding
+    # installing Sphinx under Python 3.7. The exception resembles:
     #     FAILED
     #     ../../../beartype_test/a00_unit/a20_util/test_utilobject.py::test_is_object_hashable
     #     - beartype.roar.BeartypeModuleUnimportableWarning: Ignoring module

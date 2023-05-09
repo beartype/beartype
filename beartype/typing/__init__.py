@@ -72,6 +72,55 @@ this submodule rather than from :mod:`typing` directly: e.g.,
    from beartype.typing import Tuple, List, Dict, Set, FrozenSet, Type
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Fundamentally generalize this submodule to optionally backport
+#attributes from "typing_extensions" where available, resolving issue #237 at:
+#    https://github.com/beartype/beartype/issues/237
+#
+#To do so, we'll basically want to discard the entire current implementation of
+#this submodule in favour of a fundamentally superior approach resembling:
+#    # In "beartype.typing.__init__": the future of typing backports begins today.
+#    from typing import TYPE_CHECKING
+#    
+#    # If @beartype is currently being statically type-checked (e.g.,
+#    # by mypy or pyright), just defer to the third-party
+#    # "typing_extensions" package.
+#    #
+#    # Note that this does *NOT* mean that @beartype now unconditionally
+#    # requires "typing_extensions" at either runtime or static
+#    # type-checking time. Any code in an "if TYPE_CHECKING:" is (basically)
+#    # just a convincing semantic lie that everything syntactically ignores.
+#    if TYPE_CHECKING:
+#        from typing_extensions import *  # <-- heh
+#    # Else, @beartype is currently being imported from at runtime. This is
+#    # the common case. This is also the non-trivial case, because @beartype
+#    # does *NOT* require "typing_extensions" as a mandatory runtime
+#    # dependency, because @beartype requires *NOTHING* as a runtime
+#    # dependency. This is the only rule in @beartype's Rule of Law.
+#    else:
+#        #FIXME: Unfortunately, to avoid circular import dependencies, these
+#        #imports will need to be copy-and-pasted into equivalent condensed
+#        #submodules of a new "beartype.typing._util" subpackage.
+#        # Import the requisite machinery that will make the magic happen.
+#        from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
+#        from beartype._util.mod.lib.utiltyping import (
+#            import_typing_attr_or_fallback as _import_typing_attr_or_fallback)
+#    
+#        # Dynamically define the "Self" type hint as follows:
+#        # * If the active Python interpreter targets Python >= 3.11, just
+#        #   defer to the canonical "typing.Self" type hint.
+#        # * Else if "typing_extensions" is importable *AND* of a sufficiently
+#        #   recent version to define the backported "typing_extensions.Self"
+#        #   type hint, fallback to that hint.
+#        # * Else, synthesize a placeholder type hint that @beartype internally
+#        #   recognizes as semantically equivalent to "typing.Self".
+#        Self = _import_typing_attr_or_fallback('Self', object)
+#        LiteralString = _import_typing_attr_or_fallback('Self', str)
+#        TypeGuard = _import_typing_attr_or_fallback('Self', bool)
+#        Annotated = _import_typing_attr_or_fallback('Annotated', bool)
+#    
+#        #FIXME: Repeat the above logic for *ALL* existing "typing" attributes.
+
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To avoid polluting the public module namespace, external attributes

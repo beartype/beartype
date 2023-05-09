@@ -175,15 +175,12 @@ def label_callable(
     from beartype._util.func.arg.utilfuncargget import (
         get_func_args_len_flexible)
     from beartype._util.func.utilfunccodeobj import get_func_codeobj
-    from beartype._util.func.utilfuncfile import get_func_filename_or_none
     from beartype._util.func.utilfunctest import (
         is_func_async_generator,
         is_func_coro,
         is_func_lambda,
         is_func_sync_generator,
     )
-    from beartype._util.mod.utilmodget import (
-        get_object_module_line_number_begin)
 
     # Substring prefixing the string to be returned, typically identifying the
     # specialized type of that callable if that callable has a specialized type.
@@ -193,6 +190,9 @@ def label_callable(
     # that callable with respect to its on-disk code module file.
     func_label_suffix = ''
 
+    #FIXME: *HMM.* This branch should almost certainly be folded into the
+    #existing label_beartypeable_kind() function, which would then dramatically
+    #simplify this logic here. Let's do this, yo!
     # If the passed callable is a pure-Python lambda function, that callable
     # has *NO* unique fully-qualified name. In this case, return a string
     # uniquely identifying this lambda from various code object metadata.
@@ -213,32 +213,17 @@ def label_callable(
         # Else, the caller requested an explicit contextualization. In this
         # case, preserve that contextualization as is.
     # Else, the passed callable is *NOT* a pure-Python lambda function and thus
-    # has a unique fully-qualified name.
+    # has a unique fully-qualified name. In this case, prefix this label with a
+    # substring describing the kind of that callable.
     else:
-        # If that callable is a synchronous generator, return this string
-        # prefixed by a substring emphasizing that fact.
-        if is_func_sync_generator(func):
-            func_label_prefix = 'generator '
-        # Else, that callable is *NOT* a synchronous generator.
-        #
-        # If that callable is an asynchronous coroutine, return this string
-        # prefixed by a substring emphasizing that fact.
-        elif is_func_coro(func):
-            func_label_prefix = 'coroutine '
-        # Else, that callable is *NOT* an asynchronous coroutine.
-        #
-        # If that callable is an asynchronous generator, return this string
-        # prefixed by a substring emphasizing that fact.
-        elif is_func_async_generator(func):
-            func_label_prefix = 'asynchronous generator '
-        # Else, that callable is *NOT* an asynchronous generator.
+        func_label_prefix = label_beartypeable_kind(func)
 
     # If contextualizing that callable, just do it already. Go, @beartype! Go!
     if is_context:
-        func_label_suffix += f' {label_object_context(func)} '
+        func_label_suffix = f' {label_object_context(func)}'
 
     # Return that prefix followed by the fully-qualified name of that callable.
-    return f'{func_label_prefix}{get_object_name(func)}(){func_label_suffix}'
+    return f'{func_label_prefix} {get_object_name(func)}(){func_label_suffix}'
 
 # ....................{ LABELLERS ~ context                }....................
 #FIXME: Unit test us up, please.
