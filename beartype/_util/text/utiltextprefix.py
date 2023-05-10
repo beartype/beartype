@@ -16,12 +16,13 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._data.datakind import ARG_NAME_RETURN
 from beartype._data.datatyping import BeartypeableT
 from beartype._util.text.utiltextlabel import (
-    label_beartypeable_kind,
     label_callable,
+    label_type,
 )
 from collections.abc import Callable
 
 # ....................{ PREFIXERS ~ beartypeable           }....................
+#FIXME: Unit test this function with respect to classes, please.
 def prefix_beartypeable(
     obj: BeartypeableT,  # pyright: ignore[reportInvalidTypeVarUse]
 ) -> str:
@@ -45,8 +46,15 @@ def prefix_beartypeable(
         Human-readable label describing this beartypeable.
     '''
 
-    # One-liner: "I choose you!"
-    return f'{label_callable(obj)} '  # type: ignore[arg-type]
+    # Return either...
+    return (
+        # If this beartypeable is a class, a label describing this class;
+        f'{label_type(obj)} '
+        if isinstance(obj, type) else
+        # Else, this beartypeable is a callable. In this case, a label
+        # describing this callable.
+        f'{label_callable(obj)} '  # type: ignore[arg-type]
+    )
 
 # ....................{ PREFIXERS ~ beartypeable : pith    }....................
 def prefix_beartypeable_pith(func: Callable, pith_name: str) -> str:

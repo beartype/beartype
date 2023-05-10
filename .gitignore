@@ -148,20 +148,24 @@ __pycache__/
 /.venv
 
 # ....................{ FILES ~ general                    }....................
+# Ignore all audio and video files.
+*.mp4
+
+# Ignore all C extensions.
+*.so
+
+# Ignore all data interchange files.
+*.csv
+
 # Ignore all Django-specific private files.
 local_settings.py
-
-# Ignore all pyenv-specific state files.
-.python-version
 
 # Ignore all Jython-specific byte-compiled Python files.
 *$py.class
 
-# Ignore all "trace"-specific output files.
-*.cover
-
-# Ignore all data interchange files.
-*.csv
+# Ignore all "gettext"-specific intermediary translation files.
+*.mo
+*.pot
 
 # Ignore all Jupyter Notebook-specific checkpoint files.
 .ipynb_checkpoints
@@ -169,12 +173,14 @@ local_settings.py
 # Ignore all logfiles.
 *.log
 
-# Ignore all "gettext"-specific intermediary translation files.
-*.mo
-*.pot
+# Ignore all macOS-specific filesystem viewer configuration files.
+.DS_Store
 
-# Ignore all audio and video files.
-*.mp4
+# Ignore all pyenv-specific state files.
+.python-version
+
+# Ignore all "python-coverage"-specific output Python files.
+*.py,cover
 
 # Ignore all Python-specific byte-compiled, optimized, and DLL files.
 *.py[cod]
@@ -182,16 +188,12 @@ local_settings.py
 # Ignore all Python-specific EGG packages.
 *.egg
 
-# Ignore all "python-coverage"-specific output Python files.
-*.py,cover
-
 # Ignore all SageMath-specific output Python files.
 *.sage.py
 
-# Ignore all C extensions.
-*.so
-
 # Ignore all temporary files.
 *~
-*.log
 *.sw?
+
+# Ignore all "trace"-specific output files.
+*.cover

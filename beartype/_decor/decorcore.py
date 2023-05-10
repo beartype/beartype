@@ -54,8 +54,10 @@ from beartype._util.func.lib.utilbeartypefunc import (
 )
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.func.utilfunctest import is_func_python
-from beartype._util.mod.utilmodget import get_object_module_line_number_begin
-from beartype._util.utilobject import get_object_name
+from beartype._util.text.utiltextansi import strip_text_ansi
+from beartype._util.text.utiltextlabel import label_object_context
+from beartype._util.text.utiltextmunge import uppercase_char_first
+from beartype._util.text.utiltextprefix import prefix_beartypeable
 from traceback import format_exc
 from warnings import warn
 
@@ -278,11 +280,6 @@ def beartype_object_nonfatal(
         assert isinstance(warning_category, Warning), (
             f'{repr(warning_category)} not warning category.')
 
-        # Avoid circular import dependencies.
-        from beartype._util.text.utiltextansi import strip_text_ansi
-        from beartype._util.text.utiltextlabel import label_beartypeable_kind
-        from beartype._util.text.utiltextmunge import uppercase_char_first
-
         # Original error message to be embedded in the warning message to be
         # emitted, stripped of *ALL* ANSI color. While colors improve the
         # readability of exception messages that percolate down to an ANSI-aware
@@ -305,43 +302,18 @@ def beartype_object_nonfatal(
             format_exc()
         )
 
-        # Globally replace *EVERY* newline in this message with a newline
-        # followed by four spaces. Doing so visually offsets this lower-level
-        # exception message from the higher-level warning message embedding this
-        # exception message.
-        error_message.replace('\n', '\n    ')
+        # Indent this exception message by globally replacing *EVERY* newline in
+        # this message with a newline followed by four spaces. Doing so visually
+        # offsets this lower-level exception message from the higher-level
+        # warning message embedding this exception message below.
+        error_message = error_message.replace('\n', '\n    ')
 
-        #FIXME: Woops. Looks like we accidentally duplicated functionality here
-        #that already exists in the label_callable() function. Let's generalize
-        #that functionality out of label_callable() into a lower-level
-        #label_object_context() function, please.
-        #FIXME: Refactor the existing prefix_beartypeable() function to
-        #internally call either label_callable() *OR* label_type() depending on
-        #the type of the passed object. Then call that function below like so:
-        #    obj_label = prefix_beartypeable(
-        #        obj=obj, is_context=True)
-        #
-        #    obj_label_capitalized = uppercase_char_first(obj_label)
-
-        # Fully-qualified name of this beartypeable.
-        obj_name = get_object_name(obj)
-
-        # Line number of the first line declaring this beartypeable in its
-        # underlying source code module file.
-        obj_lineno = get_object_module_line_number_begin(obj)
-
-        #FIXME: Replace our existing usage of the oddball prefix "@beartyped" in
-        #exception messages with this much more readable alternative, please.
-
-        # Human-readable string describing the type of this object as either...
-        obj_type = label_beartypeable_kind(obj)
-
-        # This string with the first character capitalized.
-        obj_type_capitalized = uppercase_char_first(obj_type)
-
-        # Warning message to be emitted.
-        warning_message = (
-            f'{obj_type_capitalized} {obj_name} at line number {obj_lineno}:\n'
+        # Warning message to be emitted, consisting of:
+        # * A human-readable label contextually describing this beartypeable,
+        #   capitalized such that the first character is uppercase.
+        # * This indented exception message.
+        warning_message = uppercase_char_first(
+            f'{prefix_beartypeable(obj)}{label_object_context(obj)}:\n'
             f'{error_message}'
         )
 

@@ -25,7 +25,7 @@
 set -e
 
 # ....................{ ARRAYS                             }....................
-# Array of all arguments with which to invoke Python. Dismantled, this is:
+# Array of all shell words with which to invoke Python. Dismantled, this is:
 # * "-X dev", enabling the Python Development Mode (PDM). See also commentary
 #   for the ${PYTHONDEVMODE} shell variable in the "tox.ini" file.
 PYTHON_ARGS=( command python3 -X dev )
@@ -36,7 +36,7 @@ PYTHON_ARGS=( command python3 -X dev )
 # PYTHON_ARGS=( command python3.11 -X dev )
 # PYTHON_ARGS=( command pypy3.7 -X dev )
 
-# Array of all arguments to be passed to "python3" below.
+# Array of all shell words to be passed to "python3" below.
 PYTEST_ARGS=(
     pytest
 
@@ -51,6 +51,7 @@ PYTEST_ARGS=(
     # to our general-purpose "pytest.ini" configuration.
     '--maxfail=1'
 
+    # Pass all remaining arguments to "pytest" as is.
     "${@}"
 )
 # echo "pytest args: ${PYTEST_ARGS[*]}"
@@ -164,15 +165,12 @@ if is_package coverage && [[ ! " ${PYTEST_ARGS[*]} " =~ " -k " ]]; then
     # See the following official documentation for further details, entitled
     # "Initialization: determining rootdir and inifile":
     #     https://docs.pytest.org/en/latest/customize.html
-    "${PYTHON_ARGS[@]}" -m \
-        coverage run -m "${PYTEST_ARGS[@]}" . &&
-    "${PYTHON_ARGS[@]}" -m \
-        coverage report
+    "${PYTHON_ARGS[@]}" -m coverage run -m "${PYTEST_ARGS[@]}" . &&
+    "${PYTHON_ARGS[@]}" -m coverage report
 # Else, run this project's pytest-based test suite with all passed arguments
 # *WITHOUT* measuring coverage.
 else
-    "${PYTHON_ARGS[@]}" -m \
-        "${PYTEST_ARGS[@]}" .
+    "${PYTHON_ARGS[@]}" -m "${PYTEST_ARGS[@]}" .
 fi
 
 # 0-based exit code reported by the prior command.

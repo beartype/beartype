@@ -263,7 +263,7 @@ def label_object_context(obj: object) -> str:
         obj_lineno = get_object_module_line_number_begin(obj)
 
         # Return a string describing the context of this object.
-        return f'declared on line {obj_lineno} of file "{obj_filename}"'
+        return f'in file "{obj_filename}" line {obj_lineno}'
     # Else, this object was defined in-memory. In this case, avoid attempting to
     # needlessly contextualize this object.
 
