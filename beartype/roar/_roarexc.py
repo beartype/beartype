@@ -733,7 +733,7 @@ class BeartypeClawRegistrationException(BeartypeClawException):
     **Beartype import hook registration exception.**
 
     This exception is raised at call time by the
-    :func:`beartype.claw.beartype_submodules_on_import` function when passed
+    :func:`beartype.claw.beartype_package` function when passed
     invalid parameters.
     '''
 

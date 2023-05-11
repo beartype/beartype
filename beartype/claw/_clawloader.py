@@ -203,7 +203,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
           :mod:`beartype.claw` import hook factory (e.g.,
           :func:`beartype.claw.beartype_package`), the beartype configuration
           with which to type-check that module.
-        * Else, ``None``.
+        * Else, :data:`None`.
 
         This instance variable enables our override of the parent
         :meth:`get_code` method to communicate this configuration to the child
@@ -214,8 +214,8 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         decide whether and how to type-check that module.
 
         Ordinarily, this approach would be fraught with fragility. For example,
-        what if something *other* than the :meth:`get_code` method calls the
-        :meth:`source_to_code` method? Thankfully, that is *not* a concern.
+        what if something *other* than the :meth:`get_code` method called the
+        :meth:`source_to_code` method? Thankfully, that is *not* a concern here.
         :meth:`source_to_code` is only called by :meth:`get_code` in the
         :mod:`importlib` codebase. Ergo, :meth:`source_to_code` should ideally
         have been privatized (e.g., as ``_source_to_code()``).
@@ -254,7 +254,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
     # ..................{ LOADER API                         }..................
     # The importlib._bootstrap_external.*Loader API declares the low-level
-    # exec_module() method, which accepts a "importlib._bootstrap.ModuleSpec"
+    # exec_module() method, which accepts an "importlib._bootstrap.ModuleSpec"
     # instance created and returned by a prior call to the higher-level
     # find_spec() method documented above; the exec_module() method then uses
     # that module spec to create and return a fully imported module object
@@ -480,9 +480,11 @@ class BeartypeSourceFileLoader(SourceFileLoader):
             optimize=_optimize,
         )
 
-        # Abstract syntax tree (AST) modified by our AST transformation
-        # decorating all typed callables and classes by @beartype.
-        module_ast_beartyped = BeartypeNodeTransformer().visit(module_ast)
+        # AST transformer decorating typed callables and classes by @beartype.
+        ast_beartyper = BeartypeNodeTransformer()
+
+        # Abstract syntax tree (AST) modified by this transformer.
+        module_ast_beartyped = ast_beartyper.visit(module_ast)
 
         #FIXME: *THIS IS BAD, BRO.* For one thing, this is slow. Recursion is
         #slow. It's also dangerous. We shouldn't do it more than we have to. Now
@@ -534,7 +536,7 @@ def _cache_from_source_beartype(*args, **kwargs) -> str:
     beartype-specific optimization marker to that function.
 
     This, in turn, ensures that submodules residing in packages registered by a
-    prior call to the :func:`beartype_submodules_on_import` function are
+    prior call to the :func:`beartype_package` function are
     compiled to files with the filetype ``".pyc{optimization}-beartype"``,
     where ``{optimization}`` is the original ``optimization`` parameter passed
     to this function call.

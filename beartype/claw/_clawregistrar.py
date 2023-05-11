@@ -7,7 +7,7 @@
 **Beartype all-at-once low-level package name cache.**
 
 This private submodule caches package names on behalf of the higher-level
-:func:`beartype.claw.beartype_submodules_on_import` function. Beartype import
+:func:`beartype.claw.beartype_package` function. Beartype import
 path hooks internally created by that function subsequently lookup these package
 names from this cache when deciding whether or not (and how) to decorate a
 submodule being imported with :func:`beartype.beartype`.
@@ -243,9 +243,9 @@ def register_packages_all(
 
 #FIXME: Unit test us up, please.
 #FIXME: Define a comparable removal function named either:
-#* cancel_beartype_submodules_on_import(). This is ostensibly the most
+#* cancel_beartype_package(). This is ostensibly the most
 #  unambiguous and thus the best choice of those listed here. Obviously,
-#  beartype_submodules_on_import_cancel() is a comparable alternative.
+#  beartype_package_cancel() is a comparable alternative.
 #* forget_beartype_on_import().
 #* no_beartype_on_import().
 def register_packages(

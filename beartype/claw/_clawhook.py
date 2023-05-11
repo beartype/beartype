@@ -7,7 +7,7 @@
 **Beartype all-at-once high-level** :mod:`importlib` **machinery.**
 
 This private submodule is the main entry point for this subpackage, defining the
-public-facing :func:`beartype_submodules_on_import` function registering new
+public-facing :func:`beartype_package` function registering new
 beartype import path hooks. Notably, this submodule integrates high-level
 :mod:`importlib` machinery required to implement :pep:`302`- and
 :pep:`451`-compliant import hooks with the abstract syntax tree (AST)
@@ -289,7 +289,7 @@ def beartype_package(
         #      frame_caller = get_frame_caller_or_none()
         #      if frame_caller is None:
         #          raise BeartypeClawRegistrationException(
-        #              'beartype_submodules_on_import() '
+        #              'beartype_package() '
         #              'not callable directly from REPL scope.'
         #          )
         frame_caller: FrameType = get_frame(1)  # type: ignore[assignment,misc]
@@ -313,7 +313,7 @@ def beartype_package(
         # callable rather than a module. In this case, raise an exception.
         if frame_caller_basename != FUNC_CODEOBJ_NAME_MODULE:
             raise BeartypeClawRegistrationException(
-                f'beartype_submodules_on_import() '
+                f'beartype_package() '
                 f'neither passed "package_names" nor called from module scope '
                 f'(i.e., caller scope '
                 f'"{frame_caller_module_name}.{frame_caller_basename}" '
@@ -338,7 +338,7 @@ def beartype_package(
         #     ('', '', 'muh_module')  # <-- we're now in trouble, folks
         if '.' not in frame_caller_module_name:
             raise BeartypeClawRegistrationException(
-                f'beartype_submodules_on_import() '
+                f'beartype_package() '
                 f'neither passed "package_names" nor called by a submodule '
                 f'(i.e., caller module "{frame_caller_module_name}" '
                 f'defined by no parent package).'

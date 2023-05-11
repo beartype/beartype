@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ TODO                               }....................
 #FIXME: Additionally define a new BeartypeNodeTransformer.visit_ClassDef()
-#method modelled after the equivelent TypeguardTransformer.visit_ClassDef()
+#method modelled after the equivalent TypeguardTransformer.visit_ClassDef()
 #method residing at:
 #    https://github.com/agronholm/typeguard/blob/master/src/typeguard/importhook.py
 
@@ -31,7 +31,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #So, what's the Big Idea here? The Big Idea here is that @beartype can
 #internally (...possibly only optionally, but possibly mandatorily) leverage
-#"stack_data" to begin performing full-blown static type-checking at runtime --
+#"executing" to begin performing full-blown static type-checking at runtime --
 #especially of mission critical type hints like "typing.LiteralString" which can
 #*ONLY* be type-checked via static analysis. :o
 #
@@ -53,7 +53,13 @@ This private submodule is *not* intended for importation by downstream callers.
 #security trumps speed, speed is significantly less of a concern insofar as
 #"typing.LiteralString" is concerned. Of course, we should also employ
 #significant caching... if we even can.
-#FIXME: The above idea generalizes from "typing.LiteralString" to other
+#FIXME: Actually, while demonstrably awesome, even the above fails to suffice to
+#to statically type-check "typing.LiteralString". We failed to fully read PEP
+#675, which contains a section on inference. In the worst case, nothing less
+#than a complete graph of the entire app and all transitive dependencies thereof
+#suffices to decide whether a parameter satisfies "typing.LiteralString".
+#
+#Thankfully, the above idea generalizes from "typing.LiteralString" to other
 #fascinating topics as well. Indeed, given sufficient caching, one could begin
 #to internally generate and cache a mypy-like graph network whose nodes are
 #typed attributes and whose edges are relations between those typed attributes.
@@ -80,8 +86,6 @@ from beartype.typing import (
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
 # ....................{ SUBCLASSES                         }....................
-#FIXME: Implement us up, please.
-#FIXME: Docstring us up, please.
 #FIXME: Unit test us up, please.
 class BeartypeNodeTransformer(NodeTransformer):
     '''
@@ -102,7 +106,7 @@ class BeartypeNodeTransformer(NodeTransformer):
        https://github.com/agronholm/typeguard/blob/master/src/typeguard/importhook.py
     '''
 
-    # ..................{ VISITORS                           }..................
+    # ..................{ VISITORS ~ module                  }..................
     def visit_Module(self, node: Module) -> Module:
         '''
         Add a new abstract syntax tree (AST) child node to the passed AST module
@@ -123,30 +127,36 @@ class BeartypeNodeTransformer(NodeTransformer):
             That same AST module parent node.
         '''
 
-        # 0-based index of the first safe position of the list of all AST child
-        # nodes of this AST module parent node to insert an import statement
+        # 0-based index of the first safe position in the list of all child
+        # nodes of this parent module node to insert an import statement
         # importing our beartype decorator, initialized to the erroneous index
-        # "-1" to enable detection of empty modules (i.e., modules whose AST
-        # module nodes containing *NO* child nodes) below.
+        # "-1" to enable detection of empty modules (i.e., modules whose module
+        # nodes containing *NO* child nodes) below.
         node_import_beartype_attrs_index = -1
 
-        # AST child node of this AST module parent node immediately preceding
-        # the AST import child node to be added below, defaulting to this AST
-        # module parent node to ensure that the _copy_node_code_metadata()
-        # function below *ALWAYS* copies from a valid AST node for sanity.
-        module_child: AST = node
+        # Child node of this parent module node immediately preceding the output
+        # import child node to be added below, defaulting to this parent module
+        # node to ensure that the _copy_node_code_metadata() function below
+        # *ALWAYS* copies from a valid node (for simplicity).
+        node_import_prev: AST = node
 
-        # Efficiently find this index. Since, this iteration is guaranteed to
-        # exhibit worst-case O(1) time complexity despite superficially
-        # appearing to perform a linear search of all n child nodes of this
-        # module parent node and thus exhibit worst-case O(n) time complexity.
+        # For the 0-based index and value of each direct child node of this
+        # parent module node...
         #
-        # For the 0-based index and value of each direct AST child node of this
-        # AST module parent node...
-        for node_import_beartype_attrs_index, module_child in enumerate(
+        # This iteration efficiently finds "node_import_beartype_attrs_index"
+        # (i.e., the 0-based index of the first safe position in the list of all
+        # child nodes of this parent module node to insert an import statement
+        # importing our beartype decorator). Despite superficially appearing to
+        # perform a linear search of all n child nodes of this module parent
+        # node and thus exhibit worst-case O(n) time complexity, this iteration
+        # is guaranteed to exhibit worst-case O(1) time complexity. \o/
+        #
+        # Note that the "body" instance variable for module nodes is a list of
+        # all child nodes of this parent module node.
+        for node_import_beartype_attrs_index, node_import_prev in enumerate(
             node.body):
-            # If this child node signifies either...
-            if (
+            # If it is *NOT* the case that this child node signifies either...
+            if not (
                 # A module docstring...
                 #
                 # If that module defines a docstring, that docstring *MUST* be
@@ -156,11 +166,11 @@ class BeartypeNodeTransformer(NodeTransformer):
                 # docstring. (The latter would destroy the semantics of that
                 # docstring by reducing that docstring to an ignorable string.)
                 (
-                    isinstance(module_child, Expr) and
-                    isinstance(module_child.value, Str)
+                    isinstance(node_import_prev, Expr) and
+                    isinstance(node_import_prev.value, Str)
                 ) or
-                # A future import (i.e., import of the form
-                # "from __future__ ...") *OR*...
+                # A future import (i.e., import of the form "from __future__
+                # ...") *OR*...
                 #
                 # If that module performs one or more future imports, these
                 # imports *MUST* necessarily be the first non-docstring
@@ -168,56 +178,76 @@ class BeartypeNodeTransformer(NodeTransformer):
                 # statements that are actually imports -- including the import
                 # statement added below.
                 (
-                    isinstance(module_child, ImportFrom) and
-                    module_child.module == '__future__'
+                    isinstance(node_import_prev, ImportFrom) and
+                    node_import_prev.module == '__future__'
                 )
+            # Then immediately halt iteration, guaranteeing O(1) runtime.
             ):
-                # Then continue past this child node to the next child node.
-                continue
+                break
+            # Else, this child node signifies either a module docstring of
+            # future import. In this case, implicitly skip past this child node
+            # to the next child node.
+            #
+        # "node_import_beartype_attrs_index" is now the index of the first safe
+        # position in this list to insert output child import nodes below.
 
-        # If the 0-based index of the first safe position of the list of all AST
-        # child nodes of this AST module parent node to insert import
-        # statements importing various beartype attributes is *NOT* the
-        # erroneous index to which this index was initialized above, this module
-        # contains one or more child nodes and is thus non-empty. In this
-        # case...
-        if node_import_beartype_attrs_index != -1:
-            # Tuple of all module-scoped import nodes (i.e., child nodes to be
-            # inserted under the parent node encapsulating the currently visited
-            # bmodule in the AST for that module).
-            nodes_import_beartype_attr = (
-                # Our public beartype.door.die_if_unbearable() raiser,
-                # intentionally imported from our private
-                # "beartype.door._doorcheck" submodule rather than our public
-                # "beartype.door" subpackage. Why? Because the former consumes
-                # marginally less space and time to import than the latter.
-                # Whereas the latter imports the full "TypeHint" hierarchy, the
-                # former only imports multiple low-level utility functions.
-                ImportFrom(
-                    module='beartype.door._doorcheck',
-                    names=[alias('die_if_unbearable')],
-                ),
-                # Our private
-                # beartype._decor.decorcore.beartype_object_nonfatal()
-                # decorator.
-                ImportFrom(
-                    module='beartype._decor.decorcore',
-                    names=[alias('beartype_object_nonfatal')],
-                ),
+        # If this is *NOT* the erroneous index to which this index was
+        # initialized above, this module contains one or more child nodes and is
+        # thus non-empty. In this case...
+        if node_import_beartype_attrs_index >= 0:
+            # Module-scoped import nodes (i.e., child nodes to be inserted under
+            # the parent node encapsulating the currently visited submodule in
+            # the AST for that module).
+            #
+            # Note that these nodes are intentionally *NOT* generalized into
+            # global constants. In theory, doing so would reduce space and time
+            # complexity by enabling efficient reuse here. In practice, doing so
+            # would also be fundamentally wrong; these nodes are subsequently
+            # modified to respect the source code metadata (e.g., line numbers)
+            # of this AST module parent node, which prevents such trivial reuse.
+            # Although we could further attempt to circumvent that by shallowly
+            # or deeply copying from global constants, both the copy() and
+            # deepcopy() functions defined by the standard "copy" module are
+            # pure-Python and thus shockingly slow -- which defeats the purpose.
+
+            # Our private beartype._decor.decorcore.beartype_object_nonfatal()
+            # decorator.
+            node_import_decorator = ImportFrom(
+                module='beartype._decor.decorcore',
+                names=[alias('beartype_object_nonfatal')],
             )
 
-            # For each module-scoped import node to be inserted...
-            for node_import_beartype_attr in nodes_import_beartype_attr:
-                # Copy all source code metadata from the AST child node of this
-                # AST module parent node immediately preceding this AST import
-                # child node onto this AST import child node.
-                _copy_node_code_metadata(
-                    node_src=node, node_trg=node_import_beartype_attr)
+            # Our public beartype.door.die_if_unbearable() raiser, intentionally
+            # imported from our private "beartype.door._doorcheck" submodule
+            # rather than our public "beartype.door" subpackage. Why? Because
+            # the former consumes marginally less space and time to import than
+            # the latter. Whereas the latter imports the full "TypeHint"
+            # hierarchy, the former only imports low-level utility functions.
+            node_import_raiser = ImportFrom(
+                module='beartype.door._doorcheck',
+                names=[alias('die_if_unbearable')],
+            )
 
-                # Insert this AST import child node at this safe position of the
-                # list of all AST child nodes of this AST module parent node.
-                node.body.insert(
-                    node_import_beartype_attrs_index, node_import_beartype_attr)
+            # Copy all source code metadata (e.g., line numbers) from:
+            # * For the first output import child node (in arbitrary order, as
+            #   import statements are necessarily idempotent), from the input
+            #   child node of this parent module node directly preceding this
+            #   output node onto this output node.
+            # * For all subsequent output import child nodes, from the preceding
+            #   output node onto the current output node.
+            _copy_node_code_metadata(
+                node_src=node_import_prev, node_trg=node_import_decorator)
+            _copy_node_code_metadata(
+                node_src=node_import_prev, node_trg=node_import_raiser)
+
+            # Insert these output import child nodes at this safe position of
+            # the list of all child nodes of this parent module node.
+            #
+            # Note that this syntax efficiently (albeit unreadably) inserts
+            # these output import child nodes at the desired index (in this
+            # arbitrary order) of this parent module node.
+            node.body[node_import_beartype_attrs_index:0] = (
+                node_import_decorator, node_import_raiser)
         # Else, this module is empty. In this case, silently reduce to a noop.
         # Since this edge case is *EXTREMELY* uncommon, avoid optimizing for
         # this edge case (here or elsewhere).
@@ -228,7 +258,7 @@ class BeartypeNodeTransformer(NodeTransformer):
         # Return this AST module node as is.
         return node
 
-
+    # ..................{ VISITORS ~ callable                }..................
     def visit_FunctionDef(self, node: FunctionDef) -> FunctionDef:
         '''
         Add a new abstract syntax tree (AST) child node to the passed AST
@@ -248,78 +278,121 @@ class BeartypeNodeTransformer(NodeTransformer):
             That same AST callable parent node.
         '''
 
-        # True only if that callable is annotated by a return type hint,
-        # trivially decided in O(1) time.
-        is_return_typed = bool(node.returns)
-
-        # True only if that callable is annotated by one or more parameter type
-        # hints, non-trivially decided in O(n) time for n the number of
-        # parameters accepted by that callable.
-        is_args_typed = False
-
-        # If that callable is *NOT* annotated by a return type hint, fallback to
-        # deciding whether that callable is annotated by one or more parameter
-        # type hints. Since doing is considerably more computationally
-        # expensive, do so *ONLY* as needed.
-        if not is_return_typed:
-            for arg in node.args.args:
-                if arg.annotation:
-                    is_args_typed = True
-                    break
-        # Else, that callable is annotated by a return type hint. In this case,
-        # do *NOT* spend useless time deciding whether that callable is
-        # annotated by one or more parameter type hints.
-
-        # If that callable is typed (i.e., annotated by a return type hint
-        # and/or one or more parameter type hints)...
+        # True only if that callable is ignorable (i.e., annotated by *NO* type
+        # hints), defaulting to whether that callable is annotated by a return
+        # type hint.
         #
-        # Note that the former is intentionally tested *BEFORE* the latter, as
-        # the detecting former is O(1) time complexity and thus trivial.
-        if is_return_typed or is_args_typed:
+        # Note that this boolean is intentionally defining in an unintuitive
+        # order so as to increase the likelihood of defining this boolean in
+        # O(1) time. Specifically:
+        # * It is most efficient to test whether that callable is annotated by a
+        #   return type hint.
+        # * It is next-most efficient to test whether that callable accepts a
+        #   variadic positional argument annotated by a type hint.
+        # * It is least efficient to test whether that callable accepts a
+        #   non-variadic argument annotated by a type hint, as doing so requires
+        #   O(n) iteration for "n" the number of such arguments..
+        #
+        # Lastly, note that we could naively avoid doing this entirely and
+        # instead unconditionally decorate *ALL* callables by @beartype -- in
+        # which case @beartype would simply reduce to a noop for ignorable
+        # callables annotated by *NO* type hints. Technically, that works.
+        # Pragmatically, that would almost certainly be slower than the current
+        # approach under the common assumption that any developer annotating one
+        # or more non-variadic arguments of a callable would also annotate the
+        # return of that callable -- in which case this detection reduces to
+        # O(1) time complexity. Even where this is *NOT* the case, however, this
+        # is still almost certainly slightly faster or of an equivalent speed to
+        # the naive approach. Why? Because treating ignorable callables as
+        # unignorable would needlessly:
+        # * Increase space complexity by polluting this AST with needlessly many
+        #   "Name" child nodes performing ignorable @beartype decorations.
+        # * Increase time complexity by instantiating, initializing, and
+        #   inserting (the three dread i's) those nodes.
+        is_ignorable = node.returns is None
+
+        # If that callable is possibly ignorable...
+        if is_ignorable:
+            # Child arguments node of all arguments accepted by that callable.
+            node_args = node.args
+
+            # Variadic positional argument accepted by that callable if any.
+            #
+            # Note that @beartype currently prohibits type hints annotating
+            # variadic keyword arguments, since there currently appears to be no
+            # use case encouraging @beartype to support that.
+            node_arg_varpos = node_args.vararg
+
+            # If that callable accepts a variadic positional argument...
+            if node_arg_varpos:
+                # That callable is unignorable if that argument is annotated by
+                # a type hint.
+                is_ignorable = node_arg_varpos.annotation is None
+            # Else, that callable accepts *NO* variadic positional argument.
+
+            # If that callable is still possibly ignorable, fallback to deciding
+            # whether that callable accepts one or more non-variadic arguments
+            # annotated by type hints. Since doing is considerably more
+            # computationally expensive, we do so *ONLY* as needed.
+            #
+            # Note that manual iteration is considerably more efficient than
+            # more syntactically concise any() and all() generator expressions.
+            if is_ignorable:
+                for node_arg_nonvar in node_args.args:
+                    if node_arg_nonvar.annotation is not None:
+                        is_ignorable = False
+                        break
+            # Else, that callable is now unignorable.
+        # Else, that callable is now unignorable.
+
+        # If that callable is unignorable (i.e., annotated by type hints)...
+        if not is_ignorable:
             #FIXME: Additionally pass the current beartype configuration as a
             #keyword-only "conf={conf}" parameter to this decorator, please.
+            #Thankfully, this class is only instantiated in a single location in
+            #the "_clawloader" submodule. Altogether, we'll need to refactor:
+            #* The BeartypeNodeTransformer.__init__() method to accept a new
+            #  "conf_beartype=BeartypeConf" parameter, which should be localized
+            #  as a new "_conf_beartype" instance variable (for safety).
+            #* The BeartypeSourceFileLoader.source_to_code() method in the
+            #  "_clawloader" submodule to instantiate:
+            #      ast_beartyper = BeartypeNodeTransformer(
+            #          conf_beartype=self._module_conf_if_registered)
+            #FIXME: We're not done, however. Ideally, we should generalize the
+            #BeartypeNodeTransformer.__new__() class method to internally cache
+            #and return "BeartypeNodeTransformer" instances depending on the
+            #passed "conf_beartype" parameter. In general, most codebases will
+            #only leverage a single @beartype configuration (if any @beartype
+            #configuration at all); ergo, caching improves everything by
+            #enabling us to reuse the same "BeartypeNodeTransformer" instance
+            #for every hooked module. Score @beartype!
+            #
+            #See the BeartypeConf.__new__() method for relevant logic. \o/
 
+            #FIXME: Can the child 
             # AST decoration child node decorating that callable by our
-            # beartype._decor.decorcore.beartype_object_nonfatal() decorator. Note
-            # that this syntax derives from the example for the ast.arg() class:
+            # beartype._decor.decorcore.beartype_object_nonfatal() decorator.
+            #
+            # Note that this syntax derives from the example for the ast.arg()
+            # class:
             #     https://docs.python.org/3/library/ast.html#ast.arg
-            decorate_callable = Name(id='beartype_object_nonfatal', ctx=Load())
+            decorate_callable = Name(
+                id='beartype_object_nonfatal', ctx=_NODE_CONTEXT_LOAD)
 
             # Copy all source code metadata from this AST callable parent node
             # onto this AST decoration child node.
             _copy_node_code_metadata(node_src=node, node_trg=decorate_callable)
 
-            #FIXME: *INSUFFICIENT.* We need to additionally avoid redecorating
-            #callables already explicitly decorated by @beartype, as that
-            #redecoration would erroneously take precedence over the explicit
-            #decoration; the latter should *ALWAYS* take precedence over the
-            #former, however, due to "conf=BeartypeConf(...)" parametrization.
-            #Happily, this should be trivial ala:
-            #    #FIXME: Note that "decorator_node.id == 'beartype'" is probably
-            #    #an insufficient test, as decorators can be trivially renamed
-            #    #or imported under differing names.
-            #    for decorator_node in node.decorator_list:
-            #        if (
-            #            isinstance(decorator_node, Name) and
-            #            decorator_node.id == 'beartype'
-            #        ):
-            #            break
-            #    else:
-            #        node.decorator_list.append(decorate_callable)
-
-            # Append this AST decoration child node to the end of the list of
-            # all AST decoration child nodes for this AST callable parent node.
-            # Since this list is "stored outermost first (i.e. the first in the
-            # list will be applied last)", appending guarantees that our
-            # decorator will be applied first (i.e., *BEFORE* all subsequent
-            # decorators). This is *NOT* simply obsequious greed. The @beartype
-            # decorator generally requires that it precede other decorators that
-            # obfuscate the identity of the original callable, including:
-            # * The builtin @property decorator.
-            # * The builtin @classmethod decorator.
-            # * The builtin @staticmethod decorator.
-            node.decorator_list.append(decorate_callable)
-        # Else, that callable is untyped. In this case, avoid needlessly
+            # Prepend this child decoration node to the beginning of the list of
+            # all child decoration nodes for this parent callable node. Since
+            # this list is "stored outermost first (i.e. the first in the list
+            # will be applied last)", prepending guarantees that our decorator
+            # will be applied last (i.e., *AFTER* all subsequent decorators).
+            # This ensures that explicitly configured @beartype decorations
+            # (e.g., "beartype(conf=BeartypeConf(...))") assume precedence over
+            # implicitly configured @beartype decorations inserted by this hook.
+            node.decorator_list.insert(0, decorate_callable)
+        # Else, that callable is ignorable. In this case, avoid needlessly
         # decorating that callable by @beartype for efficiency.
 
         # Recursively transform *ALL* AST child nodes of this AST callable node.
@@ -328,7 +401,7 @@ class BeartypeNodeTransformer(NodeTransformer):
         # Return this AST callable node as is.
         return node
 
-
+    # ..................{ VISITORS ~ pep 562                 }..................
     def visit_AnnAssign(self, node: AnnAssign) -> Union[AST, List[AST]]:
         '''
         Add a new abstract syntax tree (AST) child node to the passed AST
@@ -400,11 +473,12 @@ class BeartypeNodeTransformer(NodeTransformer):
 
         # Child node referencing the function performing this type-checking,
         # previously imported at module scope by visit_FunctionDef() above.
-        node_typecheck_function = Name('die_if_unbearable', ctx=Load())
+        node_typecheck_function = Name(
+            'die_if_unbearable', ctx=_NODE_CONTEXT_LOAD)
 
         # Child node passing the value newly assigned to this attribute by this
         # assignment as the first parameter to die_if_unbearable().
-        node_typecheck_pith = Name(node.target.id, ctx=Load())
+        node_typecheck_pith = Name(node.target.id, ctx=_NODE_CONTEXT_LOAD)
 
         # Adjacent node type-checking this newly assigned attribute against the
         # PEP-compliant type hint annotating this assignment by deferring to our
@@ -435,6 +509,14 @@ class BeartypeNodeTransformer(NodeTransformer):
         # Return a list comprising these two adjacent nodes.
         return [node, node_typecheck]
 
+# ....................{ PRIVATE ~ constants                }....................
+_NODE_CONTEXT_LOAD = Load()
+'''
+**Node context load singleton** (i.e., object suitable for passing as the
+``ctx`` keyword parameter accepted by the ``__init__()`` method of various
+abstract syntax tree (AST) node classes).
+'''
+
 # ....................{ PRIVATE ~ copiers                  }....................
 def _copy_node_code_metadata(node_src: AST, node_trg: AST) -> None:
     '''
@@ -443,6 +525,7 @@ def _copy_node_code_metadata(node_src: AST, node_trg: AST) -> None:
     the passed target AST node.
 
     This function is an efficient alternative to:
+
     * The extremely inefficient (albeit still useful)
       :func:`ast.fix_missing_locations` function.
     * The mildly inefficient (and mostly useless) :func:`ast.copy_location`
