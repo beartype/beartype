@@ -37,7 +37,7 @@ from types import CodeType
 # replacing that function with our beartype-specific variant below.
 from importlib.util import cache_from_source as cache_from_source_original
 
-# ....................{ CLASSES                            }....................
+# ....................{ TODO                               }....................
 #FIXME: Generalize this class to support stacking. What? Okay, so the core
 #issue with the prior approach is that it only works with standard Python
 #modules defined as standard files in standard directories. This assumption
@@ -121,6 +121,16 @@ from importlib.util import cache_from_source as cache_from_source_original
 #forcefully prepending their own "MetaPathFinder" instance onto "sys.meta_path",
 #which silently overwrites pytest's "MetaPathFinder" instance. Since we're *NOT*
 #doing that, we should be fine with our approach. *sweat beads brow*
+#FIXME: Is the above commentary still required? The "BeartypeSourceFileLoader"
+#docstring now documents this fairly extensively, we should think. Still, let's
+#preserve this until we can be sure this behaves as expected.
+
+# ....................{ CLASSES                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: To improve forward compatibility with the superclass API over which
+# we have *NO* control, avoid accidental conflicts by suffixing *ALL* private
+# and public attributes of this subclass by "_beartype".
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #FIXME: Unit test us up, please.
 class BeartypeSourceFileLoader(SourceFileLoader):
@@ -169,11 +179,11 @@ class BeartypeSourceFileLoader(SourceFileLoader):
       via (...wait for it) import hooks leveraging both mechanisms.
 
     Beartype subverts this long-storied tradition by *only* leveraging the
-    lower-level :attr:`sys.path_hooks` mechanism. Doing so reduces the
-    maintenance burden, code complexity, and inter-package conflicts. The latter
-    point is particularly salient. The AST transformations applied by
-    both :mod:`typeguard` and :mod:`ideas` accidentally conflict with those
-    applied by :mod:`pytest`. Why? Because (in order):
+    lower-level :attr:`sys.path_hooks` mechanism. Doing so reduces maintenance
+    burden, code complexity, and inter-package conflicts. The latter is
+    particularly salient. AST transformations applied by both :mod:`typeguard`
+    and :mod:`ideas` accidentally conflict with those applied by :mod:`pytest`.
+    Why? Because (in order):
 
     #. When run as a test suite runner, :mod:`pytest` necessarily runs first and
        thus prepends its import hook as the new first item of the
@@ -193,13 +203,13 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
     Attributes
     ----------
-    _module_conf_if_registered : Optional[BeartypeConf]
+    _conf_beartype_if_module_hooked : Optional[BeartypeConf]
         Either:
 
-        * If the most recent call to the :meth:`get_code` method loading a
-          module (i.e., creating and return the code object underlying that
-          module) was passed the fully-qualified name of a module with a
-          transitive parent package previously registered by a call to a public
+        * If the most recent call to the :meth:`get_code` method (which loads a
+          module by creating and return the code object underlying that module)
+          was passed the fully-qualified name of a module with a transitive
+          parent package previously registered by a call to a public
           :mod:`beartype.claw` import hook factory (e.g.,
           :func:`beartype.claw.beartype_package`), the beartype configuration
           with which to type-check that module.
@@ -250,7 +260,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         super().__init__(*args, **kwargs)
 
         # Nullify all subclass-specific instance variables for safety.
-        self._module_conf_if_registered: Optional[BeartypeConf] = None
+        self._conf_beartype_if_module_hooked: Optional[BeartypeConf] = None
 
     # ..................{ LOADER API                         }..................
     # The importlib._bootstrap_external.*Loader API declares the low-level
@@ -377,7 +387,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # Beartype configuration with which to type-check that module if the
         # parent package of that module was previously registered *OR* "None"
         # otherwise (i.e., if this function preserves that module unmodified).
-        self._module_conf_if_registered = get_package_conf_if_registered(
+        self._conf_beartype_if_module_hooked = get_package_conf_if_registered(
             package_name)
 
         # If that module has *NOT* been registered for type-checking, preserve
@@ -386,7 +396,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # optimization, although it certainly is that as well. This is critical.
         # Why? Because modules *NOT* being @beartyped should remain compiled
         # under their standard non-@beartyped bytecode filenames.
-        if self._module_conf_if_registered is None:
+        if self._conf_beartype_if_module_hooked is None:
             return super().get_code(fullname)
         # Else, that module has been registered for type-checking. In this
         # case...
@@ -460,7 +470,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
         # If that module has *NOT* been registered for type-checking, preserve
         # that module as is by simply deferring to the superclass method.
-        if self._module_conf_if_registered is None:
+        if self._conf_beartype_if_module_hooked is None:
             return super().source_to_code(  # type: ignore[call-arg]
                 data=data, path=path, _optimize=_optimize)  # pyright: ignore[reportGeneralTypeIssues]
         # Else, that module has been registered for type-checking.

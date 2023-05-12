@@ -83,9 +83,16 @@ from beartype.typing import (
     List,
     Union,
 )
+from beartype._conf.confcls import BeartypeConf
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
 # ....................{ SUBCLASSES                         }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# CAUTION: To improve forward compatibility with the superclass API over which
+# we have *NO* control, avoid accidental conflicts by suffixing *ALL* private
+# and public attributes of this subclass by "_beartype".
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 #FIXME: Unit test us up, please.
 class BeartypeNodeTransformer(NodeTransformer):
     '''
@@ -93,6 +100,20 @@ class BeartypeNodeTransformer(NodeTransformer):
     pattern recursively transforming the AST tree passed to the :meth:`visit`
     method by decorating all typed callables and classes by the
     :func:`beartype.beartype` decorator).
+
+    Attributes
+    ----------
+    _conf_beartype : BeartypeConf
+        Either:
+
+        * If the most recent call to the :meth:`get_code` method loading a
+          module (i.e., creating and return the code object underlying that
+          module) was passed the fully-qualified name of a module with a
+          transitive parent package previously registered by a call to a public
+          :mod:`beartype.claw` import hook factory (e.g.,
+          :func:`beartype.claw.beartype_package`), the beartype configuration
+          with which to type-check that module.
+        * Else, :data:`None`.
 
     See Also
     ----------

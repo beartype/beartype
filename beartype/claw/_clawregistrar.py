@@ -175,6 +175,14 @@ def get_package_conf_if_registered(package_name: str) -> Optional[BeartypeConf]:
     return package_conf_if_registered
 
 # ....................{ REGISTRARS                         }....................
+#FIXME: *UHM*. wut? This function is incomplete and currently does nothing
+#meaningful. Honestly. This function and the comparable register_package()
+#function should just be unified into a single function. Notably, if the passed
+#"package_names" parameter is:
+#* A singleton object (e.g., "None" or perhaps more appropriately a new
+#  submodule-specific "PACKAGES_ALL" singleton global constant), then *ALL*
+#  packages should be registered.
+#* Anything else, then only those exact packages should be registered.
 #FIXME: Unit test us up, please.
 def register_packages_all(
     # Mandatory keyword-only parameters.
@@ -246,8 +254,6 @@ def register_packages_all(
 #* cancel_beartype_package(). This is ostensibly the most
 #  unambiguous and thus the best choice of those listed here. Obviously,
 #  beartype_package_cancel() is a comparable alternative.
-#* forget_beartype_on_import().
-#* no_beartype_on_import().
 def register_packages(
     # Mandatory keyword-only parameters.
     *,
@@ -469,6 +475,7 @@ def packages_unregistered() -> Iterator[None]:
 
 # ....................{ PRIVATE ~ classes                  }....................
 #FIXME: Docstring us up, please.
+#FIXME: Unit test us up, please.
 class _PackageBasenameToSubpackagesDict(
     Dict[str, Optional['_PackageBasenameToSubpackagesDict']]):
     '''

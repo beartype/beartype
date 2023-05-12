@@ -17,6 +17,56 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: *OKAY*. This is overly complex and frankly unmaintainable. Refactor as
+#follows, please:
+#* Shift the contents of the "_clawregistrar" submodule into this submodule.
+#* Remove the "_clawregistrar" submodule.
+#* In a new "beartype.claw._clawhint" submodule, define:
+#    class BeartypeClawPackages(Enum):
+#        ALL = auto()
+#        MANY = auto()
+#        ONE = auto()
+#        CURRENT = auto()
+#
+#    BeartypeClawPackagesHint = Literal[
+#        BeartypeClawPackages.ALL,
+#        BeartypeClawPackages.ONE,
+#        BeartypeClawPackages.MANY,
+#    ]
+#* Import here:
+#    from beartype._data.datatyping import (
+#        BeartypeClawPackages,
+#        BeartypeClawPackagesHint,
+#    )
+#* Refactor the register_packages() function to:
+#  * Annotate the "package_names" parameter by "BeartypeClawPackagesHint".
+#  * Test that parameter for equality to "BeartypeClawPackages.ALL", in which
+#    case logic suitable for all packages should be performed.
+#* Remove the obsolete register_packages_all() function.
+#* Define a new low-level _beartype_packages() function, whose implementation
+#  should be copy-and-pasted from the beartype_packages() function. The
+#  signature should resemble:
+#  def _beartype_packages(
+#      *
+#      packages: BeartypeClawPackagesHint,
+#      package_name: Optional[str],
+#      package_names: Optional[Iterable[str]],
+#  )
+#* Split beartype_package() into three new functions:
+#  def beartype_package_current(conf: BeartypeConf = BeartypeConf()): ...
+#  def beartype_package(package_name: str, conf: BeartypeConf = BeartypeConf())
+#  def beartype_packages(package_names: Iterable[str], conf: BeartypeConf = BeartypeConf())
+#* Refactor all higher-level beartype_*() functions to defer to
+#  _beartype_packages(): e.g.,
+#  def beartype_all(...):
+#      _beartype_packages(packages=BeartypeClawPackages.ALL, conf=conf)
+#  def beartype_package_current(...):
+#      _beartype_packages(packages=BeartypeClawPackages.ONE, package_name=package_name, conf=conf)
+
+#FIXME: Define a new "with imports_beartyped():" context manager with signature:
+#    @contextmanager
+#    def imports_beartyped(conf: BeartypeConf = BeartypeConf()): ...
+
 #FIXME: Unit test us up. Specifically, test that this approach successfully:
 #* Directly decorates callables declared at:
 #  * Global scope in an on-disk top-level non-package module embedded in our
@@ -225,7 +275,7 @@ def beartype_package(
         * Iterable of the fully-qualified names of one or more packages to be
           type-checked.
 
-        Defaults to ``None``, in which case this parameter defaults to the
+        Defaults to :data:`None`, in which case this parameter defaults to the
         fully-qualified name of the **calling package** (i.e., external parent
         package of the submodule directly calling this function).
     conf : BeartypeConf, optional
@@ -396,7 +446,16 @@ def beartype_package(
         if not is_path_hook_added:
             _add_path_hook()
 
+# ....................{ PRIVATE ~ globals                  }....................
+_claw_lock = RLock()
+'''
+Reentrant reusable thread-safe context manager gating access to otherwise
+non-thread-safe private globals defined by both this high-level submodule and
+subsidiary lower-level submodules (particularly, the
+:attr:`beartype.claw._clawregistrar._package_basename_to_subpackages` cache).
+'''
 
+# ....................{ PRIVATE ~ adders                   }....................
 def _add_path_hook() -> None:
     '''
     Add a new **beartype import path hook** (i.e., callable inserted to the
@@ -434,12 +493,3 @@ def _add_path_hook() -> None:
     # Uncache *ALL* competing loaders cached by prior importations. Just do it!
     path_importer_cache.clear()
     invalidate_caches()
-
-# ....................{ PRIVATE ~ globals : threading      }....................
-_claw_lock = RLock()
-'''
-Reentrant reusable thread-safe context manager gating access to otherwise
-non-thread-safe private globals defined by both this high-level submodule and
-subsidiary lower-level submodules (particularly, the
-:attr:`beartype.claw._clawregistrar._package_basename_to_subpackages` cache).
-'''
