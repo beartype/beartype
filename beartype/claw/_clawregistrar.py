@@ -60,9 +60,10 @@ def get_package_conf_if_registered(package_name: str) -> Optional[BeartypeConf]:
     '''
     Beartype configuration with which to type-check the package with the passed
     name if either that package or a parent package of that package has been
-    previously registered by a prior call to the :func:`register_packages`
-    function *or* ``None`` otherwise (i.e., if neither that package nor a parent
-    package of that package has been previously registered by such a call).
+    previously registered by a prior call to the :func:`.register_packages`
+    function *or* :data:`None` otherwise (i.e., if neither that package nor a
+    parent package of that package has been previously registered by such a
+    call).
 
     Caveats
     ----------
@@ -82,9 +83,9 @@ def get_package_conf_if_registered(package_name: str) -> Optional[BeartypeConf]:
 
         * If either that package or a parent package of that package
           has been previously registered by a prior call to the
-          :func:`register_packages` function, beartype configuration with which
+          :func:`.register_packages` function, beartype configuration with which
           to type-check that package.
-        * Else, ``None``.
+        * Else, :data:`None`.
     '''
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

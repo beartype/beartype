@@ -19,49 +19,21 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ TODO                               }....................
 #FIXME: *OKAY*. This is overly complex and frankly unmaintainable. Refactor as
 #follows, please:
-#* Shift the contents of the "_clawregistrar" submodule into this submodule.
-#* Remove the "_clawregistrar" submodule.
-#* In a new "beartype.claw._clawhint" submodule, define:
-#    class BeartypeClawPackages(Enum):
-#        ALL = auto()
-#        MANY = auto()
-#        ONE = auto()
-#        CURRENT = auto()
-#
-#    BeartypeClawPackagesHint = Literal[
-#        BeartypeClawPackages.ALL,
-#        BeartypeClawPackages.ONE,
-#        BeartypeClawPackages.MANY,
-#    ]
-#* Import here:
-#    from beartype._data.datatyping import (
-#        BeartypeClawPackages,
-#        BeartypeClawPackagesHint,
-#    )
 #* Refactor the register_packages() function to:
 #  * Annotate the "package_names" parameter by "BeartypeClawPackagesHint".
 #  * Test that parameter for equality to "BeartypeClawPackages.ALL", in which
 #    case logic suitable for all packages should be performed.
 #* Remove the obsolete register_packages_all() function.
-#* Define a new low-level _beartype_packages() function, whose implementation
-#  should be copy-and-pasted from the beartype_packages() function. The
-#  signature should resemble:
-#  def _beartype_packages(
-#      *
-#      packages: BeartypeClawPackagesHint,
-#      package_name: Optional[str],
-#      package_names: Optional[Iterable[str]],
-#  )
 #* Split beartype_package() into three new functions:
 #  def beartype_package_current(conf: BeartypeConf = BeartypeConf()): ...
 #  def beartype_package(package_name: str, conf: BeartypeConf = BeartypeConf())
 #  def beartype_packages(package_names: Iterable[str], conf: BeartypeConf = BeartypeConf())
 #* Refactor all higher-level beartype_*() functions to defer to
-#  _beartype_packages(): e.g.,
+#  _beartype_coverage(): e.g.,
 #  def beartype_all(...):
-#      _beartype_packages(packages=BeartypeClawPackages.ALL, conf=conf)
+#      _beartype_coverage(coverage=BeartypeClawCoverage.PACKAGES_ALL, conf=conf)
 #  def beartype_package_current(...):
-#      _beartype_packages(packages=BeartypeClawPackages.ONE, package_name=package_name, conf=conf)
+#      _beartype_coverage(coverage=BeartypeClawCoverage.PACKAGES_ONE, conf=conf, package_name=package_name)
 
 #FIXME: Define a new "with imports_beartyped():" context manager with signature:
 #    @contextmanager
@@ -86,6 +58,7 @@ from beartype.claw._clawregistrar import (
     register_packages,
     register_packages_all,
 )
+from beartype.claw._clawenum import BeartypeClawCoverage
 from beartype.roar import BeartypeClawRegistrationException
 from beartype.typing import (
     Iterable,
@@ -176,9 +149,10 @@ def beartype_all(
     Parameters
     ----------
     conf : BeartypeConf, optional
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object). Defaults
-        to ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
+        **Beartype configuration** (i.e., self-caching dataclass configuring the
+        :mod:`beartype.beartype` decorator for *all* decoratable objects visited
+        by the path hook added by this function). Defaults to
+        ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
 
     Raises
     ----------
@@ -279,9 +253,10 @@ def beartype_package(
         fully-qualified name of the **calling package** (i.e., external parent
         package of the submodule directly calling this function).
     conf : BeartypeConf, optional
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object). Defaults
-        to ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
+        **Beartype configuration** (i.e., self-caching dataclass configuring the
+        :mod:`beartype.beartype` decorator for *all* decoratable objects visited
+        by the path hook added by this function). Defaults to
+        ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
 
     Raises
     ----------
@@ -493,3 +468,81 @@ def _add_path_hook() -> None:
     # Uncache *ALL* competing loaders cached by prior importations. Just do it!
     path_importer_cache.clear()
     invalidate_caches()
+
+# ....................{ PRIVATE ~ hookers                  }....................
+#FIXME: Finish implementing us up according to the plan detailed above, please.
+def _beartype_coverage(
+    # Keyword-only arguments.
+    *,
+
+    # Mandatory keyword-only arguments.
+    coverage: BeartypeClawCoverage,
+    conf: BeartypeConf,
+
+    # Optional keyword-only arguments.
+    package_name: Optional[str] = None,
+    package_names: Optional[Iterable[str]] = None,
+) -> None:
+    '''
+    Register a new **beartype package import path hook** (i.e., callable
+    inserted to the front of the standard :mod:`sys.path_hooks` list recursively
+    applying the :func:`beartype.beartype` decorator to all typed callables and
+    classes of all submodules of all packages with the passed names on the first
+    importation of those submodules).
+
+    Parameters
+    ----------
+    coverage : BeartypeClawCoverage
+        **Import hook coverage** (i.e., competing package scope over which to
+        apply the path hook added by this function, each with concomitant
+        tradeoffs with respect to runtime complexity and quality assurance).
+    conf : BeartypeConf, optional
+        **Beartype configuration** (i.e., self-caching dataclass configuring the
+        :mod:`beartype.beartype` decorator for *all* decoratable objects visited
+        by the path hook added by this function).
+    package_name : Optional[str]
+        Either:
+
+        * If ``coverage`` is :attr:`BeartypeClawCoverage.PACKAGE_ONE`, the
+          fully-qualified name of the package to be type-checked.
+        * Else, ignored.
+
+        Defaults to :data:`None`.
+    package_names : Optional[Iterable[str]]]
+        Either:
+
+        * If ``coverage`` is :attr:`BeartypeClawCoverage.PACKAGE_MANY`, an
+          iterable of the fully-qualified names of one or more packages to be
+          type-checked.
+        * Else, ignored.
+
+        Defaults to :data:`None`.
+
+    Raises
+    ----------
+    BeartypeClawRegistrationException
+        If either:
+
+        * The passed ``package_names`` parameter is either:
+
+          * Neither a string nor an iterable (i.e., fails to satisfy the
+            :class:`collections.abc.Iterable` protocol).
+          * An empty string or iterable.
+          * A non-empty string that is *not* a valid **package name** (i.e.,
+            ``"."``-delimited concatenation of valid Python identifiers).
+          * A non-empty iterable containing at least one item that is either:
+
+            * *Not* a string.
+            * The empty string.
+            * A non-empty string that is *not* a valid **package name** (i.e.,
+              ``"."``-delimited concatenation of valid Python identifiers).
+
+        * The passed ``conf`` parameter is *not* a beartype configuration (i.e.,
+          :class:`BeartypeConf` instance).
+
+    See Also
+    ----------
+    https://stackoverflow.com/a/43573798/2809027
+        StackOverflow answer strongly inspiring the low-level implementation of
+        this function with respect to inscrutable :mod:`importlib` machinery.
+    '''
