@@ -19,11 +19,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ TODO                               }....................
 #FIXME: *OKAY*. This is overly complex and frankly unmaintainable. Refactor as
 #follows, please:
-#* Refactor the register_packages() function to:
+#* Refactor the add_packages() function to:
 #  * Annotate the "package_names" parameter by "BeartypeClawPackagesHint".
 #  * Test that parameter for equality to "BeartypeClawPackages.ALL", in which
 #    case logic suitable for all packages should be performed.
-#* Remove the obsolete register_packages_all() function.
+#* Remove the obsolete add_packages_all() function.
 #* Split beartype_package() into three new functions:
 #  def beartype_package_current(conf: BeartypeConf = BeartypeConf()): ...
 #  def beartype_package(package_name: str, conf: BeartypeConf = BeartypeConf())
@@ -53,10 +53,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.claw._clawloader import BeartypeSourceFileLoader
-from beartype.claw._clawregistrar import (
+from beartype.claw._pkg.clawpkgadd import (
     is_packages_registered_any,
-    register_packages,
-    register_packages_all,
+    add_packages,
+    add_packages_all,
 )
 from beartype.claw._clawenum import BeartypeClawCoverage
 from beartype.roar import BeartypeClawRegistrationException
@@ -181,13 +181,13 @@ def beartype_all(
         #
         # Pragmatically, this condition is trivially decidable by noting that:
         # * This public function performs the *ONLY* call to the private
-        #   register_packages() function in this codebase.
+        #   add_packages() function in this codebase.
         # * The first call of this function under the active Python interpreter:
-        #   * Also performs the first call of the register_packages() function.
+        #   * Also performs the first call of the add_packages() function.
         #   * Also adds our beartype import path hook.
         #
         # Ergo, deciding this state in O(1) time complexity reduces to deciding
-        # whether the register_packages() function has been called already.
+        # whether the add_packages() function has been called already.
         is_path_hook_added = is_packages_registered_any()
 
         # Register *ALL* packages for subsequent lookup during submodule
@@ -196,7 +196,7 @@ def beartype_all(
         #
         # Note this helper function fully validates these parameters. Ergo, we
         # intentionally avoid doing so here in this higher-level function.
-        register_packages_all(conf=conf)
+        add_packages_all(conf=conf)
 
         # True only if the beartype import path hook subsequently added below
         # has already been added by a prior call to this function under the
@@ -398,13 +398,13 @@ def beartype_package(
         #
         # Pragmatically, this condition is trivially decidable by noting that:
         # * This public function performs the *ONLY* call to the private
-        #   register_packages() function in this codebase.
+        #   add_packages() function in this codebase.
         # * The first call of this function under the active Python interpreter:
-        #   * Also performs the first call of the register_packages() function.
+        #   * Also performs the first call of the add_packages() function.
         #   * Also adds our beartype import path hook.
         #
         # Ergo, deciding this state in O(1) time complexity reduces to deciding
-        # whether the register_packages() function has been called already.
+        # whether the add_packages() function has been called already.
         is_path_hook_added = is_packages_registered_any()
 
         # Register these packages for subsequent lookup during submodule
@@ -413,7 +413,7 @@ def beartype_package(
         #
         # Note this helper function fully validates these parameters. Ergo, we
         # intentionally avoid doing so here in this higher-level function.
-        register_packages(package_names=package_names, conf=conf)
+        add_packages(package_names=package_names, conf=conf)
 
         # True only if the beartype import path hook subsequently added below
         # has already been added by a prior call to this function under the
@@ -427,7 +427,7 @@ _claw_lock = RLock()
 Reentrant reusable thread-safe context manager gating access to otherwise
 non-thread-safe private globals defined by both this high-level submodule and
 subsidiary lower-level submodules (particularly, the
-:attr:`beartype.claw._clawregistrar._package_basename_to_subpackages` cache).
+:attr:`beartype.claw._pkg.clawpkgadd._package_basename_to_subpackages` cache).
 '''
 
 # ....................{ PRIVATE ~ adders                   }....................

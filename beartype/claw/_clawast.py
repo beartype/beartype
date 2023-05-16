@@ -378,7 +378,7 @@ class BeartypeNodeTransformer(NodeTransformer):
             #* The BeartypeSourceFileLoader.source_to_code() method in the
             #  "_clawloader" submodule to instantiate:
             #      ast_beartyper = BeartypeNodeTransformer(
-            #          conf_beartype=self._module_conf_if_registered)
+            #          conf_beartype=self._module_conf_if_added)
             #FIXME: We're not done, however. Ideally, we should generalize the
             #BeartypeNodeTransformer.__new__() class method to internally cache
             #and return "BeartypeNodeTransformer" instances depending on the

@@ -16,9 +16,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.claw._pkg._clawpkgtrie import (
+    PackageBasenameToSubpackages,
+    package_basename_to_subpackages,
+)
 from beartype.roar import BeartypeClawRegistrationException
 from beartype.typing import (
-    Dict,
     Iterable,
     Iterator,
     Optional,
@@ -33,10 +36,10 @@ from contextlib import contextmanager
 #FIXME: Unit test us up, please.
 def is_packages_registered_any() -> bool:
     '''
-    ``True`` only if one or more packages have been previously registered.
+    :data:`True` only if one or more packages have been previously registered.
 
-    Equivalently, this tester returns ``True`` only if the
-    :func:`register_packages` function has been called at least once under the
+    Equivalently, this tester returns :data:`True` only if the
+    :func:`add_packages` function has been called at least once under the
     active Python interpreter.
 
     Caveats
@@ -48,19 +51,20 @@ def is_packages_registered_any() -> bool:
     Returns
     ----------
     bool
-        ``True`` only if one or more packages have been previously registered.
+        :data:`True` only if one or more packages have been previously
+        registered.
     '''
 
     # Unleash the beast! Unsaddle the... addled?
-    return bool(_package_basename_to_subpackages)
+    return bool(package_basename_to_subpackages)
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
-def get_package_conf_if_registered(package_name: str) -> Optional[BeartypeConf]:
+def get_package_conf_if_added(package_name: str) -> Optional[BeartypeConf]:
     '''
     Beartype configuration with which to type-check the package with the passed
     name if either that package or a parent package of that package has been
-    previously registered by a prior call to the :func:`.register_packages`
+    previously registered by a prior call to the :func:`.add_packages`
     function *or* :data:`None` otherwise (i.e., if neither that package nor a
     parent package of that package has been previously registered by such a
     call).
@@ -83,13 +87,13 @@ def get_package_conf_if_registered(package_name: str) -> Optional[BeartypeConf]:
 
         * If either that package or a parent package of that package
           has been previously registered by a prior call to the
-          :func:`.register_packages` function, beartype configuration with which
+          :func:`.add_packages` function, beartype configuration with which
           to type-check that package.
         * Else, :data:`None`.
     '''
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize logic below with the register_packages() function.
+    # CAUTION: Synchronize logic below with the add_packages() function.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # List of each unqualified basename comprising this name, split from this
@@ -110,11 +114,11 @@ def get_package_conf_if_registered(package_name: str) -> Optional[BeartypeConf]:
     #   of the form "assert isinstance({arg}, {type}), ...". Further decorating
     #   *ALL* "beartype" callables with automated type-checking only needlessly
     #   reduces the runtime efficiency of the "beartype" package.
-    # * Fundamentally dangerous, which is the greater concern. For example:
-    #   The beartype.claw._clawast.BeartypeNodeTransformer.visit_Module()
+    # * Fundamentally dangerous, which is the greater concern. For example, the
+    #   beartype.claw._clawast.BeartypeNodeTransformer.visit_Module()
     #   dynamically inserts a module-scoped import of the
-    #   @beartype._decor.decorcore.beartype_object_nonfatal decorator at the head of
-    #   the module currently being imported. But if the
+    #   @beartype._decor.decorcore.beartype_object_nonfatal decorator at the
+    #   head of the module currently being imported. But if the
     #   "beartype._decor.decorcore" submodule itself is being imported, then
     #   that importation would destructively induce an infinite circular import!
     #   Could that ever happen? *YES.* Conceivably, an external caller could
@@ -131,22 +135,22 @@ def get_package_conf_if_registered(package_name: str) -> Optional[BeartypeConf]:
     # Current subdictionary of the global package name cache describing the
     # currently iterated unqualified basename comprising that package's name,
     # initialized to the root dictionary describing all top-level packages.
-    package_basename_to_subpackages_curr = _package_basename_to_subpackages
+    package_basename_to_subpackages_curr = package_basename_to_subpackages
 
     # Beartype configuration registered with that package, defaulting to the
     # beartype configuration registered with the root package cache globally
     # applicable to *ALL* packages if an external caller previously called the
     # public beartype.claw.beartype_all() function *OR* "None" otherwise (i.e.,
     # if that function has yet to be called).
-    package_conf_if_registered = (
-        package_basename_to_subpackages_curr.conf_if_registered)
+    package_conf_if_added = (
+        package_basename_to_subpackages_curr.conf_if_added)
 
     # For each unqualified basename of each parent package transitively
     # containing this package (as well as that of that package itself)...
     for package_basename in package_basenames:
         # Current subdictionary of that cache describing that parent package if
         # that parent package was registered by a prior call to the
-        # register_packages() function *OR* "None" otherwise (i.e., if that
+        # add_packages() function *OR* "None" otherwise (i.e., if that
         # parent package has yet to be registered).
         package_subpackages = package_basename_to_subpackages_curr.get(
             package_basename)
@@ -158,34 +162,26 @@ def get_package_conf_if_registered(package_name: str) -> Optional[BeartypeConf]:
         # Else, that parent package was previously registered.
 
         # Beartype configuration registered with either...
-        package_conf_if_registered = (
+        package_conf_if_added = (
             # That parent package if any *OR*...
             #
             # Since that parent package is more granular (i.e., unique) than any
             # transitive parent package of that parent package, the former takes
             # precedence over the latter where defined.
-            package_subpackages.conf_if_registered or
+            package_subpackages.conf_if_added or
             # A transitive parent package of that parent package if any.
-            package_conf_if_registered
+            package_conf_if_added
         )
 
         # Iterate the currently examined subcache one subpackage deeper.
         package_basename_to_subpackages_curr = package_subpackages
 
     # Return this beartype configuration if any *OR* "None" otherwise.
-    return package_conf_if_registered
+    return package_conf_if_added
 
-# ....................{ REGISTRARS                         }....................
-#FIXME: *UHM*. wut? This function is incomplete and currently does nothing
-#meaningful. Honestly. This function and the comparable register_package()
-#function should just be unified into a single function. Notably, if the passed
-#"package_names" parameter is:
-#* A singleton object (e.g., "None" or perhaps more appropriately a new
-#  submodule-specific "PACKAGES_ALL" singleton global constant), then *ALL*
-#  packages should be registered.
-#* Anything else, then only those exact packages should be registered.
+# ....................{ ADDERS                             }....................
 #FIXME: Unit test us up, please.
-def register_packages_all(
+def add_packages_all(
     # Mandatory keyword-only parameters.
     *,
     conf: BeartypeConf,
@@ -232,11 +228,17 @@ def register_packages_all(
     # Beartype configuration currently associated with *ALL* packages by a
     # previous call to this function if any *OR* "None" otherwise (i.e., if this
     # function has yet to be called under the active Python interpreter).
-    conf_curr = _package_basename_to_subpackages.conf_if_registered
+    conf_curr = package_basename_to_subpackages.conf_if_added
 
+    # If this function has yet to be called under the active Python interpreter,
+    # associate the passed configuration with *ALL* packages.
+    if conf_curr is None:
+        package_basename_to_subpackages.conf_if_added = conf
+    # Else, this function has already been called under this interpreter.
+    #
     # If that call associated all packages with a different configuration than
     # that passed, raise an exception.
-    if conf_curr is not conf:
+    elif conf_curr is not conf:
         raise BeartypeClawRegistrationException(
             f'All packages previously registered '
             f'with differing beartype configuration:\n'
@@ -255,7 +257,7 @@ def register_packages_all(
 #* cancel_beartype_package(). This is ostensibly the most
 #  unambiguous and thus the best choice of those listed here. Obviously,
 #  beartype_package_cancel() is a comparable alternative.
-def register_packages(
+def add_packages(
     # Mandatory keyword-only parameters.
     *,
     package_names: Union[str, Iterable[str]],
@@ -360,7 +362,7 @@ def register_packages(
     # For the fully-qualified name of each package to be registered...
     for package_name in package_names:
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize with the get_package_conf_if_registered() getter.
+        # CAUTION: Synchronize with the get_package_conf_if_added() getter.
         # The iteration performed below modifies the global package names cache
         # and thus *CANNOT* simply defer to the same logic.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -375,14 +377,14 @@ def register_packages(
         # Current subdictionary of the global package name cache describing the
         # currently iterated unqualified basename comprising that package's name
         # initialized to the root dictionary describing all top-level packages.
-        package_basename_to_subpackages_curr = _package_basename_to_subpackages
+        package_basename_to_subpackages_curr = package_basename_to_subpackages
 
         # # For each unqualified basename comprising the directed path from the
         # root parent package of that package to that package...
         for package_basename in package_basenames:
             # Current subdictionary of that cache describing that parent package
             # if that parent package was registered by a prior call to the
-            # register_packages() function *OR* "None" otherwise (i.e., if that
+            # add_packages() function *OR* "None" otherwise (i.e., if that
             # parent package has yet to be registered).
             package_subpackages = package_basename_to_subpackages_curr.get(
                 package_basename)
@@ -391,7 +393,7 @@ def register_packages(
             # a new subcache describing that parent package.
             #
             # Note that this test could be obviated away by refactoring our
-            # "_PackageBasenameToSubpackagesDict" subclass from the
+            # "PackageBasenameToSubpackages" subclass from the
             # "collections.defaultdict" superclass rather than the standard
             # "dict" class. Since doing so would obscure erroneous attempts
             # to access non-existing keys, however, this test is preferable
@@ -401,7 +403,7 @@ def register_packages(
             if package_subpackages is None:
                 package_subpackages = \
                     package_basename_to_subpackages_curr[package_basename] = \
-                    _PackageBasenameToSubpackagesDict()
+                    PackageBasenameToSubpackages()
             # Else, that parent package was already registered by a prior call
             # to this function.
 
@@ -415,15 +417,15 @@ def register_packages(
 
         # If that (sub)package has yet to be registered, register that
         # (sub)package with this beartype configuration.
-        if  package_basename_to_subpackages_curr.conf_if_registered is None:
-            package_basename_to_subpackages_curr.conf_if_registered = conf
+        if  package_basename_to_subpackages_curr.conf_if_added is None:
+            package_basename_to_subpackages_curr.conf_if_added = conf
         # Else, that (sub)package has already been registered by a previous
         # call to this function. In this case...
         else:
             # Beartype configuration previously associated with that
             # (sub)package by the previous call to this function.
             conf_curr = (
-                package_basename_to_subpackages_curr.conf_if_registered)
+                package_basename_to_subpackages_curr.conf_if_added)
 
             # If that call associated that (sub)package with a different
             # configuration than that passed, raise an exception.
@@ -440,14 +442,14 @@ def register_packages(
             # configuration to that passed. In this case, silently ignore
             # this redundant attempt to re-register that (sub)package.
 
-
+# ....................{ CONTEXTS                           }....................
 #FIXME: Unit test us up, please.
 @contextmanager
-def packages_unregistered() -> Iterator[None]:
+def packages_unadded() -> Iterator[None]:
     '''
     Context manager "unregistering" (i.e., clearing, removing) all previously
     registered packages from the global package name cache maintained by the
-    :func:`register_packages` function *after* running the caller-defined block
+    :func:`add_packages` function *after* running the caller-defined block
     of the ``with`` statement executing this context manager.
 
     Caveats
@@ -472,135 +474,4 @@ def packages_unregistered() -> Iterator[None]:
         yield
     # Clear the global package name cache *AFTER* doing so.
     finally:
-        _package_basename_to_subpackages.clear()
-
-# ....................{ PRIVATE ~ classes                  }....................
-#FIXME: Docstring us up, please.
-#FIXME: Unit test us up, please.
-class _PackageBasenameToSubpackagesDict(
-    Dict[str, Optional['_PackageBasenameToSubpackagesDict']]):
-    '''
-    **(Sub)package name (sub)cache** (i.e., recursively nested dictionary
-    mapping from the unqualified basename of each subpackage of the current
-    package to be type-checked on first importation by the
-    :func:`beartype.beartype` decorator to another instance of this class
-    similarly describing the subsubpackages of that subpackage).
-
-    This (sub)cache is suitable for caching as the values of:
-
-    * The :data:`_package_basename_to_subpackages` global dictionary.
-    * Each (sub)value mapped to by that global dictionary.
-
-    Attributes
-    ----------
-    conf_if_registered : Optional[BeartypeConf]
-        Either:
-
-        * If this (sub)package has been explicitly registered by a prior call to
-          the :func:`register_package_names` function, the **beartype
-          configuration** (i.e., self-caching dataclass encapsulating
-          all settings configuring type-checking for this (sub)package).
-        * Else, ``None``.
-    '''
-
-    # ..................{ CLASS VARIABLES                    }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Subclasses declaring uniquely subclass-specific instance
-    # variables *MUST* additionally slot those variables. Subclasses violating
-    # this constraint will be usable but unslotted, which defeats our purposes.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # Slot all instance variables defined on this object to minimize the time
-    # complexity of both reading and writing variables across frequently called
-    # cache dunder methods. Slotting has been shown to reduce read and write
-    # costs by approximately ~10%, which is non-trivial.
-    __slots__ = (
-        'conf_if_registered',
-    )
-
-    # ..................{ INITIALIZERS                       }..................
-    def __init__(self, *args, **kwargs) -> None:
-        '''
-        Initialize this package name (sub)cache.
-
-        All passed parameters are passed as is to the superclass
-        :meth:`dict.__init__` method.
-        '''
-
-        # Initialize our superclass with all passed parameters.
-        super().__init__(*args, **kwargs)
-
-        # Nullify all subclass-specific parameters for safety.
-        self.conf_if_registered: Optional[BeartypeConf] = None
-
-# ....................{ PRIVATE ~ globals                  }....................
-#FIXME: Revise docstring in accordance with data structure changes, please.
-_package_basename_to_subpackages = _PackageBasenameToSubpackagesDict()
-'''
-**Package name cache** (i.e., non-thread-safe dictionary mapping in a
-recursively nested manner from the unqualified basename of each subpackage to be
-possibly type-checked on first importation by the :func:`beartype.beartype`
-decorator to either the ``None`` singleton if that subpackage is to be
-type-checked *or* a nested dictionary satisfying the same structure otherwise
-(i.e., if that subpackage is *not* to be type-checked)).
-
-Motivation
-----------
-This dictionary is intentionally structured as a non-trivial nested data
-structure rather than a trivial non-nested flat dictionary. Why? Efficiency.
-Consider this flattened set of package names:
-
-    .. code-block:: python
-
-       _package_names = {'a.b', 'a.c', 'd'}
-
-Deciding whether an arbitrary package name is in that set or not requires
-worst-case ``O(n)`` iteration across the set of ``n`` package names.
-
-Consider instead this nested dictionary whose keys are package names split on
-``.`` delimiters and whose values are either recursively nested dictionaries of
-the same format *or* the ``None`` singleton (terminating the current package
-name):
-
-    .. code-block:: python
-
-       _package_basename_to_subpackages = {
-           'a': {'b': None, 'c': None}, 'd': None}
-
-Deciding whether an arbitrary package name is in this dictionary or not requires
-worst-case ``O(h)`` iteration across the height ``h`` of this dictionary
-(equivalent to the largest number of ``.`` delimiters for any fully-qualified
-package name encapsulated by this dictionary). Since ``h <<<<<<<<<< n``, this
-dictionary provides substantially faster worst-case lookup than that set.
-
-Moreover, in the worst case:
-
-* That set requires one inefficient string prefix test for each item.
-* This dictionary requires *only* one efficient string equality test for each
-  nested key-value pair while descending towards the target package name.
-
-Let's do this, fam.
-
-Caveats
-----------
-**This global is only safely accessible in a thread-safe manner from within a**
-``with _claw_lock:`` **context manager.** Equivalently, this global is *not*
-safely accessible outside that manager.
-
-Examples
-----------
-Instance of this data structure type-checking on import submodules of the root
-``package_z`` package, the child ``package_a.subpackage_k`` submodule, and the
-``package_a.subpackage_b.subpackage_c`` and
-``package_a.subpackage_b.subpackage_d`` submodules:
-
-    >>> _package_basename_to_subpackages = {
-    ...     'package_a': {
-    ...         'subpackage_b': {
-    ...             'subpackage_c': None,
-    ...             'subpackage_d': None,
-    ...         },
-    ...         'subpackage_k': None,
-    ...     },
-    ...     'package_z': None,
-    ... }
-'''
+        package_basename_to_subpackages.clear()

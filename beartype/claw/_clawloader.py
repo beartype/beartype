@@ -21,7 +21,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from ast import PyCF_ONLY_AST
 from beartype.claw._clawast import BeartypeNodeTransformer
-from beartype.claw._clawregistrar import get_package_conf_if_registered
+from beartype.claw._pkg.clawpkgadd import get_package_conf_if_added
 from beartype.meta import VERSION
 from beartype.typing import Optional
 from beartype._conf.confcls import BeartypeConf
@@ -197,7 +197,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         internally follows one of two distinct code paths, conditionally
         depending on whether a parent package transitively containing that
         module has been previously registered with the
-        :mod:`beartype.claw._clawregistrar` submodule (e.g., by a call to the
+        :mod:`beartype.claw._pkg.clawpkgadd` submodule (e.g., by a call to the
         :func:`beartype.claw.beartype_package` function). Specifically:
 
         * If *no* parent package transitively containing that module has been
@@ -299,7 +299,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # Beartype configuration with which to type-check that module if the
         # parent package of that module was previously registered *OR* "None"
         # otherwise (i.e., if this function preserves that module unmodified).
-        self._conf_beartype_if_module_hooked = get_package_conf_if_registered(
+        self._conf_beartype_if_module_hooked = get_package_conf_if_added(
             package_name)
 
         # If that module has *NOT* been registered for type-checking, preserve
