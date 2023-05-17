@@ -16,6 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.claw._clawenum import BeartypeClawCoverage
 from beartype.claw._pkg._clawpkgtrie import (
     PackageBasenameToSubpackages,
     package_basename_to_subpackages,
@@ -260,6 +261,7 @@ def add_packages_all(
 def add_packages(
     # Mandatory keyword-only parameters.
     *,
+    # coverage: BeartypeClawCoverage,
     package_names: Union[str, Iterable[str]],
     conf: BeartypeConf,
 ) -> None:

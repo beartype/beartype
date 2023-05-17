@@ -1103,6 +1103,20 @@ class _BeartypeUtilCallableException(_BeartypeUtilException):
     pass
 
 
+class _BeartypeUtilCallFrameException(_BeartypeUtilException):
+    '''
+    **Beartype call stack frame utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.utilfunc` subpackage.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
 class _BeartypeUtilMappingException(_BeartypeUtilException):
     '''
     **Beartype mapping utility exception.**

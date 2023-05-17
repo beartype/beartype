@@ -132,7 +132,7 @@ class BeartypeNodeTransformer(NodeTransformer):
         '''
         Add a new abstract syntax tree (AST) child node to the passed AST module
         parent node encapsulating the module currently being loaded by the
-        :class:`beartype.claw._clawloader.BeartypeSourceFileLoader` object,
+        :class:`beartype.claw._clawload.BeartypeSourceFileLoader` object,
         importing our private
         :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator for
         subsequent use by the other visitor methods defined by this class.
@@ -371,12 +371,12 @@ class BeartypeNodeTransformer(NodeTransformer):
             #FIXME: Additionally pass the current beartype configuration as a
             #keyword-only "conf={conf}" parameter to this decorator, please.
             #Thankfully, this class is only instantiated in a single location in
-            #the "_clawloader" submodule. Altogether, we'll need to refactor:
+            #the "_clawload" submodule. Altogether, we'll need to refactor:
             #* The BeartypeNodeTransformer.__init__() method to accept a new
             #  "conf_beartype=BeartypeConf" parameter, which should be localized
             #  as a new "_conf_beartype" instance variable (for safety).
             #* The BeartypeSourceFileLoader.source_to_code() method in the
-            #  "_clawloader" submodule to instantiate:
+            #  "_clawload" submodule to instantiate:
             #      ast_beartyper = BeartypeNodeTransformer(
             #          conf_beartype=self._module_conf_if_added)
             #FIXME: We're not done, however. Ideally, we should generalize the

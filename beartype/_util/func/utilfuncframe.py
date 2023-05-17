@@ -13,27 +13,29 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 import sys
+from beartype.roar._roarexc import _BeartypeUtilCallFrameException
 from beartype.typing import (
     Callable,
     Iterable,
     Optional,
 )
-from types import FrameType
+from beartype._cave._cavefast import CallableFrameType
+from beartype._data.datatyping import TypeException
 
 # ....................{ GETTERS                            }....................
-get_frame: Optional[Callable[[int,], Optional[FrameType]]] = (
+get_frame: Optional[Callable[[int], Optional[CallableFrameType]]] = (
     getattr(sys, '_getframe', None))
 '''
 Private low-level :func:`sys._getframe` getter if the active Python interpreter
-declares this getter *or* ``None`` otherwise (i.e., if this interpreter does
+declares this getter *or* :data:`None` otherwise (i.e., if this interpreter does
 *not* declare this getter).
 
 All standard Python interpreters supported by this package including both
 CPython *and* PyPy declare this getter. Ergo, this attribute should *always* be
-a valid callable rather than ``None``.
+a valid callable rather than :data:`None`.
 
-If this getter is *not* ``None``, this getter's signature and docstring under
-CPython resembles:
+If this getter is *not* :data:`None`, this getter's signature and docstring
+under CPython resembles:
 
 ::
 
@@ -56,13 +58,108 @@ CPython resembles:
         f_trace         tracing function for this frame, or None
 '''
 
+# ....................{ GETTERS ~ name                     }....................
+def get_frame_basename(
+    # Mandatory parameters.
+    frame: CallableFrameType,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallFrameException,
+) -> str:
+    '''
+    **Unqualified basename** (e.g., function name, method name excluding parent
+    classname) of the callable whose code object is that of the passed **stack
+    frame** (i.e., :class:`types.CallableFrameType` instance encapsulating all
+    metadata describing a single call on the current call stack).
+
+    Parameters
+    ----------
+    frame : CallableFrameType
+        Stack frame to be inspected.
+
+    Raises
+    ----------
+    exception_cls
+         If that callable has *no* code object and is thus *not* pure-Python.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfunccodeobj import get_func_codeobj
+
+    # Code object underlying the callable encapsulated by this frame if that
+    # callable is pure-Python *OR* raise an exception otherwise (i.e., if that
+    # callable is C-based).
+    func_codeobj = get_func_codeobj(func=frame, exception_cls=exception_cls)
+
+    # Return the unqualified basename of that callable.
+    return func_codeobj.co_name
+
+
+#FIXME: Unit test us up, please.
+def get_frame_module_name(
+    # Mandatory parameters.
+    frame: CallableFrameType,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallFrameException,
+) -> str:
+    '''
+    **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
+    declaring package) of the module declaring the callable whose code object is
+    that of the passed **stack frame** (i.e., :class:`types.CallableFrameType` instance
+    encapsulating all metadata describing a single call on the current call
+    stack).
+
+    Parameters
+    ----------
+    frame : CallableFrameType
+        Stack frame to be inspected.
+    exception_cls : TypeException, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallFrameException`.
+
+    Returns
+    ----------
+    str
+        Fully-qualified name of the module declaring that callable.
+
+    Raises
+    ----------
+    exception_cls
+         If that callable has *no* code object and is thus *not* pure-Python.
+    '''
+
+    # Fully-qualified name of the module declaring the callable whose code
+    # object is that of this stack frame's if that module declares its name *OR*
+    # "None" otherwise (i.e., if something horrifying has happened).
+    frame_module_name = frame.f_globals.get('__name__')
+
+    # If that module has *NO* name...
+    #
+    # Note that this should *NEVER* happen. All modules should have names.
+    # Nonetheless, this *WILL* happen. This is the sad state of the world.
+    if frame_module_name is None:  # pragma: no cover
+        # Unqualified basename of the callable encapsulated by this frame.
+        frame_basename = get_frame_basename(
+            frame=frame, exception_cls=exception_cls)
+
+        # Raise an exception.
+        raise exception_cls(
+            f'Call stack frame {repr(frame)} '
+            f'callable "{frame_basename}()" module name not found.'
+        )
+    # Else, that module has a name.
+
+    # Return this name.
+    return frame_module_name
+
 # ....................{ ITERATORS                          }....................
 def iter_frames(
     # Optional parameters.
     func_stack_frames_ignore: int = 0,
-) -> Iterable[FrameType]:
+) -> Iterable[CallableFrameType]:
     '''
-    Generator yielding one **frame** (i.e., :class:`types.FrameType` instance)
+    Generator yielding one **frame** (i.e., :class:`types.CallableFrameType` instance)
     for each call on the current **call stack** (i.e., stack of frame objects,
     encapsulating the linear chain of calls to external callables underlying
     the current call to this callable).
@@ -110,7 +207,7 @@ def iter_frames(
 
     Returns
     ----------
-    Iterable[FrameType]
+    Iterable[CallableFrameType]
         Generator yielding one frame for each call on the current call stack.
 
     See Also

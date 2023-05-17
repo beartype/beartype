@@ -90,15 +90,15 @@ def get_func_codeobj(
     func : Codeobjable
         Codeobjable to be inspected.
     is_unwrap: bool, optional
-        ``True`` only if this getter implicitly calls the :func:`unwrap_func`
-        function to unwrap this possibly higher-level wrapper into a possibly
-        lower-level wrappee *before* returning the code object of that wrappee.
-        Note that doing so incurs worst-case time complexity ``O(n)`` for ``n``
-        the number of lower-level wrappees wrapped by this wrapper. Defaults to
-        ``False`` for efficiency.
-    exception_cls : type, optional
-        Type of exception in the event of a fatal error. Defaults to
-        :class:`_BeartypeUtilCallableException`.
+        :data:`True` only if this getter implicitly calls the
+        :func:`.unwrap_func` function to unwrap this possibly higher-level
+        wrapper into a possibly lower-level wrappee *before* returning the code
+        object of that wrappee. Note that doing so incurs worst-case time
+        complexity ``O(n)`` for ``n`` the number of lower-level wrappees wrapped
+        by this wrapper. Defaults to :data:`False` for efficiency.
+    exception_cls : TypeException, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableException`.
 
     Returns
     ----------
@@ -130,6 +130,9 @@ def get_func_codeobj(
 
 def get_func_codeobj_or_none(
     # Mandatory parameters.
+    #
+    # Note that the "func" parameter is intentionally annotated as "Any" rather
+    # than "Codeobjable", as this tester transparently supports *ALL* objects.
     func: Any,
 
     # Optional parameters.
@@ -138,8 +141,8 @@ def get_func_codeobj_or_none(
     '''
     **Code object** (i.e., instance of the :class:`CodeType` type) underlying
     the passed **codeobjable** (i.e., pure-Python object directly associated
-    with a code object) if this object is codeobjable *or* ``None`` otherwise
-    (e.g., if this object is *not* codeobjable).
+    with a code object) if this object is codeobjable *or* :data:`None`
+    otherwise (e.g., if this object is *not* codeobjable).
 
     Specifically, if the passed object is a:
 
@@ -166,15 +169,15 @@ def get_func_codeobj_or_none(
 
     Parameters
     ----------
-    func : Codeobjable
+    func : Any
         Codeobjable to be inspected.
     is_unwrap: bool, optional
-        ``True`` only if this getter implicitly calls the :func:`unwrap_func`
-        function to unwrap this possibly higher-level wrapper into a possibly
-        lower-level wrappee *before* returning the code object of that wrappee.
-        Note that doing so incurs worst-case time complexity ``O(n)`` for ``n``
-        the number of lower-level wrappees wrapped by this wrapper. Defaults to
-        ``False`` for efficiency.
+        :data:`True` only if this getter implicitly calls the
+        :func:`.unwrap_func` function to unwrap this possibly higher-level
+        wrapper into a possibly lower-level wrappee *before* returning the code
+        object of that wrappee. Note that doing so incurs worst-case time
+        complexity ``O(n)`` for ``n`` the number of lower-level wrappees wrapped
+        by this wrapper. Defaults to :data:`False` for efficiency.
 
     Returns
     ----------
@@ -182,11 +185,11 @@ def get_func_codeobj_or_none(
         Either:
 
         * If the passed callable is pure-Python, that callable's code object.
-        * Else, ``None``.
+        * Else, :data:`None`.
 
     See Also
     ----------
-    :func:`get_func_codeobj`
+    :func:`.get_func_codeobj`
         Further details.
     '''
     assert is_unwrap.__class__ is bool, f'{is_unwrap} not boolean.'

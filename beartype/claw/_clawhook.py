@@ -52,7 +52,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  currently running pytest process? O_o
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._clawloader import BeartypeSourceFileLoader
+from beartype.claw._clawload import BeartypeSourceFileLoader
 from beartype.claw._pkg.clawpkgadd import (
     is_packages_registered_any,
     add_packages,
@@ -73,8 +73,12 @@ from beartype._util.func.utilfunccodeobj import (
     FUNC_CODEOBJ_NAME_MODULE,
     get_func_codeobj,
 )
-from beartype._util.func.utilfuncframe import get_frame
-from importlib import invalidate_caches
+from beartype._util.func.utilfuncframe import (
+    get_frame,
+    get_frame_basename,
+    get_frame_module_name,
+)
+from importlib import invalidate_caches as clear_importlib_caches
 from importlib.machinery import (
     SOURCE_SUFFIXES,
     FileFinder,
@@ -203,6 +207,130 @@ def beartype_all(
         # active Python interpreter.
         if not is_path_hook_added:
             _add_path_hook()
+
+
+#FIXME: Unit test us up, please.
+def beartype_package_current(
+    # Optional keyword-only parameters.
+    *,
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+) -> None:
+    '''
+    Register a new **current package-specific beartype import path hook** (i.e.,
+    callable inserted to the front of the standard :mod:`sys.path_hooks` list
+    recursively applying the :func:`beartype.beartype` decorator to all typed
+    callables and classes of all submodules of the current user-defined package
+    calling this function on the first importation of those submodules).
+
+    Parameters
+    ----------
+    conf : BeartypeConf, optional
+        **Beartype configuration** (i.e., self-caching dataclass configuring the
+        :mod:`beartype.beartype` decorator for *all* decoratable objects visited
+        by the path hook added by this function). Defaults to
+        ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
+
+    Raises
+    ----------
+    BeartypeClawRegistrationException
+        If the passed ``conf`` parameter is *not* a beartype configuration
+        (i.e., :class:`.BeartypeConf` instance).
+
+    See Also
+    ----------
+    :func:`.beartype_packages`
+        Further details.
+    '''
+
+    # ..................{ PACKAGE NAMES                      }..................
+    # Note the following logic *CANNOT* reasonably be isolated to a new private
+    # helper function. Why? Because this logic itself calls existing private
+    # helper functions assuming the caller to be at the expected position on the
+    # current call stack.
+
+    #FIXME: *UNSAFE.* get_frame() raises a "ValueError" exception if
+    #passed a non-existent frame, which is non-ideal: e.g.,
+    #    >>> sys._getframe(20)
+    #    ValueError: call stack is not deep enough
+    #
+    #Since beartype_on_import() is public, that function can
+    #technically be called directly from a REPL. When it is, a
+    #human-readable exception should be raised instead. Notably, we
+    #instead want to:
+    #* Define new utilfuncframe getters resembling:
+    #      def get_frame_or_none(ignore_frames: int) -> Optional[FrameType]:
+    #          try:
+    #              return get_frame(ignore_frames + 1)
+    #          except ValueError:
+    #              return None
+    #      def get_frame_caller_or_none() -> Optional[FrameType]:
+    #          return get_frame_or_none(ignore_frames=2)
+    #* Import "get_frame_caller_or_none" above.
+    #* Refactor this logic here to resemble:
+    #      frame_caller = get_frame_caller_or_none()
+    #      if frame_caller is None:
+    #          raise BeartypeClawRegistrationException(
+    #              'beartype_package_current() '
+    #              'not callable directly from REPL scope.'
+    #          )
+    frame_caller: FrameType = get_frame(1)  # type: ignore[assignment,misc]
+
+    # Unqualified basename of that caller.
+    frame_caller_basename = get_frame_basename(frame_caller)
+
+    # Fully-qualified name of the module defining that caller.
+    frame_caller_module_name = get_frame_module_name(frame_caller)
+
+    #FIXME: Relax this constraint, please. Just iteratively search up the
+    #call stack with iter_frames() until stumbling into a frame satisfying
+    #this condition.
+    # If that name is *NOT* the placeholder string assigned by the active
+    # Python interpreter to all scopes encapsulating the top-most lexical
+    # scope of a module in the current call stack, the caller is a class or
+    # callable rather than a module. In this case, raise an exception.
+    if frame_caller_basename != FUNC_CODEOBJ_NAME_MODULE:
+        raise BeartypeClawRegistrationException(
+            f'beartype_package_current() not called from module scope '
+            f'(i.e., caller '
+            f'"{frame_caller_module_name}.{frame_caller_basename}" '
+            f'either class or callable rather than module).'
+        )
+
+    # If the fully-qualified name of the module defining that caller
+    # contains *NO* delimiters, that module is a top-level module defined by
+    # *NO* parent package. In this case, raise an exception. Why? Because
+    # this function uselessly and silently reduces to a noop when called by
+    # a top-level module. Why? Because this function registers an import
+    # hook applicable only to subsequently imported submodules of the passed
+    # packages. By definition, a top-level module is *NOT* a package and
+    # thus has *NO* submodules. To prevent confusion, notify the user here.
+    #
+    # Note this is constraint is also implicitly imposed by the subsequent
+    # call to the frame_caller_module_name.rpartition() method: e.g.,
+    #     >>> frame_caller_module_name = 'muh_module'
+    #     >>> frame_caller_module_name.rpartition()
+    #     ('', '', 'muh_module')  # <-- we're now in trouble, folks
+    if '.' not in frame_caller_module_name:
+        raise BeartypeClawRegistrationException(
+            f'beartype_package_current() not called by submodule '
+            f'(i.e., caller module "{frame_caller_module_name}" is a '
+            f'top-level module rather than submodule of some parent package).'
+        )
+    # Else, that module is a submodule of some parent package.
+
+    # Fully-qualified name of the parent package defining that submodule,
+    # parsed from the name of that submodule via this standard idiom:
+    #     >>> frame_caller_module_name = 'muh_package.muh_module'
+    #     >>> frame_caller_module_name.rpartition('.')
+    #     ('muh_package', '.', 'muh_module')
+    frame_caller_package_name = frame_caller_module_name.rpartition('.')[0]
+
+    # Add a new import path hook beartyping this package.
+    _beartype_coverage(
+        coverage=BeartypeClawCoverage.PACKAGES_ONE,
+        package_name=frame_caller_package_name,
+        conf=conf,
+    )
 
 
 #FIXME: Unit test us up, please.
@@ -433,11 +561,17 @@ subsidiary lower-level submodules (particularly, the
 # ....................{ PRIVATE ~ adders                   }....................
 def _add_path_hook() -> None:
     '''
-    Add a new **beartype import path hook** (i.e., callable inserted to the
-    front of the standard :mod:`sys.path_hooks` list recursively applying the
+    Add a **beartype import path hook** (i.e., callable inserted to the front of
+    the standard :mod:`sys.path_hooks` list recursively applying the
     :func:`beartype.beartype` decorator to all well-typed callables and classes
-    defined by all submodules of all packages with the passed names on the first
-    importation of those submodules).
+    defined by all submodules of all packages previously registered by a call
+    to the :func:`beartype.claw._pkg.clawpkgadd.add_packages` function).
+
+    Caveats
+    ----------
+    **This function should only be called once for the lifetime of the active
+    Python interpreter.** It is currently the caller's responsibility to ensure
+    this.
 
     See Also
     ----------
@@ -467,7 +601,7 @@ def _add_path_hook() -> None:
 
     # Uncache *ALL* competing loaders cached by prior importations. Just do it!
     path_importer_cache.clear()
-    invalidate_caches()
+    clear_importlib_caches()
 
 # ....................{ PRIVATE ~ hookers                  }....................
 #FIXME: Finish implementing us up according to the plan detailed above, please.

@@ -351,7 +351,7 @@ def is_func_lambda(func: Any) -> bool:
 
 def is_func_python(func: object) -> TypeGuard[Callable]:
     '''
-    ``True`` only if the passed object is a **pure-Python callable** (i.e.,
+    :data:`True` only if the passed object is a **pure-Python callable** (i.e.,
     implemented in Python as either a function or method rather than in C as
     either a builtin bundled with the active Python interpreter *or*
     third-party C extension function).
@@ -364,7 +364,7 @@ def is_func_python(func: object) -> TypeGuard[Callable]:
     Returns
     ----------
     bool
-        ``True`` only if this object is a pure-Python callable
+        :data:`True` only if this object is a pure-Python callable
     '''
 
     # Return true only if a pure-Python code object underlies this object.

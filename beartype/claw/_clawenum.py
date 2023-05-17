@@ -39,7 +39,7 @@ class BeartypeClawCoverage(Enum):
         **Many-packages coverage** (i.e, hooking imports into two or more
         explicitly specified packages). This coverage is typically applied by a
         caller calling the :func:`beartype.claw.beartype_packages` import hook.
-    PACKAGES_MANY : EnumMemberType
+    PACKAGES_ONE : EnumMemberType
         **One-package coverage** (i.e, hooking imports into only one explicitly
         specified package). This coverage is typically applied by a caller
         calling the :func:`beartype.claw.beartype_package` import hook.
