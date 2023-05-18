@@ -80,9 +80,9 @@ def beartype_object(
     obj : BeartypeableT
         **Beartypeable** (i.e., pure-Python callable or class) to be decorated.
     conf : BeartypeConf
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all flags, options, settings, and other metadata configuring the
-        current decoration of the decorated callable or class).
+        **Beartype configuration** (i.e., dataclass encapsulating all flags,
+        options, settings, and other metadata configuring the current decoration
+        of the decorated callable or class).
     cls_stack : TypeStack, optional
         **Type stack** (i.e., either a tuple of the one or more
         :func:`beartype.beartype`-decorated classes lexically containing the

@@ -17,24 +17,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: *OKAY*. This is overly complex and frankly unmaintainable. Refactor as
-#follows, please:
-#* Refactor the add_packages() function to:
-#  * Annotate the "package_names" parameter by "BeartypeClawPackagesHint".
-#  * Test that parameter for equality to "BeartypeClawPackages.ALL", in which
-#    case logic suitable for all packages should be performed.
-#* Remove the obsolete add_packages_all() function.
-#* Split beartype_package() into three new functions:
-#  def beartype_package_current(conf: BeartypeConf = BeartypeConf()): ...
-#  def beartype_package(package_name: str, conf: BeartypeConf = BeartypeConf())
-#  def beartype_packages(package_names: Iterable[str], conf: BeartypeConf = BeartypeConf())
-#* Refactor all higher-level beartype_*() functions to defer to
-#  _beartype_coverage(): e.g.,
-#  def beartype_all(...):
-#      _beartype_coverage(coverage=BeartypeClawCoverage.PACKAGES_ALL, conf=conf)
-#  def beartype_package_current(...):
-#      _beartype_coverage(coverage=BeartypeClawCoverage.PACKAGES_ONE, conf=conf, package_name=package_name)
-
 #FIXME: Define a new "with imports_beartyped():" context manager with signature:
 #    @contextmanager
 #    def imports_beartyped(conf: BeartypeConf = BeartypeConf()): ...
@@ -52,44 +34,20 @@ This private submodule is *not* intended for importation by downstream callers.
 #  currently running pytest process? O_o
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._clawload import BeartypeSourceFileLoader
-from beartype.claw._pkg.clawpkgadd import (
-    is_packages_registered_any,
-    add_packages,
-    add_packages_all,
-)
+from beartype.claw._pkg.clawpkgadd import add_packages
 from beartype.claw._clawenum import BeartypeClawCoverage
 from beartype.roar import BeartypeClawRegistrationException
-from beartype.typing import (
-    Iterable,
-    Optional,
-    Union,
-)
+from beartype.typing import Iterable
+from beartype._cave._cavefast import CallableFrameType
 from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
-from beartype._util.func.utilfunccodeobj import (
-    FUNC_CODEOBJ_NAME_MODULE,
-    get_func_codeobj,
-)
+from beartype._util.func.utilfunccodeobj import FUNC_CODEOBJ_NAME_MODULE
 from beartype._util.func.utilfuncframe import (
     get_frame,
     get_frame_basename,
     get_frame_module_name,
-)
-from importlib import invalidate_caches as clear_importlib_caches
-from importlib.machinery import (
-    SOURCE_SUFFIXES,
-    FileFinder,
-)
-from sys import (
-    path_hooks,
-    path_importer_cache,
-)
-from threading import RLock
-from types import (
-    FrameType,
 )
 
 # ....................{ HOOKS                              }....................
@@ -148,65 +106,25 @@ def beartype_all(
     expected to be reused by others. Open-source packages are advised to call
     the more granular :func:`beartype_package` function instead.
 
-    **tl;dr:** *Only call this function in proprietary non-reusable packages.*
+    **tl;dr:** *Only call this function in non-reusable end user apps.*
 
     Parameters
     ----------
     conf : BeartypeConf, optional
-        **Beartype configuration** (i.e., self-caching dataclass configuring the
-        :mod:`beartype.beartype` decorator for *all* decoratable objects visited
-        by the path hook added by this function). Defaults to
-        ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
+        **Beartype configuration** (i.e., dataclass configuring the
+        :mod:`beartype.beartype` decorator for *all* decoratable objects
+        recursively decorated by the path hook added by this function).
+        Defaults to ``BeartypeConf()``, the default ``O(1)`` configuration.
 
     Raises
     ----------
     BeartypeClawRegistrationException
-        If either:
-
-        * The passed ``conf`` parameter is *not* a beartype configuration (i.e.,
-          :class:`BeartypeConf` instance).
+        If the passed ``conf`` parameter is *not* a beartype configuration
+        (i.e., :class:`BeartypeConf` instance).
     '''
 
-    # ..................{ PATH HOOK                          }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with the beartype_all() function.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    # With a submodule-specific thread-safe reentrant lock...
-    with _claw_lock:
-        # True only if the beartype import path hook subsequently added below
-        # has already been added by a prior call to this function under the
-        # active Python interpreter.
-        #
-        # Technically, this condition is also decidable by an iterative search
-        # over the "sys.path_hooks" list for an item that is an instance of our
-        # private "_BeartypeSourceFileLoader" subclass. However, doing so would
-        # impose O(n) time complexity for "n" the size of that list,
-        #
-        # Pragmatically, this condition is trivially decidable by noting that:
-        # * This public function performs the *ONLY* call to the private
-        #   add_packages() function in this codebase.
-        # * The first call of this function under the active Python interpreter:
-        #   * Also performs the first call of the add_packages() function.
-        #   * Also adds our beartype import path hook.
-        #
-        # Ergo, deciding this state in O(1) time complexity reduces to deciding
-        # whether the add_packages() function has been called already.
-        is_path_hook_added = is_packages_registered_any()
-
-        # Register *ALL* packages for subsequent lookup during submodule
-        # importation by the beartype import path hook registered below *AFTER*
-        # deciding whether this function has been called already.
-        #
-        # Note this helper function fully validates these parameters. Ergo, we
-        # intentionally avoid doing so here in this higher-level function.
-        add_packages_all(conf=conf)
-
-        # True only if the beartype import path hook subsequently added below
-        # has already been added by a prior call to this function under the
-        # active Python interpreter.
-        if not is_path_hook_added:
-            _add_path_hook()
+    # The advantage of one-liners is the vantage of vanity.
+    add_packages(coverage=BeartypeClawCoverage.PACKAGES_ALL, conf=conf)
 
 
 #FIXME: Unit test us up, please.
@@ -225,16 +143,20 @@ def beartype_package_current(
     Parameters
     ----------
     conf : BeartypeConf, optional
-        **Beartype configuration** (i.e., self-caching dataclass configuring the
-        :mod:`beartype.beartype` decorator for *all* decoratable objects visited
-        by the path hook added by this function). Defaults to
-        ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
+        **Beartype configuration** (i.e., dataclass configuring the
+        :mod:`beartype.beartype` decorator for *all* decoratable objects
+        recursively decorated by the path hook added by this function).
+        Defaults to ``BeartypeConf()``, the default ``O(1)`` configuration.
 
     Raises
     ----------
     BeartypeClawRegistrationException
-        If the passed ``conf`` parameter is *not* a beartype configuration
-        (i.e., :class:`.BeartypeConf` instance).
+        If either:
+
+        * This function is *not* called from a module (i.e., this function is
+          called directly from within a read–eval–print loop (REPL)).
+        * The passed ``conf`` parameter is *not* a beartype configuration
+          (i.e., :class:`.BeartypeConf` instance).
 
     See Also
     ----------
@@ -242,7 +164,6 @@ def beartype_package_current(
         Further details.
     '''
 
-    # ..................{ PACKAGE NAMES                      }..................
     # Note the following logic *CANNOT* reasonably be isolated to a new private
     # helper function. Why? Because this logic itself calls existing private
     # helper functions assuming the caller to be at the expected position on the
@@ -273,7 +194,7 @@ def beartype_package_current(
     #              'beartype_package_current() '
     #              'not callable directly from REPL scope.'
     #          )
-    frame_caller: FrameType = get_frame(1)  # type: ignore[assignment,misc]
+    frame_caller: CallableFrameType = get_frame(1)  # type: ignore[assignment,misc]
 
     # Unqualified basename of that caller.
     frame_caller_basename = get_frame_basename(frame_caller)
@@ -326,7 +247,7 @@ def beartype_package_current(
     frame_caller_package_name = frame_caller_module_name.rpartition('.')[0]
 
     # Add a new import path hook beartyping this package.
-    _beartype_coverage(
+    add_packages(
         coverage=BeartypeClawCoverage.PACKAGES_ONE,
         package_name=frame_caller_package_name,
         conf=conf,
@@ -335,8 +256,63 @@ def beartype_package_current(
 
 #FIXME: Unit test us up, please.
 def beartype_package(
-    # Optional parameters.
-    package_names: Optional[Union[str, Iterable[str]]] = None,
+    # Mandatory parameters.
+    package_name: str,
+
+    # Optional keyword-only parameters.
+    *,
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+) -> None:
+    '''
+    Register a new **package-specific beartype import path hook** (i.e.,
+    callable inserted to the front of the standard :mod:`sys.path_hooks` list
+    recursively applying the :func:`beartype.beartype` decorator to all typed
+    callables and classes of all submodules of the package with the passed
+    names on the first importation of those submodules).
+
+    Parameters
+    ----------
+    package_name : str
+        Fully-qualified name of the package to be type-checked.
+    conf : BeartypeConf, optional
+        **Beartype configuration** (i.e., dataclass configuring the
+        :mod:`beartype.beartype` decorator for *all* decoratable objects
+        recursively decorated by the path hook added by this function).
+        Defaults to ``BeartypeConf()``, the default ``O(1)`` configuration.
+
+    Raises
+    ----------
+    BeartypeClawRegistrationException
+        If either:
+
+        * The passed ``conf`` parameter is *not* a beartype configuration (i.e.,
+          :class:`BeartypeConf` instance).
+        * The passed ``package_name`` parameter is either:
+
+          * *Not* a string.
+          * The empty string.
+          * A non-empty string that is *not* a valid **package name** (i.e.,
+            ``"."``-delimited concatenation of valid Python identifiers).
+
+    See Also
+    ----------
+    https://stackoverflow.com/a/43573798/2809027
+        StackOverflow answer strongly inspiring the low-level implementation of
+        this function with respect to inscrutable :mod:`importlib` machinery.
+    '''
+
+    # Add a new import path hook beartyping this package.
+    add_packages(
+        coverage=BeartypeClawCoverage.PACKAGES_ONE,
+        package_name=package_name,
+        conf=conf,
+    )
+
+
+#FIXME: Unit test us up, please.
+def beartype_packages(
+    # Mandatory parameters.
+    package_names: Iterable[str],
 
     # Optional keyword-only parameters.
     *,
@@ -370,34 +346,27 @@ def beartype_package(
 
     Parameters
     ----------
-    package_names : Optional[Union[str, Iterable[str]]]
-        Either:
-
-        * Fully-qualified name of the package to be type-checked.
-        * Iterable of the fully-qualified names of one or more packages to be
-          type-checked.
-
-        Defaults to :data:`None`, in which case this parameter defaults to the
-        fully-qualified name of the **calling package** (i.e., external parent
-        package of the submodule directly calling this function).
+    package_names : Iterable[str]
+        Iterable of the fully-qualified names of one or more packages to be
+        type-checked.
     conf : BeartypeConf, optional
-        **Beartype configuration** (i.e., self-caching dataclass configuring the
-        :mod:`beartype.beartype` decorator for *all* decoratable objects visited
-        by the path hook added by this function). Defaults to
-        ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
+        **Beartype configuration** (i.e., dataclass configuring the
+        :mod:`beartype.beartype` decorator for *all* decoratable objects
+        recursively decorated by the path hook added by this function).
+        Defaults to ``BeartypeConf()``, the default ``O(1)`` configuration.
 
     Raises
     ----------
     BeartypeClawRegistrationException
         If either:
 
+        * The passed ``conf`` parameter is *not* a beartype configuration (i.e.,
+          :class:`BeartypeConf` instance).
         * The passed ``package_names`` parameter is either:
 
-          * Neither a string nor an iterable (i.e., fails to satisfy the
+          * Non-iterable (i.e., fails to satisfy the
             :class:`collections.abc.Iterable` protocol).
-          * An empty string or iterable.
-          * A non-empty string that is *not* a valid **package name** (i.e.,
-            ``"."``-delimited concatenation of valid Python identifiers).
+          * An empty iterable.
           * A non-empty iterable containing at least one item that is either:
 
             * *Not* a string.
@@ -405,9 +374,6 @@ def beartype_package(
             * A non-empty string that is *not* a valid **package name** (i.e.,
               ``"."``-delimited concatenation of valid Python identifiers).
 
-        * The passed ``conf`` parameter is *not* a beartype configuration (i.e.,
-          :class:`BeartypeConf` instance).
-
     See Also
     ----------
     https://stackoverflow.com/a/43573798/2809027
@@ -415,268 +381,9 @@ def beartype_package(
         this function with respect to inscrutable :mod:`importlib` machinery.
     '''
 
-    # ..................{ PACKAGE NAMES                      }..................
-    # Note the following logic *CANNOT* reasonably be isolated to a new
-    # private helper function. Why? Because this logic itself calls existing
-    # private helper functions assuming the caller to be at the expected
-    # position on the current call stack.
-    if package_names is None:
-        #FIXME: *UNSAFE.* get_frame() raises a "ValueError" exception if
-        #passed a non-existent frame, which is non-ideal: e.g.,
-        #    >>> sys._getframe(20)
-        #    ValueError: call stack is not deep enough
-        #Since beartype_on_import() is public, that function can
-        #technically be called directly from a REPL. When it is, a
-        #human-readable exception should be raised instead. Notably, we
-        #instead want to:
-        #* Define new utilfuncframe getters resembling:
-        #      def get_frame_or_none(ignore_frames: int) -> Optional[FrameType]:
-        #          try:
-        #              return get_frame(ignore_frames + 1)
-        #          except ValueError:
-        #              return None
-        #      def get_frame_caller_or_none() -> Optional[FrameType]:
-        #          return get_frame_or_none(2)
-        #* Import "get_frame_caller_or_none" above.
-        #* Refactor this logic here to resemble:
-        #      frame_caller = get_frame_caller_or_none()
-        #      if frame_caller is None:
-        #          raise BeartypeClawRegistrationException(
-        #              'beartype_package() '
-        #              'not callable directly from REPL scope.'
-        #          )
-        frame_caller: FrameType = get_frame(1)  # type: ignore[assignment,misc]
-
-        # Code object underlying the caller if that caller is pure-Python *OR*
-        # raise an exception otherwise (i.e., if that caller is C-based).
-        frame_caller_codeobj = get_func_codeobj(frame_caller)
-
-        # Unqualified basename of that caller.
-        frame_caller_basename = frame_caller_codeobj.co_name
-
-        # Fully-qualified name of the module defining that caller.
-        frame_caller_module_name = frame_caller.f_globals['__name__']
-
-        #FIXME: Relax this constraint, please. Just iteratively search up the
-        #call stack with iter_frames() until stumbling into a frame satisfying
-        #this condition.
-        # If that name is *NOT* the placeholder string assigned by the active
-        # Python interpreter to all scopes encapsulating the top-most lexical
-        # scope of a module in the current call stack, the caller is a class or
-        # callable rather than a module. In this case, raise an exception.
-        if frame_caller_basename != FUNC_CODEOBJ_NAME_MODULE:
-            raise BeartypeClawRegistrationException(
-                f'beartype_package() '
-                f'neither passed "package_names" nor called from module scope '
-                f'(i.e., caller scope '
-                f'"{frame_caller_module_name}.{frame_caller_basename}" '
-                f'either class or callable). '
-                f'Please either pass "package_names" or '
-                f'call this function from module scope.'
-            )
-
-        # If the fully-qualified name of the module defining that caller
-        # contains *NO* delimiters, that module is a top-level module defined by
-        # *NO* parent package. In this case, raise an exception. Why? Because
-        # this function uselessly and silently reduces to a noop when called by
-        # a top-level module. Why? Because this function registers an import
-        # hook applicable only to subsequently imported submodules of the passed
-        # packages. By definition, a top-level module is *NOT* a package and
-        # thus has *NO* submodules. To prevent confusion, notify the user here.
-        #
-        # Note this is constraint is also implicitly imposed by the subsequent
-        # call to the frame_caller_module_name.rpartition() method: e.g.,
-        #     >>> frame_caller_module_name = 'muh_module'
-        #     >>> frame_caller_module_name.rpartition()
-        #     ('', '', 'muh_module')  # <-- we're now in trouble, folks
-        if '.' not in frame_caller_module_name:
-            raise BeartypeClawRegistrationException(
-                f'beartype_package() '
-                f'neither passed "package_names" nor called by a submodule '
-                f'(i.e., caller module "{frame_caller_module_name}" '
-                f'defined by no parent package).'
-            )
-        # Else, that module is a submodule of some parent package.
-
-        # Fully-qualified name of the parent package defining that submodule,
-        # parsed from the name of that submodule via this standard idiom:
-        #     >>> frame_caller_module_name = 'muh_package.muh_module'
-        #     >>> frame_caller_module_name.rpartition()
-        #     ('muh_package', '.', 'muh_module')
-        frame_caller_package_name = frame_caller_module_name.rpartition()[0]
-
-        # Default this iterable to the 1-tuple referencing only this package.
-        package_names = (frame_caller_package_name,)
-
-    # ..................{ PATH HOOK                          }..................
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with the beartype_all() function.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    # With a submodule-specific thread-safe reentrant lock...
-    with _claw_lock:
-        # True only if the beartype import path hook subsequently added below
-        # has already been added by a prior call to this function under the
-        # active Python interpreter.
-        #
-        # Technically, this condition is also decidable by an iterative search
-        # over the "sys.path_hooks" list for an item that is an instance of our
-        # private "_BeartypeSourceFileLoader" subclass. However, doing so would
-        # impose O(n) time complexity for "n" the size of that list,
-        #
-        # Pragmatically, this condition is trivially decidable by noting that:
-        # * This public function performs the *ONLY* call to the private
-        #   add_packages() function in this codebase.
-        # * The first call of this function under the active Python interpreter:
-        #   * Also performs the first call of the add_packages() function.
-        #   * Also adds our beartype import path hook.
-        #
-        # Ergo, deciding this state in O(1) time complexity reduces to deciding
-        # whether the add_packages() function has been called already.
-        is_path_hook_added = is_packages_registered_any()
-
-        # Register these packages for subsequent lookup during submodule
-        # importation by the beartype import path hook registered below *AFTER*
-        # deciding whether this function has been called already.
-        #
-        # Note this helper function fully validates these parameters. Ergo, we
-        # intentionally avoid doing so here in this higher-level function.
-        add_packages(package_names=package_names, conf=conf)
-
-        # True only if the beartype import path hook subsequently added below
-        # has already been added by a prior call to this function under the
-        # active Python interpreter.
-        if not is_path_hook_added:
-            _add_path_hook()
-
-# ....................{ PRIVATE ~ globals                  }....................
-_claw_lock = RLock()
-'''
-Reentrant reusable thread-safe context manager gating access to otherwise
-non-thread-safe private globals defined by both this high-level submodule and
-subsidiary lower-level submodules (particularly, the
-:attr:`beartype.claw._pkg.clawpkgadd._package_basename_to_subpackages` cache).
-'''
-
-# ....................{ PRIVATE ~ adders                   }....................
-def _add_path_hook() -> None:
-    '''
-    Add a **beartype import path hook** (i.e., callable inserted to the front of
-    the standard :mod:`sys.path_hooks` list recursively applying the
-    :func:`beartype.beartype` decorator to all well-typed callables and classes
-    defined by all submodules of all packages previously registered by a call
-    to the :func:`beartype.claw._pkg.clawpkgadd.add_packages` function).
-
-    Caveats
-    ----------
-    **This function should only be called once for the lifetime of the active
-    Python interpreter.** It is currently the caller's responsibility to ensure
-    this.
-
-    See Also
-    ----------
-    https://stackoverflow.com/a/43573798/2809027
-        StackOverflow answer strongly inspiring the low-level implementation of
-        this function with respect to inscrutable :mod:`importlib` machinery.
-    '''
-
-    # 2-tuple of the undocumented format expected by the FileFinder.path_hook()
-    # class method called below, associating our beartype-specific source file
-    # loader with the platform-specific filetypes of all sourceful Python
-    # packages and modules. We didn't do it. Don't blame the bear.
-    LOADER_DETAILS = (BeartypeSourceFileLoader, SOURCE_SUFFIXES)
-
-    # Closure instantiating a new "FileFinder" instance invoking this loader.
-    #
-    # Note that we intentionally ignore mypy complaints here. Why? Because mypy
-    # erroneously believes this method accepts 2-tuples whose first items are
-    # loader *INSTANCES* (e.g., "Tuple[Loader, List[str]]"). In fact, this
-    # method accepts 2-tuples whose first items are loader *TYPES* (e.g.,
-    # "Tuple[Type[Loader], List[str]]"). This is why we can't have nice.
-    loader_factory = FileFinder.path_hook(LOADER_DETAILS)  # type: ignore[arg-type]
-
-    # Prepend a new import hook (i.e., factory closure encapsulating this
-    # loader) *BEFORE* all other import hooks.
-    path_hooks.insert(0, loader_factory)
-
-    # Uncache *ALL* competing loaders cached by prior importations. Just do it!
-    path_importer_cache.clear()
-    clear_importlib_caches()
-
-# ....................{ PRIVATE ~ hookers                  }....................
-#FIXME: Finish implementing us up according to the plan detailed above, please.
-def _beartype_coverage(
-    # Keyword-only arguments.
-    *,
-
-    # Mandatory keyword-only arguments.
-    coverage: BeartypeClawCoverage,
-    conf: BeartypeConf,
-
-    # Optional keyword-only arguments.
-    package_name: Optional[str] = None,
-    package_names: Optional[Iterable[str]] = None,
-) -> None:
-    '''
-    Register a new **beartype package import path hook** (i.e., callable
-    inserted to the front of the standard :mod:`sys.path_hooks` list recursively
-    applying the :func:`beartype.beartype` decorator to all typed callables and
-    classes of all submodules of all packages with the passed names on the first
-    importation of those submodules).
-
-    Parameters
-    ----------
-    coverage : BeartypeClawCoverage
-        **Import hook coverage** (i.e., competing package scope over which to
-        apply the path hook added by this function, each with concomitant
-        tradeoffs with respect to runtime complexity and quality assurance).
-    conf : BeartypeConf, optional
-        **Beartype configuration** (i.e., self-caching dataclass configuring the
-        :mod:`beartype.beartype` decorator for *all* decoratable objects visited
-        by the path hook added by this function).
-    package_name : Optional[str]
-        Either:
-
-        * If ``coverage`` is :attr:`BeartypeClawCoverage.PACKAGE_ONE`, the
-          fully-qualified name of the package to be type-checked.
-        * Else, ignored.
-
-        Defaults to :data:`None`.
-    package_names : Optional[Iterable[str]]]
-        Either:
-
-        * If ``coverage`` is :attr:`BeartypeClawCoverage.PACKAGE_MANY`, an
-          iterable of the fully-qualified names of one or more packages to be
-          type-checked.
-        * Else, ignored.
-
-        Defaults to :data:`None`.
-
-    Raises
-    ----------
-    BeartypeClawRegistrationException
-        If either:
-
-        * The passed ``package_names`` parameter is either:
-
-          * Neither a string nor an iterable (i.e., fails to satisfy the
-            :class:`collections.abc.Iterable` protocol).
-          * An empty string or iterable.
-          * A non-empty string that is *not* a valid **package name** (i.e.,
-            ``"."``-delimited concatenation of valid Python identifiers).
-          * A non-empty iterable containing at least one item that is either:
-
-            * *Not* a string.
-            * The empty string.
-            * A non-empty string that is *not* a valid **package name** (i.e.,
-              ``"."``-delimited concatenation of valid Python identifiers).
-
-        * The passed ``conf`` parameter is *not* a beartype configuration (i.e.,
-          :class:`BeartypeConf` instance).
-
-    See Also
-    ----------
-    https://stackoverflow.com/a/43573798/2809027
-        StackOverflow answer strongly inspiring the low-level implementation of
-        this function with respect to inscrutable :mod:`importlib` machinery.
-    '''
+    # Add a new import path hook beartyping these packages.
+    add_packages(
+        coverage=BeartypeClawCoverage.PACKAGES_MANY,
+        package_names=package_names,
+        conf=conf,
+    )

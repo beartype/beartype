@@ -18,15 +18,18 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     Dict,
+    Iterator,
     Optional,
 )
 from beartype._conf.confcls import BeartypeConf
+from contextlib import contextmanager
+from threading import RLock
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please.
-class PackageBasenameToSubpackages(
+class PackagesTrie(
     #FIXME: Use "beartype.typing.Self" here instead once we backport that.
-    Dict[str, Optional['PackageBasenameToSubpackages']]):
+    Dict[str, Optional['PackagesTrie']]):
     '''
     **(Sub)package configuration (sub)trie** (i.e., recursively nested
     dictionary mapping from the unqualified basename of each subpackage of the
@@ -36,7 +39,7 @@ class PackageBasenameToSubpackages(
 
     This (sub)cache is suitable for caching as the values of:
 
-    * The :data:`.package_basename_to_subpackages` global dictionary.
+    * The :data:`.packages_trie` global dictionary.
     * Each (sub)value mapped to by that global dictionary.
 
     Attributes
@@ -85,7 +88,7 @@ class PackageBasenameToSubpackages(
 #FIXME: Revise docstring in accordance with data structure changes, please.
 #Everything scans up until "...either the :data:`None` singleton if that
 #subpackage is to be type-checked." Is that *REALLY* how this works? *sigh*
-package_basename_to_subpackages = PackageBasenameToSubpackages()
+packages_trie = PackagesTrie()
 '''
 **Package configuration trie** (i.e., non-thread-safe dictionary implementing a
 prefix tree such that each key-value pair maps from the unqualified basename of
@@ -102,7 +105,7 @@ flattened set of package names:
 
     .. code-block:: python
 
-       _package_names = {'a.b', 'a.c', 'd'}
+       package_names = {'a.b', 'a.c', 'd'}
 
 Deciding whether an arbitrary package name is in this set requires worst-case
 ``O(n)`` iteration across the set of ``n`` package names.
@@ -114,8 +117,7 @@ package name):
 
     .. code-block:: python
 
-       _package_basename_to_subpackages = {
-           'a': {'b': None, 'c': None}, 'd': None}
+       package_names_trie = {'a': {'b': None, 'c': None}, 'd': None}
 
 Deciding whether an arbitrary package name is in this dictionary only requires
 worst-case ``O(h)`` iteration across the height ``h`` of this dictionary
@@ -144,9 +146,9 @@ Instance of this data structure type-checking on import submodules of the root
 ``package_a.subpackage_b.subpackage_c`` and
 ``package_a.subpackage_b.subpackage_d`` submodules:
 
-    >>> _package_basename_to_subpackages = _PackageBasenameToSubpackages({
-    ...     'package_a': _PackageBasenameToSubpackages({
-    ...         'subpackage_b': _PackageBasenameToSubpackages({
+    >>> packages_trie = PackagesTrie({
+    ...     'package_a': PackagesTrie({
+    ...         'subpackage_b': PackagesTrie({
     ...             'subpackage_c': None,
     ...             'subpackage_d': None,
     ...         }),
@@ -154,4 +156,51 @@ Instance of this data structure type-checking on import submodules of the root
     ...     }),
     ...     'package_z': None,
     ... })
+'''
+
+# ....................{ CONTEXTS                           }....................
+#FIXME: Unit test us up, please.
+@contextmanager
+def added_packages_removed() -> Iterator[None]:
+    '''
+    Context manager "unregistering" (i.e., clearing, removing) all previously
+    registered packages from the global package name cache maintained by the
+    :func:`add_packages` function *after* running the caller-defined block
+    of the ``with`` statement executing this context manager.
+
+    Caveats
+    ----------
+    **This context manager is only intended to be invoked by unit and
+    integration tests in our test suite.** Nonetheless, this context manager
+    necessarily violates privacy encapsulation by accessing private submodule
+    globals and is thus declared in this submodule rather than elsewhere.
+
+    **This context manager is non-thread-safe.** Since our test suite is
+    intentionally *not* dangerously parallelized across multiple threads, this
+    caveat is ignorable with respect to testing.
+
+    Yields
+    ----------
+    None
+        This context manager yields *no* values.
+    '''
+
+    # Perform the caller-defined body of the parent "with" statement.
+    try:
+        yield
+    # After doing so, regardless of whether doing so raised an exception...
+    finally:
+        # Global variables reassigned below.
+        global packages_trie
+
+        # With a submodule-specific thread-safe reentrant lock...
+        with packages_trie_lock:
+            # Reset the global package trie back to its initial state.
+            packages_trie = PackagesTrie()
+
+# ....................{ PRIVATE ~ globals                  }....................
+packages_trie_lock = RLock()
+'''
+Reentrant reusable thread-safe context manager gating access to the otherwise
+non-thread-safe :data:`.packages_trie` global.
 '''

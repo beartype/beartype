@@ -17,58 +17,39 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.claw._clawenum import BeartypeClawCoverage
+from beartype.claw._clawload import BeartypeSourceFileLoader
 from beartype.claw._pkg._clawpkgtrie import (
-    PackageBasenameToSubpackages,
-    package_basename_to_subpackages,
+    PackagesTrie,
+    packages_trie,
+    packages_trie_lock,
 )
 from beartype.roar import BeartypeClawRegistrationException
 from beartype.typing import (
     Iterable,
-    Iterator,
     Optional,
-    Union,
 )
 from beartype._conf.confcls import BeartypeConf
 from beartype._util.text.utiltextident import is_identifier
 from collections.abc import Iterable as IterableABC
-from contextlib import contextmanager
-
-# ....................{ TESTERS                            }....................
-#FIXME: Unit test us up, please.
-def is_packages_registered_any() -> bool:
-    '''
-    :data:`True` only if one or more packages have been previously registered.
-
-    Equivalently, this tester returns :data:`True` only if the
-    :func:`add_packages` function has been called at least once under the
-    active Python interpreter.
-
-    Caveats
-    ----------
-    **This function is only safely callable in a thread-safe manner within a**
-    ``with _claw_lock:`` **context manager.** Equivalently, this global is *not*
-    safely accessible outside that manager.
-
-    Returns
-    ----------
-    bool
-        :data:`True` only if one or more packages have been previously
-        registered.
-    '''
-
-    # Unleash the beast! Unsaddle the... addled?
-    return bool(package_basename_to_subpackages)
+from importlib import invalidate_caches as clear_importlib_caches
+from importlib.machinery import (
+    SOURCE_SUFFIXES,
+    FileFinder,
+)
+from sys import (
+    path_hooks,
+    path_importer_cache,
+)
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_package_conf_if_added(package_name: str) -> Optional[BeartypeConf]:
     '''
     Beartype configuration with which to type-check the package with the passed
-    name if either that package or a parent package of that package has been
-    previously registered by a prior call to the :func:`.add_packages`
-    function *or* :data:`None` otherwise (i.e., if neither that package nor a
-    parent package of that package has been previously registered by such a
-    call).
+    name if that package *or* a parent package of that package was registered by
+    a prior call to the :func:`.add_packages` function *or* :data:`None`
+    otherwise (i.e., if neither that package *nor* a parent package of that
+    package was registered by such a call).
 
     Caveats
     ----------
@@ -86,17 +67,13 @@ def get_package_conf_if_added(package_name: str) -> Optional[BeartypeConf]:
     Optional[BeartypeConf]
         Either:
 
-        * If either that package or a parent package of that package
-          has been previously registered by a prior call to the
-          :func:`.add_packages` function, beartype configuration with which
-          to type-check that package.
+        * If that package or a parent package of that package was registered by
+          a prior call to the :func:`.add_packages` function, the beartype
+          configuration with which to type-check that package.
         * Else, :data:`None`.
     '''
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize logic below with the add_packages() function.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+    # ..................{ VALIDATION                         }..................
     # List of each unqualified basename comprising this name, split from this
     # fully-qualified name on "." delimiters. Note that the "str.split('.')" and
     # "str.rsplit('.')" calls produce the exact same lists under all possible
@@ -133,163 +110,105 @@ def get_package_conf_if_added(package_name: str) -> Optional[BeartypeConf]:
     # Else, that package is neither the top-level "beartype" package *NOR* a
     # subpackage of that package. In this case, register this package.
 
-    # Current subdictionary of the global package name cache describing the
-    # currently iterated unqualified basename comprising that package's name,
-    # initialized to the root dictionary describing all top-level packages.
-    package_basename_to_subpackages_curr = package_basename_to_subpackages
+    # ..................{ ITERATION                          }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize logic below with the add_packages() function.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    # Beartype configuration registered with that package, defaulting to the
-    # beartype configuration registered with the root package cache globally
-    # applicable to *ALL* packages if an external caller previously called the
-    # public beartype.claw.beartype_all() function *OR* "None" otherwise (i.e.,
-    # if that function has yet to be called).
-    package_conf_if_added = (
-        package_basename_to_subpackages_curr.conf_if_added)
+    # With a submodule-specific thread-safe reentrant lock...
+    with packages_trie_lock:
+        # Current subtrie of the global package trie describing the currently
+        # iterated basename of this package, initialized to the global package
+        # trie describing all top-level packages.
+        subpackages_trie = packages_trie
 
-    # For each unqualified basename of each parent package transitively
-    # containing this package (as well as that of that package itself)...
-    for package_basename in package_basenames:
-        # Current subdictionary of that cache describing that parent package if
-        # that parent package was registered by a prior call to the
-        # add_packages() function *OR* "None" otherwise (i.e., if that
-        # parent package has yet to be registered).
-        package_subpackages = package_basename_to_subpackages_curr.get(
-            package_basename)
+        # Beartype configuration registered with that package, defaulting to the
+        # beartype configuration registered with the root package cache globally
+        # applicable to *ALL* packages if an external caller previously called
+        # the public beartype.claw.beartype_all() function *OR* "None" otherwise
+        # (i.e., if that function has yet to be called).
+        conf_curr = subpackages_trie.conf_if_added
 
-        # If that parent package has yet to be registered, terminate iteration
-        # at that parent package.
-        if package_subpackages is None:
-            break
-        # Else, that parent package was previously registered.
+        # For each unqualified basename of each parent package transitively
+        # containing this package (as well as that of that package itself)...
+        for package_basename in package_basenames:
+            # Current subtrie of that trie describing that parent package if
+            # that parent package was registered by a prior call to the
+            # add_packages() function *OR* "None" otherwise (i.e., if that
+            # parent package has yet to be registered).
+            subpackages_subtrie = subpackages_trie.get(package_basename)
 
-        # Beartype configuration registered with either...
-        package_conf_if_added = (
-            # That parent package if any *OR*...
-            #
-            # Since that parent package is more granular (i.e., unique) than any
-            # transitive parent package of that parent package, the former takes
-            # precedence over the latter where defined.
-            package_subpackages.conf_if_added or
-            # A transitive parent package of that parent package if any.
-            package_conf_if_added
-        )
+            # If that parent package has yet to be registered, halt iteration.
+            if subpackages_subtrie is None:
+                break
+            # Else, that parent package was previously registered.
 
-        # Iterate the currently examined subcache one subpackage deeper.
-        package_basename_to_subpackages_curr = package_subpackages
+            # Beartype configuration registered with either...
+            conf_curr = (
+                # That parent package if any *OR*...
+                #
+                # Since that parent package is more granular (i.e., unique) than
+                # any transitive parent package of that parent package, the
+                # former takes precedence over the latter when defined.
+                subpackages_subtrie.conf_if_added or
+                # A transitive parent package of that parent package if any.
+                conf_curr
+            )
+
+            # Iterate the currently examined subtrie one subpackage deeper.
+            subpackages_trie = subpackages_subtrie
 
     # Return this beartype configuration if any *OR* "None" otherwise.
-    return package_conf_if_added
+    return conf_curr
 
 # ....................{ ADDERS                             }....................
 #FIXME: Unit test us up, please.
-def add_packages_all(
-    # Mandatory keyword-only parameters.
-    *,
-    conf: BeartypeConf,
-) -> None:
-    '''
-    Register *all* packages as subject to our **beartype import path hook**
-    (i.e., callable inserted to the front of the standard :mod:`sys.path_hooks`
-    list recursively applying the :func:`beartype.beartype` decorator to all
-    well-typed callables and classes defined by all submodules of all packages
-    with the passed names on the first importation of those submodules).
-
-    Caveats
-    ----------
-    **This function is only safely callable in a thread-safe manner within a**
-    ``with _claw_lock:`` **context manager.** Equivalently, this global is *not*
-    safely accessible outside that manager.
-
-    Parameters
-    ----------
-    conf : BeartypeConf, optional
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed packages).
-
-    Raises
-    ----------
-    BeartypeClawRegistrationException
-        If either:
-
-        * The passed ``conf`` parameter is *not* a beartype configuration (i.e.,
-          :class:`BeartypeConf` instance).
-        * One or more of the packages with the passed names have already been
-          registered by a previous call to this function under a conflicting
-          configuration differing from the passed configuration.
-    '''
-
-    # This configuration is *NOT* a configuration, raise an exception.
-    if not isinstance(conf, BeartypeConf):
-        raise BeartypeClawRegistrationException(
-            f'Beartype configuration {repr(conf)} invalid (i.e., not '
-            f'"beartype.BeartypeConf" instance).'
-        )
-    # Else, this configuration is a configuration.
-
-    # Beartype configuration currently associated with *ALL* packages by a
-    # previous call to this function if any *OR* "None" otherwise (i.e., if this
-    # function has yet to be called under the active Python interpreter).
-    conf_curr = package_basename_to_subpackages.conf_if_added
-
-    # If this function has yet to be called under the active Python interpreter,
-    # associate the passed configuration with *ALL* packages.
-    if conf_curr is None:
-        package_basename_to_subpackages.conf_if_added = conf
-    # Else, this function has already been called under this interpreter.
-    #
-    # If that call associated all packages with a different configuration than
-    # that passed, raise an exception.
-    elif conf_curr is not conf:
-        raise BeartypeClawRegistrationException(
-            f'All packages previously registered '
-            f'with differing beartype configuration:\n'
-            f'----------(OLD CONFIGURATION)----------\n'
-            f'{repr(conf_curr)}\n'
-            f'----------(NEW CONFIGURATION)----------\n'
-            f'{repr(conf)}\n'
-        )
-    # Else, that call associated all packages with the same configuration to
-    # that passed. In this case, silently ignore this redundant attempt to
-    # re-register all packages.
-
-
-#FIXME: Unit test us up, please.
-#FIXME: Define a comparable removal function named either:
-#* cancel_beartype_package(). This is ostensibly the most
-#  unambiguous and thus the best choice of those listed here. Obviously,
-#  beartype_package_cancel() is a comparable alternative.
 def add_packages(
-    # Mandatory keyword-only parameters.
+    # Keyword-only arguments.
     *,
-    # coverage: BeartypeClawCoverage,
-    package_names: Union[str, Iterable[str]],
+
+    # Mandatory keyword-only arguments.
+    coverage: BeartypeClawCoverage,
     conf: BeartypeConf,
+
+    # Optional keyword-only arguments.
+    package_name: Optional[str] = None,
+    package_names: Optional[Iterable[str]] = None,
 ) -> None:
     '''
-    Register the packages with the passed names as subject to our **beartype
-    import path hook** (i.e., callable inserted to the front of the standard
-    :mod:`sys.path_hooks` list recursively applying the
-    :func:`beartype.beartype` decorator to all well-typed callables and classes
-    defined by all submodules of all packages with the passed names on the first
+    Register a new **beartype package import path hook** (i.e., callable
+    inserted to the front of the standard :mod:`sys.path_hooks` list recursively
+    applying the :func:`beartype.beartype` decorator to all typed callables and
+    classes of all submodules of all packages with the passed names on the first
     importation of those submodules).
 
-    Caveats
-    ----------
-    **This function is only safely callable in a thread-safe manner within a**
-    ``with _claw_lock:`` **context manager.** Equivalently, this global is *not*
-    safely accessible outside that manager.
-
     Parameters
     ----------
-    package_names : Union[str, Iterable[str]]
+    coverage : BeartypeClawCoverage
+        **Import hook coverage** (i.e., competing package scope over which to
+        apply the path hook added by this function, each with concomitant
+        tradeoffs with respect to runtime complexity and quality assurance).
+    conf : BeartypeConf, optional
+        **Beartype configuration** (i.e., dataclass configuring the
+        :mod:`beartype.beartype` decorator for *all* decoratable objects
+        recursively decorated by the path hook added by this function).
+    package_name : Optional[str]
         Either:
 
-        * Fully-qualified name of the package to be type-checked.
-        * Iterable of the fully-qualified names of one or more packages to be
+        * If ``coverage`` is :attr:`BeartypeClawCoverage.PACKAGES_ONE`, the
+          fully-qualified name of the package to be type-checked.
+        * Else, ignored.
+
+        Defaults to :data:`None`.
+    package_names : Optional[Iterable[str]]]
+        Either:
+
+        * If ``coverage`` is :attr:`BeartypeClawCoverage.PACKAGES_MANY`, an
+          iterable of the fully-qualified names of one or more packages to be
           type-checked.
-    conf : BeartypeConf, optional
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed packages).
+        * Else, ignored.
+
+        Defaults to :data:`None`.
 
     Raises
     ----------
@@ -312,9 +231,12 @@ def add_packages(
 
         * The passed ``conf`` parameter is *not* a beartype configuration (i.e.,
           :class:`BeartypeConf` instance).
-        * One or more of the packages with the passed names have already been
-          registered by a previous call to this function under a conflicting
-          configuration differing from the passed configuration.
+
+    See Also
+    ----------
+    https://stackoverflow.com/a/43573798/2809027
+        StackOverflow answer strongly inspiring the low-level implementation of
+        this function with respect to inscrutable :mod:`importlib` machinery.
     '''
 
     # ..................{ VALIDATION                         }..................
@@ -326,154 +248,250 @@ def add_packages(
         )
     # Else, this configuration is a configuration.
 
-    # If passed only a single package name *NOT* contained in an iterable, wrap
-    # this name in a 1-tuple containing only this name for convenience.
-    if isinstance(package_names, str):
-        package_names = (package_names,)
-
-    # If this iterable of package names is *NOT* an iterable, raise an
-    # exception.
-    if not isinstance(package_names, IterableABC):
-        raise BeartypeClawRegistrationException(
-            f'Package names {repr(package_names)} not iterable.')
-    # Else, this iterable of package names is an iterable.
-    #
-    # If this iterable of package names is empty, raise an exception.
-    elif not package_names:
-        raise BeartypeClawRegistrationException('Package names empty.')
-    # Else, this iterable of package names is non-empty.
-
-    # For each such package name...
-    for package_name in package_names:
-        # If this package name is *NOT* a string, raise an exception.
-        if not isinstance(package_name, str):
-            raise BeartypeClawRegistrationException(
-                f'Package name {repr(package_name)} not string.')
-        # Else, this package name is a string.
-        #
-        # If this package name is *NOT* a valid Python identifier, raise an
-        # exception.
-        elif not is_identifier(package_name):
-            raise BeartypeClawRegistrationException(
-                f'Package name "{package_name}" invalid '
-                f'(i.e., not "."-delimited Python identifier).'
-            )
-        # Else, this package name is a valid Python identifier.
-
-    # ..................{ REGISTRATION                       }..................
-    # For the fully-qualified name of each package to be registered...
-    for package_name in package_names:
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize with the get_package_conf_if_added() getter.
-        # The iteration performed below modifies the global package names cache
-        # and thus *CANNOT* simply defer to the same logic.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        # List of each unqualified basename comprising this name, split from
-        # this fully-qualified name on "." delimiters. Note that the
-        # "str.split('.')" and "str.rsplit('.')" calls produce the exact same
-        # lists under all possible edge cases. We arbitrarily call the former
-        # rather than the latter for simplicity and readability.
-        package_basenames = package_name.split('.')
-
-        # Current subdictionary of the global package name cache describing the
-        # currently iterated unqualified basename comprising that package's name
-        # initialized to the root dictionary describing all top-level packages.
-        package_basename_to_subpackages_curr = package_basename_to_subpackages
-
-        # # For each unqualified basename comprising the directed path from the
-        # root parent package of that package to that package...
-        for package_basename in package_basenames:
-            # Current subdictionary of that cache describing that parent package
-            # if that parent package was registered by a prior call to the
-            # add_packages() function *OR* "None" otherwise (i.e., if that
-            # parent package has yet to be registered).
-            package_subpackages = package_basename_to_subpackages_curr.get(
-                package_basename)
-
-            # If this is the first registration of that parent package, register
-            # a new subcache describing that parent package.
-            #
-            # Note that this test could be obviated away by refactoring our
-            # "PackageBasenameToSubpackages" subclass from the
-            # "collections.defaultdict" superclass rather than the standard
-            # "dict" class. Since doing so would obscure erroneous attempts
-            # to access non-existing keys, however, this test is preferable
-            # to inviting even *MORE* bugs into this bug-riddled codebase.
-            # Just kidding! There are absolutely no bugs in this codebase.
-            #                                                   *wink*
-            if package_subpackages is None:
-                package_subpackages = \
-                    package_basename_to_subpackages_curr[package_basename] = \
-                    PackageBasenameToSubpackages()
-            # Else, that parent package was already registered by a prior call
-            # to this function.
-
-            # Iterate the currently examined subcache one subpackage deeper.
-            package_basename_to_subpackages_curr = package_subpackages
-        # Since the "package_basenames" list contains at least one basename,
-        # the above iteration set the currently examined subdictionary
-        # "package_basename_to_subpackages_curr" to at least one subcache of the
-        # global package name cache. Moreover, that subcache is guaranteed to
-        # describe the current (sub)package being registered.
-
-        # If that (sub)package has yet to be registered, register that
-        # (sub)package with this beartype configuration.
-        if  package_basename_to_subpackages_curr.conf_if_added is None:
-            package_basename_to_subpackages_curr.conf_if_added = conf
-        # Else, that (sub)package has already been registered by a previous
-        # call to this function. In this case...
-        else:
-            # Beartype configuration previously associated with that
-            # (sub)package by the previous call to this function.
-            conf_curr = (
-                package_basename_to_subpackages_curr.conf_if_added)
-
-            # If that call associated that (sub)package with a different
-            # configuration than that passed, raise an exception.
-            if conf_curr is not conf:
+    # If the caller did *NOT* request all-packages coverage, the caller
+    # requested coverage over a specific subset of packages. In this case...
+    if coverage is not BeartypeClawCoverage.PACKAGES_ALL:
+        # If the caller requested mono-package coverage...
+        if coverage is BeartypeClawCoverage.PACKAGES_ONE:
+            # If the caller improperly passed *NO* package name despite
+            # requesting mono-package coverage, raise an exception.
+            if package_name is None:
                 raise BeartypeClawRegistrationException(
-                    f'Package name "{package_name}" previously registered '
-                    f'with differing beartype configuration:\n'
-                    f'----------(OLD CONFIGURATION)----------\n'
-                    f'{repr(conf_curr)}\n'
-                    f'----------(NEW CONFIGURATION)----------\n'
-                    f'{repr(conf)}\n'
+                    f'beartype_package() '
+                    f'package name {repr(package_name)} invalid.'
                 )
-            # Else, that call associated that (sub)package with the same
-            # configuration to that passed. In this case, silently ignore
-            # this redundant attempt to re-register that (sub)package.
+            # Else, the caller properly passed a package name.
 
-# ....................{ CONTEXTS                           }....................
-#FIXME: Unit test us up, please.
-@contextmanager
-def packages_unadded() -> Iterator[None]:
+            # Wrap this package name in a 1-tuple containing only this name.
+            # Doing so unifies logic below.
+            package_names = (package_name,)
+        # Else, the caller requested multi-package coverage.
+        # elif coverage is BeartypeClawCoverage.PACKAGES_MANY:
+
+        # If this package names is *NOT* iterable, raise an exception.
+        if not isinstance(package_names, IterableABC):
+            raise BeartypeClawRegistrationException(
+                f'beartype_packages() '
+                f'package names {repr(package_name)} not iterable.'
+            )
+        # Else, this package names is iterable.
+        #
+        # If *NO* package names were passed, raise an exception.
+        elif not package_names:
+            raise BeartypeClawRegistrationException(
+                'beartype_packages() package names empty.')
+        # Else, one or more package names were passed.
+
+        # For each such package name...
+        for package_name in package_names:
+            # If this package name is *NOT* a string, raise an exception.
+            if not isinstance(package_name, str):
+                raise BeartypeClawRegistrationException(
+                    f'Package name {repr(package_name)} not string.')
+            # Else, this package name is a string.
+            #
+            # If this package name is *NOT* a valid Python identifier, raise an
+            # exception.
+            elif not is_identifier(package_name):
+                raise BeartypeClawRegistrationException(
+                    f'Package name {repr(package_name)} invalid '
+                    f'(i.e., not "."-delimited Python identifier).'
+                )
+            # Else, this package name is a valid Python identifier.
+
+    # ..................{ ITERATION                          }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize logic below with the get_package_conf_if_added()
+    # function. The iteration performed below modifies the global package trie
+    # and thus *CANNOT* defer to the same logic.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # With a submodule-specific thread-safe reentrant lock...
+    with packages_trie_lock:
+        # If the caller requested all-packages coverage...
+        if coverage is BeartypeClawCoverage.PACKAGES_ALL:
+            # Beartype configuration currently associated with *ALL* packages by
+            # a prior call to this function if any *OR* "None" (i.e., if this
+            # function has yet to be called under this Python interpreter).
+            conf_curr = packages_trie.conf_if_added
+
+            # If the higher-level beartype_all() function (calling this
+            # lower-level adder) has yet to be called under this interpreter,
+            # associate this configuration with *ALL* packages.
+            if conf_curr is None:
+                packages_trie.conf_if_added = conf
+            # Else, beartype_all() was already called under this interpreter.
+            #
+            # If the caller passed a different configuration to that prior call
+            # than that passed to this current call, raise an exception.
+            elif conf_curr != conf:
+                raise BeartypeClawRegistrationException(
+                    f'beartype_all() previously passed '
+                    f'conflicting beartype configuration:\n'
+                    f'\t----------( OLD "conf" PARAMETER )----------\n'
+                    f'\t{repr(conf_curr)}\n'
+                    f'\t----------( NEW "conf" PARAMETER )----------\n'
+                    f'\t{repr(conf)}\n'
+                )
+            # Else, the caller passed the same configuration to that prior call
+            # than that passed to the current call. In this case, silently
+            # ignore this redundant request to re-register all packages.
+        # Else, the caller requested coverage over a subset of packages. In this
+        # case...
+        else:
+            # For the fully-qualified name of each package to be registered...
+            for package_name in package_names:  # type: ignore[union-attr]
+                # List of each unqualified basename comprising this name, split
+                # from this fully-qualified name on "." delimiters. Note that
+                # the "str.split('.')" and "str.rsplit('.')" calls produce the
+                # exact same lists under all possible edge cases. We arbitrarily
+                # call the former rather than the latter for simplicity.
+                package_basenames = package_name.split('.')
+
+                # Current subtrie of the global package trie describing the
+                # currently iterated basename of this package, initialized to
+                # the global package trie describing all top-level packages.
+                subpackages_trie = packages_trie
+
+                # For each unqualified basename comprising the directed path
+                # from the root parent package of that package to that
+                # package...
+                for package_basename in package_basenames:
+                    # Current subtrie of that trie describing that parent
+                    # package if that parent package was registered by a prior
+                    # call to the add_packages() function *OR* "None" (i.e., if
+                    # that parent package has yet to be registered).
+                    subpackages_subtrie = subpackages_trie.get(package_basename)
+
+                    # If this is the first registration of that parent package,
+                    # register a new subtrie describing that parent package.
+                    #
+                    # Note that this test could be obviated away by refactoring
+                    # our "PackagesTrie" subclass from the
+                    # "collections.defaultdict" superclass rather than the
+                    # standard "dict" class. Since doing so would obscure
+                    # erroneous attempts to access non-existing keys, however,
+                    # this test is preferable to inviting even *MORE* bugs into
+                    # this bug-riddled codebase. Just kidding! There are
+                    # absolutely no bugs in this codebase. *wink*
+                    if subpackages_subtrie is None:
+                        subpackages_subtrie = \
+                            subpackages_trie[package_basename] = \
+                            PackagesTrie()
+                    # Else, that parent package was already registered by a
+                    # prior call to this function.
+
+                    # Iterate the current subtrie one subpackage deeper.
+                    subpackages_trie = subpackages_subtrie
+                # Since the "package_basenames" list contains at least one
+                # basename, the above iteration set the currently examined
+                # subdictionary "subpackages_trie" to at least one subtrie of
+                # the global package trie. Moreover, that subtrie is guaranteed
+                # to describe the current (sub)package being registered.
+
+                # Beartype configuration currently associated with that package
+                # by a prior call to this function if any *OR* "None" (i.e., if
+                # that package has yet to be registered by a prior call to this
+                # function).
+                conf_curr = subpackages_trie.conf_if_added
+
+                # If that package has yet to be registered, associate this
+                # configuration with that package.
+                if conf_curr is None:
+                    subpackages_trie.conf_if_added = conf
+                # Else, that package was already registered by a previous call
+                # to this function.
+                #
+                # If the caller passed a different configuration to that prior
+                # call than that passed to this current call, raise an
+                # exception.
+                elif conf_curr != conf:
+                    raise BeartypeClawRegistrationException(
+                        f'Beartype import hook '
+                        f'(e.g., beartype.claw.beartype_*() function) '
+                        f'previously passed '
+                        f'conflicting beartype configuration for '
+                        f'package name "{package_name}":\n'
+                        f'\t----------( OLD "conf" PARAMETER )----------\n'
+                        f'\t{repr(conf_curr)}\n'
+                        f'\t----------( NEW "conf" PARAMETER )----------\n'
+                        f'\t{repr(conf)}\n'
+                    )
+                # Else, the caller passed the same configuration to that prior
+                # call than that passed to the current call. In this case,
+                # silently ignore this redundant request to re-register that
+                # package.
+
+        # Lastly, if our beartype import path hook singleton has *NOT* already
+        # been added to the standard "sys.path_hooks" list, do so now.
+        #
+        # Note that we intentionally:
+        # * Do so in a thread-safe manner inside this lock.
+        # * Defer doing so until *AFTER* the above iteration has successfully
+        #   registered the desired packages with our global package trie. Why?
+        #   This path hook subsequently calls the companion
+        #   get_package_conf_if_added() function, which accesses this trie.
+        _add_path_hook_if_needed()
+
+# ....................{ PRIVATE ~ globals                  }....................
+_is_path_hook_added = False
+'''
+:data:`True` only if the :func:`._add_path_hook_if_needed` function has been
+previously called at least once under the active Python interpreter.
+'''
+
+# ....................{ PRIVATE ~ adders                   }....................
+def _add_path_hook_if_needed() -> None:
     '''
-    Context manager "unregistering" (i.e., clearing, removing) all previously
-    registered packages from the global package name cache maintained by the
-    :func:`add_packages` function *after* running the caller-defined block
-    of the ``with`` statement executing this context manager.
+    Add our **beartype import path hook singleton** (i.e., single callable
+    guaranteed to be inserted at most once to the front of the standard
+    :mod:`sys.path_hooks` list recursively applying the
+    :func:`beartype.beartype` decorator to all well-typed callables and classes
+    defined by all submodules of all packages previously registered by a call to
+    the :func:`beartype.claw._pkg.clawpkgadd.add_packages` function) if this
+    path hook has yet to be added *or* silently reduce to a noop otherwise
+    (i.e., if this path hook has already been added).
 
-    Caveats
+    See Also
     ----------
-    **This context manager is only intended to be invoked by unit and
-    integration tests in our test suite.** Nonetheless, this context manager
-    necessarily violates privacy encapsulation by accessing private submodule
-    globals and is thus declared in this submodule rather than elsewhere.
-
-    **This context manager is non-thread-safe.** Since our test suite is
-    intentionally *not* dangerously parallelized across multiple threads, this
-    caveat is ignorable with respect to testing.
-
-    Yields
-    ----------
-    None
-        This context manager yields *no* values.
+    https://stackoverflow.com/a/43573798/2809027
+        StackOverflow answer strongly inspiring the low-level implementation of
+        this function with respect to inscrutable :mod:`importlib` machinery.
     '''
 
-    # Attempt to run the caller-defined block of the parent "with" statement.
-    try:
-        yield
-    # Clear the global package name cache *AFTER* doing so.
-    finally:
-        package_basename_to_subpackages.clear()
+    # Global variables reassigned below.
+    global _is_path_hook_added
+
+    # If this function has already been called under the active Python
+    # interpreter, silently reduce to a noop.
+    if _is_path_hook_added:
+        return
+    # Else, this function has *NOT* yet been called under this interpreter.
+
+    # 2-tuple of the undocumented format expected by the FileFinder.path_hook()
+    # class method called below, associating our beartype-specific source file
+    # loader with the platform-specific filetypes of all sourceful Python
+    # packages and modules. We didn't do it. Don't blame the bear.
+    LOADER_DETAILS = (BeartypeSourceFileLoader, SOURCE_SUFFIXES)
+
+    # Closure instantiating a new "FileFinder" instance invoking this loader.
+    #
+    # Note that we intentionally ignore mypy complaints here. Why? Because mypy
+    # erroneously believes this method accepts 2-tuples whose first items are
+    # loader *INSTANCES* (e.g., "Tuple[Loader, List[str]]"). In fact, this
+    # method accepts 2-tuples whose first items are loader *TYPES* (e.g.,
+    # "Tuple[Type[Loader], List[str]]"). This is why we can't have nice.
+    loader_factory = FileFinder.path_hook(LOADER_DETAILS)  # type: ignore[arg-type]
+
+    # Prepend a new path hook (i.e., factory closure encapsulating this loader)
+    # *BEFORE* all other path hooks.
+    path_hooks.insert(0, loader_factory)
+
+    # Prevent subsequent calls to this function from erroneously re-adding
+    # duplicate copies of this path hook immediately *AFTER* successfully adding
+    # the first such path hook.
+    _is_path_hook_added = True
+
+    # Uncache *ALL* competing loaders cached by prior importations. Just do it!
+    path_importer_cache.clear()
+    clear_importlib_caches()
