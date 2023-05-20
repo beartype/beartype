@@ -4,24 +4,19 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype all-at-once low-level** :mod:`importlib` **module loading
-machinery.**
-
-This private submodule declares an :mod:`importlib`-compatible module loader
+**Beartype module loaders** (i.e., :mod:`importlib`-compliant classes
 dynamically decorating all typed callables and classes of all submodules of all
-packages previously registered with our global package name cache (e.g., by a
-prior call to the high-level public :func:`beartype.claw.beartype_all` or
-:func:`beartype.claw.beartype_package` functions) with the
-:func:`beartype.beartype` decorator with the abstract syntax tree (AST)
-transformation defined by the low-level :mod:`beartype.claw._clawast` submodule.
+packages previously registered in our global package trie by the
+:func:`beartype.beartype` decorator via abstract syntax tree (AST) transformers
+defined by the :mod:`beartype.claw._ast.clawastmain` submodule).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
 from ast import PyCF_ONLY_AST
-from beartype.claw._clawast import BeartypeNodeTransformer
-from beartype.claw._pkg.clawpkgadd import get_package_conf_if_added
+from beartype.claw._ast.clawastmain import BeartypeNodeTransformer
+from beartype.claw._hook._clawhookadd import get_package_conf_if_added
 from beartype.meta import VERSION
 from beartype.typing import Optional
 from beartype._conf.confcls import BeartypeConf
@@ -197,7 +192,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         internally follows one of two distinct code paths, conditionally
         depending on whether a parent package transitively containing that
         module has been previously registered with the
-        :mod:`beartype.claw._pkg.clawpkgadd` submodule (e.g., by a call to the
+        :mod:`beartype.claw._hook._clawhookadd` submodule (e.g., by a call to the
         :func:`beartype.claw.beartype_package` function). Specifically:
 
         * If *no* parent package transitively containing that module has been

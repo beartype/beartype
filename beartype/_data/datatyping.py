@@ -4,9 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **PEP-compliant type hints** (i.e., hints annotating callables
-declared throughout this codebase, either for compliance with :pep:`561` or
-simply for documentation purposes).
+Project-wide **type hints** (i.e., PEP-compliant type hints annotating callables
+and classes declared throughout this codebase, either for compliance with
+:pep:`561`-compliant static type checkers like :mod:`mypy` or simply for
+documentation purposes).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

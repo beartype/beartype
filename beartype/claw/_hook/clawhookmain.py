@@ -11,7 +11,7 @@ public-facing :func:`beartype_package` function registering new
 beartype import path hooks. Notably, this submodule integrates high-level
 :mod:`importlib` machinery required to implement :pep:`302`- and
 :pep:`451`-compliant import hooks with the abstract syntax tree (AST)
-transformation defined by the low-level :mod:`beartype.claw._clawast` submodule.
+transformation defined by the low-level :mod:`beartype.claw._ast.clawastmain` submodule.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -34,8 +34,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #  currently running pytest process? O_o
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._pkg.clawpkgadd import add_packages
-from beartype.claw._clawenum import BeartypeClawCoverage
+from beartype.claw._hook._clawhookadd import add_packages
+from beartype.claw._hook._clawhookenum import BeartypeClawCoverage
 from beartype.roar import BeartypeClawRegistrationException
 from beartype.typing import Iterable
 from beartype._cave._cavefast import CallableFrameType

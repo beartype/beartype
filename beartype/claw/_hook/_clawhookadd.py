@@ -16,9 +16,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._clawenum import BeartypeClawCoverage
+from beartype.claw._hook._clawhookenum import BeartypeClawCoverage
 from beartype.claw._clawload import BeartypeSourceFileLoader
-from beartype.claw._pkg._clawpkgtrie import (
+from beartype.claw._hook._clawhooktrie import (
     PackagesTrie,
     packages_trie,
     packages_trie_lock,
@@ -93,7 +93,7 @@ def get_package_conf_if_added(package_name: str) -> Optional[BeartypeConf]:
     #   *ALL* "beartype" callables with automated type-checking only needlessly
     #   reduces the runtime efficiency of the "beartype" package.
     # * Fundamentally dangerous, which is the greater concern. For example, the
-    #   beartype.claw._clawast.BeartypeNodeTransformer.visit_Module()
+    #   beartype.claw._ast.clawastmain.BeartypeNodeTransformer.visit_Module()
     #   dynamically inserts a module-scoped import of the
     #   @beartype._decor.decorcore.beartype_object_nonfatal decorator at the
     #   head of the module currently being imported. But if the
@@ -448,7 +448,7 @@ def _add_path_hook_if_needed() -> None:
     :mod:`sys.path_hooks` list recursively applying the
     :func:`beartype.beartype` decorator to all well-typed callables and classes
     defined by all submodules of all packages previously registered by a call to
-    the :func:`beartype.claw._pkg.clawpkgadd.add_packages` function) if this
+    the :func:`beartype.claw._hook._clawhookadd.add_packages` function) if this
     path hook has yet to be added *or* silently reduce to a noop otherwise
     (i.e., if this path hook has already been added).
 
