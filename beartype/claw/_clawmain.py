@@ -4,22 +4,20 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype all-at-once high-level** :mod:`importlib` **machinery.**
-
-This private submodule is the main entry point for this subpackage, defining the
-public-facing :func:`beartype_package` function registering new
-beartype import path hooks. Notably, this submodule integrates high-level
+**Beartype import hooks** (i.e., public-facing functions integrating high-level
 :mod:`importlib` machinery required to implement :pep:`302`- and
 :pep:`451`-compliant import hooks with the abstract syntax tree (AST)
-transformation defined by the low-level :mod:`beartype.claw._ast.clawastmain` submodule.
+transformations defined by the low-level :mod:`beartype.claw._ast.clawastmain`
+submodule).
 
-This private submodule is *not* intended for importation by downstream callers.
+This private submodule is the main entry point for this subpackage. Nonetheless,
+this private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Define a new "with imports_beartyped():" context manager with signature:
+#FIXME: Define a new "with all_beartyped():" context manager with signature:
 #    @contextmanager
-#    def imports_beartyped(conf: BeartypeConf = BeartypeConf()): ...
+#    def all_beartyped(conf: BeartypeConf = BeartypeConf()): ...
 
 #FIXME: Unit test us up. Specifically, test that this approach successfully:
 #* Directly decorates callables declared at:
@@ -34,8 +32,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #  currently running pytest process? O_o
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._hook._clawhookadd import add_packages
-from beartype.claw._hook._clawhookenum import BeartypeClawCoverage
+from beartype.claw._pkg.clawpkgmain import add_packages
+from beartype.claw._pkg._clawpkgenum import BeartypeClawCoverage
 from beartype.roar import BeartypeClawRegistrationException
 from beartype.typing import Iterable
 from beartype._cave._cavefast import CallableFrameType

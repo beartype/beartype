@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from ast import PyCF_ONLY_AST
 from beartype.claw._ast.clawastmain import BeartypeNodeTransformer
-from beartype.claw._hook._clawhookadd import get_package_conf_if_added
+from beartype.claw._pkg.clawpkgmain import get_package_conf_if_added
 from beartype.meta import VERSION
 from beartype.typing import Optional
 from beartype._conf.confcls import BeartypeConf
@@ -192,7 +192,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         internally follows one of two distinct code paths, conditionally
         depending on whether a parent package transitively containing that
         module has been previously registered with the
-        :mod:`beartype.claw._hook._clawhookadd` submodule (e.g., by a call to the
+        :mod:`beartype.claw._pkg.clawpkgmain` submodule (e.g., by a call to the
         :func:`beartype.claw.beartype_package` function). Specifically:
 
         * If *no* parent package transitively containing that module has been
@@ -236,8 +236,8 @@ class BeartypeSourceFileLoader(SourceFileLoader):
           uniquifying this bytecode file to various bytecode-specific metadata,
           including the name and version of the active Python interpreter).
 
-        This monkey-patch suffixing ``{optimization_markers}`` with
-        the substring ``"-beartype-{BEARTYPE_VERSION}"``, which additionally
+        This monkey-patch suffixing ``{optimization_markers}`` with the
+        substring ``"-beartype-{BEARTYPE_VERSION}"``, which additionally
         uniquifies the filename of this bytecode file to the abstract syntax
         tree (AST) transformation applied by this version of :mod:`beartype`.
         Why? Because external callers can trivially enable and disable that
@@ -398,7 +398,8 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         )
 
         # AST transformer decorating typed callables and classes by @beartype.
-        ast_beartyper = BeartypeNodeTransformer()
+        ast_beartyper = BeartypeNodeTransformer(
+            conf_beartype=self._conf_beartype_if_module_hooked)
 
         # Abstract syntax tree (AST) modified by this transformer.
         module_ast_beartyped = ast_beartyper.visit(module_ast)

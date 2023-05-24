@@ -112,17 +112,10 @@ class BeartypeNodeTransformer(NodeTransformer):
 
     Attributes
     ----------
-    _conf_beartype : BeartypeConf
-        Either:
-
-        * If the most recent call to the :meth:`get_code` method loading a
-          module (i.e., creating and return the code object underlying that
-          module) was passed the fully-qualified name of a module with a
-          transitive parent package previously registered by a call to a public
-          :mod:`beartype.claw` import hook factory (e.g.,
-          :func:`beartype.claw.beartype_package`), the beartype configuration
-          with which to type-check that module.
-        * Else, :data:`None`.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., dataclass configuring the
+        :mod:`beartype.beartype` decorator for *all* decoratable objects
+        recursively decorated by this node transformer).
 
     See Also
     ----------
@@ -136,12 +129,39 @@ class BeartypeNodeTransformer(NodeTransformer):
        https://github.com/agronholm/typeguard/blob/master/src/typeguard/importhook.py
     '''
 
+    # ..................{ INITIALIZERS                       }..................
+    def __init__(
+        self,
+
+        # Mandatory keyword-only parameters.
+        *,
+        conf_beartype: BeartypeConf,
+    ) -> None:
+        '''
+        Initialize this node transformer.
+
+        Parameters
+        ----------
+        conf : BeartypeConf
+            **Beartype configuration** (i.e., dataclass configuring the
+            :mod:`beartype.beartype` decorator for *all* decoratable objects
+            recursively decorated by this node transformer).
+        '''
+        assert isinstance(conf_beartype, BeartypeConf), (
+            f'{repr(conf_beartype)} not beartype configuration.')
+
+        # Initialize our superclass.
+        super().__init__()
+
+        # Classify all passed parameters.
+        self._conf_beartype = conf_beartype
+
     # ..................{ VISITORS ~ module                  }..................
     def visit_Module(self, node: Module) -> Module:
         '''
         Add a new abstract syntax tree (AST) child node to the passed AST module
         parent node encapsulating the module currently being loaded by the
-        :class:`beartype.claw._clawload.BeartypeSourceFileLoader` object,
+        :class:`beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader` object,
         importing our private
         :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator for
         subsequent use by the other visitor methods defined by this class.
@@ -318,15 +338,6 @@ class BeartypeNodeTransformer(NodeTransformer):
         if is_node_callable_typed(node):
             #FIXME: Additionally pass the current beartype configuration as a
             #keyword-only "conf={conf}" parameter to this decorator, please.
-            #Thankfully, this class is only instantiated in a single location in
-            #the "_clawload" submodule. Altogether, we'll need to refactor:
-            #* The BeartypeNodeTransformer.__init__() method to accept a new
-            #  "conf_beartype=BeartypeConf" parameter, which should be localized
-            #  as a new "_conf_beartype" instance variable (for safety).
-            #* The BeartypeSourceFileLoader.source_to_code() method in the
-            #  "_clawload" submodule to instantiate:
-            #      ast_beartyper = BeartypeNodeTransformer(
-            #          conf_beartype=self._module_conf_if_added)
 
             #FIXME: [CACHE] Consider generalizing the
             #BeartypeNodeTransformer.__new__() class method to internally cache
