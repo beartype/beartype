@@ -8,10 +8,7 @@ Project-wide :pep:`593`-compliant **type hint test data.**
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype_test._util.mod.pytmodtyping import (
-    is_typing_attrs,
-    iter_typing_attrs,
-)
+from beartype_test._util.mod.pytmodtyping import is_typing_attrs
 
 # ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:
@@ -53,6 +50,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintSignAnnotated,
         HintSignList,
     )
+    from beartype._util.mod.lib.utiltyping import iter_typing_attrs
     from beartype_test.a00_unit.data.data_type import (
         Class,
         Subclass,

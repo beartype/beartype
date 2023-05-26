@@ -71,7 +71,8 @@ def add_data(data_module: 'ModuleType') -> None:
         HintSignIO,
         HintSignTextIO,
     )
-    from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES_STANDARD
+    # from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES_STANDARD
+    from beartype._util.mod.lib.utiltyping import iter_typing_attrs
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
         HintPithSatisfiedMetadata,
@@ -79,7 +80,6 @@ def add_data(data_module: 'ModuleType') -> None:
     )
     from beartype_test._util.mod.pytmodtest import (
         is_package_beartype_vale_usable)
-    from beartype_test._util.mod.pytmodtyping import iter_typing_attrs
 
     # Type variables.
     S = TypeVar('S')
@@ -150,17 +150,16 @@ def add_data(data_module: 'ModuleType') -> None:
         def __int__(self) -> int:
             return 42
 
-    # ..................{ ATTRS ~ supportsint                }..................
+    # ..................{ ATTRS ~ non-protocol               }..................
     # For each PEP 544-specific attribute importable from a standard typing
-    # module...
+    # module *EXCEPT* the "Protocol" superclass...
     #
-    # Note this iteration intentionally excludes the non-standard third-party
-    # "typing_extensions.Protocol" superclass, whose runtime behaviour has been
-    # shown to diverge significantly from that of standard implementations.
+    # Note that "typing_extensions" currently defines the "Protocol" superclass
+    # but fails to define most of these other attributes. Ergo, the two *MUST*
+    # be iterated over independently.
     for (
         BinaryIO,
         IO,
-        Protocol,
         SupportsAbs,
         SupportsBytes,
         SupportsFloat,
@@ -172,7 +171,6 @@ def add_data(data_module: 'ModuleType') -> None:
         typing_attr_basenames=(
             'BinaryIO',
             'IO',
-            'Protocol',
             'SupportsAbs',
             'SupportsBytes',
             'SupportsFloat',
@@ -181,155 +179,10 @@ def add_data(data_module: 'ModuleType') -> None:
             'SupportsRound',
             'TextIO',
         ),
-        typing_module_names=TYPING_MODULE_NAMES_STANDARD,
-        is_warn=True,
     ):
-        # ................{ PROTOCOLS ~ user                   }................
-        # User-defined protocol parametrized by *NO* type variables declaring
-        # arbitrary concrete and abstract methods.
-        @runtime_checkable
-        class ProtocolCustomUntypevared(Protocol):
-            def alpha(self) -> str:
-                return 'Of a Spicily sated'
-
-            @abstractmethod
-            def omega(self) -> str: pass
-
-        # User-defined protocol parametrized by a type variable declaring
-        # arbitrary concrete and abstract methods.
-        @runtime_checkable
-        class ProtocolCustomTypevared(Protocol[T]):
-            def alpha(self) -> str:
-                return 'Gainfully ungiving criticisms, schismatizing Ŧheo‐'
-
-            @abstractmethod
-            def omega(self) -> str: pass
-
-        # ................{ PROTOCOLS ~ user : abc             }................
-        # User-defined protocol superclass.
-        @runtime_checkable
-        class ProtocolCustomSuperclass(Protocol):
-            instance_variable: int
-
-        # User-defined abstract protocol subclassing both this superclass *AND*
-        # the standard abstract base class (ABC) superclass, exercising a prior
-        # issue with respect to non-trivial protocol hierarchies. See also:
-        #     https://github.com/beartype/beartype/issues/117
-        class ProtocolCustomABC(ProtocolCustomSuperclass, ABC):
-            instance_variable = 42
-
-            def concrete_method(self) -> str:
-                return (
-                    'Lit, Faux-Phonetician Grecian predilection derelictions '
-                    'predi‐sposed to'
-                )
-
-            @abstractmethod
-            def abstract_method(self) -> str: pass
-
-        # User-defined protocol subclass concretely subclassing this ABC.
-        class ProtocolCustomSubclass(ProtocolCustomABC):
-            def abstract_method(self) -> str:
-                return 'Concrete‐shambling,'
-
-        # ................{ SETS                               }................
-        # Add PEP 544-specific shallowly ignorable test type hints to that set
-        # global.
-        data_module.HINTS_PEP_IGNORABLE_SHALLOW.update((
-            # Note that ignoring the "typing.Protocol" superclass is vital
-            # here. For unknown and presumably uninteresting reasons, *ALL*
-            # possible objects satisfy this superclass. Ergo, this superclass
-            # is synonymous with the "object" root superclass: e.g.,
-            #     >>> import typing as t
-            #     >>> isinstance(object(), t.Protocol)
-            #     True
-            #     >>> isinstance('wtfbro', t.Protocol)
-            #     True
-            #     >>> isinstance(0x696969, t.Protocol)
-            #     True
-            Protocol,
-        ))
-
-        # Add PEP 544-specific deeply ignorable test type hints to that set.
-        data_module.HINTS_PEP_IGNORABLE_DEEP.update((
-            # Parametrizations of the "typing.Protocol" abstract base class.
-            Protocol[S, T],
-        ))
-
         # ................{ TUPLES                             }................
         # Add PEP 544-specific test type hints to that tuple.
         data_module.HINTS_PEP_META.extend((
-            # ..............{ PROTOCOLS ~ user                   }..............
-            # Despite appearances, protocols implicitly subclass
-            # "typing.Generic" and thus do *NOT* transparently reduce to
-            # standard types.
-            #
-            # Note that the "data_pep484" submodule already exercises
-            # predefined "typing" protocols (e.g., "typing.SupportsInt"), which
-            # were technically introduced with PEP 484 and thus available since
-            # Python >= 3.4 or so.
-
-            # User-defined protocol parametrized by *NO* type variables.
-            HintPepMetadata(
-                hint=ProtocolCustomUntypevared,
-                pep_sign=HintSignGeneric,
-                generic_type=ProtocolCustomUntypevared,
-                is_type_typing=False,
-                piths_meta=(
-                    # Unrelated object satisfying this protocol.
-                    HintPithSatisfiedMetadata(protocol_custom_structural),
-                    # String constant.
-                    HintPithUnsatisfiedMetadata('For durance needs.'),
-                ),
-            ),
-
-            # User-defined protocol parametrized by a type variable.
-            HintPepMetadata(
-                hint=ProtocolCustomTypevared,
-                pep_sign=HintSignGeneric,
-                generic_type=ProtocolCustomTypevared,
-                is_typevars=True,
-                is_type_typing=False,
-                piths_meta=(
-                    # Unrelated object satisfying this protocol.
-                    HintPithSatisfiedMetadata(protocol_custom_structural),
-                    # String constant.
-                    HintPithUnsatisfiedMetadata('Machist-'),
-                ),
-            ),
-
-            # User-defined protocol parametrized by a type variable, itself
-            # parametrized by the same type variables in the same order.
-            HintPepMetadata(
-                hint=ProtocolCustomTypevared[T],
-                pep_sign=HintSignGeneric,
-                generic_type=ProtocolCustomTypevared,
-                is_typevars=True,
-                is_typing=False,
-                piths_meta=(
-                    # Unrelated object satisfying this protocol.
-                    HintPithSatisfiedMetadata(protocol_custom_structural),
-                    # String constant.
-                    HintPithUnsatisfiedMetadata(
-                        'Black and white‐bit, bilinear linaements'),
-                ),
-            ),
-
-            # User-defined abstract protocol subclassing the ABC superclass.
-            HintPepMetadata(
-                hint=ProtocolCustomABC,
-                pep_sign=HintSignGeneric,
-                generic_type=ProtocolCustomABC,
-                is_type_typing=False,
-                piths_meta=(
-                    # Unrelated object satisfying this protocol.
-                    HintPithSatisfiedMetadata(ProtocolCustomSubclass()),
-                    # String constant.
-                    HintPithUnsatisfiedMetadata(
-                        'Conspiratorially oratory‐fawning faces'),
-                ),
-            ),
-
             # ..............{ GENERICS ~ io : unsubscripted      }..............
             # Unsubscripted "IO" abstract base class (ABC).
             HintPepMetadata(
@@ -553,4 +406,157 @@ def add_data(data_module: 'ModuleType') -> None:
                         'Our Fathers vowed, indulgently,'),
                 ),
             ),
+        ))
+
+    # ..................{ ATTRS ~ protocol                   }..................
+    # For the PEP 544-specific "Protocol" superclass importable from a standard
+    # typing module...
+    for Protocol in iter_typing_attrs(
+        typing_attr_basenames='Protocol', is_warn=True):
+        # ................{ PROTOCOLS ~ user                   }................
+        # User-defined protocol parametrized by *NO* type variables declaring
+        # arbitrary concrete and abstract methods.
+        @runtime_checkable
+        class ProtocolCustomUntypevared(Protocol):
+            def alpha(self) -> str:
+                return 'Of a Spicily sated'
+
+            @abstractmethod
+            def omega(self) -> str: pass
+
+        # User-defined protocol parametrized by a type variable declaring
+        # arbitrary concrete and abstract methods.
+        @runtime_checkable
+        class ProtocolCustomTypevared(Protocol[T]):
+            def alpha(self) -> str:
+                return 'Gainfully ungiving criticisms, schismatizing Ŧheo‐'
+
+            @abstractmethod
+            def omega(self) -> str: pass
+
+        # ................{ PROTOCOLS ~ user : abc             }................
+        # User-defined protocol superclass.
+        @runtime_checkable
+        class ProtocolCustomSuperclass(Protocol):
+            instance_variable: int
+
+        # User-defined abstract protocol subclassing both this superclass *AND*
+        # the standard abstract base class (ABC) superclass, exercising a prior
+        # issue with respect to non-trivial protocol hierarchies. See also:
+        #     https://github.com/beartype/beartype/issues/117
+        class ProtocolCustomABC(ProtocolCustomSuperclass, ABC):
+            instance_variable = 42
+
+            def concrete_method(self) -> str:
+                return (
+                    'Lit, Faux-Phonetician Grecian predilection derelictions '
+                    'predi‐sposed to'
+                )
+
+            @abstractmethod
+            def abstract_method(self) -> str: pass
+
+        # User-defined protocol subclass concretely subclassing this ABC.
+        class ProtocolCustomSubclass(ProtocolCustomABC):
+            def abstract_method(self) -> str:
+                return 'Concrete‐shambling,'
+
+        # ................{ SETS                               }................
+        # Add PEP 544-specific shallowly ignorable test type hints to that set
+        # global.
+        data_module.HINTS_PEP_IGNORABLE_SHALLOW.update((
+            # Note that ignoring the "typing.Protocol" superclass is vital
+            # here. For unknown and presumably uninteresting reasons, *ALL*
+            # possible objects satisfy this superclass. Ergo, this superclass
+            # is synonymous with the "object" root superclass: e.g.,
+            #     >>> import typing as t
+            #     >>> isinstance(object(), t.Protocol)
+            #     True
+            #     >>> isinstance('wtfbro', t.Protocol)
+            #     True
+            #     >>> isinstance(0x696969, t.Protocol)
+            #     True
+            Protocol,
+        ))
+
+        # Add PEP 544-specific deeply ignorable test type hints to that set.
+        data_module.HINTS_PEP_IGNORABLE_DEEP.update((
+            # Parametrizations of the "typing.Protocol" abstract base class.
+            Protocol[S, T],
+        ))
+
+        # ................{ TUPLES                             }................
+        # Add PEP 544-specific test type hints to that tuple.
+        data_module.HINTS_PEP_META.extend((
+            # ..............{ PROTOCOLS ~ user                   }..............
+            # Despite appearances, protocols implicitly subclass
+            # "typing.Generic" and thus do *NOT* transparently reduce to
+            # standard types.
+            #
+            # Note that the "data_pep484" submodule already exercises
+            # predefined "typing" protocols (e.g., "typing.SupportsInt"), which
+            # were technically introduced with PEP 484 and thus available since
+            # Python >= 3.4 or so.
+
+            # User-defined protocol parametrized by *NO* type variables.
+            HintPepMetadata(
+                hint=ProtocolCustomUntypevared,
+                pep_sign=HintSignGeneric,
+                generic_type=ProtocolCustomUntypevared,
+                is_type_typing=False,
+                piths_meta=(
+                    # Unrelated object satisfying this protocol.
+                    HintPithSatisfiedMetadata(protocol_custom_structural),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata('For durance needs.'),
+                ),
+            ),
+
+            # User-defined protocol parametrized by a type variable.
+            HintPepMetadata(
+                hint=ProtocolCustomTypevared,
+                pep_sign=HintSignGeneric,
+                generic_type=ProtocolCustomTypevared,
+                is_typevars=True,
+                is_type_typing=False,
+                piths_meta=(
+                    # Unrelated object satisfying this protocol.
+                    HintPithSatisfiedMetadata(protocol_custom_structural),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata('Machist-'),
+                ),
+            ),
+
+            # User-defined protocol parametrized by a type variable, itself
+            # parametrized by the same type variables in the same order.
+            HintPepMetadata(
+                hint=ProtocolCustomTypevared[T],
+                pep_sign=HintSignGeneric,
+                generic_type=ProtocolCustomTypevared,
+                is_typevars=True,
+                is_typing=False,
+                piths_meta=(
+                    # Unrelated object satisfying this protocol.
+                    HintPithSatisfiedMetadata(protocol_custom_structural),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata(
+                        'Black and white‐bit, bilinear linaements'),
+                ),
+            ),
+
+            # User-defined abstract protocol subclassing the ABC superclass.
+            HintPepMetadata(
+                hint=ProtocolCustomABC,
+                pep_sign=HintSignGeneric,
+                generic_type=ProtocolCustomABC,
+                is_type_typing=False,
+                piths_meta=(
+                    # Unrelated object satisfying this protocol.
+                    HintPithSatisfiedMetadata(ProtocolCustomSubclass()),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata(
+                        'Conspiratorially oratory‐fawning faces'),
+                ),
+            ),
+
         ))

@@ -254,6 +254,22 @@ class BeartypeModuleNotFoundWarning(BeartypeModuleWarning):
     pass
 
 
+class BeartypeModuleAttributeNotFoundWarning(BeartypeModuleWarning):
+    '''
+    **Beartype missing optional dependency attribute warning.**
+
+    This warning is emitted at various times to inform the user of a **missing
+    recommended optional dependency attribute** (i.e., attribute *not* defined
+    by a third-party Python package installed under the active Python
+    interpreter whose installation is technically optional but recommended,
+    typically due to the currently installed version of that package being
+    unexpectedly old and thus failing to define an attribute defined by modern
+    versions of that package).
+    '''
+
+    pass
+
+
 class BeartypeModuleUnimportableWarning(BeartypeModuleWarning):
     '''
     **Beartype unimportable optional dependency warning.**
