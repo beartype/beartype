@@ -22,7 +22,7 @@ from beartype.claw._pkg._clawpkgtrie import (
     packages_trie,
     packages_trie_lock,
 )
-from beartype.claw._importlib.clawimppath import add_path_hook_if_needed
+from beartype.claw._importlib.clawimppath import add_beartype_pathhook
 from beartype.roar import BeartypeClawRegistrationException
 from beartype.typing import (
     Iterable,
@@ -422,4 +422,4 @@ def add_packages(
         #   registered the desired packages with our global package trie. Why?
         #   This path hook subsequently calls the companion
         #   get_package_conf_if_added() function, which accesses this trie.
-        add_path_hook_if_needed()
+        add_beartype_pathhook()

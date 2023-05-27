@@ -32,6 +32,7 @@ from beartype._cave._cavefast import (
     MethodDecoratorStaticType,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from importlib.abc import PathEntryFinder
 from types import (
     CodeType,
     FrameType,
@@ -196,35 +197,7 @@ IterableStrs = Iterable[str]
 PEP-compliant type hint matching *any* iterable of zero or more strings.
 '''
 
-# ....................{ HINTS ~ pep : 484                  }....................
-# Type hints required to fully comply with PEP 484.
-
-Pep484TowerComplex = Union[complex, float, int]
-'''
-:pep:`484`-compliant type hint matching the **implicit complex tower** (i.e.,
-complex numbers, floating-point numbers, and integers).
-'''
-
-
-Pep484TowerFloat = Union[float, int]
-'''
-:pep:`484`-compliant type hint matching the **implicit floating-point tower**
-(i.e., both floating-point numbers and integers).
-'''
-
-# ....................{ HINTS ~ type                       }....................
-TypeException = Type[Exception]
-'''
-PEP-compliant type hint matching *any* exception class.
-'''
-
-
-TypeWarning = Type[Warning]
-'''
-PEP-compliant type hint matching *any* warning category.
-'''
-
-# ....................{ HINTS ~ type : tuple               }....................
+# ....................{ HINTS ~ kind : tuple               }....................
 TupleTypes = Tuple[type, ...]
 '''
 PEP-compliant type hint matching a tuple of zero or more classes.
@@ -243,7 +216,7 @@ Equivalently, this hint matches all objects passable as the second parameters
 to the :func:`isinstance` and :func:`issubclass` builtins.
 '''
 
-# ....................{ HINTS ~ type : tuple : stack       }....................
+# ....................{ HINTS ~ kind : tuple : stack       }....................
 TypeStack = Optional[Tuple[type, ...]]
 '''
 PEP-compliant type hint matching a **type stack** (i.e., either tuple of zero or
@@ -313,4 +286,42 @@ resolution can only find the parent callable lexically containing that nested
 class hierarchy on the current call stack (if any) by leveraging the total
 number of classes lexically nesting the currently decorated class as input
 metadata, as trivially provided by the length of this tuple.
+'''
+
+# ....................{ HINTS ~ mod : importlib            }....................
+# Type hints specific to the standard "importlib" package.
+
+ImportPathHook = Callable[[str], PathEntryFinder]
+'''
+PEP-compliant type hint matching an **import path hook** (i.e., factory closure
+creating and returning a new :class:`importlib.abc.PathEntryFinder` instance
+creating and leveraging a new :class:`importlib.machinery.FileLoader` instance).
+'''
+
+# ....................{ HINTS ~ pep : 484                  }....................
+# Type hints required to fully comply with PEP 484.
+
+Pep484TowerComplex = Union[complex, float, int]
+'''
+:pep:`484`-compliant type hint matching the **implicit complex tower** (i.e.,
+complex numbers, floating-point numbers, and integers).
+'''
+
+
+Pep484TowerFloat = Union[float, int]
+'''
+:pep:`484`-compliant type hint matching the **implicit floating-point tower**
+(i.e., both floating-point numbers and integers).
+'''
+
+# ....................{ HINTS ~ type                       }....................
+TypeException = Type[Exception]
+'''
+PEP-compliant type hint matching *any* exception class.
+'''
+
+
+TypeWarning = Type[Warning]
+'''
+PEP-compliant type hint matching *any* warning category.
 '''
