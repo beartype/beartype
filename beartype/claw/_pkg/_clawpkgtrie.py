@@ -4,13 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype package configuration trie.**
-
-This private submodule caches package names on behalf of the higher-level
-:func:`beartype.claw.beartype_package` function. Beartype import
-path hooks internally created by that function subsequently lookup these package
-names from this cache when deciding whether or not (and how) to decorate a
-submodule being imported with :func:`beartype.beartype`.
+**Beartype import path hook trie** (i.e., data structure caching package names
+on behalf of the higher-level :func:`beartype.claw._clawmain` submodule, which
+beartype import path hooks internally created by that submodule subsequently
+lookup when deciding whether or not (and how) to decorate by
+:func:`beartype.beartype` the currently imported user-specific submodule).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -80,7 +78,6 @@ class PackagesTrie(
         # Initialize our superclass with all passed parameters.
         super().__init__(*args, **kwargs)
 
-        #FIXME: Rename "conf_if_added" to "conf_if_added", please.
         # Nullify all subclass-specific parameters for safety.
         self.conf_if_added: Optional[BeartypeConf] = None
 

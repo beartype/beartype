@@ -339,15 +339,15 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
     #calling the enumerate() builtin here) AFTER* refactoring @beartype to
     #generate callable-specific wrapper signatures.
 
-    # For the name of each parameter accepted by this callable and the
+    # For the 0-based index of each parameter accepted by this callable and the
     # "ParameterMeta" object describing this parameter (in declaration order)...
     for arg_index, arg_meta in enumerate(iter_func_args(
-        # Possibly lowest-level wrappee underlying the possibly
-        # higher-level wrapper currently being decorated by the @beartype
-        # decorator. The latter typically fails to convey the same callable
-        # metadata conveyed by the former -- including the names and kinds
-        # of parameters accepted by the possibly unwrapped callable. This
-        # renders the latter mostly useless for our purposes.
+        # Possibly lowest-level wrappee underlying the possibly higher-level
+        # wrapper currently being decorated by the @beartype decorator. The
+        # latter typically fails to convey the same callable metadata conveyed
+        # by the former -- including the names and kinds of parameters accepted
+        # by the possibly unwrapped callable. This renders the latter mostly
+        # useless for our purposes.
         func=bear_call.func_wrappee_wrappee,
         func_codeobj=bear_call.func_wrappee_wrappee_codeobj,
         is_unwrap=False,
@@ -481,9 +481,8 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 exception=exception,
                 #FIXME: Embed the kind of parameter as well (e.g.,
                 #"positional-only", "keyword-only", "variadic positional"),
-                #ideally by improving the existing
-                #prefix_beartypeable_arg() function to introspect this
-                #kind from that callable's code object.
+                #ideally by improving the existing prefix_beartypeable_arg()
+                #function to introspect this kind from the callable code object.
                 target_str=prefix_beartypeable_arg(
                     func=bear_call.func_wrappee, arg_name=arg_name),
             )

@@ -441,7 +441,7 @@ def is_func_property(func: Any) -> TypeGuard[property]:
 
 def is_func_staticmethod(func: Any) -> TypeGuard[staticmethod]:
     '''
-    ``True`` only if the passed object is a **C-based unbound static method
+    :data:`True` only if the passed object is a **C-based unbound static method
     descriptor** (i.e., method decorated by the builtin :class:`staticmethod`
     decorator, yielding a non-callable instance of that :class:`staticmethod`
     decorator class implemented in low-level C and accessible via the low-level
@@ -466,7 +466,7 @@ def is_func_staticmethod(func: Any) -> TypeGuard[staticmethod]:
     Returns
     ----------
     bool
-        ``True`` only if this object is a pure-Python static method.
+        :data:`True` only if this object is a pure-Python static method.
     '''
 
     # Does the one-liner have Buddhahood? Mu.

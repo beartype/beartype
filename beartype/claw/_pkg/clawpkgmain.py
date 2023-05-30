@@ -32,6 +32,29 @@ from beartype._conf.confcls import BeartypeConf
 from beartype._util.text.utiltextident import is_identifier
 from collections.abc import Iterable as IterableABC
 
+# ....................{ TESTERS                            }....................
+#FIXME: Unit test us up, please.
+def is_packages_added() -> bool:
+    '''
+    :data:`True` only if one or more packages have been registered by a prior
+    call to the :func:`.add_packages` function.
+
+    Returns
+    ----------
+    bool
+        :data:`True` only if one or more packages have been registered.
+    '''
+
+    # Return true only if either...
+    return (
+        # A global configuration has been added by a prior call to the public
+        # beartype.claw.beartype_all() function *OR*...
+        packages_trie.conf_if_added is not None or
+        # One or more package-specific configurations have been added by prior
+        # calls to public beartype.claw.beartype_*() functions.
+        bool(packages_trie)
+    )
+
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_package_conf_if_added(package_name: str) -> Optional[BeartypeConf]:
@@ -41,12 +64,6 @@ def get_package_conf_if_added(package_name: str) -> Optional[BeartypeConf]:
     a prior call to the :func:`.add_packages` function *or* :data:`None`
     otherwise (i.e., if neither that package *nor* a parent package of that
     package was registered by such a call).
-
-    Caveats
-    ----------
-    **This function is only safely callable in a thread-safe manner within a**
-    ``with _claw_lock:`` **context manager.** Equivalently, this global is *not*
-    safely accessible outside that manager.
 
     Parameters
     ----------
