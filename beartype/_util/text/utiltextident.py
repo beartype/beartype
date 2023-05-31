@@ -10,13 +10,11 @@ or variable name) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                            }....................
-
 # ....................{ TESTERS                            }....................
 def is_identifier(text: str) -> bool:
     '''
-    ``True`` only if the passed string is the ``.``-delimited concatenation of
-    one or more :pep:`3131`-compliant syntactically valid **Python
+    :data:`True` only if the passed string is the ``.``-delimited concatenation
+    of one or more :pep:`3131`-compliant syntactically valid **Python
     identifiers** (i.e., attribute, callable, class, module, or variable name),
     suitable for testing whether this string is the fully-qualified name of an
     arbitrary Python object.
@@ -45,36 +43,44 @@ def is_identifier(text: str) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this string is the ``.``-delimited concatenation of
+        :data:`True` only if this string is the ``.``-delimited concatenation of
         one or more syntactically valid Python identifiers.
     '''
     assert isinstance(text, str), f'{repr(text)} not string.'
 
-    # Return either...
-    return (
-        # If this text contains *NO* "." delimiters and is thus expected to be
-        # an unqualified Python identifier, true only if this is the case;
-        text.isidentifier()
-        if '.' not in text else
-        # Else, this text contains one or more "." delimiters and is thus
-        # expected to be a qualified Python identifier. In this case, true only
-        # if *ALL* "."-delimited substrings split from this string are valid
-        # unqualified Python identifiers.
-        #
-        # Note that:
-        # * Regular expressions report false negatives. See the docstring.
-        # * There exists an alternative and significantly more computationally
-        #   expensive means of testing this condition, employed by the
-        #   typing.ForwardRef.__init__() method to valid the validity of the
-        #   passed relative classname:
-        #       # Needless to say, we'll never be doing this.
-        #       try:
-        #           all(
-        #               compile(identifier, '<string>', 'eval')
-        #               for identifier in text.split('.')
-        #           )
-        #           return True
-        #       except SyntaxError:
-        #           return False
-        all(identifier.isidentifier() for identifier in text.split('.'))
-    )
+    # If this text contains *NO* "." delimiters and is thus expected to be an
+    # unqualified Python identifier, return true only if this is the case.
+    if '.' not in text:
+        return text.isidentifier()
+
+    # Else, this text contains one or more "." delimiters and is thus expected
+    # to be a qualified Python identifier. In this case, return true only if
+    # *ALL* "."-delimited substrings split from this string are valid
+    # unqualified Python identifiers.
+    #
+    # Note that:
+    # * Regular expressions report false negatives. See the docstring.
+    # * Manual iteration is significantly faster than "all(...)"- and
+    #   "any(...)"-style comprehensions.
+    # * There exists an alternative and significantly more computationally
+    #   expensive means of testing this condition, employed by the
+    #   typing.ForwardRef.__init__() method to valid the validity of the
+    #   passed relative classname:
+    #       # Needless to say, we'll never be doing this.
+    #       try:
+    #           all(
+    #               compile(identifier, '<string>', 'eval')
+    #               for identifier in text.split('.')
+    #           )
+    #           return True
+    #       except SyntaxError:
+    #           return False
+    for text_basename in text.split('.'):
+        # If this "."-delimited substring is *NOT* a valid unqualified Python
+        # identifier, return false.
+        if not text_basename.isidentifier():
+            return False
+
+    # Return true, since *ALL* "."-delimited substrings split from this string
+    # are valid unqualified Python identifiers.
+    return True

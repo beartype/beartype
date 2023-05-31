@@ -32,8 +32,8 @@ this private submodule is *not* intended for importation by downstream callers.
 #  currently running pytest process? O_o
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._pkg.clawpkgmain import add_packages
-from beartype.claw._pkg._clawpkgenum import BeartypeClawCoverage
+from beartype.claw._pkg.clawpkghook import hook_packages
+from beartype.claw._pkg.clawpkgenum import BeartypeClawCoverage
 from beartype.roar import BeartypeClawRegistrationException
 from beartype.typing import Iterable
 from beartype._cave._cavefast import CallableFrameType
@@ -122,7 +122,7 @@ def beartype_all(
     '''
 
     # The advantage of one-liners is the vantage of vanity.
-    add_packages(coverage=BeartypeClawCoverage.PACKAGES_ALL, conf=conf)
+    hook_packages(claw_coverage=BeartypeClawCoverage.PACKAGES_ALL, conf=conf)
 
 
 #FIXME: Unit test us up, please.
@@ -245,8 +245,8 @@ def beartype_package_current(
     frame_caller_package_name = frame_caller_module_name.rpartition('.')[0]
 
     # Add a new import path hook beartyping this package.
-    add_packages(
-        coverage=BeartypeClawCoverage.PACKAGES_ONE,
+    hook_packages(
+        claw_coverage=BeartypeClawCoverage.PACKAGES_ONE,
         package_name=frame_caller_package_name,
         conf=conf,
     )
@@ -300,8 +300,8 @@ def beartype_package(
     '''
 
     # Add a new import path hook beartyping this package.
-    add_packages(
-        coverage=BeartypeClawCoverage.PACKAGES_ONE,
+    hook_packages(
+        claw_coverage=BeartypeClawCoverage.PACKAGES_ONE,
         package_name=package_name,
         conf=conf,
     )
@@ -380,8 +380,8 @@ def beartype_packages(
     '''
 
     # Add a new import path hook beartyping these packages.
-    add_packages(
-        coverage=BeartypeClawCoverage.PACKAGES_MANY,
+    hook_packages(
+        claw_coverage=BeartypeClawCoverage.PACKAGES_MANY,
         package_names=package_names,
         conf=conf,
     )
