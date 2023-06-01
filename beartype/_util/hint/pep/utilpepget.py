@@ -443,18 +443,21 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
         HintSignGeneric
     '''
 
+    # ..................{ IMPORTS                            }..................
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhintget import get_hint_repr
 
+    # ..................{ SYNOPSIS                           }..................
     # For efficiency, this tester identifies the sign of this type hint with
-    # multiple phases performed in ascending order of average time complexity.
+    # multiple phases performed in descending order of average time complexity
+    # (i.e., expected efficiency).
     #
     # Note that we intentionally avoid validating this type hint to be
     # PEP-compliant (e.g., by calling the die_unless_hint_pep() validator).
     # Why? Because this getter is the lowest-level hint validation function
     # underlying all higher-level hint validation functions! Calling the latter
     # here would thus induce infinite recursion, which would be very bad.
-    #
+
     # ..................{ PHASE ~ classname                  }..................
     # This phase attempts to map from the fully-qualified classname of this
     # hint to a sign identifying *ALL* hints that are instances of that class.
@@ -556,10 +559,10 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # ..................{ PHASE ~ repr : trie                }..................
     # This phase attempts to (in order):
     #
-    # 1. Split the unsubscripted machine-readable representation of this hint
-    #    on the "." delimiter into an iterable of module names.
-    # 2. Iteratively attempt to lookup each such module name in a trie mapping
-    #    from these names to a sign identifying *ALL* hints in that module.
+    # 1. Split the unsubscripted machine-readable representation of this hint on
+    #    the "." delimiter into an iterable of module names.
+    # 2. Iteratively look up each such module name in a trie mapping from these
+    #    names to a sign identifying *ALL* hints in that module.
     #
     # Note that:
     # * This phase is principally intended to ignore PEP-noncompliant type hints
@@ -571,7 +574,7 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     #   as generics. (See the prior note.)
     #
     # Since doing so requires splitting a string and iterating over substrings,
-    # this phase is significantly slower than the prior phase and thus *NOT*
+    # this phase is significantly slower than prior phases and thus *NOT*
     # performed almost last. Since this phase identifies an extremely small
     # subset of hints, efficiency is (mostly) incidental.
 

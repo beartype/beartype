@@ -1834,7 +1834,8 @@ def make_check_expr(
                     raise BeartypeDecorHintPepUnsupportedException(
                         f'{_EXCEPTION_PREFIX_HINT}'
                         f'{repr(hint_curr)} unsupported but '
-                        f'erroneously detected as supported.'
+                        f'erroneously detected as supported by '
+                        f'beartype sign {hint_curr_sign}.'
                     )
 
         # ................{ NON-PEP                            }................

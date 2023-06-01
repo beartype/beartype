@@ -594,7 +594,7 @@ def _init() -> None:
         # Note that:
         # * The inspect.getmembers() getter could also be called here. However,
         #   that getter internally defers to dir() and getattr() with a
-        #   considerable increase in runtime complexity.
+        #   considerable increase in runtime complexity for no tangible benefit.
         # * The "__dict__" dunder attribute should *NEVER* be accessed directly
         #   on a module, as that attribute commonly contains artificial entries
         #   *NOT* explicitly declared by that module (e.g., "__", "e__",
@@ -613,8 +613,8 @@ def _init() -> None:
             typing_attr_name = hint_sign_name[_HINT_SIGN_PREFIX_LEN:]
             assert typing_attr_name, f'{hint_sign_name} not sign name.'
 
-            # Machine-readable representation prefix of this attribute,
-            # conditionally defined as either:
+            # Substring prefixing the machine-readable representation of this
+            # attribute, conditionally defined as either:
             # * If this name is erroneously desynchronized from this
             #   representation under the active Python interpreter, the actual
             #   representation of this attribute under this interpreter (e.g.,
@@ -632,8 +632,7 @@ def _init() -> None:
                 f'{typing_module_name}.{hint_repr_prefix}'] = hint_sign
 
         # For the unqualified classname identifying each sign to that sign...
-        for typing_attr_name, hint_sign in (
-            _HINT_TYPE_BASENAMES_TO_SIGN.items()):
+        for typing_attr_name, hint_sign in _HINT_TYPE_BASENAMES_TO_SIGN.items():
             # Map from that classname in this module to this sign.
             # print(f'[datapeprepr] Mapping type "{typing_module_name}.{typing_attr_name}" -> {repr(hint_sign)}...')
             HINT_TYPE_NAME_TO_SIGN[
