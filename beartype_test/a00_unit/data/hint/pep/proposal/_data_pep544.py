@@ -151,8 +151,8 @@ def add_data(data_module: 'ModuleType') -> None:
             return 42
 
     # ..................{ ATTRS ~ non-protocol               }..................
-    # For each PEP 544-specific attribute importable from a standard typing
-    # module *EXCEPT* the "Protocol" superclass...
+    # For each PEP 544-specific attribute *EXCEPT* the "Protocol" superclass
+    # importable from any typing module...
     #
     # Note that "typing_extensions" currently defines the "Protocol" superclass
     # but fails to define most of these other attributes. Ergo, the two *MUST*
@@ -409,25 +409,32 @@ def add_data(data_module: 'ModuleType') -> None:
         ))
 
     # ..................{ ATTRS ~ protocol                   }..................
-    # For the PEP 544-specific "Protocol" superclass importable from a standard
-    # typing module...
+    # For the PEP 544-specific "Protocol" superclass importable from any typing
+    # module...
     for Protocol in iter_typing_attrs(
         typing_attr_basenames='Protocol', is_warn=True):
         # ................{ PROTOCOLS ~ user                   }................
-        # User-defined protocol parametrized by *NO* type variables declaring
-        # arbitrary concrete and abstract methods.
         @runtime_checkable
         class ProtocolCustomUntypevared(Protocol):
+            '''
+            User-defined protocol parametrized by *NO* type variables declaring
+            arbitrary concrete and abstract methods.
+            '''
+
             def alpha(self) -> str:
                 return 'Of a Spicily sated'
 
             @abstractmethod
             def omega(self) -> str: pass
 
-        # User-defined protocol parametrized by a type variable declaring
-        # arbitrary concrete and abstract methods.
+
         @runtime_checkable
         class ProtocolCustomTypevared(Protocol[T]):
+            '''
+            User-defined protocol parametrized by a type variable declaring
+            arbitrary concrete and abstract methods.
+            '''
+
             def alpha(self) -> str:
                 return 'Gainfully ungiving criticisms, schismatizing Ŧheo‐'
 
@@ -435,16 +442,25 @@ def add_data(data_module: 'ModuleType') -> None:
             def omega(self) -> str: pass
 
         # ................{ PROTOCOLS ~ user : abc             }................
-        # User-defined protocol superclass.
         @runtime_checkable
         class ProtocolCustomSuperclass(Protocol):
+            '''
+            User-defined protocol superclass.
+            '''
+
             instance_variable: int
 
-        # User-defined abstract protocol subclassing both this superclass *AND*
-        # the standard abstract base class (ABC) superclass, exercising a prior
-        # issue with respect to non-trivial protocol hierarchies. See also:
-        #     https://github.com/beartype/beartype/issues/117
+
         class ProtocolCustomABC(ProtocolCustomSuperclass, ABC):
+            '''
+            User-defined abstract protocol subclassing both this superclass
+            *and* the standard abstract base class (ABC) superclass, exercising
+            a prior issue with respect to non-trivial protocol hierarchies.
+
+            See also:
+                https://github.com/beartype/beartype/issues/117
+            '''
+
             instance_variable = 42
 
             def concrete_method(self) -> str:
@@ -456,8 +472,12 @@ def add_data(data_module: 'ModuleType') -> None:
             @abstractmethod
             def abstract_method(self) -> str: pass
 
-        # User-defined protocol subclass concretely subclassing this ABC.
+
         class ProtocolCustomSubclass(ProtocolCustomABC):
+            '''
+            User-defined protocol subclass concretely subclassing this ABC.
+            '''
+
             def abstract_method(self) -> str:
                 return 'Concrete‐shambling,'
 
@@ -541,6 +561,22 @@ def add_data(data_module: 'ModuleType') -> None:
                     # String constant.
                     HintPithUnsatisfiedMetadata(
                         'Black and white‐bit, bilinear linaements'),
+                ),
+            ),
+
+            # User-defined protocol parametrized by a type variable, itself
+            # parametrized by a concrete type satisfying this type variable.
+            HintPepMetadata(
+                hint=ProtocolCustomTypevared[str],
+                pep_sign=HintSignGeneric,
+                generic_type=ProtocolCustomTypevared,
+                is_typing=False,
+                piths_meta=(
+                    # Unrelated object satisfying this protocol.
+                    HintPithSatisfiedMetadata(protocol_custom_structural),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata(
+                        'We are as clouds that veil the midnight moon;'),
                 ),
             ),
 

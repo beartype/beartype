@@ -98,23 +98,23 @@ HINT_SIGNS_BARE_IGNORABLE = frozenset((
 
     # The unsubscripted "Optional" singleton semantically expands to the
     # implicit "Optional[Any]" singleton by the same argument. Since PEP
-    # 484 also stipulates that all "Optional[t]" singletons semantically
-    # expand to "Union[t, type(None)]" singletons for arbitrary arguments
-    # "t", "Optional[Any]" semantically expands to merely "Union[Any,
-    # type(None)]". Since all unions subscripted by "Any" semantically
-    # reduce to merely "Any", the "Optional" singleton also reduces to
+    # 484 also stipulates that all "Optional[t]" singletons semantically expand
+    #     to "Union[t, type(None)]" singletons for arbitrary arguments "t",
+    #     "Optional[Any]" semantically expands to merely "Union[Any,
+    #     type(None)]". Since all unions subscripted by "Any" semantically
+    #     reduce to merely "Any", the "Optional" singleton also reduces to
     # merely "Any".
     #
-    # This intentionally excludes "Optional[type(None)]", which the
-    # "typing" module physically reduces to merely "type(None)". *shrug*
+    # This intentionally excludes "Optional[type(None)]", which the "typing"
+    # module physically reduces to merely "type(None)". *shrug*
     HintSignOptional,
 
-    # The unsubscripted "Union" singleton semantically expands to the
-    # implicit "Union[Any]" singleton by the same argument. Since PEP 484
-    # stipulates that a union of one type semantically reduces to only that
-    # type, "Union[Any]" semantically reduces to merely "Any". Despite
-    # their semantic equivalency, however, these objects remain
-    # syntactically distinct with respect to object identification: e.g.,
+    # The unsubscripted "Union" singleton semantically expands to the implicit
+    # "Union[Any]" singleton by the same argument. Since PEP 484 stipulates that
+    # a union of one type semantically reduces to only that type, "Union[Any]"
+    # semantically reduces to merely "Any". Despite their semantic equivalency,
+    # however, these objects remain syntactically distinct with respect to
+    # object identification: e.g.,
     #     >>> Union is not Union[Any]
     #     True
     #     >>> Union is not Any
@@ -129,12 +129,12 @@ HINT_SIGNS_BARE_IGNORABLE = frozenset((
     #   * "Union[object]" to merely "object" (i.e., "Union[object] is
     #     object"), which this frozen set also already contains.
     # * "Union" singleton subscripted by one or more ignorable type hints
-    #   contained in this set (e.g., "Union[Any, bool, str]"). Since there
-    #   exist a countably infinite number of these subscriptions, these
-    #   subscriptions *CANNOT* be explicitly listed in this set. Instead,
-    #   these subscriptions are dynamically detected by the high-level
-    #   beartype._util.hint.pep.utilhinttest.is_hint_ignorable() tester
-    #   function and thus referred to as deeply ignorable type hints.
+    #   contained in this set (e.g., "Union[Any, bool, str]"). Since there exist
+    #   a countably infinite number of these subscriptions, these subscriptions
+    #   *CANNOT* be explicitly listed in this set. Instead, these subscriptions
+    #   are dynamically detected by the high-level
+    #   beartype._util.hint.pep.utilhinttest.is_hint_ignorable() tester function
+    #   and thus referred to as deeply ignorable type hints.
     HintSignUnion,
 
     # ..................{ PEP 544                            }..................

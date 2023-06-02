@@ -21,124 +21,42 @@ from beartype.typing import (
     TextIO,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES_STANDARD
+from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cls.utilclstest import is_type_builtin_or_fake
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
-
-# ....................{ PRIVATE ~ mappings                 }....................
-_HINTS_PEP484_IO_GENERIC = frozenset((IO, BinaryIO, TextIO,))
-'''
-Frozen set of all :mod:`typing` **IO generic base class** (i.e., either
-:class:`typing.IO` itself *or* a subclass of :class:`typing.IO` defined by the
-:mod:`typing` module).
-'''
-
-
-# Conditionally initialized by the _init() function below.
-_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL: Dict[type, Any] = {}
-'''
-Dictionary mapping from each :mod:`typing` **IO generic base class** (i.e.,
-either :class:`typing.IO` itself *or* a subclass of :class:`typing.IO` defined
-by the :mod:`typing` module) to the associated :mod:`beartype` **IO protocol**
-(i.e., either :class:`_Pep544IO` itself *or* a subclass of :class:`_Pep544IO`
-defined by this submodule).
-'''
-
-# ....................{ PRIVATE ~ classes                  }....................
-# Conditionally initialized by the _init() function below.
-_Pep544IO: Any = None  # type: ignore[assignment]
-'''
-:pep:`544`-compliant protocol base class for :class:`_Pep544TextIO` and
-:class:`_Pep544BinaryIO`.
-
-This is an abstract, generic version of the return of open().
-
-NOTE: This does not distinguish between the different possible classes (text
-vs. binary, read vs. write vs. read/write, append-only, unbuffered). The TextIO
-and BinaryIO subclasses below capture the distinctions between text vs. binary,
-which is pervasive in the interface; however we currently do not offer a way to
-track the other distinctions in the type system.
-
-Design
-----------
-This base class intentionally duplicates the contents of the existing
-:class:`typing.IO` generic base class by substituting the useless
-:class:`typing.Generic` superclass of the latter with the useful
-:class:`typing.Protocol` superclass of the former. Why? Because *no* stdlib
-classes excluding those defined by the :mod:`typing` module itself subclass
-:class:`typing.IO`. However, :class:`typing.IO` leverages neither the
-:class:`abc.ABCMeta` metaclass *nor* the :class:`typing.Protocol` superclass
-needed to support structural subtyping. Therefore, *no* stdlib objects
-(including those returned by the :func:`open` builtin) satisfy either
-:class:`typing.IO` itself or any subclasses of :class:`typing.IO` (e.g.,
-:class:`typing.BinaryIO`, :class:`typing.TextIO`). Therefore,
-:class:`typing.IO` and all subclasses thereof are functionally useless for all
-practical intents. The conventional excuse `given by Python maintainers to
-justify this abhorrent nonsensicality is as follows <typeshed_>`__:
-
-    There are a lot of "file-like" classes, and the typing IO classes are meant
-    as "protocols" for general files, but they cannot actually be protocols
-    because the file protocol isn't very well defined—there are lots of methods
-    that exist on some but not all filelike classes.
-
-Like most :mod:`typing`-oriented confabulation, that, of course, is bollocks.
-Refactoring the family of :mod:`typing` IO classes from inveterate generics
-into pragmatic protocols is both technically trivial and semantically useful,
-because that is exactly what :mod:`beartype` does. It works. It necessitates
-modifying three lines of existing code. It preserves backward compatibility. In
-short, it should have been done a decade ago. If the file protocol "isn't very
-well defined," the solution is to define that protocol with a rigorous type
-hierarchy satisfying all possible edge cases. The solution is *not* to pretend
-that no solutions exist, that the existing non-solution suffices, and instead
-do nothing. Welcome to :mod:`typing`, where no one cares that nothing works as
-advertised (or at all)... *and no one ever will.*
-
-.. _typeshed:
-   https://github.com/python/typeshed/issues/3225#issuecomment-529277448
-'''
-
-
-# Conditionally initialized by the _init() function below.
-_Pep544BinaryIO: Any = None  # type: ignore[assignment]
-'''
-Typed version of the return of open() in binary mode.
-'''
-
-
-# Conditionally initialized by the _init() function below.
-_Pep544TextIO: Any = None  # type: ignore[assignment]
-'''
-Typed version of the return of open() in text mode.
-'''
 
 # ....................{ TESTERS                            }....................
 # If the active Python interpreter targets at least Python >= 3.8 and thus
 # supports PEP 544, define these functions appropriately.
 if IS_PYTHON_AT_LEAST_3_8:
     # Defer version-dependent imports.
-    from typing import Protocol
+    from typing import Protocol as typing_Protocol  # <-- unoptimized protocol
 
     def is_hint_pep544_ignorable_or_none(
         hint: object, hint_sign: HintSign) -> Optional[bool]:
 
-        # Machine-readable representation of this hint.
-        hint_repr = repr(hint)
+        # Avoid circular import dependencies.
+        from beartype._util.hint.utilhintget import get_hint_repr
 
-        #FIXME: *OPTIMIZE.* Would a compiled regex test be faster? Possibly,
-        #but possibly not. Regexes are notoriously slow -- even when compiled.
-        # For the fully-qualified name of each standard typing module (i.e.,
-        # modules whose "Protocol" superclass strictly conforms with the
-        # runtime behaviour of the standard "typing.Protocol" superclass).
-        #
-        # Note this intentionally omits the "typing_extensions.Protocol"
-        # superclass, which does *NOT* conform with the runtime behaviour of
-        # the standard "typing.Protocol" superclass.
-        for typing_module_name in TYPING_MODULE_NAMES_STANDARD:
-            # If this hint is the "Protocol" superclass directly parametrized
-            # by one or more type variables (e.g., "typing.Protocol[S, T]"),
-            # ignore this superclass by returning true. Since this superclass
-            # can *ONLY* be parametrized by type variables, a trivial string
-            # test suffices.
+        # Machine-readable representation of this hint.
+        hint_repr = get_hint_repr(hint)
+
+        # If this representation does *NOT* contain a relevant substring
+        # suggesting that this hint might be the "Protocol" superclass directly
+        # parametrized by type variables (e.g., "typing.Protocol[S, T]"),
+        # continue testing this hint for other kinds of ignorability by
+        # returning "None".
+        if 'Protocol[' not in hint_repr:
+            return None
+        # Else, this representation contains such a relevant substring. Sus af!
+
+        # For the fully-qualified name of each typing module...
+        for typing_module_name in TYPING_MODULE_NAMES:
+            # If this hint is the "Protocol" superclass defined by this module
+            # directly parametrized by one or more type variables (e.g.,
+            # "typing.Protocol[S, T]"), ignore this superclass by returning
+            # true. This superclass can *ONLY* be parametrized by type
+            # variables; a string test thus suffices.
             #
             # For unknown and uninteresting reasons, *ALL* possible objects
             # satisfy the "Protocol" superclass. Ergo, this superclass and
@@ -146,10 +64,12 @@ if IS_PYTHON_AT_LEAST_3_8:
             # "object" root superclass.
             if hint_repr.startswith(f'{typing_module_name}.Protocol['):
                 return True
+            # Else, this hint is *NOT* such a "Protocol" superclass. In this
+            # case, continue to the next typing module.
 
         # Else, this hint is *NOT* the "Protocol" superclass directly
         # parametrized by one or more type variables. In this case, continue
-        # testing this hint for other kinds of ignorable by returning None.
+        # testing this hint for other kinds of ignorability by returning "None".
         return None
 
 
@@ -177,7 +97,7 @@ if IS_PYTHON_AT_LEAST_3_8:
             # A type *AND*...
             isinstance(hint, type) and
             # A PEP 544-compliant protocol *AND*...
-            issubclass(hint, Protocol) and  # type: ignore[arg-type]
+            issubclass(hint, typing_Protocol) and  # type: ignore[arg-type]
             # *NOT* a builtin type. For unknown reasons, some but *NOT* all
             # builtin types erroneously present themselves to be PEP
             # 544-compliant protocols under Python >= 3.8: e.g.,
@@ -361,8 +281,8 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
         )
     # Else, this object is *NOT* a PEP 484-compliant "typing" IO generic.
     #
-    # If this dictionary has yet to be initialized, this submodule has yet to
-    # be initialized. In this case, do so.
+    # If this dictionary has yet to be initialized, this submodule has yet to be
+    # initialized. In this case, do so.
     #
     # Note that this initialization is intentionally deferred until required.
     # Why? Because this initialization performs somewhat space- and
@@ -414,6 +334,92 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
 
     # Return this protocol.
     return pep544_protocol
+
+# ....................{ PRIVATE ~ mappings                 }....................
+_HINTS_PEP484_IO_GENERIC = frozenset((IO, BinaryIO, TextIO,))
+'''
+Frozen set of all :mod:`typing` **IO generic base class** (i.e., either
+:class:`typing.IO` itself *or* a subclass of :class:`typing.IO` defined by the
+:mod:`typing` module).
+'''
+
+
+# Conditionally initialized by the _init() function below.
+_HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL: Dict[type, Any] = {}
+'''
+Dictionary mapping from each :mod:`typing` **IO generic base class** (i.e.,
+either :class:`typing.IO` itself *or* a subclass of :class:`typing.IO` defined
+by the :mod:`typing` module) to the associated :mod:`beartype` **IO protocol**
+(i.e., either :class:`_Pep544IO` itself *or* a subclass of :class:`_Pep544IO`
+defined by this submodule).
+'''
+
+# ....................{ PRIVATE ~ classes                  }....................
+# Conditionally initialized by the _init() function below.
+_Pep544IO: Any = None  # type: ignore[assignment]
+'''
+:pep:`544`-compliant protocol base class for :class:`_Pep544TextIO` and
+:class:`_Pep544BinaryIO`.
+
+This is an abstract, generic version of the return of open().
+
+NOTE: This does not distinguish between the different possible classes (text
+vs. binary, read vs. write vs. read/write, append-only, unbuffered). The TextIO
+and BinaryIO subclasses below capture the distinctions between text vs. binary,
+which is pervasive in the interface; however we currently do not offer a way to
+track the other distinctions in the type system.
+
+Design
+----------
+This base class intentionally duplicates the contents of the existing
+:class:`typing.IO` generic base class by substituting the useless
+:class:`typing.Generic` superclass of the latter with the useful
+:class:`typing.Protocol` superclass of the former. Why? Because *no* stdlib
+classes excluding those defined by the :mod:`typing` module itself subclass
+:class:`typing.IO`. However, :class:`typing.IO` leverages neither the
+:class:`abc.ABCMeta` metaclass *nor* the :class:`typing.Protocol` superclass
+needed to support structural subtyping. Therefore, *no* stdlib objects
+(including those returned by the :func:`open` builtin) satisfy either
+:class:`typing.IO` itself or any subclasses of :class:`typing.IO` (e.g.,
+:class:`typing.BinaryIO`, :class:`typing.TextIO`). Therefore,
+:class:`typing.IO` and all subclasses thereof are functionally useless for all
+practical intents. The conventional excuse `given by Python maintainers to
+justify this abhorrent nonsensicality is as follows <typeshed_>`__:
+
+    There are a lot of "file-like" classes, and the typing IO classes are meant
+    as "protocols" for general files, but they cannot actually be protocols
+    because the file protocol isn't very well defined—there are lots of methods
+    that exist on some but not all filelike classes.
+
+Like most :mod:`typing`-oriented confabulation, that, of course, is bollocks.
+Refactoring the family of :mod:`typing` IO classes from inveterate generics
+into pragmatic protocols is both technically trivial and semantically useful,
+because that is exactly what :mod:`beartype` does. It works. It necessitates
+modifying three lines of existing code. It preserves backward compatibility. In
+short, it should have been done a decade ago. If the file protocol "isn't very
+well defined," the solution is to define that protocol with a rigorous type
+hierarchy satisfying all possible edge cases. The solution is *not* to pretend
+that no solutions exist, that the existing non-solution suffices, and instead
+do nothing. Welcome to :mod:`typing`, where no one cares that nothing works as
+advertised (or at all)... *and no one ever will.*
+
+.. _typeshed:
+   https://github.com/python/typeshed/issues/3225#issuecomment-529277448
+'''
+
+
+# Conditionally initialized by the _init() function below.
+_Pep544BinaryIO: Any = None  # type: ignore[assignment]
+'''
+Typed version of the return of open() in binary mode.
+'''
+
+
+# Conditionally initialized by the _init() function below.
+_Pep544TextIO: Any = None  # type: ignore[assignment]
+'''
+Typed version of the return of open() in text mode.
+'''
 
 # ....................{ INITIALIZERS                       }....................
 def _init() -> None:

@@ -120,6 +120,8 @@ HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: Dict[str, HintSign] = {
     # break and complicate dynamic code generation for no benefit whatsoever.
     'None': HintSignNone,
 
+    #FIXME: Almost certain that these should be detected instead via the
+    #slightly more efficient and elegant "HINT_TYPE_NAME_TO_SIGN" global below.
     # PEP 484-compliant abstract base classes (ABCs) requiring non-standard and
     # non-trivial type-checking. Although most types are trivially type-checked
     # by the isinstance() builtin, these types break the mold in various ways.
@@ -406,7 +408,7 @@ def _init() -> None:
     # representations to the actual representations of those attributes.
     #
     # The unqualified names and representations of *MOST* typing attributes are
-    # rigorously synchronized. However, these two strings are desynchronized
+    # rigorously synchronized. However, those two strings are desynchronized
     # for a proper subset of Python versions and typing attributes:
     #     $ ipython3.8
     #     >>> import typing
@@ -511,7 +513,7 @@ def _init() -> None:
     # Set of the unqualified names of all shallowly ignorable typing non-class
     # attributes. Since classes and non-class attributes have incommensurate
     # machine-readable representations, these two types of attributes *MUST* be
-    # isolated to distinct sets. See "_HINT_TYPING_CLASSNAMES_IGNORABLE" below.
+    # isolated to distinct sets. See "_HINT_TYPING_TYPE_NAMES_IGNORABLE" below.
     _HINT_TYPING_ATTR_NAMES_IGNORABLE = {
         # ................{ PEP 484                            }................
         # The "Any" singleton is semantically synonymous with the ignorable
@@ -561,10 +563,10 @@ def _init() -> None:
     }
 
     # Set of the unqualified names of all shallowly ignorable typing classes.
-    _HINT_TYPING_CLASSNAMES_IGNORABLE = {
+    _HINT_TYPING_TYPE_NAMES_IGNORABLE = {
+        # ................{ PEP 484                            }................
         # The "Generic" superclass imposes no constraints and is thus also
-        # semantically synonymous with the ignorable PEP-noncompliant
-        # "beartype.cave.AnyType" and hence "object" types. Since PEP
+        # semantically synonymous with the "object" superclass. Since PEP
         # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
         # singleton including "typing.Generic" semantically expands to that
         # singleton subscripted by an implicit "Any" argument, "Generic"
@@ -626,6 +628,24 @@ def _init() -> None:
             hint_repr_prefix = _HINT_TYPING_ATTR_NAME_TO_REPR_PREFIX.get(
                 typing_attr_name, typing_attr_name)
 
+            #FIXME: It'd be great to eventually generalize this to support
+            #aliases from one unwanted sign to another wanted sign. Perhaps
+            #something resembling:
+            ## In global scope above:
+            #_HINT_SIGN_REPLACE_SOURCE_BY_TARGET = {
+            #    HintSignProtocol: HintSignGeneric,
+            #}
+            #
+            #    # In this iteration here:
+            #    ...
+            #    hint_sign_replaced = _HINT_SIGN_REPLACE_SOURCE_BY_TARGET.get(
+            #        hint_sign, hint_sign)
+            #
+            #    # Map from that attribute in this module to this sign.
+            #    # print(f'[datapeprepr] Mapping repr("{typing_module_name}.{hint_repr_prefix}[...]") -> {repr(hint_sign)}...')
+            #    HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN[
+            #        f'{typing_module_name}.{hint_repr_prefix}'] = hint_sign_replaced
+
             # Map from that attribute in this module to this sign.
             # print(f'[datapeprepr] Mapping repr("{typing_module_name}.{hint_repr_prefix}[...]") -> {repr(hint_sign)}...')
             HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN[
@@ -646,11 +666,11 @@ def _init() -> None:
                 f'{typing_module_name}.{typing_attr_name}')
 
         # For each shallowly ignorable typing classname...
-        for typing_classname in _HINT_TYPING_CLASSNAMES_IGNORABLE:
+        for typing_type_name in _HINT_TYPING_TYPE_NAMES_IGNORABLE:
             # Add that classname relative to this module to this set.
             # print(f'[datapeprepr] Registering ignorable class "{typing_module_name}.{typing_attr_name}"...')
             HINTS_REPR_IGNORABLE_SHALLOW.add(  # type: ignore[attr-defined]
-                f"<class '{typing_module_name}.{typing_classname}'>")
+                f"<class '{typing_module_name}.{typing_type_name}'>")
 
         # For each deprecated PEP 484-compliant typing attribute name...
         for typing_attr_name in _HINT_PEP484_TYPING_ATTR_NAMES_DEPRECATED:
