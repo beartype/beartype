@@ -287,14 +287,6 @@ def warn_if_hint_pep_deprecated(
         :pep:`585` *and* the active Python interpreter targets Python >= 3.9.
     '''
 
-    # Substring of the machine-readable representation of this hint preceding
-    # the first "[" delimiter if this representation contains that delimiter
-    # *OR* this representation as is otherwise.
-    #
-    # Note that the str.partition() method has been profiled to be the
-    # optimally efficient means of parsing trivial prefixes.
-    hint_bare_repr, _, _ = repr(hint).partition('[')
-
     #FIXME: Uncomment *AFTER* resolving the "FIXME:" above.
     #FIXME: Unit test that this string contains *NO* non-human-readable
     #placeholder substrings. Note that the existing
@@ -307,7 +299,7 @@ def warn_if_hint_pep_deprecated(
     # type (e.g., "typing.List[int]"), this hint has been deprecated by the
     # equivalent PEP 585-compliant type hint (e.g., "list[int]"). In this case,
     # emit a non-fatal PEP 585-specific deprecation warning.
-    if hint_bare_repr in HINTS_PEP484_REPR_PREFIX_DEPRECATED:
+    if is_hint_pep_deprecated(hint):
         #FIXME: Resolve issue #73 by additionally passing the "stacklevel"
         #keyword parameter. Doing so will probably require:
         #* Refactoring this function to accept an *OPTIONAL*
@@ -432,9 +424,9 @@ def warn_if_hint_pep_deprecated(
 # ....................{ TESTERS                            }....................
 def is_hint_pep(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is a **PEP-compliant type hint** (i.e.,
-    object either directly defined by the :mod:`typing` module *or* whose type
-    subclasses one or more classes directly defined by the :mod:`typing`
+    :data:`True` only if the passed object is a **PEP-compliant type hint**
+    (i.e., object either directly defined by the :mod:`typing` module *or* whose
+    type subclasses one or more classes directly defined by the :mod:`typing`
     module).
 
     This tester is intentionally *not* memoized (e.g., by the
@@ -466,7 +458,7 @@ def is_hint_pep(hint: object) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this object is a PEP-compliant type hint.
+        :data:`True` only if this object is a PEP-compliant type hint.
     '''
 
     # Avoid circular import dependencies.
@@ -476,6 +468,47 @@ def is_hint_pep(hint: object) -> bool:
     # Return true only if this object is uniquely identified by a sign and thus
     # a PEP-compliant type hint.
     return get_hint_pep_sign_or_none(hint) is not None
+
+
+def is_hint_pep_deprecated(hint: object) -> bool:
+    '''
+    :data:`True` only if the passed object is a **PEP-compliant deprecated type
+    hint** (i.e., obsoleted by an equivalent type hint or set of type hints
+    standardized under one or more recent PEPs).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        :data:`True` only if this object is a PEP-compliant deprecated type
+        hint.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.utilhintget import get_hint_repr
+
+    # Machine-readable representation of this hint.
+    hint_repr = get_hint_repr(hint)
+
+    # Substring of the machine-readable representation of this hint preceding
+    # the first "[" delimiter if this representation contains that delimiter
+    # *OR* this representation as is otherwise.
+    #
+    # Note that the str.partition() method has been profiled to be the
+    # optimally efficient means of parsing trivial prefixes.
+    hint_repr_bare, _, _ = hint_repr.partition('[')
+
+    # Return true only if this hint is a PEP 484-compliant type hint originating
+    # from an origin type (e.g., "typing.List[int]").
+    return hint_repr_bare in HINTS_PEP484_REPR_PREFIX_DEPRECATED
 
 # ....................{ TESTERS ~ ignorable                }....................
 def is_hint_pep_ignorable(hint: object) -> bool:

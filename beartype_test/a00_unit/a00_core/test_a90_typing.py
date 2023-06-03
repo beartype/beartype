@@ -166,9 +166,7 @@ def test_api_typing() -> None:
 
         # If the active Python interpreter targets Python >= 3.9 and thus
         # supports PEP 585, add all "typing" attributes deprecated by PEP 585 to
-        # this set. Note these deprecated attributes are intentionally omitted:
-        # * "Match", as "typing.Match is re.Match". Yes, it is a simple alias.
-        # * "Pattern", as "typing.Pattern is re.Pattern". Ditto.
+        # this set.
         if IS_PYTHON_AT_LEAST_3_9:
             TYPING_ATTR_UNEQUAL_NAMES.update({
                 'AbstractSet',
@@ -197,6 +195,8 @@ def test_api_typing() -> None:
                 'List',
                 'Mapping',
                 'MappingView',
+                'Match',
+                'Pattern',
                 'MutableMapping',
                 'MutableSequence',
                 'MutableSet',

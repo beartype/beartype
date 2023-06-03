@@ -81,7 +81,7 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 #this submodule in favour of a fundamentally superior approach resembling:
 #    # In "beartype.typing.__init__": the future of typing backports begins today.
 #    from typing import TYPE_CHECKING
-#    
+#
 #    # If @beartype is currently being statically type-checked (e.g.,
 #    # by mypy or pyright), just defer to the third-party
 #    # "typing_extensions" package.
@@ -105,7 +105,7 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 #        from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 #        from beartype._util.mod.lib.utiltyping import (
 #            import_typing_attr_or_fallback as _import_typing_attr_or_fallback)
-#    
+#
 #        # Dynamically define the "Self" type hint as follows:
 #        # * If the active Python interpreter targets Python >= 3.11, just
 #        #   defer to the canonical "typing.Self" type hint.
@@ -118,7 +118,7 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 #        LiteralString = _import_typing_attr_or_fallback('Self', str)
 #        TypeGuard = _import_typing_attr_or_fallback('Self', bool)
 #        Annotated = _import_typing_attr_or_fallback('Annotated', bool)
-#    
+#
 #        #FIXME: Repeat the above logic for *ALL* existing "typing" attributes.
 
 # ....................{ IMPORTS                            }....................
@@ -168,11 +168,9 @@ from typing import (
     Generic as Generic,
     Hashable as Hashable,
     IO as IO,
-    Match as Match,
     NamedTuple as NamedTuple,
     NoReturn as NoReturn,
     Optional as Optional,
-    Pattern as Pattern,
     Sized as Sized,
     TextIO as TextIO,
     TypeVar as TypeVar,
@@ -332,10 +330,12 @@ if TYPE_CHECKING or not _IS_PYTHON_AT_LEAST_3_9:
         KeysView as KeysView,
         List as List,
         Mapping as Mapping,
+        Match as Match,
         MappingView as MappingView,
         MutableMapping as MutableMapping,
         MutableSequence as MutableSequence,
         MutableSet as MutableSet,
+        Pattern as Pattern,
         Reversible as Reversible,
         Set as Set,
         Tuple as Tuple,
@@ -390,6 +390,10 @@ else:
     from contextlib import (
         AbstractContextManager as ContextManager,
         AbstractAsyncContextManager as AsyncContextManager,
+    )
+    from re import (
+        Match as Match,
+        Pattern as Pattern,
     )
     from typing import (  # type: ignore[attr-defined]
         Annotated,
