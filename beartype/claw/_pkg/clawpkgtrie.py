@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.claw._importlib.clawimppath import remove_beartype_pathhook
 from beartype.typing import (
     Dict,
     Iterable,
@@ -50,7 +51,7 @@ class PackagesTrie(
           :data:`None`.
         * Else, the unqualified basename of the (sub)package configured by this
           (sub)trie.
-    conf_if_added : Optional[BeartypeConf]
+    conf_if_hooked : Optional[BeartypeConf]
         Either:
 
         * If this (sub)package has been explicitly registered by a prior call to
@@ -72,7 +73,7 @@ class PackagesTrie(
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
         'package_basename',
-        'conf_if_added',
+        'conf_if_hooked',
     )
 
     # ..................{ INITIALIZERS                       }..................
@@ -107,7 +108,7 @@ class PackagesTrie(
         self.package_basename = package_basename
 
         # Nullify all subclass-specific parameters for safety.
-        self.conf_if_added: Optional[BeartypeConf] = None
+        self.conf_if_hooked: Optional[BeartypeConf] = None
 
 # ....................{ GLOBALS                            }....................
 packages_trie_lock = RLock()
@@ -120,7 +121,9 @@ non-thread-safe :data:`.packages_trie` global.
 #FIXME: Revise docstring in accordance with data structure changes, please.
 #Everything scans up until "...either the :data:`None` singleton if that
 #subpackage is to be type-checked." Is that *REALLY* how this works? *sigh*
-packages_trie = PackagesTrie(package_basename=None)
+
+# Initialized below by a call to the clear_packages_trie() function.
+packages_trie: PackagesTrie = None  # type: ignore[assignment]
 '''
 **Package configuration trie** (i.e., non-thread-safe dictionary implementing a
 prefix tree such that each key-value pair maps from the unqualified basename of
@@ -207,7 +210,7 @@ def is_packages_trie() -> bool:
     return (
         # A global configuration has been added by a prior call to the public
         # beartype.claw.beartype_all() function *OR*...
-        packages_trie.conf_if_added is not None or
+        packages_trie.conf_if_hooked is not None or
         # One or more package-specific configurations have been added by prior
         # calls to public beartype.claw.beartype_*() functions.
         bool(packages_trie)
@@ -244,7 +247,7 @@ def get_package_conf_or_none(package_name: str) -> Optional[BeartypeConf]:
     # applicable to *ALL* packages if an external caller previously called the
     # public beartype.claw.beartype_all() function *OR* "None" otherwise (i.e.,
     # if that function has yet to be called).
-    subpackage_conf = packages_trie.conf_if_added
+    subpackage_conf = packages_trie.conf_if_hooked
 
     # For each subpackages trie describing each parent package transitively
     # containing this package (as well as that of that package itself)...
@@ -256,7 +259,7 @@ def get_package_conf_or_none(package_name: str) -> Optional[BeartypeConf]:
             # Since that parent package is more granular (i.e., unique) than
             # any transitive parent package of that parent package, the
             # former takes precedence over the latter when defined.
-            subpackages_trie.conf_if_added or
+            subpackages_trie.conf_if_hooked or
             # A transitive parent package of that parent package if any.
             subpackage_conf
         )
@@ -373,43 +376,45 @@ def iter_packages_trie(package_name: str) -> Iterable[PackagesTrie]:
             # Yield the current subtrie describing that parent package.
             yield subpackages_trie
 
-# ....................{ CONTEXTS                           }....................
-#FIXME: Unclear where this genuinely belongs -- if anywhere. *sigh*
+# ....................{ REMOVERS                           }....................
 #FIXME: Unit test us up, please.
-# @contextmanager
-# def added_packages_removed() -> Iterator[None]:
-#     '''
-#     Context manager "unregistering" (i.e., clearing, removing) all previously
-#     registered packages from the global package name cache maintained by the
-#     :func:`hook_packages` function *after* running the caller-defined block
-#     of the ``with`` statement executing this context manager.
-#
-#     Caveats
-#     ----------
-#     **This context manager is only intended to be invoked by unit and
-#     integration tests in our test suite.** Nonetheless, this context manager
-#     necessarily violates privacy encapsulation by accessing private submodule
-#     globals and is thus declared in this submodule rather than elsewhere.
-#
-#     **This context manager is non-thread-safe.** Since our test suite is
-#     intentionally *not* dangerously parallelized across multiple threads, this
-#     caveat is ignorable with respect to testing.
-#
-#     Yields
-#     ----------
-#     None
-#         This context manager yields *no* values.
-#     '''
-#
-#     # Perform the caller-defined body of the parent "with" statement.
-#     try:
-#         yield
-#     # After doing so, regardless of whether doing so raised an exception...
-#     finally:
-#         # Global variables reassigned below.
-#         global packages_trie
-#
-#         # With a submodule-specific thread-safe reentrant lock...
-#         with packages_trie_lock:
-#             # Reset the global package trie back to its initial state.
-#             packages_trie = PackagesTrie()
+def remove_beartype_pathhook_unless_packages_trie() -> None:
+    '''
+    Remove our **beartype import path hook singleton** (i.e., single callable
+    guaranteed to be inserted at most once to the front of the standard
+    :mod:`sys.path_hooks` list recursively applying the
+    :func:`beartype.beartype` decorator to all well-typed callables and classes
+    defined by all submodules of all packages previously registered by a call to
+    a public :func:`beartype.claw` function) if this path hook has already been
+    added and all previously registered packages have been unregistered *or*
+    silently reduce to a noop otherwise (i.e., if either this path hook has yet
+    to be added or one or more packages are still registered).
+
+    Caveats
+    ----------
+    **This function is non-thread-safe.** For both simplicity and efficiency,
+    the caller is expected to provide thread-safety through a higher-level
+    locking primitive managed by the caller.
+    '''
+
+    # If all previously registered packages have been unregistered, safely
+    # remove our import path hook from the "sys.path_hooks" list.
+    if not is_packages_trie():
+        remove_beartype_pathhook()
+
+# ....................{ CLEARERS                           }....................
+#FIXME: Unit test us up, please.
+def clear_packages_trie() -> None:
+    '''
+    Reset the :data:`.packages_trie` global back to its initial state.
+    '''
+
+    # Global variables reassigned below.
+    global packages_trie
+
+    # Wonderful one-liners are woefully lonely.
+    packages_trie = PackagesTrie(package_basename=None)
+
+
+# Initialize the "packages_trie" global to the empty dictionary.
+clear_packages_trie()

@@ -32,10 +32,12 @@ this private submodule is *not* intended for importation by downstream callers.
 #  currently running pytest process? O_o
 
 # ....................{ IMPORTS                            }....................
-from beartype.claw._pkg.clawpkghook import hook_packages
 from beartype.claw._pkg.clawpkgenum import BeartypeClawCoverage
+from beartype.claw._pkg.clawpkghook import hook_packages
 from beartype.roar import BeartypeClawRegistrationException
-from beartype.typing import Iterable
+from beartype.typing import (
+    Iterable,
+)
 from beartype._cave._cavefast import CallableFrameType
 from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
@@ -48,7 +50,7 @@ from beartype._util.func.utilfuncframe import (
     get_frame_module_name,
 )
 
-# ....................{ HOOKS                              }....................
+# ....................{ HOOKERS                            }....................
 #FIXME: Unit test us up, please.
 def beartype_all(
     # Optional keyword-only parameters.
@@ -70,6 +72,8 @@ def beartype_all(
 
     * First-party proprietary packages directly authored for this application.
     * Third-party open-source packages authored and maintained elsewhere.
+
+    This function is thread-safe.
 
     Usage
     ----------
@@ -119,6 +123,12 @@ def beartype_all(
     BeartypeClawRegistrationException
         If the passed ``conf`` parameter is *not* a beartype configuration
         (i.e., :class:`BeartypeConf` instance).
+
+    See Also
+    ----------
+    :func:`beartype.claw.beartyped`
+        Arguably safer alternative to this function isolating the effect of this
+        function to only imports performed inside a context manager.
     '''
 
     # The advantage of one-liners is the vantage of vanity.
@@ -137,6 +147,8 @@ def beartype_package_current(
     recursively applying the :func:`beartype.beartype` decorator to all typed
     callables and classes of all submodules of the current user-defined package
     calling this function on the first importation of those submodules).
+
+    This function is thread-safe.
 
     Parameters
     ----------
@@ -268,6 +280,8 @@ def beartype_package(
     callables and classes of all submodules of the package with the passed
     names on the first importation of those submodules).
 
+    This function is thread-safe.
+
     Parameters
     ----------
     package_name : str
@@ -322,6 +336,8 @@ def beartype_packages(
     recursively applying the :func:`beartype.beartype` decorator to all typed
     callables and classes of all submodules of all packages with the passed
     names on the first importation of those submodules).
+
+    This function is thread-safe.
 
     Usage
     ----------

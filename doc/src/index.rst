@@ -203,6 +203,24 @@ License
 Beartype is `open-source software released <beartype license_>`__ under the
 `permissive MIT license <MIT license_>`__.
 
+#######
+Funding
+#######
+
+Beartype is financed as a `purely volunteer open-source project via GitHub
+Sponsors <GitHub Sponsors_>`__, to whom our burgeoning community is eternally
+indebted. Without your generosity, runtime type-checking would be a shadow of
+its current hulking bulk. We genuflect before your selfless charity, everyone!
+
+Prior official funding sources (*yes, they once existed*) include:
+
+#. A `Paul Allen Discovery Center award`_ from the `Paul G. Allen Frontiers
+   Group`_ under the administrative purview of the `Paul Allen Discovery
+   Center`_ at `Tufts University`_ over the period 2015—2018 preceding the
+   untimely death of `Microsoft co-founder Paul Allen <Paul Allen_>`__, during
+   which beartype was maintained as the private ``@type_check`` decorator in the
+   `Bioelectric Tissue Simulation Engine (BETSE) <BETSE_>`__. :sup:`Phew!`
+
 ############
 Contributors
 ############
@@ -214,24 +232,6 @@ sleepless Wednesday evenings. These brave GitHubbers hurtled `the pull request
 |beartype-contributors|
 
 It's a heavy weight they bear. Applaud them as they buckle under the load!
-
-#######
-Funding
-#######
-
-Beartype is financed as a purely volunteer open-source project via `GitHub
-Sponsors`_, to whom our burgeoning community is eternally indebted. Without your
-generosity, runtime type-checking would be a shadow of its current hulking bulk.
-We genuflect before your selfless charity, everyone!
-
-Prior official funding sources (*yes, they once existed*) include:
-
-#. A `Paul Allen Discovery Center award`_ from the `Paul G. Allen Frontiers
-   Group`_ under the administrative purview of the `Paul Allen Discovery
-   Center`_ at `Tufts University`_ over the period 2015—2018 preceding the
-   untimely death of `Microsoft co-founder Paul Allen <Paul Allen_>`__, during
-   which beartype was maintained as the private ``@type_check`` decorator in the
-   `Bioelectric Tissue Simulation Engine (BETSE) <BETSE_>`__. :sup:`Phew!`
 
 #######
 History

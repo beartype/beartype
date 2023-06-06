@@ -19,14 +19,15 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.claw._pkg.clawpkgenum import BeartypeClawCoverage
 from beartype.claw._pkg.clawpkgtrie import (
     PackagesTrie,
-    is_packages_trie,
+    # is_packages_trie,
     iter_packages_trie,
     packages_trie,
     packages_trie_lock,
+    remove_beartype_pathhook_unless_packages_trie,
 )
 from beartype.claw._importlib.clawimppath import (
     add_beartype_pathhook,
-    remove_beartype_pathhook,
+    # remove_beartype_pathhook,
 )
 from beartype.roar import BeartypeClawRegistrationException
 from beartype.typing import (
@@ -130,13 +131,13 @@ def hook_packages(
             # Beartype configuration currently associated with *ALL* packages by
             # a prior call to this function if any *OR* "None" (i.e., if this
             # function has yet to be called under this Python interpreter).
-            conf_curr = packages_trie.conf_if_added
+            conf_curr = packages_trie.conf_if_hooked
 
             # If the higher-level beartype_all() function (calling this
             # lower-level adder) has yet to be called under this interpreter,
             # associate this configuration with *ALL* packages.
             if conf_curr is None:
-                packages_trie.conf_if_added = conf
+                packages_trie.conf_if_hooked = conf
             # Else, beartype_all() was already called under this interpreter.
             #
             # If the caller passed a different configuration to that prior call
@@ -207,12 +208,12 @@ def hook_packages(
                 # prior call to this function if any *OR* "None" (i.e., if that
                 # package has yet to be registered by a prior call to this
                 # function).
-                conf_curr = subpackages_trie.conf_if_added
+                conf_curr = subpackages_trie.conf_if_hooked
 
                 # If that package has yet to be registered, associate this
                 # configuration with that package.
                 if conf_curr is None:
-                    subpackages_trie.conf_if_added = conf
+                    subpackages_trie.conf_if_hooked = conf
                 # Else, that package was already registered by a previous call to
                 # this function.
                 #
@@ -286,8 +287,8 @@ def unhook_packages(
         # If the caller requested all-packages coverage...
         if claw_coverage is BeartypeClawCoverage.PACKAGES_ALL:
             # Unhook the beartype configuration previously associated with *ALL*
-            # packages by a prior call to the hook_packages() function.
-            packages_trie.conf_if_added = None
+            # packages by a prior call to the beartype_all() function.
+            packages_trie.conf_if_hooked = None
         # Else, the caller requested coverage over a subset of packages. In this
         # case...
         else:
@@ -308,7 +309,7 @@ def unhook_packages(
 
                 # Unhook the beartype configuration previously associated with
                 # that package by a prior call to the hook_packages() function.
-                subpackages_tries[0].conf_if_added = None
+                subpackages_tries[0].conf_if_hooked = None
 
                 # Child sub-subpackages trie of the currently iterated
                 # subpackages trie, describing the child subpackage of the
@@ -361,8 +362,7 @@ def unhook_packages(
         # * Do so in a thread-safe manner *INSIDE* this lock.
         # * Defer doing so until *AFTER* the above iteration has successfully
         #   unregistered the desired packages with our global trie.
-        if not is_packages_trie():
-            remove_beartype_pathhook()
+        remove_beartype_pathhook_unless_packages_trie()
 
 # ....................{ PRIVATE ~ checkers                 }....................
 #FIXME: Unit test us up, please.

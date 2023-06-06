@@ -477,10 +477,12 @@ LIBS_TESTTIME_OPTIONAL = (
     #     Deprecated call to `pkg_resources.declare_namespace('sphinxcontrib')`.
     'sphinx; python_version >= "3.8.0"',
 
-    # Required to exercise beartype validators and thus functionality requiring
-    # beartype validators (e.g., "numpy.typing.NDArray" type hints) under
-    # Python < 3.9.
-    'typing_extensions; python_version < "3.9.0"',
+    # Required to exercise third-party backports of type hint factories
+    # published by the standard "typing" module under newer versions of Python.
+    (
+        f'typing_extensions >='
+        f'{_LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS}'
+    ),
 )
 '''
 **Optional developer test-time package dependencies** (i.e., dependencies
