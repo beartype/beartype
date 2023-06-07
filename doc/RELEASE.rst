@@ -36,7 +36,7 @@ package maintainers) and is thus effectively mandatory.
 .. # ------------------( DESCRIPTION                         )------------------
 
 Procedure
-============
+=========
 
 Beartype is releasable to all supported platforms as follows:
 
