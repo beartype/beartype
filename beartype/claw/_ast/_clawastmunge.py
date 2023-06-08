@@ -45,6 +45,32 @@ def copy_node_code_metadata(node_src: AST, node_trg: AST) -> None:
       AST node inserted into the AST tree by the
       :class:`BeartypeNodeTransformer` above.
 
+    Caveats
+    ----------
+    **This function should only be passed nodes that support code metadata.**
+    Although *most* nodes do, some nodes do not. Why? Because they are *not*
+    actually nodes; they simply masquerade as nodes in documentation for the
+    standard :mod:`ast` module, which inexplicably makes *no* distinction
+    between the two. These pseudo-nodes include:
+
+    * :class:`ast.Del` nodes.
+    * :class:`ast.Load` nodes.
+    * :class:`ast.Store` nodes.
+
+    Indeed, this observation implies that these pseudo-nodes may be globalized
+    as singletons for efficient reuse throughout our AST generation algorithms.
+
+    Lastly, note that nodes may be differentiated from pseudo-nodes by passing
+    the call to the :func:`ast.dump` function in the code snippet presented in
+    the docstring for the :class:`BeartypeNodeTransformer` class an additional
+    ``include_attributes=True`` parameter: e.g.,
+
+    .. code-block:: python
+
+       print(ast.dump(ast.parse(CODE), indent=4, include_attributes=True))
+
+    Actual nodes have code metadata printed for them; pseudo-nodes do *not*.
+
     Parameters
     ----------
     node_src: AST

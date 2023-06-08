@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Additionally define:
+#FIXME: [PEP 484] Additionally define:
 #* A new BeartypeNodeTransformer.visit_ClassDef() method modelled after the
 #  equivalent TypeguardTransformer.visit_ClassDef() method.
 #* Generator transformers. The idea here is that @beartype *CAN* actually
@@ -27,7 +27,25 @@ This private submodule is *not* intended for importation by downstream callers.
 #See also:
 #    https://github.com/agronholm/typeguard/blob/master/src/typeguard/_transformer.py
 
-#FIXME: *OMG.* See also the third-party "executing" Python package:
+#FIXME: [SPEED] Consider generalizing the BeartypeNodeTransformer.__new__()
+#class method to internally cache and return "BeartypeNodeTransformer" instances
+#depending on the passed "conf_beartype" parameter. In general, most codebases
+#will only leverage a single @beartype configuration (if any @beartype
+#configuration at all); ergo, caching improves everything by enabling us to
+#reuse the same "BeartypeNodeTransformer" instance for every hooked module.
+#Score @beartype!
+#
+#See the BeartypeConf.__new__() method for relevant logic. \o/
+#FIXME: Oh, wait. We probably do *NOT* want to cache -- at least, not within
+#defining a comparable reinit() method as we do for "BeartypeCall". After
+#retrieving a cached "BeartypeNodeTransformer" instance, we'll need to
+#immediately call BeartypeNodeTransformer.reinit() to reinitialize that
+#instance.
+#
+#This is all feasible, of course -- but let's just roll with the naive
+#implementation for now, please.
+
+#FIXME: [PEP 675] *OMG.* See also the third-party "executing" Python package:
 #    https://github.com/alexmojaki/executing
 #
 #IPython itself internally leverages "executing" via "stack_data" (i.e., a
@@ -76,6 +94,7 @@ from ast import (
     AST,
     AnnAssign,
     Call,
+    Constant,
     Expr,
     ImportFrom,
     Load,
@@ -83,7 +102,10 @@ from ast import (
     Name,
     NodeTransformer,
     Str,
+    Subscript,
     alias,
+    expr,
+    keyword,
 )
 from beartype.claw._ast._clawastmunge import copy_node_code_metadata
 from beartype.claw._ast._clawasttest import is_node_callable_typed
@@ -110,23 +132,37 @@ class BeartypeNodeTransformer(NodeTransformer):
     method by decorating all typed callables and classes by the
     :func:`beartype.beartype` decorator).
 
+    Design
+    ----------
+    This class was largely designed by reverse-engineering the standard
+    :mod:`ast` module using the following code snippet. When run as the body of
+    a script from the command line (e.g., ``python3 {muh_script}.py``), this
+    snippet pretty-prints the desired target AST subtree implementing the
+    desired source code (specified in this snippet via the ``CODE`` global). In
+    short, this snippet trivializes the definition of arbitrarily complex
+    AST-based code from arbitrarily complex Python code:
+
+    .. code-block:: python
+
+       import ast
+
+       # Arbitrary desired code to pretty-print the AST representation of.
+       CODE = """
+       from beartype import beartype
+       from beartype._conf.confcache import BeartypeConfIdToObject
+
+       @beartype(conf=BeartypeConfIdToObject[139870142111616])
+       def muh_func(): pass
+       """
+
+       print(ast.dump(ast.parse(CODE), indent=4))
+
     Attributes
     ----------
-    conf : BeartypeConf
+    _conf_beartype : BeartypeConf
         **Beartype configuration** (i.e., dataclass configuring the
         :mod:`beartype.beartype` decorator for *all* decoratable objects
         recursively decorated by this node transformer).
-
-    See Also
-    ----------
-    * The `comparable "typeguard.importhook" submodule <typeguard import
-      hook_>`__ implemented by the incomparable `@agronholm (Alex Grönholm)
-      <agronholm_>`__.
-
-    .. _agronholm:
-       https://github.com/agronholm
-    .. _typeguard import hook:
-       https://github.com/agronholm/typeguard/blob/master/src/typeguard/importhook.py
     '''
 
     # ..................{ INITIALIZERS                       }..................
@@ -142,7 +178,7 @@ class BeartypeNodeTransformer(NodeTransformer):
 
         Parameters
         ----------
-        conf : BeartypeConf
+        conf_beartype : BeartypeConf
             **Beartype configuration** (i.e., dataclass configuring the
             :mod:`beartype.beartype` decorator for *all* decoratable objects
             recursively decorated by this node transformer).
@@ -160,11 +196,16 @@ class BeartypeNodeTransformer(NodeTransformer):
     def visit_Module(self, node: Module) -> Module:
         '''
         Add a new abstract syntax tree (AST) child node to the passed AST module
-        parent node encapsulating the module currently being loaded by the
-        :class:`beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader` object,
-        importing our private
-        :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator for
-        subsequent use by the other visitor methods defined by this class.
+        parent node (encapsulating the module currently being loaded by the
+        :class:`beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader`
+        object) importing various attributes required by lower-level AST child
+        nodes added by subsequent visitor methods defined by this transformer.
+
+        Specifically, this method adds nodes importing:
+
+        * Our private
+          :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator.
+        * Our public :func:`beartype.door.die_if_unbearable` exception raiser.
 
         Parameters
         ----------
@@ -333,43 +374,74 @@ class BeartypeNodeTransformer(NodeTransformer):
             This same callable node.
         '''
 
-        # If that callable is annotated by one or more type hints and thus
-        # unignorable...
+        # If the currently visited callable is annotated by one or more type
+        # hints and thus *NOT* ignorable with respect to beartype decoration...
         if is_node_callable_typed(node):
-            #FIXME: Additionally pass the current beartype configuration as a
-            #keyword-only "conf={conf}" parameter to this decorator, please.
-
-            #FIXME: [CACHE] Consider generalizing the
-            #BeartypeNodeTransformer.__new__() class method to internally cache
-            #and return "BeartypeNodeTransformer" instances depending on the
-            #passed "conf_beartype" parameter. In general, most codebases will
-            #only leverage a single @beartype configuration (if any @beartype
-            #configuration at all); ergo, caching improves everything by
-            #enabling us to reuse the same "BeartypeNodeTransformer" instance
-            #for every hooked module. Score @beartype!
-            #
-            #See the BeartypeConf.__new__() method for relevant logic. \o/
-            #FIXME: Oh, wait. We probably do *NOT* want to cache -- at least,
-            #not within defining a comparable reinit() method as we do for
-            #"BeartypeCall". After retrieving a cached "BeartypeNodeTransformer"
-            #instance, we'll need to immediately call
-            #BeartypeNodeTransformer.reinit() to reinitialize that instance.
-            #
-            #This is all feasible, of course -- but let's just roll with the
-            #naive implementation for now, please.
-
             # AST decoration child node decorating that callable by our
             # beartype._decor.decorcore.beartype_object_nonfatal() decorator.
-            #
-            # Note that this syntax derives from the example for the ast.arg()
-            # class:
-            #     https://docs.python.org/3/library/ast.html#ast.arg
-            decorate_callable = Name(
+            beartype_decorator: expr = Name(
                 id='beartype_object_nonfatal', ctx=_NODE_CONTEXT_LOAD)
 
             # Copy all source code metadata from this AST callable parent node
             # onto this AST decoration child node.
-            copy_node_code_metadata(node_src=node, node_trg=decorate_callable)
+            copy_node_code_metadata(node_src=node, node_trg=beartype_decorator)
+
+            # If the current beartype configuration is *NOT* the default
+            # beartype configuration, this configuration is a user-defined
+            # beartype configuration which *MUST* be passed to a call to the
+            # beartype decorator. Merely referencing this decorator does *NOT*
+            # suffice. In this case...
+            if self._conf_beartype != BeartypeConf():
+                # Object identifier uniquely identifying this configuration.
+                conf_id = id(self._conf_beartype)
+
+                #FIXME: Finalize us up, please. Notably, *ALL* non-pseudo-nodes
+                #will need to fixed up by subsequent calls to
+                #copy_node_code_metadata(), please.
+
+                # Replace the reference to this decorator defined above with a
+                # call to this decorator passed this configuration.
+                beartype_decorator = Call(
+                    func=beartype_decorator,
+                    args=[],
+                    keywords=[
+                        keyword(
+                            arg='conf',
+
+                            #FIXME: Actually implement the
+                            #"BeartypeConfIdToObject" dictionary, please. Note
+                            #that doing so will require augmenting the
+                            #"BeartypeConf" class to register itself with that
+                            #dictionary on instantiation.
+                            #FIXME: Import the "BeartypeConfIdToObject"
+                            #dictionary in the visit_Module() method, please.
+
+                            # This configuration, indirectly passed to this call
+                            # with an efficient dictionary lookup into a
+                            # beartype configuration cache mapping from the
+                            # object identifiers of *ALL* previously
+                            # instantiated beartype configurations to those
+                            # configurations. While cumbersome, this indirection
+                            # is effectively "glue" integrating this AST node
+                            # generation algorithm with the corresponding Python
+                            # code subsequently interpreted by Python.
+                            value=Subscript(
+                                value=Name(
+                                    id='BeartypeConfIdToObject',
+                                    ctx=_NODE_CONTEXT_LOAD,
+                                ),
+                                slice=Constant(value=conf_id),
+                                ctx=_NODE_CONTEXT_LOAD,
+                            )
+                        )
+                    ]
+                )
+
+                Name(
+                    id='beartype_object_nonfatal', ctx=_NODE_CONTEXT_LOAD)
+            # Else, this configuration is simply the default beartype
+            # configuration. In this case, avoid passing that configuration to
+            # the beartype decorator for both efficiency and simplicity.
 
             # Prepend this child decoration node to the beginning of the list of
             # all child decoration nodes for this parent callable node. Since
@@ -379,7 +451,7 @@ class BeartypeNodeTransformer(NodeTransformer):
             # This ensures that explicitly configured @beartype decorations
             # (e.g., "beartype(conf=BeartypeConf(...))") assume precedence over
             # implicitly configured @beartype decorations inserted by this hook.
-            node.decorator_list.insert(0, decorate_callable)
+            node.decorator_list.insert(0, beartype_decorator)
         # Else, that callable is ignorable. In this case, avoid needlessly
         # decorating that callable by @beartype for efficiency.
 
