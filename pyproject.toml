@@ -59,28 +59,8 @@
 #   https://github.com/pypa/setuptools/issues/2350
 #   https://github.com/pypa/setuptools/issues/2352
 #   https://github.com/pypa/setuptools/issues/2353
-requires = [
-    'setuptools!=50.0',
-    'wheel',
-]
+requires = ['setuptools !=50.0']
 
 # Explicitly notify "pip" that we leverage the top-level "setuptools"-backed
 # "setup.py" script as our installation infrastructure.
-#
-# Note that this is explicitly required for temporary backward compatibility
-# with "pip" 19.1.0, which erroneously violated PEP 51{7,8} by failing to
-# fallback to a sane default value in the absence of this setting. If this
-# setting is left unspecified here, "pip" 19.1.0 fails on attempting to perform
-# an editable (i.e., developer-specific) install with the following error:
-#     $ pip3 install --user --editable .
-#     Obtaining file:///home/leycec/py/betse
-#     ERROR: Error installing 'file:///home/leycec/py/betse': editable mode is
-#     not supported for pyproject.toml-style projects. pip is processing this
-#     project as pyproject.toml-style because it has a pyproject.toml file.
-#     Since the project has a setup.py and the pyproject.toml has no
-#     "build-backend" key for the "build_system" value, you may pass
-#     --no-use-pep517 to opt out of pyproject.toml-style processing. See PEP
-#     517 for details on pyproject.toml-style projects.
-#
-# See also: https://github.com/pypa/pip/issues/6434
 build-backend = 'setuptools.build_meta'

@@ -4,14 +4,18 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype abstract syntax tree (AST) mungers** (i.e., low-level utilities
+Beartype **abstract syntax tree (AST) mungers** (i.e., low-level utilities
 modifying various properties of various nodes in the currently visited AST).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from ast import AST
+from ast import (
+    AST,
+    ImportFrom,
+    alias,
+)
 # from beartype.typing import (
 #     List,
 #     Optional,
@@ -73,9 +77,9 @@ def copy_node_code_metadata(node_src: AST, node_trg: AST) -> None:
 
     Parameters
     ----------
-    node_src: AST
+    node_src : AST
         Source AST node to copy source code metadata from.
-    node_trg: AST
+    node_trg : AST
         Target AST node to copy source code metadata onto.
 
     See Also
@@ -97,3 +101,50 @@ def copy_node_code_metadata(node_src: AST, node_trg: AST) -> None:
     if IS_PYTHON_AT_LEAST_3_8:
         node_trg.end_lineno     = node_src.end_lineno  # type: ignore[attr-defined]
         node_trg.end_col_offset = node_src.end_col_offset  # type: ignore[attr-defined]
+
+# ....................{ FACTORIES                          }....................
+#FIXME: Unit test us up, please.
+def make_node_importfrom(
+    module_name: str,
+    attr_name: str,
+    node_sibling: AST,
+) -> ImportFrom:
+    '''
+    Create and return a new **import-from abstract syntax tree (AST) node**
+    (i.e., node encapsulating an import statement of the alias-style format
+    ``from {module_name} import {attr_name}``) importing the attribute with the
+    passed name from the module with the passed name.
+
+    Parameters
+    ----------
+    module_name : str
+        Fully-qualified name of the module to import this attribute from.
+    attr_name : str
+        Unqualified basename of the attribute to import from this module.
+    node_sibling : AST
+        Sibling AST node to copy source code metadata from.
+
+    Returns
+    ----------
+    ImportFrom
+        Import-from AST node importing this attribute from this module.
+    '''
+    assert isinstance(module_name, str), f'{repr(module_name)} not string.'
+    assert isinstance(attr_name, str), f'{repr(attr_name)} not string.'
+
+    # Node encapsulating the name of the attribute to import from this module.
+    node_importfrom_name = alias(attr_name)
+
+    # Node encapsulating the name of the module to import this attribute from.
+    node_importfrom = ImportFrom(
+        module=module_name, names=[node_importfrom_name])
+
+    # Copy all source code metadata (e.g., line numbers) from this sibling node
+    # onto this import from node.
+    copy_node_code_metadata(
+        node_src=node_sibling, node_trg=node_importfrom)
+    copy_node_code_metadata(
+        node_src=node_sibling, node_trg=node_importfrom_name)
+
+    # Return this import from node.
+    return node_importfrom

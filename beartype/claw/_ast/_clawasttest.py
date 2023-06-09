@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype abstract syntax tree (AST) testers** (i.e., low-level callables
+Beartype **abstract syntax tree (AST) testers** (i.e., low-level callables
 testing various properties of various nodes in the currently visited AST).
 
 This private submodule is *not* intended for importation by downstream callers.
