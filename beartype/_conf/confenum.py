@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype configuration enumerations** (i.e., public enumerations whose members
+Beartype **configuration enumerations** (i.e., public enumerations whose members
 may be passed as initialization-time parameters to the
 :meth:`beartype._conf.confcls.BeartypeConf.__init__` constructor to configure
 :mod:`beartype` with optional runtime type-checking behaviours).

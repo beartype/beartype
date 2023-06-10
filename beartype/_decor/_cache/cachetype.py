@@ -94,7 +94,7 @@ def register_typistry_forwardref(hint_classname: str) -> str:
         f'{_CODE_TYPISTRY_HINT_NAME_TO_HINT_SUFFIX}'
     )
 
-# ....................{ CLASSES                            }....................
+# ....................{ SUBCLASSES                         }....................
 class Beartypistry(dict):
     '''
     **Beartypistry** (i.e., singleton dictionary mapping from strings uniquely
@@ -129,7 +129,7 @@ class Beartypistry(dict):
     def __setitem__(self, hint_name: str, hint: object) -> None:
         '''
         Dunder method explicitly called by the superclass on setting the passed
-        key-value pair with``[``- and ``]``-delimited syntax, mapping the
+        key-value pair with ``[``- and ``]``-delimited syntax, mapping the
         passed string uniquely identifying the passed PEP-noncompliant type
         hint to that hint.
 
@@ -139,8 +139,8 @@ class Beartypistry(dict):
             String uniquely identifying this hint in a manner dependent on the
             type of this hint. Specifically, if this hint is:
 
-            * A non-:mod:`typing` type, this is the fully-qualified classname
-              of the module attribute defining this type.
+            * A non-:mod:`typing` type, this is the fully-qualified classname of
+              the module attribute defining this type.
             * A tuple of non-:mod:`typing` types, this is a string:
 
               * Prefixed by the :data:`TYPISTRY_HINT_NAME_TUPLE_PREFIX`

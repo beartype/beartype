@@ -55,10 +55,10 @@ class KeyPool(object):
         (i.e., arbitrary object cached under a pool of the :attr:`_key_to_pool`
         ditionary) to a boolean that is either:
 
-        * `True` if that item is currently **acquired** (i.e., most recently
-          returned by a call to the :meth:`acquire` method).
-        * `False` if that item is currently **released** (i.e., most recently
-          passed to a call to the :meth:`release` method).
+        * :data:`True` if that item is currently **acquired** (i.e., most
+          recently returned by a call to the :meth:`acquire` method).
+        * :data:`False` if that item is currently **released** (i.e., most
+          recently passed to a call to the :meth:`release` method).
     _pool_item_maker : Callable
         Caller-defined factory callable internally called by the
         :meth:`acquire` method on attempting to acquire a non-existent object

@@ -154,9 +154,9 @@ class BeartypeNodeTransformer(NodeTransformer):
        # Arbitrary desired code to pretty-print the AST representation of.
        CODE = """
        from beartype import beartype
-       from beartype._conf.confcache import ObjectIdToBeartypeConf
+       from beartype._conf.confcache import beartype_conf_id_to_conf
 
-       @beartype(conf=ObjectIdToBeartypeConf[139870142111616])
+       @beartype(conf=beartype_conf_id_to_conf[139870142111616])
        def muh_func(): pass
        """
 
@@ -216,7 +216,7 @@ class BeartypeNodeTransformer(NodeTransformer):
         * Our private
           :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator.
         * Our private
-          :obj:`beartype._conf.confcache.ObjectIdToBeartypeConf` global
+          :obj:`beartype._conf.confcache.beartype_conf_id_to_conf` global
           dictionary singleton.
         * Our public :func:`beartype.door.die_if_unbearable` exception raiser.
 
@@ -322,7 +322,7 @@ class BeartypeNodeTransformer(NodeTransformer):
                 node_sibling=node_import_prev,
             )
 
-            # Nodes importing our public beartype.door.die_if_unbearable()
+            # Node importing our public beartype.door.die_if_unbearable()
             # exception-raiser, intentionally imported from our private
             # "beartype.door._doorcheck" submodule rather than our public
             # "beartype.door" subpackage. Why? Because the former consumes
@@ -335,8 +335,13 @@ class BeartypeNodeTransformer(NodeTransformer):
                 node_sibling=node_import_prev,
             )
 
-            #FIXME: Import us up, please.
-            # beartype._conf.confcache.ObjectIdToBeartypeConf
+            # Node importing our private
+            # "beartype._conf.confcache.beartype_conf_id_to_conf" dictionary.
+            node_import_conf_cache = make_node_importfrom(
+                module_name='beartype._conf.confcache',
+                attr_name='beartype_conf_id_to_conf',
+                node_sibling=node_import_prev,
+            )
 
             # Insert these output import child nodes at this safe position of
             # the list of all child nodes of this parent module node.
@@ -347,6 +352,7 @@ class BeartypeNodeTransformer(NodeTransformer):
             node.body[node_import_beartype_attrs_index:0] = (
                 node_import_decorator,
                 node_import_raiser,
+                node_import_conf_cache,
             )
         # Else, this module is empty. In this case, silently reduce to a noop.
         # Since this edge case is *EXTREMELY* uncommon, avoid optimizing for
@@ -413,14 +419,6 @@ class BeartypeNodeTransformer(NodeTransformer):
                         keyword(
                             arg='conf',
 
-                            #FIXME: Actually implement the
-                            #"ObjectIdToBeartypeConf" dictionary, please. Note
-                            #that doing so will require augmenting the
-                            #"BeartypeConf" class to register itself with that
-                            #dictionary on instantiation.
-                            #FIXME: Import the "ObjectIdToBeartypeConf"
-                            #dictionary in the visit_Module() method, please.
-
                             # This configuration, indirectly passed to this call
                             # with an efficient dictionary lookup into a
                             # beartype configuration cache mapping from the
@@ -432,7 +430,7 @@ class BeartypeNodeTransformer(NodeTransformer):
                             # code subsequently interpreted by Python.
                             value=Subscript(
                                 value=Name(
-                                    id='ObjectIdToBeartypeConf',
+                                    id='beartype_conf_id_to_conf',
                                     ctx=NODE_CONTEXT_LOAD,
                                 ),
                                 slice=Constant(value=conf_id),

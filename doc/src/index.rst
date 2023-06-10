@@ -18,6 +18,25 @@
      Beartype is an open-source pure-Python PEP-compliant constant-time runtime
      type-checker emphasizing efficiency and portability.
 
+.. # ------------------( TODO                                )------------------
+.. #FIXME: Replace and/or supplement badges shown below with third-party badges
+.. #published by "https://shields.io"; the look-and-feel of shields.io badges is
+.. #the flat design favoured by modern apps and thus ostensibly superior to
+.. #anything else I've seen. Relevant HTML that we'll want to translate into
+.. #corresponding reST resembles:
+.. #    <a href="https://github.com/beartype/beartype/stargazers">
+.. #    <img src="https://img.shields.io/github/stars/beartype/beartype?style=for-the-badge" alt="@beartype stars"/>
+.. #    </a>
+.. #    <a href="https://github.com/beartype/beartype/fork">
+.. #    <img src="https://img.shields.io/github/forks/beartype/beartype?style=for-the-badge" alt="@beartype forks"/>
+.. #    </a>
+.. #    </a>
+.. #    <a href="https://github.com/beartype/beartype/releases">
+.. #    <img src="https://img.shields.io/github/release/beartype/beartype?&label=Latest&style=for-the-badge"/>
+.. #
+.. #See also this exhaustive list of all GitHub-specific shield.io badges:
+.. #    https://shields.io/category/activity
+
 .. # ------------------( MAIN                                )------------------
 
 |beartype-banner|
