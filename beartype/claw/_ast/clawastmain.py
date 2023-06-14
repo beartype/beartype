@@ -13,8 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ TODO                               }....................
 #FIXME: [PEP 484] Additionally define:
-#* A new BeartypeNodeTransformer.visit_ClassDef() method modelled after the
-#  equivalent TypeguardTransformer.visit_ClassDef() method.
 #* Generator transformers. The idea here is that @beartype *CAN* actually
 #  automatically type-check generator yields, sends, and returns at runtime.
 #  How? By automatically injecting appropriate die_if_unbearable() calls
@@ -94,33 +92,46 @@ from ast import (
     AST,
     AnnAssign,
     Call,
-    Constant,
+    ClassDef,
+    # Constant,
     Expr,
     ImportFrom,
     Module,
     Name,
     NodeTransformer,
     Str,
-    Subscript,
-    alias,
-    expr,
-    keyword,
+    # Subscript,
+    # alias,
+    # expr,
+    # keyword,
 )
 from beartype.claw._ast._clawastmagic import (
     NODE_CONTEXT_LOAD,
+    BEARTYPE_DECORATOR_MODULE_NAME,
+    BEARTYPE_DECORATOR_ATTR_NAME,
+)
+from beartype.claw._ast._clawastmake import (
+    make_node_importfrom,
+    make_node_keyword_conf,
 )
 from beartype.claw._ast._clawastmunge import (
-    copy_node_code_metadata,
-    make_node_importfrom,
+    copy_node_metadata,
+    decorate_node,
 )
 from beartype.claw._ast._clawasttest import is_node_callable_typed
-from beartype.claw._clawtyping import NodeCallable
+from beartype.claw._clawtyping import (
+    NodeCallable,
+    NodeT,
+    NodeVisitResult,
+)
 from beartype.typing import (
     List,
     Optional,
-    Union,
 )
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcls import (
+    BEARTYPE_CONF_DEFAULT,
+    BeartypeConf,
+)
 
 # ....................{ SUBCLASSES                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -173,6 +184,44 @@ class BeartypeNodeTransformer(NodeTransformer):
         **Beartype configuration** (i.e., dataclass configuring the
         :mod:`beartype.beartype` decorator for *all* decoratable objects
         recursively decorated by this node transformer).
+    _node_stack_beartype : List[AST]
+        **Current visitation stack** (i.e., list of the zero or more parent
+        nodes of the current node being visited by this node transformer), such
+        that:
+
+        * The first node on this stack is the **module node** encapsulating the
+          module currently being visited by this node transformer.
+        * The last node on this stack is the **parent node** of the current node
+          being visited (and possibly transformed) by this node transformer.
+
+        Note that the principal purpose of this stack is to deterministically
+        differentiate the two different types of callables, each of which
+        requires a correspondingly different type of decoration. These are:
+
+        * Nodes encapsulating pure-Python **functions**, which this transformer
+          directly decorates by the :func:`beartype.beartype` decorator.
+        * Nodes encapsulating pure-Python **methods**, which this transformer
+          does *not* directly decorate by that decorator. Why? Because this
+          transformer already decorates classes by that decorator, which then
+          implicitly decorates *all* methods defined by those classes.
+          Needlessly re-decorating the same methods by the same decorator only
+          harms runtime efficiency for no tangible gain.
+
+    See Also
+    ----------
+    https://github.com/agronholm/typeguard/blob/fe5b578595e00d5e45c3795d451dcd7935743809/src/typeguard/importhook.py
+        Last commit of the third-party Python package whose
+        ``@typeguard.importhook.TypeguardTransformer`` class implements import
+        hooks performing runtime type-checking in a similar manner, strongly
+        inspiring this implementation.
+
+        Note that all subsequent commits to that package generalize those import
+        hooks into something else entirely, which increasingly resembles a
+        static type-checker run at runtime; while fascinating and almost
+        certainly ingenious, those commits are sufficiently inscrutable,
+        undocumented, and unintelligible to warrant caution. Nonetheless, thanks
+        so much to @agronholm (Alex Grönholm) for his pulse-pounding innovations
+        in this burgeoning field! Our AST transformer is for you, @agronholm.
     '''
 
     # ..................{ INITIALIZERS                       }..................
@@ -202,14 +251,51 @@ class BeartypeNodeTransformer(NodeTransformer):
         # Classify all passed parameters.
         self._conf_beartype = conf_beartype
 
+        # Nullify all remaining instance variables for safety.
+        self._node_stack_beartype: List[AST] = []
+
+    # ..................{ SUPERCLASS                         }..................
+    # Overridden methods first defined by the "NodeTransformer" superclass.
+
+    def generic_visit(self, node: NodeT) -> NodeT:
+        '''
+        Recursively visit and possibly transform *all* child nodes of the passed
+        parent node in-place (i.e., preserving this parent node as is).
+
+        Parameters
+        ----------
+        node : NodeT
+            Parent node to transform *all* child nodes of.
+
+        Returns
+        ----------
+        NodeT
+            Parent node returned and thus preserved as is.
+        '''
+
+        # Add this parent node to the top of the stack of all current parent
+        # nodes *BEFORE* visiting any child nodes of this parent node.
+        self._node_stack_beartype.append(node)
+
+        # Recursively visit *ALL* child nodes of this parent node.
+        super().generic_visit(node)
+
+        # Remove this parent node from the top of the stack of all current
+        # parent nodes *AFTER* visiting all child nodes of this parent node.
+        self._node_stack_beartype.pop()
+
+        # Return this parent node as is.
+        return node
+
     # ..................{ VISITORS ~ module                  }..................
     def visit_Module(self, node: Module) -> Module:
         '''
-        Add a new abstract syntax tree (AST) child node to the passed AST module
-        parent node (encapsulating the module currently being loaded by the
-        :class:`beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader`
-        object) importing various attributes required by lower-level AST child
-        nodes added by subsequent visitor methods defined by this transformer.
+        Add a new abstract syntax tree (AST) child node to the passed
+        **module node** (i.e., node encapsulating the module currently being
+        loaded by the
+        :class:`beartype.claw._importlib._clawimpload.BeartypeSourceFileLoader`)
+        importing various attributes required by lower-level child nodes added
+        by subsequent visitor methods defined by this transformer.
 
         Specifically, this method adds nodes importing:
 
@@ -223,12 +309,12 @@ class BeartypeNodeTransformer(NodeTransformer):
         Parameters
         ----------
         node : Module
-            AST module parent node to be transformed.
+            Module node to be transformed.
 
         Returns
         ----------
         Module
-            That same AST module parent node.
+            That same module node.
         '''
 
         # 0-based index of the first safe position in the list of all child
@@ -240,7 +326,7 @@ class BeartypeNodeTransformer(NodeTransformer):
 
         # Child node of this parent module node immediately preceding the output
         # import child node to be added below, defaulting to this parent module
-        # node to ensure that the copy_node_code_metadata() function below
+        # node to ensure that the copy_node_metadata() function below
         # *ALWAYS* copies from a valid node (for simplicity).
         node_import_prev: AST = node
 
@@ -317,8 +403,8 @@ class BeartypeNodeTransformer(NodeTransformer):
             # Node importing our private
             # beartype._decor.decorcore.beartype_object_nonfatal() decorator.
             node_import_decorator = make_node_importfrom(
-                module_name='beartype._decor.decorcore',
-                attr_name='beartype_object_nonfatal',
+                module_name=BEARTYPE_DECORATOR_MODULE_NAME,
+                attr_name=BEARTYPE_DECORATOR_ATTR_NAME,
                 node_sibling=node_import_prev,
             )
 
@@ -343,11 +429,11 @@ class BeartypeNodeTransformer(NodeTransformer):
                 node_sibling=node_import_prev,
             )
 
-            # Insert these output import child nodes at this safe position of
+            # Insert these output child import nodes at this safe position of
             # the list of all child nodes of this parent module node.
             #
             # Note that this syntax efficiently (albeit unreadably) inserts
-            # these output import child nodes at the desired index (in this
+            # these output child import nodes at the desired index (in this
             # arbitrary order) of this parent module node.
             node.body[node_import_beartype_attrs_index:0] = (
                 node_import_decorator,
@@ -358,17 +444,43 @@ class BeartypeNodeTransformer(NodeTransformer):
         # Since this edge case is *EXTREMELY* uncommon, avoid optimizing for
         # this edge case (here or elsewhere).
 
-        # Recursively transform *ALL* AST child nodes of this AST module node.
-        self.generic_visit(node)
+        # Recursively transform *ALL* child nodes of this parent module node.
+        return self.generic_visit(node)
 
-        # Return this AST module node as is.
-        return node
+    # ..................{ VISITORS ~ class                   }..................
+    #FIXME: Implement us up, please.
+    def visit_ClassDef(self, node: ClassDef) -> Optional[ClassDef]:
+        '''
+        Add a new child node to the passed **class node** (i.e., node
+        encapsulating the definition of a pure-Python class) unconditionally
+        decorating that class by our private
+        :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator.
+
+        Parameters
+        ----------
+        node : ClassDef
+            Class node to be transformed.
+
+        Returns
+        ----------
+        Optional[ClassDef]
+            This same class node.
+        '''
+
+        # Add a new child decoration node to this parent class node decorating
+        # this class by @beartype under this configuration.
+        decorate_node(node=node, conf=self._conf_beartype)
+
+        # Recursively transform *ALL* child nodes of this parent class node.
+        # Note that doing so implicitly calls the visit_FunctionDef() method
+        # (defined below), each of which then effectively reduces to a noop.
+        return self.generic_visit(node)
 
     # ..................{ VISITORS ~ callable                }..................
     def visit_FunctionDef(self, node: NodeCallable) -> Optional[NodeCallable]:
         '''
         Add a new child node to the passed **callable node** (i.e., node
-        signifying the definition of a pure-Python function or method)
+        encapsulating the definition of a pure-Python function or method)
         decorating that callable by our private
         :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator if
         and only if that callable is **typed** (i.e., annotated by a return type
@@ -385,84 +497,39 @@ class BeartypeNodeTransformer(NodeTransformer):
             This same callable node.
         '''
 
+        # If...
+        if (
+            # This callable node has one or more parent nodes previously visited
+            # by this node transformer *AND*...
+            self._node_stack_beartype and
+            # The immediate parent node of this callable node is a class node...
+            isinstance(self._node_stack_beartype[-1], ClassDef)
+        ):
+            # Then this callable node encapsulates a method rather than a
+            # function. In this case, the visit_ClassDef() method defined above
+            # has already explicitly decorated the class defining this method by
+            # the @beartype decorator, which then implicitly decorates both this
+            # and all other methods of that class by that decorator. For safety
+            # and efficiency, avoid needlessly re-decorating this method by the
+            # same decorator by simply preserving and returning this node as is.
+            return node
+        # Else, this callable node encapsulates a function rather than a method.
+        # In this case, this function has yet to be decorated. Do so now, I say!
+
         # If the currently visited callable is annotated by one or more type
         # hints and thus *NOT* ignorable with respect to beartype decoration...
         if is_node_callable_typed(node):
-            # AST decoration child node decorating that callable by our
-            # beartype._decor.decorcore.beartype_object_nonfatal() decorator.
-            beartype_decorator: expr = Name(
-                id='beartype_object_nonfatal', ctx=NODE_CONTEXT_LOAD)
-
-            # Copy all source code metadata from this AST callable parent node
-            # onto this AST decoration child node.
-            copy_node_code_metadata(node_src=node, node_trg=beartype_decorator)
-
-            # If the current beartype configuration is *NOT* the default
-            # beartype configuration, this configuration is a user-defined
-            # beartype configuration which *MUST* be passed to a call to the
-            # beartype decorator. Merely referencing this decorator does *NOT*
-            # suffice. In this case...
-            if self._conf_beartype != BeartypeConf():
-                # Object identifier uniquely identifying this configuration.
-                conf_id = id(self._conf_beartype)
-
-                #FIXME: Finalize us up, please. Notably, *ALL* non-pseudo-nodes
-                #will need to fixed up by subsequent calls to
-                #copy_node_code_metadata(), please.
-
-                # Replace the reference to this decorator defined above with a
-                # call to this decorator passed this configuration.
-                beartype_decorator = Call(
-                    func=beartype_decorator,
-                    args=[],
-                    keywords=[
-                        keyword(
-                            arg='conf',
-
-                            # This configuration, indirectly passed to this call
-                            # with an efficient dictionary lookup into a
-                            # beartype configuration cache mapping from the
-                            # object identifiers of *ALL* previously
-                            # instantiated beartype configurations to those
-                            # configurations. While cumbersome, this indirection
-                            # is effectively "glue" integrating this AST node
-                            # generation algorithm with the corresponding Python
-                            # code subsequently interpreted by Python.
-                            value=Subscript(
-                                value=Name(
-                                    id='beartype_conf_id_to_conf',
-                                    ctx=NODE_CONTEXT_LOAD,
-                                ),
-                                slice=Constant(value=conf_id),
-                                ctx=NODE_CONTEXT_LOAD,
-                            )
-                        )
-                    ]
-                )
-            # Else, this configuration is simply the default beartype
-            # configuration. In this case, avoid passing that configuration to
-            # the beartype decorator for both efficiency and simplicity.
-
-            # Prepend this child decoration node to the beginning of the list of
-            # all child decoration nodes for this parent callable node. Since
-            # this list is "stored outermost first (i.e. the first in the list
-            # will be applied last)", prepending guarantees that our decorator
-            # will be applied last (i.e., *AFTER* all subsequent decorators).
-            # This ensures that explicitly configured @beartype decorations
-            # (e.g., "beartype(conf=BeartypeConf(...))") assume precedence over
-            # implicitly configured @beartype decorations inserted by this hook.
-            node.decorator_list.insert(0, beartype_decorator)
+            # Add a new child decoration node to this parent callable node
+            # decorating this callable by @beartype under this configuration.
+            decorate_node(node=node, conf=self._conf_beartype)
         # Else, that callable is ignorable. In this case, avoid needlessly
         # decorating that callable by @beartype for efficiency.
 
-        # Recursively transform *ALL* AST child nodes of this AST callable node.
-        self.generic_visit(node)
-
-        # Return this AST callable node as is.
-        return node
+        # Recursively transform *ALL* child nodes of this parent callable node.
+        return self.generic_visit(node)
 
     # ..................{ VISITORS ~ pep 562                 }..................
-    def visit_AnnAssign(self, node: AnnAssign) -> Union[AST, List[AST]]:
+    def visit_AnnAssign(self, node: AnnAssign) -> NodeVisitResult:
         '''
         Add a new child node to the passed **annotated assignment node** (i.e.,
         node signifying the assignment of an attribute annotated by a
@@ -478,7 +545,7 @@ class BeartypeNodeTransformer(NodeTransformer):
 
         Returns
         ----------
-        Union[AST, List[AST]]
+        NodeVisitResult
             Either:
 
             * If this annotated assignment node is *not* **simple** (i.e., the
@@ -503,6 +570,8 @@ class BeartypeNodeTransformer(NodeTransformer):
         #   hint annotating this assignment, typically an instance of either:
         #   * "ast.Name".
         #   * "ast.Str".
+        #   Note that this node is *NOT* itself a valid PEP-compliant type hint
+        #   and should *NOT* be treated as such here or elsewhere.
         # * "node.simple", a boolean that is true only if "node.target" is an
         #   "ast.Name" node.
         # * "node.target", a child node describing the target attribute assigned
@@ -525,48 +594,67 @@ class BeartypeNodeTransformer(NodeTransformer):
             return node
         # Else, this assignment is simple and assigning to an attribute name.
 
-        # Validate this fact.
+        # Validate this expectation.
         assert isinstance(node.target, Name), (
             f'Non-simple AST annotated assignment node {repr(node)} '
             f'target {repr(node.target)} not {repr(Name)} instance.')
 
-        #FIXME: Additionally pass the current beartype configuration as a
-        #keyword-only "conf={conf}" parameter to this raiser, please.
-
         # Child node referencing the function performing this type-checking,
         # previously imported at module scope by visit_FunctionDef() above.
-        node_typecheck_function = Name(
+        node_check_function = Name(
             'die_if_unbearable', ctx=NODE_CONTEXT_LOAD)
 
         # Child node passing the value newly assigned to this attribute by this
         # assignment as the first parameter to die_if_unbearable().
-        node_typecheck_pith = Name(node.target.id, ctx=NODE_CONTEXT_LOAD)
+        node_check_pith = Name(node.target.id, ctx=NODE_CONTEXT_LOAD)
+
+        # List of all nodes encapsulating keyword arguments passed to
+        # die_if_unbearable(), defaulting to the empty list and thus *NO* such
+        # keyword arguments.
+        node_check_keywords = []
+
+        # If the current beartype configuration is *NOT* the default beartype
+        # configuration, this configuration is a user-defined beartype
+        # configuration which *MUST* be passed as well. In this case...
+        if self._conf_beartype != BEARTYPE_CONF_DEFAULT:
+            # Node encapsulating the passing of this configuration as
+            # the "conf" keyword argument to die_if_unbearable().
+            node_check_keyword_conf = make_node_keyword_conf(
+                conf=self._conf_beartype, node_sibling=node)
+
+            # Append this node to the list of all keyword arguments passed to
+            # die_if_unbearable().
+            node_check_keywords.append(node_check_keyword_conf)
+        # Else, this configuration is simply the default beartype
+        # configuration. In this case, avoid passing that configuration to
+        # the beartype decorator for both efficiency and simplicity.
 
         # Adjacent node type-checking this newly assigned attribute against the
         # PEP-compliant type hint annotating this assignment by deferring to our
         # die_if_unbearable() raiser.
-        node_typecheck = Call(
-            node_typecheck_function,
-            [
+        node_check = Call(
+            func=node_check_function,
+            args=[
                 # Child node passing the value newly assigned to this
                 # attribute by this assignment as the first parameter.
-                node_typecheck_pith,
+                node_check_pith,
                 # Child node passing the type hint annotating this assignment as
                 # the second parameter.
                 node.annotation,
             ],
-            [],
+            keywords=node_check_keywords,
         )
 
         # Copy all source code metadata from this AST annotated assignment node
         # onto *ALL* AST nodes created above.
-        copy_node_code_metadata(
-            node_src=node, node_trg=node_typecheck_function)
-        copy_node_code_metadata(node_src=node, node_trg=node_typecheck_pith)
-        copy_node_code_metadata(node_src=node, node_trg=node_typecheck)
+        copy_node_metadata(node_src=node, node_trg=(
+            node_check_function,
+            node_check_pith,
+            node_check,
+        ))
 
-        #FIXME: Can we replace this inefficient list with an efficient tuple?
-        #Probably not. Let's avoid doing so for the moment, as the "ast" API is
-        #obstruse enough as it is.
         # Return a list comprising these two adjacent nodes.
-        return [node, node_typecheck]
+        #
+        # Note that order is *EXTREMELY* significant. This order ensures that
+        # this attribute is type-checked after being assigned to, as expected.
+        return [node, node_check]

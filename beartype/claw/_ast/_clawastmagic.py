@@ -22,3 +22,19 @@ NODE_CONTEXT_LOAD = Load()
 ``ctx`` keyword parameter accepted by the ``__init__()`` method of various
 abstract syntax tree (AST) node classes).
 '''
+
+# ....................{ STRINGS                            }....................
+BEARTYPE_DECORATOR_MODULE_NAME = 'beartype._decor.decorcore'
+'''
+Fully-qualified name of the submodule defining the :mod:`beartype` decorator
+applied by our abstract syntax tree (AST) node transformer to all applicable
+callables and classes of third-party modules.
+'''
+
+
+BEARTYPE_DECORATOR_ATTR_NAME = 'beartype_object_nonfatal'
+'''
+Unqualified basename of the :mod:`beartype` decorator applied by our abstract
+syntax tree (AST) node transformer to all applicable callables and classes of
+third-party modules.
+'''
