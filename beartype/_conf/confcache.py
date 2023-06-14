@@ -49,7 +49,6 @@ otherwise harmless) repeated re-memoization of duplicate configurations.
 '''
 
 
-#FIXME: Unit test us up, please.
 beartype_conf_id_to_conf: Dict[int, 'BeartypeConf'] = {}
 '''
 Non-thread-safe **beartype configuration identifier cache** (i.e., dictionary

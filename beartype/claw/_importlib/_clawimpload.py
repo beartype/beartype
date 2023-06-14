@@ -243,8 +243,8 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         Why? Because external callers can trivially enable and disable that
         transformation for any module by either calling or not calling the
         :func:`beartype.claw.beartype_package` function with the name of a
-        package transitively containing that module. Compiling a @beartyped
-        module to the same bytecode file as the non-@beartyped variant of that
+        package transitively containing that module. Compiling a @beartyping
+        module to the same bytecode file as the non-@beartyping variant of that
         module would erroneously persist @beartyping to that module -- even
         *after* removing the relevant call to the
         :func:`beartype.claw.beartype_package` function! Clearly, that's awful.
@@ -301,8 +301,8 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # that module as is by simply deferring to the superclass method
         # *WITHOUT* monkey-patching cache_from_source(). This isn't only an
         # optimization, although it certainly is that as well. This is critical.
-        # Why? Because modules *NOT* being @beartyped should remain compiled
-        # under their standard non-@beartyped bytecode filenames.
+        # Why? Because modules *NOT* being @beartyping should remain compiled
+        # under their standard non-@beartyping bytecode filenames.
         if self._conf_beartype_if_module_hooked is None:
             return super().get_code(fullname)
         # Else, that module has been registered for type-checking. In this

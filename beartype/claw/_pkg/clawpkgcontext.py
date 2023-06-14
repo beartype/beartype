@@ -33,7 +33,7 @@ from contextlib import contextmanager
 # ....................{ CONTEXTS                           }....................
 #FIXME: Unit test us up, please.
 @contextmanager
-def beartyped(
+def beartyping(
     # Optional keyword-only parameters.
     *,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
@@ -50,7 +50,7 @@ def beartyped(
 
     #. Temporarily registers this hook by calling the public
        :func:`beartype.claw.beartype_all` function.
-    #. Runs the body of the caller-defined ``with beartyped(...):`` block.
+    #. Runs the body of the caller-defined ``with beartyping(...):`` block.
     #. Unregisters the hook registered by the prior call to that function.
 
     This context manager is thread-safe.
@@ -96,7 +96,7 @@ def beartyped(
         # Globalize the passed beartype configuration.
         beartype_all(conf=conf)
 
-        # Defer to the caller's body of the parent "with beartyped(...):" block.
+        # Defer to the caller's body of the parent "with beartyping(...):" block.
         yield
     # After doing so (regardless of whether doing so raised an exception)...
     finally:
@@ -104,7 +104,7 @@ def beartyped(
         with packages_trie_lock:
             # If the current global beartype configuration is still the passed
             # beartype configuration, then the caller's body of the parent "with
-            # beartyped(...):" block has *NOT* itself called the beartype_all()
+            # beartyping(...):" block has *NOT* itself called the beartype_all()
             # function with a conflicting beartype configuration. In this
             # case...
             if packages_trie.conf_if_hooked == conf:
@@ -114,7 +114,7 @@ def beartyped(
                 # Possibly remove our beartype import path hook added by the
                 # above call to beartype_all() if no packages are registered.
                 remove_beartype_pathhook_unless_packages_trie()
-            # Else, the caller's body of the parent "with beartyped(...):" block
+            # Else, the caller's body of the parent "with beartyping(...):" block
             # has itself called the beartype_all() function with a conflicting
             # beartype configuration. Preserve that configuration as is.
 
@@ -126,7 +126,7 @@ def packages_trie_cleared() -> Iterator[None]:
     Context manager resetting the
     :data:`beartype.claw._pkg.clawpkgtrie.packages_trie` global back to its
     initial state *after* running the body of the caller-defined ``with
-    beartyped(...):`` block.
+    beartyping(...):`` block.
 
     This context manager is thread-safe.
 

@@ -533,7 +533,7 @@ class BeartypeNodeTransformer(NodeTransformer):
         '''
         Add a new child node to the passed **annotated assignment node** (i.e.,
         node signifying the assignment of an attribute annotated by a
-        :pep:`562`-compliant type hint) inserting a subsequent statement
+        :pep:`526`-compliant type hint) inserting a subsequent statement
         following that annotated assignment type-checking that attribute against
         that type hint by passing both to our :func:`beartype.door.is_bearable`
         tester.
@@ -586,13 +586,23 @@ class BeartypeNodeTransformer(NodeTransformer):
         # * "node.value", an optional child node describing the source value
         #   being assigned to this target attribute.
 
-        #FIXME: Can and/or should we also support "node.target" child nodes that
-        #are instances of "ast.Attribute" and "ast.Subscript"?
-        # If this assignment is *NOT* simple, this assignment is *NOT* assigning
-        # to an attribute name. In this case, silently ignore this assignment.
-        if not node.simple:
+        # If either...
+        if (
+            # This beartype configuration disables type-checking of PEP
+            # 526-compliant annotated variable assignments *OR*...
+            not self._conf_beartype.claw_is_pep526 or
+            #FIXME: Can and/or should we also support "node.target" child nodes
+            #that are instances of "ast.Attribute" and "ast.Subscript"?
+            # This assignment is *NOT* simple (in which case this assignment is
+            # *NOT* assigning to an attribute name).
+            not node.simple
+        ):
+            # Then silently ignore this assignment.
             return node
-        # Else, this assignment is simple and assigning to an attribute name.
+        # Else:
+        # * This beartype configuration enables type-checking of PEP
+        #   526-compliant annotated variable assignments.
+        # * This assignment is simple and assigning to an attribute name.
 
         # Validate this expectation.
         assert isinstance(node.target, Name), (

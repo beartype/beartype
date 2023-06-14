@@ -7,7 +7,7 @@
 **Beartype configuration unit tests.**
 
 This submodule unit tests the subset of the public API of the :mod:`beartype`
-package defined by the private :mod:`beartype._conf` submodule.
+package defined by the private :mod:`beartype._conf` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -39,9 +39,46 @@ def test_api_conf_dataclass() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype import BeartypeConf, BeartypeStrategy
+    from beartype import (
+        BeartypeConf,
+        BeartypeStrategy,
+    )
     from beartype.roar import BeartypeConfException
+    from beartype._conf.confcache import beartype_conf_id_to_conf
     from pytest import raises
+
+    # ....................{ LOCALS                         }....................
+    # Tuple of all substrings to assert as trivially contained within the string
+    # returned by the BeartypeConf.__repr__() dunder method, including:
+    # * The unqualified basename of this class.
+    # * The unqualified basenames of and all public fields of this class.
+    BEAR_CONF_REPR_SUBSTRS = (
+        'BeartypeConf',
+        'claw_is_pep526',
+        'is_color',
+        'is_debug',
+        'is_pep484_tower',
+        'strategy',
+    )
+
+    # Default (i.e., unparametrized) beartype configuration.
+    BEAR_CONF_DEFAULT = BeartypeConf()
+
+    # All possible keyword arguments initialized to non-default values with
+    # which to instantiate a non-default beartype configuration.
+    BEAR_CONF_NONDEFAULT_KWARGS = dict(
+        claw_is_pep526=False,
+        is_color=True,
+        is_debug=True,
+        is_pep484_tower=True,
+        strategy=BeartypeStrategy.Ologn,
+    )
+
+    # Arbitrary parametrized beartype configuration.
+    BEAR_CONF_NONDEFAULT = BeartypeConf(**BEAR_CONF_NONDEFAULT_KWARGS)
+
+    # Tuple of these beartype configurations.
+    BEAR_CONFS = (BEAR_CONF_DEFAULT, BEAR_CONF_NONDEFAULT)
 
     # ....................{ PASS                           }....................
     # Assert beartype configurations to be self-memoizing across both
@@ -51,60 +88,57 @@ def test_api_conf_dataclass() -> None:
     # the order in which parameters are passed.
     assert BeartypeConf() is BeartypeConf()
     assert (
-        BeartypeConf(strategy=BeartypeStrategy.On, is_debug=True, is_color=True, is_pep484_tower=True) is
-        BeartypeConf(is_pep484_tower=True, is_color=True, is_debug=True, strategy=BeartypeStrategy.On)
+        BeartypeConf(strategy=BeartypeStrategy.On, claw_is_pep526=False, is_debug=True, is_color=True, is_pep484_tower=True) is
+        BeartypeConf(is_pep484_tower=True, is_color=True, is_debug=True, claw_is_pep526=False, strategy=BeartypeStrategy.On)
     )
-
-    # Default (i.e., unparametrized) beartype configuration.
-    bear_conf_default = BeartypeConf()
 
     # Assert this configuration to default to the expected public fields.
-    assert bear_conf_default.strategy is BeartypeStrategy.O1
-    assert bear_conf_default.is_color is None
-    assert bear_conf_default.is_pep484_tower is False
-    assert bear_conf_default.is_debug is False
-
-    # All possible keyword arguments initialized to non-default values with
-    # which to instantiate a non-default beartype configuration.
-    bear_conf_nondefault_kwargs = dict(
-        is_color=True,
-        is_debug=True,
-        is_pep484_tower=True,
-        strategy=BeartypeStrategy.Ologn,
-    )
-
-    # Arbitrary parametrized beartype configuration.
-    bear_conf_nondefault = BeartypeConf(**bear_conf_nondefault_kwargs)
+    assert BEAR_CONF_DEFAULT.strategy is BeartypeStrategy.O1
+    assert BEAR_CONF_DEFAULT.claw_is_pep526 is True
+    assert BEAR_CONF_DEFAULT.is_color is None
+    assert BEAR_CONF_DEFAULT.is_pep484_tower is False
+    assert BEAR_CONF_DEFAULT.is_debug is False
 
     # Assert two differing configurations to compare unequal.
-    assert bear_conf_default != bear_conf_nondefault
+    assert BEAR_CONF_DEFAULT != BEAR_CONF_NONDEFAULT
 
     # Assert two identical configurations to compare equal.
-    assert bear_conf_default == BeartypeConf()
-    assert bear_conf_nondefault == BeartypeConf(**bear_conf_nondefault_kwargs)
+    assert BEAR_CONF_DEFAULT == BeartypeConf()
+    assert BEAR_CONF_NONDEFAULT == BeartypeConf(**BEAR_CONF_NONDEFAULT_KWARGS)
 
     # Assert two identical configurations to hash equal.
-    assert hash(bear_conf_default) == hash(BeartypeConf())
-    assert hash(bear_conf_nondefault) == hash(
-        BeartypeConf(**bear_conf_nondefault_kwargs))
+    assert hash(BEAR_CONF_DEFAULT) == hash(BeartypeConf())
+    assert hash(BEAR_CONF_NONDEFAULT) == hash(
+        BeartypeConf(**BEAR_CONF_NONDEFAULT_KWARGS))
 
     # Assert two differing configurations to hash unequal.
-    assert hash(bear_conf_default) != hash(bear_conf_nondefault)
+    assert hash(BEAR_CONF_DEFAULT) != hash(BEAR_CONF_NONDEFAULT)
 
     # Machine-readable representation of an arbitrary configuration.
-    bear_conf_repr = repr(bear_conf_nondefault)
+    BEAR_CONF_REPR = repr(BEAR_CONF_NONDEFAULT)
 
     # Assert this representation to contain the names of this class and all
     # public fields of this class.
-    assert 'BeartypeConf' in bear_conf_repr
-    assert 'is_color' in bear_conf_repr
-    assert 'is_debug' in bear_conf_repr
-    assert 'is_pep484_tower' in bear_conf_repr
-    assert 'strategy' in bear_conf_repr
+    for BEAR_CONF_REPR_SUBSTR in BEAR_CONF_REPR_SUBSTRS:
+        assert BEAR_CONF_REPR_SUBSTR in BEAR_CONF_REPR
+
+    # For each beartype configuration instantiated above...
+    for BEAR_CONF in BEAR_CONFS:
+        # Object identifier uniquely identifying this configuration.
+        BEAR_CONF_ID = id(BEAR_CONF)
+
+        # Assert this identifier is in the beartype configuration object cache.
+        assert BEAR_CONF_ID in beartype_conf_id_to_conf
+
+        # Assert this cache maps this identifier to this configuration.
+        assert beartype_conf_id_to_conf[BEAR_CONF_ID] is BEAR_CONF
 
     # ....................{ FAIL                           }....................
-    # Assert that instantiating a configuration with invalid parameters raises
-    # the expected exceptions.
+    # Assert that instantiating a configuration with an invalid parameter raises
+    # the expected exception.
+    with raises(BeartypeConfException):
+        BeartypeConf(claw_is_pep526=(
+            'The fountains mingle with the river'))
     with raises(BeartypeConfException):
         BeartypeConf(is_color=(
             'And many sounds, and much of life and death.'))
@@ -120,10 +154,12 @@ def test_api_conf_dataclass() -> None:
 
     # Assert that attempting to modify any public raises the expected exception.
     with raises(AttributeError):
-        bear_conf_default.is_color = True
+        BEAR_CONF_DEFAULT.claw_is_pep526 = True
     with raises(AttributeError):
-        bear_conf_default.is_debug = True
+        BEAR_CONF_DEFAULT.is_color = True
     with raises(AttributeError):
-        bear_conf_default.is_pep484_tower = True
+        BEAR_CONF_DEFAULT.is_debug = True
     with raises(AttributeError):
-        bear_conf_default.strategy = BeartypeStrategy.O0
+        BEAR_CONF_DEFAULT.is_pep484_tower = True
+    with raises(AttributeError):
+        BEAR_CONF_DEFAULT.strategy = BeartypeStrategy.O0

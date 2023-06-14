@@ -92,8 +92,8 @@ def beartype_all(
        beartype_package()  # <-- beartype all subsequent imports, yo
 
        # Import submodules *AFTER* calling beartype_package().
-       from muh_package._some_module import muh_function  # <-- @beartyped!
-       from yer_package.other_module import muh_class     # <-- @beartyped!
+       from muh_package._some_module import muh_function  # <-- @beartyping!
+       from yer_package.other_module import muh_class     # <-- @beartyping!
 
     Caveats
     ----------
@@ -126,7 +126,7 @@ def beartype_all(
 
     See Also
     ----------
-    :func:`beartype.claw.beartyped`
+    :func:`beartype.claw.beartyping`
         Arguably safer alternative to this function isolating the effect of this
         function to only imports performed inside a context manager.
     '''
@@ -136,7 +136,7 @@ def beartype_all(
 
 
 #FIXME: Unit test us up, please.
-def beartype_package_current(
+def beartype_this_package(
     # Optional keyword-only parameters.
     *,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
@@ -201,7 +201,7 @@ def beartype_package_current(
     #      frame_caller = get_frame_caller_or_none()
     #      if frame_caller is None:
     #          raise BeartypeClawRegistrationException(
-    #              'beartype_package_current() '
+    #              'beartype_this_package() '
     #              'not callable directly from REPL scope.'
     #          )
     frame_caller: CallableFrameType = get_frame(1)  # type: ignore[assignment,misc]
@@ -221,7 +221,7 @@ def beartype_package_current(
     # callable rather than a module. In this case, raise an exception.
     if frame_caller_basename != FUNC_CODEOBJ_NAME_MODULE:
         raise BeartypeClawRegistrationException(
-            f'beartype_package_current() not called from module scope '
+            f'beartype_this_package() not called from module scope '
             f'(i.e., caller '
             f'"{frame_caller_module_name}.{frame_caller_basename}" '
             f'either class or callable rather than module).'
@@ -243,7 +243,7 @@ def beartype_package_current(
     #     ('', '', 'muh_module')  # <-- we're now in trouble, folks
     if '.' not in frame_caller_module_name:
         raise BeartypeClawRegistrationException(
-            f'beartype_package_current() not called by submodule '
+            f'beartype_this_package() not called by submodule '
             f'(i.e., caller module "{frame_caller_module_name}" is a '
             f'top-level module rather than submodule of some parent package).'
         )
@@ -355,8 +355,8 @@ def beartype_packages(
        beartype_package()  # <-- beartype all subsequent package imports, yo
 
        # Import package submodules *AFTER* calling beartype_package().
-       from muh_package._some_module import muh_function  # <-- @beartyped!
-       from muh_package.other_module import muh_class     # <-- @beartyped!
+       from muh_package._some_module import muh_function  # <-- @beartyping!
+       from muh_package.other_module import muh_class     # <-- @beartyping!
 
     Parameters
     ----------

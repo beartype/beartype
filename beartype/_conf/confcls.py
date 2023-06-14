@@ -28,6 +28,7 @@ from beartype._conf.confcache import (
 from beartype._conf.confenum import BeartypeStrategy
 
 # ....................{ CLASSES                            }....................
+#FIXME: Document "claw_is_pep526" in our reST-formatted docos, please.
 #FIXME: Refactor to use @dataclass.dataclass once we drop Python 3.7 support.
 #Note that doing so will require usage of "frozen=True" to prevent unwanted
 #modification of read-only properties.
@@ -40,6 +41,12 @@ class BeartypeConf(object):
 
     Attributes
     ----------
+    _claw_is_pep526 : bool, optional
+        :data:`True` only if type-checking **annotated variable assignments**
+        (i.e., :pep:`526`-compliant assignments to local, global, class, and
+        instance variables annotated by type hints) when importing modules
+        under import hooks published by the :mod:`beartype.claw` subpackage. See
+        also the :meth:`__new__` method docstring.
     _is_color : Optional[bool]
         Tri-state boolean governing how and whether beartype colours
         **type-checking violations** (i.e.,
@@ -84,6 +91,7 @@ class BeartypeConf(object):
     # cache dunder methods. Slotting has been shown to reduce read and write
     # costs by approximately ~10%, which is non-trivial.
     __slots__ = (
+        '_claw_is_pep526',
         '_is_color',
         '_is_debug',
         '_is_pep484_tower',
@@ -93,6 +101,7 @@ class BeartypeConf(object):
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
     #     https://github.com/python/mypy/issues/5941
     if TYPE_CHECKING:
+        _claw_is_pep526: bool
         _is_color: Optional[bool]
         _is_debug: bool
         _is_pep484_tower: bool
@@ -117,6 +126,7 @@ class BeartypeConf(object):
         #FIXME: Uncomment us when implementing O(n) type-checking, please.
         # check_time_max_multiplier: Union[int, None] = 1000,
 
+        claw_is_pep526: bool = True,
         is_color: Optional[bool] = None,
         is_debug: bool = False,
         is_pep484_tower: bool = False,
@@ -190,6 +200,29 @@ class BeartypeConf(object):
             .. code-block:: python
 
                b * check_time_max_multiplier >= T
+        claw_is_pep526 : bool, optional
+            :data:`True` only if implicitly type-checking **annotated variable
+            assignments** (i.e., :pep:`526`-compliant assignments to local,
+            global, class, and instance variables annotated by type hints) by
+            injecting calls to the :func:`beartype.door.die_if_unbearable`
+            function immediately *after* those assignments when importing
+            modules under import hooks published by the :mod:`beartype.claw`
+            subpackage. Enabling this boolean:
+
+            * Effectively augments :mod:`beartype` into a full-blown **hybrid
+              runtime-static type-checker** (i.e., performing both standard
+              runtime type-checking *and* non-standard static type-checking at
+              runtime).
+            * Adds negligible runtime overhead to all annotated variable
+              assignments in all modules imported under those import hooks.
+              Although the *individual* cost of this overhead for any given
+              assignment is negligible, the *aggregate* cost across all such
+              assignments could be non-negligible in worst-case use cases.
+
+            Ideally, this boolean should only be disabled for a small subset of
+            performance-sensitive modules *after* profiling those modules to
+            suffer performance regressions under import hooks published by the
+            :mod:`beartype.claw` subpackage. Defaults to :data:`True`.
         is_color : Optional[bool]
             Tri-state boolean governing how and whether beartype colours
             **type-checking violations** (i.e.,
@@ -283,6 +316,7 @@ class BeartypeConf(object):
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # Efficiently hashable tuple of these parameters (in arbitrary order).
         beartype_conf_args = (
+            claw_is_pep526,
             is_color,
             is_debug,
             is_pep484_tower,
@@ -306,6 +340,14 @@ class BeartypeConf(object):
             # Else, this method has yet to instantiate a configuration with
             # these parameters. In this case, do so below (and cache that
             # configuration).
+            #
+            # If "claw_is_pep526" is *NOT* a boolean, raise an exception.
+            elif not isinstance(claw_is_pep526, bool):
+                raise BeartypeConfException(
+                    f'Beartype configuration parameter "claw_is_pep526" '
+                    f'value {repr(claw_is_pep526)} not boolean.'
+                )
+            # Else, "claw_is_pep526" is a boolean.
             #
             # If "is_color" is *NOT* a tri-state boolean, raise an exception.
             elif not isinstance(is_color, NoneTypeOr[bool]):
@@ -345,6 +387,7 @@ class BeartypeConf(object):
             self = super().__new__(cls)
 
             # Classify all passed parameters with this configuration.
+            self._claw_is_pep526 = claw_is_pep526
             self._is_color = is_color
             self._is_debug = is_debug
             self._is_pep484_tower = is_pep484_tower
@@ -362,6 +405,23 @@ class BeartypeConf(object):
     # underlying private attributes.
 
     @property
+    def claw_is_pep526(self) -> bool:
+        '''
+        :data:`True` only if type-checking **annotated variable assignments**
+        (i.e., :pep:`526`-compliant assignments to local, global, class, and
+        instance variables annotated by type hints) when importing modules
+        under import hooks published by the :mod:`beartype.claw` subpackage.
+
+        See Also
+        ----------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._claw_is_pep526
+
+
+    @property
     def is_color(self) -> Optional[bool]:
         '''
         Tri-state boolean governing how and whether beartype colours
@@ -370,11 +430,11 @@ class BeartypeConf(object):
         POSIX-compliant ANSI escape sequences for readability. Specifically, if
         this boolean is:
 
-        * ``False``, beartype *never* colours type-checking violations raised by
-          callables configured with this configuration.
-        * ``True``, beartype *always* colours type-checking violations raised by
-          callables configured with this configuration.
-        * ``None``, beartype conditionally colours type-checking violations
+        * :data:`False`, beartype *never* colours type-checking violations
+          raised by callables configured with this configuration.
+        * :data:`True`, beartype *always* colours type-checking violations
+          raised by callables configured with this configuration.
+        * :data:`None`, beartype conditionally colours type-checking violations
           raised by callables configured with this configuration only when
           standard output is attached to an interactive terminal.
         '''
@@ -385,7 +445,7 @@ class BeartypeConf(object):
     @property
     def is_debug(self) -> bool:
         '''
-        ``True`` only if debugging :mod:`beartype`.
+        :data:`True` only if debugging :mod:`beartype`.
 
         See Also
         ----------
@@ -399,7 +459,7 @@ class BeartypeConf(object):
     @property
     def is_pep484_tower(self) -> bool:
         '''
-        ``True`` only if enabling support for the :pep:`484`-compliant
+        :data:`True` only if enabling support for the :pep:`484`-compliant
         implicit numeric tower.
 
         See Also
@@ -416,8 +476,8 @@ class BeartypeConf(object):
         '''
         **Type-checking strategy** (i.e., :class:`BeartypeStrategy`
         enumeration member) with which to implement all type-checks in the
-        wrapper function dynamically generated by the :func:
-        `beartype.beartype` decorator for the decorated callable.
+        wrapper function dynamically generated by the
+        :func:`beartype.beartype` decorator for the decorated callable.
         '''
 
         return self._strategy
@@ -455,6 +515,7 @@ class BeartypeConf(object):
         if isinstance(other, BeartypeConf):
             # Return true only if these configurations share the same settings.
             return (
+                self._claw_is_pep526 == other._claw_is_pep526 and
                 self._is_color == other._is_color and
                 self._is_debug == other._is_debug and
                 self._is_pep484_tower == other._is_pep484_tower and
@@ -492,6 +553,7 @@ class BeartypeConf(object):
         # * Optimally uniformly distributed, thus minimizing the likelihood of
         #   expensive hash collisions.
         return hash((
+            self._claw_is_pep526,
             self._is_color,
             self._is_debug,
             self._is_pep484_tower,
@@ -513,6 +575,7 @@ class BeartypeConf(object):
 
         return (
             f'{self.__class__.__name__}('
+            f'claw_is_pep526={repr(self._claw_is_pep526)}, '
             f'is_color={repr(self._is_color)}, '
             f'is_debug={repr(self._is_debug)}, '
             f'is_pep484_tower={repr(self._is_pep484_tower)}, '
