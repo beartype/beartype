@@ -15,10 +15,6 @@ this private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Define a new "with all_beartyped():" context manager with signature:
-#    @contextmanager
-#    def all_beartyped(conf: BeartypeConf = BeartypeConf()): ...
-
 #FIXME: Unit test us up. Specifically, test that this approach successfully:
 #* Directly decorates callables declared at:
 #  * Global scope in an on-disk top-level non-package module embedded in our
@@ -142,11 +138,11 @@ def beartype_this_package(
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
 ) -> None:
     '''
-    Register a new **current package-specific beartype import path hook** (i.e.,
-    callable inserted to the front of the standard :mod:`sys.path_hooks` list
-    recursively applying the :func:`beartype.beartype` decorator to all typed
-    callables and classes of all submodules of the current user-defined package
-    calling this function on the first importation of those submodules).
+    Register a new **current package beartype import path hook** (i.e., callable
+    inserted to the front of the standard :mod:`sys.path_hooks` list recursively
+    applying the :func:`beartype.beartype` decorator to all typed callables and
+    classes of all submodules of the current user-defined package calling this
+    function on the first importation of those submodules).
 
     This function is thread-safe.
 
@@ -274,11 +270,11 @@ def beartype_package(
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
 ) -> None:
     '''
-    Register a new **package-specific beartype import path hook** (i.e.,
-    callable inserted to the front of the standard :mod:`sys.path_hooks` list
-    recursively applying the :func:`beartype.beartype` decorator to all typed
-    callables and classes of all submodules of the package with the passed
-    names on the first importation of those submodules).
+    Register a new **single package beartype import path hook** (i.e., callable
+    inserted to the front of the standard :mod:`sys.path_hooks` list recursively
+    applying the :func:`beartype.beartype` decorator to all typed callables and
+    classes of all submodules of the package with the passed names on the first
+    importation of those submodules).
 
     This function is thread-safe.
 
@@ -331,7 +327,7 @@ def beartype_packages(
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
 ) -> None:
     '''
-    Register a new **package-specific beartype import path hook** (i.e.,
+    Register a new **multiple package beartype import path hook** (i.e.,
     callable inserted to the front of the standard :mod:`sys.path_hooks` list
     recursively applying the :func:`beartype.beartype` decorator to all typed
     callables and classes of all submodules of all packages with the passed

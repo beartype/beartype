@@ -21,8 +21,8 @@ from beartype.typing import (
     # Iterator,
     Optional,
 )
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import BeartypeConf
-# from contextlib import contextmanager
 from threading import RLock
 
 # ....................{ CLASSES                            }....................
@@ -92,14 +92,14 @@ class PackagesTrie(
 
             * If this (sub)trie is the global trie :data:`.packages_trie`,
               :data:`None`.
-            * Else, the unqualified basename of the (sub)package configured by this
-              (sub)trie.
+            * Else, the unqualified basename of the (sub)package configured by
+              this (sub)trie.
 
         All remaining passed parameters are passed as is to the superclass
         :meth:`dict.__init__` method.
         '''
-        assert isinstance(package_basename, str), (
-            f'{repr(package_basename)} not string.')
+        assert isinstance(package_basename, NoneTypeOr[str]), (
+            f'{repr(package_basename)} neither string nor "None".')
 
         # Initialize our superclass with all passed parameters.
         super().__init__(*args, **kwargs)

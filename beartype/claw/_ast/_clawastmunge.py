@@ -17,12 +17,9 @@ from ast import (
     Name,
     expr,
 )
-from beartype.claw._ast._clawastmagic import (
+from beartype.claw._clawmagic import (
     NODE_CONTEXT_LOAD,
     BEARTYPE_DECORATOR_ATTR_NAME,
-)
-from beartype.claw._ast._clawastmake import (
-    make_node_keyword_conf,
 )
 from beartype.claw._clawtyping import (
     NodeDecoratable,
@@ -69,6 +66,9 @@ def decorate_node(node: NodeDecoratable, conf: BeartypeConf) -> None:
     '''
     assert isinstance(node, AST), f'{repr(node)} not AST node.'
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+
+    # Avoid circular import dependencies.
+    from beartype.claw._ast._clawastmake import make_node_keyword_conf
 
     # Child decoration node decorating that callable by our beartype decorator.
     beartype_decorator: expr = Name(
@@ -184,7 +184,6 @@ def copy_node_metadata(
         Typically, ``k == 4``.
     '''
     assert isinstance(node_src, AST), f'{repr(node_src)} not AST node.'
-    assert isinstance(node_trg, AST), f'{repr(node_trg)} not AST node.'
 
     # If passed only a single target node, wrap this node in a 1-tuple
     # containing only this node for simplicity.
@@ -194,6 +193,9 @@ def copy_node_metadata(
 
     # For each passed target node...
     for node_trg_cur in node_trg:
+        assert isinstance(node_trg_cur, AST), (
+            f'{repr(node_trg_cur)} not AST node.')
+
         # Copy all source code metadata from this source to target node.
         node_trg_cur.lineno     = node_src.lineno
         node_trg_cur.col_offset = node_src.col_offset

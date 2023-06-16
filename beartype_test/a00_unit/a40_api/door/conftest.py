@@ -15,7 +15,7 @@ into *all* submodules of this subpackage.
 # ....................{ IMPORTS                            }....................
 # Import all subpackage-specific fixtures implicitly required by tests defined
 # by submodules of this subpackage.
-from beartype_test.a00_unit.a60_api.door._doorfixture import (
+from beartype_test.a00_unit.a40_api.door._doorfixture import (
     door_cases_equality,
     door_cases_subhint,
 )

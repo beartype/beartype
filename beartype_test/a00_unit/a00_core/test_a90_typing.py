@@ -25,7 +25,7 @@ exercising those attributes against the high-level :func:`beartype.beartype`
 decorator. Since that decorator has yet to be validated as functional at this
 extremely early stage in the running of this test suite, we necessarily defer
 testing the behaviour of these attributes to the subsequent
-:mod:`a60_api.typing` subpackage.
+:mod:`a40_api.typing` subpackage.
 '''
 
 # ....................{ IMPORTS                            }....................

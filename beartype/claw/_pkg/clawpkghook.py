@@ -347,7 +347,7 @@ def unhook_packages(
 
                         # Delete this child sub-subpackages trie from this
                         # parent subpackages trie.
-                        del subpackages_trie[subsubpackage_basename]
+                        del subpackages_trie[subsubpackage_basename]  # pyright: ignore[reportGeneralTypeIssues]
                     # Else, this is the first iteration of this loop.
 
                     # Treat this parent subpackages trie as the child

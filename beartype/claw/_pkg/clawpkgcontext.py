@@ -123,7 +123,7 @@ def beartyping(
 @contextmanager
 def packages_trie_cleared() -> Iterator[None]:
     '''
-    Context manager resetting the
+    Test-specific context manager reverting (i.e., clearing, resetting) the
     :data:`beartype.claw._pkg.clawpkgtrie.packages_trie` global back to its
     initial state *after* running the body of the caller-defined ``with
     beartyping(...):`` block.
@@ -132,9 +132,10 @@ def packages_trie_cleared() -> Iterator[None]:
 
     Caveats
     ----------
-    **This context manager is intentionally hidden from users** rather than
-    publicly exported. This context manager is *only* intended to be invoked by
-    unit and integration tests in our test suite.
+    **This context manager is intentionally hidden from users as a private
+    attribute of this submodule** rather than publicly exported. Why? Because
+    this context manager is *only* intended to be invoked by unit and
+    integration tests in our test suite.
 
     Yields
     ----------

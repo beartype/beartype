@@ -27,7 +27,7 @@ from ast import (
 #     Optional,
 #     Union,
 # )
-from beartype.claw._ast._clawastmagic import (
+from beartype.claw._clawmagic import (
     NODE_CONTEXT_LOAD,
 )
 from beartype.claw._ast._clawastmunge import copy_node_metadata

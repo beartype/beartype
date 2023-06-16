@@ -105,7 +105,7 @@ from ast import (
     # expr,
     # keyword,
 )
-from beartype.claw._ast._clawastmagic import (
+from beartype.claw._clawmagic import (
     NODE_CONTEXT_LOAD,
     BEARTYPE_DECORATOR_MODULE_NAME,
     BEARTYPE_DECORATOR_ATTR_NAME,

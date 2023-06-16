@@ -16,8 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from ast import PyCF_ONLY_AST
 from beartype.claw._ast.clawastmain import BeartypeNodeTransformer
-from beartype.claw._pkg.clawpkgtrie import get_package_conf_or_none
-from beartype.meta import VERSION
+from beartype.claw._clawmagic import BEARTYPE_OPTIMIZATION_MARKER
 from beartype.typing import Optional
 from beartype._conf.confcls import BeartypeConf
 from importlib import (  # type: ignore[attr-defined]
@@ -218,8 +217,8 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         ----------
         The temporary monkey-patch applied by this method is strongly inspired
         by a suspiciously similar temporary monkey-patch applied by the external
-        :meth:`typeguard.importhook.TypeguardLoader.exec_module` method authored
-        by the incomparable @agronholm (Alex Grönholm), who writes:
+        :meth:`typeguard._importhook.TypeguardLoader.exec_module` method
+        authored by the incomparable @agronholm (Alex Grönholm), who writes:
 
             Use a custom optimization marker – the import lock should make
             this monkey patch safe
@@ -236,17 +235,17 @@ class BeartypeSourceFileLoader(SourceFileLoader):
           uniquifying this bytecode file to various bytecode-specific metadata,
           including the name and version of the active Python interpreter).
 
-        This monkey-patch suffixing ``{optimization_markers}`` with the
-        substring ``"-beartype-{BEARTYPE_VERSION}"``, which additionally
-        uniquifies the filename of this bytecode file to the abstract syntax
-        tree (AST) transformation applied by this version of :mod:`beartype`.
-        Why? Because external callers can trivially enable and disable that
-        transformation for any module by either calling or not calling the
+        This monkey-patch suffixes ``{optimization_markers}`` by
+        :data:`.BEARTYPE_OPTIMIZATION_MARKER`, which additionally uniquifies the
+        filename of this bytecode file to the abstract syntax tree (AST)
+        transformation applied by this version of :mod:`beartype`. Why? Because
+        external callers can trivially enable and disable that transformation
+        for any module by either calling or not calling the
         :func:`beartype.claw.beartype_package` function with the name of a
-        package transitively containing that module. Compiling a @beartyping
-        module to the same bytecode file as the non-@beartyping variant of that
-        module would erroneously persist @beartyping to that module -- even
-        *after* removing the relevant call to the
+        package transitively containing that module. Compiling a beartyped
+        variant of that module to the same bytecode file as the non-beartyped
+        variant of that module would erroneously persist beartyping to that
+        module -- even *after* removing the relevant call to the
         :func:`beartype.claw.beartype_package` function! Clearly, that's awful.
         Enter @agronholm's phenomenal patch, stage left.
 
@@ -265,6 +264,9 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         this monkey-patch. Did we mention that @agronholm is amazing? Because
         that really bears repeating. May the name of Alex Grönholm live eternal!
         '''
+
+        # Avoid circular import dependencies.
+        from beartype.claw._pkg.clawpkgtrie import get_package_conf_or_none
 
         # Fully-qualified name of the parent package of the module with the
         # passed fully-qualified name, defined as either...
@@ -301,8 +303,8 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # that module as is by simply deferring to the superclass method
         # *WITHOUT* monkey-patching cache_from_source(). This isn't only an
         # optimization, although it certainly is that as well. This is critical.
-        # Why? Because modules *NOT* being @beartyping should remain compiled
-        # under their standard non-@beartyping bytecode filenames.
+        # Why? Because modules *NOT* being beartyped should remain compiled
+        # under their standard non-beartyped bytecode filenames.
         if self._conf_beartype_if_module_hooked is None:
             return super().get_code(fullname)
         # Else, that module has been registered for type-checking. In this
@@ -455,18 +457,20 @@ def _cache_from_source_beartype(*args, **kwargs) -> str:
 
     This, in turn, ensures that submodules residing in packages registered by a
     prior call to the :func:`beartype_package` function are
-    compiled to files with the filetype ``".pyc{optimization}-beartype"``,
-    where ``{optimization}`` is the original ``optimization`` parameter passed
-    to this function call.
+    compiled to files with the filetype
+    ``".pyc{optimization}_{BEARTYPE_OPTIMIZATION_MARKER}"``, where
+    ``{optimization}`` is the original ``optimization`` parameter passed to this
+    function call.
     '''
 
     # Original optimization parameter passed to this function call if any *OR*
     # the empty string otherwise.
-    optimization_marker_old = kwargs.get('optimization', '')
+    NONBEARTYPE_OPTIMIZATION_MARKER = kwargs.get('optimization', '')
 
     # New optimization parameter applied by this monkey-patch of that function,
     # uniquifying that parameter with a beartype-specific suffix.
-    kwargs['optimization'] = f'{optimization_marker_old}-beartype-{VERSION}'
+    kwargs['optimization'] = (
+        f'{NONBEARTYPE_OPTIMIZATION_MARKER}{BEARTYPE_OPTIMIZATION_MARKER}')
 
     # Defer to the implementation of the original cache_from_source() function.
     return cache_from_source_original(*args, **kwargs)

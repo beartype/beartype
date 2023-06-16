@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype all-at-once API.**
+**Beartype import hook API.**
 
 This subpackage publishes :pep:`302`- and :pep:`451`-compliant import hooks
 enabling external callers to automatically decorate well-typed third-party
