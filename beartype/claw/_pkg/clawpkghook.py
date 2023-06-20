@@ -29,7 +29,7 @@ from beartype.claw._importlib.clawimppath import (
     add_beartype_pathhook,
     # remove_beartype_pathhook,
 )
-from beartype.roar import BeartypeClawRegistrationException
+from beartype.roar import BeartypeClawHookException
 from beartype.typing import (
     Iterable,
     Optional,
@@ -89,7 +89,7 @@ def hook_packages(
 
     Raises
     ----------
-    BeartypeClawRegistrationException
+    BeartypeClawHookException
         If either:
 
         * The passed ``package_names`` parameter is either:
@@ -143,7 +143,7 @@ def hook_packages(
             # If the caller passed a different configuration to that prior call
             # than that passed to this current call, raise an exception.
             elif conf_curr != conf:
-                raise BeartypeClawRegistrationException(
+                raise BeartypeClawHookException(
                     f'beartype_all() previously passed '
                     f'conflicting beartype configuration:\n'
                     f'\t----------( OLD "conf" PARAMETER )----------\n'
@@ -220,7 +220,7 @@ def hook_packages(
                 # If the caller passed a different configuration to that prior call
                 # than that passed to this current call, raise an exception.
                 elif conf_curr != conf:
-                    raise BeartypeClawRegistrationException(
+                    raise BeartypeClawHookException(
                         f'Beartype import hook '
                         f'(e.g., beartype.claw.beartype_*() function) '
                         f'previously passed '
@@ -396,7 +396,7 @@ def _get_package_names_from_args(
 
     # If the "conf" parameter is *NOT* a configuration, raise an exception.
     if not isinstance(conf, BeartypeConf):
-        raise BeartypeClawRegistrationException(
+        raise BeartypeClawHookException(
             f'Beartype configuration {repr(conf)} invalid (i.e., not '
             f'"beartype.BeartypeConf" instance).'
         )
@@ -407,7 +407,7 @@ def _get_package_names_from_args(
         # If the caller improperly passed a package name despite requesting
         # all-packages coverage, raise an exception.
         if package_name is not None:
-            raise BeartypeClawRegistrationException(
+            raise BeartypeClawHookException(
                 f'Coverage {repr(BeartypeClawCoverage.PACKAGES_ALL)} '
                 f'but package name {repr(package_name)} passed.'
             )
@@ -416,7 +416,7 @@ def _get_package_names_from_args(
         # If the caller improperly passed multiple package names despite
         # requesting all-packages coverage, raise an exception.
         elif package_names is not None:
-            raise BeartypeClawRegistrationException(
+            raise BeartypeClawHookException(
                 f'Coverage {repr(BeartypeClawCoverage.PACKAGES_ALL)} '
                 f'but package names {repr(package_names)} passed.'
             )
@@ -429,7 +429,7 @@ def _get_package_names_from_args(
             # If the caller improperly passed *NO* package name despite
             # requesting mono-package coverage, raise an exception.
             if package_name is None:
-                raise BeartypeClawRegistrationException(
+                raise BeartypeClawHookException(
                     f'beartype_package() '
                     f'package name {repr(package_name)} invalid.'
                 )
@@ -443,7 +443,7 @@ def _get_package_names_from_args(
 
         # If this package names is *NOT* iterable, raise an exception.
         if not isinstance(package_names, IterableABC):
-            raise BeartypeClawRegistrationException(
+            raise BeartypeClawHookException(
                 f'beartype_packages() '
                 f'package names {repr(package_name)} not iterable.'
             )
@@ -451,7 +451,7 @@ def _get_package_names_from_args(
         #
         # If *NO* package names were passed, raise an exception.
         elif not package_names:
-            raise BeartypeClawRegistrationException(
+            raise BeartypeClawHookException(
                 'beartype_packages() package names empty.')
         # Else, one or more package names were passed.
 
@@ -459,14 +459,14 @@ def _get_package_names_from_args(
         for package_name in package_names:
             # If this package name is *NOT* a string, raise an exception.
             if not isinstance(package_name, str):
-                raise BeartypeClawRegistrationException(
+                raise BeartypeClawHookException(
                     f'Package name {repr(package_name)} not string.')
             # Else, this package name is a string.
             #
             # If this package name is *NOT* a valid Python identifier, raise an
             # exception.
             elif not is_identifier(package_name):
-                raise BeartypeClawRegistrationException(
+                raise BeartypeClawHookException(
                     f'Package name {repr(package_name)} invalid '
                     f'(i.e., not "."-delimited Python identifier).'
                 )

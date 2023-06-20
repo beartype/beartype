@@ -10,7 +10,7 @@ This submodule exports global constants synopsizing this package -- including
 versioning and dependencies.
 
 Python Version
-----------
+--------------
 For uniformity between this codebase and the ``setup.py`` setuptools script
 importing this module, this module also validates the version of the active
 Python 3 interpreter. An exception is raised if this version is insufficient.
@@ -25,7 +25,7 @@ of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: To avoid accidental importation of optional runtime dependencies
-# (e.g., "typing_extensions") at installation time *BEFORE* the current package
+# (e.g., "typing-extensions") at installation time *BEFORE* the current package
 # manager has installed those dependencies, this module may *NOT* import from
 # any submodules of the current package. This includes *ALL* "beartype._util"
 # submodules, most of which import from "beartype.typing", which conditionally
@@ -89,13 +89,13 @@ Fully-qualified name of the top-level Python package exercising this project.
 # submodule's docstring above.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-PYTHON_VERSION_MIN = '3.7.0'
+PYTHON_VERSION_MIN = '3.8.0'
 '''
 Human-readable minimum version of Python required by this package as a
 ``.``-delimited string.
 
 See Also
-----------
+--------
 "Python Version" section of this submodule's docstring for a detailed
 justification of this constant's current value.
 '''
@@ -244,7 +244,7 @@ For brevity, this string *only* lists authors explicitly assigned copyrights.
 For the list of all contributors regardless of copyright assignment or
 attribution, see the `contributors graph`_ for this project.
 
-.. _contributors graph::
+.. _contributors graph:
    https://github.com/beartype/beartype/graphs/contributors
 '''
 
@@ -258,7 +258,7 @@ For brevity, this string *only* lists authors explicitly assigned copyrights.
 For the list of all contributors regardless of copyright assignment or
 attribution, see the `contributors graph`_ for this project.
 
-.. _contributors graph::
+.. _contributors graph:
    https://github.com/beartype/beartype/graphs/contributors
 '''
 
@@ -376,11 +376,12 @@ unavailable under older Python interpreters supported by the
 '''
 
 
-# Note that we intentionally omit NumPy here. If you want it, you're already
-# using it; likewise, if you don't want it, you're *NOT* already using it.
+# Note that we intentionally omit NumPy here, because:
+# * If you want it, you're already using it.
+# * If you do *NOT* want it, you're *NOT* already using it.
 LIBS_RUNTIME_OPTIONAL = (
     (
-        f'typing_extensions >='
+        f'typing-extensions >='
         f'{_LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS}'
     ),
 )
@@ -410,6 +411,7 @@ requirements strings of the format ``{project_name}
 # * The oldest Python version still supported by @beartype, which typically is
 #   *NOT* supported by newer versions of these dependencies.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 LIBS_TESTTIME_OPTIONAL = (
     # Require a reasonably recent version of mypy known to behave well. Less
     # recent versions are significantly deficient with respect to error
@@ -480,7 +482,7 @@ LIBS_TESTTIME_OPTIONAL = (
     # Required to exercise third-party backports of type hint factories
     # published by the standard "typing" module under newer versions of Python.
     (
-        f'typing_extensions >='
+        f'typing-extensions >='
         f'{_LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS}'
     ),
 )

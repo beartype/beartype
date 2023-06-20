@@ -242,7 +242,9 @@ def make_func(
         # this factory) when the locals() dictionary is passed; instead, a
         # unique local dictionary *MUST* be passed.
         exec(func_code_compiled, func_globals, func_locals)
-    # If doing so fails for any reason...
+    # If doing so fails for *ANY* reason whatsoever, wrap that low-level
+    # exception with a higher-level exception exhibiting the exact issue. Doing
+    # so enables users to submit meaningful issues to our tracker.
     except Exception as exception:
         # Raise an exception suffixed by that function's declaration such that
         # each line of that declaration is prefixed by that line's number. This

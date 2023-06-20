@@ -321,7 +321,7 @@ def get_object_type_unless_type(obj: object) -> type:
     object otherwise (i.e., if this object is *not* a class).
 
     Note that this function *never* raises exceptions on arbitrary objects, as
-    the :func:`type` builtin wisely returns itself when passed itself: e.g.,
+    the :obj:`type` builtin wisely returns itself when passed itself: e.g.,
 
     .. code-block:: python
 

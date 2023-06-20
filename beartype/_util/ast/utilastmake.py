@@ -30,7 +30,7 @@ from ast import (
 from beartype.claw._clawmagic import (
     NODE_CONTEXT_LOAD,
 )
-from beartype.claw._ast._clawastmunge import copy_node_metadata
+from beartype._util.ast.utilastmunge import copy_node_metadata
 from beartype._conf.confcls import BeartypeConf
 
 # ....................{ FACTORIES                          }....................

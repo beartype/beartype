@@ -722,23 +722,49 @@ class BeartypeClawException(BeartypeException):
     Abstract base class of all **beartype import hook exceptions.**
 
     Instances of subclasses of this exception are raised at call time from the
-    callables and classes published by the :func:`beartype.claw` subpackage.
+    callables and classes published by the :mod:`beartype.claw` subpackage.
     '''
 
     pass
 
 
-class BeartypeClawRegistrationException(BeartypeClawException):
+class BeartypeClawHookException(BeartypeClawException):
     '''
-    **Beartype import hook registration exception.**
+    **Beartype import hook-time exception.**
 
-    This exception is raised at call time by the
-    :func:`beartype.claw.beartype_package` function when passed
-    invalid parameters.
+    This exception is raised at **beartype import hook-time** (i.e., the early
+    time encompassing the call to a public beartype import hook published
+    by the :mod:`beartype.claw` subpackage by a downstream third-party codebase)
+    on various fatal errors (e.g., when that codebase calls that hook with
+    invalid parameters).
     '''
 
     pass
 
+# ....................{ API ~ claw : import                }....................
+class BeartypeClawImportException(BeartypeClawException):
+    '''
+    **Beartype import hook import exception.**
+
+    This exception is raised at import time when importing a module erroneously
+    transformed by a beartype import hook previously installed by a prior call
+    to a public function published by the :mod:`beartype.claw` subpackage.
+    '''
+
+    pass
+
+
+class BeartypeClawImportAstException(BeartypeClawImportException):
+    '''
+    **Beartype import hook abstract syntax tree (AST) import exception.**
+
+    This exception is raised at import time when a module erroneously
+    transformed by the AST node transformer from its original valid AST into a
+    new invalid AST by a beartype import hook previously installed by a prior
+    call to a public function published by the :mod:`beartype.claw` subpackage.
+    '''
+
+    pass
 # ....................{ API ~ conf                         }....................
 class BeartypeConfException(BeartypeException):
     '''
@@ -769,9 +795,12 @@ class BeartypeDoorHintViolation(BeartypeCallHintViolation):
     '''
     **Beartype object-oriented type-checking exception.**
 
-    This exception is raised at call time by the
-    :meth:`beartype.door.TypeHint.die_if_unbearable` method when passed an
-    object violating the current type hint.
+    This exception is raised at call time by both:
+
+    * The :func:`beartype.door.die_if_unbearable` function when passed an
+      object violating the passed type hint.
+    * The :meth:`beartype.door.TypeHint.die_if_unbearable` method when passed an
+      object violating the current type hint.
     '''
 
     pass

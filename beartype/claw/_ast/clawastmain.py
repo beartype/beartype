@@ -110,15 +110,7 @@ from beartype.claw._clawmagic import (
     BEARTYPE_DECORATOR_MODULE_NAME,
     BEARTYPE_DECORATOR_ATTR_NAME,
 )
-from beartype.claw._ast._clawastmake import (
-    make_node_importfrom,
-    make_node_keyword_conf,
-)
-from beartype.claw._ast._clawastmunge import (
-    copy_node_metadata,
-    decorate_node,
-)
-from beartype.claw._ast._clawasttest import is_node_callable_typed
+from beartype.claw._ast._clawastmunge import decorate_node
 from beartype.claw._clawtyping import (
     NodeCallable,
     NodeT,
@@ -132,6 +124,12 @@ from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
+from beartype._util.ast.utilastmake import (
+    make_node_importfrom,
+    make_node_keyword_conf,
+)
+from beartype._util.ast.utilastmunge import copy_node_metadata
+from beartype._util.ast.utilasttest import is_node_callable_typed
 
 # ....................{ SUBCLASSES                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -528,7 +526,7 @@ class BeartypeNodeTransformer(NodeTransformer):
         # Recursively transform *ALL* child nodes of this parent callable node.
         return self.generic_visit(node)
 
-    # ..................{ VISITORS ~ pep 562                 }..................
+    # ..................{ VISITORS ~ pep : 526               }..................
     def visit_AnnAssign(self, node: AnnAssign) -> NodeVisitResult:
         '''
         Add a new child node to the passed **annotated assignment node** (i.e.,
@@ -611,17 +609,16 @@ class BeartypeNodeTransformer(NodeTransformer):
 
         # Child node referencing the function performing this type-checking,
         # previously imported at module scope by visit_FunctionDef() above.
-        node_check_function = Name(
-            'die_if_unbearable', ctx=NODE_CONTEXT_LOAD)
+        node_func_name = Name('die_if_unbearable', ctx=NODE_CONTEXT_LOAD)
 
         # Child node passing the value newly assigned to this attribute by this
         # assignment as the first parameter to die_if_unbearable().
-        node_check_pith = Name(node.target.id, ctx=NODE_CONTEXT_LOAD)
+        node_func_arg_pith = Name(node.target.id, ctx=NODE_CONTEXT_LOAD)
 
         # List of all nodes encapsulating keyword arguments passed to
         # die_if_unbearable(), defaulting to the empty list and thus *NO* such
         # keyword arguments.
-        node_check_keywords = []
+        node_func_kwargs = []
 
         # If the current beartype configuration is *NOT* the default beartype
         # configuration, this configuration is a user-defined beartype
@@ -629,42 +626,46 @@ class BeartypeNodeTransformer(NodeTransformer):
         if self._conf_beartype != BEARTYPE_CONF_DEFAULT:
             # Node encapsulating the passing of this configuration as
             # the "conf" keyword argument to die_if_unbearable().
-            node_check_keyword_conf = make_node_keyword_conf(
+            node_func_kwarg_conf = make_node_keyword_conf(
                 conf=self._conf_beartype, node_sibling=node)
 
             # Append this node to the list of all keyword arguments passed to
             # die_if_unbearable().
-            node_check_keywords.append(node_check_keyword_conf)
+            node_func_kwargs.append(node_func_kwarg_conf)
         # Else, this configuration is simply the default beartype
         # configuration. In this case, avoid passing that configuration to
         # the beartype decorator for both efficiency and simplicity.
 
-        # Adjacent node type-checking this newly assigned attribute against the
+        # Child node type-checking this newly assigned attribute against the
         # PEP-compliant type hint annotating this assignment by deferring to our
         # die_if_unbearable() raiser.
-        node_check = Call(
-            func=node_check_function,
+        node_func_call = Call(
+            func=node_func_name,
             args=[
                 # Child node passing the value newly assigned to this
                 # attribute by this assignment as the first parameter.
-                node_check_pith,
+                node_func_arg_pith,
                 # Child node passing the type hint annotating this assignment as
                 # the second parameter.
                 node.annotation,
             ],
-            keywords=node_check_keywords,
+            keywords=node_func_kwargs,
         )
+
+        # Adjacent node encapsulating this type-check as a Python statement.
+        node_func = Expr(node_func_call)
 
         # Copy all source code metadata from this AST annotated assignment node
         # onto *ALL* AST nodes created above.
         copy_node_metadata(node_src=node, node_trg=(
-            node_check_function,
-            node_check_pith,
-            node_check,
+            node_func_name,
+            node_func_arg_pith,
+            node_func_call,
+            node_func,
         ))
 
         # Return a list comprising these two adjacent nodes.
         #
         # Note that order is *EXTREMELY* significant. This order ensures that
         # this attribute is type-checked after being assigned to, as expected.
-        return [node, node_check]
+        return [node, node_func]

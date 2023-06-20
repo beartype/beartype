@@ -14,11 +14,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from ast import PyCF_ONLY_AST
+from ast import (
+    PyCF_ONLY_AST,
+)
 from beartype.claw._ast.clawastmain import BeartypeNodeTransformer
 from beartype.claw._clawmagic import BEARTYPE_OPTIMIZATION_MARKER
+from beartype.roar import BeartypeClawImportAstException
 from beartype.typing import Optional
 from beartype._conf.confcls import BeartypeConf
+from beartype._util.ast.utilastget import get_node_repr_indented
+from beartype._util.text.utiltextlabel import label_exception
 from importlib import (  # type: ignore[attr-defined]
     _bootstrap_external,  # pyright: ignore[reportGeneralTypeIssues]
 )
@@ -135,6 +140,10 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         :meth:`source_to_code` is only called by :meth:`get_code` in the
         :mod:`importlib` codebase. Ergo, :meth:`source_to_code` should ideally
         have been privatized (e.g., as ``_source_to_code()``).
+    _module_name_beartype : str
+        Fully-qualified name of the module currently being imported by the
+        :meth:`get_code` method for subsequent reference in the lower-level
+        :meth:`source_to_code` method transitively called by the former.
 
     See Also
     ----------
@@ -167,6 +176,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
         # Nullify all subclass-specific instance variables for safety.
         self._conf_beartype_if_module_hooked: Optional[BeartypeConf] = None
+        self._module_name_beartype: str = ''
 
     # ..................{ LOADER API                         }..................
     # The importlib._bootstrap_external.*Loader API declares the low-level
@@ -253,10 +263,10 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         stress-tested across hundreds of open-source projects over the past
         several decades. So, we avoid explicit thread-safe locking here.
 
-        Lastly, note there appears to be *no* other means of safely
-        implementing this behaviour *without* violating Don't Repeat Yourself
-        (DRY). Specifically, doing so would require duplicating most of the
-        entirety of the *extremely* non-trivial nearly 100 line-long
+        Lastly, note there appears to be *no* other means of safely implementing
+        this behaviour *without* violating Don't Repeat Yourself (DRY).
+        Specifically, doing so would require duplicating most of the entirety of
+        the *extremely* non-trivial nearly 100 line-long
         :meth:`importlib._bootstrap_external.SourceLoader.get_code` method.
         Since duplicating non-trivial and fragile code inherently tied to a
         specific CPython version is considerably worse than applying a trivial
@@ -267,6 +277,11 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
         # Avoid circular import dependencies.
         from beartype.claw._pkg.clawpkgtrie import get_package_conf_or_none
+
+        # Classify the fully-qualified name of this module for subsequent
+        # reference in the lower-level source_to_code() method transitively
+        # called by this higher-level method.
+        self._module_name_beartype = fullname
 
         # Fully-qualified name of the parent package of the module with the
         # passed fully-qualified name, defined as either...
@@ -375,6 +390,14 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         ----------
         CodeType
             Code object dynamically compiled from that Python package or module.
+
+        Raises
+        ----------
+        BeartypeClawImportAstException
+            If our **beartype node transformer** (i.e.,
+            :class:`.BeartypeNodeTransformer` instance) dynamically transforms
+            the original valid abstract syntax tree (AST) governing that Python
+            package or module into a new invalid AST.
         '''
 
         # If that module has *NOT* been registered for type-checking, preserve
@@ -406,43 +429,38 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # Abstract syntax tree (AST) modified by this transformer.
         module_ast_beartyped = ast_beartyper.visit(module_ast)
 
-        #FIXME: *THIS IS BAD, BRO.* For one thing, this is slow. Recursion is
-        #slow. It's also dangerous. We shouldn't do it more than we have to. Now
-        #we're recursing over the entire AST tree twice: once in our AST
-        #transformation above (which is unavoidable) and again in the call to
-        #fix_missing_locations() here (which probably is avoidable). Instead, we
-        #should fold the logic of fix_missing_locations() directly into our AST
-        #transformation. Specifically, our AST transformation should:
-        #* For each newly generated AST node, non-recursively propagate the line
-        #  and column numbers of that node's parent node onto that node.
-        #FIXME: Fascinating. It would seem that we need to propagate these
-        #*FOUR* attributes: "lineno", "end_lineno", "col_offset", and
-        #"end_col_offset". Note that the "end_"-prefixed attributes may only be
-        #available under newer Python versions. Say, Python ≥ 3.9 or 3.10?
-        #Further research is required, clearly. Fortunately, the implementation
-        #of the ast.fix_missing_locations() function is trivial. It shouldn't be
-        #terribly arduous to embed equivalent functionality in our AST
-        #transformation, assuming we think we know what we're doing. (We don't.)
-
-        # Recursively propagate the line and column numbers of all parent nodes
-        # in this tree to their children that failed to define these numbers
-        # *BEFORE* calling the compile() builtin, which requires these numbers
-        # to be defined on all AST nodes supporting these numbers. All AST nodes
-        # supporting these numbers define these numbers *EXCEPT* those AST nodes
-        # programmatically generated by our AST transformation, which currently
-        # leaves these numbers undefined due to programmer laziness.
-        #fix_missing_locations(module_ast_beartyped)
-
-        # Code object compiled from this transformed AST.
-        module_codeobj = compile(
-            module_ast_beartyped,
-            path,
-            'exec',
-            # Prevent these contents from inheriting the effects of any
-            # "from __future__ import" statements in effect in beartype itself.
-            dont_inherit=True,
-            optimize=_optimize,
+        #FIXME: Conditionally perform this logic if "conf.is_debug", please.
+        print(
+            f'Module "{self._module_name_beartype}" abstract syntax tree (AST) '
+            f'transformed by @beartype to:\n\n'
+            f'{get_node_repr_indented(module_ast_beartyped)}'
         )
+
+        # Attempt to...
+        try:
+            # Code object compiled from this transformed AST.
+            module_codeobj = compile(
+                module_ast_beartyped,
+                path,
+                'exec',
+                # Prevent these contents from inheriting the effects of any
+                # "from __future__ import" statements in effect in the beartype
+                # codebase itself.
+                dont_inherit=True,
+                optimize=_optimize,
+            )
+        # If doing so raises *ANY* exception whatsoever, wrap that low-level
+        # exception with a higher-level exception exhibiting the exact issue.
+        # Doing so enables users to submit meaningful issues to our tracker.
+        except Exception as exception:
+            raise BeartypeClawImportAstException(
+                f'Module "{self._module_name_beartype}" unimportable, as '
+                f'@beartype generated invalid '
+                f'abstract syntax tree (AST):\n\n'
+                f'{get_node_repr_indented(module_ast_beartyped)}\n\n'
+                f'ast.compile() exception (when passed the above AST):\n\t'
+                f'{label_exception(exception)}'
+            ) from exception
 
         # Return this code object.
         return module_codeobj

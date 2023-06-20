@@ -30,7 +30,7 @@ this private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.claw._pkg.clawpkgenum import BeartypeClawCoverage
 from beartype.claw._pkg.clawpkghook import hook_packages
-from beartype.roar import BeartypeClawRegistrationException
+from beartype.roar import BeartypeClawHookException
 from beartype.typing import (
     Iterable,
 )
@@ -116,7 +116,7 @@ def beartype_all(
 
     Raises
     ----------
-    BeartypeClawRegistrationException
+    BeartypeClawHookException
         If the passed ``conf`` parameter is *not* a beartype configuration
         (i.e., :class:`BeartypeConf` instance).
 
@@ -156,7 +156,7 @@ def beartype_this_package(
 
     Raises
     ----------
-    BeartypeClawRegistrationException
+    BeartypeClawHookException
         If either:
 
         * This function is *not* called from a module (i.e., this function is
@@ -196,7 +196,7 @@ def beartype_this_package(
     #* Refactor this logic here to resemble:
     #      frame_caller = get_frame_caller_or_none()
     #      if frame_caller is None:
-    #          raise BeartypeClawRegistrationException(
+    #          raise BeartypeClawHookException(
     #              'beartype_this_package() '
     #              'not callable directly from REPL scope.'
     #          )
@@ -216,7 +216,7 @@ def beartype_this_package(
     # scope of a module in the current call stack, the caller is a class or
     # callable rather than a module. In this case, raise an exception.
     if frame_caller_basename != FUNC_CODEOBJ_NAME_MODULE:
-        raise BeartypeClawRegistrationException(
+        raise BeartypeClawHookException(
             f'beartype_this_package() not called from module scope '
             f'(i.e., caller '
             f'"{frame_caller_module_name}.{frame_caller_basename}" '
@@ -238,7 +238,7 @@ def beartype_this_package(
     #     >>> frame_caller_module_name.rpartition()
     #     ('', '', 'muh_module')  # <-- we're now in trouble, folks
     if '.' not in frame_caller_module_name:
-        raise BeartypeClawRegistrationException(
+        raise BeartypeClawHookException(
             f'beartype_this_package() not called by submodule '
             f'(i.e., caller module "{frame_caller_module_name}" is a '
             f'top-level module rather than submodule of some parent package).'
@@ -290,7 +290,7 @@ def beartype_package(
 
     Raises
     ----------
-    BeartypeClawRegistrationException
+    BeartypeClawHookException
         If either:
 
         * The passed ``conf`` parameter is *not* a beartype configuration (i.e.,
@@ -367,7 +367,7 @@ def beartype_packages(
 
     Raises
     ----------
-    BeartypeClawRegistrationException
+    BeartypeClawHookException
         If either:
 
         * The passed ``conf`` parameter is *not* a beartype configuration (i.e.,

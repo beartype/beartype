@@ -66,6 +66,7 @@ pushd "${script_dirname}" >/dev/null
 #exposes further "pyright" compliants. Let's avoid doing so until someone
 #explicitly requests we do so, please. This has dragged on long enough! *HURK*
 # Statically type-check this project's codebase with all passed arguments.
+# command pyright --pythonversion 3.8 beartype "${@}"
 command pyright beartype "${@}"
 
 # 0-based exit code reported by the prior command.

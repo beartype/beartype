@@ -11,14 +11,8 @@
 #   List of all options supported in this file.
 
 # ....................{ TODO                               }....................
-#FIXME: [CODE] Politely suggest that "pydata-sphinx-theme' incorporate
-#functionality for wrapping long function signatures. Thankfully, this has
-#already been (possibly elegantly) achieved by the competing Sphinx-Immaterial
-#theme via CSS governed by well-documented "conf.py" globals. See also:
-#    https://sphinx-immaterial.readthedocs.io/en/stable/apidoc/format_signatures.html
-#FIXME: [CODE] Thankfully, somebody's already implemented a crude CSS hack
-#enabling this for Python signatures. Let's incorporate this when time admits:
-#    https://github.com/sphinx-doc/sphinx/issues/1514#issuecomment-742703082
+#FIXME: [ICON] Define the "html_favicon" setting as well -- once we actually
+#create a favicon, of course. *sigh*
 
 #FIXME: [THEME] Consider generalizing our theme from the somewhat low-level
 #"pydata-sphinx-theme" theme to the substantially higher-level
@@ -44,6 +38,7 @@
 # "sys.path") has yet to be properly established, imports from this project in
 # particular are likely to fail under common edge cases.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 # Preliminary imports from Python's standard library required to establish the
 # directory structure for this project.
 import sys
@@ -194,6 +189,15 @@ extensions = [
     # Builtin extensions unconditionally available under *ALL* reasonably
     # modern versions of Sphinx uniquely prefixed by "sphinx.ext.".
 
+    #FIXME: Uncomment when enabling "autoapi" support, please. *sigh*
+    # # Builtin extension enabling support for type hint introspection in API
+    # # generation extensions (e.g., "autoapi", "autodoc").
+    # #
+    # # The third-party "autoapi" extension implicitly requires this extension to
+    # # be enabled as a prerequisite for its own type hint introspection. We
+    # # intentionally enable this extension despite *NOT* using "autodoc".
+    # 'sphinx.ext.autodoc',
+
     # Builtin extension automatically creating one explicit globally
     # cross-referenceable target "{/document/basename}:{section_title}" for each
     # section titled "{section_title}" of each document residing at
@@ -227,8 +231,8 @@ extensions = [
     # usability, this block should typically be empty. Third-party Sphinx
     # extensions should ideally be optionally enabled. See below.
 
-    # Third-party "autoapi" Sphinx extension, an alternative to the builtin
-    # "autodoc" Sphinx extension actively maintained by Read The Docs (RTD).
+    # Third-party "autoapi" Sphinx extension actively maintained by Read The
+    # Docs (RTD) and an alternative to the builtin "autodoc" Sphinx extension.
     # "autoapi" is strongly preferable to "autodoc" in the modern context, as:
     # * "autodoc" dynamically imports *ALL* Python modules to be documented and
     #   thus executes *ALL* module-scoped code in those modules at documentation
@@ -245,7 +249,7 @@ extensions = [
     #   *NO* configuration or kludges required.
 
     #FIXME: Temporarily disabled in a pell-mell rush to host our "README.rst"
-    #file on RTD. Once we finish that laborious process, let's revisite
+    #file on RTD. Once we finish that laborious process, let's revisit
     #"autoapi". Doing so will prove non-trivial, as "autoapi" currently emits
     #~300 warnings -- some of which are ignorable, but most of which are not.
     # 'autoapi.extension',
@@ -341,7 +345,7 @@ def _register_extension_or_warn(
         Fully-qualified name of the package providing this extension.
     warning_message : Optional[str]
         Human-readable message to be printed when this package is unimportable.
-        Defaults to ``None``, in which case a standard message is printed.
+        Defaults to :data:`None`, in which case a standard message is printed.
     '''
 
     # If this package is importable under the active Python interpreter, append
@@ -397,7 +401,7 @@ autoapi_options = [
     # Document public documented attributes of modules and classes.
     'members',
 
-    # Document undocumented attributes of modules and classes. *gulp*
+    # Document public undocumented attributes of modules and classes. *gulp*
     'undoc-members',
 
     # Document dunder attributes of modules and classes. Although often
@@ -430,9 +434,10 @@ autoapi_options = [
 # "sphinx.ext.autodoc"-specific settings. See also:
 #     https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 
-# Instruct "autodoc" to globally append type hints annotating callable
-# signatures to the parameters and returns they annotate in the content (i.e.,
-# descriptions) of those callables. Note this requires Sphinx >= 4.1.
+# Instruct API generation extensions (e.g., "autoapi", "autodoc") to globally
+# append type hints annotating callable signatures to the parameters and returns
+# they annotate in the content (i.e., descriptions) of those callables. Note
+# this requires Sphinx >= 4.1.
 #
 # Since the third-party "autoapi" extension implicitly supports this setting, we
 # intentionally define this setting despite *NOT* using "autodoc".
@@ -442,11 +447,11 @@ autodoc_typehints = 'both'
 # 'sphinx.ext.autosectionlabel'-specific settings. See also:
 #     https://www.sphinx-doc.org/en/master/usage/extensions/autosectionlabel.html
 
-# Instruct "autosectionlabel" to uniquify created targets by prefixing
-# section titles with document pathnames in these targets. By default, this
-# extension ambiguously creates targets as section titles; that simplistic
-# scheme fails when two or more documents share the same section titles, a
-# common use case that's effectively infeasible to prohibit.
+# Instruct "autosectionlabel" to uniquify created targets by prefixing section
+# titles with document pathnames in these targets. By default, this extension
+# ambiguously creates targets as section titles; that simplistic scheme fails
+# when two or more documents share the same section titles, a common use case
+# that's effectively infeasible to prohibit.
 autosectionlabel_prefix_document = True
 
 # ....................{ EXTENSIONS ~ intersphinx           }....................
@@ -512,23 +517,16 @@ napoleon_custom_sections = [
 # Wrap Python callable and class signatures exceeding this maximum number of
 # plaintext characters such that each parameter of those signatures is then
 # delegated its own discrete line.
-#
-# Note that this is currently only a prospective PR likely to be merged and is
-# thus merely something we're currently excited about. See also:
-#    https://github.com/sphinx-doc/sphinx/pull/11011
 python_maximum_signature_line_length = 80
 
 # ....................{ BUILD ~ html                       }....................
-#FIXME: Define the "html_favicon" setting as well -- once we actually create a
-#favicon, of course. *sigh*
-
 # Relative filename or URL of a small image (i.e., no wider than 200px) to be
 # rendered in the upper left-hand corner of the sidebar for this theme.
 html_logo = 'https://raw.githubusercontent.com/beartype/beartype-assets/main/badge/bear-ified.svg'
 
 # Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
+# relative to this directory. They are copied after the builtin static files;
+# ergo, a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
 # Dictionary mapping from the names of theme-specific options to those options.

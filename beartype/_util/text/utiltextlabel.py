@@ -25,9 +25,9 @@ def label_beartypeable_kind(
     obj: BeartypeableT,  # pyright: ignore[reportInvalidTypeVarUse]
 ) -> str:
     '''
-    Human-readable label describing the **kind** (i.e.,
-    single concise noun synopsizing the category of) the passed **beartypeable**
-    (i.e., object that is currently being or has already been decorated by the
+    Human-readable label describing the **kind** (i.e., single concise noun
+    synopsizing the category of) of the passed **beartypeable** (i.e., object
+    that is currently being or has already been decorated by the
     :func:`beartype.beartype` decorator).
 
     Parameters
@@ -175,12 +175,7 @@ def label_callable(
     from beartype._util.func.arg.utilfuncargget import (
         get_func_args_len_flexible)
     from beartype._util.func.utilfunccodeobj import get_func_codeobj
-    from beartype._util.func.utilfunctest import (
-        is_func_async_generator,
-        is_func_coro,
-        is_func_lambda,
-        is_func_sync_generator,
-    )
+    from beartype._util.func.utilfunctest import is_func_lambda
 
     # Substring prefixing the string to be returned, typically identifying the
     # specialized type of that callable if that callable has a specialized type.

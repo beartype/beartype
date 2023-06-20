@@ -154,7 +154,7 @@ def import_module_or_none(module_name: str) -> Optional[ModuleType]:
             BeartypeModuleUnimportableWarning,
         )
 
-    # Inform the caller this module is unimportable.
+    # Inform the caller that this module is unimportable.
     return None
 
 # ....................{ IMPORTERS ~ attr                   }....................
