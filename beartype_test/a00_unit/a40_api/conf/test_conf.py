@@ -44,7 +44,6 @@ def test_api_conf_dataclass() -> None:
         BeartypeStrategy,
     )
     from beartype.roar import BeartypeConfException
-    from beartype._conf.confcache import beartype_conf_id_to_conf
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -77,8 +76,8 @@ def test_api_conf_dataclass() -> None:
     # Arbitrary parametrized beartype configuration.
     BEAR_CONF_NONDEFAULT = BeartypeConf(**BEAR_CONF_NONDEFAULT_KWARGS)
 
-    # Tuple of these beartype configurations.
-    BEAR_CONFS = (BEAR_CONF_DEFAULT, BEAR_CONF_NONDEFAULT)
+    # # Tuple of these beartype configurations.
+    # BEAR_CONFS = (BEAR_CONF_DEFAULT, BEAR_CONF_NONDEFAULT)
 
     # ....................{ PASS                           }....................
     # Assert beartype configurations to be self-memoizing across both
@@ -121,17 +120,6 @@ def test_api_conf_dataclass() -> None:
     # public fields of this class.
     for BEAR_CONF_REPR_SUBSTR in BEAR_CONF_REPR_SUBSTRS:
         assert BEAR_CONF_REPR_SUBSTR in BEAR_CONF_REPR
-
-    # For each beartype configuration instantiated above...
-    for BEAR_CONF in BEAR_CONFS:
-        # Object identifier uniquely identifying this configuration.
-        BEAR_CONF_ID = id(BEAR_CONF)
-
-        # Assert this identifier is in the beartype configuration object cache.
-        assert BEAR_CONF_ID in beartype_conf_id_to_conf
-
-        # Assert this cache maps this identifier to this configuration.
-        assert beartype_conf_id_to_conf[BEAR_CONF_ID] is BEAR_CONF
 
     # ....................{ FAIL                           }....................
     # Assert that instantiating a configuration with an invalid parameter raises

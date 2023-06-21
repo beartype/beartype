@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype module loaders** (i.e., :mod:`importlib`-compliant classes
-dynamically decorating all typed callables and classes of all submodules of all
-packages previously registered in our global package trie by the
+Beartype **import hook module loaders** (i.e., :mod:`importlib`-compliant
+classes dynamically decorating all typed callables and classes of all submodules
+of all packages previously registered in our global package trie by the
 :func:`beartype.beartype` decorator via abstract syntax tree (AST) transformers
 defined by the :mod:`beartype.claw._ast.clawastmain` submodule).
 
@@ -18,7 +18,11 @@ from ast import (
     PyCF_ONLY_AST,
 )
 from beartype.claw._ast.clawastmain import BeartypeNodeTransformer
-from beartype.claw._clawmagic import BEARTYPE_OPTIMIZATION_MARKER
+from beartype.claw._importlib.clawimpcache import (  # type: ignore[attr-defined]
+    cache_from_source_beartype,
+    cache_from_source_original,
+    module_name_to_beartype_conf,
+)
 from beartype.roar import BeartypeClawImportAstException
 from beartype.typing import Optional
 from beartype._conf.confcls import BeartypeConf
@@ -30,11 +34,6 @@ from importlib import (  # type: ignore[attr-defined]
 from importlib.machinery import SourceFileLoader
 from importlib.util import decode_source
 from types import CodeType
-
-# Original cache_from_source() function defined by the private (*gulp*)
-# "importlib._bootstrap_external" submodule, preserved *BEFORE* temporarily
-# replacing that function with our beartype-specific variant below.
-from importlib.util import cache_from_source as cache_from_source_original
 
 # ....................{ CLASSES                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -311,6 +310,14 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # Beartype configuration with which to type-check that module if the
         # parent package of that module was previously registered *OR* "None"
         # otherwise (i.e., if this function preserves that module unmodified).
+        #
+        # For usability by various consumers embedded throughout the
+        # "beartype.claw" subpackage, we add this configuration to several
+        # different data structures -- including:
+        # * "module_name_to_beartype_conf", a global dictionary externally
+        #   leveraged by the "beartype.claw._ast" subpackage. (See below.)
+        # * "self._conf_beartype_if_module_hooked", an instance variable
+        #   internally leveraged by the source_to_code() method defined below.
         self._conf_beartype_if_module_hooked = get_package_conf_or_none(
             package_name)
         # print(f'Imported module "{fullname}" package "{package_name}" conf: {repr(self._conf_beartype_if_module_hooked)}')
@@ -331,13 +338,17 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # well as a potentially risky monkey-patch) and is thus performed *ONLY*
         # when absolutely necessary.
         else:
+            # Expose this configuration to the "beartype.claw._ast" subpackage.
+            module_name_to_beartype_conf[fullname] = (
+                self._conf_beartype_if_module_hooked)
+
             # print(f'Importing module "{fullname}" with beartyping: ...')
 
             # Temporarily monkey-patch away the cache_from_source() function.
             #
             # Note that @agronholm (Alex Grönholm) claims that "the import lock
             # should make this monkey patch safe." We're trusting you here, man!
-            _bootstrap_external.cache_from_source = _cache_from_source_beartype
+            _bootstrap_external.cache_from_source = cache_from_source_beartype
 
             # Attempt to defer to the superclass method.
             try:
@@ -468,31 +479,3 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
         # Return this code object.
         return module_codeobj
-
-# ....................{ PRIVATE ~ cachers                  }....................
-#FIXME: Unit test us up, please.
-def _cache_from_source_beartype(*args, **kwargs) -> str:
-    '''
-    Beartype-specific variant of the
-    :func:`importlib._bootstrap_external.cache_from_source` function applying a
-    beartype-specific optimization marker to that function.
-
-    This, in turn, ensures that submodules residing in packages registered by a
-    prior call to the :func:`beartype_package` function are
-    compiled to files with the filetype
-    ``".pyc{optimization}_{BEARTYPE_OPTIMIZATION_MARKER}"``, where
-    ``{optimization}`` is the original ``optimization`` parameter passed to this
-    function call.
-    '''
-
-    # Original optimization parameter passed to this function call if any *OR*
-    # the empty string otherwise.
-    NONBEARTYPE_OPTIMIZATION_MARKER = kwargs.get('optimization', '')
-
-    # New optimization parameter applied by this monkey-patch of that function,
-    # uniquifying that parameter with a beartype-specific suffix.
-    kwargs['optimization'] = (
-        f'{NONBEARTYPE_OPTIMIZATION_MARKER}{BEARTYPE_OPTIMIZATION_MARKER}')
-
-    # Defer to the implementation of the original cache_from_source() function.
-    return cache_from_source_original(*args, **kwargs)

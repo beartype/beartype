@@ -266,10 +266,10 @@ def is_type_builtin_or_fake(cls: type) -> bool:
 def is_type_subclass(
     cls: object, base_classes: TypeOrTupleTypes) -> bool:
     '''
-    ``True`` only if the passed object is an inclusive subclass of the passed
-    superclass(es).
+    :data:`True` only if the passed object is an inclusive subclass of the
+    passed superclass(es).
 
-    Specifically, this tester returns ``True`` only if either:
+    Specifically, this tester returns :data:`True` only if either:
 
     * If ``base_classes`` is a single superclass, the passed class is either:
 
@@ -310,7 +310,7 @@ def is_type_subclass(
     Returns
     ----------
     bool
-        ``True`` only if this object is an inclusive subclass of these
+        :data:`True` only if this object is an inclusive subclass of these
         superclass(es).
     '''
     assert isinstance(base_classes, TestableTypesTuple), (

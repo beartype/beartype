@@ -64,52 +64,6 @@
 #explicit "TypeAlias". That constitutes full support for PEP 613 from our
 #side. Good enough! :p
 
-#FIXME: [PEP] Add PEP 673 support (i.e., "typing.Self"). Since "typing.Self" is
-#simply a singleton syntactic sugar for "typing.TypeVar('Self', bound={cls})"
-#where {cls} is the class containing the "typing.Self" reference, this can be
-#trivially achieved with a reduction in "beartype._util.hint.utilhintconv"
-#contextually reducing each "typing.Self" type hint in a callable signature to
-#the corresponding "typing.TypeVar('Self', bound={cls})" object: e.g.,
-#    # This canonical PEP 673-specific example...
-#    from typing import Self
-#    class Shape:
-#        def set_scale(self, scale: float) -> Self:
-#            self.scale = scale
-#            return self
-#
-#    # ...is semantically identical to this PEP 673-agnostic example.
-#    from typing import TypeVar
-#    class Shape:
-#        def set_scale(self, scale: float) -> TypeVar('Self', Shape):
-#            self.scale = scale
-#            return self
-#
-#Note that implementing this reduction will require:
-#* Adding a new "cls_scope" (or something) instance variable to our
-#  "beartype._check.checkcall.BeartypeCall" dataclass, defined as either:
-#  * "None" for non-method callables.
-#  * The type of the class lexically declaring the current method callable. Note
-#    that this type is trivially retrievable from C-based bound instance method
-#    descriptors via the "__self__" dunder variable: e.g.,
-#        >>> class Yam(object): def yim(self): pass
-#        >>> Yam().yim.__self__
-#        <__main__.Yam at 0x7f4f70aad130>
-#
-#    That said, it kinda seems unlikely that our dynamically generated unbound
-#    pure-Python wrapper functions would have access to the C-based parent
-#    instance method descriptor. Given that, the only means of supporting this
-#    is probably to require that users decorate classes rather than class
-#    methods by @beartype. In the former case, @beartype trivially has access to
-#    this type and can safely set "BeartypeCall.cls_scope"; in the latter case,
-#    @beartype does not and *MUST* leave "BeartypeCall.cls_scope" as "None".
-#
-#    Ergo, @beartype should raise a fatal exception when visiting a "Self" hint
-#    *AND* "BeartypeCall.cls_scope is None" is true.
-#* It would be advisable to cache the "TypeVar" objects produced in this
-#  manner. Or perhaps that's overkill, as the same "utilhintconv" function
-#  performing this reduction *ALSO* currently reduces "TypeVar" objects to
-#  their bounds. So... *shrug*
-
 #FIXME: [SPEED] As a useful MACROoptimization, render the entire @beartype
 #toolchain thread-safe upfront rather than doing so piecemeal throughout the
 #toolchain. While the latter certainly works as well, the former is

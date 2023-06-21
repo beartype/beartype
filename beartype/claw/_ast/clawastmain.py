@@ -107,6 +107,8 @@ from ast import (
 )
 from beartype.claw._clawmagic import (
     NODE_CONTEXT_LOAD,
+    BEARTYPE_CONF_CACHE_MODULE_NAME,
+    BEARTYPE_CONF_CACHE_ATTR_NAME,
     BEARTYPE_DECORATOR_MODULE_NAME,
     BEARTYPE_DECORATOR_ATTR_NAME,
 )
@@ -127,6 +129,7 @@ from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
+from beartype._util.ast.utilastget import get_node_repr_indented
 from beartype._util.ast.utilastmake import (
     make_node_importfrom,
 )
@@ -302,8 +305,8 @@ class BeartypeNodeTransformer(NodeTransformer):
         * Our private
           :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator.
         * Our private
-          :obj:`beartype._conf.confcache.beartype_conf_id_to_conf` global
-          dictionary singleton.
+          :obj:`beartype.claw._importlib.clawimpcache.module_name_to_beartype_conf`
+          global dictionary singleton.
         * Our public :func:`beartype.door.die_if_unbearable` exception raiser.
 
         Parameters
@@ -422,10 +425,11 @@ class BeartypeNodeTransformer(NodeTransformer):
             )
 
             # Node importing our private
-            # "beartype._conf.confcache.beartype_conf_id_to_conf" dictionary.
+            # "beartype.claw._importlib.clawimpcache.module_name_to_beartype_conf"
+            # dictionary.
             node_import_conf_cache = make_node_importfrom(
-                module_name='beartype._conf.confcache',
-                attr_name='beartype_conf_id_to_conf',
+                module_name=BEARTYPE_CONF_CACHE_MODULE_NAME,
+                attr_name=BEARTYPE_CONF_CACHE_ATTR_NAME,
                 node_sibling=node_import_prev,
             )
 
@@ -445,7 +449,16 @@ class BeartypeNodeTransformer(NodeTransformer):
         # this edge case (here or elsewhere).
 
         # Recursively transform *ALL* child nodes of this parent module node.
-        return self.generic_visit(node)
+        node = self.generic_visit(node)
+
+        # #FIXME: Conditionally perform this logic if "conf.is_debug", please.
+        # print(
+        #     f'Module abstract syntax tree (AST) transformed by @beartype to:\n\n'
+        #     f'{get_node_repr_indented(node)}'
+        # )
+
+        # Return this transformed module node.
+        return node
 
     # ..................{ VISITORS ~ class                   }..................
     #FIXME: Implement us up, please.
@@ -628,8 +641,7 @@ class BeartypeNodeTransformer(NodeTransformer):
         if self._conf_beartype != BEARTYPE_CONF_DEFAULT:
             # Node encapsulating the passing of this configuration as
             # the "conf" keyword argument to die_if_unbearable().
-            node_func_kwarg_conf = make_node_keyword_conf(
-                conf=self._conf_beartype, node_sibling=node)
+            node_func_kwarg_conf = make_node_keyword_conf(node_sibling=node)
 
             # Append this node to the list of all keyword arguments passed to
             # die_if_unbearable().

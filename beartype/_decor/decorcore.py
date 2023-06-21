@@ -16,9 +16,12 @@ despite *not* actually being that decorator (due to being unmemoized).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: We're getting a bit long in the tooth yet again. Contemplate splitting
+#lower-level functions into ancillary submodules, please. *sigh*
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
-    BeartypeClawDecorWarning,
     BeartypeException,
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
@@ -46,6 +49,7 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
 )
+from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.func.lib.utilbeartypefunc import (
     is_func_unbeartypeable,
     set_func_beartyped,
@@ -61,6 +65,62 @@ from warnings import warn
 
 # ....................{ DECORATORS                         }....................
 def beartype_object(
+    # Mandatory parameters.
+    obj: BeartypeableT,
+    conf: BeartypeConf,
+
+    # Variadic keyword parameters.
+    **kwargs
+) -> BeartypeableT:
+    '''
+    Decorate the passed **beartypeable** (i.e., caller-defined object that may
+    be decorated by the :func:`beartype.beartype` decorator) with optimal
+    type-checking dynamically generated unique to that beartypeable.
+
+    Parameters
+    ----------
+    obj : BeartypeableT
+        **Beartypeable** (i.e., pure-Python callable or class) to be decorated.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., dataclass encapsulating all flags,
+        options, settings, and other metadata configuring the current decoration
+        of the decorated callable or class).
+
+    All remaining keyword parameters are passed as is to whichever lower-level
+    decorator this higher-level decorator calls on the passed beartypeable.
+
+    Returns
+    ----------
+    BeartypeableT
+        Either:
+
+        * If the passed object is a class, this existing class embellished with
+          dynamically generated type-checking.
+        * If the passed object is a callable, a new callable wrapping that
+          callable with dynamically generated type-checking.
+
+    See Also
+    ----------
+    :func:`beartype._decor.decormain.beartype`
+        Memoized parent decorator wrapping this unmemoized child decorator.
+    '''
+    # print(f'Decorating object {repr(obj)}...')
+
+    # Return either...
+    return (
+        _beartype_object_fatal(obj, conf, **kwargs)
+        # If this beartype configuration requests that this decorator raise
+        # fatal exceptions at decoration time, defer to the lower-level
+        # decorator doing so;
+        if conf.reduce_decorator_exception_to_warning_category is None else
+        # Else, this beartype configuration requests that this decorator emit
+        # fatal warnings at decoration time. In this case, defer to the
+        # lower-level decorator doing so.
+        _beartype_object_nonfatal(obj, conf, **kwargs)
+    )
+
+
+def _beartype_object_fatal(
     # Mandatory parameters.
     obj: BeartypeableT,
     conf: BeartypeConf,
@@ -102,8 +162,6 @@ def beartype_object(
     :func:`beartype._decor.decormain.beartype`
         Memoized parent decorator wrapping this unmemoized child decorator.
     '''
-    # print(f'Decorating object {repr(obj)}...')
-
     # If this object is a class, return this class decorated with type-checking.
     #
     # Note that the passed "cls_curr" class is ignorable in this context.
@@ -200,12 +258,12 @@ def beartype_object(
 
 
 #FIXME: Unit test us up, please.
-def beartype_object_nonfatal(
+def _beartype_object_nonfatal(
     # Mandatory parameters.
     obj: BeartypeableT,
+    conf: BeartypeConf,
 
-    # Optional parameters.
-    warning_category: TypeWarning = BeartypeClawDecorWarning,
+    # Variadic keyword parameters.
     **kwargs
 ) -> BeartypeableT:
     '''
@@ -240,16 +298,14 @@ def beartype_object_nonfatal(
     ----------
     obj : BeartypeableT
         **Beartypeable** (i.e., pure-Python callable or class) to be decorated.
-    warning_category : TypeWarning, optional
-        Category of the non-fatal warning to emit if :func:`beartype.beartype`
-        fails to generate a type-checking wrapper for this callable or class.
-        Defaults to :class:`BeartypeClawDecorWarning`, due to the
-        :mod:`beartype.claw` API currently being the *only* public API in this
-        codebase calling this private decorator.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., dataclass encapsulating all flags,
+        options, settings, and other metadata configuring the current decoration
+        of the decorated callable or class).
 
     All remaining keyword parameters are passed as is to the lower-level
-    :func:`.beartype_object` decorator internally called by this higher-level
-    decorator on the passed beartypeable.
+    :func:`._beartype_object_fatal` decorator internally called by this
+    higher-level decorator on the passed beartypeable.
 
     Returns
     ----------
@@ -275,11 +331,13 @@ def beartype_object_nonfatal(
 
     # Attempt to decorate the passed beartypeable.
     try:
-        return beartype_object(obj, **kwargs)
+        return _beartype_object_fatal(obj, conf, **kwargs)
     # If doing so unexpectedly raises an exception, coerce that fatal exception
     # into a non-fatal warning for nebulous safety.
     except Exception as exception:
-        assert isinstance(warning_category, Warning), (
+        # Category of warning to be emitted.
+        warning_category = conf.reduce_decorator_exception_to_warning_category
+        assert is_type_subclass(warning_category, Warning), (
             f'{repr(warning_category)} not warning category.')
 
         # Original error message to be embedded in the warning message to be

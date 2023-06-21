@@ -28,7 +28,7 @@ abstract syntax tree (AST) node classes).
 '''
 
 # ....................{ STRINGS                            }....................
-BEARTYPE_OPTIMIZATION_MARKER = f'{NAME}{VERSION.replace(".", "l")}'
+BEARTYPE_OPTIMIZATION_MARKER = f'{NAME}{VERSION.replace(".", "v")}'
 '''
 **Beartype optimization marker** (i.e., placeholder substring suffixing the
 ``optimization`` parameter passed to the magical hidden
@@ -57,22 +57,39 @@ raises a fatal exception resembling:
 
 Ergo, this string globally replaces *all* non-alphanumeric characters that are
 otherwise commonly present in the version specifier for this version of
-:mod:`beartype` by the arbitrary character ``"l`"" (which is *not* present in
+:mod:`beartype` by the arbitrary character ``"v`"" (which is *not* present in
 the name of this package and thus suitable as a machine-readable delimiter).
 '''
 
+# ....................{ STRINGS ~ cache                    }....................
+BEARTYPE_CONF_CACHE_MODULE_NAME = 'beartype.claw._importlib.clawimpcache'
+'''
+Fully-qualified name of the submodule defining the **hooked module beartype
+configuration cache** (i.e., dictionary mapping from the fully-qualified name of
+each previously imported submodule of each package previously registered in our
+global package trie to the beartype configuration configuring type-checking by
+the :func:`beartype.beartype` decorator of that submodule).
+'''
+
+
+BEARTYPE_CONF_CACHE_ATTR_NAME = 'module_name_to_beartype_conf'
+'''
+Unqualified basename of the hooked module beartype configuration cache relative
+to the fully-qualified name of its submodule.
+'''
+
 # ....................{ STRINGS ~ decorator                }....................
-BEARTYPE_DECORATOR_MODULE_NAME = 'beartype._decor.decorcore'
+BEARTYPE_DECORATOR_MODULE_NAME = 'beartype._decor._cache.cachedecor'
 '''
-Fully-qualified name of the submodule defining the :mod:`beartype` decorator
-applied by our abstract syntax tree (AST) node transformer to all applicable
-callables and classes of third-party modules.
+Fully-qualified name of the submodule defining the **hooked module beartype
+decorator** (i.e., :mod:`beartype` decorator applied by our abstract syntax tree
+(AST) node transformer to all applicable callables and classes of third-party
+modules).
 '''
 
 
-BEARTYPE_DECORATOR_ATTR_NAME = 'beartype_object_nonfatal'
+BEARTYPE_DECORATOR_ATTR_NAME = 'beartype'
 '''
-Unqualified basename of the :mod:`beartype` decorator applied by our abstract
-syntax tree (AST) node transformer to all applicable callables and classes of
-third-party modules.
+Unqualified basename of the hooked module beartype decorator relative
+to the fully-qualified name of its submodule.
 '''

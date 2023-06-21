@@ -29,7 +29,10 @@ from beartype.claw._importlib.clawimppath import (
     add_beartype_pathhook,
     # remove_beartype_pathhook,
 )
-from beartype.roar import BeartypeClawHookException
+from beartype.roar import (
+    BeartypeClawDecorWarning,
+    BeartypeClawHookException,
+)
 from beartype.typing import (
     Iterable,
     Optional,
@@ -116,8 +119,13 @@ def hook_packages(
         this function with respect to inscrutable :mod:`importlib` machinery.
     '''
 
+    # Replace this beartype configuration (which is typically unsuitable for
+    # usage in import hooks) with a new beartype configuration suitable for
+    # usage in import hooks.
+    conf = _make_conf_hookable(conf)
+
     # Iterable of the passed fully-qualified names of all packages to be hooked.
-    package_names = _get_package_names_from_args(
+    package_names = _make_package_names_from_args(
         claw_coverage=claw_coverage,
         conf=conf,
         package_name=package_name,
@@ -273,9 +281,14 @@ def unhook_packages(
         Further details.
     '''
 
+    # Replace this beartype configuration (which is typically unsuitable for
+    # usage in import hooks) with a new beartype configuration suitable for
+    # usage in import hooks.
+    conf = _make_conf_hookable(conf)
+
     # Iterable of the passed fully-qualified names of all packages to be
     # unhooked.
-    package_names = _get_package_names_from_args(
+    package_names = _make_package_names_from_args(
         claw_coverage=claw_coverage,
         conf=conf,
         package_name=package_name,
@@ -364,9 +377,68 @@ def unhook_packages(
         #   unregistered the desired packages with our global trie.
         remove_beartype_pathhook_unless_packages_trie()
 
-# ....................{ PRIVATE ~ checkers                 }....................
+# ....................{ PRIVATE ~ factories                }....................
 #FIXME: Unit test us up, please.
-def _get_package_names_from_args(
+def _make_conf_hookable(conf: BeartypeConf) -> BeartypeConf:
+    '''
+    New **hookable beartype configuration** (i.e., beartype configuration
+    suitable for use in import hooks, sanitized from the passed beartype
+    configuration which is typically unsuitable for use in import hooks).
+
+    This getter creates and returns a new configuration permuted from the passed
+    configuration, forcefully enabling these parameters required by import
+    hooks:
+
+    * :attr:`beartype.BeartypeConf.reduce_decorator_exception_to_warning_category`
+      to the :class:`beartype.roar.BeartypeClawDecorWarning` warning category.
+      Doing so instructs the :func:`beartype.beartype` decorator to emit
+      non-fatal warnings rather than raise fatal exceptions at decoration time
+      when implicitly decorating callables and classes defined by modules hooked
+      by our import hooks, substantially improving the robustness and usability
+      of those hooks.
+
+    Returns
+    ----------
+    Optional[Iterable[str]]
+        Iterable of the fully-qualified names of one or more packages to be
+        either hooked or unhooked by the parent call.
+
+    See Also
+    ----------
+    :func:`.hook_packages`
+        Further details.
+    '''
+
+    # If the "conf" parameter is *NOT* a configuration, raise an exception.
+    if not isinstance(conf, BeartypeConf):
+        raise BeartypeClawHookException(
+            f'Beartype configuration {repr(conf)} invalid (i.e., not '
+            f'"beartype.BeartypeConf" instance).'
+        )
+    # Else, the "conf" parameter is a configuration.
+
+    # If this configuration does *NOT* reduce fatal exceptions to non-fatal
+    # warnings at @beartype decoration-time...
+    if conf.reduce_decorator_exception_to_warning_category is None:
+        # Keyword dictionary with which to instantiate a new configuration
+        # reducing fatal exceptions to non-fatal warnings of a warning category
+        # specific to beartype import hooks.
+        conf_kwargs = conf.kwargs.copy()
+        conf_kwargs['reduce_decorator_exception_to_warning_category'] = (
+            BeartypeClawDecorWarning)
+
+        # Replace this configuration with this new configuration.
+        conf = BeartypeConf(**conf_kwargs)  # type: ignore[arg-type]
+    # Else, this configuration already reduces fatal exceptions to non-fatal
+    # warnings at @beartype decoration-time. In this case, preserve this
+    # user-defined reduction as is.
+
+    # Return this possibly new configuration.
+    return conf
+
+
+#FIXME: Unit test us up, please.
+def _make_package_names_from_args(
     # Keyword-only arguments.
     *,
 
@@ -393,14 +465,9 @@ def _get_package_names_from_args(
     :func:`.hook_packages`
         Further details.
     '''
-
-    # If the "conf" parameter is *NOT* a configuration, raise an exception.
-    if not isinstance(conf, BeartypeConf):
-        raise BeartypeClawHookException(
-            f'Beartype configuration {repr(conf)} invalid (i.e., not '
-            f'"beartype.BeartypeConf" instance).'
-        )
-    # Else, the "conf" parameter is a configuration.
+    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    assert isinstance(claw_coverage, BeartypeClawCoverage), (
+        f'{repr(claw_coverage)} not beartype claw coverage.')
 
     # If the caller requested all-packages coverage...
     if claw_coverage is BeartypeClawCoverage.PACKAGES_ALL:

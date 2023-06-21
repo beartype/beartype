@@ -468,9 +468,9 @@ class BeartypeValidator(object):
     def __and__(self, other: 'BeartypeValidator') -> 'BeartypeValidator':
         '''
         **Conjunction** (i.e., ``self & other``), synthesizing a new
-        :class:`BeartypeValidator` object whose validator returns ``True`` only
-        when the validators of both this *and* the passed
-        :class:`BeartypeValidator` objects all return ``True``.
+        :class:`BeartypeValidator` object whose validator returns :data:`True`
+        only when the validators of both this *and* the passed
+        :class:`BeartypeValidator` objects all return :data:`True`.
 
         Parameters
         ----------
@@ -502,9 +502,9 @@ class BeartypeValidator(object):
     def __or__(self, other: 'BeartypeValidator') -> 'BeartypeValidator':
         '''
         **Disjunction** (i.e., ``self | other``), synthesizing a new
-        :class:`BeartypeValidator` object whose validator returns ``True`` only
-        when the validators of either this *or* the passed
-        :class:`BeartypeValidator` objects return ``True``.
+        :class:`BeartypeValidator` object whose validator returns :data:`True`
+        only when the validators of either this *or* the passed
+        :class:`BeartypeValidator` objects return :data:`True`.
 
         Parameters
         ----------
@@ -533,9 +533,9 @@ class BeartypeValidator(object):
     def __invert__(self) -> 'BeartypeValidator':
         '''
         **Negation** (i.e., ``~self``), synthesizing a new
-        :class:`BeartypeValidator` object whose validator returns ``True`` only
-        when the validators of this :class:`BeartypeValidator` object returns
-        ``False``.
+        :class:`BeartypeValidator` object whose validator returns :data:`True`
+        only when the validators of this :class:`BeartypeValidator` object
+        returns :data:`False`.
 
         Returns
         ----------

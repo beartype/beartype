@@ -22,12 +22,12 @@ from ast import (
 )
 from beartype.claw._clawmagic import (
     NODE_CONTEXT_LOAD,
+    BEARTYPE_CONF_CACHE_ATTR_NAME,
     BEARTYPE_DECORATOR_ATTR_NAME,
 )
 from beartype.claw._clawtyping import (
     NodeDecoratable,
 )
-from beartype._conf.confcache import beartype_conf_id_to_conf
 from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
@@ -87,7 +87,7 @@ def decorate_node(node: NodeDecoratable, conf: BeartypeConf) -> None:
             args=[],
             # Node encapsulating the passing of this configuration as
             # the "conf" keyword argument to this call.
-            keywords=[make_node_keyword_conf(conf=conf, node_sibling=node)],
+            keywords=[make_node_keyword_conf(node_sibling=node)],
         )
 
         # Copy all source code metadata from this parent callable node onto this
@@ -109,18 +109,15 @@ def decorate_node(node: NodeDecoratable, conf: BeartypeConf) -> None:
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
-def make_node_keyword_conf(conf: BeartypeConf, node_sibling: AST) -> keyword:
+def make_node_keyword_conf(node_sibling: AST) -> keyword:
     '''
-    Create and return a new **beartype configuration abstract syntax tree (AST)
-    node** (i.e., node passing the passed configuration as a ``conf`` keyword to
-    a :mod:`beartype` function orchestrated by the caller).
+    Create and return a new **beartype configuration keyword argument node**
+    (i.e., abstract syntax tree (AST) node passing the beartype configuration
+    associated with the currently visited module as a ``conf`` keyword to a
+    :func:`beartype.beartype` decorator orchestrated by the caller).
 
     Parameters
     ----------
-    conf : BeartypeConf
-        **Beartype configuration** (i.e., dataclass configuring the
-        :mod:`beartype.beartype` decorator for some decoratable object(s)
-        decorated by a parent node passing this dataclass to that decorator).
     node_sibling : AST
         Sibling node to copy source code metadata from.
 
@@ -129,33 +126,26 @@ def make_node_keyword_conf(conf: BeartypeConf, node_sibling: AST) -> keyword:
     keyword
         Keyword node passing this configuration to an arbitrary function.
     '''
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
 
-    # Object identifier uniquely identifying this configuration.
-    conf_id = id(conf)
-
-    # Assert that a beartype configuration with this object identifier exists.
-    # Note that the __getitem__() dunder method underlying this access
-    # implicitly raises a human-readable exception if this is *NOT* the case.
-    assert beartype_conf_id_to_conf[conf_id]
-
-    # Node encapsulating this object identifier as a literal integer constant.
-    node_conf_id = Constant(value=conf_id)
+    # Node encapsulating the fully-qualified name of that module of the
+    # currently visited module, accessed via the "__name__" dunder attribute
+    # accessible to any module.
+    node_module_name = Name(id='__name__', ctx=NODE_CONTEXT_LOAD)
 
     # Node encapsulating a reference to the beartype configuration object cache
-    # (i.e., dictionary mapping from object identifiers to the beartype
-    # configurations with those identifiers).
-    node_conf_id_to_conf = Name(
-        id='beartype_conf_id_to_conf', ctx=NODE_CONTEXT_LOAD)
+    # (i.e., dictionary mapping from fully-qualified module names to the
+    # beartype configurations associated with those modules).
+    node_module_name_to_conf = Name(
+        id=BEARTYPE_CONF_CACHE_ATTR_NAME, ctx=NODE_CONTEXT_LOAD)
 
     # Node encapsulating a reference to this beartype configuration, indirectly
     # (and efficiently) accessed via a dictionary lookup into this object cache.
     # While cumbersome, this indirection is effectively "glue" integrating this
     # AST node generation algorithm with the corresponding Python code
-    # subsequently interpreted by Python at runtime during module load.
+    # subsequently interpreted by Python at runtime during module importation.
     node_conf = Subscript(
-        value=node_conf_id_to_conf,
-        slice=node_conf_id,
+        value=node_module_name_to_conf,
+        slice=node_module_name,
         ctx=NODE_CONTEXT_LOAD,
     )
 
@@ -169,8 +159,8 @@ def make_node_keyword_conf(conf: BeartypeConf, node_sibling: AST) -> keyword:
     copy_node_metadata(
         node_src=node_sibling,
         node_trg=(
-            node_conf_id,
-            node_conf_id_to_conf,
+            node_module_name,
+            node_module_name_to_conf,
             node_conf,
             node_keyword_conf,
         )
