@@ -41,7 +41,7 @@ def get_node_repr_indented(node: AST) -> str:
         # If the active Python interpreter targets Python >= 3.9, the
         # pretty-printed contents of this AST. Sadly, the "indent=4" parameter
         # pretty-printing this AST was first introduced by Python 3.9.
-        ast_dump(node, indent=4)  # pyright: ignore[reportGeneralTypeIssues]
+        ast_dump(node, indent=4)  # type: ignore[call-arg]
         if IS_PYTHON_AT_LEAST_3_9 else
         # Else, the active Python interpreter targets Python < 3.9. In this
         # case, the non-pretty-printed contents of this AST as a single line.

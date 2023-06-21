@@ -396,6 +396,7 @@ class BeartypeConf(object):
             # Cache this configuration with all relevant dictionary singletons.
             beartype_conf_args_to_conf[beartype_conf_args] = self
             beartype_conf_id_to_conf[id(self)] = self
+            # print(f'Caching beartype configuration {repr(self)} as {id(self)}...')
 
         # Return this configuration.
         return self

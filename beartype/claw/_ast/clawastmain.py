@@ -110,7 +110,10 @@ from beartype.claw._clawmagic import (
     BEARTYPE_DECORATOR_MODULE_NAME,
     BEARTYPE_DECORATOR_ATTR_NAME,
 )
-from beartype.claw._ast._clawastmunge import decorate_node
+from beartype.claw._ast._clawastmunge import (
+    decorate_node,
+    make_node_keyword_conf,
+)
 from beartype.claw._clawtyping import (
     NodeCallable,
     NodeT,
@@ -126,7 +129,6 @@ from beartype._conf.confcls import (
 )
 from beartype._util.ast.utilastmake import (
     make_node_importfrom,
-    make_node_keyword_conf,
 )
 from beartype._util.ast.utilastmunge import copy_node_metadata
 from beartype._util.ast.utilasttest import is_node_callable_typed

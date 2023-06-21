@@ -50,6 +50,7 @@ from beartype.roar._roarexc import (
     BeartypeClawHookException as BeartypeClawHookException,
     BeartypeClawImportException as BeartypeClawImportException,
     BeartypeClawImportAstException as BeartypeClawImportAstException,
+    BeartypeClawImportConfException as BeartypeClawImportConfException,
     BeartypeConfException as BeartypeConfException,
     BeartypeDoorException as BeartypeDoorException,
     BeartypeDoorNonpepException as BeartypeDoorNonpepException,

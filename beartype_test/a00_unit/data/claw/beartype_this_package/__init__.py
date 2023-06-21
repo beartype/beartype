@@ -20,3 +20,4 @@ from beartype.claw import beartype_this_package
 # configuration to exercise that this hook correctly recursively applies this
 # configuration to *ALL* submodules of this subpackage.
 beartype_this_package(conf=BeartypeConf(is_pep484_tower=True))
+# print(f'"beartype_this_package" conf id: {id(BeartypeConf(is_pep484_tower=True))}')

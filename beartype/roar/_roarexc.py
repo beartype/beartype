@@ -756,15 +756,29 @@ class BeartypeClawImportException(BeartypeClawException):
 
 class BeartypeClawImportAstException(BeartypeClawImportException):
     '''
-    **Beartype import hook abstract syntax tree (AST) import exception.**
+    **Beartype import hook abstract syntax tree (AST) exception.**
 
-    This exception is raised at import time when a module erroneously
-    transformed by the AST node transformer from its original valid AST into a
-    new invalid AST by a beartype import hook previously installed by a prior
-    call to a public function published by the :mod:`beartype.claw` subpackage.
+    This exception is raised at import time when a **beartype import hook**
+    (i.e., previously installed by a prior call to a public function published
+    by the :mod:`beartype.claw` subpackage) erroneously transforms a module from
+    its original syntactically valid AST into a new syntactically invalid AST.
     '''
 
     pass
+
+
+class BeartypeClawImportConfException(BeartypeClawImportException):
+    '''
+    **Beartype import hook configuration exception.**
+
+    This exception is raised at import time when a **beartype import hook**
+    (i.e., previously installed by a prior call to a public function published
+    by the :mod:`beartype.claw` subpackage) erroneously attempts to access a
+    non-existent beartype configuration.
+    '''
+
+    pass
+
 # ....................{ API ~ conf                         }....................
 class BeartypeConfException(BeartypeException):
     '''

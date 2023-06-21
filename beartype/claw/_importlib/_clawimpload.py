@@ -313,6 +313,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # otherwise (i.e., if this function preserves that module unmodified).
         self._conf_beartype_if_module_hooked = get_package_conf_or_none(
             package_name)
+        # print(f'Imported module "{fullname}" package "{package_name}" conf: {repr(self._conf_beartype_if_module_hooked)}')
 
         # If that module has *NOT* been registered for type-checking, preserve
         # that module as is by simply deferring to the superclass method
@@ -321,6 +322,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # Why? Because modules *NOT* being beartyped should remain compiled
         # under their standard non-beartyped bytecode filenames.
         if self._conf_beartype_if_module_hooked is None:
+            # print(f'Importing module "{fullname}" without beartyping...')
             return super().get_code(fullname)
         # Else, that module has been registered for type-checking. In this
         # case...
@@ -329,6 +331,8 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # well as a potentially risky monkey-patch) and is thus performed *ONLY*
         # when absolutely necessary.
         else:
+            # print(f'Importing module "{fullname}" with beartyping: ...')
+
             # Temporarily monkey-patch away the cache_from_source() function.
             #
             # Note that @agronholm (Alex Grönholm) claims that "the import lock
@@ -430,11 +434,11 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         module_ast_beartyped = ast_beartyper.visit(module_ast)
 
         #FIXME: Conditionally perform this logic if "conf.is_debug", please.
-        print(
-            f'Module "{self._module_name_beartype}" abstract syntax tree (AST) '
-            f'transformed by @beartype to:\n\n'
-            f'{get_node_repr_indented(module_ast_beartyped)}'
-        )
+        # print(
+        #     f'Module "{self._module_name_beartype}" abstract syntax tree (AST) '
+        #     f'transformed by @beartype to:\n\n'
+        #     f'{get_node_repr_indented(module_ast_beartyped)}'
+        # )
 
         # Attempt to...
         try:

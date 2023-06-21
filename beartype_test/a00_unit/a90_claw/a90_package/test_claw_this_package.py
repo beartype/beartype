@@ -15,7 +15,7 @@ the :mod:`beartype.claw.beartype_this_package` import hook).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_claw_beartype_this_package() -> None:
+def test_claw_this_package() -> None:
     '''
     Test the :mod:`beartype.claw.beartype_this_package` import hook against a
     data subpackage in this test suite exercising *all* edge cases associated
@@ -34,7 +34,7 @@ def test_claw_beartype_this_package() -> None:
     # to guaranteeably revert the installation of this hook *BEFORE* this test
     # returns.
     with packages_trie_cleared():
-        #FIXME: Uncomment once worky, please.
+        #FIXME: Uncomment after worky. *sigh*
         # # Defer hooks installing import hooks to this context manager.
         # from beartype_test.a00_unit.data.claw.beartype_this_package import (
         #     this_submodule)

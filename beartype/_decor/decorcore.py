@@ -4,13 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-**Unmemoized beartype decorator.**
-
-This private submodule defines all core high-level logic underlying the
-:func:`beartype.beartype` decorator, whose implementation in the parent
-:mod:`beartype._decor._cache.cachedecor` submodule is a thin wrapper
-efficiently memoizing closures internally created and returned by that
-decorator. In turn, those closures directly defer to this submodule.
+**Unmemoized beartype decorators** (i.e., core lower-level unmemoized decorators
+underlying the higher-level memoized :func:`beartype.beartype` decorator, whose
+implementation in the parent :mod:`beartype._decor._cache.cachedecor` submodule
+is a thin wrapper efficiently memoizing closures internally created and returned
+by that decorator; in turn, those closures directly defer to this submodule).
 
 This private submodule is effectively the :func:`beartype.beartype` decorator
 despite *not* actually being that decorator (due to being unmemoized).
@@ -20,10 +18,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
+    BeartypeClawDecorWarning,
     BeartypeException,
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
-    # BeartypeWarning,
 )
 from beartype.typing import no_type_check
 from beartype._cave._cavefast import (
@@ -205,9 +203,9 @@ def beartype_object(
 def beartype_object_nonfatal(
     # Mandatory parameters.
     obj: BeartypeableT,
-    warning_category: TypeWarning,
 
     # Optional parameters.
+    warning_category: TypeWarning = BeartypeClawDecorWarning,
     **kwargs
 ) -> BeartypeableT:
     '''
@@ -218,8 +216,8 @@ def beartype_object_nonfatal(
 
     Motivation
     ----------
-    This decorator is principally intended to be called by our **all-at-once
-    API** (i.e., the import hooks defined by the :mod:`beartype.claw`
+    This decorator is principally intended to be called by our **import hook
+    API** (i.e., public functions exported by the :mod:`beartype.claw`
     subpackage). Raising detailed exception tracebacks on unexpected error
     conditions is:
 
@@ -242,9 +240,12 @@ def beartype_object_nonfatal(
     ----------
     obj : BeartypeableT
         **Beartypeable** (i.e., pure-Python callable or class) to be decorated.
-    warning_category : TypeWarning
+    warning_category : TypeWarning, optional
         Category of the non-fatal warning to emit if :func:`beartype.beartype`
         fails to generate a type-checking wrapper for this callable or class.
+        Defaults to :class:`BeartypeClawDecorWarning`, due to the
+        :mod:`beartype.claw` API currently being the *only* public API in this
+        codebase calling this private decorator.
 
     All remaining keyword parameters are passed as is to the lower-level
     :func:`.beartype_object` decorator internally called by this higher-level
@@ -258,6 +259,7 @@ def beartype_object_nonfatal(
         * If :func:`.beartype_object` raises an exception, the passed object
           unmodified as is.
         * If :func:`.beartype_object` raises no exception:
+
           * If the passed object is a class, this existing class embellished with
             dynamically generated type-checking.
           * If the passed object is a callable, a new callable wrapping that
