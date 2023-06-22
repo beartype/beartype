@@ -33,6 +33,7 @@ from beartype._cave._cavefast import (
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from importlib.abc import PathEntryFinder
+from pathlib import Path
 from types import (
     CodeType,
     FrameType,
@@ -296,6 +297,24 @@ ImportPathHook = Callable[[str], PathEntryFinder]
 PEP-compliant type hint matching an **import path hook** (i.e., factory closure
 creating and returning a new :class:`importlib.abc.PathEntryFinder` instance
 creating and leveraging a new :class:`importlib.machinery.FileLoader` instance).
+'''
+
+# ....................{ HINTS ~ mod : pathlib              }....................
+# Type hints specific to the standard "pathlib" package.
+
+PathnameLike = Union[str, Path]
+'''
+PEP-compliant type hint matching a **pathname-like object** (i.e., either a
+low-level string possibly signifying a pathname *or* a high-level :class:`Path`
+instance definitely encapsulating a pathname).
+'''
+
+
+PathnameLikeTuple = (str, Path)
+'''
+2-tuple of the types of all **pathname-like objects** (i.e., either
+low-level strings possibly signifying pathnames *or* high-level :class:`Path`
+instances definitely encapsulating pathnames).
 '''
 
 # ....................{ HINTS ~ pep : 484                  }....................

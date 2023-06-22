@@ -341,7 +341,6 @@ class BeartypeSourceFileLoader(SourceFileLoader):
             # Expose this configuration to the "beartype.claw._ast" subpackage.
             module_name_to_beartype_conf[fullname] = (
                 self._conf_beartype_if_module_hooked)
-
             # print(f'Importing module "{fullname}" with beartyping: ...')
 
             # Temporarily monkey-patch away the cache_from_source() function.

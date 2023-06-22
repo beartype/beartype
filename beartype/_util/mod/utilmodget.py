@@ -15,6 +15,7 @@ from beartype._cave._cavefast import ModuleType
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype.typing import Optional
 from inspect import findsource
+from pathlib import Path
 from sys import modules as sys_modules
 
 # ....................{ GETTERS ~ object                   }....................
@@ -248,13 +249,52 @@ def get_object_type_module_name_or_none(obj: object) -> Optional[str]:
     # Make it so, ensign.
     return get_object_module_name_or_none(get_object_type_unless_type(obj))
 
+# ....................{ GETTERS ~ module : dir             }....................
+#FIXME: Unit test us up.
+def get_module_dir(module: ModuleType) -> Path:
+    '''
+    High-level :class:`Path` object encapsulating the absolute dirname of the
+    parent directory containing the passed module if this module is physically
+    defined on-disk *or* raise an exception otherwise (i.e., if this module is
+    abstractly defined only in-memory).
+
+    Parameters
+    ----------
+    module : ModuleType
+        Module to be inspected.
+
+    Returns
+    ----------
+    Path
+        High-level :class:`Path` object encapsulating the absolute dirname of
+        the parent directory containing this on-disk module.
+
+    Raises
+    ----------
+    _BeartypeUtilModuleException
+        If this module *only* resides in memory.
+    '''
+
+    # Absolute filename of this module if this module is physically defined
+    # on-disk *OR* raise an exception otherwise (i.e., if this module is
+    # abstractly defined only in-memory).
+    module_filename = get_module_filename(module)
+
+    # High-level "Path" object encapsulating this file and the parent directory
+    # directly containing this file.
+    module_file = Path(module_filename)
+    module_dir = module_file.parent
+
+    # Return this "Path" object.
+    return module_dir
+
 # ....................{ GETTERS ~ module : file            }....................
 #FIXME: Unit test us up.
 def get_module_filename(module: ModuleType) -> str:
     '''
     Absolute filename of the passed module if this module is physically defined
-    on disk *or* raise an exception otherwise (i.e., if this module is
-    abstractly defined in memory).
+    on-disk *or* raise an exception otherwise (i.e., if this module is
+    abstractly defined only in-memory).
 
     Parameters
     ----------
@@ -270,6 +310,11 @@ def get_module_filename(module: ModuleType) -> str:
     ----------
     _BeartypeUtilModuleException
         If this module *only* resides in memory.
+
+    See Also
+    ----------
+    :func:`get_module_filename_or_none`
+        Further details.
     '''
 
     # Absolute filename of this module if on-disk *OR* "None" otherwise.
@@ -289,8 +334,18 @@ def get_module_filename(module: ModuleType) -> str:
 def get_module_filename_or_none(module: ModuleType) -> Optional[str]:
     '''
     Absolute filename of the passed module if this module is physically defined
-    on disk *or* :data:`None` otherwise (i.e., if this module is abstractly
-    defined in memory).
+    on-disk *or* :data:`None` otherwise (i.e., if this module is abstractly
+    defined only in-memory).
+
+    Specifically, this getter returns either:
+
+    * If this module is actually a package, the absolute filename of the
+      ``"__init__.py"`` submodule directly contained in this package.
+    * Else, the absolute filename of this module as provided by the `__file__`
+      dunder attribute of this in-memory module object.
+
+    In either case, the filename returned by this getter (if any) necessarily
+    refers to a file rather than a directory.
 
     Parameters
     ----------
