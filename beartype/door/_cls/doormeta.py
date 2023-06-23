@@ -190,7 +190,7 @@ class _TypeHintMeta(ABCMeta):
         # concrete "TypeHint" subclass if desired.
         #
         # Note that this reduction intentionally ignores the entire
-        # "beartype._check.conv" subpackage. Although submodules of that
+        # "beartype._check.convert" subpackage. Although submodules of that
         # subpackage do perform various coercions, reductions, and sanitizations
         # of low-level PEP-compliant type hints, they do so only for the express
         # purpose of dynamic code generation. That subpackage is *NOT*

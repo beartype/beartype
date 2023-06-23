@@ -76,8 +76,8 @@ from beartype._data.datatyping import (
 from beartype._check.checkmagic import (
     FUNC_TESTER_NAME_PREFIX,
 )
-from beartype._check.conv.convsanify import sanify_hint_root_statement
-from beartype._check.expr.exprmake import make_check_expr
+from beartype._check.convert.convsanify import sanify_hint_root_statement
+from beartype._check.code.codemake import make_check_expr
 from beartype._check.util.checkutilmake import make_func_signature
 from beartype._check._checksnip import (
     FUNC_TESTER_CODE_RETURN,

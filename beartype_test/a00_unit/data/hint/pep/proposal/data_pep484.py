@@ -268,6 +268,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
+    from beartype import BeartypeConf
     from beartype.door import (
         CallableTypeHint,
         NewTypeTypeHint,
@@ -300,8 +301,6 @@ def add_data(data_module: 'ModuleType') -> None:
     from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
         HINT_PEP484_FORWARDREF_TYPE)
     from beartype._util.py.utilpyversion import (
-        IS_PYTHON_AT_MOST_3_10,
-        IS_PYTHON_AT_LEAST_3_11,
         IS_PYTHON_AT_LEAST_3_10,
         IS_PYTHON_AT_LEAST_3_9,
     )
@@ -357,7 +356,7 @@ def add_data(data_module: 'ModuleType') -> None:
         Union[complex, int, object,],
     ))
 
-    # ..................{ TUPLES                             }..................
+    # ..................{ TUPLES ~ pep                       }..................
     # Add PEP 484-specific test type hints to this dictionary global.
     data_module.HINTS_PEP_META.extend((
         # ................{ UNSUBSCRIPTED                      }................
@@ -1825,6 +1824,88 @@ def add_data(data_module: 'ModuleType') -> None:
                     # declares the types *NOT* satisfied by this object.
                     exception_str_match_regexes=(
                         r'\bNoneType\b',
+                        r'\bSequence\b',
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* contain a newline or bullet delimiter.
+                    exception_str_not_match_regexes=(
+                        r'\n',
+                        r'\*',
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ UNION ~ tower                      }................
+        # Type hints pertaining to the implicit numeric tower (i.e., optional
+        # PEP 484-compliant (sub)standard in which type hints defined as broad
+        # numeric types implicitly match all narrower numeric types as well by
+        # enabling the "beartype.BeartypeConf.is_pep484_tower" parameter). When
+        # enabled, @beartype implicitly expands:
+        # * "float" to "float | int".
+        # * "complex" to "complex | float | int".
+        #
+        # See also the "_data_nonpep484" submodule, which defines additional
+        # PEP 484-compliant raw types pertaining to the implicit numeric tower
+        # (e.g., "float", "complex").
+
+        # Implicit numeric tower type *AND* an arbitrary type hint outside the
+        # implicit numeric tower with with the implicit numeric tower disabled.
+        HintPepMetadata(
+            hint=Union[float, Sequence[str]],
+            pep_sign=HintSignUnion,
+            typehint_cls=UnionTypeHint,
+            piths_meta=(
+                # Floating-point constant.
+                HintPithSatisfiedMetadata(42.4242424242424242),
+                # Sequence of string items.
+                HintPithSatisfiedMetadata((
+                    'No sister-flower would be forgiven',
+                    'If it disdained its brother;',
+                )),
+                # Integer constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=0xBABEBABE,  # <-- 3133061822
+                    # Match that the exception message raised for this object
+                    # declares the types *NOT* satisfied by this object.
+                    exception_str_match_regexes=(
+                        r'\bfloat\b',
+                        r'\bSequence\b',
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* contain a newline or bullet delimiter.
+                    exception_str_not_match_regexes=(
+                        r'\n',
+                        r'\*',
+                    ),
+                ),
+            ),
+        ),
+
+        # Implicit numeric tower type *AND* an arbitrary type hint outside the
+        # implicit numeric tower with with the implicit numeric tower enabled.
+        HintPepMetadata(
+            hint=Union[float, Sequence[str]],
+            conf=BeartypeConf(is_pep484_tower=True),
+            pep_sign=HintSignUnion,
+            typehint_cls=UnionTypeHint,
+            piths_meta=(
+                # Floating-point constant.
+                HintPithSatisfiedMetadata(24.2424242424242424),
+                # Integer constant.
+                HintPithSatisfiedMetadata(0xABBAABBA),  # <-- 2881137594
+                # Sequence of string items.
+                HintPithSatisfiedMetadata((
+                    'And the sunlight clasps the earth',
+                    'And the moonbeams kiss the sea:',
+                )),
+                # Complex constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=42 + 24j,
+                    # Match that the exception message raised for this object
+                    # declares the types *NOT* satisfied by this object.
+                    exception_str_match_regexes=(
+                        r'\bfloat\b',
                         r'\bSequence\b',
                     ),
                     # Match that the exception message raised for this object

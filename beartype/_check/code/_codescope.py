@@ -21,7 +21,7 @@ from beartype._decor._cache.cachetype import (
     register_typistry_forwardref,
 )
 from beartype._check.checkmagic import ARG_NAME_TYPISTRY
-from beartype._check.expr._exprsnip import (
+from beartype._check.code._codesnip import (
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
 )

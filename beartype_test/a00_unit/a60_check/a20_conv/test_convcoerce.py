@@ -7,7 +7,7 @@
 Project-wide **PEP-agnostic type hint conversion utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._check.conv.convcoerce` submodule.
+:mod:`beartype._check.convert.convcoerce` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,7 +20,7 @@ This submodule unit tests the public API of the private
 def test_coerce_func_hint_root() -> None:
     '''
     Test the private
-    :func:`beartype._check.conv.convcoerce.coerce_func_hint_root`
+    :func:`beartype._check.convert.convcoerce.coerce_func_hint_root`
     coercer.
     '''
 
@@ -28,7 +28,7 @@ def test_coerce_func_hint_root() -> None:
     # Defer test-specific imports.
     from beartype import BeartypeConf
     from beartype._check.checkcall import BeartypeCall
-    from beartype._check.conv.convcoerce import coerce_func_hint_root
+    from beartype._check.convert.convcoerce import coerce_func_hint_root
 
     # ..................{ CALLABLES                          }..................
     def one_legion_of_wild_thoughts() -> str:
@@ -65,12 +65,12 @@ def test_coerce_func_hint_root() -> None:
 def test_coerce_hint_any() -> None:
     '''
     Test the private
-    :func:`beartype._check.conv.convcoerce.coerce_hint_any` coercer.
+    :func:`beartype._check.convert.convcoerce.coerce_hint_any` coercer.
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
-    from beartype._check.conv.convcoerce import coerce_hint_any
+    from beartype._check.convert.convcoerce import coerce_hint_any
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_LEAST_3_10,
         IS_PYTHON_AT_LEAST_3_9,

@@ -81,7 +81,10 @@ from beartype.typing import (
     Optional,
 )
 # from beartype._cave._cavemap import NoneTypeOr
-from beartype._conf.confcls import BeartypeConf
+from beartype._conf.confcls import (
+    BEARTYPE_CONF_DEFAULT,
+    BeartypeConf,
+)
 from beartype._data.datakind import ARG_NAME_RETURN
 from beartype._data.datatyping import TypeStack
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
@@ -161,7 +164,7 @@ def get_beartype_violation(
     runtime type-checkers, each complementing the other by providing
     functionality unsuited for the other. These are:
 
-    * The :mod:`beartype._check.expr` submodule, dynamically generating
+    * The :mod:`beartype._check.code` submodule, dynamically generating
       optimized PEP-compliant runtime type-checking code embedded in the body
       of the wrapper function wrapping the decorated callable. For both
       efficiency and maintainability, that code only tests whether or not a
@@ -357,9 +360,22 @@ def get_beartype_violation(
     # case, avoid adding duplicate items to this list.
 
     # ....................{ EXCEPTION                      }....................
+    # Substring prefixing this exception message.
+    exception_message_prefix = (
+        f'{exception_prefix}violates type hint {color_hint(repr(hint))}')
+
+    # If this configuration is *NOT* the default configuration, append the
+    # machine-readable representation of this non-default configuration to this
+    # exception message for disambiguity and clarity.
+    exception_message_conf = (
+        ''
+        if conf == BEARTYPE_CONF_DEFAULT else
+        f' under non-default configuration {repr(conf)}'
+    )
+
     # Exception message embedding this cause.
     exception_message = (
-        f'{exception_prefix}violates type hint {color_hint(repr(hint))}, as '
+        f'{exception_message_prefix}{exception_message_conf}, as '
         f'{violation_cause_suffixed}'
     )
 

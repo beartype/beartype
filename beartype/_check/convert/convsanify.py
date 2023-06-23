@@ -17,12 +17,12 @@ from beartype.typing import (
     Optional,
 )
 from beartype._check.checkcall import BeartypeCall
-from beartype._check.conv.convcoerce import (
+from beartype._check.convert.convcoerce import (
     coerce_func_hint_root,
     coerce_hint_any,
     coerce_hint_root,
 )
-from beartype._check.conv.convreduce import reduce_hint
+from beartype._check.convert.convreduce import reduce_hint
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.datatyping import TypeStack
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong

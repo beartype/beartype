@@ -29,7 +29,7 @@ from beartype._check.checkmagic import (
     VAR_NAME_PREFIX_PITH,
     VAR_NAME_PITH_ROOT,
 )
-from beartype._check.expr.exprmagic import (
+from beartype._check.code.codemagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     EXCEPTION_PREFIX_HINT,
     HINT_META_INDEX_HINT,
@@ -38,13 +38,13 @@ from beartype._check.expr.exprmagic import (
     HINT_META_INDEX_PITH_VAR_NAME,
     HINT_META_INDEX_INDENT,
 )
-from beartype._check.expr._exprscope import (
+from beartype._check.code._codescope import (
     add_func_scope_type,
     add_func_scope_types,
     add_func_scope_type_or_types,
     express_func_scope_type_forwardref,
 )
-from beartype._check.expr._exprsnip import (
+from beartype._check.code._codesnip import (
     PEP_CODE_HINT_CHILD_PLACEHOLDER_PREFIX,
     PEP_CODE_HINT_CHILD_PLACEHOLDER_SUFFIX,
     PEP_CODE_PITH_ASSIGN_EXPR,
@@ -126,6 +126,7 @@ from beartype._util.hint.pep.proposal.utilpep593 import (
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
     get_hint_pep_sign,
+    get_hint_pep_sign_or_none,
     get_hint_pep_origin_type_isinstanceable,
 )
 from beartype._util.hint.pep.utilpeptest import (
@@ -134,7 +135,7 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep_args,
     warn_if_hint_pep_deprecated,
 )
-from beartype._check.conv.convsanify import sanify_hint_any
+from beartype._check.convert.convsanify import sanify_hint_any
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
@@ -177,7 +178,7 @@ def make_check_expr(
     _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     _EXCEPTION_PREFIX_HINT=EXCEPTION_PREFIX_HINT,
 
-    # "beartype._check.expr.exprmagic" globals.
+    # "beartype._check.code.codemagic" globals.
     _HINT_META_INDEX_HINT=HINT_META_INDEX_HINT,
     _HINT_META_INDEX_PLACEHOLDER=HINT_META_INDEX_PLACEHOLDER,
     _HINT_META_INDEX_PITH_EXPR=HINT_META_INDEX_PITH_EXPR,
@@ -186,7 +187,7 @@ def make_check_expr(
     _LINE_RSTRIP_INDEX_AND=LINE_RSTRIP_INDEX_AND,
     _LINE_RSTRIP_INDEX_OR=LINE_RSTRIP_INDEX_OR,
 
-    # "beartype._check.expr._exprsnip" string globals required only for
+    # "beartype._check.code._codesnip" string globals required only for
     # their bound str.format() methods.
     PEP_CODE_PITH_ASSIGN_EXPR_format: Callable = (
         PEP_CODE_PITH_ASSIGN_EXPR.format),
@@ -364,6 +365,10 @@ def make_check_expr(
     # called _enqueue_hint_child() function to enqueue the root hint.
     hint_child = hint_root
 
+    # Current unsubscripted typing attribute associated with this child hint
+    # (e.g., "Union" if "hint_child == Union[int, str]").
+    hint_child_sign = None
+
     # Python code snippet expanding to the current level of indentation
     # appropriate for the currently iterated child hint, initialized to the
     # root hint indentation to enable the subsequently called
@@ -375,9 +380,23 @@ def make_check_expr(
     # visited hint (e.g., "(int, str)" if "hint_curr == Union[int, str]").
     hint_childs: tuple = None  # type: ignore[assignment]
 
+    # Current list of all output PEP-compliant child hints to replace the 
+    # Current tuple of all input PEP-compliant child hints subscripting the
+    # currently visited hint with.
+    hint_childs_new: list = None  # type: ignore[assignment]
+
     # Number of PEP-compliant child hints subscripting the currently visited
     # hint.
     hint_childs_len: int = None  # type: ignore[assignment]
+
+    # 0-based index of the currently iterated PEP-compliant child hint of the
+    # "hint_childs" tuple.
+    hint_childs_index: int = None  # type: ignore[assignment]
+
+    # Current tuple of all PEP-compliant child child hints subscripting the
+    # currently visited child hint (e.g., "(int, str)" if "hint_child ==
+    # Union[int, str]").
+    hint_child_childs: tuple = None  # type: ignore[assignment]
 
     # ..................{ HINT ~ pep 484 : forwardref        }..................
     # Set of the unqualified classnames referred to by all relative forward
@@ -708,16 +727,6 @@ def make_check_expr(
             warn_if_hint_pep_deprecated(
                 hint=hint_curr, warning_prefix=_EXCEPTION_PREFIX)
 
-            # Tuple of all arguments subscripting this hint if any *OR* the
-            # empty tuple otherwise (e.g., if this hint is its own unsubscripted
-            # "typing" attribute).
-            #
-            # Note that the "__args__" dunder attribute is *NOT* guaranteed to
-            # exist for arbitrary PEP-compliant type hints. Ergo, we obtain
-            # this attribute via a higher-level utility getter instead.
-            hint_childs = get_hint_pep_args(hint_curr)
-            hint_childs_len = len(hint_childs)
-
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # NOTE: Whenever adding support for (i.e., when generating code
             # type-checking) a new "typing" attribute below, similar support
@@ -734,6 +743,9 @@ def make_check_expr(
             #"if" logic into equivalent "case" logic *AFTER* we drop support
             #for Python 3.9. Of course, that will be basically never, so we'll
             #have to preserve this for basically forever. What you gonna do?
+            #FIXME: Actually, we should probably just leverage a hypothetical
+            #"beartype.vale.IsInline[...]" validator to coerce this slow O(n)
+            #procedural logic into fast O(1) object-oriented logic.
 
             # Switch on (as in, pretend Python provides a "case" statement)
             # the sign identifying this hint to decide which type of code to
@@ -820,10 +832,10 @@ def make_check_expr(
             elif hint_curr_sign is HintSignForwardRef:
                 # Render this forward reference accessible to the body of this
                 # wrapper function by populating:
-                # * Python expression evaluating to the class referred to by
+                # * A Python expression evaluating to the class referred to by
                 #   this forward reference when accessed via the private
                 #   "__beartypistry" parameter.
-                # * Set of the unqualified classnames referred to by all
+                # * A set of the unqualified classnames referred to by all
                 #   relative forward references, including this reference if
                 #   relative. If this set was previously uninstantiated (i.e.,
                 #   "None"), this assignment initializes this local to the new
@@ -1077,6 +1089,17 @@ def make_check_expr(
                 else:
                     pith_curr_assign_expr = pith_curr_var_name = pith_curr_expr
 
+                # Tuple of all arguments subscripting this hint if any *OR* the
+                # empty tuple otherwise (e.g., if this hint is its own
+                # unsubscripted "typing" attribute).
+                #
+                # Note that the "__args__" dunder attribute is *NOT* guaranteed
+                # to exist for arbitrary PEP-compliant type hints. Ergo, we
+                # obtain this attribute via a higher-level utility getter
+                # instead.
+                hint_childs = get_hint_pep_args(hint_curr)
+                hint_childs_len = len(hint_childs)
+
                 # ............{ UNION                              }............
                 # If this hint is a union (e.g., "typing.Union[bool, str]",
                 # typing.Optional[float]")...
@@ -1113,6 +1136,103 @@ def make_check_expr(
                     #     >>> import typing
                     #     >>> typing.Union[int]
                     #     int
+
+                    # 0-based index of the currently iterated child hint.
+                    hint_childs_index = 0
+
+                    # For efficiency, reuse a previously created list of all
+                    # new child hints of this parent union.
+                    hint_childs_new = acquire_object_typed(list)
+                    hint_childs_new.clear()
+
+                    # For each subscripted argument of this union...
+                    #
+                    # Note that this preliminary iteration:
+                    # * Modifies the "hint_childs" container being iterated over
+                    #   and is thus intentionally implemented as a cumbersome
+                    #   "while" loop rather than a convenient "for" loop.
+                    # * Exists for the sole purpose of explicitly flattening
+                    #   *ALL* child unions nested in this parent union. This
+                    #   iteration *CANNOT* be efficiently combined with the
+                    #   iteration performed below for that reason.
+                    # * Does *NOT* recursively flatten arbitrarily nested
+                    #   child unions regardless of nesting depth in this parent
+                    #   union. Doing so is non-trivial and currently *NOT*
+                    #   required by any existing edge cases. "Huzzah!"
+                    while hint_childs_index < hint_childs_len:
+                        # Current child hint of this union.
+                        hint_child = hint_childs[hint_childs_index]
+
+                        # This child hint sanified (i.e., sanitized) from this
+                        # child hint if this child hint is reducible *OR*
+                        # preserved as is otherwise (i.e., if this child hint is
+                        # irreducible).
+                        #
+                        # Note that this sanification is intentionally performed
+                        # *BEFORE* this child hint is tested as being either
+                        # PEP-compliant or -noncompliant. Why? Because a small
+                        # subset of low-level reduction routines performed by
+                        # this high-level sanification actually expand a
+                        # PEP-noncompliant type into a PEP-compliant type hint.
+                        # This includes:
+                        # * The PEP-noncompliant "float' and "complex" types,
+                        #   implicitly expanded to the PEP 484-compliant "float
+                        #   | int" and "complex | float | int" type hints
+                        #   (respectively) when the non-default
+                        #   "conf.is_pep484_tower=True" parameter is enabled.
+                        # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
+                        hint_child = sanify_hint_any(
+                            hint=hint_child,
+                            conf=conf,
+                            cls_stack=cls_stack,
+                            exception_prefix=_EXCEPTION_PREFIX,
+                        )
+                        # print(f'Sanified union child hint to {repr(hint_child)}...')
+
+                        # Sign of this sanified child hint if this hint is
+                        # PEP-compliant *OR* "None" otherwise (i.e., if this
+                        # hint is PEP-noncompliant).
+                        hint_child_sign = get_hint_pep_sign_or_none(hint_child)
+
+                        # If this child hint is itself a child union nested in
+                        # this parent union, explicitly flatten this nested
+                        # union by appending *ALL* child child hints
+                        # subscripting this child union onto this parent union.
+                        #
+                        # Note that this edge case currently *ONLY* arises when
+                        # this child hint has been expanded by the above call to
+                        # the sanify_hint_any() function from a non-union (e.g.,
+                        # "float") into a union (e.g., "float | int"). The
+                        # standard PEP 484-compliant "typing.Union" factory
+                        # already implicitly flattens nested unions: e.g.,
+                        #     >>> from typing import Union
+                        #     >>> Union[float, Union[int, str]]
+                        #     typing.Union[float, int, str]
+                        if hint_child_sign in HINT_SIGNS_UNION:
+                            # Tuple of all child child type hints subscripting
+                            # this child union.
+                            hint_child_childs = get_hint_pep_args(hint_child)
+                            # print(f'Expanding union {repr(hint_curr)} with child union {repr(hint_child_childs)}...')
+
+                            # Append these child child type hints to this parent
+                            # union.
+                            hint_childs_new.extend(hint_child_childs)
+                        # Else, this child hint is *NOT* itself a union. In this
+                        # case, append this child hint to this parent union.
+                        else:
+                            hint_childs_new.append(hint_child)
+
+                        # Increment the 0-based index of the currently iterated
+                        # child hint.
+                        hint_childs_index += 1
+
+                    # Freeze this temporary list back to this permanent tuple,
+                    # replacing the prior unflattened contents of this tuple.
+                    hint_childs = tuple(hint_childs_new)
+
+                    # Release this list back to its respective pool.
+                    release_object_typed(hint_childs_new)
+                    # print(f'Flattened union to {repr(hint_childs)}...')
 
                     # For efficiency, reuse previously created sets of the
                     # following (when available):
@@ -1167,9 +1287,8 @@ def make_check_expr(
                         else:
                             hint_childs_nonpep.add(hint_child)
 
-                    # Initialize the code type-checking the current pith
-                    # against these arguments to the substring prefixing all
-                    # such code.
+                    # Initialize the code type-checking the current pith against
+                    # these arguments to the substring prefixing all such code.
                     func_curr_code = PEP484_CODE_HINT_UNION_PREFIX
 
                     # If this union is subscripted by one or more
@@ -1204,23 +1323,23 @@ def make_check_expr(
                                 # Python expression evaluating to a tuple of
                                 # these arguments.
                                 #
-                                # Note that we would ideally avoid coercing
-                                # this set into a tuple when this set only
-                                # contains one type by passing that type
-                                # directly to the
+                                # Note that we would ideally avoid coercing this
+                                # set into a tuple when this set only contains
+                                # one type by passing that type directly to the
                                 # _add_func_wrapper_local_type() function.
                                 # Sadly, the "set" class defines no convenient
-                                # or efficient means of retrieving the only
-                                # item of a 1-set. Indeed, the most efficient
-                                # means of doing so is to iterate over that set
-                                # and break:
+                                # or efficient means of retrieving the only item
+                                # of a 1-set. Indeed, the most efficient means
+                                # of doing so is to iterate over that set and
+                                # break:
                                 #     for first_item in muh_set: break
+                                #
                                 # While we *COULD* technically leverage that
                                 # approach here, doing so would also mandate
-                                # adding multiple intermediate tests,
-                                # mitigating any performance gains. Ultimately,
-                                # we avoid doing so by falling back to the
-                                # usual approach. See also this relevant
+                                # adding multiple intermediate tests, mitigating
+                                # any performance gains. Ultimately, we avoid
+                                # doing so by falling back to the usual
+                                # approach. See also this relevant
                                 # self-StackOverflow post:
                                 #       https://stackoverflow.com/a/40054478/2809027
                                 hint_curr_expr=add_func_scope_types(

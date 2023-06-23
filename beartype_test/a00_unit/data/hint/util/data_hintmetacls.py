@@ -216,7 +216,7 @@ class HintNonpepMetadata(object):
 
         # Validate passed non-variadic parameters.
         assert isinstance(conf, BeartypeConf), (
-            f'{repr(conf)} not beartype configuration.')
+            f'{repr(conf)} not configuration.')
         assert isinstance(is_ignorable, bool), (
             f'{repr(is_ignorable)} not bool.')
         assert isinstance(is_needs_cls_stack, bool), (

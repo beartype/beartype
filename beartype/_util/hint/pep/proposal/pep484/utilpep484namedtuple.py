@@ -65,7 +65,7 @@ from beartype._util.cls.utilclstest import is_type_subclass_proper
 #Guarding against both combinatorial explosion *AND* recursion is imperative. To
 #do so, we'll need to fundamentally refactor our existing breadth-first search
 #(BFS) over type hints into a new depth-first search (DFS) over type hints.
-#We've extensively documented this in the "beartype._check.expr.__init__"
+#We've extensively documented this in the "beartype._check.code.__init__"
 #submodule. Simply know that this will be non-trivial, albeit fun and needed!
 def is_hint_pep484_namedtuple_subclass(hint: object) -> bool:
     '''

@@ -31,7 +31,7 @@ PEP-noncompliant type hints include:
 # ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:
     '''
-    Add :pep:`484`**-compliant PEP-noncompliant type hint test data to various
+    Add :pep:`484`-compliant PEP-noncompliant type hint test data to various
     global containers declared by the passed module.
 
     Parameters
@@ -70,8 +70,8 @@ def add_data(data_module: 'ModuleType') -> None:
         'NamedTupleType', [('fumarole', str), ('enrolled', int)])
 
     # ..................{ TUPLES                             }..................
-    # Add PEP 484-specific PEP-noncompliant test type hints to this dictionary
-    # global.
+    # Add PEP 484-specific (albeit technically PEP-noncompliant from the
+    # @beartype perspective) test type hints to this dictionary global.
     data_module.HINTS_NONPEP_META.extend((
         # ................{ NAMEDTUPLE                         }................
         # "NamedTuple" instances transparently reduce to standard tuples and
@@ -187,11 +187,17 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ TYPE ~ builtin : tower             }................
-        # Types implicated in the PEP 484-compliant implicit numeric tower only
-        # optionally supported by enabling the
-        # "beartype.BeartypeConf.is_pep484_tower" parameter, which expands:
-        # * "float" as an alias for "float | int".
-        # * "complex" as an alias for "complex | float | int".
+        # Types pertaining to the implicit numeric tower (i.e., optional PEP
+        # 484-compliant (sub)standard in which type hints defined as broad
+        # numeric types implicitly match all narrower numeric types as well by
+        # enabling the "beartype.BeartypeConf.is_pep484_tower" parameter). When
+        # enabled, @beartype implicitly expands:
+        # * "float" to "float | int".
+        # * "complex" to "complex | float | int".
+        #
+        # See also the "data_pep484" submodule, which defines additional
+        # PEP 484-compliant type hints nesting type hints pertaining to the
+        # implicit numeric tower (e.g., "Union[float, str]").
 
         # Floating-point number with the implicit numeric tower disabled.
         HintNonpepMetadata(

@@ -216,7 +216,7 @@ def is_hint_uncached(hint: object) -> bool:
 
     See Also
     ----------
-    :func:`beartype._check.conv.convcoerce.coerce_hint_any`
+    :func:`beartype._check.convert.convcoerce.coerce_hint_any`
         Further details.
     '''
 

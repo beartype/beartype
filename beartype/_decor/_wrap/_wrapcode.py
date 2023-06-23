@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.checkmagic import ARG_NAME_GETRANDBITS
-from beartype._check.expr.exprmake import make_check_expr
+from beartype._check.code.codemake import make_check_expr
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.datatyping import (
     CodeGenerated,

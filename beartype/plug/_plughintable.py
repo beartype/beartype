@@ -98,14 +98,14 @@ def is_hint_beartypehintable(hint: object) -> bool:
 #FIXME: Significant complications exist suggesting that we should immediately
 #release beartype 0.12.0 and contemplate implementing this later:
 #* The "beartype._decor._error" subpackage will need to implement a comparable
-#  mechanism as the "beartype._check.expr" subpackage for detecting and avoiding
+#  mechanism as the "beartype._check.code" subpackage for detecting and avoiding
 #  recursion in this reduction. Curiously, "beartype._decor._error" only ever
 #  calls the sanify_hint_any() sanifier in a single place. That simplifies
 #  things a bit. Still, we'll need to add a similar "set" somewhere in that
 #  subpackage tracking which "BeartypeHintable" objects have already been
 #  reduced.
 #* Even ignoring that, detecting and avoiding recursion in
-#  "beartype._check.expr" alone will be non-trivial. We can't pass the original
+#  "beartype._check.code" alone will be non-trivial. We can't pass the original
 #  presanified type hint to the make_check_expr() factory, because that hint has
 #  *NOT* been coerced into a memoizable singleton (e.g., think PEP 585). That
 #  means the caller needs to pass either:
