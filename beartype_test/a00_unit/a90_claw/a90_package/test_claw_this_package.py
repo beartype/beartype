@@ -63,7 +63,7 @@ def test_claw_this_package() -> None:
     # returns.
     with packages_trie_cleared():
         #FIXME: Uncomment after worky. *sigh*
-        # # Defer hooks installing import hooks to this context manager.
-        # from beartype_test.a00_unit.data.claw.beartype_this_package import (
-        #     this_submodule)
-        pass
+        # Defer hooks installing import hooks to this context manager.
+        from beartype_test.a00_unit.data.claw.beartype_this_package import (
+            this_submodule)
+        # pass

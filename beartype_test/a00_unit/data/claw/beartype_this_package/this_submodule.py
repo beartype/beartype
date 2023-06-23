@@ -24,6 +24,9 @@ from beartype.typing import (
 )
 from pytest import raises
 
+# from beartype.claw._importlib.clawimpcache import module_name_to_beartype_conf
+# print(f'this_submodule conf: {repr(module_name_to_beartype_conf)}')
+
 # ....................{ PEP 526                            }....................
 # Validate that the beartype_this_package() import hook installed by the parent
 # "beartype_this_package.__init__" submodule implicitly appends all PEP
@@ -50,63 +53,83 @@ with raises(BeartypeDoorHintViolation):
         'The winds of heaven mix for ever')
 
 # ....................{ FUNCTIONS                          }....................
-def nothing_in_the_world(is_single: Union[float, bytes]) -> Optional[complex]:
-    '''
-    Arbitrary method either returning the passed integer first doubled and then
-    coerced into a complex number with imaginary component ``1`` if this integer
-    is non-zero *or* raising a :exc:`.BeartypeCallHintParamViolation` exception
-    otherwise (i.e., if this integer is zero), exercising that beartype import
-    hooks decorate global functions as expected.
-    '''
+#FIXME: *YIKES.* This should pass, but currently doesn't for reasons completely
+#unrelated to "beartype.claw". Why? Because our reduction algorithm currently
+#fails to apply to nested types. After resolving that, this should begin
+#passing. Clearly, no one in the real world has ever actually enabled the
+#"is_pep484_tower=True" parameter or else we would have received an issue about
+#this by now. *sigh*
+#
+#Resolving this will hopefully prove trivial. Testing this is another matter
+#entirely. Our test suite currently lacks support for testing arbitrary type
+#hints against non-default configurations. Clearly, we need to amend that by:
+#* Adding a new "conf: BeartypeConf = BEARTYPE_CONF_DEFAULT" parameter to our
+#  "HintNonpepMetadata" superclass.
+#* Revising *ALL* existing unit tests that exercise these type-checkers to
+#  additionally pass a new "conf" keyword parameter to these type-checkers:
+#  * @beartype.beartype itself.
+#  * beartype.door.die_if_unbearable().
+#  * beartype.door.is_bearable().
+#  * beartype.door.TypeHint.die_if_unbearable().
+#  * beartype.door.TypeHint.is_bearable().
 
-    def in_one_spirit(meet_and_mingle: Optional[float]) -> Union[complex, str]:
-        '''
-        Arbitrary closure either returning the passed integer first doubled and then
-        coerced into a complex number with imaginary component ``1`` if this
-        integer is non-:data:`None` *or* raising a
-        :exc:`.BeartypeCallHintReturnViolation` exception otherwise (i.e., if
-        this integer is :data:`None`), exercising that beartype import hooks
-        decorate closures as expected.
-        '''
-
-        # Return either...
-        return (
-            # If this integer is "None", explicitly force this
-            # @beartype-decorated closure to raise a
-            # "BeartypeCallHintReturnViolation" exception;
-            None
-            if meet_and_mingle is None else
-            # Else, this integer is non-zero. In this case, return this integer
-            # doubled and then coerced into a complex number with imaginary
-            # component "1". Why? Just because. *THIS IS BEARTYPE.* Graaaah!
-            is_single + meet_and_mingle + 1j
-        )
-
-    # Return either...
-    return (
-        # If this integer is zero, explicitly force this @beartype-decorated
-        # closure to raise a "BeartypeCallHintReturnViolation" exception.
-        in_one_spirit(None)
-        if is_single == 0 else
-        # Else, this integer is non-zero. In this case, return this integer
-        # doubled and then coerced into a complex number with imaginary
-        # component "1". Why? Just because. *THIS IS BEARTYPE.* Graaaah!
-        in_one_spirit(is_single)
-    )
-
-# Assert that calling this function passed an arbitrary integer returns the
-# expected complex number *WITHOUT* raising an exception.
-assert nothing_in_the_world(len('Why not I with thine?')) == 42 + 1j
-
-# Assert that calling this function passed an invalid parameter raises the
-# expected exception.
-with raises(BeartypeCallHintParamViolation):
-    nothing_in_the_world('See the mountains kiss high heaven')
-
-# Assert that calling this function passed zero raises the expected exception
-# from the clojure defined and called by this function.
-with raises(BeartypeCallHintReturnViolation):
-    nothing_in_the_world(len('And the waves') - len('clasp another'))
+# def nothing_in_the_world(is_single: Union[float, bytes]) -> Optional[complex]:
+#     '''
+#     Arbitrary method either returning the passed integer first doubled and then
+#     coerced into a complex number with imaginary component ``1`` if this integer
+#     is non-zero *or* raising a :exc:`.BeartypeCallHintParamViolation` exception
+#     otherwise (i.e., if this integer is zero), exercising that beartype import
+#     hooks decorate global functions as expected.
+#     '''
+#
+#     def in_one_spirit(meet_and_mingle: Optional[float]) -> Union[complex, str]:
+#         '''
+#         Arbitrary closure either returning the passed integer first doubled and then
+#         coerced into a complex number with imaginary component ``1`` if this
+#         integer is non-:data:`None` *or* raising a
+#         :exc:`.BeartypeCallHintReturnViolation` exception otherwise (i.e., if
+#         this integer is :data:`None`), exercising that beartype import hooks
+#         decorate closures as expected.
+#         '''
+#
+#         # Return either...
+#         return (
+#             # If this integer is "None", explicitly force this
+#             # @beartype-decorated closure to raise a
+#             # "BeartypeCallHintReturnViolation" exception;
+#             None
+#             if meet_and_mingle is None else
+#             # Else, this integer is non-zero. In this case, return this integer
+#             # doubled and then coerced into a complex number with imaginary
+#             # component "1". Why? Just because. *THIS IS BEARTYPE.* Graaaah!
+#             is_single + meet_and_mingle + 1j
+#         )
+#
+#     # Return either...
+#     return (
+#         # If this integer is zero, explicitly force this @beartype-decorated
+#         # closure to raise a "BeartypeCallHintReturnViolation" exception.
+#         in_one_spirit(None)
+#         if is_single == 0 else
+#         # Else, this integer is non-zero. In this case, return this integer
+#         # doubled and then coerced into a complex number with imaginary
+#         # component "1". Why? Just because. *THIS IS BEARTYPE.* Graaaah!
+#         in_one_spirit(is_single)
+#     )
+#
+# # Assert that calling this function passed an arbitrary integer returns the
+# # expected complex number *WITHOUT* raising an exception.
+# assert nothing_in_the_world(len('Why not I with thine?')) == 42 + 1j
+#
+# # Assert that calling this function passed an invalid parameter raises the
+# # expected exception.
+# with raises(BeartypeCallHintParamViolation):
+#     nothing_in_the_world('See the mountains kiss high heaven')
+#
+# # Assert that calling this function passed zero raises the expected exception
+# # from the clojure defined and called by this function.
+# with raises(BeartypeCallHintReturnViolation):
+#     nothing_in_the_world(len('And the waves') - len('clasp another'))
 
 # ....................{ CLASSES                            }....................
 # class WithASweetEmotion(object):

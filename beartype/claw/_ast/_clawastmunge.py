@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from ast import (
     AST,
     Call,
-    Constant,
+    Index,
     Name,
     Subscript,
     expr,
@@ -33,6 +33,7 @@ from beartype._conf.confcls import (
     BeartypeConf,
 )
 from beartype._util.ast.utilastmunge import copy_node_metadata
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
 # ....................{ DECORATORS                         }....................
 #FIXME: Unit test us up, please.
@@ -138,6 +139,27 @@ def make_node_keyword_conf(node_sibling: AST) -> keyword:
     node_module_name_to_conf = Name(
         id=BEARTYPE_CONF_CACHE_ATTR_NAME, ctx=NODE_CONTEXT_LOAD)
 
+    # Node encapsulating the indexation of a dictionary by the fully-qualified
+    # name of that module of the currently visited module.
+    node_module_name_index: AST = None  # type: ignore[assignment]
+
+    # If the active Python interpreter targets Python >= 3.9...
+    if IS_PYTHON_AT_LEAST_3_9:
+        # Reuse this node in a manner specific to Python >= 3.9, which
+        # fundamentally broke backward compatibility with Python 3.8 with
+        # respect to dictionary subscription.
+        node_module_name_index = node_module_name
+    # Else, the active Python interpreter targets Python 3.8. In this case..
+    else:
+        # Create this node in a manner specific to Python 3.8, which requires
+        # an additional intermediary node *NOT* required under Python >= 3.9.
+        node_module_name_index = Index(value=node_module_name)
+
+        # Copy all source code metadata (e.g., line numbers) from this sibling
+        # node onto this new node.
+        copy_node_metadata(
+            node_src=node_sibling, node_trg=node_module_name_index)
+
     # Node encapsulating a reference to this beartype configuration, indirectly
     # (and efficiently) accessed via a dictionary lookup into this object cache.
     # While cumbersome, this indirection is effectively "glue" integrating this
@@ -145,7 +167,7 @@ def make_node_keyword_conf(node_sibling: AST) -> keyword:
     # subsequently interpreted by Python at runtime during module importation.
     node_conf = Subscript(
         value=node_module_name_to_conf,
-        slice=node_module_name,
+        slice=node_module_name_index,
         ctx=NODE_CONTEXT_LOAD,
     )
 

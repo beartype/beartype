@@ -38,34 +38,6 @@ from beartype._util.mod.utilmodget import get_object_module_name_or_none
 from beartype._util.utilobject import get_object_type_unless_type
 from warnings import warn
 
-# ....................{ CONSTANTS                          }....................
-_IS_HINT_PEP_IGNORABLE_TESTERS = (
-    is_hint_pep484_ignorable_or_none,
-    is_hint_pep544_ignorable_or_none,
-    is_hint_pep593_ignorable_or_none,
-)
-'''
-Tuple of all PEP-specific functions testing whether the passed object is an
-ignorable type hint fully compliant with a specific PEP.
-
-Each such function is expected to have a signature resembling:
-
-.. code-block:: python
-
-    def is_hint_pep{PEP_NUMBER}_ignorable_or_none(
-        hint: object, hint_sign: HintSign) -> Optional[bool]:
-        ...
-
-Each such function is expected to return either:
-
-* If the passed object is fully compliant with that PEP:
-
-    * If this object is ignorable, ``True``.
-    * Else, ``False``.
-
-* If this object is *not* fully compliant with that PEP, ``None``.
-'''
-
 # ....................{ EXCEPTIONS                         }....................
 def die_if_hint_pep(
     # Mandatory parameters.
@@ -76,9 +48,9 @@ def die_if_hint_pep(
     exception_prefix: str = '',
 ) -> None:
     '''
-    Raise an exception if the passed object is a **PEP-compliant type
-    hint** (i.e., :mod:`beartype`-agnostic annotation compliant with
-    annotation-centric PEPs).
+    Raise an exception of the passed type if the passed object is a
+    **PEP-compliant type hint** (i.e., :mod:`beartype`-agnostic annotation
+    compliant with annotation-centric PEPs).
 
     This validator is effectively (but technically *not*) memoized. See the
     :func:`beartype._util.hint.utilhinttest.die_unless_hint` validator.
@@ -89,7 +61,7 @@ def die_if_hint_pep(
         Object to be validated.
     exception_cls : Type[Exception], optional
         Type of the exception to be raised by this function. Defaults to
-        :class:`BeartypeDecorHintPepException`.
+        :exc:`BeartypeDecorHintPepException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -883,3 +855,31 @@ def is_hint_pep_typevars(hint: object) -> bool:
     # variables, trivially detected by testing whether the tuple of all type
     # variables parametrizing this hint is non-empty.
     return bool(get_hint_pep_typevars(hint))
+
+# ....................{ PRIVATE ~ tuples                   }....................
+_IS_HINT_PEP_IGNORABLE_TESTERS = (
+    is_hint_pep484_ignorable_or_none,
+    is_hint_pep544_ignorable_or_none,
+    is_hint_pep593_ignorable_or_none,
+)
+'''
+Tuple of all PEP-specific functions testing whether the passed object is an
+ignorable type hint fully compliant with a specific PEP.
+
+Each such function is expected to have a signature resembling:
+
+.. code-block:: python
+
+    def is_hint_pep{PEP_NUMBER}_ignorable_or_none(
+        hint: object, hint_sign: HintSign) -> Optional[bool]:
+        ...
+
+Each such function is expected to return either:
+
+* If the passed object is fully compliant with that PEP:
+
+    * If this object is ignorable, :data:`True`.
+    * Else, :data:`False`.
+
+* If this object is *not* fully compliant with that PEP, :data:`None`.
+'''

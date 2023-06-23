@@ -56,8 +56,15 @@ def remove_package_bytecode_files(package_dirname: PathnameLike) -> None:
     assert isinstance(package_dirname, PathnameLikeTuple), (
         f'{repr(package_dirname)} neither string nor "Path" object.')
 
+    # Avoid circular import dependencies.
+    from beartype._util.path.utilpathtest import die_unless_dir
+
     # High-level "Path" object encapsulating this dirname.
     package_dir = Path(package_dirname)
+
+    # If this directory does *NOT* exist, raise an exception.
+    die_unless_dir(package_dir)
+    # Else, this directory exists.
 
     # High-level "Path" object encapsulating the "__pycache__/" subdirectory
     # directly contained in this parent directory.
@@ -151,15 +158,15 @@ def remove_paths_globbed(dirname: PathnameLike, glob: str) -> None:
         f'{repr(dirname)} neither string nor "Path" object.')
     assert isinstance(glob, str), f'{repr(glob)} not string.'
 
+    # Avoid circular import dependencies.
+    from beartype._util.path.utilpathtest import die_unless_dir
+
     # High-level "Path" object encapsulating this dirname.
     dirname_path = Path(dirname)
 
-    # If this directory either does *NOT* exist or is *NOT* a directory, raise
-    # an exception.
-    if not dirname_path.is_dir():
-        raise _BeartypeUtilPathException(
-            f'Directory "{dirname_path}" either not found or not directory.')
-    # Else, this directory is an existing directory.
+    # If this directory does *NOT* exist, raise an exception.
+    die_unless_dir(dirname_path)
+    # Else, this directory exists.
 
     # For each matching pathname globbed from this dirname as a "Path" object...
     for pathname_globbed in dirname_path.glob(glob):
