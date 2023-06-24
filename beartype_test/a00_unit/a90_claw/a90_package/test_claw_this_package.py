@@ -62,8 +62,9 @@ def test_claw_this_package() -> None:
     # to guaranteeably revert the installation of this hook *BEFORE* this test
     # returns.
     with packages_trie_cleared():
-        #FIXME: Uncomment after worky. *sigh*
         # Defer hooks installing import hooks to this context manager.
         from beartype_test.a00_unit.data.claw.beartype_this_package import (
             this_submodule)
-        # pass
+
+        # # Import an arbitrary submodule *NOT* subject to those import hooks.
+        # from beartype_test.a00_unit.data.claw import unhooked_submodule

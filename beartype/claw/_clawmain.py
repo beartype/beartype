@@ -180,10 +180,9 @@ def beartype_this_package(
     #    >>> sys._getframe(20)
     #    ValueError: call stack is not deep enough
     #
-    #Since beartype_on_import() is public, that function can
-    #technically be called directly from a REPL. When it is, a
-    #human-readable exception should be raised instead. Notably, we
-    #instead want to:
+    #Since beartype_this_package() is public, that function can technically be
+    #called directly from a REPL. When it is, a human-readable exception should
+    #be raised instead. Notably, we instead want to:
     #* Define new utilfuncframe getters resembling:
     #      def get_frame_or_none(ignore_frames: int) -> Optional[FrameType]:
     #          try:
@@ -211,10 +210,10 @@ def beartype_this_package(
     #FIXME: Relax this constraint, please. Just iteratively search up the
     #call stack with iter_frames() until stumbling into a frame satisfying
     #this condition.
-    # If that name is *NOT* the placeholder string assigned by the active
-    # Python interpreter to all scopes encapsulating the top-most lexical
-    # scope of a module in the current call stack, the caller is a class or
-    # callable rather than a module. In this case, raise an exception.
+    # If that name is *NOT* the placeholder string assigned by the active Python
+    # interpreter to all scopes encapsulating the top-most lexical scope of a
+    # module in the current call stack, the caller is a class or callable rather
+    # than a module. In this case, raise an exception.
     if frame_caller_basename != FUNC_CODEOBJ_NAME_MODULE:
         raise BeartypeClawHookException(
             f'beartype_this_package() not called from module scope '
@@ -222,18 +221,19 @@ def beartype_this_package(
             f'"{frame_caller_module_name}.{frame_caller_basename}" '
             f'either class or callable rather than module).'
         )
+    # Else, the caller is a module as expected.
 
-    # If the fully-qualified name of the module defining that caller
-    # contains *NO* delimiters, that module is a top-level module defined by
-    # *NO* parent package. In this case, raise an exception. Why? Because
-    # this function uselessly and silently reduces to a noop when called by
-    # a top-level module. Why? Because this function registers an import
-    # hook applicable only to subsequently imported submodules of the passed
-    # packages. By definition, a top-level module is *NOT* a package and
-    # thus has *NO* submodules. To prevent confusion, notify the user here.
+    # If the fully-qualified name of the module defining that caller contains
+    # *NO* delimiters, that module is a top-level module defined by *NO* parent
+    # package. In this case, raise an exception. Why? Because this function
+    # uselessly and silently reduces to a noop when called by a top-level
+    # module. Why? Because this function registers an import hook applicable
+    # only to subsequently imported submodules of the passed packages. By
+    # definition, a top-level module is *NOT* a package and thus has *NO*
+    # submodules. To prevent confusion, notify the user here.
     #
-    # Note this is constraint is also implicitly imposed by the subsequent
-    # call to the frame_caller_module_name.rpartition() method: e.g.,
+    # Note this is constraint is also implicitly imposed by the subsequent call
+    # to the frame_caller_module_name.rpartition() method: e.g.,
     #     >>> frame_caller_module_name = 'muh_module'
     #     >>> frame_caller_module_name.rpartition()
     #     ('', '', 'muh_module')  # <-- we're now in trouble, folks
@@ -251,6 +251,35 @@ def beartype_this_package(
     #     >>> frame_caller_module_name.rpartition('.')
     #     ('muh_package', '.', 'muh_module')
     frame_caller_package_name = frame_caller_module_name.rpartition('.')[0]
+    # print(f'beartype_this_package: {frame_caller_module_name} -> {frame_caller_package_name}')
+    # print(f'beartype_this_package: {repr(frame_caller)}')
+
+    #FIXME: *ODDNESS.* "frame_caller_module_name" is
+    #"beartype_test.a00_unit.data.claw.beartype_this_package" rather than
+    #"beartype_test.a00_unit.data.claw.beartype_this_package.__init__" as
+    #expected, which then causes "frame_caller_package_name" to be
+    #"beartype_test.a00_unit.data.claw" rather than
+    #"beartype_test.a00_unit.data.claw.beartype_this_package". Something is
+    #quite wrong somewhere. Interestingly, the "frame_caller" object *IS*
+    #correctly encapsulating the expected
+    #"beartype_test.a00_unit.data.claw.beartype_this_package.__init__"
+    #submodule. Ergo, the get_frame_module_name() getter *MUST* necessarily be
+    #incorrectly implemented. Right? *sigh*
+    #FIXME: *LOLBRO.* So, what we *REALLY* want here is as follows:
+    #* Stop doing pretty much *EVERYTHING* we are currently doing above.
+    #  Seriously. It's extreme overkill, fragile, and not particularly relevant.
+    #  Just let callers call this function from wherever they like. There's *NO*
+    #  particular reason to prohibit calling this function from within other
+    #  callables. Honestly.
+    #* Define a new get_frame_package_name() getter. Just copy-and-paste the
+    #  implementation of the get_frame_module_name() getter with two significant
+    #  differences:
+    #  * Access the '__package__' rather than '__name__' dunder variable.
+    #  * Raise an exception if '__package__' is the *EMPTY* string, which
+    #    indicates that the module in question is a top-level module or script
+    #    residing outside a package.
+    #* Call that getter. In theory, calling that getter alone should suffice for
+    #  everything we require here. \o/
 
     # Add a new import path hook beartyping this package.
     hook_packages(
