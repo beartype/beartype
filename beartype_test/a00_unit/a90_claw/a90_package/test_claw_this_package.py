@@ -66,5 +66,5 @@ def test_claw_this_package() -> None:
         from beartype_test.a00_unit.data.claw.beartype_this_package import (
             this_submodule)
 
-        # # Import an arbitrary submodule *NOT* subject to those import hooks.
-        # from beartype_test.a00_unit.data.claw import unhooked_submodule
+        # Import an arbitrary submodule *NOT* subject to those import hooks.
+        from beartype_test.a00_unit.data.claw import unhooked_submodule

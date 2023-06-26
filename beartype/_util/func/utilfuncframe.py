@@ -23,8 +23,10 @@ from beartype._cave._cavefast import CallableFrameType
 from beartype._data.datatyping import TypeException
 
 # ....................{ GETTERS                            }....................
-get_frame: Optional[Callable[[int], Optional[CallableFrameType]]] = (
-    getattr(sys, '_getframe', None))
+#FIXME: Mypy insists this getter can return "None" in certain edge cases. But...
+#what are those? Official documentation is seemingly silent on the issue. *sigh*
+get_frame: Optional[Callable[[int], Optional[CallableFrameType]]] = getattr(
+    sys, '_getframe', None)
 '''
 Private low-level :func:`sys._getframe` getter if the active Python interpreter
 declares this getter *or* :data:`None` otherwise (i.e., if this interpreter does
@@ -56,7 +58,34 @@ under CPython resembles:
         f_lineno        current line number in Python source code
         f_locals        local namespace seen by this frame
         f_trace         tracing function for this frame, or None
+
+Parameters
+----------
+depth : int
+    0-based index of the stack frame on the current call stack to be returned.
+    Defaults to 0, signifying the stack frame encapsulating the lexical scope
+    directly calling this getter.
+
+Returns
+----------
+CallableFrameType
+    Stack frame with the passed index on the current call stack.
+
+Raises
+----------
+ValueError
+     If this index exceeds the **height** (i.e., total number of stack frames)
+     of the current call stack.
 '''
+
+#FIXME: Preserve until we inevitably require this getter, please.
+#def get_frame_or_none(ignore_frames: int) -> Optional[FrameType]:
+#    try:
+#        return get_frame(ignore_frames + 1)
+#    except ValueError:
+#        return None
+#def get_frame_caller_or_none() -> Optional[FrameType]:
+#    return get_frame_or_none(ignore_frames=2)
 
 # ....................{ GETTERS ~ name                     }....................
 def get_frame_basename(
@@ -96,7 +125,7 @@ def get_frame_basename(
 
 
 #FIXME: Unit test us up, please.
-def get_frame_module_name(
+def get_frame_package_name(
     # Mandatory parameters.
     frame: CallableFrameType,
 
@@ -105,10 +134,10 @@ def get_frame_module_name(
 ) -> str:
     '''
     **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
-    declaring package) of the module declaring the callable whose code object is
-    that of the passed **stack frame** (i.e., :class:`types.CallableFrameType` instance
-    encapsulating all metadata describing a single call on the current call
-    stack).
+    declaring package) of the parent package of the child module declaring the
+    callable whose code object is that of the passed **stack frame** (i.e.,
+    :class:`types.CallableFrameType` instance encapsulating all metadata
+    describing a single call on the current call stack).
 
     Parameters
     ----------
@@ -121,7 +150,8 @@ def get_frame_module_name(
     Returns
     ----------
     str
-        Fully-qualified name of the module declaring that callable.
+        Fully-qualified name of the parent package of the child module declaring
+        that callable.
 
     Raises
     ----------
@@ -129,29 +159,34 @@ def get_frame_module_name(
          If that callable has *no* code object and is thus *not* pure-Python.
     '''
 
-    # Fully-qualified name of the module declaring the callable whose code
-    # object is that of this stack frame's if that module declares its name *OR*
-    # "None" otherwise (i.e., if something horrifying has happened).
-    frame_module_name = frame.f_globals.get('__name__')
+    # Fully-qualified name of the parent package of the child module declaring
+    # the callable whose code object is that of this stack frame's if that
+    # module declares its name *OR* the empty string otherwise (e.g., if that
+    # module is either a top-level module or script residing outside any parent
+    # package structure).
+    frame_package_name = frame.f_globals.get('__package__')
 
-    # If that module has *NO* name...
-    #
-    # Note that this should *NEVER* happen. All modules should have names.
-    # Nonetheless, this *WILL* happen. This is the sad state of the world.
-    if frame_module_name is None:  # pragma: no cover
-        # Unqualified basename of the callable encapsulated by this frame.
+    #FIXME: Is "pragma: no cover" accurate here? Is this condition untestable?
+    # If that module has *NO* parent package...
+    if not frame_package_name:  # pragma: no cover
+        # Fully-qualified name of that child module.
+        frame_module_name = frame.f_globals.get('__name__')
+
+        # Unqualified basename of that callable.
         frame_basename = get_frame_basename(
             frame=frame, exception_cls=exception_cls)
 
         # Raise an exception.
         raise exception_cls(
-            f'Call stack frame {repr(frame)} '
-            f'callable "{frame_basename}()" module name not found.'
+            f'Callable "{frame_module_name}.{frame_basename}()" '
+            f'package not found '
+            f'(i.e., top-level module or script "{frame_module_name}" '
+            f'resides outside any parent package).'
         )
-    # Else, that module has a name.
+    # Else, that module has a parent package.
 
-    # Return this name.
-    return frame_module_name
+    # Return the name of this parent package.
+    return frame_package_name
 
 # ....................{ ITERATORS                          }....................
 def iter_frames(

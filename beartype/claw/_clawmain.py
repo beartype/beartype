@@ -30,7 +30,6 @@ this private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.claw._pkg.clawpkgenum import BeartypeClawCoverage
 from beartype.claw._pkg.clawpkghook import hook_packages
-from beartype.roar import BeartypeClawHookException
 from beartype.typing import (
     Iterable,
 )
@@ -39,11 +38,9 @@ from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
-from beartype._util.func.utilfunccodeobj import FUNC_CODEOBJ_NAME_MODULE
 from beartype._util.func.utilfuncframe import (
     get_frame,
-    get_frame_basename,
-    get_frame_module_name,
+    get_frame_package_name,
 )
 
 # ....................{ HOOKERS                            }....................
@@ -170,116 +167,38 @@ def beartype_this_package(
         Further details.
     '''
 
-    # Note the following logic *CANNOT* reasonably be isolated to a new private
-    # helper function. Why? Because this logic itself calls existing private
-    # helper functions assuming the caller to be at the expected position on the
-    # current call stack.
-
-    #FIXME: *UNSAFE.* get_frame() raises a "ValueError" exception if
-    #passed a non-existent frame, which is non-ideal: e.g.,
-    #    >>> sys._getframe(20)
-    #    ValueError: call stack is not deep enough
+    # Stack frame encapsulating the user-defined lexical scope directly calling
+    # this import hook.
     #
-    #Since beartype_this_package() is public, that function can technically be
-    #called directly from a REPL. When it is, a human-readable exception should
-    #be raised instead. Notably, we instead want to:
-    #* Define new utilfuncframe getters resembling:
-    #      def get_frame_or_none(ignore_frames: int) -> Optional[FrameType]:
-    #          try:
-    #              return get_frame(ignore_frames + 1)
-    #          except ValueError:
-    #              return None
-    #      def get_frame_caller_or_none() -> Optional[FrameType]:
-    #          return get_frame_or_none(ignore_frames=2)
-    #* Import "get_frame_caller_or_none" above.
-    #* Refactor this logic here to resemble:
-    #      frame_caller = get_frame_caller_or_none()
-    #      if frame_caller is None:
-    #          raise BeartypeClawHookException(
-    #              'beartype_this_package() '
-    #              'not callable directly from REPL scope.'
-    #          )
+    # Note that:
+    # * This call is guaranteed to succeed without error. Why? Because:
+    #   * The current call stack *ALWAYS* contains at least one stack frame.
+    #     Ergo, get_frame(0) *ALWAYS* succeeds without error.
+    #   * The call to this import hook guaranteeably adds yet another stack
+    #     frame to the current call stack. Ergo, get_frame(1) also *ALWAYS*
+    #     succeeds without error in this context.
+    # * This and the following logic *CANNOT* reasonably be isolated to a new
+    #   private helper function. Why? Because this logic itself calls existing
+    #   private helper functions assuming the caller to be at the expected
+    #   position on the current call stack.
     frame_caller: CallableFrameType = get_frame(1)  # type: ignore[assignment,misc]
 
-    # Unqualified basename of that caller.
-    frame_caller_basename = get_frame_basename(frame_caller)
-
-    # Fully-qualified name of the module defining that caller.
-    frame_caller_module_name = get_frame_module_name(frame_caller)
-
-    #FIXME: Relax this constraint, please. Just iteratively search up the
-    #call stack with iter_frames() until stumbling into a frame satisfying
-    #this condition.
-    # If that name is *NOT* the placeholder string assigned by the active Python
-    # interpreter to all scopes encapsulating the top-most lexical scope of a
-    # module in the current call stack, the caller is a class or callable rather
-    # than a module. In this case, raise an exception.
-    if frame_caller_basename != FUNC_CODEOBJ_NAME_MODULE:
-        raise BeartypeClawHookException(
-            f'beartype_this_package() not called from module scope '
-            f'(i.e., caller '
-            f'"{frame_caller_module_name}.{frame_caller_basename}" '
-            f'either class or callable rather than module).'
-        )
-    # Else, the caller is a module as expected.
-
-    # If the fully-qualified name of the module defining that caller contains
-    # *NO* delimiters, that module is a top-level module defined by *NO* parent
-    # package. In this case, raise an exception. Why? Because this function
-    # uselessly and silently reduces to a noop when called by a top-level
-    # module. Why? Because this function registers an import hook applicable
-    # only to subsequently imported submodules of the passed packages. By
-    # definition, a top-level module is *NOT* a package and thus has *NO*
-    # submodules. To prevent confusion, notify the user here.
+    # Fully-qualified name of the parent package of the child module defining
+    # that caller if that module resides in some package *OR* raise an exception
+    # otherwise (i.e., if that module is a top-level module or script residing
+    # outside any package).
     #
-    # Note this is constraint is also implicitly imposed by the subsequent call
-    # to the frame_caller_module_name.rpartition() method: e.g.,
-    #     >>> frame_caller_module_name = 'muh_module'
-    #     >>> frame_caller_module_name.rpartition()
-    #     ('', '', 'muh_module')  # <-- we're now in trouble, folks
-    if '.' not in frame_caller_module_name:
-        raise BeartypeClawHookException(
-            f'beartype_this_package() not called by submodule '
-            f'(i.e., caller module "{frame_caller_module_name}" is a '
-            f'top-level module rather than submodule of some parent package).'
-        )
-    # Else, that module is a submodule of some parent package.
-
-    # Fully-qualified name of the parent package defining that submodule,
-    # parsed from the name of that submodule via this standard idiom:
-    #     >>> frame_caller_module_name = 'muh_package.muh_module'
-    #     >>> frame_caller_module_name.rpartition('.')
-    #     ('muh_package', '.', 'muh_module')
-    frame_caller_package_name = frame_caller_module_name.rpartition('.')[0]
-    # print(f'beartype_this_package: {frame_caller_module_name} -> {frame_caller_package_name}')
+    # Note that raising an exception in the latter case is appropriate here.
+    # Why? Because this function uselessly (but silently) reduces to a noop
+    # when called by a top-level module or script residing outside any package.
+    # Why? Because this function hook installs an import hook applicable only to
+    # subsequently imported submodules of the current package. By definition, a
+    # top-level module or script has *NO* package and thus *NO* sibling
+    # submodules and thus *NO* meaningful imports to be hooked. To avoid
+    # unwanted confusion, we intentionally notify the user with an exception.
+    frame_caller_package_name = get_frame_package_name(frame_caller)
+    # print(f'beartype_this_package: {frame_caller_package_name}')
     # print(f'beartype_this_package: {repr(frame_caller)}')
-
-    #FIXME: *ODDNESS.* "frame_caller_module_name" is
-    #"beartype_test.a00_unit.data.claw.beartype_this_package" rather than
-    #"beartype_test.a00_unit.data.claw.beartype_this_package.__init__" as
-    #expected, which then causes "frame_caller_package_name" to be
-    #"beartype_test.a00_unit.data.claw" rather than
-    #"beartype_test.a00_unit.data.claw.beartype_this_package". Something is
-    #quite wrong somewhere. Interestingly, the "frame_caller" object *IS*
-    #correctly encapsulating the expected
-    #"beartype_test.a00_unit.data.claw.beartype_this_package.__init__"
-    #submodule. Ergo, the get_frame_module_name() getter *MUST* necessarily be
-    #incorrectly implemented. Right? *sigh*
-    #FIXME: *LOLBRO.* So, what we *REALLY* want here is as follows:
-    #* Stop doing pretty much *EVERYTHING* we are currently doing above.
-    #  Seriously. It's extreme overkill, fragile, and not particularly relevant.
-    #  Just let callers call this function from wherever they like. There's *NO*
-    #  particular reason to prohibit calling this function from within other
-    #  callables. Honestly.
-    #* Define a new get_frame_package_name() getter. Just copy-and-paste the
-    #  implementation of the get_frame_module_name() getter with two significant
-    #  differences:
-    #  * Access the '__package__' rather than '__name__' dunder variable.
-    #  * Raise an exception if '__package__' is the *EMPTY* string, which
-    #    indicates that the module in question is a top-level module or script
-    #    residing outside a package.
-    #* Call that getter. In theory, calling that getter alone should suffice for
-    #  everything we require here. \o/
 
     # Add a new import path hook beartyping this package.
     hook_packages(

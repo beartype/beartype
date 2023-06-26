@@ -13,8 +13,8 @@ third-party package submodule ``{some_package}.__init__`).
 # ....................{ IMPORTS                            }....................
 from beartype import BeartypeConf
 from beartype.claw import beartype_this_package
-print(f'__init__.__name__: {__name__}')
-print(f'__init__.__package__: {__package__}')
+# print(f'__init__.__name__: {__name__}')
+# print(f'__init__.__package__: {__package__}')
 
 # ....................{ HOOKS                              }....................
 # Install a beartype import hook for the current data subpackage directly

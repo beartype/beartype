@@ -5,7 +5,7 @@
 
 '''
 Project-wide **current package beartype import hook unhooked submodule**
-(i.e., data module *not* hooked by any import hooks published by the 
+(i.e., data module *not* hooked by any import hooks published by the
 :mod:`beartype.claw` subpackage and thus expected to be governed by standard
 Python type-checking semantics -- which is to say, *no* type-checking at all).
 '''
