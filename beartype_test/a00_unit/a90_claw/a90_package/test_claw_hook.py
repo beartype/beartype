@@ -15,7 +15,7 @@ the :mod:`beartype.claw.beartype_this_package` import hook).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_claw_this_package() -> None:
+def test_claw_beartype_this_package() -> None:
     '''
     Test the :mod:`beartype.claw.beartype_this_package` import hook against a
     data subpackage in this test suite exercising *all* edge cases associated
@@ -28,13 +28,13 @@ def test_claw_this_package() -> None:
     from beartype._util.mod.utilmodget import get_module_dir
     from beartype._util.path.utilpathremove import (
         remove_package_bytecode_files)
-    from beartype_test.a00_unit.data import claw
+    from beartype_test.a00_unit.data.claw import hookable_package
 
     # ....................{ PATHS                          }....................
     # High-level "Path" object encapsulating the absolute dirname of this module
     # if this module is physically defined on-disk *OR* raise an exception
     # otherwise (i.e., if this module is abstractly defined only in-memory).
-    module_dir = get_module_dir(claw)
+    hookable_package_dir = get_module_dir(hookable_package)
 
     # High-level "Path" object encapsulating the "beartype_this_package/"
     # subdirectory directly contained in this parent directory.
@@ -43,14 +43,14 @@ def test_claw_this_package() -> None:
     # subpackage here. Why? Because doing so would implicitly install the exact
     # beartype import hook which we exercise below and which *MUST* be confined
     # to a context manager for test idempotency.
-    subpackage_dir = module_dir / 'beartype_this_package'
+    hookable_subpackage_dir = hookable_package_dir / 'beartype_this_package'
 
     # Remove all previously compiled bytecode files from this subdirectory. Why?
     # Because failing to do so invites subtle but easily reproducible
     # desynchronization woes between those files and more recent changes to our
     # "beartype.claw" implementation. See the
     # remove_package_bytecode_files() docstring for further details.
-    remove_package_bytecode_files(subpackage_dir)
+    remove_package_bytecode_files(hookable_subpackage_dir)
 
     # ....................{ HOOKS                          }....................
     # With a context manager guaranteeably reverting *ALL* beartype import hooks
@@ -63,8 +63,25 @@ def test_claw_this_package() -> None:
     # returns.
     with packages_trie_cleared():
         # Defer hooks installing import hooks to this context manager.
-        from beartype_test.a00_unit.data.claw.beartype_this_package import (
+        from beartype_test.a00_unit.data.claw.hookable_package.beartype_this_package import (
             this_submodule)
 
         # Import an arbitrary submodule *NOT* subject to those import hooks.
-        from beartype_test.a00_unit.data.claw import unhooked_submodule
+        from beartype_test.a00_unit.data.claw import unhooked_module
+
+
+#FIXME: Implement us up, please. Doing so will require:
+#* Defining a new "clean_claws" fixture (heh, heh) generalizing the existing
+#  bytecode removal functionality defined by the
+#  test_claw_beartype_this_package() unit test to iteratively remove *ALL*
+#  bytecode files transitively nested (at any subdirectory depth) under the
+#  "beartype_test.a00_unit.data.claw.hookable_package" subpackage. Doing so will
+#  probably necessitate a recursive directory traversal for sanity.
+
+# def test_claw_beartype_package() -> None:
+#     '''
+#     Test the :mod:`beartype.claw.beartype_package` import hook against a data
+#     subpackage in this test suite exercising *all* edge cases associated with
+#     this import hook.
+#     '''
+#
