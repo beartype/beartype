@@ -4,11 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) API procedural
-unit tests.**
-
-This submodule unit tests the subset of the public API of the public
-:mod:`beartype.door` subpackage that is procedural.
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) fixtures** (i.e.,
+:mod:`pytest`-specific context managers passed as parameters to unit tests
+exercising the :mod:`beartype.door` subpackage).
 '''
 
 # ....................{ IMPORTS                            }....................

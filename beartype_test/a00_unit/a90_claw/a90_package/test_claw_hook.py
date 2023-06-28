@@ -25,32 +25,6 @@ def test_claw_beartype_this_package() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.claw._pkg.clawpkgcontext import packages_trie_cleared
-    from beartype._util.mod.utilmodget import get_module_dir
-    from beartype._util.path.utilpathremove import (
-        remove_package_bytecode_files)
-    from beartype_test.a00_unit.data.claw import hookable_package
-
-    # ....................{ PATHS                          }....................
-    # High-level "Path" object encapsulating the absolute dirname of this module
-    # if this module is physically defined on-disk *OR* raise an exception
-    # otherwise (i.e., if this module is abstractly defined only in-memory).
-    hookable_package_dir = get_module_dir(hookable_package)
-
-    # High-level "Path" object encapsulating the "beartype_this_package/"
-    # subdirectory directly contained in this parent directory.
-    #
-    # Note that we intentionally avoid importing the "beartype_this_package"
-    # subpackage here. Why? Because doing so would implicitly install the exact
-    # beartype import hook which we exercise below and which *MUST* be confined
-    # to a context manager for test idempotency.
-    hookable_subpackage_dir = hookable_package_dir / 'beartype_this_package'
-
-    # Remove all previously compiled bytecode files from this subdirectory. Why?
-    # Because failing to do so invites subtle but easily reproducible
-    # desynchronization woes between those files and more recent changes to our
-    # "beartype.claw" implementation. See the
-    # remove_package_bytecode_files() docstring for further details.
-    remove_package_bytecode_files(hookable_subpackage_dir)
 
     # ....................{ HOOKS                          }....................
     # With a context manager guaranteeably reverting *ALL* beartype import hooks
@@ -67,7 +41,7 @@ def test_claw_beartype_this_package() -> None:
             this_submodule)
 
         # Import an arbitrary submodule *NOT* subject to those import hooks.
-        from beartype_test.a00_unit.data.claw import unhooked_module
+        from beartype_test.a00_unit.data.claw import unhookable_module
 
 
 #FIXME: Implement us up, please. Doing so will require:
