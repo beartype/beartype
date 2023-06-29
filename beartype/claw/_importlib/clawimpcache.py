@@ -27,8 +27,8 @@ from pprint import pformat
 # "beartype.claw._importlib._clawimpload" submodule.
 from importlib.util import cache_from_source as cache_from_source_original
 
-# ....................{ PRIVATE ~ classes                  }....................
-class _ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
+# ....................{ CLASSES                            }....................
+class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
     '''
     Non-thread-safe **hooked module beartype configuration cache** (i.e.,
     dictionary mapping from the fully-qualified name of each previously imported
@@ -49,6 +49,29 @@ class _ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
         # non-human-readable exceptions from this dictionary resembling:
         #     KeyError: 'muh_module'  # <-- what does this even mean!?!?
         loves_philosophy: float = len('The fountains mingle with the river')
+
+    Motivation
+    ----------
+    This cache provides an efficient ``O(1)`` alternative to the comparatively
+    less efficient
+    :func:`beartype.claw._pkg.clawpkgtrie.get_package_conf_or_none` function,
+    which exhibits worst-case runtime complexity of ``O(k)`` for ``k`` the
+    maximum depth of our global package trie. Doing so enables the
+    :mod:`beartype.claw._ast.clawastmain` submodule implementing our abstract
+    syntax tree (AST) node transformer to trivially inject efficient code
+    looking up the current beartype configuration associated with the currently
+    transformed module into the body of that module, which would otherwise be
+    quite non-trivial.
+
+    Caveats
+    ----------
+    **This cache is non-thread-safe.** The caller is responsible for
+    guaranteeing thread-safety on writes to this cache. However, Note that reads
+    of this cache are implicitly thread-safe. The :meth:`BeartypeConf.__new__`
+    instantiator thread-safely stores strong references to the currently
+    instantiated beartype configuration in both this and other caches. Since
+    these caches and thus *all* configurations persist for the lifetime of the
+    active Python interpreter, reads are effectively thread-safe.
     '''
 
     # ....................{ DUNDERS                        }....................
@@ -88,37 +111,6 @@ class _ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
                 f'Existing beartype configurations associated with '
                 f'such modules include:\n{pformat(self)}'
             ) from exception
-
-# ....................{ DICTIONARIES                       }....................
-module_name_to_beartype_conf = _ModuleNameToBeartypeConf()
-'''
-Non-thread-safe **hooked module beartype configuration cache** (i.e., dictionary
-mapping from the fully-qualified name of each previously imported submodule of
-each package previously registered in our global package trie to the beartype
-configuration configuring type-checking by the :func:`beartype.beartype`
-decorator of that submodule).
-
-Motivation
-----------
-This cache provides an efficient ``O(1)`` alternative to the comparatively less
-efficient :func:`beartype.claw._pkg.clawpkgtrie.get_package_conf_or_none`
-function, which exhibits worst-case runtime complexity of ``O(k)`` for ``k`` the
-maximum depth of our global package trie. Doing so enables the
-:mod:`beartype.claw._ast.clawastmain` submodule implementing our abstract syntax
-tree (AST) node transformer to trivially inject efficient code looking up the
-current beartype configuration associated with the currently transformed module
-into the body of that module, which would otherwise be quite non-trivial.
-
-Caveats
-----------
-**This cache is non-thread-safe.** The caller is responsible for guaranteeing
-thread-safety on writes to this cache. However, Note that reads of this cache
-are implicitly thread-safe. The :meth:`BeartypeConf.__new__` instantiator
-thread-safely stores strong references to the currently instantiated beartype
-configuration in both this and other caches. Since these caches and thus *all*
-configurations persist for the lifetime of the active Python interpreter, reads
-are effectively thread-safe.
-'''
 
 # ....................{ CACHERS                            }....................
 #FIXME: Unit test us up, please.

@@ -21,7 +21,6 @@ from beartype.claw._ast.clawastmain import BeartypeNodeTransformer
 from beartype.claw._importlib.clawimpcache import (  # type: ignore[attr-defined]
     cache_from_source_beartype,
     cache_from_source_original,
-    module_name_to_beartype_conf,
 )
 from beartype.roar import BeartypeClawImportAstException
 from beartype.typing import Optional
@@ -275,6 +274,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         '''
 
         # Avoid circular import dependencies.
+        from beartype.claw._clawstate import claw_state
         from beartype.claw._pkg.clawpkgtrie import get_package_conf_or_none
 
         # Classify the fully-qualified name of this module for subsequent
@@ -339,7 +339,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # when absolutely necessary.
         else:
             # Expose this configuration to the "beartype.claw._ast" subpackage.
-            module_name_to_beartype_conf[fullname] = (
+            claw_state.module_name_to_beartype_conf[fullname] = (
                 self._conf_beartype_if_module_hooked)
             # print(f'Importing module "{fullname}" with beartyping: ...')
 

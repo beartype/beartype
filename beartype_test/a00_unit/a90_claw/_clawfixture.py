@@ -40,6 +40,7 @@ def clean_claws() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny.
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
+    from beartype.claw._pkg.clawpkgcontext import packages_trie_cleared
     from beartype._util.mod.utilmodget import get_module_dir
     from beartype._util.path.utilpathremove import (
         remove_package_bytecode_files)
@@ -59,3 +60,10 @@ def clean_claws() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny.
     # Recursively remove *ALL* previously compiled bytecode files from both this
     # subdirectory *and* *ALL* subsubdirectories of this subdirectory.
     remove_package_bytecode_files(claw_dir)
+
+    # ....................{ HOOKS                          }....................
+    # With a context manager guaranteeably reverting *ALL* beartype import hooks
+    # transitively installed in the body of this context manager, defer to the
+    # parent unit test implicitly invoking this fixture.
+    with packages_trie_cleared():
+        yield

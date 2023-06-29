@@ -17,8 +17,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.claw._importlib._clawimpload import BeartypeSourceFileLoader
-from beartype.typing import Optional
-from beartype._data.datatyping import ImportPathHook
 from importlib import invalidate_caches
 from importlib.machinery import (
     SOURCE_SUFFIXES,
@@ -55,12 +53,12 @@ def add_beartype_pathhook() -> None:
         this function with respect to inscrutable :mod:`importlib` machinery.
     '''
 
-    # Global variables reassigned below.
-    global _beartype_pathhook
+    # Avoid circular import dependencies.
+    from beartype.claw._clawstate import claw_state
 
     # If this function has already been called under the active Python
     # interpreter, silently reduce to a noop.
-    if _beartype_pathhook is not None:
+    if claw_state.beartype_pathhook is not None:
         return
     # Else, this function has *NOT* yet been called under this interpreter.
 
@@ -91,7 +89,7 @@ def add_beartype_pathhook() -> None:
     # successfully having done so. Why? Negligible safety. The companion
     # remove_beartype_pathhook() function raises a non-human-readable exception
     # if this global is non-"None" but *NOT* in the "path_hooks" list.
-    _beartype_pathhook = loader_factory
+    claw_state.beartype_pathhook = loader_factory
 
     # Lastly, clear *ALL* import path hook caches for safety.
     _clear_importlib_caches()
@@ -116,38 +114,27 @@ def remove_beartype_pathhook() -> None:
     locking primitive managed by the caller.
     '''
 
-    # Global variables reassigned below.
-    global _beartype_pathhook
+    # Avoid circular import dependencies.
+    from beartype.claw._clawstate import claw_state
 
     # If the add_beartype_pathhook() function has *NOT* yet been called under
     # the active Python interpreter, silently reduce to a noop.
-    if _beartype_pathhook is None:
+    if claw_state.beartype_pathhook is None:
         return
     # Else, that function has already been called under this interpreter.
 
     # Remove the prior path hook added by that function *OR* raise a
     # non-human-readable "ValueError" exception if this global is non-"None" but
     # *NOT* in the "path_hooks" list (which should *NEVER* happen, but it will).
-    path_hooks.remove(_beartype_pathhook)
+    path_hooks.remove(claw_state.beartype_pathhook)
 
     # Allow subsequent calls to the add_beartype_pathhook() to re-add a new
     # instance of this path hook immediately *AFTER* successfully removing the
     # first such path hook.
-    _beartype_pathhook = None
+    claw_state.beartype_pathhook = None
 
     # Lastly, clear *ALL* import path hook caches for safety.
     _clear_importlib_caches()
-
-# ....................{ PRIVATE ~ globals                  }....................
-_beartype_pathhook: Optional[ImportPathHook] = None
-'''
-**Beartype import path hook singleton** (i.e., factory closure creating and
-returning a new :class:`importlib.machinery.FileFinder` instance itself creating
-and leveraging a new :class:`.BeartypeSourceFileLoader` instance) if the
-:func:`.add_beartype_pathhook` function has been previously called at least once
-under the active Python interpreter and the :func:`.remove_beartype_pathhook`
-function has not been called more recently *or* :data:`None` otherwise.
-'''
 
 # ....................{ PRIVATE ~ cachers                  }....................
 #FIXME: Unit test us up, please.

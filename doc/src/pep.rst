@@ -9,9 +9,9 @@
 
 .. _pep:pep:
 
-#########
-Big Data™
-#########
+########
+BigData™
+########
 
 .. code-block:: text
 

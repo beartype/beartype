@@ -13,6 +13,18 @@ lookup when deciding whether or not (and how) to decorate by
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: *WOOPS.* Altogether too much dangerous reassignable global state going
+#around, folks. Instead, all global state that we intend to reassign with an
+#assignment statement needs to be accessed through a single global. Let's
+#refactor this immediately:
+#* Remove the existing "packages_trie" and "module_name_to_beartype_conf"
+#  globals.
+#* Refactor AST generation to access "module_name_to_beartype_conf" through
+#  "claw_state" instead.
+#* Call reinit() from packages_trie_cleared(), please.
+#* Probably excise clear_packages_trie() entirely, please.
+
 # ....................{ IMPORTS                            }....................
 from beartype.claw._importlib.clawimppath import remove_beartype_pathhook
 from beartype.typing import (
@@ -23,7 +35,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import BeartypeConf
-from threading import RLock
+# from pprint import pformat
 
 # ....................{ CLASSES                            }....................
 #FIXME: Unit test us up, please.
@@ -42,15 +54,69 @@ class PackagesTrie(
     * The :data:`.packages_trie` global dictionary.
     * Each (sub)value mapped to by that global dictionary.
 
+    Motivation
+    ----------
+    This dictionary is intentionally implemented as a nested trie data structure
+    rather than a trivial non-nested flat dictionary. Why? Efficiency. Consider
+    this flattened set of package names:
+
+        .. code-block:: python
+
+           package_names = {'a.b', 'a.c', 'd'}
+
+    Deciding whether an arbitrary package name is in this set requires
+    worst-case ``O(n)`` iteration across the set of ``n`` package names.
+
+    Consider instead this nested dictionary whose keys are package names split
+    on ``"."`` delimiters and whose values are either recursively nested
+    dictionaries of the same format *or* the :data:`None` singleton (terminating
+    the current package name):
+
+        .. code-block:: python
+
+           package_names_trie = {'a': {'b': None, 'c': None}, 'd': None}
+
+    Deciding whether an arbitrary package name is in this dictionary only
+    requires worst-case ``O(h)`` iteration across the height ``h`` of this
+    dictionary (equivalent to the largest number of ``"."`` delimiters for any
+    fully-qualified package name encapsulated by this dictionary). ``h <<<< n``,
+    so this dictionary offers *much* faster worst-case lookup than that set.
+
+    Moreover, in the worst case:
+
+    * That set requires one inefficient string prefix test for each item.
+    * This dictionary requires *only* one efficient string equality test for
+      each nested key-value pair while descending towards the target package
+      name.
+
+    Let's do this, fam.
+
+    Caveats
+    ----------
+    **This dictionary is only safely accessible in a thread-safe manner from
+    within a** ``with claw_lock:`` **context manager.** Equivalently, this
+    dictionary is *not* safely accessible outside that manager.
+
+    Examples
+    ----------
+    An example instance of this dictionary hooked on submodules of the root
+    ``package_z`` package, the child ``package_a.subpackage_k`` submodule, and
+    the ``package_a.subpackage_b.subpackage_c`` and
+    ``package_a.subpackage_b.subpackage_d`` submodules:
+
+        >>> packages_trie = PackagesTrie({
+        ...     'package_a': PackagesTrie({
+        ...         'subpackage_b': PackagesTrie({
+        ...             'subpackage_c': None,
+        ...             'subpackage_d': None,
+        ...         }),
+        ...         'subpackage_k': None,
+        ...     }),
+        ...     'package_z': None,
+        ... })
+
     Attributes
     ----------
-    package_basename : Optional[str]
-        Either:
-
-        * If this (sub)trie is the global trie :data:`.packages_trie`,
-          :data:`None`.
-        * Else, the unqualified basename of the (sub)package configured by this
-          (sub)trie.
     conf_if_hooked : Optional[BeartypeConf]
         Either:
 
@@ -59,6 +125,13 @@ class PackagesTrie(
           configuration** (i.e., dataclass encapsulating all settings
           configuring type-checking for this (sub)package).
         * Else, :data:`None`.
+    package_basename : Optional[str]
+        Either:
+
+        * If this (sub)trie is the global trie :data:`.packages_trie`,
+          :data:`None`.
+        * Else, the unqualified basename of the (sub)package configured by this
+          (sub)trie.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -67,6 +140,7 @@ class PackagesTrie(
     # variables *MUST* additionally slot those variables. Subclasses violating
     # this constraint will be usable but unslotted, which defeats our purposes.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     # Slot all instance variables defined on this object to minimize the time
     # complexity of both reading and writing variables across frequently called
     # cache dunder methods. Slotting has been shown to reduce read and write
@@ -110,88 +184,16 @@ class PackagesTrie(
         # Nullify all subclass-specific parameters for safety.
         self.conf_if_hooked: Optional[BeartypeConf] = None
 
-# ....................{ GLOBALS                            }....................
-packages_trie_lock = RLock()
-'''
-Reentrant reusable thread-safe context manager gating access to the otherwise
-non-thread-safe :data:`.packages_trie` global.
-'''
+    # ..................{ DUNDERS                            }..................
+    def __repr__(self) -> str:
 
-
-#FIXME: Revise docstring in accordance with data structure changes, please.
-#Everything scans up until "...either the :data:`None` singleton if that
-#subpackage is to be type-checked." Is that *REALLY* how this works? *sigh*
-
-# Initialized below by a call to the clear_packages_trie() function.
-packages_trie: PackagesTrie = None  # type: ignore[assignment]
-'''
-**Package configuration trie** (i.e., non-thread-safe dictionary implementing a
-prefix tree such that each key-value pair maps from the unqualified basename of
-each subpackage to be possibly type-checked on the first importation of that
-subpackage to either the :data:`None` singleton if that subpackage is to be
-type-checked *or* a nested dictionary satisfying the same structure otherwise
-(i.e., if that subpackage is *not* to be type-checked)).
-
-Motivation
-----------
-This dictionary is intentionally implemented as a nested trie data structure
-rather than a trivial non-nested flat dictionary. Why? Efficiency. Consider this
-flattened set of package names:
-
-    .. code-block:: python
-
-       package_names = {'a.b', 'a.c', 'd'}
-
-Deciding whether an arbitrary package name is in this set requires worst-case
-``O(n)`` iteration across the set of ``n`` package names.
-
-Consider instead this nested dictionary whose keys are package names split on
-``"."`` delimiters and whose values are either recursively nested dictionaries
-of the same format *or* the :data:`None` singleton (terminating the current
-package name):
-
-    .. code-block:: python
-
-       package_names_trie = {'a': {'b': None, 'c': None}, 'd': None}
-
-Deciding whether an arbitrary package name is in this dictionary only requires
-worst-case ``O(h)`` iteration across the height ``h`` of this dictionary
-(equivalent to the largest number of ``"."`` delimiters for any fully-qualified
-package name encapsulated by this dictionary). Since ``h <<<<<<<<<< n``, this
-dictionary provides substantially faster worst-case lookup than that set.
-
-Moreover, in the worst case:
-
-* That set requires one inefficient string prefix test for each item.
-* This dictionary requires *only* one efficient string equality test for each
-  nested key-value pair while descending towards the target package name.
-
-Let's do this, fam.
-
-Caveats
-----------
-**This global is only safely accessible in a thread-safe manner from within a**
-``with _claw_lock:`` **context manager.** Equivalently, this global is *not*
-safely accessible outside that manager.
-
-Examples
-----------
-Instance of this data structure type-checking on import submodules of the root
-``package_z`` package, the child ``package_a.subpackage_k`` submodule, and the
-``package_a.subpackage_b.subpackage_c`` and
-``package_a.subpackage_b.subpackage_d`` submodules:
-
-    >>> packages_trie = PackagesTrie({
-    ...     'package_a': PackagesTrie({
-    ...         'subpackage_b': PackagesTrie({
-    ...             'subpackage_c': None,
-    ...             'subpackage_d': None,
-    ...         }),
-    ...         'subpackage_k': None,
-    ...     }),
-    ...     'package_z': None,
-    ... })
-'''
+        return '\n'.join((
+            f'{self.__class__.__name__}(',
+            f'    package_basename={repr(self.package_basename)},',
+            f'    conf_if_hooked={repr(self.conf_if_hooked)},',
+            f'    dict={super().__repr__()},',
+            f')',
+        ))
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -206,14 +208,17 @@ def is_packages_trie() -> bool:
         :data:`True` only if one or more packages have been registered.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype.claw._clawstate import claw_state
+
     # Return true only if either...
     return (
         # A global configuration has been added by a prior call to the public
         # beartype.claw.beartype_all() function *OR*...
-        packages_trie.conf_if_hooked is not None or
+        claw_state.packages_trie.conf_if_hooked is not None or
         # One or more package-specific configurations have been added by prior
         # calls to public beartype.claw.beartype_*() functions.
-        bool(packages_trie)
+        bool(claw_state.packages_trie)
     )
 
 # ....................{ GETTERS                            }....................
@@ -242,12 +247,15 @@ def get_package_conf_or_none(package_name: str) -> Optional[BeartypeConf]:
         * Else, :data:`None`.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype.claw._clawstate import claw_state
+
     # Beartype configuration registered for the currently iterated package,
     # defaulting to the beartype configuration registered for the global trie
     # applicable to *ALL* packages if an external caller previously called the
     # public beartype.claw.beartype_all() function *OR* "None" otherwise (i.e.,
     # if that function has yet to be called).
-    subpackage_conf = packages_trie.conf_if_hooked
+    subpackage_conf = claw_state.packages_trie.conf_if_hooked
 
     # For each subpackages trie describing each parent package transitively
     # containing this package (as well as that of that package itself)...
@@ -336,7 +344,14 @@ def iter_packages_trie(package_name: str) -> Iterable[PackagesTrie]:
     '''
     assert isinstance(package_name, str), f'{repr(package_name)} not string.'
 
-    # ..................{ VALIDATION                         }..................
+    # ..................{ IMPORTS                            }..................
+    # Avoid circular import dependencies.
+    from beartype.claw._clawstate import (
+        claw_lock,
+        claw_state,
+    )
+
+    # ..................{ VALIDATE                           }..................
     # List of each unqualified basename comprising this name, split from this
     # fully-qualified name on "." delimiters. Note that the "str.split('.')" and
     # "str.rsplit('.')" calls produce the exact same lists under all possible
@@ -352,12 +367,12 @@ def iter_packages_trie(package_name: str) -> Iterable[PackagesTrie]:
     # Else, that package is neither the top-level "beartype" package *NOR* a
     # subpackage of that package. In this case, iterate this package.
 
-    # ..................{ ITERATION                          }..................
+    # ..................{ ITERATE                            }..................
     # With a submodule-specific thread-safe reentrant lock...
-    with packages_trie_lock:
+    with claw_lock:
         # Current subtrie of the global trie describing the currently iterated
         # basename of this package, initialized to this global trie itself.
-        subpackages_trie: Optional[PackagesTrie] = packages_trie
+        subpackages_trie: Optional[PackagesTrie] = claw_state.packages_trie
 
         # For each unqualified basename of each parent package transitively
         # containing this package (as well as that of that package itself)...
@@ -401,20 +416,3 @@ def remove_beartype_pathhook_unless_packages_trie() -> None:
     # remove our import path hook from the "sys.path_hooks" list.
     if not is_packages_trie():
         remove_beartype_pathhook()
-
-# ....................{ CLEARERS                           }....................
-#FIXME: Unit test us up, please.
-def clear_packages_trie() -> None:
-    '''
-    Reset the :data:`.packages_trie` global back to its initial state.
-    '''
-
-    # Global variables reassigned below.
-    global packages_trie
-
-    # Wonderful one-liners are woefully lonely.
-    packages_trie = PackagesTrie(package_basename=None)
-
-
-# Initialize the "packages_trie" global to the empty dictionary.
-clear_packages_trie()

@@ -107,8 +107,8 @@ from ast import (
 )
 from beartype.claw._clawmagic import (
     NODE_CONTEXT_LOAD,
-    BEARTYPE_CONF_CACHE_MODULE_NAME,
-    BEARTYPE_CONF_CACHE_ATTR_NAME,
+    BEARTYPE_CLAW_STATE_MODULE_NAME,
+    BEARTYPE_CLAW_STATE_ATTR_NAME,
     BEARTYPE_DECORATOR_MODULE_NAME,
     BEARTYPE_DECORATOR_ATTR_NAME,
 )
@@ -129,10 +129,8 @@ from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
-from beartype._util.ast.utilastget import get_node_repr_indented
-from beartype._util.ast.utilastmake import (
-    make_node_importfrom,
-)
+# from beartype._util.ast.utilastget import get_node_repr_indented
+from beartype._util.ast.utilastmake import make_node_importfrom
 from beartype._util.ast.utilastmunge import copy_node_metadata
 from beartype._util.ast.utilasttest import is_node_callable_typed
 
@@ -305,8 +303,7 @@ class BeartypeNodeTransformer(NodeTransformer):
         * Our private
           :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator.
         * Our private
-          :obj:`beartype.claw._importlib.clawimpcache.module_name_to_beartype_conf`
-          global dictionary singleton.
+          :obj:`beartype.claw._clawcache.claw_state` singleton global.
         * Our public :func:`beartype.door.die_if_unbearable` exception raiser.
 
         Parameters
@@ -424,12 +421,10 @@ class BeartypeNodeTransformer(NodeTransformer):
                 node_sibling=node_import_prev,
             )
 
-            # Node importing our private
-            # "beartype.claw._importlib.clawimpcache.module_name_to_beartype_conf"
-            # dictionary.
-            node_import_conf_cache = make_node_importfrom(
-                module_name=BEARTYPE_CONF_CACHE_MODULE_NAME,
-                attr_name=BEARTYPE_CONF_CACHE_ATTR_NAME,
+            # Node importing our private "claw_state" singleton.
+            node_import_claw_state = make_node_importfrom(
+                module_name=BEARTYPE_CLAW_STATE_MODULE_NAME,
+                attr_name=BEARTYPE_CLAW_STATE_ATTR_NAME,
                 node_sibling=node_import_prev,
             )
 
@@ -442,7 +437,7 @@ class BeartypeNodeTransformer(NodeTransformer):
             node.body[node_import_beartype_attrs_index:0] = (
                 node_import_decorator,
                 node_import_raiser,
-                node_import_conf_cache,
+                node_import_claw_state,
             )
         # Else, this module is empty. In this case, silently reduce to a noop.
         # Since this edge case is *EXTREMELY* uncommon, avoid optimizing for

@@ -174,6 +174,7 @@ def alastor_or(the_spirit_of_solitude: Union[float, bytes]) -> (
         nondum_amabam(the_spirit_of_solitude)
     )
 
+
 # Assert that calling this function passed an arbitrary float returns the
 # expected complex number *WITHOUT* raising an exception.
 assert alastor_or(len('Earth, ocean, air, beloved brotherhood!') + 0.0) == (
@@ -224,6 +225,7 @@ class ConfessStAugust(object):
 
         # Look here, you. Just do it yet again!
         return and_recompense_the_boon_with_mine
+
 
 # Arbitrary instance of this class.
 if_dewy_morn = ConfessStAugust()

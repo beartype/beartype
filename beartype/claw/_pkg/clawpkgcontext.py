@@ -14,10 +14,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.claw._clawstate import (
+    claw_lock,
+    claw_state,
+)
 from beartype.claw._pkg.clawpkgtrie import (
-    clear_packages_trie,
-    packages_trie,
-    packages_trie_lock,
+    is_packages_trie,
     remove_beartype_pathhook_unless_packages_trie,
 )
 from beartype.typing import (
@@ -85,13 +87,14 @@ def beartyping(
     # Attempt to...
     try:
         # With a "beartype.claw"-specific thread-safe reentrant lock...
-        with packages_trie_lock:
+        with claw_lock:
             # Store the prior global beartype configuration if any.
-            packages_trie_conf_if_hooked_old = packages_trie.conf_if_hooked
+            packages_trie_conf_if_hooked_old = (
+                claw_state.packages_trie.conf_if_hooked)
 
             # Prevent the beartype_all() function from raising an exception on
             # conflicting registrations of beartype configurations.
-            packages_trie.conf_if_hooked = None
+            claw_state.packages_trie.conf_if_hooked = None
 
         # Globalize the passed beartype configuration.
         beartype_all(conf=conf)
@@ -101,18 +104,19 @@ def beartyping(
     # After doing so (regardless of whether doing so raised an exception)...
     finally:
         # With a "beartype.claw"-specific thread-safe reentrant lock...
-        with packages_trie_lock:
+        with claw_lock:
             # If the current global beartype configuration is still the passed
             # beartype configuration, then the caller's body of the parent "with
             # beartyping(...):" block has *NOT* itself called the beartype_all()
             # function with a conflicting beartype configuration. In this
             # case...
-            if packages_trie.conf_if_hooked == conf:
+            if claw_state.packages_trie.conf_if_hooked == conf:
                 # Restore the prior global beartype configuration if any.
-                packages_trie.conf_if_hooked = packages_trie_conf_if_hooked_old
+                claw_state.packages_trie.conf_if_hooked = (
+                    packages_trie_conf_if_hooked_old)
 
                 # Possibly remove our beartype import path hook added by the
-                # above call to beartype_all() if no packages are registered.
+                # above call to beartype_all() if *NO* packages are registered.
                 remove_beartype_pathhook_unless_packages_trie()
             # Else, the caller's body of the parent "with beartyping(...):" block
             # has itself called the beartype_all() function with a conflicting
@@ -143,12 +147,18 @@ def packages_trie_cleared() -> Iterator[None]:
         This context manager yields *no* objects.
     '''
 
+    # Assert that *NO* packages are still registered by a prior call to a
+    # beartype import hook.
+    assert not is_packages_trie()
+
     # Perform the caller-defined body of the parent "with" statement.
     try:
         yield
     # After doing so, regardless of whether doing so raised an exception...
     finally:
-        # With a submodule-specific thread-safe reentrant lock...
-        with packages_trie_lock:
-            # Reset our global trie back to its initial state.
-            clear_packages_trie()
+        # print(f'claw_state [after test]: {repr(claw_state)}')
+
+        # With a submodule-specific thread-safe reentrant lock, reset our import
+        # hook state back to its initial defaults.
+        with claw_lock:
+            claw_state.reinit()

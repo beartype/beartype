@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from ast import (
     AST,
+    Attribute,
     Call,
     Index,
     Name,
@@ -22,7 +23,8 @@ from ast import (
 )
 from beartype.claw._clawmagic import (
     NODE_CONTEXT_LOAD,
-    BEARTYPE_CONF_CACHE_ATTR_NAME,
+    BEARTYPE_CLAW_STATE_ATTR_NAME,
+    BEARTYPE_CLAW_STATE_CONF_CACHE_ATTR_NAME,
     BEARTYPE_DECORATOR_ATTR_NAME,
 )
 from beartype.claw._clawtyping import (
@@ -128,6 +130,10 @@ def make_node_keyword_conf(node_sibling: AST) -> keyword:
         Keyword node passing this configuration to an arbitrary function.
     '''
 
+    # Node encapsulating a reference to the beartype import hook state global.
+    node_claw_state = Name(
+        id=BEARTYPE_CLAW_STATE_ATTR_NAME, ctx=NODE_CONTEXT_LOAD)
+
     # Node encapsulating the fully-qualified name of that module of the
     # currently visited module, accessed via the "__name__" dunder attribute
     # accessible to any module.
@@ -136,8 +142,11 @@ def make_node_keyword_conf(node_sibling: AST) -> keyword:
     # Node encapsulating a reference to the beartype configuration object cache
     # (i.e., dictionary mapping from fully-qualified module names to the
     # beartype configurations associated with those modules).
-    node_module_name_to_conf = Name(
-        id=BEARTYPE_CONF_CACHE_ATTR_NAME, ctx=NODE_CONTEXT_LOAD)
+    node_module_name_to_conf = Attribute(
+        value=node_claw_state,
+        attr=BEARTYPE_CLAW_STATE_CONF_CACHE_ATTR_NAME,
+        ctx=NODE_CONTEXT_LOAD,
+    )
 
     # Node encapsulating the indexation of a dictionary by the fully-qualified
     # name of that module of the currently visited module.
@@ -181,6 +190,7 @@ def make_node_keyword_conf(node_sibling: AST) -> keyword:
     copy_node_metadata(
         node_src=node_sibling,
         node_trg=(
+            node_claw_state,
             node_module_name,
             node_module_name_to_conf,
             node_conf,

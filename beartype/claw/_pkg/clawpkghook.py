@@ -19,10 +19,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.claw._pkg.clawpkgenum import BeartypeClawCoverage
 from beartype.claw._pkg.clawpkgtrie import (
     PackagesTrie,
-    # is_packages_trie,
     iter_packages_trie,
-    packages_trie,
-    packages_trie_lock,
     remove_beartype_pathhook_unless_packages_trie,
 )
 from beartype.claw._importlib.clawimppath import (
@@ -119,6 +116,12 @@ def hook_packages(
         this function with respect to inscrutable :mod:`importlib` machinery.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype.claw._clawstate import (
+        claw_lock,
+        claw_state,
+    )
+
     # Replace this beartype configuration (which is typically unsuitable for
     # usage in import hooks) with a new beartype configuration suitable for
     # usage in import hooks.
@@ -133,19 +136,19 @@ def hook_packages(
     )
 
     # With a submodule-specific thread-safe reentrant lock...
-    with packages_trie_lock:
+    with claw_lock:
         # If the caller requested all-packages coverage...
         if claw_coverage is BeartypeClawCoverage.PACKAGES_ALL:
             # Beartype configuration currently associated with *ALL* packages by
             # a prior call to this function if any *OR* "None" (i.e., if this
             # function has yet to be called under this Python interpreter).
-            conf_curr = packages_trie.conf_if_hooked
+            conf_curr = claw_state.packages_trie.conf_if_hooked
 
             # If the higher-level beartype_all() function (calling this
             # lower-level adder) has yet to be called under this interpreter,
             # associate this configuration with *ALL* packages.
             if conf_curr is None:
-                packages_trie.conf_if_hooked = conf
+                claw_state.packages_trie.conf_if_hooked = conf
             # Else, beartype_all() was already called under this interpreter.
             #
             # If the caller passed a different configuration to that prior call
@@ -176,7 +179,7 @@ def hook_packages(
                 # Current subtrie of the global package trie describing the
                 # currently iterated basename of this package, initialized to
                 # the global trie configuring all top-level packages.
-                subpackages_trie = packages_trie
+                subpackages_trie = claw_state.packages_trie
 
                 # For each unqualified basename comprising the directed path from
                 # the root parent package of that package to that package...
@@ -281,6 +284,12 @@ def unhook_packages(
         Further details.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype.claw._clawstate import (
+        claw_lock,
+        claw_state,
+    )
+
     # Replace this beartype configuration (which is typically unsuitable for
     # usage in import hooks) with a new beartype configuration suitable for
     # usage in import hooks.
@@ -296,12 +305,12 @@ def unhook_packages(
     )
 
     # With a submodule-specific thread-safe reentrant lock...
-    with packages_trie_lock:
+    with claw_lock:
         # If the caller requested all-packages coverage...
         if claw_coverage is BeartypeClawCoverage.PACKAGES_ALL:
             # Unhook the beartype configuration previously associated with *ALL*
             # packages by a prior call to the beartype_all() function.
-            packages_trie.conf_if_hooked = None
+            claw_state.packages_trie.conf_if_hooked = None
         # Else, the caller requested coverage over a subset of packages. In this
         # case...
         else:

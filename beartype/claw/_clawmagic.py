@@ -62,20 +62,29 @@ the name of this package and thus suitable as a machine-readable delimiter).
 '''
 
 # ....................{ STRINGS ~ cache                    }....................
-BEARTYPE_CONF_CACHE_MODULE_NAME = 'beartype.claw._importlib.clawimpcache'
+BEARTYPE_CLAW_STATE_MODULE_NAME = 'beartype.claw._clawstate'
 '''
-Fully-qualified name of the submodule defining the **hooked module beartype
-configuration cache** (i.e., dictionary mapping from the fully-qualified name of
-each previously imported submodule of each package previously registered in our
-global package trie to the beartype configuration configuring type-checking by
-the :func:`beartype.beartype` decorator of that submodule).
+Fully-qualified name of the submodule defining **beartype import hook state**
+(i.e., non-thread-safe singleton centralizing *all* global state maintained by
+beartype import hooks).
 '''
 
 
-BEARTYPE_CONF_CACHE_ATTR_NAME = 'module_name_to_beartype_conf'
+BEARTYPE_CLAW_STATE_ATTR_NAME = 'claw_state'
 '''
-Unqualified basename of the hooked module beartype configuration cache relative
-to the fully-qualified name of its submodule.
+Unqualified basename of the beartype import hook state relative to the
+fully-qualified name of its submodule.
+'''
+
+
+BEARTYPE_CLAW_STATE_CONF_CACHE_ATTR_NAME = 'module_name_to_beartype_conf'
+'''
+Unqualified basename of the **hooked module beartype configuration cache**
+(i.e., dictionary mapping from the fully-qualified name of each previously
+imported submodule of each package previously registered in our global package
+trie to the beartype configuration configuring type-checking by the
+:func:`beartype.beartype` decorator of that submodule) relative to the
+beartype import hook state, which contains this cache.
 '''
 
 # ....................{ STRINGS ~ decorator                }....................
