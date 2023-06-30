@@ -214,6 +214,7 @@ def hook_packages(
                 # "subpackages_trie" to at least one subtrie of the global package
                 # trie. Moreover, that subtrie is guaranteed to describe the current
                 # (sub)package being registered.
+                # print(f'Hooked package "{package_name}" subpackage trie {repr(subpackages_trie)}...')
 
                 # Beartype configuration currently associated with that package by a
                 # prior call to this function if any *OR* "None" (i.e., if that

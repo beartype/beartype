@@ -112,7 +112,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
     Attributes
     ----------
-    _conf_beartype_if_module_hooked : Optional[BeartypeConf]
+    _module_conf_beartype : Optional[BeartypeConf]
         Either:
 
         * If the most recent call to the :meth:`get_code` method (which loads a
@@ -173,7 +173,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         super().__init__(*args, **kwargs)
 
         # Nullify all subclass-specific instance variables for safety.
-        self._conf_beartype_if_module_hooked: Optional[BeartypeConf] = None
+        self._module_conf_beartype: Optional[BeartypeConf] = None
         self._module_name_beartype: str = ''
 
     # ..................{ LOADER API                         }..................
@@ -271,76 +271,74 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         one-line monkey-patch, first typeguard and now @beartype strongly prefer
         this monkey-patch. Did we mention that @agronholm is amazing? Because
         that really bears repeating. May the name of Alex Grönholm live eternal!
+
+        Parameters
+        ----------
+        fullname : str
+            Fully-qualified name of the module currently being imported.
+
+        Returns
+        ----------
+        Optional[CodeType]
+            Code object underlying that module.
         '''
 
         # Avoid circular import dependencies.
         from beartype.claw._clawstate import claw_state
         from beartype.claw._pkg.clawpkgtrie import get_package_conf_or_none
 
-        # Classify the fully-qualified name of this module for subsequent
-        # reference in the lower-level source_to_code() method transitively
-        # called by this higher-level method.
-        self._module_name_beartype = fullname
+        # Beartype configuration with which to type-check that module if that
+        # module was directly hooked under its fully-qualified name *OR* "None"
+        # otherwise (i.e., if that module is directly unhooked).
+        conf = get_package_conf_or_none(fullname)
 
-        # Fully-qualified name of the parent package of the module with the
-        # passed fully-qualified name, defined as either...
-        package_name = (
-            # If that module is a submodule of a package, then the expression
-            # "fullname.rpartition('.')[0]" necessarily yields the
-            # fully-qualified name of that package;
-            fullname.rpartition('.')[0] or
+        # If that module is directly unhooked, that module could still be
+        # indirectly hooked via the parent package of that module. In this
+        # case...
+        if conf is None:
+            # Fully-qualified name of the parent package of that module.
+            #
+            # Note that this is the empty string if that module has *NO* parent
+            # package, which is fine. If that module has *NO* parent package,
+            # then the only means of hooking that module would have been for the
+            # caller to directly pass the fully-qualified name of that module to
+            # a beartype import hook. However, since the above call to the
+            # get_package_conf_or_none() getter returned "None", the caller did
+            # *NOT* directly pass this name to a beartype import hook.
+            package_name = fullname.rpartition('.')[0]
 
-            #FIXME: Actually, *IS* it feasible for a top-level module to be
-            #registered as a package? Certainly, our API permits that -- but how
-            #does "importlib" machinery actually import top-level modules? They
-            #don't have packages, but *ALL* "importlib" machinery is based on
-            #containing packages. This is a fascinating edge case, so let's
-            #investigate further if we ever grep up the time.
+            # Beartype configuration with which to type-check that module if
+            # that module was indirectly hooked under the fully-qualified name
+            # of a parent package of that module *OR* "None" otherwise (i.e., if
+            # that module is indirectly unhooked as well).
+            conf = get_package_conf_or_none(fullname)
+        # Else, that module is directly hooked.
+        # print(f'Imported module "{fullname}" package "{package_name}" conf: {repr(self._module_conf_beartype)}')
 
-            # Else, that module is a top-level module with *NO* parent package.
-            # In this case, since the above expression
-            # "fullname.rpartition('.')[0]" erroneously yields the empty string,
-            # fallback to the fully-qualified name of that module as is.
-            # Although unlikely, it is feasible for a top-level module to be
-            # registered as a package by a prior call resembling:
-            #     beartype.claw.beartype_package(fullname)
-            fullname
-        )
-
-        # Beartype configuration with which to type-check that module if the
-        # parent package of that module was previously registered *OR* "None"
-        # otherwise (i.e., if this function preserves that module unmodified).
-        #
-        # For usability by various consumers embedded throughout the
-        # "beartype.claw" subpackage, we add this configuration to several
-        # different data structures -- including:
-        # * "module_name_to_beartype_conf", a global dictionary externally
-        #   leveraged by the "beartype.claw._ast" subpackage. (See below.)
-        # * "self._conf_beartype_if_module_hooked", an instance variable
-        #   internally leveraged by the source_to_code() method defined below.
-        self._conf_beartype_if_module_hooked = get_package_conf_or_none(
-            package_name)
-        # print(f'Imported module "{fullname}" package "{package_name}" conf: {repr(self._conf_beartype_if_module_hooked)}')
-
-        # If that module has *NOT* been registered for type-checking, preserve
-        # that module as is by simply deferring to the superclass method
-        # *WITHOUT* monkey-patching cache_from_source(). This isn't only an
-        # optimization, although it certainly is that as well. This is critical.
-        # Why? Because modules *NOT* being beartyped should remain compiled
-        # under their standard non-beartyped bytecode filenames.
-        if self._conf_beartype_if_module_hooked is None:
+        # If that module is both directly and indirectly unhooked, preserve that
+        # module as is by simply deferring to the superclass method *WITHOUT*
+        # monkey-patching cache_from_source(). This isn't only an optimization,
+        # though it certainly is that as well. This is critical. Why? Because
+        # modules *NOT* being beartyped should remain compiled under their
+        # standard non-beartyped bytecode filenames.
+        if conf is None:
             # print(f'Importing module "{fullname}" without beartyping...')
             return super().get_code(fullname)
-        # Else, that module has been registered for type-checking. In this
-        # case...
+        # Else, that module has been either directly or indirectly hooked. In
+        # this case...
         #
         # Note that the logic below requires inefficient exception handling (as
         # well as a potentially risky monkey-patch) and is thus performed *ONLY*
         # when absolutely necessary.
         else:
+            # Classify local attributes as instance variables for subsequent
+            # reference in the lower-level source_to_code() method transitively
+            # called by this higher-level method.
+            self._module_conf_beartype = conf
+            self._module_name_beartype = fullname
+
             # Expose this configuration to the "beartype.claw._ast" subpackage.
-            claw_state.module_name_to_beartype_conf[fullname] = (
-                self._conf_beartype_if_module_hooked)
+            claw_state.module_name_to_beartype_conf[fullname] = conf
             # print(f'Importing module "{fullname}" with beartyping: ...')
 
             # Temporarily monkey-patch away the cache_from_source() function.
@@ -416,7 +414,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
         # If that module has *NOT* been registered for type-checking, preserve
         # that module as is by simply deferring to the superclass method.
-        if self._conf_beartype_if_module_hooked is None:
+        if self._module_conf_beartype is None:
             return super().source_to_code(  # type: ignore[call-arg]
                 data=data, path=path, _optimize=_optimize)  # pyright: ignore[reportGeneralTypeIssues]
         # Else, that module has been registered for type-checking.
@@ -438,7 +436,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
         # AST transformer decorating typed callables and classes by @beartype.
         ast_beartyper = BeartypeNodeTransformer(
-            conf_beartype=self._conf_beartype_if_module_hooked)
+            conf_beartype=self._module_conf_beartype)
 
         # Abstract syntax tree (AST) modified by this transformer.
         module_ast_beartyped = ast_beartyper.visit(module_ast)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -26,276 +26,147 @@ This file is the aforementioned ``conftest.py`` file "...situated at the tests
 root directory."
 '''
 
-# ....................{ IMPORTS                           }....................
-from pytest import fixture
-import os, sys
+# ....................{ IMPORTS                            }....................
+from pytest import Function
+from typing import Optional
 
-# ....................{ HOOKS ~ session : start           }....................
-def pytest_sessionstart(session: '_pytest.main.Session') -> None:
+# ....................{ HOOKS ~ ini                        }....................
+def pytest_configure(config) -> None:
     '''
-    Hook run immediately *before* starting the current test session (i.e.,
-    calling the :func:`pytest.session.main` function).
+    Hook programmatically configuring the top-level ``"pytest.ini"`` file.
+    '''
+
+    # Programmatically add our custom "run_in_subprocess" mark, enabling tests
+    # to notify the pytest_pyfunc_call() hook that they require isolation to a
+    # Python subprocess of the current Python process.
+    config.addinivalue_line(
+        'markers',
+        f'{_MARK_NAME_SUBPROCESS}: mark test to run in an isolated subprocess',
+    )
+
+# ....................{ HOOKS ~ test : run                 }....................
+def pytest_pyfunc_call(pyfuncitem: Function) -> Optional[bool]:
+    '''
+    Hook intercepting the call to run the passed :mod:`pytest` test function.
+
+    Specifically, this test:
+
+    * If this test has been decorated by our custom
+      ``@pytest.mark.run_in_subprocess`` marker, runs this test in a Python
+      subprocess of the current Python process isolated to this test.
+    * Else, runs this test in the current Python process by deferring to the
+      standard :mod:`pytest` logic for running this test.
 
     Parameters
     ----------
-    session: _pytest.main.Session
-        :mod:`pytest`-specific test session object.
-    '''
+    pyfuncitem: Function
+        :mod:`pytest`-specific object encapsulating the current test function
+        being run.
 
-    #FIXME: This doesn't appear to be working when this package is editably
-    #installed into a venv. We need to fix this -- and promptly!
-    # Sanitize import directories *BEFORE* the first module importation.
-    # _clean_imports()
-
-
-#FIXME: Sufficiently general-purpose and widely useful that we should consider
-#shifting this into a newly discrete "pytest" plugin -- named, say:
-#* "pytest-pretox". Equally clever and meaningful and hence probably the best
-#   name suggested here.
-#* "pytest-retox". (Clever, and mildly meaningfull.)
-#* "pytest-detox". (Clever, but sadly meaningless.)
-#Once created, we can then require this plugin in both this *AND* various other
-#codebases. At present, we have no alternative means of sharing this code. DRY!
-def _clean_imports() -> None:
-    '''
-    Sanitize and validate import directories (i.e., the global :attr:`sys.list`
-    of the absolute and relative dirnames of all directories to search for
-    modules and packages to be imported from).
-
-    Specifically, this function:
-
-    * If this low-level :mod:`pytest` test harness is *not* isolated to a venv
-      (e.g., due to being exercised by the low-level ``pytest`` command),
-      reduce to a noop.
-    * Else, this harness is isolated to a venv (e.g., due to being exercised by
-      the high-level ``tox`` command):
-
-      #. If the top-level directory for this project is listed in the global
-         list of all import directories (i.e., :attr:`sys.path`), remove this
-         directory from this list. Doing so prevents this test session from
-         accidentally importing from modules *not* isolated to this venv,
-         including this project being tested.
-      #. If the first directory on this list is *not* isolated to this venv,
-         raise an exception. This condition implies that modules will be
-         imported from outside this venv, which entirely defeats the purpose of
-         isolating tests with :mod:`tox` to a venv in the first place.
-      #. If the top-level package is *not* isolated to this venv, raise an
-         exception. This condition implies that this project has been imported
-         from outside this venv -- again defeating the purpose.
-
-    Raises
+    Returns
     ----------
-    ValueError
-        If either the first directory on :attr:`sys.path` or the top-level
-        package are *not* isolated to this venv.
+    Optional[bool]
+        Either:
+
+        * If this hook ran this test, :data:`True`.
+        * If this hook did *not* run this test, :data:`None`.
+
+    See Also
+    ----------
+    https://github.com/ansible/pytest-mp/issues/15#issuecomment-1342682418
+        GitHub comment by @pelson (Phil Elson) strongly inspiring this hook.
     '''
 
-    # Print a header for disambiguity.
-    print('----------[ venv ]----------')
+    # If this test has been decorated by our custom
+    # @pytest.mark.run_in_subprocess marker...
+    if _MARK_NAME_SUBPROCESS in pyfuncitem.keywords:
+        # Defer hook-specific imports.
+        from multiprocessing import Process
+        from pytest import fail
 
-    # Print the absolute dirname of the system-wide Python prefix and current
-    # Python prefix, which differs from the former under venvs.
-    print(f'python prefix (system [base]): {sys.base_prefix}')
-    print(f'python prefix (system [real]): {getattr(sys, "real_prefix", "")}')
-    print(f'python prefix (current): {sys.prefix}')
+        def _run_test_in_subprocess() -> object:
+            '''
+            Run the current :mod:`pytest` test function isolated to a Python
+            subprocess of the current Python process.
 
-    # True only if tests are isolated to a venv produced by either...
-    #
-    # See the betse.util.py.pvenv.is_venv() function, whose implementation is
-    # inlined below. While calling that function directly would (of course) be
-    # preferable, doing so invites chicken-and-egg issues by importing *BEFORE*
-    # sanitizing import directories.
-    is_venv = (
-        # "virtualenv", which uniquely defines the "sys.real_prefix"
-        # attribute to the absolute dirname of the top-level directory
-        # containing the system-wide Python interpreter *OR*...
-        hasattr(sys, 'real_prefix') or
+            Returns
+            ----------
+            object
+                Arbitrary object returned by this test if any *or* :data:`None`.
+            '''
 
-        # "venv", which (possibly non-uniquely) sets:
-        #
-        # * The "sys.base_prefix" attribute to the absolute dirname of the
-        #   top-level directory containing the system-wide Python interpreter.
-        # * The "sys.prefix" attribute to the absolute dirname of the
-        #   top-level directory containing the venv-specific Python interpreter
-        #   if any *OR* the system-wide Python interpreter otherwise.
-        #
-        # Note that, as Python >= 3.3 *ALWAYS* defines the "sys.base_prefix"
-        # attribute, testing that attribute's existence is unnecessary.
-        sys.prefix != sys.base_prefix
-    )
+            # Defer subpracess-specific imports.
+            import sys
 
-    # Print whether tests are isolated to a venv.
-    print(f'venv test isolation: {is_venv}')
+            # Monkey-patch the unbuffered standard error and output streams of
+            # this subprocess with buffered equivalents, ensuring that pytest
+            # will reliably capture *all* standard error and output emitted by
+            # running this test.
+            sys.stderr = _UnbufferedOutputStream(sys.stderr)
+            sys.stdout = _UnbufferedOutputStream(sys.stdout)
 
-    # If tests are *NOT* isolated to a venv, silently reduce to a noop.
-    if not is_venv:
-        return
-    # ELse, tests are isolated to a venv.
+            # Run this test and return the result of doing so.
+            return pyfuncitem.obj()
 
-    # Absolute dirname of this project's top-level directory.
-    PROJECT_DIRNAME = os.path.dirname(__file__)
+        # Python subprocess tasked with running this test.
+        test_subprocess = Process(target=_run_test_in_subprocess)
 
-    # Absolute dirname of this venv's top-level directory, suffixed by a
-    # directory separator for disambiguity when calling str.startswith() below.
-    VENV_DIRNAME = sys.prefix + os.path.sep
+        # Begin running this test in this subprocess.
+        test_subprocess.start()
 
-    # Function-specific tester requiring "VENV_DIRNAME" and called below.
-    def _is_import_path_isolated(import_pathname: str) -> bool:
-        '''
-        ``True`` only if the passed pathname is either isolated to this venv
-        *or* is a zipfile.
+        # Block this parent Python process until this test completes.
+        test_subprocess.join()
 
-        Specifically, this function returns ``True`` only if either:
+        # If this subprocess reports non-zero exit status, this test failed. In
+        # this case...
+        if test_subprocess.exitcode != 0:
+            # Human-readable exception message to be raised.
+            exception_message = (
+                f'Test "{pyfuncitem.name}" failed in isolated subprocess with:')
 
-        * This pathname is prefixed by the absolute dirname of this venv's
-          top-level directory.
-        * This pathname is suffixed by ``.zip``. Regardless of whether this
-          path is isolated to this venv, zipfiles are by definition effectively
-          isolated from filesystem modification (e.g., ``pip``- and
-          ``setuptools``-based package installation) and thus isolated for all
-          practical intents and purposes.
-        '''
+            # Raise a pytest-compliant exception.
+            raise fail(exception_message, pytrace=False)
+        # Else, this subprocess reports zero exit status. In this case, this
+        # test succeeded.
 
-        # Return true only if either...
-        return (
-            # This pathname is isolated to this venv *OR*...
-            import_pathname.startswith(VENV_DIRNAME) or
-            # This pathname is a zipfile.
-            (
-                os.path.isfile(import_pathname) and
-                import_pathname.endswith('.zip')
-            )
-        )
+        # Notify pytest that this hook successfully ran this test.
+        return True
 
-    # Sanitized list of the absolute pathnames of all paths to find modules to
-    # be imported from, reordered from the unsanitized list of these pathnames
-    # such that pathnames *NOT* isolated to this venv are shifted to the end of
-    # this list and thus deprioritized with respect to pathnames isolated to
-    # this venv.
-    #
-    # Ideally, pathnames *NOT* isolated to this venv would simply be removed
-    # from this list. Unfortunately, doing so fundamentally breaks the world.
-    # Why? Because most venv packages fail to adequately isolate venvs from
-    # system-wide paths. Specifically, the "venv" and "virtualenv" packages
-    # both create insufficient and arguably broken virtual environments whose
-    # "lib/python${PYTHON_VERSION}/" subdirectories contain only a proper
-    # subset of all requisite stdlib files -- thus necessitating that the
-    # equivalent system-wide pathnames remain on "sys.path". Removing these
-    # pathnames induces this fatal exception on attempting to import the stdlib
-    # "pkgutil" submodule from within a purportedly isolated "tox" test venv:
-    #
-    #    INTERNALERROR> Traceback (most recent call last):
-    #    INTERNALERROR>   File "/home/leycec/py/betse/.tox/py36/lib/python3.6/site-packages/_pytest/main.py", line 194, in wrap_session
-    #    INTERNALERROR>     config.hook.pytest_sessionstart(session=session)
-    #    INTERNALERROR>   File "/home/leycec/py/betse/.tox/py36/lib/python3.6/site-packages/pluggy/hooks.py", line 286, in __call__
-    #    INTERNALERROR>     return self._hookexec(self, self.get_hookimpls(), kwargs)
-    #    INTERNALERROR>   File "/home/leycec/py/betse/.tox/py36/lib/python3.6/site-packages/pluggy/manager.py", line 92, in _hookexec
-    #    INTERNALERROR>     return self._inner_hookexec(hook, methods, kwargs)
-    #    INTERNALERROR>   File "/home/leycec/py/betse/.tox/py36/lib/python3.6/site-packages/pluggy/manager.py", line 86, in <lambda>
-    #    INTERNALERROR>     firstresult=hook.spec.opts.get("firstresult") if hook.spec else False,
-    #    INTERNALERROR>   File "/home/leycec/py/betse/.tox/py36/lib/python3.6/site-packages/pluggy/callers.py", line 208, in _multicall
-    #    INTERNALERROR>     return outcome.get_result()
-    #    INTERNALERROR>   File "/home/leycec/py/betse/.tox/py36/lib/python3.6/site-packages/pluggy/callers.py", line 80, in get_result
-    #    INTERNALERROR>     raise ex[1].with_traceback(ex[2])
-    #    INTERNALERROR>   File "/home/leycec/py/betse/.tox/py36/lib/python3.6/site-packages/pluggy/callers.py", line 187, in _multicall
-    #    INTERNALERROR>     res = hook_impl.function(*args)
-    #    INTERNALERROR>   File "/home/leycec/py/betse/conftest.py", line 106, in pytest_sessionstart
-    #    INTERNALERROR>     _print_metadata()
-    #    INTERNALERROR>   File "/home/leycec/py/betse/conftest.py", line 260, in _print_metadata
-    #    INTERNALERROR>     from betse.util.py.module import pymodule
-    #    INTERNALERROR>   File "/home/leycec/py/betse/.tox/py36/lib/python3.6/site-packages/betse/util/py/module/pymodule.py", line 31, in <module>
-    #    INTERNALERROR>     from betse.util.io.log import logs
-    #    INTERNALERROR>   File "/home/leycec/py/betse/.tox/py36/lib/python3.6/site-packages/betse/util/io/log/logs.py", line 54, in <module>
-    #    INTERNALERROR>     from betse.util.type import types
-    #    INTERNALERROR>   File "/home/leycec/py/betse/.tox/py36/lib/python3.6/site-packages/betse/util/type/types.py", line 22, in <module>
-    #    INTERNALERROR>     import functools, inspect, logging, pkg_resources, re
-    #    INTERNALERROR>   File "/home/leycec/py/betse/.tox/py36/lib/python3.6/site-packages/pkg_resources/__init__.py", line 31, in <module>
-    #    INTERNALERROR>     import pkgutil
-    #    INTERNALERROR> ModuleNotFoundError: No module named 'pkgutil'
-    #    ERROR: InvocationError for command /home/leycec/py/betse/.tox/py36/bin/pytest /home/leycec/py/betse (exited with code 3)
-    sys_path_new = []
+    # Notify pytest that this hook avoided attempting to run this test, in which
+    # case pytest will continue to look for a suitable runner for this test.
+    return None
 
-    # Sanitized list of the absolute pathnames of all paths to find modules to
-    # be imported from that are *NOT* isolated to this venv, appended to the
-    # "sys_path_new" list after iteration and thus deprioritized.
-    sys_path_nonvenv = []
+# ....................{ PRIVATE ~ globals                  }....................
+_MARK_NAME_SUBPROCESS = 'run_in_subprocess'
+'''
+**Subprocess mark** (i.e., name of our custom :mod:`pytest` mark, enabling tests
+to notify the :func:`.pytest_pyfunc_call` hook that they require isolation to a
+Python subprocess of the current Python process).
+'''
 
-    # Print the absolute dirname of this venv's top-level directory.
-    print(f'venv dir: {sys.prefix}')
+# ....................{ PRIVATE ~ classes                  }....................
+class _UnbufferedOutputStream(object):
+    '''
+    **Unbuffered standard output stream** (i.e., proxy object encapsulating a
+    buffered standard output stream by forcefully flushing that stream on all
+    writes to that stream).
 
-    # For the pathname of each path to find imports from...
-    for import_pathname in sys.path:
-        # If this pathname is the empty string (implying this project's
-        # top-level directory), ignore this pathname and warn the user.
-        if not import_pathname:
-            print(
-                'WARNING: Ignoring non-isolated empty import directory...',
-                file=sys.stderr)
-        # Else if this pathname is that of this project's top-level directory,
-        # ignore this pathname and warn the user.
-        elif import_pathname == PROJECT_DIRNAME:
-            print(
-                f'WARNING: Ignoring non-isolated import directory '
-                f'"{import_pathname}"...',
-                file=sys.stderr)
-        # Else if this pathname is *NOT* isolated to this venv...
-        elif not _is_import_path_isolated(import_pathname):
-            # Warn the user.
-            print(
-                f'WARNING: Deprioritizing non-isolated import path '
-                f'"{import_pathname}"...',
-                file=sys.stderr)
+    See Also
+    ----------
+    https://github.com/ansible/pytest-mp/issues/15#issuecomment-1342682418
+        GitHub comment by @pelson (Phil Elson) strongly inspiring this class.
+    '''
 
-            # Append this pathname to the deprioritized list.
-            sys_path_nonvenv.append(import_pathname)
-        # Else, this pathname is isolated to this venv. In this case,  preserve
-        # this pathname's ordering in the sanitized list.
-        else:
-            sys_path_new.append(import_pathname)
-    # The sanitized list has now been purged of offending pathnames.
+    def __init__(self, stream) -> None:
+        self.stream = stream
 
-    # Extend the sanitized list of prioritized pathnames with the
-    # corresponding list of deprioritized pathnames.
-    sys_path_new.extend(sys_path_nonvenv)
+    def write(self, data) -> None:
+        self.stream.write(data)
+        self.stream.flush()
 
-    # Print the unsanitized list of these pathnames.
-    print(f'venv import paths (unsanitized): {sys.path}')
+    def writelines(self, datas) -> None:
+        self.stream.writelines(datas)
+        self.stream.flush()
 
-    # Print the sanitized list of these pathnames.
-    print(f'venv import paths (sanitized): {sys_path_new}')
-
-    # Replace the original unsanitized list with this sanitized list as a
-    # single atomic assignment, avoiding synchronization issues.
-    sys.path = sys_path_new
-    # print('import paths: ' + str(sys.path))
-
-    # First pathname on this sanitized list.
-    import_pathname_first = sys.path[0]
-
-    # If this pathname is *NOT* isolated to this venv, raise an exception.
-    #
-    # By the above deprioritization of pathnames *NOT* isolated to this venv in
-    # this sanitized list, the first pathname on this list should *ALWAYS* be
-    # isolated to this venv.
-    #
-    if not _is_import_path_isolated(import_pathname_first):
-        raise ValueError(
-            f'Leading import path "{import_pathname_first}" not isolated to '
-            f'venv directory "{VENV_DIRNAME}".'
-        )
-
-    # Top-level package, imported only *AFTER* sanity checks above.
-    import beartype as package
-
-    # Absolute dirname of the directory defining this package.
-    PACKAGE_DIRNAME = os.path.dirname(package.__file__)
-
-    # Print this dirname.
-    print(f'venv project path: {PACKAGE_DIRNAME}')
-
-    # If this directory is *NOT* isolated to this venv, raise an exception.
-    if not _is_import_path_isolated(PACKAGE_DIRNAME):
-        raise ValueError(
-            f'Project import directory "{PACKAGE_DIRNAME}" not isolated to '
-            f'venv directory "{VENV_DIRNAME}".'
-        )
+    def __getattr__(self, attr: str) -> object:
+        return getattr(self.stream, attr)

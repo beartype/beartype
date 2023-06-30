@@ -9,24 +9,20 @@ the :mod:`beartype.claw.beartype_this_package` import hook).
 '''
 
 # ....................{ IMPORTS                            }....................
-#FIXME: Isolate each unit test defined below to its own subprocess. Why? Module
-#imports. Since each unit test defined below tends to reimport the same (or, at
-#least, similar) modules as previously run unit tests defined below, module
-#imports and thus unit tests *MUST* be isolated to their own subprocesses to
-#ensure that these tests may be run in any arbitrary order. See also this astute
-#GitHub comment for a related third-party "pytest" plugin; although we do *NOT*
-#want to adopt that plugin, this comment provides an awesome snippet that we can
-#presumably copy-paste into this test suite to conditionally enable test
-#isolation on a test-by-test basis:
-#    https://github.com/ansible/pytest-mp/issues/15#issuecomment-1342682418
-
-# ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: Isolate each unit test defined below to its own subprocess. Why?
+# Module imports. Since each unit test defined below tends to reimport the same
+# (or, at least, similar) modules as previously run unit tests defined below,
+# module imports and thus unit tests *MUST* be isolated to their own
+# subprocesses to ensure these tests may be run in any arbitrary order.
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+import pytest
 
 # ....................{ TESTS                              }....................
+@pytest.mark.run_in_subprocess
 def test_claw_beartype_this_package() -> None:
     '''
     Test the :mod:`beartype.claw.beartype_this_package` import hook against a
@@ -45,21 +41,29 @@ def test_claw_beartype_this_package() -> None:
     from beartype_test.a00_unit.data.claw import unhookable_module
 
 
+@pytest.mark.run_in_subprocess
 def test_claw_beartype_package() -> None:
     '''
-    Test the :mod:`beartype.claw.beartype_package` import hook against a data
-    subpackage in this test suite exercising *all* edge cases associated with
-    this import hook.
+    Test the :mod:`beartype.claw.beartype_package` import hook against a single
+    data subpackage in this test suite exercising *all* edge cases associated
+    with this import hook.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
+    from beartype import BeartypeConf
     from beartype.claw import beartype_package
+    from beartype.roar import BeartypeClawHookException
+    from pytest import raises
 
-    # ....................{ HOOKS                          }....................
+    # ....................{ LOCALS                         }....................
+    # Name of the single package to be subject to beartype import hooks below.
+    PACKAGE_NAME = 'beartype_test.a00_unit.data.claw.hookable_package'
+
+    # ....................{ PASS                           }....................
     # Explicitly subject this single package to a beartype import hook
     # configured by the default beartype configuration.
-    beartype_package('beartype_test.a00_unit.data.claw.hookable_package')
+    beartype_package(PACKAGE_NAME)
 
     # Import all submodules of the package hooked above, exercising that these
     # submodules are subject to that import hook.
@@ -72,8 +76,122 @@ def test_claw_beartype_package() -> None:
     # Import an arbitrary submodule *NOT* subject to those import hooks.
     from beartype_test.a00_unit.data.claw import unhookable_module
 
-    # ....................{ PASS                           }....................
-    #FIXME: Exercise the beartype_package() with additional asserts of all
-    #possible edge cases.
+    # Assert that repeating the same import hook as above silently succeeds.
+    beartype_package(PACKAGE_NAME)
 
     # ....................{ FAIL                           }....................
+    # Assert that passing an invalid package name to this import hook raises the
+    # expected exception, where invalid package name includes:
+    # * A non-string.
+    # * An empty string.
+    # * A non-empty string that is *NOT* a valid Python identifier.
+    with raises(BeartypeClawHookException):
+        beartype_package(b'Keeps record of the trophies won from thee,')
+    with raises(BeartypeClawHookException):
+        beartype_package('')
+    with raises(BeartypeClawHookException):
+        beartype_package('0_hoping_to.still.these_obstinate_questionings')
+
+    # Assert that passing an invalid beartype configuration to this import hook
+    # raises the expected exception.
+    with raises(BeartypeClawHookException):
+        beartype_package(
+            package_name=PACKAGE_NAME,
+            conf='Of thee and thine, by forcing some lone ghost',
+        )
+
+    # Assert that repeating a similar import hook as above under a different
+    # (and thus conflicting) beartype configuration raises the expected
+    # exception.
+    with raises(BeartypeClawHookException):
+        beartype_package(
+            package_name=PACKAGE_NAME,
+            conf=BeartypeConf(is_debug=True),
+        )
+
+
+@pytest.mark.run_in_subprocess
+def test_claw_beartype_packages() -> None:
+    '''
+    Test the :mod:`beartype.claw.beartype_packages` import hook against multiple
+    data subpackage in this test suite exercising *all* edge cases associated
+    with this import hook.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import BeartypeConf
+    from beartype.claw import beartype_packages
+    from beartype.roar import (
+        BeartypeClawHookException,
+        BeartypeDoorHintViolation,
+    )
+    from pytest import raises
+
+    # ....................{ LOCALS                         }....................
+    # Tuple of the names of two or more packages to be subject to beartype
+    # import hooks below.
+    PACKAGE_NAMES = (
+        'beartype_test.a00_unit.data.claw.hookable_package',
+        'beartype_test.a00_unit.data.claw.hookable_package.hookable_subpackage',
+        'beartype_test.a00_unit.data.claw.unhookable_module',
+    )
+
+    # ....................{ PASS                           }....................
+    # Explicitly subject these multiple packages to a beartype import hook
+    # configured by the default beartype configuration.
+    beartype_packages(PACKAGE_NAMES)
+
+    # Import all submodules of the package hooked above, exercising that these
+    # submodules are subject to that import hook.
+    from beartype_test.a00_unit.data.claw.hookable_package import pep526_module
+    from beartype_test.a00_unit.data.claw.hookable_package.hookable_subpackage import (
+        class_submodule,
+        func_submodule,
+    )
+
+    # Assert that repeating the same import hook as above silently succeeds.
+    beartype_packages(PACKAGE_NAMES)
+
+    # ....................{ FAIL                           }....................
+    # Assert that attempting to unsafely import a submodule directly hooked
+    # above that is *NOT* hookable by @beartype raises the expected exception.
+    with raises(BeartypeDoorHintViolation):
+        from beartype_test.a00_unit.data.claw import unhookable_module
+
+    # Assert that passing an invalid iterable of package names to this import
+    # hook raises the expected exception, where invalid iterable includes:
+    # * A non-iterable.
+    # * An empty iterable.
+    # * A non-empty iterable containing one or more items that are either:
+    #   * A non-string.
+    #   * An empty string.
+    #   * A non-empty string that is *NOT* a valid Python identifier.
+    with raises(BeartypeClawHookException):
+        beartype_packages('Thy messenger, to render up the tale')
+    with raises(BeartypeClawHookException):
+        beartype_packages(())
+    with raises(BeartypeClawHookException):
+        beartype_packages((b'Of what we are. In lone and silent hours,',))
+    with raises(BeartypeClawHookException):
+        beartype_packages(('',))
+    with raises(BeartypeClawHookException):
+        beartype_packages(
+            ('when.night_makes_a.weird_sound.of.its.0_own_stillness',))
+
+    # Assert that passing an invalid beartype configuration to this import hook
+    # raises the expected exception.
+    with raises(BeartypeClawHookException):
+        beartype_packages(
+            package_names=PACKAGE_NAMES,
+            conf='Like an inspired and desperate alchymist',
+        )
+
+    # Assert that repeating a similar import hook as above under a different
+    # (and thus conflicting) beartype configuration raises the expected
+    # exception.
+    with raises(BeartypeClawHookException):
+        beartype_packages(
+            package_names=PACKAGE_NAMES,
+            conf=BeartypeConf(is_debug=True),
+        )
