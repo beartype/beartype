@@ -81,35 +81,16 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> Optional[bool]:
     # @pytest.mark.run_in_subprocess marker...
     if _MARK_NAME_SUBPROCESS in pyfuncitem.keywords:
         # Defer hook-specific imports.
+        from functools import partial
         from multiprocessing import Process
         from pytest import fail
 
-        def _run_test_in_subprocess() -> object:
-            '''
-            Run the current :mod:`pytest` test function isolated to a Python
-            subprocess of the current Python process.
-
-            Returns
-            ----------
-            object
-                Arbitrary object returned by this test if any *or* :data:`None`.
-            '''
-
-            # Defer subpracess-specific imports.
-            import sys
-
-            # Monkey-patch the unbuffered standard error and output streams of
-            # this subprocess with buffered equivalents, ensuring that pytest
-            # will reliably capture *all* standard error and output emitted by
-            # running this test.
-            sys.stderr = _UnbufferedOutputStream(sys.stderr)
-            sys.stdout = _UnbufferedOutputStream(sys.stdout)
-
-            # Run this test and return the result of doing so.
-            return pyfuncitem.obj()
+        # Partial object encapsulating the _run_test_in_subprocess() helper
+        # bound to the current "pyfuncitem" object encapsulating this test.
+        run_test_in_subprocess = partial(_run_test_in_subprocess, pyfuncitem)
 
         # Python subprocess tasked with running this test.
-        test_subprocess = Process(target=_run_test_in_subprocess)
+        test_subprocess = Process(target=run_test_in_subprocess)
 
         # Begin running this test in this subprocess.
         test_subprocess.start()
@@ -170,3 +151,27 @@ class _UnbufferedOutputStream(object):
 
     def __getattr__(self, attr: str) -> object:
         return getattr(self.stream, attr)
+
+# ....................{ PRIVATE ~ functions                }....................
+def _run_test_in_subprocess(pyfuncitem: Function) -> object:
+    '''
+    Run the passed :mod:`pytest` test function isolated to a Python subprocess
+    of the current Python process.
+
+    Returns
+    ----------
+    object
+        Arbitrary object returned by this test if any *or* :data:`None`.
+    '''
+
+    # Defer subpracess-specific imports.
+    import sys
+
+    # Monkey-patch the unbuffered standard error and output streams of this
+    # subprocess with buffered equivalents, ensuring that pytest will reliably
+    # capture *all* standard error and output emitted by running this test.
+    sys.stderr = _UnbufferedOutputStream(sys.stderr)
+    sys.stdout = _UnbufferedOutputStream(sys.stdout)
+
+    # Run this test and return the result of doing so.
+    return pyfuncitem.obj()
