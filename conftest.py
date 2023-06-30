@@ -27,6 +27,7 @@ root directory."
 '''
 
 # ....................{ IMPORTS                            }....................
+from collections.abc import Callable
 from pytest import Function
 from typing import Optional
 
@@ -85,12 +86,15 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> Optional[bool]:
         from multiprocessing import Process
         from pytest import fail
 
+        # Test function to be run.
+        test_func = pyfuncitem.function
+
         # Partial object encapsulating the _run_test_in_subprocess() helper
         # bound to the current "pyfuncitem" object encapsulating this test.
-        run_test_in_subprocess = partial(_run_test_in_subprocess, pyfuncitem)
+        test_func_in_subprocess = partial(_test_func_in_subprocess, test_func)
 
         # Python subprocess tasked with running this test.
-        test_subprocess = Process(target=run_test_in_subprocess)
+        test_subprocess = Process(target=test_func_in_subprocess)
 
         # Begin running this test in this subprocess.
         test_subprocess.start()
@@ -153,10 +157,15 @@ class _UnbufferedOutputStream(object):
         return getattr(self.stream, attr)
 
 # ....................{ PRIVATE ~ functions                }....................
-def _run_test_in_subprocess(pyfuncitem: Function) -> object:
+def _test_func_in_subprocess(test_func: Callable) -> object:
     '''
     Run the passed :mod:`pytest` test function isolated to a Python subprocess
     of the current Python process.
+
+    Parameters
+    ----------
+    test_func : Callable
+        Test function to be run.
 
     Returns
     ----------
@@ -174,4 +183,4 @@ def _run_test_in_subprocess(pyfuncitem: Function) -> object:
     sys.stdout = _UnbufferedOutputStream(sys.stdout)
 
     # Run this test and return the result of doing so.
-    return pyfuncitem.obj()
+    return test_func()
