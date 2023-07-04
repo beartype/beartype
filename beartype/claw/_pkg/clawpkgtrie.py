@@ -13,18 +13,6 @@ lookup when deciding whether or not (and how) to decorate by
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: *WOOPS.* Altogether too much dangerous reassignable global state going
-#around, folks. Instead, all global state that we intend to reassign with an
-#assignment statement needs to be accessed through a single global. Let's
-#refactor this immediately:
-#* Remove the existing "packages_trie" and "module_name_to_beartype_conf"
-#  globals.
-#* Refactor AST generation to access "module_name_to_beartype_conf" through
-#  "claw_state" instead.
-#* Call reinit() from packages_trie_cleared(), please.
-#* Probably excise clear_packages_trie() entirely, please.
-
 # ....................{ IMPORTS                            }....................
 from beartype.claw._importlib.clawimppath import remove_beartype_pathhook
 from beartype.typing import (
@@ -298,39 +286,6 @@ def iter_packages_trie(package_name: str) -> Iterable[PackagesTrie]:
     This generator intentionally avoids yielding the global trie
     :data:`.packages_trie`, which is already accessible via that global.
 
-    Caveats
-    ----------
-    This generator generator yields nothing and thus silently reduces to the
-    empty generator when the passed package names is ignorable. This includes:
-
-    * Either ``"beartype"`` or any subpackage or submodule thereof, thus
-      silently ignoring all dangerous attempts to type-check the :mod:`beartype`
-      package by the :func:`beartype.beartype` decorator. Doing so would be:
-
-      * **Fundamentally unnecessary.** The entirety of the :mod:`beartype`
-        package already religiously guards against type violations with a
-        laborious slew of type checks littered throughout the codebase --
-        including assertions of the form ``"assert isinstance({arg}, {type}),
-        ..."``. Further decorating *all* :mod:`beartype` callables with
-        automated type-checking only needlessly reduces the runtime efficiency
-        of the :mod:`beartype` package.
-      * **Fundamentally dangerous**, which is the greater concern. For example,
-        the
-        :meth:`beartype.claw._ast.clawastmain.BeartypeNodeTransformer.visit_Module`
-        method dynamically inserts a module-scoped import of the
-        :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator at
-        the head of the module currently being imported. But if the
-        :mod:`beartype._decor.decorcore` submodule itself is being imported,
-        then that importation would destructively induce an infinite circular
-        import! Could that ever happen? *YES.* Conceivably, an external caller
-        could force reimportation of all modules by emptying the
-        :mod:`sys.modules` cache.
-
-      Note this edge case is surprisingly common. The public
-      :func:`beartype.claw.beartype_all` function implicitly registers *all*
-      packages (including :mod:`beartype` itself by default) for decoration by
-      the :func:`beartype.beartype` decorator.
-
     Parameters
     ----------
     package_name : str
@@ -344,14 +299,12 @@ def iter_packages_trie(package_name: str) -> Iterable[PackagesTrie]:
     '''
     assert isinstance(package_name, str), f'{repr(package_name)} not string.'
 
-    # ..................{ IMPORTS                            }..................
     # Avoid circular import dependencies.
     from beartype.claw._clawstate import (
         claw_lock,
         claw_state,
     )
 
-    # ..................{ VALIDATE                           }..................
     # List of each unqualified basename comprising this name, split from this
     # fully-qualified name on "." delimiters. Note that the "str.split('.')" and
     # "str.rsplit('.')" calls produce the exact same lists under all possible
@@ -359,15 +312,6 @@ def iter_packages_trie(package_name: str) -> Iterable[PackagesTrie]:
     # simplicity and readability.
     package_basenames = package_name.split('.')
 
-    # If that package is either the top-level "beartype" package or a subpackage
-    # of that package, silently ignore this dangerous attempt to type-check the
-    # "beartype" package by the @beartype.beartype decorator. See the docstring.
-    if package_basenames[0] == 'beartype':
-        return
-    # Else, that package is neither the top-level "beartype" package *NOR* a
-    # subpackage of that package. In this case, iterate this package.
-
-    # ..................{ ITERATE                            }..................
     # With a submodule-specific thread-safe reentrant lock...
     with claw_lock:
         # Current subtrie of the global trie describing the currently iterated

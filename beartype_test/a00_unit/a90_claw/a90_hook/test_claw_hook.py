@@ -21,6 +21,14 @@ the :mod:`beartype.claw.beartype_this_package` import hook).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 import pytest
 
+# ....................{ TODO                               }....................
+#FIXME: Technically, we're not quite down here. The "beartype.claw" API
+#currently silently ignores attempts to subject the "beartype" package itself to
+#@beartyping. Ideally, that API should instead raise human-readable exceptions
+#when users explicitly attempt to do so when calling either the
+#beartype_package() or beartype_packages() functions. After implementing this
+#functionality, assert this below, please.
+
 # ....................{ TESTS                              }....................
 @pytest.mark.run_in_subprocess
 def test_claw_beartype_this_package() -> None:
@@ -114,7 +122,7 @@ def test_claw_beartype_package() -> None:
 def test_claw_beartype_packages() -> None:
     '''
     Test the :mod:`beartype.claw.beartype_packages` import hook against multiple
-    data subpackage in this test suite exercising *all* edge cases associated
+    data subpackages in this test suite exercising *all* edge cases associated
     with this import hook.
     '''
 
@@ -195,3 +203,56 @@ def test_claw_beartype_packages() -> None:
             package_names=PACKAGE_NAMES,
             conf=BeartypeConf(is_debug=True),
         )
+
+
+@pytest.mark.run_in_subprocess
+def test_claw_beartype_all() -> None:
+    '''
+    Test the :mod:`beartype.claw.beartype_all` import hook against *all* data
+    subpackages in this test suite exercising *all* edge cases associated with
+    this import hook.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import BeartypeConf
+    from beartype.claw import beartype_all
+    from beartype.roar import (
+        BeartypeClawHookException,
+        BeartypeDoorHintViolation,
+    )
+    from pytest import raises
+
+    # ....................{ PASS                           }....................
+    # Explicitly subject *ALL* modules (including both third-party and
+    # first-party modules in Python's standard library) to a beartype import
+    # hook configured by the default beartype configuration.
+    beartype_all()
+
+    # Import *ALL* "beartype.claw"-specific data submodules, exercising that
+    # these submodules are subject to that import hook.
+    from beartype_test.a00_unit.data.claw.hookable_package import pep526_module
+    from beartype_test.a00_unit.data.claw.hookable_package.hookable_subpackage import (
+        class_submodule,
+        func_submodule,
+    )
+
+    # Assert that repeating the same import hook as above silently succeeds.
+    beartype_all()
+
+    # ....................{ FAIL                           }....................
+    # Assert that attempting to unsafely import a submodule directly hooked
+    # above that is *NOT* hookable by @beartype raises the expected exception.
+    with raises(BeartypeDoorHintViolation):
+        from beartype_test.a00_unit.data.claw import unhookable_module
+
+    # Assert that passing an invalid beartype configuration to this import hook
+    # raises the expected exception.
+    with raises(BeartypeClawHookException):
+        beartype_all(conf='Staking his very life on some dark hope,')
+
+    # Assert that repeating a similar import hook as above under a different
+    # (and thus conflicting) beartype configuration raises the expected
+    # exception.
+    with raises(BeartypeClawHookException):
+        beartype_all(conf=BeartypeConf(is_debug=True))

@@ -44,7 +44,6 @@ from beartype._util.func.utilfuncframe import (
 )
 
 # ....................{ HOOKERS                            }....................
-#FIXME: Unit test us up, please.
 def beartype_all(
     # Optional keyword-only parameters.
     *,
@@ -128,7 +127,6 @@ def beartype_all(
     hook_packages(claw_coverage=BeartypeClawCoverage.PACKAGES_ALL, conf=conf)
 
 
-#FIXME: Unit test us up, please.
 def beartype_this_package(
     # Optional keyword-only parameters.
     *,
@@ -208,7 +206,6 @@ def beartype_this_package(
     )
 
 
-#FIXME: Unit test us up, please.
 def beartype_package(
     # Mandatory parameters.
     package_name: str,
@@ -265,7 +262,6 @@ def beartype_package(
     )
 
 
-#FIXME: Unit test us up, please.
 def beartype_packages(
     # Mandatory parameters.
     package_names: Iterable[str],

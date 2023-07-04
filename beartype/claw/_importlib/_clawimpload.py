@@ -272,6 +272,36 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         this monkey-patch. Did we mention that @agronholm is amazing? Because
         that really bears repeating. May the name of Alex Grönholm live eternal!
 
+        Caveats
+        ----------
+        This getter intentionally avoids all dangerous attempts to recursively
+        type-check the :mod:`beartype` package by the :func:`beartype.beartype`
+        decorator. Doing so would be:
+
+        * **Fundamentally unnecessary.** The entirety of the :mod:`beartype`
+          package already religiously guards against type violations with a
+          laborious slew of type checks littered throughout the codebase --
+          including assertions of the form ``"assert isinstance({arg}, {type}),
+          ..."``. Further decorating *all* :mod:`beartype` callables with
+          automated type-checking only needlessly reduces the runtime efficiency
+          of the :mod:`beartype` package.
+        * **Fundamentally dangerous**, which is the greater concern. For
+          example, the
+          :meth:`beartype.claw._ast.clawastmain.BeartypeNodeTransformer.visit_Module`
+          method dynamically inserts a module-scoped import of the
+          :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator
+          at the head of the module currently being imported. But if the
+          :mod:`beartype._decor.decorcore` submodule itself is being imported,
+          then that importation would destructively induce an infinite circular
+          import! Could that ever happen? **YES.** Conceivably, an external
+          caller could force reimportation of all modules by emptying the
+          :mod:`sys.modules` cache.
+
+        Note this edge case is surprisingly common. The public
+        :func:`beartype.claw.beartype_all` function implicitly registers *all*
+        packages (including :mod:`beartype` itself by default) for decoration by
+        the :func:`beartype.beartype` decorator.
+
         Parameters
         ----------
         fullname : str
@@ -288,44 +318,38 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         from beartype.claw._pkg.clawpkgtrie import get_package_conf_or_none
 
         # Beartype configuration with which to type-check that module if that
-        # module was directly hooked under its fully-qualified name *OR* "None"
-        # otherwise (i.e., if that module is directly unhooked).
-        conf = get_package_conf_or_none(fullname)
-
-        # If that module is directly unhooked, that module could still be
-        # indirectly hooked via the parent package of that module. In this
-        # case...
-        if conf is None:
-            # Fully-qualified name of the parent package of that module.
-            #
-            # Note that this is the empty string if that module has *NO* parent
-            # package, which is fine. If that module has *NO* parent package,
-            # then the only means of hooking that module would have been for the
-            # caller to directly pass the fully-qualified name of that module to
-            # a beartype import hook. However, since the above call to the
-            # get_package_conf_or_none() getter returned "None", the caller did
-            # *NOT* directly pass this name to a beartype import hook.
-            package_name = fullname.rpartition('.')[0]
-
-            # Beartype configuration with which to type-check that module if
-            # that module was indirectly hooked under the fully-qualified name
-            # of a parent package of that module *OR* "None" otherwise (i.e., if
-            # that module is indirectly unhooked as well).
-            conf = get_package_conf_or_none(fullname)
-        # Else, that module is directly hooked.
+        # module is hooked *OR* "None" otherwise (i.e., if that module is
+        # unhooked), defined as either...
+        conf = (
+            # If that module is either the top-level "beartype" package *OR* a
+            # subpackage or submodule of that package, "None". This effectively
+            # silently ignores this dangerous attempt to recursively type-check
+            # the "beartype" package by the @beartype.beartype decorator. See
+            # the method docstring for further commentary.
+            None
+            if (
+                fullname == 'beartype' or
+                fullname.startswith('beartype.')
+            ) else
+            # Else, that module is neither our top-level "beartype" package
+            # *NOR* a subpackage or submodule of that package. In this case, the
+            # beartype configuration with which to type-check that module if
+            # that module is hooked under its fully-qualified name *OR*
+            # "None" otherwise (i.e., if that module is unhooked).
+            get_package_conf_or_none(fullname)
+        )
         # print(f'Imported module "{fullname}" package "{package_name}" conf: {repr(self._module_conf_beartype)}')
 
-        # If that module is both directly and indirectly unhooked, preserve that
-        # module as is by simply deferring to the superclass method *WITHOUT*
-        # monkey-patching cache_from_source(). This isn't only an optimization,
-        # though it certainly is that as well. This is critical. Why? Because
-        # modules *NOT* being beartyped should remain compiled under their
-        # standard non-beartyped bytecode filenames.
+        # If that module is unhooked, preserve that module as is by simply
+        # deferring to the superclass method *WITHOUT* monkey-patching
+        # cache_from_source(). This isn't only an optimization, though it is
+        # that as well. This is critical. Why? Because modules *NOT* being
+        # beartyped should remain compiled under their standard non-beartyped
+        # bytecode filenames.
         if conf is None:
             # print(f'Importing module "{fullname}" without beartyping...')
             return super().get_code(fullname)
-        # Else, that module has been either directly or indirectly hooked. In
-        # this case...
+        # Else, that module has been either hooked. In this case...
         #
         # Note that the logic below requires inefficient exception handling (as
         # well as a potentially risky monkey-patch) and is thus performed *ONLY*

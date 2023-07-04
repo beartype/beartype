@@ -91,6 +91,19 @@ def pytest_pyfunc_call(pyfuncitem: Function) -> Optional[bool]:
 
         # Partial object encapsulating the _run_test_in_subprocess() helper
         # bound to the current "pyfuncitem" object encapsulating this test.
+        #
+        # Note that this logic is robust under POSIX-compliant platforms (e.g.,
+        # Linux, macOS) but *EXTREMELY* fragile under Windows, where the
+        # "multiprocessing.Process" class sadly leverages the mostly unusable
+        # "pickle" module rather than the mostly usable third-party "dill"
+        # module. Notably, we intentionally:
+        # * Leverage a "partial" object (which "pickle" silently supports)
+        #   rather than a closure (which "pickle" rejects with
+        #   non-human-readable exceptions).
+        # * Pass the actual low-level test function being tested (which "pickle"
+        #   silently supports) rather than the high-level "pyfuncitem" object
+        #   encapsulating that function (which "pickle" rejects with
+        #   non-human-readable exceptions).
         test_func_in_subprocess = partial(_test_func_in_subprocess, test_func)
 
         # Python subprocess tasked with running this test.
