@@ -25,8 +25,8 @@ from pytest import raises
 from beartype_test.a00_unit.data.claw.hookable_package.beartype_this_package import (
     this_submodule)
 
-# from beartype.claw._importlib.clawimpcache import module_name_to_beartype_conf
-# print(f'this_submodule conf: {repr(module_name_to_beartype_conf)}')
+# from beartype.claw._clawstate import claw_state
+# print(f'this_submodule conf: {repr(claw_state.module_name_to_beartype_conf)}')
 
 # ....................{ PEP 526                            }....................
 # Validate that the import hook presumably installed by the caller implicitly

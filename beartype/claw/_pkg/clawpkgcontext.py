@@ -70,6 +70,12 @@ def beartyping(
     None
         This context manager yields *no* objects.
 
+    Raises
+    ----------
+    BeartypeClawHookException
+        If the passed ``conf`` parameter is *not* a beartype configuration
+        (i.e., :class:`BeartypeConf` instance).
+
     See Also
     ----------
     :func:`beartype.claw.beartype_all`
@@ -99,7 +105,7 @@ def beartyping(
         # Globalize the passed beartype configuration.
         beartype_all(conf=conf)
 
-        # Defer to the caller's body of the parent "with beartyping(...):" block.
+        # Defer to the caller body of the parent "with beartyping(...):" block.
         yield
     # After doing so (regardless of whether doing so raised an exception)...
     finally:
@@ -118,9 +124,10 @@ def beartyping(
                 # Possibly remove our beartype import path hook added by the
                 # above call to beartype_all() if *NO* packages are registered.
                 remove_beartype_pathhook_unless_packages_trie()
-            # Else, the caller's body of the parent "with beartyping(...):" block
-            # has itself called the beartype_all() function with a conflicting
-            # beartype configuration. Preserve that configuration as is.
+            # Else, the caller's body of the parent "with beartyping(...):"
+            # block has itself called the beartype_all() function with a
+            # conflicting beartype configuration. In this case, preserve that
+            # configuration as is.
 
 
 #FIXME: Unit test us up, please.
