@@ -67,6 +67,7 @@ def add_beartype_pathhook() -> None:
     # loader with the platform-specific filetypes of all sourceful Python
     # packages and modules. We didn't do it. Don't blame the bear.
     LOADER_DETAILS = (BeartypeSourceFileLoader, SOURCE_SUFFIXES)
+    # print(f'SOURCE_SUFFIXES: {SOURCE_SUFFIXES}')
 
     # Closure instantiating a new "FileFinder" instance invoking this loader.
     #
@@ -80,6 +81,14 @@ def add_beartype_pathhook() -> None:
     # Prepend a new path hook (i.e., factory closure encapsulating this loader)
     # *BEFORE* all other path hooks.
     path_hooks.insert(0, loader_factory)
+    # path_hooks.append(loader_factory)
+    # print(f'path_hooks: {path_hooks}')
+    # for path_hook in path_hooks:
+    #     try:
+    #         file_finder = path_hook('/usr/lib/python3.11')
+    #         print(f'file_finder: {file_finder} [{file_finder._loaders}]')
+    #     except:
+    #         pass
 
     # Prevent subsequent calls to this function from erroneously re-adding
     # duplicate copies of this path hook immediately *AFTER* successfully adding

@@ -302,5 +302,8 @@ def test_claw_beartyping() -> None:
         # Assert that passing an invalid beartype configuration to this context
         # manager raises the expected exception.
         with raises(BeartypeClawHookException):
-            with beartyping(conf='Staking his very life on some dark hope,'):
+            with beartyping(conf='Have I mixed awful talk and asking looks'):
                 pass
+
+    # Import an arbitrary submodule *NOT* subject to that context manager.
+    from beartype_test.a00_unit.data.claw import unhookable_module
