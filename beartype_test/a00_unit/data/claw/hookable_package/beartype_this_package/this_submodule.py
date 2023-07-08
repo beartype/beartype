@@ -26,6 +26,19 @@ from beartype.typing import (
 )
 from pytest import raises
 
+#FIXME: Fascinatingly, this doesn't actually test anything. Why? We have *NO*
+#idea whatsoever, but strongly suspect that pytest's own import hooks are
+#silently conflicting with @beartype's in a manner preventing @beartype from
+#guarding against regressions in this functionality. For now, the *ONLY* means
+#of testing this is to do so manually in an external module subject to a
+#beartype import hook that performs this import. Gag me with a spork.
+
+# Intentionally import a pure-Python module from the standard library that
+# internally imports a C extension -- in this case, "_struct". Doing so ensures
+# that beartype import hooks properly support loading of C extensions, which our
+# initial implementation did *NOT*. Avoid regressions by testing this, please.
+import struct
+
 # from beartype.claw._importlib.clawimpcache import module_name_to_beartype_conf
 # print(f'this_submodule conf: {repr(module_name_to_beartype_conf)}')
 
