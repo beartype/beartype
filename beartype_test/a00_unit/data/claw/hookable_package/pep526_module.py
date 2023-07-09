@@ -34,12 +34,17 @@ from beartype_test.a00_unit.data.claw.hookable_package.beartype_this_package imp
 # submodule with calls to beartype's statement-level
 # beartype.door.die_if_unbearable() exception-raiser.
 
-# Assert that a PEP 562-compliant assignment statement assigning an object
-# satisfying the type hint annotating that statement raises *NO* exception.
+# Assert that a PEP 562-compliant annotated assignment statement assigning an
+# object satisfying the type hint annotating that statement raises *NO*
+# exception.
 and_winter_robing: int = len('And winter robing with pure snow and crowns')
 
-# Assert that a PEP 562-compliant assignment statement assigning an object
-# violating the type hint annotating that statement raises the expected
+# Assert that a PEP 562-compliant annotated statement lacking an assignment
+# raises *NO* exception.
+such_magic_as_compels_the_charmed_night: str
+
+# Assert that a PEP 562-compliant annotated assignment statement assigning an
+# object violating the type hint annotating that statement raises the expected
 # exception.
 with raises(BeartypeDoorHintViolation):
     of_starry_ice: Union[float, List[str]] = len(

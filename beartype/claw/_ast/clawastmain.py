@@ -546,6 +546,53 @@ class BeartypeNodeTransformer(NodeTransformer):
         that type hint by passing both to our :func:`beartype.door.is_bearable`
         tester.
 
+        Note that the :class:`.AnnAssign` subclass defines these instance
+        variables:
+
+        * ``node.annotation``, a child node describing the PEP-compliant type
+          hint annotating this assignment, typically an instance of either:
+
+          * :class:`ast.Name`.
+          * :class:`ast.Str`.
+
+          Note that this node is *not* itself a valid PEP-compliant type hint
+          and should *not* be treated as such here or elsewhere.
+        * ``node.target``, a child node describing the target attribute assigned
+          to by this assignment, guaranteed to be an instance of either:
+
+          * :class:`ast.Name`, in which case this assignment is denoted as
+            "simple" via the ``node.simple`` instance variable. This is the
+            common case in which the attribute being assigned to is *NOT*
+            embedded in parentheses and thus denotes a simple attribute name
+            rather than a full-blown Python expression.
+          * :class:`ast.Subscript`, in which case this assignment is to the item
+            subscripted by an index of a container rather than to that container
+            itself.
+          * :class:`ast.Attribute`. **WE HAVE NO IDEA.** Look. We just don't.
+
+        * ``node.simple``, an integer :superscript:`sigh` that is either:
+
+          * If ``node.target`` is an :class:`ast.Name` node, 1.
+          * Else, 0.
+
+        * ``node.value``, an optional child node defined as either:
+
+          * If this attribute is actually assigned to, a node encapsulating
+            the new value assigned to this target attribute.
+          * Else, :data:`None`.
+
+          You may now be thinking to yourself as you wear a bear hat while
+          rummaging through this filthy code: "What do you mean, 'if this
+          attribute is actually assigned to'? Isn't this attribute necessarily
+          assigned to? Isn't that what the 'AnnAssign' subclass means? I mean,
+          it's right there in the bloody subclass name: 'AnnAssign', right?
+          Clearly, *SOMETHING* is bloody well being assigned to. Right?"
+          Wrong. The name of the :class:`.AnnAssign` subclass was poorly chosen.
+          That subclass ambiguously encapsulates both:
+
+          * Annotated variable assignments (e.g., ``muh_attr: int = 42``).
+          * Annotated variables *without* assignments (e.g., ``muh_attr: int``).
+
         Parameters
         ----------
         node : AnnAssign
@@ -560,6 +607,10 @@ class BeartypeNodeTransformer(NodeTransformer):
               attribute being assigned to is embedded in parentheses and thus
               denotes a full-blown Python expression rather than a simple
               attribute name), that same parent node unmodified.
+            * If this annotated assignment node is *not* **assigned** (i.e., the
+              attribute in question is simply annotated with a type hint rather
+              than both annotated with a type hint *and* assigned to), that same
+              parent node unmodified.
             * Else, a 2-list comprising both that node and a new adjacent
               :class:`Call` node performing this type-check.
 
@@ -573,37 +624,24 @@ class BeartypeNodeTransformer(NodeTransformer):
             phenomenal inspiration!
         '''
 
-        # Note that "AnnAssign" node subclass defines these instance variables:
-        # * "node.annotation", a child node describing the PEP-compliant type
-        #   hint annotating this assignment, typically an instance of either:
-        #   * "ast.Name".
-        #   * "ast.Str".
-        #   Note that this node is *NOT* itself a valid PEP-compliant type hint
-        #   and should *NOT* be treated as such here or elsewhere.
-        # * "node.simple", a boolean that is true only if "node.target" is an
-        #   "ast.Name" node.
-        # * "node.target", a child node describing the target attribute assigned
-        #   to by this assignment, guaranteed to be an instance of either:
-        #   * "ast.Name", in which case this assignment is denoted as "simple"
-        #     via the "node.simple" instance variable. This is the common case
-        #     in which the attribute being assigned to is *NOT* embedded in
-        #     parentheses and thus denotes a simple attribute name rather than a
-        #     full-blown Python expression.
-        #   * "ast.Attribute".
-        #   * "ast.Subscript".
-        # * "node.value", an optional child node describing the source value
-        #   being assigned to this target attribute.
-
         # If either...
         if (
             # This beartype configuration disables type-checking of PEP
             # 526-compliant annotated variable assignments *OR*...
             not self._conf_beartype.claw_is_pep526 or
+            # This beartype configuration enables type-checking of PEP
+            # 526-compliant annotated variable assignments *BUT*...
+
             #FIXME: Can and/or should we also support "node.target" child nodes
             #that are instances of "ast.Attribute" and "ast.Subscript"?
             # This assignment is *NOT* simple (in which case this assignment is
-            # *NOT* assigning to an attribute name).
-            not node.simple
+            # *NOT* assigning to an attribute name) *OR*...
+            not node.simple or
+            # This assignment is simple *BUT*...
+            #
+            # This assignment is *NOT* actually an assignment but simply an
+            # unassigned annotation of an attribute...
+            not node.value
         ):
             # Then silently ignore this assignment.
             return node
@@ -646,8 +684,7 @@ class BeartypeNodeTransformer(NodeTransformer):
         # the beartype decorator for both efficiency and simplicity.
 
         # Child node type-checking this newly assigned attribute against the
-        # PEP-compliant type hint annotating this assignment by deferring to our
-        # die_if_unbearable() raiser.
+        # type hint annotating this assignment via our die_if_unbearable().
         node_func_call = Call(
             func=node_func_name,
             args=[
