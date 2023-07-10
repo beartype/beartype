@@ -23,9 +23,9 @@ from ast import (
 )
 from beartype.claw._clawmagic import (
     NODE_CONTEXT_LOAD,
-    BEARTYPE_CLAW_STATE_ATTR_NAME,
-    BEARTYPE_CLAW_STATE_CONF_CACHE_ATTR_NAME,
-    BEARTYPE_DECORATOR_ATTR_NAME,
+    BEARTYPE_CLAW_STATE_TARGET_ATTR_NAME,
+    BEARTYPE_CLAW_STATE_CONF_CACHE_VAR_NAME,
+    BEARTYPE_DECORATOR_TARGET_ATTR_NAME,
 )
 from beartype.claw._clawtyping import (
     NodeDecoratable,
@@ -72,7 +72,7 @@ def decorate_node(node: NodeDecoratable, conf: BeartypeConf) -> None:
 
     # Child decoration node decorating that callable by our beartype decorator.
     beartype_decorator: expr = Name(
-        id=BEARTYPE_DECORATOR_ATTR_NAME, ctx=NODE_CONTEXT_LOAD)
+        id=BEARTYPE_DECORATOR_TARGET_ATTR_NAME, ctx=NODE_CONTEXT_LOAD)
 
     # Copy all source code metadata from this parent callable node onto this
     # child decoration node.
@@ -132,7 +132,7 @@ def make_node_keyword_conf(node_sibling: AST) -> keyword:
 
     # Node encapsulating a reference to the beartype import hook state global.
     node_claw_state = Name(
-        id=BEARTYPE_CLAW_STATE_ATTR_NAME, ctx=NODE_CONTEXT_LOAD)
+        id=BEARTYPE_CLAW_STATE_TARGET_ATTR_NAME, ctx=NODE_CONTEXT_LOAD)
 
     # Node encapsulating the fully-qualified name of that module of the
     # currently visited module, accessed via the "__name__" dunder attribute
@@ -144,7 +144,7 @@ def make_node_keyword_conf(node_sibling: AST) -> keyword:
     # beartype configurations associated with those modules).
     node_module_name_to_conf = Attribute(
         value=node_claw_state,
-        attr=BEARTYPE_CLAW_STATE_CONF_CACHE_ATTR_NAME,
+        attr=BEARTYPE_CLAW_STATE_CONF_CACHE_VAR_NAME,
         ctx=NODE_CONTEXT_LOAD,
     )
 

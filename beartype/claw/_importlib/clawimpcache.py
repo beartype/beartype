@@ -100,14 +100,14 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
         try:
             return super().__getitem__(module_name)
         # If doing so fails with a low-level non-human-readable exception, raise
-        # high-level human-readable exception wrapping that exception instead.
+        # a high-level human-readable exception wrapping that exception instead.
         except KeyError as exception:
             raise BeartypeClawImportConfException(
                 f'Beartype configuration associated with '
                 f'module "{module_name}" hooked by '
-                f'"beartype.claw" import hooks not found. '
+                f'"beartype.claw" not found. '
                 f'Existing beartype configurations associated with '
-                f'such modules include:\n{pformat(self)}'
+                f'hooked modules include:\n\t{pformat(self)}'
             ) from exception
 
 # ....................{ CACHERS                            }....................

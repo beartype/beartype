@@ -23,21 +23,26 @@ from beartype._util.ast.utilastmunge import copy_node_metadata
 #FIXME: Unit test us up, please.
 def make_node_importfrom(
     module_name: str,
-    attr_name: str,
+    source_attr_name: str,
+    target_attr_name: str,
     node_sibling: AST,
 ) -> ImportFrom:
     '''
     Create and return a new **import-from abstract syntax tree (AST) node**
     (i.e., node encapsulating an import statement of the alias-style format
     ``from {module_name} import {attr_name}``) importing the attribute with the
-    passed name from the module with the passed name.
+    passed source name from the module with the passed name into the currently
+    visited module as a new attribute with the passed target name.
 
     Parameters
     ----------
     module_name : str
         Fully-qualified name of the module to import this attribute from.
-    attr_name : str
+    source_attr_name : str
         Unqualified basename of the attribute to import from this module.
+    target_attr_name : str
+        Unqualified basename of the same attribute to import into the currently
+        visited module.
     node_sibling : AST
         Sibling node to copy source code metadata from.
 
@@ -47,10 +52,13 @@ def make_node_importfrom(
         Import-from node importing this attribute from this module.
     '''
     assert isinstance(module_name, str), f'{repr(module_name)} not string.'
-    assert isinstance(attr_name, str), f'{repr(attr_name)} not string.'
+    assert isinstance(source_attr_name, str), (
+        f'{repr(source_attr_name)} not string.')
+    assert isinstance(target_attr_name, str), (
+        f'{repr(target_attr_name)} not string.')
 
     # Node encapsulating the name of the attribute to import from this module.
-    node_importfrom_name = alias(attr_name)
+    node_importfrom_name = alias(name=source_attr_name, asname=target_attr_name)
 
     # Node encapsulating the name of the module to import this attribute from.
     node_importfrom = ImportFrom(

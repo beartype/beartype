@@ -61,7 +61,14 @@ otherwise commonly present in the version specifier for this version of
 the name of this package and thus suitable as a machine-readable delimiter).
 '''
 
-# ....................{ STRINGS ~ cache                    }....................
+# ....................{ STRINGS ~ names                    }....................
+BEARTYPE_CLAW_STATE_ATTR_NAME = 'claw_state'
+'''
+Unqualified basename of the beartype import hook state relative to the
+fully-qualified name of its submodule.
+'''
+
+# ....................{ STRINGS ~ names : cache            }....................
 BEARTYPE_CLAW_STATE_MODULE_NAME = 'beartype.claw._clawstate'
 '''
 Fully-qualified name of the submodule defining **beartype import hook state**
@@ -70,14 +77,22 @@ beartype import hooks).
 '''
 
 
-BEARTYPE_CLAW_STATE_ATTR_NAME = 'claw_state'
+BEARTYPE_CLAW_STATE_SOURCE_ATTR_NAME = 'claw_state'
 '''
 Unqualified basename of the beartype import hook state relative to the
 fully-qualified name of its submodule.
 '''
 
 
-BEARTYPE_CLAW_STATE_CONF_CACHE_ATTR_NAME = 'module_name_to_beartype_conf'
+BEARTYPE_CLAW_STATE_TARGET_ATTR_NAME = '__claw_state_beartype__'
+'''
+Unqualified basename of the beartype import hook state as imported into the
+current user-defined module being imported and thus transformed by the
+:class:`beartype.claw._ast.clawastmain.BeartypeNodeTransformer` subclass.
+'''
+
+
+BEARTYPE_CLAW_STATE_CONF_CACHE_VAR_NAME = 'module_name_to_beartype_conf'
 '''
 Unqualified basename of the **hooked module beartype configuration cache**
 (i.e., dictionary mapping from the fully-qualified name of each previously
@@ -90,15 +105,47 @@ beartype import hook state, which contains this cache.
 # ....................{ STRINGS ~ decorator                }....................
 BEARTYPE_DECORATOR_MODULE_NAME = 'beartype._decor._cache.cachedecor'
 '''
-Fully-qualified name of the submodule defining the **hooked module beartype
-decorator** (i.e., :mod:`beartype` decorator applied by our abstract syntax tree
-(AST) node transformer to all applicable callables and classes of third-party
+Fully-qualified name of the submodule defining the **beartype decorator** (i.e.,
+:mod:`beartype` decorator applied by our abstract syntax tree (AST) node
+transformer to all applicable callables and classes in third-party modules).
+'''
+
+
+BEARTYPE_DECORATOR_SOURCE_ATTR_NAME = 'beartype'
+'''
+Unqualified basename of the beartype decorator relative to the fully-qualified
+name of its submodule.
+'''
+
+
+BEARTYPE_DECORATOR_TARGET_ATTR_NAME = '__beartype__'
+'''
+Unqualified basename of the beartype decorator as imported into the current
+user-defined module being imported and thus transformed by the
+:class:`beartype.claw._ast.clawastmain.BeartypeNodeTransformer` subclass.
+'''
+
+# ....................{ STRINGS ~ raiser                   }....................
+BEARTYPE_RAISER_MODULE_NAME = 'beartype.door._doorcheck'
+'''
+Fully-qualified name of the submodule defining the **beartype exception-raiser**
+(i.e., :mod:`beartype` function raising exceptions on runtime type-checking
+violations, applied by our abstract syntax tree (AST) node transformer to all
+applicable :pep:`526`-compliant annotated variable assignments in third-party
 modules).
 '''
 
 
-BEARTYPE_DECORATOR_ATTR_NAME = 'beartype'
+BEARTYPE_RAISER_SOURCE_ATTR_NAME = 'die_if_unbearable'
 '''
-Unqualified basename of the hooked module beartype decorator relative
-to the fully-qualified name of its submodule.
+Unqualified basename of the beartype exception-raiser relative to the
+fully-qualified name of its submodule.
+'''
+
+
+BEARTYPE_RAISER_TARGET_ATTR_NAME = '__die_if_unbearable_beartype__'
+'''
+Unqualified basename of the beartype exception-raiser as imported into the
+current user-defined module being imported and thus transformed by the
+:class:`beartype.claw._ast.clawastmain.BeartypeNodeTransformer` subclass.
 '''

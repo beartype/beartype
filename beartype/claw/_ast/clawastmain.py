@@ -108,9 +108,14 @@ from ast import (
 from beartype.claw._clawmagic import (
     NODE_CONTEXT_LOAD,
     BEARTYPE_CLAW_STATE_MODULE_NAME,
-    BEARTYPE_CLAW_STATE_ATTR_NAME,
+    BEARTYPE_CLAW_STATE_SOURCE_ATTR_NAME,
+    BEARTYPE_CLAW_STATE_TARGET_ATTR_NAME,
     BEARTYPE_DECORATOR_MODULE_NAME,
-    BEARTYPE_DECORATOR_ATTR_NAME,
+    BEARTYPE_DECORATOR_SOURCE_ATTR_NAME,
+    BEARTYPE_DECORATOR_TARGET_ATTR_NAME,
+    BEARTYPE_RAISER_MODULE_NAME,
+    BEARTYPE_RAISER_SOURCE_ATTR_NAME,
+    BEARTYPE_RAISER_TARGET_ATTR_NAME,
 )
 from beartype.claw._ast._clawastmunge import (
     decorate_node,
@@ -389,22 +394,29 @@ class BeartypeNodeTransformer(NodeTransformer):
             # the parent node encapsulating the currently visited submodule in
             # the AST for that module).
             #
-            # Note that these nodes are intentionally *NOT* generalized into
-            # global constants. In theory, doing so would reduce space and time
-            # complexity by enabling efficient reuse here. In practice, doing so
-            # would also be fundamentally wrong; these nodes are subsequently
-            # modified to respect the source code metadata (e.g., line numbers)
-            # of this AST module parent node, which prevents such trivial reuse.
-            # Although we could further attempt to circumvent that by shallowly
-            # or deeply copying from global constants, both the copy() and
-            # deepcopy() functions defined by the standard "copy" module are
-            # pure-Python and thus shockingly slow -- which defeats the purpose.
+            # Note that:
+            # * The original attributes are imported into the currently visited
+            #   submodule under obfuscated beartype-specific names,
+            #   significantly reducing the likelihood of a namespace collision
+            #   with existing attributes of the same name in that submodule.
+            # * These nodes are intentionally *NOT* generalized into global
+            #   constants. In theory, doing so would reduce space and time
+            #   complexity by enabling efficient reuse here. In practice, doing
+            #   so would also be fundamentally wrong; these nodes are
+            #   subsequently modified to respect the source code metadata (e.g.,
+            #   line numbers) of this AST module parent node, which prevents
+            #   such trivial reuse. Although we could further attempt to
+            #   circumvent that by shallowly or deeply copying from global
+            #   constants, both the copy() and deepcopy() functions defined by
+            #   the standard "copy" module are pure-Python and thus shockingly
+            #   slow -- which defeats the purpose.
 
             # Node importing our private
             # beartype._decor.decorcore.beartype_object_nonfatal() decorator.
             node_import_decorator = make_node_importfrom(
                 module_name=BEARTYPE_DECORATOR_MODULE_NAME,
-                attr_name=BEARTYPE_DECORATOR_ATTR_NAME,
+                source_attr_name=BEARTYPE_DECORATOR_SOURCE_ATTR_NAME,
+                target_attr_name=BEARTYPE_DECORATOR_TARGET_ATTR_NAME,
                 node_sibling=node_import_prev,
             )
 
@@ -416,15 +428,17 @@ class BeartypeNodeTransformer(NodeTransformer):
             # the latter imports the full "TypeHint" hierarchy, the former only
             # imports low-level utility functions.
             node_import_raiser = make_node_importfrom(
-                module_name='beartype.door._doorcheck',
-                attr_name='die_if_unbearable',
+                module_name=BEARTYPE_RAISER_MODULE_NAME,
+                source_attr_name=BEARTYPE_RAISER_SOURCE_ATTR_NAME,
+                target_attr_name=BEARTYPE_RAISER_TARGET_ATTR_NAME,
                 node_sibling=node_import_prev,
             )
 
             # Node importing our private "claw_state" singleton.
             node_import_claw_state = make_node_importfrom(
                 module_name=BEARTYPE_CLAW_STATE_MODULE_NAME,
-                attr_name=BEARTYPE_CLAW_STATE_ATTR_NAME,
+                source_attr_name=BEARTYPE_CLAW_STATE_SOURCE_ATTR_NAME,
+                target_attr_name=BEARTYPE_CLAW_STATE_TARGET_ATTR_NAME,
                 node_sibling=node_import_prev,
             )
 
@@ -657,7 +671,8 @@ class BeartypeNodeTransformer(NodeTransformer):
 
         # Child node referencing the function performing this type-checking,
         # previously imported at module scope by visit_FunctionDef() above.
-        node_func_name = Name('die_if_unbearable', ctx=NODE_CONTEXT_LOAD)
+        node_func_name = Name(
+            BEARTYPE_RAISER_TARGET_ATTR_NAME, ctx=NODE_CONTEXT_LOAD)
 
         # Child node passing the value newly assigned to this attribute by this
         # assignment as the first parameter to die_if_unbearable().
