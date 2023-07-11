@@ -519,28 +519,26 @@ class BeartypeNodeTransformer(NodeTransformer):
             This same callable node.
         '''
 
-        # If...
-        if (
-            # This callable node has one or more parent nodes previously visited
-            # by this node transformer *AND*...
-            self._node_stack_beartype and
-            # The immediate parent node of this callable node is a class node...
-            isinstance(self._node_stack_beartype[-1], ClassDef)
-        ):
-            # Then this callable node encapsulates a method rather than a
-            # function. In this case, the visit_ClassDef() method defined above
-            # has already explicitly decorated the class defining this method by
-            # the @beartype decorator, which then implicitly decorates both this
-            # and all other methods of that class by that decorator. For safety
-            # and efficiency, avoid needlessly re-decorating this method by the
-            # same decorator by simply preserving and returning this node as is.
+        # If this callable node has one or more parent nodes previously visited
+        # by this node transformer *AND* the immediate parent node of this
+        # callable node is a class node, then this callable node encapsulates a
+        # method rather than a function. In this case, the visit_ClassDef()
+        # method defined above has already explicitly decorated the class
+        # defining this method by the @beartype decorator, which then implicitly
+        # decorates both this and all other methods of that class by that
+        # decorator. For safety and efficiency, avoid needlessly re-decorating
+        # this method by the same decorator by simply preserving and returning
+        # this node as is.
+        if self._is_node_parent_class:
             return node
-        # Else, this callable node encapsulates a function rather than a method.
-        # In this case, this function has yet to be decorated. Do so now, I say!
-
+        # Else, this callable node is either the root node of the current AST
+        # *OR* has a parent node that is not a class node. In either case, this
+        # callable node necessarily encapsulates a function (rather than a
+        # method), which yet to be decorated. Do so now! So say we all.
+        #
         # If the currently visited callable is annotated by one or more type
         # hints and thus *NOT* ignorable with respect to beartype decoration...
-        if is_node_callable_typed(node):
+        elif is_node_callable_typed(node):
             # Add a new child decoration node to this parent callable node
             # decorating this callable by @beartype under this configuration.
             decorate_node(node=node, conf=self._conf_beartype)
@@ -654,10 +652,50 @@ class BeartypeNodeTransformer(NodeTransformer):
             # This assignment is simple *BUT*...
             #
             # This assignment is *NOT* actually an assignment but simply an
-            # unassigned annotation of an attribute...
-            not node.value
+            # unassigned annotation of an attribute (e.g., "var: int") *OR*...
+            not node.value or
+            # This assignment node has one or more parent nodes previously
+            # visited by this node transformer *AND* the immediate parent node
+            # of this assignment node is a class node, then this assignment node
+            # encapsulates a PEP 681-compliant annotated field declaration
+            # rather than an PEP 526-compliant annotated variable assignment. In
+            # this case, the visit_ClassDef() method defined above has already
+            # explicitly decorated the class declaring this annotated field by
+            # the @beartype decorator, which then implicitly decorates both this
+            # and all other fields of that class by that decorator. For safety
+            # and efficiency, avoid needlessly re-decorating this field by the
+            # same decorator by simply preserving and returning this node as is.
+            #
+            # Note, however, that this is *NOT* simply an efficiency concern.
+            # This is a significant semantic concern. While a subset of PEP
+            # 681-compliant annotated field declarations *ARE* amenable to
+            # type-checking by our die_if_unbearable(), still others are
+            # absolutely *NOT* amenable to such type-checking. Indeed, in both
+            # the average and the worst case, PEP 681-compliant annotated field
+            # declarations both supersede and violate PEP 484 typing semantics.
+            # Since PEP 681 assumes supremacy over PEP 484 here, @beartype has
+            # little to say and much to ignore: e.g.,
+            #
+            #     from dataclasses import dataclass, field
+            #
+            #     @dataclass
+            #     class MuhDataclass(object):
+            #         # This annotated field declaration is safely
+            #         # type-checkable by die_if_unbearable(), clearly.
+            #         muh_safe_field: int = 0xBABECAFE
+            #
+            #         # This annotated field declaration is *NOT* safely
+            #         # type-checkable by die_if_unbearable(). Clearly, a
+            #         # dataclass "field" instance is *NOT* a valid integer and
+            #         # thus violates the type hint annotating this field. Since
+            #         # PEP 681 standardizes declarations like this as
+            #         # semantically valid, @beartype has *NO* alternative but
+            #         # to quietly turn a blind eye to what otherwise might be
+            #         # considered a type violation.
+            #         muh_unsafe_field: int = field(default=0xCAFEBABE)
+            self._is_node_parent_class
         ):
-            # Then silently ignore this assignment.
+            # Then simply preserve and return this node as is.
             return node
         # Else:
         # * This beartype configuration enables type-checking of PEP
@@ -730,3 +768,28 @@ class BeartypeNodeTransformer(NodeTransformer):
         # Note that order is *EXTREMELY* significant. This order ensures that
         # this attribute is type-checked after being assigned to, as expected.
         return [node, node_func]
+
+    # ..................{ VISITORS ~ pep : 526               }..................
+    @property
+    def _is_node_parent_class(self) -> bool:
+        '''
+        :data:`True` only if the currently visited has a parent node (i.e., is
+        *not* the root node of the current abstract syntax tree (AST)) *and*
+        that parent node is a **class node** (i.e., :class:`.ClassDef` instance
+        encapsulating the declaration of a user-defined class).
+
+        Returns
+        ----------
+        bool
+            :data:`True` only if the currently visited has a parent node *and*
+            that parent node is a class node.
+        '''
+
+        # Return true only if...
+        return (
+            # This callable node has one or more parent nodes previously visited
+            # by this node transformer *AND*...
+            bool(self._node_stack_beartype) and
+            # The immediate parent node of this callable node is a class node.
+            isinstance(self._node_stack_beartype[-1], ClassDef)
+        )

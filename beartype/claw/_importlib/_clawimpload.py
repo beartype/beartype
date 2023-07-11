@@ -409,7 +409,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
             # associated with that module via the "__name__" dunder global.
             # Ergo, we *MUST* additionally expose this configuration under the
             # placeholder name "__main__" as well.
-            if self._main_module_name_beartype == fullname:
+            if self._main_module_name_beartype == fullname:  # pragma: no cover
                 claw_state.module_name_to_beartype_conf['__main__'] = conf
             # Else, the fully-qualified name of that module is *NOT* that of the
             # main module imported as the first entry-point into the active

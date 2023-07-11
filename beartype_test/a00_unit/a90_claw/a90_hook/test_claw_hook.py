@@ -67,10 +67,13 @@ def test_claw_beartype_package() -> None:
 
     # Import all submodules of the package hooked above, exercising that these
     # submodules are subject to that import hook.
-    from beartype_test.a00_unit.data.claw.hookable_package import pep526_module
-    from beartype_test.a00_unit.data.claw.hookable_package.hookable_subpackage import (
-        class_submodule,
-        func_submodule,
+    from beartype_test.a00_unit.data.claw.hookable_package.kind import (
+        data_claw_class,
+        data_claw_func,
+    )
+    from beartype_test.a00_unit.data.claw.hookable_package.pep import (
+        data_claw_pep526,
+        data_claw_pep557,
     )
 
     # Import an arbitrary submodule *NOT* subject to those import hooks.
@@ -133,7 +136,7 @@ def test_claw_beartype_packages() -> None:
     # import hooks below.
     PACKAGE_NAMES = (
         'beartype_test.a00_unit.data.claw.hookable_package',
-        'beartype_test.a00_unit.data.claw.hookable_package.hookable_subpackage',
+        'beartype_test.a00_unit.data.claw.hookable_package.kind',
         'beartype_test.a00_unit.data.claw.unhookable_module',
     )
 
@@ -144,10 +147,13 @@ def test_claw_beartype_packages() -> None:
 
     # Import all submodules of the package hooked above, exercising that these
     # submodules are subject to that import hook.
-    from beartype_test.a00_unit.data.claw.hookable_package import pep526_module
-    from beartype_test.a00_unit.data.claw.hookable_package.hookable_subpackage import (
-        class_submodule,
-        func_submodule,
+    from beartype_test.a00_unit.data.claw.hookable_package.kind import (
+        data_claw_class,
+        data_claw_func,
+    )
+    from beartype_test.a00_unit.data.claw.hookable_package.pep import (
+        data_claw_pep526,
+        data_claw_pep557,
     )
 
     # Assert that repeating the same import hook as above silently succeeds.
@@ -223,10 +229,13 @@ def test_claw_beartype_all() -> None:
 
     # Import *ALL* "beartype.claw"-specific data submodules, exercising that
     # these submodules are subject to that import hook.
-    from beartype_test.a00_unit.data.claw.hookable_package import pep526_module
-    from beartype_test.a00_unit.data.claw.hookable_package.hookable_subpackage import (
-        class_submodule,
-        func_submodule,
+    from beartype_test.a00_unit.data.claw.hookable_package.kind import (
+        data_claw_class,
+        data_claw_func,
+    )
+    from beartype_test.a00_unit.data.claw.hookable_package.pep import (
+        data_claw_pep526,
+        data_claw_pep557,
     )
 
     # Assert that repeating the same import hook as above silently succeeds.
@@ -281,15 +290,18 @@ def test_claw_beartyping() -> None:
         # imported modules. Likewise, this unit test has *NO* robust means of
         # testing whether or not this context manager raises exceptions under a
         # different (and thus conflicting) beartype configuration.
-        from beartype_test.a00_unit.data.claw.hookable_package import pep526_module
+        from beartype_test.a00_unit.data.claw.hookable_package.pep import (
+            data_claw_pep526,
+            data_claw_pep557,
+        )
 
         # Assert that nesting a similar context manager under a non-default
         # configuration nonetheless semantically equivalent to the default
         # configuration silently succeeds.
         with beartyping(conf=BeartypeConf(is_debug=True)):
-            from beartype_test.a00_unit.data.claw.hookable_package.hookable_subpackage import (
-                class_submodule,
-                func_submodule,
+            from beartype_test.a00_unit.data.claw.hookable_package.kind import (
+                data_claw_class,
+                data_claw_func,
             )
 
         # ....................{ FAIL                       }....................
