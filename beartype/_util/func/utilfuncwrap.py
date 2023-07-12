@@ -52,3 +52,55 @@ def unwrap_func(func: Any) -> Callable:
 
     # Return this wrappee, which is now guaranteed to *NOT* be a wrapper.
     return func
+
+
+#FIXME: Unit test us up, please.
+def unwrap_func_closure_isomorphic(func: Any) -> Callable:
+    '''
+    Lowest-level **non-isomorphic wrappee** (i.e., callable wrapped by the
+    passed wrapper callable) of the passed higher-level **isomorphic wrapper**
+    (i.e., closure wrapping the wrappee callable to be returned by accepting
+    both a variadic positional and keyword argument and thus preserving both the
+    positions and types of all parameters originally passed to that wrappee) if
+    the passed callable is an isomorphic wrapper *or* that callable as is
+    otherwise (i.e., if that callable is *not* an isomorphic wrapper).
+
+    Specifically, this getter iteratively undoes the work performed by:
+
+    * One or more consecutive decorations of the :func:`functools.wrap`
+      decorator on the wrappee callable to be returned.
+    * One or more consecutive calls to the :func:`functools.update_wrapper`
+      function on the wrappee callable to be returned.
+
+    Parameters
+    ----------
+    func : Callable
+        Wrapper callable to be inspected.
+
+    Returns
+    ----------
+    Callable
+        Either:
+
+        * If the passed callable is an isomorphic wrapper, the lowest-level
+          non-isomorphic wrappee callable wrapped by that wrapper.
+        * Else, the passed callable as is.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfunctest import is_func_closure_isomorphic
+
+    # While...
+    while (
+        # That callable is a higher-level isomorphic wrapper...
+        is_func_closure_isomorphic(func) and
+        # ...wrapping a lower-level callable...
+        hasattr(func, '__wrapped__')
+    ):
+        # Undo one layer of wrapping by reducing the former to the latter.
+        print(f'Unwrapping isomorphic closure wrapper {func} to wrappee {func.__wrapped__}...')
+        func = func.__wrapped__  # type: ignore[attr-defined]
+
+    # Return this wrappee, which is now guaranteed to *NOT* be an isomorphic
+    # wrapper but might very well still be a wrapper, which is fine.
+    return func

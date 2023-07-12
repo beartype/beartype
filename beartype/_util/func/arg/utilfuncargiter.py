@@ -18,12 +18,13 @@ from beartype.typing import (
     Optional,
     Tuple,
 )
+from beartype._data.datakind import DICT_EMPTY
 from beartype._data.datatyping import (
     # Codeobjable,
     TypeException,
 )
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
-from beartype._util.func.utilfuncwrap import unwrap_func
+from beartype._util.func.utilfuncwrap import unwrap_func_closure_isomorphic
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from collections.abc import Callable
 from enum import (
@@ -213,7 +214,7 @@ def iter_func_args(
         comparatively slower :func:`get_func_codeobj` function.
     is_unwrap: bool, optional
         :data:`True` only if this generator implicitly calls the
-        :func:`unwrap_func` function to unwrap this possibly higher-level
+        :func:`unwrap_func_closure_isomorphic` function to unwrap this possibly higher-level
         wrapper into its possibly lowest-level wrappee *before* returning the
         code object of that wrappee. Note that doing so incurs worst-case time
         complexity ``O(n)`` for ``n`` the number of lower-level wrappees
@@ -246,7 +247,7 @@ def iter_func_args(
     # If unwrapping that callable, do so *BEFORE* obtaining the code object of
     # that callable for safety (to avoid desynchronization between the two).
     if is_unwrap:
-        func = unwrap_func(func)
+        func = unwrap_func_closure_isomorphic(func)
     # Else, that callable is assumed to have already been unwrapped by the
     # caller. We should probably assert that, but doing so requires an
     # expensive call to hasattr(). What you gonna do?
@@ -321,7 +322,7 @@ def iter_func_args(
     args_defaults_posonly_or_flex = func.__defaults__ or ()  # type: ignore[attr-defined]
     # print(f'args_defaults_posonly_or_flex: {args_defaults_posonly_or_flex}')
 
-    # Dictionary mapping the name of each optional keyword-only parameter
+    # Dictionary mapping from the name of each optional keyword-only parameter
     # accepted by that callable to the default value assigned to that parameter
     # if any *OR* the empty dictionary otherwise.
     #
@@ -333,21 +334,12 @@ def iter_func_args(
     #     True
     #     >>> {} is {}
     #     False
-    args_defaults_kwonly = func.__kwdefaults__ or _ARGS_DEFAULTS_KWONLY_EMPTY  # type: ignore[attr-defined]
+    args_defaults_kwonly = func.__kwdefaults__ or DICT_EMPTY  # type: ignore[attr-defined]
 
     # ..................{ LOCALS ~ len                       }..................
     # Number of both optional and mandatory positional-only parameters accepted
-    # by that callable, specified as either...
-    args_len_posonly = (
-        # If the active Python interpreter targets Python >= 3.8 and thus
-        # supports PEP 570 standardizing positional-only parameters, the number
-        # of these parameters;
-        func_codeobj.co_posonlyargcount  # type: ignore[attr-defined]
-        if IS_PYTHON_AT_LEAST_3_8 else
-        # Else, this interpreter targets Python < 3.8 and thus fails to support
-        # PEP 570. In this case, there are *NO* such parameters.
-        0
-    )
+    # by that callable,  standardized under Python >= 3.8 by PEP 570.
+    args_len_posonly = func_codeobj.co_posonlyargcount  # type: ignore[attr-defined]
     assert args_len_posonly_or_flex >= args_len_posonly, (
         f'Positional-only and flexible argument count {args_len_posonly_or_flex} < '
         f'positional-only argument count {args_len_posonly}.')

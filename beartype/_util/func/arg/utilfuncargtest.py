@@ -13,15 +13,20 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import Dict
 from beartype._util.func.arg.utilfuncargiter import (
     ARG_META_INDEX_NAME,
     iter_func_args,
 )
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
-from beartype._data.datatyping import Codeobjable, TypeException
+from beartype._data.datatyping import (
+    Codeobjable,
+    TypeException,
+)
 from collections.abc import Callable
-from inspect import CO_VARARGS, CO_VARKEYWORDS
+from inspect import (
+    CO_VARARGS,
+    CO_VARKEYWORDS,
+)
 
 # ....................{ VALIDATORS                         }....................
 def die_unless_func_args_len_flexible_equal(
@@ -46,7 +51,7 @@ def die_unless_func_args_len_flexible_equal(
         Number of flexible parameters to validate this callable as accepting.
     is_unwrap: bool, optional
         ``True`` only if this validator implicitly calls the
-        :func:`unwrap_func` function to unwrap this possibly higher-level
+        :func:`unwrap_func_closure_isomorphic` function to unwrap this possibly higher-level
         wrapper into its possibly lowest-level wrappee *before* returning the
         code object of that wrappee. Note that doing so incurs worst-case time
         complexity ``O(n)`` for ``n`` the number of lower-level wrappees
@@ -79,10 +84,10 @@ def die_unless_func_args_len_flexible_equal(
 
     # Avoid circular import dependencies.
     from beartype._util.func.arg.utilfuncargget import (
-        get_func_args_len_flexible)
+        get_func_args_flexible_len)
 
     # Number of flexible parameters accepted by this callable.
-    func_args_len_flexible_actual = get_func_args_len_flexible(
+    func_args_len_flexible_actual = get_func_args_flexible_len(
         func=func,
         is_unwrap=is_unwrap,
         exception_cls=exception_cls,
@@ -184,24 +189,19 @@ def is_func_argless(
 
     # Return true only if this callable accepts neither...
     return not (
-        # One or more non-variadic arguments that are either standard or
-        # keyword-only *NOR*...
-        #
-        # Note that both of the argument counts tested here ignore the
-        # existence of variadic arguments, which is mildly frustrating... but
-        # that's the backward-compatible hodgepodge that is the modern code
-        # object for you.
-        (func_codeobj.co_argcount + func_codeobj.co_kwonlyargcount > 0) or
+        # One or more non-variadic arguments *NOR*...
+        is_func_arg_nonvariadic(func_codeobj) or
         # One or more variadic arguments.
         is_func_arg_variadic(func_codeobj)
     )
 
-# ....................{ TESTERS ~ kind : variadic          }....................
-def is_func_arg_variadic(func: Codeobjable) -> bool:
+# ....................{ TESTERS ~ kind : non-variadic      }....................
+#FIXME: Unit test us up, please.
+def is_func_arg_nonvariadic(func: Codeobjable) -> bool:
     '''
-    ``True`` only if the passed pure-Python callable accepts any **variadic
-    parameters** and thus either variadic positional arguments (e.g.,
-    "*args") or variadic keyword arguments (e.g., "**kwargs").
+    :data:`True` only if the passed pure-Python callable accepts any
+    **non-variadic parameters** (i.e., one or more positional, positional-only,
+    keyword, or keyword-only arguments).
 
     Parameters
     ----------
@@ -211,15 +211,45 @@ def is_func_arg_variadic(func: Codeobjable) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if the passed callable accepts either:
-
-        * Variadic positional arguments (e.g., "*args").
-        * Variadic keyword arguments (e.g., "**kwargs").
+        :data:`True` only if that callable accepts any non-variadic parameters.
 
     Raises
     ----------
     _BeartypeUtilCallableException
-         If the passed callable is *not* pure-Python.
+         If that callable is *not* pure-Python.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.func.arg.utilfuncargget import (
+        get_func_args_nonvariadic_len)
+
+    # Return true only if this callable accepts any non-variadic parameters.
+    return bool(get_func_args_nonvariadic_len(func))
+
+# ....................{ TESTERS ~ kind : variadic          }....................
+def is_func_arg_variadic(func: Codeobjable) -> bool:
+    '''
+    :data:`True` only if the passed pure-Python callable accepts any **variadic
+    parameters** (i.e., either a variadic positional argument (e.g.,
+    ``*args``) *or* a variadic keyword argument (e.g., ``**kwargs``)).
+
+    Parameters
+    ----------
+    func : Union[Callable, CodeType, FrameType]
+        Pure-Python callable, frame, or code object to be inspected.
+
+    Returns
+    ----------
+    bool
+        :data:`True` only if that callable accepts either:
+
+        * Variadic positional arguments (e.g., ``*args``).
+        * Variadic keyword arguments (e.g., ``**kwargs``).
+
+    Raises
+    ----------
+    _BeartypeUtilCallableException
+         If that callable is *not* pure-Python.
     '''
 
     # Return true only if this callable declares either...
@@ -235,8 +265,8 @@ def is_func_arg_variadic(func: Codeobjable) -> bool:
 
 def is_func_arg_variadic_positional(func: Codeobjable) -> bool:
     '''
-    ``True`` only if the passed pure-Python callable accepts variadic
-    positional arguments (e.g., "*args").
+    :data:`True` only if the passed pure-Python callable accepts a variadic
+    positional argument (e.g., ``*args``).
 
     Parameters
     ----------
@@ -246,8 +276,8 @@ def is_func_arg_variadic_positional(func: Codeobjable) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if the passed callable accepts variadic positional
-        arguments.
+        :data:`True` only if the passed callable accepts a variadic positional
+        argument.
 
     Raises
     ----------
@@ -268,8 +298,8 @@ def is_func_arg_variadic_positional(func: Codeobjable) -> bool:
 
 def is_func_arg_variadic_keyword(func: Codeobjable) -> bool:
     '''
-    :data:`True` only if the passed pure-Python callable accepts variadic
-    keyword arguments (e.g., "**kwargs").
+    :data:`True` only if the passed pure-Python callable accepts a variadic
+    keyword argument (e.g., ``**kwargs``).
 
     Parameters
     ----------
@@ -279,8 +309,8 @@ def is_func_arg_variadic_keyword(func: Codeobjable) -> bool:
     Returns
     ----------
     bool
-        :data:`True` only if the passed callable accepts variadic keyword
-        arguments.
+        :data:`True` only if the passed callable accepts a variadic keyword
+        argument.
 
     Raises
     ----------
@@ -349,13 +379,3 @@ def is_func_arg_name(func: Callable, arg_name: str) -> bool:
         # For the name of any parameter accepted by this callable.
         for arg_meta in iter_func_args(func)
     )
-
-# ....................{ PRIVATE                            }....................
-#FIXME: Redundant. Replace with the general-purpose empty dictionary global
-#"beartype._data.datakind.DICT_EMPTY", please.
-_ARGS_DEFAULTS_KWONLY_EMPTY: Dict[str, object] = {}
-'''
-Empty dictionary suitable for use as the default dictionary mapping the name of
-each optional keyword-only parameter accepted by a callable to the default
-value assigned to that parameter.
-'''

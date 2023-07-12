@@ -308,7 +308,7 @@ def method_cached_arg_by_id(func: _CallableT) -> _CallableT:
 
     **This decorator is only intended to decorate a method whose sole argument
     is guaranteed to be a memoized singleton** (e.g.,
-    :class:`beartype.door.TypeHint` singletons). In this case, the object
+    :class:`beartype.door.TypeHint` singleton). In this case, the object
     identifier of that argument uniquely identifies that argument across *all*
     calls to that method -- enabling this decorator to memoize that method.
     Conversely, if that argument is *not* guaranteed to be a memoized singleton,

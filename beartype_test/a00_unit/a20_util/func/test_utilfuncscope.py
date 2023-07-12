@@ -127,7 +127,7 @@ def test_is_func_nested() -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._util.func.utilfuncscope import is_func_nested
+    from beartype._util.func.utilfunctest import is_func_nested
 
     # Nested callable returned by the above callable.
     when_the_ash_and_oak_and_the_birch_and_yew = (

@@ -25,96 +25,6 @@ from beartype._data.datatyping import (
 from collections.abc import Callable
 from types import CodeType
 
-# ....................{ TESTERS                            }....................
-def is_func_nested(func: Callable) -> bool:
-    '''
-    :data:`True` only if the passed callable is **nested** (i.e., a pure-Python
-    callable declared in the body of another pure-Python callable).
-
-    Parameters
-    ----------
-    func : Callable
-        Callable to be inspected.
-
-    Returns
-    ----------
-    bool
-        :data:`True` only if this callable is nested.
-    '''
-    assert callable(func), f'{repr(func)} not callable.'
-
-    # Return true only if the fully-qualified name of this callable contains
-    # one or more "." delimiters, each signifying a nested lexical scope. Since
-    # *ALL* callables (i.e., both pure-Python and C-based) define a non-empty
-    # "__qualname__" dunder variable containing at least their unqualified
-    # names, this simplistic test is guaranteed to be safe.
-    #
-    # Note this function intentionally tests for the general-purpose existence
-    # of a "." delimiter rather than the special-cased existence of a
-    # ".<locals>." placeholder substring. Why? Because there are two types of
-    # nested callables:
-    # * Non-methods, which are lexically nested in a parent callable whose
-    #   scope encapsulates all previously declared local variables. For unknown
-    #   reasons, the unqualified names of nested non-method callables are
-    #   *ALWAYS* prefixed by ".<locals>." in their "__qualname__" variables:
-    #       >>> from collections.abc import Callable
-    #       >>> def muh_parent_callable() -> Callable:
-    #       ...     def muh_nested_callable() -> None: pass
-    #       ...     return muh_nested_callable
-    #       >>> muh_nested_callable = muh_parent_callable()
-    #       >>> muh_parent_callable.__qualname__
-    #       'muh_parent_callable'
-    #       >>> muh_nested_callable.__qualname__
-    #       'muh_parent_callable.<locals>.muh_nested_callable'
-    # * Methods, which are lexically nested in the scope encapsulating all
-    #   previously declared class variables (i.e., variables declared in class
-    #   scope and thus accessible as method annotations). For unknown reasons,
-    #   the unqualified names of methods are *NEVER* prefixed by ".<locals>."
-    #   in their "__qualname__" variables: e.g.,
-    #       >>> from typing import ClassVar
-    #       >>> class MuhClass(object):
-    #       ...    # Class variable declared in class scope.
-    #       ...    muh_class_var: ClassVar[type] = int
-    #       ...    # Instance method annotated by this class variable.
-    #       ...    def muh_method(self) -> muh_class_var: return 42
-    #       >>> MuhClass.muh_method.__qualname__
-    #       'MuhClass.muh_method'
-    return '.' in func.__qualname__
-
-
-#FIXME: Unit test us up.
-#FIXME: Technically, we currently don't call this anywhere. But we probably
-#will someday, so let's preserve this intact until then. *shrug*
-# def is_func_closure(func: Callable) -> bool:
-#     '''
-#     ``True`` only if the passed callable is a **closure** (i.e.,
-#     nested callable accessing one or more variables declared by the parent
-#     callable also declaring that callable).
-#
-#     Note that all closures are necessarily nested callables but that the
-#     converse is *not* necessarily the case. In particular, a nested callable
-#     accessing no variables declared by the parent callable also declaring that
-#     callable is *not* a closure.
-#
-#     Parameters
-#     ----------
-#     func : Callable
-#         Callable to be inspected.
-#
-#     Returns
-#     ----------
-#     bool
-#         ``True`` only if this callable is a closure.
-#     '''
-#     assert callable(func), f'{repr(func)} not callable.'
-#
-#     # Return true only if this callable defines a closure-specific dunder
-#     # attribute whose value is either:
-#     # * If this callable is a closure, a tuple of zero or more cell variables.
-#     # * If this callable is a pure-Python non-closure, "None".
-#     # * If this callable is C-based, undefined.
-#     return getattr(func, '__closure__', None) is not None
-
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_func_globals(
@@ -134,6 +44,9 @@ def get_func_globals(
     lowel-level callables at either decoration time via the
     :func:`functools.wraps` decorator *or* after declaration via the
     :func:`functools.update_wrapper` function).
+
+    Note that the primary (and indeed only, at the moment) use case for this
+    getter is :pep:`563`-compliant resolution of postponed annotations.
 
     Parameters
     ----------
@@ -163,7 +76,7 @@ def get_func_globals(
 
     # Avoid circular import dependencies.
     from beartype._util.func.utilfunctest import die_unless_func_python
-    from beartype._util.func.utilfuncwrap import unwrap_func
+    from beartype._util.func.utilfuncwrap import unwrap_func_closure_isomorphic
 
     # If this callable is *NOT* pure-Python, raise an exception. C-based
     # callables do *NOT* define the "__globals__" dunder attribute.
@@ -171,7 +84,7 @@ def get_func_globals(
     # Else, this callable is pure-Python.
 
     # Lowest-level wrappee callable wrapped by this wrapper callable.
-    func_wrappee = unwrap_func(func)
+    func_wrappee = unwrap_func_closure_isomorphic(func)
 
     # Dictionary mapping from the name to value of each locally scoped
     # attribute accessible to this wrappee callable to be returned.
@@ -299,6 +212,7 @@ def get_func_locals(
         get_func_codeobj_or_none,
     )
     from beartype._util.func.utilfuncframe import iter_frames
+    from beartype._util.func.utilfunctest import is_func_nested
 
     # ..................{ NOOP                               }..................
     # Fully-qualified name of the module declaring the passed callable if that
@@ -664,7 +578,8 @@ def add_func_scope_attr(
     # this scope, raise an exception.
     if func_scope.get(attr_name, attr) is not attr:
         raise _BeartypeUtilCallableException(
-            f'{exception_prefix}"{attr_name}" already exists with differing value:\n'
+            f'{exception_prefix}"{attr_name}" already exists with '
+            f'differing value:\n'
             f'~~~~[ NEW VALUE ]~~~~\n{repr(attr)}\n'
             f'~~~~[ OLD VALUE ]~~~~\n{repr(func_scope[attr_name])}'
         )
@@ -699,11 +614,11 @@ Arbitrary substring prefixing names dynamically synthesized by the
 :func:`.add_func_scope_attr` function for attributes whose **object ids** (i.e.,
 the integers returned by the :func:`id` builtin) are negative.
 
-Negative attribute ids are coerced into positive attribute ids. Doing so renders
-the former suitable for embedding in attribute names that are valid Python
+That function coerces negative into positive attribute IDs. Doing so renders the
+former suitable for embedding in attribute names that are valid Python
 identifiers. That's good. Doing so naively, however, would invite name
-collisions between negative and positive attribute ids whose absolute values are
-equal (e.g., "|-42| == |42|"). To avoid this, the names of attributes whose ids
-are negative are prefixed by a different substring than those of attributes
-whose ids are positive. It's complicated. Did our hand-waving not convince you!?
+collisions between negative and positive attribute IDs whose absolute values are
+equal (e.g., ``|-42| == |42|``). To avoid this, the names of attributes whose
+IDs are negative are prefixed by a different substring than those of attributes
+whose IDs are positive. It's complicated. Did our hand-waving not convince you!?
 '''

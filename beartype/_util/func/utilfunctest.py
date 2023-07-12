@@ -16,8 +16,14 @@ from beartype.typing import (
     TYPE_CHECKING,
     Any,
 )
+from beartype._util.func.arg.utilfuncargtest import (
+    is_func_arg_variadic_positional,
+    is_func_arg_variadic_keyword,
+)
 from beartype._util.func.utilfunccodeobj import (
-    get_func_codeobj_or_none)
+    get_func_codeobj,
+    get_func_codeobj_or_none,
+)
 from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 from beartype._util.mod.lib.utiltyping import import_typing_attr_or_fallback
 from beartype._data.datatyping import (
@@ -26,7 +32,7 @@ from beartype._data.datatyping import (
 )
 from collections.abc import (
     Callable,
-    Generator,
+    # Generator,
 )
 from inspect import (
     CO_ASYNC_GENERATOR,
@@ -374,7 +380,7 @@ def is_func_python(func: object) -> TypeGuard[Callable]:
 # ....................{ TESTERS ~ descriptor               }....................
 def is_func_classmethod(func: Any) -> TypeGuard[classmethod]:
     '''
-    ``True`` only if the passed object is a **C-based unbound class method
+    :data:`True` only if the passed object is a **C-based unbound class method
     descriptor** (i.e., method decorated by the builtin :class:`classmethod`
     decorator, yielding a non-callable instance of that :class:`classmethod`
     decorator class implemented in low-level C and accessible via the
@@ -399,7 +405,7 @@ def is_func_classmethod(func: Any) -> TypeGuard[classmethod]:
     Returns
     ----------
     bool
-        ``True`` only if this object is a C-based unbound class method
+        :data:`True` only if this object is a C-based unbound class method
         descriptor.
     '''
 
@@ -409,8 +415,8 @@ def is_func_classmethod(func: Any) -> TypeGuard[classmethod]:
 
 def is_func_property(func: Any) -> TypeGuard[property]:
     '''
-    ``True`` only if the passed object is a **C-based unbound property method
-    descriptor** (i.e., method decorated by the builtin :class:`property`
+    :data:`True` only if the passed object is a **C-based unbound property
+    method descriptor** (i.e., method decorated by the builtin :class:`property`
     decorator, yielding a non-callable instance of that :class:`property`
     decorator class implemented in low-level C and accessible as a class rather
     than instance attribute).
@@ -432,7 +438,7 @@ def is_func_property(func: Any) -> TypeGuard[property]:
     Returns
     ----------
     bool
-        ``True`` only if this object is a pure-Python property.
+        :data:`True` only if this object is a pure-Python property.
     '''
 
     # We rejoice in the shared delight of one-liners.
@@ -661,4 +667,157 @@ def is_func_sync_generator(func: object) -> TypeGuard[Callable]:
         # This callable's code object implies this callable to be a
         # synchronous generator.
         func_codeobj.co_flags & CO_GENERATOR != 0
+    )
+
+# ....................{ TESTERS : nested                   }....................
+def is_func_nested(func: Callable) -> bool:
+    '''
+    :data:`True` only if the passed callable is **nested** (i.e., a pure-Python
+    callable declared in the body of another pure-Python callable).
+
+    Parameters
+    ----------
+    func : Callable
+        Callable to be inspected.
+
+    Returns
+    ----------
+    bool
+        :data:`True` only if this callable is nested.
+    '''
+    assert callable(func), f'{repr(func)} not callable.'
+
+    # Return true only if either...
+    return (
+        # That callable is a closure (in which case that closure is necessarily
+        # nested inside another callable) *OR*...
+        #
+        # Note that this tester intentionally tests for whether that callable is
+        # a closure first, as doing so efficiently reduces to a constant-time
+        # attribute test -- whereas the following test for non-closure nested
+        # callables inefficiently requires a linear-time string search.
+        is_func_closure(func) or
+        # The fully-qualified name of that callable contains one or more "."
+        # delimiters, each signifying a nested lexical scope. Since *ALL*
+        # callables (i.e., both pure-Python and C-based) define a non-empty
+        # "__qualname__" dunder variable containing at least their unqualified
+        # names, this simplistic test is guaranteed to be safe.
+        #
+        # Note this tester intentionally tests for the general-purpose existence
+        # of a "." delimiter rather than the special-cased existence of a
+        # ".<locals>." placeholder substring. Why? Because there are two types
+        # of nested callables:
+        # * Non-methods, which are lexically nested in a parent callable whose
+        #   scope encapsulates all previously declared local variables. For
+        #   unknown reasons, the unqualified names of nested non-method
+        #   callables are *ALWAYS* prefixed by ".<locals>." in their
+        #   "__qualname__" variables:
+        #       >>> from collections.abc import Callable
+        #       >>> def muh_parent_callable() -> Callable:
+        #       ...     def muh_nested_callable() -> None: pass
+        #       ...     return muh_nested_callable
+        #       >>> muh_nested_callable = muh_parent_callable()
+        #       >>> muh_parent_callable.__qualname__
+        #       'muh_parent_callable'
+        #       >>> muh_nested_callable.__qualname__
+        #       'muh_parent_callable.<locals>.muh_nested_callable'
+        # * Methods, which are lexically nested in the scope encapsulating all
+        #   previously declared class variables (i.e., variables declared in
+        #   class scope and thus accessible as method annotations). For unknown
+        #   reasons, the unqualified names of methods are *NEVER* prefixed by
+        #   ".<locals>." in their "__qualname__" variables: e.g.,
+        #       >>> from typing import ClassVar
+        #       >>> class MuhClass(object):
+        #       ...    # Class variable declared in class scope.
+        #       ...    muh_class_var: ClassVar[type] = int
+        #       ...    # Instance method annotated by this class variable.
+        #       ...    def muh_method(self) -> muh_class_var: return 42
+        #       >>> MuhClass.muh_method.__qualname__
+        #       'MuhClass.muh_method'
+        '.' in func.__qualname__
+    )
+
+# ....................{ TESTERS ~ nested : closure         }....................
+#FIXME: Unit test us up, please.
+def is_func_closure(func: Any) -> TypeGuard[Callable]:
+    '''
+    :data:`True` only if the passed callable is a **closure** (i.e., nested
+    callable accessing one or more variables declared by the parent callable
+    also declaring that callable).
+
+    Note that all closures are necessarily nested callables but that the
+    converse is *not* necessarily the case. In particular, a nested callable
+    accessing *no* variables declared by the parent callable also declaring that
+    callable is *not* a closure; it's simply a nested callable.
+
+    Parameters
+    ----------
+    func : Callable
+        Callable to be inspected.
+
+    Returns
+    ----------
+    bool
+        :data:`True` only if this callable is a closure.
+    '''
+    assert callable(func), f'{repr(func)} not callable.'
+
+    # Return true only if that callable defines the closure-specific
+    # "__closure__" dunder variable whose value is either:
+    # * If that callable is a closure, a tuple of zero or more cell variables.
+    # * If that callable is a pure-Python non-closure, "None".
+    # * If that callable is C-based, undefined.
+    return getattr(func, '__closure__', None) is not None
+
+
+#FIXME: Unit test us up, please.
+def is_func_closure_isomorphic(func: Any) -> TypeGuard[Callable]:
+    '''
+    :data:`True` only if the passed object is an **isomorphic decorator
+    closure** (i.e., closure both defined and returned by a decorator such that
+    that closure isomorphically preserves both the number and types of all
+    passed parameters and returns, implemented as a closure accepting only a
+    variadic positional argument and a variadic keyword argument).
+
+    This tester detects standard decorator closures, as decorators typically
+    preserve the number and types of all parameters passed to and returns
+    returned from their decorated callables.
+
+    Caveats
+    ----------
+    **This tester is merely a heuristic** -- albeit a reasonably robust
+    heuristic likely to succeed in almost all real-world use cases. Nonetheless,
+    this tester *could* return false positives and negatives in edge cases.
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        :data:`True` only if this object is an isomorphic decorator closure.
+
+    Raises
+    ----------
+    _BeartypeUtilCallableException
+         If the passed callable is *not* pure-Python.
+    '''
+
+    # If the passed callable is *NOT* a closure, immediately return false.
+    if not is_func_closure(func):
+        return False
+    # Else, that callable is a closure.
+
+    # Code object underlying that callable as is (rather than possibly unwrapped
+    # to another code object entirely).
+    func_codeobj = get_func_codeobj(func=func, is_unwrap=False)
+
+    # Return true only if...
+    return (
+        # That callable accepts a variadic positional argument *AND*...
+        is_func_arg_variadic_positional(func_codeobj) and
+        # That callable accepts a variadic keyword argument.
+        is_func_arg_variadic_keyword(func_codeobj)
     )

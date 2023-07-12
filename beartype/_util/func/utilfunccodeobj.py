@@ -17,7 +17,6 @@ from beartype.typing import (
     Any,
     Optional,
 )
-from beartype._util.func.utilfuncwrap import unwrap_func
 from beartype._data.datatyping import (
     Codeobjable,
     TypeException,
@@ -91,7 +90,7 @@ def get_func_codeobj(
         Codeobjable to be inspected.
     is_unwrap: bool, optional
         :data:`True` only if this getter implicitly calls the
-        :func:`.unwrap_func` function to unwrap this possibly higher-level
+        :func:`.unwrap_func_closure_isomorphic` function to unwrap this possibly higher-level
         wrapper into a possibly lower-level wrappee *before* returning the code
         object of that wrappee. Note that doing so incurs worst-case time
         complexity ``O(n)`` for ``n`` the number of lower-level wrappees wrapped
@@ -164,7 +163,7 @@ def get_func_codeobj_or_none(
     ``O(n)`` **for** ``n`` **the number of lower-level wrappees wrapped by this
     higher-level wrapper.** That parameter should thus be disabled in
     time-critical code paths; instead, the lowest-level wrappee returned by the
-    :func:``beartype._util.func.utilfuncwrap.unwrap_func` function should be
+    :func:``beartype._util.func.utilfuncwrap.unwrap_func_closure_isomorphic` function should be
     temporarily stored and then repeatedly passed.
 
     Parameters
@@ -173,7 +172,7 @@ def get_func_codeobj_or_none(
         Codeobjable to be inspected.
     is_unwrap: bool, optional
         :data:`True` only if this getter implicitly calls the
-        :func:`.unwrap_func` function to unwrap this possibly higher-level
+        :func:`.unwrap_func_closure_isomorphic` function to unwrap this possibly higher-level
         wrapper into a possibly lower-level wrappee *before* returning the code
         object of that wrappee. Note that doing so incurs worst-case time
         complexity ``O(n)`` for ``n`` the number of lower-level wrappees wrapped
@@ -193,6 +192,9 @@ def get_func_codeobj_or_none(
         Further details.
     '''
     assert is_unwrap.__class__ is bool, f'{is_unwrap} not boolean.'
+
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfuncwrap import unwrap_func
 
     # Note that:
     # * For efficiency, tests are intentionally ordered in decreasing likelihood

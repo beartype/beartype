@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,29 +10,32 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.utilfunc.utilfuncwrap` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 def test_unwrap_func() -> None:
     '''
     Test the
     :func:`beartype._util.func.utilfuncwrap.unwrap_func` function.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.func.utilfuncwrap import unwrap_func
     from functools import wraps
 
+    # ....................{ CALLABLES                      }....................
     def in_a_station_of_the_metro_line_two():
         '''
         Arbitrary wrappee callable.
         '''
 
         return 'Petals on a wet, black bough.'
+
 
     @wraps(in_a_station_of_the_metro_line_two)
     def in_a_station_of_the_metro():
@@ -45,6 +48,7 @@ def test_unwrap_func() -> None:
             in_a_station_of_the_metro_line_two()
         )
 
+    # ....................{ ASSERTS                        }....................
     # Assert this function returns unwrapped callables unmodified.
     assert unwrap_func(in_a_station_of_the_metro_line_two) is (
         in_a_station_of_the_metro_line_two)

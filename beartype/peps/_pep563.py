@@ -32,9 +32,11 @@ from beartype._util.cls.utilclsget import get_type_locals
 from beartype._util.func.utilfuncscope import (
     get_func_globals,
     get_func_locals,
+)
+from beartype._util.func.utilfunctest import (
+    die_unless_func_python,
     is_func_nested,
 )
-from beartype._util.func.utilfunctest import die_unless_func_python
 from beartype._util.mod.utilmodget import get_object_module_or_none
 from beartype._util.text.utiltextident import is_identifier
 from beartype._util.text.utiltextprefix import prefix_beartypeable_pith

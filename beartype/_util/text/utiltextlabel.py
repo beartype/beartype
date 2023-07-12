@@ -173,7 +173,7 @@ def label_callable(
 
     # Avoid circular import dependencies.
     from beartype._util.func.arg.utilfuncargget import (
-        get_func_args_len_flexible)
+        get_func_args_flexible_len)
     from beartype._util.func.utilfunccodeobj import get_func_codeobj
     from beartype._util.func.utilfunctest import is_func_lambda
 
@@ -198,7 +198,7 @@ def label_callable(
         # Substring preceding the string to be returned.
         func_label_prefix = (
             f'lambda function of '
-            f'{get_func_args_len_flexible(func_codeobj)} argument(s)'
+            f'{get_func_args_flexible_len(func_codeobj)} argument(s)'
         )
 
         # If the caller failed to request an explicit contextualization, default

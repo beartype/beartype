@@ -31,7 +31,7 @@ from beartype._data.datatyping import (
 )
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.func.utilfunctest import is_func_coro
-from beartype._util.func.utilfuncwrap import unwrap_func
+from beartype._util.func.utilfuncwrap import unwrap_func_closure_isomorphic
 
 # ....................{ CLASSES                            }....................
 class BeartypeCall(object):
@@ -308,7 +308,7 @@ class BeartypeCall(object):
         self.func_wrappee = func
 
         # Possibly unwrapped callable unwrapped from that callable.
-        self.func_wrappee_wrappee = unwrap_func(func)
+        self.func_wrappee_wrappee = unwrap_func_closure_isomorphic(func)
 
         # Possibly wrapped callable code object.
         self.func_wrappee_codeobj = get_func_codeobj(
