@@ -51,7 +51,7 @@ def die_unless_func_args_len_flexible_equal(
         Number of flexible parameters to validate this callable as accepting.
     is_unwrap: bool, optional
         ``True`` only if this validator implicitly calls the
-        :func:`unwrap_func_closure_isomorphic` function to unwrap this possibly higher-level
+        :func:`unwrap_func_all_closures_isomorphic` function to unwrap this possibly higher-level
         wrapper into its possibly lowest-level wrappee *before* returning the
         code object of that wrappee. Note that doing so incurs worst-case time
         complexity ``O(n)`` for ``n`` the number of lower-level wrappees
@@ -185,7 +185,7 @@ def is_func_argless(
 
     # Code object underlying the passed pure-Python callable unwrapped.
     func_codeobj = get_func_codeobj(
-        func=func, is_unwrap=True, exception_cls=exception_cls)
+        func=func, is_unwrap=False, exception_cls=exception_cls)
 
     # Return true only if this callable accepts neither...
     return not (
@@ -290,7 +290,7 @@ def is_func_arg_variadic_positional(func: Codeobjable) -> bool:
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_codeobj(func=func, is_unwrap=True)
+    func_codeobj = get_func_codeobj(func=func, is_unwrap=False)
 
     # Return true only if this callable declares variadic positional arguments.
     return func_codeobj.co_flags & CO_VARARGS != 0
@@ -323,7 +323,7 @@ def is_func_arg_variadic_keyword(func: Codeobjable) -> bool:
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_codeobj(func=func, is_unwrap=True)
+    func_codeobj = get_func_codeobj(func=func, is_unwrap=False)
 
     # Return true only if this callable declares variadic keyword arguments.
     return func_codeobj.co_flags & CO_VARKEYWORDS != 0

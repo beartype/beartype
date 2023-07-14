@@ -166,10 +166,10 @@ def callable_cached(func: _CallableT) -> _CallableT:
     assert callable(func), f'{repr(func)} not callable.'
 
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfuncwrap import unwrap_func
+    from beartype._util.func.utilfuncwrap import unwrap_func_all
 
     # Lowest-level wrappee callable wrapped by this wrapper callable.
-    func_wrappee = unwrap_func(func)
+    func_wrappee = unwrap_func_all(func)
 
     # If this wrappee accepts variadic arguments, raise an exception.
     if is_func_arg_variadic(func_wrappee):
@@ -377,10 +377,10 @@ def method_cached_arg_by_id(func: _CallableT) -> _CallableT:
     assert callable(func), f'{repr(func)} not callable.'
 
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfuncwrap import unwrap_func
+    from beartype._util.func.utilfuncwrap import unwrap_func_all
 
     # Lowest-level wrappee callable wrapped by this wrapper callable.
-    func_wrappee = unwrap_func(func)
+    func_wrappee = unwrap_func_all(func)
 
     # If this wrappee accepts either zero, one, *OR* three or more flexible
     # parameters (i.e., parameters passable as either positional or keyword

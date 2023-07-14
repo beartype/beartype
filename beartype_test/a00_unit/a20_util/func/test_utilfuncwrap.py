@@ -20,12 +20,12 @@ This submodule unit tests the public API of the private
 def test_unwrap_func() -> None:
     '''
     Test the
-    :func:`beartype._util.func.utilfuncwrap.unwrap_func` function.
+    :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.func.utilfuncwrap import unwrap_func
+    from beartype._util.func.utilfuncwrap import unwrap_func_all
     from functools import wraps
 
     # ....................{ CALLABLES                      }....................
@@ -50,10 +50,10 @@ def test_unwrap_func() -> None:
 
     # ....................{ ASSERTS                        }....................
     # Assert this function returns unwrapped callables unmodified.
-    assert unwrap_func(in_a_station_of_the_metro_line_two) is (
+    assert unwrap_func_all(in_a_station_of_the_metro_line_two) is (
         in_a_station_of_the_metro_line_two)
-    assert unwrap_func(iter) is iter
+    assert unwrap_func_all(iter) is iter
 
     # Assert this function returns wrapper callables unwrapped.
-    assert unwrap_func(in_a_station_of_the_metro) is (
+    assert unwrap_func_all(in_a_station_of_the_metro) is (
         in_a_station_of_the_metro_line_two)

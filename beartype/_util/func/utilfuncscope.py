@@ -76,7 +76,7 @@ def get_func_globals(
 
     # Avoid circular import dependencies.
     from beartype._util.func.utilfunctest import die_unless_func_python
-    from beartype._util.func.utilfuncwrap import unwrap_func_closure_isomorphic
+    from beartype._util.func.utilfuncwrap import unwrap_func_all_closures_isomorphic
 
     # If this callable is *NOT* pure-Python, raise an exception. C-based
     # callables do *NOT* define the "__globals__" dunder attribute.
@@ -84,7 +84,7 @@ def get_func_globals(
     # Else, this callable is pure-Python.
 
     # Lowest-level wrappee callable wrapped by this wrapper callable.
-    func_wrappee = unwrap_func_closure_isomorphic(func)
+    func_wrappee = unwrap_func_all_closures_isomorphic(func)
 
     # Dictionary mapping from the name to value of each locally scoped
     # attribute accessible to this wrappee callable to be returned.

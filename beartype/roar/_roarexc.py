@@ -1132,20 +1132,6 @@ class _BeartypeCallHintPepRaiseDesynchronizationException(
     pass
 
 # ....................{ PRIVATE ~ util : kind                }..................
-class _BeartypeUtilCallableException(_BeartypeUtilException):
-    '''
-    **Beartype callable utility exception.**
-
-    This exception is raised by public functions of the private
-    :mod:`beartype._util.utilfunc` subpackage.
-
-    This exception denotes a critical internal issue and should thus *never* be
-    raised -- let alone allowed to percolate up the call stack to end users.
-    '''
-
-    pass
-
-
 class _BeartypeUtilCallFrameException(_BeartypeUtilException):
     '''
     **Beartype call stack frame utility exception.**
@@ -1226,6 +1212,34 @@ class _BeartypeUtilTypeException(_BeartypeUtilException):
 
     This exception is raised by public functions of the private
     :mod:`beartype._util.cls.utilclstest` subpackage.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+# ....................{ PRIVATE ~ util : kind : callable     }..................
+class _BeartypeUtilCallableException(_BeartypeUtilException):
+    '''
+    **Beartype callable utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.utilfunc` subpackage.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilCallableWrapperException(_BeartypeUtilCallableException):
+    '''
+    **Beartype callable wrapper utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.utilfunc.utilfuncwrap` subpackage.
 
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.

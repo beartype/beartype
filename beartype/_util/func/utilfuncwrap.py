@@ -11,11 +11,61 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar._roarexc import _BeartypeUtilCallableWrapperException
 from beartype.typing import Any
 from collections.abc import Callable
 
 # ....................{ UNWRAPPERS                         }....................
-def unwrap_func(func: Any) -> Callable:
+#FIXME: Unit test us up, please.
+def unwrap_func_once(func: Any) -> Callable:
+    '''
+    Immediate **wrappee** (i.e., callable wrapped by the passed wrapper
+    callable) of the passed higher-level **wrapper** (i.e., callable wrapping
+    the wrappee callable to be returned) if the passed callable is a wrapper
+    *or* that callable as is otherwise (i.e., if that callable is *not* a
+    wrapper).
+
+    Specifically, this getter undoes the work performed by:
+
+    * A single use of the :func:`functools.wrap` decorator on the wrappee
+      callable to be returned.
+    * A single call to the :func:`functools.update_wrapper` function on the
+      wrappee callable to be returned.
+
+    Parameters
+    ----------
+    func : Callable
+        Wrapper callable to be unwrapped.
+
+    Returns
+    ----------
+    Callable
+        The immediate wrappee callable wrapped by the passed wrapper callable.
+
+    Raises
+    ----------
+    _BeartypeUtilCallableWrapperException
+        If the passed callable is *not* a wrapper.
+    '''
+
+    # Immediate wrappee callable wrapped by the passed wrapper callable if any
+    # *OR* "None" otherwise (i.e., if that callable is *NOT* a wrapper).
+    func_wrappee = getattr(func, '__wrapped__', None)
+
+    # If that callable is *NOT* a wrapper, raise an exception.
+    if func_wrappee is None:
+        raise _BeartypeUtilCallableWrapperException(
+            f'Callable {repr(func)} not wrapper '
+            f'(i.e., has no "__wrapped__" dunder attribute '
+            f'defined by @functools.wrap or functools.update_wrapper()).'
+        )
+    # Else, that callable is a wrapper.
+
+    # Return this immediate wrappee callable.
+    return func_wrappee
+
+# ....................{ UNWRAPPERS ~ all                   }....................
+def unwrap_func_all(func: Any) -> Callable:
     '''
     Lowest-level **wrappee** (i.e., callable wrapped by the passed wrapper
     callable) of the passed higher-level **wrapper** (i.e., callable wrapping
@@ -33,7 +83,7 @@ def unwrap_func(func: Any) -> Callable:
     Parameters
     ----------
     func : Callable
-        Wrapper callable to be inspected.
+        Wrapper callable to be unwrapped.
 
     Returns
     ----------
@@ -55,7 +105,7 @@ def unwrap_func(func: Any) -> Callable:
 
 
 #FIXME: Unit test us up, please.
-def unwrap_func_closure_isomorphic(func: Any) -> Callable:
+def unwrap_func_all_closures_isomorphic(func: Any) -> Callable:
     '''
     Lowest-level **non-isomorphic wrappee** (i.e., callable wrapped by the
     passed wrapper callable) of the passed higher-level **isomorphic wrapper**
@@ -75,7 +125,7 @@ def unwrap_func_closure_isomorphic(func: Any) -> Callable:
     Parameters
     ----------
     func : Callable
-        Wrapper callable to be inspected.
+        Wrapper callable to be unwrapped.
 
     Returns
     ----------
@@ -98,7 +148,7 @@ def unwrap_func_closure_isomorphic(func: Any) -> Callable:
         hasattr(func, '__wrapped__')
     ):
         # Undo one layer of wrapping by reducing the former to the latter.
-        print(f'Unwrapping isomorphic closure wrapper {func} to wrappee {func.__wrapped__}...')
+        # print(f'Unwrapping isomorphic closure wrapper {func} to wrappee {func.__wrapped__}...')
         func = func.__wrapped__  # type: ignore[attr-defined]
 
     # Return this wrappee, which is now guaranteed to *NOT* be an isomorphic

@@ -21,6 +21,7 @@ from beartype._data.datatyping import (
     Codeobjable,
     TypeException,
 )
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
 from types import (
     CodeType,
     FrameType,
@@ -30,6 +31,7 @@ from types import (
 )
 
 # ....................{ CONSTANTS                          }....................
+#FIXME: Shift into the "beartype._date" subpackage somewhere, please.
 #FIXME: Unit test us up, please.
 FUNC_CODEOBJ_NAME_MODULE = '<module>'
 '''
@@ -81,6 +83,8 @@ def get_func_codeobj(
            co_name             name with which this code object was defined
            co_names            tuple of names of local variables
            co_nlocals          number of local variables
+           co_qualname         fully-qualified name with which this code object
+                               was defined (Python >= 3.11 only)
            co_stacksize        virtual machine stack space required
            co_varnames         tuple of names of arguments and local variables
 
@@ -90,7 +94,7 @@ def get_func_codeobj(
         Codeobjable to be inspected.
     is_unwrap: bool, optional
         :data:`True` only if this getter implicitly calls the
-        :func:`.unwrap_func_closure_isomorphic` function to unwrap this possibly higher-level
+        :func:`.unwrap_func_all_closures_isomorphic` function to unwrap this possibly higher-level
         wrapper into a possibly lower-level wrappee *before* returning the code
         object of that wrappee. Note that doing so incurs worst-case time
         complexity ``O(n)`` for ``n`` the number of lower-level wrappees wrapped
@@ -102,12 +106,12 @@ def get_func_codeobj(
     Returns
     ----------
     CodeType
-        Code object underlying this callable.
+        Code object underlying this codeobjable.
 
     Raises
     ----------
     exception_cls
-         If this callable has *no* code object and is thus *not* pure-Python.
+         If this codeobjable has *no* code object and is thus *not* pure-Python.
     '''
 
     # Code object underlying this callable if this callable is pure-Python *OR*
@@ -159,12 +163,12 @@ def get_func_codeobj_or_none(
 
     Caveats
     -------
-    If ``is_unwrap``, **this callable has worst-case time complexity**
-    ``O(n)`` **for** ``n`` **the number of lower-level wrappees wrapped by this
+    If ``is_unwrap``, **this callable has worst-case time complexity** ``O(n)``
+    **for** ``n`` **the number of lower-level wrappees wrapped by this
     higher-level wrapper.** That parameter should thus be disabled in
     time-critical code paths; instead, the lowest-level wrappee returned by the
-    :func:``beartype._util.func.utilfuncwrap.unwrap_func_closure_isomorphic` function should be
-    temporarily stored and then repeatedly passed.
+    :func:``beartype._util.func.utilfuncwrap.unwrap_func_all_closures_isomorphic`
+    function should be temporarily stored and then repeatedly passed.
 
     Parameters
     ----------
@@ -172,18 +176,20 @@ def get_func_codeobj_or_none(
         Codeobjable to be inspected.
     is_unwrap: bool, optional
         :data:`True` only if this getter implicitly calls the
-        :func:`.unwrap_func_closure_isomorphic` function to unwrap this possibly higher-level
-        wrapper into a possibly lower-level wrappee *before* returning the code
-        object of that wrappee. Note that doing so incurs worst-case time
-        complexity ``O(n)`` for ``n`` the number of lower-level wrappees wrapped
-        by this wrapper. Defaults to :data:`False` for efficiency.
+        :func:`.unwrap_func_all_closures_isomorphic` function to unwrap this possibly
+        higher-level wrapper into a possibly lower-level wrappee *before*
+        returning the code object of that wrappee. Note that doing so incurs
+        worst-case time complexity ``O(n)`` for ``n`` the number of lower-level
+        wrappees wrapped by this wrapper. Defaults to :data:`False` for both
+        efficiency and disambiguity.
 
     Returns
     ----------
     Optional[CodeType]
         Either:
 
-        * If the passed callable is pure-Python, that callable's code object.
+        * If this codeobjable is pure-Python, the code object underlying this
+          codeobjable.
         * Else, :data:`None`.
 
     See Also
@@ -194,7 +200,7 @@ def get_func_codeobj_or_none(
     assert is_unwrap.__class__ is bool, f'{is_unwrap} not boolean.'
 
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfuncwrap import unwrap_func
+    from beartype._util.func.utilfuncwrap import unwrap_func_all
 
     # Note that:
     # * For efficiency, tests are intentionally ordered in decreasing likelihood
@@ -224,7 +230,7 @@ def get_func_codeobj_or_none(
         # * If unwrapping this function, the lowest-level wrappee wrapped by
         #   this function.
         # * Else, this function as is.
-        return (unwrap_func(func) if is_unwrap else func).__code__  # type: ignore[attr-defined]
+        return (unwrap_func_all(func) if is_unwrap else func).__code__  # type: ignore[attr-defined]
     # Else, this object is *NOT* a pure-Python function.
     #
     # If this callable is a bound method, return this method's code object.
@@ -250,7 +256,7 @@ def get_func_codeobj_or_none(
             # * If unwrapping this function, the lowest-level wrappee wrapped
             #   by this function.
             # * Else, this function as is.
-            return (unwrap_func(func) if is_unwrap else func).__code__  # type: ignore[attr-defined]
+            return (unwrap_func_all(func) if is_unwrap else func).__code__  # type: ignore[attr-defined]
     # Else, this callable is *NOT* a pure-Python bound method.
     #
     # If this object is a pure-Python generator, return this generator's code
@@ -274,3 +280,51 @@ def get_func_codeobj_or_none(
 
     # Fallback to returning "None".
     return None
+
+# ....................{ GETTERS                            }....................
+#FIXME: Unit test us up, please.
+def get_func_codeobj_name(func: Codeobjable, **kwargs) -> str:
+    '''
+    Fully-qualified name or unqualified basename (contextually depending on the
+    version of the active Python interpreter) of the passed **codeobjable**
+    (i.e., pure-Python object directly associated with a code object) if this
+    object is codeobjable *or* raise an exception otherwise (e.g., if this
+    object is *not* codeobjable).
+
+    Specifically, this getter returns:
+
+    * If the active Python interpreter targets Python >= 3.11 and thus defines
+      the ``co_qualname`` attribute on code objects, the value of that attribute
+      on the code object providing the fully-qualified name of this codeobjable.
+    * Else, the value of the ``co_name`` attribute on the code object providing
+      the unqualified basename of this codeobjable.
+
+    Parameters
+    ----------
+    func : Codeobjable
+        Codeobjable to be inspected.
+
+    All remaining keyword parameters are passed as is to the
+    :func:`.get_func_codeobj` getter.
+
+    Raises
+    ----------
+    exception_cls
+         If this codeobjable has *no* code object and is thus *not* pure-Python.
+    '''
+
+    # Code object underlying this codeobjable if pure-Python *OR* raise an
+    # exception otherwise (i.e., if this codeobjable is C-based).
+    func_codeobj = get_func_codeobj(func, **kwargs)
+
+    # Return either...
+    return (
+        # If the active Python interpreter targets Python >= 3.11 and thus
+        # defines the "co_qualname" attribute on code objects, that attribute;
+        func_codeobj.co_qualname  # type: ignore[attr-defined]
+        if IS_PYTHON_AT_LEAST_3_11 else
+        # Else, the active Python interpreter targets Python < 3.11 and thus
+        # does *NOT* defines the "co_qualname" attribute on code objects. In
+        # this case, the "co_name" attribute instead.
+        func_codeobj.co_name
+    )

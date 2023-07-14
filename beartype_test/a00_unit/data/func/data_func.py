@@ -11,7 +11,7 @@ cases on behalf of higher-level unit test submodules.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype_test.a00_unit.data.data_type import decorator_wrapping
+from beartype_test.a00_unit.data.data_type import decorator_isomorphic
 from typing import Union
 
 # ....................{ CALLABLES                          }....................
@@ -114,13 +114,13 @@ def func_args_5_flex_mandatory_varpos_kwonly_varkw(
 # closures (i.e., *NOT* @beartype-style decorators):
 #     def wrapper(*args, **kwargs): ...
 
-func_args_0_wrapped = decorator_wrapping(
+func_args_0_wrapped = decorator_isomorphic(
     func_args_0)
-func_args_1_flex_mandatory_wrapped = decorator_wrapping(
+func_args_1_flex_mandatory_wrapped = decorator_isomorphic(
     func_args_1_flex_mandatory)
-func_args_1_varpos_wrapped = decorator_wrapping(
+func_args_1_varpos_wrapped = decorator_isomorphic(
     func_args_1_varpos)
-func_args_2_flex_mandatory_wrapped = decorator_wrapping(
+func_args_2_flex_mandatory_wrapped = decorator_isomorphic(
     func_args_2_flex_mandatory)
-func_args_3_flex_mandatory_optional_varkw_wrapped = decorator_wrapping(
+func_args_3_flex_mandatory_optional_varkw_wrapped = decorator_isomorphic(
     func_args_3_flex_mandatory_optional_varkw)

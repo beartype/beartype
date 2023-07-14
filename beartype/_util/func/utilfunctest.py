@@ -16,20 +16,22 @@ from beartype.typing import (
     TYPE_CHECKING,
     Any,
 )
+from beartype._data.func.datafunc import CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME
+from beartype._data.datatyping import (
+    Codeobjable,
+    TypeException,
+)
 from beartype._util.func.arg.utilfuncargtest import (
     is_func_arg_variadic_positional,
     is_func_arg_variadic_keyword,
 )
 from beartype._util.func.utilfunccodeobj import (
-    get_func_codeobj,
     get_func_codeobj_or_none,
+    get_func_codeobj_name,
 )
 from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 from beartype._util.mod.lib.utiltyping import import_typing_attr_or_fallback
-from beartype._data.datatyping import (
-    Codeobjable,
-    TypeException,
-)
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_10
 from collections.abc import (
     Callable,
     # Generator,
@@ -738,7 +740,6 @@ def is_func_nested(func: Callable) -> bool:
     )
 
 # ....................{ TESTERS ~ nested : closure         }....................
-#FIXME: Unit test us up, please.
 def is_func_closure(func: Any) -> TypeGuard[Callable]:
     '''
     :data:`True` only if the passed callable is a **closure** (i.e., nested
@@ -770,7 +771,6 @@ def is_func_closure(func: Any) -> TypeGuard[Callable]:
     return getattr(func, '__closure__', None) is not None
 
 
-#FIXME: Unit test us up, please.
 def is_func_closure_isomorphic(func: Any) -> TypeGuard[Callable]:
     '''
     :data:`True` only if the passed object is an **isomorphic decorator
@@ -779,9 +779,9 @@ def is_func_closure_isomorphic(func: Any) -> TypeGuard[Callable]:
     passed parameters and returns, implemented as a closure accepting only a
     variadic positional argument and a variadic keyword argument).
 
-    This tester detects standard decorator closures, as decorators typically
-    preserve the number and types of all parameters passed to and returns
-    returned from their decorated callables.
+    This tester enables callers to detect when a user-defined callable has been
+    decorated by an isomorphic decorator, which constitutes *most* real-world
+    decorators of interest.
 
     Caveats
     ----------
@@ -798,11 +798,6 @@ def is_func_closure_isomorphic(func: Any) -> TypeGuard[Callable]:
     ----------
     bool
         :data:`True` only if this object is an isomorphic decorator closure.
-
-    Raises
-    ----------
-    _BeartypeUtilCallableException
-         If the passed callable is *not* pure-Python.
     '''
 
     # If the passed callable is *NOT* a closure, immediately return false.
@@ -811,13 +806,84 @@ def is_func_closure_isomorphic(func: Any) -> TypeGuard[Callable]:
     # Else, that callable is a closure.
 
     # Code object underlying that callable as is (rather than possibly unwrapped
-    # to another code object entirely).
-    func_codeobj = get_func_codeobj(func=func, is_unwrap=False)
+    # to another code object entirely) if that callable is pure-Python *OR*
+    # "None" otherwise (i.e., if that callable is C-based).
+    func_codeobj = get_func_codeobj_or_none(func)
 
     # Return true only if...
     return (
+        # That callable is pure-Python *AND*...
+        func_codeobj is not None and
         # That callable accepts a variadic positional argument *AND*...
         is_func_arg_variadic_positional(func_codeobj) and
         # That callable accepts a variadic keyword argument.
         is_func_arg_variadic_keyword(func_codeobj)
     )
+
+
+def is_func_contextlib_contextmanager(func: Any) -> TypeGuard[Callable]:
+    '''
+    :data:`True` only if the passed object is a
+    :func:`contextlib.contextmanager`-based **isomorphic decorator closure**
+    (i.e., closure both defined and returned by the standard
+    :func:`contextlib.contextmanager` decorator where that closure
+    isomorphically preserves both the number and types of all passed parameters
+    and returns by accepting only a variadic positional argument and variadic
+    keyword argument).
+
+    This tester enables callers to detect when a user-defined callable has been
+    decorated by :func:`contextlib.contextmanager` and thus has a mismatch
+    between the type hints annotating that decorated callable and the type of
+    the object created and returned by that decorated callable.
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        :data:`True` only if this object is a
+        :func:`contextlib.contextmanager`-based isomorphic decorator closure.
+
+    See Also
+    ----------
+    beartype._data.func.datafunc.CONTEXTLIB_CONTEXTMANAGER_CO_NAME_QUALNAME
+        Further discussion.
+    '''
+
+    # If either...
+    if (
+        # The active Python interpreter targets Python < 3.10 and thus fails to
+        # define the "co_qualname" attribute on code objects required to
+        # robustly implement this test *OR*...
+        IS_PYTHON_AT_MOST_3_10 or
+        # The passed callable is *NOT* a closure...
+        not is_func_closure(func)
+    ):
+        # Then immediately return false.
+        return False
+    # Else, that callable is a closure.
+
+    # Code object underlying that callable as is (rather than possibly unwrapped
+    # to another code object entirely) if that callable is pure-Python *OR*
+    # "None" otherwise (i.e., if that callable is C-based).
+    func_codeobj = get_func_codeobj_or_none(func)
+
+    # If that callable is C-based, immediately return false.
+    if func_codeobj is None:
+        return False
+    # Else, that callable is pure-Python.
+
+    # Fully-qualified name of that code object.
+    func_codeobj_name = get_func_codeobj_name(func_codeobj)
+
+    # Return true only if the fully-qualified name of that code object is that
+    # of the isomorphic decorator closure created and returned by the standard
+    # @contextlib.contextmanager decorator.
+    #
+    # Note that we *COULD* technically also explicitly test whether that
+    # callable satisfies the is_func_closure_isomorphic() tester, but that
+    # there's no benefit and a minor efficiency cost  to doing so.
+    return func_codeobj_name == CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME

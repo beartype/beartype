@@ -378,7 +378,7 @@ def test_is_func_staticmethod() -> None:
 def test_die_unless_func_python() -> None:
     '''
     Test the
-    :func:`beartype._util.func.utilfunctest.die_unless_func_python` function.
+    :func:`beartype._util.func.utilfunctest.die_unless_func_python` tester.
     '''
 
     # Defer test-specific imports.
@@ -399,7 +399,7 @@ def test_die_unless_func_python() -> None:
 def test_is_func_python() -> None:
     '''
     Test the
-    :func:`beartype._util.func.utilfunctest.is_func_python` function.
+    :func:`beartype._util.func.utilfunctest.is_func_python` tester.
     '''
 
     # Defer test-specific imports.
@@ -410,3 +410,88 @@ def test_is_func_python() -> None:
 
     # Assert this tester rejects C-based callables.
     assert is_func_python(iter) is False
+
+# ....................{ TESTS ~ closure                    }....................
+def test_is_func_closure() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfunctest.is_func_closure` tester.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.func.utilfunctest import is_func_closure
+    from beartype_test.a00_unit.data.data_type import (
+        closure_factory,
+        function,
+    )
+
+    # Assert this tester accepts closures.
+    assert is_func_closure(closure_factory()) is True
+
+    # Assert this tester rejects non-closure callables.
+    assert is_func_closure(function) is False
+
+
+def test_is_func_closure_isomorphic() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfunctest.is_func_closure_isomorphic` tester.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.func.utilfunctest import is_func_closure_isomorphic
+    from beartype_test.a00_unit.data.data_type import (
+        context_manager_factory,
+        decorator_isomorphic,
+        decorator_nonisomorphic,
+        function,
+    )
+
+    # Assert this tester accepts isomorphic closures.
+    assert is_func_closure_isomorphic(context_manager_factory) is True
+    assert is_func_closure_isomorphic(decorator_isomorphic(function)) is True
+
+    # Assert this tester rejects non-isomorphic closures.
+    assert is_func_closure_isomorphic(
+        decorator_nonisomorphic(function)) is False
+
+    # Assert this tester rejects non-closure callables.
+    assert is_func_closure_isomorphic(function) is False
+
+
+def test_is_func_contextlib_contextmanager() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfunctest.is_func_contextlib_contextmanager`
+    tester.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.func.utilfunctest import (
+        is_func_contextlib_contextmanager)
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
+    from beartype_test.a00_unit.data.data_type import (
+        context_manager_factory,
+        decorator_isomorphic,
+        decorator_nonisomorphic,
+        function,
+    )
+
+    # Assert this tester either accepts or rejects isomorphic closures created
+    # and returned by the @contextlib.contextmanager decorator conditionally
+    # depending on whether the active Python interpreter targets Python >= 3.11
+    # or not.
+    assert is_func_contextlib_contextmanager(context_manager_factory) is (
+        IS_PYTHON_AT_LEAST_3_11)
+
+    # Assert this tester rejects isomorphic closures *NOT* created and returned
+    # by the @contextlib.contextmanager decorator.
+    assert is_func_contextlib_contextmanager(
+        decorator_isomorphic(function)) is False
+
+    # Assert this tester rejects non-isomorphic closures.
+    assert is_func_contextlib_contextmanager(
+        decorator_nonisomorphic(function)) is False
+
+    # Assert this tester rejects non-closure callables.
+    assert is_func_contextlib_contextmanager(function) is False

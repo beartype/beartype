@@ -60,7 +60,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavefast import NotImplementedType
 from beartype._data.datakind import ARG_NAME_RETURN
-from beartype._data.func.datafunc import METHOD_NAMES_BINARY_DUNDER
+from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
 from beartype._check.checkcall import BeartypeCall
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.hint.utilhinttest import is_hint_uncached
@@ -132,7 +132,7 @@ def coerce_func_hint_root(
         # This hint annotates the return for the decorated callable *AND*...
         arg_name == ARG_NAME_RETURN and
         # The decorated callable is a binary dunder method (e.g., __eq__())...
-        bear_call.func_wrapper_name in METHOD_NAMES_BINARY_DUNDER
+        bear_call.func_wrapper_name in METHOD_NAMES_DUNDER_BINARY
     ):
         # Expand this hint to accept both this hint *AND* the "NotImplemented"
         # singleton as valid returns from this method. Why? Because this

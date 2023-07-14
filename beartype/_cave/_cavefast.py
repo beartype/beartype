@@ -168,23 +168,23 @@ either as C extensions or in pure Python).
 # ....................{ TYPES ~ core : singleton           }....................
 EllipsisType: type = type(Ellipsis)
 '''
-Type of the ``Ellipsis`` singleton.
+Type of the :data:`Ellipsis` singleton.
 '''
 
 
 NoneType: type = type(None)
 '''
-Type of the ``None`` singleton.
+Type of the :data:`None` singleton.
 
-Curiously, although the type of the ``None`` object is a class object whose
+Curiously, although the type of the :data:`None` object is a class object whose
 ``__name__`` attribute is ``NoneType``, there exists no globally accessible
 class by that name. To circumvents this obvious oversight, this global globally
 exposes this class.
 
 This class is principally useful for annotating both:
 
-* Callable parameters accepting ``None`` as a valid value.
-* Callables returning ``None`` as a valid value.
+* Callable parameters accepting :data:`None` as a valid value.
+* Callables returning :data:`None` as a valid value.
 
 Note that, for obscure and uninteresting reasons, the standard :mod:`types`
 module defined the same type with the same name under Python 2.x but *not* 3.x.
@@ -194,7 +194,7 @@ Depressingly, this type must now be manually redefined everywhere.
 
 NotImplementedType: type = type(NotImplemented)  # type: ignore[misc]
 '''
-Type of the ``NotImplemented`` singleton.
+Type of the :data:`NotImplemented` singleton.
 '''
 
 # ....................{ TYPES ~ call                       }....................

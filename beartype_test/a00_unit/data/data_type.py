@@ -14,9 +14,9 @@ cases on behalf of higher-level unit test submodules.
 from beartype.typing import (
     AsyncGenerator,
     Callable,
-    ContextManager,
     Coroutine,
     Generator,
+    Iterator,
 )
 from beartype._util.func.utilfuncmake import make_func
 from contextlib import contextmanager
@@ -286,10 +286,12 @@ Arbitrary pure-Python function dynamically declared in-memory.
 
 
 @contextmanager
-def context_manager_factory(obj: object) -> ContextManager[object]:
+def context_manager_factory(obj: object) -> Iterator[object]:
     '''
     Create and return a new **identity context manager** (i.e., context
-    manager trivially yielding the passed object).
+    manager trivially yielding the passed object implemented as a generator
+    factory function decorated by the standard :func:`contextlib.contextmanager`
+    decorator).
     '''
 
     yield obj
@@ -309,26 +311,55 @@ def decorator(func: Callable) -> Callable:
     return func
 
 
-def decorator_wrapping(func):
+def decorator_isomorphic(func):
     '''
-    **Identity wrapping decorator** (i.e., function returning a closure
-    wrapping the passed callable in the trivial way by simply passing all
-    passed arguments to that callable).
+    **Isomorphic decorator** (i.e., function returning an isomorphic decorator
+    closure transparently preserving both the positions and types of all
+    parameters passed to the passed callable).
     '''
 
     # Defer decorator-specific imports.
     from functools import wraps
 
     @wraps(func)
-    def _identity_wrapper(*args, **kwargs):
+    def _closure_isomorphic(*args, **kwargs):
         '''
-        **Identity wrapper** (i.e., closure trivially wrapping that callable).
+        **Isomorphic decorator closure** (i.e., closure transparently
+        preserving both the positions and types of all parameters passed to the
+        decorated callable).
         '''
 
         return func(*args, **kwargs)
 
     # Return this closure.
-    return _identity_wrapper
+    return _closure_isomorphic
+
+
+def decorator_nonisomorphic(func):
+    '''
+    **Non-isomorphic decorator** (i.e., function returning a non-isomorphic
+    decorator closure destroying the positions and/or types of one or more
+    parameters passed to the passed callable).
+    '''
+
+    # Defer decorator-specific imports.
+    from functools import wraps
+
+    @wraps(func)
+    def _closure_nonisomorphic(*args):
+        '''
+        **Non-isomorphic decorator closure** (i.e., closure destroying the
+        positions and/or types of one or more parameters passed to the decorated
+        callable).
+
+        This closure fails to accept keyword parameters and thus effectively
+        "destroys" all keyword parameters passed to the decorated callable.
+        '''
+
+        return func(*args)
+
+    # Return this closure.
+    return _closure_nonisomorphic
 
 # ....................{ CALLABLES ~ sync : generator       }....................
 def sync_generator_factory() -> Generator[int, None, None]:

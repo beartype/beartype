@@ -18,11 +18,11 @@ unit tests defined elsewhere.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_beartype_decorator_builtin() -> None:
+def test_beartype_descriptor_decorator_builtin() -> None:
     '''
     Test the subset of the private
-    :func:`beartype._decor.decorcore._beartype_decorator_builtin` decorator
-    *not* already tested by higher-level unit tests defined elsewhere.
+    :func:`beartype._decor._decormore.beartype_descriptor_decorator_builtin`
+    decorator *not* already tested by higher-level unit tests defined elsewhere.
 
     See Also
     ----------
@@ -34,13 +34,13 @@ def test_beartype_decorator_builtin() -> None:
     # Defer test-specific imports.
     from beartype import BeartypeConf
     from beartype.roar import BeartypeDecorWrappeeException
-    from beartype._decor.decorcore import _beartype_decorator_builtin
+    from beartype._decor._decormore import beartype_descriptor_decorator_builtin
     from pytest import raises
 
     # Assert this decorator raises the expected exception when passed an object
     # that is neither a class, property, *NOR* static method descriptor.
     with raises(BeartypeDecorWrappeeException):
-        _beartype_decorator_builtin(
+        beartype_descriptor_decorator_builtin(
             descriptor='Music, when soft voices die,',
             conf=BeartypeConf(),
         )
