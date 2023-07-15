@@ -71,6 +71,7 @@ def test_api_conf_dataclass() -> None:
         is_debug=True,
         is_pep484_tower=True,
         strategy=BeartypeStrategy.Ologn,
+        warning_cls_on_decorator_exception=None,
     )
 
     # Arbitrary parametrized beartype configuration.
@@ -91,32 +92,44 @@ def test_api_conf_dataclass() -> None:
         BeartypeConf(is_pep484_tower=True, is_color=True, is_debug=True, claw_is_pep526=False, strategy=BeartypeStrategy.On)
     )
 
-    # Assert this configuration to default to the expected public fields.
-    assert BEAR_CONF_DEFAULT.strategy is BeartypeStrategy.O1
+    # Assert that the default configuration contains the expected fields.
     assert BEAR_CONF_DEFAULT.claw_is_pep526 is True
     assert BEAR_CONF_DEFAULT.is_color is None
-    assert BEAR_CONF_DEFAULT.is_pep484_tower is False
     assert BEAR_CONF_DEFAULT.is_debug is False
+    assert BEAR_CONF_DEFAULT.is_pep484_tower is False
+    assert BEAR_CONF_DEFAULT.strategy is BeartypeStrategy.O1
+    assert BEAR_CONF_DEFAULT.warning_cls_on_decorator_exception is None
+    assert BEAR_CONF_DEFAULT._is_warning_cls_on_decorator_exception_set is False
 
-    # Assert two differing configurations to compare unequal.
+    # Assert that the non-default configuration contains the expected fields.
+    assert BEAR_CONF_NONDEFAULT.claw_is_pep526 is False
+    assert BEAR_CONF_NONDEFAULT.is_color is True
+    assert BEAR_CONF_NONDEFAULT.is_debug is True
+    assert BEAR_CONF_NONDEFAULT.is_pep484_tower is True
+    assert BEAR_CONF_NONDEFAULT.strategy is BeartypeStrategy.Ologn
+    assert BEAR_CONF_NONDEFAULT.warning_cls_on_decorator_exception is None
+    assert BEAR_CONF_NONDEFAULT._is_warning_cls_on_decorator_exception_set is (
+        True)
+
+    # Assert that two differing configurations compare unequal.
     assert BEAR_CONF_DEFAULT != BEAR_CONF_NONDEFAULT
 
-    # Assert two identical configurations to compare equal.
+    # Assert that two identical configurations compare equal.
     assert BEAR_CONF_DEFAULT == BeartypeConf()
     assert BEAR_CONF_NONDEFAULT == BeartypeConf(**BEAR_CONF_NONDEFAULT_KWARGS)
 
-    # Assert two identical configurations to hash equal.
+    # Assert that two identical configurations hash equal.
     assert hash(BEAR_CONF_DEFAULT) == hash(BeartypeConf())
     assert hash(BEAR_CONF_NONDEFAULT) == hash(
         BeartypeConf(**BEAR_CONF_NONDEFAULT_KWARGS))
 
-    # Assert two differing configurations to hash unequal.
+    # Assert that two differing configurations hash unequal.
     assert hash(BEAR_CONF_DEFAULT) != hash(BEAR_CONF_NONDEFAULT)
 
     # Machine-readable representation of an arbitrary configuration.
     BEAR_CONF_REPR = repr(BEAR_CONF_NONDEFAULT)
 
-    # Assert this representation to contain the names of this class and all
+    # Assert that this representation to contain the names of this class and all
     # public fields of this class.
     for BEAR_CONF_REPR_SUBSTR in BEAR_CONF_REPR_SUBSTRS:
         assert BEAR_CONF_REPR_SUBSTR in BEAR_CONF_REPR

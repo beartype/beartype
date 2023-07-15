@@ -68,7 +68,7 @@ class HerFirstSweetKisses(object):
         # Look here, you. Just do it yet again!
         return but_still_loved
 
-
+# ....................{ PASS                               }....................
 # Arbitrary instance of this class.
 and_cherished_these_my_kindred = HerFirstSweetKisses()
 
@@ -77,6 +77,7 @@ and_cherished_these_my_kindred = HerFirstSweetKisses()
 assert and_cherished_these_my_kindred.if_no_bright_bird(len(
     'This boast, belovèd brethren, and withdraw')) == 42
 
+# ....................{ FAIL                               }....................
 # Assert that calling the first method passed an invalid parameter raises the
 # expected exception.
 with raises(BeartypeCallHintParamViolation):

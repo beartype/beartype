@@ -70,8 +70,7 @@ See Also
 
 
 CODE_HINT_ROOT_PREFIX = '''
-        # Type-check this passed parameter or return value against this
-        # PEP-compliant type hint.
+        # Type-check this passed parameter or return against this type hint.
         if not '''
 '''
 Code snippet prefixing all code type-checking the **root pith** (i.e., value of

@@ -83,6 +83,18 @@ class BeartypeClawDecorWarning(BeartypeClawWarning):
 
     pass
 
+# ....................{ CONF                               }....................
+class BeartypeConfWarning(BeartypeWarning):
+    '''
+    Abstract base class of all **beartype configuration warnings.**
+
+    Instances of subclasses of this warning are emitted by the
+    :class:`beartype.BeartypeConf` class to inform the user of various non-fatal
+    edge cases concerning beartype configuration.
+    '''
+
+    pass
+
 # ....................{ DECORATOR ~ hint                   }....................
 class BeartypeDecorHintWarning(BeartypeWarning):
     '''
@@ -322,6 +334,41 @@ class BeartypeValeLambdaWarning(BeartypeValeWarning):
 
     pass
 
+# ....................{ PRIVATE ~ conf                     }....................
+class _BeartypeConfReduceDecoratorExceptionToWarningDefault(
+    BeartypeConfWarning):
+    '''
+    Beartype
+    :attr:`beartype.BeartypeConf.warning_cls_on_decorator_exception`
+    **fake warning default.**
+
+    This warning is *not* actually emitted at all anywhere but instead
+    constitutes an intentional design abuse of this submodule. Specifically,
+    this warning is used as the default value for the public
+    :attr:`beartype.BeartypeConf.warning_cls_on_decorator_exception`
+    configuration parameter, enabling private functionality elsewhere to
+    distinguish between the following two common cases:
+
+    * A user does explicitly sets that parameter to :data:`None`, instructing
+      the :func:`beartype.beartype` decorator to raise exceptions rather than
+      emit warnings on decoration-time errors.
+    * A user does *not* explicitly set that parameter, which then defaults to
+      this fake warning category. Private functionality elsewhere then detects
+      this default and conditionally sets that parameter to a meaningful default
+      depending on the current context. As example, when *not* explicitly set by
+      the user:
+
+      * The :mod:`beartype.claw` API defaults that parameter to the public
+        :class:`.BeartypeClawDecorWarning` warning category.
+      * The :func:`beartype.beartype` decorator defaults that parameter to
+        :data:`None`.
+
+    This warning is doing the wrong things, but for the right reasons. Again,
+    this warning is a placeholder that should *never* be emitted to end users.
+    '''
+
+    pass
+
 # ....................{ PRIVATE ~ util                     }....................
 class _BeartypeUtilWarning(BeartypeWarning):
     '''
@@ -338,7 +385,7 @@ class _BeartypeUtilWarning(BeartypeWarning):
 # ....................{ PRIVATE ~ util : call              }....................
 class _BeartypeUtilCallableWarning(_BeartypeUtilWarning):
     '''
-    **Beartype decorator memoization decorator keyword argument warnings.**
+    Beartype **decorator memoization decorator keyword argument** warning.
 
     This warning is emitted from callables memoized by the
     :func:`beartype._util.cache.utilcachecall.callable_cached` decorator on

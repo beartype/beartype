@@ -96,7 +96,7 @@ def beartype_object(
         # If this beartype configuration requests that this decorator raise
         # fatal exceptions at decoration time, defer to the lower-level
         # decorator doing so;
-        if conf.reduce_decorator_exception_to_warning_category is None else
+        if conf.warning_cls_on_decorator_exception is None else
         # Else, this beartype configuration requests that this decorator emit
         # fatal warnings at decoration time. In this case, defer to the
         # lower-level decorator doing so.
@@ -369,7 +369,7 @@ def _beartype_object_nonfatal(
     # into a non-fatal warning for nebulous safety.
     except Exception as exception:
         # Category of warning to be emitted.
-        warning_category = conf.reduce_decorator_exception_to_warning_category
+        warning_category = conf.warning_cls_on_decorator_exception
         assert is_type_subclass(warning_category, Warning), (
             f'{repr(warning_category)} not warning category.')
 

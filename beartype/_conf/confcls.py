@@ -15,6 +15,8 @@ callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeConfException
+from beartype.roar._roarwarn import (
+    _BeartypeConfReduceDecoratorExceptionToWarningDefault)
 from beartype.typing import (
     TYPE_CHECKING,
     Dict,
@@ -81,7 +83,11 @@ class BeartypeConf(object):
     _is_pep484_tower : bool
         :data:`True` only if enabling support for the :pep:`484`-compliant
         implicit numeric tower. See also the :meth:`__new__` method docstring.
-    _reduce_decorator_exception_to_warning_category : Optional[TypeWarning]
+    _is_warning_cls_on_decorator_exception_set : bool
+        :data:`True` only if the caller explicitly passed the
+        :attr:`_warning_cls_on_decorator_exception` parameter. See
+        also the :meth:`__new__` method docstring.
+    _warning_cls_on_decorator_exception : Optional[TypeWarning]
         Configuration parameter governing whether the :func:`beartype.beartype`
         decorator reduces otherwise fatal exceptions raised at decoration time
         to equivalent non-fatal warnings of this warning category. See also the
@@ -116,7 +122,8 @@ class BeartypeConf(object):
         '_is_color',
         '_is_debug',
         '_is_pep484_tower',
-        '_reduce_decorator_exception_to_warning_category',
+        '_is_warning_cls_on_decorator_exception_set',
+        '_warning_cls_on_decorator_exception',
         '_strategy',
     )
 
@@ -129,7 +136,8 @@ class BeartypeConf(object):
         _is_color: Optional[bool]
         _is_debug: bool
         _is_pep484_tower: bool
-        _reduce_decorator_exception_to_warning_category: Optional[TypeWarning]
+        _is_warning_cls_on_decorator_exception_set: bool
+        _warning_cls_on_decorator_exception: Optional[TypeWarning]
         _strategy: BeartypeStrategy
 
     # ..................{ INSTANTIATORS                      }..................
@@ -155,8 +163,8 @@ class BeartypeConf(object):
         is_color: Optional[bool] = None,
         is_debug: bool = False,
         is_pep484_tower: bool = False,
-        reduce_decorator_exception_to_warning_category: (
-            Optional[TypeWarning]) = None,
+        warning_cls_on_decorator_exception: Optional[TypeWarning] = (
+            _BeartypeConfReduceDecoratorExceptionToWarningDefault),
         strategy: BeartypeStrategy = BeartypeStrategy.O1,
     ) -> 'BeartypeConf':
         '''
@@ -313,20 +321,6 @@ class BeartypeConf(object):
             that accumulates over multiple conversions and operations into a
             larger precision error. Enabling this improves the usability of
             public APIs at a cost of introducing precision errors.
-        reduce_decorator_exception_to_warning_category : Optional[TypeWarning]
-            Configuration parameter governing whether the
-            :func:`beartype.beartype` decorator reduces otherwise fatal
-            exceptions raised at decoration time to equivalent non-fatal
-            warnings with the passed **warning category** (i.e., subclass of the
-            standard :class:`Warning` class). Either:
-
-            * :data:`None`, in which case the :func:`beartype.beartype`
-              decorator raises fatal exceptions at decoration time.
-            * A warning category, in which case the :func:`beartype.beartype`
-              decorator reduces fatal exceptions to non-fatal warnings of this
-              category at decoration time.
-
-            Defaults to :data:`None`.
         strategy : BeartypeStrategy, optional
             **Type-checking strategy** (i.e., :class:`BeartypeStrategy`
             enumeration member) with which to implement all type-checks in the
@@ -334,6 +328,36 @@ class BeartypeConf(object):
             :func:`beartype.beartype` decorator for the decorated callable.
             Defaults to :attr: `BeartypeStrategy.O1`, the ``O(1)`` constant-time
             strategy.
+        warning_cls_on_decorator_exception : Optional[TypeWarning]
+            Configuration parameter governing whether the
+            :func:`beartype.beartype` decorator reduces what would otherwise be
+            fatal exceptions raised at decoration time to equivalent non-fatal
+            warnings of the passed **warning category** (i.e., subclass of the
+            standard :class:`Warning` class). Specifically, this parameter may
+            be either:
+
+            * :data:`None`, in which case the :func:`beartype.beartype`
+              decorator raises fatal exceptions at decoration time.
+            * A warning category, in which case the :func:`beartype.beartype`
+              decorator reduces fatal exceptions to non-fatal warnings of this
+              category at decoration time.
+
+            Defaults to a private warning type *not* intended to be passed by
+            callers, enabling :mod:`beartype` to internally detect whether the
+            caller has *not* explicitly passed this parameter and respond
+            accordingly by defaulting this parameter to a context-dependent
+            value. Notably, if this parameter is *not* explicitly passed:
+
+            * The :func:`beartype.beartype` decorator defaults this parameter to
+              :data:`None`, thus raising decoration-time exceptions.
+            * The :mod:`beartype.claw` API defaults this parameter to the public
+              :class:`beartype.roar.BeartypeClawDecorWarning` warning category,
+              thus reducing decoration-time exceptions to warnings of that
+              category when performing import hooks. This default behaviour
+              significantly increases the likelihood that import hooks installed
+              by :mod:`beartype.claw` will successfully decorate the entirety of
+              their target packages rather than prematurely halt with a single
+              fatal exception at the first decoration issue.
 
         Returns
         ----------
@@ -362,8 +386,8 @@ class BeartypeConf(object):
             is_color,
             is_debug,
             is_pep484_tower,
-            reduce_decorator_exception_to_warning_category,
             strategy,
+            warning_cls_on_decorator_exception,
         )
 
         # In a non-reentrant thread lock specific to beartype configurations...
@@ -417,21 +441,21 @@ class BeartypeConf(object):
                 )
             # Else, "is_pep484_tower" is a boolean.
             #
-            # If "reduce_decorator_exception_to_warning_category" is neither
+            # If "warning_cls_on_decorator_exception" is neither
             # "None" *NOR* a warning category, raise an exception.
             elif not (
-                reduce_decorator_exception_to_warning_category is None or
+                warning_cls_on_decorator_exception is None or
                 is_type_subclass(
-                    reduce_decorator_exception_to_warning_category, Warning)
+                    warning_cls_on_decorator_exception, Warning)
             ):
                 raise BeartypeConfException(
                     f'Beartype configuration parameter '
-                    f'"reduce_decorator_exception_to_warning_category" value '
-                    f'{repr(reduce_decorator_exception_to_warning_category)} '
+                    f'"warning_cls_on_decorator_exception" value '
+                    f'{repr(warning_cls_on_decorator_exception)} '
                     f'neither "None" nor warning category '
                     f'(i.e., "Warning" subclass).'
                 )
-            # Else, "reduce_decorator_exception_to_warning_category" is either
+            # Else, "warning_cls_on_decorator_exception" is either
             # "None" *OR* a warning category.
             #
             # If "strategy" is *NOT* an enumeration member, raise an exception.
@@ -446,13 +470,35 @@ class BeartypeConf(object):
             # Instantiate a new configuration of this type.
             self = super().__new__(cls)
 
+            # If the value of the "warning_cls_on_decorator_exception" parameter
+            # is still the default private fake warning category established
+            # above, then the caller failed to explicitly pass a valid value; in
+            # this case...
+            if (
+                warning_cls_on_decorator_exception is
+                _BeartypeConfReduceDecoratorExceptionToWarningDefault
+            ):
+                # Note this fact for subsequent reference elsewhere (e.g., in
+                # the "beartype.claw" subpackage).
+                self._is_warning_cls_on_decorator_exception_set = False
+
+                # Default this parameter to "None" for safety. Since this
+                # default private fake warning category is *NOT* an actual
+                # warning category intended for real-world use, this category
+                # *MUST* be replaced with a sane default that is safely usable.
+                warning_cls_on_decorator_exception = None
+            # Else, the caller explicitly passed a valid value for this
+            # parameter. In this case, preserve this value and note this fact.
+            else:
+                self._is_warning_cls_on_decorator_exception_set = True
+
             # Classify all passed parameters with this configuration.
             self._claw_is_pep526 = claw_is_pep526
             self._is_color = is_color
             self._is_debug = is_debug
             self._is_pep484_tower = is_pep484_tower
-            self._reduce_decorator_exception_to_warning_category = (
-                reduce_decorator_exception_to_warning_category)
+            self._warning_cls_on_decorator_exception = (
+                warning_cls_on_decorator_exception)
             self._strategy = strategy
 
             # Cache this configuration with all relevant dictionary singletons.
@@ -466,9 +512,9 @@ class BeartypeConf(object):
                 is_color=is_color,
                 is_debug=is_debug,
                 is_pep484_tower=is_pep484_tower,
-                reduce_decorator_exception_to_warning_category=(
-                    reduce_decorator_exception_to_warning_category),
                 strategy=strategy,
+                warning_cls_on_decorator_exception=(
+                    warning_cls_on_decorator_exception),
             )
 
             # Assert that these two data structures encapsulate the same number
@@ -587,7 +633,19 @@ class BeartypeConf(object):
 
 
     @property
-    def reduce_decorator_exception_to_warning_category(self) -> (
+    def strategy(self) -> BeartypeStrategy:
+        '''
+        **Type-checking strategy** (i.e., :class:`BeartypeStrategy`
+        enumeration member) with which to implement all type-checks in the
+        wrapper function dynamically generated by the
+        :func:`beartype.beartype` decorator for the decorated callable.
+        '''
+
+        return self._strategy
+
+
+    @property
+    def warning_cls_on_decorator_exception(self) -> (
         Optional[TypeWarning]):
         '''
         Configuration parameter governing whether the :func:`beartype.beartype`
@@ -600,19 +658,7 @@ class BeartypeConf(object):
             Further details.
         '''
 
-        return self._reduce_decorator_exception_to_warning_category
-
-
-    @property
-    def strategy(self) -> BeartypeStrategy:
-        '''
-        **Type-checking strategy** (i.e., :class:`BeartypeStrategy`
-        enumeration member) with which to implement all type-checks in the
-        wrapper function dynamically generated by the
-        :func:`beartype.beartype` decorator for the decorated callable.
-        '''
-
-        return self._strategy
+        return self._warning_cls_on_decorator_exception
 
     # ..................{ DUNDERS                            }..................
     def __eq__(self, other: object) -> bool:
@@ -701,8 +747,8 @@ class BeartypeConf(object):
             f'is_color={repr(self._is_color)}, '
             f'is_debug={repr(self._is_debug)}, '
             f'is_pep484_tower={repr(self._is_pep484_tower)}, '
-            f'reduce_decorator_exception_to_warning_category={repr(self._reduce_decorator_exception_to_warning_category)}, '
             f'strategy={repr(self._strategy)}'
+            f'warning_cls_on_decorator_exception={repr(self._warning_cls_on_decorator_exception)}, '
             f')'
         )
 

@@ -10,15 +10,25 @@ module containing *only* annotated functions, mimicking real-world usage of the
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype import (
+    beartype,
+    BeartypeConf,
+)
 from beartype.roar import (
+    BeartypeClawDecorWarning,
     BeartypeCallHintParamViolation,
     BeartypeCallHintReturnViolation,
+    BeartypeDecorHintPep484Exception,
 )
 from beartype.typing import (
+    NoReturn,
     Optional,
     Union,
 )
-from pytest import raises
+from pytest import (
+    raises,
+    warns,
+)
 
 # from beartype.claw._importlib.clawimpcache import module_name_to_beartype_conf
 # print(f'this_submodule conf: {repr(module_name_to_beartype_conf)}')
@@ -70,13 +80,14 @@ def thee_ever_and_thee_only(i_have_watched: Union[float, bytes]) -> (
         thy_shadow(i_have_watched)
     )
 
-
+# ....................{ PASS                               }....................
 # Assert that calling this function passed an arbitrary float returns the
 # expected complex number *WITHOUT* raising an exception.
 assert thee_ever_and_thee_only(
     len('And my heart ever gazes on the depth') + 0.0) == (
     72 + 1j)
 
+# ....................{ FAIL                               }....................
 # Assert that calling this function passed an invalid parameter raises the
 # expected exception.
 with raises(BeartypeCallHintParamViolation):
@@ -87,3 +98,33 @@ with raises(BeartypeCallHintParamViolation):
 with raises(BeartypeCallHintReturnViolation):
     thee_ever_and_thee_only(
         len('In and on coffins') - len('where black death') + 0.0)
+
+# ....................{ FAIL ~ decoration                  }....................
+# Assert that attempting to define a function whose type hints violate one or
+# more PEP standards at decoration time emits the expected non-fatal warning.
+with warns(BeartypeClawDecorWarning):
+    def but_the_charmed_eddies(of_autumnal_winds: NoReturn) -> None:
+        '''
+        Arbitrary callable accepting a parameter erroneously annotated with the
+        :pep:`484`-compliant :obj:`typing.NoReturn` type hint *only* allowed on
+        returns and thus raising a decoration-time exception, which the
+        :mod:`beartype.claw` API then coerces into a non-fatal warning.
+        '''
+
+        pass
+
+# Assert that attempting to define a function whose type hints violate one or
+# more PEP standards at decoration time emits the expected exception when that
+# function is configured by a non-default configuration instructing the
+# "beartype.claw" API to raise exceptions rather than emit non-fatal warnings at
+# decoration time. *PHEW!*
+with raises(BeartypeDecorHintPep484Exception):
+    @beartype(conf=BeartypeConf(warning_cls_on_decorator_exception=None))
+    def built_over_his_mouldering_bones(a_pyramid: NoReturn) -> None:
+        '''
+        Arbitrary callable accepting a parameter erroneously annotated with the
+        :pep:`484`-compliant :obj:`typing.NoReturn` type hint *only* allowed on
+        returns and thus raising a decoration-time exception.
+        '''
+
+        pass

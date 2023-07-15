@@ -45,7 +45,7 @@ def make_conf_hookable(conf: BeartypeConf) -> BeartypeConf:
     configuration, forcefully enabling these parameters required by import
     hooks:
 
-    * :attr:`beartype.BeartypeConf.reduce_decorator_exception_to_warning_category`
+    * :attr:`beartype.BeartypeConf.warning_cls_on_decorator_exception`
       to the :class:`beartype.roar.BeartypeClawDecorWarning` warning category.
       Doing so instructs the :func:`beartype.beartype` decorator to emit
       non-fatal warnings rather than raise fatal exceptions at decoration time
@@ -79,21 +79,24 @@ def make_conf_hookable(conf: BeartypeConf) -> BeartypeConf:
         )
     # Else, the "conf" parameter is a configuration.
 
-    # If this configuration does *NOT* reduce fatal exceptions to non-fatal
-    # warnings at @beartype decoration-time...
-    if conf.reduce_decorator_exception_to_warning_category is None:
+    # If the caller did *NOT* explicitly set the
+    # "warning_cls_on_decorator_exception" configuration parameter governing the
+    # reduction of fatal exceptions to non-fatal warnings at @beartype
+    # decoration-time...
+    if not conf._is_warning_cls_on_decorator_exception_set:
         # Keyword dictionary with which to instantiate a new configuration
         # reducing fatal exceptions to non-fatal warnings of a warning category
         # specific to beartype import hooks.
         conf_kwargs = conf.kwargs.copy()
-        conf_kwargs['reduce_decorator_exception_to_warning_category'] = (
+        conf_kwargs['warning_cls_on_decorator_exception'] = (
             BeartypeClawDecorWarning)
 
         # Replace this configuration with this new configuration.
         conf = BeartypeConf(**conf_kwargs)  # type: ignore[arg-type]
-    # Else, this configuration already reduces fatal exceptions to non-fatal
-    # warnings at @beartype decoration-time. In this case, preserve this
-    # user-defined reduction as is.
+    # Else, this caller already explicitly set the
+    # "warning_cls_on_decorator_exception" configuration parameter governing the
+    # reduction of fatal exceptions to non-fatal warnings at @beartype
+    # decoration-time. In this case, preserve this user-defined reduction as is.
 
     # Return this possibly new configuration.
     return conf
