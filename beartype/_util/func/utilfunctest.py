@@ -372,12 +372,47 @@ def is_func_python(func: object) -> TypeGuard[Callable]:
     Returns
     ----------
     bool
-        :data:`True` only if this object is a pure-Python callable
+        :data:`True` only if this object is a pure-Python callable.
     '''
 
     # Return true only if a pure-Python code object underlies this object.
     # C-based callables are associated with *NO* code objects.
     return get_func_codeobj_or_none(func) is not None
+
+
+def is_func_wrapper(func: Any) -> TypeGuard[Callable]:
+    '''
+    :data:`True` only if the passed object is a **callable wrapper** (i.e.,
+    object created by the standard :func:`functools.wraps` decorator for
+    wrapping a pure-Python callable with additional functionality defined by a
+    higher-level decorator).
+
+    Note that this tester returns :data:`True` for both pure-Python and C-based
+    callable wrappers. As an example of the latter, the standard
+    :func:`functools.lru_cache` decorator creates and returns low-level C-based
+    callable wrappers of the private type :class:`functools._lru_cache_wrapper`
+    wrapping pure-Python callables.
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        :data:`True` only if this object is a callable wrapper.
+    '''
+
+    # Return true only if this object defines a dunder attribute uniquely
+    # specific to the @functools.wraps decorator.
+    #
+    # Technically, *ANY* callable (including non-wrappers *NOT* created by the
+    # @functools.wraps decorator) could trivially define this attribute; ergo,
+    # this invites the possibility of false positives. Pragmatically, doing so
+    # would violate ad-hoc standards and real-world practice across the
+    # open-source ecosystem; ergo, this effectively excludes false positives.
+    return hasattr(func, '__wrapped__')
 
 # ....................{ TESTERS ~ descriptor               }....................
 def is_func_classmethod(func: Any) -> TypeGuard[classmethod]:

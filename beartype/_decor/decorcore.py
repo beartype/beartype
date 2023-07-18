@@ -33,13 +33,15 @@ from beartype._decor._decormore import (
     beartype_descriptor_decorator_builtin,
     beartype_func,
     beartype_func_contextlib_contextmanager,
-    beartype_object_monkeypatch,
+    beartype_cfunc_call,
 )
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.func.utilfunctest import (
     is_func_contextlib_contextmanager,
     is_func_python,
+    is_func_wrapper,
 )
+from beartype._util.func.utilfuncwrap import unwrap_func_once
 from beartype._util.text.utiltextansi import strip_text_ansi
 from beartype._util.text.utiltextlabel import label_object_context
 from beartype._util.text.utiltextmunge import uppercase_char_first
@@ -221,12 +223,36 @@ def _beartype_object_fatal(
             f'Uncallable {repr(obj)} not decoratable by @beartype.')
     # Else, this object is callable.
     #
-    # If this object is *NOT* a pure-Python function, attempt to monkey-patch
-    # runtime type-checking into this object by replacing all bound method
-    # descriptors of this object with comparable descriptors calling
-    # @beartype-generated runtime type-checking wrapper functions.
+    # If this object is *NOT* a pure-Python function, this object is a C-based
+    # callable. In this case...
     elif not is_func_python(obj):
-        return beartype_object_monkeypatch(  # type: ignore[return-value]
+        # If this is a C-based callable wrapper...
+        if is_func_wrapper(obj):
+            func_wrappee = unwrap_func_once(obj)
+
+            # Return a new callable decorating that callable with type-checking.
+            func_wrappee_beartyped = beartype_func(  # type: ignore[return-value]
+                func=func_wrappee,
+                conf=conf,
+                cls_stack=cls_stack,
+            )
+
+            #FIXME: *LOL.* Superficially, this works. Pragmatically, this does
+            #nothing. We'll almost certainly need to:
+            #* Define a new is_func_functools_lru_cache() tester.
+            #* Call that rather than is_func_wrapper() above.
+            #* Define a new beartype_func_functools_lru_cache() function
+            #  copy-pasted from is_func_contextlib_contextmanager(). *sigh*
+            obj.__wrapped__ = func_wrappee_beartyped  # type: ignore[attr-defined]
+
+            return obj  # type: ignore[return-value]
+        # Else, this is *NOT* a C-based callable wrapper.
+
+        # Attempt to monkey-patch runtime type-checking into this C-based
+        # callable by replacing all bound method descriptors of this object with
+        # comparable descriptors calling @beartype-generated runtime
+        # type-checking wrapper functions.
+        return beartype_cfunc_call(  # type: ignore[return-value]
             obj=obj,
             conf=conf,
             cls_stack=cls_stack,
@@ -512,13 +538,14 @@ def _beartype_type(
             #
             # Note that class attributes are *ONLY* settable by calling the
             # tragically slow setattr() builtin. Attempting to directly set an
-            # attribute on the class dictionary raises an exception. Why? Because
-            # class dictionaries are actually low-level "mappingproxy" objects that
-            # intentionally override the __setattr__() dunder method to
-            # unconditionally raise an exception. Why? Because this constraint
-            # enables the type.__setattr__() dunder method to enforce critical
-            # efficiency constraints on class attributes -- including that class
-            # attribute keys are not only strings but valid Python identifiers:
+            # attribute on the class dictionary raises an exception. Why?
+            # Because class dictionaries are actually low-level "mappingproxy"
+            # objects that intentionally override the __setattr__() dunder
+            # method to unconditionally raise an exception. Why? Because this
+            # constraint enables the type.__setattr__() dunder method to enforce
+            # critical efficiency constraints on class attributes -- including
+            # that class attribute keys are *NOT* only strings but also valid
+            # Python identifiers:
             #     >>> class OhGodHelpUs(object): pass
             #     >>> OhGodHelpUs.__dict__['even_god_cannot_help'] = 2
             #     TypeError: 'mappingproxy' object does not support item assignment

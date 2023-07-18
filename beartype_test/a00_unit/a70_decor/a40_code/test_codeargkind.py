@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -11,15 +11,14 @@ all explicitly supported **parameter kinds** (e.g., keyword-only,
 positional-only, variadic positional, variadic keyword).
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                             }....................
-def test_arg_kind_flex() -> None:
+# ....................{ TESTS ~ flex                       }....................
+def test_decor_arg_kind_flex() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on a callable passed two
     **flexible parameters** (i.e., non-variadic positional or keyword
@@ -49,7 +48,7 @@ def test_arg_kind_flex() -> None:
     )
 
 
-def test_arg_kind_flex_varkw() -> None:
+def test_decor_arg_kind_flex_varkw() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on a callable passed a
     mandatory flexible parameter, an optional flexible parameter, and a
@@ -86,11 +85,40 @@ def test_arg_kind_flex_varkw() -> None:
         'the teeth tearing into it',
     ))
 
-# ....................{ TESTS ~ pep 3102                  }....................
+
+# ....................{ TESTS ~ kw                         }....................
+def test_decor_arg_kind_kw_unknown_fail() -> None:
+    '''
+    Test unsuccessful usage of the :func:`beartype.beartype` decorator for
+    wrapper functions passed unrecognized keyword parameters.
+    '''
+
+    # Defer test-specific imports.
+    from beartype import beartype
+    from pytest import raises
+
+    # Decorated callable to be exercised.
+    @beartype
+    def tau(kroot: str, vespid: str) -> str:
+        return kroot + vespid
+
+    # Assert that calling this callable with an unrecognized keyword parameter
+    # raises the expected exception.
+    with raises(TypeError) as exception:
+        tau(kroot='Greater Good', nicassar='Dhow')
+
+    # Assert that this exception's message is that raised by the Python
+    # interpreter on calling the decorated callable rather than that raised by
+    # the wrapper function on type-checking that callable. This message is
+    # currently stable across Python versions and thus robustly testable.
+    assert str(exception.value).endswith(
+        "tau() got an unexpected keyword argument 'nicassar'")
+
+# ....................{ TESTS ~ pep 3102                   }....................
 # Keyword-only keywords require PEP 3102 compliance, which has thankfully been
 # available since Python >= 3.0.
 
-def test_arg_kind_kwonly_mixed() -> None:
+def test_decor_arg_kind_kwonly_mixed() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on a callable passed one
     optional keyword-only parameter and one mandatory keyword-only parameter
@@ -126,7 +154,7 @@ def test_arg_kind_kwonly_mixed() -> None:
             if_this_creature=b'dead would ever approach his vision')
 
 
-def test_arg_kind_flex_varpos_kwonly() -> None:
+def test_decor_arg_kind_flex_varpos_kwonly() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on a callable passed a
     flexible parameter, a variadic positional parameter, and a keyword-only
@@ -183,11 +211,10 @@ def test_arg_kind_flex_varpos_kwonly() -> None:
             'The tongue tasting its savour',
             teeth_tearing_into_it='And the hunger for that taste')
 
-# ....................{ TESTS ~ pep 570                   }....................
+# ....................{ TESTS ~ pep 570                    }....................
 # Positional-only keywords require PEP 570 compliance and thus Python >= 3.8.
 
-@skip_if_python_version_less_than('3.8.0')
-def test_arg_kind_posonly() -> None:
+def test_decor_arg_kind_posonly() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on a callable passed two
     positional-only parameters annotated with PEP-compliant type hints.
@@ -213,8 +240,7 @@ def test_arg_kind_posonly() -> None:
         the_taste_and_the_hunger(b'That was my plan')
 
 
-@skip_if_python_version_less_than('3.8.0')
-def test_arg_kind_posonly_flex_varpos_kwonly() -> None:
+def test_decor_arg_kind_posonly_flex_varpos_kwonly() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on a callable passed a
     mandatory positional-only parameter, optional positional-only parameter,

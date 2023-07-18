@@ -311,7 +311,7 @@ def beartype_descriptor_decorator_builtin(
 #  ignores unless defined on the *CLASS* of this object rather than this object
 #  itself.
 #* All other methods, which should be defined on this object itself for safety.
-def beartype_object_monkeypatch(obj: BeartypeableT, **kwargs) -> BeartypeableT:
+def beartype_cfunc_call(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     '''
     Monkey-patch the passed **arbitrary object** (i.e., pure-Python object
     assumed *not* to be handled by other higher-level decorators defined by this
@@ -360,13 +360,13 @@ def beartype_object_monkeypatch(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # Else, this object is a pseudo-callable.
 
     # Replace the existing bound method descriptor to this __call__() dunder
-    # method  with a new bound method descriptor to a new __call__() dunder
+    # method with a new bound method descriptor to a new __call__() dunder
     # method wrapping the old method with runtime type-checking.
     #
     # Note that:
     # * This is a monkey-patch. Since the caller is intentionally decorating
     #   this pseudo-callable with @beartype, this is exactly what the caller
-    #   wanted. Probably.
+    #   wanted. Probably. Hopefully. Okay! We're crossing our fingers here.
     # * This monkey-patches the *CLASS* of this object rather than this object
     #   itself. Why? Because Python. For unknown reasons (so, speed is what
     #   we're saying), Python accesses dunder methods on the *CLASS* of an

@@ -95,9 +95,14 @@ def unwrap_func_all(func: Any) -> Callable:
         * Else, the passed callable as is.
     '''
 
+    #FIXME: Not even this suffices to avoid a circular import, sadly. *sigh*
+    # Avoid circular import dependencies.
+    # from beartype._util.func.utilfunctest import is_func_wrapper
+
     # While this callable still wraps another callable, unwrap one layer of
     # wrapping by reducing this wrapper to its next wrappee.
     while hasattr(func, '__wrapped__'):
+    # while is_func_wrapper(func):
         func = func.__wrapped__  # type: ignore[attr-defined]
 
     # Return this wrappee, which is now guaranteed to *NOT* be a wrapper.
@@ -138,14 +143,17 @@ def unwrap_func_all_closures_isomorphic(func: Any) -> Callable:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfunctest import is_func_closure_isomorphic
+    from beartype._util.func.utilfunctest import (
+        is_func_closure_isomorphic,
+        is_func_wrapper,
+    )
 
-    # While...
+    # While ...
     while (
-        # That callable is a higher-level isomorphic wrapper...
-        is_func_closure_isomorphic(func) and
-        # ...wrapping a lower-level callable...
-        hasattr(func, '__wrapped__')
+        # That callable wraps a lower-level callable...
+        is_func_wrapper(func) and
+        # ...with a higher-level isomorphic wrapper...
+        is_func_closure_isomorphic(func)
     ):
         # Undo one layer of wrapping by reducing the former to the latter.
         # print(f'Unwrapping isomorphic closure wrapper {func} to wrappee {func.__wrapped__}...')

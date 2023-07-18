@@ -16,82 +16,8 @@ concerns (e.g., PEP-compliance, PEP-noncompliance).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS ~ wrappee                    }....................
-@skip_if_python_version_less_than('3.11.0')
-def test_decor_wrappee_contextlib_contextmanager() -> None:
-    '''
-    Test the :func:`beartype.beartype` decorator on
-    :func:`contextlib.contextmanager`-based **context managers** (i.e.,
-    generator factory functions decorated by that standard decorator) if the
-    active Python interpreter targets Python >= 3.11 and thus defines the
-    ``co_qualname`` attribute on code objects required to implement this
-    functionality *or* skip this test otherwise.
-    '''
-
-    # ....................{ IMPORTS                        }....................
-    # Defer test-specific imports.
-    from beartype import beartype
-    from beartype.roar import BeartypeCallHintParamViolation
-    from beartype.typing import (
-        Iterator,
-        Union,
-    )
-    from contextlib import contextmanager
-    from pytest import raises
-
-    # ....................{ CONTEXTS                       }....................
-    @beartype
-    @contextmanager
-    def may_modulate_with(
-        murmurs_of_the_air: str) -> Iterator[Union[str, bool]]:
-        '''
-        Arbitrary :func:`contextlib.contextmanager`-decorated context manager
-        decorated by :func:`beartype.beartype` in a non-ideal order.
-        '''
-
-        yield murmurs_of_the_air
-
-
-    @contextmanager
-    @beartype
-    def and_motions_of(
-        the_forests_and_the_sea: Union[int, float]) -> Iterator[int]:
-        '''
-        Arbitrary :func:`contextlib.contextmanager`-decorated context manager
-        decorated by :func:`beartype.beartype` in the ideal order.
-        '''
-
-        yield int(the_forests_and_the_sea)
-
-    # ....................{ PASS                           }....................
-    # Assert that the non-ideal context manager when passed a valid parameter
-    # returns the expected return.
-    with may_modulate_with(
-        'And voice of living beings, and woven hymns') as and_woven_hymns:
-        assert and_woven_hymns == 'And voice of living beings, and woven hymns'
-
-    # Assert that the ideal context manager when passed a valid parameter
-    # returns the expected return.
-    with and_motions_of(len(
-        'Of night and day, and the deep heart of man.')) as (
-        deep_heart_of_man):
-        assert deep_heart_of_man == len(
-            'Of night and day, and the deep heart of man.')
-
-    # ....................{ FAIL                           }....................
-    # Assert that the non-ideal context manager when passed an invalid parameter
-    # raises the expected exception.
-    with raises(BeartypeCallHintParamViolation):
-        may_modulate_with(b'There was a Poet whose untimely tomb')
-
-    # Assert that the ideal context manager when passed an invalid parameter
-    # raises the expected exception.
-    with raises(BeartypeCallHintParamViolation):
-        and_motions_of('No human hands with pious reverence reared,')
-
-
 def test_decor_wrappee_decorator_builtin() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on **C-based unbound builtin
@@ -384,34 +310,6 @@ def test_decor_arg_name_fail() -> None:
         @beartype
         def jokaero(weaponsmith: str, __beartype_func: str) -> str:
             return weaponsmith + __beartype_func
-
-# ....................{ TESTS ~ fail : arg : call          }....................
-def test_decor_arg_call_keyword_unknown_fail() -> None:
-    '''
-    Test unsuccessful usage of the :func:`beartype.beartype` decorator for
-    wrapper functions passed unrecognized keyword parameters.
-    '''
-
-    # Defer test-specific imports.
-    from beartype import beartype
-    from pytest import raises
-
-    # Decorated callable to be exercised.
-    @beartype
-    def tau(kroot: str, vespid: str) -> str:
-        return kroot + vespid
-
-    # Assert that calling this callable with an unrecognized keyword parameter
-    # raises the expected exception.
-    with raises(TypeError) as exception:
-        tau(kroot='Greater Good', nicassar='Dhow')
-
-    # Assert that this exception's message is that raised by the Python
-    # interpreter on calling the decorated callable rather than that raised by
-    # the wrapper function on type-checking that callable. This message is
-    # currently stable across Python versions and thus robustly testable.
-    assert str(exception.value).endswith(
-        "tau() got an unexpected keyword argument 'nicassar'")
 
 # ....................{ TESTS ~ fail : wrappee             }....................
 def test_decor_wrappee_type_fail() -> None:

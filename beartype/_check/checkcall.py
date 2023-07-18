@@ -29,7 +29,10 @@ from beartype._data.datatyping import (
     LexicalScope,
     TypeStack,
 )
-from beartype._util.func.utilfunccodeobj import get_func_codeobj
+from beartype._util.func.utilfunccodeobj import (
+    get_func_codeobj,
+    # get_func_codeobj_or_none,
+)
 from beartype._util.func.utilfunctest import is_func_coro
 from beartype._util.func.utilfuncwrap import (
     # unwrap_func_all,
@@ -313,6 +316,8 @@ class BeartypeCall(object):
         # Possibly unwrapped callable unwrapped from that callable.
         # self.func_wrappee_wrappee = unwrap_func_all(func)
         self.func_wrappee_wrappee = unwrap_func_all_closures_isomorphic(func)
+        # print(f'func_wrappee: {self.func_wrappee}')
+        # print(f'func_wrappee_wrappee: {self.func_wrappee_wrappee}')
 
         # Possibly wrapped callable code object.
         self.func_wrappee_codeobj = get_func_codeobj(

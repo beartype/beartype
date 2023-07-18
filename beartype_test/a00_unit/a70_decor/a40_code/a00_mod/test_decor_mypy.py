@@ -22,7 +22,7 @@ PEP-compliant but are effectively PEP-compliant due to being accepted by
 def test_decor_mypy_notimplemented() -> None:
     '''
     Test the :func:`beartype.beartype` decorator against :mod:`mypy` compliant
-    usage of the ``NotImplemented`` singleton, which is contextually
+    usage of the :data:`NotImplemented` singleton, which is contextually
     permissible *only* as an unsubscripted return annotation of binary dunder
     methods.
     '''

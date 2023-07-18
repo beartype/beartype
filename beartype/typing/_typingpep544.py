@@ -292,7 +292,7 @@ if IS_PYTHON_AT_LEAST_3_8:
 
         def __instancecheck__(cls, inst: Any) -> bool:
             '''
-            ``True`` only if the passed object is a **structural subtype**
+            :data:`True` only if the passed object is a **structural subtype**
             (i.e., satisfies the protocol defined by) the passed protocol.
 
             Parameters
@@ -305,7 +305,7 @@ if IS_PYTHON_AT_LEAST_3_8:
             Returns
             ----------
             bool
-                ``True`` only if this object satisfies this protocol.
+                :data:`True` only if this object satisfies this protocol.
             '''
 
             # Attempt to...
