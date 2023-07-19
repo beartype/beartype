@@ -23,7 +23,7 @@ from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
 from beartype.vale._core._valecore import BeartypeValidator
 from beartype.vale._util._valeutilfunc import die_unless_validator_tester
 from beartype.vale._util._valeutiltyping import BeartypeValidatorTester
-from beartype._data.datatyping import LexicalScope
+from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.text.utiltextrepr import (

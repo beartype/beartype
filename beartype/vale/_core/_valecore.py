@@ -23,7 +23,7 @@ from beartype.vale._util._valeutiltyping import (
     BeartypeValidatorTester,
     BeartypeValidatorRepresenter,
 )
-from beartype._data.datatyping import LexicalScope
+from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._util.func.arg.utilfuncargtest import is_func_argless
 from beartype._util.text.utiltextrepr import represent_object
 

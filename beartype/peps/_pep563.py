@@ -24,7 +24,7 @@ from beartype.typing import (
     FrozenSet,
     Optional,
 )
-from beartype._data.datatyping import (
+from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeStack,
 )

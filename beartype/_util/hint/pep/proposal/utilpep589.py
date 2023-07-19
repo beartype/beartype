@@ -10,7 +10,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.datatyping import MappingKeysStr
+from beartype._data.hint.datahinttyping import MappingKeysStr
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.py.utilpyversion import IS_PYTHON_3_8
 

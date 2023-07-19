@@ -20,7 +20,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavefast import CallableFrameType
-from beartype._data.datatyping import TypeException
+from beartype._data.hint.datahinttyping import TypeException
 
 # ....................{ GETTERS                            }....................
 #FIXME: Mypy insists this getter can return "None" in certain edge cases. But...

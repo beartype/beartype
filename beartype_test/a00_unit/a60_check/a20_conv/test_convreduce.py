@@ -36,7 +36,7 @@ def test_reduce_hint() -> None:
         BEARTYPE_CONF_DEFAULT,
         BeartypeConf,
     )
-    from beartype._data.datatyping import (
+    from beartype._data.hint.datahinttyping import (
         Pep484TowerComplex,
         Pep484TowerFloat,
     )

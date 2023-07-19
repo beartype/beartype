@@ -69,7 +69,7 @@ from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
-from beartype._data.datatyping import (
+from beartype._data.hint.datahinttyping import (
     CallableTester,
     # TypeException,
 )

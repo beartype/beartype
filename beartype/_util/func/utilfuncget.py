@@ -16,7 +16,7 @@ from beartype.typing import (
     Any,
     Callable,
 )
-from beartype._data.datatyping import TypeException
+from beartype._data.hint.datahinttyping import TypeException
 
 # ....................{ GETTERS ~ descriptor               }....................
 def get_func_classmethod_wrappee(

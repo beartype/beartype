@@ -17,7 +17,7 @@ from beartype.typing import (
     Any,
     Optional,
 )
-from beartype._data.datatyping import TypeException
+from beartype._data.hint.datahinttyping import TypeException
 from importlib import import_module as importlib_import_module
 from sys import modules as sys_modules
 from types import ModuleType

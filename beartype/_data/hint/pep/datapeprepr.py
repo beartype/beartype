@@ -18,7 +18,7 @@ from beartype.typing import (
     Set,
     # Union,
 )
-from beartype._data.datatyping import HintSignTrie
+from beartype._data.hint.datahinttyping import HintSignTrie
 from beartype._data.hint.pep.sign import datapepsigns
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (

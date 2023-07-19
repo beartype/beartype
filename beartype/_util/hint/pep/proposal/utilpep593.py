@@ -18,7 +18,7 @@ from beartype.typing import (
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
-from beartype._data.datatyping import TypeException
+from beartype._data.hint.datahinttyping import TypeException
 
 # ....................{ RAISERS                            }....................
 #FIXME: Pass "exception_prefix" to all calls of this validator.

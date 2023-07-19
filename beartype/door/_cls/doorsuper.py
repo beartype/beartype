@@ -24,7 +24,6 @@ from beartype.door._cls.doormeta import _TypeHintMeta
 from beartype.door._doortest import die_unless_typehint
 from beartype.door._doortyping import T
 from beartype.typing import (
-    TYPE_CHECKING,
     Any,
     FrozenSet,
     Generic,
@@ -37,7 +36,8 @@ from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
-from beartype._data.datatyping import CallableMethodGetitemArg
+from beartype._data.hint.datahintfactory import TypeGuard
+from beartype._data.hint.datahinttyping import CallableMethodGetitemArg
 from beartype._util.cache.utilcachecall import (
     method_cached_arg_by_id,
     property_cached,
@@ -47,20 +47,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_or_none,
     get_hint_pep_sign_or_none,
 )
-from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
 from beartype._util.hint.utilhinttest import is_hint_ignorable
-from beartype._util.mod.lib.utiltyping import import_typing_attr_or_fallback
-
-# ....................{ HINTS                              }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# CAUTION: Synchronize with similar logic in "beartype.door._doorcheck". See
-# the head of that submodule for detailed commentary.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-if TYPE_CHECKING:
-    from typing_extensions import TypeGuard
-else:
-    TypeGuard = import_typing_attr_or_fallback(
-        'TypeGuard', TypeHintTypeFactory(bool))
 
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Subclass all applicable "collections.abc" ABCs for explicitness, please.

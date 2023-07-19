@@ -86,7 +86,7 @@ from beartype._conf.confcls import (
     BeartypeConf,
 )
 from beartype._data.datakind import ARG_NAME_RETURN
-from beartype._data.datatyping import TypeStack
+from beartype._data.hint.datahinttyping import TypeStack
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
@@ -118,7 +118,7 @@ from beartype._util.text.utiltextmunge import (
     uppercase_char_first,
 )
 from beartype._util.text.utiltextrepr import represent_object
-from beartype._data.datatyping import TypeException
+from beartype._data.hint.datahinttyping import TypeException
 
 # ....................{ GLOBALS                            }....................
 # Initialized with automated inspection below in the _init() function.

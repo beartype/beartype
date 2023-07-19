@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.claw._importlib.clawimpcache import ModuleNameToBeartypeConf
 from beartype.claw._pkg.clawpkgtrie import PackagesTrie
 from beartype.typing import Optional
-from beartype._data.datatyping import ImportPathHook
+from beartype._data.hint.datahinttyping import ImportPathHook
 from threading import RLock
 
 # ....................{ CLASSES                            }....................

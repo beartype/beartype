@@ -49,7 +49,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import BeartypeConf
-from beartype._data.datatyping import TypeStack
+from beartype._data.hint.datahinttyping import TypeStack
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,

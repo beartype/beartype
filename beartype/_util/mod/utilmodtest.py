@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.meta import _convert_version_str_to_tuple
 from beartype.roar._roarexc import _BeartypeUtilModuleException
-from beartype._data.datatyping import TypeException
+from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.py.utilpyversion import IS_PYTHON_3_7
 
 # ....................{ VALIDATORS                         }....................

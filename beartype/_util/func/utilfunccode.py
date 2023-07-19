@@ -61,7 +61,7 @@ from beartype.typing import (
     List,
     Optional,
 )
-from beartype._data.datatyping import TypeWarning
+from beartype._data.hint.datahinttyping import TypeWarning
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from collections.abc import Callable

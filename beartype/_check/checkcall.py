@@ -25,7 +25,7 @@ from beartype._check.checkmagic import (
     ARG_NAME_RAISE_EXCEPTION,
 )
 from beartype._conf.confcls import BeartypeConf
-from beartype._data.datatyping import (
+from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeStack,
 )

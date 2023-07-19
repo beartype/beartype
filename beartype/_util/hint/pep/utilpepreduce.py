@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.datatyping import (
+from beartype._data.hint.datahinttyping import (
     Pep484TowerComplex,
     Pep484TowerFloat,
 )

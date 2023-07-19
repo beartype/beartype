@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep673Exception
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.datatyping import TypeStack
+from beartype._data.hint.datahinttyping import TypeStack
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.

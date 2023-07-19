@@ -22,7 +22,7 @@ from beartype._check.util._checkutilsnip import (
     CODE_INIT_RANDOM_INT,
 )
 from beartype._conf.confcls import BeartypeConf
-from beartype._data.datatyping import (
+from beartype._data.hint.datahinttyping import (
     LexicalScope,
 )
 from beartype._util.text.utiltextrepr import represent_object

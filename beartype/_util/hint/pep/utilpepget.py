@@ -23,7 +23,7 @@ from beartype.typing import (
     # Union,
 )
 # from beartype._cave._cavefast import HintGenericSubscriptedType
-from beartype._data.datatyping import (
+from beartype._data.hint.datahinttyping import (
     # HintSignTrie,
     TypeException,
 )
@@ -54,7 +54,7 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_MOST_3_9,
     IS_PYTHON_AT_LEAST_3_9,
 )
-from beartype._data.datatyping import TupleTypes
+from beartype._data.hint.datahinttyping import TupleTypes
 
 # ....................{ GETTERS ~ args                     }....................
 # If the active Python interpreter targets Python >= 3.9, implement this

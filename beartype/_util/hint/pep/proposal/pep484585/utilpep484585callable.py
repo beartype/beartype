@@ -18,7 +18,7 @@ from beartype.typing import (
     TYPE_CHECKING,
     Union,
 )
-from beartype._data.datatyping import TypeException
+from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignCallable
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_CALLABLE_PARAMS)

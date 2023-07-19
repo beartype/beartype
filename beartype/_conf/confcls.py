@@ -28,7 +28,7 @@ from beartype._conf.confcache import (
     beartype_conf_lock,
 )
 from beartype._conf.confenum import BeartypeStrategy
-from beartype._data.datatyping import TypeWarning
+from beartype._data.hint.datahinttyping import TypeWarning
 from beartype._util.cls.utilclstest import is_type_subclass
 
 # ....................{ CLASSES                            }....................

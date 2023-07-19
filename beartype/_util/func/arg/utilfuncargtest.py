@@ -18,7 +18,7 @@ from beartype._util.func.arg.utilfuncargiter import (
     iter_func_args,
 )
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
-from beartype._data.datatyping import (
+from beartype._data.hint.datahinttyping import (
     Codeobjable,
     TypeException,
 )

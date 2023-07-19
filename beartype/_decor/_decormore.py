@@ -28,7 +28,7 @@ from beartype._cave._cavefast import (
 from beartype._check.checkcall import BeartypeCall
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confenum import BeartypeStrategy
-from beartype._data.datatyping import (
+from beartype._data.hint.datahinttyping import (
     BeartypeableT,
 )
 from beartype._decor._wrap.wrapmain import generate_code
@@ -36,13 +36,19 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
 )
-from beartype._util.func.lib.utilbeartypefunc import (
+from beartype._util.func.mod.utilbeartypefunc import (
     is_func_unbeartypeable,
     set_func_beartyped,
 )
+from beartype._util.func.mod.utilfuncmodtest import (
+    is_func_functools_lru_cache,
+)
 from beartype._util.func.utilfuncmake import make_func
+from beartype._util.func.utilfunctest import is_func_python
 from beartype._util.func.utilfuncwrap import unwrap_func_once
+from beartype._util.py.utilpyversion import IS_PYTHON_3_8
 from contextlib import contextmanager
+from functools import lru_cache
 
 # ....................{ DECORATORS ~ func                  }....................
 def beartype_func(
@@ -168,7 +174,7 @@ def beartype_func_contextlib_contextmanager(
     Parameters
     ----------
     descriptor : BeartypeableT
-        Descriptor to be decorated by :func:`beartype.beartype`.
+        Context manager to be decorated by :func:`beartype.beartype`.
 
     All remaining keyword parameters are passed as is to the lower-level
     :func:`.beartype_func` decorator internally called by this higher-level
@@ -177,10 +183,12 @@ def beartype_func_contextlib_contextmanager(
     Returns
     ----------
     BeartypeableT
-        New pure-Python callable wrapping this descriptor with type-checking.
+        New pure-Python callable wrapping this context manager with
+        type-checking.
     '''
 
-    # Generator factory function decorated by @contextlib.contextmanager.
+    # Original pure-Python generator factory function decorated by
+    # @contextlib.contextmanager.
     generator = unwrap_func_once(func)
 
     # Decorate this generator factory function with type-checking.
@@ -302,89 +310,6 @@ def beartype_descriptor_decorator_builtin(
         f'(i.e., neither property, class method, nor static method descriptor).'
     )
 
-# ....................{ DECORATORS ~ object                }....................
-#FIXME: Generalize to iteratively monkey-patch *ALL* bound method descriptors of
-#this object. Currently, this method only monkey-patches the __call__() method.
-#Note that doing so will prove slightly non-trivial, as we'll need to handle
-#both:
-#* Special dunder methods like __call__() and __getitem__(), which Python
-#  ignores unless defined on the *CLASS* of this object rather than this object
-#  itself.
-#* All other methods, which should be defined on this object itself for safety.
-def beartype_cfunc_call(obj: BeartypeableT, **kwargs) -> BeartypeableT:
-    '''
-    Monkey-patch the passed **arbitrary object** (i.e., pure-Python object
-    assumed *not* to be handled by other higher-level decorators defined by this
-    submodule and thus neither a class, function, nor builtin decorator
-    descriptor) with dynamically generated type-checking.
-
-    For each bound method descriptor encapsulating a method bound to this
-    object, this function monkey-patches (i.e., replaces) that descriptor with a
-    comparable descriptor calling a new :func:`beartype.beartype`-generated
-    runtime type-checking wrapper function wrapping the original method.
-
-    Parameters
-    ----------
-    obj : BeartypeableT
-        Object to be monkey-patched by :func:`beartype.beartype`.
-
-    All remaining keyword parameters are passed as is to the lower-level
-    :func:`.beartype_func` decorator internally called by this higher-level
-    decorator on the pure-Python function encapsulated in this descriptor.
-
-    Returns
-    ----------
-    BeartypeableT
-        The object monkey-patched by :func:`beartype.beartype`.
-    '''
-    # print(f'@beartyping pseudo-callable {repr(obj)}...')
-
-    # __call__() dunder method defined by this object if this object defines
-    # this method *OR* "None" otherwise.
-    obj_call_method = getattr(obj, '__call__')
-
-    # If this object does *NOT* define this method, this object is *NOT* a
-    # pseudo-callable. In this case, raise an exception.
-    #
-    # Note this edge case should *NEVER* occur. By definition, this object has
-    # already been validated to be callable. But this object is *NOT* a
-    # pure-Python function. Since the only other category of callable in Python
-    # is a pseudo-callable, this object *MUST* be a pseudo-callable. That said,
-    # languages change; it's not inconceivable that Python could introduce yet
-    # another kind of callable object under future versions.
-    if obj_call_method is None:
-        raise BeartypeDecorWrappeeException(  # pragma: no cover
-            f'Callable {repr(obj)} not pseudo-callable '
-            f'(i.e., callable object defining __call__() dunder method).'
-        )
-    # Else, this object is a pseudo-callable.
-
-    # Replace the existing bound method descriptor to this __call__() dunder
-    # method with a new bound method descriptor to a new __call__() dunder
-    # method wrapping the old method with runtime type-checking.
-    #
-    # Note that:
-    # * This is a monkey-patch. Since the caller is intentionally decorating
-    #   this pseudo-callable with @beartype, this is exactly what the caller
-    #   wanted. Probably. Hopefully. Okay! We're crossing our fingers here.
-    # * This monkey-patches the *CLASS* of this object rather than this object
-    #   itself. Why? Because Python. For unknown reasons (so, speed is what
-    #   we're saying), Python accesses dunder methods on the *CLASS* of an
-    #   object rather than on the object itself. Of course, this implies that
-    #   *ALL* instances of this pseudo-callable (rather than
-    #   merely the passed instance) will be monkey-patched. This may *NOT*
-    #   necessarily be what the caller wanted. Unfortunately, the only
-    #   alternative would be for @beartype to raise an exception when passed a
-    #   pseudo-callable. Since doing something beneficial is generally
-    #   preferable to doing something harmful, @beartype prefers the former. See
-    #   also official documentation on the subject:
-    #       https://docs.python.org/3/reference/datamodel.html#special-method-names
-    obj.__class__.__call__ = _beartype_descriptor_method_bound(  # type: ignore[assignment,method-assign]
-        descriptor=obj_call_method, **kwargs)
-
-    # Return this monkey-patched object.
-    return obj  # type: ignore[return-value]
-
 # ....................{ PRIVATE ~ decorators               }....................
 def _beartype_descriptor_method_bound(
     descriptor: BeartypeableT, **kwargs) -> BeartypeableT:
@@ -462,3 +387,207 @@ def _beartype_descriptor_method_bound(
 
     # Return this new descriptor, implicitly destroying the prior descriptor.
     return descriptor_new  # type: ignore[return-value]
+
+# ....................{ DECORATORS ~ pseudo-callable       }....................
+def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
+    '''
+    Monkey-patch the passed **pseudo-callable** (i.e., arbitrary pure-Python
+    *or* C-based object whose class defines the ``__call__``) dunder method
+    enabling this object to be called like a standard callable) with dynamically
+    generated type-checking.
+
+    For each bound method descriptor encapsulating a method bound to this
+    object, this function monkey-patches (i.e., replaces) that descriptor with a
+    comparable descriptor calling a new :func:`beartype.beartype`-generated
+    runtime type-checking wrapper function wrapping the original method.
+
+    Parameters
+    ----------
+    pseudofunc : BeartypeableT
+        Pseudo-callable to be monkey-patched by :func:`beartype.beartype`.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.beartype_func` decorator internally called by this higher-level
+    decorator on the pure-Python function encapsulated in this descriptor.
+
+    Returns
+    ----------
+    BeartypeableT
+        The object monkey-patched by :func:`beartype.beartype`.
+    '''
+    # print(f'@beartyping pseudo-callable {repr(obj)}...')
+
+    # __call__() dunder method defined by this object if this object defines
+    # this method *OR* "None" otherwise.
+    pseudofunc_call_method = getattr(pseudofunc, '__call__')
+
+    # If this object does *NOT* define this method, this object is *NOT* a
+    # pseudo-callable. In this case, raise an exception.
+    #
+    # Note this edge case should *NEVER* occur. By definition, this object has
+    # already been validated to be callable. But this object is *NOT* a
+    # pure-Python function. Since the only other category of callable in Python
+    # is a pseudo-callable, this object *MUST* be a pseudo-callable. That said,
+    # languages change; it's not inconceivable that Python could introduce yet
+    # another kind of callable object under future versions.
+    if pseudofunc_call_method is None:
+        raise BeartypeDecorWrappeeException(  # pragma: no cover
+            f'Callable {repr(pseudofunc)} not pseudo-callable '
+            f'(i.e., callable object defining __call__() dunder method).'
+        )
+    # Else, this object is a pseudo-callable.
+
+    # If this method is *NOT* pure-Python, this method is C-based. In this
+    # case...
+    #
+    # Note that this is non-ideal. Whereas logic below safely monkey-patches
+    # pure-Python pseudo-callables in a general-purpose manner, that same logic
+    # does *NOT* apply to C-based pseudo-callables; indeed, there exists *NO*
+    # general-purpose means of safely monkey-patching the latter. Instead,
+    # specific instances of the latter *MUST* be manually detected and handled.
+    if not is_func_python(pseudofunc_call_method):
+        # If this is a C-based @functools.lru_cache-memoized callable (i.e.,
+        # low-level C-based callable object both created and returned by the
+        # standard @functools.lru_cache decorator), @beartype was listed above
+        # rather than below the @functools.lru_cache decorator creating and
+        # returning this callable in the chain of decorators decorating this
+        # decorated callable.
+        #
+        # This conditional branch effectively reorders @beartype to be the first
+        # decorator decorating the pure-Python callable underlying this C-based
+        # pseudo-callable: e.g.,
+        #
+        #     from functools import lru_cache
+        #
+        #     # This branch detects and reorders this edge case...
+        #     @beartype
+        #     @lru_cache
+        #     def muh_lru_cache() -> None: pass
+        #
+        #     # ...to resemble this direct decoration instead.
+        #     @lru_cache
+        #     @beartype
+        #     def muh_lru_cache() -> None: pass
+        if is_func_functools_lru_cache(pseudofunc):
+            # Return a new callable decorating that callable with type-checking.
+            return beartype_pseudofunc_functools_lru_cache(  # type: ignore[return-value]
+                pseudofunc=pseudofunc, **kwargs)
+        # Else, this is *NOT* a C-based @functools.lru_cache-memoized callable.
+
+    # Replace the existing bound method descriptor to this __call__() dunder
+    # method with a new bound method descriptor to a new __call__() dunder
+    # method wrapping the old method with runtime type-checking.
+    #
+    # Note that:
+    # * This is a monkey-patch. Since the caller is intentionally decorating
+    #   this pseudo-callable with @beartype, this is exactly what the caller
+    #   wanted. Probably. Hopefully. Okay! We're crossing our fingers here.
+    # * This monkey-patches the *CLASS* of this object rather than this object
+    #   itself. Why? Because Python. For unknown reasons (so, speed is what
+    #   we're saying), Python accesses the __call__() dunder method on the
+    #   *CLASS* of an object rather than on the object itself. Of course, this
+    #   implies that *ALL* instances of this pseudo-callable (rather than merely
+    #   the passed instance) will be monkey-patched. This may *NOT* necessarily
+    #   be what the caller wanted. Unfortunately, the only alternative would be
+    #   for @beartype to raise an exception when passed a pseudo-callable. Since
+    #   doing something beneficial is generally preferable to doing something
+    #   harmful, @beartype prefers the former. See also official documentation
+    #   on the subject:
+    #       https://docs.python.org/3/reference/datamodel.html#special-method-names
+    pseudofunc.__class__.__call__ = _beartype_descriptor_method_bound(  # type: ignore[assignment,method-assign]
+        descriptor=pseudofunc_call_method, **kwargs)
+
+    # Return this monkey-patched object.
+    return pseudofunc  # type: ignore[return-value]
+
+
+def beartype_pseudofunc_functools_lru_cache(
+    pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
+    '''
+    Monkey-patch the passed :func:`functools.lru_cache`-memoized
+    **pseudo-callable** (i.e., low-level C-based callable object both created
+    and returned by the standard :func:`functools.lru_cache` decorator) with
+    dynamically generated type-checking.
+
+    Parameters
+    ----------
+    pseudofunc : BeartypeableT
+        Pseudo-callable to be monkey-patched by :func:`beartype.beartype`.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.beartype_func` decorator internally called by this higher-level
+    decorator on the pure-Python function encapsulated in this descriptor.
+
+    Returns
+    ----------
+    BeartypeableT
+        New pseudo-callable monkey-patched by :func:`beartype.beartype`.
+    '''
+
+    # If this pseudo-callable is *NOT* actually a @functools.lru_cache-memoized
+    # callable, raise an exception.
+    if not is_func_functools_lru_cache(pseudofunc):
+        raise BeartypeDecorWrappeeException(  # pragma: no cover
+            f'@functools.lru_cache-memoized callable {repr(pseudofunc)} not  '
+            f'decorated by @functools.lru_cache.'
+        )
+    # Else, this pseudo-callable is a @functools.lru_cache-memoized callable.
+
+    # Original pure-Python callable decorated by @functools.lru_cache.
+    func = unwrap_func_once(pseudofunc)
+
+    # If the active Python interpreter targets Python 3.8, then this
+    # pseudo-callable fails to declare the cache_parameters() lambda function
+    # called below to recover the keyword parameters originally passed by the
+    # caller to that decorator. In this case, we have *NO* recourse but to
+    # explicitly inform the caller of this edge case by raising a human-readable
+    # exception providing a pragmatic workaround.
+    if IS_PYTHON_3_8:
+        raise BeartypeDecorWrappeeException(  # pragma: no cover
+            f'@functools.lru_cache-memoized callable {repr(func)} not '
+            f'decoratable by @beartype under Python 3.8. '
+            f'Consider manually decorating this callable by '
+            f'@beartype first and then by @functools.lru_cache to preserve '
+            f'Python 3.8 compatibility: e.g.,\n'
+            f'    # Do this...\n'
+            f'    @lru_cache(maxsize=42)\n'
+            f'    @beartype\n'
+            f'    def muh_func(...) -> ...: ...\n'
+            f'\n'
+            f'    # Rather than either this...\n'
+            f'    @beartype\n'
+            f'    @lru_cache(maxsize=42)\n'
+            f'    def muh_func(...) -> ...: ...\n'
+            f'\n'
+            f'    # Or this (if you use "beartype.claw", which you really should).\n'
+            f'    @lru_cache(maxsize=42)\n'
+            f'    def muh_func(...) -> ...: ...\n'
+        )
+    # Else, the active Python interpreter targets Python >= 3.9.
+
+    # Decorate that callable with type-checking.
+    func_checked = beartype_func(func=func, **kwargs)
+
+    # Dictionary mapping from the names of all keyword parameters originally
+    # passed by the caller to that decorator, enabling the re-decoration of that
+    # callable. Thankfully, that decorator preserves these parameters via the
+    # decorator-specific "cache_parameters" instance variable whose value is a
+    # bizarre argumentless lambda function (...for unknown reasons that are
+    # probably indefensible) creating and returning this dictionary: e.g.,
+    #     >>> from functools import lru_cache
+    #     >>> @lru_cache(maxsize=3)
+    #     ... def plus_one(n: int) -> int: return n +1
+    #     >>> plus_one.cache_parameters()
+    #     {'maxsize': 3, 'typed': False}
+    lru_cache_kwargs = pseudofunc.cache_parameters()  # type: ignore[attr-defined]
+
+    # Closure defined and returned by the @functools.lru_cache decorator when
+    # passed these keyword parameters.
+    lru_cache_configured = lru_cache(**lru_cache_kwargs)
+
+    # Re-decorate that callable by @functools.lru_cache by the same parameters
+    # originally passed by the caller to that decorator.
+    pseudofunc_checked = lru_cache_configured(func_checked)
+
+    # Return that new pseudo-callable.
+    return pseudofunc_checked

@@ -44,7 +44,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeVar,
     HintSignTypedDict,
 )
-from beartype._data.datatyping import TypeStack
+from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.nonpep.mod.utilmodnumpy import (
     reduce_hint_numpy_ndarray)

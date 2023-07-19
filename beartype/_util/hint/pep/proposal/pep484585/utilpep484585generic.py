@@ -17,7 +17,7 @@ from beartype.typing import (
     Optional,
     Tuple,
 )
-from beartype._data.datatyping import TypeException
+from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cache.pool.utilcachepoollistfixed import (

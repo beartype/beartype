@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Iterable as typing_Iterable
-from beartype._data.datatyping import IterableStrs
+from beartype._data.hint.datahinttyping import IterableStrs
 from collections.abc import Iterable, Sequence
 
 # ....................{ JOINERS                            }....................

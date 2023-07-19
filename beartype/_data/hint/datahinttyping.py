@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
+    # TYPE_CHECKING,
     Any,
     Callable,
     Dict,

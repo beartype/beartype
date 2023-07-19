@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilPathException
-from beartype._data.datatyping import (
+from beartype._data.hint.datahinttyping import (
     PathnameLike,
     PathnameLikeTuple,
     TypeException,

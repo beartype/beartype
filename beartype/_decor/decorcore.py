@@ -25,7 +25,7 @@ from beartype._cave._cavefast import MethodDecoratorBuiltinTypes
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
-from beartype._data.datatyping import (
+from beartype._data.hint.datahinttyping import (
     BeartypeableT,
     TypeStack,
 )
@@ -33,15 +33,15 @@ from beartype._decor._decormore import (
     beartype_descriptor_decorator_builtin,
     beartype_func,
     beartype_func_contextlib_contextmanager,
-    beartype_cfunc_call,
+    beartype_pseudofunc,
 )
 from beartype._util.cls.utilclstest import is_type_subclass
-from beartype._util.func.utilfunctest import (
+from beartype._util.func.mod.utilfuncmodtest import (
     is_func_contextlib_contextmanager,
-    is_func_python,
-    is_func_wrapper,
 )
-from beartype._util.func.utilfuncwrap import unwrap_func_once
+from beartype._util.func.utilfunctest import (
+    is_func_python,
+)
 from beartype._util.text.utiltextansi import strip_text_ansi
 from beartype._util.text.utiltextlabel import label_object_context
 from beartype._util.text.utiltextmunge import uppercase_char_first
@@ -223,37 +223,17 @@ def _beartype_object_fatal(
             f'Uncallable {repr(obj)} not decoratable by @beartype.')
     # Else, this object is callable.
     #
-    # If this object is *NOT* a pure-Python function, this object is a C-based
-    # callable. In this case...
+    # If this object is *NOT* a pure-Python function, this object is a
+    # pseudo-callable (i.e., arbitrary pure-Python *OR* C-based object whose
+    # class defines the __call__() dunder method enabling this object to be
+    # called like a standard callable). In this case, attempt to monkey-patch
+    # runtime type-checking into this pure-Python callable by replacing the
+    # bound method descriptor of the type of this object implementing the
+    # __call__() dunder method with a comparable descriptor calling a
+    # @beartype-generated runtime type-checking wrapper function.
     elif not is_func_python(obj):
-        # If this is a C-based callable wrapper...
-        if is_func_wrapper(obj):
-            func_wrappee = unwrap_func_once(obj)
-
-            # Return a new callable decorating that callable with type-checking.
-            func_wrappee_beartyped = beartype_func(  # type: ignore[return-value]
-                func=func_wrappee,
-                conf=conf,
-                cls_stack=cls_stack,
-            )
-
-            #FIXME: *LOL.* Superficially, this works. Pragmatically, this does
-            #nothing. We'll almost certainly need to:
-            #* Define a new is_func_functools_lru_cache() tester.
-            #* Call that rather than is_func_wrapper() above.
-            #* Define a new beartype_func_functools_lru_cache() function
-            #  copy-pasted from is_func_contextlib_contextmanager(). *sigh*
-            obj.__wrapped__ = func_wrappee_beartyped  # type: ignore[attr-defined]
-
-            return obj  # type: ignore[return-value]
-        # Else, this is *NOT* a C-based callable wrapper.
-
-        # Attempt to monkey-patch runtime type-checking into this C-based
-        # callable by replacing all bound method descriptors of this object with
-        # comparable descriptors calling @beartype-generated runtime
-        # type-checking wrapper functions.
-        return beartype_cfunc_call(  # type: ignore[return-value]
-            obj=obj,
+        return beartype_pseudofunc(  # type: ignore[return-value]
+            pseudofunc=obj,
             conf=conf,
             cls_stack=cls_stack,
         )
@@ -482,9 +462,9 @@ def _beartype_type(
     #attribute -- say, "__beartyped" -- on this class. Additionally, if this
     #class has already been @beartyped, we want to detect that here and avoid
     #re-@beartype-ing this class. In short, we want to generalize our existing
-    #"beartype._util.func.lib.utilbeartypefunc" submodule to support classes as
+    #"beartype._util.func.mod.utilbeartypefunc" submodule to support classes as
     #well. Let's shift that submodule somewhere more general, please. Perhaps:
-    #* Rename "beartype._util.func.lib.utilbeartypefunc" to
+    #* Rename "beartype._util.func.mod.utilbeartypefunc" to
     #  "beartype._util.check.utilcheckfunc".
     #* Define a new "beartype._util.check.utilchecktype" submodule containing
     #  similar class-specific functionality.

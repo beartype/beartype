@@ -18,7 +18,7 @@ from beartype.typing import (
 )
 from beartype._util.utilobject import get_object_basename_scoped
 from beartype._data.datakind import DICT_EMPTY
-from beartype._data.datatyping import (
+from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeException,
 )

@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep3119Exception
-from beartype._data.datatyping import (
+from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeOrTupleTypes,
 )

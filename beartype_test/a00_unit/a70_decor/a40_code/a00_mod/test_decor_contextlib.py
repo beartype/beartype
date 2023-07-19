@@ -41,18 +41,6 @@ def test_decor_contextlib_contextmanager() -> None:
     from pytest import raises
 
     # ....................{ CONTEXTS                       }....................
-    @beartype
-    @contextmanager
-    def may_modulate_with(
-        murmurs_of_the_air: str) -> Iterator[Union[str, bool]]:
-        '''
-        Arbitrary :func:`contextlib.contextmanager`-decorated context manager
-        decorated by :func:`beartype.beartype` in a non-ideal order.
-        '''
-
-        yield murmurs_of_the_air
-
-
     @contextmanager
     @beartype
     def and_motions_of(
@@ -64,13 +52,19 @@ def test_decor_contextlib_contextmanager() -> None:
 
         yield int(the_forests_and_the_sea)
 
-    # ....................{ PASS                           }....................
-    # Assert that the non-ideal context manager when passed a valid parameter
-    # returns the expected return.
-    with may_modulate_with(
-        'And voice of living beings, and woven hymns') as and_woven_hymns:
-        assert and_woven_hymns == 'And voice of living beings, and woven hymns'
 
+    @beartype
+    @contextmanager
+    def may_modulate_with(
+        murmurs_of_the_air: str) -> Iterator[Union[str, bool]]:
+        '''
+        Arbitrary :func:`contextlib.contextmanager`-decorated context manager
+        decorated by :func:`beartype.beartype` in a non-ideal order.
+        '''
+
+        yield murmurs_of_the_air
+
+    # ....................{ PASS                           }....................
     # Assert that the ideal context manager when passed a valid parameter
     # returns the expected return.
     with and_motions_of(len(
@@ -79,13 +73,19 @@ def test_decor_contextlib_contextmanager() -> None:
         assert deep_heart_of_man == len(
             'Of night and day, and the deep heart of man.')
 
-    # ....................{ FAIL                           }....................
-    # Assert that the non-ideal context manager when passed an invalid parameter
-    # raises the expected exception.
-    with raises(BeartypeCallHintParamViolation):
-        may_modulate_with(b'There was a Poet whose untimely tomb')
+    # Assert that the non-ideal context manager when passed a valid parameter
+    # returns the expected return.
+    with may_modulate_with(
+        'And voice of living beings, and woven hymns') as and_woven_hymns:
+        assert and_woven_hymns == 'And voice of living beings, and woven hymns'
 
+    # ....................{ FAIL                           }....................
     # Assert that the ideal context manager when passed an invalid parameter
     # raises the expected exception.
     with raises(BeartypeCallHintParamViolation):
         and_motions_of('No human hands with pious reverence reared,')
+
+    # Assert that the non-ideal context manager when passed an invalid parameter
+    # raises the expected exception.
+    with raises(BeartypeCallHintParamViolation):
+        may_modulate_with(b'There was a Poet whose untimely tomb')

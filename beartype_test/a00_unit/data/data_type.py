@@ -20,6 +20,7 @@ from beartype.typing import (
 )
 from beartype._util.func.utilfuncmake import make_func
 from contextlib import contextmanager
+from functools import lru_cache
 from enum import Enum
 from sys import exc_info
 
@@ -284,18 +285,6 @@ def function_in_memory():
 Arbitrary pure-Python function dynamically declared in-memory.
 ''')
 
-
-@contextmanager
-def context_manager_factory(obj: object) -> Iterator[object]:
-    '''
-    Create and return a new **identity context manager** (i.e., context
-    manager trivially yielding the passed object implemented as a generator
-    factory function decorated by the standard :func:`contextlib.contextmanager`
-    decorator).
-    '''
-
-    yield obj
-
 # ....................{ CALLABLES ~ sync : decorator       }....................
 def decorator(func: Callable) -> Callable:
     '''
@@ -437,6 +426,27 @@ sync_generator = sync_generator_factory()
 '''
 Arbitrary pure-Python synchronous generator.
 '''
+
+# ....................{ CALLABLES ~ sync : module          }....................
+@contextmanager
+def context_manager_factory(obj: object) -> Iterator[object]:
+    '''
+    **Context manager factory** (i.e., function creating and returning a new
+    **identity context manager** (i.e., context manager trivially yielding the
+    passed object implemented as a generator factory function decorated by the
+    standard :func:`contextlib.contextmanager` decorator)).
+    '''
+
+    yield obj
+
+
+@lru_cache
+def lru_cache_func(n: int) -> int:
+    '''
+    Arbitrary :func:`functools.lru_cache`-memoized function.
+    '''
+
+    return n + 1
 
 # ....................{ CONSTANTS                          }....................
 CALLABLE_CODE_OBJECT = function.__code__

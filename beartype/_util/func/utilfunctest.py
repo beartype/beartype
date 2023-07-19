@@ -13,11 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype.typing import (
-    TYPE_CHECKING,
     Any,
 )
-from beartype._data.func.datafunc import CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME
-from beartype._data.datatyping import (
+from beartype._data.hint.datahintfactory import TypeGuard
+from beartype._data.hint.datahinttyping import (
     Codeobjable,
     TypeException,
 )
@@ -27,11 +26,7 @@ from beartype._util.func.arg.utilfuncargtest import (
 )
 from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj_or_none,
-    get_func_codeobj_name,
 )
-from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
-from beartype._util.mod.lib.utiltyping import import_typing_attr_or_fallback
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_10
 from collections.abc import (
     Callable,
     # Generator,
@@ -41,40 +36,6 @@ from inspect import (
     CO_COROUTINE,
     CO_GENERATOR,
 )
-
-#FIXME: DRY violation. This logic is duplicated from the
-#"beartype.door._doorcheck" submodule. Ideally, this should be aggregated in
-#"beartype.typing" for public reuse.
-
-# Portably import the PEP 647-compliant "typing.TypeGuard" type hint factory
-# first introduced by Python >= 3.10, regardless of the current version of
-# Python and regardless of whether this submodule is currently being subject to
-# static type-checking or not. Praise be to MIT ML guru and stunning Hypothesis
-# maintainer @rsokl (Ryan Soklaski) for this brilliant circumvention. \o/
-#
-# Usage of this factory is a high priority. Hinting the return of the
-# is_bearable() tester with a type guard created by this factory effectively
-# coerces that tester in an arbitrarily complete type narrower and thus type
-# parser at static analysis time, substantially reducing complaints from static
-# type-checkers in end user code deferring to that tester.
-#
-# If this submodule is currently being statically type-checked (e.g., mypy),
-# intentionally import from the third-party "typing_extensions" module rather
-# than the standard "typing" module. Why? Because doing so eliminates Python
-# version complaints from static type-checkers (e.g., mypy, pyright). Static
-# type-checkers could care less whether "typing_extensions" is actually
-# installed or not; they only care that "typing_extensions" unconditionally
-# defines this type factory across all Python versions, whereas "typing" only
-# conditionally defines this type factory under Python >= 3.10. *facepalm*
-if TYPE_CHECKING:
-    from typing_extensions import TypeGuard
-# Else, this submodule is currently being imported at runtime by Python. In this
-# case, dynamically import this factory from whichever of the standard "typing"
-# module *OR* the third-party "typing_extensions" module declares this factory,
-# falling back to the builtin "bool" type if none do.
-else:
-    TypeGuard = import_typing_attr_or_fallback(
-        'TypeGuard', TypeHintTypeFactory(bool))
 
 # ....................{ CONSTANTS                          }....................
 FUNC_NAME_LAMBDA = '<lambda>'
@@ -722,7 +683,6 @@ def is_func_nested(func: Callable) -> bool:
     bool
         :data:`True` only if this callable is nested.
     '''
-    assert callable(func), f'{repr(func)} not callable.'
 
     # Return true only if either...
     return (
@@ -796,7 +756,6 @@ def is_func_closure(func: Any) -> TypeGuard[Callable]:
     bool
         :data:`True` only if this callable is a closure.
     '''
-    assert callable(func), f'{repr(func)} not callable.'
 
     # Return true only if that callable defines the closure-specific
     # "__closure__" dunder variable whose value is either:
@@ -854,71 +813,3 @@ def is_func_closure_isomorphic(func: Any) -> TypeGuard[Callable]:
         # That callable accepts a variadic keyword argument.
         is_func_arg_variadic_keyword(func_codeobj)
     )
-
-
-def is_func_contextlib_contextmanager(func: Any) -> TypeGuard[Callable]:
-    '''
-    :data:`True` only if the passed object is a
-    :func:`contextlib.contextmanager`-based **isomorphic decorator closure**
-    (i.e., closure both defined and returned by the standard
-    :func:`contextlib.contextmanager` decorator where that closure
-    isomorphically preserves both the number and types of all passed parameters
-    and returns by accepting only a variadic positional argument and variadic
-    keyword argument).
-
-    This tester enables callers to detect when a user-defined callable has been
-    decorated by :func:`contextlib.contextmanager` and thus has a mismatch
-    between the type hints annotating that decorated callable and the type of
-    the object created and returned by that decorated callable.
-
-    Parameters
-    ----------
-    func : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        :data:`True` only if this object is a
-        :func:`contextlib.contextmanager`-based isomorphic decorator closure.
-
-    See Also
-    ----------
-    beartype._data.func.datafunc.CONTEXTLIB_CONTEXTMANAGER_CO_NAME_QUALNAME
-        Further discussion.
-    '''
-
-    # If either...
-    if (
-        # The active Python interpreter targets Python < 3.10 and thus fails to
-        # define the "co_qualname" attribute on code objects required to
-        # robustly implement this test *OR*...
-        IS_PYTHON_AT_MOST_3_10 or
-        # The passed callable is *NOT* a closure...
-        not is_func_closure(func)
-    ):
-        # Then immediately return false.
-        return False
-    # Else, that callable is a closure.
-
-    # Code object underlying that callable as is (rather than possibly unwrapped
-    # to another code object entirely) if that callable is pure-Python *OR*
-    # "None" otherwise (i.e., if that callable is C-based).
-    func_codeobj = get_func_codeobj_or_none(func)
-
-    # If that callable is C-based, immediately return false.
-    if func_codeobj is None:
-        return False
-    # Else, that callable is pure-Python.
-
-    # Fully-qualified name of that code object.
-    func_codeobj_name = get_func_codeobj_name(func_codeobj)
-
-    # Return true only if the fully-qualified name of that code object is that
-    # of the isomorphic decorator closure created and returned by the standard
-    # @contextlib.contextmanager decorator.
-    #
-    # Note that we *COULD* technically also explicitly test whether that
-    # callable satisfies the is_func_closure_isomorphic() tester, but that
-    # there's no benefit and a minor efficiency cost  to doing so.
-    return func_codeobj_name == CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME

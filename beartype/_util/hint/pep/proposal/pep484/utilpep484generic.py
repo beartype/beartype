@@ -16,7 +16,7 @@ from beartype.typing import (
     Any,
     Generic,
 )
-from beartype._data.datatyping import TypeException
+from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
 

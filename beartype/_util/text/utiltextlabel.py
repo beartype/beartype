@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Optional
-from beartype._data.datatyping import BeartypeableT
+from beartype._data.hint.datahinttyping import BeartypeableT
 from beartype._util.utilobject import (
     get_object_name,
     get_object_type_name,

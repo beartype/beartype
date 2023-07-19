@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.datatyping import LexicalScope
+from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._decor._cache.cachetype import (
     TYPISTRY_HINT_NAME_TUPLE_PREFIX,
     bear_typistry,
@@ -36,7 +36,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     get_hint_pep484585_forwardref_classname,
 )
 from beartype._util.utilobject import get_object_type_basename
-from beartype._data.datatyping import (
+from beartype._data.hint.datahinttyping import (
     TypeOrTupleTypes,
     TupleTypes,
 )

@@ -18,7 +18,7 @@ from beartype.typing import (
     Optional,
     Type,
 )
-from beartype._data.datatyping import LexicalScope
+from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._util.text.utiltextlabel import label_exception
 from beartype._util.text.utiltextmunge import number_lines
 from beartype._util.utilobject import get_object_name

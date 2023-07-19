@@ -19,7 +19,7 @@ from beartype.roar import (
     BeartypeDecorHintPep585DeprecationWarning,
 )
 from beartype.typing import NoReturn
-from beartype._data.datatyping import TypeException
+from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.datapeprepr import (
     HINTS_PEP484_REPR_PREFIX_DEPRECATED)
 from beartype._data.hint.pep.sign.datapepsignset import (

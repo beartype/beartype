@@ -20,12 +20,12 @@ This submodule unit tests the public API of the private
 def test_is_func_beartyped() -> None:
     '''
     Test the
-    :func:`beartype._util.func.lib.utilbeartypefunc.is_func_beartyped` tester.
+    :func:`beartype._util.func.mod.utilbeartypefunc.is_func_beartyped` tester.
     '''
 
     # Defer test-specific imports.
     from beartype import beartype
-    from beartype._util.func.lib.utilbeartypefunc import is_func_beartyped
+    from beartype._util.func.mod.utilbeartypefunc import is_func_beartyped
 
     @beartype
     def where_that_or() -> str:
@@ -54,11 +54,11 @@ def test_is_func_beartyped() -> None:
 def test_set_func_beartyped() -> None:
     '''
     Test the
-    :func:`beartype._util.func.lib.utilbeartypefunc.set_func_beartyped` tester.
+    :func:`beartype._util.func.mod.utilbeartypefunc.set_func_beartyped` tester.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.func.lib.utilbeartypefunc import (
+    from beartype._util.func.mod.utilbeartypefunc import (
         is_func_beartyped,
         set_func_beartyped,
     )

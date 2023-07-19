@@ -20,7 +20,7 @@ from beartype.typing import (
     Tuple,
     Union,
 )
-from beartype._data.datatyping import TypeException
+from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.mod.utilmodimport import import_module_attr_or_none

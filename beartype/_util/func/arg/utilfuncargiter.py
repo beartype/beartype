@@ -19,7 +19,7 @@ from beartype.typing import (
     Tuple,
 )
 from beartype._data.datakind import DICT_EMPTY
-from beartype._data.datatyping import (
+from beartype._data.hint.datahinttyping import (
     # Codeobjable,
     TypeException,
 )

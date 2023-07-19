@@ -28,59 +28,68 @@ def test_decor_functools_lru_cache() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
-    # from beartype.roar import BeartypeCallHintParamViolation
-    from beartype.typing import (
-        Iterator,
-        # Union,
+    from beartype.roar import (
+        BeartypeCallHintParamViolation,
+        BeartypeDecorWrappeeException,
     )
+    from beartype._util.py.utilpyversion import IS_PYTHON_3_8
     from functools import lru_cache
     from pytest import raises
 
-    # ....................{ CONTEXTS                       }....................
+    # ....................{ IDEAL                          }....................
     @lru_cache(maxsize=3)
     @beartype
-    def increment_int_goodly(n: int) -> Iterator[int]:
+    def increment_int_goodly(n: int) -> int:
         '''
-        Arbitrary :func:`functools.lru_cache`-decorated callable decorated by
+        Arbitrary :func:`functools.lru_cache`-memoized callable decorated by
         :func:`beartype.beartype` in the ideal order.
-        '''
-
-        yield n + 1
-
-
-    @beartype
-    @lru_cache(maxsize=3)
-    def increment_int_badly(n: int) -> int:
-        '''
-        Arbitrary :func:`functools.lru_cache`-decorated callable decorated by
-        :func:`beartype.beartype` in a non-ideal order.
         '''
 
         return n + 1
 
-    #FIXME: Uncomment us after worky, please.
-    # # ....................{ PASS                           }....................
-    # # Assert that the non-ideal context manager when passed a valid parameter
-    # # returns the expected return.
-    # with may_modulate_with(
-    #     'And voice of living beings, and woven hymns') as and_woven_hymns:
-    #     assert and_woven_hymns == 'And voice of living beings, and woven hymns'
-    #
-    # # Assert that the ideal context manager when passed a valid parameter
-    # # returns the expected return.
-    # with and_motions_of(len(
-    #     'Of night and day, and the deep heart of man.')) as (
-    #     deep_heart_of_man):
-    #     assert deep_heart_of_man == len(
-    #         'Of night and day, and the deep heart of man.')
-    #
-    # # ....................{ FAIL                           }....................
-    # # Assert that the non-ideal context manager when passed an invalid parameter
-    # # raises the expected exception.
-    # with raises(BeartypeCallHintParamViolation):
-    #     may_modulate_with(b'There was a Poet whose untimely tomb')
-    #
-    # # Assert that the ideal context manager when passed an invalid parameter
-    # # raises the expected exception.
-    # with raises(BeartypeCallHintParamViolation):
-    #     and_motions_of('No human hands with pious reverence reared,')
+
+    # Assert that the ideal memoized callable when passed a valid parameter
+    # returns the expected return.
+    assert increment_int_goodly(42) == 43
+
+    # Assert that the ideal memoized callable when passed an invalid parameter
+    # raises the expected exception.
+    with raises(BeartypeCallHintParamViolation):
+        increment_int_goodly('The lone couch of his everlasting sleep:—')
+
+    # ....................{ NON-IDEAL                      }....................
+    # If the active Python interpreter targets Python 3.8, then @beartype fails
+    # to support the edge case of non-ideal decoration ordering. In this case,
+    # assert that @beartype raises the expected exception.
+    if IS_PYTHON_3_8:
+        with raises(BeartypeDecorWrappeeException):
+            @beartype
+            @lru_cache(maxsize=3)
+            def increment_int_badly(n: int) -> int:
+                '''
+                Arbitrary :func:`functools.lru_cache`-memoized callable
+                decorated by :func:`beartype.beartype` in a non-ideal order.
+                '''
+
+                return n + 1
+    # Else, the active Python interpreter targets Python >= 3.9. In this case,
+    # @beartype supports the edge case of non-ideal decoration ordering.
+    else:
+        @beartype
+        @lru_cache(maxsize=3)
+        def increment_int_badly(n: int) -> int:
+            '''
+            Arbitrary :func:`functools.lru_cache`-memoized callable decorated by
+            :func:`beartype.beartype` in a non-ideal order.
+            '''
+
+            return n + 1
+
+        # Assert that the non-ideal memoized callable when passed a valid parameter
+        # returns the expected return.
+        assert increment_int_badly(24) == 25
+
+        # Assert that the non-ideal memoized callable when passed an invalid
+        # parameter raises the expected exception.
+        with raises(BeartypeCallHintParamViolation):
+            increment_int_badly('Gentle, and brave, and generous,—no lorn bard')
