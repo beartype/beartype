@@ -541,7 +541,7 @@ def _init() -> None:
             pass
 
         @abstractmethod
-        def __enter__(self) -> '_Pep544IO[AnyStr]':
+        def __enter__(self) -> '_Pep544IO[AnyStr]':  # pyright: ignore[reportGeneralTypeIssues]
             pass
 
         @abstractmethod
@@ -588,7 +588,7 @@ def _init() -> None:
             pass
 
         @abstractmethod
-        def __enter__(self) -> '_Pep544TextIO':
+        def __enter__(self) -> '_Pep544TextIO':  # pyright: ignore[reportGeneralTypeIssues]
             pass
 
     # ..................{ PROTOCOLS ~ validator              }..................
