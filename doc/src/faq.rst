@@ -557,11 +557,13 @@ we give thanks. If:
 * You don't mind adding an **additional mandatory runtime dependency** to your
   app:
 
-  * Require the `third-party "TorchTyping" package <TorchTyping_>`__.
-  * Annotate callables with type hint factories published by TorchTyping (e.g.,
-    ``TorchTyping.TensorType['{metadata1}', ..., '{metadataN}']``).
+  * Require the `third-party "jaxtyping" package <jaxtyping_>`__. (Yes, really!
+    Despite the now-historical name it also supports PyTorch, and has no JAX
+    dependency.)
+  * Annotate callables with type hint factories published by jaxtyping (e.g.,
+    ``jaxtyping.Float[torch.Tensor, '{metadata1 ... metadataN}']``).
 
-  Beartype fully supports `typed PyTorch tensors <TorchTyping_>`__. Because
+  Beartype fully supports `typed PyTorch tensors <jaxtyping_>`__. Because
   `Google mathematician @patrick-kidger <patrick-kidger_>`__ did all the hard
   work, we didn't have to. Bless your runtime API, @patrick-kidger.
 
