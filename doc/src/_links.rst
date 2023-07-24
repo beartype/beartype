@@ -843,8 +843,6 @@
    https://github.com/google/jaxtyping
 .. _nptyping:
    https://github.com/ramonhagenaars/nptyping
-.. _TorchTyping:
-   https://github.com/patrick-kidger/torchtyping
 
 .. # ------------------( LINKS ~ soft : ide                  )------------------
 .. _PyCharm:
