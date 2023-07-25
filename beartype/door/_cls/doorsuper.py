@@ -36,7 +36,7 @@ from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
-from beartype._data.hint.datahintfactory import TypeGuard
+# from beartype._data.hint.datahintfactory import TypeGuard
 from beartype._data.hint.datahinttyping import CallableMethodGetitemArg
 from beartype._util.cache.utilcachecall import (
     method_cached_arg_by_id,
@@ -526,10 +526,13 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         # Optional keyword-only parameters.
         *, conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-    ) -> TypeGuard[T]:
+    #FIXME: Re-enable after static type-checkers support "TypeGuard[T]". See
+    #"_doorcheck" for further details, please.
+    # ) -> TypeGuard[T]:
+    ) -> bool:
         '''
-        ``True`` only if the passed arbitrary object satisfies this type hint
-        under the passed beartype configuration.
+        :data:`True` only if the passed arbitrary object satisfies this type
+        hint under the passed beartype configuration.
 
         Parameters
         ----------
@@ -538,13 +541,13 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         conf : BeartypeConf, optional
             **Beartype configuration** (i.e., self-caching dataclass
             encapsulating all settings configuring type-checking for the passed
-            object). Defaults to ``BeartypeConf()``, the default ``O(1)``
+            object). Defaults to ``BeartypeConf()``, the default
             constant-time configuration.
 
         Returns
         ----------
         bool
-            ``True`` only if this object satisfies this hint.
+            :data:`True` only if this object satisfies this hint.
 
         Raises
         ----------

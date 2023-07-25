@@ -966,56 +966,59 @@ standards that govern how Python is statically type-checked. Modern Integrated
 Development Environments (IDEs) support these standards - hopefully including
 your GigaChad IDE of choice.
 
-...with type narrowing?
-#######################
+.. #FIXME: Restore *AFTER* resolving the effectively still-open issue #255 at:
+.. #    https://github.com/beartype/beartype/issues/255
 
-Beartype fully supports `type narrowing`_ with the :pep:`647`\ -compliant
-:obj:`typing.TypeGuard` type hint. In fact, beartype supports type narrowing of
-*all* PEP-compliant type hints and is thus the first maximal type narrower.
-
-Specifically, the procedural :func:`beartype.door.is_bearable` function and
-object-oriented :meth:`beartype.door.TypeHint.is_bearable` method both narrow
-the type of the passed test object (which can be *anything*) to the passed type
-hint (which can be *anything* PEP-compliant). Both soft-guarantee runtime
-performance on the order of less than 1µs (i.e., less than one millionth of a
-second), preserving runtime performance and your personal sanity.
-
-Calling either :func:`beartype.door.is_bearable` *or*
-:meth:`beartype.door.TypeHint.is_bearable` in your code enables beartype to
-symbiotically eliminate false positives from static type-checkers checking that
-code, substantially reducing static type-checker spam that went rotten decades
-ago: e.g.,
-
-.. code-block:: python
-
-   # Import the requisite machinery.
-   from beartype.door import is_bearable
-
-   def narrow_types_like_a_boss_with_beartype(lst: list[int | str]):
-       '''
-       This function eliminates false positives from static type-checkers
-       like mypy and pyright by narrowing types with ``is_bearable()``.
-
-       Note that decorating this function with ``@beartype`` is *not*
-       required to inform static type-checkers of type narrowing. Of
-       course, you should still do that anyway. Trust is a fickle thing.
-       '''
-
-       # If this list contains integers rather than strings, call another
-       # function accepting only a list of integers.
-       if is_bearable(lst, list[int]):
-           # "lst" has been though a lot. Let's celebrate its courageous story.
-           munch_on_list_of_strings(lst)  # mypy/pyright: OK!
-       # If this list contains strings rather than integers, call another
-       # function accepting only a list of strings.
-       elif is_bearable(lst, list[str]):
-           # "lst": The Story of "lst." The saga of false positives ends now.
-           munch_on_list_of_strings(lst)  # mypy/pyright: OK!
-
-   def munch_on_list_of_strings(lst: list[str]): ...
-   def munch_on_list_of_integers(lst: list[int]): ...
-
-Beartype: *because you no longer care what static type-checkers think.*
+.. # ...with type narrowing?
+.. # #######################
+.. # 
+.. # Beartype fully supports `type narrowing`_ with the :pep:`647`\ -compliant
+.. # :obj:`typing.TypeGuard` type hint. In fact, beartype supports type narrowing of
+.. # *all* PEP-compliant type hints and is thus the first maximal type narrower.
+.. # 
+.. # Specifically, the procedural :func:`beartype.door.is_bearable` function and
+.. # object-oriented :meth:`beartype.door.TypeHint.is_bearable` method both narrow
+.. # the type of the passed test object (which can be *anything*) to the passed type
+.. # hint (which can be *anything* PEP-compliant). Both soft-guarantee runtime
+.. # performance on the order of less than 1µs (i.e., less than one millionth of a
+.. # second), preserving runtime performance and your personal sanity.
+.. # 
+.. # Calling either :func:`beartype.door.is_bearable` *or*
+.. # :meth:`beartype.door.TypeHint.is_bearable` in your code enables beartype to
+.. # symbiotically eliminate false positives from static type-checkers checking that
+.. # code, substantially reducing static type-checker spam that went rotten decades
+.. # ago: e.g.,
+.. # 
+.. # .. code-block:: python
+.. # 
+.. #    # Import the requisite machinery.
+.. #    from beartype.door import is_bearable
+.. # 
+.. #    def narrow_types_like_a_boss_with_beartype(lst: list[int | str]):
+.. #        '''
+.. #        This function eliminates false positives from static type-checkers
+.. #        like mypy and pyright by narrowing types with ``is_bearable()``.
+.. # 
+.. #        Note that decorating this function with ``@beartype`` is *not*
+.. #        required to inform static type-checkers of type narrowing. Of
+.. #        course, you should still do that anyway. Trust is a fickle thing.
+.. #        '''
+.. # 
+.. #        # If this list contains integers rather than strings, call another
+.. #        # function accepting only a list of integers.
+.. #        if is_bearable(lst, list[int]):
+.. #            # "lst" has been though a lot. Let's celebrate its courageous story.
+.. #            munch_on_list_of_strings(lst)  # mypy/pyright: OK!
+.. #        # If this list contains strings rather than integers, call another
+.. #        # function accepting only a list of strings.
+.. #        elif is_bearable(lst, list[str]):
+.. #            # "lst": The Story of "lst." The saga of false positives ends now.
+.. #            munch_on_list_of_strings(lst)  # mypy/pyright: OK!
+.. # 
+.. #    def munch_on_list_of_strings(lst: list[str]): ...
+.. #    def munch_on_list_of_integers(lst: list[int]): ...
+.. # 
+.. # Beartype: *because you no longer care what static type-checkers think.*
 
 ************************************
 How do I *NOT* type-check something?

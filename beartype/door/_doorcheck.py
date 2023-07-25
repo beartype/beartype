@@ -11,6 +11,15 @@ active Python process).
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: Re-enable type-narrowing (i.e., "typing.TypeGuard[...]") for both the
+#is_bearable() function defined below *AND* TypeHint.is_bearable() method
+#defined elsewhere *AFTER* resolving this effectively still-open issue:
+#    https://github.com/beartype/beartype/issues/255
+#
+#Note that doing so will require upstream static type-checkers to explicitly
+#support this use case, which they appear loathe to do. In short, this is
+#unlikely to work this decade -- possibly, this century. The future depends upon
+#us and we failed it, everybody! *gurgles*
 #FIXME: Consider validating the signatures of both the is_bearable() function
 #defined below *AND* TypeHint.is_bearable() method defined elsewhere to have
 #returns annotated as "TypeHint[T]" from the perspective of static
@@ -29,7 +38,7 @@ active Python process).
 # operate as expected regardless of the current context.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.door._doortyping import (
-    T,
+    # T,
     BeartypeTypeChecker,
 )
 from beartype.roar import (
@@ -42,7 +51,7 @@ from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
-from beartype._data.hint.datahintfactory import TypeGuard
+# from beartype._data.hint.datahintfactory import TypeGuard
 from beartype._decor._cache.cachedecor import beartype
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerror import reraise_exception_placeholder
@@ -212,14 +221,18 @@ def is_subhint(subhint: object, superhint: object) -> bool:
 def is_bearable(
     # Mandatory flexible parameters.
     obj: object,
-    hint: T,
+    #FIXME: Re-enable after static type-checkers support "TypeGuard[T]". See above!
+    # hint: T,
+    hint: object,
 
     # Optional keyword-only parameters.
     *,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-) -> TypeGuard[T]:
+#FIXME: Re-enable after static type-checkers support "TypeGuard[T]". See above!
+# ) -> TypeGuard[T]:
+) -> bool:
     '''
-    ``True`` only if the passed arbitrary object satisfies the passed
+    :data:`True` only if the passed arbitrary object satisfies the passed
     PEP-compliant type hint under the passed beartype configuration.
 
     Parameters
@@ -231,12 +244,12 @@ def is_bearable(
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
-        to ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
+        to ``BeartypeConf()``, the default constant-time configuration.
 
     Returns
     ----------
     bool
-        ``True`` only if this object satisfies this hint.
+        :data:`True` only if this object satisfies this hint.
 
     Raises
     ----------
