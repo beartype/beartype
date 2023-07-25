@@ -1017,6 +1017,62 @@ ago: e.g.,
 
 Beartype: *because you no longer care what static type-checkers think.*
 
+************************************
+How do I *NOT* type-check something?
+************************************
+
+**So.** You have installed import hooks with our :mod:`beartype.claw` API, but
+those hooks are complaining about something filthy in your codebase. Now, you
+want :mod:`beartype.claw` to unsee what it saw and just quietly move along so
+you can *finally* do something productive on Monday morning for once. That
+coffee isn't going to drink itself. :superscript:`...hopefully.`
+
+You have come to the right FAQ entry. This the common use case for temporarily
+**blacklisting** a callable or class. Prevent :mod:`beartype.claw` from
+type-checking your hidden shame by decorating the hideous callable or class with
+either:
+
+* The :func:`beartype.beartype` decorator configured under the **no-time
+  strategy** :attr:`beartype.BeartypeStrategy.O0`: e.g.,
+
+  .. code-block:: python
+
+     # Import the requisite machinery.
+     from beartype import beartype, BeartypeConf, BeartypeStrategy
+
+     # Dynamically create a new @nobeartype decorator disabling type-checking.
+     nobeartype = beartype(conf=BeartypeConf(strategy=BeartypeStrategy.O0))
+
+     # Avoid type-checking *ANY* methods or attributes of this class.
+     @nobeartype
+     class UncheckedDangerClassIsDangerous(object):
+         # This method raises *NO* type-checking violation despite returning a
+         # non-"None" value.
+         def unchecked_danger_method_is_dangerous(self) -> None:
+             return 'This string is not "None". Sadly, nobody cares anymore.'
+
+* The :pep:`484`\ -compliant :func:`typing.no_type_check` decorator: e.g.,
+
+  .. code-block:: python
+
+     # Import more requisite machinery. It is requisite.
+     from beartype import beartype
+     from typing import no_type_check
+
+     # Avoid type-checking *ANY* methods or attributes of this class.
+     @no_type_check
+     class UncheckedRiskyClassRisksOurEntireHistoricalTimeline(object):
+         # This method raises *NO* type-checking violation despite returning a
+         # non-"None" value.
+         def unchecked_risky_method_which_i_am_squinting_at(self) -> None:
+             return 'This string is not "None". Why does nobody care? Why?'
+
+For further details that may break your will to code, see also:
+
+* The :ref:`"...as Noop" subsection of our decorator documentation
+  <api_decor:noop>`.
+* The :attr:`beartype.BeartypeStrategy.O0` enumeration member.
+
 *****************************************************************************
 Why is @leycec's poorly insulated cottage in the Canadian wilderness so cold?
 *****************************************************************************

@@ -208,20 +208,55 @@ you're the sort of Pythonista that reads tortuous documentation like this.
 
 One ``beartype()`` to monkey-patch them all and in the darkness type-check them.
 
+.. _api_decor:noop:
+
 ...as Noop
 ==========
 
-:func:`.beartype` silently reduces to a noop under common edge cases. When *any*
-of the following apply, :func:`.beartype` preserves the decorated callable as is
-by just returning that callable unmodified:
+:func:`.beartype` silently reduces to a **noop** (i.e., scoops organic honey out
+of a jar with its fat paws rather than doing something useful with its life)
+under common edge cases. When *any* of the following apply, :func:`.beartype`
+preserves the decorated callable or class as is by just returning that callable
+or class unmodified (rather than augmenting that callable or class with unwanted
+runtime type-checking):
+
+* Beartype has been configured with the **no-time strategy**
+  :attr:`.BeartypeStrategy.O0`: e.g.,
+
+  .. code-block:: python
+
+     # Import the requisite machinery.
+     from beartype import beartype, BeartypeConf, BeartypeStrategy
+
+     # Avoid type-checking *ANY* methods or attributes of this class.
+     @beartype(conf=BeartypeConf(strategy=BeartypeStrategy.O0))
+     class UncheckedDangerClassIsDangerous(object):
+         # This method raises *NO* type-checking violation despite returning a
+         # non-"None" value.
+         def unchecked_danger_method_is_dangerous(self) -> None:
+             return 'This string is not "None". Sadly, nobody cares anymore.'
+
+* That callable or class has already been decorated by:
+
+  * The :func:`.beartype` decorator itself.
+  * The :pep:`484`\ -compliant :func:`typing.no_type_check` decorator: e.g.,
+
+    .. code-block:: python
+
+       # Import more requisite machinery. It is requisite.
+       from beartype import beartype
+       from typing import no_type_check
+
+       # Avoid type-checking *ANY* methods or attributes of this class.
+       @no_type_check
+       class UncheckedRiskyClassRisksOurEntireHistoricalTimeline(object):
+           # This method raises *NO* type-checking violation despite returning a
+           # non-"None" value.
+           def unchecked_risky_method_which_i_am_squinting_at(self) -> None:
+               return 'This string is not "None". Why does nobody care? Why?'
 
 * That callable is **unannotated** (i.e., *no* parameters or return values in
   the signature of that callable are annotated by type hints).
-* That callable has already been decorated by :func:`.beartype`.
-* That callable has already been decorated by the :pep:`484`\ -compliant
-  @typing.no_type_check_ decorator.
-* Beartype has been configured with the **no-time strategy** (i.e.,
-  _BeartypeStrategy.O0).
 * Sphinx_ is currently autogenerating documentation (i.e., Sphinx's
   `"autodoc" extension <sphinx.ext.autodoc_>`__ is currently running).
 
@@ -238,7 +273,7 @@ In class mode, :func:`.beartype` dynamically replaces *each* method of the
 passed pure-Python class with a new method runtime type-checking the original
 method.
 
-As with `callable mode <Callable Mode_>`__, simply prefix the class to be
+As with `callable mode <callable mode_>`__, simply prefix the class to be
 runtime type-checked with the line ``@beartype``. In this standard use pattern,
 :func:`.beartype` silently iterates over all instance, class, and static methods
 declared by the decorated class and, for each such method:
