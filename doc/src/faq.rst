@@ -522,29 +522,36 @@ Bask in the array of options at your disposal! :sup:`...get it?
 ...NumPy arrays?
 ################
 
-You have more than a few options here. If you want to type-check:
+You have more than a few options here. If:
 
-* The ``dtype`` of a NumPy array, prefer the :ref:`official
-  "numpy.typing.NDArray[{dtype}]" type hint factory bundled with NumPy
-  explicitly supported by beartype <api:numpy>` – also referred to as a
-  :ref:`typed NumPy array <api:numpy>`.
-* The ``shape`` of a NumPy array (and possibly more), you have two additional
-  sub-options here depending on whether:
+* (**Recommend option**) You don't mind adding an **additional mandatory
+  runtime dependency** to your app:
 
-  * You want **static type-checkers** to enforce that ``shape`` *and* you don't
-    mind adding an **additional mandatory runtime dependency** to your app. In
-    this case:
+  * Require the `third-party "jaxtyping" package <jaxtyping_>`__. (Yes, really!
+    Despite the now-historical name it also supports NumPy, and has no JAX
+    dependency.)
+  * Annotate callables with type hint factories published by jaxtyping (e.g.,
+    ``jaxtyping.Float[np.ndarray, '{metadata1 ... metadataN}']``).
 
-    * Require the `third-party "nptyping" package <nptyping_>`__.
-    * Prefer the unofficial ``nptyping.NDArray[{nptyping.dtype},
-      nptyping.Shape[...]]`` type hint factory implicitly supported by beartype.
+  Beartype fully supports `typed NumPy arrays <jaxtyping_>`__. Because
+  `Google mathematician @patrick-kidger <patrick-kidger_>`__ did all the hard
+  work, we didn't have to. Bless your runtime API, @patrick-kidger.
 
-    Beartype fully supports :ref:`typed NumPy arrays <api:numpy>`. Because
-    beartype cares.
+* You mind adding an additional mandatory runtime dependency to your app. Then
+  prefer either:
 
-  * You don't mind static type-checkers ignoring that ``shape`` *or* you mind
-    adding an additional mandatory runtime dependency to your app. In this case,
-    prefer :ref:`beartype validators <api:tensor>`.
+  * The :ref:`validators <api:tensor>` built-in to beartype. This can check
+    arbitrary properties of the array, by writing your validators appropriately.
+
+  * The :ref:`official
+    "numpy.typing.NDArray[{dtype}]" type hint factory bundled with NumPy, and
+    explicitly supported by beartype <api:numpy>` – also referred to as a
+    :ref:`typed NumPy array <api:numpy>`. Beartype fully supports
+    :ref:`typed NumPy arrays <api:numpy>`. Because beartype cares. However:
+    note that this can only check the dtype (but not shape) of an array. 
+
+* You need support for custom ("structured") dtypes: consider the
+  `third-party "nptyping" package <nptyping_>`__.
 
 Options are good! Repeat this mantra in times of need.
 
