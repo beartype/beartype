@@ -42,6 +42,7 @@ from beartype._util.func.mod.utilfuncmodtest import (
 from beartype._util.func.utilfunctest import (
     is_func_python,
 )
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from beartype._util.text.utiltextansi import strip_text_ansi
 from beartype._util.text.utiltextlabel import label_object_context
 from beartype._util.text.utiltextmunge import uppercase_char_first
@@ -468,6 +469,27 @@ def _beartype_type(
     #  "beartype._util.check.utilcheckfunc".
     #* Define a new "beartype._util.check.utilchecktype" submodule containing
     #  similar class-specific functionality.
+    #FIXME: Actually... *NO.* We absolutely do *NOT* want to monkey-patch random
+    #@beartype-specific attributes in types, because then the Python ecosystem
+    #will shudder, then sway, then crack, and finally tumble into the churning
+    #seas below. Instead, let's find something *ELSE* that is actually safe to
+    #monkey-patch. Method objects are the classic example. Nobody cares if we
+    #monkey-patch those. The most common method object would be the
+    #"cls.__init__" object. Of course, many types do *NOT* define that object --
+    #but many types also do. We could simply:
+    #* Decide whether the "cls.__init__" method exists.
+    #* Decide whether the "cls.__init__.__beartyped_cls" attribute exists. Note
+    #  that this attribute is distinct from our existing "__beartyped"
+    #  attribute, when records a lower-level and less useful truth.
+    #
+    #For example:
+    #    is_type_beartyped = getattr(
+    #        getattr(cls, '__init__', None), '__beartyped_cls', False)
+    #
+    #Pretty sure that suffices. It's just a simple two-liner. This is only an
+    #optimization, so it doesn't particularly matter if it fails to apply to
+    #some classes. So, let's a-go!
+
     #FIXME: Unit test us up, please. Test against at least:
     #* A dataclass. We already do this, of course. Hurrah!
     #* An uncallable class (i.e., defining *NO* __call__() dunder method)
@@ -514,26 +536,63 @@ def _beartype_type(
                 cls_stack=cls_stack,
             )
 
-            # Replace this undecorated attribute with this decorated attribute.
-            #
-            # Note that class attributes are *ONLY* settable by calling the
-            # tragically slow setattr() builtin. Attempting to directly set an
-            # attribute on the class dictionary raises an exception. Why?
-            # Because class dictionaries are actually low-level "mappingproxy"
-            # objects that intentionally override the __setattr__() dunder
-            # method to unconditionally raise an exception. Why? Because this
-            # constraint enables the type.__setattr__() dunder method to enforce
-            # critical efficiency constraints on class attributes -- including
-            # that class attribute keys are *NOT* only strings but also valid
-            # Python identifiers:
-            #     >>> class OhGodHelpUs(object): pass
-            #     >>> OhGodHelpUs.__dict__['even_god_cannot_help'] = 2
-            #     TypeError: 'mappingproxy' object does not support item assignment
-            #
-            # See also this relevant StackOverflow answer by Python luminary
-            # Raymond Hettinger:
-            #     https://stackoverflow.com/a/32720603/2809027
-            setattr(cls, attr_name, attr_value_beartyped)
+            # Attempt to...
+            try:
+                # Replace this undecorated attribute with this decorated
+                # attribute.
+                #
+                # Note that class attributes are *ONLY* settable by calling the
+                # tragically slow setattr() builtin. Attempting to directly set
+                # an attribute on the class dictionary raises an exception. Why?
+                # Because class dictionaries are actually low-level
+                # "mappingproxy" objects that intentionally override the
+                # __setattr__() dunder method to unconditionally raise an
+                # exception. Why? Because that constraint enables the
+                # type.__setattr__() dunder method to enforce critical
+                # efficiency constraints on class attributes -- including that
+                # class attribute keys are *NOT* only strings but also valid
+                # Python identifiers:
+                #     >>> class OhGodHelpUs(object): pass
+                #     >>> OhGodHelpUs.__dict__['even_god_cannot_help'] = 2
+                #     TypeError: 'mappingproxy' object does not support item
+                #     assignment
+                #
+                # See also this relevant StackOverflow answer by Python luminary
+                # Raymond Hettinger:
+                #     https://stackoverflow.com/a/32720603/2809027
+                setattr(cls, attr_name, attr_value_beartyped)
+            # If doing so raises a builtin "TypeError"...
+            except TypeError as exception:
+                #FIXME: Shift this detection logic into a new
+                #is_typeerror_attr_immutable() tester, please.
+
+                # Message raised with this "TypeError".
+                exception_message = str(exception)
+
+                # If this message satisfies a pattern , then this "TypeError" signifies this attribute
+                # to be inherited from an immutable builtin type (e.g., "str")
+                # subclassed by this user-defined subclass. In this case,
+                # silently skip past this uncheckable attribute to the next.
+                #
+                # Note that this pattern depends on the current Python version.
+                if (
+                    # The active Python interpreter targets Python >= 3.10,
+                    # match a message of the form "cannot set '{attr_name}'
+                    # attribute of immutable type '{cls_name}'".
+                    IS_PYTHON_AT_LEAST_3_10 and (
+                        exception_message.startswith("cannot set '") and
+                        "' attribute of immutable type " in exception_message
+                    # Else, the active Python interpreter targets Python <= 3.9.
+                    # In this case, match a message of the form "can't set
+                    # attributes of built-in/extension type '{cls_name}'".
+                    ) or exception_message.startswith(
+                        "can't set attributes of built-in/extension type '")
+                ):
+                    continue
+                # Else, this message does *NOT* satisfy that pattern.
+
+                # Preserve this exception by re-raising this exception.
+                raise
         # Else, this attribute is *NOT* beartypeable. In this case, silently
         # ignore this attribute.
 
