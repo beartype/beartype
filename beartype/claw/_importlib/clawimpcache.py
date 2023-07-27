@@ -102,6 +102,20 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
         # If doing so fails with a low-level non-human-readable exception, raise
         # a high-level human-readable exception wrapping that exception instead.
         except KeyError as exception:
+            #FIXME: lolbro. This is nonsense, but there we are. Given how
+            #nonsensical this is, we *REALLY* want to deeply document this.
+            #FIXME: Also, consider dropping the parallel
+            #"BeartypeSourceFileLoader._main_module_name_beartype" attribute.
+            #Does this nonsense supercede that nonsense? Probably. Which leads
+            #us directly to...
+            #FIXME: Unit this for the love of Python, please. This is madness.
+            if module_name == '__main__':
+                import __main__
+                # from sys import argv
+                # print(f'Python arguments: "{repr(argv)}"')
+                # print(f'Main module spec: "{__main__.__spec__}"')
+                return super().__getitem__(__main__.__spec__.name)
+
             raise BeartypeClawImportConfException(
                 f'Beartype configuration associated with '
                 f'module "{module_name}" hooked by '

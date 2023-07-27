@@ -16,7 +16,7 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ tester                     }....................
+# ....................{ TESTS ~ testers                    }....................
 def test_is_py_pypy() -> None:
     '''
     Test the :func:`beartype._util.py.utilpyinterpreter.is_py_pypy` tester.
@@ -28,3 +28,20 @@ def test_is_py_pypy() -> None:
     # Assert this tester returns a boolean.
     IS_PY_PYPY = is_py_pypy()
     assert isinstance(IS_PY_PYPY, bool)
+
+# ....................{ TESTS ~ getters                    }....................
+def test_get_interpreter_filename() -> None:
+    '''
+    Test the
+    :func:`beartype._util.py.utilpyinterpreter.get_interpreter_filename` getter.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.py.utilpyinterpreter import get_interpreter_filename
+
+    # Absolute filename of the executable binary underlying this interpreter.
+    interpreter_filename = get_interpreter_filename()
+
+    # Assert this filename is a non-empty string.
+    assert isinstance(interpreter_filename, str)
+    assert bool(str)

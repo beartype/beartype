@@ -11,7 +11,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import (
-    _BeartypeUtilPathException,
     _BeartypeUtilPythonInterpreterException,
 )
 from beartype._util.cache.utilcachecall import callable_cached
@@ -30,11 +29,13 @@ def is_py_pypy() -> bool:
     return python_implementation() == 'PyPy'
 
 # ....................{ GETTERS                            }....................
+@callable_cached
 def get_interpreter_filename() -> str:
     '''
     Absolute filename of the executable binary underlying the active Python
-    interpreter if Python successfully queried this filename *or* raise an
-    exception otherwise.
+    interpreter if Python provides this filename *or* raise an exception
+    otherwise (i.e., if Python refuses to provide this filename, typically due
+    to this filename being embedded in a frozen bundle of some sort).
 
     Raises
     ----------
@@ -45,9 +46,9 @@ def get_interpreter_filename() -> str:
     '''
 
     # Avoid circular import dependencies.
-    # from beartype._util.path.utilfile import
+    from beartype._util.path.utilpathtest import die_unless_file_executable
 
-    # If Python failed to query this filename, raise an exception.
+    # If Python refuses to provide this filename, raise an exception.
     #
     # Note that this test intentionally matches both the empty string and
     # "None", as the official documentation for "sys.executable" states:
@@ -55,15 +56,12 @@ def get_interpreter_filename() -> str:
     #     sys.executable will be an empty string or None.
     if not sys_executable:
         raise _BeartypeUtilPythonInterpreterException(
-            'Absolute filename of Python interpreter unknown.')
-    # Else, Python successfully queried this filename.
+            'Absolute filename of active Python interpreter not found.')
+    # Else, Python provides this filename.
 
-    #FIXME: Actually implement this up. Doing so will require declaring a
-    #new beartype._util.path.utilfile.die_unless_file_executable() tester. For
-    #simplicity, we currently assume Python knows what it's talking about here.
-    # # If no such file exists, raise an exception.
-    # die_unless_file_executable(sys_executable)
-    # # Else, this file exists, raise an exception.
+    # If this file is *NOT* executable, raise an exception.
+    die_unless_file_executable(sys_executable)
+    # Else, this file is executable.
 
-    # Return this filename as is.
+    # Return this filename.
     return sys_executable

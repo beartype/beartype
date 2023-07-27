@@ -204,6 +204,9 @@ class BeartypeSourceFileLoader(SourceFileLoader):
             # importlib-specific dataclass.
             __main__.__spec__.name
         )
+        # from sys import argv
+        # print(f'Python arguments: "{repr(argv)}"')
+        # print(f'Main module name: "{self._main_module_name_beartype}"')
 
         # Nullify all subclass-specific instance variables for safety.
         self._module_conf_beartype: Optional[BeartypeConf] = None
@@ -382,7 +385,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         if conf is None:
             # print(f'Importing module "{fullname}" without beartyping...')
             return super().get_code(fullname)
-        # Else, that module has been either hooked. In this case...
+        # Else, that module has been hooked. In this case...
         #
         # Note that the logic below requires inefficient exception handling (as
         # well as a potentially risky monkey-patch) and is thus performed *ONLY*
@@ -396,7 +399,11 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
             # Expose this configuration to the "beartype.claw._ast" subpackage.
             claw_state.module_name_to_beartype_conf[fullname] = conf
-            # print(f'Importing module "{fullname}" with beartyping: ...')
+            # import __main__
+            # print(f'Main module name "{self._main_module_name_beartype}" (prior)...')
+            # print(f'Main module name "{__main__.__spec__.name}" (new)...')
+            # print(f'Main module name "{__main__.__name__}" (bad)...')
+            # print(f'Importing module "{fullname}" with beartyping...')
 
             # If the fully-qualified name of that module is that of the main
             # module imported as the first entry-point into the active Python

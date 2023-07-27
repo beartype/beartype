@@ -743,12 +743,12 @@ class BeartypeConf(object):
 
         return (
             f'{self.__class__.__name__}('
-            f'claw_is_pep526={repr(self._claw_is_pep526)}, '
-            f'is_color={repr(self._is_color)}, '
-            f'is_debug={repr(self._is_debug)}, '
-            f'is_pep484_tower={repr(self._is_pep484_tower)}, '
-            f'strategy={repr(self._strategy)}'
-            f'warning_cls_on_decorator_exception={repr(self._warning_cls_on_decorator_exception)}, '
+              f'claw_is_pep526={repr(self._claw_is_pep526)}'
+            f', is_color={repr(self._is_color)}'
+            f', is_debug={repr(self._is_debug)}'
+            f', is_pep484_tower={repr(self._is_pep484_tower)}'
+            f', strategy={repr(self._strategy)}'
+            f', warning_cls_on_decorator_exception={repr(self._warning_cls_on_decorator_exception)}'
             f')'
         )
 
