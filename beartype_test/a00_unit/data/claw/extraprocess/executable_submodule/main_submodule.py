@@ -18,15 +18,24 @@ from pytest import raises
 def and_silence(too_enamoured_of_that_voice: float) -> None:
     '''
     Arbitrary callable annotated by trivial PEP-compliant type hints.
+
+    To enable the parent Python process to validate that this callable actually
+    *was* successfully called, this callable prints the passed parameter as is
+    to standard output.
     '''
 
-    pass
+    print(too_enamoured_of_that_voice)
 
 # ....................{ MAIN                               }....................
 # If the unqualified basename of this submodule is that of the pseudo-module
 # "__main__", then this submodule was actually run as a script via Python's
 # standard command-line option "-m". In this case...
 if __name__ == '__main__':
-    # Assert that calling the above function raises the expected violation.
+    # Call the above function with a valid parameter, which then prints that
+    # parameter to standard output.
+    and_silence(float(len('His infancy was nurtured. Every sight')))
+
+    # Assert that calling the above function with an invalid parameter raises
+    # the expected violation.
     with raises(BeartypeCallHintParamViolation):
         and_silence('Locks its mute music in her rugged cell.')

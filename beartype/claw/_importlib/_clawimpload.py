@@ -14,13 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-# Import the eponymous main module imported as the first entry-point into the
-# active Python interpreter.
-#
-# Note that Python guarantees this module to *ALWAYS* be safely importable,
-# regardless of whether a main module was imported as an entry-point or not.
-import __main__
-
 from ast import (
     PyCF_ONLY_AST,
 )
@@ -119,12 +112,6 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
     Attributes
     ----------
-    _main_module_name_beartype : Optional[BeartypeConf]
-        Either:
-
-        * If a main module was imported as the first entry-point into the active
-          Python interpreter, the fully-qualified name of that module.
-        * Else, :data:`None`.
     _module_conf_beartype : Optional[BeartypeConf]
         Either:
 
@@ -184,29 +171,6 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
         # Initialize our superclass with all passed parameters.
         super().__init__(*args, **kwargs)
-
-        # Fully-qualified name of the main module imported as the first
-        # entry-point into the active Python interpreter if a main module was
-        # imported as an entry-point *OR* "None" otherwise, defined as either...
-        self._main_module_name_beartype = (
-            # If the main module has *NO* "__spec__" dunder attribute (i.e., an
-            # importlib-specific dataclass specifying all metadata pertaining to
-            # the importation of that module), then that module effectively does
-            # *NOT* exist. In this case, the active Python interpreter must have
-            # been invoked on a script (e.g., as "python {muh_script}.py").
-            # Default this name to "None" for safety;
-            None
-            if __main__.__spec__ is None else
-            # Else, the main module has a "__spec__" dunder attribute. In this
-            # case, that module effectively exists, implying the active Python
-            # interpreter must have been invoked on a module (e.g., as "python
-            # -m {muh_package}.{muh_module}"). Access this name from this
-            # importlib-specific dataclass.
-            __main__.__spec__.name
-        )
-        # from sys import argv
-        # print(f'Python arguments: "{repr(argv)}"')
-        # print(f'Main module name: "{self._main_module_name_beartype}"')
 
         # Nullify all subclass-specific instance variables for safety.
         self._module_conf_beartype: Optional[BeartypeConf] = None
@@ -399,30 +363,6 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
             # Expose this configuration to the "beartype.claw._ast" subpackage.
             claw_state.module_name_to_beartype_conf[fullname] = conf
-            # import __main__
-            # print(f'Main module name "{self._main_module_name_beartype}" (prior)...')
-            # print(f'Main module name "{__main__.__spec__.name}" (new)...')
-            # print(f'Main module name "{__main__.__name__}" (bad)...')
-            # print(f'Importing module "{fullname}" with beartyping...')
-
-            # If the fully-qualified name of that module is that of the main
-            # module imported as the first entry-point into the active Python
-            # interpreter, that module is the main module. In this case, the
-            # "__name__" dunder global in the main module is implicitly coerced
-            # by Python from this name to the placeholder name "__main__".
-            # However, the "beartype.claw._ast" submodule dynamically injects
-            # nodes into the abstract syntax tree (AST) for all hooked modules
-            # (including this main module) accessing the beartype configuration
-            # associated with that module via the "__name__" dunder global.
-            # Ergo, we *MUST* additionally expose this configuration under the
-            # placeholder name "__main__" as well.
-            if self._main_module_name_beartype == fullname:  # pragma: no cover
-                claw_state.module_name_to_beartype_conf['__main__'] = conf
-            # Else, the fully-qualified name of that module is *NOT* that of the
-            # main module imported as the first entry-point into the active
-            # Python interpreter. In this case, that module is *NOT* the main
-            # module. Since its "__name__" dunder global is its fully-qualified
-            # name, no further mappings to alternate names are required.
 
             # Temporarily monkey-patch away the cache_from_source() function.
             #

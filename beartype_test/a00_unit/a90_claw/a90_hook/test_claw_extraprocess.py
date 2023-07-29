@@ -35,7 +35,8 @@ def test_claw_extraprocess_executable_submodule(
     # Defer test-specific imports.
     from beartype._util.py.utilpyinterpreter import (
         get_interpreter_command_words)
-    from beartype_test._util.command.pytcmdrun import run_command_forward_output
+    from beartype_test._util.command.pytcmdrun import (
+        run_command_forward_stderr_return_stdout)
     from beartype_test._util.path.pytpathtest import (
         get_test_unit_data_claw_extraprocess_dir)
 
@@ -53,10 +54,16 @@ def test_claw_extraprocess_executable_submodule(
         '-m', 'executable_submodule.main_submodule',
     )
 
-    # Run this module as a script, raising an exception on subprocess failure
-    # while forwarding all standard output and error output by this subprocess
-    # to the standard output and error file handles of this active process.
-    run_command_forward_output(command_words=PYTHON_ARGS)
+    # Standard output emitted by running this this module as a script, raising
+    # an exception on subprocess failure while forwarding all standard error
+    # emitted by this subprocess to the standard error file handle of this
+    # parent Python process.
+    PYTHON_STDOUT = run_command_forward_stderr_return_stdout(
+        command_words=PYTHON_ARGS)
+
+    # Assert this output to be the expected output printed by this module.
+    assert PYTHON_STDOUT == str(float(len(
+        'His infancy was nurtured. Every sight')))
 
 
 def test_claw_extraprocess_executable_package(monkeypatch: MonkeyPatch) -> None:
@@ -76,7 +83,8 @@ def test_claw_extraprocess_executable_package(monkeypatch: MonkeyPatch) -> None:
     # Defer test-specific imports.
     from beartype._util.py.utilpyinterpreter import (
         get_interpreter_command_words)
-    from beartype_test._util.command.pytcmdrun import run_command_forward_output
+    from beartype_test._util.command.pytcmdrun import (
+        run_command_forward_stderr_return_stdout)
     from beartype_test._util.path.pytpathtest import (
         get_test_unit_data_claw_extraprocess_dir)
 
@@ -94,7 +102,13 @@ def test_claw_extraprocess_executable_package(monkeypatch: MonkeyPatch) -> None:
         '-m', 'executable_package',
     )
 
-    # Run this package as a script, raising an exception on subprocess failure
-    # while forwarding all standard output and error output by this subprocess
-    # to the standard output and error file handles of this active process.
-    run_command_forward_output(command_words=PYTHON_ARGS)
+    # Standard output emitted by running this this module as a script, raising
+    # an exception on subprocess failure while forwarding all standard error
+    # emitted by this subprocess to the standard error file handle of this
+    # parent Python process.
+    PYTHON_STDOUT = run_command_forward_stderr_return_stdout(
+        command_words=PYTHON_ARGS)
+
+    # Assert this output to be the expected output printed by this module.
+    assert PYTHON_STDOUT == str(
+        len('And sound from the vast earth and ambient air,'))

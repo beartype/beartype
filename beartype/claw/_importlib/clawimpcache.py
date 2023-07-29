@@ -99,23 +99,99 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
         # Attempt to defer to the superclass implementation.
         try:
             return super().__getitem__(module_name)
-        # If doing so fails with a low-level non-human-readable exception, raise
-        # a high-level human-readable exception wrapping that exception instead.
+        # If doing so fails with a low-level non-human-readable exception...
         except KeyError as exception:
-            #FIXME: lolbro. This is nonsense, but there we are. Given how
-            #nonsensical this is, we *REALLY* want to deeply document this.
             #FIXME: Also, consider dropping the parallel
             #"BeartypeSourceFileLoader._main_module_name_beartype" attribute.
             #Does this nonsense supercede that nonsense? Probably. Which leads
             #us directly to...
-            #FIXME: Unit this for the love of Python, please. This is madness.
+
+            # If the module to be inspected is the "__main__" pseudo-module
+            # signifying the main entry-point into the active Python process...
             if module_name == '__main__':
-                import __main__
                 # from sys import argv
                 # print(f'Python arguments: "{repr(argv)}"')
                 # print(f'Main module spec: "{__main__.__spec__}"')
+
+                # Import this pseudo-module.
+                #
+                # Note that:
+                # * Note that Python guarantees this pseudo-module to *ALWAYS*
+                #   be safely importable, regardless of whether a main module
+                #   actually was imported as an entry-point or not.
+                # * This import *MUST* be delayed as long as feasible. In fact,
+                #   this need to delay this import as long as feasible is why
+                #   this import is performed here; this block is actually the
+                #   last possible code path that this import can be delayed to.
+                #
+                # Ideally, this import would be performed earlier (e.g., in the
+                # BeartypeSourceFileLoader.__init__() method defined in the
+                # "beartype.claw._importlib._clawimpload" submodule) for
+                # debuggability, efficiency, and idempotency; for this reason, a
+                # prior implementation of the aforementioned method performed
+                # this import.
+                #
+                # Pragmatically, doing so:
+                # * Succeeded in some common edge cases, including execution of
+                #   a third-party "muh_package" package invoked at the command
+                #   line as "python -m muh_package", containing:
+                #   * A "muh_package.__init__" submodule calling our
+                #     beartype.claw.beartype_this_package() import hook.
+                #   * A "muh_package.__main__" submodule.
+                # * Failed in other common edge cases, including execution of a
+                #   third-party "muh_package.muh_submodule" submodule invoked at
+                #   the command line as "python -m muh_package.muh_submodule",
+                #   containing:
+                #   * A "muh_package.__init__" submodule calling our
+                #     beartype.claw.beartype_this_package() import hook.
+                #   * *NO* "muh_package.__main__" submodule.
+                #
+                # Why the discrepancy? Because CPython itself (specifically,
+                # CPython's "runpy" architecture responsible for bootstrapping
+                # CPython at process startup) is buggy. Due to non-trivial
+                # "runpy" implementation details that are ultimately irrelevant
+                # to @beartype, CPython inconsistently alters the values of
+                # various critical system globals necessarily introspected by
+                # the "beartype.claw" API, including erroneously reporting that:
+                # * In the aforementioned "muh_package.__init__" submodule:
+                #   * The "sys.argv" global is just "[-m]", thus truncating the
+                #     trailing module name.
+                #   * The "__main__" pseudo-module is empty and thus effectively
+                #     unimportable for all intents and purposes.
+                # * In the aforementioned "muh_package.__main__" and
+                #   "muh_package.muh_submodule" submodules:
+                #   * The "sys.argv" global is just "['muh_package']" and
+                #     "['muh_package.muh_submodule']" (respectively), thus
+                #     truncating the leading argument "-m".
+                #   * The "__main__" pseudo-module is non-empty and thus
+                #     importable for all intents and purposes.
+                #
+                # CPython blatantly lies about both the "sys.argv" global *AND*
+                # "__main__" pseudo-module in top-level "muh_package.__init__"
+                # submodules when CPython is passed the "-m" command-line
+                # option. Ergo, beartype has *NO* means of introspecting either
+                # object from any call in the call stack called by a top-level
+                # "muh_package.__init__" submodule -- including any call to any
+                # "beartype.claw" import hook. Instead, beartype *MUST* defer
+                # that introspection to the last possible time... here.
+                #
+                # See also this relevant StackOverflow question on the topic,
+                # which is nearly a decade-old as of this commit (2023 Q3) but
+                # remains unresolved in even the live git version of CPython:
+                #     https://stackoverflow.com/questions/42076706/sys-argv-behavior-with-python-m
+                import __main__
+
+                # Return the fully-qualified name of the actual user-defined
+                # module encapsulated by the "__main__" pseudo-module.
+                #
+                # Note that the value of the "__main__.__name__" dunder
+                # attribute is *ALWAYS* "__main__", yet another blatant lie that
+                # only obfuscates the truth. Thankfully, the low-level
+                # "importlib"-specific spec object publishes the fully-qualified
+                # name of this actual user-defined module. I sleep now. *zzzzzz*
                 return super().__getitem__(__main__.__spec__.name)
 
+            # Raise a high-level human-readable exception instead.
             raise BeartypeClawImportConfException(
                 f'Beartype configuration associated with '
                 f'module "{module_name}" hooked by '

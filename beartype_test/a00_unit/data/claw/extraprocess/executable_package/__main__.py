@@ -16,6 +16,11 @@ from executable_package.nonexecutable_submodule import by_solemn_vision
 from pytest import raises
 
 # ....................{ MAIN                               }....................
-# Assert that calling the above function raises the expected violation.
+# Call the above function with a valid parameter, which then prints that
+# parameter to standard output.
+by_solemn_vision(len('And sound from the vast earth and ambient air,'))
+
+# Assert that calling the above function with an invalid parameter raises
+# the expected violation.
 with raises(BeartypeCallHintParamViolation):
     by_solemn_vision('His infancy was nurtured. Every sight')

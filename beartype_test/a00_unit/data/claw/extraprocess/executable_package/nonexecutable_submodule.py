@@ -13,6 +13,10 @@ data package rather than directly executed as a script).
 def by_solemn_vision(and_bright_silver_dream: int) -> None:
     '''
     Arbitrary callable annotated by trivial PEP-compliant type hints.
+
+    To enable the parent Python process to validate that this callable actually
+    *was* successfully called, this callable prints the passed parameter as is
+    to standard output.
     '''
 
-    pass
+    print(and_bright_silver_dream)
