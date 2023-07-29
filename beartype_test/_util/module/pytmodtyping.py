@@ -11,7 +11,7 @@ attributes with arbitrary names dynamically imported from typing modules).
 # ....................{ TODO                               }....................
 #FIXME: Consider excising this submodule. Ideally, *ALL* functionality defined
 #by this submodule should instead reside in the central
-#"beartype._util.mod.lib.utiltyping" submodule, which significantly overlaps
+#"beartype._util.module.lib.utiltyping" submodule, which significantly overlaps
 #with this submodule in harmful way. We appear to have duplicated work between
 #these two submodules unknowingly, which is simply horrid. Gah! I cry at night.
 
@@ -21,8 +21,8 @@ from beartype.typing import (
     Iterable,
     Union,
 )
-from beartype._util.mod.utilmodimport import import_module_attr_or_none
-from beartype._util.mod.lib.utiltyping import iter_typing_attrs
+from beartype._util.module.utilmodimport import import_module_attr_or_none
+from beartype._util.module.lib.utiltyping import iter_typing_attrs
 
 # ....................{ TESTERS                            }....................
 def is_typing_attrs(typing_attr_basenames: Union[str, Iterable[str]]) -> bool:
@@ -65,7 +65,7 @@ def import_typing_attr_or_none_safe(typing_attr_basename: str) -> Any:
     ----------
     **This higher-level wrapper should typically be called in lieu of the
     lower-level**
-    :func:`beartype._util.mod.lib.utiltyping.import_typing_attr_or_none`
+    :func:`beartype._util.module.lib.utiltyping.import_typing_attr_or_none`
     **function.** Unlike the latter, this wrapper imports from the third-party
     :mod:`typing_extensions` module *only* if the version of that module is
     sufficiently new and thus satisfies test-time requirements.
@@ -94,9 +94,9 @@ def import_typing_attr_or_none_safe(typing_attr_basename: str) -> Any:
     '''
 
     # Defer test-specific imports.
-    from beartype._util.mod.lib.utiltyping import import_typing_attr_or_none
-    # from beartype._util.mod.utilmodimport import import_module_attr_or_none
-    from beartype_test._util.mod.pytmodtest import is_package_typing_extensions
+    from beartype._util.module.lib.utiltyping import import_typing_attr_or_none
+    # from beartype._util.module.utilmodimport import import_module_attr_or_none
+    from beartype_test._util.module.pytmodtest import is_package_typing_extensions
     # print(f'is_package_typing_extensions: {is_package_typing_extensions()}')
 
     # Return either...

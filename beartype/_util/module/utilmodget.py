@@ -323,7 +323,10 @@ def get_module_filename(module: ModuleType) -> str:
     # If this module resides *ONLY* in memory, raise an exception.
     if module_filename is None:
         raise _BeartypeUtilModuleException(
-            f'Module {repr(module)} not on disk.')
+            f'Module {repr(module)} file not found '
+            f'(e.g., due to either being a namespace (sub)package or '
+            f'a dynamically defined in-memory module).'
+        )
     # Else, this module resides on disk.
 
     # Return this filename.

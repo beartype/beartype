@@ -28,8 +28,9 @@ def test_package_import_isolation() -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._util.py.utilpyinterpreter import get_interpreter_filename
-    from beartype_test._util.cmd.pytcmdrun import (
+    from beartype._util.py.utilpyinterpreter import (
+        get_interpreter_command_words)
+    from beartype_test._util.command.pytcmdrun import (
         run_command_forward_stderr_return_stdout)
     from re import (
         compile as re_compile,
@@ -82,9 +83,7 @@ print('\\n'.join(module_name for module_name in modules.keys()))
 
     # Tuple of all arguments to be passed to the active Python interpreter rerun
     # as an external command.
-    _PYTHON_ARGS = (
-        # Absolute filename of the executable running the active Python process.
-        get_interpreter_filename(),
+    _PYTHON_ARGS = get_interpreter_command_words() + (
         '-c',
         _CODE_PRINT_IMPORTS_AFTER_IMPORTING_BEARTYPE,
     )

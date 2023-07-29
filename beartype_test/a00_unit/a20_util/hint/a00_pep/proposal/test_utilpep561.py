@@ -32,7 +32,7 @@ def test_pep561_pytyped() -> None:
 
     # Defer test-specific imports.
     import beartype
-    from beartype._util.mod.utilmodget import get_module_filename
+    from beartype._util.module.utilmodget import get_module_filename
     from pathlib import Path
 
     # Concrete platform-agnostic path encapsulating the absolute filename of

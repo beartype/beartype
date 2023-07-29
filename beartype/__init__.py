@@ -158,7 +158,7 @@ def __getattr__(attr_deprecated_name: str) -> object:
     '''
 
     # Isolate imports to avoid polluting the module namespace.
-    from beartype._util.mod.utilmoddeprecate import deprecate_module_attr
+    from beartype._util.module.utilmoddeprecate import deprecate_module_attr
 
     # Package scope (i.e., dictionary mapping from the names to values of all
     # non-deprecated attributes defined by this package).

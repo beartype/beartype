@@ -61,8 +61,9 @@ def test_pep561_mypy() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.py.utilpyinterpreter import get_interpreter_filename
-    from beartype_test._util.cmd.pytcmdrun import (
+    from beartype._util.py.utilpyinterpreter import (
+        get_interpreter_command_words)
+    from beartype_test._util.command.pytcmdrun import (
         run_command_return_stdout_stderr)
     from beartype_test._util.path.pytpathmain import (
         get_main_mypy_config_file,
@@ -71,10 +72,7 @@ def test_pep561_mypy() -> None:
 
     # ....................{ COMMAND                        }....................
     # Tuple of all shell words with which to run the external "mypy" command.
-    MYPY_ARGS = (
-        # Absolute filename of the executable running the active Python process.
-        get_interpreter_filename(),
-
+    MYPY_ARGS = get_interpreter_command_words() + (
         # Fully-qualified name of the "mypy" package to be run.
         '-m', 'mypy',
 
@@ -195,7 +193,7 @@ def test_pep561_pyright() -> None:
     # Defer test-specific imports.
     from beartype.meta import PACKAGE_NAME
     from beartype._util.py.utilpyversion import get_python_version_major_minor
-    from beartype_test._util.cmd.pytcmdrun import run_command_forward_output
+    from beartype_test._util.command.pytcmdrun import run_command_forward_output
 
     # ....................{ COMMAND                        }....................
     # Tuple of all shell words with which to run the external "pyright" command.

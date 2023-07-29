@@ -562,7 +562,7 @@ def find_hint_pep484585_generic_module_base_first(
     assert isinstance(module_name, str), f'{repr(module_name)} not string.'
 
     # Avoid circular import dependencies.
-    from beartype._util.mod.utilmodget import get_object_module_name_or_none
+    from beartype._util.module.utilmodget import get_object_module_name_or_none
 
     # Either:
     # * If this generic is unsubscripted, this unsubscripted generic type as is.

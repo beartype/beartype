@@ -28,7 +28,7 @@ def test_die_unless_hint_pep593() -> None:
     from beartype.roar import BeartypeDecorHintPep593Exception
     from beartype._util.hint.pep.proposal.utilpep593 import (
         die_unless_hint_pep593)
-    from beartype_test._util.mod.pytmodtyping import (
+    from beartype_test._util.module.pytmodtyping import (
         import_typing_attr_or_none_safe)
     from pytest import raises
     from typing import Optional
@@ -106,7 +106,7 @@ def test_get_hint_pep593_metadata() -> None:
     from beartype.roar import BeartypeDecorHintPep593Exception
     from beartype._util.hint.pep.proposal.utilpep593 import (
         get_hint_pep593_metadata)
-    from beartype_test._util.mod.pytmodtyping import (
+    from beartype_test._util.module.pytmodtyping import (
         import_typing_attr_or_none_safe)
     from pytest import raises
     from typing import Optional
@@ -141,7 +141,7 @@ def test_get_hint_pep593_metahint() -> None:
     from beartype.roar import BeartypeDecorHintPep593Exception
     from beartype._util.hint.pep.proposal.utilpep593 import (
         get_hint_pep593_metahint)
-    from beartype_test._util.mod.pytmodtyping import (
+    from beartype_test._util.module.pytmodtyping import (
         import_typing_attr_or_none_safe)
     from pytest import raises
     from typing import Optional

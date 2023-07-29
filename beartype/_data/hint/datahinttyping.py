@@ -199,6 +199,15 @@ IterableStrs = Iterable[str]
 PEP-compliant type hint matching *any* iterable of zero or more strings.
 '''
 
+# ....................{ HINTS ~ path                       }....................
+CommandWords = IterableStrs
+'''
+PEP-compliant type hint matching **command words** (i.e., an iterable of one or
+more shell words comprising a shell command, suitable for passing as the
+``command_words`` parameter accepted by most callables declared in the
+test-specific :mod:`beartype_test._util.command.pytcmdrun` submodule).
+'''
+
 # ....................{ HINTS ~ kind : tuple               }....................
 TupleTypes = Tuple[type, ...]
 '''

@@ -50,9 +50,9 @@ def test_reduce_hint() -> None:
         T_BOUNDED,
         T_CONSTRAINED,
     )
-    from beartype_test._util.mod.pytmodtyping import (
+    from beartype_test._util.module.pytmodtyping import (
         import_typing_attr_or_none_safe)
-    from beartype_test._util.mod.pytmodtest import (
+    from beartype_test._util.module.pytmodtest import (
         is_package_numpy,
         is_package_numpy_typing_ndarray_deep,
     )

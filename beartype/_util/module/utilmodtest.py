@@ -129,7 +129,7 @@ def is_module(module_name: str) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.mod.utilmodimport import import_module_or_none
+    from beartype._util.module.utilmodimport import import_module_or_none
 
     # Module with this name if this module is importable *OR* "None" otherwise.
     module = import_module_or_none(module_name)

@@ -31,7 +31,7 @@ def add_data(data_module: 'ModuleType') -> None:
     # Defer data-specific imports.
     from beartype.plug import BeartypeHintable
     from beartype.vale import Is
-    from beartype._util.mod.lib.utiltyping import iter_typing_attrs
+    from beartype._util.module.lib.utiltyping import iter_typing_attrs
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintNonpepMetadata,
         HintPithSatisfiedMetadata,

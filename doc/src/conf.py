@@ -96,8 +96,8 @@ from beartype.meta import (
     VERSION,
 )
 from beartype.typing import Optional
-from beartype._util.mod.utilmodimport import import_module_attr
-from beartype._util.mod.utilmodtest import is_module
+from beartype._util.module.utilmodimport import import_module_attr
+from beartype._util.module.utilmodtest import is_module
 # from warnings import warn
 
 # ....................{ PRIVATE ~ path : more              }....................

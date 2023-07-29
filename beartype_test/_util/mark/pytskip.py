@@ -121,7 +121,7 @@ def skip_unless_pathable(command_basename: str):
     '''
 
     # Defer heavyweight imports.
-    from beartype_test._util.cmd.pytcmdpath import is_pathable
+    from beartype_test._util.command.pytcmdpath import is_pathable
 
     # Skip this test if *NO* command with this basename resides in the ${PATH}.
     return skip_if(
@@ -199,7 +199,7 @@ def skip_unless_os_linux():
 #         IS_PYTHON_3_7,
 #         IS_PYTHON_AT_LEAST_3_8,
 #     )
-#     from beartype_test._util.mod.pytmodtest import is_package_typing_extensions
+#     from beartype_test._util.module.pytmodtest import is_package_typing_extensions
 #
 #     # True only if the active Python interpreter supports PEP 544. See the
 #     # decorator docstring for further details.

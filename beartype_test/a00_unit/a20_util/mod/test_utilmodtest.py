@@ -7,7 +7,7 @@
 Project-wide **Python module tester** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.mod.utilmodtest` submodule.
+:mod:`beartype._util.module.utilmodtest` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -19,13 +19,13 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS ~ raiser                     }....................
 def test_die_unless_module_attr_name() -> None:
     '''
-    Test the :func:`beartype._util.mod.utilmodtest.die_unless_module_attr_name`
+    Test the :func:`beartype._util.module.utilmodtest.die_unless_module_attr_name`
     validator.
     '''
 
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
-    from beartype._util.mod.utilmodtest import die_unless_module_attr_name
+    from beartype._util.module.utilmodtest import die_unless_module_attr_name
     from pytest import raises
 
     # Assert this validator raises *NO* exception when passed a syntactically
@@ -49,12 +49,12 @@ def test_die_unless_module_attr_name() -> None:
 # ....................{ TESTS ~ tester                     }....................
 def test_is_module() -> None:
     '''
-    Test the :func:`beartype._util.mod.utilmodtest.is_module` tester.
+    Test the :func:`beartype._util.module.utilmodtest.is_module` tester.
     '''
 
     # Defer test-specific imports.
     from beartype.roar import BeartypeModuleUnimportableWarning
-    from beartype._util.mod.utilmodtest import is_module
+    from beartype._util.module.utilmodtest import is_module
     from pytest import warns
 
     # Assert this tester accepts the name of a (possibly unimported) existing

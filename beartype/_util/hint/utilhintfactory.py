@@ -93,7 +93,7 @@ class TypeHintTypeFactory(Generic[_T], metaclass=_TypeHintTypeFactoryMeta):
 
        from beartype.typing import TYPE_CHECKING
        from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
-       from beartype._util.mod.lib.utiltyping import (
+       from beartype._util.module.lib.utiltyping import (
            import_typing_attr_or_fallback)
 
        if TYPE_CHECKING:

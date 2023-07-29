@@ -34,7 +34,7 @@ def is_package_beartype_vale_usable() -> bool:
     '''
 
     # Defer test-specific imports.
-    from beartype._util.mod.lib.utiltyping import is_typing_attr
+    from beartype._util.module.lib.utiltyping import is_typing_attr
 
     # Return true only if the "Annotated" type hint is importable from either
     # the official "typing" or third-party "typing_extensions" modules.
@@ -50,7 +50,7 @@ def is_package_sphinx() -> bool:
 
     # Defer test-specific imports.
     from beartype.meta import _LIB_DOCTIME_MANDATORY_VERSION_MINIMUM_SPHINX
-    from beartype._util.mod.utilmodtest import is_module_version_at_least
+    from beartype._util.module.utilmodtest import is_module_version_at_least
 
     # Return true only if this version of this package is importable.
     return is_module_version_at_least(
@@ -68,7 +68,7 @@ def is_package_typing_extensions() -> bool:
     # Defer test-specific imports.
     from beartype.meta import (
         _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS)
-    from beartype._util.mod.utilmodtest import is_module_version_at_least
+    from beartype._util.module.utilmodtest import is_module_version_at_least
     # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
     # Return true only if this version of this package is importable.
@@ -87,7 +87,7 @@ def is_package_numpy() -> bool:
 
     # Defer test-specific imports.
     from beartype.meta import _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY
-    from beartype._util.mod.utilmodtest import is_module_version_at_least
+    from beartype._util.module.utilmodtest import is_module_version_at_least
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
     # Return true only if...

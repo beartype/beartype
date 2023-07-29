@@ -244,7 +244,7 @@ def label_object_context(obj: object) -> str:
 
     # Defer test-specific imports.
     from beartype._util.utilobject import get_object_filename_or_none
-    from beartype._util.mod.utilmodget import (
+    from beartype._util.module.utilmodget import (
         get_object_module_line_number_begin)
 
     # Absolute filename of the module or script physically declaring this object

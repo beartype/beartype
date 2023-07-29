@@ -48,8 +48,9 @@ def test_nuitka(capsys, tmp_path) -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.py.utilpyinterpreter import get_interpreter_filename
-    from beartype_test._util.cmd.pytcmdrun import (
+    from beartype._util.py.utilpyinterpreter import (
+        get_interpreter_command_words)
+    from beartype_test._util.command.pytcmdrun import (
         run_command_forward_output,
         run_command_forward_stderr_return_stdout,
     )
@@ -66,10 +67,7 @@ def test_nuitka(capsys, tmp_path) -> None:
     #*ALWAYS* redirect stdin to "/dev/null". We *ALWAYS* want that everywhere.
 
     # Tuple of all shell words with which to run the external "nuitka" command.
-    NUITKA_ARGS = (
-        # Absolute filename of the executable running the active Python process.
-        get_interpreter_filename(),
-
+    NUITKA_ARGS = get_interpreter_command_words() + (
         # Fully-qualified name of the "nuitka" package to be run.
         '-m', 'nuitka',
 

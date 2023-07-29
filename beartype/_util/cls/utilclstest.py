@@ -246,7 +246,7 @@ def is_type_builtin_or_fake(cls: type) -> bool:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.mod.utilmodget import (
+    from beartype._util.module.utilmodget import (
         get_object_type_module_name_or_none)
 
     # If this object is *NOT* a type, raise an exception.

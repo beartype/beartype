@@ -23,7 +23,7 @@ from beartype.typing import (
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.mod.utilmodimport import import_module_attr_or_none
+from beartype._util.module.utilmodimport import import_module_attr_or_none
 from collections.abc import Iterable as IterableABC
 from warnings import warn
 
@@ -132,7 +132,7 @@ def import_typing_attr(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.mod.utilmodtest import is_module
+    from beartype._util.module.utilmodtest import is_module
 
     # Attribute with this name imported from either the "typing" or
     # "typing_extensions" modules if one or more of these modules declare this
@@ -296,7 +296,7 @@ def import_typing_attr_or_fallback(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.mod.utilmodimport import import_module_attr_or_none
+    from beartype._util.module.utilmodimport import import_module_attr_or_none
 
     # Attribute with this name imported from the "typing" module if that module
     # declares this attribute *OR* "None" otherwise.

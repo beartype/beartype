@@ -21,8 +21,8 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
     get_hint_pep484_forwardref_type_basename,
     is_hint_pep484_forwardref,
 )
-from beartype._util.mod.utilmodget import get_object_module_name_or_none
-from beartype._util.mod.utilmodimport import import_module_attr
+from beartype._util.module.utilmodget import get_object_module_name_or_none
+from beartype._util.module.utilmodimport import import_module_attr
 
 # ....................{ HINTS                              }....................
 #FIXME: Shift into "datatyping", please. When doing so, note that

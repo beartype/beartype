@@ -21,8 +21,8 @@ from beartype._check.checkmagic import ARG_NAME_TYPISTRY
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.pep.utilpep3119 import die_unless_type_isinstanceable
 from beartype._util.cls.utilclstest import is_type_builtin
-from beartype._util.mod.utilmodimport import import_module_attr
-from beartype._util.mod.utilmodtest import die_unless_module_attr_name
+from beartype._util.module.utilmodimport import import_module_attr
+from beartype._util.module.utilmodtest import die_unless_module_attr_name
 from beartype._util.utilobject import get_object_type_name
 
 # ....................{ CONSTANTS                          }....................

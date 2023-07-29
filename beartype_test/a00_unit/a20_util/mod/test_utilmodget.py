@@ -7,7 +7,7 @@
 Project-wide **Python module tester** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.mod.utilmodtest` submodule.
+:mod:`beartype._util.module.utilmodtest` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -19,13 +19,13 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS ~ object                     }....................
 def test_get_object_module_or_none() -> None:
     '''
-    Test the :func:`beartype._util.mod.utilmodget.get_object_module_or_none`
+    Test the :func:`beartype._util.module.utilmodget.get_object_module_or_none`
     getter.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.mod.utilmodget import get_object_module_or_none
+    from beartype._util.module.utilmodget import get_object_module_or_none
     from beartype_test.a00_unit.data import data_type
 
     # ....................{ PASS                           }....................
@@ -44,13 +44,13 @@ def test_get_object_module_or_none() -> None:
 
 def test_get_object_module() -> None:
     '''
-    Test the :func:`beartype._util.mod.utilmodget.get_object_module` getter.
+    Test the :func:`beartype._util.module.utilmodget.get_object_module` getter.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
-    from beartype._util.mod.utilmodget import get_object_module
+    from beartype._util.module.utilmodget import get_object_module
     from beartype_test.a00_unit.data import data_type
     from pytest import raises
 
@@ -71,14 +71,14 @@ def test_get_object_module() -> None:
 def test_get_object_module_line_number_begin() -> None:
     '''
     Test the
-    :func:`beartype._util.mod.utilmodget.get_object_module_line_number_begin`
+    :func:`beartype._util.module.utilmodget.get_object_module_line_number_begin`
     getter.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
-    from beartype._util.mod.utilmodget import (
+    from beartype._util.module.utilmodget import (
         get_object_module_line_number_begin)
     from beartype_test.a00_unit.data.util.mod.data_utilmodule_line import (
         SlowRollingOn,

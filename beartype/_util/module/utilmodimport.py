@@ -274,7 +274,7 @@ def import_module_attr_or_none(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.mod.utilmodtest import die_unless_module_attr_name
+    from beartype._util.module.utilmodtest import die_unless_module_attr_name
 
     # If this object is *NOT* the fully-qualified syntactically valid name of a
     # module attribute that may or may not actually exist, raise an exception.

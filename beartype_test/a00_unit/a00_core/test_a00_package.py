@@ -51,7 +51,7 @@ def test_api_deprecations() -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype._util.mod.utilmodimport import import_module_attr
+    from beartype._util.module.utilmodimport import import_module_attr
     from pytest import warns
 
     # Tuple of the fully-qualified names of all deprecated attributes.

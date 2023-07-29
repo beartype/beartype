@@ -42,11 +42,12 @@ Most runners accept the same optional keyword arguments accepted by the
 * ``cwd``, the absolute path of the current working directory (CWD) from which
   this command is to be run. Defaults to the current CWD. **Unfortunately, note
   that this keyword argument appears to be erroneously ignored on numerous
-  platforms (e.g., Windows XP).** For safety, a context manager temporarily
+  platforms** (e.g., Windows). For safety, a context manager temporarily
   changing the current directory should typically be leveraged instead.
 * ``timeout``, the maximum number of milliseconds this command is to be run
   for. Commands with execution time exceeding this timeout will be mercifully
-  killed. Defaults to ``None``, in which case this command is run indefinitely.
+  killed. Defaults to :data:`None`, in which case this command is run
+  indefinitely.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -56,6 +57,7 @@ from beartype.typing import (
     Optional,
     Tuple,
 )
+from beartype._data.hint.datahinttyping import CommandWords
 from collections.abc import (
     Iterable as IterableABC,
     Mapping as MappingABC,
@@ -100,13 +102,6 @@ newline inclusive and the prior newline exclusive is consumed.
 '''
 
 # ....................{ PRIVATE ~ hints                    }....................
-_HINT_COMMAND_WORDS = Iterable[str]
-'''
-PEP-compliant type hint matching the ``command_words`` parameter passed to most
-callables declared by this submodule.
-'''
-
-
 _HINT_POPEN_KWARGS = Mapping[str, object]
 '''
 PEP-compliant type hint matching the return value of the private
@@ -124,7 +119,7 @@ callables declared by this submodule.
 #FIXME: Unit test us up, please.
 def run_command_forward_stderr_return_stdout(
     # Mandatory parameters.
-    command_words: _HINT_COMMAND_WORDS,
+    command_words: CommandWords,
 
     # Optional parameters.
     popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None,
@@ -140,11 +135,11 @@ def run_command_forward_stderr_return_stdout(
 
     Parameters
     ----------
-    command_words : _HINT_COMMAND_WORDS
+    command_words : CommandWords
         Iterable of one or more shell words comprising this command.
     popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
         Dictionary of all keyword arguments to be passed to the
-        :meth:`subprocess.Popen.__init__` method. Defaults to ``None``, in
+        :meth:`subprocess.Popen.__init__` method. Defaults to :data:`None`, in
         which case the empty dictionary is assumed.
 
     Returns
@@ -174,7 +169,7 @@ def run_command_forward_stderr_return_stdout(
 #FIXME: Unit test us up, please.
 def run_command_forward_output(
     # Mandatory parameters.
-    command_words: _HINT_COMMAND_WORDS,
+    command_words: CommandWords,
 
     # Optional parameters.
     popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None,
@@ -189,11 +184,11 @@ def run_command_forward_output(
 
     Parameters
     ----------
-    command_words : _HINT_COMMAND_WORDS
+    command_words : CommandWords
         Iterable of one or more shell words comprising this command.
     popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
         Dictionary of all keyword arguments to be passed to the
-        :meth:`subprocess.Popen.__init__` method. Defaults to ``None``, in
+        :meth:`subprocess.Popen.__init__` method. Defaults to :data:`None`, in
         which case the empty dictionary is assumed.
 
     Raises
@@ -203,7 +198,7 @@ def run_command_forward_output(
     '''
 
     # Defer test-specific imports.
-    from beartype_test._util.cmd.pytcmdexit import is_failure
+    from beartype_test._util.command.pytcmdexit import is_failure
 
     # 0-based exit status reported by running this command.
     exit_status = run_command_forward_output_return_status(
@@ -221,7 +216,7 @@ def run_command_forward_output(
 #FIXME: Unit test us up, please.
 def run_command_forward_output_return_status(
     # Mandatory parameters.
-    command_words: _HINT_COMMAND_WORDS,
+    command_words: CommandWords,
 
     # Optional parameters.
     popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None
@@ -239,11 +234,11 @@ def run_command_forward_output_return_status(
 
     Parameters
     ----------
-    command_words : _HINT_COMMAND_WORDS
+    command_words : CommandWords
         Iterable of one or more shell words comprising this command.
     popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
         Dictionary of all keyword arguments to be passed to the
-        :meth:`subprocess.Popen.__init__` method. Defaults to ``None``, in
+        :meth:`subprocess.Popen.__init__` method. Defaults to :data:`None`, in
         which case the empty dictionary is assumed.
 
     Returns
@@ -253,7 +248,7 @@ def run_command_forward_output_return_status(
     '''
 
     # Defer test-specific imports.
-    from beartype_test._util.cmd.pytcmdexit import FAILURE_DEFAULT
+    from beartype_test._util.command.pytcmdexit import FAILURE_DEFAULT
 
     # Sanitize these arguments.
     popen_kwargs = _init_popen_kwargs(command_words, popen_kwargs)
@@ -274,7 +269,7 @@ def run_command_forward_output_return_status(
 
 def run_command_return_stdout_stderr(
     # Mandatory parameters.
-    command_words: _HINT_COMMAND_WORDS,
+    command_words: CommandWords,
 
     # Optional parameters.
     popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None,
@@ -288,11 +283,11 @@ def run_command_return_stdout_stderr(
 
     Parameters
     ----------
-    command_words : _HINT_COMMAND_WORDS
+    command_words : CommandWords
         Iterable of one or more shell words comprising this command.
     popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
         Dictionary of all keyword arguments to be passed to the
-        :meth:`subprocess.Popen.__init__` method. Defaults to ``None``, in
+        :meth:`subprocess.Popen.__init__` method. Defaults to :data:`None`, in
         which case the empty dictionary is assumed.
 
     Returns
@@ -313,6 +308,11 @@ def run_command_return_stdout_stderr(
     # *BEFORE* setting dictionary keys below.
     if popen_kwargs is None:
         popen_kwargs = {}
+    # Else, these keyword arguments are non-empty.
+
+    # In either case, these keyword arguments are now a dictionary. Assert this.
+    assert isinstance(popen_kwargs, MappingABC), (
+        f'{repr(popen_kwargs)} not mapping.')
 
     # Enable capturing of both standard output and error.
     popen_kwargs['capture_output'] = True
@@ -351,10 +351,10 @@ See Also
     Further details.
 '''
 
-# ....................{ PRIVATE                            }....................
+# ....................{ PRIVATE ~ initializers             }....................
 def _init_popen_kwargs(
     # Mandatory parameters.
-    command_words: _HINT_COMMAND_WORDS,
+    command_words: CommandWords,
 
     # Optional parameters.
     popen_kwargs: _HINT_POPEN_KWARGS_OPTIONAL = None
@@ -368,12 +368,12 @@ def _init_popen_kwargs(
     ----------
     If the current platform is vanilla Windows *and* none of the ``stdin``,
     ``stdout``, ``stderr``, or ``close_fds`` parameters are passed, this
-    function defaults the ``close_fds`` parameter if unpassed to ``False``.
+    function defaults the ``close_fds`` parameter if unpassed to :data:`False`.
     Doing so causes this command to inherit all file handles (including stdin,
     stdout, and stderr) from the active Python process. Note that the
     :class:`subprocess.Popen` docstring insists that:
 
-        On Windows, if ``close_fds`` is ``True`` then no handles will be
+        On Windows, if ``close_fds`` is :data:`True` then no handles will be
         inherited by the child process.
 
     The child process will then open new file handles for stdin, stdout, and
@@ -386,12 +386,12 @@ def _init_popen_kwargs(
     particular, all output from this command will be squelched.
 
     If at least one of stdin, stdout, or stderr are redirected to a blocking
-    pipe, setting ``close_fds`` to ``False`` can induce deadlocks under certain
-    edge-case scenarios. Since all such file handles default to ``None`` and
-    hence are *not* redirected in this case, ``close_fds`` may be safely set to
-    ``False``.
+    pipe, setting ``close_fds`` to :data:`False` can induce deadlocks under
+    certain edge-case scenarios. Since all such file handles default to
+    :data:`None` and hence are *not* redirected in this case, ``close_fds`` may
+    be safely set to :data:`False`.
 
-    On all other platforms, if ``close_fds`` is ``True``, no file handles
+    On all other platforms, if ``close_fds`` is :data:`True`, no file handles
     *except* stdin, stdout, and stderr will be inherited by the child process.
     This function fundamentally differs in subtle (and only slightly documented
     ways) between vanilla Windows and all other platforms. These discrepancies
@@ -400,11 +400,11 @@ def _init_popen_kwargs(
 
     Parameters
     ----------
-    command_words : _HINT_COMMAND_WORDS
+    command_words : CommandWords
         Iterable of one or more shell words comprising this command.
     popen_kwargs : _HINT_POPEN_KWARGS_OPTIONAL
         Dictionary of all keyword arguments to be passed to the
-        :meth:`subprocess.Popen.__init__` method. Defaults to ``None``, in
+        :meth:`subprocess.Popen.__init__` method. Defaults to :data:`None`, in
         which case the empty dictionary is assumed.
 
     Returns
@@ -421,6 +421,9 @@ def _init_popen_kwargs(
     # *BEFORE* validating these arguments as a dictionary below.
     if popen_kwargs is None:
         popen_kwargs = {}
+    # Else, these keyword arguments are non-empty.
+    #
+    # In either case, these keyword arguments are now a dictionary.
 
     # Validate these parameters *AFTER* defaulting them above if needed.
     assert isinstance(command_words, IterableABC), (

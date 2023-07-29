@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **current package import hook unit tests** (i.e., unit tests exercising
-the :mod:`beartype.claw.beartype_this_package` import hook).
+Beartype **intraprocess import hook unit tests** (i.e., unit tests exercising
+:mod:`beartype.claw` import hooks within the active Python process).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -23,7 +23,7 @@ import pytest
 
 # ....................{ TESTS                              }....................
 @pytest.mark.run_in_subprocess
-def test_claw_beartype_this_package() -> None:
+def test_claw_intraprocess_beartype_this_package() -> None:
     '''
     Test the :mod:`beartype.claw.beartype_this_package` import hook against a
     data subpackage in this test suite exercising *all* edge cases associated
@@ -34,15 +34,15 @@ def test_claw_beartype_this_package() -> None:
     # Implicitly subject this single package to a beartype import hook
     # configured by a non-default beartype configuration, installed by importing
     # *ANYTHING* from this package.
-    from beartype_test.a00_unit.data.claw.hookable_package.beartype_this_package import (
+    from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.beartype_this_package import (
         this_submodule)
 
     # Import an arbitrary submodule *NOT* subject to that import hook.
-    from beartype_test.a00_unit.data.claw import unhookable_module
+    from beartype_test.a00_unit.data.claw.intraprocess import unhookable_module
 
 
 @pytest.mark.run_in_subprocess
-def test_claw_beartype_package() -> None:
+def test_claw_intraprocess_beartype_package() -> None:
     '''
     Test the :mod:`beartype.claw.beartype_package` import hook against a single
     data subpackage in this test suite exercising *all* edge cases associated
@@ -58,7 +58,8 @@ def test_claw_beartype_package() -> None:
 
     # ....................{ LOCALS                         }....................
     # Name of the single package to be subject to beartype import hooks below.
-    PACKAGE_NAME = 'beartype_test.a00_unit.data.claw.hookable_package'
+    PACKAGE_NAME = (
+        'beartype_test.a00_unit.data.claw.intraprocess.hookable_package')
 
     # ....................{ PASS                           }....................
     # Explicitly subject this single package to a beartype import hook
@@ -67,17 +68,17 @@ def test_claw_beartype_package() -> None:
 
     # Import all submodules of the package hooked above, exercising that these
     # submodules are subject to that import hook.
-    from beartype_test.a00_unit.data.claw.hookable_package.kind import (
+    from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.kind import (
         data_claw_class,
         data_claw_func,
     )
-    from beartype_test.a00_unit.data.claw.hookable_package.pep import (
+    from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.pep import (
         data_claw_pep526,
         data_claw_pep557,
     )
 
     # Import an arbitrary submodule *NOT* subject to those import hooks.
-    from beartype_test.a00_unit.data.claw import unhookable_module
+    from beartype_test.a00_unit.data.claw.intraprocess import unhookable_module
 
     # Assert that repeating the same import hook as above silently succeeds.
     beartype_package(PACKAGE_NAME)
@@ -114,7 +115,7 @@ def test_claw_beartype_package() -> None:
 
 
 @pytest.mark.run_in_subprocess
-def test_claw_beartype_packages() -> None:
+def test_claw_intraprocess_beartype_packages() -> None:
     '''
     Test the :mod:`beartype.claw.beartype_packages` import hook against multiple
     data subpackages in this test suite exercising *all* edge cases associated
@@ -135,9 +136,9 @@ def test_claw_beartype_packages() -> None:
     # Tuple of the names of two or more packages to be subject to beartype
     # import hooks below.
     PACKAGE_NAMES = (
-        'beartype_test.a00_unit.data.claw.hookable_package',
-        'beartype_test.a00_unit.data.claw.hookable_package.kind',
-        'beartype_test.a00_unit.data.claw.unhookable_module',
+        'beartype_test.a00_unit.data.claw.intraprocess.hookable_package',
+        'beartype_test.a00_unit.data.claw.intraprocess.hookable_package.kind',
+        'beartype_test.a00_unit.data.claw.intraprocess.unhookable_module',
     )
 
     # ....................{ PASS                           }....................
@@ -147,11 +148,11 @@ def test_claw_beartype_packages() -> None:
 
     # Import all submodules of the package hooked above, exercising that these
     # submodules are subject to that import hook.
-    from beartype_test.a00_unit.data.claw.hookable_package.kind import (
+    from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.kind import (
         data_claw_class,
         data_claw_func,
     )
-    from beartype_test.a00_unit.data.claw.hookable_package.pep import (
+    from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.pep import (
         data_claw_pep526,
         data_claw_pep557,
     )
@@ -163,7 +164,8 @@ def test_claw_beartype_packages() -> None:
     # Assert that attempting to unsafely import a submodule directly hooked
     # above that is *NOT* hookable by @beartype raises the expected exception.
     with raises(BeartypeDoorHintViolation):
-        from beartype_test.a00_unit.data.claw import unhookable_module
+        from beartype_test.a00_unit.data.claw.intraprocess import (
+            unhookable_module)
 
     # Assert that passing an invalid iterable of package names to this import
     # hook raises the expected exception, where invalid iterable includes:
@@ -204,7 +206,7 @@ def test_claw_beartype_packages() -> None:
 
 
 @pytest.mark.run_in_subprocess
-def test_claw_beartype_all() -> None:
+def test_claw_intraprocess_beartype_all() -> None:
     '''
     Test the :mod:`beartype.claw.beartype_all` import hook against *all* data
     subpackages in this test suite exercising *all* edge cases associated with
@@ -229,11 +231,11 @@ def test_claw_beartype_all() -> None:
 
     # Import *ALL* "beartype.claw"-specific data submodules, exercising that
     # these submodules are subject to that import hook.
-    from beartype_test.a00_unit.data.claw.hookable_package.kind import (
+    from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.kind import (
         data_claw_class,
         data_claw_func,
     )
-    from beartype_test.a00_unit.data.claw.hookable_package.pep import (
+    from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.pep import (
         data_claw_pep526,
         data_claw_pep557,
     )
@@ -245,7 +247,8 @@ def test_claw_beartype_all() -> None:
     # Assert that attempting to unsafely import a submodule directly hooked
     # above that is *NOT* hookable by @beartype raises the expected exception.
     with raises(BeartypeDoorHintViolation):
-        from beartype_test.a00_unit.data.claw import unhookable_module
+        from beartype_test.a00_unit.data.claw.intraprocess import (
+            unhookable_module)
 
     # Assert that passing an invalid beartype configuration to this import hook
     # raises the expected exception.
@@ -260,7 +263,7 @@ def test_claw_beartype_all() -> None:
 
 
 @pytest.mark.run_in_subprocess
-def test_claw_beartyping() -> None:
+def test_claw_intraprocess_beartyping() -> None:
     '''
     Test the :mod:`beartype.claw.beartyping` import hook against *all* data
     subpackages in this test suite exercising *all* edge cases associated with
@@ -290,7 +293,7 @@ def test_claw_beartyping() -> None:
         # imported modules. Likewise, this unit test has *NO* robust means of
         # testing whether or not this context manager raises exceptions under a
         # different (and thus conflicting) beartype configuration.
-        from beartype_test.a00_unit.data.claw.hookable_package.pep import (
+        from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.pep import (
             data_claw_pep526,
             data_claw_pep557,
         )
@@ -299,7 +302,7 @@ def test_claw_beartyping() -> None:
         # configuration nonetheless semantically equivalent to the default
         # configuration silently succeeds.
         with beartyping(conf=BeartypeConf(is_debug=True)):
-            from beartype_test.a00_unit.data.claw.hookable_package.kind import (
+            from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.kind import (
                 data_claw_class,
                 data_claw_func,
             )
@@ -309,7 +312,8 @@ def test_claw_beartyping() -> None:
         # above that is *NOT* hookable by @beartype raises the expected
         # exception.
         with raises(BeartypeDoorHintViolation):
-            from beartype_test.a00_unit.data.claw import unhookable_module
+            from beartype_test.a00_unit.data.claw.intraprocess import (
+                unhookable_module)
 
         # Assert that passing an invalid beartype configuration to this context
         # manager raises the expected exception.
@@ -318,4 +322,4 @@ def test_claw_beartyping() -> None:
                 pass
 
     # Import an arbitrary submodule *NOT* subject to that context manager.
-    from beartype_test.a00_unit.data.claw import unhookable_module
+    from beartype_test.a00_unit.data.claw.intraprocess import unhookable_module

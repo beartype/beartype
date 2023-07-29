@@ -1,3 +1,7 @@
+.. # ------------------( LICENSE                             )------------------
+.. # Copyright (c) 2014-2023 Beartype authors.
+.. # See "LICENSE" for further details.
+.. #
 .. # ------------------( SEO                                 )------------------
 .. # Metadata converted into HTML-specific meta tags parsed by search engines.
 .. # Note that:

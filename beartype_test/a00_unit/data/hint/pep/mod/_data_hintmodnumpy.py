@@ -20,7 +20,7 @@ dramatically simplify code generation for these hints. Ergo, so we do.
 '''
 
 # ....................{ IMPORTS                           }....................
-from beartype_test._util.mod.pytmodtest import (
+from beartype_test._util.module.pytmodtest import (
     is_package_numpy_typing_ndarray_deep)
 
 # ....................{ ADDERS                            }....................
@@ -51,7 +51,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintSignNumpyArray,
         HintSignTuple,
     )
-    from beartype._util.mod.lib.utiltyping import import_typing_attr
+    from beartype._util.module.lib.utiltyping import import_typing_attr
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,

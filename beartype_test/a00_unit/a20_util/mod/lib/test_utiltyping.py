@@ -7,7 +7,7 @@
 Project-wide **typing module** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.mod.lib.utiltyping` submodule.
+:mod:`beartype._util.module.lib.utiltyping` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -19,14 +19,14 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS ~ attr : typing             }....................
 def test_import_typing_attr() -> None:
     '''
-    Test the :func:`beartype._util.mod.lib.utiltyping.import_typing_attr`
+    Test the :func:`beartype._util.module.lib.utiltyping.import_typing_attr`
     importer.
     '''
 
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
-    from beartype._util.mod.lib.utiltyping import import_typing_attr
-    from beartype._util.mod.utilmodimport import import_module_attr_or_none
+    from beartype._util.module.lib.utiltyping import import_typing_attr
+    from beartype._util.module.utilmodimport import import_module_attr_or_none
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from pytest import raises
     from typing import Union

@@ -7,7 +7,7 @@
 Project-wide **Python module deprecation** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.mod.utilmoddeprecate` submodule.
+:mod:`beartype._util.module.utilmoddeprecate` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,12 +20,12 @@ This submodule unit tests the public API of the private
 def test_deprecate_module_attr() -> None:
     '''
     Test the
-    :func:`beartype._util.mod.utilmoddeprecate.deprecate_module_attr` function.
+    :func:`beartype._util.module.utilmoddeprecate.deprecate_module_attr` function.
     '''
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
-    from beartype._util.mod.utilmoddeprecate import deprecate_module_attr
+    from beartype._util.module.utilmoddeprecate import deprecate_module_attr
     from pytest import raises, warns
 
     # ..................{ LOCALS                             }..................

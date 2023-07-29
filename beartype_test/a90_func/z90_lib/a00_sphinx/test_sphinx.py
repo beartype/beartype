@@ -37,19 +37,17 @@ def test_sphinx_docs_other(tmp_path) -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
-    # from beartype._util.mod.lib.utilsphinx import (
+    # from beartype._util.module.lib.utilsphinx import (
     #     _SPHINX_AUTODOC_SUBPACKAGE_NAME)
-    from beartype._util.py.utilpyinterpreter import get_interpreter_filename
-    from beartype_test._util.cmd.pytcmdrun import run_command_forward_output
+    from beartype._util.py.utilpyinterpreter import (
+        get_interpreter_command_words)
+    from beartype_test._util.command.pytcmdrun import run_command_forward_output
     from beartype_test._util.path.pytpathtest import (
         get_test_func_data_lib_sphinx_dir)
 
     # ..................{ SPHINX-BUILD                       }..................
     # Tuple of all shell words with which to run the "sphinx-build" command.
-    SPHINX_ARGS = (
-        # Absolute filename of the executable running the active Python process.
-        get_interpreter_filename(),
-
+    SPHINX_ARGS = get_interpreter_command_words() + (
         # Fully-qualified name of the Sphinx package to be run. Interestingly,
         # running this package as a script is semantically equivalent to running
         # the "sphinx-build" command (with the added bonus of running under the
@@ -118,16 +116,14 @@ def test_sphinx_docs_these(make_app, tmp_path) -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
-    from beartype_test._util.cmd.pytcmdrun import run_command_forward_output
+    from beartype_test._util.command.pytcmdrun import run_command_forward_output
     from beartype_test._util.path.pytpathmain import get_main_sphinx_source_dir
-    from beartype._util.py.utilpyinterpreter import get_interpreter_filename
+    from beartype._util.py.utilpyinterpreter import (
+        get_interpreter_command_words)
 
     # ..................{ SPHINX-BUILD                       }..................
     # Tuple of all shell words with which to run the "sphinx-build" command.
-    SPHINX_ARGS = (
-        # Absolute filename of the executable running the active Python process.
-        get_interpreter_filename(),
-
+    SPHINX_ARGS = get_interpreter_command_words() + (
         # Fully-qualified name of the Sphinx package to be run. Interestingly,
         # running this package as a script is semantically equivalent to running
         # the "sphinx-build" command (with the added bonus of running under the

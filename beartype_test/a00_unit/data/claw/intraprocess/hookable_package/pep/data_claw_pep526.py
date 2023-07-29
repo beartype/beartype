@@ -22,7 +22,7 @@ from pytest import raises
 # import hooks configured by another beartype configuration isolated to that
 # submodule. Doing so exercises that beartype import hooks correctly support
 # import hook composition (i.e., combinations of arbitrary import hooks).
-from beartype_test.a00_unit.data.claw.hookable_package.beartype_this_package import (
+from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.beartype_this_package import (
     this_submodule)
 
 # from beartype.claw._clawstate import claw_state

@@ -1165,7 +1165,7 @@ class _BeartypeUtilModuleException(_BeartypeUtilException):
     **Beartype module utility exception.**
 
     This exception is raised by public functions of the private
-    :mod:`beartype._util.mod.utilmodget` subpackage when dynamically importing
+    :mod:`beartype._util.module.utilmodget` subpackage when dynamically importing
     an unimportable external user-defined module, typically due to a
     **PEP-compliant forward reference type hint** (i.e., string whose value is
     the name of a user-defined class that has yet to be defined) erroneously

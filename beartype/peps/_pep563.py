@@ -37,7 +37,7 @@ from beartype._util.func.utilfunctest import (
     die_unless_func_python,
     is_func_nested,
 )
-from beartype._util.mod.utilmodget import get_object_module_or_none
+from beartype._util.module.utilmodget import get_object_module_or_none
 from beartype._util.text.utiltextident import is_identifier
 from beartype._util.text.utiltextprefix import prefix_beartypeable_pith
 from collections.abc import Callable

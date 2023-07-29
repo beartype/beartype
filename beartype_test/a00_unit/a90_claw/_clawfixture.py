@@ -41,7 +41,7 @@ def clean_claws() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny.
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
     from beartype.claw._pkg.clawpkgcontext import packages_trie_cleared
-    from beartype._util.mod.utilmodget import get_module_dir
+    from beartype._util.module.utilmodget import get_module_dir
     from beartype._util.path.utilpathremove import (
         remove_package_bytecode_files)
     from beartype_test.a00_unit.data import claw
@@ -50,7 +50,7 @@ def clean_claws() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny.
     # Path encapsulating the absolute dirname of the "beartype.claw" subpackage.
     #
     # Note that we intentionally avoid importing any subsubpackages (e.g.,
-    # "beartype_test.a00_unit.data.claw.hookable_package.beartype_this_package")
+    # "beartype_test.a00_unit.data.claw.intraprocess.hookable_package.beartype_this_package")
     # above. Why? Because doing so would implicitly install the exact beartype
     # import hook which calling unit tests are attempting to subsequently
     # exercise and which *MUST* be confined to a context manager for test

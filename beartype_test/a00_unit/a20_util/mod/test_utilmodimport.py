@@ -7,7 +7,7 @@
 Project-wide **Python module importer** unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.mod.utilmodimport` submodule.
+:mod:`beartype._util.module.utilmodimport` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -20,13 +20,13 @@ This submodule unit tests the public API of the private
 def test_import_module_or_none() -> None:
     '''
     Test the
-    :func:`beartype._util.mod.utilmodget.import_module_or_none` function.
+    :func:`beartype._util.module.utilmodget.import_module_or_none` function.
     '''
 
     # Defer test-specific imports.
     import beartype
     from beartype.roar import BeartypeModuleUnimportableWarning
-    from beartype._util.mod.utilmodimport import import_module_or_none
+    from beartype._util.module.utilmodimport import import_module_or_none
     from pytest import warns
 
     # Assert this function returns the expected module when passed the
@@ -57,12 +57,12 @@ def test_import_module_or_none() -> None:
 def test_import_module_attr() -> None:
     '''
     Test the
-    :func:`beartype._util.mod.utilmodget.import_module_attr` function.
+    :func:`beartype._util.module.utilmodget.import_module_attr` function.
     '''
 
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
-    from beartype._util.mod.utilmodimport import import_module_attr
+    from beartype._util.module.utilmodimport import import_module_attr
     from pytest import raises
 
     # Attribute dynamically imported from a module.
@@ -84,13 +84,13 @@ def test_import_module_attr() -> None:
 def test_import_module_attr_or_none() -> None:
     '''
     Test the
-    :func:`beartype._util.mod.utilmodget.import_module_attr_or_none` function.
+    :func:`beartype._util.module.utilmodget.import_module_attr_or_none` function.
     '''
 
     # Defer test-specific imports.
     from beartype.roar import BeartypeModuleUnimportableWarning
     from beartype.roar._roarexc import _BeartypeUtilModuleException
-    from beartype._util.mod.utilmodimport import import_module_attr_or_none
+    from beartype._util.module.utilmodimport import import_module_attr_or_none
     from pytest import raises, warns
 
     # Attribute declared by an importable module.

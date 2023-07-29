@@ -250,7 +250,7 @@ def test_api_vale_decor_fail() -> None:
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintPep593Exception
     from beartype.vale import Is
-    from beartype_test._util.mod.pytmodtyping import (
+    from beartype_test._util.module.pytmodtyping import (
         import_typing_attr_or_none_safe)
     from pytest import raises
 

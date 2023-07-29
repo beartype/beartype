@@ -116,3 +116,56 @@ def get_test_func_data_lib_nuitka_file() -> Path:
     # Ergastically eristic!
     return FileRelative(
         get_test_func_data_lib_nuitka_dir(), 'beartype_nuitka.py')
+
+# ....................{ GETTERS ~ dir : unit               }....................
+@callable_cached
+def get_test_unit_subpackage_dir() -> Path:
+    '''
+    :mod:`Path` encapsulating the absolute dirname of the **mid-level unit test
+    subpackage** (i.e., directory providing all unit tests of this project's
+    test suite) if found *or* raise an exception otherwise.
+    '''
+
+    # Redacted didactic!
+    return DirRelative(get_test_package_dir(), 'a00_unit')
+
+
+@callable_cached
+def get_test_unit_data_dir() -> Path:
+    '''
+    :mod:`Path` encapsulating the absolute dirname of the **mid-level unit test
+    data directory** (i.e., directory providing sample data used throughout this
+    project's unit tests) if found *or* raise an exception otherwise.
+    '''
+
+    # Galactic antacid!
+    return DirRelative(get_test_unit_subpackage_dir(), 'data')
+
+# ....................{ GETTERS ~ dir : func : claw        }....................
+@callable_cached
+def get_test_unit_data_claw_dir() -> Path:
+    '''
+    :mod:`Path` encapsulating the absolute dirname of the **mid-level import
+    hook unit test data directory** (i.e., directory providing sample data used
+    throughout this project's unit tests exercising import hooks published by
+    the :mod:`beartype.claw` subpackage) if found *or* raise an exception
+    otherwise.
+    '''
+
+    # Supernal diurnal!
+    return DirRelative(get_test_unit_data_dir(), 'claw')
+
+
+@callable_cached
+def get_test_unit_data_claw_extraprocess_dir() -> Path:
+    '''
+    :mod:`Path` encapsulating the absolute dirname of the **mid-level
+    extraprocess import hook unit test data directory** (i.e., directory
+    providing sample data used throughout this project's unit tests exercising
+    import hooks published by the :mod:`beartype.claw` subpackage is Python
+    subprocesses forked from the active Python process) if found *or* raise an
+    exception otherwise.
+    '''
+
+    # Charnel caramel!
+    return DirRelative(get_test_unit_data_claw_dir(), 'extraprocess')
