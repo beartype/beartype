@@ -23,8 +23,8 @@ from beartype._util.hint.pep.utilpeptest import is_hint_pep
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextmunge import (
-    suffix_unless_suffixed,
-    uppercase_char_first,
+    suffix_str_unless_suffixed,
+    uppercase_str_char_first,
 )
 
 # ....................{ GETTERS                            }....................
@@ -198,12 +198,12 @@ def find_cause_union(cause: ViolationCause) -> ViolationCause:
                     # Indented by the current indent...
                     cause.cause_indent,
                     # Whose first character is uppercased...
-                    uppercase_char_first(
+                    uppercase_str_char_first(
                         # Suffixed by a period if not yet suffixed by a period.
-                        suffix_unless_suffixed(text=cause_str, suffix='.')
+                        suffix_str_unless_suffixed(text=cause_str, suffix='.')
                     )
                 )
-                # '{}* {}.'.format(cause_indent, uppercase_char_first(cause_union))
+                # '{}* {}.'.format(cause_indent, uppercase_str_char_first(cause_union))
                 for cause_str in cause_strs
             )
         )

@@ -114,8 +114,8 @@ from beartype._decor._error._util.errorutiltext import (
 )
 # from beartype._util.hint.utilhinttest import die_unless_hint
 from beartype._util.text.utiltextmunge import (
-    suffix_unless_suffixed,
-    uppercase_char_first,
+    suffix_str_unless_suffixed,
+    uppercase_str_char_first,
 )
 from beartype._util.text.utiltextrepr import represent_object
 from beartype._data.hint.datahinttyping import TypeException
@@ -290,7 +290,7 @@ def get_beartype_violation(
             func=func, arg_name=pith_name, arg_value=pith_value)
 
     # Uppercase the first character of this violation message prefix if needed.
-    exception_prefix = uppercase_char_first(exception_prefix)
+    exception_prefix = uppercase_str_char_first(exception_prefix)
 
     # ....................{ HINTS                          }....................
     # If this parameter or return value is unannotated, raise an exception.
@@ -342,7 +342,7 @@ def get_beartype_violation(
     # Else, this pith violates this hint as expected and as required for sanity.
 
     # This failure suffixed by a period if *NOT* yet suffixed by a period.
-    violation_cause_suffixed = suffix_unless_suffixed(
+    violation_cause_suffixed = suffix_str_unless_suffixed(
         text=violation_cause.cause_str_or_none, suffix='.')
 
     # List of the one or more culprits responsible for this violation,

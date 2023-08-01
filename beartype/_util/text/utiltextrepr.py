@@ -14,57 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
 from beartype.typing import Dict
 from beartype._data.hint.datahinttyping import TypeWarning
+from beartype._data.kind.datakindtext import CHARS_PUNCTUATION
 from beartype._cave._cavefast import NumberType
 from beartype._util.utilobject import get_object_basename_scoped
 from collections.abc import Callable
-from string import punctuation
-
-# ....................{ PRIVATE ~ cache                    }....................
-_MAX_LEN_TO_MAX_CHARS_REGEX: Dict[int, str] = {}
-'''
-Non-thread-safe global dictionary cache mapping from each **maximum length**
-(i.e., ``max_len`` parameter previously passed to the :func:`represent_object`
-function) to a compiled regular expression grouping zero or more leading
-characters preceding this maximum length *and* zero or more trailing
-delimiters.
-
-Caveats
-----------
-**This cache is intentionally non-thread-safe.** Although rendering this cache
-thread-safe would be trivial (e.g., via the
-:class:`beartype._util.cache.map.utilmapbig.CacheUnboundedStrong` class), doing
-so would both reduce efficiency *and* be ineffectual. Since this cache is
-*only* used to amortize the costs of regular expression compilation, violating
-thread-safety has *no* harmful side effects (aside from recompiling a
-previously compiled regular expression in unlikely edge cases).
-'''
-
-# ....................{ PRIVATE ~ frozen                   }....................
-_CHARS_PUNCTUATION = frozenset(punctuation)
-'''
-Frozen set of all **ASCII punctuation characters** (i.e., non-Unicode
-characters satisfying the conventional definition of English punctuation).
-
-Note that the :attr:`string.punctuation` object is actually an inefficient
-string of these characters rather than an efficient collection. Ergo, this set
-should *ALWAYS* be accessed in lieu of that string.
-'''
-
-
-_TYPES_UNQUOTABLE = (
-    # Byte strings, whose representations are already quoted as "b'...'".
-    bytes,
-    # Numbers, whose representations are guaranteed to both contain *NO*
-    # whitespace and be sufficiently terse as to benefit from *NO* quoting.
-    NumberType,
-)
-'''
-**Unquotable tuple union** (i.e., isinstancable tuple of all classes such that
-the :func:`represent_object` function intentionally avoids double-quoting the
-machine-readable representations all instances of these classes, typically due
-to these representations either being effectively quoted already *or*
-sufficiently terse as to not benefit from being quoted).
-'''
 
 # ....................{ REPRESENTERS                       }....................
 def represent_object(
@@ -74,7 +27,7 @@ def represent_object(
     # Optional parameters.
     max_len: int = 96,
 ) -> str:
-    """
+    '''
     Pretty-printed quasi-human-readable variant of the string returned by the
     non-pretty-printed machine-readable :meth:`obj.__repr__` dunder method of
     the passed object, truncated to the passed maximum string length.
@@ -130,7 +83,7 @@ def represent_object(
     str
         Pretty-printed quasi-human-readable variant of this object's
         non-pretty-printed machine-readable representation.
-    """
+    '''
     assert isinstance(max_len, int), f'{repr(max_len)} not integer.'
 
     #FIXME: Render this safe against infinitely recursive data structures.
@@ -151,6 +104,16 @@ def represent_object(
     #fists on our issue tracker, let's pretend this isn't a compelling concern.
     #See also:
     #   https://github.com/celery/celery/blob/master/celery/utils/saferepr.py
+    #FIXME: Actually, a trivial way to do this without going full-Celery would
+    #be to just leverage the EAFP principle: e.g.,
+    #    try:
+    #        obj_repr = repr(obj)
+    #    except RecursionError:
+    #        from pprint import saferepr
+    #        obj_repr = saferepr(obj)
+    #
+    #Clearly, that will still be slightly less efficient than the
+    #Celery-oriented approach -- but also considerably easier. *sigh*
 
     # String describing this object. Note that:
     # * This representation quote-protects all newlines in this representation.
@@ -181,7 +144,7 @@ def represent_object(
     # If this representation is neither...
     elif not (
         # Prefixed by punctuation *NOR*...
-        obj_repr[0] in _CHARS_PUNCTUATION or
+        obj_repr[0] in CHARS_PUNCTUATION or
         # An instance of a class whose representations do *NOT* benefit from
         # explicit quoting...
         isinstance(obj, _TYPES_UNQUOTABLE)
@@ -203,7 +166,7 @@ def represent_object(
             # If this character is punctuation, preserve this punctuation by
             # replacing the trailing portion of this representation up to but
             # *NOT* including this punctuation with an ellipses.
-            if obj_repr_char_last in _CHARS_PUNCTUATION:
+            if obj_repr_char_last in CHARS_PUNCTUATION:
                 obj_repr = f'{obj_repr[:max_len-4]}...{obj_repr_char_last}'
             # Else, this character is *NOT* punctuation. In this case, replace
             # the trailing portion of this representation (including this
@@ -253,6 +216,11 @@ def represent_func(
     :class:`warning_cls`
         If this callable is a pure-Python lambda function whose definition is
         *not* parsable from the script or module defining that lambda.
+
+    Returns
+    ----------
+    str
+        Machine-readable representation of that callable.
     '''
     assert callable(func), f'{repr(func)} not callable.'
 
@@ -274,3 +242,40 @@ def represent_func(
 
     # Return the fully-qualified name of this non-lambda function.
     return get_object_basename_scoped(func)
+
+# ....................{ PRIVATE ~ globals                  }....................
+_TYPES_UNQUOTABLE = (
+    # Byte strings, whose representations are already quoted as "b'...'".
+    bytes,
+    # Numbers, whose representations are guaranteed to both contain *NO*
+    # whitespace and be sufficiently terse as to benefit from *NO* quoting.
+    NumberType,
+)
+'''
+**Unquotable tuple union** (i.e., isinstancable tuple of all classes such that
+the :func:`represent_object` function intentionally avoids double-quoting the
+machine-readable representations all instances of these classes, typically due
+to these representations either being effectively quoted already *or*
+sufficiently terse as to not benefit from being quoted).
+'''
+
+
+#FIXME: Temporarily preserved for posterity.
+# _MAX_LEN_TO_MAX_CHARS_REGEX: Dict[int, str] = {}
+# '''
+# Non-thread-safe global dictionary cache mapping from each **maximum length**
+# (i.e., ``max_len`` parameter previously passed to the :func:`represent_object`
+# function) to a compiled regular expression grouping zero or more leading
+# characters preceding this maximum length *and* zero or more trailing
+# delimiters.
+#
+# Caveats
+# ----------
+# **This cache is intentionally non-thread-safe.** Although rendering this cache
+# thread-safe would be trivial (e.g., via the
+# :class:`beartype._util.cache.map.utilmapbig.CacheUnboundedStrong` class), doing
+# so would both reduce efficiency *and* be ineffectual. Since this cache is
+# *only* used to amortize the costs of regular expression compilation, violating
+# thread-safety has *no* harmful side effects (aside from recompiling a
+# previously compiled regular expression in unlikely edge cases).
+# '''

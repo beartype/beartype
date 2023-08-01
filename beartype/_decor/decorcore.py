@@ -45,7 +45,7 @@ from beartype._util.func.utilfunctest import (
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from beartype._util.text.utiltextansi import strip_text_ansi
 from beartype._util.text.utiltextlabel import label_object_context
-from beartype._util.text.utiltextmunge import uppercase_char_first
+from beartype._util.text.utiltextmunge import uppercase_str_char_first
 from beartype._util.text.utiltextprefix import prefix_beartypeable
 from traceback import format_exc
 from warnings import warn
@@ -387,7 +387,7 @@ def _beartype_object_nonfatal(
         # intermediary packages into ANSI-unaware logfiles.
         #
         # This message is defined as either...
-        error_message = strip_text_ansi(
+        error_message = (
             # If this exception is beartype-specific, this exception's message
             # is probably human-readable as is. In this case, coerce only that
             # message directly into a warning for brevity and readability.
@@ -412,7 +412,7 @@ def _beartype_object_nonfatal(
         # * A human-readable label contextually describing this beartypeable,
         #   capitalized such that the first character is uppercase.
         # * This indented exception message.
-        warning_message = uppercase_char_first(
+        warning_message = uppercase_str_char_first(
             f'{prefix_beartypeable(obj)}{label_object_context(obj)}:\n'
             f'{error_message}'
         )
@@ -470,13 +470,13 @@ def _beartype_type(
     #* Define a new "beartype._util.check.utilchecktype" submodule containing
     #  similar class-specific functionality.
     #FIXME: Actually... *NO.* We absolutely do *NOT* want to monkey-patch random
-    #@beartype-specific attributes in types, because then the Python ecosystem
-    #will shudder, then sway, then crack, and finally tumble into the churning
-    #seas below. Instead, let's find something *ELSE* that is actually safe to
-    #monkey-patch. Method objects are the classic example. Nobody cares if we
-    #monkey-patch those. The most common method object would be the
-    #"cls.__init__" object. Of course, many types do *NOT* define that object --
-    #but many types also do. We could simply:
+    #@beartype-specific attributes into user-defined classes, because then the
+    #Python ecosystem will shudder, then sway, then crack, and finally tumble
+    #into the churning seas below. Instead, let's find something *ELSE* that is
+    #actually safe to monkey-patch. Method objects are the classic example.
+    #Nobody cares if we monkey-patch those. The most common method object would
+    #be the "cls.__init__" object. Of course, many types do *NOT* define that
+    #object -- but many types also do. We could simply:
     #* Decide whether the "cls.__init__" method exists.
     #* Decide whether the "cls.__init__.__beartyped_cls" attribute exists. Note
     #  that this attribute is distinct from our existing "__beartyped"

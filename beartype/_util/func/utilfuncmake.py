@@ -20,7 +20,7 @@ from beartype.typing import (
 )
 from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._util.text.utiltextlabel import label_exception
-from beartype._util.text.utiltextmunge import number_lines
+from beartype._util.text.utiltextmunge import number_str_lines
 from beartype._util.utilobject import get_object_name
 from collections.abc import Callable
 from functools import update_wrapper
@@ -217,7 +217,7 @@ def make_func(
 
     # If debugging this function, print the definition of this function.
     if is_debug:
-        print(f'{number_lines(func_code)}')
+        print(f'{number_str_lines(func_code)}')
     # else:
     #     print('!!!!!!!!!PRINTING NOTHING!!!!!!!!!!!')
     # Else, leave that definition obscured by the voracious bitbuckets of time.
@@ -257,7 +257,7 @@ def make_func(
         raise exception_cls(
             f'{func_label} unparseable, as @beartype generated '
             f'invalid code raising "{label_exception(exception)}":\n\n'
-            f'{number_lines(func_code)}'
+            f'{number_str_lines(func_code)}'
         ) from exception
 
     # ..................{ VALIDATION ~ post                  }..................
@@ -266,7 +266,7 @@ def make_func(
     if func_name not in func_locals:
         raise exception_cls(
             f'{func_label} undefined by code snippet:\n\n'
-            f'{number_lines(func_code)}'
+            f'{number_str_lines(func_code)}'
         )
     # Else, that function's name is in this local scope.
 
@@ -277,7 +277,7 @@ def make_func(
     if not callable(func):
         raise exception_cls(
             f'{func_label} defined by code snippet uncallable:\n\n'
-            f'{number_lines(func_code)}'
+            f'{number_str_lines(func_code)}'
         )
     # Else, that function is callable.
 
