@@ -194,6 +194,16 @@ def test_truncate_str():
     assert truncate_str(text='Sent t/>',  max_len=6) == 'S.../>'
     assert truncate_str(text='Sent to/>', max_len=7) == 'Se.../>'
 
+    # Assert that truncating fairly short strings suffixed by one period
+    # followed by two or more non-period punctuation characters truncates those
+    # strings to the desired maximum length by replacing all trailing characters
+    # in those strings up to and including those periods but *NOT* those
+    # non-period punctuation characters with an ellipsis.
+    assert truncate_str(text='Sen."?',    max_len=5) == '..."?'
+    assert truncate_str(text='Sent."?',   max_len=6) == 'S..."?'
+    assert truncate_str(text='Sent ."?',  max_len=7) == 'Se..."?'
+    assert truncate_str(text='Sent t."?', max_len=8) == 'Sen..."?'
+
     # Assert that truncating fairly short strings suffixed by an ellipsis
     # truncates those strings to the desired maximum length while preserving
     # that ellipsis as is.

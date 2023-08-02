@@ -12,10 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
-from beartype.typing import Dict
+# from beartype.typing import Dict
+from beartype._cave._cavefast import NumberType
 from beartype._data.hint.datahinttyping import TypeWarning
 from beartype._data.kind.datakindtext import CHARS_PUNCTUATION
-from beartype._cave._cavefast import NumberType
 from beartype._util.utilobject import get_object_basename_scoped
 from collections.abc import Callable
 
@@ -61,9 +61,9 @@ def represent_object(
     ----------
     **This function is unavoidably slow and should thus not be called from
     optimized performance-critical code.** This function internally performs
-    mildly expensive operations, including regular expression-based matching
-    and substitution. Ideally, this function should *only* be called to create
-    user-oriented exception messages where performance is a negligible concern.
+    mildly expensive operations, including iterating-based string munging.
+    Ideally, this function should *only* be called to create user-oriented
+    exception messages where performance is a negligible concern.
 
     **This function preserves all quote-protected newline characters** (i.e.,
     ``"\\n"``) **in this representation.** Since the :meth:`str.__repr__`
@@ -157,27 +157,11 @@ def represent_object(
 
     # If this representation exceeds this maximum length...
     if len(obj_repr) > max_len:
-        # If this maximum length is long enough to at least allow truncation to
-        # ellipses (i.e., a substring of length 3)...
-        if max_len > 3:
-            # Last character of this representation.
-            obj_repr_char_last = obj_repr[max_len-1]
+        # Avoid circular import dependencies.
+        from beartype._util.text.utiltextmunge import truncate_str
 
-            # If this character is punctuation, preserve this punctuation by
-            # replacing the trailing portion of this representation up to but
-            # *NOT* including this punctuation with an ellipses.
-            if obj_repr_char_last in CHARS_PUNCTUATION:
-                obj_repr = f'{obj_repr[:max_len-4]}...{obj_repr_char_last}'
-            # Else, this character is *NOT* punctuation. In this case, replace
-            # the trailing portion of this representation (including this
-            # character) with an ellipses.
-            else:
-                obj_repr = f'{obj_repr[:max_len-3]}...'
-        # Else, this maximum length is *NOT* long enough to at least allow
-        # truncation to ellipses (i.e., a substring of length 3). In this case,
-        # truncate this string to this length *WITHOUT* ellipses.
-        else:
-            obj_repr = obj_repr[:max_len]
+        # Truncate this representation to this maximum length.
+        obj_repr = truncate_str(text=obj_repr, max_len=max_len)
         # print(f'obj repr truncated: {obj_repr}')
 
     # Return this representation.

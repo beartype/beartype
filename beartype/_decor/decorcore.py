@@ -43,9 +43,12 @@ from beartype._util.func.utilfunctest import (
     is_func_python,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
-from beartype._util.text.utiltextansi import strip_text_ansi
+# from beartype._util.text.utiltextansi import strip_text_ansi
 from beartype._util.text.utiltextlabel import label_object_context
-from beartype._util.text.utiltextmunge import uppercase_str_char_first
+from beartype._util.text.utiltextmunge import (
+    truncate_str,
+    uppercase_str_char_first,
+)
 from beartype._util.text.utiltextprefix import prefix_beartypeable
 from traceback import format_exc
 from warnings import warn
@@ -389,9 +392,11 @@ def _beartype_object_nonfatal(
         # This message is defined as either...
         error_message = (
             # If this exception is beartype-specific, this exception's message
-            # is probably human-readable as is. In this case, coerce only that
-            # message directly into a warning for brevity and readability.
-            str(exception)
+            # is probably human-readable as is. In this case, maximize brevity
+            # and readability by coercing *ONLY* this message (rather than both
+            # this message *AND* traceback) truncated to a reasonable maximum
+            # length into a warning message.
+            truncate_str(text=str(exception), max_len=1024)
             if isinstance(exception, BeartypeException) else
             # Else, this exception is *NOT* beartype-specific. In this case,
             # this exception's message is probably *NOT* human-readable as is.

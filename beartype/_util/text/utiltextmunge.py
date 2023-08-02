@@ -158,7 +158,6 @@ def suffix_str_unless_suffixed(text: str, suffix: str) -> str:
     return text if text.endswith(suffix) else text + suffix
 
 # ....................{ TRUNCATERS                         }....................
-#FIXME: Call from represent_object(), please.
 def truncate_str(
     # Mandatory parameters.
     text: str,
@@ -175,6 +174,14 @@ def truncate_str(
       unmodified as is.
     * Else, this string with the suffix of this string exceeding this maximum
       replaced by an ASCII ellipsis (i.e., ``"..."`` substring).
+
+    Caveats
+    ----------
+    **This function is unavoidably slow and should thus not be called from
+    optimized performance-critical code.** This function internally performs
+    mildly expensive operations, including iterating-based string munging.
+    Ideally, this function should *only* be called to create user-oriented
+    exception messages where performance is a negligible concern.
 
     Parameters
     ----------
