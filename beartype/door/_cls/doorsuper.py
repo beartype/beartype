@@ -420,16 +420,16 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             non-ignorable, the deeply nested :class:`object` child type hint is
             ignorable by the argument above. It transitively follows that the
             ``Annotated[object, 53]`` parent type hint subscripted by
-            :class:`object`, the :attr:`typing.NewType` parent type hint aliased
+            :class:`object`, the :obj:`typing.NewType` parent type hint aliased
             to ``Annotated[object, 53]``, *and* the entire union subscripted by
-            that :attr:`typing.NewType` are themselves all ignorable as well.
+            that :obj:`typing.NewType` are themselves all ignorable as well.
 
         * Any subscription of :attr:`typing.Annotated` by one or more ignorable
           type hints. As with :attr:`typing.Union`, there exists a countably
           infinite number of such subscriptions. (See the prior item.)
         * The :class:`typing.Generic` and :class:`typing.Protocol` superclasses,
           both of which impose no constraints *in and of themselves.* Since all
-          possible objects satisfy both superclasses. both superclasses are
+          possible objects satisfy both superclasses. Both superclasses are
           synonymous to the ignorable :class:`object` root superclass: e.g.,
 
           .. code-block:: python
@@ -580,7 +580,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     @method_cached_arg_by_id
     def is_subhint(self, other: 'TypeHint') -> bool:
         '''
-        ``True`` only if this type hint is a **subhint** of the passed type
+        :data:`True` only if this type hint is a **subhint** of the passed type
         hint.
 
         This tester method is memoized for efficiency.
@@ -593,7 +593,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         Returns
         ----------
         bool
-            ``True`` only if this type hint is a subhint of that other hint.
+            :data:`True` only if this type hint is a subhint of that other hint.
 
         See Also
         ----------
@@ -619,8 +619,8 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
     def is_superhint(self, other: 'TypeHint') -> bool:
         '''
-        ``True`` only if this type hint is a **superhint** of the passed type
-        hint.
+        :data:`True` only if this type hint is a **superhint** of the passed
+        type hint.
 
         This tester method is memoized for efficiency.
 
@@ -632,7 +632,8 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         Returns
         ----------
         bool
-            ``True`` only if this type hint is a superhint of that other hint.
+            :data:`True` only if this type hint is a superhint of that other
+            hint.
 
         See Also
         ----------
@@ -669,7 +670,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     # ..................{ PRIVATE ~ testers                  }..................
     def _is_equal(self, other: 'TypeHint') -> bool:
         '''
-        ``True`` only if the low-level type hint wrapped by this wrapper is
+        :data:`True` only if the low-level type hint wrapped by this wrapper is
         semantically equivalent to the other low-level type hint wrapped by the
         passed wrapper.
 
@@ -697,7 +698,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         Returns
         ----------
         bool
-            ``True`` only if this type hint is equal to that other hint.
+            :data:`True` only if this type hint is equal to that other hint.
         '''
 
         # Return true only if both...
@@ -714,7 +715,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
     def _is_subhint(self, other: 'TypeHint') -> bool:
         '''
-        ``True`` only if this type hint is a **subhint** of the passed type
+        :data:`True` only if this type hint is a **subhint** of the passed type
         hint.
 
         Subclasses are advised to override this method to implement the public
@@ -733,7 +734,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         Returns
         ----------
         bool
-            ``True`` only if this type hint is a subhint of that other hint.
+            :data:`True` only if this type hint is a subhint of that other hint.
 
         See Also
         ----------
@@ -817,9 +818,9 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     # otherwise abstract class to be safely instantiated as "TypeHint(hint)".
     def _is_le_branch(self, branch: 'TypeHint') -> bool:
         '''
-        ``True`` only if this partially ordered type hint is **compatible** with
-        the passed branch of another partially ordered type hint passed to the
-        parent call of the :meth:`__le__` dunder method.
+        :data:`True` only if this partially ordered type hint is **compatible**
+        with the passed branch of another partially ordered type hint passed to
+        the parent call of the :meth:`__le__` dunder method.
 
         See Also
         ----------
@@ -833,15 +834,15 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     # ..................{ PRIVATE ~ abstract : property      }..................
     @property
     def _is_args_ignorable(self) -> bool:
-        """
-        Flag that indicates this hint can be evaluating only using the origin.
+        '''
+        Flag that indicates this hint can be evaluated only using the origin.
 
         This is useful for parametrized type hints with no arguments or with
         :attr:`typing.Any`-type placeholder arguments (e.g.,
         ``Tuple[Any, ...]``, ``Callable[..., Any]``).
 
-        It's also useful in cases where a builtin type or abc.collection is used
-        as a type hint (and has no sign).  For example:
+        It's also useful in cases where a builtin type or abstract base class
+        (ABC) is used as a type hint (and has no sign). For example:
 
         .. code-block:: python
 
@@ -852,7 +853,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         In this case, using :attr:`_is_args_ignorable` allows us to us simplify
         the comparison.
-        """
+        '''
 
         raise NotImplementedError(  # pragma: no cover
             'Abstract method TypeHint._is_args_ignorable() undefined.')

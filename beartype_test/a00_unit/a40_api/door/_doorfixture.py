@@ -188,33 +188,58 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     )
 
     # ..................{ NEWTYPES                           }..................
-    NewStr = NewType("NewStr", str)
+    NewStr = NewType('NewStr', str)
 
     # ..................{ TYPEVARS                           }..................
-    T = TypeVar("T")
+    # Arbitrary unconstrained type variables.
+    S = TypeVar('S')
+    T = TypeVar('T')
+
     SeqBoundTypeVar = TypeVar("SeqBoundTypeVar", bound=Sequence)
     IntStrConstrainedTypeVar = TypeVar("IntStrConstrainedTypeVar", int, str)
 
     # ..................{ CLASSES                            }..................
     class MuhThing:
         def muh_method(self):
-            ...
+            pass
 
     class MuhSubThing(MuhThing):
-        ...
+        pass
 
     class MuhNutherThing:
         def __len__(self) -> int:
-            ...
+            pass
 
 
     class MuhTuple(NamedTuple):
         thing_one: str
         thing_two: int
 
-
+    # ..................{ CLASSES ~ generics                 }..................
     class MuhGeneric(Generic[T]):
-        ...
+        '''
+        Arbitrary generic parametrized by one unconstrained type variable.
+        '''
+
+        pass
+
+
+    class MuhGenericTwo(Generic[S, T]):
+        '''
+        Arbitrary generic parametrized by two unconstrained type variables.
+        '''
+
+        pass
+
+
+    class MuhGenericTwoIntInt(MuhGenericTwo[int, int]):
+        '''
+        Arbitrary concrete generic subclass inheriting the
+        :class:`.MuhGenericTwo` generic superclass subscripted twice by the
+        builtin :class:`int` type.
+        '''
+
+        pass
 
     # ..................{ LISTS                              }..................
     HINT_SUBHINT_CASES = [
@@ -306,17 +331,21 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         # (types.FunctionType, Callable, True),  # FIXME
 
         # ..................{ HINTS ~ arg : generic          }..................
-        # PEP 484-compliant generics.
-        (MuhGeneric[list], MuhGeneric[SeqBoundTypeVar], True),
-        (MuhGeneric[str], MuhGeneric[SeqBoundTypeVar], True),
-        (MuhGeneric[int], MuhGeneric[SeqBoundTypeVar], False),
+        # PEP 484-compliant generics parametrized by one type variable.
         (MuhGeneric, MuhGeneric, True),
-        (MuhGeneric[int], MuhGeneric, True),
         (MuhGeneric, MuhGeneric[int], False),
+        (MuhGeneric[int], MuhGeneric, True),
+        (MuhGeneric[int], MuhGeneric[SeqBoundTypeVar], False),
+        (MuhGeneric[int], MuhGeneric[SeqBoundTypeVar], False),
+        (MuhGeneric[list], MuhGeneric[SeqBoundTypeVar], True),
         (MuhGeneric[list], MuhGeneric[Sequence], True),
+        (MuhGeneric[str], MuhGeneric[SeqBoundTypeVar], True),
         (MuhGeneric[Sequence], MuhGeneric[list], False),
         (MuhGeneric[SeqBoundTypeVar], MuhGeneric, True),
-        (MuhGeneric[int], MuhGeneric[SeqBoundTypeVar], False),
+
+        #FIXME: Uncomment after resolving open issue #271, please.
+        # PEP 484-compliant generics parametrized by two type variables.
+        # (MuhGenericTwoIntInt, MuhGenericTwo[int, int], True),
 
         # ..................{ HINTS ~ arg : mapping          }..................
         # PEP 484-compliant mapping type hints.
