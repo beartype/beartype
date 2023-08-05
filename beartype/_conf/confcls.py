@@ -13,8 +13,15 @@ This private submodule is *not* intended for direct importation by downstream
 callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Unit test *EVERYTHING* pertaining to the newly defined
+#${BEARTYPE_IS_COLOR} environment variable, please.
+
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeConfException
+from beartype.roar import (
+    BeartypeConfException,
+    BeartypeConfShellVarException,
+)
 from beartype.roar._roarwarn import (
     _BeartypeConfReduceDecoratorExceptionToWarningDefault)
 from beartype.typing import (
@@ -29,7 +36,13 @@ from beartype._conf.confcache import (
 )
 from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.hint.datahinttyping import TypeWarning
+from beartype._data.os.dataosshell import (
+    SHELL_VAR_CONF_IS_COLOR_NAME,
+    SHELL_VAR_CONF_IS_COLOR_VALUE_TO_OBJ,
+)
 from beartype._util.cls.utilclstest import is_type_subclass
+from beartype._util.os.utilosshell import get_shell_var_value_or_none
+from beartype._util.text.utiltextjoin import join_delimited_disjunction
 
 # ....................{ CLASSES                            }....................
 #FIXME: [DOCOS] Document all newly defined configuration parameters in our
@@ -374,8 +387,17 @@ class BeartypeConf(object):
             * ``is_pep484_tower`` is *not* a boolean.
             * ``strategy`` is *not* a :class:`BeartypeStrategy` enumeration
               member.
+            * ``warning_cls_on_decorator_exception`` is neither :data:`None`
+              *nor* a **warning category** (i.e., :class:`Warning` subclass).
+        BeartypeConfShellVarException
+            If either:
+
+            * The external ``${BEARTYPE_IS_COLOR}`` shell environment variable
+              is set to an unrecognized string (i.e., neither ``"True"``,
+              ``"False"``, nor ``"None"``).
         '''
 
+        # ..................{ CACHE                          }..................
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # CAUTION: Synchronize this tuple with the similar "self._conf_kwargs"
         # dictionary defined below.
@@ -404,6 +426,8 @@ class BeartypeConf(object):
             # efficiency.
             if conf_args in beartype_conf_args_to_conf:
                 return beartype_conf_args_to_conf[conf_args]
+
+            # ..................{ VALIDATE                   }..................
             # Else, this method has yet to instantiate a configuration with
             # these parameters. In this case, do so below (and cache that
             # configuration).
@@ -470,9 +494,10 @@ class BeartypeConf(object):
             # Instantiate a new configuration of this type.
             self = super().__new__(cls)
 
+            # ..................{ DEFAULT                    }..................
             # If the value of the "warning_cls_on_decorator_exception" parameter
             # is still the default private fake warning category established
-            # above, then the caller failed to explicitly pass a valid value; in
+            # above, then the caller failed to explicitly pass a valid value. In
             # this case...
             if (
                 warning_cls_on_decorator_exception is
@@ -492,6 +517,85 @@ class BeartypeConf(object):
             else:
                 self._is_warning_cls_on_decorator_exception_set = True
 
+            #FIXME: Shift *ALL* of the following logic into a lower-level
+            #utility function called like so, please:
+            #    is_color = _get_is_color(is_color)
+
+            # String value of the external shell environment variable
+            # "${BEARTYPE_IS_COLOR}" globally overriding the passed "is_color"
+            # parameter if the caller defined this environment variable *OR*
+            # "None" otherwise.
+            is_color_shell_var_value = get_shell_var_value_or_none(
+                SHELL_VAR_CONF_IS_COLOR_NAME)
+
+            # If the caller defined this environment variable...
+            if is_color_shell_var_value is not None:
+                # If the string value of this environment variable is
+                # unrecognized...
+                if (is_color_shell_var_value not in
+                    SHELL_VAR_CONF_IS_COLOR_VALUE_TO_OBJ):
+                    # Human-readable string listing the names of all valid
+                    # string values of this environment variable, double-quoting
+                    # each such name for additional readability.
+                    IS_COLOR_SHELL_VAR_VALUES = join_delimited_disjunction(
+                        strs=SHELL_VAR_CONF_IS_COLOR_VALUE_TO_OBJ.keys(),
+                        is_double_quoted=True,
+                    )
+
+                    # Raise an exception embedding this string.
+                    raise BeartypeConfShellVarException(
+                        f'Beartype configuration shell environment variable '
+                        f'"${{{SHELL_VAR_CONF_IS_COLOR_NAME}}}" '
+                        f'value {repr(is_color_shell_var_value)} invalid '
+                        f'(i.e., neither {IS_COLOR_SHELL_VAR_VALUES}).'
+                    )
+                # Else, the string value of this environment variable is
+                # recognized.
+
+                # Value of the "is_color" parameter represented by this string
+                # value (e.g., boolean True for the string "True"). By the
+                # above validation, this value is now guaranteed to be valid.
+                is_color_override = (
+                    SHELL_VAR_CONF_IS_COLOR_VALUE_TO_OBJ.get(
+                        is_color_shell_var_value))
+
+                #FIXME: *INSUFFICIENT.* Refactor the declaration of the
+                #"is_color" parameter in the signature above as follows:
+                #from beartype._data.datakind.datakindint import _UNPASSED_BOOL
+                #     is_color: Literal[True, False, None, _UNPASSED_BOOL] = _UNPASSED_BOOL,
+                #
+                #Then define a new "_UNPASSED_BOOL" global somewhere in a new
+                #"beartype._data.datakind.datakindint" submodule resembling:
+                #     _UNPASSED_BOOL = 0xFA3EBOO1
+                #FIXME: Also define a new "BeartypeConfShellVarWarning"
+                #category.
+                # # If...
+                # if (
+                #     # The caller explicitly passed the "is_color" parameter
+                #     # *AND*...
+                #     is_color != _UNPASSED_BOOL and
+                #     # The value of this parameter differs from the value of
+                #     # this environment variable...
+                #     is_color != is_color_override
+                # ):
+                #     # Warn the caller that @beartype resolves this conflict by
+                #     # ignoring this parameter in favour of this environment variable.
+                #     warn(
+                #         (
+                #             f'Beartype configuration "is_color" value '
+                #             f'{repr(is_color)} ignored in favour of '
+                #             f'shell environment variable '
+                #             f'"${{{SHELL_VAR_CONF_IS_COLOR_NAME}}}" '
+                #             f'value {repr(is_color_override)}.'
+                #         ),
+                #         BeartypeConfShellVarWarning,
+                #     )
+
+                # Override the value of the passed "is_color" parameter with
+                # that of this environment variable.
+                is_color = is_color_override
+
+            # ..................{ INIT                       }..................
             # Classify all passed parameters with this configuration.
             self._claw_is_pep526 = claw_is_pep526
             self._is_color = is_color

@@ -21,7 +21,7 @@ from beartype.typing import (
     TextIO,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES
+from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cls.utilclstest import is_type_builtin_or_fake
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 

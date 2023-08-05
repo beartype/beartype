@@ -21,7 +21,7 @@ from beartype.typing import (
     Union,
 )
 from beartype._data.hint.datahinttyping import TypeException
-from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES
+from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.module.utilmodimport import import_module_attr_or_none
 from collections.abc import Iterable as IterableABC

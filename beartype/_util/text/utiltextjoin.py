@@ -13,14 +13,25 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Iterable as typing_Iterable
 from beartype._data.hint.datahinttyping import IterableStrs
-from collections.abc import Iterable, Sequence
+from collections.abc import (
+    Iterable,
+    Sequence,
+)
 
 # ....................{ JOINERS                            }....................
+#FIXME: Unit test the "is_double_quoted" parameter, please.
 def join_delimited(
+    # Mandatory parameters.
     strs: IterableStrs,
+
+    # Mandatory keyword-only parameters.
+    *,
     delimiter_if_two: str,
     delimiter_if_three_or_more_nonlast: str,
-    delimiter_if_three_or_more_last: str
+    delimiter_if_three_or_more_last: str,
+
+    # Optional keyword-only parameters.
+    is_double_quoted: bool = False,
 ) -> str:
     '''
     Concatenate the passed iterable of zero or more strings delimited by the
@@ -55,6 +66,10 @@ def join_delimited(
     delimiter_if_three_or_more_last : str
         Substring separating each string the last two contained in this
         iterable if this iterable contains three or more strings.
+    is_double_quoted : bool, optional
+        :data:`True` only if **double-quoting** (i.e., both prefixing and
+        suffixing by the ``"`` character) each item of this iterable. Defaults
+        to :data:`False`.
 
     Returns
     ----------
@@ -84,6 +99,14 @@ def join_delimited(
     # into a sequence for subsequent indexing purposes.
     if not isinstance(strs, Sequence):
         strs = tuple(strs)
+    # Else, this iterable is already a sequence.
+    #
+    # In either case, this iterable is now a sequence.
+
+    # If double-quoting these strings, do so.
+    if is_double_quoted:
+        strs = tuple(f'"{text}"' for text in strs)
+    # Else, preserve these strings as is.
 
     # Number of strings in this sequence.
     num_strs = len(strs)
@@ -110,7 +133,7 @@ def join_delimited(
     return f'{strs_nonlast}{delimiter_if_three_or_more_nonlast}{strs_last}'
 
 # ....................{ JOINERS ~ disjunction              }....................
-def join_delimited_disjunction(strs: IterableStrs) -> str:
+def join_delimited_disjunction(strs: IterableStrs, **kwargs) -> str:
     '''
     Concatenate the passed iterable of zero or more strings delimited by commas
     and/or the disjunction "or" (conditionally depending on both the length of
@@ -134,18 +157,22 @@ def join_delimited_disjunction(strs: IterableStrs) -> str:
     strs : Iterable[str]
         Iterable of all strings to be concatenated disjunctively.
 
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.join_delimeted` function underlying this higher-level function.
+
     Returns
     ----------
     str
         Disjunctive concatenation of these strings.
     '''
 
-    # He will join us or die, master.
+    # He will join us... OR DIE! *cackling heard*
     return join_delimited(
         strs=strs,
         delimiter_if_two=' or ',
         delimiter_if_three_or_more_nonlast=', ',
-        delimiter_if_three_or_more_last=', or '
+        delimiter_if_three_or_more_last=', or ',
+        **kwargs
     )
 
 

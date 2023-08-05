@@ -87,7 +87,7 @@ def is_func_contextlib_contextmanager(func: Any) -> TypeGuard[Callable]:
 
     # Defer heavyweight tester-specific imports with potential side effects --
     # notably, increased costs to space and time complexity.
-    from beartype._data.mod.datamodcontextlib import (
+    from beartype._data.module.datamodcontextlib import (
         CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME)
 
     # Fully-qualified name of that code object.
@@ -128,7 +128,7 @@ def is_func_functools_lru_cache(func: Any) -> TypeGuard[Callable]:
 
     # Defer heavyweight tester-specific imports with potential side effects --
     # notably, increased costs to space and time complexity.
-    from beartype._data.mod.datamodfunctools import (
+    from beartype._data.module.datamodfunctools import (
         LRU_CACHE_TYPE)
 
     # Return true only if the type of that callable is the low-level C-based

@@ -18,10 +18,10 @@ import sys
 #FIXME: Unit test us up, please.
 def is_stdout_terminal() -> bool:
     '''
-    ``True`` only if standard output is currently attached to a **TTY** (i.e.,
-    interactive terminal).
+    :data:`True` only if standard output is currently attached to a **TTY**
+    (i.e., interactive terminal).
 
-    If this tester returns ``True``, the TTY to which standard output is
+    If this tester returns :data:`True`, the TTY to which standard output is
     currently attached may be safely assumed to support **ANSI escape
     sequences** (i.e., POSIX-compliant colour codes). This assumption even holds
     under platforms that are otherwise *not* POSIX-compliant, including:

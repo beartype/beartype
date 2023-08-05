@@ -782,12 +782,25 @@ class BeartypeClawImportConfException(BeartypeClawImportException):
 # ....................{ API ~ conf                         }....................
 class BeartypeConfException(BeartypeException):
     '''
-    **Beartype configuration exception.**
+    Abstract base class of all **beartype configuration exceptions.**
 
-    Instances of this exception are raised on either erroneously instantiating
-    the :class:`beartype.BeartypeConf` class *or* passing an object that is not
-    an instance of that class as the ``conf`` parameter to the
-    :func:`beartype.beartype` decorator.
+    Instances of subclasses of this exception are raised on either erroneously
+    instantiating the :class:`beartype.BeartypeConf` class *or* passing an
+    object that is not an instance of that class as the ``conf`` parameter to
+    the :func:`beartype.beartype` decorator.
+    '''
+
+    pass
+
+
+class BeartypeConfShellVarException(BeartypeException):
+    '''
+    **Beartype configuration shell environment variable exception.**
+
+    Instances of this exception are raised at instantiation time of the
+    :class:`beartype.BeartypeConf` class when the caller defines one or more
+    external shell environment variables recognized by that class (e.g.,
+    ``${BEARTYPE_IS_COLOR}``) whose values are unrecognized and thus invalid.
     '''
 
     pass

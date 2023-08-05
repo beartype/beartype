@@ -71,7 +71,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintSignIO,
         HintSignTextIO,
     )
-    # from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES_STANDARD
+    # from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES_STANDARD
     from beartype._util.module.lib.utiltyping import iter_typing_attrs
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,

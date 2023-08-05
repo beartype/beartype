@@ -17,7 +17,7 @@ from beartype._data.cls.datacls import (
     TYPES_BUILTIN_FAKE,
     TYPE_BUILTIN_FAKE_PYCAPSULE_NAME,
 )
-from beartype._data.mod.datamodpy import BUILTINS_MODULE_NAME
+from beartype._data.module.datamodpy import BUILTINS_MODULE_NAME
 from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeOrTupleTypes,

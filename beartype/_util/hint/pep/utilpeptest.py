@@ -26,7 +26,7 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED,
     HINT_SIGNS_TYPE_MIMIC,
 )
-from beartype._data.mod.datamodtyping import TYPING_MODULE_NAMES
+from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
     is_hint_pep484_ignorable_or_none)
