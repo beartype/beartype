@@ -15,23 +15,9 @@ package defined by the private :mod:`beartype._conf` submodule.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from pytest import MonkeyPatch
 
 # ....................{ TESTS                              }....................
-def test_api_conf_strategy() -> None:
-    '''
-    Test the public :func:`beartype.BeartypeStrategy` enumeration.
-    '''
-
-    # Defer test-specific imports.
-    from beartype import BeartypeStrategy
-
-    # Assert this enumeration declares the expected members.
-    assert isinstance(BeartypeStrategy.O0, BeartypeStrategy)
-    assert isinstance(BeartypeStrategy.O1, BeartypeStrategy)
-    assert isinstance(BeartypeStrategy.Ologn, BeartypeStrategy)
-    assert isinstance(BeartypeStrategy.On, BeartypeStrategy)
-
-
 def test_api_conf_dataclass() -> None:
     '''
     Test the public :func:`beartype.BeartypeConf` class.
@@ -43,7 +29,7 @@ def test_api_conf_dataclass() -> None:
         BeartypeConf,
         BeartypeStrategy,
     )
-    from beartype.roar import BeartypeConfException
+    from beartype.roar import BeartypeConfParamException
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -137,21 +123,24 @@ def test_api_conf_dataclass() -> None:
     # ....................{ FAIL                           }....................
     # Assert that instantiating a configuration with an invalid parameter raises
     # the expected exception.
-    with raises(BeartypeConfException):
+    with raises(BeartypeConfParamException):
         BeartypeConf(claw_is_pep526=(
             'The fountains mingle with the river'))
-    with raises(BeartypeConfException):
+    with raises(BeartypeConfParamException):
         BeartypeConf(is_color=(
             'And many sounds, and much of life and death.'))
-    with raises(BeartypeConfException):
+    with raises(BeartypeConfParamException):
         BeartypeConf(is_debug=(
             'Interpret, or make felt, or deeply feel.'))
-    with raises(BeartypeConfException):
+    with raises(BeartypeConfParamException):
         BeartypeConf(is_pep484_tower=(
             'In the calm darkness of the moonless nights,'))
-    with raises(BeartypeConfException):
+    with raises(BeartypeConfParamException):
         BeartypeConf(strategy=(
             'By all, but which the wise, and great, and good'))
+    with raises(BeartypeConfParamException):
+        BeartypeConf(warning_cls_on_decorator_exception=(
+            'He lived, he died, he sung, in solitude.'))
 
     # Assert that attempting to modify any public raises the expected exception.
     with raises(AttributeError):
@@ -164,3 +153,122 @@ def test_api_conf_dataclass() -> None:
         BEAR_CONF_DEFAULT.is_pep484_tower = True
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.strategy = BeartypeStrategy.O0
+
+# ....................{ TESTS ~ arg                        }....................
+def test_api_conf_is_color(monkeypatch: MonkeyPatch) -> None:
+    '''
+    Test the``is_color`` parameter accepted by the
+    :class:`beartype.BeartypeConf` class with respect to the external
+    ``${BEARTYPE_IS_COLOR}`` shell environment variable also respected by that
+    class, which interact in non-trivial ways.
+
+    Parameters
+    ----------
+    monkeypatch : MonkeyPatch
+        :mod:`pytest` fixture allowing various state associated with the active
+        Python process to be temporarily changed for the duration of this test.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import BeartypeConf
+    from beartype.roar import (
+        BeartypeConfShellVarException,
+        BeartypeConfShellVarWarning,
+    )
+    from beartype._data.os.dataosshell import (
+        SHELL_VAR_CONF_IS_COLOR_NAME)
+    from pytest import (
+        raises,
+        warns,
+    )
+
+    # ....................{ PASS                           }....................
+    # Temporarily enable the ${BEARTYPE_IS_COLOR} environment variable.
+    monkeypatch.setenv(SHELL_VAR_CONF_IS_COLOR_NAME, 'True')
+
+    # Non-default beartype configuration masquerading as the default
+    # beartype configuration.
+    bear_conf = BeartypeConf()
+
+    # Assert that this configuration enabled the "is_color" parameter
+    # despite the above instantiation *NOT* passing that parameter.
+    assert bear_conf.is_color is True
+
+    # Temporarily disable the ${BEARTYPE_IS_COLOR} environment variable.
+    monkeypatch.setenv(SHELL_VAR_CONF_IS_COLOR_NAME, 'False')
+
+    # Non-default beartype configuration masquerading as the default
+    # beartype configuration.
+    bear_conf = BeartypeConf()
+
+    # Assert that this configuration disabled the "is_color" parameter
+    # despite the above instantiation *NOT* passing that parameter.
+    assert bear_conf.is_color is False
+
+    # Temporarily nullify the ${BEARTYPE_IS_COLOR} environment variable.
+    monkeypatch.setenv(SHELL_VAR_CONF_IS_COLOR_NAME, 'None')
+
+    # Non-default beartype configuration masquerading as the default
+    # beartype configuration.
+    bear_conf = BeartypeConf()
+
+    # Assert that this configuration nullified the "is_color" parameter
+    # despite the above instantiation *NOT* passing that parameter.
+    assert bear_conf.is_color is None
+
+    # Non-default beartype configuration explicitly passing the same value for
+    # the "is_color" parameter as the ${BEARTYPE_IS_COLOR} environment variable
+    # is also currently set to.
+    bear_conf = BeartypeConf(is_color=None)
+
+    # Assert that this configuration nullified the "is_color" parameter.
+    assert bear_conf.is_color is None
+
+    # ....................{ FAIL                           }....................
+    # Assert that attempting to instantiate a beartype configuration when the
+    # ${BEARTYPE_IS_COLOR} environment variable is set to a valid string value
+    # differing from the valid non-string value passed for the "is_color"
+    # parameter emits the expected non-fatal warning.
+    with warns(BeartypeConfShellVarWarning):
+        # Non-default beartype configuration explicitly passing a differing
+        # value for the "is_color" parameter as the ${BEARTYPE_IS_COLOR}
+        # environment variable is currently set to.
+        bear_conf = BeartypeConf(is_color=True)
+
+        # Assert that this configuration override the passed value of the
+        # "is_color" parameter in favour of the corresponding value of the
+        # ${BEARTYPE_IS_COLOR} environment variable.
+        assert bear_conf.is_color is None
+
+    # Assert that attempting to instantiate a beartype configuration when the
+    # ${BEARTYPE_IS_COLOR} environment variable is set to invalid string value
+    # raises the expected exception.
+    with raises(BeartypeConfShellVarException) as exception_info:
+        # Temporarily set ${BEARTYPE_IS_COLOR} to an invalid value.
+        monkeypatch.setenv(
+            SHELL_VAR_CONF_IS_COLOR_NAME,
+            'Strangers have wept to hear his passionate notes,',
+        )
+
+        # Attempt to instantiate a beartype configuration.
+        BeartypeConf()
+
+    # Assert that this exception message contains an expected substring, whose
+    # construction is non-trivial and thus liable to improper construction.
+    assert '"True", "False", or "None"' in str(exception_info.value)
+
+
+def test_api_conf_strategy() -> None:
+    '''
+    Test the public :func:`beartype.BeartypeStrategy` enumeration.
+    '''
+
+    # Defer test-specific imports.
+    from beartype import BeartypeStrategy
+
+    # Assert this enumeration declares the expected members.
+    assert isinstance(BeartypeStrategy.O0, BeartypeStrategy)
+    assert isinstance(BeartypeStrategy.O1, BeartypeStrategy)
+    assert isinstance(BeartypeStrategy.Ologn, BeartypeStrategy)
+    assert isinstance(BeartypeStrategy.On, BeartypeStrategy)

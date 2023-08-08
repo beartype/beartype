@@ -49,9 +49,10 @@ begins with :func:`beartype.beartype`, just like all rivers run to the sea.
    :hidden:
    :caption: Bear with Us
 
+   Beartype Import Hooks <api_claw>
    Beartype Decorator <api_decor>
    Beartype Validators <api_vale>
-   Beartype DOOR <api_door>
+   Beartype Introspectors <api_door>
    Beartype Errors <api_roar>
 
 .. #FIXME: Uncomment *AFTER* re-enabling "autoapi" support in "conf.py" and

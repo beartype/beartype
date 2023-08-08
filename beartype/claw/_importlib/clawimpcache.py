@@ -100,7 +100,7 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
         try:
             return super().__getitem__(module_name)
         # If doing so fails with a low-level non-human-readable exception...
-        except KeyError as exception:
+        except KeyError as exception:  # pragma: no cover
             #FIXME: Also, consider dropping the parallel
             #"BeartypeSourceFileLoader._main_module_name_beartype" attribute.
             #Does this nonsense supercede that nonsense? Probably. Which leads

@@ -52,7 +52,8 @@ ANSI escape sequence stylizing all subsequent characters as bold.
 # ....................{ TESTERS                            }....................
 def is_text_ansi(text: str) -> bool:
     '''
-    :data:`True` if the passed text contains one or more ANSI escape sequences.
+    :data:`True` only if the passed text contains one or more ANSI escape
+    sequences.
 
     Parameters
     ----------

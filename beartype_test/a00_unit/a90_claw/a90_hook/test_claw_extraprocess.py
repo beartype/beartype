@@ -27,7 +27,7 @@ def test_claw_extraprocess_executable_submodule(
     Parameters
     ----------
     monkeypatch : MonkeyPatch
-        :mod:`pytest` fixture enabling various state associated with the active
+        :mod:`pytest` fixture allowing various state associated with the active
         Python process to be temporarily changed for the duration of this test.
     '''
 

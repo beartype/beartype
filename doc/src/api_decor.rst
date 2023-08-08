@@ -456,50 +456,14 @@ Beartype Configuration API
       >>> BeartypeConf().strategy
       <BeartypeStrategy.O1: 2>
 
-   Beartype configurations support these **optional read-only keyword-only**
-   parameters at instantiation time:
+   Beartype configurations support various **optional read-only keyword-only**
+   parameters at instantiation time. Most parameters are suitable for passing by
+   *all* beartype users in *all* possible use cases. Some, however, are only
+   intended to be passed by *some* beartype users in *some* isolated use cases.
+   This is their story.
 
-   .. py:attribute:: is_color
-
-          ``Type:`` :class:`bool` | :data:`None` = :data:`None`
-
-      Tri-state boolean governing how and whether beartype colours
-      **type-checking violations** (i.e., human-readable
-      :exc:`beartype.roar.BeartypeCallHintViolation` exceptions) with
-      POSIX-compliant ANSI escape sequences for readability. Specifically, if
-      this boolean is:
-
-      * :data:`False`, beartype *never* colours type-checking violations raised
-        by callables configured with this configuration.
-      * :data:`True`, beartype *always* colours type-checking violations raised
-        by callables configured with this configuration.
-      * :data:`None`, beartype conditionally colours type-checking violations
-        raised by callables configured with this configuration only when
-        standard output is attached to an interactive terminal.
-
-      Defaults to :data:`None`.
-
-      The standard use case is to dynamically define your own app-specific
-      :func:`.beartype` decorator unconditionally disabling colours in
-      type-checking violations, usually due to one or more frameworks in your
-      application stack failing to support ANSI escape sequences. Please file
-      upstream issues with those frameworks requesting ANSI support. In the
-      meanwhile, behold the monochromatic powers of... ``@monobeartype``!
-
-      .. code-block:: python
-
-         # Import the requisite machinery.
-         from beartype import beartype, BeartypeConf
-
-         # Dynamically create a new @monobeartype decorator disabling colour.
-         monobeartype = beartype(conf=BeartypeConf(is_color=False))
-
-         # Decorate with this decorator rather than @beartype everywhere.
-         @monobeartype
-         def muh_colorless_func() -> str:
-             return b'In the kingdom of the blind, you are now king.'
-
-      .. versionadded:: 0.12.0
+   General-purpose configuration parameters that are *always* safely passable
+   include:
 
    .. py:attribute:: is_debug
 
@@ -647,6 +611,70 @@ Beartype Configuration API
       Defaults to :attr:`.BeartypeStrategy.O1`, the constant-time :math:`O(1)`
       strategy – maximizing scalability at a cost of also maximizing false
       positives.
+
+   **Executable-only configuration parameters** (i.e., parameters intended to be
+   passed *only* by downstream Python packages that are typically executed as an
+   app, binary, script, server, or other executable process rather than imported
+   from other Python packages in the current Python process) include:
+
+   .. py:attribute:: is_color
+
+          ``Type:`` :class:`bool` | :data:`None` = :data:`None`
+
+      Tri-state boolean governing how and whether beartype colours
+      **type-checking violations** (i.e., human-readable
+      :exc:`beartype.roar.BeartypeCallHintViolation` exceptions) with
+      POSIX-compliant ANSI escape sequences for readability. Specifically, if
+      this boolean is:
+
+      * :data:`False`, beartype *never* colours type-checking violations raised
+        by callables configured with this configuration.
+      * :data:`True`, beartype *always* colours type-checking violations raised
+        by callables configured with this configuration.
+      * :data:`None`, beartype conditionally colours type-checking violations
+        raised by callables configured with this configuration only when
+        standard output is attached to an interactive terminal.
+
+      The :ref:`${BEARTYPE_IS_COLOR} environment variable
+      <api_decor:beartype_is_color>` globally overrides this parameter, enabling
+      end users to enforce a global colour policy across their full app stack.
+      When both that variable *and* this parameter are set to differing (and
+      thus conflicting) values, the :class:`BeartypeConf` class:
+
+      * Ignores this parameter in favour of that variable.
+      * Emits a :class:`beartype.roar.BeartypeConfShellVarWarning` warning
+        notifying callers of this conflict.
+
+      To avoid this conflict, only downstream executables should pass this
+      parameter; intermediary libraries should *never* pass this parameter.
+      Non-violent communication begins with you.
+
+      Effectively defaults to :data:`None`. Technically, this parameter defaults
+      to a private magic constant *not* intended to be passed by callers,
+      enabling :mod:`beartype` to reliably detect whether the caller has
+      explicitly passed this parameter or not.
+
+      The standard use case is to dynamically define your own app-specific
+      :func:`.beartype` decorator unconditionally disabling colours in
+      type-checking violations, usually due to one or more frameworks in your
+      app stack failing to support ANSI escape sequences. Please file issues
+      with those frameworks requesting ANSI support. In the meanwhile, behold
+      the monochromatic powers of... ``@monobeartype``!
+
+      .. code-block:: python
+
+         # Import the requisite machinery.
+         from beartype import beartype, BeartypeConf
+
+         # Dynamically create a new @monobeartype decorator disabling colour.
+         monobeartype = beartype(conf=BeartypeConf(is_color=False))
+
+         # Decorate with this decorator rather than @beartype everywhere.
+         @monobeartype
+         def muh_colorless_func() -> str:
+             return b'In the kingdom of the blind, you are now king.'
+
+      .. versionadded:: 0.12.0
 
 Beartype Strategy API
 =====================
@@ -819,3 +847,43 @@ Beartype Strategy API
              @maybebeartype
              def muh_performance_critical_func(big_list: list[int]) -> int:
                  return sum(big_list)
+
+Beartype Environment Variables
+==============================
+
+Beartype supports increasingly many **environment variables** (i.e., external
+shell variables associated with the active Python interpreter). Most of these
+variables globally override :class:`.BeartypeConf` parameters of similar names,
+enabling end users to enforce global configuration policies across their full
+app stacks.
+
+Beneath environment variables thy humongous codebase shalt rise!
+
+.. _api_decor:beartype_is_color:
+
+${BEARTYPE_IS_COLOR}
+********************
+
+The ``${BEARTYPE_IS_COLOR}`` environment variable globally overrides the
+:attr:`.BeartypeConf.is_color` parameter, enabling end users to enforce a global
+colour policy. As with that parameter, this variable is a tri-state boolean with
+three possible string values:
+
+* ``BEARTYPE_IS_COLOR='True'``, forcefully instantiating *all* beartype
+  configurations across *all* Python processes with the ``is_color=True``
+  parameter.
+* ``BEARTYPE_IS_COLOR='False'``, forcefully instantiating *all* beartype
+  configurations across *all* Python processes with the ``is_color=False``
+  parameter.
+* ``BEARTYPE_IS_COLOR='None'``, forcefully instantiating *all* beartype
+  configurations across *all* Python processes with the ``is_color=None``
+  parameter.
+
+Force beartype to obey your unthinking hatred of the colour spectrum. You can't
+be wrong!
+
+.. code-block:: bash
+
+   BEARTYPE_IS_COLOR=False python3 -m monochrome_retro_app.its_srsly_cool
+
+.. versionadded:: 0.15.1

@@ -12,12 +12,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import (
-    BeartypeConfParamException,
-    BeartypeConfShellVarException,
-)
+from beartype.roar import BeartypeConfShellVarException
 from beartype.roar._roarwarn import BeartypeConfShellVarWarning
-from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
 from beartype._data.hint.datahinttyping import (
     BoolTristateUnpassable,
@@ -94,7 +90,7 @@ def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:
 
             # Raise an exception embedding this string.
             raise BeartypeConfShellVarException(
-                f'Beartype configuration shell environment variable '
+                f'Beartype configuration environment variable '
                 f'"${{{SHELL_VAR_CONF_IS_COLOR_NAME}}}" '
                 f'value {repr(is_color_shell_var_value)} invalid '
                 f'(i.e., neither {IS_COLOR_SHELL_VAR_VALUES}).'
@@ -123,7 +119,7 @@ def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:
                 (
                     f'Beartype configuration parameter "is_color" '
                     f'value {repr(is_color)} ignored in favour of '
-                    f'shell environment variable '
+                    f'environment variable '
                     f'"${{{SHELL_VAR_CONF_IS_COLOR_NAME}}}" '
                     f'value {repr(is_color_override)}.'
                 ),
@@ -143,15 +139,6 @@ def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:
     # Else, the value of the "is_color" parameter is *NOT* that of our unpassed
     # argument placeholder. In this case, the caller did explicitly passed some
     # value for this parameter. Preserve this value as is.
-
-    # If this parameter is *NOT* a tri-state boolean, raise an exception.
-    if not isinstance(is_color, NoneTypeOr[bool]):
-        raise BeartypeConfParamException(
-            f'Beartype configuration parameter "is_color" '
-            f'value {repr(is_color)} not tri-state boolean '
-            f'(i.e., "True", "False", or "None").'
-        )
-    # Else, this parameter is a tri-state boolean.
 
     # Return this boolean.
     return is_color
