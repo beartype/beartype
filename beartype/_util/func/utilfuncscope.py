@@ -17,11 +17,11 @@ from beartype.typing import (
     Optional,
 )
 from beartype._util.utilobject import get_object_basename_scoped
-from beartype._data.datakind import DICT_EMPTY
 from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeException,
 )
+from beartype._data.kind.datakinddict import DICT_EMPTY
 from collections.abc import Callable
 from types import CodeType
 

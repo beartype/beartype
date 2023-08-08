@@ -18,11 +18,11 @@ from beartype.typing import (
     Optional,
     Tuple,
 )
-from beartype._data.datakind import DICT_EMPTY
 from beartype._data.hint.datahinttyping import (
     # Codeobjable,
     TypeException,
 )
+from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.func.utilfuncwrap import unwrap_func_all_closures_isomorphic
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8

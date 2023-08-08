@@ -95,6 +95,20 @@ class BeartypeConfWarning(BeartypeWarning):
 
     pass
 
+
+class BeartypeConfShellVarWarning(BeartypeConfWarning):
+    '''
+    **Beartype configuration shell environment variable warning.**
+
+    Instances of this warning are emitted at instantiation time of the
+    :class:`beartype.BeartypeConf` class when the caller erroneously sets a
+    shell environment variable recognized by that class (e.g.,
+    ``${BEARTYPE_IS_COLOR}``) to an valid value conflicting with that of a
+    corresponding parameter also passed to that class (e.g., ``is_color``).
+    '''
+
+    pass
+
 # ....................{ DECORATOR ~ hint                   }....................
 class BeartypeDecorHintWarning(BeartypeWarning):
     '''

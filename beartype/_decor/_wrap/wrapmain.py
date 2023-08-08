@@ -40,7 +40,7 @@ from beartype._check.code._codesnip import (
 )
 from beartype._check.util.checkutilmake import make_func_signature
 from beartype._check.checkcall import BeartypeCall
-from beartype._data.datakind import (
+from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
     ARG_NAME_RETURN_REPR,
 )

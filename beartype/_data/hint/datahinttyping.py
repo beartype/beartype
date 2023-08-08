@@ -19,6 +19,7 @@ from beartype.typing import (
     Callable,
     Dict,
     Iterable,
+    Literal,
     Mapping,
     Optional,
     Tuple,
@@ -33,6 +34,7 @@ from beartype._cave._cavefast import (
     MethodDecoratorStaticType,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
 from importlib.abc import PathEntryFinder
 from pathlib import Path
 from types import (
@@ -40,6 +42,35 @@ from types import (
     FrameType,
     GeneratorType,
 )
+
+# ....................{ HINTS ~ boolean                    }....................
+BoolTristate = Literal[True, False, None]
+'''
+PEP-compliant type hint matching a **tri-state boolean** whose value may be
+either:
+
+* :data:`True`.
+* :data:`False`.
+* :data:`None`, implying that the actual value of this boolean is contextually
+  dependent on context-sensitive program state.
+'''
+
+
+BoolTristateUnpassable = Literal[True, False, None, ARG_VALUE_UNPASSED]  # type: ignore[valid-type]
+'''
+PEP-compliant type hint matching an **unpassable tri-state boolean** whose value
+may be either:
+
+* :data:`True`.
+* :data:`False`.
+* :data:`None`, implying that the actual value of this boolean is contextually
+  dependent on context-sensitive program state.
+* :data:`.ARG_VALUE_UNPASSED`, enabling any callable that annotates a tri-state
+  boolean parameter by this type hint to deterministically identify whether the
+  caller explicitly passed that parameter or not. Since the caller may
+  explicitly pass :data:`None` as a valid value, testing that parameter against
+  :data:`None` does *not* suffice to decide this decision problem.
+'''
 
 # ....................{ HINTS ~ callable ~ early           }....................
 # Callable-specific type hints required by subsequent type hints below.

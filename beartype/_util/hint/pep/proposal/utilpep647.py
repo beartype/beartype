@@ -16,7 +16,7 @@ from beartype.typing import (
     Optional,
     Type,
 )
-from beartype._data.datakind import ARG_NAME_RETURN
+from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Unit test us up, please.

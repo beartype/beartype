@@ -784,23 +784,34 @@ class BeartypeConfException(BeartypeException):
     '''
     Abstract base class of all **beartype configuration exceptions.**
 
-    Instances of subclasses of this exception are raised on either erroneously
-    instantiating the :class:`beartype.BeartypeConf` class *or* passing an
-    object that is not an instance of that class as the ``conf`` parameter to
-    the :func:`beartype.beartype` decorator.
+    Instances of subclasses of this exception are raised by the
+    :class:`beartype.BeartypeConf` class to inform the user of various fatal
+    edge cases concerning beartype configuration.
     '''
 
     pass
 
 
-class BeartypeConfShellVarException(BeartypeException):
+class BeartypeConfParamException(BeartypeConfException):
+    '''
+    **Beartype configuration parameter exception.**
+
+    Instances of this exception are raised at instantiation time of the
+    :class:`beartype.BeartypeConf` class when the caller attempts to erroneously
+    instantiate that class with an invalid parameter.
+    '''
+
+    pass
+
+
+class BeartypeConfShellVarException(BeartypeConfException):
     '''
     **Beartype configuration shell environment variable exception.**
 
     Instances of this exception are raised at instantiation time of the
-    :class:`beartype.BeartypeConf` class when the caller defines one or more
-    external shell environment variables recognized by that class (e.g.,
-    ``${BEARTYPE_IS_COLOR}``) whose values are unrecognized and thus invalid.
+    :class:`beartype.BeartypeConf` class when the caller erroneously sets a
+    shell environment variable recognized by that class (e.g.,
+    ``${BEARTYPE_IS_COLOR}``) to an invalid value.
     '''
 
     pass

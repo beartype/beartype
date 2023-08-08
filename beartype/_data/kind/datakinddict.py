@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **container singletons** (i.e., instances of data structures
-commonly required throughout this codebase, reducing space and time consumption
-by preallocating widely used data structures).
+Project-wide **mapping singletons** (i.e., dictionaries commonly required
+throughout this codebase, reducing space and time consumption by preallocating
+widely used dictionary-centric objects).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -16,24 +16,6 @@ from beartype.typing import (
     Any,
     Dict,
 )
-
-# ....................{ STRINGS ~ return                   }....................
-ARG_NAME_RETURN = 'return'
-'''
-Unique name arbitrarily assigned by Python to the key of the ``__annotations__``
-dunder attribute providing the type hint annotating the return of callables.
-
-Note that Python itself prohibits callable parameters from being named
-``"return"`` and thus guarantees this name to be safe and unambiguous.
-'''
-
-
-ARG_NAME_RETURN_REPR = repr(ARG_NAME_RETURN)
-'''
-Object representation of the magic string implying a return value in various
-Python objects (e.g., the ``__annotations__`` dunder dictionary of annotated
-callables).
-'''
 
 # ....................{ DICTS                              }....................
 # Note that this exact type annotation is required to avoid mypy complaints. :O
@@ -52,7 +34,7 @@ dictionaries: e.g.,
    True  # <-- good. this is good.
    >>> {} is {}
    False  # <-- bad. this is bad.
-   >>> from beartype._data.datakind import DICT_EMPTY
+   >>> from beartype._data.kind.datakinddict import DICT_EMPTY
    >>> DICT_EMPTY is DICT_EMPTY
    True  # <-- good. this is good, because we made it so.
 '''

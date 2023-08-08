@@ -22,7 +22,7 @@ from beartype._check.checkmagic import (
     VAR_NAME_PITH_ROOT,
     VAR_NAME_RANDOM_INT,
 )
-from beartype._data.datakind import ARG_NAME_RETURN_REPR
+from beartype._data.func.datafuncarg import ARG_NAME_RETURN_REPR
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
 

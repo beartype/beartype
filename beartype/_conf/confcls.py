@@ -17,34 +17,6 @@ callers.
 #FIXME: Unit test *EVERYTHING* pertaining to the newly defined
 #${BEARTYPE_IS_COLOR} environment variable, please.
 
-# ....................{ IMPORTS                            }....................
-from beartype.roar import (
-    BeartypeConfException,
-    BeartypeConfShellVarException,
-)
-from beartype.roar._roarwarn import (
-    _BeartypeConfReduceDecoratorExceptionToWarningDefault)
-from beartype.typing import (
-    TYPE_CHECKING,
-    Dict,
-    Optional,
-)
-from beartype._cave._cavemap import NoneTypeOr
-from beartype._conf.confcache import (
-    beartype_conf_args_to_conf,
-    beartype_conf_lock,
-)
-from beartype._conf.confenum import BeartypeStrategy
-from beartype._data.hint.datahinttyping import TypeWarning
-from beartype._data.os.dataosshell import (
-    SHELL_VAR_CONF_IS_COLOR_NAME,
-    SHELL_VAR_CONF_IS_COLOR_VALUE_TO_OBJ,
-)
-from beartype._util.cls.utilclstest import is_type_subclass
-from beartype._util.os.utilosshell import get_shell_var_value_or_none
-from beartype._util.text.utiltextjoin import join_delimited_disjunction
-
-# ....................{ CLASSES                            }....................
 #FIXME: [DOCOS] Document all newly defined configuration parameters in our
 #reST-formatted docos, please -- including:
 #* "claw_is_pep526".
@@ -53,6 +25,32 @@ from beartype._util.text.utiltextjoin import join_delimited_disjunction
 #FIXME: Refactor to use @dataclass.dataclass once we drop Python 3.7 support.
 #Note that doing so will require usage of "frozen=True" to prevent unwanted
 #modification of read-only properties.
+
+# ....................{ IMPORTS                            }....................
+from beartype.roar import (
+    BeartypeConfParamException,
+)
+from beartype.roar._roarwarn import (
+    _BeartypeConfReduceDecoratorExceptionToWarningDefault)
+from beartype.typing import (
+    TYPE_CHECKING,
+    Dict,
+    Optional,
+)
+from beartype._conf.confcache import (
+    beartype_conf_args_to_conf,
+    beartype_conf_lock,
+)
+from beartype._conf._confget import get_is_color
+from beartype._conf.confenum import BeartypeStrategy
+from beartype._data.hint.datahinttyping import (
+    BoolTristateUnpassable,
+    TypeWarning,
+)
+from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
+from beartype._util.cls.utilclstest import is_type_subclass
+
+# ....................{ CLASSES                            }....................
 class BeartypeConf(object):
     '''
     **Beartype configuration** (i.e., self-caching dataclass encapsulating all
@@ -173,7 +171,7 @@ class BeartypeConf(object):
         # check_time_max_multiplier: Union[int, None] = 1000,
 
         claw_is_pep526: bool = True,
-        is_color: Optional[bool] = None,
+        is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,
         is_debug: bool = False,
         is_pep484_tower: bool = False,
         warning_cls_on_decorator_exception: Optional[TypeWarning] = (
@@ -271,7 +269,7 @@ class BeartypeConf(object):
             performance-sensitive modules *after* profiling those modules to
             suffer performance regressions under import hooks published by the
             :mod:`beartype.claw` subpackage. Defaults to :data:`True`.
-        is_color : Optional[bool]
+        is_color : BoolTristateUnpassable
             Tri-state boolean governing how and whether beartype colours
             **type-checking violations** (i.e.,
             :class:`beartype.roar.BeartypeCallHintViolation` exceptions) with
@@ -280,13 +278,26 @@ class BeartypeConf(object):
 
             * :data:`False`, beartype *never* colours type-checking violations
               raised by callables configured with this configuration.
-            * :data:``True`, beartype *always* colours type-checking violations
+            * :data:`True`, beartype *always* colours type-checking violations
               raised by callables configured with this configuration.
             * :data:`None`, beartype conditionally colours type-checking
               violations raised by callables configured with this configuration
               only when standard output is attached to an interactive terminal.
 
-            Defaults to :data:`None`.
+            The ``${BEARTYPE_IS_COLOR}`` environment variable globally overrides
+            *all* attempts by *all* callers to explicitly pass this parameter,
+            enabling end users to enforce a global colour policy across their
+            full app stack. If ``${BEARTYPE_IS_COLOR}`` is set to a different
+            value than that of this parameter, this constructor emits a
+            non-fatal :class:`.BeartypeConfShellVarWarning` warning informing
+            the caller of this configuration conflict. To avoid this conflict,
+            open-source libraries are recommended to *not* pass this parameter;
+            ideally, *only* end user apps should pass this parameter.
+
+            Effectively defaults to :data:`None`. Technically, this parameter
+            defaults to a private magic constant *not* intended to be passed by
+            callers, enabling :mod:`beartype` to reliably detect whether the
+            caller has explicitly passed this parameter or not.
         is_debug : bool, optional
             :data:`True` only if debugging :mod:`beartype`. Enabling this
             boolean:
@@ -356,10 +367,10 @@ class BeartypeConf(object):
               category at decoration time.
 
             Defaults to a private warning type *not* intended to be passed by
-            callers, enabling :mod:`beartype` to internally detect whether the
-            caller has *not* explicitly passed this parameter and respond
-            accordingly by defaulting this parameter to a context-dependent
-            value. Notably, if this parameter is *not* explicitly passed:
+            callers, enabling :mod:`beartype` to reliably detect when the caller
+            has *not* explicitly passed this parameter and respond accordingly
+            by defaulting this parameter to a context-dependent value. Notably,
+            if this parameter is *not* explicitly passed:
 
             * The :func:`beartype.beartype` decorator defaults this parameter to
               :data:`None`, thus raising decoration-time exceptions.
@@ -379,7 +390,7 @@ class BeartypeConf(object):
 
         Raises
         ----------
-        BeartypeConfException
+        BeartypeConfParamException
             If either:
 
             * ``is_color`` is *not* a tri-state boolean.
@@ -434,24 +445,15 @@ class BeartypeConf(object):
             #
             # If "claw_is_pep526" is *NOT* a boolean, raise an exception.
             elif not isinstance(claw_is_pep526, bool):
-                raise BeartypeConfException(
+                raise BeartypeConfParamException(
                     f'Beartype configuration parameter "claw_is_pep526" '
                     f'value {repr(claw_is_pep526)} not boolean.'
                 )
             # Else, "claw_is_pep526" is a boolean.
             #
-            # If "is_color" is *NOT* a tri-state boolean, raise an exception.
-            elif not isinstance(is_color, NoneTypeOr[bool]):
-                raise BeartypeConfException(
-                    f'Beartype configuration parameter "is_color" '
-                    f'value {repr(is_color)} not tri-state boolean '
-                    f'(i.e., "True", "False", or "None").'
-                )
-            # Else, "is_color" is a tri-state boolean, raise an exception.
-            #
             # If "is_debug" is *NOT* a boolean, raise an exception.
             elif not isinstance(is_debug, bool):
-                raise BeartypeConfException(
+                raise BeartypeConfParamException(
                     f'Beartype configuration parameter "is_debug" '
                     f'value {repr(is_debug)} not boolean.'
                 )
@@ -459,7 +461,7 @@ class BeartypeConf(object):
             #
             # If "is_pep484_tower" is *NOT* a boolean, raise an exception.
             elif not isinstance(is_pep484_tower, bool):
-                raise BeartypeConfException(
+                raise BeartypeConfParamException(
                     f'Beartype configuration parameter "is_pep484_tower" '
                     f'value {repr(is_debug)} not boolean.'
                 )
@@ -472,7 +474,7 @@ class BeartypeConf(object):
                 is_type_subclass(
                     warning_cls_on_decorator_exception, Warning)
             ):
-                raise BeartypeConfException(
+                raise BeartypeConfParamException(
                     f'Beartype configuration parameter '
                     f'"warning_cls_on_decorator_exception" value '
                     f'{repr(warning_cls_on_decorator_exception)} '
@@ -484,12 +486,16 @@ class BeartypeConf(object):
             #
             # If "strategy" is *NOT* an enumeration member, raise an exception.
             elif not isinstance(strategy, BeartypeStrategy):
-                raise BeartypeConfException(
+                raise BeartypeConfParamException(
                     f'Beartype configuration parameter "strategy" '
                     f'value {repr(strategy)} not '
                     f'"beartype.BeartypeStrategy" enumeration member.'
                 )
             # Else, "strategy" is an enumeration member.
+
+            # Validate and possibly override the "is_color" parameter by the
+            # value of the ${BEARTYPE_IS_COLOR} environment variable (if set).
+            is_color = get_is_color(is_color)
 
             # Instantiate a new configuration of this type.
             self = super().__new__(cls)
@@ -516,84 +522,6 @@ class BeartypeConf(object):
             # parameter. In this case, preserve this value and note this fact.
             else:
                 self._is_warning_cls_on_decorator_exception_set = True
-
-            #FIXME: Shift *ALL* of the following logic into a lower-level
-            #utility function called like so, please:
-            #    is_color = _get_is_color(is_color)
-
-            # String value of the external shell environment variable
-            # "${BEARTYPE_IS_COLOR}" globally overriding the passed "is_color"
-            # parameter if the caller defined this environment variable *OR*
-            # "None" otherwise.
-            is_color_shell_var_value = get_shell_var_value_or_none(
-                SHELL_VAR_CONF_IS_COLOR_NAME)
-
-            # If the caller defined this environment variable...
-            if is_color_shell_var_value is not None:
-                # If the string value of this environment variable is
-                # unrecognized...
-                if (is_color_shell_var_value not in
-                    SHELL_VAR_CONF_IS_COLOR_VALUE_TO_OBJ):
-                    # Human-readable string listing the names of all valid
-                    # string values of this environment variable, double-quoting
-                    # each such name for additional readability.
-                    IS_COLOR_SHELL_VAR_VALUES = join_delimited_disjunction(
-                        strs=SHELL_VAR_CONF_IS_COLOR_VALUE_TO_OBJ.keys(),
-                        is_double_quoted=True,
-                    )
-
-                    # Raise an exception embedding this string.
-                    raise BeartypeConfShellVarException(
-                        f'Beartype configuration shell environment variable '
-                        f'"${{{SHELL_VAR_CONF_IS_COLOR_NAME}}}" '
-                        f'value {repr(is_color_shell_var_value)} invalid '
-                        f'(i.e., neither {IS_COLOR_SHELL_VAR_VALUES}).'
-                    )
-                # Else, the string value of this environment variable is
-                # recognized.
-
-                # Value of the "is_color" parameter represented by this string
-                # value (e.g., boolean True for the string "True"). By the
-                # above validation, this value is now guaranteed to be valid.
-                is_color_override = (
-                    SHELL_VAR_CONF_IS_COLOR_VALUE_TO_OBJ.get(
-                        is_color_shell_var_value))
-
-                #FIXME: *INSUFFICIENT.* Refactor the declaration of the
-                #"is_color" parameter in the signature above as follows:
-                #from beartype._data.datakind.datakindint import _UNPASSED_BOOL
-                #     is_color: Literal[True, False, None, _UNPASSED_BOOL] = _UNPASSED_BOOL,
-                #
-                #Then define a new "_UNPASSED_BOOL" global somewhere in a new
-                #"beartype._data.datakind.datakindint" submodule resembling:
-                #     _UNPASSED_BOOL = 0xFA3EBOO1
-                #FIXME: Also define a new "BeartypeConfShellVarWarning"
-                #category.
-                # # If...
-                # if (
-                #     # The caller explicitly passed the "is_color" parameter
-                #     # *AND*...
-                #     is_color != _UNPASSED_BOOL and
-                #     # The value of this parameter differs from the value of
-                #     # this environment variable...
-                #     is_color != is_color_override
-                # ):
-                #     # Warn the caller that @beartype resolves this conflict by
-                #     # ignoring this parameter in favour of this environment variable.
-                #     warn(
-                #         (
-                #             f'Beartype configuration "is_color" value '
-                #             f'{repr(is_color)} ignored in favour of '
-                #             f'shell environment variable '
-                #             f'"${{{SHELL_VAR_CONF_IS_COLOR_NAME}}}" '
-                #             f'value {repr(is_color_override)}.'
-                #         ),
-                #         BeartypeConfShellVarWarning,
-                #     )
-
-                # Override the value of the passed "is_color" parameter with
-                # that of this environment variable.
-                is_color = is_color_override
 
             # ..................{ INIT                       }..................
             # Classify all passed parameters with this configuration.
