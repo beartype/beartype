@@ -11,6 +11,10 @@ classnames of all type hints annotating callables decorated by the
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Consider obsoleting this submodule entirely in favour of the more
+#general-purpose and significantly more powerful "cachescope" submodule, please.
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeCallHintForwardRefException,
@@ -99,7 +103,7 @@ class Beartypistry(dict):
     '''
     **Beartypistry** (i.e., singleton dictionary mapping from strings uniquely
     identifying PEP-noncompliant type hints annotating callables decorated
-    by the :func:`beartype.beartype` decorator to those hints).**
+    by the :func:`beartype.beartype` decorator to those hints).
 
     This dictionary implements a global registry for **PEP-noncompliant type
     hints** (i.e., :mod:`beartype`-specific annotation *not* compliant with

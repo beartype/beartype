@@ -44,7 +44,7 @@ from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
     ARG_NAME_RETURN_REPR,
 )
-from beartype._decor._cache.cachetype import (
+from beartype._decor.cache.cachetype import (
     bear_typistry,
     register_typistry_forwardref,
 )

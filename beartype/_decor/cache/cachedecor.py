@@ -9,9 +9,9 @@
 This private submodule defines the core :func:`beartype.beartype` decorator,
 conditionally imported (in order):
 
-#. Into the parent :mod:`beartype._decor.decormain`
-   submodule if this decorator is *not* currently reducing to a noop (e.g., due
-   to ``python3 -O`` optimization).
+#. Into the parent :mod:`beartype._decor.decormain` submodule if this decorator
+   is *not* currently reducing to a noop (e.g., due to ``python3 -O``
+   optimization).
 #. Into the root :mod:`beartype.__init__` submodule if the :mod:`beartype`
    package is *not* currently being installed by :mod:`setuptools`.
 

@@ -6,7 +6,7 @@
 '''
 **Unmemoized beartype decorators** (i.e., core lower-level unmemoized decorators
 underlying the higher-level memoized :func:`beartype.beartype` decorator, whose
-implementation in the parent :mod:`beartype._decor._cache.cachedecor` submodule
+implementation in the parent :mod:`beartype._decor.cache.cachedecor` submodule
 is a thin wrapper efficiently memoizing closures internally created and returned
 by that decorator; in turn, those closures directly defer to this submodule).
 

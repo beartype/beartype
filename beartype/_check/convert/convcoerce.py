@@ -94,7 +94,7 @@ def coerce_func_hint_root(
     type hints can be meaningfully memoized. Since this high-level function
     internally defers to unmemoized low-level functions that are ``O(n)`` in
     ``n`` the size of the inheritance hierarchy of this hint, this function
-    should be called sparingly. See the :mod:`beartype._decor._cache.cachehint`
+    should be called sparingly. See the :mod:`beartype._decor.cache.cachehint`
     submodule for further details.
 
     Parameters
@@ -212,7 +212,7 @@ def coerce_hint_root(hint: object, exception_prefix: str) -> object:
     type hints can be meaningfully memoized. Since this high-level function
     internally defers to unmemoized low-level functions that are ``O(n)`` for
     ``n`` the size of the inheritance hierarchy of this hint, this function
-    should be called sparingly. See the :mod:`beartype._decor._cache.cachehint`
+    should be called sparingly. See the :mod:`beartype._decor.cache.cachehint`
     submodule for further details.
 
     Parameters

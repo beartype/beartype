@@ -456,14 +456,20 @@ Beartype Configuration API
       >>> BeartypeConf().strategy
       <BeartypeStrategy.O1: 2>
 
-   Beartype configurations support various **optional read-only keyword-only**
+   Keyword Parameters
+   ------------------
+
+   Beartype configurations support **optional read-only keyword-only**
    parameters at instantiation time. Most parameters are suitable for passing by
-   *all* beartype users in *all* possible use cases. Some, however, are only
-   intended to be passed by *some* beartype users in *some* isolated use cases.
+   *all* beartype users in *all* possible use cases. Some are only intended to
+   be passed by *some* beartype users in *some* isolated use cases.
+
    This is their story.
 
-   General-purpose configuration parameters that are *always* safely passable
-   include:
+   General Keyword Parameters
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+   General-purpose configuration parameters are *always* safely passable:
 
    .. py:attribute:: is_debug
 
@@ -612,10 +618,13 @@ Beartype Configuration API
       strategy – maximizing scalability at a cost of also maximizing false
       positives.
 
-   **Executable-only configuration parameters** (i.e., parameters intended to be
-   passed *only* by downstream Python packages that are typically executed as an
-   app, binary, script, server, or other executable process rather than imported
-   from other Python packages in the current Python process) include:
+   App-only Keyword Parameters
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+   **App-only configuration parameters** are passed *only* by first-party
+   packages executed as apps, binaries, scripts, servers, or other executable
+   processes (rather than imported as libraries, frameworks, or other importable
+   APIs into the current process):
 
    .. py:attribute:: is_color
 
@@ -857,12 +866,12 @@ variables globally override :class:`.BeartypeConf` parameters of similar names,
 enabling end users to enforce global configuration policies across their full
 app stacks.
 
-Beneath environment variables thy humongous codebase shalt rise!
+Beneath environment variables... *thy humongous codebase shalt rise.*
 
 .. _api_decor:beartype_is_color:
 
 ${BEARTYPE_IS_COLOR}
-********************
+--------------------
 
 The ``${BEARTYPE_IS_COLOR}`` environment variable globally overrides the
 :attr:`.BeartypeConf.is_color` parameter, enabling end users to enforce a global

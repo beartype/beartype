@@ -16,7 +16,7 @@
 # ....................{ INCLUDE                            }....................
 # Include all requisite top-level install-time files.
 include .coveragerc
-include .readthedocs.yml
+include .readthedocs.yaml
 include LICENSE
 include MANIFEST.in
 include README.rst
