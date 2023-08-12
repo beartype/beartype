@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype cave-specific abstract base classes (ABCs).**
+:mod:`beartype.cave`-specific **abstract base classes (ABCs).**
 '''
 
 # ....................{ TODO                               }....................
@@ -27,7 +27,7 @@
 #    Fortunately, doing so is trivial; simply use the three-argument form of
 #    the type() constructor, as demonstrated by this StackOverflow answer:
 #    https://stackoverflow.com/a/14219244/2809027
-#  * *WAIT!* There's no need to call the type() constructor diroctly. Instead,
+#  * *WAIT!* There's no need to call the type() constructor directly. Instead,
 #    define a new make_type() function in this new submodule copied from the
 #    betse.util.type.classes.define_class() function (but renamed, obviously).
 #* Replace the current manual definition of "_BoolType" below with an in-place

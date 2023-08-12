@@ -63,7 +63,7 @@ class BeartypeCall(object):
     memoized callables** (e.g.,
     :func:`beartype._check.code.codemake.make_func_wrapper_code`) **and
     higher-level callables** (e.g.,
-    :func:`beartype._decor._wrap.wrapmain.generate_code`). Instead, memoized
+    :func:`beartype._decor.wrap.wrapmain.generate_code`). Instead, memoized
     callables *must* return that state as additional return values up the call
     stack to those higher-level callables. By definition, memoized callables
     are *not* recalled on subsequent calls passed the same parameters. Since
@@ -276,7 +276,7 @@ class BeartypeCall(object):
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # Avoid circular import dependencies.
-        from beartype._decor._error.errormain import get_beartype_violation
+        from beartype._decor.error.errormain import get_beartype_violation
 
         # If this callable is uncallable, raise an exception.
         if not callable(func):

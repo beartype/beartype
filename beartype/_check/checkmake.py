@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ TODO                               }....................
 #FIXME: Create a new make_func_raiser_code() factory. After doing so, refactor
-#the lower-level beartype._decor._wrap._wrapcode.make_func_wrapper_code()
+#the lower-level beartype._decor.wrap._wrapcode.make_func_wrapper_code()
 #factory in terms of that higher-level make_func_raiser_code() factory, please.
 #
 #Note that doing so *WILL* prove non-trivial. That's why this submodule has
@@ -23,10 +23,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #raising an exception by calling a beartype-specific exception handler that does
 #*NOT* currently exist. To create that handler, we'll need to:
 #* Generalize the existing decoration-specific
-#  "beartype._decor._error.errormain" submodule into a new general-purpose
+#  "beartype._decor.error.errormain" submodule into a new general-purpose
 #  "beartype._check._checkerror" submodule. To do so, initially just copy the
 #  former to the latter. Do *NOT* bother generalizing any other submodules of
-#  the "beartype._decor._error" subpackage, for the moment. One thing at a time.
+#  the "beartype._decor.error" subpackage, for the moment. One thing at a time.
 #* Rename the *COPIED* beartype._check._checkerror.get_beartype_violation()
 #  getter to get_func_raiser_violation().
 #* Refactor get_func_raiser_violation() to have a signature resembling:
@@ -47,7 +47,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  adds "ARG_NAME_RAISE_EXCEPTION" to "func_wrapper_scope" into the
 #  make_func_raiser_code() factory instead.
 #* Refactor the original lower-level
-#  beartype._decor._error.errormain.get_beartype_violation() getter in terms of
+#  beartype._decor.error.errormain.get_beartype_violation() getter in terms of
 #  the new higher-level get_func_raiser_violation() getter.
 #* Define a new make_func_raiser_code() factory. Note that:
 #  * This factory will need to generate a code snippet raising an exception. The

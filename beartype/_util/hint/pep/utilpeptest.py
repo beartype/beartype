@@ -178,7 +178,7 @@ def die_if_hint_pep_unsupported(
     BeartypeDecorHintPep484Exception
         If this object is the PEP-compliant :attr:`typing.NoReturn` type hint,
         which is contextually valid in only a single use case and thus
-        supported externally by the :mod:`beartype._decor._wrap.wrapmain`
+        supported externally by the :mod:`beartype._decor.wrap.wrapmain`
         submodule rather than with general-purpose automation.
     '''
 

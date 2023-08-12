@@ -102,13 +102,13 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
     HINT_SIGNS_UNION,
 )
-from beartype._decor._error._errorcause import ViolationCause
-from beartype._decor._error._util.errorutilcolor import (
+from beartype._decor.error._errorcause import ViolationCause
+from beartype._decor.error._util.errorutilcolor import (
     color_hint,
     color_repr,
     strip_text_ansi_if_configured,
 )
-from beartype._decor._error._util.errorutiltext import (
+from beartype._decor.error._util.errorutiltext import (
     prefix_beartypeable_arg_value,
     prefix_beartypeable_return_value,
 )
@@ -417,24 +417,24 @@ def _init() -> None:
     '''
 
     # Defer heavyweight imports.
-    from beartype._decor._error._errortype import (
+    from beartype._decor.error._errortype import (
         find_cause_instance_type_forwardref,
         find_cause_subclass_type,
         find_cause_type_instance_origin,
     )
-    from beartype._decor._error._pep._pep484._errornoreturn import (
+    from beartype._decor.error._pep._pep484._errornoreturn import (
         find_cause_noreturn)
-    from beartype._decor._error._pep._pep484._errorunion import (
+    from beartype._decor.error._pep._pep484._errorunion import (
         find_cause_union)
-    from beartype._decor._error._pep._pep484585._errorgeneric import (
+    from beartype._decor.error._pep._pep484585._errorgeneric import (
         find_cause_generic)
-    from beartype._decor._error._pep._pep484585._errorsequence import (
+    from beartype._decor.error._pep._pep484585._errorsequence import (
         find_cause_sequence_args_1,
         find_cause_tuple,
     )
-    from beartype._decor._error._pep._errorpep586 import (
+    from beartype._decor.error._pep._errorpep586 import (
         find_cause_literal)
-    from beartype._decor._error._pep._errorpep593 import (
+    from beartype._decor.error._pep._errorpep593 import (
         find_cause_annotated)
 
     # Map each originative sign to the appropriate getter *BEFORE* any other

@@ -4,10 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **callable creation** utilities.
-
-This private submodule implements utility functions dynamically creating new
-callables on-the-fly.
+Project-wide **callable factories** (i.e., low-level functions dynamically
+creating and returning new in-memory callables).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -18,7 +16,10 @@ from beartype.typing import (
     Optional,
     Type,
 )
-from beartype._data.hint.datahinttyping import LexicalScope
+from beartype._data.hint.datahinttyping import (
+    LexicalScope,
+    TypeException,
+)
 from beartype._util.text.utiltextlabel import label_exception
 from beartype._util.text.utiltextmunge import number_str_lines
 from beartype._util.utilobject import get_object_name
@@ -40,7 +41,7 @@ def make_func(
     func_label:   Optional[str] = None,
     func_wrapped: Optional[Callable] = None,
     is_debug: bool = False,
-    exception_cls: Type[Exception] = _BeartypeUtilCallableException,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> Callable:
     '''
     Dynamically create and return a new function with the passed name declared
@@ -56,25 +57,25 @@ def make_func(
         signature prefixed by zero or more decorations *and* body. **This
         snippet must be unindented.** If this snippet is indented, this factory
         raises a syntax error.
-    func_globals : Dict[str, Any], optional
+    func_globals : Optional[Dict[str, Any]]
         Dictionary mapping from the name to value of each **globally scoped
         attribute** (i.e., internally referenced in the body of the function
         declared by this code snippet). Defaults to the empty dictionary.
-    func_locals : Dict[str, Any], optional
+    func_locals : Optional[Dict[str, Any]]
         Dictionary mapping from the name to value of each **locally scoped
         attribute** (i.e., internally referenced either in the signature of
         the function declared by this code snippet *or* as decorators
         decorating that function). **Note that this factory necessarily
         modifies the contents of this dictionary.** Defaults to the empty
         dictionary.
-    func_doc : str, optional
+    func_doc : Optional[str]
         Human-readable docstring documenting this function. Defaults to
-        ``None``, in which case this function remains undocumented.
+        :data:`None`, in which case this function remains undocumented.
     func_label : str, optional
         Human-readable label describing this function for error-handling
-        purposes. Defaults to ``{func_name}()``.
+        purposes. Defaults to ``"{func_name}()"``.
     func_wrapped : Callable, optional
-        Callable wrapped by the function to be created. If non-``None``,
+        Callable wrapped by the function to be created. If non-:data:`None`,
         special dunder attributes will be propagated (i.e., copied) from this
         wrapped callable into this created function; these include:
 
@@ -82,10 +83,10 @@ def make_func(
         * ``__doc__``, this function's docstring.
         * ``__module__``, the fully-qualified name of this function's module.
 
-        Defaults to ``None``.
+        Defaults to :data:`None`.
     is_debug : bool, optional
-        ``True`` only if this function is being debugged. If ``True``, the
-        definition (including signature and body) of this function is:
+        :data:`True` only if this function is being debugged. If :data:`True`,
+        then the definition (including signature and body) of this function is:
 
         * Printed to standard output.
         * Cached with the standard :mod:`linecache` module under a fake
@@ -98,10 +99,10 @@ def make_func(
              from linecache import cache as linecache_cache
              func_source = linecache_cache[func.__code__.co_filename]
 
-        Defaults to ``False``.
-    exception_cls : type, optional
+        Defaults to :data:`False`.
+    exception_cls : Type[Exception], optional
         Type of exception to raise in the event of a fatal error. Defaults to
-        :exc:`_BeartypeUtilCallableException`.
+        :exc:`._BeartypeUtilCallableException`.
 
     Returns
     ----------

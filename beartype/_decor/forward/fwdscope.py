@@ -17,19 +17,18 @@ from beartype.typing import Dict
 # from beartype._data.hint.datahinttyping import BeartypeableT
 
 # ....................{ SUBCLASSES                         }....................
-class BeartypeableScopeDeferrer(dict):
+class BeartypeForwardScope(dict):
     '''
-    **Beartypeable scope deferrer** (i.e., dictionary deferring the resolution
-    of a local or global scope of a **beartypeable** (i.e., class or callable
-    decorated by the :func:`beartype.beartype` decorator) when dynamically
-    evaluating stringified type hints for this beartypeable, including both
-    forward references *and* :pep:`563`-postponed type hints).
+    **Forward scope** (i.e., dictionary deferring the resolution of a local or
+    global scope of an arbitrary class or callable when dynamically evaluating
+    stringified type hints for that class or callable, including both forward
+    references *and* :pep:`563`-postponed type hints).
 
     Attributes
     ----------
     module_name : str
         Fully-qualified name of the (sub)module declaring the local or global
-        scope deferred by this deferrer.
+        scope deferred by this forward scope.
     '''
 
     # ..................{ INITIALIZERS                       }..................

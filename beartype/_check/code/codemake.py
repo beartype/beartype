@@ -524,7 +524,7 @@ def make_check_expr(
 
     # True only if one or more PEP-compliant type hints visitable from this
     # root hint require a pseudo-random integer. If true, the higher-level
-    # beartype._decor._wrap.wrapmain.generate_code() function prefixes the body
+    # beartype._decor.wrap.wrapmain.generate_code() function prefixes the body
     # of this wrapper function with code generating such an integer.
     is_var_random_int_needed = False
 
@@ -661,7 +661,7 @@ def make_check_expr(
         # otherwise (i.e., if this hint is irreducible).
         #
         # Note that the root hint has already been permanently sanified by the
-        # calling "beartype._decor._wrap.wrapmain" submodule and thus need
+        # calling "beartype._decor.wrap.wrapmain" submodule and thus need
         # *NOT* be inefficiently resanified here.
         if hints_meta_index_curr:
             hint_curr = sanify_hint_any(

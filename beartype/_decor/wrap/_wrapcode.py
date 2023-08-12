@@ -20,7 +20,7 @@ from beartype._data.hint.datahinttyping import (
     CodeGenerated,
     TypeStack,
 )
-from beartype._decor._wrap.wrapsnip import (
+from beartype._decor.wrap.wrapsnip import (
     CODE_HINT_ROOT_PREFIX,
     CODE_HINT_ROOT_SUFFIX,
     CODE_HINT_ROOT_SUFFIX_CLS_STACK,

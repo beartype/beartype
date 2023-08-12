@@ -7,7 +7,7 @@
 **Beartype main error-handling unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._decor._error.errormain` submodule.
+:mod:`beartype._decor.error.errormain` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,7 +20,7 @@ This submodule unit tests the public API of the private
 def test_get_beartype_violation() -> None:
     '''
     Test the
-    :func:`beartype._decor._error.errormain.get_beartype_violation`
+    :func:`beartype._decor.error.errormain.get_beartype_violation`
     function.
     '''
 
@@ -37,7 +37,7 @@ def test_get_beartype_violation() -> None:
         List,
         Tuple,
     )
-    from beartype._decor._error.errormain import get_beartype_violation
+    from beartype._decor.error.errormain import get_beartype_violation
     from beartype._util.os.utilostty import is_stdout_terminal
     from beartype._util.text.utiltextansi import is_text_ansi
     from pytest import raises

@@ -31,7 +31,7 @@ from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.hint.datahinttyping import (
     BeartypeableT,
 )
-from beartype._decor._wrap.wrapmain import generate_code
+from beartype._decor.wrap.wrapmain import generate_code
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,

@@ -52,13 +52,11 @@ def is_identifier(text: str) -> bool:
     # unqualified Python identifier, return true only if this is the case.
     if '.' not in text:
         return text.isidentifier()
-
     # Else, this text contains one or more "." delimiters and is thus expected
-    # to be a qualified Python identifier. In this case, return true only if
-    # *ALL* "."-delimited substrings split from this string are valid
-    # unqualified Python identifiers.
-    #
-    # Note that:
+    # to be a qualified Python identifier.
+
+    # Return true only if *ALL* "."-delimited substrings split from this string
+    # are valid unqualified Python identifiers. Note that:
     # * Regular expressions report false negatives. See the docstring.
     # * Manual iteration is significantly faster than "all(...)"- and
     #   "any(...)"-style comprehensions.

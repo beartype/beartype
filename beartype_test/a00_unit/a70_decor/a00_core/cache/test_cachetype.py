@@ -99,7 +99,7 @@ def test_typistry_singleton_fail() -> None:
 #
 #     # Defer test-specific imports.
 #     from beartype._decor.cache.cachetype import bear_typistry
-#     from beartype._decor._wrap.wrapsnip import ARG_NAME_TYPISTRY
+#     from beartype._decor.wrap.wrapsnip import ARG_NAME_TYPISTRY
 #
 #     # Dictionary of all local variables required to evaluate this expression.
 #     eval_locals = {ARG_NAME_TYPISTRY: bear_typistry}
