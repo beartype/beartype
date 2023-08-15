@@ -161,7 +161,7 @@ def is_func_argless(
     exception_cls: TypeException = _BeartypeUtilCallableException,
 ) -> bool:
     '''
-    ``True`` only if the passed pure-Python callable is **argumentless**
+    :data:`True` only if the passed pure-Python callable is **argumentless**
     (i.e., accepts *no* arguments).
 
     Parameters
@@ -175,7 +175,7 @@ def is_func_argless(
     Returns
     ----------
     bool
-        ``True`` only if the passed callable accepts *no* arguments.
+        :data:`True` only if the passed callable accepts *no* arguments.
 
     Raises
     ----------

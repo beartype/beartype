@@ -18,11 +18,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #decorator is *INSANELY* fast for this edge case -- substantially faster than
 #the current general-purpose @callable_cached approach.
 
-#FIXME: Generalize @callable_cached to support variadic positional parameters by
-#appending to "params_flat":
-#1. A placeholder sentinel object after all non-variadic positional parameters.
-#2. Those variadic parameters.
-
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
 from beartype.typing import (
@@ -164,20 +159,6 @@ def callable_cached(func: _CallableT) -> _CallableT:
         ``*args``).
     '''
     assert callable(func), f'{repr(func)} not callable.'
-
-    # Avoid circular import dependencies.
-    from beartype._util.func.utilfuncwrap import unwrap_func_all
-
-    # Lowest-level wrappee callable wrapped by this wrapper callable.
-    func_wrappee = unwrap_func_all(func)
-
-    # If this wrappee accepts variadic arguments, raise an exception.
-    if is_func_arg_variadic(func_wrappee):
-        raise _BeartypeUtilCallableCachedException(
-            f'@callable_cached {label_callable(func)} '
-            f'variadic arguments uncacheable.'
-        )
-    # Else, this wrappee accepts *NO* variadic arguments.
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize against the @method_cached_arg_by_id decorator
@@ -394,11 +375,6 @@ def method_cached_arg_by_id(func: _CallableT) -> _CallableT:
     )
     # Else, this wrappee accepts exactly one flexible parameter.
 
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize against the @callable_cached decorator above. For
-    # speed, this decorator violates DRY by duplicating logic.
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     # If this wrappee accepts variadic arguments, raise an exception.
     if is_func_arg_variadic(func_wrappee):
         raise _BeartypeUtilCallableCachedException(
@@ -406,6 +382,11 @@ def method_cached_arg_by_id(func: _CallableT) -> _CallableT:
             f'variadic arguments uncacheable.'
         )
     # Else, this wrappee accepts *NO* variadic arguments.
+
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Synchronize against the @callable_cached decorator above. For
+    # speed, this decorator violates DRY by duplicating logic.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Dictionary mapping a tuple of all flattened parameters passed to each
     # prior call of the decorated callable with the value returned by that call

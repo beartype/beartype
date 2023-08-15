@@ -33,7 +33,7 @@ def test_callable_cached() -> None:
     @callable_cached
     def still_i_rise(bitter, twisted, lies):
         '''
-        Arbitrary callable memoized by this decorator.
+        Arbitrary non-variadic callable memoized by this decorator.
         '''
 
         # If an arbitrary condition, raise an exception whose value depends on
@@ -46,6 +46,23 @@ def test_callable_cached() -> None:
         # decorator's conditional caching of return values.
         return bitter + twisted + lies
 
+
+    @callable_cached
+    def from_savage_men(with_his, sweet_voice = ('and, eyes',), *args):
+        '''
+        Arbitrary variadic callable memoized by this decorator.
+        '''
+
+        # If an arbitrary condition, raise an exception whose value depends on
+        # these parameters to exercise this decorator's conditional caching of
+        # exceptions.
+        if len(args) == 6:
+            raise ValueError(lies)
+
+        # Else, return a value depending on these parameters to exercise this
+        # decorator's conditional caching of return values.
+        return with_his + sweet_voice + args
+
     # ..................{ LOCALS                             }..................
     # Hashable objects to be passed as parameters below.
     bitter  = ('You', 'may', 'write', 'me', 'down', 'in', 'history',)
@@ -53,7 +70,9 @@ def test_callable_cached() -> None:
     lies    = ('You', 'may', 'trod,', 'me,', 'in', 'the', 'very', 'dirt',)
     dust    = ('But', 'still,', 'like', 'dust,', "I'll", 'rise',)
 
-    # ..................{ ASSERTS ~ pass                     }..................
+    # ..................{ PASS ~ non-variadic                }..................
+    # Test the non-variadic function defined above.
+
     # Assert that memoizing two calls passed the same positional arguments
     # caches and returns the same value.
     assert (
@@ -67,7 +86,7 @@ def test_callable_cached() -> None:
     # Assert that repeating that call reraises the same exception.
     with raises(ValueError) as exception_next_info:
         still_i_rise(bitter, twisted, dust)
-        assert exception_first_info is exception_next_info
+    assert exception_first_info.value is exception_next_info.value
 
     # Assert that passing one or more unhashable parameters to this callable
     # succeeds with the expected return value.
@@ -81,13 +100,22 @@ def test_callable_cached() -> None:
         'With the certainty of tides',
     ]
 
-    # ..................{ ASSERTS ~ fail                     }..................
-    # Assert that attempting to memoize a callable accepting one or more
-    # variadic positional parameters fails with the expected exception.
-    with raises(_BeartypeUtilCallableCachedException):
-        @callable_cached
-        def see_me_broken(*args):
-            return args
+    # ..................{ PASS ~ non-variadic                }..................
+    # Test the variadic function defined above.
+
+    # Assert that memoizing two calls passed *NO* optional or variadic
+    # positional arguments caches and returns the same value.
+    assert from_savage_men(bitter) is from_savage_men(bitter)
+
+    # Assert that memoizing two calls passed optional positional arguments but
+    # *NO* variadic positional arguments caches and returns the same value.
+    assert from_savage_men(bitter, twisted) is from_savage_men(bitter, twisted)
+
+    # Assert that memoizing two calls passed the same positional arguments
+    # caches and returns the same value.
+    assert (
+        from_savage_men(bitter, twisted, *lies) is
+        from_savage_men(bitter, twisted, *lies))
 
 
 def test_method_cached_arg_by_id() -> None:
@@ -144,7 +172,7 @@ def test_method_cached_arg_by_id() -> None:
     # Unhashable objects to be passed as parameters below.
     hopes = ['Just', 'like', 'hopes,', 'springing,', 'high',]
 
-    # ..................{ ASSERTS ~ pass                     }..................
+    # ..................{ PASS                               }..................
     # Assert that memoizing two calls passed the same positional arguments
     # caches and returns the same value.
     assert (
@@ -164,13 +192,13 @@ def test_method_cached_arg_by_id() -> None:
     # Assert that repeating that call reraises the same exception.
     with raises(ValueError) as exception_next_info:
         like_air.just_like_moons(moons)
-        assert exception_first_info is exception_next_info
+    assert exception_first_info.value is exception_next_info.value
 
     # Assert that passing one or more unhashable parameters to this callable
     # succeeds with the expected return value.
     assert like_air.just_like_moons(hopes) == [id(like_air), hopes]
 
-    # ..................{ ASSERTS ~ fail                     }..................
+    # ..................{ FAIL                               }..................
     # Assert that attempting to memoize a callable accepting *NO* parameters
     # fails with the expected exception.
     with raises(_BeartypeUtilCallableCachedException):
@@ -234,7 +262,7 @@ def test_property_cached() -> None:
     # Instance of this class initialized with this value.
     i_want_out = Keeper(keys=KEY_COUNT_PRECACHED)
 
-    # ..................{ ASSERTS                            }..................
+    # ..................{ PASS                               }..................
     # Assert this attribute to be as initialized.
     assert i_want_out.keys == KEY_COUNT_PRECACHED
 
