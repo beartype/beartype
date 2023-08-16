@@ -19,6 +19,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.hint.datahinttyping import LexicalScope
+from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._util.text.utiltextident import is_identifier
 
 # ....................{ MAKERS                             }....................
@@ -28,7 +29,7 @@ def make_type(
 
     # Optional arguments.
     type_module_name: Optional[str] = None,
-    type_bases: Optional[Tuple[type]] = None,
+    type_bases: Optional[Tuple[type, ...]] = None,
     type_scope: Optional[LexicalScope] = None,
     type_doc: Optional[str] = None,
     exception_cls: Type[Exception] = _BeartypeUtilTypeException,
@@ -44,7 +45,7 @@ def make_type(
     type_module_name : Optional[str]
         Fully-qualified name of the module declaring this class. Defaults to
         :data:`None`, in which case this class remains undeclared by any module.
-    type_bases : Optional[Tuple[type]]
+    type_bases : Optional[Tuple[type, ...]]
         Tuple of all base classes to be inherited by this class. Defaults to
         the empty tuple, equivalent to the 1-tuple ``(object,)`` inheriting this
         class from only the root base class :class:`object` of all classes.
@@ -94,7 +95,7 @@ def make_type(
     if type_bases is None:
         type_bases = ()  # type: ignore[assignment]
     if type_scope is None:
-        type_scope = {}  # type: ignore[assignment]
+        type_scope = DICT_EMPTY  # type: ignore[assignment]
     assert isinstance(type_bases, tuple), f'{repr(type_bases)} not tuple.'
     assert isinstance(type_scope, dict), f'{repr(type_scope)} not dictionary.'
 

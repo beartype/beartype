@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartypeable scope deferrers** (i.e., dictionaries deferring the resolutions
-of local and global scopes of classes and callables decorated by the
+Beartype **forward scope classes** (i.e., dictionary subclasses deferring the
+resolutions of local and global scopes of classes and callables decorated by the
 :func:`beartype.beartype` decorator when dynamically evaluating stringified type
 hints for those classes and callables).
 
@@ -17,6 +17,8 @@ from beartype.typing import Dict
 # from beartype._data.hint.datahinttyping import BeartypeableT
 
 # ....................{ SUBCLASSES                         }....................
+#FIXME: Implement us up, please.
+#FIXME: Unit test us up, please.
 class BeartypeForwardScope(dict):
     '''
     **Forward scope** (i.e., dictionary deferring the resolution of a local or
