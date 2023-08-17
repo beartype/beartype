@@ -41,11 +41,21 @@ values are types from pairs whose values are tuples.
 '''
 
 # ....................{ REGISTRARS ~ forwardref            }....................
+#FIXME: *UHM.* This function is clearly a vestigial relic from the Dark Times,
+#back when the "bear_typistry" singleton did a great deal more than it currently
+#does. Notably, this function doesn't actually "register" anything. Both the
+#function name *AND* docstring of this function are erroneous red herrings. All
+#this function does is return a trivial code snippet. That's it. *facepalm*
+#
+#At the very least, we should:
+#* Rename this function to get_type_forwardref_code().
+#* Revise the docstring accordingly, please.
 #FIXME: Unit test us up.
+
 # Note this function intentionally does *NOT* accept an optional "hint_labal"
 # parameter as doing so would conflict with memoization.
 @callable_cached
-def register_typistry_forwardref(hint_classname: str) -> str:
+def register_typistry_forwardref(type_name: str) -> str:
     '''
     Register the passed **fully-qualified forward reference** (i.e., string
     whose value is the fully-qualified name of a user-defined class that
@@ -59,7 +69,7 @@ def register_typistry_forwardref(hint_classname: str) -> str:
 
     Parameters
     ----------
-    hint_classname : object
+    type_name : object
         Forward reference to be registered, defined as either:
 
         * A string whose value is the syntactically valid name of a class.
@@ -83,7 +93,7 @@ def register_typistry_forwardref(hint_classname: str) -> str:
     # If this object is *NOT* the syntactically valid fully-qualified name of a
     # module attribute which may *NOT* actually exist, raise an exception.
     die_unless_module_attr_name(
-        module_attr_name=hint_classname,
+        module_attr_name=type_name,
         exception_cls=BeartypeDecorHintForwardRefException,
         exception_prefix='Forward reference ',
     )
@@ -94,7 +104,7 @@ def register_typistry_forwardref(hint_classname: str) -> str:
     # forward references by dynamically registering types on their first access
     # if *NOT* already registered. Ergo, our job is actually done here.
     return (
-        f'{_CODE_TYPISTRY_HINT_NAME_TO_HINT_PREFIX}{repr(hint_classname)}'
+        f'{_CODE_TYPISTRY_HINT_NAME_TO_HINT_PREFIX}{repr(type_name)}'
         f'{_CODE_TYPISTRY_HINT_NAME_TO_HINT_SUFFIX}'
     )
 

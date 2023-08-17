@@ -228,7 +228,7 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
 
     **This class prohibits instantiation.** This class is *only* intended to be
     subscripted. Attempting to instantiate this class into an object will raise
-    an :exc:`BeartypeValeSubscriptionException` exception.
+    an :exc:`.BeartypeValeSubscriptionException` exception.
 
     Examples
     ----------
@@ -352,7 +352,7 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
         #FIXME: Unit test edge cases extensively, please.
         def _is_valid_bool(obj: object) -> bool:
             '''
-            ``True`` only if the passed object satisfies the caller-defined
+            :data:`True` only if the passed object satisfies the caller-defined
             validation callable subscripting this :attr:`beartype.vale.Is`
             validator factory.
 
@@ -413,7 +413,8 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
             Returns
             ----------
             bool
-                ``True`` only if that object satisfies that validation callable.
+                :data:`True` only if that object satisfies that validation
+                callable.
 
             Raises
             ----------

@@ -244,7 +244,7 @@ def test_express_func_scope_type_forwardref() -> None:
 
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintForwardRefException
-    from beartype._decor.cache.cachetype import bear_typistry
+    from beartype._decor.forward.fwdtype import bear_typistry
     from beartype._check.checkmagic import ARG_NAME_TYPISTRY
     from beartype._check.code._codescope import (
         express_func_scope_type_forwardref)

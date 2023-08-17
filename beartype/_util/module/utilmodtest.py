@@ -78,9 +78,8 @@ def die_unless_module_attr_name(
             f'{exception_prefix}{repr(module_attr_name)} not string.')
     # Else, this object is a string.
     #
-    # If this string contains *NO* "." characters and thus either is relative
-    # to the calling subpackage or refers to a builtin object, raise an
-    # exception.
+    # If this string contains *NO* "." characters and thus either is relative to
+    # the calling subpackage or refers to a builtin object, raise an exception.
     elif '.' not in module_attr_name:
         raise exception_cls(
             f'{exception_prefix}"{module_attr_name}" '

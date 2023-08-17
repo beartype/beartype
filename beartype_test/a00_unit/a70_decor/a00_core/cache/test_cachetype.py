@@ -7,7 +7,7 @@
 **Beartypistry unit tests.**
 
 This submodule unit tests the
-:attr:`beartype._decor.cache.cachetype.bear_typistry` singleton.
+:attr:`beartype._decor.forward.fwdtype.bear_typistry` singleton.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,12 +20,12 @@ This submodule unit tests the
 def test_typistry_singleton_pass() -> None:
     '''
     Test successful usage of the
-    :attr:`beartype._decor.cache.cachetype.bear_typistry` singleton.
+    :attr:`beartype._decor.forward.fwdtype.bear_typistry` singleton.
     '''
 
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
-    from beartype._decor.cache.cachetype import bear_typistry
+    from beartype._decor.forward.fwdtype import bear_typistry
     from beartype._util.utilobject import get_object_type_name
     from pytest import raises
 
@@ -54,12 +54,12 @@ def test_typistry_singleton_pass() -> None:
 def test_typistry_singleton_fail() -> None:
     '''
     Test unsuccessful usage of the
-    :attr:`beartype._decor.cache.cachetype.bear_typistry` singleton.
+    :attr:`beartype._decor.forward.fwdtype.bear_typistry` singleton.
     '''
 
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
-    from beartype._decor.cache.cachetype import bear_typistry
+    from beartype._decor.forward.fwdtype import bear_typistry
     from pytest import raises
 
     # Assert that keys that are *NOT* strings are *NOT* registrable.
@@ -90,15 +90,15 @@ def test_typistry_singleton_fail() -> None:
 #     '''
 #     Dynamically evaluate the passed Python expression (assumed to be a string
 #     returned by either the
-#     :func:`beartype._decor.cache.cachetype.register_typistry_type` or
-#     :func:`beartype._decor.cache.cachetype.register_typistry_tuple` functions)
+#     :func:`beartype._decor.forward.fwdtype.register_typistry_type` or
+#     :func:`beartype._decor.forward.fwdtype.register_typistry_tuple` functions)
 #     *and* return the resulting value (assumed to either be a type or tuple of
 #     types).
 #     '''
 #     assert isinstance(hint_expr, str), '{repr(hint_expr)} not string.'
 #
 #     # Defer test-specific imports.
-#     from beartype._decor.cache.cachetype import bear_typistry
+#     from beartype._decor.forward.fwdtype import bear_typistry
 #     from beartype._decor.wrap.wrapsnip import ARG_NAME_TYPISTRY
 #
 #     # Dictionary of all local variables required to evaluate this expression.

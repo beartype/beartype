@@ -10,24 +10,62 @@ be defined and annotating a class or callable decorated by the
 :func:`beartype.beartype` decorator) utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
+
+Motivation
+----------
+This submodule exists purely for future generality at a minor increase in both
+space and time complexity. Since forward references are comparatively rare (by
+compare to all the *other* kinds of type hints), these costs are effectively
+negligible (by compare to the extreme cost of failing to resolve all possible
+forward references at runtime).
+
+Currently, this submodule *only* resolves forward references to globals declared
+in the global scopes of external modules. Technically, the design of this
+submodule constitutes extreme overkill for resolving that specific case. Why?
+Because the most efficient means of resolving forward references to globals
+declared in the global scopes of external modules is simply to refactor the
+:mod:`beartype._decor.forward.fwdscope` submodule to canonicalize all relative
+forward references (e.g., ``"SomeClass"``) into their corresponding absolute
+forward references (e.g., ``"some_package.some_module.SomeClass"``), which our
+code generation algorithm would then generate optimally efficient type-checking
+code for. Given that, why does this submodule exist?
+
+This submodule exists to simplify our generalization of this submodule at a
+later date to resolve all the *other* kinds of forward references that exist in
+real-world code -- including resolution of forward references to nested
+attributes (including nested classes), "free attributes" (i.e., non-local and
+non-global attributes that are accessible only from a closure scope), and so on
+via non-trivial call stack inspection.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: For safety, ensure that the "_BeartypeForwardRefABC" superclass
-#prohibits instantiation. *sigh*
+#FIXME: Honestly, does this submodule actually need to exist, really? Sure, we
+#went to a great deal of effort to implement all of this -- but it kinda all
+#seems for naught, now. After all, shouldn't we simply generalize the "fwdtype"
+#submodule to handle these edge cases -- or has the "Beartypistry" generally
+#outlived its usefulness? Should we instead obsolete the "fwdtype" submodule in
+#favour of this submodule? I honestly have no idea.
+#
+#Consider recursive type hints, which leverage relative forward references. It
+#seems likely that *THIS* submodule rather than the "fwdtype" submodule will be
+#required to resolve recursive type hints. Notably, the
+#_BeartypeForwardRefMeta.__instancecheck__() method can be generalized to at
+#least detect recursion... maybe? Or should that detection instead be handled
+#in the higher-level "fwdscope" submodule? *UGH*! So hard. Y dis so hard. *sigh*
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import (
+    NoReturn,
     Type,
 )
 # from beartype._data.hint.datahinttyping import BeartypeableT
-from beartype._decor.cache.cachetype import bear_typistry
-from beartype._util.cache.utilcachemeta import BeartypeCachingMeta
+from beartype._decor.forward.fwdtype import bear_typistry
 from beartype._util.cls.utilclsmake import make_type
 
 # ....................{ METACLASSES                        }....................
 #FIXME: Unit test us up, please.
-class _BeartypeForwardRefMeta(BeartypeCachingMeta):
+class _BeartypeForwardRefMeta(type):
     '''
     **Forward reference metaclass** (i.e., metaclass of the
     :class:`._BeartypeForwardRefABC` superclass deferring the resolution of a
@@ -115,6 +153,18 @@ class _BeartypeForwardRefABC(object, metaclass=_BeartypeForwardRefMeta):
     '''
     Fully-qualified name of the attribute referenced by this forward reference.
     '''
+
+    # ....................{ INITIALIZERS                   }....................
+    def __new__(cls, *args, **kwargs) -> NoReturn:
+        '''
+        Prohibit instantiation by unconditionally raising an exception.
+        '''
+
+        # 
+        raise BeartypeDecorHintForwardRefException(
+            f'{repr(_BeartypeForwardRefABC)} subclass '
+            f'{repr(cls)} not instantiatable.'
+        )
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
