@@ -103,7 +103,7 @@ beartype import hook state, which contains this cache.
 '''
 
 # ....................{ STRINGS ~ decorator                }....................
-BEARTYPE_DECORATOR_MODULE_NAME = 'beartype._decor.cache.cachedecor'
+BEARTYPE_DECORATOR_MODULE_NAME = 'beartype._decor.decorcache'
 '''
 Fully-qualified name of the submodule defining the **beartype decorator** (i.e.,
 :mod:`beartype` decorator applied by our abstract syntax tree (AST) node

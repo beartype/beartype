@@ -96,7 +96,7 @@ if (
 # case, define the @beartype decorator in the standard way.
 else:
     # This is where @beartype *REALLY* lives. Grep here for all the goods.
-    from beartype._decor.cache.cachedecor import beartype
+    from beartype._decor.decorcache import beartype
 
 # ....................{ DECORATORS ~ doc                   }....................
 # Document the @beartype decorator with the same documentation regardless of

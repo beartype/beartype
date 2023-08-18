@@ -35,7 +35,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #            RecursiveTypeHint = List['RecursiveTypeHint']
 #            NonrecursiveTypeHint = list
 #
-#            @beartype(arg_to_type_hint_names={
+#            @beartype(_arg_to_type_hint_names={
 #                'muh_first_arg': 'RecursiveTypeHint',
 #                'muh_other_arg': 'NonrecursiveTypeHint',
 #            })
@@ -44,13 +44,66 @@ This private submodule is *not* intended for importation by downstream callers.
 #                muh_other_arg: NonrecursiveTypeHint,
 #                muh_final_arg: list[int],  # <-- *NOT A PYTHON IDENTIFIER*
 #            ) -> None: ...
+#
+#        Note that our prospective "_arg_to_type_hint_names" parameter is
+#        intentionally privatized.
+#
 #        Feasible? Certainly. Non-trivial? Certainly. *shrug*
+#  * Additionally, note that even the above doesn't suffice. Yes, it *DOES*
+#    suffice for the trivial case of a recursive type hint passed as a root type
+#    hint. But what about the non-trivial case of a recursive type hint embedded
+#    in a parent type hint (e.g., "set[RecursiveTypeHint]")? To properly handle
+#    this, we would need to... do what exactly? We have *NO* idea. Is this even
+#    worth doing if we can't reasonably detect embedded recursive type hints?
+#    *sigh*
+#  * It might make more sense to attempt to:
+#    * Detect attribute assignments that appear to be defining recursive type
+#      hints. Ugh. The issue here is that we could conceivably do so for the
+#      current submodule but *NOT* across module boundaries (without caching an
+#      insane amount of on-disk metadata, anyway).
+#    * Pass a tuple of the names of all such attributes to @beartype.
+#    Okay. So, we're agreed we are *NOT* doing that. NO ON-DISK CACHING... yet.
+#  * Perhaps we can, indeed, detect embedded recursive type hints by:
+#    * Parsing apart something like "set[RecursiveTypeHint]" into the frozen set
+#      of all Python identifiers referenced by that type hint. In this case,
+#      that would be "frozenset(('set', 'RecursiveTypeHint'))". Of course, we
+#      could further optimize this by excluding builtin names (e.g., "set").
+#      Seems reasonable... maybe? Presumably, this requires recursively visiting
+#      each root type hint AST node to iteratively construct this frozen set.
+#  * *OH. OH, BOY.* I sorta figured out how to detect embedded recursive type
+#    hints -- but it's insane. Just passing frozen sets or whatever doesn't
+#    work, because that approach invites obvious false positives in various edge
+#    cases. The *ONLY* approach that is robust, deterministic, and failure-proof
+#    against all edge cases is to pass *THE AST NODE ENCAPSULATING EACH TYPE
+#    HINT* to @beartype. We pass AST nodes; not the names of type hints: e.g.,
+#            from typing import List
+#            RecursiveTypeHint = List['RecursiveTypeHint']
+#            NonrecursiveTypeHint = list
+#
+#            @beartype(_arg_to_type_hint_node={
+#                'muh_first_arg': AstNode(name='set[RecursiveTypeHint]'),  # <-- fake AST node, obviously
+#                'muh_other_arg': AstNode(name='NonrecursiveTypeHint'),    # <-- more faking just for show
+#            })
+#            def muh_func(
+#                muh_first_arg: set[RecursiveTypeHint],
+#                muh_other_arg: NonrecursiveTypeHint,
+#            ) -> None: ...
+#
+#    Fairly convinced that would work. The idea here is that our code generation
+#    algorithm would iteratively visit each child AST node in parallel to the
+#    actual child type hint that it is currently visiting. Doing so enables
+#    @beartype to then decide whether a type hint is recursive or not... in
+#    theory, anyway. Note, however, that this is still *EXTREMELY* non-trivial.
+#    Like, our code generation algorithm would probably need to maintain an
+#    internal stack of the names of all parent type hints on the current path to
+#    the currently visited child type hint. lolwut?
 #  * Raise a human-readable exception when detecting a recursive type hint. This
 #    is better than raising a non-human-readable exception, which we currently
 #    do. Naturally, eventually, we should instead...
-#  * Dynamically generate a new recursive type-checking tester function that
-#    recursively calls itself indefinitely. If doing so generates a
-#    "RecursionError", @beartype considers that the user's problem. *wink*
+#  * Dynamically generate a new recursive type-checking
+#    BeartypeForwardRef_{attr_name}.is_instance() tester method that recursively
+#    calls itself indefinitely. If doing so generates a "RecursionError",
+#    @beartype considers that the user's problem. *wink*
 #
 #Let's revisit this when we've at least finalized the initial implementation of
 #"BeartypeForwardScope", please.

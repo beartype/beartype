@@ -1672,7 +1672,7 @@
 #* In that submodule:
 #  * Rename the existing @beartype decorator to beartype_template(). That
 #    function will now only be called internally rather than externally.
-#* Define a new private "beartype._decor.cache.cachedecor" submodule.
+#* Define a new private "beartype._decor.decorcache" submodule.
 #* In that submodule:
 #  * Define a new "BEARTYPE_PARAMS_TO_DECOR" dictionary mapping from a *TUPLE*
 #    of positional arguments listed in the exact same order as the optional

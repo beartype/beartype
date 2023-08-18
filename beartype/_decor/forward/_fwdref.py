@@ -38,21 +38,6 @@ non-global attributes that are accessible only from a closure scope), and so on
 via non-trivial call stack inspection.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: Honestly, does this submodule actually need to exist, really? Sure, we
-#went to a great deal of effort to implement all of this -- but it kinda all
-#seems for naught, now. After all, shouldn't we simply generalize the "fwdtype"
-#submodule to handle these edge cases -- or has the "Beartypistry" generally
-#outlived its usefulness? Should we instead obsolete the "fwdtype" submodule in
-#favour of this submodule? I honestly have no idea.
-#
-#Consider recursive type hints, which leverage relative forward references. It
-#seems likely that *THIS* submodule rather than the "fwdtype" submodule will be
-#required to resolve recursive type hints. Notably, the
-#_BeartypeForwardRefMeta.__instancecheck__() method can be generalized to at
-#least detect recursion... maybe? Or should that detection instead be handled
-#in the higher-level "fwdscope" submodule? *UGH*! So hard. Y dis so hard. *sigh*
-
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import (
@@ -116,14 +101,9 @@ class _BeartypeForwardRefMeta(type):
             class referenced by this forward reference subclass.
         '''
 
-        # Return true only if this object is an instance of the external class
-        # referenced by this forward reference.
-        #
-        # Note that this is "good enough" for now. Our existing "bear_typistry"
-        # dictionary already handles lookup-based resolution and caching of
-        # forward references at runtime; so, just defer to that for now as the
-        # trivial solution. Next!
-        return isinstance(obj, bear_typistry[cls.attr_name])
+        # Return true only if this forward reference subclass insists that this
+        # object satisfies the external class referenced by this subclass.
+        return cls.is_instance(obj)
 
 # ....................{ SUPERCLASSES                       }....................
 #FIXME: Unit test us up, please.
@@ -160,11 +140,39 @@ class _BeartypeForwardRefABC(object, metaclass=_BeartypeForwardRefMeta):
         Prohibit instantiation by unconditionally raising an exception.
         '''
 
-        # 
+        # Instantiatable. It's a word or my username isn't @UncleBobOnAStick.
         raise BeartypeDecorHintForwardRefException(
             f'{repr(_BeartypeForwardRefABC)} subclass '
             f'{repr(cls)} not instantiatable.'
         )
+
+    # ....................{ TESTERS                        }....................
+    @classmethod
+    def is_instance(cls, obj: object) -> bool:
+        '''
+        :data:`True` only if the passed object is an instance of the external
+        class referred to by this forward reference.
+
+        Parameters
+        ----------
+        obj : object
+            Arbitrary object to be tested.
+
+        Returns
+        ----------
+        bool
+            :data:`True` only if this object is an instance of the external
+            class referred to by this forward reference subclass.
+        '''
+
+        # Return true only if this object is an instance of the external class
+        # referenced by this forward reference.
+        #
+        # Note that this is "good enough" for now. Our existing "bear_typistry"
+        # dictionary already handles lookup-based resolution and caching of
+        # forward references at runtime; so, just defer to that for now as the
+        # trivial solution. Next!
+        return isinstance(obj, bear_typistry[cls.attr_name])
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
