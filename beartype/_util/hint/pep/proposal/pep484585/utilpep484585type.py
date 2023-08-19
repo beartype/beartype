@@ -31,14 +31,14 @@ from beartype._util.cls.pep.utilpep3119 import (
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
     get_hint_pep484585_args_1)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    HINT_PEP484585_FORWARDREF_UNION)
+    Pep484585ForwardRef)
 from typing import (
     Type as typing_Type,  # <-- intentional to distinguish from "type" below
 )
 
 # ....................{ HINTS ~ private                    }....................
 _HINT_PEP484585_SUBCLASS_ARGS_1_UNION = Union[
-    type, Tuple[type], TypeVar, HINT_PEP484585_FORWARDREF_UNION,]
+    type, Tuple[type], TypeVar, Pep484585ForwardRef,]
 '''
 Union of the types of all permissible :pep:`484`- or :pep:`585`-compliant
 **subclass type hint arguments** (i.e., PEP-compliant child type hints

@@ -10,7 +10,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.hint.datahinttyping import MappingKeysStr
+from beartype._data.hint.datahinttyping import MappingStrToAny
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.py.utilpyversion import IS_PYTHON_3_8
 
@@ -175,4 +175,4 @@ def reduce_hint_pep589(
     # reducing this hint to a "Mapping" type hint. Yes, "Mapping" rather than
     # "dict". By PEP 589 edict:
     #     First, any TypedDict type is consistent with Mapping[str, object].
-    return MappingKeysStr
+    return MappingStrToAny

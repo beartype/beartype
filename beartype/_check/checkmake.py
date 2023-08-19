@@ -13,9 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Create a new make_func_raiser_code() factory. After doing so, refactor
-#the lower-level beartype._decor.wrap._wrapcode.make_func_wrapper_code()
-#factory in terms of that higher-level make_func_raiser_code() factory, please.
+#FIXME: [SPEED] Create a new make_func_raiser_code() factory. After doing so,
+#refactor the lower-level
+#beartype._decor.wrap._wrapcode.make_func_wrapper_code() factory in terms of
+#that higher-level make_func_raiser_code() factory, please.
 #
 #Note that doing so *WILL* prove non-trivial. That's why this submodule has
 #currently focused only on the make_func_tester_code() factory. Why the

@@ -209,7 +209,15 @@ func_wrapper_scope, hint_forwardrefs_class_basename)``, where:
 '''
 
 # ....................{ HINTS ~ dict                       }....................
-MappingKeysStr = Mapping[str, object]
+DictStrToAny = Dict[str, object]
+'''
+PEP-compliant type hint matching a dictionary whose keys are *all* strings
+(e.g., keyword arguments ``**kwargs`` dictionary, object ``__dict__``
+dictionary).
+'''
+
+
+MappingStrToAny = Mapping[str, object]
 '''
 PEP-compliant type hint matching a mapping whose keys are *all* strings.
 '''

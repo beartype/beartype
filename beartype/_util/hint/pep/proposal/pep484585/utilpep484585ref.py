@@ -50,7 +50,7 @@ harms space and time complexity at runtime with *no* concomitant benefits.
 
 
 #FIXME: Shift into "datatyping", please.
-HINT_PEP484585_FORWARDREF_UNION = Union[str, HINT_PEP484_FORWARDREF_TYPE]
+Pep484585ForwardRef = Union[str, HINT_PEP484_FORWARDREF_TYPE]
 '''
 Union of all :pep:`484`- or :pep:`585`-compliant **forward reference types**
 (i.e., classes of all forward reference objects).
@@ -118,7 +118,7 @@ def die_unless_hint_pep484585_forwardref(
 #Right. So, we already have an is_identifier() tester; now, we just need to
 #define a new die_unless_identifier() validator.
 def get_hint_pep484585_forwardref_classname(
-    hint: HINT_PEP484585_FORWARDREF_UNION) -> str:
+    hint: Pep484585ForwardRef) -> str:
     '''
     Possibly unqualified classname referred to by the passed :pep:`484`- or
     :pep:`585`-compliant **forward reference type hint** (i.e., object
@@ -179,7 +179,7 @@ def get_hint_pep484585_forwardref_classname(
 
 #FIXME: Unit test against nested classes.
 def get_hint_pep484585_forwardref_classname_relative_to_object(
-    hint: HINT_PEP484585_FORWARDREF_UNION, obj: object) -> str:
+    hint: Pep484585ForwardRef, obj: object) -> str:
     '''
     Fully-qualified classname referred to by the passed **forward reference
     type hint** (i.e., object indirectly referring to a user-defined class that
@@ -262,7 +262,7 @@ def get_hint_pep484585_forwardref_classname_relative_to_object(
 #FIXME: Unit test us up, please.
 def import_pep484585_forwardref_type_relative_to_object(
     # Mandatory parameters.
-    hint: HINT_PEP484585_FORWARDREF_UNION,
+    hint: Pep484585ForwardRef,
     obj: object,
 
     # Optional parameters.
@@ -283,7 +283,7 @@ def import_pep484585_forwardref_type_relative_to_object(
 
     Parameters
     ----------
-    hint : HINT_PEP484585_FORWARDREF_UNION
+    hint : Pep484585ForwardRef
         Forward reference type hint to be resolved.
     obj : object
         Object to canonicalize the classname referred to by this forward
