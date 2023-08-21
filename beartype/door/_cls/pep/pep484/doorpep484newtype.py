@@ -13,6 +13,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.pep.pep484.doorpep484class import ClassTypeHint
+from beartype._util.cls.utilclsmake import make_type
+from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
     get_hint_pep484_newtype_alias)
 
@@ -29,14 +31,11 @@ class NewTypeTypeHint(ClassTypeHint):
         # Initialize the superclass with all passed parameters.
         super().__init__(hint)
 
-        # User-defined class aliased by this "NewType" type hint.
-        newtype_class = get_hint_pep484_newtype_alias(hint)
+        # Non-new type type hint encapsulated by this new type.
+        hint_embedded = get_hint_pep484_newtype_alias(hint)
 
-        # We want to "create" an origin for this NewType that treats the newtype
-        # as a subclass of its supertype. For example, if the hint is
-        # "NewType("MyType", str)", then the origin should be
-        # "class MyString(str): pass".
-        try:
+        # If this non-new type hint is a class...
+        if is_type_subclass(hint_embedded, type):
             #FIXME: Define a new get_hint_pep484_newtype_name() getter ala:
             #    def get_hint_pep484_newtype_name(
             #        hint: Any, exception_prefix: str = '') -> type:
@@ -44,15 +43,28 @@ class NewTypeTypeHint(ClassTypeHint):
             #        #"__name__" instance variable to exist? No idea. *sigh*
             #        return getattr(hint, '__name__')
             #Then, call that below in lieu of the "name = getattr(...)" call.
+            # Unqualified basename of the new subclass of this class to be
+            # created below.
+            hint_name = getattr(hint, '__name__', str(hint))
 
-            # Dynamically synthesize a new subclass.
+            # Dynamically synthesize a new subclass of this class with the name
+            # of this new type, effectively fabricating a fake origin type
+            # treating this new type as a subclass of this class. For example,
+            # if this new type is "NewType("MyType", str)", then this logic
+            # fabricates a fake origin type resembling:
+            #     class MyString(str): pass
             #
             # Note that this would typically be non-ideal due to explosive space
             # and time consumption. Thankfully, however, "TypeHint" wrappers are
             # cached; the "_TypeHintMeta" metaclass guarantees this __init__()
             # method to be called exactly once for each "NewType" type hint.
-            name = getattr(hint, '__name__', str(hint))
-            self._origin = type(name, (newtype_class,), {})
-        # Not all types are subclassable (e.g., "Any").
-        except TypeError:
-            self._origin = newtype_class
+            self._origin = make_type(
+                type_name=hint_name,
+                type_bases=(hint_embedded,),  # type: ignore[arg-type]
+            )
+        # Else, this non-new type hint is a non-class (e.g., "Any"). In this
+        # case, preserve this non-class as is.
+        else:
+            #FIXME: This can't be right. Isn't "self._origin" supposed to *ONLY*
+            #be a class? Mypy complaints are probably justified here, frankly.
+            self._origin = hint_embedded  # type: ignore[assignment]

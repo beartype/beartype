@@ -1000,7 +1000,7 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
 
         # ................{ NEWTYPE                            }................
-        # New type aliasing a non-ignorable type.
+        # New type encapsulating a non-ignorable type.
         HintPepMetadata(
             hint=NewType('TotallyNotAStr', str),
             pep_sign=HintSignNewType,
@@ -1021,6 +1021,33 @@ def add_data(data_module: 'ModuleType') -> None:
                 HintPithUnsatisfiedMetadata((
                     'Of Common Street‐harrying barrens',
                     'Of harmony, harm’s abetting Harlem bedlam, and',
+                )),
+            ),
+        ),
+
+        # New type encapsulating a new type encapsulating a non-ignorable type.
+        HintPepMetadata(
+            hint=NewType(
+                'NewTypeBytes', NewType('TotallyNotABytes', bytes)),
+            pep_sign=HintSignNewType,
+            typehint_cls=NewTypeTypeHint,
+            # "typing.NewType" type hints are always declared by that module.
+            is_typing=True,
+            # If the active Python interpreter targets:
+            # * Python >= 3.10, "typing.NewType" type hints are instances of
+            #   that class -- which is thus declared by the "typing" module.
+            # * Else, "typing.NewType" type hints are merely pure-Python
+            #   closures of the pure-Python function type -- which is *NOT*
+            #   declared by the "typing" module.
+            is_type_typing=IS_PYTHON_AT_LEAST_3_10,
+            piths_meta=(
+                # Bytestring constant.
+                HintPithSatisfiedMetadata(
+                    b"His rest and food. Nature's most secret steps"),
+                # Tuple of bytestring constants.
+                HintPithUnsatisfiedMetadata((
+                    b"He like her shadow has pursued, where'er",
+                    b'The red volcano overcanopies',
                 )),
             ),
         ),

@@ -146,7 +146,7 @@ def _init() -> None:
     from beartype._util.utilobject import is_object_hashable
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata)
-    from beartype_test.a00_unit.data.hint.pep.mod import (
+    from beartype_test.a00_unit.data.hint.pep.module import (
         _data_hintmodnumpy)
     from beartype_test.a00_unit.data.hint.pep.proposal import (
         data_pep484,

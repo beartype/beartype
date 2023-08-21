@@ -70,7 +70,7 @@ else:
 
 
 is_hint_pep484_newtype_pre_python310.__doc__ = '''
-    ``True`` only if the passed object is a Python < 3.10-specific
+    :data:`True` only if the passed object is a Python < 3.10-specific
     :pep:`484`-compliant **new type** (i.e., closure created and returned by
     the :func:`typing.NewType` closure factory function).
 
@@ -100,16 +100,17 @@ is_hint_pep484_newtype_pre_python310.__doc__ = '''
     Returns
     ----------
     bool
-        ``True`` only if this object is a Python < 3.10-specific
+        :data:`True` only if this object is a Python < 3.10-specific
         :pep:`484`-compliant new type.
     '''
 
 # ....................{ GETTERS                            }....................
 def get_hint_pep484_newtype_alias(
-    hint: Any, exception_prefix: str = '') -> type:
+    hint: Any, exception_prefix: str = '') -> object:
     '''
-    User-defined class aliased by the passed :pep:`484`-compliant **new type**
-    (i.e., object created and returned by the :func:`typing.NewType` type hint
+    **Non-new type type hint** (i.e., PEP-compliant type hint that is *not* a
+    new type) encapsulated by the passed **new type** (i.e., object created and
+    returned by the :pep:`484`-compliant :func:`typing.NewType` type hint
     factory).
 
     This getter is intentionally *not* memoized (e.g., by the
@@ -126,13 +127,13 @@ def get_hint_pep484_newtype_alias(
 
     Returns
     ----------
-    type
-        User-defined class aliased by this :pep:`484`-compliant new type.
+    object
+        Non-new type type hint encapsulated by this new type.
 
     Raises
     ----------
     BeartypeDecorHintPep484Exception
-        If this object is *not* a :pep:`484`-compliant new type.
+        If this object is *not* a new type.
 
     See Also
     ----------
@@ -141,32 +142,54 @@ def get_hint_pep484_newtype_alias(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_sign,
+        get_hint_pep_sign_or_none,
+    )
 
-    # If this object is *NOT* a PEP 484-compliant "NewType" hint, raise an
-    # exception.
+    # If this object is *NOT* a new type, raise an exception.
     if get_hint_pep_sign(hint) is not HintSignNewType:
         raise BeartypeDecorHintPep484Exception(
             f'{exception_prefix}type hint {repr(hint)} not "typing.NewType".')
-    # Else, this object is a PEP 484-compliant "NewType" hint.
+    # Else, this object is a new type.
 
-    # Return the unqualified classname referred to by this reference. Note
-    # that this requires violating privacy encapsulation by accessing a dunder
-    # instance variable unique to closures created by the typing.NewType()
-    # closure factory function.
-    return hint.__supertype__
+    # While the Universe continues infinitely expanding...
+    while True:
+        # Reduce this new type to the type hint encapsulated by this new type,
+        # which itself is possibly a nested new type. Oh, it happens.
+        hint = hint.__supertype__
+
+        # If this type hint is *NOT* a nested new type, break this iteration.
+        if get_hint_pep_sign_or_none(hint) is not HintSignNewType:
+            break
+        # Else, this type hint is a nested new type. In this case, continue
+        # iteratively unwrapping this nested new type.
+
+    # Return this non-new type type hint.
+    return hint
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_newtype(
-    hint: object, exception_prefix: str, *args, **kwargs) -> type:
+    hint: object, exception_prefix: str, *args, **kwargs) -> object:
     '''
-    Reduce the passed :pep:`484`-compliant **new type** (i.e., object created
-    and returned by the :func:`typing.NewType` type hint factory) to the
-    # user-defined class aliased by this new type.
+    Reduce the passed **new type** (i.e., object created and returned by the
+    :pep:`484`-compliant :func:`typing.NewType` type hint factory) to the
+    **non-new type type hint** (i.e., PEP-compliant type hint that is *not* a
+    new type) encapsulated by this new type.
 
     This reducer is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
     to an efficient one-liner.
+
+    Caveats
+    ----------
+    **This reducer has worst-case linear time complexity** :math:`O(k)` for
+    :math:`k` the number of **nested new types** (e.g., :math:`k = 2` for the
+    doubly nested new type ``NewType('a', NewType('b', int))``) embedded within
+    this new type. Pragmatically, this reducer has average-case constant time
+    complexity :math:`O(1)`. Why? Because nested new types are extremely rare.
+    Almost all real-world new types are non-nested. Indeed, it took three years
+    for a user to submit an issue presenting the existence of a nested new type.
 
     Parameters
     ----------
@@ -181,9 +204,14 @@ def reduce_hint_pep484_newtype(
     Returns
     ----------
     type
-        User-defined class aliased by this :pep:`484`-compliant new type.
+        Non-new type type hint encapsulated by this new type.
     '''
 
-    # Reduce this new type to the user-defined class aliased by this new type.
+    # Reduce this new type to the non-new type type hint encapsulated by this
+    # new type.
+    #
+    # Note that this reducer *CANNOT* be reduced to an efficient alias of the
+    # get_hint_pep484_newtype_alias() getter, as this reducer accepts ignorable
+    # arguments *NOT* accepted by that getter.
     return get_hint_pep484_newtype_alias(
         hint=hint, exception_prefix=exception_prefix)
