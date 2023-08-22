@@ -42,8 +42,8 @@ from beartype._conf.confcache import (
     beartype_conf_args_to_conf,
     beartype_conf_lock,
 )
-from beartype._conf._confget import get_is_color
 from beartype._conf.confenum import BeartypeStrategy
+from beartype._conf._confget import get_is_color
 from beartype._data.hint.datahinttyping import (
     BoolTristateUnpassable,
     TypeWarning,

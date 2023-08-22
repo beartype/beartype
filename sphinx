@@ -62,7 +62,12 @@ SPHINX_BUILD_ARGS=(
     #     sphinx-build: error: argument -d: expected one argument
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    # Convert non-fatal warnings into fatal errors for safety.
+    # Suffix raised exceptions with tracebacks. This is *CRITICAL.* By default,
+    # Sphinx insanely emits *ONLY* useless exception messages.
+    -T,
+
+    # Treat non-fatal warnings as fatal errors. This is *CRITICAL.* By default,
+    # Sphinx insanely emits non-fatal warnings for fatal errors... Not kidding.
     -W
 
     #FIXME: Uncomment this when caching issues inevitably arise.

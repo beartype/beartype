@@ -306,7 +306,8 @@ def resolve_hint(
                     #to this submodule, please.
                     exception_cls=BeartypePep563Exception,
                 )
-                #FIXME: Pick up here tomorrow, please.
+                #FIXME: Pick up here tomorrow, please. When doing so, please
+                #incorporate our "BeartypeForwardScope" class, please.
 
             # Else, the decorated callable is global and is thus guaranteed to
             # have an empty local scope. In this common case, avoid uselessly

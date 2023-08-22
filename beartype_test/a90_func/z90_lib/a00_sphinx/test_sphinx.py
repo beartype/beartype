@@ -64,6 +64,15 @@ def test_sphinx_docs_other(tmp_path) -> None:
         # Although technically arbitrary, this is the typical default mode.
         '-b', 'html',
 
+        # Suffix raised exceptions with tracebacks. This is *CRITICAL.* By
+        # default, Sphinx insanely emits *ONLY* useless exception messages for
+        # fatal "autodoc" errors resembling:
+        #     WARNING: autodoc: failed to import module 'beartype_sphinx'; the
+        #     following exception was raised:
+        #     cannot import name 'BeartypeConf' from partially initialized
+        #     module 'beartype' (most likely due to a circular import)
+        '-T',
+
         # Treat non-fatal warnings as fatal errors. This is *CRITICAL.* By
         # default, Sphinx insanely emits non-fatal warnings for fatal "autodoc"
         # errors resembling:

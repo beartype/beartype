@@ -24,7 +24,7 @@ from threading import Lock
 if TYPE_CHECKING:
     from beartype import BeartypeConf
 # Else, avoid importing the "BeartypeConf" class. Why? Because doing so would
-# cause a circular import dependency. *facepalm*
+# induce a circular import dependency. *facepalm*
 
 # ....................{ LOCKS                              }....................
 beartype_conf_lock = Lock()
