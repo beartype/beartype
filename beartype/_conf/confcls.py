@@ -14,17 +14,10 @@ callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Unit test *EVERYTHING* pertaining to the newly defined
-#${BEARTYPE_IS_COLOR} environment variable, please.
-
 #FIXME: [DOCOS] Document all newly defined configuration parameters in our
 #reST-formatted docos, please -- including:
 #* "claw_is_pep526".
 #* "coerce_decorator_exception_to_warning_category".
-
-#FIXME: Refactor to use @dataclass.dataclass once we drop Python 3.7 support.
-#Note that doing so will require usage of "frozen=True" to prevent unwanted
-#modification of read-only properties.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
@@ -38,10 +31,6 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._conf.confcache import (
-    beartype_conf_args_to_conf,
-    beartype_conf_lock,
-)
 from beartype._conf.confenum import BeartypeStrategy
 from beartype._conf._confget import get_is_color
 from beartype._data.hint.datahinttyping import (
@@ -50,6 +39,7 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
 from beartype._util.cls.utilclstest import is_type_subclass
+from threading import Lock
 
 # ....................{ CLASSES                            }....................
 class BeartypeConf(object):
@@ -421,7 +411,7 @@ class BeartypeConf(object):
         # non-reentrant thread locks are reasonably fast to enter, and since the
         # cost of race conditions is high, this lock does no real-world harm and
         # may actually do a great deal of real-world good. Safety first, all!
-        with beartype_conf_lock:
+        with _beartype_conf_lock:
             # ..................{ CACHE                      }..................
             # Validate and possibly override the "is_color" parameter by the
             # value of the ${BEARTYPE_IS_COLOR} environment variable (if set).
@@ -440,8 +430,8 @@ class BeartypeConf(object):
             # If this method has already instantiated a configuration with these
             # parameters, return that configuration for consistency and
             # efficiency.
-            if conf_args in beartype_conf_args_to_conf:
-                return beartype_conf_args_to_conf[conf_args]
+            if conf_args in _beartype_conf_args_to_conf:
+                return _beartype_conf_args_to_conf[conf_args]
 
             # ..................{ VALIDATE                   }..................
             # Else, this method has yet to instantiate a configuration with
@@ -543,7 +533,7 @@ class BeartypeConf(object):
             self._strategy = strategy
 
             # Cache this configuration with all relevant dictionary singletons.
-            beartype_conf_args_to_conf[conf_args] = self
+            _beartype_conf_args_to_conf[conf_args] = self
 
             # Store data structures encapsulating these passed parameters for
             # subsequent reuse.
@@ -792,6 +782,30 @@ class BeartypeConf(object):
             f', warning_cls_on_decorator_exception={repr(self._warning_cls_on_decorator_exception)}'
             f')'
         )
+
+# ....................{ PRIVATE ~ globals                  }....................
+_beartype_conf_lock = Lock()
+'''
+**Non-reentrant beartype configuration thread lock** (i.e., low-level thread
+locking mechanism implemented as a highly efficient C extension, defined as an
+global for non-reentrant reuse elsewhere as a context manager).
+'''
+
+
+_beartype_conf_args_to_conf: Dict[tuple, BeartypeConf] = {}
+'''
+Non-thread-safe **beartype configuration parameter cache** (i.e., dictionary
+mapping from the hash of each set of parameters accepted by a prior call of the
+:meth:`BeartypeConf.__new__` instantiator to the unique :class:`BeartypeConf`
+instance instantiated by that call).
+
+Caveats
+----------
+**This cache is non-thread-safe.** However, since this cache is only used as a
+memoization optimization, the only harmful consequences of a race condition
+between threads contending over this cache is a mildly inefficient (but
+otherwise harmless) repeated re-memoization of duplicate configurations.
+'''
 
 # ....................{ GLOBALS                            }....................
 # This global is intentionally defined *AFTER* all other attributes above, which
