@@ -59,7 +59,7 @@ def get_func_globals(
         the passed callable. Defaults to 0.
     exception_cls : Type[Exception], optional
         Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`_BeartypeUtilCallableException`.
+        to :class:`._BeartypeUtilCallableException`.
 
     Returns
     ----------
@@ -181,7 +181,7 @@ def get_func_locals(
         the passed callable. Defaults to 0.
     exception_cls : Type[Exception], optional
         Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`_BeartypeUtilCallableException`.
+        to :class:`._BeartypeUtilCallableException`.
 
     Returns
     ----------

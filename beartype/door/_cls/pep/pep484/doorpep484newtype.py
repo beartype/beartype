@@ -14,7 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.pep.pep484.doorpep484class import ClassTypeHint
 from beartype._util.cls.utilclsmake import make_type
-from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
     get_hint_pep484_newtype_alias)
 
@@ -35,7 +34,7 @@ class NewTypeTypeHint(ClassTypeHint):
         hint_embedded = get_hint_pep484_newtype_alias(hint)
 
         # If this non-new type hint is a class...
-        if is_type_subclass(hint_embedded, type):
+        if isinstance(hint_embedded, type):
             #FIXME: Define a new get_hint_pep484_newtype_name() getter ala:
             #    def get_hint_pep484_newtype_name(
             #        hint: Any, exception_prefix: str = '') -> type:

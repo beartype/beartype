@@ -12,15 +12,6 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.claw._pkg.clawpkgenum import BeartypeClawCoverage
-from beartype.claw._pkg.clawpkgtrie import (
-    PackagesTrie,
-    iter_packages_trie,
-    remove_beartype_pathhook_unless_packages_trie,
-)
-from beartype.claw._importlib.clawimppath import (
-    add_beartype_pathhook,
-    # remove_beartype_pathhook,
-)
 from beartype.roar import (
     BeartypeClawDecorWarning,
     BeartypeClawHookException,
@@ -30,7 +21,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._conf.confcls import BeartypeConf
-from beartype._util.text.utiltextident import is_identifier
+from beartype._util.text.utiltextident import die_unless_identifier
 from collections.abc import Iterable as IterableABC
 
 # ....................{ PRIVATE ~ factories                }....................
@@ -214,10 +205,11 @@ def make_package_names_from_args(
             #
             # If this package name is *NOT* a valid Python identifier, raise an
             # exception.
-            elif not is_identifier(package_name):
-                raise BeartypeClawHookException(
-                    f'Package name {repr(package_name)} invalid '
-                    f'(i.e., not "."-delimited Python identifier).'
+            else:
+                die_unless_identifier(
+                    text=package_name,
+                    exception_cls=BeartypeClawHookException,
+                    exception_prefix='Package name ',
                 )
             # Else, this package name is a valid Python identifier.
 

@@ -17,6 +17,11 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
+# Note that the related test_is_func_nested() unit test is intentionally defined
+# in the companion "test_utilfuncscope" submodule rather than this submodule.
+# Why? Convenience, mostly. That submodule defines various callables of interest
+# that dramatically simplify the implementation of that unit test.
+
 def test_is_func_lambda() -> None:
     '''
     Test the

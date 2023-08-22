@@ -181,8 +181,8 @@ in both configuration and decoration modes.
 LexicalScope = Dict[str, Any]
 '''
 PEP-compliant type hint matching a **lexical scope** (i.e., dictionary mapping
-from the name to value of each locally or globally scoped variable accessible
-to a callable or class).
+from the relative unqualified name to value of each locally or globally scoped
+attribute accessible to a callable or class).
 '''
 
 

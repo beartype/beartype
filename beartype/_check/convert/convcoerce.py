@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **PEP-agnostic type hint coercers** (i.e., mid-level callables
+Beartype **PEP-agnostic type hint coercers** (i.e., mid-level callables
 *permanently* converting type hints from one format into another, either
 losslessly or in a lossy manner).
 
@@ -24,9 +24,9 @@ This private submodule is *not* intended for importation by downstream callers.
 #iterables, which can *ALWAYS* be safely rewritten to be hashable (e.g.,
 #coercing "callable[[], None]" to "callable[(), None]").
 
-#FIXME: coerce_hint() should also coerce PEP 544-compatible protocols *NOT*
-#decorated by @typing.runtime_checkable to be decorated by that decorator, as
-#such protocols are unusable at runtime. Yes, we should always try something
+#FIXME: [PEP 544] coerce_hint() should also coerce PEP 544-compatible protocols
+#*NOT* decorated by @typing.runtime_checkable to be decorated by that decorator,
+#as such protocols are unusable at runtime. Yes, we should always try something
 #*REALLY* sneaky and clever.
 #
 #Specifically, rather than accept "typing" nonsense verbatim, we could instead:
@@ -62,6 +62,7 @@ from beartype._cave._cavefast import NotImplementedType
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
 from beartype._check.checkcall import BeartypeCall
+from beartype._check.forward.fwdhint import resolve_hint
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.hint.utilhinttest import is_hint_uncached
 from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
@@ -92,10 +93,10 @@ def coerce_func_hint_root(
     This function *cannot* be meaningfully memoized, since the passed type hint
     is *not* guaranteed to be cached somewhere. Only functions passed cached
     type hints can be meaningfully memoized. Since this high-level function
-    internally defers to unmemoized low-level functions that are ``O(n)`` in
-    ``n`` the size of the inheritance hierarchy of this hint, this function
-    should be called sparingly. See the :mod:`beartype._decor.cache.cachehint`
-    submodule for further details.
+    internally defers to unmemoized low-level functions that are :math:`O(n)`
+    for :math:``n` the size of the inheritance hierarchy of this hint, this
+    function should be called sparingly. See the
+    :mod:`beartype._decor.cache.cachehint` submodule for further details.
 
     Parameters
     ----------
@@ -125,6 +126,24 @@ def coerce_func_hint_root(
     assert isinstance(arg_name, str), f'{arg_name} not string.'
     assert bear_call.__class__ is BeartypeCall, (
         f'{repr(bear_call)} not @beartype call.')
+
+    # ..................{ FORWARD REFERENCE                  }..................
+    # If this hint is stringified (e.g., as a PEP 484- or 563-compliant forward
+    # reference), resolve this hint to the non-string hint to which this hint
+    # refers *BEFORE* performing any subsequent logic with this hint -- *ALL* of
+    # which assumes this hint to be a non-string hint.
+    if isinstance(hint, str):
+        pass
+
+        #FIXME: Uncomment once worky, please. *sigh*
+        # hint = resolve_hint(
+        #     hint=hint,
+        #     bear_call=bear_call,
+        #     exception_prefix=exception_prefix,
+        # )
+    # Else, this hint is *NOT* stringified.
+    #
+    # In either case, this hint is guaranteed to now be a non-string hint.
 
     # ..................{ MYPY                               }..................
     # If...

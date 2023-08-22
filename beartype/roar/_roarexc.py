@@ -943,7 +943,7 @@ class _BeartypeDecorBeartypistryException(BeartypeDecorException):
     This exception is raised at decoration time from the
     :func:`beartype.beartype` decorator when erroneously accessing the
     **beartypistry** (i.e.,
-    :class:`beartype._decor.forward.fwdtype.bear_typistry` singleton).
+    :class:`beartype._check.forward.fwdtype.bear_typistry` singleton).
 
     This private exception denotes a critical internal issue and should thus
     *never* be raised -- let alone exposed to end users.
@@ -1216,20 +1216,6 @@ class _BeartypeUtilPathException(_BeartypeUtilException):
     pass
 
 
-class _BeartypeUtilTextException(_BeartypeUtilException):
-    '''
-    **Beartype text utility exception.**
-
-    This exception is raised by various functions of the private
-    :mod:`beartype._util.text` subpackage.
-
-    This exception denotes a critical internal issue and should thus *never* be
-    raised -- let alone allowed to percolate up the call stack to end users.
-    '''
-
-    pass
-
-
 class _BeartypeUtilTypeException(_BeartypeUtilException):
     '''
     **Beartype class utility exception.**
@@ -1303,7 +1289,7 @@ class _BeartypeUtilObjectNameException(_BeartypeUtilObjectException):
 # ....................{ PRIVATE ~ util : python              }..................
 class _BeartypeUtilPythonException(_BeartypeUtilException):
     '''
-    Abstract base class of all **beartype Python utility exceptions.**
+    Abstract base class of all beartype **Python utility exceptions.**
 
     Instances of subclasses of this exception are raised by private submodules
     of the private :mod:`beartype._util.py` subpackage. These exceptions
@@ -1316,7 +1302,7 @@ class _BeartypeUtilPythonException(_BeartypeUtilException):
 
 class _BeartypeUtilPythonInterpreterException(_BeartypeUtilPythonException):
     '''
-    **Beartype Python interpreter utility exception.**
+    Beartype **Python interpreter utility exception.**
 
     This exception is raised by private functions of the private
     :mod:`beartype._util.py.utilpyinterpreter` submodule on fatal edge cases.
@@ -1329,11 +1315,38 @@ class _BeartypeUtilPythonInterpreterException(_BeartypeUtilPythonException):
 
 class _BeartypeUtilPythonWeakrefException(_BeartypeUtilPythonException):
     '''
-    **Beartype Python weak reference utility exception.**
+    Beartype **Python weak reference utility exception.**
 
     This exception is raised by private functions of the private
     :mod:`beartype._util.py.utilpyweakref` submodule on fatal edge cases. This
     exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+# ....................{ PRIVATE ~ util : text                }..................
+class _BeartypeUtilTextException(_BeartypeUtilException):
+    '''
+    Beartype **text utility exception.**
+
+    This exception is raised by various functions of the private
+    :mod:`beartype._util.text` subpackage.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilTextIdentifierException(_BeartypeUtilTextException):
+    '''
+    Beartype **Python identifier utility exception.**
+
+    This exception is raised by private functions of the private
+    :mod:`beartype._util.text.utiltextident` submodule on fatal edge cases.
+    This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
     '''
 

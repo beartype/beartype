@@ -44,7 +44,7 @@ from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
     ARG_NAME_RETURN_REPR,
 )
-from beartype._decor.forward.fwdtype import (
+from beartype._check.forward.fwdtype import (
     bear_typistry,
     register_typistry_forwardref,
 )

@@ -24,7 +24,7 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 
-# ....................{ VALIDATORS                         }....................
+# ....................{ RAISERS                            }....................
 def die_unless_type(
     # Mandatory parameters.
     cls: object,
@@ -41,15 +41,15 @@ def die_unless_type(
     cls : object
         Object to be validated.
     exception_cls : Type[Exception]
-        Type of exception to be raised. Defaults to
-        :exc:`_BeartypeUtilTypeException`.
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`._BeartypeUtilTypeException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
 
     Raises
     ----------
-    :exc:`exception_cls`
+    exception_cls
         If this object is *not* a class.
     '''
 
@@ -61,6 +61,7 @@ def die_unless_type(
             'f{repr(exception_prefix)} not string.')
 
         raise exception_cls(f'{exception_prefix}{repr(cls)} not class.')
+    # Else, this object is a class.
 
 
 #FIXME: Unit test us up.
@@ -81,15 +82,15 @@ def die_unless_type_or_types(
     type_or_types : object
         Object to be validated.
     exception_cls : Type[Exception]
-        Type of exception to be raised. Defaults to
-        :exc:`_BeartypeUtilTypeException`.
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`._BeartypeUtilTypeException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
 
     Raises
     ----------
-    :exc:`exception_cls`
+    exception_cls
         If this object is neither a class *nor* tuple of one or more classes.
     '''
 
@@ -134,12 +135,13 @@ def die_unless_type_or_types(
 
         # Raise this exception.
         raise exception_cls(f'{exception_message}.')
+    # Else, this object is either a class *OR* tuple of one or more classes.
 
 # ....................{ TESTERS                            }....................
 def is_type_or_types(type_or_types: object) -> bool:
     '''
-    ``True`` only if the passed object is either a class *or* tuple of one or
-    more classes.
+    :data:`True` only if the passed object is either a class *or* tuple of one
+    or more classes.
 
     Parameters
     ----------
@@ -149,7 +151,7 @@ def is_type_or_types(type_or_types: object) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this object is either a class *or* tuple of one or
+        :data:`True` only if this object is either a class *or* tuple of one or
         more classes.
     '''
 

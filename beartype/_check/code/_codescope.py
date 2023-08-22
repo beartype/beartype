@@ -39,7 +39,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #      previously called express_func_scope_type_forwardref() function, then
 #      *THIS REFERENCE INDICATES A RECURSIVE TYPE HINT.* In this case:
 #      * Replace this forward reference with a new recursive type-checking
-#        "beartype._decor.forward._fwdref.BeartypeForwardRef_{forwardref}"
+#        "beartype._check.forward._fwdref.BeartypeForwardRef_{forwardref}"
 #        subclass whose is_instance() tester method recursively calls itself
 #        indefinitely. If doing so generates a "RecursionError", @beartype
 #        considers that the user's problem. *wink*
@@ -50,7 +50,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.hint.datahinttyping import LexicalScope
-from beartype._decor.forward.fwdtype import (
+from beartype._check.forward.fwdtype import (
     TYPISTRY_HINT_NAME_TUPLE_PREFIX,
     bear_typistry,
     register_typistry_forwardref,

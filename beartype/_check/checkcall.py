@@ -16,6 +16,8 @@ from beartype.roar import BeartypeDecorWrappeeException
 from beartype.typing import (
     Callable,
     Dict,
+    FrozenSet,
+    Optional,
 )
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
@@ -33,7 +35,11 @@ from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj,
     # get_func_codeobj_or_none,
 )
-from beartype._util.func.utilfunctest import is_func_coro
+from beartype._util.func.utilfuncscope import get_func_globals
+from beartype._util.func.utilfunctest import (
+    is_func_coro,
+    is_func_nested,
+)
 from beartype._util.func.utilfuncwrap import (
     # unwrap_func_all,
     unwrap_func_all_closures_isomorphic,
@@ -80,8 +86,7 @@ class BeartypeCall(object):
     ----------
     cls_stack : TypeStack
         **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
-        ``None``). Defaults to ``None``. See also the parameter of the same name
-        accepted by the
+        :data:`None`). See also the parameter of the same name accepted by the
         :func:`beartype._decor.decorcore.beartype_object` function for details.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
@@ -108,6 +113,55 @@ class BeartypeCall(object):
         For efficiency, this code object should *always* be accessed in lieu of
         inefficiently calling the comparatively slower
         :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
+    func_wrappee_is_nested : bool
+        Either:
+
+        * If this wrappee callable is **nested** (i.e., declared in the body of
+          another pure-Python callable or class), :data:`True`.
+        * If this wrappee callable is **global** (i.e., declared at module scope
+          in its submodule), :data:`False`.
+    func_wrappee_scope_global : Optional[LexicalScope]
+        **Global scope** (i.e., dictionary mapping from the name to value of
+        each globally accessible attribute) of this wrappee callable.
+    func_wrappee_scope_nested_local : Optional[LexicalScope]
+        Either:
+
+        * If this wrappee callable is annotated by at least one **stringified
+          type hint** (i.e., declared as a :pep:`484`- or :pep:`563`-compliant
+          forward reference referring to an actual type hint that has yet to be
+          declared in the local and global scopes declaring this callable) that
+          :mod:`beartype` has already resolved to its referent, either:
+
+          * If this wrappee callable is **nested** (i.e., declared in the body
+            of another pure-Python callable or class), the **local scope**
+            (i.e., dictionary mapping from the name to value of each locally
+            accessible attribute) of this wrappee callable.
+          * Else, the empty dictionary.
+
+        * Else, :data:`None`.
+
+        Note that:
+
+        * The reconstruction of this local scope is computationally expensive
+          and thus deferred until needed to resolve a stringified type hint.
+        * All callables have local scopes *except* global functions, whose local
+          scopes are by definition the empty dictionary.
+    func_wrappee_scope_nested_names : Optional[frozenset[str]]
+        Either:
+
+        * If this wrappee callable is annotated by at least one stringified type
+          hint that :mod:`beartype` has already resolved to its referent,
+          either:
+
+          * If this wrappee callable is **nested** (i.e., declared in the body
+            of another pure-Python callable or class), the non-empty frozen set
+            of the unqualified names of all parent callables lexically
+            containing this nested wrappee callable (including this nested
+            wrappee callable itself).
+          * Else, this wrappee callable is declared at global scope in its
+            submodule. In this case, the empty frozen set.
+
+        * Else, :data:`None`.
     func_wrappee_wrappee : Optional[Callable]
         Possibly unwrapped **decorated callable wrappee** (i.e., low-level
         callable wrapped by the high-level :attr:`func_wrappee` callable
@@ -162,10 +216,14 @@ class BeartypeCall(object):
         'conf',
         'func_arg_name_to_hint',
         'func_arg_name_to_hint_get',
-        'func_wrappee_codeobj',
-        'func_wrappee_wrappee_codeobj',
         'func_wrappee',
+        'func_wrappee_codeobj',
+        'func_wrappee_is_nested',
+        'func_wrappee_scope_global',
+        'func_wrappee_scope_nested_local',
+        'func_wrappee_scope_nested_names',
         'func_wrappee_wrappee',
+        'func_wrappee_wrappee_codeobj',
         'func_wrapper_code_call_prefix',
         'func_wrapper_code_signature_prefix',
         'func_wrapper_scope',
@@ -209,6 +267,10 @@ class BeartypeCall(object):
         self.func_arg_name_to_hint_get: Callable[[str, object], object] = None  # type: ignore[assignment]
         self.func_wrappee: Callable = None  # type: ignore[assignment]
         self.func_wrappee_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
+        self.func_wrappee_is_nested: bool = None  # type: ignore[assignment]
+        self.func_wrappee_scope_global: LexicalScope = None  # type: ignore[assignment]
+        self.func_wrappee_scope_nested_local: Optional[LexicalScope] = None
+        self.func_wrappee_scope_nested_names: Optional[FrozenSet[str]] = None
         self.func_wrappee_wrappee: Callable = None  # type: ignore[assignment]
         self.func_wrappee_wrappee_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
         self.func_wrapper_code_call_prefix: str = None  # type: ignore[assignment]
@@ -244,12 +306,10 @@ class BeartypeCall(object):
         conf : BeartypeConf
             Beartype configuration configuring :func:`beartype.beartype`
             specific to this callable.
-        cls_root : Optional[type]
-            **Root decorated class** if any or ``None`` otherwise. Defaults to
-            ``None``. See the class docstring for further details.
-        cls_curr : Optional[type]
-            **Current decorated class** if any or ``None`` otherwise. Defaults
-            to ``None``. See the class docstring for further details.
+        cls_stack : TypeStack
+            **Type stack** (i.e., either tuple of zero or more arbitrary types
+            *or* :data:`None`). See also the parameter of the same name accepted
+            by the :func:`beartype._decor.decorcore.beartype_object` function.
 
         Raises
         ----------
@@ -298,7 +358,7 @@ class BeartypeCall(object):
 
         # If this class stack is *NOT* "None", this class stack is a tuple. In
         # this case, for each item of this class stack tuple...
-        if cls_stack is not None:
+        if cls_stack:
             for cls_stack_item in cls_stack:
                 # If this item is *NOT* a type, raise an exception.
                 if not isinstance(cls_stack_item, type):
@@ -310,23 +370,56 @@ class BeartypeCall(object):
         self.cls_stack = cls_stack
         self.conf = conf
 
-        # Possibly wrapped callable currently being decorated.
+        # Wrappee callable currently being decorated.
         self.func_wrappee = func
 
-        # Possibly unwrapped callable unwrapped from that callable.
-        # self.func_wrappee_wrappee = unwrap_func_all(func)
+        # Possibly unwrapped callable unwrapped from this wrappee callable.
         self.func_wrappee_wrappee = unwrap_func_all_closures_isomorphic(func)
+        # self.func_wrappee_wrappee = unwrap_func_all(func)
         # print(f'func_wrappee: {self.func_wrappee}')
         # print(f'func_wrappee_wrappee: {self.func_wrappee_wrappee}')
 
+        # True only if this wrappee callable is nested. As a minor efficiency
+        # gain, we can avoid the slightly expensive call to is_func_nested() by
+        # noting that:
+        # * If the class stack is non-empty, then this wrappee callable is
+        #   necessarily nested in one or more classes.
+        # * Else, defer to the is_func_nested() tester.
+        self.func_wrappee_is_nested = bool(cls_stack) or is_func_nested(func)
+
+        # Defer the resolution of the local scope for this wrappee callable
+        # until needed to subsequently resolve stringified type hints.
+        self.func_wrappee_scope_nested_local = None
+        self.func_wrappee_scope_nested_names = None
+
+        # Classify the global scope for this possibly unwrapped wrappee
+        # callable, as doing so costs nothing, simplifies logic, and *COULD* be
+        # needed to subsequently resolve a stringified type hint.
+        self.func_wrappee_scope_global = get_func_globals(
+            func=self.func_wrappee_wrappee,
+            exception_cls=BeartypeDecorWrappeeException,
+        )
+
         # Possibly wrapped callable code object.
         self.func_wrappee_codeobj = get_func_codeobj(
-            func=func, exception_cls=BeartypeDecorWrappeeException)
+            func=func,
+            exception_cls=BeartypeDecorWrappeeException,
+        )
 
         # Possibly unwrapped callable code object.
         self.func_wrappee_wrappee_codeobj = get_func_codeobj(
             func=self.func_wrappee_wrappee,
             exception_cls=BeartypeDecorWrappeeException,
+        )
+
+        #FIXME: Stop calling this function in favour of the
+        #"self.func_wrappee_scope_global" and
+        #"self.func_wrappee_scope_nested_local" scopes, please.
+        # Resolve all postponed hints on this callable if any *BEFORE* parsing
+        # the actual hints these postponed hints refer to.
+        resolve_pep563(
+            func=self.func_wrappee,
+            cls_stack=self.cls_stack,
         )
 
         # Efficiently reduce this local scope back to the dictionary of all
@@ -344,13 +437,6 @@ class BeartypeCall(object):
 
         # Machine-readable name of the wrapper function to be generated.
         self.func_wrapper_name = func.__name__
-
-        # Resolve all postponed hints on this callable if any *BEFORE* parsing
-        # the actual hints these postponed hints refer to.
-        resolve_pep563(
-            func=self.func_wrappee,
-            cls_stack=self.cls_stack,
-        )
 
         #FIXME: Globally replace all references to "__annotations__" throughout
         #the "beartype._decor" subpackage with references to this instead.

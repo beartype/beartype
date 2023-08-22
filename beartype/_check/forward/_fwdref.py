@@ -19,7 +19,7 @@ from beartype.typing import (
     Type,
 )
 from beartype._data.hint.datahinttyping import DictStrToAny
-from beartype._decor.forward.fwdtype import bear_typistry
+from beartype._check.forward.fwdtype import bear_typistry
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclsmake import make_type
 from beartype._util.cls.utilclstest import is_type_subclass

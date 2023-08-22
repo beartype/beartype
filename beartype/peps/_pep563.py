@@ -28,6 +28,7 @@ from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeStack,
 )
+from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.cls.utilclsget import get_type_locals
 from beartype._util.func.utilfuncscope import (
     get_func_globals,
@@ -43,6 +44,7 @@ from beartype._util.text.utiltextprefix import prefix_beartypeable_pith
 from collections.abc import Callable
 
 # ....................{ RESOLVERS                          }....................
+#FIXME: Refactor to leverage our new resolve_hint() resolver, please.
 def resolve_pep563(
     # Mandatory parameters.
     func: Callable,
@@ -153,8 +155,7 @@ def resolve_pep563(
 
     # ..................{ VALIDATION                         }..................
     # If that callable is *NOT* pure-Python, raise an exception.
-    die_unless_func_python(
-        func=func, exception_cls=BeartypePep563Exception)
+    die_unless_func_python(func=func, exception_cls=BeartypePep563Exception)
     # Else, that callable is pure-Python.
 
     # ..................{ DETECTION                          }..................
@@ -222,7 +223,7 @@ def resolve_pep563(
     func_scope_names = (
         frozenset(func.__qualname__.rsplit(sep='.'))
         if is_func_nested(func) else
-        _FROZEN_SET_EMPTY
+        FROZENSET_EMPTY
     )
 
     # ..................{ RESOLUTION                         }..................
@@ -265,14 +266,13 @@ def resolve_pep563(
             #_die_if_hint_repr_exceeds_child_limit(
             #    hint_repr=pith_hint, pith_label=pith_label)
 
-            # If this hint is the unqualified name of one or more parent
-            # callables or classes of this callable, then this hint is a
-            # relative forward reference to a parent callable or class of this
-            # callable that is currently being defined but has yet to be
-            # defined in full. By deduction, we can infer this hint *MUST* have
-            # been a locally or globally scoped attribute of this callable
-            # before being postponed by PEP 563 into a relative forward
-            # reference to that attribute: e.g.,
+            # If this hint is the unqualified name of a parent callable or class
+            # of this callable, then this hint is a relative forward reference
+            # to a parent callable or class of this callable that is currently
+            # being defined but has yet to be defined in full. By deduction, we
+            # can infer this hint *MUST* have been a locally or globally scoped
+            # attribute of this callable before being postponed by PEP 563 into
+            # a relative forward reference to that attribute: e.g.,
             #     # If this loop is iterating over a postponed type hint
             #     # annotating this post-PEP 563 method signature...
             #     class MuhClass:
@@ -373,10 +373,12 @@ def resolve_pep563(
             # tl;dr: Preserve this hint for disambiguity and skip to the next.
             if pith_hint in func_scope_names:
                 continue
-
+            # Else, this hint is *NOT* the unqualified name of a parent callable
+            # or class of this callable.
+            #
             # If the local scope of the decorated callable has yet to be
             # decided...
-            if func_locals is None:
+            elif func_locals is None:
                 # Attempt to resolve this hint against the global scope defined
                 # by the module declaring the decorated callable.
                 #
@@ -403,6 +405,11 @@ def resolve_pep563(
                     # print(f'Resolving PEP 563-postponed type hint {repr(pith_hint)} locals...')
                     # print(f'Ignoring {len(cls_stack or ())} lexical parent class scopes...')
 
+                    #FIXME: Optimize as follows. This is critical:
+                    #    # If the decorated callable is nested (rather than
+                    #    # global) and thus possibly has a non-empty local
+                    #    # scope...
+                    #    if is_func_nested(func):
                     # Local scope for the decorated callable.
                     func_locals = get_func_locals(
                         func=func,
@@ -697,13 +704,6 @@ def resolve_pep563(
     func.__annotations__ = func_hints_resolved
 
 # ....................{ PRIVATE ~ constants                }....................
-_FROZEN_SET_EMPTY: FrozenSet[Any] = frozenset()
-'''
-Empty frozen set, globalized as a mild optimization for the body of the
-:func:`.resolve_pep563` resolver.
-'''
-
-
 _FUTURE_ANNOTATIONS = __future__.annotations
 '''
 :obj:`__future__.annotations` object, globalized as a private constant of this

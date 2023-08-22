@@ -179,7 +179,7 @@ def sanify_hint_root_statement(
     type hint) if this hint is reducible *or* this hint as is otherwise (i.e.,
     if this hint is irreducible).
 
-    This sanifier is principally intended to be called by a **stateement-level
+    This sanifier is principally intended to be called by a **statement-level
     type-checker factory** (i.e., a function creating and returning a runtime
     type-checker type-checking this hint, outside the context of any standard
     type hinting annotation like a user-defined class variable, callable
@@ -187,6 +187,7 @@ def sanify_hint_root_statement(
 
     * The private :func:`beartype._check.checkmake.make_func_tester` factory,
       internally called by:
+
       * The public :func:`beartype.door.is_bearable` function.
       * The public :meth:`beartype.door.TypeHint.is_bearable` method.
 

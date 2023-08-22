@@ -14,9 +14,10 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.meta import _convert_version_str_to_tuple
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype._data.hint.datahinttyping import TypeException
-from beartype._util.py.utilpyversion import IS_PYTHON_3_7
+from beartype._util.text.utiltextident import die_unless_identifier
+from importlib.metadata import version as get_module_version  # type: ignore[attr-defined]
 
-# ....................{ VALIDATORS                         }....................
+# ....................{ RAISERS                            }....................
 def die_unless_module_attr_name(
     # Mandatory parameters.
     module_attr_name: str,
@@ -38,8 +39,8 @@ def die_unless_module_attr_name(
     module_attr_name : str
         Fully-qualified name of the module attribute to be validated.
     exception_cls : type, optional
-        Type of exception to be raised. Defaults to
-        :class:`_BeartypeUtilModuleException`.
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilModuleException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to something reasonably sane.
@@ -69,9 +70,6 @@ def die_unless_module_attr_name(
     assert isinstance(exception_prefix, str), (
         f'{repr(exception_prefix)} not string.')
 
-    # Avoid circular import dependencies.
-    from beartype._util.text.utiltextident import is_identifier
-
     # If this object is *NOT* a string, raise an exception.
     if not isinstance(module_attr_name, str):
         raise exception_cls(
@@ -91,10 +89,11 @@ def die_unless_module_attr_name(
     #
     # If this string is syntactically invalid as a fully-qualified module
     # attribute name, raise an exception.
-    elif not is_identifier(module_attr_name):
-        raise exception_cls(
-            f'{exception_prefix}"{module_attr_name}" '
-            f'syntactically invalid as module attribute name.'
+    else:
+        die_unless_identifier(
+            text=module_attr_name,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
         )
     # Else, this string is syntactically valid as a fully-qualified module
     # attribute name.
@@ -179,27 +178,6 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
     if not is_module(module_name):
         return False
     # Else, this module is importable.
-    #
-    # If the active Python interpreter targets Python < 3.7 and thus fails to
-    # provide the "importlib.metadata" API required to portably inspect module
-    # versions without requiring obsolete third-party packages (e.g.,
-    # "pkg_resources"), naively assume that this module satisfies this minimum
-    # version. Although doing so is clearly non-ideal:
-    #
-    # * This function is currently *ONLY* called by our test suite to decide
-    #   whether relevant tests should be skipped or not.
-    # * Python 3.7 is on the cusp of hitting its official End-Of-Life (EOL) and
-    #   thus increasingly ignorable.
-    # * The prior Python 3.7-specific implementation of this function leveraged
-    #   the fragile third-party "pkg_resources" package. That package now emits
-    #   "DeprecationWarnings" on Python 3.7, which "pytest" then implicitly
-    #   coerces into test failures.
-    elif IS_PYTHON_3_7:
-        return True
-    # Else, the active Python interpreter targets Python >= 3.8.
-
-    # Defer version-specific imports.
-    from importlib.metadata import version as get_module_version  # type: ignore[attr-defined]
 
     # Current version of this module installed under the active Python
     # interpreter if any *OR* raise an exception otherwise (which should

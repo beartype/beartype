@@ -671,7 +671,22 @@ def is_func_sync_generator(func: object) -> TypeGuard[Callable]:
 def is_func_nested(func: Callable) -> bool:
     '''
     :data:`True` only if the passed callable is **nested** (i.e., a pure-Python
-    callable declared in the body of another pure-Python callable).
+    callable declared in the body of another pure-Python callable or class).
+
+    Equivalently, this tester returns :data:`True` only if that callable is
+    either:
+
+    * A closure, which by definition is nested inside another callable.
+    * A method, which by definition is nested inside its class.
+    * A **nested non-closure function** (i.e., a closure-like function that does
+      *not* reference local attributes of the parent callable enclosing that
+      function and is thus technically *not* a closure): e.g.,
+
+      .. code-block:: python
+
+         def muh_parent_callable():           # <-- parent callable
+             def muh_nested_callable(): pass  # <-- nested non-closure function
+             return muh_nested_callable
 
     Parameters
     ----------

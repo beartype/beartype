@@ -20,7 +20,7 @@ from beartype.typing import (
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._data.kind.datakinddict import DICT_EMPTY
-from beartype._util.text.utiltextident import is_identifier
+from beartype._util.text.utiltextident import die_unless_identifier
 
 # ....................{ MAKERS                             }....................
 def make_type(
@@ -106,9 +106,11 @@ def make_type(
     if type_module_name is not None:
         # If this module name is *NOT* a valid Python identifier, raise an
         # exception.
-        if not is_identifier(type_module_name):
-            raise exception_cls(
-                f'Class module name {repr(type_module_name)} invalid.')
+        die_unless_identifier(
+            text=type_module_name,
+            exception_cls=exception_cls,
+            exception_prefix='Class module name ',
+        )
         # Else, this module name is a valid Python identifier.
 
         # Set the module name of this class.

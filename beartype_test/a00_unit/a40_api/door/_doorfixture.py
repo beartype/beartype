@@ -280,7 +280,7 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (NewStr, int, False),
         (NewStr, str, True),
         (int, NewStr, False),
-        (str, NewStr, True),  # NewType act like subtypes
+        (str, NewStr, False),  # NewType act like subtypes
 
         # ..................{ HINTS ~ argless : typevar      }..................
         # PEP 484-compliant type variables.

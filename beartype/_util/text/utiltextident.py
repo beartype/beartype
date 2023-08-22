@@ -10,14 +10,68 @@ or variable name) utilities.
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ IMPORTS                            }....................
+from beartype.roar._roarexc import _BeartypeUtilTextIdentifierException
+from beartype._data.hint.datahinttyping import TypeException
+
+# ....................{ RAISERS                            }....................
+def die_unless_identifier(
+    # Mandatory parameters.
+    text: str,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilTextIdentifierException,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception unless the passed string is a valid **Python attribute
+    name** (i.e., ``.``-delimited concatenation of one or more
+    :pep:`3131`-compliant syntactically valid Python identifiers, including the
+    names of attributes, callables, classes, modules, and variables).
+
+    Parameters
+    ----------
+    text : str
+        String to be validated.
+    exception_cls : Type[Exception]
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`._BeartypeUtilTextIdentifierException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this string in the
+        exception message. Defaults to the empty string.
+
+    Raises
+    ----------
+    exception_cls
+        If this string is *not* a valid Python attribute name.
+
+    See Also
+    ----------
+    :func:`.is_identifier`
+        Further details.
+    '''
+
+    # If this string is *NOT* a valid Python attribute name, raise an exception.
+    if not is_identifier(text):
+        assert isinstance(exception_cls, type), (
+            'f{repr(exception_cls)} not exception class.')
+        assert isinstance(exception_prefix, str), (
+            'f{repr(exception_prefix)} not string.')
+
+        raise exception_cls(
+            f'{exception_prefix}{repr(text)} not valid Python attribute name.')
+    # Else, this string is a valid Python attribute name.
+
 # ....................{ TESTERS                            }....................
 def is_identifier(text: str) -> bool:
     '''
-    :data:`True` only if the passed string is the ``.``-delimited concatenation
-    of one or more :pep:`3131`-compliant syntactically valid **Python
-    identifiers** (i.e., attribute, callable, class, module, or variable name),
-    suitable for testing whether this string is the fully-qualified name of an
-    arbitrary Python object.
+    :data:`True` only if the passed string is a valid **Python attribute name**
+    (i.e., ``.``-delimited concatenation of one or more :pep:`3131`-compliant
+    syntactically valid Python identifiers, including the names of attributes,
+    callables, classes, modules, and variables).
+
+    This tester is suitable for detecting whether this string is the
+    fully-qualified name of an arbitrary Python object.
 
     Caveats
     ----------
@@ -33,11 +87,11 @@ def is_identifier(text: str) -> bool:
     :mod:`regex` package and would still almost certainly fail in edge cases.
     Why? Because Python 3 permits Python identifiers to contain Unicode letters
     and digits in the "General Category" of Unicode code points, which is
-    highly non-trivial to match with the standard :mod:`re` module.
+    extremely non-trivial to match with the standard :mod:`re` module.
 
     Parameters
     ----------
-    text : string
+    text : str
         String to be inspected.
 
     Returns
