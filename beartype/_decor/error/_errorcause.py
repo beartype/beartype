@@ -342,8 +342,8 @@ class ViolationCause(object):
         #FIXME: Trivially simplify this method by:
         #* Define a new find_cause_nonpep() function elsewhere whose body is
         #  the body of this "if" conditional branch.
-        #* Register this function with PEP_HINT_SIGN_TO_GET_CAUSE_FUNC: e.g.,
-        #  PEP_HINT_SIGN_TO_GET_CAUSE_FUNC = {
+        #* Register this function with HINT_SIGN_TO_GET_CAUSE_FUNC: e.g.,
+        #  HINT_SIGN_TO_GET_CAUSE_FUNC = {
         #      ...,
         #      None: find_cause_nonpep,
         #  }
@@ -400,11 +400,11 @@ class ViolationCause(object):
         else:
             # Avoid circular import dependencies.
             from beartype._decor.error.errormain import (
-                PEP_HINT_SIGN_TO_GET_CAUSE_FUNC)
+                HINT_SIGN_TO_GET_CAUSE_FUNC)
 
             # Getter function returning the desired string for this attribute
             # if any *OR* "None" otherwise.
-            cause_finder = PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.get(
+            cause_finder = HINT_SIGN_TO_GET_CAUSE_FUNC.get(
                 self.hint_sign, None)  # type: ignore[arg-type]
 
             # If no such function has been implemented to handle this attribute

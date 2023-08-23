@@ -72,6 +72,7 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
 #FIXME: Document mypy-specific coercion in the docstring as well, please.
 def coerce_func_hint_root(
     hint: object,
+    #FIXME: Rename to "pith_name" for orthogonality with everything else.
     arg_name: str,
     bear_call: BeartypeCall,
     exception_prefix: str,
@@ -123,7 +124,7 @@ def coerce_func_hint_root(
           type hint coerced from this hint.
         * Else, this hint as is unmodified.
     '''
-    assert isinstance(arg_name, str), f'{arg_name} not string.'
+    assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
     assert bear_call.__class__ is BeartypeCall, (
         f'{repr(bear_call)} not @beartype call.')
 
@@ -135,7 +136,7 @@ def coerce_func_hint_root(
     if isinstance(hint, str):
         pass
 
-        #FIXME: Uncomment once worky, please. *sigh*
+        # #FIXME: Uncomment once worky, please. *sigh*
         # hint = resolve_hint(
         #     hint=hint,
         #     bear_call=bear_call,

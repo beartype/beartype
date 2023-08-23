@@ -24,9 +24,8 @@ from beartype._util.text.utiltextident import die_unless_identifier
 # from sys import modules as sys_modules
 
 # ....................{ SUBCLASSES                         }....................
-#FIXME: Implement us up, please.
 #FIXME: Unit test us up, please.
-class BeartypeForwardScope(dict):
+class BeartypeForwardScope(LexicalScope):
     '''
     **Forward scope** (i.e., dictionary deferring the resolution of a local or
     global scope of an arbitrary class or callable when dynamically evaluating
@@ -38,26 +37,25 @@ class BeartypeForwardScope(dict):
     _is_scope_module : bool
         :data:`True` only if the name of this scope is that of a previously
         imported module, implying this to be a forward module scope.
-    _scope_name : str
-        Fully-qualified name of this forward scope.
-    _scope_attrs : LexicalScope
+    _scope_dict : LexicalScope
         **Lexical scope** (i.e., dictionary mapping from the relative
         unqualified name to value of each previously declared attribute)
         underlying this forward scope.
+    _scope_name : str
+        Fully-qualified name of this forward scope.
     '''
 
     # ..................{ INITIALIZERS                       }..................
-    #FIXME: Implement us up, please.
-    def __init__(
-        self,
-        scope_name: str,
-        scope_attrs: LexicalScope,
-    ) -> None:
+    def __init__(self, scope_dict: LexicalScope, scope_name: str) -> None:
         '''
         Initialize this forward scope.
 
         Attributes
         ----------
+        scope_dict : LexicalScope
+            **Lexical scope** (i.e., dictionary mapping from the relative
+            unqualified name to value of each previously declared attribute)
+            underlying this forward scope.
         scope_name : str
             Fully-qualified name of this forward scope. For example:
 
@@ -65,23 +63,19 @@ class BeartypeForwardScope(dict):
               resolve a global class or callable against this scope).
             * ``"some_package.some_module.SomeClass"`` for a class scope (e.g.,
               to resolve a nested class or callable against this scope).
-        scope_attrs : LexicalScope
-            **Lexical scope** (i.e., dictionary mapping from the relative
-            unqualified name to value of each previously declared attribute)
-            underlying this forward scope.
 
         Raises
         ----------
         BeartypeDecorHintForwardRefException
             If this scope name is *not* a valid Python attribute name.
         '''
-        assert isinstance(scope_attrs, dict), (
-            f'{repr(scope_attrs)} not dictionary.')
+        assert isinstance(scope_dict, dict), (
+            f'{repr(scope_dict)} not dictionary.')
 
         # Initialize our superclass with this lexical scope, efficiently
         # pre-populating this dictionary with all previously declared attributes
         # underlying this forward scope.
-        super().__init__(scope_attrs)
+        super().__init__(scope_dict)
 
         # If this scope name is syntactically invalid, raise an exception.
         die_unless_identifier(
@@ -92,7 +86,7 @@ class BeartypeForwardScope(dict):
         # Else, this scope name is syntactically valid.
 
         # Classify all passed parameters.
-        self._scope_attrs = scope_attrs
+        self._scope_dict = scope_dict
         self._scope_name = scope_name
 
         #FIXME: Consider excising, please.
@@ -139,6 +133,7 @@ class BeartypeForwardScope(dict):
         BeartypeDecorHintForwardRefException
             If this type hint name is *not* a valid Python attribute name.
         '''
+        print(f'Missing type hint: {repr(hint_name)}')
 
         # If this type hint name is syntactically invalid, raise an exception.
         die_unless_identifier(

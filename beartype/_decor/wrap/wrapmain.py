@@ -33,20 +33,21 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
 )
 from beartype.typing import NoReturn
+from beartype._check.checkcall import BeartypeCall
 from beartype._check.checkmagic import ARG_NAME_TYPISTRY
 from beartype._check.code._codesnip import (
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
 )
-from beartype._check.util.checkutilmake import make_func_signature
-from beartype._check.checkcall import BeartypeCall
-from beartype._data.func.datafuncarg import (
-    ARG_NAME_RETURN,
-    ARG_NAME_RETURN_REPR,
-)
+from beartype._check.convert.convsanify import sanify_hint_root_func
 from beartype._check.forward.fwdtype import (
     bear_typistry,
     register_typistry_forwardref,
+)
+from beartype._check.util.checkutilmake import make_func_signature
+from beartype._data.func.datafuncarg import (
+    ARG_NAME_RETURN,
+    ARG_NAME_RETURN_REPR,
 )
 from beartype._decor.wrap.wrapsnip import (
     CODE_INIT_ARGS_LEN,
@@ -69,13 +70,14 @@ from beartype._util.func.arg.utilfuncargiter import (
     ArgKind,
     iter_func_args,
 )
-from beartype._util.hint.utilhinttest import is_hint_needs_cls_stack
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
     reduce_hint_pep484585_func_return)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     get_hint_pep484585_forwardref_classname_relative_to_object)
-from beartype._check.convert.convsanify import sanify_hint_root_func
-from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._util.hint.utilhinttest import (
+    is_hint_ignorable,
+    is_hint_needs_cls_stack,
+)
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextprefix import (

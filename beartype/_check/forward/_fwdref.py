@@ -197,8 +197,8 @@ class _BeartypeForwardRefIndexableABC(_BeartypeForwardRefABC):
     '''
 
     # ....................{ DUNDERS                        }....................
-    @callable_cached
     @classmethod
+    @callable_cached
     def __class_getitem__(cls, *args, **kwargs) -> (
         Type[_BeartypeForwardRefIndexedABC]):
         '''

@@ -4,14 +4,14 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype exception handling utilities.**
-
-This private submodule implements supplementary exception-handling utility
-functions required by various :mod:`beartype` facilities, including callables
-generating code for the :func:`beartype.beartype` decorator.
+Project-wide **exception handling utilities** (i.e., low-level functions
+manipulating exceptions in a general-purpose manner).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
+
+# ....................{ IMPORTS                            }....................
+from beartype._util.text.utiltextmunge import uppercase_str_char_first
 
 # ....................{ CONSTANTS                          }....................
 EXCEPTION_PLACEHOLDER = '$%ROOT_PITH_LABEL/~'
@@ -92,11 +92,10 @@ def reraise_exception_placeholder(
     source_str: str = EXCEPTION_PLACEHOLDER,
 ) -> None:
     '''
-    Reraise the passed exception in a safe manner preserving both this
-    exception object *and* the original traceback associated with this
-    exception object, but globally replacing all instances of the passed source
-    substring hard-coded into this exception's message with the passed target
-    substring.
+    Reraise the passed exception in a safe manner preserving both this exception
+    object *and* the original traceback associated with this exception object,
+    but globally replacing all instances of the passed source substring
+    hard-coded into this exception's message with the passed target substring.
 
     Parameters
     ----------
@@ -108,7 +107,7 @@ def reraise_exception_placeholder(
     source_str : Optional[str]
         Source non-human-readable substring previously hard-coded into this
         exception's message to be replaced by the passed target substring.
-        Defaults to :data:`EXCEPTION_PLACEHOLDER`.
+        Defaults to :data:`.EXCEPTION_PLACEHOLDER`.
 
     Raises
     ----------
@@ -119,7 +118,7 @@ def reraise_exception_placeholder(
 
     See Also
     ----------
-    :data:`EXCEPTION_PLACEHOLDER`
+    :data:`.EXCEPTION_PLACEHOLDER`
         Further commentary on usage and motivation.
     https://stackoverflow.com/a/62662138/2809027
         StackOverflow answer mildly inspiring this implementation.
@@ -199,6 +198,9 @@ def reraise_exception_placeholder(
 
         # If doing so actually changed this message...
         if exception_message != exception.args[0]:
+            # Uppercase the first character of this message if needed.
+            exception_message = uppercase_str_char_first(exception_message)
+
             # Reconstitute this exception argument tuple from this message.
             #
             # Note that if this tuple contains only this message, this slice

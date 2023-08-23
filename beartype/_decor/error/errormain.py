@@ -21,8 +21,8 @@ This private submodule is *not* intended for importation by downstream callers.
 #generalization, the most reasonable *BY FAR* is probably to:
 #
 #* Embed additional assignment expressions in the type-checking tests generated
-#  by the make_func_wrapper_code() function that uniquely store the value of each
-#  item, key, or value returned by each access of a non-indexable container
+#  by the make_func_wrapper_code() function that uniquely store the value of
+#  each item, key, or value returned by each access of a non-indexable container
 #  iterator into a new unique local variable. Note this unavoidably requires:
 #  * Adding a new index to the "hint_curr_meta" tuples internally created by
 #    that function -- named, say, "_HINT_META_INDEX_ITERATOR_NAME". The value
@@ -122,11 +122,11 @@ from beartype._data.hint.datahinttyping import TypeException
 
 # ....................{ GLOBALS                            }....................
 # Initialized with automated inspection below in the _init() function.
-PEP_HINT_SIGN_TO_GET_CAUSE_FUNC: Dict[
+HINT_SIGN_TO_GET_CAUSE_FUNC: Dict[
     HintSign, Callable[[ViolationCause], ViolationCause]] = {}
 '''
 Dictionary mapping each **sign** (i.e., arbitrary object uniquely identifying a
-PEP-compliant type) to a private getter function defined by this submodule
+category of type hints) to a private getter function defined by this submodule
 whose signature matches that of the :func:`._find_cause` function and
 which is dynamically dispatched by that function to describe type-checking
 failures specific to that unsubscripted :mod:`typing` attribute.
@@ -441,23 +441,23 @@ def _init() -> None:
     # mappings. This is merely a generalized fallback subsequently replaced by
     # sign-specific getters below.
     for pep_sign_origin_isinstanceable in HINT_SIGNS_ORIGIN_ISINSTANCEABLE:
-        PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_origin_isinstanceable] = (
+        HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_origin_isinstanceable] = (
             find_cause_type_instance_origin)
 
     # Map each 1-argument sequence sign to its corresponding getter.
     for pep_sign_sequence_args_1 in HINT_SIGNS_SEQUENCE_ARGS_1:
-        PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_sequence_args_1] = (
+        HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_sequence_args_1] = (
             find_cause_sequence_args_1)
 
     # Map each union-specific sign to its corresponding getter.
     for pep_sign_type_union in HINT_SIGNS_UNION:
-        PEP_HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_type_union] = (
+        HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_type_union] = (
             find_cause_union)
 
     # Map each sign validated by a unique getter to that getter *AFTER* all
     # other mappings. These sign-specific getters are intended to replace all
     # other automated mappings above.
-    PEP_HINT_SIGN_TO_GET_CAUSE_FUNC.update({
+    HINT_SIGN_TO_GET_CAUSE_FUNC.update({
         HintSignAnnotated: find_cause_annotated,
         HintSignForwardRef: find_cause_instance_type_forwardref,
         HintSignGeneric: find_cause_generic,

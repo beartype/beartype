@@ -22,7 +22,7 @@ active Python process).
 #us and we failed it, everybody! *gurgles*
 #FIXME: Consider validating the signatures of both the is_bearable() function
 #defined below *AND* TypeHint.is_bearable() method defined elsewhere to have
-#returns annotated as "TypeHint[T]" from the perspective of static
+#returns annotated as "TypeGuard[T]" from the perspective of static
 #type-checking. Sadly, doing so is extremely non-trivial -- requiring usage of a
 #new mandatory "pytest-mypy-plugins" test-time dependency, which itself requires
 #definition of mypy-specific cases in a new supplementary top-level directory.
@@ -103,15 +103,16 @@ def die_if_unbearable(
     '''
 
     # @beartype-decorated closure raising an
-    # "BeartypeCallHintReturnViolation" exception if the parameter passed to
+    # "BeartypeCallHintReturnViolation" exception when the parameter passed to
     # this closure violates the hint passed to this parent tester.
-    _check_object = _get_type_checker(hint, conf)
+    _check_object = _get_object_checker(hint, conf)
 
     # Attempt to type-check this object by passing this object to this closure,
     # which then implicitly type-checks this object as a return value.
     try:
         _check_object(obj)
-    # If this closure raises an exception as this object violates this hint...
+    # If this closure raises a beartype-specific exception implying that this
+    # object violates this hint...
     except BeartypeCallHintReturnViolation as exception:
         # Exception message.
         exception_message = str(exception)
@@ -285,21 +286,18 @@ def is_bearable(
     # "_BeartypeUtilCallableCachedKwargsWarning" warning.
     try:
         func_tester = make_func_tester(hint, conf)
-    # If any exception was raised, reraise this exception with each
-    # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
-    # replaced by the passed exception prefix.
+    # If any exception was raised, reraise this exception with each placeholder
+    # substring (i.e., "EXCEPTION_PLACEHOLDER" instance) replaced by the passed
+    # exception prefix.
     except Exception as exception:
         reraise_exception_placeholder(
-            exception=exception,
-            target_str='is_bearable() ',
-        )
+            exception=exception, target_str='is_bearable() ')
 
     # Return true only if the passed object satisfies this hint.
     return func_tester(obj)  # pyright: ignore[reportUnboundVariable]
 
 # ....................{ PRIVATE ~ getters                  }....................
 #FIXME: Shift into a more public location for widespread usage elsewhere: e.g.,
-#* Define a new "beartype._check" subpackage.
 #* Define a new "beartype._check.checkget" submodule.
 #* Rename this function to get_object_checker() in that submodule.
 #* Shift the "_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX*" globals into that
@@ -323,12 +321,12 @@ def is_bearable(
 #Eventually, we want to eliminate this getter entirely in favour of dynamically
 #generating a full-blown exception raiser specific to the passed hint. *shrig*
 @callable_cached
-def _get_type_checker(
+def _get_object_checker(
     hint: object, conf: BeartypeConf) -> BeartypeTypeChecker:
     '''
     Create, cache, and return a **synthetic runtime type-checker** (i.e.,
-    function raising a :exc:`BeartypeCallHintReturnViolation` exception when the
-    object passed to that function violates the hint passed to this parent
+    function raising a :exc:`.BeartypeCallHintReturnViolation` exception when
+    the object passed to that function violates the hint passed to this parent
     getter under the passed beartype configuration).
 
     This factory intentionally raises :exc:`BeartypeCallHintReturnViolation`
@@ -375,7 +373,7 @@ def _get_type_checker(
     # Else, this hint is supported.
 
     # @beartype-decorated closure raising an
-    # "BeartypeCallHintReturnViolation" exception if the parameter passed to
+    # "BeartypeCallHintReturnViolation" exception when the parameter passed to
     # this closure violates the hint passed to this parent tester.
     @beartype(conf=conf)
     def _die_if_unbearable(pith) -> hint:  # type: ignore[valid-type]
@@ -387,13 +385,13 @@ def _get_type_checker(
 # ....................{ PRIVATE ~ constants                }....................
 _TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX = (
     'Function '
-    'beartype.door._doorcheck._get_type_checker._die_if_unbearable() '
+    'beartype.door._doorcheck._get_object_checker._die_if_unbearable() '
     'return '
 )
 '''
 Irrelevant substring prefixing *all* exception messages raised by *all*
 **synthetic runtime type-checkers** (i.e., callables dynamically created and
-returned by the :func: `_get_type_checker` getter).
+returned by the :func:`._get_object_checker` getter).
 '''
 
 
@@ -402,6 +400,6 @@ _TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX_LEN = (
 '''
 Length of the irrelevant substring prefixing *all*
 exception messages raised by *all* **synthetic runtime type-checkers** (i.e.,
-callables dynamically created and returned by the :func: `_get_type_checker`
+callables dynamically created and returned by the :func:`._get_object_checker`
 getter).
 '''

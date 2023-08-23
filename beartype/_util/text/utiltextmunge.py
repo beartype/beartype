@@ -36,8 +36,18 @@ def uppercase_str_char_first(text: str) -> str:
     '''
     assert isinstance(text, str), f'{repr(text)} not string.'
 
-    # For great justice!
-    return text[0].upper() + text[1:] if text else ''
+    # If...
+    if (
+        # This string contains at least two characters *AND*...
+        len(text) >= 2 and
+        # The first character of this string is lowercase...
+        text[0].islower()
+    ):
+        # Then uppercase only this string for readability.
+        text = f'{text[0].upper()}{text[1:]}'
+
+    # Return this possibly changed string.
+    return text
 
 # ....................{ NUMBERERS                          }....................
 def number_str_lines(text: str) -> str:

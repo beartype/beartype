@@ -33,6 +33,7 @@ from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
 def sanify_hint_root_func(
     # Mandatory parameters.
     hint: object,
+    #FIXME: Rename to "pith_name" for orthogonality with everything else.
     arg_name: str,
     bear_call: BeartypeCall,
 

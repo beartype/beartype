@@ -35,7 +35,6 @@ from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj,
     # get_func_codeobj_or_none,
 )
-from beartype._util.func.utilfuncscope import get_func_globals
 from beartype._util.func.utilfunctest import (
     is_func_coro,
     is_func_nested,
@@ -121,8 +120,19 @@ class BeartypeCall(object):
         * If this wrappee callable is **global** (i.e., declared at module scope
           in its submodule), :data:`False`.
     func_wrappee_scope_global : Optional[LexicalScope]
-        **Global scope** (i.e., dictionary mapping from the name to value of
-        each globally accessible attribute) of this wrappee callable.
+        Either:
+
+        * If this wrappee callable is annotated by at least one **stringified
+          type hint** (i.e., declared as a :pep:`484`- or :pep:`563`-compliant
+          forward reference referring to an actual type hint that has yet to be
+          declared in the local and global scopes declaring this callable) that
+          :mod:`beartype` has already resolved to its referent, the **global
+          scope** (i.e., dictionary mapping from the name to value of each
+          globally accessible attribute) of this wrappee callable.
+        * Else, :data:`None`.
+
+        Note that the reconstruction of this scope is computationally expensive
+        and thus deferred until needed to resolve stringified type hints.
     func_wrappee_scope_nested_local : Optional[LexicalScope]
         Either:
 
@@ -142,8 +152,8 @@ class BeartypeCall(object):
 
         Note that:
 
-        * The reconstruction of this local scope is computationally expensive
-          and thus deferred until needed to resolve a stringified type hint.
+        * The reconstruction of this scope is computationally expensive and thus
+          deferred until needed to resolve stringified type hints.
         * All callables have local scopes *except* global functions, whose local
           scopes are by definition the empty dictionary.
     func_wrappee_scope_nested_names : Optional[frozenset[str]]
@@ -189,21 +199,19 @@ class BeartypeCall(object):
           nor asynchronous generator), the ``"await "`` keyword.
     func_wrapper_code_signature_prefix : Optional[str]
         Code snippet prefixing the signature declaring the wrapper function
-        wrapping the decorated callable with type checking if the
-        :meth:`reinit` method has been called *or* ``None`` otherwise. If
-        non-``None``, this string is guaranteed to be either:
+        wrapping the decorated callable with type checking. Specifically, this
+        string is guaranteed to be either:
 
         * If the decorated callable is synchronous (i.e., neither a coroutine
           nor asynchronous generator), the empty string.
         * If the decorated callable is asynchronous (i.e., either a coroutine
-          nor asynchronous generator), the ``"async "`` keyword.
+          or asynchronous generator), the ``"async "`` keyword.
     func_wrapper_scope : LexicalScope
         **Local scope** (i.e., dictionary mapping from the name to value of
         each attribute referenced in the signature) of this wrapper function.
     func_wrapper_name : Optional[str]
         Machine-readable name of the wrapper function to be generated and
-        returned by this decorator if the :meth:`reinit` method has been called
-        *or* ``None`` otherwise.
+        returned by this decorator.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -268,7 +276,7 @@ class BeartypeCall(object):
         self.func_wrappee: Callable = None  # type: ignore[assignment]
         self.func_wrappee_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
         self.func_wrappee_is_nested: bool = None  # type: ignore[assignment]
-        self.func_wrappee_scope_global: LexicalScope = None  # type: ignore[assignment]
+        self.func_wrappee_scope_global: Optional[LexicalScope] = None
         self.func_wrappee_scope_nested_local: Optional[LexicalScope] = None
         self.func_wrappee_scope_nested_names: Optional[FrozenSet[str]] = None
         self.func_wrappee_wrappee: Callable = None  # type: ignore[assignment]
@@ -387,18 +395,11 @@ class BeartypeCall(object):
         # * Else, defer to the is_func_nested() tester.
         self.func_wrappee_is_nested = bool(cls_stack) or is_func_nested(func)
 
-        # Defer the resolution of the local scope for this wrappee callable
-        # until needed to subsequently resolve stringified type hints.
+        # Defer the resolution of both global and local scopes for this wrappee
+        # callable until needed to subsequently resolve stringified type hints.
+        self.func_wrappee_scope_global = None
         self.func_wrappee_scope_nested_local = None
         self.func_wrappee_scope_nested_names = None
-
-        # Classify the global scope for this possibly unwrapped wrappee
-        # callable, as doing so costs nothing, simplifies logic, and *COULD* be
-        # needed to subsequently resolve a stringified type hint.
-        self.func_wrappee_scope_global = get_func_globals(
-            func=self.func_wrappee_wrappee,
-            exception_cls=BeartypeDecorWrappeeException,
-        )
 
         # Possibly wrapped callable code object.
         self.func_wrappee_codeobj = get_func_codeobj(

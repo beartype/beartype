@@ -53,6 +53,24 @@ class BeartypeException(Exception, metaclass=_ABCMeta):
                hint typing.Annotated[list[str], Is[lambda lst: bool(lst)]], as
                value [] violates validator Is[lambda lst: bool(lst)].
         '''
+        assert isinstance(message, str), (
+            f'{repr(message)} not exception message.')
+
+        # If...
+        #
+        # Note that this logic unavoidably duplicates the body of the existing
+        # beartype._util.text.utiltextmunge.uppercase_str_char_first() function
+        # for safety. Attempting to call *ANY* beartype-specific callable
+        # (including that function) from within an exception initializer would
+        # invite a shocking calamity that would surely shatter the whole world.
+        if (
+            # This message contains at least two characters *AND*...
+            len(message) >= 2 and
+            # The first character of this message is lowercase...
+            message[0].islower()
+        ):
+            # Then uppercase only this character for readability.
+            message = f'{message[0].upper()}{message[1:]}'
 
         # Defer to the superclass constructor.
         super().__init__(message)

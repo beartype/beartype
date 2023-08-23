@@ -60,7 +60,7 @@ def prefix_beartypeable(
 def prefix_beartypeable_pith(func: Callable, pith_name: str) -> str:
     '''
     Human-readable label describing either the parameter with the passed name
-    *or* return value if this name is ``return`` of the passed **beartypeable
+    *or* return value if this name is ``"return"`` of the passed **beartypeable
     callable** (i.e., callable wrapped by the :func:`beartype.beartype`
     decorator with a wrapper function type-checking that callable) suffixed by
     delimiting whitespace.

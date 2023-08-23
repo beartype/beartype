@@ -14,25 +14,35 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypePep563Exception
-from beartype.roar._roarexc import _BeartypeUtilCallableException
+from beartype.roar import BeartypeDecorHintForwardRefException
+# from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.checkcall import BeartypeCall
+from beartype._check.forward._fwdscope import BeartypeForwardScope
 from beartype._data.hint.datahinttyping import (
+    # LexicalScope,
     TypeException,
+    # TypeStack,
 )
+from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._data.kind.datakindset import FROZENSET_EMPTY
-from beartype._util.func.utilfuncscope import get_func_locals
+from beartype._util.cls.utilclsget import get_type_locals
+from beartype._util.func.utilfuncscope import (
+    get_func_globals,
+    get_func_locals,
+)
+from beartype._util.module.utilmodget import get_object_module_name
 
 # ....................{ RESOLVERS                          }....................
 #FIXME: Unit test us up, please.
-#FIXME: Implement us up, please.
+#FIXME: Docstring us up, please -- especially with respect to
+#"BeartypeDecorHintForwardRefException" error conditions.
 def resolve_hint(
     # Mandatory parameters.
     hint: str,
     bear_call: BeartypeCall,
 
     # Optional parameters.
-    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_cls: TypeException = BeartypeDecorHintForwardRefException,
     exception_prefix: str = '',
 ) -> object:
     '''
@@ -56,7 +66,7 @@ def resolve_hint(
         Decorated callable annotated by this hint.
     exception_cls : Type[Exception], optional
         Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`._BeartypeUtilCallableException`.
+        to :exc:`.BeartypeDecorHintForwardRefException`.
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -69,24 +79,28 @@ def resolve_hint(
         * If this possibly PEP-noncompliant hint is coercible, a PEP-compliant
           type hint coerced from this hint.
         * Else, this hint as is unmodified.
+
+    Raises
+    ----------
+    exception_cls
+        If either:
+
+        ...
     '''
     assert isinstance(hint, str), f'{repr(hint)} not stringified type hint.'
     assert isinstance(bear_call, BeartypeCall), (
         f'{repr(bear_call)} not @beartype call.')
 
     # ..................{ LOCALS                             }..................
-    #FIXME: *SLOW*. Store this in the "bear_call" dataclass to avoid recomputing
-    #this across calls, please.
-
-    # Decorated callable, localized for negligible efficiency gains but *MOSTLY*
-    # just to improve the readability of this algorithm.
-    func = bear_call.func_wrappee_wrappee
+    # Decorated callable and metadata associated with that callable, localized
+    # to improve both readability and negligible efficiency when accessed below.
+    func      = bear_call.func_wrappee_wrappee
+    cls_stack = bear_call.cls_stack
 
     # If the frozen set of the unqualified names of all parent callables
-    # lexically containing this possibly nested decorated callable has yet to be
-    # decided...
-    if bear_call.func_wrappee_scope_nested_names is None:
-        # Classify this frozen set as either...
+    # lexically containing this decorated callable has yet to be decided...
+    if bear_call.func_wrappee_scope_global is None:
+        # Decide this frozen set as either...
         bear_call.func_wrappee_scope_nested_names = (
             # If the decorated callable is nested, the non-empty frozen set of
             # the unqualified names of all parent callables lexically containing
@@ -98,11 +112,10 @@ def resolve_hint(
             # the empty frozen set.
             FROZENSET_EMPTY
         )
-    # Else, this frozen set has already been decided. Preserve this set as is.
+    # Else, this frozen set has already been decided.
     #
-    # In either case, this set is now guaranteed to exist.
+    # In either case, this frozen set is now decided. I choose you, red pill!
 
-    # ..................{ RESOLVE                            }..................
     # If this hint is the unqualified name of a parent callable or class of the
     # decorated callable, then this hint is a relative forward reference to a
     # parent callable or class of the decorated callable that is currently being
@@ -205,114 +218,285 @@ def resolve_hint(
     # * This edge case is both trivial and efficient to support.
     #
     # tl;dr: Preserve this hint for disambiguity by reducing to a noop.
-    if hint in bear_call.func_wrappee_scope_nested_names:
+    if hint in bear_call.func_wrappee_scope_nested_names:  # type: ignore[operator]
         return hint
     # Else, this hint is *NOT* the unqualified name of a parent callable or
     # class of the decorated callable. In this case, resolve this hint.
-    #
-    # If the local scope of the decorated callable has yet to be decided...
-    elif bear_call.func_wrappee_scope_nested_local is None:
-        # Attempt to resolve this hint against *ONLY* the global scope defined
-        # by the module declaring the decorated callable.
+
+    # If the global scope of the decorated callable has yet to be decided,
+    # assume that all other related cached attributes (e.g.,
+    # "bear_call.func_wrappee_scope_nested_local") of the decorated callable
+    # also have yet to be decided. In this case, both decide and cache these
+    # attributes now.
+    if bear_call.func_wrappee_scope_global is None:
+        # Fully-qualified name of the module declaring the decorated callable,
+        # which also serves as the name of this module and thus global scope.
+        func_module_name = get_object_module_name(func)  # type: ignore[operator]
+
+        # Global scope of the decorated callable.
+        func_globals = get_func_globals(func=func, exception_cls=exception_cls)
+
+        # Wrap this global scope of the decorated callable in a forward scope
+        # dynamically replacing each unresolved attribute of this stringified
+        # type hint with a forward reference proxy resolving this attribute on
+        # the first attempt to pass this attribute as the second parameter to an
+        # isinstance()-based runtime type-check: e.g.,
+        #     from beartype import beartype
+        #     from beartype.typing import Dict, Generic, TypeVar
         #
-        # Note that this first attempt intentionally does *NOT* attempt to
-        # evaluate this hint against both the global and local scope of the
-        # decorated callable. Why? Because:
-        # * The majority of real-world hints are imported at module scope (e.g.,
-        #   "collections.abc", "typing") and thus accessible as globals.
-        # * Deciding the local scope of the decorated callable is an O(n**2)
-        #   operation for an arbitrarily large integer n. Ergo, that decision
-        #   should be deferred as long as feasible to minimize space and time
-        #   costs of the @beartype decorator.
-        try:
-            hint = eval(hint, bear_call.func_wrappee_scope_global)
+        #     T = TypeVar('T')
+        #
+        #     # @beartype resolves this stringified type hint as follows:
+        #     # * The "Dict", "str", and "int" attributes are globals and thus
+        #     #   trivially resolved to those objects via the "func_globals"
+        #     #   scope decided above.
+        #     # * The "MuhGeneric" attribute is neither a global nor local and
+        #     #   thus remains unresolved. This forward scope replaces this
+        #     #   unresolved attribute with a forward reference proxy.
+        #     @beartype
+        #     def muh_func(muh_arg: 'Dict[str, MuhGeneric[int]]') -> None: ...
+        #
+        #     class MuhGeneric(Generic[T]): ...
+        bear_call.func_wrappee_scope_global = BeartypeForwardScope(
+            scope_dict=func_globals, scope_name=func_module_name)
 
-            # If doing so succeeded, return this resolved hint.
-            return hint
-        # If doing so failed, it probably did so due to requiring one or more
-        # attributes available *ONLY* via the local scope for the decorated
-        # callable. In this case...
-        except Exception:
-            # If the decorated callable is nested (rather than global) and thus
-            # possibly has a non-empty local scope...
-            if bear_call.func_wrappee_is_nested:
-                # Local scope for the decorated callable.
-                bear_call.func_wrappee_scope_nested_local = get_func_locals(
-                    func=func,
+        # If the decorated callable is nested (rather than global) and thus
+        # *MAY* have a non-empty local nested scope...
+        if bear_call.func_wrappee_is_nested:
+            # Local scope of the decorated callable, localized to improve both
+            # readability and negligible efficiency when accessed below.
+            func_locals = get_func_locals(
+                func=func,
 
-                    # Ignore all lexical scopes in the fully-qualified name of
-                    # the decorated callable corresponding to owner classes
-                    # lexically nesting the current decorated class containing
-                    # that callable (including the current decorated class).
-                    # Why? Because these classes are *ALL* currently being
-                    # decorated and thus have yet to be encapsulated by new
-                    # stack frames on the call stack. If these lexical scopes
-                    # are *NOT* ignored, this call to get_func_locals() will
-                    # fail to find the parent lexical scope of the decorated
-                    # callable and then raise an unexpected exception.
-                    #
-                    # Consider, for example, this nested class decoration of a
-                    # fully-qualified "muh_package.Outer" class:
-                    #     from beartype import beartype
-                    #
-                    #     @beartype
-                    #     class Outer(object):
-                    #         class Middle(object):
-                    #             class Inner(object):
-                    #                 def muh_method(self) -> str:
-                    #                     return 'Painful API is painful.'
-                    #
-                    # When @beartype finally recurses into decorating the nested
-                    # muh_package.Outer.Middle.Inner.muh_method() method, this
-                    # call to get_func_locals() if *NOT* passed this parameter
-                    # would naively assume that the parent lexical scope of the
-                    # current muh_method() method on the call stack is named
-                    # "Inner". Instead, the parent lexical scope of that method
-                    # on the call stack is named "muh_package" -- the first
-                    # lexical scope enclosing that method that exists on the
-                    # call stack. Ergo, the non-existent "Outer", "Middle", and
-                    # "Inner" lexical scopes must *ALL* be silently ignored.
-                    func_scope_names_ignore=(
-                        0
-                        if bear_call.cls_stack is None
-                        else len(bear_call.cls_stack)
-                    ),
+                # Ignore all lexical scopes in the fully-qualified name of the
+                # decorated callable corresponding to parent classes lexically
+                # nesting the current decorated class containing that callable
+                # (including that class). Why? Because these classes are *ALL*
+                # currently being decorated and thus have yet to be encapsulated
+                # by new stack frames on the call stack. If these lexical scopes
+                # are *NOT* ignored, this call to get_func_locals() will fail to
+                # find the parent lexical scope of the decorated callable and
+                # then raise an unexpected exception.
+                #
+                # Consider, for example, this nested class decoration of a
+                # fully-qualified "muh_package.Outer" class:
+                #     @beartype
+                #     class Outer(object):
+                #         class Middle(object):
+                #             class Inner(object):
+                #                 def muh_method(self) -> str:
+                #                     return 'Painful API is painful.'
+                #
+                # When @beartype finally recurses into decorating the nested
+                # muh_package.Outer.Middle.Inner.muh_method() method, this call
+                # to get_func_locals() if *NOT* passed this parameter would
+                # naively assume that the parent lexical scope of the current
+                # muh_method() method on the call stack is named "Inner".
+                # Instead, the parent lexical scope of that method on the call
+                # stack is named "muh_package" -- the first lexical scope
+                # enclosing that method that exists on the call stack. The
+                # non-existent "Outer", "Middle", and "Inner" lexical scopes
+                # must *ALL* be silently ignored.
+                func_scope_names_ignore=(
+                    0 if cls_stack is None else len(cls_stack)),
 
-                    #FIXME: Consider dynamically calculating exactly how many
-                    #additional @beartype-specific frames are ignorable on the
-                    #first call to this function, caching that number, and then
-                    #reusing that cached number on all subsequent calls to this
-                    #function. The current approach employed below of naively
-                    #hard-coding a number of frames to ignore was incredibly
-                    #fragile and had to be effectively disabled, which hampers
-                    #runtime efficiency.
+                #FIXME: Consider dynamically calculating exactly how many
+                #additional @beartype-specific frames are ignorable on the first
+                #call to this function, caching that number, and then reusing
+                #that cached number on all subsequent calls to this function.
+                #The current approach employed below of naively hard-coding a
+                #number of frames to ignore was incredibly fragile and had to be
+                #effectively disabled, which hampers runtime efficiency.
 
-                    # Ignore additional frames on the call stack embodying:
-                    # * The current call to this function.
-                    #
-                    # Note that, for safety, we currently avoid ignoring
-                    # additional frames that we could technically ignore. These
-                    # include:
-                    # * The call to the parent
-                    #   beartype._check.checkcall.BeartypeCall.reinit() method.
-                    # * The call to the parent @beartype.beartype() decorator.
-                    #
-                    # Why? Because the @beartype codebase has been sufficiently
-                    # refactored so as to render any such attempts non-trivial,
-                    # fragile, and frankly dangerous.
-                    func_stack_frames_ignore=1,
+                # Ignore additional frames on the call stack embodying:
+                # * The current call to this function.
+                #
+                # Note that, for safety, we currently avoid ignoring additional
+                # frames that we could technically ignore. These include:
+                # * The call to the parent
+                #   beartype._check.checkcall.BeartypeCall.reinit() method.
+                # * The call to the parent @beartype.beartype() decorator.
+                #
+                # Why? Because the @beartype codebase has been sufficiently
+                # refactored so as to render any such attempts non-trivial,
+                # fragile, and frankly dangerous.
+                func_stack_frames_ignore=1,
+                exception_cls=exception_cls,
+            )
 
-                    #FIXME: *NON-IDEAL*. Raise a new type of exception specific
-                    #to this submodule, please.
-                    exception_cls=BeartypePep563Exception,
+            # If the decorated callable is a method transitively defined by a
+            # root decorated class, add a pair of local attributes exposing:
+            #
+            # * The unqualified basename of the root decorated class. Why?
+            #   Because this class may be recursively referenced in postponed
+            #   type hints and *MUST* thus be exposed to *ALL* postponed type
+            #   hints. However, this class is currently being decorated and thus
+            #   has yet to be defined in either:
+            #   * If this class is module-scoped, the global attribute
+            #     dictionary of that module and thus the "func_globals"
+            #     dictionary.
+            #   * If this class is closure-scoped, the local attribute
+            #     dictionary of that closure and thus the "func_locals"
+            #     dictionary.
+            # * The unqualified basename of the current decorated class. Why?
+            #   For similar reasons. Since the current decorated class may be
+            #   lexically nested in the root decorated class, the current
+            #   decorated class is *NOT* already accessible as either a global
+            #   or local. Exposing the current decorated class to a stringified
+            #   type hint referencing that class thus requires adding a local
+            #   attribute exposing that class.
+            #
+            # Note that:
+            # * *ALL* intermediary classes (i.e., excluding the root decorated
+            #   class) lexically nesting the current decorated class are
+            #   irrelevant. Intermediary classes are neither module-scoped nor
+            #   closure-scoped and thus inaccessible as either globals or locals
+            #   in the nested lexical scope of the current decorated class:
+            #   e.g.,
+            #     # This raises a parser error and is thus *NOT* fine:
+            #     #     NameError: name 'muh_type' is not defined
+            #     class Outer(object):
+            #         class Middle(object):
+            #             muh_type = str
+            #
+            #             class Inner(object):
+            #                 def muh_method(self) -> muh_type:
+            #                     return 'Dumpster fires are all I see.'
+            # * This implicitly overrides any previously declared locals of the
+            #   same name. Although non-ideal, this constitutes syntactically
+            #   valid Python and is thus *NOT* worth emitting even a non-fatal
+            #   warning over: e.g.,
+            #     # This is fine... technically.
+            #     from beartype import beartype
+            #     def muh_closure() -> None:
+            #         MuhClass = 'This is horrible, yet fine.'
+            #
+            #         @beartype
+            #         class MuhClass(object):
+            #             def muh_method(self) -> str:
+            #                 return 'Look away and cringe, everyone!'
+            if cls_stack:
+                # Root and current decorated classes.
+                cls_root = cls_stack[0]
+                cls_curr = cls_stack[-1]
+
+                # Add new locals exposing these classes to type hints,
+                # overwriting any locals of the same names in the higher-level
+                # local scope for any closure declaring this class if any. These
+                # classes are currently being decorated and thus guaranteed to
+                # be the most recent declarations of these attributes.
+                #
+                # Note that the current class assumes lexical precedence over
+                # the root class and is thus added *AFTER* the latter.
+                func_locals[cls_root.__name__] = cls_root
+                func_locals[cls_curr.__name__] = cls_curr
+
+                # Local scope for the class directly defining this method.
+                #
+                # Note that callables *ONLY* have direct access to attributes
+                # declared by the classes directly defining those callables.
+                # Ergo, the local scopes for parent classes of this class
+                # (including the root decorated class) are irrelevant.
+                cls_curr_locals = get_type_locals(
+                    cls=cls_curr,
+                    exception_cls=exception_cls,
                 )
-                #FIXME: Pick up here tomorrow, please. When doing so, please
-                #incorporate our "BeartypeForwardScope" class, please.
 
-            # Else, the decorated callable is global and is thus guaranteed to
-            # have an empty local scope. In this common case, avoid uselessly
-            # and expensively deciding this empty local scope.
+                # Forcefully merge this local scope into the current
+                # local scope, implicitly overwriting any locals of the
+                # same name. Class locals necessarily assume lexical
+                # precedence over:
+                # * These classes themselves.
+                # * Locals defined by higher-level parent classes.
+                # * Locals defined by closures defining these classes.
+                func_locals.update(cls_curr_locals)
+            # Else, the decorated callable is *NOT* a method transitively
+            # declared by a root decorated class.
+        # Else, the decorated callable is global and thus guaranteed to have an
+        # empty local scope. In this case, default to the empty dictionary.
+        else:
+            func_locals = DICT_EMPTY
+
+        # Classify this local scope of the decorated callable.
+        bear_call.func_wrappee_scope_nested_local = func_locals
+    # Else, this global scope and thus presumably all other related cached
+    # attributes have already been decided.
+    #
+    # In either case, these attributes should now all have been decided.
+
+    # ..................{ RESOLVE                            }..................
+    # Attempt to resolve this stringified type hint into a non-string type hint
+    # against both the global and local scopes of the decorated callable.
+    try:
+        hint_resolved = eval(
+            hint,
+            bear_call.func_wrappee_scope_global,
+
+            #FIXME: Uhm. What? It would appear that our
+            #BeartypeForwardScope.__missing__() method is called *ONLY* when
+            #this argument is commented out. That doesn't quite parse, though;
+            #why would failing to pass a local dictionary cause success? *sigh*
+            #
+            #The eval() docstring reads:
+            #    The globals must be a dictionary and locals can be any mapping,
+            #    defaulting to the current globals and locals.
+            #    If only globals is given, locals defaults to it.
+            #
+            #Ah-ha! Clearly, eval() treats globals and locals fundamentally
+            #differently (presumably for efficiency or something). This suggests
+            #that eval() truly only supports a single unified dictionary for our
+            #use case. In this case, the obvious solution is for us to simply
+            #congeal these two dictionaries together. In other words:
+            #* Rename "BeartypeCall.func_wrappee_scope_global" to simply
+            #  "BeartypeCall.func_wrappee_scope_forward".
+            #* Excise "BeartypeCall.func_wrappee_scope_nested_local".
+            #* Unify these two scopes into a single
+            #  "BeartypeCall.func_wrappee_scope_forward" above. Namely, after
+            #  deciding both "func_globals" *AND* "func_locals" above:
+            #  * Shallow-copy "func_globals" into a new "func_scope" local
+            #    variable: e.g.,
+            #       func_scope = func_globals.copy()
+            #  * Layer "func_locals" onto that: e.g.,
+            #       func_scope.update(func_locals)
+            #  * Assign the result to "BeartypeCall.func_wrappee_scope_forward":
+            #       bear_call.func_wrappee_scope_forward = func_scope
+            #
+            #Done and done. *shakes fist at eval()*
+
+            # bear_call.func_wrappee_scope_nested_local,
+        )
+    # If doing so failed for *ANY* reason whatsoever...
+    except Exception as exception:
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not exception class.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Human-readable message to be raised.
+        exception_message = (
+            f'{exception_prefix}stringified type hint '
+            f'{repr(hint)} syntactically invalid '
+            f'(i.e., {repr(exception)}).'
+        )
+
+        # If the beartype configuration associated with the decorated callable
+        # enabled debugging, append debug-specific metadata to this message.
+        if bear_call.conf.is_debug:
+            exception_message += (
+                f' Lexical scopes enclosing this hint include:\n\n'
+                f'~~~~[ GLOBAL SCOPE ]~~~~\n'
+                f'{repr(bear_call.func_wrappee_scope_global)}\n\n'
+                f'~~~~[ LOCAL SCOPE  ]~~~~\n'
+                f'{repr(bear_call.func_wrappee_scope_nested_local)}'
+            )
+        # Else, the beartype configuration associated with the decorated
+        # callable disabled debugging. In this case, avoid appending
+        # debug-specific metadata to this message.
+
+        # Raise a human-readable exception wrapping the typically
+        # non-human-readable exception raised above.
+        raise exception_cls(exception_message) from exception
 
     # ..................{ RETURN                             }..................
     # Return this resolved hint.
-    return hint
+    return hint_resolved
