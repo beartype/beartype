@@ -13,6 +13,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: *CRITICAL*. Refactor this submodule to defer to the new resolve_hint()
+#resolver, please.
+
 #FIXME: Conditionally emit a non-fatal PEP 563-specific warning when the active
 #Python interpreter targets Python >= 3.10 *AND* the passed callable is nested.
 

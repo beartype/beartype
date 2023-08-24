@@ -27,23 +27,40 @@ from beartype._util.text.utiltextident import die_unless_identifier
 #FIXME: Unit test us up, please.
 class BeartypeForwardScope(LexicalScope):
     '''
-    **Forward scope** (i.e., dictionary deferring the resolution of a local or
-    global scope of an arbitrary class or callable when dynamically evaluating
-    stringified type hints for that class or callable, including both forward
-    references *and* :pep:`563`-postponed type hints).
+    **Forward scope** (i.e., dictionary mapping from the name to value of each
+    locally and globally accessible attribute in the local and global scope of a
+    class or callable as well as deferring the resolution of each currently
+    undeclared attribute in that scope by replacing that attribute with a
+    forward reference proxy resolved only when that attribute is passed as the
+    second parameter to an :func:`isinstance`-based runtime type-check).
+
+    This dictionary is principally employed to dynamically evaluate stringified
+    type hints, including:
+
+    * :pep:`484`-compliant forward references.
+    * :pep:`563`-postponed type hints.
 
     Attributes
     ----------
-    _is_scope_module : bool
-        :data:`True` only if the name of this scope is that of a previously
-        imported module, implying this to be a forward module scope.
     _scope_dict : LexicalScope
-        **Lexical scope** (i.e., dictionary mapping from the relative
-        unqualified name to value of each previously declared attribute)
-        underlying this forward scope.
+        **Composite local and global scope** (i.e., dictionary mapping from
+        the name to value of each locally and globally accessible attribute
+        in the local and global scope of some class or callable) underlying
+        this forward scope. See the :meth:`__init__` method for details.
     _scope_name : str
-        Fully-qualified name of this forward scope.
+        Fully-qualified name of this forward scope. See the :meth:`__init__`
+        method for details.
     '''
+
+    # ..................{ CLASS VARIABLES                    }..................
+    # Slot all instance variables defined on this object to minimize the time
+    # complexity of both reading and writing variables across frequently
+    # called @beartype decorations. Slotting has been shown to reduce read and
+    # write costs by approximately ~10%, which is non-trivial.
+    __slots__ = (
+        '_scope_dict',
+        '_scope_name',
+    )
 
     # ..................{ INITIALIZERS                       }..................
     def __init__(self, scope_dict: LexicalScope, scope_name: str) -> None:
@@ -53,9 +70,35 @@ class BeartypeForwardScope(LexicalScope):
         Attributes
         ----------
         scope_dict : LexicalScope
-            **Lexical scope** (i.e., dictionary mapping from the relative
-            unqualified name to value of each previously declared attribute)
-            underlying this forward scope.
+            **Composite local and global scope** (i.e., dictionary mapping from
+            the name to value of each locally and globally accessible attribute
+            in the local and global scope of some class or callable) underlying
+            this forward scope.
+
+            Crucially, **this dictionary must composite both the local and
+            global scopes for that class or callable.** This dictionary must
+            *not* provide only the local or global scope; this dictionary must
+            provide both. Why? Because this forward scope is principally
+            intended to be passed as the second and last parameter to the
+            :func:`eval` builtin, called by the
+            :func:`beartype._check.forward.fwdhint.resolve_hint` function. For
+            unknown reasons, :func:`eval` only calls the :meth:`__missing__`
+            dunder method of this forward scope when passed only two parameters
+            (i.e., when passed only a global scope); :func:`eval` does *not*
+            call the :meth:`__missing__` dunder method of this forward scope
+            when passed three parameters (i.e., when passed both a global and
+            local scope). Presumably, this edge case pertains to the official
+            :func:`eval` docstring -- which reads:
+
+                The globals must be a dictionary and locals can be any mapping,
+                defaulting to the current globals and locals.
+                If only globals is given, locals defaults to it.
+
+            Clearly, :func:`eval` treats globals and locals fundamentally
+            differently (probably for efficiency or obscure C implementation
+            details). Since :func:`eval` only supports a single unified globals
+            dictionary for our use case, the caller *must* composite together
+            the global and local scopes into this dictionary. Praise to Guido.
         scope_name : str
             Fully-qualified name of this forward scope. For example:
 
@@ -88,11 +131,6 @@ class BeartypeForwardScope(LexicalScope):
         # Classify all passed parameters.
         self._scope_dict = scope_dict
         self._scope_name = scope_name
-
-        #FIXME: Consider excising, please.
-        # True only if the name of this scope is that of a previously imported
-        # module, implying this to be a module scope.
-        # self._is_scope_module = scope_name in sys_modules
 
     # ..................{ DUNDERS                            }..................
     def __missing__(self, hint_name: str) -> Type[
@@ -133,7 +171,7 @@ class BeartypeForwardScope(LexicalScope):
         BeartypeDecorHintForwardRefException
             If this type hint name is *not* a valid Python attribute name.
         '''
-        print(f'Missing type hint: {repr(hint_name)}')
+        # print(f'Missing type hint: {repr(hint_name)}')
 
         # If this type hint name is syntactically invalid, raise an exception.
         die_unless_identifier(

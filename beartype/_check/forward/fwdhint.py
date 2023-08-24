@@ -17,20 +17,23 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintForwardRefException
 # from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.checkcall import BeartypeCall
-from beartype._check.forward._fwdscope import BeartypeForwardScope
+from beartype._check.forward.fwdscope import BeartypeForwardScope
+# from beartype._check.forward._fwdref import make_forwardref_indexable_subtype
 from beartype._data.hint.datahinttyping import (
     # LexicalScope,
     TypeException,
     # TypeStack,
 )
 from beartype._data.kind.datakinddict import DICT_EMPTY
-from beartype._data.kind.datakindset import FROZENSET_EMPTY
+# from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.cls.utilclsget import get_type_locals
 from beartype._util.func.utilfuncscope import (
     get_func_globals,
     get_func_locals,
 )
 from beartype._util.module.utilmodget import get_object_module_name
+from beartype._util.text.utiltextident import is_identifier
+from builtins import __dict__ as func_builtins  # type: ignore[attr-defined]
 
 # ....................{ RESOLVERS                          }....................
 #FIXME: Unit test us up, please.
@@ -94,44 +97,24 @@ def resolve_hint(
     # ..................{ LOCALS                             }..................
     # Decorated callable and metadata associated with that callable, localized
     # to improve both readability and negligible efficiency when accessed below.
-    func      = bear_call.func_wrappee_wrappee
-    cls_stack = bear_call.cls_stack
+    func = bear_call.func_wrappee_wrappee
 
-    # If the frozen set of the unqualified names of all parent callables
-    # lexically containing this decorated callable has yet to be decided...
-    if bear_call.func_wrappee_scope_global is None:
-        # Decide this frozen set as either...
-        bear_call.func_wrappee_scope_nested_names = (
-            # If the decorated callable is nested, the non-empty frozen set of
-            # the unqualified names of all parent callables lexically containing
-            # this nested decorated callable (including this nested decorated
-            # callable itself);
-            frozenset(func.__qualname__.rsplit(sep='.'))
-            if bear_call.func_wrappee_is_nested else
-            # Else, the decorated callable is a global function. In that case,
-            # the empty frozen set.
-            FROZENSET_EMPTY
-        )
-    # Else, this frozen set has already been decided.
+    # If this hint is a trivial Python identifier (e.g., "MuhClass"), then this
+    # hint *COULD* be a relative forward reference to a parent callable or class
+    # of the decorated callable that is currently being defined but has yet to
+    # be defined in full. If PEP 563 postponed this type hint under "from
+    # __future__ import annotations", this hint *MUST* have been a locally or
+    # globally scoped attribute of the decorated callable before being postponed
+    # by PEP 563 into a relative forward reference to that attribute: e.g.,
+    #     from __future__ import annotations
     #
-    # In either case, this frozen set is now decided. I choose you, red pill!
-
-    # If this hint is the unqualified name of a parent callable or class of the
-    # decorated callable, then this hint is a relative forward reference to a
-    # parent callable or class of the decorated callable that is currently being
-    # defined but has yet to be defined in full. If PEP 563 postponed this type
-    # hint under "from __future__ import annotations", this hint *MUST* have
-    # been a locally or globally scoped attribute of the decorated callable
-    # before being postponed by PEP 563 into a relative forward reference to
-    # that attribute: e.g.,
-    #     # If this loop is iterating over a postponed type hint annotating this
-    #     # post-PEP 563 method signature...
+    #     # If this is a PEP 563-postponed type hint...
     #     class MuhClass:
     #         @beartype
     #         def muh_method(self) -> 'MuhClass': ...
     #
-    #     # ...then the original type hints prior to being postponed *MUST* have
-    #     # annotated this pre-PEP 563 method signature.
+    #     # ...then the original type hints prior to being postponed *MUST*
+    #     # have annotated this pre-PEP 563 method signature.
     #     class MuhClass:
     #         @beartype
     #         def muh_method(self) -> MuhClass: ...
@@ -218,47 +201,23 @@ def resolve_hint(
     # * This edge case is both trivial and efficient to support.
     #
     # tl;dr: Preserve this hint for disambiguity by reducing to a noop.
-    if hint in bear_call.func_wrappee_scope_nested_names:  # type: ignore[operator]
+    # if hint in bear_call.func_wrappee_scope_nested_names:  # type: ignore[operator]
+    if is_identifier(hint):
         return hint
-    # Else, this hint is *NOT* the unqualified name of a parent callable or
-    # class of the decorated callable. In this case, resolve this hint.
+    # Else, this hint is *NOT* a trivial Python identifier and must thus be a
+    # non-trivial Python expression (e.g., "List[MuhClass[int]]").
 
-    # If the global scope of the decorated callable has yet to be decided,
-    # assume that all other related cached attributes (e.g.,
-    # "bear_call.func_wrappee_scope_nested_local") of the decorated callable
-    # also have yet to be decided. In this case, both decide and cache these
-    # attributes now.
-    if bear_call.func_wrappee_scope_global is None:
+    # If the forward scope of the decorated callable has yet to be decided...
+    if bear_call.func_wrappee_scope_forward is None:
+        # Localize metadata for readability and efficiency. Look. Just do it.
+        cls_stack = bear_call.cls_stack
+
         # Fully-qualified name of the module declaring the decorated callable,
         # which also serves as the name of this module and thus global scope.
         func_module_name = get_object_module_name(func)  # type: ignore[operator]
 
         # Global scope of the decorated callable.
         func_globals = get_func_globals(func=func, exception_cls=exception_cls)
-
-        # Wrap this global scope of the decorated callable in a forward scope
-        # dynamically replacing each unresolved attribute of this stringified
-        # type hint with a forward reference proxy resolving this attribute on
-        # the first attempt to pass this attribute as the second parameter to an
-        # isinstance()-based runtime type-check: e.g.,
-        #     from beartype import beartype
-        #     from beartype.typing import Dict, Generic, TypeVar
-        #
-        #     T = TypeVar('T')
-        #
-        #     # @beartype resolves this stringified type hint as follows:
-        #     # * The "Dict", "str", and "int" attributes are globals and thus
-        #     #   trivially resolved to those objects via the "func_globals"
-        #     #   scope decided above.
-        #     # * The "MuhGeneric" attribute is neither a global nor local and
-        #     #   thus remains unresolved. This forward scope replaces this
-        #     #   unresolved attribute with a forward reference proxy.
-        #     @beartype
-        #     def muh_func(muh_arg: 'Dict[str, MuhGeneric[int]]') -> None: ...
-        #
-        #     class MuhGeneric(Generic[T]): ...
-        bear_call.func_wrappee_scope_global = BeartypeForwardScope(
-            scope_dict=func_globals, scope_name=func_module_name)
 
         # If the decorated callable is nested (rather than global) and thus
         # *MAY* have a non-empty local nested scope...
@@ -417,54 +376,58 @@ def resolve_hint(
         else:
             func_locals = DICT_EMPTY
 
-        # Classify this local scope of the decorated callable.
-        bear_call.func_wrappee_scope_nested_local = func_locals
-    # Else, this global scope and thus presumably all other related cached
-    # attributes have already been decided.
+        # Forward scope compositing this global and local scope of the decorated
+        # callable as well as dynamically replacing each unresolved attribute of
+        # this stringified type hint with a forward reference proxy resolving
+        # this attribute on the first attempt to pass this attribute as the
+        # second parameter to an isinstance()-based runtime type-check: e.g.,
+        #     from beartype import beartype
+        #     from beartype.typing import Dict, Generic, TypeVar
+        #
+        #     T = TypeVar('T')
+        #
+        #     # @beartype resolves this stringified type hint as follows:
+        #     # * The "Dict", "str", and "int" attributes are globals and thus
+        #     #   trivially resolved to those objects via the "func_globals"
+        #     #   scope decided above.
+        #     # * The "MuhGeneric" attribute is neither a global nor local and
+        #     #   thus remains unresolved. This forward scope replaces this
+        #     #   unresolved attribute with a forward reference proxy.
+        #     @beartype
+        #     def muh_func(muh_arg: 'Dict[str, MuhGeneric[int]]') -> None: ...
+        #
+        #     class MuhGeneric(Generic[T]): ...
+        #
+        # Initialize this forward scope to the set of all builtin attributes
+        # (e.g., "str", "Exception"). Although the eval() builtin does, of
+        # course, implicitly evaluate this stringified type hint against all
+        # builtin attributes, it does only *AFTER* invoking the
+        # BeartypeForwardScope.__missing__() dunder method with each such
+        # builtin attribute referenced in this hint. Since handling that
+        # eccentricity would be less efficient and trivial than simply
+        # initializing this forward scope with all builtin attributes, we prefer
+        # the current (admittedly sus af) approach. Do not squint at this.
+        bear_call.func_wrappee_scope_forward = BeartypeForwardScope(
+            scope_dict=func_builtins, scope_name=func_module_name)
+
+        # Composite this global and local scope into this forward scope (in that
+        # order), implicitly overwriting first each builtin attribute and then
+        # each global attribute previously copied into this forward scope with
+        # each global and then local attribute of the same name. Since locals
+        # *ALWAYS* assume precedence over globals *ALWAYS* assume precedence
+        # over builtins, order of operations is *EXTREMELY* significant here.
+        bear_call.func_wrappee_scope_forward.update(func_globals)
+        bear_call.func_wrappee_scope_forward.update(func_locals)
+        # print(f'Forward scope: {bear_call.func_wrappee_scope_forward}')
+    # Else, this forward scope has already been decided.
     #
-    # In either case, these attributes should now all have been decided.
+    # In either case, this forward scope should now all have been decided.
 
     # ..................{ RESOLVE                            }..................
     # Attempt to resolve this stringified type hint into a non-string type hint
     # against both the global and local scopes of the decorated callable.
     try:
-        hint_resolved = eval(
-            hint,
-            bear_call.func_wrappee_scope_global,
-
-            #FIXME: Uhm. What? It would appear that our
-            #BeartypeForwardScope.__missing__() method is called *ONLY* when
-            #this argument is commented out. That doesn't quite parse, though;
-            #why would failing to pass a local dictionary cause success? *sigh*
-            #
-            #The eval() docstring reads:
-            #    The globals must be a dictionary and locals can be any mapping,
-            #    defaulting to the current globals and locals.
-            #    If only globals is given, locals defaults to it.
-            #
-            #Ah-ha! Clearly, eval() treats globals and locals fundamentally
-            #differently (presumably for efficiency or something). This suggests
-            #that eval() truly only supports a single unified dictionary for our
-            #use case. In this case, the obvious solution is for us to simply
-            #congeal these two dictionaries together. In other words:
-            #* Rename "BeartypeCall.func_wrappee_scope_global" to simply
-            #  "BeartypeCall.func_wrappee_scope_forward".
-            #* Excise "BeartypeCall.func_wrappee_scope_nested_local".
-            #* Unify these two scopes into a single
-            #  "BeartypeCall.func_wrappee_scope_forward" above. Namely, after
-            #  deciding both "func_globals" *AND* "func_locals" above:
-            #  * Shallow-copy "func_globals" into a new "func_scope" local
-            #    variable: e.g.,
-            #       func_scope = func_globals.copy()
-            #  * Layer "func_locals" onto that: e.g.,
-            #       func_scope.update(func_locals)
-            #  * Assign the result to "BeartypeCall.func_wrappee_scope_forward":
-            #       bear_call.func_wrappee_scope_forward = func_scope
-            #
-            #Done and done. *shakes fist at eval()*
-
-            # bear_call.func_wrappee_scope_nested_local,
-        )
+        hint_resolved = eval(hint, bear_call.func_wrappee_scope_forward)
     # If doing so failed for *ANY* reason whatsoever...
     except Exception as exception:
         assert isinstance(exception_cls, type), (
@@ -483,11 +446,8 @@ def resolve_hint(
         # enabled debugging, append debug-specific metadata to this message.
         if bear_call.conf.is_debug:
             exception_message += (
-                f' Lexical scopes enclosing this hint include:\n\n'
-                f'~~~~[ GLOBAL SCOPE ]~~~~\n'
-                f'{repr(bear_call.func_wrappee_scope_global)}\n\n'
-                f'~~~~[ LOCAL SCOPE  ]~~~~\n'
-                f'{repr(bear_call.func_wrappee_scope_nested_local)}'
+                f' Composite global and local scope enclosing this hint:\n\n'
+                f'{repr(bear_call.func_wrappee_scope_forward)}'
             )
         # Else, the beartype configuration associated with the decorated
         # callable disabled debugging. In this case, avoid appending

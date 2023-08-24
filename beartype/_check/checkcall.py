@@ -16,7 +16,7 @@ from beartype.roar import BeartypeDecorWrappeeException
 from beartype.typing import (
     Callable,
     Dict,
-    FrozenSet,
+    # FrozenSet,
     Optional,
 )
 from beartype._cave._cavefast import CallableCodeObjectType
@@ -26,6 +26,7 @@ from beartype._check.checkmagic import (
     ARG_NAME_FUNC,
     ARG_NAME_RAISE_EXCEPTION,
 )
+from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahinttyping import (
     LexicalScope,
@@ -119,59 +120,30 @@ class BeartypeCall(object):
           another pure-Python callable or class), :data:`True`.
         * If this wrappee callable is **global** (i.e., declared at module scope
           in its submodule), :data:`False`.
-    func_wrappee_scope_global : Optional[LexicalScope]
+    func_wrappee_scope_forward : Optional[BeartypeForwardScope]
         Either:
 
         * If this wrappee callable is annotated by at least one **stringified
           type hint** (i.e., declared as a :pep:`484`- or :pep:`563`-compliant
           forward reference referring to an actual type hint that has yet to be
           declared in the local and global scopes declaring this callable) that
-          :mod:`beartype` has already resolved to its referent, the **global
-          scope** (i.e., dictionary mapping from the name to value of each
-          globally accessible attribute) of this wrappee callable.
-        * Else, :data:`None`.
-
-        Note that the reconstruction of this scope is computationally expensive
-        and thus deferred until needed to resolve stringified type hints.
-    func_wrappee_scope_nested_local : Optional[LexicalScope]
-        Either:
-
-        * If this wrappee callable is annotated by at least one **stringified
-          type hint** (i.e., declared as a :pep:`484`- or :pep:`563`-compliant
-          forward reference referring to an actual type hint that has yet to be
-          declared in the local and global scopes declaring this callable) that
-          :mod:`beartype` has already resolved to its referent, either:
-
-          * If this wrappee callable is **nested** (i.e., declared in the body
-            of another pure-Python callable or class), the **local scope**
-            (i.e., dictionary mapping from the name to value of each locally
-            accessible attribute) of this wrappee callable.
-          * Else, the empty dictionary.
-
+          :mod:`beartype` has already resolved to its referent, this wrappee
+          callable's **forward scope** (i.e., dictionary mapping from the name
+          to value of each locally and globally accessible attribute in the
+          local and global scope of this wrappee callable as well as deferring
+          the resolution of each currently undeclared attribute in that scope by
+          replacing that attribute with a forward reference proxy resolved only
+          when that attribute is passed as the second parameter to an
+          :func:`isinstance`-based runtime type-check).
         * Else, :data:`None`.
 
         Note that:
 
         * The reconstruction of this scope is computationally expensive and thus
-          deferred until needed to resolve stringified type hints.
+          deferred until needed to resolve the first stringified type hint
+          annotating this wrappee callable.
         * All callables have local scopes *except* global functions, whose local
           scopes are by definition the empty dictionary.
-    func_wrappee_scope_nested_names : Optional[frozenset[str]]
-        Either:
-
-        * If this wrappee callable is annotated by at least one stringified type
-          hint that :mod:`beartype` has already resolved to its referent,
-          either:
-
-          * If this wrappee callable is **nested** (i.e., declared in the body
-            of another pure-Python callable or class), the non-empty frozen set
-            of the unqualified names of all parent callables lexically
-            containing this nested wrappee callable (including this nested
-            wrappee callable itself).
-          * Else, this wrappee callable is declared at global scope in its
-            submodule. In this case, the empty frozen set.
-
-        * Else, :data:`None`.
     func_wrappee_wrappee : Optional[Callable]
         Possibly unwrapped **decorated callable wrappee** (i.e., low-level
         callable wrapped by the high-level :attr:`func_wrappee` callable
@@ -227,9 +199,7 @@ class BeartypeCall(object):
         'func_wrappee',
         'func_wrappee_codeobj',
         'func_wrappee_is_nested',
-        'func_wrappee_scope_global',
-        'func_wrappee_scope_nested_local',
-        'func_wrappee_scope_nested_names',
+        'func_wrappee_scope_forward',
         'func_wrappee_wrappee',
         'func_wrappee_wrappee_codeobj',
         'func_wrapper_code_call_prefix',
@@ -240,8 +210,8 @@ class BeartypeCall(object):
 
     # Coerce instances of this class to be unhashable, preventing spurious
     # issues when accidentally passing these instances to memoized callables by
-    # implicitly raising an "TypeError" exceptions on the first call to such a
-    # callable. There exists no tangible benefit to permitting these instances
+    # implicitly raising a "TypeError" exception on the first call to those
+    # callables. There exists no tangible benefit to permitting these instances
     # to be hashed (and thus also cached), since these instances are:
     # * Specific to the decorated callable and thus *NOT* safely cacheable
     #   across functions applying to different decorated callables.
@@ -276,9 +246,7 @@ class BeartypeCall(object):
         self.func_wrappee: Callable = None  # type: ignore[assignment]
         self.func_wrappee_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
         self.func_wrappee_is_nested: bool = None  # type: ignore[assignment]
-        self.func_wrappee_scope_global: Optional[LexicalScope] = None
-        self.func_wrappee_scope_nested_local: Optional[LexicalScope] = None
-        self.func_wrappee_scope_nested_names: Optional[FrozenSet[str]] = None
+        self.func_wrappee_scope_forward: Optional[BeartypeForwardScope] = None
         self.func_wrappee_wrappee: Callable = None  # type: ignore[assignment]
         self.func_wrappee_wrappee_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
         self.func_wrapper_code_call_prefix: str = None  # type: ignore[assignment]
@@ -397,9 +365,7 @@ class BeartypeCall(object):
 
         # Defer the resolution of both global and local scopes for this wrappee
         # callable until needed to subsequently resolve stringified type hints.
-        self.func_wrappee_scope_global = None
-        self.func_wrappee_scope_nested_local = None
-        self.func_wrappee_scope_nested_names = None
+        self.func_wrappee_scope_forward = None
 
         # Possibly wrapped callable code object.
         self.func_wrappee_codeobj = get_func_codeobj(
@@ -413,9 +379,8 @@ class BeartypeCall(object):
             exception_cls=BeartypeDecorWrappeeException,
         )
 
-        #FIXME: Stop calling this function in favour of the
-        #"self.func_wrappee_scope_global" and
-        #"self.func_wrappee_scope_nested_local" scopes, please.
+        #FIXME: Stop calling this function in favour of
+        #"self.func_wrappee_scope_forward", please.
         # Resolve all postponed hints on this callable if any *BEFORE* parsing
         # the actual hints these postponed hints refer to.
         resolve_pep563(
