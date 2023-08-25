@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -20,7 +20,7 @@ Python 3.7.0.** If this is *not* the case, importing this submodule raises an
 :class:`AttributeError` exception.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from __future__ import annotations
 from beartype import beartype
 from beartype.typing import List
@@ -29,7 +29,7 @@ from beartype_test.a00_unit.data.data_type import decorator
 from collections.abc import Callable
 from typing import Union
 
-# ....................{ CONSTANTS                         }....................
+# ....................{ CONSTANTS                          }....................
 _MINECRAFT_END_TXT_STANZAS = (
     'I see the player you mean.',
     '{player_name}?',
@@ -109,7 +109,7 @@ _MINECRAFT_END_TXT_STANZAS = (
     'Wake up.',
 )
 
-# ....................{ CALLABLES ~ module                }....................
+# ....................{ CALLABLES ~ module                 }....................
 # Callables exercising module-scoped edge cases under PEP 563.
 
 def get_minecraft_end_txt(player_name: str) -> str:
@@ -135,7 +135,7 @@ def get_minecraft_end_txt_stanza(
     return _MINECRAFT_END_TXT_STANZAS[stanza_index].format(
         player_name=player_name)
 
-# ....................{ CALLABLES ~ closure               }....................
+# ....................{ CALLABLES ~ closure                }....................
 # Callables exercising closure-scoped edge cases under PEP 563.
 
 @beartype
@@ -244,15 +244,15 @@ def get_minecraft_end_txt_closure_factory(player_name: str) -> Callable:
     # Return this closure.
     return get_minecraft_end_txt_closure_outer
 
-# ....................{ CLASSES                           }....................
+# ....................{ CLASSES                            }....................
 # Classes exercising module-scoped edge cases under PEP 563.
 
-#FIXME: We should probably nest this class in a function to exercise
-#everything, but this would seem to suffice for now as an initial foray.
+#FIXME: We should probably nest this class in a function to exercise everything,
+#but this would seem to suffice for now as an initial foray.
 class MinecraftEndTxtUnscrambler(object):
     '''
-    Class declaring a method decorated by :func:`beartype.beartype` annotated
-    by PEP-compliant type hints accessible only as class variables.
+    Arbitrary class declaring a method decorated by :func:`beartype.beartype`
+    annotated by type hints accessible only as class variables.
     '''
 
     # PEP-compliant type hints accessible only as class variables to the
@@ -263,8 +263,8 @@ class MinecraftEndTxtUnscrambler(object):
     @beartype
     def __init__(self, unscrambling: TextIsh) -> NoneIsh:
         '''
-        Method decorated by :func:`beartype.beartype`, annotated by
-        PEP-compliant type hints accessible only as class variables.
+        Arbitrary method decorated by :func:`beartype.beartype`, annotated by
+        type hints accessible only as class variables.
         '''
 
         _minecraft_end_txt_stanzas_unscrambled = [
@@ -273,17 +273,16 @@ class MinecraftEndTxtUnscrambler(object):
             if '[scrambled]' in minecraft_end_txt_stanza
         ]
 
-        # PEP-compliant type hints accessible only as local variables to the
-        # following closure, exercising an edge case in PEP 563 support.
+        # Type hints accessible only as local variables to the following
+        # closure, exercising an edge case in PEP 563 support.
         BoolIsh = Union[bool, float, int]
 
         @beartype
         def get_minecraft_end_txt_unscrambled_stanza_closure(
             self, is_stanza_last: BoolIsh) -> self.TextIsh:
             '''
-            Closure decorated by :func:`beartype.beartype`, annotated by
-            PEP-compliant type hints accessible only as both class and local
-            variables.
+            Arbitrary closure decorated by :func:`beartype.beartype`, annotated
+            by type hints accessible only as both class and local variables.
             '''
 
             return _minecraft_end_txt_stanzas_unscrambled[
@@ -293,7 +292,7 @@ class MinecraftEndTxtUnscrambler(object):
         self.get_minecraft_end_txt_unscrambled_stanza = (
             get_minecraft_end_txt_unscrambled_stanza_closure)
 
-# ....................{ CALLABLES ~ limit                 }....................
+# ....................{ CALLABLES ~ limit                  }....................
 #FIXME: Hilariously, we can't even unit test whether the
 #beartype._decor._pep.pep563._die_if_hint_repr_exceeds_child_limit() function
 #behaves as expected. Why not? Because some combination of the "typing" module

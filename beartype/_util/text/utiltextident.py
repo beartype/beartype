@@ -114,10 +114,16 @@ def is_identifier(text: str) -> bool:
     # * Regular expressions report false negatives. See the docstring.
     # * Manual iteration is significantly faster than "all(...)"- and
     #   "any(...)"-style comprehensions.
+    # * This approach correctly handles *ALL* edge cases, including when:
+    #   * This string is simply the "." character. In this case:
+    #         >>> '.'.split('.')
+    #         ['', '']
+    #     Since the empty string is *NOT* a valid Python identifier, this
+    #     iteration immediately returns false as expected.
     # * There exists an alternative and significantly more computationally
     #   expensive means of testing this condition, employed by the
-    #   typing.ForwardRef.__init__() method to valid the validity of the
-    #   passed relative classname:
+    #   typing.ForwardRef.__init__() method to valid the validity of the passed
+    #   relative classname:
     #       # Needless to say, we'll never be doing this.
     #       try:
     #           all(
@@ -132,6 +138,8 @@ def is_identifier(text: str) -> bool:
         # identifier, return false.
         if not text_basename.isidentifier():
             return False
+        # Else, this "."-delimited substring is a valid unqualified Python
+        # identifier. In this case, silently continue to the next.
 
     # Return true, since *ALL* "."-delimited substrings split from this string
     # are valid unqualified Python identifiers.

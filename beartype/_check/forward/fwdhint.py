@@ -25,7 +25,7 @@ from beartype._data.hint.datahinttyping import (
     # TypeStack,
 )
 from beartype._data.kind.datakinddict import DICT_EMPTY
-# from beartype._data.kind.datakindset import FROZENSET_EMPTY
+from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.cls.utilclsget import get_type_locals
 from beartype._util.func.utilfuncscope import (
     get_func_globals,
@@ -99,13 +99,33 @@ def resolve_hint(
     # to improve both readability and negligible efficiency when accessed below.
     func = bear_call.func_wrappee_wrappee
 
-    # If this hint is a trivial Python identifier (e.g., "MuhClass"), then this
-    # hint *COULD* be a relative forward reference to a parent callable or class
-    # of the decorated callable that is currently being defined but has yet to
-    # be defined in full. If PEP 563 postponed this type hint under "from
-    # __future__ import annotations", this hint *MUST* have been a locally or
-    # globally scoped attribute of the decorated callable before being postponed
-    # by PEP 563 into a relative forward reference to that attribute: e.g.,
+    # If the frozen set of the unqualified names of all parent callables
+    # lexically containing this decorated callable has yet to be decided...
+    if bear_call.func_wrappee_scope_nested_names is None:
+        # Decide this frozen set as either...
+        bear_call.func_wrappee_scope_nested_names = (
+            # If the decorated callable is nested, the non-empty frozen set
+            # of the unqualified names of all parent callables lexically
+            # containing this nested decorated callable (including this
+            # nested decorated callable itself);
+            frozenset(func.__qualname__.rsplit(sep='.'))
+            if bear_call.func_wrappee_is_nested else
+            # Else, the decorated callable is a global function. In this
+            # case, the empty frozen set.
+            FROZENSET_EMPTY
+        )
+    # Else, this frozen set has already been decided.
+    #
+    # In either case, this frozen set is now decided. I choose you!
+
+    # If this hint is the unqualified name of a parent callable or class of
+    # the decorated callable, then this hint is a relative forward reference
+    # to a parent callable or class of the decorated callable that is
+    # currently being defined but has yet to be defined in full. If PEP 563
+    # postponed this type hint under "from __future__ import annotations",
+    # this hint *MUST* have been a locally or globally scoped attribute of
+    # the decorated callable before being postponed by PEP 563 into a
+    # relative forward reference to that attribute: e.g.,
     #     from __future__ import annotations
     #
     #     # If this is a PEP 563-postponed type hint...
@@ -120,9 +140,9 @@ def resolve_hint(
     #         def muh_method(self) -> MuhClass: ...
     #
     # In this case, avoid attempting to resolve this forward reference. Why?
-    # Disambiguity. Although the "MuhClass" class has yet to be defined at the
-    # time @beartype decorates the muh_method() method, an attribute of the same
-    # name may already have been defined at that time: e.g.,
+    # Disambiguity. Although the "MuhClass" class has yet to be defined at
+    # the time @beartype decorates the muh_method() method, an attribute of
+    # the same name may already have been defined at that time: e.g.,
     #     # While bad form, PEP 563 postpones this valid logic...
     #     MuhClass = "Just kidding! Had you going there, didn't I?"
     #     class MuhClass:
@@ -135,8 +155,8 @@ def resolve_hint(
     #         @beartype
     #         def muh_method(self) -> 'MuhClass': ...
     #
-    # Naively resolving this forward reference would erroneously replace this
-    # hint with the previously declared attribute rather than the class
+    # Naively resolving this forward reference would erroneously replace
+    # this hint with the previously declared attribute rather than the class
     # currently being declared: e.g.,
     #     # Naive PEP 563 resolution would replace the above by this!
     #     MuhClass = "Just kidding! Had you going there, didn't I?"
@@ -145,33 +165,35 @@ def resolve_hint(
     #         def muh_method(self) -> (
     #             "Just kidding! Had you going there, didn't I?"): ...
     #
-    # This isn't simply an edge-case disambiguity, however. This exact situation
-    # commonly arises whenever reloading modules containing @beartype-decorated
-    # callables annotated with self-references (e.g., by passing those modules
-    # to the standard importlib.reload() function). Why? Because module
-    # reloading is ill-defined and mostly broken under Python. Since the
-    # importlib.reload() function fails to delete any of the attributes of the
-    # module to be reloaded before reloading that module, the parent callable or
-    # class referred to by this hint will be briefly defined for the duration of
-    # @beartype's decoration of the decorated callable as the prior version of
-    # that parent callable or class!
+    # This isn't just an edge-case disambiguity, however. This situation
+    # commonly arises when reloading modules containing @beartype-decorated
+    # callables annotated with self-references (e.g., by passing those
+    # modules to the standard importlib.reload() function). Why? Because
+    # module reloading is ill-defined and mostly broken under Python. Since
+    # the importlib.reload() function fails to delete any of the attributes
+    # of the module to be reloaded before reloading that module, the parent
+    # callable or class referred to by this hint will be briefly defined for
+    # the duration of @beartype's decoration of the decorated callable as
+    # the prior version of that parent callable or class!
     #
     # Resolving this hint would thus superficially succeed, while actually
-    # erroneously replacing this hint with the prior rather than current version
-    # of that parent callable or class. @beartype would then wrap the decorated
-    # callable with a wrapper expecting the prior rather than current version of
-    # that parent callable or class. All subsequent calls to that wrapper would
-    # then fail. Since this actually happened, we ensure it never does again.
+    # erroneously replacing this hint with the prior rather than current
+    # version of that parent callable or class. @beartype would then wrap
+    # the decorated callable with a wrapper expecting the prior rather than
+    # current version of that parent callable or class. All subsequent calls
+    # to that wrapper would then fail. Since this actually happened, we
+    # ensure it never does again.
     #
     # Lastly, note that this edge case *ONLY* supports top-level relative
     # forward references (i.e., syntactically valid Python identifier names
-    # subscripting *NO* parent type hints). Child relative forward references
-    # will continue to raise exceptions. As resolving PEP 563-postponed type
-    # hints effectively reduces to a single "all or nothing" call of the
-    # low-level eval() builtin accepting *NO* meaningful configuration, there
-    # exists *NO* means of only partially resolving parent type hints while
-    # preserving relative forward references subscripting those hints. The
-    # solution in those cases is for end users to either:
+    # subscripting *NO* parent type hints). Child relative forward
+    # references will continue to raise exceptions. As resolving PEP
+    # 563-postponed type hints effectively reduces to a single "all or
+    # nothing" call of the low-level eval() builtin accepting *NO*
+    # meaningful configuration, there exists *NO* means of only partially
+    # resolving parent type hints while preserving relative forward
+    # references subscripting those hints. The solution in those cases is
+    # for end users to either:
     #
     # * Decorate classes rather than methods: e.g.,
     #     # Users should replace this method decoration, which will fail at
@@ -201,11 +223,24 @@ def resolve_hint(
     # * This edge case is both trivial and efficient to support.
     #
     # tl;dr: Preserve this hint for disambiguity by reducing to a noop.
-    # if hint in bear_call.func_wrappee_scope_nested_names:  # type: ignore[operator]
-    if is_identifier(hint):
+    if hint in bear_call.func_wrappee_scope_nested_names:  # type: ignore[operator]
         return hint
-    # Else, this hint is *NOT* a trivial Python identifier and must thus be a
-    # non-trivial Python expression (e.g., "List[MuhClass[int]]").
+    # Else, this hint is *NOT* the unqualified name of a parent callable or
+    # class of the decorated callable. In this case, this hint *COULD* require
+    # dynamic evaluation under the eval() builtin. Why? Because this hint could
+    # simply be the stringified name of a PEP 563-postponed unsubscripted
+    # "typing" non-class attribute imported at module scope. While valid as a
+    # type hint, this attribute is *NOT* a class. Returning this stringified
+    # hint as is would erroneously instruct our code generation algorithm to
+    # treat this stringified hint as a relative forward reference to a class.
+    # Instead, evaluate this stringified hint into its referent below: e.g.,
+    #     from __future__ import annotations
+    #     from typing import Hashable
+    #
+    #     # PEP 563 postpones this into:
+    #     #     def muh_func() -> 'Hashable':
+    #     def muh_func() -> Hashable:
+    #         return 'This is hashable, yo.'
 
     # If the forward scope of the decorated callable has yet to be decided...
     if bear_call.func_wrappee_scope_forward is None:

@@ -16,7 +16,7 @@ from beartype.roar import BeartypeDecorWrappeeException
 from beartype.typing import (
     Callable,
     Dict,
-    # FrozenSet,
+    FrozenSet,
     Optional,
 )
 from beartype._cave._cavefast import CallableCodeObjectType
@@ -144,6 +144,22 @@ class BeartypeCall(object):
           annotating this wrappee callable.
         * All callables have local scopes *except* global functions, whose local
           scopes are by definition the empty dictionary.
+    func_wrappee_scope_nested_names : Optional[frozenset[str]]
+        Either:
+
+        * If this wrappee callable is annotated by at least one stringified type
+          hint that :mod:`beartype` has already resolved to its referent,
+          either:
+
+          * If this wrappee callable is **nested** (i.e., declared in the body
+            of another pure-Python callable or class), the non-empty frozen set
+            of the unqualified names of all parent callables lexically
+            containing this nested wrappee callable (including this nested
+            wrappee callable itself).
+          * Else, this wrappee callable is declared at global scope in its
+            submodule. In this case, the empty frozen set.
+
+        * Else, :data:`None`.
     func_wrappee_wrappee : Optional[Callable]
         Possibly unwrapped **decorated callable wrappee** (i.e., low-level
         callable wrapped by the high-level :attr:`func_wrappee` callable
@@ -200,6 +216,7 @@ class BeartypeCall(object):
         'func_wrappee_codeobj',
         'func_wrappee_is_nested',
         'func_wrappee_scope_forward',
+        'func_wrappee_scope_nested_names',
         'func_wrappee_wrappee',
         'func_wrappee_wrappee_codeobj',
         'func_wrapper_code_call_prefix',
@@ -247,6 +264,7 @@ class BeartypeCall(object):
         self.func_wrappee_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
         self.func_wrappee_is_nested: bool = None  # type: ignore[assignment]
         self.func_wrappee_scope_forward: Optional[BeartypeForwardScope] = None
+        self.func_wrappee_scope_nested_names: Optional[FrozenSet[str]] = None
         self.func_wrappee_wrappee: Callable = None  # type: ignore[assignment]
         self.func_wrappee_wrappee_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
         self.func_wrapper_code_call_prefix: str = None  # type: ignore[assignment]
@@ -366,6 +384,7 @@ class BeartypeCall(object):
         # Defer the resolution of both global and local scopes for this wrappee
         # callable until needed to subsequently resolve stringified type hints.
         self.func_wrappee_scope_forward = None
+        self.func_wrappee_scope_nested_names = None
 
         # Possibly wrapped callable code object.
         self.func_wrappee_codeobj = get_func_codeobj(

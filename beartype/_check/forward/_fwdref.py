@@ -51,6 +51,60 @@ class _BeartypeForwardRefMeta(type):
     '''
 
     # ....................{ DUNDERS                        }....................
+    def __getattr__(  # type: ignore[misc]
+        cls: Type['_BeartypeForwardRefABC'],  # pyright: ignore[reportGeneralTypeIssues]
+        hint_name: str,
+    ) -> Type['_BeartypeForwardRefIndexableABC']:
+        '''
+        **Fully-qualified forward reference subclass** (i.e.,
+        :class:`._BeartypeForwardRefABC` subclass whose metaclass is this
+        metaclass and whose :attr:`._BeartypeForwardRefABC._hint_name` class
+        variable is the fully-qualified name of an external class).
+
+        This dunder method creates and returns a new forward reference subclass
+        referring to an external class whose name is concatenated from (in
+        order):
+
+        #. The fully-qualified name of the external package or module referred
+           to by the passed forward reference subclass.
+        #. The passed unqualified basename, presumably referring to a
+           subpackage, submodule, or class of that external package or module.
+
+        Parameters
+        ----------
+        cls : Type[_BeartypeForwardRefABC]
+            Forward reference subclass to concatenate this basename against.
+        hint_name : str
+            Unqualified basename to be concatenated against this forward
+            reference subclass.
+
+        Returns
+        ----------
+        Type['_BeartypeForwardRefIndexableABC']
+            Fully-qualified forward reference subclass concatenated as described
+            above.
+        '''
+
+        # If this unqualified basename is that of a non-existent dunder
+        # attribute both prefixed *AND* suffixed by the magic substring "__",
+        # raise the standard "AttributeError" exception.
+        if (
+            hint_name.startswith('__') and
+            hint_name.endswith('__')
+        ):
+            raise AttributeError(
+                f'Forward reference proxy dunder method '
+                f'{cls.__name__}.{hint_name} not found.'
+            )
+        # Else, this unqualified basename is *NOT* that of a non-existent dunder
+        # attribute.
+
+        # Return a new fully-qualified forward reference subclass concatenated
+        # as described above.
+        return make_forwardref_indexable_subtype(
+            hint_name=f'{cls._hint_name}.{hint_name}')
+
+
     def __instancecheck__(  # type: ignore[misc]
         cls: Type['_BeartypeForwardRefABC'],  # pyright: ignore[reportGeneralTypeIssues]
         obj: object,
@@ -198,7 +252,6 @@ class _BeartypeForwardRefIndexableABC(_BeartypeForwardRefABC):
 
     # ....................{ DUNDERS                        }....................
     @classmethod
-    @callable_cached
     def __class_getitem__(cls, *args, **kwargs) -> (
         Type[_BeartypeForwardRefIndexedABC]):
         '''
@@ -212,8 +265,6 @@ class _BeartypeForwardRefIndexableABC(_BeartypeForwardRefABC):
         transparently masquerade as any subscriptable type hint factory,
         including subscriptable user-defined generics that have yet to be
         declared (e.g., ``"MuhGeneric[int]"``).
-
-        This dunder method is memoized for efficiency.
         '''
 
         # Substring prefixing the name of this forward reference subclass,
@@ -244,11 +295,14 @@ class _BeartypeForwardRefIndexableABC(_BeartypeForwardRefABC):
         # arguments.
 
         # Subscripted forward reference to be returned.
+        #
+        # Note that parameters *MUST* be passed positionally to the
+        # memoized _make_forwardref_subtype() factory function.
         forwardref_indexed_subtype: Type[_BeartypeForwardRefIndexedABC] = (
             _make_forwardref_subtype(  # type: ignore[assignment]
-                hint_name=cls._hint_name,
-                forwardref_base=_BeartypeForwardRefIndexedABC,  # type: ignore[arg-type]
-                forwardref_subtype_name_prefix='BeartypeForwardRefIndexed_',
+                cls._hint_name,
+                _BeartypeForwardRefIndexedABC,  # type: ignore[arg-type]
+                'BeartypeForwardRefIndexed_',
             ))
 
         # Classify the arguments subscripting this forward reference.
@@ -280,10 +334,14 @@ def make_forwardref_indexable_subtype(hint_name: str) -> Type[
         Subscriptable forward reference subclass referencing this type hint.
     '''
 
+    # Subscriptable forward reference to be returned.
+    #
+    # Note that parameters *MUST* be passed positionally to the memoized
+    # _make_forwardref_subtype() factory function.
     return _make_forwardref_subtype(  # type: ignore[return-value]
-        hint_name=hint_name,
-        forwardref_base=_BeartypeForwardRefIndexableABC,  # type: ignore[arg-type]
-        forwardref_subtype_name_prefix='BeartypeForwardRefIndexable_',
+        hint_name,
+        _BeartypeForwardRefIndexableABC,  # type: ignore[arg-type]
+        'BeartypeForwardRefIndexable_',
     )
 
 # ....................{ PRIVATE ~ factories                }....................

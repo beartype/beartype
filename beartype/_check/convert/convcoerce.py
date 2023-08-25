@@ -134,11 +134,14 @@ def coerce_func_hint_root(
     # refers *BEFORE* performing any subsequent logic with this hint -- *ALL* of
     # which assumes this hint to be a non-string hint.
     if isinstance(hint, str):
-        hint = resolve_hint(
-            hint=hint,
-            bear_call=bear_call,
-            exception_prefix=exception_prefix,
-        )
+        pass
+
+        #FIXME: Uncomment after worky, please. *sigh*
+        # hint = resolve_hint(
+        #     hint=hint,
+        #     bear_call=bear_call,
+        #     exception_prefix=exception_prefix,
+        # )
     # Else, this hint is *NOT* stringified.
     #
     # In either case, this hint is guaranteed to now be a non-string hint.
