@@ -19,7 +19,7 @@ typically have yet to be defined).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ pass                       }....................
-def test_pep484_ref__data_pass() -> None:
+def test_pep484_forwardref_data_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator with
     respect to both PEP-compliant and -noncompliant forward references by
@@ -27,6 +27,7 @@ def test_pep484_ref__data_pass() -> None:
     user-defined classes referred to by these references.
     '''
 
+    # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype_test.a00_unit.data.hint.data_hintref import (
         TheDarkestEveningOfTheYear,
@@ -34,6 +35,7 @@ def test_pep484_ref__data_pass() -> None:
         of_easy_wind,
         stopping_by_woods_on,
         the_woods_are_lovely,
+        its_fields_of_snow,
         # between_the_woods_and_frozen_lake,
     )
 
@@ -43,12 +45,17 @@ def test_pep484_ref__data_pass() -> None:
     WOODS = TheDarkestEveningOfTheYear('The woods are lovely, dark and deep,')
     LAKE = TheDarkestEveningOfTheYear('Between the woods and frozen lake')
     KNOW = TheDarkestEveningOfTheYear('Whose woods these are I think I know.')
+    WITH_BURNING_SMOKE = [
+        TheDarkestEveningOfTheYear('With burning smoke, or where bitumen lakes'),
+        TheDarkestEveningOfTheYear('On black bare pointed islets ever beat'),
+    ]
 
     # Assert these forward-referencing callables return the expected values.
     assert but_i_have_promises(MILES_TO_GO) == MILES_TO_GO
     assert of_easy_wind(WOODS) == WOODS
     assert stopping_by_woods_on(LAKE) == LAKE
     assert the_woods_are_lovely(KNOW) == KNOW
+    assert its_fields_of_snow(WITH_BURNING_SMOKE) == WITH_BURNING_SMOKE[0]
 
     #FIXME: Disabled until we decide whether we want to bother trying to
     #resolve nested forward references or not.
@@ -67,7 +74,7 @@ def test_pep484_ref__data_pass() -> None:
     # assert to_watch_his_woods(STOP) == STOP
 
 
-def test_pep484_ref__param_pass() -> None:
+def test_pep484_forwardref_arg_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator for a
     callable passed a parameter annotated with a PEP-noncompliant
@@ -75,13 +82,16 @@ def test_pep484_ref__param_pass() -> None:
     external module.
     '''
 
+    # ..................{ IMPORTS                            }..................
     # Import this decorator.
     from beartype import beartype
 
+    # ..................{ LOCALS                             }..................
     # Dates between which the Sisters of Battle must have been established.
     ESTABLISHMENT_DATE_MIN = 36000
     ESTABLISHMENT_DATE_MAX = 37000
 
+    # ..................{ FUNCTIONS                          }..................
     # Function to be type-checked.
     @beartype
     def sisters_of_battle(
@@ -92,23 +102,26 @@ def test_pep484_ref__param_pass() -> None:
     # Import the stdlib module referenced above *AFTER* that forward reference.
     from random import Random
 
+    # ..................{ PASS                               }..................
     # Call this function with an instance of the type named above.
     assert sisters_of_battle('Abbess Sanctorum', Random()) in range(
         ESTABLISHMENT_DATE_MIN, ESTABLISHMENT_DATE_MAX + 1)
 
 # ....................{ TESTS ~ fail                       }....................
-def test_pep484_ref__decor_fail() -> None:
+def test_pep484_forwardref_decor_fail() -> None:
     '''
     Test unsuccessful decorator-time usage of the :func:`beartype.beartype`
     decorator with respect to both PEP-compliant and -noncompliant forward
     references.
     '''
 
+    # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintForwardRefException
     from beartype_test._util.pytroar import raises_uncached
 
+    # ..................{ FAIL                               }..................
     #FIXME: Uncomment if and when a future Python release unconditionally
     #enables some variant of PEP 563... yet again.
     # from beartype.roar import (
@@ -149,19 +162,21 @@ def test_pep484_ref__decor_fail() -> None:
             return i_hear_it
 
 
-def test_pep484_ref__call_fail() -> None:
+def test_pep484_forwardref_call_fail() -> None:
     '''
     Test unsuccessful call-time usage of the :func:`beartype.beartype`
     decorator with respect to both PEP-compliant and -noncompliant forward
     references.
     '''
 
+    # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeCallHintForwardRefException
     from beartype.typing import Union
     from beartype_test._util.pytroar import raises_uncached
 
+    # ..................{ FAIL                               }..................
     # Decorated callable annotated by a PEP-noncompliant fully-qualified
     # forward reference referring to a non-existent type.
     TwoForwardRefsDivergedInAYellowWood = (
@@ -217,7 +232,7 @@ def test_pep484_ref__call_fail() -> None:
         somewhere_ages('I doubted if I should ever come back.')
 
 
-def test_pep484_ref__call_param_fail() -> None:
+def test_pep484_forwardref_call_arg_fail() -> None:
     '''
     Test unsuccessful call-time usage of the :func:`beartype.beartype`
     decorator for callables passed parameters annotated with PEP-noncompliant
@@ -225,6 +240,7 @@ def test_pep484_ref__call_param_fail() -> None:
     erroneous edge cases.
     '''
 
+    # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import (
@@ -233,19 +249,22 @@ def test_pep484_ref__call_param_fail() -> None:
     )
     from beartype_test._util.pytroar import raises_uncached
 
+    # ..................{ LOCALS                             }..................
     # Dates between which the Black Legion must have been established.
     ESTABLISHMENT_DATE_MIN = 30000
     ESTABLISHMENT_DATE_MAX = 31000
 
-    # Callable with a forward reference type hint referencing an existing
-    # class of an importable module.
+    # ..................{ FUNCTIONS                          }..................
     @beartype
     def black_legion(primarch: str, establishment: 'random.Random') -> int:
+        '''
+        Arbitrary callable annotated with a forward reference type hint
+        referencing an existing class of an importable module.
+        '''
+
         return establishment.randint(
             ESTABLISHMENT_DATE_MIN, ESTABLISHMENT_DATE_MAX)
 
-    # Callable with a forward reference type hint referencing a missing
-    # attribute of an unimportable module.
     @beartype
     def eye_of_terror(
         ocularis_terribus: str,
@@ -256,6 +275,11 @@ def test_pep484_ref__call_param_fail() -> None:
         # this is probably the best we can do.
         segmentum_obscurus: '__rand0m__.Warp',
     ) -> str:
+        '''
+        Arbitrary callable annotated with a forward reference type hint
+        referencing a non-existent attribute of a non-existent module.
+        '''
+
         return ocularis_terribus + segmentum_obscurus
 
     # Callable with a forward reference type hint referencing a missing
@@ -268,10 +292,16 @@ def test_pep484_ref__call_param_fail() -> None:
         # name will ever exist, the possibility cannot be discounted. Since
         # there appears to be no syntactically valid module attribute name
         # prohibited from existing, this is probably the best we can do.
-        navis_nobilite: 'random.__Psych1cL1ght__',
+        navis_nobilite: 'random.Psych1c__L1ght__',
     ) -> str:
+        '''
+        Arbitrary callable annotated with a forward reference type hint
+        referencing a non-existent attribute of an importable module.
+        '''
+
         return astronomicon + navis_nobilite
 
+    # ..................{ FAIL                               }..................
     # Assert call these callables raise the expected exceptions.
     with raises_uncached(BeartypeCallHintParamViolation):
         black_legion('Horus', 'Abaddon the Despoiler')

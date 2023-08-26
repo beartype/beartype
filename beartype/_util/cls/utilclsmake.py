@@ -14,11 +14,14 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeUtilTypeException
 from beartype.typing import (
     Optional,
-    Tuple,
     Type,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.hint.datahinttyping import LexicalScope
+from beartype._data.hint.datahinttyping import (
+    LexicalScope,
+    TupleTypes,
+    TypeException,
+)
 from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._util.text.utiltextident import die_unless_identifier
 
@@ -29,10 +32,10 @@ def make_type(
 
     # Optional arguments.
     type_module_name: Optional[str] = None,
-    type_bases: Optional[Tuple[type, ...]] = None,
+    type_bases: Optional[TupleTypes] = None,
     type_scope: Optional[LexicalScope] = None,
     type_doc: Optional[str] = None,
-    exception_cls: Type[Exception] = _BeartypeUtilTypeException,
+    exception_cls: TypeException = _BeartypeUtilTypeException,
 ) -> type:
     '''
     Dynamically create and return a new class with the passed name subclassing

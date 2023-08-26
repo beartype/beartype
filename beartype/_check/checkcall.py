@@ -11,7 +11,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.peps import resolve_pep563
 from beartype.roar import BeartypeDecorWrappeeException
 from beartype.typing import (
     Callable,
@@ -396,15 +395,6 @@ class BeartypeCall(object):
         self.func_wrappee_wrappee_codeobj = get_func_codeobj(
             func=self.func_wrappee_wrappee,
             exception_cls=BeartypeDecorWrappeeException,
-        )
-
-        #FIXME: Stop calling this function in favour of
-        #"self.func_wrappee_scope_forward", please.
-        # Resolve all postponed hints on this callable if any *BEFORE* parsing
-        # the actual hints these postponed hints refer to.
-        resolve_pep563(
-            func=self.func_wrappee,
-            cls_stack=self.cls_stack,
         )
 
         # Efficiently reduce this local scope back to the dictionary of all

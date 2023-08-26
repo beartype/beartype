@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
-**Beartype forward reference data submodule.**
+Project-wide  **forward reference data submodule.**
 
 This submodule exercises **forward reference type hints** (i.e., strings whose
 values are the names of classes and tuples of classes, one or more of which
@@ -26,52 +26,105 @@ Why? Because:
   scope before their referents exercise this deferred nature.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from beartype import beartype
-from typing import Union
+from beartype.typing import (
+    # Generic,
+    List,
+    Union,
+)
+from dataclasses import dataclass
 
-# ....................{ CALLABLES                         }....................
-# Decorated callable annotated by a PEP-noncompliant fully-qualified forward
-# reference referring to a type that has yet to be declared.
+# ....................{ FUNCTIONS ~ pep : discrete         }....................
+# Arbitrary functions annotated by PEP-compliant forward references defined as
+# both unqualified (relative) and fully-qualified (absolute) Python identifiers,
+# possibly nested in one or more parent type hints.
+
 TheDarkestForwardRefOfTheYear = (
     'beartype_test.a00_unit.data.hint.data_hintref.TheDarkestEveningOfTheYear')
 @beartype
 def the_woods_are_lovely(dark_and_deep: TheDarkestForwardRefOfTheYear) -> (
     TheDarkestForwardRefOfTheYear):
+    '''
+    Decorated function annotated by a fully-qualified forward reference
+    referring to a type that has yet to be declared.
+    '''
+
     return dark_and_deep
 
 
-# Decorated callable annotated by a PEP-noncompliant tuple containing both
-# standard types and a fully-qualified forward reference referring to a type
-# that has yet to be declared.
-TheDarkestTupleOfTheYear = (complex, TheDarkestForwardRefOfTheYear, bool)
-@beartype
-def of_easy_wind(and_downy_flake: TheDarkestTupleOfTheYear) -> (
-    TheDarkestTupleOfTheYear):
-    return and_downy_flake
-
-
-# Decorated callable annotated by a PEP-compliant unnested unqualified forward
-# reference referring to a type that has yet to be declared.
 @beartype
 def stopping_by_woods_on(a_snowy_evening: 'TheDarkestEveningOfTheYear') -> (
     'TheDarkestEveningOfTheYear'):
+    '''
+    Decorated function annotated by a relative forward reference referring to a
+    type that has yet to be declared.
+    '''
+
     return a_snowy_evening
 
 
-# Decorated callable annotated by a PEP-compliant nested unqualified forward
-# reference referring to a type that has yet to be declared.
 TheDarkestUnionOfTheYear = Union[complex, 'TheDarkestEveningOfTheYear', bytes]
 @beartype
 def but_i_have_promises(to_keep: TheDarkestUnionOfTheYear) -> (
     TheDarkestUnionOfTheYear):
+    '''
+    Decorated function annotated by a nested relative forward reference
+    referring to a type that has yet to be declared.
+    '''
+
     return to_keep
 
-# ....................{ CLASSES                           }....................
-# User-defined class previously referred to by forward references above.
-class TheDarkestEveningOfTheYear(str): pass
+# ....................{ FUNCTIONS ~ pep : composite        }....................
+# Arbitrary functions annotated by PEP-compliant forward references defined as
+# non-trivial Python expressions (i.e., strings that are *NOT* reducible to
+# trivial Python identifiers) containing unqualified (relative) and
+# fully-qualified (absolute) Python identifiers, either nested in one or more
+# parent type hints *OR* themselves serving as parent type hints nesting one or
+# more child type hints.
+#
+# Whereas discrete forward references are trivially supportable with simple
+# dynamic module attribute lookups at call time, composite forward references
+# can only be supported with non-trivial runtime parsing of Python expressions.
 
-# ....................{ CALLABLES ~ closure               }....................
+@beartype
+def its_fields_of_snow(
+    and_pinnacles_of_ice: 'List[TheDarkestForwardRefOfTheYear]') -> (
+    TheDarkestForwardRefOfTheYear):
+    '''
+    Decorated function annotated by a composite type hint defined as a standard
+    type hint subscripted by a relative forward reference referring to a type
+    that has yet to be declared.
+    '''
+
+    return and_pinnacles_of_ice[0]
+
+# ....................{ FUNCTIONS ~ non-pep : discrete     }....................
+# Arbitrary functions annotated by PEP-noncompliant forward references defined
+# as both unqualified (relative) and fully-qualified (absolute) Python
+# identifiers, possibly nested in one or more parent type hints.
+
+TheDarkestTupleOfTheYear = (complex, TheDarkestForwardRefOfTheYear, bool)
+@beartype
+def of_easy_wind(and_downy_flake: TheDarkestTupleOfTheYear) -> (
+    TheDarkestTupleOfTheYear):
+    '''
+    Decorated function annotated by a PEP-noncompliant tuple containing both
+    standard types and a fully-qualified forward reference referring to a type
+    that has yet to be declared.
+    '''
+
+    return and_downy_flake
+
+# ....................{ CLASSES                            }....................
+class TheDarkestEveningOfTheYear(str):
+    '''
+    Arbitrary class previously referred to by forward references above.
+    '''
+
+    pass
+
+# ....................{ CLOSURES                           }....................
 #FIXME: Technically, @beartype *MAYBE* could actually resolve nested forward
 #references by dynamically inspecting the call stack (depending on whether
 #Python injects parent callables into the call stacks of closures, which it
@@ -82,27 +135,28 @@ class TheDarkestEveningOfTheYear(str): pass
 #because PEP 484 + 563 + Python 3.10 means that unqualified forward references
 #*MUST* now refer to globally scoped classes. So... why even bother, you know?
 
-# Note that we do *NOT* bother declaring nested callables annotated with
-# forward references to nested classes. Why? Unlike static analysis tooling,
-# runtime decorators have *NO* internal access into nested lexical scopes and
-# thus *CANNOT* by definition resolve forward references to nested classes.
+# Note that we do *NOT* bother declaring nested callables annotated with forward
+# references to nested classes. Why? Unlike static analysis tooling, runtime
+# decorators have *NO* internal access into nested lexical scopes and thus
+# *CANNOT* by definition resolve forward references to nested classes.
 #
 # For example, the following callable is callable without exception but the
 # closures returned by that callable are *NOT*, because @beartype fails to
 # resolve the nested forward references annotating those closures:
-#     # Undecorated callable nesting...
 #     from collections.abc import Callable
 #     from typing import Tuple
+#
+#     # Undecorated callable nesting...
 #     def between_the_woods_and_frozen_lake() -> Tuple[Callable, Callable, type]:
 #         # ..................{ CLOSURES                          }..................
-#         # Decorated closure annotated by a PEP-compliant unnested unqualified
-#         # forward reference referring to a type that has yet to be declared.
+#         # Decorated closure annotated by an  unnested unqualified forward
+#         # reference referring to a type that has yet to be declared.
 #         @beartype
 #         def to_stop_without(a_farmhouse_near: 'WhoseWoodsTheseAreIThinkIKnow') -> (
 #             'WhoseWoodsTheseAreIThinkIKnow'):
 #             return a_farmhouse_near
 #
-#         # Decorated closure annotated by a PEP-compliant nested unqualified forward
+#         # Decorated closure annotated by a nested unqualified forward
 #         # reference referring to a type that has yet to be declared.
 #         TheDarkestNestedUnionOfTheYear = Union[
 #             int, 'WhoseWoodsTheseAreIThinkIKnow', bool]

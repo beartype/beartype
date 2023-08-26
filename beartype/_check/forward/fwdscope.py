@@ -162,7 +162,7 @@ class BeartypeForwardScope(LexicalScope):
 
         Returns
         ----------
-        _BeartypeForwardRefIndexableABC
+        Type[_BeartypeForwardRefIndexableABC]
             Forward reference proxy deferring the resolution of this unresolved
             type hint.
 
@@ -181,18 +181,9 @@ class BeartypeForwardScope(LexicalScope):
         )
         # Else, this type hint name is syntactically valid.
 
-        # If this type hint name contains *NO* "." delimiters and is thus
-        # relative to this scope...
-        if '.' not in hint_name:
-            # Canonicalize this relative type hint name into an absolute type
-            # hint name relative to the name of this scope.
-            hint_name = f'{self._scope_name}.{hint_name}'
-        # Else, this type hint name contains one or more "." delimiters and is
-        # thus absolute (i.e., fully-qualified). In this case, preserve this
-        # name as is.
-
         # Forward reference proxy to be returned.
-        forwardref_subtype = make_forwardref_indexable_subtype(hint_name)
+        forwardref_subtype = make_forwardref_indexable_subtype(
+            self._scope_name, hint_name)
 
         # Return this proxy. The superclass dict.__getitem__() dunder method
         # then implicitly maps the passed unresolved type hint name to this

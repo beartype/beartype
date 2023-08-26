@@ -43,7 +43,7 @@ from types import (
     GeneratorType,
 )
 
-# ....................{ HINTS ~ boolean                    }....................
+# ....................{ BOOL                               }....................
 BoolTristate = Literal[True, False, None]
 '''
 PEP-compliant type hint matching a **tri-state boolean** whose value may be
@@ -72,7 +72,7 @@ may be either:
   :data:`None` does *not* suffice to decide this decision problem.
 '''
 
-# ....................{ HINTS ~ callable ~ early           }....................
+# ....................{ CALLABLE ~ early                   }....................
 # Callable-specific type hints required by subsequent type hints below.
 
 CallableAny = Callable[..., Any]
@@ -81,7 +81,7 @@ PEP-compliant type hint matching any callable in a manner explicitly matching
 all possible callable signatures.
 '''
 
-# ....................{ HINTS ~ typevar                    }....................
+# ....................{ TYPEVAR ~ early                    }....................
 # Type variables required by subsequent type hints below.
 
 BeartypeableT = TypeVar(
@@ -127,14 +127,7 @@ checkers (e.g., :mod:`mypy`) and type-aware IDEs (e.g., VSCode) that the
   including metaclasses and method-resolution orders (MRO) of those classes.
 '''
 
-# ....................{ HINTS ~ callable ~ args            }....................
-CallableMethodGetitemArg = Union[int, slice]
-'''
-PEP-compliant type hint matching the standard type of the single positional
-argument accepted by the ``__getitem__` dunder method.
-'''
-
-# ....................{ HINTS ~ callable ~ late            }....................
+# ....................{ CALLABLE                           }....................
 # Callable-specific type hints *NOT* required by subsequent type hints below.
 
 CallableTester = Callable[[object], bool]
@@ -160,7 +153,14 @@ Specifically, this hint matches:
 * Pure-Python callable stack frames.
 '''
 
-# ....................{ HINTS ~ callable ~ late : decor    }....................
+# ....................{ CALLABLE ~ args                    }....................
+CallableMethodGetitemArg = Union[int, slice]
+'''
+PEP-compliant type hint matching the standard type of the single positional
+argument accepted by the ``__getitem__` dunder method.
+'''
+
+# ....................{ CALLABLE ~ decor                   }....................
 BeartypeConfedDecorator = Callable[[BeartypeableT], BeartypeableT]
 '''
 PEP-compliant type hint matching a **configured beartype decorator** (i.e.,
@@ -177,7 +177,7 @@ of the :func:`beartype.beartype` decorator, including calls to that decorator
 in both configuration and decoration modes.
 '''
 
-# ....................{ HINTS ~ code                       }....................
+# ....................{ CODE                               }....................
 LexicalScope = Dict[str, Any]
 '''
 PEP-compliant type hint matching a **lexical scope** (i.e., dictionary mapping
@@ -208,15 +208,7 @@ func_wrapper_scope, hint_forwardrefs_class_basename)``, where:
   List['YoClass']]``).
 '''
 
-# ....................{ HINTS ~ dict                       }....................
-DictStrToAny = Dict[str, object]
-'''
-PEP-compliant type hint matching a dictionary whose keys are *all* strings
-(e.g., keyword arguments ``**kwargs`` dictionary, object ``__dict__``
-dictionary).
-'''
-
-
+# ....................{ DICT                               }....................
 MappingStrToAny = Mapping[str, object]
 '''
 PEP-compliant type hint matching a mapping whose keys are *all* strings.
@@ -232,13 +224,13 @@ number of type hint factories defined by an external third-party package to
 their identifying sign).
 '''
 
-# ....................{ HINTS ~ iterable                   }....................
+# ....................{ ITERABLE                           }....................
 IterableStrs = Iterable[str]
 '''
 PEP-compliant type hint matching *any* iterable of zero or more strings.
 '''
 
-# ....................{ HINTS ~ path                       }....................
+# ....................{ PATH                               }....................
 CommandWords = IterableStrs
 '''
 PEP-compliant type hint matching **command words** (i.e., an iterable of one or
@@ -247,7 +239,7 @@ more shell words comprising a shell command, suitable for passing as the
 test-specific :mod:`beartype_test._util.command.pytcmdrun` submodule).
 '''
 
-# ....................{ HINTS ~ kind : tuple               }....................
+# ....................{ TUPLE                              }....................
 TupleTypes = Tuple[type, ...]
 '''
 PEP-compliant type hint matching a tuple of zero or more classes.
@@ -266,7 +258,7 @@ Equivalently, this hint matches all objects passable as the second parameters
 to the :func:`isinstance` and :func:`issubclass` builtins.
 '''
 
-# ....................{ HINTS ~ kind : tuple : stack       }....................
+# ....................{ TUPLE ~ stack                      }....................
 TypeStack = Optional[Tuple[type, ...]]
 '''
 PEP-compliant type hint matching a **type stack** (i.e., either tuple of zero or
@@ -338,7 +330,7 @@ number of classes lexically nesting the currently decorated class as input
 metadata, as trivially provided by the length of this tuple.
 '''
 
-# ....................{ HINTS ~ mod : importlib            }....................
+# ....................{ MODULE ~ importlib                 }....................
 # Type hints specific to the standard "importlib" package.
 
 ImportPathHook = Callable[[str], PathEntryFinder]
@@ -348,7 +340,7 @@ creating and returning a new :class:`importlib.abc.PathEntryFinder` instance
 creating and leveraging a new :class:`importlib.machinery.FileLoader` instance).
 '''
 
-# ....................{ HINTS ~ mod : pathlib              }....................
+# ....................{ MODULE ~ pathlib                   }....................
 # Type hints specific to the standard "pathlib" package.
 
 PathnameLike = Union[str, Path]
@@ -366,7 +358,7 @@ low-level strings possibly signifying pathnames *or* high-level :class:`Path`
 instances definitely encapsulating pathnames).
 '''
 
-# ....................{ HINTS ~ pep : 484                  }....................
+# ....................{ PEP 484                            }....................
 # Type hints required to fully comply with PEP 484.
 
 Pep484TowerComplex = Union[complex, float, int]
@@ -382,7 +374,7 @@ Pep484TowerFloat = Union[float, int]
 (i.e., both floating-point numbers and integers).
 '''
 
-# ....................{ HINTS ~ type                       }....................
+# ....................{ TYPE                               }....................
 TypeException = Type[Exception]
 '''
 PEP-compliant type hint matching *any* exception class.
