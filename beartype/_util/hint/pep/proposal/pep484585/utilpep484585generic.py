@@ -39,12 +39,13 @@ from collections.abc import Iterable
 @callable_cached
 def is_hint_pep484585_generic(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is either a :pep:`484`- or
+    :data:`True` only if the passed object is either a :pep:`484`- or
     :pep:`585`-compliant **generic** (i.e., object that may *not* actually be a
     class despite subclassing at least one PEP-compliant type hint that also
     may *not* actually be a class).
 
-    Specifically, this tester returns ``True`` only if this object is either:
+    Specifically, this tester returns :data:`True` only if this object is
+    either:
 
     * A :pep:`585`-compliant generic as tested by the lower-level
       :func:`is_hint_pep585_generic` function.
@@ -81,11 +82,11 @@ def is_hint_pep484585_generic(hint: object) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this object is a generic.
+        :data:`True` only if this object is a generic.
 
     See Also
     ----------
-    :func:`is_hint_pep_typevars`
+    :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_typevars`
         Commentary on the relation between generics and parametrized hints.
     '''
 
@@ -255,7 +256,7 @@ def get_hint_pep484585_generic_bases_unerased(
 
     Raises
     ----------
-    :exc:`exception_cls`
+    exception_cls
         If this hint is either:
 
         * Neither a :pep:`484`- nor :pep:`585`-compliant generic.

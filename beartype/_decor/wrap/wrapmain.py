@@ -42,7 +42,7 @@ from beartype._check.code._codesnip import (
 from beartype._check.convert.convsanify import sanify_hint_root_func
 from beartype._check.forward.fwdtype import (
     bear_typistry,
-    register_typistry_forwardref,
+    get_hint_forwardref_code,
 )
 from beartype._check.util.checkutilmake import make_func_signature
 from beartype._data.func.datafuncarg import (
@@ -762,7 +762,7 @@ def _unmemoize_func_wrapper_code(
                 ),
                 # Python expression evaluating to this class when accessed
                 # via the private "__beartypistry" parameter.
-                new=register_typistry_forwardref(
+                new=get_hint_forwardref_code(
                     # Fully-qualified classname referred to by this forward
                     # reference relative to the decorated callable.
                     get_hint_pep484585_forwardref_classname_relative_to_object(

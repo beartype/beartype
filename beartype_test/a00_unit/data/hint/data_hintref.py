@@ -146,6 +146,31 @@ class WithSluggishSurge(Generic[_T]):
 
         return self
 
+# ....................{ FUNCTIONS ~ pep : composite : moar }....................
+# Arbitrary functions annotated by PEP-compliant forward references defined as
+# non-trivial Python expressions (i.e., strings that are *NOT* reducible to
+# trivial Python identifiers) containing unqualified (relative) and
+# fully-qualified (absolute) Python identifiers, requiring the previously
+# defined classes to have already been declared.
+
+@beartype
+def winding_among_the_springs(
+    of_fire_and_poison: 'Inaccessible') -> 'Inaccessible':
+    '''
+    Decorated function annotated by a relative forward reference referring to a
+    **type alias** (i.e., global attribute whose value is a composite type hint
+    defined as a standard type hint subscripted by an arbitrary type).
+    '''
+
+    return of_fire_and_poison
+
+
+Inaccessible = WithSluggishSurge[int]
+'''
+Arbitrary **type alias** (i.e., global attribute whose value is a composite type
+hint defined as a standard type hint subscripted by an arbitrary type).
+'''
+
 # ....................{ CLOSURES                           }....................
 #FIXME: Technically, @beartype *MAYBE* could actually resolve nested forward
 #references by dynamically inspecting the call stack (depending on whether

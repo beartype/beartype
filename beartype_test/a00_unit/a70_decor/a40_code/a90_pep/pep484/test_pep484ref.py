@@ -37,6 +37,7 @@ def test_pep484_forwardref_data() -> None:
         stopping_by_woods_on,
         the_woods_are_lovely,
         its_fields_of_snow,
+        winding_among_the_springs,
         # between_the_woods_and_frozen_lake,
     )
 
@@ -60,6 +61,7 @@ def test_pep484_forwardref_data() -> None:
     assert the_woods_are_lovely(KNOW) is KNOW
     assert its_fields_of_snow(WITH_BURNING_SMOKE) is WITH_BURNING_SMOKE[0]
     assert RUGGED_AND_DARK.or_where_the_secret_caves() is RUGGED_AND_DARK
+    assert winding_among_the_springs(RUGGED_AND_DARK) is RUGGED_AND_DARK
 
     #FIXME: Disabled until we decide whether we want to bother trying to
     #resolve nested forward references or not.
