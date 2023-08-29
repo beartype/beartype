@@ -18,8 +18,8 @@ typically have yet to be defined).
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ pass                       }....................
-def test_pep484_forwardref_data_pass() -> None:
+# ....................{ TESTS                              }....................
+def test_pep484_forwardref_data() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator with
     respect to both PEP-compliant and -noncompliant forward references by
@@ -31,6 +31,7 @@ def test_pep484_forwardref_data_pass() -> None:
     # Defer test-specific imports.
     from beartype_test.a00_unit.data.hint.data_hintref import (
         TheDarkestEveningOfTheYear,
+        WithSluggishSurge,
         but_i_have_promises,
         of_easy_wind,
         stopping_by_woods_on,
@@ -39,7 +40,7 @@ def test_pep484_forwardref_data_pass() -> None:
         # between_the_woods_and_frozen_lake,
     )
 
-    # ..................{ UNNESTED                           }..................
+    # ..................{ LOCALS                             }..................
     # Objects passed below to exercise forward references.
     MILES_TO_GO = TheDarkestEveningOfTheYear('And miles to go before I sleep')
     WOODS = TheDarkestEveningOfTheYear('The woods are lovely, dark and deep,')
@@ -49,13 +50,16 @@ def test_pep484_forwardref_data_pass() -> None:
         TheDarkestEveningOfTheYear('With burning smoke, or where bitumen lakes'),
         TheDarkestEveningOfTheYear('On black bare pointed islets ever beat'),
     ]
+    RUGGED_AND_DARK = WithSluggishSurge()
 
+    # ..................{ PASS                               }..................
     # Assert these forward-referencing callables return the expected values.
-    assert but_i_have_promises(MILES_TO_GO) == MILES_TO_GO
-    assert of_easy_wind(WOODS) == WOODS
-    assert stopping_by_woods_on(LAKE) == LAKE
-    assert the_woods_are_lovely(KNOW) == KNOW
-    assert its_fields_of_snow(WITH_BURNING_SMOKE) == WITH_BURNING_SMOKE[0]
+    assert but_i_have_promises(MILES_TO_GO) is MILES_TO_GO
+    assert of_easy_wind(WOODS) is WOODS
+    assert stopping_by_woods_on(LAKE) is LAKE
+    assert the_woods_are_lovely(KNOW) is KNOW
+    assert its_fields_of_snow(WITH_BURNING_SMOKE) is WITH_BURNING_SMOKE[0]
+    assert RUGGED_AND_DARK.or_where_the_secret_caves() is RUGGED_AND_DARK
 
     #FIXME: Disabled until we decide whether we want to bother trying to
     #resolve nested forward references or not.
@@ -73,7 +77,7 @@ def test_pep484_forwardref_data_pass() -> None:
     # assert to_stop_without(MY_LITTLE_HORSE) == MY_LITTLE_HORSE
     # assert to_watch_his_woods(STOP) == STOP
 
-
+# ....................{ TESTS ~ pass                       }....................
 def test_pep484_forwardref_arg_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator for a

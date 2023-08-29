@@ -29,11 +29,17 @@ Why? Because:
 # ....................{ IMPORTS                            }....................
 from beartype import beartype
 from beartype.typing import (
-    # Generic,
+    Generic,
     List,
+    TypeVar,
     Union,
 )
-from dataclasses import dataclass
+
+# ....................{ PRIVATE ~ hints                    }....................
+_T = TypeVar('_T')
+'''
+Arbitrary type variable reference in type hints defined below.
+'''
 
 # ....................{ FUNCTIONS ~ pep : discrete         }....................
 # Arbitrary functions annotated by PEP-compliant forward references defined as
@@ -123,6 +129,22 @@ class TheDarkestEveningOfTheYear(str):
     '''
 
     pass
+
+
+class WithSluggishSurge(Generic[_T]):
+    '''
+    Arbitrary generic declaring a method annotated by a forward reference
+    referring to an instance of this same generic.
+    '''
+
+    @beartype
+    def or_where_the_secret_caves(self) -> 'WithSluggishSurge[_T]':
+        '''
+        Arbitrary method annotated by a forward reference referring to an
+        instance of this same generic.
+        '''
+
+        return self
 
 # ....................{ CLOSURES                           }....................
 #FIXME: Technically, @beartype *MAYBE* could actually resolve nested forward
