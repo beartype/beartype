@@ -15,15 +15,9 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
-# from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.checkcall import BeartypeCall
 from beartype._check.forward.fwdscope import BeartypeForwardScope
-# from beartype._check.forward._fwdref import make_forwardref_indexable_subtype
-from beartype._data.hint.datahinttyping import (
-    # LexicalScope,
-    TypeException,
-    # TypeStack,
-)
+from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._data.kind.datakindset import FROZENSET_EMPTY
 from beartype._util.cls.utilclsget import get_type_locals
@@ -32,7 +26,6 @@ from beartype._util.func.utilfuncscope import (
     get_func_locals,
 )
 from beartype._util.module.utilmodget import get_object_module_name
-from beartype._util.text.utiltextident import is_identifier
 from builtins import __dict__ as func_builtins  # type: ignore[attr-defined]
 
 # ....................{ RESOLVERS                          }....................

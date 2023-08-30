@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`563` **support.** (i.e., low-level functions resolving
-stringified PEP-compliant type hints implicitly postponed by the active Python
+Beartype :pep:`563` **support** (i.e., low-level functions resolving stringified
+:pep:`563`-compliant type hints implicitly postponed by the active Python
 interpreter via a ``from __future__ import annotations`` statement at the head
 of the external user-defined module currently being introspected).
 
@@ -13,9 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: *CRITICAL*. Refactor this submodule to defer to the new resolve_hint()
-#resolver, please.
-
 #FIXME: Conditionally emit a non-fatal PEP 563-specific warning when the active
 #Python interpreter targets Python >= 3.10 *AND* the passed callable is nested.
 
@@ -26,6 +23,10 @@ from beartype.typing import (
     Any,
     FrozenSet,
     Optional,
+)
+from beartype._conf.confcls import (
+    BEARTYPE_CONF_DEFAULT,
+    BeartypeConf,
 )
 from beartype._data.hint.datahinttyping import (
     LexicalScope,
@@ -53,6 +54,7 @@ def resolve_pep563(
     func: Callable,
 
     # Optional parameters.
+    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
     cls_stack: TypeStack = None,
 ) -> None:
     '''
@@ -84,6 +86,10 @@ def resolve_pep563(
     ----------
     func : Callable
         Callable to resolve postponed annotations on.
+    conf : BeartypeConf, optional
+        Beartype configuration configuring :func:`beartype.beartype` uniquely
+        specific to this callable. Defaults to :data`.BEARTYPE_CONF_DEFAULT`,
+        the default beartype configuration.
     cls_stack : TypeStack
         Either:
 
@@ -147,7 +153,7 @@ def resolve_pep563(
 
     Raises
     ----------
-    beartype.roar.BeartypePep563Exception
+    BeartypePep563Exception
         If either:
 
         * ``func`` is *not* a pure-Python callable.

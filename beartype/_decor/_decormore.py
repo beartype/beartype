@@ -25,7 +25,7 @@ from beartype._cave._cavefast import (
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
 )
-from beartype._check.checkcall import BeartypeCall
+from beartype._check.checkcall import make_beartype_call
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.hint.datahinttyping import (
@@ -71,7 +71,7 @@ def beartype_func(
         specific to this callable.
 
     All remaining keyword parameters are passed as is to the
-    :meth:`.BeartypeCall.reinit` method.
+    :meth:`beartype._check.checkcall.BeartypeCall.reinit` method.
 
     Returns
     ----------
@@ -108,9 +108,8 @@ def beartype_func(
         return func  # type: ignore[return-value]
     # Else, that callable is beartypeable. Let's do this, folks.
 
-    # Previously cached callable metadata reinitialized from that callable.
-    bear_call = acquire_object_typed(BeartypeCall)
-    bear_call.reinit(func, conf, **kwargs)
+    # Beartype call metadata describing that callable.
+    bear_call = make_beartype_call(func, conf, **kwargs)
 
     # Generate the raw string of Python statements implementing this wrapper.
     func_wrapper_code = generate_code(bear_call)

@@ -31,24 +31,21 @@ from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeStack,
 )
-from beartype._util.func.utilfunccodeobj import (
-    get_func_codeobj,
-    # get_func_codeobj_or_none,
-)
+from beartype._util.cache.pool.utilcachepoolobjecttyped import (
+    acquire_object_typed)
+from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.func.utilfunctest import (
     is_func_coro,
     is_func_nested,
 )
-from beartype._util.func.utilfuncwrap import (
-    # unwrap_func_all,
-    unwrap_func_all_closures_isomorphic,
-)
+from beartype._util.func.utilfuncwrap import unwrap_func_all_closures_isomorphic
 
 # ....................{ CLASSES                            }....................
 class BeartypeCall(object):
     '''
-    **Beartype data** (i.e., object aggregating *all* metadata for the callable
-    currently being decorated by the :func:`beartype.beartype` decorator).**
+    **Beartype call metadata** (i.e., object encapsulating *all* metadata for
+    the user-defined callable currently being decorated by the
+    :func:`beartype.beartype` decorator).
 
     Design
     ----------
@@ -471,6 +468,61 @@ class BeartypeCall(object):
         else:
             self.func_wrapper_code_call_prefix = ''
             self.func_wrapper_code_signature_prefix = ''
+
+# ....................{ FACTORIES                          }....................
+#FIXME: Unit test us up, please.
+def make_beartype_call(
+    # Mandatory parameters.
+    func: Callable,
+    conf: BeartypeConf,
+
+    # Variadic keyword parameters.
+    **kwargs
+) -> BeartypeCall:
+    '''
+    **Beartype call metadata** (i.e., object encapsulating *all* metadata for
+    the passed user-defined callable, typically currently being decorated by the
+    :func:`beartype.beartype` decorator).
+
+    Caveats
+    ----------
+    **This higher-level factory function should always be called in lieu of
+    instantiating the** :class:`.BeartypeCall` **class directly.** Why?
+    Brute-force efficiency. This factory efficiently reuses previously
+    instantiated :class:`.BeartypeCall` objects rather than inefficiently
+    instantiating new :class:`.BeartypeCall` objects.
+
+    **The caller must pass the metadata returned by this factory back to the**
+    :func:`beartype._util.cache.pool.utilcachepoolobjecttyped.release_object_typed`
+    **function.** If accidentally omitted, this metadata will simply be
+    garbage-collected rather than available for efficient reuse by this factory. 
+    Although hardly a worst-case outcome, omitting that explicit call largely
+    defeats the purpose of calling this factory in the first place.
+
+    Parameters
+    ----------
+    func : Callable
+        Callable to be described.
+    conf : BeartypeConf
+        Beartype configuration configuring :func:`beartype.beartype` uniquely
+        specific to this callable.
+
+    All remaining keyword parameters are passed as is to the
+    :meth:`.BeartypeCall.reinit` method.
+
+    Returns
+    ----------
+    BeartypeCall
+        Beartype call metadata describing this callable.
+
+    '''
+
+    # Previously cached callable metadata reinitialized from that callable.
+    bear_call = acquire_object_typed(BeartypeCall)
+    bear_call.reinit(func, conf, **kwargs)
+
+    # Return this metadata.
+    return bear_call
 
 # ....................{ GLOBALS ~ private                  }....................
 _TypeStackOrNone = NoneTypeOr[tuple]
