@@ -9,15 +9,8 @@ Project-wide :pep:`563` **poetic data submodule.**
 This submodule exercises :pep:`563` support implemented in the
 :func:`beartype.beartype` decorator by enabling this support with a leading
 ``from __future__ import annotations`` statement and then declaring a callable
-decorated by that decorator. External unit tests are expected to conditionally
-import this submodule if the active Python interpreter targets at least
-Python 3.7.0 and then call that callable.
-
-Caveats
-----------
-**This submodule requires the active Python interpreter to target at least
-Python 3.7.0.** If this is *not* the case, importing this submodule raises an
-:class:`AttributeError` exception.
+decorated by that decorator. External unit tests are expected to import this
+submodule and then call that callable.
 '''
 
 # ....................{ IMPORTS                            }....................

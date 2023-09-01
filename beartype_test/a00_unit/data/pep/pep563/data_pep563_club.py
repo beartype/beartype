@@ -12,12 +12,6 @@ This submodule exercises edge-case :pep:`563` support implemented in the
 the comparable :mod:`beartype_test.a00_unit.data.pep.pep563.data_pep563_poem`
 submodule.
 
-Caveats
-----------
-**This submodule requires the active Python interpreter to target at least
-Python 3.7.0.** If this is *not* the case, importing this submodule raises an
-:class:`AttributeError` exception.
-
 .. _issue #49:
    https://github.com/beartype/beartype/issues/49
 '''

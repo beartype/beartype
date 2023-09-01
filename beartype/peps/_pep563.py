@@ -13,42 +13,28 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: [DOCOS] Officially document both this and the public "beartype.peps"
+#submodule, please.
+
 #FIXME: Conditionally emit a non-fatal PEP 563-specific warning when the active
 #Python interpreter targets Python >= 3.10 *AND* the passed callable is nested.
 
 # ....................{ IMPORTS                            }....................
 import __future__
 from beartype.roar import BeartypePep563Exception
-from beartype.typing import (
-    Any,
-    FrozenSet,
-    Optional,
-)
+from beartype._check.checkcall import make_beartype_call
+from beartype._check.forward.fwdhint import resolve_hint
 from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
-from beartype._data.hint.datahinttyping import (
-    LexicalScope,
-    TypeStack,
-)
-from beartype._data.kind.datakindset import FROZENSET_EMPTY
-from beartype._util.cls.utilclsget import get_type_locals
-from beartype._util.func.utilfuncscope import (
-    get_func_globals,
-    get_func_locals,
-)
-from beartype._util.func.utilfunctest import (
-    die_unless_func_python,
-    is_func_nested,
-)
-from beartype._util.module.utilmodget import get_object_module_or_none
-from beartype._util.text.utiltextident import is_identifier
-from beartype._util.text.utiltextprefix import prefix_beartypeable_pith
+from beartype._data.hint.datahinttyping import TypeStack
+from beartype._util.cache.pool.utilcachepoolobjecttyped import (
+    release_object_typed)
+from beartype._util.func.utilfunctest import die_unless_func_python
 from collections.abc import Callable
 
 # ....................{ RESOLVERS                          }....................
-#FIXME: Refactor to leverage our new resolve_hint() resolver, please.
 def resolve_pep563(
     # Mandatory parameters.
     func: Callable,
@@ -104,9 +90,9 @@ def resolve_pep563(
             (i.e., possibly nested class directly containing that method).
 
         * Else, that callable is *not* a method of a class. In this case,
-          ``None``.
+          :data:`None`.
 
-        Defaults to ``None``.
+        Defaults to :data:`None`.
 
         Note that this function requires *both* the root and current class to
         correctly resolve edge cases under :pep:`563`: e.g.,
@@ -156,7 +142,7 @@ def resolve_pep563(
     BeartypePep563Exception
         If either:
 
-        * ``func`` is *not* a pure-Python callable.
+        * That callable is *not* pure-Python (e.g., is C-based).
         * Evaluating a postponed annotation on that callable raises an exception
           (e.g., due to that annotation referring to local state inaccessible in
           this deferred context).
@@ -167,536 +153,138 @@ def resolve_pep563(
     die_unless_func_python(func=func, exception_cls=BeartypePep563Exception)
     # Else, that callable is pure-Python.
 
-    # ..................{ DETECTION                          }..................
-    # Module directly defining that callable if that callable is defined by a
-    # module that exists *OR* "None" otherwise (i.e., if that callable declared
-    # itself to be either dynamically defined in memory by setting its
-    # "__module" attribute to "None" *OR* statically defined on disk by a
-    # non-existent module, in which case that callable should have set its
-    # "__module__" attribute to "None" instead).
-    #
-    # Note that shockingly many callables erroneously declare themselves to be
-    # statically defined on disk by non-existent modules. This includes methods
-    # synthesized by the standard "typing.NamedTuple" class -- which set their
-    # "__module__" attributes to the non-existent module "namedtuple_Foo". :O
-    func_module = get_object_module_or_none(func)
-
-    # If it is *NOT* the case that...
-    if not (
-        # That callable's module exists *AND*...
-        func_module and
-        # That callable's module defined an "annotations" attribute to be
-        # the "__future__.annotations" object, that module enabled PEP 563
-        # support with a leading statement resembling:
-        #     from __future__ import annotations
-        getattr(func_module, 'annotations', None) is _FUTURE_ANNOTATIONS
-    # Then that callable's hints are *NOT* postponed under PEP 563. In this
-    # case, silently reduce to a noop.
-    ):
-        return
-    # Else, these hints are postponed under PEP 563. In this case, resolve these
-    # hints to their referents.
-
-    # ..................{ LOCALS                             }..................
-    # Global scope for the decorated callable.
-    func_globals = get_func_globals(
-        func=func, exception_cls=BeartypePep563Exception)
-    # print(f'PEP 563-postponed type hint {repr(func)} globals:\n{repr(func_globals)}\n')
-
-    # Dictionary mapping from parameter name to postponed hint for each
-    # annotated parameter and return value of this callable, localized for
-    # negligible efficiency gains.
-    func_hints_postponed = func.__annotations__
-
-    # Dictionary mapping from parameter name to resolved hint for each
-    # annotated parameter and return value of this callable, initialized to a
-    # shallow copy of the postponed dictionary.
+    # ..................{ NOOP                               }..................
+    # Dictionary to be returned, mapping from the name of each annotated
+    # parameter and return of the passed callable to the non-string type hint
+    # resolved from the string type hint annotating that parameter or return,
+    # initialized to a shallow copy of that dictionary.
     #
     # Note that the "func.__annotations__" dictionary *CANNOT* be safely
     # directly assigned to below, as the loop performing that assignment below
     # necessarily iterates over that dictionary. As with most languages, Python
     # containers cannot be safely mutated while being iterated.
-    func_hints_resolved = func_hints_postponed.copy()
+    arg_name_to_hint = func.__annotations__
 
-    # Local scope for the decorated callable. Since calculating this scope is
-    # O(n**2) for an arbitrary large integer n, defer doing so until we must
-    # (i.e., when that callable's postponed annotations are *NOT* resolvable
-    # given only the global scope of that callable).
-    func_locals: Optional[LexicalScope] = None
+    # If the passed callable was *NOT* subject to PEP 563-compliant postponement
+    # of type hints under the standard "from __future__ import annotations"
+    # import, silently reduce to a noop.
+    #
+    # Note that there exist numerous means of detecting PEP 563. This approach:
+    # * Is the least efficient, requiring O(n) iteration for n the number of
+    #   type hints annotating that callable.
+    # * Is the most reliable, detecting PEP 563 regardless of whether:
+    #   * That callable was dynamically synthesized in-memory *OR* physically
+    #     defined in an on-disk source module. In the latter case, this
+    #     detection heuristic could statically analyze the on-disk source code
+    #     underlying that callable for an import of the form:
+    #         from __future__ import annotations
+    #     In the former case, however, that analysis is infeasible.
+    #   * The "__future__.annotations" singleton object is a global attribute of
+    #     the module defining that callable. This simplistic test fails under
+    #     numerous edge cases, including if:
+    #     * That callable was dynamically synthesized in-memory, in which case
+    #       that callable may have *NO* such module.
+    #     * That callable was physically defined in an on-disk source module
+    #       that enabled PEP 563 but which then maliciously deleted the
+    #       "__future__.annotations" singleton object from module scope: e.g.,
+    #           from __future__ import annotations
+    #           del annotations
+    #       Yes, that is valid Python. Yes, Python continues to enable PEP 563
+    #       for that module despite that module deleting the "annotations"
+    #       attribute from module scope. Yes, we're facepalming ourselves.
+    #
+    # Since reliability is *FAR* more important than efficiency, this function
+    # adopts the detection heuristic that is the most inefficient and reliable.
+    #
+    # For the name of each annotated parameter and return of the passed callable
+    # and the type hint annotating that parameter or return...
+    for arg_name, hint in arg_name_to_hint.items():
+        # If this hint is *NOT* stringified, this hint was either:
+        # * Never postponed under PEP 563 (i.e., the module defining that
+        #   callable did *NOT* import "from __future__ import annotations").
+        # * Previously postponed under PEP 563 (i.e., the module defining that
+        #   callable imported "from __future__ import annotations") but has
+        #   since been resolved into a non-string type hint by a competing
+        #   runtime type-introspector, possibly including @beartype itself.
+        #
+        # In either case, PEP 563 is now disabled for this hint. But PEP 563 is
+        # a module-scoped effect that universally applies to *ALL* type hints
+        # annotating *ALL* callables of a module. If PEP 563 is disabled for one
+        # hint of a callable, then PEP 563 must necessarily be disabled for all
+        # hints of that same callable. In this case, reduce to a noop.
+        if not isinstance(hint, str):
+            return
+        # Else, this hint is stringified. In this case, this hint was either:
+        # * Postponed under PEP 563 (i.e., the module defining that callable
+        #   imported "from __future__ import annotations").
+        # * Never postponed under PEP 563 (i.e., the module defining that
+        #   callable did *NOT* import "from __future__ import annotations") but
+        #   was instead simply a PEP 484-compliant forward reference (e.g.,
+        #   "def muh_func(muh_arg: 'MuhClass'): ...").
+        #
+        # Differentiating these two cases is infeasible! Python's standard
+        # library failed to ship solutions to this or any other outstanding
+        # runtime issues with PEP 563. Instead, we pretend everything will be
+        # okay by silently ignoring the latter case. Doing so largely suffices
+        # but can technically yield a false positive. This is why PEP 563 should
+        # have failed Python's peer review process. Of course, it passed
+        # instead. In short: "Trust me, bro."
+    # All type hints annotating the passed callable are now guaranteed to have
+    # been stringified. For simplicity, we assume these hints were stringified
+    # automatically by PEP 563 rather than manually by user typing.
 
-    # Non-empty frozen set of the unqualified names of all parent callables
-    # lexically containing this nested callable (including this nested
-    # callable itself) if this callable is nested *OR* the empty frozen set
-    # otherwise (i.e., if this callable is declared at global scope in its
-    # submodule).
-    func_scope_names = (
-        frozenset(func.__qualname__.rsplit(sep='.'))
-        if is_func_nested(func) else
-        FROZENSET_EMPTY
+    # ..................{ LOCALS                             }..................
+    # Beartype call metadata describing the passed callable.
+    bear_call = make_beartype_call(
+        func=func,
+        conf=conf,
+        cls_stack=cls_stack,
     )
 
+    # Make a shallow copy of the dictionary to be returned. Why? Because the
+    # "func.__annotations__" dictionary *CANNOT* be safely directly assigned to
+    # below, as the loop performing that assignment below necessarily iterates
+    # over that dictionary. As with most languages, Python containers cannot be
+    # safely mutated while being iterated.
+    arg_name_to_hint = arg_name_to_hint.copy()
+
     # ..................{ RESOLUTION                         }..................
-    # For the parameter name (or "return" for the return value) and
-    # corresponding annotation of each of this callable's type hints...
+    # For the name of each annotated parameter and return of the passed callable
+    # and the stringified type hint annotating that parameter or return...
     #
-    # Note that refactoring this iteration into a dictionary comprehension
-    # would be largely infeasible (e.g., due to the need to raise
-    # human-readable exceptions on evaluating unevaluatable type hints) as well
-    # as largely pointless (e.g., due to dictionary comprehensions being either
-    # no faster or even slower than explicit iteration for small dictionary
-    # sizes, as "func.__annotations__" usually is).
-    for pith_name, pith_hint in func_hints_postponed.items():
-        # If...
-        if (
-            # This hint is a string *AND*...
-            isinstance(pith_hint, str) and
-            # This string is non-empty...
-            pith_hint
-        ):
-        # Then this hint is a PEP 563-compliant postponed hint. Note that this
-        # test could technically yield a false positive in the unlikely edge
-        # case that this annotation was previously postponed but has since been
-        # replaced in-place by its referent that is itself a string matching the
-        # PEP 563 format without actually being a PEP 563-formatted postponed
-        # string. Since PEP 563 authors failed to provide solutions to this or
-        # any other outstanding runtime issues with PEP 563, there's *NOTHING*
-        # we can do about that. We prefer to pretend everything will be okay.
-            # print(f'Resolving postponed hint {repr(pith_hint)}...')
-
-            #FIXME: Since CPython appears to currently be incapable of even
-            #defining a deeply nested annotation that would violate this limit,
-            #we avoid performing this test for the moment. Nonetheless, it's
-            #likely that CPython will permit such annotations to be defined
-            #under some *VERY* distant major version. Ergo, we preserve this.
-            # If this string internally exceeds the child limit (i.e., maximum
-            # number of nested child type hints listed as subscripted arguments
-            # of the parent PEP-compliant type hint produced by evaluating this
-            # string) permitted by the @beartype decorator, raise an exception.
-            #_die_if_hint_repr_exceeds_child_limit(
-            #    hint_repr=pith_hint, pith_label=pith_label)
-
-            # If this hint is the unqualified name of a parent callable or class
-            # of this callable, then this hint is a relative forward reference
-            # to a parent callable or class of this callable that is currently
-            # being defined but has yet to be defined in full. By deduction, we
-            # can infer this hint *MUST* have been a locally or globally scoped
-            # attribute of this callable before being postponed by PEP 563 into
-            # a relative forward reference to that attribute: e.g.,
-            #     # If this loop is iterating over a postponed type hint
-            #     # annotating this post-PEP 563 method signature...
-            #     class MuhClass:
-            #         @beartype
-            #         def muh_method(self) -> 'MuhClass': ...
-            #
-            #     # ...then the original type hints prior to being postponed
-            #     # *MUST* have annotated this pre-PEP 563 method signature.
-            #     class MuhClass:
-            #         @beartype
-            #         def muh_method(self) -> MuhClass: ...
-            #
-            # In this case, we absolutely *MUST* avoid attempting to resolve
-            # this forward reference. Why? Disambiguity. Although the
-            # "MuhClass" class has yet to be defined at the time @beartype
-            # decorates the muh_method() method, an attribute of the same name
-            # may already have been defined at that time: e.g.,
-            #     # While bad form, PEP 563 postpones this valid logic...
-            #     MuhClass = "Just kidding! Had you going there, didn't I?"
-            #     class MuhClass:
-            #         @beartype
-            #         def muh_method(self) -> MuhClass: ...
-            #
-            #     # ...into this relative forward reference.
-            #     MuhClass = "Just kidding! Had you going there, didn't I?"
-            #     class MuhClass:
-            #         @beartype
-            #         def muh_method(self) -> 'MuhClass': ...
-            #
-            # Naively resolving this forward reference would erroneously
-            # replace this hint with the previously declared attribute rather
-            # than the class currently being declared: e.g.,
-            #     # Naive PEP 563 resolution would replace the above by this!
-            #     MuhClass = "Just kidding! Had you going there, didn't I?"
-            #     class MuhClass:
-            #         @beartype
-            #         def muh_method(self) -> (
-            #             "Just kidding! Had you going there, didn't I?"): ...
-            #
-            # This isn't simply an edge-case disambiguity, however. This exact
-            # situation commonly arises whenever reloading modules containing
-            # @beartype-decorated callables annotated with self-references
-            # (e.g., by passing those modules to the standard
-            # importlib.reload() function). Why? Because module reloading is
-            # ill-defined and mostly broken under Python. Since the
-            # importlib.reload() function fails to delete any of the attributes
-            # of the module to be reloaded before reloading that module, the
-            # parent callable or class referred to by this hint will be briefly
-            # defined for the duration of @beartype's decoration of this
-            # callable as the prior version of that parent callable or class!
-            #
-            # Resolving this hint would thus superficially succeed, while
-            # actually erroneously replacing this hint with the prior rather
-            # than current version of that parent callable or class. @beartype
-            # would then wrap the decorated callable with a wrapper expecting
-            # the prior rather than current version of that parent callable or
-            # class. All subsequent calls to that wrapper would then fail.
-            # Since this actually happened, we ensure it never does again.
-            #
-            # Lastly, note that this edge case *ONLY* supports top-level
-            # relative forward references (i.e., syntactically valid Python
-            # identifier names subscripting *NO* parent type hints). Child
-            # relative forward references will continue to raise exceptions. As
-            # resolving PEP 563-postponed type hints effectively reduces to a
-            # single "all or nothing" call of the low-level eval() builtin
-            # accepting *NO* meaningful configuration, there exists *NO* means
-            # of only partially resolving parent type hints while preserving
-            # relative forward references subscripting those hints. The
-            # solution in those cases is for end users to either:
-            #
-            # * Decorate classes rather than methods: e.g.,
-            #     # Users should replace this method decoration, which will
-            #     # fail at runtime...
-            #     class MuhClass:
-            #         @beartype
-            #         def muh_method(self) -> list[MuhClass]: ...
-            #
-            #     # ...with this class decoration, which will work.
-            #     @beartype
-            #     class MuhClass:
-            #         def muh_method(self) -> list[MuhClass]: ...
-            # * Replace implicit with explicit forward references: e.g.,
-            #     # Users should replace this implicit forward reference, which
-            #     # will fail at runtime...
-            #     class MuhClass:
-            #         @beartype
-            #         def muh_method(self) -> list[MuhClass]: ...
-            #
-            #     # ...with this explicit forward reference, which will work.
-            #     class MuhClass:
-            #         @beartype
-            #         def muh_method(self) -> list['MuhClass']: ...
-            #
-            # Indeed, the *ONLY* reasons we support this common edge case are:
-            # * This edge case is indeed common.
-            # * This edge case is both trivial and efficient to support.
-            #
-            # tl;dr: Preserve this hint for disambiguity and skip to the next.
-            if pith_hint in func_scope_names:
-                continue
-            # Else, this hint is *NOT* the unqualified name of a parent callable
-            # or class of this callable.
-            #
-            # If the local scope of the decorated callable has yet to be
-            # decided...
-            elif func_locals is None:
-                # Attempt to resolve this hint against the global scope defined
-                # by the module declaring the decorated callable.
-                #
-                # Note that this first attempt intentionally does *NOT* attempt
-                # to evaluate this postponed hint against both the global and
-                # local scope of the decorated callable. Why? Because:
-                # * The overwhelming majority of real-world type hints are
-                #   imported at module scope (e.g., from "collections.abc" and
-                #   "typing") and thus accessible as global attributes.
-                # * Deciding the local scope of the decorated callable is an
-                #   O(n**2) operation for an arbitrarily large integer n. Ergo,
-                #   that decision should be deferred as long as feasible to
-                #   minimize space and time costs of the @beartype decorator.
-                try:
-                    func_hints_resolved[pith_name] = eval(
-                        pith_hint, func_globals)
-
-                    # If that succeeded, continue to the next postponed hint.
-                    continue
-                # If that resolution failed, it probably did so due to
-                # requiring one or more attributes available only in the local
-                # scope for the decorated callable. In this case...
-                except Exception:
-                    # print(f'Resolving PEP 563-postponed type hint {repr(pith_hint)} locals...')
-                    # print(f'Ignoring {len(cls_stack or ())} lexical parent class scopes...')
-
-                    #FIXME: Optimize as follows. This is critical:
-                    #    # If the decorated callable is nested (rather than
-                    #    # global) and thus possibly has a non-empty local
-                    #    # scope...
-                    #    if is_func_nested(func):
-                    # Local scope for the decorated callable.
-                    func_locals = get_func_locals(
-                        func=func,
-
-                        # Ignore all lexical scopes in the fully-qualified name
-                        # of the decorated callable corresponding to owner
-                        # classes lexically nesting the current decorated class
-                        # containing that callable (including the current
-                        # decorated class). Why? Because these classes are *ALL*
-                        # currently being decorated and thus have yet to be
-                        # encapsulated by new stack frames on the call stack. If
-                        # these lexical scopes are *NOT* ignored, this call to
-                        # get_func_locals() will fail to find the parent lexical
-                        # scope of the decorated callable and then raise an
-                        # unexpected exception.
-                        #
-                        # Consider, for example, this nested class decoration of
-                        # a fully-qualified "muh_package.Outer" class:
-                        #     from beartype import beartype
-                        #
-                        #     @beartype
-                        #     class Outer(object):
-                        #         class Middle(object):
-                        #             class Inner(object):
-                        #                 def muh_method(self) -> str:
-                        #                     return 'Painful API is painful.'
-                        #
-                        # When @beartype finally recurses into decorating the
-                        # nested muh_package.Outer.Middle.Inner.muh_method()
-                        # method, this call to get_func_locals() if *NOT* passed
-                        # this parameter would naively assume that the parent
-                        # lexical scope of the current muh_method() method on
-                        # the call stack is named "Inner". Instead, the parent
-                        # lexical scope of that method on the call stack is
-                        # named "muh_package" -- the first lexical scope
-                        # enclosing that method that exists on the call stack.
-                        # Ergo, the non-existent "Outer", "Middle", and "Inner"
-                        # lexical scopes must *ALL* be silently ignored here.
-                        func_scope_names_ignore=(
-                            0 if cls_stack is None else len(cls_stack)),
-
-                        #FIXME: Consider dynamically calculating exactly how
-                        #many additional @beartype-specific frames are ignorable
-                        #on the first call to this function, caching that
-                        #number, and then reusing that cached number on all
-                        #subsequent calls to this function. The current approach
-                        #employed below of naively hard-coding a number of
-                        #frames to ignore was incredibly fragile and had to be
-                        #effectively disabled, which hampers runtime efficiency.
-
-                        # Ignore additional frames on the call stack embodying:
-                        # * The current call to this function.
-                        #
-                        # Note that, for safety, we currently avoid ignoring
-                        # additional frames that we could technically ignore.
-                        # These include:
-                        # * The call to the parent
-                        #   beartype._check.checkcall.BeartypeCall.reinit()
-                        #   method.
-                        # * The call to the parent @beartype.beartype()
-                        #   decorator.
-                        #
-                        # Why? Because the @beartype codebase has been
-                        # sufficiently refactored so as to render any such
-                        # attempts non-trivial, fragile, and frankly dangerous.
-                        func_stack_frames_ignore=1,
-
-                        exception_cls=BeartypePep563Exception,
-                    )
-
-                    # If the decorated callable is a method transitively defined
-                    # by a root decorated class, add a pair of new local
-                    # attributes exposing both:
-                    #
-                    # * The unqualified basename of the root decorated class.
-                    #   Why? Because this class may be recursively referenced in
-                    #   postponed type hints and *MUST* thus be exposed to *ALL*
-                    #   postponed type hints. However, this class is currently
-                    #   being decorated and thus has yet to be defined in
-                    #   either:
-                    #   * If this class is module-scoped, the global attribute
-                    #     dictionary of that module and thus the "func_globals"
-                    #     dictionary.
-                    #   * If this class is closure-scoped, the local attribute
-                    #     dictionary of that closure and thus the "func_locals"
-                    #     dictionary.
-                    # * The unqualified basename of the current decorated class.
-                    #   Why? For similar reasons. Since the current decorated
-                    #   class may be lexically nested in the root decorated
-                    #   class, the current decorated class is *NOT* already
-                    #   accessible as either a global or local; the current
-                    #   decorated class is *NOT* already exposed by either the
-                    #   "func_globals" or "func_locals" dictionary. Exposing the
-                    #   current decorated class to postponed type hints
-                    #   referencing that class thus requires adding a local
-                    #   attribute exposing that class.
-                    #
-                    # Note that:
-                    # * *ALL* intermediary classes (i.e., excluding the root
-                    #   decorated class) lexically nesting the current decorated
-                    #   class are irrelevant. Intermediary classes are neither
-                    #   module-scoped nor closure-scoped and thus *NOT*
-                    #   accessible as either globals or locals to the nested
-                    #   lexical scope of the current decorated class: e.g.,
-                    #     # This raises a parser error and is thus *NOT* fine:
-                    #     #     NameError: name 'muh_type' is not defined
-                    #     class Outer(object):
-                    #         class Middle(object):
-                    #             muh_type = str
-                    #
-                    #             class Inner(object):
-                    #                 def muh_method(self) -> muh_type:
-                    #                     return 'Dumpster fires are all I see.'
-                    # * This implicitly overrides any previously declared locals
-                    #   of the same name. Although non-ideal, this constitutes
-                    #   syntactically valid Python and is thus *NOT* worth
-                    #   emitting even a non-fatal warning over: e.g.,
-                    #     # This is fine... technically.
-                    #     from beartype import beartype
-                    #     def muh_closure() -> None:
-                    #         MuhClass = 'This is horrible, yet fine.'
-                    #
-                    #         @beartype
-                    #         class MuhClass(object):
-                    #             def muh_method(self) -> str:
-                    #                 return 'Look away and cringe, everyone!'
-                    if cls_stack:
-                        # Root and current decorated classes.
-                        cls_root = cls_stack[0]
-                        cls_curr = cls_stack[-1]
-
-                        # Unqualified basenames of the root and current
-                        # decorated classes.
-                        cls_root_basename = cls_root.__name__
-                        cls_curr_basename = cls_curr.__name__
-
-                        # Add new locals exposing these classes to type hints,
-                        # implicitly overwriting any locals of the same name in
-                        # the higher-level local scope for any closure declaring
-                        # this class if any. These classes are currently being
-                        # decorated and thus guaranteed to be the most recent
-                        # declarations of local variables by these names.
-                        #
-                        # Note that the current class assumes lexical precedence
-                        # over the root class and is thus intentionally added
-                        # *AFTER* the latter.
-                        func_locals[cls_root_basename] = cls_root
-                        func_locals[cls_curr_basename] = cls_curr
-
-                        # Local scope for the class directly defining the
-                        # decorated callable.
-                        #
-                        # Note that callables *ONLY* have direct access to
-                        # attributes declared by the classes directly defining
-                        # those callables. Ergo, the local scopes for parent
-                        # classes of this class (including the root decorated
-                        # class) are irrelevant.
-                        cls_curr_locals = get_type_locals(
-                            cls=cls_curr,
-                            exception_cls=BeartypePep563Exception,
-                        )
-
-                        # Forcefully merge this local scope into the current
-                        # local scope, implicitly overwriting any locals of the
-                        # same name. Class locals necessarily assume lexical
-                        # precedence over:
-                        # * These classes themselves.
-                        # * Locals defined by higher-level parent classes.
-                        # * Locals defined by closures defining these classes.
-                        func_locals.update(cls_curr_locals)
-                    # Else, the decorated callable is *NOT* a method
-                    # transitively declared by a root decorated class.
-            # In either case, the local scope of the decorated callable has now
-            # been decided. (Validate this to be the case.)
-            assert func_locals is not None, (
-                f'{func.__qualname__}() local scope undecided.')
-
-            # Attempt to resolve this hint against both the global and local
-            # scopes for the decorated callable.
-            try:
-                func_hints_resolved[pith_name] = eval(
-                    pith_hint, func_globals, func_locals)
-            # If that resolution also fails...
-            except Exception as exception:
-                # If...
-                if (
-                    # That resolution fails with a "NameError" *AND*...
-                    isinstance(exception, NameError) and
-                    # This hint is a valid Python identifier...
-                    is_identifier(pith_hint)
-                ):
-                    # This hint is *PROBABLY* a forward reference hinted as a
-                    # string. In this case, defer validation of this string as a
-                    # valid forward reference to a class (which presumably has
-                    # yet to be declared) until call time of the decorated
-                    # callable by preserving this string as is.
-                    #
-                    # PEP 563 prevents runtime type checkers from distinguishing
-                    # between forward references hinted as strings and
-                    # non-forward references postponed under PEP
-                    # 563 as strings. Ideally, PEP 563 would postpone the former
-                    # as machine-readable string representations (e.g.,
-                    # converting "muh.class.name" to "'muh.class.name'"). It
-                    # doesn't. Instead, it simply preserves forward references
-                    # hinted as strings! Who approved this appalling
-                    # abomination that breaks CPython itself?
-                    # print(f'Deferring postponed forward reference hint {repr(pith_hint)}...')
-                    continue
-                # Else, this hint is *PROBABLY NOT* a forward reference hinted
-                # as a string.
-
-                # Human-readable label describing this pith.
-                exception_prefix = prefix_beartypeable_pith(
-                    func=func, pith_name=pith_name)
-
-                # Wrap this low-level non-human-readable exception with a
-                # high-level human-readable beartype-specific exception.
-                raise BeartypePep563Exception(
-                    f'{exception_prefix}PEP 563-postponed type hint '
-                    f'{repr(pith_hint)} syntactically invalid '
-                    f'(i.e., "{str(exception)}") under:\n'
-                    f'~~~~[ GLOBAL SCOPE ]~~~~\n{repr(func_globals)}\n'
-                    f'~~~~[ LOCAL SCOPE  ]~~~~\n{repr(func_locals)}'
-                ) from exception
-        # Else, this hint is *NOT* a PEP 563-formatted postponed string. Since
-        # PEP 563 is active for this callable, this implies this hint *MUST*
-        # have been previously postponed but has since been replaced in-place
-        # with its referent -- typically due to this callable being decorated
-        # by @beartype and one or more other hint-based decorators.
+    # Note that refactoring this iteration into a dictionary comprehension would
+    # be both:
+    # * Largely infeasible (e.g., due to the need to raise human-readable
+    #   exceptions on evaluating invalid type hints).
+    # * largely pointless (e.g., due to dictionary comprehensions being either
+    #   no faster or even slower than explicit iteration for small dictionary
+    #   sizes, as "func.__annotations__" usually is).
+    for arg_name, hint in arg_name_to_hint.items():
+        # If this hint is stringified, resolve this stringified type hint to the
+        # non-string type hint to which this string refers.
         #
-        # In this case, silently preserve this hint as is. Since PEP 563
-        # provides no means of distinguishing expected from unexpected
-        # evaluation of postponed hint, either emitting a non-fatal
-        # warning *OR* raising a fatal exception here would be overly violent.
-        # Instead, we conservatively assume this hint was previously
-        # postponed but has already been properly resolved to its referent by
-        # external logic elsewhere (e.g., yet another runtime type checker).
-        #
-        # Did we mention that PEP 563 is a shambolic cesspit of inelegant
-        # language design and thus an indictment of Guido himself, who approved
-        # this festering mess that:
-        #
-        # * Critically breaks backward compatibility throughout the
-        #   well-established Python 3 ecosystem.
-        # * Unhelpfully provides no general-purpose API for either:
-        #   * Detecting postponed hints on arbitrary objects.
-        #   * Resolving those hints.
-        # * Dramatically reduces the efficiency of hint-based decorators
-        #   for no particularly good reason.
-        # * Non-orthogonally prohibits hints from accessing local state.
-        #
-        # Because we should probably mention those complaints here.
-        # else:
-            #FIXME: See above.
-            # If the machine-readable representation of this annotation (which
-            # internally encapsulates the same structural metadata as the
-            # PEP 563-formatted postponed string representation of this
-            # annotation) internally exceeds the child limit as tested above,
-            # again raise an exception.
-            #
-            # Note that obtaining the machine-readable representation of this
-            # annotation incurs a minor performance penalty. However, since
-            # effectively *ALL* annotations will be PEP 563-formatted postponed
-            # strings once the next major Python version officially instates
-            # PEP 563 as a mandatory backward compatibility-breaking change,
-            # this penalty will effectively cease to existence for the
-            # overwhelming majority of real-world annotations. *shrug*
-            #_die_if_hint_repr_exceeds_child_limit(
-            #    hint_repr=repr(pith_hint),
-            #    pith_label=pith_label)
+        # Note that this test could technically yield a false positive in the
+        # unlikely edge case that this hint was previously postponed but has
+        # since been replaced in-place by its referent that is itself a PEP
+        # 484-compliant forward reference matching the PEP 563 format without
+        # actually being a PEP 563-postponed type hint. Since PEP 563 failed to
+        # provide solutions to this or any other outstanding runtime issues with
+        # PEP 563, there is *NOTHING* we can differentiate these two edge cases.
+        # Instead, we pretend everything will be okay. "Trust me, bro!"
+        if isinstance(hint, str):
+            arg_name_to_hint[arg_name] = resolve_hint(
+                hint=hint,
+                bear_call=bear_call,
+                exception_cls=BeartypePep563Exception,
+            )
+        # Else, this hint is *NOT* stringified. In this case, preserve this hint
+        # as is.
 
-    # Assert the above resolution resolved the expected number of type hints.
-    assert len(func_hints_resolved) == len(func_hints_postponed), (
-        f'{func.__qualname__}() PEP 563-postponed type hint resolution mismatch: '
-        f'{len(func_hints_resolved)} resolved hints != '
-        f'{len(func_hints_postponed)} postponed hints.')
+    # ..................{ RETURN                             }..................
+    # Release this beartype call metadata back to its object pool.
+    release_object_typed(bear_call)
 
-    # Atomically (i.e., all-at-once) replace this callable's postponed
+    # Atomically (i.e., all-at-once) replace that callable's postponed
     # annotations with these resolved annotations for safety and efficiency.
     #
     # While the @beartype decorator goes to great lengths to preserve the
@@ -705,12 +293,13 @@ def resolve_pep563(
     # resolving postponed annotations for downstream third-party callers is
     # justified. Everyone benefits from replacing useless postponed annotations
     # with useful real annotations; so, we do so.
+    func.__annotations__ = arg_name_to_hint
+
     # print(
     #     f'{func.__name__}() PEP 563-postponed annotations resolved:'
     #     f'\n\t------[ POSTPONED ]------\n\t{func_hints_postponed}'
     #     f'\n\t------[ RESOLVED  ]------\n\t{func_hints_resolved}'
     # )
-    func.__annotations__ = func_hints_resolved
 
 # ....................{ PRIVATE ~ constants                }....................
 _FUTURE_ANNOTATIONS = __future__.annotations

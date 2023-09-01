@@ -33,9 +33,7 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._decor.wrap.wrapmain import generate_code
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
-    acquire_object_typed,
-    release_object_typed,
-)
+    release_object_typed)
 from beartype._util.func.mod.utilbeartypefunc import (
     is_func_unbeartypeable,
     set_func_beartyped,
@@ -153,7 +151,7 @@ def beartype_func(
     # already decorated by @beartype by efficiently reducing to a noop.
     set_func_beartyped(func_wrapper)
 
-    # Release this callable metadata back to its object pool.
+    # Release this beartype call metadata back to its object pool.
     release_object_typed(bear_call)
 
     # Return this wrapper.

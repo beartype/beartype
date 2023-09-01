@@ -25,8 +25,33 @@ def test_resolve_pep563() -> None:
     # .....................{ IMPORTS                       }....................
     # Defer test-specific imports.
     from beartype.peps import resolve_pep563
-    from beartype.roar import BeartypePep563Exception
+    from beartype.roar import (
+        BeartypeCallHintForwardRefException,
+        BeartypePep563Exception,
+    )
+    from beartype_test.a00_unit.data.pep.pep563.data_pep563_resolve import (
+        ToAvariceOrPride,
+        their_starry_domes,
+    )
     from pytest import raises
+
+    # .....................{ LOCALS                        }....................
+    # Arbitrary instance of the generic accepted by the function called below.
+    numberless_and_immeasurable_halls = ToAvariceOrPride()
+
+    # .....................{ PASS                          }....................
+    # Assert that this function unsuccessfully raises the expected exception
+    # *BEFORE* resolving all PEP 563-postponed type hints annotating this
+    # function.
+    with raises(BeartypeCallHintForwardRefException):
+        their_starry_domes(numberless_and_immeasurable_halls)
+
+    # Resolve all PEP 563-postponed type hints annotating this function.
+    resolve_pep563(their_starry_domes)
+
+    # Assert that this function successfully accepts and returns this instance.
+    assert their_starry_domes(numberless_and_immeasurable_halls) is (
+        numberless_and_immeasurable_halls)
 
     # .....................{ FAIL                          }....................
     # Assert that this resolver raises the expected exception when passed an
