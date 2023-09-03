@@ -16,6 +16,7 @@ from __future__ import annotations
 from beartype.door import die_if_unbearable
 from beartype.typing import (
     Generic,
+    NoReturn,
     TypeVar,
 )
 
@@ -33,6 +34,39 @@ class ToAvariceOrPride(Generic[T]):
 
     pass
 
+
+class FrequentWith(object):
+    '''
+    Arbitrary class defining various problematic methods.
+    '''
+
+    def crystal_column(self, and_clear_shrines: OfPearl) -> NoReturn:
+        '''
+        Arbitrary method both accepting and returning a value annotated as a
+        **missing forward reference** (i.e., :pep:`563`-postponed type hint
+        referring to a global attribute that is guaranteed to *never* be defined
+        by this submodule), exercising an edge case in the
+        :func:`beartype.peps.resolve_pep563` resolver.
+
+        Raises
+        ----------
+        BeartypeCallHintForwardRefException
+            Unconditionally.
+        '''
+
+        # Missing forward reference, defined merely as a placeholder forward
+        # reference proxy after the caller passes this method to the
+        # resolve_pep563() function.
+        OfPearl_resolved = FrequentWith.crystal_column.__annotations__[
+            'and_clear_shrines']
+
+        # Raise an exception. Since this forward reference is guaranteed to be
+        # missing, this call is guaranteed to fail.
+        die_if_unbearable(and_clear_shrines, OfPearl_resolved)
+
+        # Return this parameter as is.
+        return and_clear_shrines
+
 # ....................{ FUNCTIONS                          }....................
 def their_starry_domes(of_diamond_and_of_gold: ExpandAbove) -> ExpandAbove:
     '''
@@ -45,6 +79,9 @@ def their_starry_domes(of_diamond_and_of_gold: ExpandAbove) -> ExpandAbove:
 
     Raises
     ----------
+    BeartypeCallHintForwardRefException
+        If this function has yet to be passed to the
+        :func:`beartype.peps.resolve_pep563` resolver.
     '''
 
     # Subscripted generic type alias, resolved to this global attribute that has
@@ -58,7 +95,7 @@ def their_starry_domes(of_diamond_and_of_gold: ExpandAbove) -> ExpandAbove:
     # Return this parameter as is.
     return of_diamond_and_of_gold
 
-
+# ....................{ HINTS                              }....................
 ExpandAbove = ToAvariceOrPride[str]
 '''
 Arbitrary **subscripted generic type alias forward reference** (i.e.,

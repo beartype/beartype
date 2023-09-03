@@ -1253,7 +1253,39 @@ class _BeartypeUtilCallableException(_BeartypeUtilException):
     **Beartype callable utility exception.**
 
     This exception is raised by public functions of the private
-    :mod:`beartype._util.utilfunc` subpackage.
+    :mod:`beartype._util.func` subpackage.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilCallableScopeException(_BeartypeUtilCallableException):
+    '''
+    **Beartype callable scope utility exception.**
+
+    This exception is raised by public functions of the private
+    :mod:`beartype._util.func.utilfuncscope` submodule.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilCallableScopeNotFoundException(
+    _BeartypeUtilCallableException):
+    '''
+    **Beartype callable missing scope utility exception.**
+
+    This exception is raised by the private
+    :mod:`beartype._util.func.utilfuncscope.get_func_locals` getter on failing
+    to find the lexical scope of the parent callable or class declaring the
+    passed nested callable, enabling callers of that getter to identify this
+    common edge case.
 
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
@@ -1267,7 +1299,7 @@ class _BeartypeUtilCallableWrapperException(_BeartypeUtilCallableException):
     **Beartype callable wrapper utility exception.**
 
     This exception is raised by public functions of the private
-    :mod:`beartype._util.utilfunc.utilfuncwrap` subpackage.
+    :mod:`beartype._util.func.utilfuncwrap` subpackage.
 
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.

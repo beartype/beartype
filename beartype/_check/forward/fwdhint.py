@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
+from beartype.roar._roarexc import _BeartypeUtilCallableScopeNotFoundException
 from beartype._check.checkcall import BeartypeCall
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._data.hint.datahinttyping import TypeException
@@ -250,66 +251,90 @@ def resolve_hint(
         # If the decorated callable is nested (rather than global) and thus
         # *MAY* have a non-empty local nested scope...
         if bear_call.func_wrappee_is_nested:
-            # Local scope of the decorated callable, localized to improve both
-            # readability and negligible efficiency when accessed below.
-            func_locals = get_func_locals(
-                func=func,
+            # Attempt to...
+            try:
+                # Local scope of the decorated callable, localized to improve
+                # readability and negligible efficiency when accessed below.
+                func_locals = get_func_locals(
+                    func=func,
 
-                # Ignore all lexical scopes in the fully-qualified name of the
-                # decorated callable corresponding to parent classes lexically
-                # nesting the current decorated class containing that callable
-                # (including that class). Why? Because these classes are *ALL*
-                # currently being decorated and thus have yet to be encapsulated
-                # by new stack frames on the call stack. If these lexical scopes
-                # are *NOT* ignored, this call to get_func_locals() will fail to
-                # find the parent lexical scope of the decorated callable and
-                # then raise an unexpected exception.
-                #
-                # Consider, for example, this nested class decoration of a
-                # fully-qualified "muh_package.Outer" class:
-                #     @beartype
-                #     class Outer(object):
-                #         class Middle(object):
-                #             class Inner(object):
-                #                 def muh_method(self) -> str:
-                #                     return 'Painful API is painful.'
-                #
-                # When @beartype finally recurses into decorating the nested
-                # muh_package.Outer.Middle.Inner.muh_method() method, this call
-                # to get_func_locals() if *NOT* passed this parameter would
-                # naively assume that the parent lexical scope of the current
-                # muh_method() method on the call stack is named "Inner".
-                # Instead, the parent lexical scope of that method on the call
-                # stack is named "muh_package" -- the first lexical scope
-                # enclosing that method that exists on the call stack. The
-                # non-existent "Outer", "Middle", and "Inner" lexical scopes
-                # must *ALL* be silently ignored.
-                func_scope_names_ignore=(
-                    0 if cls_stack is None else len(cls_stack)),
+                    # Ignore all lexical scopes in the fully-qualified name of
+                    # the decorated callable corresponding to parent classes
+                    # lexically nesting the current decorated class containing
+                    # that callable (including that class). Why? Because these
+                    # classes are *ALL* currently being decorated and thus have
+                    # yet to be encapsulated by new stack frames on the call
+                    # stack. If these lexical scopes are *NOT* ignored, this
+                    # call to get_func_locals() will fail to find the parent
+                    # lexical scope of the decorated callable and then raise an
+                    # unexpected exception.
+                    #
+                    # Consider, for example, this nested class decoration of a
+                    # fully-qualified "muh_package.Outer" class:
+                    #     @beartype
+                    #     class Outer(object):
+                    #         class Middle(object):
+                    #             class Inner(object):
+                    #                 def muh_method(self) -> str:
+                    #                     return 'Painful API is painful.'
+                    #
+                    # When @beartype finally recurses into decorating the nested
+                    # muh_package.Outer.Middle.Inner.muh_method() method, this
+                    # call to get_func_locals() if *NOT* passed this parameter
+                    # would naively assume that the parent lexical scope of the
+                    # current muh_method() method on the call stack is named
+                    # "Inner". Instead, the parent lexical scope of that method
+                    # on the call stack is named "muh_package" -- the first
+                    # lexical scope enclosing that method that exists on the
+                    # call stack. The non-existent "Outer", "Middle", and
+                    # "Inner" lexical scopes must *ALL* be silently ignored.
+                    func_scope_names_ignore=(
+                        0 if cls_stack is None else len(cls_stack)),
 
-                #FIXME: Consider dynamically calculating exactly how many
-                #additional @beartype-specific frames are ignorable on the first
-                #call to this function, caching that number, and then reusing
-                #that cached number on all subsequent calls to this function.
-                #The current approach employed below of naively hard-coding a
-                #number of frames to ignore was incredibly fragile and had to be
-                #effectively disabled, which hampers runtime efficiency.
+                    #FIXME: Consider dynamically calculating exactly how many
+                    #additional @beartype-specific frames are ignorable on the first
+                    #call to this function, caching that number, and then reusing
+                    #that cached number on all subsequent calls to this function.
+                    #The current approach employed below of naively hard-coding a
+                    #number of frames to ignore was incredibly fragile and had to be
+                    #effectively disabled, which hampers runtime efficiency.
 
-                # Ignore additional frames on the call stack embodying:
-                # * The current call to this function.
-                #
-                # Note that, for safety, we currently avoid ignoring additional
-                # frames that we could technically ignore. These include:
-                # * The call to the parent
-                #   beartype._check.checkcall.BeartypeCall.reinit() method.
-                # * The call to the parent @beartype.beartype() decorator.
-                #
-                # Why? Because the @beartype codebase has been sufficiently
-                # refactored so as to render any such attempts non-trivial,
-                # fragile, and frankly dangerous.
-                func_stack_frames_ignore=1,
-                exception_cls=exception_cls,
-            )
+                    # Ignore additional frames on the call stack embodying:
+                    # * The current call to this function.
+                    #
+                    # Note that, for safety, we currently avoid ignoring
+                    # additional frames that we could technically ignore. These
+                    # include:
+                    # * The call to the parent
+                    #   beartype._check.checkcall.BeartypeCall.reinit() method.
+                    # * The call to the parent @beartype.beartype() decorator.
+                    #
+                    # Why? Because the @beartype codebase has been sufficiently
+                    # refactored so as to render any such attempts non-trivial,
+                    # fragile, and frankly dangerous.
+                    func_stack_frames_ignore=1,
+                    exception_cls=exception_cls,
+                )
+            # If this local scope cannot be found (i.e., if this getter found
+            # the lexical scope of the module declaring the decorated callable
+            # *before* that of the parent callable or class declaring that
+            # callable), then this resolve_hint() function was called *AFTER*
+            # rather than *DURING* the declaration of the decorated callable.
+            # This implies that that callable is not, in fact, currently being
+            # decorated. Instead, that callable was *NEVER* decorated by
+            # @beartype but has instead subsequently been passed to this
+            # resolve_hint() function after its initial declaration -- typically
+            # due to an external caller passing that callable to our public
+            # beartype.peps.resolve_pep563() function.
+            #
+            # In this case, the call stack frame providing this local scope has
+            # (almost certainly) already been deleted and is no longer
+            # accessible. We have no recourse but to default this local scope to
+            # the empty dictionary -- which might be subsequently modified and
+            # *CANNOT* thus default to the singleton empty dictionary
+            # "DICT_EMPTY" (unlike below).
+            except _BeartypeUtilCallableScopeNotFoundException:
+                func_locals = {}
 
             # If the decorated callable is a method transitively defined by a
             # root decorated class, add a pair of local attributes exposing:
