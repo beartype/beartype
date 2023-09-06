@@ -38,6 +38,11 @@ This private submodule is *not* intended for importation by downstream callers.
 #  subclasses, please.
 #
 #This all seems quite reasonable. Now, let's see whether it is. *gulp*
+#FIXME: Actually, the above comment now ties directly into feature request #235.
+#Resolving the above comment mostly suffices to resolve #235. That said, the
+#above isn't *QUITE* right. It's pretty nice -- but we can do better. See the
+#following comment at #235 for that better:
+#    https://github.com/beartype/beartype/issues/235#issuecomment-1707127231
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException

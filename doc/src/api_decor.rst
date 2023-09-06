@@ -895,4 +895,4 @@ be wrong!
 
    BEARTYPE_IS_COLOR=False python3 -m monochrome_retro_app.its_srsly_cool
 
-.. versionadded:: 0.15.1
+.. versionadded:: 0.16.0

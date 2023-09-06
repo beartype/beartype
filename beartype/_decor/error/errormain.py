@@ -321,8 +321,9 @@ def get_beartype_violation(
         random_int=random_int,
     ).find_cause()
 
-    # If this pith satisfies this hint, *SOMETHING HAS GONE TERRIBLY AWRY.* In
-    # theory, this should never happen, as the parent wrapper function
+    # If this pith satisfies this hint, *SOMETHING HAS GONE TERRIBLY AWRY.*
+    #
+    # In theory, this should never happen, as the parent wrapper function
     # performing type checking should *ONLY* call this child helper function
     # when this pith does *NOT* satisfy this hint. In this case, raise an
     # exception encouraging the end user to submit an upstream issue with us.
