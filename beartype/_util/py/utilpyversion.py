@@ -15,7 +15,20 @@ from sys import version_info
 # ....................{ CONSTANTS ~ at least               }....................
 IS_PYTHON_AT_LEAST_4_0 = version_info >= (4, 0)
 '''
-``True`` only if the active Python interpreter targets at least Python 4.0.0.
+:data:`True` only if the active Python interpreter targets at least Python
+4.0.0.
+'''
+
+
+#FIXME: After dropping Python 3.12 support:
+#* Refactor all code conditionally testing this global to be unconditional.
+#* Remove this global.
+#* Remove all decorators resembling:
+#  @skip_if_python_version_less_than('3.12.0')
+IS_PYTHON_AT_LEAST_3_12 = IS_PYTHON_AT_LEAST_4_0 or version_info >= (3, 12)
+'''
+:data:`True` only if the active Python interpreter targets at least Python
+3.12.0.
 '''
 
 
@@ -24,17 +37,20 @@ IS_PYTHON_AT_LEAST_4_0 = version_info >= (4, 0)
 #* Remove this global.
 #* Remove all decorators resembling:
 #  @skip_if_python_version_less_than('3.11.0')
-IS_PYTHON_AT_LEAST_3_11 = IS_PYTHON_AT_LEAST_4_0 or version_info >= (3, 11)
+IS_PYTHON_AT_LEAST_3_11 = IS_PYTHON_AT_LEAST_3_12 or version_info >= (3, 11)
 '''
-``True`` only if the active Python interpreter targets at least Python 3.11.0.
+:data:`True` only if the active Python interpreter targets at least Python
+3.11.0.
 '''
 
 
 #FIXME: After dropping Python 3.9 support:
+#* Refactor all code conditionally testing this global to be unconditional.
 #* Remove this global.
 IS_PYTHON_AT_MOST_3_10 = not IS_PYTHON_AT_LEAST_3_11
 '''
-``True`` only if the active Python interpreter targets at most Python 3.10.x.
+:data:`True` only if the active Python interpreter targets at most Python
+3.10.x.
 '''
 
 
@@ -45,15 +61,17 @@ IS_PYTHON_AT_MOST_3_10 = not IS_PYTHON_AT_LEAST_3_11
 #  @skip_if_python_version_less_than('3.10.0')
 IS_PYTHON_AT_LEAST_3_10 = IS_PYTHON_AT_LEAST_3_11 or version_info >= (3, 10)
 '''
-``True`` only if the active Python interpreter targets at least Python 3.10.0.
+:data:`True` only if the active Python interpreter targets at least Python
+3.10.0.
 '''
 
 
 #FIXME: After dropping Python 3.9 support:
+#* Refactor all code conditionally testing this global to be unconditional.
 #* Remove this global.
 IS_PYTHON_AT_MOST_3_9 = not IS_PYTHON_AT_LEAST_3_10
 '''
-``True`` only if the active Python interpreter targets at most Python 3.9.x.
+:data:`True` only if the active Python interpreter targets at most Python 3.9.x.
 '''
 
 
@@ -64,15 +82,17 @@ IS_PYTHON_AT_MOST_3_9 = not IS_PYTHON_AT_LEAST_3_10
 #  @skip_if_python_version_less_than('3.9.0')
 IS_PYTHON_AT_LEAST_3_9 = IS_PYTHON_AT_LEAST_3_10 or version_info >= (3, 9)
 '''
-``True`` only if the active Python interpreter targets at least Python 3.9.0.
+:data:`True` only if the active Python interpreter targets at least Python
+3.9.0.
 '''
 
 
 #FIXME: After dropping Python 3.8 support:
+#* Refactor all code conditionally testing this global to be unconditional.
 #* Remove this global.
 IS_PYTHON_AT_MOST_3_8 = not IS_PYTHON_AT_LEAST_3_9
 '''
-``True`` only if the active Python interpreter targets at most Python 3.8.x.
+:data:`True` only if the active Python interpreter targets at most Python 3.8.x.
 '''
 
 
@@ -83,36 +103,17 @@ IS_PYTHON_AT_MOST_3_8 = not IS_PYTHON_AT_LEAST_3_9
 #  @skip_if_python_version_less_than('3.8.0')
 IS_PYTHON_AT_LEAST_3_8 = IS_PYTHON_AT_LEAST_3_9 or version_info >= (3, 8)
 '''
-``True`` only if the active Python interpreter targets at least Python 3.8.0.
+:data:`True` only if the active Python interpreter targets at least Python
+3.8.0.
 '''
 
 
-#FIXME: After dropping Python 3.8 support, *REMOVE* all code conditionally
-#testing this global.
-IS_PYTHON_3_8 = version_info[:2] == (3, 8)
-'''
-``True`` only if the active Python interpreter targets exactly Python 3.8.
-'''
-
-
-#FIXME: After dropping Python 3.7 support:
+#FIXME: After dropping Python 3.8 support:
 #* Refactor all code conditionally testing this global to be unconditional.
 #* Remove this global.
-#* Remove all decorators resembling:
-#  @skip_if_python_version_less_than('3.7.2')
-IS_PYTHON_AT_LEAST_3_7_2 = IS_PYTHON_AT_LEAST_3_8 or version_info >= (3, 7, 2)
+IS_PYTHON_3_8 = version_info[:2] == (3, 8)
 '''
-``True`` only if the active Python interpreter targets at least Python 3.7.2,
-which introduced several new public attributes to the :mod:`typing` module
-(e.g., :attr:`typing.OrderedDict`).
-'''
-
-
-#FIXME: After dropping Python 3.7 support, *REMOVE* all code conditionally
-#testing this global.
-IS_PYTHON_3_7 = version_info[:2] == (3, 7)
-'''
-``True`` only if the active Python interpreter targets exactly Python 3.7.
+:data:`True` only if the active Python interpreter targets exactly Python 3.8.x.
 '''
 
 # ....................{ GETTERS                            }....................

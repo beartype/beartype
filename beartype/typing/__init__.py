@@ -138,7 +138,6 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_10  as _IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_LEAST_3_9   as _IS_PYTHON_AT_LEAST_3_9,
     IS_PYTHON_AT_LEAST_3_8   as _IS_PYTHON_AT_LEAST_3_8,
-    IS_PYTHON_AT_LEAST_3_7_2 as _IS_PYTHON_AT_LEAST_3_7_2,
 )
 
 # ....................{ IMPORTS ~ all                      }....................
@@ -335,6 +334,7 @@ if TYPE_CHECKING or not _IS_PYTHON_AT_LEAST_3_9:
         MutableMapping as MutableMapping,
         MutableSequence as MutableSequence,
         MutableSet as MutableSet,
+        OrderedDict as OrderedDict,
         Pattern as Pattern,
         Reversible as Reversible,
         Set as Set,
@@ -343,14 +343,6 @@ if TYPE_CHECKING or not _IS_PYTHON_AT_LEAST_3_9:
         Sequence as Sequence,
         ValuesView as ValuesView,
     )
-
-    # If the active Python interpreter targets Python >= 3.7.2, import *ALL*
-    # public attributes of the "typing" module introduced by Python 3.7.2
-    # deprecated by PEP 585 as their original values.
-    if _IS_PYTHON_AT_LEAST_3_7_2:
-        from typing import (  # type: ignore[attr-defined]
-            OrderedDict as OrderedDict,
-        )
 # If the active Python interpreter targets Python >= 3.9 and thus supports PEP
 # 585, alias *ALL* public attributes of the "typing" module deprecated by PEP
 # 585 to their equivalent values elsewhere in the standard library.

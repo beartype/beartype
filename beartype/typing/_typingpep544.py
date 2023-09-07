@@ -46,9 +46,6 @@ from beartype._util.py.utilpyversion import (
 # but couldn't find it after a brief search.
 if IS_PYTHON_AT_LEAST_3_8:
     # ..................{ IMPORTS                            }..................
-    #FIXME: The ignore[attr-defined] is for Python 3.7 because Mypy doesn't
-    #understand IS_PYTHON_AT_LEAST_3_8. That ignore should be removable
-    #when retiring PYTHON 3.7.
     # Defer Python version-specific imports, including non-caching
     # protocols to be overridden by caching equivalents below (and other
     # requirements from various sources, depending on runtime environment).
