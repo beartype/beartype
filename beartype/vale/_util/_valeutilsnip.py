@@ -13,7 +13,6 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.text.utiltextmagic import CODE_INDENT_1
 
 # ....................{ INDENTATION                        }....................
@@ -75,25 +74,15 @@ validated.
 
 
 VALE_CODE_CHECK_ISATTR_VALUE_EXPR = (
-    # If the active Python interpreter targets Python >= 3.8 and thus supports
-    # assignment expressions, localize the value of this attribute to optimize
-    # subsequent access of that value;
-    f'({{local_name_attr_value}} := {_VALE_CODE_CHECK_ISATTR_VALUE_EXPR_RAW})'
-    if IS_PYTHON_AT_LEAST_3_8 else
-    # Else, the active Python interpreter targets Python < 3.8 and thus fails
-    # to support assignment expressions. In this case, directly access that
-    # value repeatedly (and thus inefficiently) *WITHOUT* localization.
-    _VALE_CODE_CHECK_ISATTR_VALUE_EXPR_RAW
-)
+    f'({{local_name_attr_value}} := {_VALE_CODE_CHECK_ISATTR_VALUE_EXPR_RAW})')
 '''
 :attr:`beartype.vale.IsAttr`-specific Python expression efficiently yielding
 the value of the attribute with an arbitrary name of an arbitrary object to be
 validated.
 
-If the active Python interpreter targets Python >= 3.8 and thus supports
-assignment expressions, this expression is optimized to localize this value to
-a local variable whose name *must* be uniquified and formatted by the caller
-into the ``local_name_attr_value`` format variable.
+For efficiency, this expression is optimized to localize this value to a local
+variable whose name *must* be uniquified and formatted by the caller into the
+``local_name_attr_value`` format variable.
 '''
 
 # ....................{ METHODS                            }....................

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`544` **optimization layer unit tests.**
+Beartype :pep:`544` **optimization layer** unit tests.
 
 This submodule unit tests both the public *and* private API of the private
 :mod:`beartype.typing._typingpep544` subpackage for sanity.
@@ -18,16 +18,13 @@ This submodule unit tests both the public *and* private API of the private
 from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS                              }....................
-# If the active Python interpreter targets Python < 3.8, this interpreter fails
-# to support PEP 544. In this case, skip all tests declared below.
-
-@skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_metaclass() -> None:
     '''
     Test the private
     :class:`beartype.typing._typingpep544._CachingProtocolMeta` metaclass.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from abc import abstractmethod
     from beartype.typing import (
@@ -38,9 +35,11 @@ def test_typingpep544_metaclass() -> None:
     )
     from beartype.typing._typingpep544 import _CachingProtocolMeta
 
+    # ....................{ LOCALS                         }....................
     # Arbitrary type variable.
     _T_co = TypeVar('_T_co', covariant=True)
 
+    # ....................{ CLASSES                        }....................
     # Can we really have it all?!
     @runtime_checkable  # <-- unnecessary at runtime, but Mypy is confused without it
     class SupportsRoundFromScratch(Protocol[_T_co]):
@@ -50,16 +49,18 @@ def test_typingpep544_metaclass() -> None:
             pass
 
     supports_round: SupportsRoundFromScratch = 0
+
+    # ....................{ PASS                           }....................
     assert isinstance(supports_round, SupportsRoundFromScratch)
     assert issubclass(type(SupportsRoundFromScratch), _CachingProtocolMeta)
 
 
-@skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_superclass() -> None:
     '''
     Test the public :class:`beartype.typing.Protocol` superclass.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.typing import (
         Protocol as ProtocolFast,
@@ -68,6 +69,7 @@ def test_typingpep544_superclass() -> None:
     from beartype.typing._typingpep544 import _ProtocolSlow as ProtocolSlow
     from pytest import raises
 
+    # ....................{ LOCALS                         }....................
     # Arbitrary type variable.
     _T_co = TypeVar('_T_co', covariant=True)
 
@@ -75,6 +77,7 @@ def test_typingpep544_superclass() -> None:
     fast_repr = repr(ProtocolFast[_T_co])
     slow_repr = repr(ProtocolSlow[_T_co])
 
+    # ....................{ PASS                           }....................
     # Assert that our caching protocol superclass memoizes subscriptions.
     assert ProtocolFast.__module__ == 'beartype.typing'
     assert ProtocolFast[_T_co] is ProtocolFast[_T_co]
@@ -89,19 +92,20 @@ def test_typingpep544_superclass() -> None:
     slow_repr_suffix = slow_repr[slow_repr.rindex('['):]
     assert fast_repr_suffix == slow_repr_suffix
 
+    # ....................{ FAIL                           }....................
     # Assert that attempting to directly subscript the caching protocol
     # superclass by a non-type variable raises the expected exception.
     with raises(TypeError):
         ProtocolFast[str]
 
 
-@skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_subclass() -> None:
     '''
     Test expected behaviour of user-defined subclasses of the public
     :class:`beartype.typing.Protocol` superclass.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from abc import abstractmethod
     from beartype.typing import (
@@ -109,53 +113,50 @@ def test_typingpep544_subclass() -> None:
         Protocol,
         runtime_checkable
     )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
     from pytest import raises
 
-    # Arbitrary protocol directly subclassing the protocol superclass
-    # subscripted by one or more type variables, exercising subtle edge cases.
+    # ....................{ CLASSES                        }....................
     class SupportsFeebleDreams(Protocol[AnyStr]):
+        '''
+        Arbitrary protocol directly subclassing the protocol superclass
+        subscripted by one or more type variables, exercising subtle edge cases.
+        '''
+
         @abstractmethod
         def torpor_of_the_year(self) -> AnyStr:
             pass
 
+
+    class SupportsHiddenBuds(SupportsFeebleDreams[str]):
+        '''
+        Arbitrary protocol directly subclassing the above protocol superclass
+        subscripted by one or more non-type variables satisfying the type
+        variables subscripting that superclass, exercising subtle edge cases.
+        '''
+
+        @abstractmethod
+        def dreamless_sleep(self) -> str:
+            pass
+
+    # ....................{ PASS                           }....................
     # Assert that optionally decorating protocols by the standard
     # @typing.runtime_checkable() decorator reduces to a noop.
     assert runtime_checkable(SupportsFeebleDreams) is SupportsFeebleDreams
 
-    # If the active Python interpreter targets Python >= 3.8 and thus behaves
-    # sanely with respect to subscription by non-type variables...
-    #
-    # Sadly, this logic fails under Python 3.7. Why? Because the
-    # "typing_extensions.Protocol" superclass erroneously raises an exception
-    # resembling the following when a protocol subclass is subscripted by a
-    # non-type variable satisfying the bounds on the type variable subscripting
-    # the superclass:
-    #     TypeError: Parameters to Protocol[...] must all be type variables.
-    #     Parameter 1 is <class 'str'>
-    if IS_PYTHON_AT_LEAST_3_8:
-        # Assert that a caching protocol subclass also memoizes subscriptions.
-        assert SupportsFeebleDreams[str] is SupportsFeebleDreams[str]
+    # Assert that a caching protocol subclass also memoizes subscriptions.
+    assert SupportsFeebleDreams[str] is SupportsFeebleDreams[str]
 
-        # Arbitrary protocol directly subclassing the above protocol superclass
-        # subscripted by one or more non-type variables satisfying the type
-        # variables subscripting that superclass, exercising subtle edge cases.
-        class SupportsHiddenBuds(SupportsFeebleDreams[str]):
-            @abstractmethod
-            def dreamless_sleep(self) -> str:
-                pass
+    # Assert that optionally decorating abstract protocols by the standard
+    # @typing.runtime_checkable() decorator reduces to a noop.
+    assert runtime_checkable(SupportsFeebleDreams) is SupportsFeebleDreams
 
-        # Assert that optionally decorating abstract protocols by the standard
-        # @typing.runtime_checkable() decorator reduces to a noop.
-        assert runtime_checkable(SupportsFeebleDreams) is SupportsFeebleDreams
-
-        # Assert that attempting to decorate concrete protocol subclasses by
-        # the same decorator raises the expected exception.
-        with raises(TypeError):
-            runtime_checkable(SupportsHiddenBuds)
+    # ....................{ FAIL                           }....................
+    # Assert that attempting to decorate concrete protocol subclasses by
+    # the same decorator raises the expected exception.
+    with raises(TypeError):
+        runtime_checkable(SupportsHiddenBuds)
 
 
-@skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_protocols_typing() -> None:
     '''
     Test the public retinue of ``beartype.typing.Supports*`` protocols with
@@ -231,7 +232,6 @@ def test_typingpep544_protocols_typing() -> None:
         int, float, bool, Decimal, Fraction, target_t=SupportsRound)
 
 # ....................{ TESTS ~ custom : direct            }....................
-@skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_protocol_custom_direct() -> None:
     '''
     Test the core operation of the public :class:`beartype.typing.Protocol`
@@ -302,7 +302,6 @@ def test_typingpep544_protocol_custom_direct() -> None:
         _lies_all_lies(OneFish())
 
 
-@skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_protocol_custom_direct_typevar() -> None:
     '''
     Test the core operation of the public :class:`beartype.typing.Protocol`
@@ -343,7 +342,6 @@ def test_typingpep544_protocol_custom_direct_typevar() -> None:
     assert myabs(-1) == 1
 
 # ....................{ TESTS ~ custom : indirect          }....................
-@skip_if_python_version_less_than('3.8.0')
 def test_typingpep544_protocol_custom_indirect() -> None:
     '''
     Test the core operation of the public :class:`beartype.typing.Protocol`

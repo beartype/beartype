@@ -4,8 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **callable parameter iterator utilities** (i.e., callables
-introspectively iterating over parameters accepted by arbitrary callables).
+Project-wide **callable parameter iterator utilities** (i.e., low-level
+callables introspectively iterating over parameters accepted by arbitrary
+callables).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -25,7 +26,6 @@ from beartype._data.hint.datahinttyping import (
 from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.func.utilfuncwrap import unwrap_func_all_closures_isomorphic
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from collections.abc import Callable
 from enum import (
     Enum,

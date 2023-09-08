@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **PEP-agnostic type hint conversion utility unit tests.**
+Project-wide **PEP-agnostic type hint conversion utility** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._check.convert.convreduce` submodule.
@@ -43,7 +43,6 @@ def test_reduce_hint() -> None:
     from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
     from beartype._util.hint.pep.proposal.utilpep593 import is_hint_pep593
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
         PEP484_GENERICS_IO,
         T,
@@ -56,8 +55,9 @@ def test_reduce_hint() -> None:
         is_package_numpy,
         is_package_numpy_typing_ndarray_deep,
     )
+    from dataclasses import InitVar
     from pytest import raises, warns
-    # from typing import TypeVar
+    from typing import Protocol
 
     # ..................{ LOCALS                             }..................
     # Keyword arguments to be passed to all calls to reduce_hints() below.
@@ -111,35 +111,23 @@ def test_reduce_hint() -> None:
     assert bytes in typevar_constraints_union.__args__
 
     # ..................{ PEP 544                            }..................
-    # If the active Python interpreter targets Python >= 3.8 and thus declares
-    # the "typing.Protocol" superclass...
-    if IS_PYTHON_AT_LEAST_3_8:
-        # Defer version-specific imports.
-        from typing import Protocol
+    # For each PEP 484-compliant "typing" IO generic superclass...
+    for pep484_generic_io in PEP484_GENERICS_IO:
+        # Equivalent protocol reduced from this generic.
+        pep544_protocol_io = reduce_hint(hint=pep484_generic_io, **kwargs)
 
-        # For each PEP 484-compliant "typing" IO generic superclass...
-        for pep484_generic_io in PEP484_GENERICS_IO:
-            # Equivalent protocol reduced from this generic.
-            pep544_protocol_io = reduce_hint(hint=pep484_generic_io, **kwargs)
-
-            # Assert this protocol is either...
-            assert (
-                # A PEP 593-compliant type metahint generalizing a protocol
-                # *OR*...
-                is_hint_pep593(pep544_protocol_io) or
-                # A PEP 544-compliant protocol.
-                issubclass(pep544_protocol_io, Protocol)
-            )
+        # Assert this protocol is either...
+        assert (
+            # A PEP 593-compliant type metahint generalizing a protocol
+            # *OR*...
+            is_hint_pep593(pep544_protocol_io) or
+            # A PEP 544-compliant protocol.
+            issubclass(pep544_protocol_io, Protocol)
+        )
 
     # ..................{ PEP 557                            }..................
-    # If the active Python interpreter targets Python >= 3.8 and thus supports
-    # PEP 557...
-    if IS_PYTHON_AT_LEAST_3_8:
-        # Defer version-specific imports.
-        from dataclasses import InitVar
-
-        # Assert this reducer reduces an "InitVar" to its subscripted argument.
-        assert reduce_hint(hint=InitVar[str], **kwargs) is str
+    # Assert this reducer reduces an "InitVar" to its subscripted argument.
+    assert reduce_hint(hint=InitVar[str], **kwargs) is str
 
     # ..................{ PEP 593                            }..................
     # "typing.Annotated" type hint factory imported from either the "typing" or
@@ -153,15 +141,9 @@ def test_reduce_hint() -> None:
         # lower-level hint it annotates.
         assert reduce_hint(hint=Annotated[int, 42], **kwargs) is int
 
-        # If the active Python interpreter targets Python >= 3.8 and thus
-        # supports the __class_getitem__() dunder method required by beartype
-        # validators...
-        if IS_PYTHON_AT_LEAST_3_8:
-            # Assert this reducer preserves a beartype-specific metahint as is.
-            leaves_when_laid = Annotated[
-                str, IsEqual['In their noonday dreams.']]
-            assert reduce_hint(hint=leaves_when_laid, **kwargs) is (
-                leaves_when_laid)
+        # Assert this reducer preserves a beartype-specific metahint as is.
+        leaves_when_laid = Annotated[str, IsEqual['In their noonday dreams.']]
+        assert reduce_hint(hint=leaves_when_laid, **kwargs) is leaves_when_laid
 
     # ..................{ NUMPY                              }..................
     # If a recent version of NumPy is importable...

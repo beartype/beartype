@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype functional validation classes** (i.e., :mod:`beartype`-specific
+Beartype **functional validation classes** (i.e., :mod:`beartype`-specific
 classes enabling callers to define PEP-compliant validators from arbitrary
 caller-defined callables *not* efficiently generating stack-free code).
 
@@ -19,49 +19,43 @@ from beartype.roar import (
     BeartypeValeLambdaWarning,
     BeartypeValeValidationException,
 )
+from beartype.typing import Protocol
 from beartype.vale._is._valeisabc import _BeartypeValidatorFactoryABC
 from beartype.vale._core._valecore import BeartypeValidator
 from beartype.vale._util._valeutilfunc import die_unless_validator_tester
 from beartype.vale._util._valeutiltyping import BeartypeValidatorTester
 from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._util.func.utilfuncscope import add_func_scope_attr
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.text.utiltextrepr import (
     represent_func,
     represent_object,
 )
 
 # ....................{ PRIVATE ~ protocols                }....................
-# If the active Python interpreter targets Python >= 3.8 and thus supports
-# PEP 544-compliant protocols...
-if IS_PYTHON_AT_LEAST_3_8:
-    # Defer version-specific imports.
-    from beartype.typing import Protocol
-
-    class _SupportsBool(Protocol):
-        '''
-        Fast caching protocol matching any object whose class defines the
-        :meth:`__bool__` dunder method.
-        '''
-
-        def __bool__(self) -> bool: ...
-
-
-    class _SupportsLen(Protocol):
-        '''
-        Fast caching protocol matching any object whose class defines the
-        :meth:`__len__` dunder method.
-        '''
-
-        def __len__(self) -> bool: ...
-
-
-    _BoolLike = (_SupportsBool, _SupportsLen)
+class _SupportsBool(Protocol):
     '''
-    :func:`isinstance`-able tuple of fast caching protocols matching any
-    **bool-like** (i.e., object whose class defines at least one of the
-    :meth:`__bool__` and/or :meth:`__len__` dunder methods).
+    Fast caching protocol matching any object whose class defines the
+    :meth:`__bool__` dunder method.
     '''
+
+    def __bool__(self) -> bool: ...
+
+
+class _SupportsLen(Protocol):
+    '''
+    Fast caching protocol matching any object whose class defines the
+    :meth:`__len__` dunder method.
+    '''
+
+    def __len__(self) -> bool: ...
+
+
+_BoolLike = (_SupportsBool, _SupportsLen)
+'''
+:func:`isinstance`-able tuple of fast caching protocols matching any
+**bool-like** (i.e., object whose class defines at least one of the
+:meth:`__bool__` and/or :meth:`__len__` dunder methods).
+'''
 
 # ....................{ PRIVATE ~ subclasses               }....................
 class _IsFactory(_BeartypeValidatorFactoryABC):
@@ -506,25 +500,10 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
             # * Else, that constructor returns "True".
             #
             # To handle the first two cases, we instead:
-            #
-            # * Under Python >= 3.8, define both our own "SupportsBool" *AND*
-            #   "SupportsLen" protocols.
-            # * Under Python 3.7, fallback to slower getattr()-based tests.
-            is_obj_valid_boollike: bool = None  # type: ignore[assignment]
-
-            # If the active Python interpreter targets Python >= 3.8 and thus
-            # supports the PEP 544-compliant protocols defined above, decide
-            # whether that object is bool-like by deferring to those protocols.
-            if IS_PYTHON_AT_LEAST_3_8:
-                is_obj_valid_boollike = isinstance(is_obj_valid, _BoolLike)  # pyright: ignore
-            # Else, the active Python interpreter targets Python 3.7 and thus
-            # fails to support the PEP 544-compliant protocols defined above.
-            # Instead, decide whether that object is bool-like manually.
-            else:
-                is_obj_valid_boollike = (
-                    hasattr(is_obj_valid, '__bool__') or
-                    hasattr(is_obj_valid, '__len__')
-                )
+            # * Define both our own "SupportsBool" and "SupportsLen" protocols.
+            # * Decide whether that object is bool-like by deferring to those
+            #   protocols.
+            is_obj_valid_boollike = isinstance(is_obj_valid, _BoolLike)  # pyright: ignore
 
             # If that object is *NOT* bool-like, raise an exception.
             if not is_obj_valid_boollike:

@@ -18,9 +18,8 @@ Project-wide :pep:`544`-compliant **type hint test data.**
 #superclasses) once @beartype supports these protocols as well.
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
-# ....................{ CONSTANTS                          }....................
+# ....................{ PRIVATE ~ constants                }....................
 _DATA_HINTPEP544_FILENAME = __file__
 '''
 Absolute filename of this data submodule, to be subsequently opened for
@@ -39,21 +38,7 @@ def add_data(data_module: 'ModuleType') -> None:
         Module to be added to.
     '''
 
-    # If the active Python interpreter targets less than Python < 3.8, this
-    # interpreter fails to support PEP 544. In this case, reduce to a noop.
-    #
-    # Note that we intentionally avoid testing against the
-    # "typing_extensions.Protocol" superclass. Why? Because that superclass is
-    # horribly broken under Python 3.7 and thus *CANNOT* be supported by
-    # beartype. This is why we only support a proper subset of
-    # "typing_extensions" attributes, folks.
-    if not IS_PYTHON_AT_LEAST_3_8:
-        return
-    # Else, the active Python interpreter targets at least Python >= 3.8 and
-    # thus supports PEP 544.
-
     # ..................{ IMPORTS                            }..................
-    # Defer Python >= 3.8-specific imports.
     import pathlib
     from abc import (
         ABC,

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`544` **utility unit tests.**
+Beartype :pep:`544` **type hint utility** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.hint.pep.proposal.utilpep544` submodule.
@@ -19,19 +19,25 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS ~ tester                     }....................
 def test_is_hint_pep544_protocol() -> None:
     '''
-    Test usage of the private
+    Test the private
     :mod:`beartype._util.hint.pep.proposal.utilpep544.is_hint_pep544_protocol`
     tester.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
+    from abc import abstractmethod
     from beartype._util.hint.pep.proposal.utilpep544 import (
         is_hint_pep544_protocol)
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
     from beartype_test.a00_unit.data.data_type import (
         TYPES_BUILTIN,
         Class,
+    )
+
+    # Intentionally import @beartype-accelerated protocols.
+    from beartype.typing import (
+        Protocol,
+        runtime_checkable,
     )
 
     # Intentionally import @beartype-unaccelerated protocols.
@@ -46,6 +52,19 @@ def test_is_hint_pep544_protocol() -> None:
     )
 
     # ....................{ LOCALS                         }....................
+    @runtime_checkable
+    class ProtocolCustomUntypevared(Protocol):
+        '''
+        User-defined protocol parametrized by *NO* type variables declaring
+        arbitrary concrete and abstract methods.
+        '''
+
+        def alpha(self) -> str:
+            return 'Of a Spicily sated'
+
+        @abstractmethod
+        def omega(self) -> str: pass
+
     # Set of all PEP 544-compliant "typing" protocols.
     TYPING_PROTOCOLS = {
         SupportsAbs,
@@ -70,11 +89,9 @@ def test_is_hint_pep544_protocol() -> None:
     # assert not issubclass(Yam, Protocol)
     # assert is_hint_pep544_protocol(Yam) is False
 
-    # Assert this tester accepts these classes *ONLY* if the active Python
-    # interpreter targets at least Python >= 3.8 and thus supports PEP 544.
+    # Assert this tester accepts all standard PEP 544-compliant protocols.
     for typing_protocol in TYPING_PROTOCOLS:
-        assert is_hint_pep544_protocol(typing_protocol) is (
-            IS_PYTHON_AT_LEAST_3_8)
+        assert is_hint_pep544_protocol(typing_protocol) is True
 
     # Assert this tester rejects all builtin types. For unknown reasons, some
     # but *NOT* all builtin types (e.g., "int") erroneously present themselves
@@ -85,34 +102,11 @@ def test_is_hint_pep544_protocol() -> None:
     # Assert this tester rejects standard type hints in either case.
     assert is_hint_pep544_protocol(Union[int, str]) is False
 
-    # ....................{ VERSION                        }....................
-    # If the active Python interpreter targets at least Python >= 3.8 and thus
-    # supports PEP 544...
-    if IS_PYTHON_AT_LEAST_3_8:
-        # Defer version-specific imports.
-        from abc import abstractmethod
+    # Assert this tester accepts a standardized protocol.
+    assert is_hint_pep544_protocol(SupportsInt) is True
 
-        # Intentionally import @beartype-accelerated protocols.
-        from beartype.typing import (
-            Protocol,
-            runtime_checkable,
-        )
-
-        # User-defined protocol parametrized by *NO* type variables declaring
-        # arbitrary concrete and abstract methods.
-        @runtime_checkable
-        class ProtocolCustomUntypevared(Protocol):
-            def alpha(self) -> str:
-                return 'Of a Spicily sated'
-
-            @abstractmethod
-            def omega(self) -> str: pass
-
-        # Assert this accepts a standardized protocol.
-        assert is_hint_pep544_protocol(SupportsInt) is True
-
-        # Assert this accepts a user-defined protocol.
-        assert is_hint_pep544_protocol(ProtocolCustomUntypevared) is True
+    # Assert this tester accepts a user-defined protocol.
+    assert is_hint_pep544_protocol(ProtocolCustomUntypevared) is True
 
 
 def test_is_hint_pep544_io_generic() -> None:
@@ -123,68 +117,57 @@ def test_is_hint_pep544_io_generic() -> None:
     '''
 
     # Defer test-specific imports.
+    from beartype.typing import Union
     from beartype._util.hint.pep.proposal.utilpep544 import (
         is_hint_pep484_generic_io)
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
         PEP484_GENERICS_IO)
-    from typing import Union
 
-    # Assert this tester accepts these classes *ONLY* if the active Python
-    # interpreter targets at least Python >= 3.8 and thus supports PEP 544.
+    # Assert this tester accepts all standard PEP 484-compliant IO generics.
     for pep484_generic_io in PEP484_GENERICS_IO:
-        assert is_hint_pep484_generic_io(pep484_generic_io) is (
-            IS_PYTHON_AT_LEAST_3_8)
+        assert is_hint_pep484_generic_io(pep484_generic_io) is True
 
     # Assert this tester rejects standard type hints in either case.
     assert is_hint_pep484_generic_io(Union[int, str]) is False
 
-# ....................{ TESTS ~ getters                    }....................
-def test_get_hint_pep544_io_protocol_from_generic() -> None:
+# ....................{ TESTS ~ reducers                   }....................
+def test_reduce_hint_pep484_generic_io_to_pep544_protocol() -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.utilpep544.reduce_hint_pep484_generic_io_to_pep544_protocol`
-    tester.
+    reducer.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep544Exception
+    from beartype.typing import Union
     from beartype._util.hint.pep.proposal.utilpep544 import (
         reduce_hint_pep484_generic_io_to_pep544_protocol)
     from beartype._util.hint.pep.proposal.utilpep593 import is_hint_pep593
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
     from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
         PEP484_GENERICS_IO)
     from pytest import raises
-    from typing import Union
+    from typing import Protocol
 
+    # ....................{ PASS                           }....................
     # For each PEP 484-compliant "typing" IO generic base class...
     for pep484_generic_io in PEP484_GENERICS_IO:
-        # If the active Python interpreter targets at least Python >= 3.8 and
-        # thus supports PEP 544...
-        if IS_PYTHON_AT_LEAST_3_8:
-            # Defer version-dependent imports.
-            from typing import Protocol
+        # Equivalent protocol reduced from this generic.
+        pep544_protocol_io = (
+            reduce_hint_pep484_generic_io_to_pep544_protocol(
+                pep484_generic_io, ''))
 
-            # Equivalent protocol reduced from this generic.
-            pep544_protocol_io = (
-                reduce_hint_pep484_generic_io_to_pep544_protocol(
-                    pep484_generic_io, ''))
+        # Assert this protocol is either...
+        assert (
+            # A PEP 593-compliant type metahint generalizing a protocol
+            # *OR*...
+            is_hint_pep593(pep544_protocol_io) or
+            # A PEP 544-compliant protocol.
+            issubclass(pep544_protocol_io, Protocol)
+        )
 
-            # Assert this protocol is either...
-            assert (
-                # A PEP 593-compliant type metahint generalizing a protocol
-                # *OR*...
-                is_hint_pep593(pep544_protocol_io) or
-                # A PEP 544-compliant protocol.
-                issubclass(pep544_protocol_io, Protocol)
-            )
-        # Else, assert this function raises an exception.
-        else:
-            with raises(BeartypeDecorHintPep544Exception):
-                reduce_hint_pep484_generic_io_to_pep544_protocol(
-                    pep484_generic_io, '')
-
+    # ....................{ FAIL                           }....................
     # Assert this function rejects standard type hints in either case.
     with raises(BeartypeDecorHintPep544Exception):
         reduce_hint_pep484_generic_io_to_pep544_protocol(Union[int, str], '')

@@ -134,10 +134,9 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 # "import_typing_attr_or_none('Annotated')").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_11  as _IS_PYTHON_AT_LEAST_3_11,
-    IS_PYTHON_AT_LEAST_3_10  as _IS_PYTHON_AT_LEAST_3_10,
-    IS_PYTHON_AT_LEAST_3_9   as _IS_PYTHON_AT_LEAST_3_9,
-    IS_PYTHON_AT_LEAST_3_8   as _IS_PYTHON_AT_LEAST_3_8,
+    IS_PYTHON_AT_LEAST_3_11 as _IS_PYTHON_AT_LEAST_3_11,
+    IS_PYTHON_AT_LEAST_3_10 as _IS_PYTHON_AT_LEAST_3_10,
+    IS_PYTHON_AT_LEAST_3_9  as _IS_PYTHON_AT_LEAST_3_9,
 )
 
 # ....................{ IMPORTS ~ all                      }....................
@@ -159,22 +158,30 @@ from typing import (
     TYPE_CHECKING as TYPE_CHECKING,
     Any as Any,
     AnyStr as AnyStr,
-    NewType as NewType,
-    Text as Text,
     BinaryIO as BinaryIO,
     ClassVar as ClassVar,
+    Final as Final,  # pyright: ignore[reportGeneralTypeIssues]
     ForwardRef as ForwardRef,
     Generic as Generic,
     Hashable as Hashable,
     IO as IO,
+    Literal as Literal,  # pyright: ignore[reportGeneralTypeIssues]
+    NewType as NewType,
     NamedTuple as NamedTuple,
     NoReturn as NoReturn,
     Optional as Optional,
+    Reversible as Reversible,  # pyright: ignore[reportGeneralTypeIssues]
     Sized as Sized,
+    SupportsIndex as SupportsIndex,  # pyright: ignore[reportGeneralTypeIssues]
+    TypedDict as TypedDict,  # pyright: ignore[reportGeneralTypeIssues]
+    Text as Text,
     TextIO as TextIO,
     TypeVar as TypeVar,
     Union as Union,
     cast as cast,
+    final as final,  # pyright: ignore[reportGeneralTypeIssues]
+    get_args as get_args,  # pyright: ignore[reportGeneralTypeIssues]
+    get_origin as get_origin,  # pyright: ignore[reportGeneralTypeIssues]
     get_type_hints as get_type_hints,
     no_type_check as no_type_check,
     no_type_check_decorator as no_type_check_decorator,
@@ -208,88 +215,67 @@ from typing import (
 #* Submitting an upstream issue requesting that mypy respect the
 #  "# type: ignore[attr-defined]" pragma rather than emitting warnings here.
 
-# If the active Python interpreter targets Python >= 3.8...
-if _IS_PYTHON_AT_LEAST_3_8:
+# If the active Python interpreter targets Python >= 3.10...
+if _IS_PYTHON_AT_LEAST_3_10:
     from typing import (  # type: ignore[attr-defined]
-        Final as Final,  # pyright: ignore[reportGeneralTypeIssues]
-        Literal as Literal,  # pyright: ignore[reportGeneralTypeIssues]
-        Reversible as Reversible,  # pyright: ignore[reportGeneralTypeIssues]
-        SupportsIndex as SupportsIndex,  # pyright: ignore[reportGeneralTypeIssues]
-        TypedDict as TypedDict,  # pyright: ignore[reportGeneralTypeIssues]
-        final as final,  # pyright: ignore[reportGeneralTypeIssues]
-        get_args as get_args,  # pyright: ignore[reportGeneralTypeIssues]
-        get_origin as get_origin,  # pyright: ignore[reportGeneralTypeIssues]
+        Concatenate as Concatenate,  # pyright: ignore[reportGeneralTypeIssues]
+        ParamSpec as ParamSpec,  # pyright: ignore[reportGeneralTypeIssues]
+        ParamSpecArgs as ParamSpecArgs,  # pyright: ignore[reportGeneralTypeIssues]
+        ParamSpecKwargs as ParamSpecKwargs,  # pyright: ignore[reportGeneralTypeIssues]
+        TypeAlias as TypeAlias,  # pyright: ignore[reportGeneralTypeIssues]
+        TypeGuard as TypeGuard,  # pyright: ignore[reportGeneralTypeIssues]
+        is_typeddict as is_typeddict,  # pyright: ignore[reportGeneralTypeIssues]
     )
 
-    # If the active Python interpreter targets Python >= 3.10...
-    if _IS_PYTHON_AT_LEAST_3_10:
+    # If the active Python interpreter targets Python >= 3.11...
+    if _IS_PYTHON_AT_LEAST_3_11:
         from typing import (  # type: ignore[attr-defined]
-            Concatenate as Concatenate,  # pyright: ignore[reportGeneralTypeIssues]
-            ParamSpec as ParamSpec,  # pyright: ignore[reportGeneralTypeIssues]
-            ParamSpecArgs as ParamSpecArgs,  # pyright: ignore[reportGeneralTypeIssues]
-            ParamSpecKwargs as ParamSpecKwargs,  # pyright: ignore[reportGeneralTypeIssues]
-            TypeAlias as TypeAlias,  # pyright: ignore[reportGeneralTypeIssues]
-            TypeGuard as TypeGuard,  # pyright: ignore[reportGeneralTypeIssues]
-            is_typeddict as is_typeddict,  # pyright: ignore[reportGeneralTypeIssues]
+               LiteralString as LiteralString,  # pyright: ignore[reportGeneralTypeIssues]
+               Never as Never,  # pyright: ignore[reportGeneralTypeIssues]
+               NotRequired as NotRequired,  # pyright: ignore[reportGeneralTypeIssues]
+               Required as Required,  # pyright: ignore[reportGeneralTypeIssues]
+               Self as Self,  # pyright: ignore[reportGeneralTypeIssues]
+               TypeVarTuple as TypeVarTuple,  # pyright: ignore[reportGeneralTypeIssues]
+               Unpack as Unpack,  # pyright: ignore[reportGeneralTypeIssues]
+               assert_never as assert_never,  # pyright: ignore[reportGeneralTypeIssues]
+               assert_type as assert_type,  # pyright: ignore[reportGeneralTypeIssues]
+               clear_overloads as clear_overloads,  # pyright: ignore[reportGeneralTypeIssues]
+               dataclass_transform as dataclass_transform,  # pyright: ignore[reportGeneralTypeIssues]
+               reveal_type as reveal_type,  # pyright: ignore[reportGeneralTypeIssues]
+               get_overloads as get_overloads,  # pyright: ignore[reportGeneralTypeIssues]
+               reveal_type as reveal_type,  # pyright: ignore[reportGeneralTypeIssues]
         )
 
-        # If the active Python interpreter targets Python >= 3.11...
-        if _IS_PYTHON_AT_LEAST_3_11:
-            from typing import (  # type: ignore[attr-defined]
-                   LiteralString as LiteralString,  # pyright: ignore[reportGeneralTypeIssues]
-                   Never as Never,  # pyright: ignore[reportGeneralTypeIssues]
-                   NotRequired as NotRequired,  # pyright: ignore[reportGeneralTypeIssues]
-                   Required as Required,  # pyright: ignore[reportGeneralTypeIssues]
-                   Self as Self,  # pyright: ignore[reportGeneralTypeIssues]
-                   TypeVarTuple as TypeVarTuple,  # pyright: ignore[reportGeneralTypeIssues]
-                   Unpack as Unpack,  # pyright: ignore[reportGeneralTypeIssues]
-                   assert_never as assert_never,  # pyright: ignore[reportGeneralTypeIssues]
-                   assert_type as assert_type,  # pyright: ignore[reportGeneralTypeIssues]
-                   clear_overloads as clear_overloads,  # pyright: ignore[reportGeneralTypeIssues]
-                   dataclass_transform as dataclass_transform,  # pyright: ignore[reportGeneralTypeIssues]
-                   reveal_type as reveal_type,  # pyright: ignore[reportGeneralTypeIssues]
-                   get_overloads as get_overloads,  # pyright: ignore[reportGeneralTypeIssues]
-                   reveal_type as reveal_type,  # pyright: ignore[reportGeneralTypeIssues]
-            )
-
 # ....................{ PEP ~ 544                          }....................
-# If this interpreter is either performing static type-checking (e.g., via mypy)
-# *OR* targets Python < 3.8, defer to the standard library versions of the
-# family of "Supports*" protocols available under Python < 3.8.
-if TYPE_CHECKING or not _IS_PYTHON_AT_LEAST_3_8:
+# If this interpreter is performing static type-checking (e.g., via mypy), defer
+# to the standard library versions of the family of "Supports*" protocols
+# available under Python < 3.8.
+if TYPE_CHECKING:
     from typing import (  # type: ignore[attr-defined]
+        Protocol as Protocol,  # pyright: ignore[reportGeneralTypeIssues]
         SupportsAbs as SupportsAbs,
         SupportsBytes as SupportsBytes,
         SupportsComplex as SupportsComplex,
         SupportsFloat as SupportsFloat,
+        SupportsIndex as SupportsIndex,  # pyright: ignore[reportGeneralTypeIssues]
         SupportsInt as SupportsInt,
         SupportsRound as SupportsRound,
+        runtime_checkable as runtime_checkable,  # pyright: ignore[reportGeneralTypeIssues]
     )
-
-# If this interpreter targets Python >= 3.8 and thus fully supports PEP 544...
-if _IS_PYTHON_AT_LEAST_3_8:
-    # If this interpreter is performing static type-checking, defer to the
-    # standard library versions of all remaining PEP 544 attributes.
-    if TYPE_CHECKING:
-        from typing import (  # type: ignore[attr-defined]
-            Protocol as Protocol,  # pyright: ignore[reportGeneralTypeIssues]
-            SupportsIndex as SupportsIndex,  # pyright: ignore[reportGeneralTypeIssues]
-            runtime_checkable as runtime_checkable,  # pyright: ignore[reportGeneralTypeIssues]
-        )
-    # Else, this interpreter is *NOT* performing static type-checking. In this
-    # case, prefer our optimized PEP 544 attributes.
-    else:
-        from beartype.typing._typingpep544 import (
-            Protocol as Protocol,
-            SupportsAbs as SupportsAbs,
-            SupportsBytes as SupportsBytes,
-            SupportsComplex as SupportsComplex,
-            SupportsFloat as SupportsFloat,
-            SupportsIndex as SupportsIndex,
-            SupportsInt as SupportsInt,
-            SupportsRound as SupportsRound,
-            runtime_checkable as runtime_checkable,
-        )
+# Else, this interpreter is *NOT* performing static type-checking. In this
+# case, prefer our optimized PEP 544 attributes.
+else:
+    from beartype.typing._typingpep544 import (
+        Protocol as Protocol,
+        SupportsAbs as SupportsAbs,
+        SupportsBytes as SupportsBytes,
+        SupportsComplex as SupportsComplex,
+        SupportsFloat as SupportsFloat,
+        SupportsIndex as SupportsIndex,
+        SupportsInt as SupportsInt,
+        SupportsRound as SupportsRound,
+        runtime_checkable as runtime_checkable,
+    )
 
 # ....................{ PEP ~ 585                          }....................
 # If this interpreter is either performing static type-checking (e.g., via mypy)

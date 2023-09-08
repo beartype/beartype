@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype typing API attribute** unit tests.
+Beartype **typing API attribute** unit tests.
 
 This submodule unit tests that the :mod:`beartype.typing` submodule publishes
 the expected public attributes for the active Python interpreter. Specifically,
@@ -50,7 +50,6 @@ def test_api_typing() -> None:
     from beartype import typing as beartype_typing
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_LEAST_3_9,
-        IS_PYTHON_AT_LEAST_3_8,
     )
 
     # ..................{ LOCALS                             }..................
@@ -136,7 +135,18 @@ def test_api_typing() -> None:
     # Set of the basenames of all public attributes declared by the "typing"
     # module whose *VALUES* differ from those declared by the "beartype.typing"
     # submodule.
-    TYPING_ATTR_UNEQUAL_NAMES = set()
+    TYPING_ATTR_UNEQUAL_NAMES = {
+        # Names of all inefficient PEP 544-specific "typing" attributes
+        # overridden by efficient "beartype.typing" variants of the same name.
+        'Protocol',
+        'SupportsAbs',
+        'SupportsBytes',
+        'SupportsComplex',
+        'SupportsFloat',
+        'SupportsIndex',
+        'SupportsInt',
+        'SupportsRound',
+    }
 
     # Sets of all public attributes exposed by "beartype.typing" and "typing".
     BEARTYPE_TYPING_ATTR_NAMES = BEARTYPE_TYPING_ATTR_NAME_TO_VALUE.keys()
@@ -148,66 +158,49 @@ def test_api_typing() -> None:
         BEARTYPE_TYPING_ATTR_NAMES ^ OFFICIAL_TYPING_ATTR_NAMES)
 
     # ..................{ LOCALS ~ version                   }..................
-    # If the active Python interpreter targets Python >= 3.8...
-    if IS_PYTHON_AT_LEAST_3_8:
-        # Since this interpreter supports PEP 544, add all inefficient PEP
-        # 544-specific "typing" attributes overridden by efficient
-        # "beartype.typing" variants of the same name to this set.
+    # If the active Python interpreter targets Python >= 3.9 and thus supports
+    # PEP 585, add all "typing" attributes deprecated by PEP 585 to this set.
+    if IS_PYTHON_AT_LEAST_3_9:
         TYPING_ATTR_UNEQUAL_NAMES.update({
-            'Protocol',
-            'SupportsAbs',
-            'SupportsBytes',
-            'SupportsComplex',
-            'SupportsFloat',
-            'SupportsIndex',
-            'SupportsInt',
-            'SupportsRound',
+            'AbstractSet',
+            'AsyncContextManager',
+            'AsyncGenerator',
+            'AsyncIterable',
+            'AsyncIterator',
+            'Awaitable',
+            'ByteString',
+            'Callable',
+            'ChainMap',
+            'Collection',
+            'Container',
+            'ContextManager',
+            'Coroutine',
+            'Counter',
+            'DefaultDict',
+            'Deque',
+            'Dict',
+            'FrozenSet',
+            'Generator',
+            'ItemsView',
+            'Iterable',
+            'Iterator',
+            'KeysView',
+            'List',
+            'Mapping',
+            'MappingView',
+            'Match',
+            'Pattern',
+            'MutableMapping',
+            'MutableSequence',
+            'MutableSet',
+            'OrderedDict',
+            'Reversible',
+            'Set',
+            'Tuple',
+            'Type',
+            'Sequence',
+            'ValuesView',
         })
-
-        # If the active Python interpreter targets Python >= 3.9 and thus
-        # supports PEP 585, add all "typing" attributes deprecated by PEP 585 to
-        # this set.
-        if IS_PYTHON_AT_LEAST_3_9:
-            TYPING_ATTR_UNEQUAL_NAMES.update({
-                'AbstractSet',
-                'AsyncContextManager',
-                'AsyncGenerator',
-                'AsyncIterable',
-                'AsyncIterator',
-                'Awaitable',
-                'ByteString',
-                'Callable',
-                'ChainMap',
-                'Collection',
-                'Container',
-                'ContextManager',
-                'Coroutine',
-                'Counter',
-                'DefaultDict',
-                'Deque',
-                'Dict',
-                'FrozenSet',
-                'Generator',
-                'ItemsView',
-                'Iterable',
-                'Iterator',
-                'KeysView',
-                'List',
-                'Mapping',
-                'MappingView',
-                'Match',
-                'Pattern',
-                'MutableMapping',
-                'MutableSequence',
-                'MutableSet',
-                'OrderedDict',
-                'Reversible',
-                'Set',
-                'Tuple',
-                'Type',
-                'Sequence',
-                'ValuesView',
-            })
 
     # Set of the basenames of all public attributes declared by the "typing"
     # module whose values are identical to those declared by the

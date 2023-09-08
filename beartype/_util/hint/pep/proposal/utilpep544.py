@@ -23,125 +23,19 @@ from beartype.typing import (
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cls.utilclstest import is_type_builtin_or_fake
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+from typing import Protocol as typing_Protocol  # <-- unoptimized protocol
 
 # ....................{ TESTERS                            }....................
-# If the active Python interpreter targets at least Python >= 3.8 and thus
-# supports PEP 544, define these functions appropriately.
-if IS_PYTHON_AT_LEAST_3_8:
-    # Defer version-dependent imports.
-    from typing import Protocol as typing_Protocol  # <-- unoptimized protocol
-
-    def is_hint_pep544_ignorable_or_none(
-        hint: object, hint_sign: HintSign) -> Optional[bool]:
-
-        # Avoid circular import dependencies.
-        from beartype._util.hint.utilhintget import get_hint_repr
-
-        # Machine-readable representation of this hint.
-        hint_repr = get_hint_repr(hint)
-
-        # If this representation does *NOT* contain a relevant substring
-        # suggesting that this hint might be the "Protocol" superclass directly
-        # parametrized by type variables (e.g., "typing.Protocol[S, T]"),
-        # continue testing this hint for other kinds of ignorability by
-        # returning "None".
-        if 'Protocol[' not in hint_repr:
-            return None
-        # Else, this representation contains such a relevant substring. Sus af!
-
-        # For the fully-qualified name of each typing module...
-        for typing_module_name in TYPING_MODULE_NAMES:
-            # If this hint is the "Protocol" superclass defined by this module
-            # directly parametrized by one or more type variables (e.g.,
-            # "typing.Protocol[S, T]"), ignore this superclass by returning
-            # true. This superclass can *ONLY* be parametrized by type
-            # variables; a string test thus suffices.
-            #
-            # For unknown and uninteresting reasons, *ALL* possible objects
-            # satisfy the "Protocol" superclass. Ergo, this superclass and
-            # *ALL* parametrizations of this superclass are synonymous with the
-            # "object" root superclass.
-            if hint_repr.startswith(f'{typing_module_name}.Protocol['):
-                return True
-            # Else, this hint is *NOT* such a "Protocol" superclass. In this
-            # case, continue to the next typing module.
-
-        # Else, this hint is *NOT* the "Protocol" superclass directly
-        # parametrized by one or more type variables. In this case, continue
-        # testing this hint for other kinds of ignorability by returning "None".
-        return None
-
-
-    def is_hint_pep484_generic_io(hint: object) -> bool:
-
-        # Avoid circular import dependencies.
-        from beartype._util.hint.pep.utilpepget import (
-            get_hint_pep_origin_or_none)
-
-        # Return true only if this hint is either...
-        return (
-            # An unsubscripted PEP 484-compliant IO generic base class
-            # (e.g., "typing.IO") *OR*....
-            (isinstance(hint, type) and hint in _HINTS_PEP484_IO_GENERIC) or
-            # A subscripted PEP 484-compliant IO generic base class
-            # (e.g., "typing.IO[str]") *OR*....
-            get_hint_pep_origin_or_none(hint) in _HINTS_PEP484_IO_GENERIC
-        )
-
-
-    def is_hint_pep544_protocol(hint: object) -> bool:
-
-        # Return true only if this hint is...
-        return (
-            # A type *AND*...
-            isinstance(hint, type) and
-            # A PEP 544-compliant protocol *AND*...
-            issubclass(hint, typing_Protocol) and  # type: ignore[arg-type]
-            # *NOT* a builtin type. For unknown reasons, some but *NOT* all
-            # builtin types erroneously present themselves to be PEP
-            # 544-compliant protocols under Python >= 3.8: e.g.,
-            #     >>> from typing import Protocol
-            #     >>> issubclass(str, Protocol)
-            #     False        # <--- this makes sense
-            #     >>> issubclass(int, Protocol)
-            #     True         # <--- this makes no sense whatsoever
-            #
-            # Since builtin types are obviously *NOT* PEP 544-compliant
-            # protocols, explicitly exclude all such types. Why, Guido? Why?
-            #
-            # Do *NOT* ignore fake builtins for the purposes of this test. Why?
-            # Because even fake builtins (e.g., "type(None)") erroneously
-            # masquerade as PEP 544-compliant protocols! :o
-            not is_type_builtin_or_fake(hint)
-        )
-
-
-# Else, the active Python interpreter targets at most Python < 3.8 and thus
-# fails to support PEP 544. In this case, fallback to declaring this function
-# to unconditionally return False.
-else:
-    def is_hint_pep544_ignorable_or_none(
-        hint: object, hint_sign: HintSign) -> Optional[bool]:
-        return None
-
-
-    def is_hint_pep484_generic_io(hint: object) -> bool:
-        return False
-
-
-    def is_hint_pep544_protocol(hint: object) -> bool:
-        return False
-
-# ....................{ TESTERS ~ doc                      }....................
-is_hint_pep544_ignorable_or_none.__doc__ = '''
-    ``True`` only if the passed object is a :pep:`544`-compliant **ignorable
-    type hint,** ``False`` only if this object is a :pep:`544`-compliant
-    unignorable type hint, and ``None`` if this object is *not*
+def is_hint_pep544_ignorable_or_none(
+    hint: object, hint_sign: HintSign) -> Optional[bool]:
+    '''
+    :data:`True` only if the passed object is a :pep:`544`-compliant **ignorable
+    type hint,** :data:`False` only if this object is a :pep:`544`-compliant
+    unignorable type hint, and :data:`None` if this object is *not*
     :pep:`544`-compliant.
 
-    Specifically, this tester function returns ``True`` only if this object is
-    a deeply ignorable :pep:`544`-compliant type hint, including:
+    Specifically, this tester function returns :data:`True` only if this object
+    is a deeply ignorable :pep:`544`-compliant type hint, including:
 
     * A parametrization of the :class:`typing.Protocol` abstract base class
       (ABC) by one or more type variables. As the name implies, this ABC is
@@ -175,15 +69,53 @@ is_hint_pep544_ignorable_or_none.__doc__ = '''
 
         * If this object is :pep:`544`-compliant:
 
-          * If this object is a ignorable, ``True``.
-          * Else, ``False``.
+          * If this object is a ignorable, :data:`True`.
+          * Else, :data:`False`.
 
-        * If this object is *not* :pep:`544`-compliant, ``None``.
+        * If this object is *not* :pep:`544`-compliant, :data:`None`.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._util.hint.utilhintget import get_hint_repr
 
-is_hint_pep484_generic_io.__doc__ = '''
-    ``True`` only if the passed object is a functionally useless
+    # Machine-readable representation of this hint.
+    hint_repr = get_hint_repr(hint)
+
+    # If this representation does *NOT* contain a relevant substring
+    # suggesting that this hint might be the "Protocol" superclass directly
+    # parametrized by type variables (e.g., "typing.Protocol[S, T]"),
+    # continue testing this hint for other kinds of ignorability by
+    # returning "None".
+    if 'Protocol[' not in hint_repr:
+        return None
+    # Else, this representation contains such a relevant substring. Sus af!
+
+    # For the fully-qualified name of each typing module...
+    for typing_module_name in TYPING_MODULE_NAMES:
+        # If this hint is the "Protocol" superclass defined by this module
+        # directly parametrized by one or more type variables (e.g.,
+        # "typing.Protocol[S, T]"), ignore this superclass by returning
+        # true. This superclass can *ONLY* be parametrized by type
+        # variables; a string test thus suffices.
+        #
+        # For unknown and uninteresting reasons, *ALL* possible objects
+        # satisfy the "Protocol" superclass. Ergo, this superclass and
+        # *ALL* parametrizations of this superclass are synonymous with the
+        # "object" root superclass.
+        if hint_repr.startswith(f'{typing_module_name}.Protocol['):
+            return True
+        # Else, this hint is *NOT* such a "Protocol" superclass. In this
+        # case, continue to the next typing module.
+
+    # Else, this hint is *NOT* the "Protocol" superclass directly
+    # parametrized by one or more type variables. In this case, continue
+    # testing this hint for other kinds of ignorability by returning "None".
+    return None
+
+
+def is_hint_pep484_generic_io(hint: object) -> bool:
+    '''
+    :data:`True` only if the passed object is a functionally useless
     :pep:`484`-compliant :mod:`typing` **IO generic superclass** (i.e., either
     :class:`typing.IO` itself *or* a subclass of :class:`typing.IO` defined by
     the :mod:`typing` module effectively unusable at runtime due to botched
@@ -204,8 +136,8 @@ is_hint_pep484_generic_io.__doc__ = '''
     Returns
     ----------
     bool
-        ``True`` only if this object is a :pep:`484`-compliant IO generic base
-        class.
+        :data:`True` only if this object is a :pep:`484`-compliant IO generic
+        base class.
 
     See Also
     ----------
@@ -213,10 +145,25 @@ is_hint_pep484_generic_io.__doc__ = '''
         Further commentary.
     '''
 
+    # Avoid circular import dependencies.
+    from beartype._util.hint.pep.utilpepget import (
+        get_hint_pep_origin_or_none)
 
-is_hint_pep544_protocol.__doc__ = '''
-    ``True`` only if the passed object is a :pep:`544`-compliant **protocol**
-    (i.e., subclass of the :class:`typing.Protocol` superclass).
+    # Return true only if this hint is either...
+    return (
+        # An unsubscripted PEP 484-compliant IO generic base class
+        # (e.g., "typing.IO") *OR*....
+        (isinstance(hint, type) and hint in _HINTS_PEP484_IO_GENERIC) or
+        # A subscripted PEP 484-compliant IO generic base class
+        # (e.g., "typing.IO[str]") *OR*....
+        get_hint_pep_origin_or_none(hint) in _HINTS_PEP484_IO_GENERIC
+    )
+
+
+def is_hint_pep544_protocol(hint: object) -> bool:
+    '''
+    :data:`True` only if the passed object is a :pep:`544`-compliant
+    **protocol** (i.e., subclass of the :class:`typing.Protocol` superclass).
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -230,15 +177,39 @@ is_hint_pep544_protocol.__doc__ = '''
     Returns
     ----------
     bool
-        ``True`` only if this object is a :pep:`544`-compliant protocol.
+        :data:`True` only if this object is a :pep:`544`-compliant protocol.
     '''
+
+    # Return true only if this hint is...
+    return (
+        # A type *AND*...
+        isinstance(hint, type) and
+        # A PEP 544-compliant protocol *AND*...
+        issubclass(hint, typing_Protocol) and  # type: ignore[arg-type]
+        # *NOT* a builtin type. For unknown reasons, some but *NOT* all
+        # builtin types erroneously present themselves to be PEP
+        # 544-compliant protocols under Python >= 3.8: e.g.,
+        #     >>> from typing import Protocol
+        #     >>> issubclass(str, Protocol)
+        #     False        # <--- this makes sense
+        #     >>> issubclass(int, Protocol)
+        #     True         # <--- this makes no sense whatsoever
+        #
+        # Since builtin types are obviously *NOT* PEP 544-compliant
+        # protocols, explicitly exclude all such types. Why, Guido? Why?
+        #
+        # Do *NOT* ignore fake builtins for the purposes of this test. Why?
+        # Because even fake builtins (e.g., "type(None)") erroneously
+        # masquerade as PEP 544-compliant protocols! :o
+        not is_type_builtin_or_fake(hint)
+    )
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_generic_io_to_pep544_protocol(
     hint: Any, exception_prefix: str) -> Any:
     '''
     :pep:`544`-compliant :mod:`beartype` **IO protocol** (i.e., either
-    :class:`_Pep544IO` itself *or* a subclass of that class defined by this
+    :class:`._Pep544IO` itself *or* a subclass of that class defined by this
     submodule intentionally designed to be usable at runtime) corresponding to
     the passed :pep:`484`-compliant :mod:`typing` **IO generic base class**
     (i.e., either :class:`typing.IO` itself *or* a subclass of
@@ -296,7 +267,7 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
     # generic if any *OR* "None" otherwise.
     pep544_protocol = _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL.get(hint)
 
-    # If *NO* such protocol implements this generic...
+    # If *NO* PEP 544-compliant IO protocol implements this generic...
     if pep544_protocol is None:
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.utilpepget import (
@@ -331,6 +302,7 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
         pep544_protocol = \
             _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL[hint] = \
             _HINT_PEP484_IO_GENERIC_TO_PEP544_PROTOCOL[hint_unparametrized]
+    # Else, some PEP 544-compliant IO protocol implements this generic.
 
     # Return this protocol.
     return pep544_protocol
@@ -426,14 +398,6 @@ def _init() -> None:
     '''
     Initialize this submodule.
     '''
-
-    # ..................{ VERSIONS                           }..................
-    # If the active Python interpreter only targets Python < 3.8 and thus fails
-    # to support PEP 544, silently reduce to a noop.
-    if not IS_PYTHON_AT_LEAST_3_8:
-        return
-    # Else, the active Python interpreter targets Python >= 3.8 and thus
-    # supports PEP 593.
 
     # ..................{ IMPORTS                            }..................
     # Defer Python version-specific imports.

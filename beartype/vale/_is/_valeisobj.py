@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype declarative object validation classes** (i.e.,
+Beartype **declarative object validation classes** (i.e.,
 :mod:`beartype`-specific classes enabling callers to define PEP-compliant
 validators from arbitrary caller-defined objects tested via explicitly
 supported object introspectors efficiently generating stack-free code).
@@ -30,7 +30,6 @@ from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.kind.utilkinddict import update_mapping
 from beartype._util.func.utilfuncscope import add_func_scope_attr
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.text.utiltextrepr import represent_object
 from beartype._util.utilobject import SENTINEL
 
@@ -338,20 +337,12 @@ class _IsAttrFactory(_BeartypeValidatorFactoryABC):
                 attr_validator._is_valid_code.format(
                     # Replace the placeholder substring "{obj}" in this code
                     # with the expression expanding to this attribute's value,
-                    # defined as either...
-                    obj=(
-                        # If the active Python interpreter targets Python >=
-                        # 3.8 and thus supports assignment expressions, the
-                        # name of the local variable previously assigned the
-                        # value of this attribute by the
-                        # "VALE_CODE_CHECK_ISATTR_VALUE_EXPR" code snippet
-                        # subsequently embedded in the
-                        # "VALE_CODE_CHECK_ISATTR_VALUE_TEST" code snippet;
-                        local_name_attr_value
-                        if IS_PYTHON_AT_LEAST_3_8 else
-                        # Else, the value of this attribute directly accessed.
-                        attr_value_expr
-                    ),
+                    # defined as the name of the local variable previously
+                    # assigned the value of this attribute by the
+                    # "VALE_CODE_CHECK_ISATTR_VALUE_EXPR" code snippet
+                    # subsequently embedded in the
+                    # "VALE_CODE_CHECK_ISATTR_VALUE_TEST" code snippet.
+                    obj=local_name_attr_value,
                     # Replace the placeholder substring "{indent}" in this code
                     # with an indentation increased by one level.
                     indent=VALE_CODE_INDENT_1,

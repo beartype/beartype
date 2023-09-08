@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype type-checking code factories** (i.e., low-level callables dynamically
+Beartype **type-checking code factories** (i.e., low-level callables dynamically
 generating pure-Python code snippets type-checking arbitrary objects against
 PEP-compliant type hints).
 
@@ -138,7 +138,6 @@ from beartype._util.hint.pep.utilpeptest import (
 from beartype._check.convert.convsanify import sanify_hint_any
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.utilkinddict import update_mapping
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 from beartype._util.text.utiltextmagic import (
     CODE_INDENT_1,
     CODE_INDENT_2,
@@ -380,7 +379,7 @@ def make_check_expr(
     # visited hint (e.g., "(int, str)" if "hint_curr == Union[int, str]").
     hint_childs: tuple = None  # type: ignore[assignment]
 
-    # Current list of all output PEP-compliant child hints to replace the 
+    # Current list of all output PEP-compliant child hints to replace the
     # Current tuple of all input PEP-compliant child hints subscripting the
     # currently visited hint with.
     hint_childs_new: list = None  # type: ignore[assignment]
@@ -985,109 +984,99 @@ def make_check_expr(
                 #* In the "beartype._decor.decormain" submodule:
                 #  * Do... something? Oh, boy. Why didn't we finish this comment?
 
-                # If the active Python interpreter targets Python >= 3.8 and
-                # thus supports assignment expressions...
-                if IS_PYTHON_AT_LEAST_3_8:
-                    # If...
-                    if (
-                        # The current pith is not the root pith *AND*...
-                        #
-                        # Note that we explicitly test against piths rather
-                        # than seemingly equivalent metadata to account for
-                        # edge cases. Notably, child hints of unions (and
-                        # possibly other "typing" objects) do *NOT* narrow the
-                        # current pith and are *NOT* the root hint. Ergo, a
-                        # seemingly equivalent test like "hints_meta_index_curr
-                        # != 0" would generate false positives and thus
-                        # unnecessarily inefficient code.
-                        pith_curr_expr is not VAR_NAME_PITH_ROOT and
+                # If...
+                if (
+                    # The current pith is not the root pith *AND*...
+                    #
+                    # Note that we explicitly test against piths rather than
+                    # seemingly equivalent metadata to account for edge cases.
+                    # Notably, child hints of unions (and possibly other
+                    # "typing" objects) do *NOT* narrow the current pith and are
+                    # *NOT* the root hint. Ergo, a seemingly equivalent test
+                    # like "hints_meta_index_curr != 0" would generate false
+                    # positives and thus unnecessarily inefficient code.
+                    pith_curr_expr is not VAR_NAME_PITH_ROOT and
 
-                        #FIXME: Overly ambiguous, unfortunately. This suffices
-                        #for now but absolutely *WILL* fail with inscrutable
-                        #errors under some future release. The issue is that
-                        #this trivial test reports false negatives for
-                        #sufficiently complex "pith_curr_expr" strings.
-                        #
-                        #For example, if "pith_curr_expr ==
-                        #'(yam := yum[0])[1]'", the detection below would
-                        #incorrectly detect that as being an assignment
-                        #expression. It isn't. It *CONTAINS* an embedded
-                        #assignment expression, but it itself is *NOT* an
-                        #assignment expression. Ergo, that "pith_curr_expr"
-                        #should be assigned via an assignment expression here.
-                        #
-                        #To handle embedded assignment expressions like that,
-                        #we'll probably need to generalize this yet again:
-                        #* Define a new "HINT_META_INDEX_IS_PITH_EXPR_ASSIGN"
-                        #  global.
-                        #* Define a new "is_pith_curr_expr_assign" local,
-                        #  "True" only if "pith_curr_expr" itself is an
-                        #  assignment expression, defaulting to "False":
-                        #      is_pith_curr_expr_assign = False
-                        #* Assign above:
-                        #      is_pith_curr_expr_assign = hint_curr_meta[
-                        #          HINT_META_INDEX_IS_PITH_EXPR_ASSIGN]
-                        #* Assign below in the body of this "if" conditional:
-                        #      is_pith_curr_expr_assign = True
-                        #* Assign below in the body of this "else" branch:
-                        #      is_pith_curr_expr_assign = False
-                        #* Pass "is_pith_curr_expr_assign" in the
-                        #  _enqueue_hint_child() closure above.
-                        #* Replace this "':=' not in pith_curr_expr" test here
-                        #  with "not is_pith_curr_expr_assign" instead.
-                        #
-                        #Voila! What could be simpler? O_o
+                    #FIXME: Overly ambiguous, unfortunately. This suffices
+                    #for now but absolutely *WILL* fail with inscrutable
+                    #errors under some future release. The issue is that
+                    #this trivial test reports false negatives for
+                    #sufficiently complex "pith_curr_expr" strings.
+                    #
+                    #For example, if "pith_curr_expr ==
+                    #'(yam := yum[0])[1]'", the detection below would
+                    #incorrectly detect that as being an assignment
+                    #expression. It isn't. It *CONTAINS* an embedded
+                    #assignment expression, but it itself is *NOT* an
+                    #assignment expression. Ergo, that "pith_curr_expr"
+                    #should be assigned via an assignment expression here.
+                    #
+                    #To handle embedded assignment expressions like that,
+                    #we'll probably need to generalize this yet again:
+                    #* Define a new "HINT_META_INDEX_IS_PITH_EXPR_ASSIGN"
+                    #  global.
+                    #* Define a new "is_pith_curr_expr_assign" local,
+                    #  "True" only if "pith_curr_expr" itself is an
+                    #  assignment expression, defaulting to "False":
+                    #      is_pith_curr_expr_assign = False
+                    #* Assign above:
+                    #      is_pith_curr_expr_assign = hint_curr_meta[
+                    #          HINT_META_INDEX_IS_PITH_EXPR_ASSIGN]
+                    #* Assign below in the body of this "if" conditional:
+                    #      is_pith_curr_expr_assign = True
+                    #* Assign below in the body of this "else" branch:
+                    #      is_pith_curr_expr_assign = False
+                    #* Pass "is_pith_curr_expr_assign" in the
+                    #  _enqueue_hint_child() closure above.
+                    #* Replace this "':=' not in pith_curr_expr" test here
+                    #  with "not is_pith_curr_expr_assign" instead.
+                    #
+                    #Voila! What could be simpler? O_o
 
-                        # The current pith expression does *NOT* already
-                        # perform an assignment expression...
-                        #
-                        # If the current pith expression already performs an
-                        # assignment expression, there's no benefit to
-                        # assigning that to another local variable via another
-                        # assignment expression, which would just be an alias
-                        # of the existing local variable assigned via the
-                        # existing assignment expression. Moreover, whereas
-                        # chained assignments are syntactically valid, chained
-                        # assignment expressions are syntactically invalid
-                        # unless protected with parens:
-                        #     >>> a = b =    'Mother*Teacher*Destroyer'  # <-- fine
-                        #     >>> (a :=      "Mother's Abomination")     # <-- fine
-                        #     >>> (a := (b := "Mother's Illumination"))  # <-- fine
-                        #     >>> (a := b := "Mother's Illumination")    # <-- not fine
-                        #     SyntaxError: invalid syntax
-                        ':=' not in pith_curr_expr
-                    ):
-                    # Then all conditions needed to assign the current pith to a
-                    # unique local variable via a Python >= 3.8-specific
-                    # assignment expression are satisfied. In this case...
-                        # Increment the integer suffixing the name of this
-                        # variable *BEFORE* defining this local variable.
-                        pith_curr_assign_expr_name_counter += 1
+                    # The current pith expression does *NOT* already perform an
+                    # assignment expression...
+                    #
+                    # If the current pith expression already performs an
+                    # assignment expression, there's no benefit to assigning
+                    # that to another local variable via another assignment
+                    # expression, which would just be an alias of the existing
+                    # local variable assigned via the existing assignment
+                    # expression. Moreover, whereas chained assignments are
+                    # syntactically valid, chained assignment expressions are
+                    # syntactically invalid unless protected with parens:
+                    #     >>> a = b =    'Mother*Teacher*Destroyer'  # <-- fine
+                    #     >>> (a :=      "Mother's Abomination")     # <-- fine
+                    #     >>> (a := (b := "Mother's Illumination"))  # <-- fine
+                    #     >>> (a := b := "Mother's Illumination")    # <-- not fine
+                    #     SyntaxError: invalid syntax
+                    ':=' not in pith_curr_expr
+                ):
+                # Then all conditions needed to assign the current pith to a
+                # unique local variable via an assignment expression are
+                # satisfied. In this case...
+                    # Increment the integer suffixing the name of this variable
+                    # *BEFORE* defining this local variable.
+                    pith_curr_assign_expr_name_counter += 1
 
-                        # Reduce the current pith expression to the name of
-                        # this local variable.
-                        pith_curr_var_name = (
-                            f'{VAR_NAME_PREFIX_PITH}'
-                            f'{pith_curr_assign_expr_name_counter}'
-                        )
+                    # Reduce the current pith expression to the name of this
+                    # local variable.
+                    pith_curr_var_name = (
+                        f'{VAR_NAME_PREFIX_PITH}'
+                        f'{pith_curr_assign_expr_name_counter}'
+                    )
 
-                        # Python >= 3.8-specific assignment expression
-                        # assigning this full expression to this variable.
-                        pith_curr_assign_expr = (
-                            PEP_CODE_PITH_ASSIGN_EXPR_format(
-                                pith_curr_var_name=pith_curr_var_name,
-                                pith_curr_expr=pith_curr_expr,
-                            ))
-                    # Else, one or more of the above conditions have *NOT* been
-                    # satisfied. In this case, preserve the Python code snippet
-                    # evaluating to the current pith as is.
-                    else:
-                        pith_curr_assign_expr = pith_curr_expr
-                # Else, the active Python interpreter targets Python < 3.8 and
-                # thus does *NOT* support assignment expressions. In this case,
-                # assign the variables assigned above to sane expressions.
+                    # Assignment expression assigning this full expression to
+                    # this variable.
+                    pith_curr_assign_expr = (
+                        PEP_CODE_PITH_ASSIGN_EXPR_format(
+                            pith_curr_var_name=pith_curr_var_name,
+                            pith_curr_expr=pith_curr_expr,
+                        ))
+                # Else, one or more of the above conditions have *NOT* been
+                # satisfied. In this case, preserve the Python code snippet
+                # evaluating to the current pith as is.
                 else:
-                    pith_curr_assign_expr = pith_curr_var_name = pith_curr_expr
+                    pith_curr_assign_expr = pith_curr_expr
 
                 # Tuple of all arguments subscripting this hint if any *OR* the
                 # empty tuple otherwise (e.g., if this hint is its own

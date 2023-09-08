@@ -24,28 +24,30 @@ def test_is_type_pep557() -> None:
     :func:`beartype._util.cls.pep.utilpep557.is_type_pep557` tester.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilTypeException
     from beartype._util.cls.pep.utilpep557 import is_type_pep557
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+    from dataclasses import dataclass
     from pytest import raises
 
-    # Assert this tester raises the expected exception when passed a non-type.
-    with raises(_BeartypeUtilTypeException):
-        is_type_pep557('The wilderness has a mysterious tongue')
+    # ....................{ CLASSES                        }....................
+    @dataclass
+    class WhichTeachesAwfulDoubtOrFaithSoMild(object):
+        '''
+        Arbitrary dataclass.
+        '''
+
+        pass
+
+    # ....................{ PASS                           }....................
+    # Assert this tester returns true when passed a dataclass type.
+    assert is_type_pep557(WhichTeachesAwfulDoubtOrFaithSoMild) is True
 
     # Assert this tester returns false when passed a non-dataclass type.
     assert is_type_pep557(str) is False
 
-    # If the active Python interpreter targets Python >= 3.8 and thus supports
-    # PEP 557-compliant dataclasses...
-    if IS_PYTHON_AT_LEAST_3_8:
-        # Defer version-specific imports.
-        from dataclasses import dataclass
-
-        # Arbitrary dataclass.
-        @dataclass
-        class WhichTeachesAwfulDoubtOrFaithSoMild(object): pass
-
-        # Assert this tester returns true when passed a dataclass type.
-        assert is_type_pep557(WhichTeachesAwfulDoubtOrFaithSoMild) is True
+    # ....................{ FAIL                           }....................
+    # Assert this tester raises the expected exception when passed a non-type.
+    with raises(_BeartypeUtilTypeException):
+        is_type_pep557('The wilderness has a mysterious tongue')

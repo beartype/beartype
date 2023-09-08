@@ -69,7 +69,6 @@ def is_package_typing_extensions() -> bool:
     from beartype.meta import (
         _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS)
     from beartype._util.module.utilmodtest import is_module_version_at_least
-    # from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
     # Return true only if this version of this package is importable.
     return is_module_version_at_least(
@@ -88,20 +87,10 @@ def is_package_numpy() -> bool:
     # Defer test-specific imports.
     from beartype.meta import _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY
     from beartype._util.module.utilmodtest import is_module_version_at_least
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
-    # Return true only if...
-    return (
-        # The active Python interpreter targets Python >= 3.8 *AND*...
-        #
-        # Note that the last released version of NumPy targeting Python 3.7
-        # appears to *NOT* provide the critical "numpy.typing" subpackage and
-        # thus be critically insufficient for @beartype purposes.
-        IS_PYTHON_AT_LEAST_3_8 and
-        # This version of this package is importable.
-        is_module_version_at_least(
-            'numpy', _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY)
-    )
+    # Return true only if this version of this package is importable.
+    return is_module_version_at_least(
+        'numpy', _LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_NUMPY)
 
 
 @callable_cached

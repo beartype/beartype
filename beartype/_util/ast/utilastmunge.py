@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **abstract syntax tree (AST) mungers** (i.e., low-level callables
+Project-wide **abstract syntax tree (AST) mungers** (i.e., low-level callables
 modifying various properties of various nodes in the currently visited AST).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -16,7 +16,6 @@ from beartype.typing import (
     Iterable,
     Union,
 )
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
 
 # ....................{ COPIERS                            }....................
 #FIXME: Unit test us up, please.
@@ -107,9 +106,5 @@ def copy_node_metadata(
         # Copy all source code metadata from this source to target node.
         node_trg_cur.lineno     = node_src.lineno
         node_trg_cur.col_offset = node_src.col_offset
-
-        # If the active Python interpreter targets Python >= 3.8, then also copy
-        # all source code metadata exposed by Python >= 3.8.
-        if IS_PYTHON_AT_LEAST_3_8:
-            node_trg_cur.end_lineno     = node_src.end_lineno  # type: ignore[attr-defined]
-            node_trg_cur.end_col_offset = node_src.end_col_offset  # type: ignore[attr-defined]
+        node_trg_cur.end_lineno     = node_src.end_lineno  # type: ignore[attr-defined]
+        node_trg_cur.end_col_offset = node_src.end_col_offset  # type: ignore[attr-defined]

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`591` **unit tests.**
+Beartype :pep:`591` unit tests.
 
 This submodule unit tests :pep:`591` support implemented in the
 :func:`beartype.beartype` decorator.
@@ -15,10 +15,8 @@ This submodule unit tests :pep:`591` support implemented in the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS                              }....................
-@skip_if_python_version_less_than('3.8.0')
 def test_decor_pep591() -> None:
     '''
     Test :pep:`557` support implemented in the :func:`beartype.beartype`
