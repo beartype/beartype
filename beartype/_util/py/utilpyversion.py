@@ -96,18 +96,6 @@ IS_PYTHON_AT_MOST_3_8 = not IS_PYTHON_AT_LEAST_3_9
 '''
 
 
-#FIXME: After dropping Python 3.7 support:
-#* Refactor all code conditionally testing this global to be unconditional.
-#* Remove this global.
-#* Remove all decorators resembling:
-#  @skip_if_python_version_less_than('3.8.0')
-IS_PYTHON_AT_LEAST_3_8 = IS_PYTHON_AT_LEAST_3_9 or version_info >= (3, 8)
-'''
-:data:`True` only if the active Python interpreter targets at least Python
-3.8.0.
-'''
-
-
 #FIXME: After dropping Python 3.8 support:
 #* Refactor all code conditionally testing this global to be unconditional.
 #* Remove this global.

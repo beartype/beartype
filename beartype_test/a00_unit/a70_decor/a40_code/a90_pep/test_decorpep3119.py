@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`3119` **unit tests.**
+Beartype :pep:`3119` **unit tests.
 
 This submodule unit tests :pep:`3119` support implemented in the
 :func:`beartype.beartype` decorator.
@@ -31,9 +31,15 @@ def test_decor_pep3119() -> None:
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorHintPep3119Exception
-    from beartype.typing import Tuple, Type
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_8
+    from beartype.typing import (
+        Tuple,
+        Type,
+    )
     from pytest import raises
+
+    # Intentionally import from the "typing" module to allow the definition of
+    # an uncheckable protocol below.
+    from typing import Protocol
 
     # ....................{ CLASSES                        }....................
     class Pep3119Metaclass(type):
@@ -56,6 +62,18 @@ def test_decor_pep3119() -> None:
         Arbitrary class whose metaclass is a :pep:`3119`-compliant metaclass
         guaranteed to be only partially initialized.
         '''
+
+
+    class NonisinstanceableProtocol(Protocol):
+        '''
+        Arbitrary **non-isinstanceable protocol** (i.e., protocol *not*
+        decorated by the :func:`typing.runtime_checkable` decorator and
+        hence *not* checkable at runtime, as doing so raises a
+        :exc:`TypeError` from the ``__instancecheck__`` dunder method of the
+        metaclass of this protocol).
+        '''
+
+        pass
 
     # ....................{ FUNCTIONS                      }....................
     # Implicitly assert that decorating a function annotated by a partially
@@ -97,38 +115,19 @@ def test_decor_pep3119() -> None:
         thine_azure_sister_of_the_Spring_shall_blow, Pep3119Class)
 
     # ....................{ FAIL                           }....................
-    # If the active Python interpreter targets Python >= 3.8 and thus supports
-    # the PEP 544-compliant "typing.Protocol" superclass...
-    if IS_PYTHON_AT_LEAST_3_8:
-        # Intentionally import from the "typing" module to allow the definition
-        # of an uncheckable protocol below.
-        from typing import Protocol
-
-        class NonisinstanceableProtocol(Protocol):
-            '''
-            Arbitrary **non-isinstanceable protocol** (i.e., protocol *not*
-            decorated by the :func:`typing.runtime_checkable` decorator and
-            hence *not* checkable at runtime, as doing so raises a
-            :exc:`TypeError` from the ``__instancecheck__`` dunder method of the
-            metaclass of this protocol).
-            '''
-
+    # Assert that decorating a function annotated as accepting a parameter whose
+    # value is an instance of a non-isinstanceable class raises the expected
+    # exception.
+    with raises(BeartypeDecorHintPep3119Exception):
+        @beartype
+        def her_clarion_over_the_dreaming_earth(
+            and_lie: NonisinstanceableProtocol) -> None:
             pass
 
-        # Assert that decorating a function annotated as accepting a parameter
-        # whose value is an instance of a non-isinstanceable class raises the
-        # expected exception.
-        with raises(BeartypeDecorHintPep3119Exception):
-            @beartype
-            def her_clarion_over_the_dreaming_earth(
-                and_lie: NonisinstanceableProtocol) -> None:
-                pass
-
-        # Assert that decorating a function annotated as accepting a parameter
-        # whose value is a non-issubclassable class raises the expected
-        # exception.
-        with raises(BeartypeDecorHintPep3119Exception):
-            @beartype
-            def with_living_hues_and_odours_plain(
-                and_hill: Type[NonisinstanceableProtocol]) -> None:
-                pass
+    # Assert that decorating a function annotated as accepting a parameter whose
+    # value is a non-issubclassable class raises the expected exception.
+    with raises(BeartypeDecorHintPep3119Exception):
+        @beartype
+        def with_living_hues_and_odours_plain(
+            and_hill: Type[NonisinstanceableProtocol]) -> None:
+            pass
