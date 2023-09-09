@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator type hint-agnostic unit tests.**
+**Beartype decorator type hint-agnostic** unit tests.
 
 This submodule unit tests high-level functionality of the
 :func:`beartype.beartype` decorator independent of lower-level type hinting
@@ -16,9 +16,81 @@ concerns (e.g., PEP-compliance, PEP-noncompliance).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype_test._util.mark.pytskip import (
+    skip_if_python_version_greater_than_or_equal_to,
+    skip_if_python_version_less_than,
+)
 
-# ....................{ TESTS ~ wrappee                    }....................
-def test_decor_wrappee_decorator_builtin() -> None:
+# ....................{ TESTS                              }....................
+def test_wrappee_callable_pseudo() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator on **pseudo-callables** (i.e.,
+    objects defining the pure-Python ``__call__()`` dunder method).
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from pytest import raises
+
+    # ....................{ CLASSES                        }....................
+    class WildWestWind(object):
+        '''
+        Arbitrary **pseudo-callable** (i.e., object defining the pure-Python
+        ``__call__()`` dunder method).
+        '''
+
+        def __call__(self, leaves_dead: str) -> str:
+            '''Arbitrary docstring.'''
+
+            return f'{leaves_dead}: O thou,'
+
+    # ....................{ LOCALS                         }....................
+    # Arbitrary pseudo-callables instance of this class.
+    autumns_being   = WildWestWind()
+    unseen_presence = WildWestWind()
+
+    # ....................{ PASS                           }....................
+    # Pseudo-callable wrapped with runtime type-checking.
+    autumns_being_typed = beartype(autumns_being)
+
+    # Assert that both the original and new pseudo-callables accept and return
+    # strings.
+    assert autumns_being(
+        "O wild West Wind, thou breath of Autumn's being,") == (
+        "O wild West Wind, thou breath of Autumn's being,: O thou,")
+    assert autumns_being_typed(
+        'Thou, from whose unseen presence the leaves dead') == (
+        'Thou, from whose unseen presence the leaves dead: O thou,')
+    assert unseen_presence(
+        'Pestilence-stricken multitudes: O thou,') == (
+        'Pestilence-stricken multitudes: O thou,: O thou,')
+
+    # ....................{ FAIL                           }....................
+    # Assert that both the original and new pseudo-callables raise the expected
+    # exception when passed invalid parameters.
+    #
+    # Note that the original pseudo-callable has been augmented with runtime
+    # type-checking despite *NOT* being passed to @beartype. Is this expected?
+    # Yes. Is this desirable? Maybe not. Either way, there's nothing @beartype
+    # can particularly do about it. Why? Because Python ignores the __call__()
+    # dunder method defined on objects; Python only respects the __call__()
+    # dunder method defined on the types of objects. Because of this, @beartype
+    # has *NO* recourse but to globally monkey-patch the type of the passed
+    # pseudo-callable (rather than that pseudo-callable itself).
+    with raises(BeartypeCallHintParamViolation):
+        autumns_being(
+            b'Are driven, like ghosts from an enchanter fleeing,')
+    with raises(BeartypeCallHintParamViolation):
+        autumns_being_typed(
+            b'Yellow, and black, and pale, and hectic red,')
+    with raises(BeartypeCallHintParamViolation):
+        unseen_presence(
+            b'Who chariotest to their dark wintry bed')
+
+# ....................{ TESTS ~ descriptor                 }....................
+def test_wrappee_descriptor_builtin() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on **C-based unbound builtin
     method descriptors** (i.e., methods decorated by builtin method decorators).
@@ -224,95 +296,57 @@ def test_decor_wrappee_decorator_builtin() -> None:
     assert exception_message == 'And their place is not known.'
 
 
-def test_decor_wrappee_callable_pseudo() -> None:
+# If the active Python interpreter targets either Python 3.9.x *OR* 3.10.x, then
+# chaining the @classmethod decorator into the @property decorator is permitted;
+# else, doing so is prohibited. To avoid non-deterministic behaviour under both
+# older and newer Python versions, avoid those versions.
+@skip_if_python_version_less_than('3.10.0')
+@skip_if_python_version_greater_than_or_equal_to('3.11.0')
+def test_wrappee_descriptor_builtin_chain() -> None:
     '''
-    Test the :func:`beartype.beartype` decorator on **pseudo-callables** (i.e.,
-    objects defining the pure-Python ``__call__()`` dunder method).
+    Test the :func:`beartype.beartype` decorator on chaining multiple **C-based
+    unbound builtin method descriptors** (i.e., methods decorated by builtin
+    method decorators) together -- notably, the builtin :class:`.classmethod`
+    decorator into the builtin :class:`.property` decorator.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
-    from beartype.roar import BeartypeCallHintParamViolation
-    from pytest import raises
 
     # ....................{ CLASSES                        }....................
-    class WildWestWind(object):
+    class ThanGemsOrGold(object):
         '''
-        Arbitrary **pseudo-callable** (i.e., object defining the pure-Python
-        ``__call__()`` dunder method).
+        Arbitrary class defining an arbitrary class property.
         '''
 
-        def __call__(self, leaves_dead: str) -> str:
-            '''Arbitrary docstring.'''
+        @beartype
+        @classmethod
+        @property
+        def the_varying_roof_of_heaven(cls) -> str:
+            '''
+            Arbitrary **class property** (i.e., method decorated by chaining the
+            builtin :class:`.classmethod` decorator into the builtin
+            :class:`.property` decorator).
+            '''
 
-            return f'{leaves_dead}: O thou,'
+            return 'And the green earth lost in his heart its claims'
 
     # ....................{ LOCALS                         }....................
-    # Arbitrary pseudo-callables instance of this class.
-    autumns_being   = WildWestWind()
-    unseen_presence = WildWestWind()
+    # Instance of this class.
+    to_love_and_wonder = ThanGemsOrGold()
 
     # ....................{ PASS                           }....................
-    # Pseudo-callable wrapped with runtime type-checking.
-    autumns_being_typed = beartype(autumns_being)
-
-    # Assert that both the original and new pseudo-callables accept and return
-    # strings.
-    assert autumns_being(
-        "O wild West Wind, thou breath of Autumn's being,") == (
-        "O wild West Wind, thou breath of Autumn's being,: O thou,")
-    assert autumns_being_typed(
-        'Thou, from whose unseen presence the leaves dead') == (
-        'Thou, from whose unseen presence the leaves dead: O thou,')
-    assert unseen_presence(
-        'Pestilence-stricken multitudes: O thou,') == (
-        'Pestilence-stricken multitudes: O thou,: O thou,')
-
-    # ....................{ FAIL                           }....................
-    # Assert that both the original and new pseudo-callables raise the expected
-    # exception when passed invalid parameters.
-    #
-    # Note that the original pseudo-callable has been augmented with runtime
-    # type-checking despite *NOT* being passed to @beartype. Is this expected?
-    # Yes. Is this desirable? Maybe not. Either way, there's nothing @beartype
-    # can particularly do about it. Why? Because Python ignores the __call__()
-    # dunder method defined on objects; Python only respects the __call__()
-    # dunder method defined on the types of objects. Because of this, @beartype
-    # has *NO* recourse but to globally monkey-patch the type of the passed
-    # pseudo-callable (rather than that pseudo-callable itself).
-    with raises(BeartypeCallHintParamViolation):
-        autumns_being(
-            b'Are driven, like ghosts from an enchanter fleeing,')
-    with raises(BeartypeCallHintParamViolation):
-        autumns_being_typed(
-            b'Yellow, and black, and pale, and hectic red,')
-    with raises(BeartypeCallHintParamViolation):
-        unseen_presence(
-            b'Who chariotest to their dark wintry bed')
-
-# ....................{ TESTS ~ fail : arg                 }....................
-def test_decor_arg_name_fail() -> None:
-    '''
-    Test unsuccessful usage of the :func:`beartype.beartype` decorator for
-    callables accepting one or more **decorator-reserved parameters** (i.e.,
-    parameters whose names are reserved for internal use by this decorator).
-    '''
-
-    # Defer test-specific imports.
-    from beartype import beartype
-    from beartype.roar import BeartypeDecorParamNameException
-    from pytest import raises
-
-    # Assert that decorating a callable accepting a reserved parameter name
-    # raises the expected exception.
-    with raises(BeartypeDecorParamNameException):
-        @beartype
-        def jokaero(weaponsmith: str, __beartype_func: str) -> str:
-            return weaponsmith + __beartype_func
+    # Assert this class property accessed on both this instance and this class
+    # returns the expected value.
+    assert (
+        ThanGemsOrGold.the_varying_roof_of_heaven ==
+        to_love_and_wonder.the_varying_roof_of_heaven ==
+        'And the green earth lost in his heart its claims'
+    )
 
 # ....................{ TESTS ~ fail : wrappee             }....................
-def test_decor_wrappee_type_fail() -> None:
+def test_wrappee_type_fail() -> None:
     '''
     Test unsuccessful usage of the :func:`beartype.beartype` decorator for an
     **invalid wrappee** (i.e., object *not* decoratable by this decorator).

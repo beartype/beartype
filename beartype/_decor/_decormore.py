@@ -22,6 +22,7 @@ from beartype.typing import no_type_check
 from beartype._cave._cavefast import (
     MethodBoundInstanceOrClassType,
     MethodDecoratorClassType,
+    MethodDecoratorBuiltinTypes,
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
 )
@@ -39,6 +40,7 @@ from beartype._util.func.mod.utilbeartypefunc import (
     set_func_beartyped,
 )
 from beartype._util.func.mod.utilfuncmodtest import (
+    is_func_contextlib_contextmanager,
     is_func_functools_lru_cache,
 )
 from beartype._util.func.utilfuncmake import make_func
@@ -47,6 +49,133 @@ from beartype._util.func.utilfuncwrap import unwrap_func_once
 from beartype._util.py.utilpyversion import IS_PYTHON_3_8
 from contextlib import contextmanager
 from functools import lru_cache
+
+# ....................{ DECORATORS ~ non-func              }....................
+def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
+    '''
+    Decorate the passed **non-class beartypeable** (i.e., caller-defined object
+    that may be decorated by the :func:`beartype.beartype` decorator but is
+    *not* a class) with dynamically generated type-checking.
+
+    Parameters
+    ----------
+    obj : BeartypeableT
+        Non-class beartypeable to be decorated.
+
+    All remaining keyword parameters are passed as is to a lower-level decorator
+    defined by this submodule (e.g., :func:`.beartype_func`).
+
+    Returns
+    ----------
+    BeartypeableT
+        New pure-Python callable wrapping this beartypeable with type-checking.
+    '''
+
+    # Validate that the passed object is *NOT* a class.
+    assert not isinstance(obj, type), f'{repr(obj)} is class.'
+    # print(f'Decorating non-type {repr(obj)}...')
+
+    # Type of this object.
+    obj_type = type(obj)
+
+    # If this object is an uncallable builtin method descriptor (i.e., either a
+    # property, class method, instance method, or static method object),
+    # @beartype was listed above rather than below the builtin decorator
+    # generating this descriptor in the chain of decorators decorating this
+    # decorated callable. Although @beartype typically *MUST* decorate a
+    # callable directly, this edge case is sufficiently common *AND* trivial to
+    # resolve to warrant doing so. To do so, this conditional branch effectively
+    # reorders @beartype to be the first decorator decorating the pure-Python
+    # function underlying this method descriptor: e.g.,
+    #
+    #     # This branch detects and reorders this edge case...
+    #     class MuhClass(object):
+    #         @beartype
+    #         @classmethod
+    #         def muh_classmethod(cls) -> None: pass
+    #
+    #     # ...to resemble this direct decoration instead.
+    #     class MuhClass(object):
+    #         @classmethod
+    #         @beartype
+    #         def muh_classmethod(cls) -> None: pass
+    #
+    # Note that most but *NOT* all of these objects are uncallable. Regardless,
+    # *ALL* of these objects are unsuitable for direct decoration. Specifically:
+    # * Under Python < 3.10, *ALL* of these objects are uncallable.
+    # * Under Python >= 3.10:
+    #   * Descriptors created by @classmethod and @property are uncallable.
+    #   * Descriptors created by @staticmethod are technically callable but
+    #     C-based and thus unsuitable for decoration.
+    if obj_type in MethodDecoratorBuiltinTypes:
+        return beartype_descriptor_decorator_builtin(obj, **kwargs)  # type: ignore[return-value]
+    # Else, this object is *NOT* an uncallable builtin method descriptor.
+    #
+    # If this object is uncallable, raise an exception.
+    elif not callable(obj):
+        raise BeartypeDecorWrappeeException(
+            f'Uncallable {repr(obj)} not decoratable by @beartype.')
+    # Else, this object is callable.
+    #
+    # If this object is *NOT* a pure-Python function, this object is a
+    # pseudo-callable (i.e., arbitrary pure-Python *OR* C-based object whose
+    # class defines the __call__() dunder method enabling this object to be
+    # called like a standard callable). In this case, attempt to monkey-patch
+    # runtime type-checking into this pure-Python callable by replacing the
+    # bound method descriptor of the type of this object implementing the
+    # __call__() dunder method with a comparable descriptor calling a
+    # @beartype-generated runtime type-checking wrapper function.
+    elif not is_func_python(obj):
+        return beartype_pseudofunc(obj, **kwargs)  # type: ignore[return-value]
+    # Else, this object is a pure-Python function.
+    #
+    # If this function is a @contextlib.contextmanager-based isomorphic
+    # decorator closure (i.e., closure both created and returned by the standard
+    # @contextlib.contextmanager decorator where that closure isomorphically
+    # preserves both the number and types of all passed parameters and returns
+    # by accepting only a variadic positional argument and variadic keyword
+    # argument), @beartype was listed above rather than below the
+    # @contextlib.contextmanager decorator creating and returning this closure
+    # in the chain of decorators decorating this decorated callable. This is
+    # non-ideal, as the type of *ALL* objects created and returned by
+    # @contextlib.contextmanager-decorated context managers is a private class
+    # of the "contextlib" module rather than the types implied by the type hints
+    # originally annotating the returns of those context managers. If @beartype
+    # did *not* actively detect and intervene in this edge case, then runtime
+    # type-checkers dynamically generated by @beartype for those managers would
+    # erroneously raise type-checking violations after calling those managers
+    # and detecting the apparent type violation: e.g.,
+    #
+    #     >>> from beartype.typing import Iterator
+    #     >>> from contextlib import contextmanager
+    #     >>> @contextmanager
+    #     ... def muh_context_manager() -> Iterator[None]: yield
+    #     >>> type(muh_context_manager())
+    #     <class 'contextlib._GeneratorContextManager'>  # <-- not an "Iterator"
+    #
+    # This conditional branch effectively reorders @beartype to be the first
+    # decorator decorating the callable underlying this context manager,
+    # preserving consistency between return types *AND* return type hints: e.g.,
+    #
+    #     from beartype.typing import Iterator
+    #     from contextlib import contextmanager
+    #
+    #     # This branch detects and reorders this edge case...
+    #     @beartype
+    #     @contextmanager
+    #     def muh_contextmanager(cls) -> Iterator[None]: yield
+    #
+    #     # ...to resemble this direct decoration instead.
+    #     @contextmanager
+    #     @beartype
+    #     def muh_contextmanager(cls) -> Iterator[None]: yield
+    elif is_func_contextlib_contextmanager(obj):
+        return beartype_func_contextlib_contextmanager(obj, **kwargs)  # type: ignore[return-value]
+    # Else, this function is *NOT* a @contextlib.contextmanager-based isomorphic
+    # decorator closure.
+
+    # Return a new callable decorating that callable with type-checking.
+    return beartype_func(obj, **kwargs)  # type: ignore[return-value]
 
 # ....................{ DECORATORS ~ func                  }....................
 def beartype_func(
@@ -259,11 +388,9 @@ def beartype_descriptor_decorator_builtin(
         # If this property method descriptor additionally wraps a setter and/or
         # deleter function, type-check those functions as well.
         if descriptor_setter is not None:
-            descriptor_setter = beartype_func(
-                func=descriptor_setter, **kwargs)
+            descriptor_setter = beartype_func(descriptor_setter, **kwargs)
         if descriptor_deleter is not None:
-            descriptor_deleter = beartype_func(
-                func=descriptor_deleter, **kwargs)
+            descriptor_deleter = beartype_func(descriptor_deleter, **kwargs)
 
         # Return a new property method descriptor decorating all of these
         # functions, implicitly destroying the prior descriptor.
@@ -281,7 +408,44 @@ def beartype_descriptor_decorator_builtin(
     # If this descriptor is a class method...
     elif descriptor_type is MethodDecoratorClassType:
         # Pure-Python unbound function type-checking this class method.
-        func_checked = beartype_func(func=descriptor.__func__,  **kwargs)  # type: ignore[union-attr]
+        #
+        # Note that:
+        # * Python 3.8, 3.9, and 3.10 explicitly permit the @classmethod
+        #   decorator to be chained into the @property decorator: e.g.,
+        #       class MuhClass(object):
+        #           @classmethod  # <-- this is fine under Python < 3.11
+        #           @property
+        #           def muh_property(self) -> ...: ...
+        # * Python ≥ 3.11 explicitly prohibits that by emitting a non-fatal
+        #   "DeprecationWarning" on each attempt to do so. Under Python ≥ 3.11,
+        #   users *MUST* instead refactor the above simplistic decorator
+        #   chaining use case as follows:
+        #   * Define a metaclass for each class requiring a class property.
+        #   * Define each class property on that metaclass rather than on that
+        #     class instead.
+        #
+        #   In other words:
+        #       class MuhClassMeta(type):  # <-- Python ≥ 3.11 demands sacrifice
+        #          '''
+        #          Metaclass of the :class`.MuhClass` class, defining class
+        #          properties for that class.
+        #          '''
+        #
+        #          @property
+        #          def muh_property(cls) -> ...: ...
+        #
+        #      class MuhClass(object, metaclass=MuhClassMeta):
+        #          pass
+        # * Technically, all Python versions currently supported by @beartype
+        #   permit this. Ergo, @beartype currently defers to:
+        #   * The high-level beartype_nontype() decorator (which permits the
+        #     passed object to be the descriptor created and returned by the
+        #     @property decorator and thus implicitly allows @classmethod to be
+        #     chained into @property) rather than...
+        #   * The low-level beartype_func() decorator (which requires the passed
+        #     object to be callable, which the descriptor created and returned
+        #     by the @property decorator is *NOT*).
+        func_checked = beartype_nontype(descriptor.__func__,  **kwargs)  # type: ignore[union-attr]
 
         # Return a new class method descriptor decorating the pure-Python
         # unbound function wrapped by this descriptor with type-checking,
@@ -292,7 +456,7 @@ def beartype_descriptor_decorator_builtin(
     # If this descriptor is a static method...
     elif descriptor_type is MethodDecoratorStaticType:
         # Pure-Python unbound function type-checking this static method.
-        func_checked = beartype_func(func=descriptor.__func__, **kwargs) # type: ignore[union-attr]
+        func_checked = beartype_func(descriptor.__func__, **kwargs) # type: ignore[union-attr]
 
         # Return a new static method descriptor decorating the pure-Python
         # unbound function wrapped by this descriptor with type-checking,

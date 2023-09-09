@@ -21,7 +21,6 @@ from beartype.roar import (
     BeartypeException,
     BeartypeDecorWrappeeException,
 )
-from beartype._cave._cavefast import MethodDecoratorBuiltinTypes
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
@@ -33,12 +32,10 @@ from beartype._decor._decormore import (
     beartype_descriptor_decorator_builtin,
     beartype_func,
     beartype_func_contextlib_contextmanager,
+    beartype_nontype,
     beartype_pseudofunc,
 )
 from beartype._util.cls.utilclstest import is_type_subclass
-from beartype._util.func.mod.utilfuncmodtest import (
-    is_func_contextlib_contextmanager,
-)
 from beartype._util.func.utilfunctest import (
     is_func_python,
 )
@@ -98,7 +95,7 @@ def beartype_object(
 
     # Return either...
     return (
-        _beartype_object_fatal(obj, conf, **kwargs)
+        _beartype_object_fatal(obj, conf=conf, **kwargs)
         # If this beartype configuration requests that this decorator raise
         # fatal exceptions at decoration time, defer to the lower-level
         # decorator doing so;
@@ -106,18 +103,11 @@ def beartype_object(
         # Else, this beartype configuration requests that this decorator emit
         # fatal warnings at decoration time. In this case, defer to the
         # lower-level decorator doing so.
-        _beartype_object_nonfatal(obj, conf, **kwargs)
+        _beartype_object_nonfatal(obj, conf=conf, **kwargs)
     )
 
 # ....................{ PRIVATE ~ decorators               }....................
-def _beartype_object_fatal(
-    # Mandatory parameters.
-    obj: BeartypeableT,
-    conf: BeartypeConf,
-
-    # Optional parameters.
-    cls_stack: TypeStack = None,
-) -> BeartypeableT:
+def _beartype_object_fatal(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     '''
     Decorate the passed **beartypeable** (i.e., caller-defined object that may
     be decorated by the :func:`beartype.beartype` decorator) with optimal
@@ -127,15 +117,9 @@ def _beartype_object_fatal(
     ----------
     obj : BeartypeableT
         **Beartypeable** (i.e., pure-Python callable or class) to be decorated.
-    conf : BeartypeConf
-        **Beartype configuration** (i.e., dataclass encapsulating all flags,
-        options, settings, and other metadata configuring the current decoration
-        of the decorated callable or class).
-    cls_stack : TypeStack, optional
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
-        Defaults to :data:`None`.
+
+    All remaining keyword parameters are passed as is to a lower-level decorator
+    defined by this submodule (e.g., :func:`.beartype_func`).
 
     Returns
     ----------
@@ -153,150 +137,14 @@ def _beartype_object_fatal(
         Memoized parent decorator wrapping this unmemoized child decorator.
     '''
 
-    # If this object is a class, return this class decorated with type-checking.
-    #
-    # Note that the passed "cls_curr" class is ignorable in this context.
-    # Why? There are three cases. "obj" is either a:
-    # * Root decorated class, in which case both "cls_root" and
-    #   "cls_curr" are "None". Ergo, "cls_curr" conveys *NO*
-    #   meaningful semantics.
-    # * Inner decorated class of a root decorated class, in which case both
-    #   "cls_root" and "cls_curr" refer to that root decorated case.
-    #   Ergo, "cls_curr" conveys *NO* additional meaningful semantics.
-    # * Leaf decorated class of an inner decorated class of a root decorated
-    #   class, in which case "cls_root" and "cls_curr" refer to
-    #   different classes. However, lexical scoping rules in Python prevent
-    #   leaf classes from directly referring to any parent classes *OTHER* than
-    #   module-scoped root classes. Ergo, "cls_curr" conveys *NO*
-    #   meaningful semantics again.
-    #
-    # In all cases, "cls_curr" conveys *NO* meaningful semantics.
-    if isinstance(obj, type):
-        # print(f'Decorating type {repr(obj)}...')
-        return _beartype_type(  # type: ignore[return-value]
-            cls=obj,
-            conf=conf,
-            cls_stack=cls_stack,
-        )
-    # Else, this object is a non-class.
-    # print(f'Decorating non-type {repr(obj)}...')
-
-    # Type of this object.
-    obj_type = type(obj)
-
-    # If this object is an uncallable builtin method descriptor (i.e., either a
-    # property, class method, instance method, or static method object),
-    # @beartype was listed above rather than below the builtin decorator
-    # generating this descriptor in the chain of decorators decorating this
-    # decorated callable. Although @beartype typically *MUST* decorate a
-    # callable directly, this edge case is sufficiently common *AND* trivial to
-    # resolve to warrant doing so. To do so, this conditional branch effectively
-    # reorders @beartype to be the first decorator decorating the pure-Python
-    # function underlying this method descriptor: e.g.,
-    #
-    #     # This branch detects and reorders this edge case...
-    #     class MuhClass(object):
-    #         @beartype
-    #         @classmethod
-    #         def muh_classmethod(cls) -> None: pass
-    #
-    #     # ...to resemble this direct decoration instead.
-    #     class MuhClass(object):
-    #         @classmethod
-    #         @beartype
-    #         def muh_classmethod(cls) -> None: pass
-    #
-    # Note that most but *NOT* all of these objects are uncallable. Regardless,
-    # *ALL* of these objects are unsuitable for direct decoration. Specifically:
-    # * Under Python < 3.10, *ALL* of these objects are uncallable.
-    # * Under Python >= 3.10:
-    #   * Descriptors created by @classmethod and @property are uncallable.
-    #   * Descriptors created by @staticmethod are technically callable but
-    #     C-based and thus unsuitable for decoration.
-    if obj_type in MethodDecoratorBuiltinTypes:
-        return beartype_descriptor_decorator_builtin(  # type: ignore[return-value]
-            descriptor=obj,
-            conf=conf,
-            cls_stack=cls_stack,
-        )
-    # Else, this object is *NOT* an uncallable builtin method descriptor.
-    #
-    # If this object is uncallable, raise an exception.
-    elif not callable(obj):
-        raise BeartypeDecorWrappeeException(
-            f'Uncallable {repr(obj)} not decoratable by @beartype.')
-    # Else, this object is callable.
-    #
-    # If this object is *NOT* a pure-Python function, this object is a
-    # pseudo-callable (i.e., arbitrary pure-Python *OR* C-based object whose
-    # class defines the __call__() dunder method enabling this object to be
-    # called like a standard callable). In this case, attempt to monkey-patch
-    # runtime type-checking into this pure-Python callable by replacing the
-    # bound method descriptor of the type of this object implementing the
-    # __call__() dunder method with a comparable descriptor calling a
-    # @beartype-generated runtime type-checking wrapper function.
-    elif not is_func_python(obj):
-        return beartype_pseudofunc(  # type: ignore[return-value]
-            pseudofunc=obj,
-            conf=conf,
-            cls_stack=cls_stack,
-        )
-    # Else, this object is a pure-Python function.
-    #
-    # If this function is a @contextlib.contextmanager-based isomorphic
-    # decorator closure (i.e., closure both created and returned by the standard
-    # @contextlib.contextmanager decorator where that closure isomorphically
-    # preserves both the number and types of all passed parameters and returns
-    # by accepting only a variadic positional argument and variadic keyword
-    # argument), @beartype was listed above rather than below the
-    # @contextlib.contextmanager decorator creating and returning this closure
-    # in the chain of decorators decorating this decorated callable. This is
-    # non-ideal, as the type of *ALL* objects created and returned by
-    # @contextlib.contextmanager-decorated context managers is a private class
-    # of the "contextlib" module rather than the types implied by the type hints
-    # originally annotating the returns of those context managers. If @beartype
-    # did *not* actively detect and intervene in this edge case, then runtime
-    # type-checkers dynamically generated by @beartype for those managers would
-    # erroneously raise type-checking violations after calling those managers
-    # and detecting the apparent type violation: e.g.,
-    #
-    #     >>> from beartype.typing import Iterator
-    #     >>> from contextlib import contextmanager
-    #     >>> @contextmanager
-    #     ... def muh_context_manager() -> Iterator[None]: yield
-    #     >>> type(muh_context_manager())
-    #     <class 'contextlib._GeneratorContextManager'>  # <-- not an "Iterator"
-    #
-    # This conditional branch effectively reorders @beartype to be the first
-    # decorator decorating the callable underlying this context manager,
-    # preserving consistency between return types *AND* return type hints: e.g.,
-    #
-    #     from beartype.typing import Iterator
-    #     from contextlib import contextmanager
-    #
-    #     # This branch detects and reorders this edge case...
-    #     @beartype
-    #     @contextmanager
-    #     def muh_contextmanager(cls) -> Iterator[None]: yield
-    #
-    #     # ...to resemble this direct decoration instead.
-    #     @contextmanager
-    #     @beartype
-    #     def muh_contextmanager(cls) -> Iterator[None]: yield
-    elif is_func_contextlib_contextmanager(obj):
-        return beartype_func_contextlib_contextmanager(  # type: ignore[return-value]
-            func=obj,
-            conf=conf,
-            cls_stack=cls_stack,
-        )
-    # Else, this function is *NOT* a @contextlib.contextmanager-based isomorphic
-    # decorator closure.
-
-    # Return a new callable decorating that callable with type-checking.
-    return beartype_func(  # type: ignore[return-value]
-        func=obj,
-        conf=conf,
-        cls_stack=cls_stack,
+    # Return either...
+    return (
+        # If this object is a class, this class decorated with type-checking.
+        _beartype_type(obj, **kwargs)  # type: ignore[return-value]
+        if isinstance(obj, type) else
+        # Else, this object is a non-class. In this case, this non-class
+        # decorated with type-checking.
+        beartype_nontype(obj, **kwargs)  # type: ignore[return-value]
     )
 
 
@@ -355,9 +203,9 @@ def _beartype_object_nonfatal(
     BeartypeableT
         Either:
 
-        * If :func:`.beartype_object` raises an exception, the passed object
-          unmodified as is.
-        * If :func:`.beartype_object` raises no exception:
+        * If :func:`.beartype_object_fatal` raises an exception, the passed
+          object unmodified as is.
+        * If :func:`.beartype_object_fatal` raises no exception:
 
           * If the passed object is a class, this existing class embellished with
             dynamically generated type-checking.
@@ -367,14 +215,14 @@ def _beartype_object_nonfatal(
     Warns
     ----------
     warning_category
-        If :func:`.beartype_object` fails to generate a type-checking wrapper
-        for this callable or class by raising a fatal exception, this function
-        coerces that exception into a non-fatal warning describing that error.
+        If :func:`.beartype_object_fatal` fails to generate a type-checking
+        wrapper for this callable or class by raising a fatal exception, this
+        decorator coerces that exception into a non-fatal warning instead.
     '''
 
     # Attempt to decorate the passed beartypeable.
     try:
-        return _beartype_object_fatal(obj, conf, **kwargs)
+        return _beartype_object_fatal(obj, conf=conf, **kwargs)
     # If doing so unexpectedly raises an exception, coerce that fatal exception
     # into a non-fatal warning for nebulous safety.
     except Exception as exception:
@@ -463,6 +311,7 @@ def _beartype_type(
     assert isinstance(cls_stack, NoneTypeOr[tuple]), (
         f'{repr(cls_stack)} neither tuple nor "None".')
     # assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    # print(f'Decorating type {repr(obj)}...')
 
     #FIXME: Insufficient. We also want to set a beartype-specific dunder
     #attribute -- say, "__beartyped" -- on this class. Additionally, if this

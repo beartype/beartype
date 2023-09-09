@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator parameter kind unit tests.**
+**Beartype decorator parameter kind** unit tests.
 
 This submodule unit tests the :func:`beartype.beartype` decorator with respect
 all explicitly supported **parameter kinds** (e.g., keyword-only,
@@ -16,6 +16,26 @@ positional-only, variadic positional, variadic keyword).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+# ....................{ TESTS ~ name                       }....................
+def test_decor_arg_name_fail() -> None:
+    '''
+    Test unsuccessful usage of the :func:`beartype.beartype` decorator for
+    callables accepting one or more **decorator-reserved parameters** (i.e.,
+    parameters whose names are reserved for internal use by this decorator).
+    '''
+
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeDecorParamNameException
+    from pytest import raises
+
+    # Assert that decorating a callable accepting a reserved parameter name
+    # raises the expected exception.
+    with raises(BeartypeDecorParamNameException):
+        @beartype
+        def jokaero(weaponsmith: str, __beartype_func: str) -> str:
+            return weaponsmith + __beartype_func
 
 # ....................{ TESTS ~ flex                       }....................
 def test_decor_arg_kind_flex() -> None:
