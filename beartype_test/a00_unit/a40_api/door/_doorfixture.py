@@ -447,6 +447,7 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (MuhNutherThing, MuhThingP, False),
         (MuhThingP, MuhThing, False),
 
+        # ..................{ PEP 586                        }..................
         # PEP 586-compliant type hints.
         (Literal[7], int, True),
         (Literal["a"], str, True),
@@ -455,6 +456,7 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (int, Literal[7], False),
         (Literal[7, 8], Literal[7, 8, 9], True),
 
+        # ..................{ PEP 589                        }..................
         # PEP 589-compliant type hints.
         (MuhDict, dict, True),
     ]

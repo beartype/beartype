@@ -55,9 +55,7 @@ class _BeartypeForwardRefMeta(type):
 
     # ....................{ DUNDERS                        }....................
     def __getattr__(  # type: ignore[misc]
-        cls: Type['_BeartypeForwardRefABC'],  # pyright: ignore[reportGeneralTypeIssues]
-        hint_name: str,
-    ) -> Type['_BeartypeForwardRefIndexableABC']:
+        cls, hint_name: str) -> Type['_BeartypeForwardRefIndexableABC']:
         '''
         **Fully-qualified forward reference subclass** (i.e.,
         :class:`._BeartypeForwardRefABC` subclass whose metaclass is this
@@ -115,7 +113,9 @@ class _BeartypeForwardRefMeta(type):
         # Return a new fully-qualified forward reference subclass concatenated
         # as described above.
         return make_forwardref_indexable_subtype(
-            cls.__beartype_scope_name__, f'{cls.__beartype_name__}.{hint_name}')
+            cls.__beartype_scope_name__,  # type: ignore[arg-type]
+            f'{cls.__beartype_name__}.{hint_name}',
+        )
 
 
     def __instancecheck__(  # type: ignore[misc]
@@ -394,9 +394,7 @@ superclass to reduce space and time consumption.
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
 def make_forwardref_indexable_subtype(
-    scope_name: str,
-    hint_name: str,
-) -> Type[_BeartypeForwardRefIndexableABC]:
+    scope_name: str, hint_name: str) -> Type[_BeartypeForwardRefIndexableABC]:
     '''
     Create and return a new **subscriptable forward reference subclass** (i.e.,
     concrete subclass of the :class:`._BeartypeForwardRefIndexableABC`
