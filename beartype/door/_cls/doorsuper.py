@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) superclass**
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) superclass**
 (i.e., root of the object-oriented type hint class hierarchy encapsulating the
 non-object-oriented type hint API standardized by the :mod:`typing` module).
 
@@ -28,6 +28,7 @@ from beartype.typing import (
     FrozenSet,
     Generic,
     Iterable,
+    Optional,
     Tuple,
     Union,
     overload,
@@ -99,12 +100,19 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         (indexing) the low-level parent type hint wrapped by this wrapper.
     _hint : T
         Low-level type hint wrapped by this wrapper.
-    _hint_sign : Optional[beartype._data.hint.pep.sign.datapepsigncls.HintSign]
+    _hint_sign : beartype._data.hint.pep.sign.datapepsigncls.HintSign | None
         Either:
 
         * If this hint is PEP-compliant and thus uniquely identified by a
           :mod:`beartype`-specific sign, that sign.
-        * If this hint is a simple class, ``None``.
+        * Else (i.e., if this hint is an isinstanceable class), :data:`None`.
+    _origin: type | None
+        Either:
+
+        * If this hint originates from an **isinstanceable class** (i.e., such
+          that all objects satisfying this hint are instances of this class),
+          this class.
+        * Else, :data:`None`.
     '''
 
     # ..................{ INITIALIZERS                       }..................
@@ -126,17 +134,38 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # Sign uniquely identifying this and that hint if any *OR* "None"
         self._hint_sign = get_hint_pep_sign_or_none(hint)
 
-        # FIXME: This... is pretty wierd. I mean, I definitely get this part:
-        #    self._origin: type = get_hint_pep_origin_or_none(hint)
-        #
-        # Sure. That makes sense and is thus great. But the trailing " or hint"
-        # confounds me a bit. For one thing, arbitrary type hints are definitely
-        # *NOT* types and thus really *NOT* origin types. We probably just want
-        # to reduce this to simply:
-        #    self._origin = get_hint_pep_origin_or_none(hint)
+        #FIXME: Consider encapsulating the following logic as a new standard
+        #get_hint_pep_origin_type_or_none() getter, please.
+        # Isinstance class originating this hint if any *OR* "None" otherwise.
+        self._origin: type = None  # type: ignore[assignment]
 
-        # Origin class, that may or may not be subscripted.
-        self._origin: type = get_hint_pep_origin_or_none(hint) or hint  # type: ignore
+        # If this hint is itself an instanceable class, this hint could be said
+        # to originate from itself assuming we wave our hands about a lot.
+        if isinstance(hint, type):
+            self._origin = hint
+        # Else, this hint is *NOT* an instanceable class. In this case...
+        else:
+            # Arbitrary object defined as the "hint.__origin__" dunder attribute
+            # if this hint defines that attribute *OR* "None" otherwise.
+            self._origin = get_hint_pep_origin_or_none(hint)  # type: ignore[assignment]
+
+            # If this object is *NOT* an isinstanceable class, silently ignore
+            # this object.
+            #
+            # Ideally, this attribute would *ALWAYS* be an isinstanceable class
+            # for all possible PEP-compliant type hints. For unknown reasons,
+            # this attribute is commonly set to a type hint factory that is
+            # *NOT* an isinstanceable class for various but *NOT* all type
+            # hints. Why? We have *NO* idea, frankly:
+            #    >>> import typing
+            #    >>> typing.Optional[int].__origin__
+            #    typing.Union  # <-- wut? this is insane, python.
+            #    >>> typing.Literal[1, 2].__origin__
+            #    typing.Literal  # <-- do you even know what you doing, python?
+            if not isinstance(self._origin, type):
+                self._origin = object
+                # self._origin = None
+            # Else, this object is an isinstanceable class.
 
         # Tuple of all low-level child type hints of this hint.
         self._args = self._make_args()
@@ -207,7 +236,9 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
     # ..................{ DUNDERS ~ compare : rich           }..................
     def __le__(self, other: object) -> bool:
-        '''Return true if self is a subhint of other.'''
+        '''
+        :data:`True` if this hint is a subhint of the passed hint.
+        '''
 
         if not isinstance(other, TypeHint):
             return NotImplemented
@@ -216,7 +247,9 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
 
     def __lt__(self, other: object) -> bool:
-        '''Return true if self is a strict subhint of other.'''
+        '''
+        :data:`True` if this hint is a strict subhint of the passed hint.
+        '''
 
         if not isinstance(other, TypeHint):
             return NotImplemented
@@ -225,7 +258,9 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
 
     def __ge__(self, other: object) -> bool:
-        '''Return true if self is a superhint of other.'''
+        '''
+        :data:`True` if this hint is a superhint of the passed hint.
+        '''
 
         if not isinstance(other, TypeHint):
             return NotImplemented
@@ -234,7 +269,9 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
 
     def __gt__(self, other: object) -> bool:
-        '''Return true if self is a strict superhint of other.'''
+        '''
+        :data:`True` if this hint is a strict superhint of the passed hint.
+        '''
 
         if not isinstance(other, TypeHint):
             return NotImplemented
@@ -244,10 +281,10 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     # ..................{ DUNDERS ~ iterable                 }..................
     def __contains__(self, hint_child: 'TypeHint') -> bool:
         '''
-        ``True`` only if the low-level type hint wrapped by the passed **type
-        hint wrapper** (i.e., :class:`TypeHint` instance) is a child type hint
-        originally subscripting the low-level parent type hint wrapped by this
-        :class:`TypeHint` instance.
+        :data:`True` only if the low-level type hint wrapped by the passed
+        **type hint wrapper** (i.e., :class:`TypeHint` instance) is a child type
+        hint originally subscripting the low-level parent type hint wrapped by
+        this :class:`TypeHint` instance.
         '''
 
         # Sgt. Pepper's One-liners GitHub Club Band.
@@ -328,8 +365,8 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     #FIXME: Unit test us up, please.
     def __bool__(self) -> bool:
         '''
-        ``True`` only if the low-level parent type hint wrapped by this wrapper
-        was subscripted by at least one child type hint.
+        :data:`True` only if the low-level parent type hint wrapped by this
+        wrapper was subscripted by at least one child type hint.
         '''
 
         # See __len__() for further commentary.
@@ -605,16 +642,16 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         die_unless_typehint(other)
         # Else, that object is a type hint wrapper.
 
-        # If that other hint is the "typing.Any" catch-all (which, by
-        # definition, is the superhint of *ALL* hints -- including "Any"
-        # itself), this hint is necessarily a subhint of that hint. In this
-        # case, return true.
-        if other._hint is Any:
-            return True
-        # Else, that other hint is *NOT* the "typing.Any" catch-all.
-
-        # Defer to the subclass-specific implementation of this test.
-        return self._is_subhint(other)
+        # Return true only if either...
+        return (
+            # That other hint is the "typing.Any" catch-all. By definition, that
+            # hint is the superhint of *ALL* hints -- including "typing.Any"
+            # itself. Ergo, this hint is necessarily a subhint of that hint.
+            other._hint is Any or
+            # Else, that other hint is *NOT* the "typing.Any" catch-all. In this
+            # case, defer to the subclass-specific implementation of this test.
+            self._is_subhint(other)
+        )
 
 
     def is_superhint(self, other: 'TypeHint') -> bool:
@@ -745,7 +782,9 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # Return true only if this hint is a subhint of *ANY* branch of that
         # other hint.
         return any(
-            self._is_le_branch(that_branch) for that_branch in other._branches)
+            self._is_subhint_branch(other_branch)
+            for other_branch in other._branches
+        )
 
     # ..................{ PRIVATE ~ properties : read-only   }..................
     # Read-only properties intentionally defining *NO* corresponding setter.
@@ -754,7 +793,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     @property_cached
     def _args_wrapped_tuple(self) -> Tuple['TypeHint', ...]:
         '''
-        Tuple of the zero or more high-level child **type hint wrappers** (i.e.,
+        Tuple of the zero or more high-level **child type hint wrappers** (i.e.,
         :class:`TypeHint` instances) wrapping the low-level child type hints
         subscripting (indexing) the low-level parent type hint wrapped by this
         wrapper.
@@ -811,16 +850,23 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
     #FIXME: This implies our usage of "abc.ABC" above to be useless, which is
     #mostly fine. But let's remove all reference to "abc.ABC" above, please.
+    #FIXME: Shift above, please. This property is now concrete by default.
+
     # We intentionally avoid applying the @abstractmethod decorator here. Why?
     # Because doing so would cause static type checkers (e.g., mypy) to
     # incorrectly flag this class as abstract and thus *NOT* instantiable. In
     # fact, the magical __new__() method defined by this class enables this
     # otherwise abstract class to be safely instantiated as "TypeHint(hint)".
-    def _is_le_branch(self, branch: 'TypeHint') -> bool:
+    def _is_subhint_branch(self, branch: 'TypeHint') -> bool:
         '''
-        :data:`True` only if this partially ordered type hint is **compatible**
-        with the passed branch of another partially ordered type hint passed to
-        the parent call of the :meth:`__le__` dunder method.
+        :data:`True` only if this type hint is a subhint of the passed branch of
+        another type hint passed to a parent call of the :meth:`is_subhint`
+        method, itself called by the :meth:`__le__` dunder method.
+
+        Parameters
+        ----------
+        branch : TypeHint
+            Conditional branch of another type hint to be tested against.
 
         See Also
         ----------
@@ -828,32 +874,75 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             Further details.
         '''
 
-        raise NotImplementedError(  # pragma: no cover
-            'Abstract method TypeHint._is_le_branch() undefined.')
+        #FIXME: Excise us up, please.
+        # raise NotImplementedError(  # pragma: no cover
+        #     'Abstract method TypeHint._is_subhint_branch() undefined.')
+
+        # If the other branch was *NOT* subscripted, we assume it was
+        # subscripted by "Any" and simply check that the origins are compatible.
+        if branch._is_args_ignorable:
+            return issubclass(self._origin, branch._origin)
+        # Else, the other branch was subscripted.
+
+        # Return true only if...
+        return (
+            # That branch is also a type hint wrapper of the same concrete
+            # subclass as this type hint wrapper *AND*...
+            isinstance(branch, type(self)) and
+            # The class originating this hint is a subclass of the class
+            # originating that branch...
+            issubclass(self._origin, branch._origin) and
+            # All child type hints of this parent type hint are subhints of the
+            # corresponding child type hints of that branch.
+            all(
+                self_child <= branch_child
+                for self_child, branch_child in zip(
+                    self._args_wrapped_tuple, branch._args_wrapped_tuple)
+            )
+        )
 
     # ..................{ PRIVATE ~ abstract : property      }..................
+    #FIXME: Shift above, please. This property is now concrete by default.
     @property
     def _is_args_ignorable(self) -> bool:
         '''
-        Flag that indicates this hint can be evaluated only using the origin.
+        :data:`True` only if this hint is effectively **unsubscripted** (i.e.,
+        either indexed by *no* child type hints or only indexed by ignorable
+        child type hints).
 
-        This is useful for parametrized type hints with no arguments or with
-        :attr:`typing.Any`-type placeholder arguments (e.g.,
-        ``Tuple[Any, ...]``, ``Callable[..., Any]``).
+        If :data:`True`, this hint can be trivially and efficiently evaluated
+        by simply inspecting the :attr:`_origin` property. Relevant type hints
+        include:
 
-        It's also useful in cases where a builtin type or abstract base class
-        (ABC) is used as a type hint (and has no sign). For example:
+        * Unsubscripted type hint factories (e.g., ``Tuple``, ``Callable``).
+        * Type hints subscripted only by ignorable child type hints (e.g.,
+          ``Tuple[Any, ...]``, ``Callable[..., Any]``).
 
-        .. code-block:: python
+        This boolean trivializes comparisons between syntactically unrelated
+        type hints that are nonetheless semantically equivalent: e.g.,
 
-           >>> get_hint_pep_sign_or_none(tuple)
-           None
-           >>> get_hint_pep_sign_or_none(typing.Tuple)
-           HintSignTuple
+        .. code-block:: pycon
 
-        In this case, using :attr:`_is_args_ignorable` allows us to us simplify
-        the comparison.
+           >>> from beartype.door import TypeHint
+           >>> from typing import Any, Tuple
+
+           # These type hints are all semantically equivalent despite being
+           # syntactically unrelated.
+
+           >>> TypeHint(tuple) == TypeHint(typing.Tuple) == \
+           ... TypeHint(typing.Tuple[Any, ...])
+           True
+
+        Note that this property is *not* equivalent to the :meth:`is_ignorable`
+        property. Although related, a non-ignorable parent type hint can
+        trivially have ignorable child type hints (e.g., ``list[Any]``).
         '''
 
-        raise NotImplementedError(  # pragma: no cover
-            'Abstract method TypeHint._is_args_ignorable() undefined.')
+        #FIXME: Excise us up, please.
+        # raise NotImplementedError(  # pragma: no cover
+        #     'Abstract method TypeHint._is_args_ignorable() undefined.')
+
+        # Return true only if all child type hints subscripting this parent type
+        # hint are themselves ignorable.
+        return all(
+            hint_child.is_ignorable for hint_child in self._args_wrapped_tuple)

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Decidedly Object-Oriented Runtime-checking (DOOR) literal type hint
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) literal type hint
 classes** (i.e., :class:`beartype.door.TypeHint` subclasses implementing support
 for :pep:`586`-compliant :attr:`typing.Literal` type hints).
 
@@ -46,28 +46,41 @@ class LiteralTypeHint(_TypeHintSubscripted):
     # ..................{ PRIVATE ~ testers                  }..................
     def _is_subhint(self, other: TypeHint) -> bool:
 
-        # If the other hint is also a literal, return true only if the set of
+        # If the passed hint is also a literal, return true only if the set of
         # all child hints subscripting this literal is a subset of the set of
         # all child hints subscripting that literal.
         if isinstance(other, LiteralTypeHint):
-            return all(
-                this_hint_child in other._args
-                for this_hint_child in self._args
-            )
-        # Else, the other hint is *NOT* also a literal.
-        #
-        # If the other hint is just an origin, check that *ALL* child hints
-        # subscripting this literal are instances of that origin.
-        elif other._is_args_ignorable:
-            return all(
-                isinstance(this_hint_child, other._origin)
-                for this_hint_child in self._args
-            )
-        # Else, the other hint is *NOT* just an origin.
+            return all(self_arg in other._args for self_arg in self._args)
+        # Else, the passed hint is *NOT* also a literal.
 
-        # Return true only if the type of each child hint subscripting this
-        # literal is a subhint of the other hint.
-        return all(
-            TypeHint(type(this_hint_child)).is_subhint(other)
-            for this_hint_child in self._args
+        # Return true only if either...
+        return (
+            # The class of each child hint subscripting this literal is a
+            # subhint (e.g., subclass) of the passed hint *OR*...
+            #
+            # Note that, unlike most type hints, each child hints subscripting
+            # this literal is typically *NOT* a valid type hint in and of itself
+            # (e.g., "Literal[True]" is a valid type hint, but "True" is not).
+            # This test *CANNOT* be reduced to the simpler and sensible variant:
+            #     return all(
+            #         hint_child.is_subhint(other)
+            #         for hint_child in self._args_wrapped_tuple
+            #     )
+            all(
+                TypeHint(type(literal_child)).is_subhint(other)
+                for literal_child in self._args
+            ) or
+            # Else, the class of one or more child hints subscripting this
+            # literal is *NOT* a subhint (e.g., subclass) of the passed hint.
+            #
+            # Defer to the superclass implementation of this method. Why?
+            # Because this literal could still be a subhint of passed hint
+            # according to standard typing semantics. Notably, this literal
+            # could be a child type hint and thus a subhint of the passed type
+            # hint - despite failing all of the above literal-specific subhint
+            # tests: e.g.,
+            #     # The call below handles this surprisingly common edge case.
+            #     >>> Literal[True] <= Union[Literal[True], Literal[False]]
+            #     True
+            super()._is_subhint(other)
         )

@@ -27,6 +27,7 @@ def test_get_hint_pep_args() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
+    from beartype.typing import Tuple
     from beartype._util.hint.pep.utilpepget import (
         _HINT_ARGS_EMPTY_TUPLE,
         get_hint_pep_args,
@@ -34,7 +35,6 @@ def test_get_hint_pep_args() -> None:
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
-    from typing import Tuple
 
     # ....................{ PASS                           }....................
     # For each PEP-compliant hint, assert this getter returns...
@@ -184,22 +184,19 @@ def test_get_hint_pep_type_isinstanceable_or_none() -> None:
     '''
 
     # Defer test-specific imports.
-    from beartype.roar import BeartypeDecorHintPepException
     from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_origin_type_isinstanceable_or_none)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
     from beartype_test.a00_unit.data.hint.pep.data_pep import (
         HINTS_PEP_META)
-    from pytest import raises
 
     # Assert this getter returns the expected type origin for all PEP-compliant
     # type hints.
     for hint_pep_meta in HINTS_PEP_META:
-        assert get_hint_pep_origin_type_isinstanceable_or_none(hint_pep_meta.hint) is (
-            hint_pep_meta.isinstanceable_type)
+        assert get_hint_pep_origin_type_isinstanceable_or_none(
+            hint_pep_meta.hint) is hint_pep_meta.isinstanceable_type
 
-    # Assert this getter raises the expected exception for non-PEP-compliant
-    # type hints.
+    # Assert this getter returns "None" for non-PEP-compliant type hints.
     for not_hint_pep in NOT_HINTS_PEP:
-        with raises(BeartypeDecorHintPepException):
-            get_hint_pep_origin_type_isinstanceable_or_none(not_hint_pep)
+        assert get_hint_pep_origin_type_isinstanceable_or_none(
+            not_hint_pep) is None

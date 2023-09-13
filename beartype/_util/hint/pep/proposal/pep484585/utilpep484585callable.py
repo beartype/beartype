@@ -22,6 +22,7 @@ from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignCallable
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_CALLABLE_PARAMS)
+from beartype._data.kind.datakindsequence import TUPLE_EMPTY
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
 # ....................{ HINTS                              }....................
@@ -157,7 +158,7 @@ def get_hint_pep484585_callable_params(
         Callable type hint to be inspected.
     exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
-        :exc:`BeartypeDecorHintPep484585Exception`.
+        :exc:`.BeartypeDecorHintPep484585Exception`.
     exception_prefix : str, optional
         Human-readable substring prefixing the representation of this object in
         the exception message. Defaults to the empty string.
@@ -169,7 +170,7 @@ def get_hint_pep484585_callable_params(
 
     Raises
     ----------
-    :exc:`exception_cls`
+    exception_cls
         If this hint is *not* a callable type hint.
     '''
 
@@ -193,27 +194,28 @@ def get_hint_pep484585_callable_params(
     #   * If the first child type originally subscripting this hint was a list,
     #     all items subscripting the nested list of zero or more parameter type
     #     hints originally subscripting this hint as is: e.g.,
-    #         >>> Callable[[], bool]
+    #         >>> Callable[[], bool].__args__
     #         (bool,)
-    #         >>> Callable[[int, str], bool]
+    #         >>> Callable[[int, str], bool].__args__
     #         (int, str, bool)
+    #
     #     This includes a list containing only the empty tuple signifying a
     #     callable accepting *NO* parameters, in which case that empty tuple is
     #     preserved as is: e.g.,
-    #         >>> Callable[[()], bool]
+    #         >>> Callable[[()], bool].__args__
     #         ((), bool)
     #   * Else, the first child type originally subscripting this hint as is. In
     #     this case, that child type is required to be either:
     #     * An ellipsis object (i.e., the "Ellipsis" builtin singleton): e.g.,
-    #         >>> Callable[..., bool]
+    #         >>> Callable[..., bool].__args__
     #         (Ellipsis, bool)
     #     * A PEP 612-compliant parameter specification (i.e.,
     #       "typing.ParamSpec[...]" type hint): e.g.,
-    #         >>> Callable[ParamSpec('P'), bool]
+    #         >>> Callable[ParamSpec('P'), bool].__args__
     #         (~P, bool)
     #     * A PEP 612-compliant parameter concatenation (i.e.,
     #       "typing.Concatenate[...]" type hint): e.g.,
-    #         >>> Callable[Concatenate[str, ParamSpec('P')], bool]
+    #         >>> Callable[Concatenate[str, ParamSpec('P')], bool].__args__
     #         (typing.Concatenate[str, ~P], bool)
     # * The return type hint originally subscripting this hint.
     #
@@ -259,25 +261,6 @@ def get_hint_pep484585_callable_params(
     # former from the latter, we explicitly detect all possible instances of the
     # latter and only fallback to the former after exhausting the latter.
 
-    # Empty tuple singleton. Yes, we know exactly what you're thinking: "Why
-    # would anyone do this, @leycec? Why not just directly access the empty
-    # tuple singleton as ()?" Because Python insanely requires us to do this
-    # under Python >= 3.8 to detect empty tuples:
-    #     $ python3.7
-    #     >>> () is ()
-    #     True   # <-- yes, this is good
-    #
-    #     $ python3.8
-    #     >>> () is ()
-    #     SyntaxWarning: "is" with a literal. Did you mean "=="?  # <-- WUT
-    #     >>> _TUPLE_EMPTY = ()
-    #     >>> _TUPLE_EMPTY is _TUPLE_EMPTY
-    #     True  # <-- *FACEPALM*
-    #
-    # Note there's no point in globalizing this. Doing so would needlessly
-    # incur a globals lookup cost while saving no space or time.
-    _TUPLE_EMPTY = ()
-
     # Single parameter type hint subscripting this callable type hint.
     hint_param = hint_args[0]
 
@@ -298,7 +281,7 @@ def get_hint_pep484585_callable_params(
         #     (bool,)  # <------ this is good
         #     >>> Callable[[()], bool].__args__
         #     ((), bool,)  # <-- this is bad, so pretend this never happens
-        hint_param is _TUPLE_EMPTY
+        hint_param is TUPLE_EMPTY
     ):
         return hint_param
     # Else, this parameter type hint is neither the empty tuple *NOR* an

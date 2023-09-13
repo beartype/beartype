@@ -686,11 +686,12 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
 # ....................{ GETTERS ~ origin                   }....................
 def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
     '''
-    **Unsafe origin object** (i.e., arbitrary object possibly related to the
-    passed PEP-compliant type hint but *not* necessarily a non-:mod:`typing`
-    class such that *all* objects satisfying this hint are instances of this
-    class) originating this hint if this hint originates from an object *or*
-    ``None`` otherwise (i.e., if this hint originates from *no* such object).
+    **Unsafe origin object** (i.e., arbitrary object originating the passed
+    PEP-compliant type hint but *not* necessarily an isinstanceable class such
+    that all objects satisfying this hint are instances of this class)
+    originating this hint if this hint originates from an object *or*
+    :data:`None` otherwise (i.e., if this hint originates from *no* such
+    object).
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -698,27 +699,27 @@ def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
 
     Caveats
     ----------
-    **The high-level** :func:`get_hint_pep_origin_type_isinstanceable` function
+    **The high-level** :func:`get_hint_pep_origin_type_isinstanceable` getter
     should always be called in lieu of this low-level function.** Whereas the
-    former is guaranteed to return either a class or ``None``, this function
-    enjoys no such guarantees and instead returns what the caller can only
-    safely assume to be an arbitrary object.
+    former is guaranteed to return either an isinstanceable class or
+    :data:`None`, this getter enjoys no such guarantees and instead returns an
+    arbitrary object that may or may not actually be an instanceable class.
 
-    If this function *must* be called, **this function should always be called
-    in lieu of attempting to directly access the low-level** ``__origin__``
-    **dunder attribute.** That attribute is defined non-orthogonally by various
-    singleton objects in the :mod:`typing` module, including:
+    If this getter *must* be called, **this getter should always be called in
+    lieu of attempting to directly access the low-level** ``__origin__``
+    **dunder attribute.** Various :mod:`typing` objects either fail to define
+    this attribute or define this attribute non-orthogonally, including objects:
 
-    * Objects failing to define this attribute (e.g., :attr:`typing.Any`,
+    * Failing to define this attribute altogether (e.g., :attr:`typing.Any`,
       :attr:`typing.NoReturn`).
-    * Objects defining this attribute to be their unsubscripted :mod:`typing`
-      object (e.g., :attr:`typing.Optional`, :attr:`typing.Union`).
-    * Objects defining this attribute to be their origin type.
+    * Defining this attribute to be their unsubscripted :mod:`typing` type hint
+      factories (e.g., :attr:`typing.Optional`, :attr:`typing.Union`).
+    * Defining this attribute to be their actual origin types.
 
     Since the :mod:`typing` module neither guarantees the existence of this
     attribute nor imposes a uniform semantic on this attribute when defined,
-    that attribute is *not* safely directly accessible. Thus this function,
-    which "fills in the gaps" by implementing this oversight.
+    that attribute is *not* safely directly accessible. Thus this getter, which
+    "fills in the gaps" by implementing this oversight.
 
     Parameters
     ----------
@@ -731,34 +732,41 @@ def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
         Either:
 
         * If this hint originates from an arbitrary object, that object.
-        * Else, ``None``.
+        * Else, :data:`None`.
 
     Examples
     ----------
-        >>> import typing
-        >>> from beartype._util.hint.pep.utilpepget import (
-        ...     get_hint_pep_origin_or_none)
-        # This is sane.
-        >>> get_hint_pep_origin_or_none(typing.List)
-        list
-        >>> get_hint_pep_origin_or_none(typing.List[int])
-        list
-        >>> get_hint_pep_origin_or_none(typing.Union)
-        None
-        >>> get_hint_pep_origin_or_none(typing.Union[int])
-        None
-        # This is insane.
-        >>> get_hint_pep_origin_or_none(typing.Union[int, str])
-        Union
-        # This is crazy.
-        >>> typing.Union.__origin__
-        AttributeError: '_SpecialForm' object has no attribute '__origin__'
-        # This is balls crazy.
-        >>> typing.Union[int].__origin__
-        AttributeError: type object 'int' has no attribute '__origin__'
-        # This is balls cray-cray -- the ultimate evolution of crazy.
-        >>> typing.Union[int, str].__origin__
-        typing.Union
+    .. code-block:: pycon
+
+       >>> import typing
+       >>> from beartype._util.hint.pep.utilpepget import (
+       ...     get_hint_pep_origin_or_none)
+
+       # This is sane.
+       >>> get_hint_pep_origin_or_none(typing.List)
+       list
+       >>> get_hint_pep_origin_or_none(typing.List[int])
+       list
+       >>> get_hint_pep_origin_or_none(typing.Union)
+       None
+       >>> get_hint_pep_origin_or_none(typing.Union[int])
+       None
+
+       # This is insane.
+       >>> get_hint_pep_origin_or_none(typing.Union[int, str])
+       Union
+
+       # This is crazy.
+       >>> typing.Union.__origin__
+       AttributeError: '_SpecialForm' object has no attribute '__origin__'
+
+       # This is balls crazy.
+       >>> typing.Union[int].__origin__
+       AttributeError: type object 'int' has no attribute '__origin__'
+
+       # This is balls cray-cray -- the ultimate evolution of crazy.
+       >>> typing.Union[int, str].__origin__
+       typing.Union
     '''
 
     # Return this hint's origin object if any *OR* "None" otherwise.
@@ -819,8 +827,8 @@ def get_hint_pep_origin_type_isinstanceable_or_none(
     **Standard origin type** (i.e., isinstanceable class declared by Python's
     standard library such that *all* objects satisfying the passed
     PEP-compliant type hint are instances of this class) originating this hint
-    if this hint originates from such a type *or* ``None`` otherwise (i.e., if
-    this hint does *not* originate from such a type).
+    if this hint originates from such a type *or* :data:`None` otherwise (i.e.,
+    if this hint does *not* originate from such a type).
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
@@ -843,7 +851,7 @@ def get_hint_pep_origin_type_isinstanceable_or_none(
         Either:
 
         * If this hint originates from a standard origin type, that type.
-        * Else, ``None``.
+        * Else, :data:`None`.
 
     See Also
     ----------
@@ -853,8 +861,8 @@ def get_hint_pep_origin_type_isinstanceable_or_none(
         Further details.
     '''
 
-    # Sign uniquely identifying this hint.
-    hint_sign = get_hint_pep_sign(hint)
+    # Sign uniquely identifying this hint if any *OR* "None" otherwise.
+    hint_sign = get_hint_pep_sign_or_none(hint)
 
     # Return either...
     return (

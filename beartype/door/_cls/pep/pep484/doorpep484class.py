@@ -61,9 +61,7 @@ class ClassTypeHint(TypeHint):
         return True
 
     # ..................{ PRIVATE ~ methods                  }..................
-    #FIXME: Globally rename to _is_subhint_branch(), please. The current
-    #nomenclature is (quite simply) awful. *sigh*
-    def _is_le_branch(self, branch: TypeHint) -> bool:
+    def _is_subhint_branch(self, branch: TypeHint) -> bool:
         # print(f'is_subhint({repr(self)}, {repr(branch)})?')
         # print(f'{repr(self)}._origin: {self._origin}')
         # # print(f'{repr(self)}._origin.__args__: {self._origin.__args__}')
@@ -79,14 +77,12 @@ class ClassTypeHint(TypeHint):
         #  implementation performing this logic on behalf of *EVERY* subclass.
         #* TypeHint._is_subhint_branch() should then call a subclass-specific
         #  abstract TypeHint._is_subhint_branch_override() method.
-        #* Shouldn't references to "_origin" below instead reference "_hint"?
 
         # Everything is a subclass of "Any".
-        if branch._origin is Any:
+        if branch._hint is Any:
             return True
-        # "Any" is only a subclass of "Any". Furthermore, "Any" is unsuitable as
-        # the first argument to issubclass() below.
-        elif self._origin is Any:
+        # "Any" is only a subclass of "Any".
+        elif self._hint is Any:
             return False
 
         #FIXME: Actually, let's avoid the implicit numeric tower for now.

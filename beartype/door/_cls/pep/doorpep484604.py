@@ -32,8 +32,8 @@ class UnionTypeHint(_TypeHintSubscripted):
         return self._args_wrapped_tuple
 
     # ..................{ PRIVATE ~ testers                  }..................
-    def _is_le_branch(self, branch: TypeHint) -> bool:
-        raise NotImplementedError('UnionTypeHint._is_le_branch() unsupported.')  # pragma: no cover
+    def _is_subhint_branch(self, branch: TypeHint) -> bool:
+        raise NotImplementedError('UnionTypeHint._is_subhint_branch() unsupported.')  # pragma: no cover
 
 
     def _is_subhint(self, other: TypeHint) -> bool:

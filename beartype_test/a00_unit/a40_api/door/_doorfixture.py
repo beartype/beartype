@@ -453,8 +453,10 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (Literal["a"], str, True),
         (Literal[7, 8, "3"], Union[int, str], True),
         (Literal[7, 8, "3"], Union[list, int], False),
-        (int, Literal[7], False),
+        (Literal[True], Union[Literal[True], Literal[False]], True),
         (Literal[7, 8], Literal[7, 8, 9], True),
+        (int, Literal[7], False),
+        (Union[Literal[True], Literal[False]], Literal[True], False),
 
         # ..................{ PEP 589                        }..................
         # PEP 589-compliant type hints.

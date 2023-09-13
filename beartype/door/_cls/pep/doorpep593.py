@@ -68,7 +68,7 @@ class AnnotatedTypeHint(TypeHint):
         )
 
 
-    def _is_le_branch(self, branch: TypeHint) -> bool:
+    def _is_subhint_branch(self, branch: TypeHint) -> bool:
 
         # If the other type is not annotated, we ignore annotations on this
         # one and just check that the metahint is a subhint of the other.

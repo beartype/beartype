@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) middle-men
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) middle-men
 subclasses** (i.e., abstract subclasses of the object-oriented type hint class
 hierarchy simplifying the definition of concrete subclasses of this hierarchy).
 
@@ -18,11 +18,11 @@ from beartype.roar import BeartypeDoorException
 from beartype.typing import (
     Any,
 )
-from beartype._util.cache.utilcachecall import (
-    property_cached,
-)
+from beartype._util.cache.utilcachecall import property_cached
+# from beartype._util.cls.utilclstest import is_type_subclass
 
 # ....................{ SUBCLASSES                         }....................
+#FIXME: Excise us up, please.
 class _TypeHintSubscripted(TypeHint):
     '''
     **Subscripted type hint wrapper** (i.e., high-level object encapsulating a
@@ -30,63 +30,65 @@ class _TypeHintSubscripted(TypeHint):
     low-level children type hints).
     '''
 
-    # ..................{ PRIVATE ~ properties : concrete    }..................
-    @property  # type: ignore[misc]
-    @property_cached
-    def _is_args_ignorable(self) -> bool:
-        '''
-        ``True`` only if all child type hints subscripting (indexing) this
-        parent type hint are ignorable.
+    pass
 
-        Note that this property is *not* equivalent to the :meth:`is_ignorable`
-        property. Although related, a non-ignorable parent type hint can
-        trivially have ignorable child type hints (e.g., ``list[Any]``).
-        '''
-
-        #FIXME: Kinda unsure about this. Above, we define "_origin" as:
-        #   self._origin: type = get_hint_pep_origin_or_none(hint) or hint  # type: ignore
-        #
-        #That effectively reduces to:
-        #   self._origin: type = hint.__origin__ or hint  # type: ignore
-        #FIXME: Ideally, this should read:
-        #    return all(
-        #        hint_child.is_ignorable
-        #        for hint_child in self._args_wrapped_tuple
-        #    )
-        #
-        #Sadly, that refactoring currently raises non-trivial test failures.
-        #Let's investigate at a later time, please.
-        return all(
-            hint_child._origin is Any
-            for hint_child in self._args_wrapped_tuple
-        )
-
-    # ..................{ PRIVATE ~ testers                  }..................
-    def _is_le_branch(self, branch: TypeHint) -> bool:
-
-        # If the other branch was *NOT* subscripted, we assume it was
-        # subscripted by "Any" and simply check that the origins are compatible.
-        if branch._is_args_ignorable:
-            return issubclass(self._origin, branch._origin)
-        # Else, the other branch was subscripted.
-
-        return (
-            # That branch is also a type hint wrapper of the same concrete
-            # subclass as this type hint wrapper *AND*...
-            isinstance(branch, type(self)) and
-            # The low-level unordered type hint encapsulated by this
-            # high-level partially ordered type hint is a subclass of
-            # The low-level unordered type hint encapsulated by the branch
-            issubclass(self._origin, branch._origin) and
-            # *AND* All child (argument) hints are subclasses of the
-            # corresponding branch child hint
-            all(
-                self_child <= branch_child
-                for self_child, branch_child in zip(
-                    self._args_wrapped_tuple, branch._args_wrapped_tuple
-                )
-            )
-        )
+    # # ..................{ PRIVATE ~ properties : concrete    }..................
+    # @property  # type: ignore[misc]
+    # @property_cached
+    # def _is_args_ignorable(self) -> bool:
+    #     '''
+    #     :data:`True` only if all child type hints subscripting (indexing) this
+    #     parent type hint are ignorable.
+    #
+    #     Note that this property is *not* equivalent to the :meth:`is_ignorable`
+    #     property. Although related, a non-ignorable parent type hint can
+    #     trivially have ignorable child type hints (e.g., ``list[Any]``).
+    #     '''
+    #
+    #     #FIXME: Kinda unsure about this. Above, we define "_origin" as:
+    #     #   self._origin: type = get_hint_pep_origin_or_none(hint) or hint  # type: ignore
+    #     #
+    #     #That effectively reduces to:
+    #     #   self._origin: type = hint.__origin__ or hint  # type: ignore
+    #     #FIXME: Ideally, this should read:
+    #     #    return all(
+    #     #        hint_child.is_ignorable
+    #     #        for hint_child in self._args_wrapped_tuple
+    #     #    )
+    #     #
+    #     #Sadly, that refactoring currently raises non-trivial test failures.
+    #     #Let's investigate at a later time, please.
+    #     return all(
+    #         hint_child._origin is Any
+    #         # hint_child.is_ignorable
+    #         for hint_child in self._args_wrapped_tuple
+    #     )
+    #
+    # # ..................{ PRIVATE ~ testers                  }..................
+    # def _is_subhint_branch(self, branch: TypeHint) -> bool:
+    #
+    #     # If the other branch was *NOT* subscripted, we assume it was
+    #     # subscripted by "Any" and simply check that the origins are compatible.
+    #     if branch._is_args_ignorable:
+    #         return issubclass(self._origin, branch._origin)
+    #     # Else, the other branch was subscripted.
+    #
+    #     # Return true only if...
+    #     return (
+    #         # That branch is also a type hint wrapper of the same concrete
+    #         # subclass as this type hint wrapper *AND*...
+    #         isinstance(branch, type(self)) and
+    #         # The class originating this hint is a subclass of the class
+    #         # originating that branch...
+    #         issubclass(self._origin, branch._origin) and
+    #         # All child type hints of this parent type hint are subhints of the
+    #         # corresponding child type hints of that branch.
+    #         all(
+    #             self_child <= branch_child
+    #             for self_child, branch_child in zip(
+    #                 self._args_wrapped_tuple, branch._args_wrapped_tuple)
+    #         )
+    #     )
 
 # ....................{ SUBCLASSES ~ isinstanceable        }....................
 class _TypeHintOriginIsinstanceable(_TypeHintSubscripted):

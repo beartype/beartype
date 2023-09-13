@@ -17,7 +17,7 @@ from beartype.typing import (
     FrozenSet,
 )
 
-# ....................{ DICTS                              }....................
+# ....................{ SETS                               }....................
 # Note that this exact type annotation is required to avoid mypy complaints. :O
 FROZENSET_EMPTY: FrozenSet[Any] = frozenset()
 '''
@@ -28,7 +28,7 @@ Python does *not* extend that guarantee to frozen sets. This empty frozen set
 singleton amends that oversight, providing efficient reuse of empty frozen sets:
 e.g.,
 
-.. code-block::
+.. code-block:: pycon
 
    >>> () is ()
    True  # <-- good. this is good.

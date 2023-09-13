@@ -40,7 +40,7 @@ class _TupleTypeHint(_TypeHintSubscripted):
         #Why? Because variadic and fixed-length tuple type hints have *NOTHING*
         #semantically to do with one another. All they share is the common
         #prefix "Tuple". Aside from that, everything is dissimilar. Indeed,
-        #most of the logic below (especially _is_le_branch(), which is kinda
+        #most of the logic below (especially _is_subhint_branch(), which is kinda
         #cray-cray) would strongly benefit from separating this class into two
         #subclasses.
         #
@@ -101,7 +101,7 @@ class _TupleTypeHint(_TypeHintSubscripted):
         )
 
     # ..................{ PRIVATE ~ testers                  }..................
-    def _is_le_branch(self, branch: TypeHint) -> bool:
+    def _is_subhint_branch(self, branch: TypeHint) -> bool:
 
         if branch._is_args_ignorable:
             return issubclass(self._origin, branch._origin)

@@ -36,5 +36,4 @@ def test_door_is_subhint(
     # For each subhint relation to be tested...
     for subhint, superhint, IS_SUBHINT in door_cases_subhint:
         # Assert this tester returns the expected boolean for these hints.
-        assert is_subhint(subhint, superhint) is IS_SUBHINT, (
-            f'{subhint} <= {superhint} is not {IS_SUBHINT}')
+        assert is_subhint(subhint, superhint) is IS_SUBHINT

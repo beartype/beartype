@@ -4,16 +4,19 @@
 # See "LICENSE" for further details.
 
 '''
-**Decidedly Object-Oriented Runtime-checking (DOOR) callable type hint classes**
-(i.e., :class:`beartype.door.TypeHint` subclasses implementing support for
-:pep:`484`- and :pep:`585`-compliant ``Callable[...]`` type hints).
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) callable type hint
+classes** (i.e., :class:`beartype.door.TypeHint` subclasses implementing support
+for :pep:`484`- and :pep:`585`-compliant ``Callable[...]`` type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
 from beartype.door._cls.doorsub import _TypeHintSubscripted
-from beartype.door._cls.doorsuper import TypeHint
+from beartype.door._cls.doorsuper import (
+    TypeHint,
+    # T,
+)
 from beartype.roar import BeartypeDoorPepUnsupportedException
 from beartype.typing import (
     Any,
@@ -21,6 +24,7 @@ from beartype.typing import (
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_CALLABLE_PARAMS)
+# from beartype._data.kind.datakindsequence import TUPLE_EMPTY
 from beartype._util.cache.utilcachecall import property_cached
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
     get_hint_pep484585_callable_params,
@@ -29,100 +33,206 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585callable import (
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 
 # ....................{ SUBCLASSES                         }....................
-# FIXME: Document all public and private attributes of this class, please.
 class CallableTypeHint(_TypeHintSubscripted):
     '''
     **Callable type hint wrapper** (i.e., high-level object encapsulating a
     low-level :pep:`484`- or :pep:`585`-compliant ``Callable[...]`` type hint).
-
-    Attributes (Private)
-    --------
     '''
 
     # ..................{ INITIALIZERS                       }..................
+    #FIXME: Excise us up, please.
+    # def __init__(self, hint: T) -> None:
+    #     .
+
     def _make_args(self) -> tuple:
 
-        # Tuple of the zero or more low-level child type hints subscripting
-        # (indexing) the low-level parent type hint wrapped by this wrapper.
+        # Tuple of all child type hints subscripting this callable type hint,
+        # localized for both readability and negligible efficiency gains.
+        #
+        # Note that this is a flattened tuple of the one or more child type
+        # hints subscripting this callable type hint. Presumably for space
+        # efficiency reasons, both PEP 484- *AND* 585-compliant callable type
+        # hints implicitly flatten the "__args__" dunder tuple from the original
+        # data structure subscripting those hints. CPython produces this
+        # flattened tuple as the concatenation of:
+        #
+        # * Either:
+        #   * If the first child type originally subscripting this hint was a
+        #     list, all items subscripting the nested list of zero or more
+        #     parameter type hints originally subscripting this hint as is:
+        #         >>> Callable[[], bool].__args__
+        #         (bool,)
+        #         >>> Callable[[int, str], bool].__args__
+        #         (int, str, bool)
+        #
+        #     This includes a list containing only the empty tuple signifying a
+        #     callable accepting *NO* parameters, in which case that empty tuple
+        #     is preserved as is:
+        #         >>> Callable[[()], bool].__args__
+        #         ((), bool)
+        #   * Else, the first child type originally subscripting this hint as
+        #     is. In this case, that child type is required to be either:
+        #     * An ellipsis object (i.e., the "Ellipsis" builtin singleton):
+        #         >>> Callable[..., bool].__args__
+        #         (Ellipsis, bool)
+        #     * A PEP 612-compliant parameter specification (i.e.,
+        #       "typing.ParamSpec[...]" type hint):
+        #         >>> Callable[ParamSpec('P'), bool].__args__
+        #         (~P, bool)
+        #     * A PEP 612-compliant parameter concatenation (i.e.,
+        #       "typing.Concatenate[...]" type hint):
+        #         >>> Callable[Concatenate[str, ParamSpec('P')], bool].__args__
+        #         (typing.Concatenate[str, ~P], bool)
+        # * The return type hint originally subscripting this hint.
+        #
+        # Note that both PEP 484- *AND* 585-compliant callable type hints
+        # guarantee this tuple to contain at least one child type hint. Ergo, we
+        # avoid validating that constraint here:
+        #     >>> from typing import Callable
+        #     >>> Callable[()]
+        #     TypeError: Callable must be used as Callable[[arg, ...], result].
+        #     >>> from collections.abc import Callable
+        #     >>> Callable[()]
+        #     TypeError: Callable must be used as Callable[[arg, ...], result].
+        # args = self._args
         args = super()._make_args()
 
         # Note that this branch may be literally unreachable, as an
         # unsubscripted "Callable" should already be implicitly handled by the
         # "ClassTypeHint" subclass. Nonetheless, this branch exists for safety.
-        if len(args) == 0:  # pragma: no cover
+        if not args:  # pragma: no cover
             args = (..., Any,)
         else:
             # Parameters type hint(s) subscripting this callable type hint.
-            self._callable_params = get_hint_pep484585_callable_params(
-                self._hint)
+            #
+            # Note that this:
+            # * May be a special object (e.g., ellipsis) rather than a tuple of
+            #   zero or more parameter type hints.
+            # * Has the essential side effect of eliminating harmful edge cases
+            #   (e.g., "Callable[[()], Any]", which is semantically but *NOT*
+            #   syntactically equivalent to "Callable[[], Any]").
+            args_params = get_hint_pep484585_callable_params(self._hint)
 
-            #FIXME: Should we classify this hint as well? Contemplate us up.
             # Return type hint subscripting this callable type hint.
-            callable_return = get_hint_pep484585_callable_return(self._hint)
+            args_return = get_hint_pep484585_callable_return(self._hint)
 
-            # If this hint was first subscripted by an ellipsis (i.e., "...")
-            # signifying a callable accepting an arbitrary number of parameters
-            # of arbitrary types, strip this ellipsis. The ellipsis is *NOT* a
-            # PEP-compliant type hint in general and thus *CANNOT* be wrapped by
-            # the "TypeHint" wrapper.
-            if self._callable_params is Ellipsis:
-                #FIXME: *NO.* This is bad. Although an ellipsis is obviously
-                #*NOT* a type hint in and of itself, an ellipsis is absolutely a
-                #valid argument of a callable type hint and must *NOT* be
-                #stripped. Preserve this ellipsis as is, please. We're exposing
-                #this via the public "args" property, after all.
-                #
-                #Instead, override the _args_wrapped_tuple() property to
-                #dynamically replace ellipsis with "typing.Any" hints: e.g.,
-                #    #FIXME: Does this need caching? Probably not, thankfully.
-                #    @property
-                #    def _args_wrapped_tuple(self) -> Tuple[TypeHint, ...]:
-                #        args_wrapped_tuple = []
-                #
-                #        if self._callable_params is Ellipsis:
-                #            args_wrapped_tuple.append(TypeHint(Any))
-                #        else:
-                #            for callable_param in self._callable_params:
-                #                args_wrapped_tuple.append(TypeHint(callable_param))
-                #
-                #        args_wrapped_tuple.append(self._callable_return)
-                #        return tuple(args_wrapped_tuple)
+            # Sign uniquely identifying this parameter list if any *OR*
+            # "None" otherwise.
+            hint_args_sign = get_hint_pep_sign_or_none(args_params)
 
-                # e.g. `Callable[..., Any]`
-                self._callable_params = ()
-            # Else...
-            else:
-                # Sign uniquely identifying this parameter list if any *OR*
-                # "None" otherwise.
-                hint_args_sign = get_hint_pep_sign_or_none(
-                    self._callable_params)
+            # If this hint was first subscripted by a PEP 612-compliant
+            # parameter type hint, raise an exception. *sigh*
+            if hint_args_sign in HINT_SIGNS_CALLABLE_PARAMS:
+                raise BeartypeDoorPepUnsupportedException(
+                    f'PEP 484 or 585 callable type hint {repr(self._hint)} '
+                    f'PEP 612 child type hint {repr(args_params)} '
+                    f'currently unsupported.'
+                )
+            # Else, this hint was *NOT* first subscripted by a PEP
+            # 612-compliant parameter type hint.
 
-                # If this hint was first subscripted by a PEP 612-compliant
-                # type hint, raise an exception. *sigh*
-                if hint_args_sign in HINT_SIGNS_CALLABLE_PARAMS:
-                    raise BeartypeDoorPepUnsupportedException(
-                        f'Type hint {repr(self._hint)} '
-                        f'PEP 612 child type hint '
-                        f'{repr(self._callable_params)} '
-                        f'currently unsupported.'
-                    )
-                # Else, this hint was *NOT* first subscripted by a PEP
-                # 612-compliant type hint.
-
-            #FIXME: Note this will fail if "self._callable_params" is a PEP
-            #612-compliant "typing.ParamSpec(...)" or "typing.Concatenate[...]"
-            #object, as neither are tuples and thus *NOT* addable here.
-            #FIXME: *AFTER* resolving that issue, remove the trailing pragma
-            #"# type: ignore[operator]" from the following line.
+            # Parameters type hint(s) subscripting this callable type hint,
+            # coerced into a 1-tuple if *NOT* already a tuple.
+            args_params_tuple = (
+                args_params
+                if isinstance(args_params, tuple) else
+                (args_params,)
+            )
 
             # Recreate the tuple of child type hints subscripting this parent
             # callable type hint from the tuple of argument type hints
             # introspected above. Why? Because the latter is saner than the
             # former in edge cases (e.g., ellipsis, empty argument lists).
-            args = self._callable_params + (callable_return,)  # type: ignore[operator]
+            args = args_params_tuple + (args_return,)
 
         # Return these child hints.
         return args
+
+    # ..................{ PRIVATE ~ properties               }..................
+    @property
+    # @property_cached
+    def _args_wrapped_tuple(self) -> Tuple[TypeHint, ...]:
+
+        # Tuple of all child type hints subscripting this callable type hint.
+        args = self._args
+
+        # Number of child type hints subscripting this callable type hint.
+        args_len = len(args)
+
+        # Tuple of all child type hint wrappers subscripting this callable type
+        # hint wrapper, initialized to the empty tuple for simplicity.
+        args_wrapped_tuple = ()
+
+        # If this type hint is unsubscripted, return the empty tuple.
+        if not args_len:
+            pass
+        # Else, this type hint is subscripted by one or more child type hints.
+        #
+        # If this type hint is subscripted by exactly one child type hint, then
+        # that child type hint signifies this callable's return type hint,
+        # implying this callable accepts *NO* parameters. In this case...
+        elif args_len == 1:
+            # Return a 2-tuple consisting of...
+            args_wrapped_tuple = (
+                # Empty parameter list.
+                # CallableParamsNoneTypeHint(_CallableParamsNone),
+                TypeHint(Tuple[()]),
+                # Return type hint.
+                TypeHint(args[-1]),
+            )
+        # Else, this type hint is subscripted by two or more child type hints.
+        #
+        # If the first child type hint subscripting this type hint is an
+        # ellipsis (i.e., "..."), this callable accepts *ANY* parameters of
+        # *ANY* arbitrary types. In this case...
+        elif args[0] is ...:
+            # Return a 2-tuple consisting of...
+            args_wrapped_tuple = (
+                # Variadic parameter list.
+                # CallableParamsAnyTypeHint(_CallableParamsAny),
+                TypeHint(Any),
+                # Return type hint.
+                TypeHint(args[-1]),
+            )
+        # Else, the first child type hint subscripting this type hint is *NOT*
+        # an ellipsis. In this case, defer to the superclass approach.
+        else:
+            # args_wrapped_tuple = super()._args_wrapped_tuple
+            args_wrapped_tuple = tuple(
+                TypeHint(hint_child) for hint_child in args)
+
+        # Return this tuple.
+        print(f'Callable: {self._hint}; args: {self._args}; args_wrapped_tuple: {args_wrapped_tuple}')
+        return args_wrapped_tuple
+
+    # ..................{ PROPERTIES ~ hints                 }..................
+    @property  # type: ignore
+    @property_cached
+    def param_hints(self) -> Tuple[TypeHint, ...]:
+        '''
+        Tuple of the one or more parameter type hints subscripting this
+        callable type hint.
+
+        Notably, if this callable accepts:
+
+        * *No* parameters (i.e., was originally subscripted by the empty list as
+          ``Callable[[], ???]``), this is the 1-tuple
+          ``(TypeHint(Tuple[()]),)``.
+        * *Any* parameters of *any* arbitrary types (i.e., was originally
+          subscripted by an ellipsis as ``Callable[..., ???]``), this is the
+          1-tuple ``(TypeHint(Any),)``.
+        '''
+
+        return self._args_wrapped_tuple[:-1]
+
+
+    @property
+    def return_hint(self) -> TypeHint:
+        '''
+        Return type hint subscripting this callable type hint.
+        '''
+
+        return self._args_wrapped_tuple[-1]
 
     # ..................{ PROPERTIES ~ bools                 }..................
     # FIXME: Remove this by instead adding support for ignoring ignorable
@@ -153,41 +263,19 @@ class CallableTypeHint(_TypeHintSubscripted):
         # Callable[???, Any]
         return self.return_hint.is_ignorable
 
-    # ..................{ PROPERTIES ~ hints                 }..................
-    @property  # type: ignore
-    @property_cached
-    def param_hints(self) -> Tuple[TypeHint, ...]:
-        '''
-        Arguments portion of the callable.
-
-        May be an empty tuple if the callable takes no arguments.
-        '''
-
-        return self._args_wrapped_tuple[:-1]
-
-
-    @property
-    def return_hint(self) -> TypeHint:
-        '''
-        Return type of the callable.
-        '''
-
-        return self._args_wrapped_tuple[-1]
-
     # ..................{ PRIVATE ~ testers                  }..................
     #FIXME: Internally comment us up, please.
-    def _is_le_branch(self, branch: TypeHint) -> bool:
+    def _is_subhint_branch(self, branch: TypeHint) -> bool:
 
-        # If the branch is not subscripted, then we assume it is subscripted
-        # with ``Any``, and we simply check that the origins are compatible.
+        # If that branch is unsubscripted, assume it is subscripted as
+        # "typing.Callable[..., Any]" and just test for compatible origins.
         if branch._is_args_ignorable:
             return issubclass(self._origin, branch._origin)
-        if not isinstance(branch, CallableTypeHint):
+        elif not isinstance(branch, CallableTypeHint):
             return False
-        if not issubclass(self._origin, branch._origin):
+        elif not issubclass(self._origin, branch._origin):
             return False
-
-        if not branch.is_params_ignorable and (
+        elif not branch.is_params_ignorable and (
             (
                 self.is_params_ignorable or
                 len(self.param_hints) != len(branch.param_hints) or
@@ -206,7 +294,7 @@ class CallableTypeHint(_TypeHintSubscripted):
         #    return self.return_hint <= branch.return_hint
         #
         # Are we missing something? We're probably missing something. *sigh*
-        if not branch.is_return_ignorable:
+        elif not branch.is_return_ignorable:
             return (
                 False
                 if self.is_return_ignorable else
@@ -214,3 +302,58 @@ class CallableTypeHint(_TypeHintSubscripted):
             )
 
         return True
+
+# ....................{ PRIVATE ~ classes                  }....................
+#FIXME: Excise us up, please.
+# class _CallableParamsAny(object):
+#     '''
+#     **Parameter-less callable placeholder type** (i.e., low-level class that
+#     exists only to signify a callable permissively accepting *any* number of
+#     parameters of *any* arbitrary types).
+#     '''
+#
+#     pass
+#
+#
+# class _CallableParamsNone(object):
+#     '''
+#     **Parameter-less callable placeholder type** (i.e., low-level class that
+#     exists only to signify a callable strictly accepting *no* parameters).
+#     '''
+#
+#     pass
+
+# ....................{ SUBCLASSES ~ placeholders          }....................
+#FIXME: Excise us up, please.
+# class CallableParamsAnyTypeHint(TypeHint):
+#     '''
+#     **All-parameters callable type hint wrapper** (i.e., high-level object
+#     encapsulating an ellipsis subscripting the first argument of a low-level
+#     :pep:`484`- or :pep:`585`-compliant ``Callable[..., ...]`` type hint,
+#     signifying a callable permissively accepting *any* number of parameters of
+#     *any* arbitrary types).
+#     '''
+#
+#     # ..................{ INITIALIZERS                       }..................
+#     def __init__(self, hint: T = _CallableParamsAny) -> None:
+#
+#         # Wrap a beartype-specific placeholder type that exists only to signify
+#         # a callable accepting *ANY* parameters.
+#         super().__init__(hint)
+#
+#
+# class CallableParamsNoneTypeHint(TypeHint):
+#     '''
+#     **No-parameters callable type hint wrapper** (i.e., high-level object
+#     encapsulating an empty list subscripting the first argument of a low-level
+#     :pep:`484`- or :pep:`585`-compliant ``Callable[[], ...]`` type hint,
+#     signifying a callable strictly accepting *no* parameters).
+#     '''
+#
+#     #FIXME: Excise us up, please.
+#     # # ..................{ INITIALIZERS                       }..................
+#     # def __init__(self) -> None:
+#     #
+#     #     # Wrap a beartype-specific placeholder type that exists only to signify
+#     #     # a callable accepting *NO* parameters.
+#     #     super().__init__(hint=_CallableParamsNone)
