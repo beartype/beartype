@@ -189,7 +189,7 @@ def test_door_typehint_equals(
         assert typehint_b != nonhint
 
 
-def test_door_typehint_rich_fail() -> None:
+def test_door_typehint_compare_fail() -> None:
     '''
     Test unsuccessful usage the rich comparison dunder methods defined by the
     :class:`beartype.door.TypeHint` class.
@@ -197,7 +197,11 @@ def test_door_typehint_rich_fail() -> None:
 
     # Defer test-specific imports.
     from beartype.door import TypeHint
-    from beartype.typing import Callable, Sequence, Any
+    from beartype.typing import (
+        Any,
+        Callable,
+        Sequence,
+    )
     from pytest import raises
 
     a = TypeHint(Callable[[], list])
@@ -356,16 +360,22 @@ def test_door_typehint_len():
 
 def test_door_typehint_is_ignorable() -> None:
     '''
-    Test the read-only :meth:`beartype.door.TypeHint.is_ignorable` property.
+    Test the :meth:`beartype.door.TypeHint.is_ignorable` property.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.door import TypeHint
     from beartype.roar import BeartypeDoorException, BeartypeDoorNonpepException
+    from beartype.typing import TypeVar
+    from beartype._util.hint.utilhinttest import is_hint_ignorable
+    from beartype._util.hint.pep.proposal.pep484.utilpep484typevar import (
+        get_hint_pep484_typevar_bound_or_none)
     from beartype_test.a00_unit.data.hint.data_hint import HINTS_IGNORABLE
     from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
     from contextlib import suppress
 
+    # ....................{ PASS                           }....................
     # Assert this property accepts ignorable type hints.
     for hint_ignorable in HINTS_IGNORABLE:
         #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
@@ -377,14 +387,48 @@ def test_door_typehint_is_ignorable() -> None:
     # * Accepts unignorable PEP-compliant type hints.
     # * Rejects ignorable PEP-compliant type hints.
     for hint_pep_meta in HINTS_PEP_META:
+        # Hint to be tested.
+        hint = hint_pep_meta.hint
+
+        # True only if the @beartype decorator currently ignores this hint.
+        hint_is_ignorable = hint_pep_meta.is_ignorable
+
+        # If this hint is a type variable...
+        #
+        # Note that the @beartype decorator and the "beartype.door" API
+        # currently disagree as to whether type variables are ignorable. From:
+        # the perspective of:
+        # * The low-level @beartype decorator, they mostly are.
+        # * The high-level "beartype.door" API, they mostly are *NOT*.
+        #
+        # Since the "hint_pep_meta.is_ignorable" variable reflects the
+        # perspective of the @beartype decorator rather than the "beartype.door"
+        # API, further logic is needed to decide whether this type variable is
+        # actually ignorable from the "beartype.door" perspective.
+        if isinstance(hint, TypeVar):
+            # Type hint synthesized from all bounded constraints parametrizing
+            # this type variable if any *OR* "None" otherwise.
+            hint_typevar_bound = get_hint_pep484_typevar_bound_or_none(hint)
+
+            # This type hint is ignorable only if either...
+            hint_is_ignorable = (
+                # This type hint is unconstrained *OR*...
+                hint_typevar_bound is None or
+                # This type hint is constrained by one or more ignorable
+                # constraints.
+                is_hint_ignorable(hint_typevar_bound)
+            )
+        # Else, this hint is *NOT* a type variable.
+
         #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
         #all currently unsupported type hints. Most of these will be
         #"BeartypeDoorNonpepException", but there are some covariant type hints
         #(e.g. numpy.dtype[+ScalarType]) that will raise a "not invariant"
         #exception in the "TypeVarTypeHint" subclass.
         with suppress(BeartypeDoorException):
-            assert TypeHint(hint_pep_meta.hint).is_ignorable is (
-                hint_pep_meta.is_ignorable)
+            assert TypeHint(hint).is_ignorable is hint_is_ignorable
+            # assert TypeHint(hint_pep_meta.hint).is_ignorable is (
+            #     hint_pep_meta.is_ignorable)
 
 # ....................{ TESTS ~ testers                    }....................
 def test_door_typehint_is_subhint_fail() -> None:

@@ -202,8 +202,9 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     S = TypeVar('S')
     T = TypeVar('T')
 
-    SeqBoundTypeVar = TypeVar("SeqBoundTypeVar", bound=Sequence)
-    IntStrConstrainedTypeVar = TypeVar("IntStrConstrainedTypeVar", int, str)
+    # Arbitrary constrained type variables.
+    T_sequence = TypeVar('T_sequence', bound=SequenceABC)
+    T_int_or_str = TypeVar('T_int_or_str', int, str)
 
     # ..................{ CLASSES                            }..................
     class MuhThing:
@@ -261,7 +262,6 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         pass
 
 
-    #FIXME: Actually reference this class below, please. *sigh*
     class MuhGenericTwoIntInt(MuhGenericTwo[int, int]):
         '''
         Arbitrary concrete generic subclass inheriting the
@@ -314,18 +314,18 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
 
         # ..................{ PEP 484 ~ argless : typevar    }..................
         # PEP 484-compliant type variables.
-        (list, SeqBoundTypeVar, True),
-        (SeqBoundTypeVar, list, False),
-        (int, IntStrConstrainedTypeVar, True),
-        (str, IntStrConstrainedTypeVar, True),
-        (list, IntStrConstrainedTypeVar, False),
-        (Union[int, str], IntStrConstrainedTypeVar, True),
-        (Union[int, str, None], IntStrConstrainedTypeVar, False),
-        (T, SeqBoundTypeVar, False),
-        (SeqBoundTypeVar, T, True),
-        (SeqBoundTypeVar, Any, True),
+        (list, T_sequence, True),
+        (T_sequence, list, False),
+        (int, T_int_or_str, True),
+        (str, T_int_or_str, True),
+        (list, T_int_or_str, False),
+        (Union[int, str], T_int_or_str, True),
+        (Union[int, str, None], T_int_or_str, False),
+        (T, T_sequence, False),
+        (T_sequence, T, True),
+        (T_sequence, Any, True),
         (Any, T, True),  # Any is compatible with an unconstrained TypeVar
-        (Any, SeqBoundTypeVar, False),  # but not vice versa
+        (Any, T_sequence, False),  # but not vice versa
 
         # ..................{ PEP 484 ~ argless : number     }..................
         # Blame Guido.
@@ -365,13 +365,12 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (MuhGeneric, MuhGeneric, True),
         (MuhGeneric, MuhGeneric[int], False),
         (MuhGeneric[int], MuhGeneric, True),
-        (MuhGeneric[int], MuhGeneric[SeqBoundTypeVar], False),
-        (MuhGeneric[int], MuhGeneric[SeqBoundTypeVar], False),
-        (MuhGeneric[list], MuhGeneric[SeqBoundTypeVar], True),
+        (MuhGeneric[int], MuhGeneric[T_sequence], False),
+        (MuhGeneric[list], MuhGeneric[T_sequence], True),
         (MuhGeneric[list], MuhGeneric[Sequence], True),
-        (MuhGeneric[str], MuhGeneric[SeqBoundTypeVar], True),
+        (MuhGeneric[str], MuhGeneric[T_sequence], True),
         (MuhGeneric[Sequence], MuhGeneric[list], False),
-        (MuhGeneric[SeqBoundTypeVar], MuhGeneric, True),
+        (MuhGeneric[T_sequence], MuhGeneric, True),
 
         #FIXME: Uncomment after resolving open issue #271, please.
         # PEP 484-compliant generics parametrized by two type variables.

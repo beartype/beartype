@@ -234,11 +234,10 @@ _HINT_KEY_TO_WRAPPER = CacheUnboundedStrong(
     lock_type=RLock,
 )
 '''
-**Type hint wrapper cache** (i.e., non-thread-safe cache mapping
-from the machine-readable representations of all type hints to
-cached singleton instances of concrete subclasses of the
-:class:`beartype.door.TypeHint` abstract base class (ABC) wrapping
-those hints).**
+**Type hint wrapper cache** (i.e., non-thread-safe cache mapping from the
+machine-readable representations of all type hints to cached singleton instances
+of concrete subclasses of the :class:`beartype.door.TypeHint` abstract base
+class (ABC) wrapping those hints).
 
 Design
 --------------

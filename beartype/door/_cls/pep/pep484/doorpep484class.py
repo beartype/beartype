@@ -77,10 +77,17 @@ class ClassTypeHint(TypeHint):
         #  implementation performing this logic on behalf of *EVERY* subclass.
         #* TypeHint._is_subhint_branch() should then call a subclass-specific
         #  abstract TypeHint._is_subhint_branch_override() method.
+        #FIXME: Actually, TypeHint._is_subhint_branch() is only called in
+        #exactly one place: by TypeHint._is_subhint(). So, the simpler solution
+        #would be to simply implement the following tests there, please.
 
         # Everything is a subclass of "Any".
         if branch._hint is Any:
             return True
+
+        #FIXME: *UHM.* Wat? Do we really currently wrap "typing.Any" with an
+        #instance of this class? Why? That makes *NO* sense. "typing.Any" should
+        #be wrapped by its own "TypeHintAny" subclass, please. *sigh*
         # "Any" is only a subclass of "Any".
         elif self._hint is Any:
             return False
@@ -150,14 +157,12 @@ class ClassTypeHint(TypeHint):
         #  #both "self_args" and "branch_args" to is_subhint(). Notably, we
         #  #return True if and only if is_subhint() returns True for *ALL* pairs
         #  #of items of these two n-tuples.
-        #  #
-        #  #The only catch there is that we'll need to define a new
-        #  #"TypeVarTypeHint" subclass if we haven't already such that:
-        #  #* Unconstrained type variables are semantically equivalent to
-        #  #  "typing.Any".
-        #  #* Constrained type variables semantically reduce to their
-        #  #  constraints.
 
         # Return true only if...
-        return branch._is_args_ignorable and issubclass(
-            self._origin, branch._origin)
+        return (
+            # This class is unsubscripted (and thus *NOT* a subscripted generic)
+            # *AND*...
+            branch._is_args_ignorable and
+            # This class is a subclass of that class.
+            issubclass(self._origin, branch._origin)
+        )

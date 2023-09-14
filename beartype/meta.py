@@ -44,7 +44,7 @@ of Life (EoL) (e.g., Python 3.5) are explicitly unsupported.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 import sys as _sys
-from beartype.typing import Tuple as _Tuple
+# from beartype.typing import Tuple as _Tuple
 
 # ....................{ METADATA                           }....................
 NAME = 'beartype'
@@ -108,7 +108,7 @@ Maximum minor stable version of this major version of Python currently released
 '''
 
 
-def _convert_version_str_to_tuple(version_str: str) -> _Tuple[int, ...]:
+def _convert_version_str_to_tuple(version_str: str):  # -> _Tuple[int, ...]:
     '''
     Convert the passed human-readable ``.``-delimited version string into a
     machine-readable version tuple of corresponding integers.

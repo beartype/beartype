@@ -96,7 +96,7 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
 
         # If either...
         if (
-            # This hint is a PEP-noncompliant class *OR*...
+            # This hint is a PEP-noncompliant isinstanceable class *OR*...
             isinstance(hint, type) or
             # An unsupported kind of PEP-compliant type hint (e.g.,
             # "typing.TypedDict" instance)...
@@ -107,16 +107,15 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
         # Else, raise an exception.
         else:
             raise BeartypeDoorNonpepException(
-                f'Type hint {repr(hint)} invalid '
-                f'(i.e., either PEP-noncompliant or PEP-compliant but '
-                f'currently unsupported by "beartype.door.TypeHint").'
+                f'Type hint {repr(hint)} '
+                f'currently unsupported by "beartype.door.TypeHint".'
             )
     # Else, this hint is supported.
 
     #FIXME: Alternately, it might be preferable to refactor this to resemble:
     #    if (
     #       not get_hint_pep_args(hint) and
-    #       get_hint_pep_origin_or_none(hint) is None
+    #       get_hint_pep_origin_type_or_none(hint) is not None
     #    ):
     #        wrapper_subclass = ClassTypeHint
     #
@@ -125,11 +124,17 @@ def get_typehint_subclass(hint: object) -> Type[TypeHint]:
     #FIXME: While sensible, the above approach induces non-trivial test
     #failures. Let's investigate this further at a later time, please.
 
-    # If a subscriptable type has no args, all we care about is the origin.
+    #FIXME: Push the "not" up to the top level of this conditional, please.
+    # If this hint is unsubscripted a subscriptable type has no args, all we care about is the origin.
     elif (
+        # Unsubscripted (i.e., indexed by *NO* child type hints) *AND*...
         not get_hint_pep_args(hint) and
+        #FIXME: No idea, bro. This is pretty weird. For one,
+        #"_HINT_SIGNS_ORIGINLESS" doesn't even contain all the signs it should
+        #(e.g., "HintSignLiteral", "HintSignUnion"). For another we should just
+        #be calling this instead:
+        #    get_hint_pep_origin_type_or_none(hint) is not None
         hint_sign not in _HINT_SIGNS_ORIGINLESS
-        # get_hint_pep_origin_or_none(hint) is None
     ):
         wrapper_subclass = ClassTypeHint
     # In any case, this hint is supported by this concrete subclass.
@@ -191,7 +196,7 @@ def _init() -> None:
     # (*AFTER* initializing this dictionary)...
     for typehint_cls in _HINT_SIGN_TO_TYPEHINT_CLS.values():
         # If the unqualified basename of this subclass is prefixed by an
-        # underscare, this subclass is private rather than public. In this case,
+        # underscore, this subclass is private rather than public. In this case,
         # silently ignore this private subclass and continue to the next.
         if typehint_cls.__name__.startswith('_'):
             continue
@@ -204,6 +209,6 @@ def _init() -> None:
         # exceptions and discourage users from violating privacy encapsulation.
         typehint_cls.__module__ = 'beartype.door'
 
-
+# ....................{ MAIN                               }....................
 # Initialize this submodule.
 _init()

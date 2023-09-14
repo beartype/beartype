@@ -773,6 +773,80 @@ def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
     return getattr(hint, '__origin__', None)
 
 # ....................{ GETTERS ~ origin : type            }....................
+#FIXME: Unit test us up, please.
+@callable_cached
+def get_hint_pep_origin_type_or_none(hint: Any) -> Optional[type]:
+    '''
+    **Standard origin type** (i.e., isinstanceable class declared by Python's
+    standard library such that *all* objects satisfying the passed
+    PEP-compliant type hint are instances of this class) originating this hint
+    if this hint originates from such a type *or* :data:`None` otherwise (i.e.,
+    if this hint does *not* originate from such a type).
+
+    This getter is memoized for efficiency.
+
+    Caveats
+    ----------
+    **This high-level getter should always be called in lieu of the low-level**
+    :func:`get_hint_pep_origin_or_none` **getter on attempting to
+    directly access the low-level** ``__origin__`` **dunder attribute.**
+
+    Parameters
+    ----------
+    hint : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    Optional[type]
+        Either:
+
+        * If this hint originates from a standard origin type, that type.
+        * Else, :data:`None`.
+
+    See Also
+    ----------
+    :func:`.get_hint_pep_origin_or_none`
+        Further details.
+    '''
+
+    # Origin type originating this hint if any *OR* "None" otherwise,
+    # initialized to the arbitrary object set as the "hint.__origin__" dunder
+    # attribute if this hint defines that attribute.
+    hint_origin: Optional[type] = get_hint_pep_origin_or_none(hint)  # type: ignore[assignment]
+
+    # If this origin is *NOT* a type...
+    #
+    # Ideally, this attribute would *ALWAYS* be a type for all possible
+    # PEP-compliant type hints. For unknown reasons, type hint factories defined
+    # by the standard "typing" module often set their origins to those same type
+    # hint factories, despite those factories *NOT* being types. Why? Frankly,
+    # we have no idea and neither does anyone else:
+    #    >>> import typing
+    #    >>> typing.Literal[1, 2].__origin__
+    #    typing.Literal  # <-- do you even know what you are doing, python?
+    #    >>> typing.Optional[int].__origin__
+    #    typing.Union  # <-- wut? this is insane, python.
+    if not isinstance(hint_origin, type):
+        # Default this origin type to either...
+        hint_origin = (
+            # If this hint is itself a type, this hint could be euphemistically
+            # said to originate from "itself." In this case, this hint.
+            #
+            # Look. Just go with it. We wave our hands in the air.
+            hint if isinstance(hint, type) else
+            # Else, this hint is *NOT* a type. Default to "None". No choice, yo!
+            None
+        )
+    # Else, this origin is a type.
+
+    # Return this origin.
+    return hint_origin
+
+
+#FIXME: Is this even required or desired anymore? Can't we just replace all
+#calls to this frankly non-ideal getter with calls to a dramatically superior
+#get_hint_pep_origin_type() getter? Excise us up, please.
 def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
     '''
     **Isinstanceable origin type** (i.e., class passable as the second argument
@@ -821,6 +895,9 @@ def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
     return hint_origin_type
 
 
+#FIXME: Is this even required or desired anymore? Can't we just replace all
+#calls to this frankly non-ideal getter with calls to the dramatically superior
+#get_hint_pep_origin_type_or_none() getter? Excise us up, please.
 def get_hint_pep_origin_type_isinstanceable_or_none(
     hint: Any) -> Optional[type]:
     '''

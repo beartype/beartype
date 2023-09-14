@@ -54,10 +54,7 @@ from beartype.door._cls.pep.pep484.doorpep484newtype import (
 from beartype.door._cls.pep.pep484.doorpep484typevar import (
     TypeVarTypeHint as TypeVarTypeHint)
 from beartype.door._cls.pep.pep484585.doorpep484585callable import (
-    CallableTypeHint as CallableTypeHint,
-    # CallableParamsAnyTypeHint as CallableParamsAnyTypeHint,
-    # CallableParamsNoneTypeHint as CallableParamsNoneTypeHint,
-)
+    CallableTypeHint as CallableTypeHint)
 
 #FIXME: Actually, let's *NOT* publicly expose this for the moment. Why? Because
 #we still need to split this into fixed and variadic tuple subclasses.

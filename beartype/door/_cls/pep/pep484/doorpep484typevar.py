@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Decidedly Object-Oriented Runtime-checking (DOOR) type variable classes**
-(i.e., :class:`beartype.door.TypeHint` subclasses implementing support
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) type variable
+classes** (i.e., :class:`beartype.door.TypeHint` subclasses implementing support
 for :pep:`484`-compliant :attr:`typing.TypeVar` type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -35,7 +35,28 @@ class TypeVarTypeHint(UnionTypeHint):
     if TYPE_CHECKING:
         _hint: TypeVar
 
-    # ..................{ PRIVATE ~ methods                  }..................
+    # ..................{ PROPERTIES                         }..................
+    @property
+    def is_ignorable(self) -> bool:
+
+        # This type variable is ignorable only if this type variable is either:
+        # * Unconstrained by any bounds or constraints (and thus effectively
+        #   bound only by the "typing.Any" catch-all).
+        # * Bound by an ignorable bound: e.g.,
+        #       TypeVar('T', bound=object)
+        # * Constrained by one or more ignorable constraints. Since constraints
+        #   effectively build a union over those constraints, even a single
+        #   ignorable constraint suffices to render the entire type variable
+        #   ignorable: e.g.,
+        #       TypeVar('T', object)
+        return self._is_args_ignorable
+
+    # ..................{ PRIVATE ~ properties               }..................
+    #FIXME: *HMM.* We should arguably just define the _make_args() factory
+    #method instead. That implementation would become quite a bit simpler as
+    #well as generalize to cover more use cases. By defining this method,
+    #"self._args" and "self._args_wrapped_tuple" are now desynchronized. *sigh*
+
     @property  # type: ignore[misc]
     @property_cached
     def _args_wrapped_tuple(self) -> Tuple[TypeHint, ...]:
@@ -83,7 +104,7 @@ class TypeVarTypeHint(UnionTypeHint):
         # Else, this type variable is unconstrained.
 
         #FIXME: Consider globalizing this as a private constant for efficiency.
-        # Return the 1-tuple containing only the wrapped catch-all "Any". Why?
-        # Because an unconstrained, unbounded type variable is semantically
-        # equivalent to a type variable bounded by "Any".
+        # Return the 1-tuple containing only the "typing.Any" catch-all. Why?
+        # Because an unconstrained and unbounded type variable is semantically
+        # equivalent to a type variable bounded by "typing.Any".
         return (TypeHint(Any),)

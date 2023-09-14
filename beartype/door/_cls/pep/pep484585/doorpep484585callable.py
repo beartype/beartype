@@ -40,11 +40,8 @@ class CallableTypeHint(_TypeHintSubscripted):
     '''
 
     # ..................{ INITIALIZERS                       }..................
-    #FIXME: Excise us up, please.
-    # def __init__(self, hint: T) -> None:
-    #     .
-
     def _make_args(self) -> tuple:
+        # print(f'{self}._origin: {self._origin}')
 
         # Tuple of all child type hints subscripting this callable type hint,
         # localized for both readability and negligible efficiency gains.
@@ -161,7 +158,7 @@ class CallableTypeHint(_TypeHintSubscripted):
 
         # Tuple of all child type hint wrappers subscripting this callable type
         # hint wrapper, initialized to the empty tuple for simplicity.
-        args_wrapped_tuple = ()
+        args_wrapped_tuple: Tuple[TypeHint, ...] = ()
 
         # If this type hint is unsubscripted, return the empty tuple.
         if not args_len:
@@ -175,7 +172,6 @@ class CallableTypeHint(_TypeHintSubscripted):
             # Return a 2-tuple consisting of...
             args_wrapped_tuple = (
                 # Empty parameter list.
-                # CallableParamsNoneTypeHint(_CallableParamsNone),
                 TypeHint(Tuple[()]),
                 # Return type hint.
                 TypeHint(args[-1]),
@@ -189,7 +185,6 @@ class CallableTypeHint(_TypeHintSubscripted):
             # Return a 2-tuple consisting of...
             args_wrapped_tuple = (
                 # Variadic parameter list.
-                # CallableParamsAnyTypeHint(_CallableParamsAny),
                 TypeHint(Any),
                 # Return type hint.
                 TypeHint(args[-1]),
@@ -197,12 +192,10 @@ class CallableTypeHint(_TypeHintSubscripted):
         # Else, the first child type hint subscripting this type hint is *NOT*
         # an ellipsis. In this case, defer to the superclass approach.
         else:
-            # args_wrapped_tuple = super()._args_wrapped_tuple
-            args_wrapped_tuple = tuple(
-                TypeHint(hint_child) for hint_child in args)
+            args_wrapped_tuple = super()._args_wrapped_tuple
 
         # Return this tuple.
-        print(f'Callable: {self._hint}; args: {self._args}; args_wrapped_tuple: {args_wrapped_tuple}')
+        # print(f'Callable: {self._hint}; args: {self._args}; args_wrapped_tuple: {args_wrapped_tuple}')
         return args_wrapped_tuple
 
     # ..................{ PROPERTIES ~ hints                 }..................
@@ -302,58 +295,3 @@ class CallableTypeHint(_TypeHintSubscripted):
             )
 
         return True
-
-# ....................{ PRIVATE ~ classes                  }....................
-#FIXME: Excise us up, please.
-# class _CallableParamsAny(object):
-#     '''
-#     **Parameter-less callable placeholder type** (i.e., low-level class that
-#     exists only to signify a callable permissively accepting *any* number of
-#     parameters of *any* arbitrary types).
-#     '''
-#
-#     pass
-#
-#
-# class _CallableParamsNone(object):
-#     '''
-#     **Parameter-less callable placeholder type** (i.e., low-level class that
-#     exists only to signify a callable strictly accepting *no* parameters).
-#     '''
-#
-#     pass
-
-# ....................{ SUBCLASSES ~ placeholders          }....................
-#FIXME: Excise us up, please.
-# class CallableParamsAnyTypeHint(TypeHint):
-#     '''
-#     **All-parameters callable type hint wrapper** (i.e., high-level object
-#     encapsulating an ellipsis subscripting the first argument of a low-level
-#     :pep:`484`- or :pep:`585`-compliant ``Callable[..., ...]`` type hint,
-#     signifying a callable permissively accepting *any* number of parameters of
-#     *any* arbitrary types).
-#     '''
-#
-#     # ..................{ INITIALIZERS                       }..................
-#     def __init__(self, hint: T = _CallableParamsAny) -> None:
-#
-#         # Wrap a beartype-specific placeholder type that exists only to signify
-#         # a callable accepting *ANY* parameters.
-#         super().__init__(hint)
-#
-#
-# class CallableParamsNoneTypeHint(TypeHint):
-#     '''
-#     **No-parameters callable type hint wrapper** (i.e., high-level object
-#     encapsulating an empty list subscripting the first argument of a low-level
-#     :pep:`484`- or :pep:`585`-compliant ``Callable[[], ...]`` type hint,
-#     signifying a callable strictly accepting *no* parameters).
-#     '''
-#
-#     #FIXME: Excise us up, please.
-#     # # ..................{ INITIALIZERS                       }..................
-#     # def __init__(self) -> None:
-#     #
-#     #     # Wrap a beartype-specific placeholder type that exists only to signify
-#     #     # a callable accepting *NO* parameters.
-#     #     super().__init__(hint=_CallableParamsNone)

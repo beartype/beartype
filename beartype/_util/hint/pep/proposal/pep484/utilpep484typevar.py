@@ -22,8 +22,8 @@ def get_hint_pep484_typevar_bound_or_none(
     '''
     PEP-compliant type hint synthesized from all bounded constraints
     parametrizing the passed :pep:`484`-compliant **type variable** (i.e.,
-    :class:`typing.TypeVar` instance) if any *or* ``None`` otherwise (i.e., if
-    this type variable was parametrized by *no* bounded constraints).
+    :class:`typing.TypeVar` instance) if any *or* :data:`None` otherwise (i.e.,
+    if this type variable was parametrized by *no* bounded constraints).
 
     Specifically, if this type variable was parametrized by:
 
@@ -85,7 +85,7 @@ def get_hint_pep484_typevar_bound_or_none(
         * If this type variable was parametrized by one or more constraints, a
           new PEP-compliant union type hint aggregating those constraints.
         * If this type variable was parametrized by an upper bound, that bound.
-        * Else, ``None``.
+        * Else, :data:`None`.
 
     Raises
     ----------
