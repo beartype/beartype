@@ -72,16 +72,18 @@ def make_type(
 
     Raises
     ----------
-    :exc:`exception_cls`
+    exception_cls
         If either:
 
         * The passed classname is empty.
-        * The passed classname is non-empty but *NOT* a valid unqualified Python
+        * The passed classname is non-empty but *not* a valid unqualified Python
           identifier.
     '''
     assert isinstance(type_name, str), f'{repr(type_name)} not string.'
+    assert isinstance(type_module_name, NoneTypeOr[str]), (
+        f'{repr(type_module_name)} neither string nor "None".')
     assert isinstance(type_doc, NoneTypeOr[str]), (
-        f'{repr(type_doc)} neither "None" nor string.')
+        f'{repr(type_doc)} neither string nor "None".')
 
     # If this classname is *NOT* a valid unqualified Python identifier, raise an
     # exception. Insanely, the builtin type.__init__() constructor silently
@@ -99,8 +101,10 @@ def make_type(
         type_bases = ()  # type: ignore[assignment]
     if type_scope is None:
         type_scope = DICT_EMPTY  # type: ignore[assignment]
-    assert isinstance(type_bases, tuple), f'{repr(type_bases)} not tuple.'
-    assert isinstance(type_scope, dict), f'{repr(type_scope)} not dictionary.'
+    assert isinstance(type_bases, tuple), (
+        f'{repr(type_bases)} neither tuple nor "None".')
+    assert isinstance(type_scope, dict), (
+        f'{repr(type_scope)} neither dictionary nor "None".')
 
     # Thank you, bizarre 3-parameter variant of the type.__init__() constructor.
     cls = type(type_name, type_bases, type_scope)

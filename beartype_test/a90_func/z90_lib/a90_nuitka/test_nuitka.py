@@ -116,5 +116,5 @@ def test_nuitka(capsys, tmp_path) -> None:
 
     # Assert that this is the expected output.
     assert COMPILED_STDOUT == (
-'''TypeHint(<class 'int'>)
-TypeHint(<class 'float'>)''')
+'''ClassTypeHint(<class 'int'>)
+ClassTypeHint(<class 'float'>)''')

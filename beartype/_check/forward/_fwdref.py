@@ -159,15 +159,16 @@ class _BeartypeForwardRefMeta(type):
         # Machine-readable representation to be returned.
         cls_repr = (
             f'{cls.__name__}('
-            f'__beartype_name__={repr(cls.__beartype_name__)}'
+              f'__beartype_scope_name__={repr(cls.__beartype_scope_name__)}'
+            f', __beartype_name__={repr(cls.__beartype_name__)}'
         )
 
         # If this is a subscripted forward reference subclass, append additional
         # metadata representing this subscription.
         if issubclass(cls, _BeartypeForwardRefIndexedABC):
             cls_repr += (
-                f'__beartype_args__={repr(cls.__beartype_args__)}, '
-                f'__beartype_kwargs__={repr(cls.__beartype_kwargs__)}'
+                f', __beartype_args__={repr(cls.__beartype_args__)}'
+                f', __beartype_kwargs__={repr(cls.__beartype_kwargs__)}'
             )
 
         # Close this representation.
@@ -357,6 +358,13 @@ class _BeartypeForwardRefIndexableABC(_BeartypeForwardRefABC):
         transparently masquerade as any subscriptable type hint factory,
         including subscriptable user-defined generics that have yet to be
         declared (e.g., ``"MuhGeneric[int]"``).
+
+        This dunder method is intentionally *not* memoized (e.g., by the
+        :func:`callable_cached` decorator). Ideally, this dunder method *would*
+        be memoized. Sadly, there exists no means of efficiently caching either
+        non-variadic or variadic keyword arguments. Although technically
+        feasible, doing so imposes practical costs defeating the entire point of
+        memoization.
         '''
 
         # Subscripted forward reference to be returned.
@@ -365,9 +373,10 @@ class _BeartypeForwardRefIndexableABC(_BeartypeForwardRefABC):
         # _make_forwardref_subtype() factory function.
         forwardref_indexed_subtype: Type[_BeartypeForwardRefIndexedABC] = (
             _make_forwardref_subtype(  # type: ignore[assignment]
-                cls.__beartype_scope_name__,
-                cls.__beartype_name__,
-                _BeartypeForwardRefIndexedABC_BASES,
+                scope_name=cls.__beartype_scope_name__,
+                hint_name=cls.__beartype_name__,
+                type_name='_BeartypeForwardRefIndexed',
+                type_bases=_BeartypeForwardRefIndexedABC_BASES,
             ))
 
         # Classify the arguments subscripting this forward reference.
@@ -393,8 +402,11 @@ superclass to reduce space and time consumption.
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
+@callable_cached
 def make_forwardref_indexable_subtype(
-    scope_name: str, hint_name: str) -> Type[_BeartypeForwardRefIndexableABC]:
+    scope_name: str,
+    hint_name: str,
+) -> Type[_BeartypeForwardRefIndexableABC]:
     '''
     Create and return a new **subscriptable forward reference subclass** (i.e.,
     concrete subclass of the :class:`._BeartypeForwardRefIndexableABC`
@@ -410,6 +422,8 @@ def make_forwardref_indexable_subtype(
     hint_name : str
         Fully-qualified name of the type hint to be referenced.
 
+    This factory is memoized for efficiency.
+
     Returns
     ----------
     Type[_BeartypeForwardRefIndexableABC]
@@ -421,14 +435,18 @@ def make_forwardref_indexable_subtype(
     # Note that parameters *MUST* be passed positionally to the memoized
     # _make_forwardref_subtype() factory function.
     return _make_forwardref_subtype(  # type: ignore[return-value]
-        scope_name, hint_name, _BeartypeForwardRefIndexableABC_BASES)
+        scope_name=scope_name,
+        hint_name=hint_name,
+        type_name='_BeartypeForwardRefIndexable',
+        type_bases=_BeartypeForwardRefIndexableABC_BASES,
+    )
 
 # ....................{ PRIVATE ~ factories                }....................
 #FIXME: Unit test us up, please.
-@callable_cached
 def _make_forwardref_subtype(
     scope_name: str,
     hint_name: str,
+    type_name: str,
     type_bases: TupleTypes,
 ) -> Type[_BeartypeForwardRefABC]:
     '''
@@ -436,7 +454,9 @@ def _make_forwardref_subtype(
     subclass of the passed abstract base class (ABC) deferring the resolution of
     the type hint with the passed name transparently).
 
-    This factory function is memoized for efficiency.
+    This factory is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as *all* higher-level public factories
+    calling this private factory are themselves already memoized.
 
     Parameters
     ----------
@@ -446,6 +466,8 @@ def _make_forwardref_subtype(
     hint_name : str
         Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of
         the type hint referenced by this forward reference subclass.
+    type_name : str
+        Name of the subclass to be created.
     type_bases : Tuple[type, ...]
         Tuple of all base classes to be inherited by this forward reference
         subclass. For simplicity, this *must* be a 1-tuple
@@ -459,18 +481,12 @@ def _make_forwardref_subtype(
     '''
     assert isinstance(hint_name, str), f'{repr(hint_name)} not string.'
     assert isinstance(scope_name, str), f'{repr(scope_name)} not string.'
-    assert isinstance(type_bases, tuple), f'{repr(type_bases)} not tuple.'
     assert len(type_bases) == 1, (
         f'{repr(type_bases)} not 1-tuple of a single superclass.')
 
-    # Forward reference superclass to be subclassed.
-    type_base = type_bases[0]
-
     # Forward reference subclass to be returned.
     forwardref_subtype: Type[_BeartypeForwardRefIndexableABC] = make_type(
-        # Unqualified basename of this subclass, stripped of the suffixing "ABC"
-        # substring to connote this subclass is concrete rather than abstract.
-        type_name=type_base.__name__[:-3],
+        type_name=type_name,
         # Fully-qualified name of the current submodule.
         type_module_name=__name__,
         type_bases=type_bases,
