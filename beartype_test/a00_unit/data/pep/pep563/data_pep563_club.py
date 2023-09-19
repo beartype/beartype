@@ -19,7 +19,10 @@ submodule.
 # ....................{ IMPORTS                            }....................
 from __future__ import annotations
 from beartype import beartype
-from beartype.typing import Union
+from beartype.typing import (
+    NoReturn,
+    Union,
+)
 
 # ....................{ CONSTANTS                          }....................
 COLORS = 'red, gold, and green'
@@ -48,6 +51,14 @@ Karma = 'you come and go'
 Arbitrary string constant whose attribute name intentionally conflicts with
 that of a subsequently declared class.
 '''
+
+# ....................{ EXCEPTIONS                         }....................
+class HeWouldLingerLong(Exception):
+    '''
+    Arbitrary exception subclass.
+    '''
+
+    pass
 
 # ....................{ CLASSES                            }....................
 @beartype
@@ -175,3 +186,19 @@ class Karma(object):
         '''
 
         return Karma(DREAMS)
+
+# ....................{ FUNCTIONS                          }....................
+@beartype
+def to_love_and_wonder() -> NoReturn:
+    '''
+    Arbitrary function unconditionally raising a unique function-specific
+    exception annotated as such, exercising an edge case in the
+    :func:`beartype.beartype` decorator.
+
+    Raises
+    ----------
+    HeWouldLingerLong
+        Unconditionally.
+    '''
+
+    raise HeWouldLingerLong('In lonesome vales, making the wild his home,')

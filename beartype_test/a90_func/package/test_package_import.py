@@ -27,6 +27,7 @@ def test_package_import_isolation() -> None:
     :mod:`beartype` package itself remains low -- if not ideally negligible.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.py.utilpyinterpreter import (
         get_interpreter_command_words)
@@ -37,6 +38,7 @@ def test_package_import_isolation() -> None:
         search as re_search,
     )
 
+    # ....................{ LOCAL                          }....................
     #FIXME: *FRAGILE.* Manually hardcoding module names here invites
     #desynchronization, particularly with optional third-party dependencies.
     #Instead, the names of optional third-party packages should be dynamically
@@ -55,8 +57,8 @@ def test_package_import_isolation() -> None:
     #   importation costs here. See also @posita's stunning profiling work at:
     #       https://github.com/beartype/beartype/pull/103#discussion_r815027198
     _HEAVY_MODULE_NAME_RAW_REGEXES = (
-        r'beartype\.abby',
         r'beartype\.cave',
+        r'beartype\.door',
         r'beartype\.vale',
         r'numpy',
     )
@@ -88,6 +90,7 @@ print('\\n'.join(module_name for module_name in modules.keys()))
         _CODE_PRINT_IMPORTS_AFTER_IMPORTING_BEARTYPE,
     )
 
+    # ....................{ PASS                           }....................
     # Run this code isolated to a Python subprocess, raising an exception on
     # subprocess failure while both forwarding all standard error output by this
     # subprocess to the standard error file handle of the active Python process

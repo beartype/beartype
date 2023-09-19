@@ -40,7 +40,7 @@ class FrequentWith(object):
     Arbitrary class defining various problematic methods.
     '''
 
-    def crystal_column(self, and_clear_shrines: OfPearl) -> NoReturn:
+    def crystal_column(self, and_clear_shrines: OfPearl) -> OfPearl:
         '''
         Arbitrary method both accepting and returning a value annotated as a
         **missing forward reference** (i.e., :pep:`563`-postponed type hint

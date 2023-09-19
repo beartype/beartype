@@ -56,6 +56,7 @@ def test_pep563_class_self_reference_reloaded() -> None:
        https://github.com/beartype/beartype/issues/152
     '''
 
+    # .....................{ IMPORTS                       }....................
     # Defer test-specific imports.
     #
     # Note that the "data_pep563_club" submodule is intentionally imported as
@@ -66,6 +67,7 @@ def test_pep563_class_self_reference_reloaded() -> None:
     from beartype_test.a00_unit.data.pep.pep563 import data_pep563_club
     from importlib import reload
 
+    # .....................{ PASS                          }....................
     # Assert that a @beartype-decorated class method whose circular return
     # annotation is postponed under PEP 563 returns the expected value.
     assert data_pep563_club.Chameleon.like_my_dreams().colors == (
@@ -122,6 +124,27 @@ def test_pep563_class_self_reference_override() -> None:
     # previously declared global of the module declaring that class returns the
     # expected value.
     assert Karma.if_your_colors().dreams == DREAMS
+
+
+def test_pep563_func_return() -> None:
+    '''
+    Test module-scoped :pep:`563` support implemented in the
+    :func:`beartype.beartype` decorator with respect to callables with returns
+    annotated by the :pep:`484`-compliant :obj:`typing.NoReturn` type hint.
+    '''
+
+    # Defer test-specific imports.
+    from beartype_test.a00_unit.data.pep.pep563.data_pep563_club import (
+        HeWouldLingerLong,
+        to_love_and_wonder,
+    )
+    from pytest import raises
+
+    # Assert that a @beartype-decorated function "typing.NoReturn" return
+    # annotation is postponed under PEP 563 to a string raises the expected
+    # exception.
+    with raises(HeWouldLingerLong):
+        to_love_and_wonder()
 
 # ....................{ TESTS ~ poem                       }....................
 def test_pep563_module() -> None:

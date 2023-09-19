@@ -70,8 +70,6 @@ from beartype._util.func.arg.utilfuncargiter import (
     ArgKind,
     iter_func_args,
 )
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
-    reduce_hint_pep484585_func_return)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     get_hint_pep484585_forwardref_classname_relative_to_object)
 from beartype._util.hint.utilhinttest import (
@@ -557,16 +555,20 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
 
     # Attempt to...
     try:
-        # This hint reduced to a simpler hint if this hint is either PEP 484-
-        # *OR* 585-compliant *AND* requires reduction (e.g., from
-        # "Coroutine[None, None, str]" to just "str"), raising an exception if
-        # this hint is contextually invalid for this callable (e.g., generator
-        # whose return is *NOT* annotated as "Generator[...]").
+        # Preserve the original unsanitized type hint for subsequent reference
+        # *BEFORE* sanitizing this type hint.
+        hint_insane = hint
+
+        # Sanitize this hint to either:
+        # * If this hint is PEP-noncompliant, the PEP-compliant type hint
+        #   converted from this PEP-noncompliant type hint.
+        # * If this hint is both PEP-compliant and supported, this hint as
+        #   is.
+        # * Else, raise an exception.
         #
-        # Perform this reduction *BEFORE* performing subsequent tests (e.g., to
-        # accept "Coroutine[None, None, typing.NoReturn]" as expected).
-        hint = reduce_hint_pep484585_func_return(
-            func=bear_call.func_wrappee, exception_prefix=EXCEPTION_PLACEHOLDER)
+        # Do this first *BEFORE* passing this hint to any further callables.
+        hint = sanify_hint_root_func(
+            hint=hint, arg_name=ARG_NAME_RETURN, bear_call=bear_call)
 
         # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
         # *ONLY* as a return annotation...
@@ -577,30 +579,19 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                 func_call_prefix=bear_call.func_wrapper_code_call_prefix)
         # Else, this is *NOT* "typing.NoReturn". In this case...
         else:
-            # Sanitize this hint to either:
-            # * If this hint is PEP-noncompliant, the PEP-compliant type hint
-            #   converted from this PEP-noncompliant type hint.
-            # * If this hint is both PEP-compliant and supported, this hint as
-            #   is.
-            # * Else, raise an exception.
-            #
-            # Do this first *BEFORE* passing this hint to any further callables.
-            hint_sane = sanify_hint_root_func(
-                hint=hint, arg_name=ARG_NAME_RETURN, bear_call=bear_call)
-
             # If this PEP-compliant hint is unignorable, generate and return a
             # snippet type-checking this return against this hint.
-            if not is_hint_ignorable(hint_sane):
+            if not is_hint_ignorable(hint):
                 # Type stack if required by this hint *OR* "None" otherwise. See
                 # the is_hint_needs_cls_stack() tester for further discussion.
                 #
-                # Note that the original unsanitized "hint" (e.g.,
-                # "typing.Self") rather than the new sanitized "hint_sane"
-                # (e.g., the class currently being decorated by @beartype) is
-                # passed to that tester. See _code_check_args() for details.
+                # Note that the original unsanitized "hint_insane" (e.g.,
+                # "typing.Self") rather than the new sanitized "hint" (e.g., the
+                # class currently being decorated by @beartype) is passed to
+                # that tester. See _code_check_args() for details.
                 cls_stack = (
                     bear_call.cls_stack
-                    if is_hint_needs_cls_stack(hint) else
+                    if is_hint_needs_cls_stack(hint_insane) else
                     None
                 )
                 # print(f'return hint {repr(hint)} cls_stack: {repr(cls_stack)}')
@@ -615,7 +606,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                     code_return_check_pith,
                     func_wrapper_scope,
                     hint_forwardrefs_class_basename,
-                ) = make_func_wrapper_code(hint_sane, bear_call.conf, cls_stack)  # type: ignore[assignment]
+                ) = make_func_wrapper_code(hint, bear_call.conf, cls_stack)  # type: ignore[assignment]
 
                 # Merge the local scope required to type-check this return into
                 # the local scope currently required by the current wrapper

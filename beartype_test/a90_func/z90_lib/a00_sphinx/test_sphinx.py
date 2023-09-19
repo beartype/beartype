@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Project-wide functional Sphinx tests.**
+Project-wide **Sphinx** integration tests.
 
 This submodule functionally tests the :func:`beartype.beartype` decorator with
 respect to the third-party Sphinx documentation build toolchain.

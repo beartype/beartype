@@ -24,16 +24,18 @@ from beartype._check.convert.convcoerce import (
 )
 from beartype._check.convert.convreduce import reduce_hint
 from beartype._conf.confcls import BeartypeConf
+from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
+    reduce_hint_pep484585_func_return)
 
 # ....................{ SANIFIERS ~ root                   }....................
 #FIXME: Unit test us up, please.
 def sanify_hint_root_func(
     # Mandatory parameters.
     hint: object,
-    #FIXME: Rename to "pith_name" for orthogonality with everything else.
     arg_name: str,
     bear_call: BeartypeCall,
 
@@ -131,6 +133,22 @@ def sanify_hint_root_func(
             exception_prefix=exception_prefix,
         )
     )
+
+    # If this hint annotates the return, reduce this hint to a simpler hint if
+    # this hint is either PEP 484- or 585-compliant *AND* requires reduction
+    # (e.g., from "Coroutine[None, None, str]" to just "str"). Raise an
+    # exception if this hint is contextually invalid for this callable (e.g.,
+    # generator whose return is *NOT* annotated as "Generator[...]").
+    #
+    # Perform this reduction *BEFORE* performing subsequent tests (e.g., to
+    # accept "Coroutine[None, None, typing.NoReturn]" as expected).
+    #
+    # Note that this logic *ONLY* pertains to callables (rather than statements)
+    # and is thus *NOT* performed by the sanify_hint_root_statement() sanitizer.
+    if arg_name == ARG_NAME_RETURN:
+        hint = reduce_hint_pep484585_func_return(
+            func=bear_call.func_wrappee, exception_prefix=EXCEPTION_PLACEHOLDER)
+    # Else, this hint annotates a parameter.
 
     # Reduce this hint to a lower-level PEP-compliant type hint if this hint is
     # reducible *OR* this hint as is otherwise. Reductions simplify subsequent

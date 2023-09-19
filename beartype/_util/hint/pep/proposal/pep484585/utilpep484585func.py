@@ -192,13 +192,13 @@ def _die_of_hint_return_invalid(
         Decorated callable whose return is annotated by an invalid type hint.
     exception_cls : TypeException
         Type of exception to be raised. Defaults to
-        :exc:`BeartypeDecorHintPep484585Exception`.
+        :exc:`.BeartypeDecorHintPep484585Exception`.
     exception_suffix : str
         Substring suffixing the exception message to be raised.
 
     Raises
     ----------
-    :exc:`exception_cls`
+    exception_cls
         Exception explaining the invalidity of this return type hint.
     '''
     assert callable(func), f'{repr(func)} not callable.'
