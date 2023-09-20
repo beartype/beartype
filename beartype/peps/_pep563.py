@@ -31,7 +31,8 @@ from beartype._conf.confcls import (
 from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     release_object_typed)
-from beartype._util.func.utilfunctest import die_unless_func_python
+from beartype._util.func.utilfuncget import get_func_annotations
+from beartype._util.utilobject import get_object_name
 from collections.abc import Callable
 
 # ....................{ RESOLVERS                          }....................
@@ -142,28 +143,27 @@ def resolve_pep563(
     BeartypePep563Exception
         If either:
 
-        * That callable is *not* pure-Python (e.g., is C-based).
+        * That callable is *not* a pure-Python callable (e.g., is C-based).
         * Evaluating a postponed annotation on that callable raises an exception
           (e.g., due to that annotation referring to local state inaccessible in
           this deferred context).
     '''
 
-    # ..................{ VALIDATION                         }..................
-    # If that callable is *NOT* pure-Python, raise an exception.
-    die_unless_func_python(func=func, exception_cls=BeartypePep563Exception)
-    # Else, that callable is pure-Python.
-
     # ..................{ NOOP                               }..................
     # Dictionary to be returned, mapping from the name of each annotated
     # parameter and return of the passed callable to the non-string type hint
-    # resolved from the string type hint annotating that parameter or return,
-    # initialized to a shallow copy of that dictionary.
+    # resolved from the string type hint annotating that parameter or return --
+    # raising an exception if that callable is *NOT* a pure-Python callable.
     #
     # Note that the "func.__annotations__" dictionary *CANNOT* be safely
     # directly assigned to below, as the loop performing that assignment below
     # necessarily iterates over that dictionary. As with most languages, Python
     # containers cannot be safely mutated while being iterated.
-    arg_name_to_hint = func.__annotations__
+    arg_name_to_hint = get_func_annotations(
+        func=func,
+        exception_cls=BeartypePep563Exception,
+        exception_prefix='Callable ',
+    )
 
     # If the passed callable was *NOT* subject to PEP 563-compliant postponement
     # of type hints under the standard "from __future__ import annotations"
@@ -284,16 +284,40 @@ def resolve_pep563(
     # Release this beartype call metadata back to its object pool.
     release_object_typed(bear_call)
 
-    # Atomically (i.e., all-at-once) replace that callable's postponed
-    # annotations with these resolved annotations for safety and efficiency.
+    # Attempt to...
+    try:
+        # Atomically (i.e., all-at-once) replace that callable's postponed
+        # annotations with these resolved annotations for safety and efficiency.
+        #
+        # While the @beartype decorator goes to great lengths to preserve the
+        # originating "__annotations__" dictionary as is, PEP 563 is
+        # sufficiently expensive, non-trivial, and general-purpose to implement
+        # that generally resolving postponed annotations for downstream
+        # third-party callers is justified. Everyone benefits from replacing
+        # useless postponed annotations with useful real annotations; so, do so.
+        func.__annotations__ = arg_name_to_hint
+    # If doing so fails with an exception resembling the following, then that
+    # callable is *NOT* a pure-Python callable but rather a C-based decorator
+    # object of some sort (e.g., class, property, or static method descriptor):
+    #     AttributeError: 'method' object has no attribute '__annotations__'
     #
-    # While the @beartype decorator goes to great lengths to preserve the
-    # originating "__annotations__" dictionary as is, PEP 563 is sufficiently
-    # expensive, non-trivial, and general-purpose to implement that generally
-    # resolving postponed annotations for downstream third-party callers is
-    # justified. Everyone benefits from replacing useless postponed annotations
-    # with useful real annotations; so, we do so.
-    func.__annotations__ = arg_name_to_hint
+    # Ideally, the above call to the get_func_annotations() getter would have
+    # already detected this to be the case and raised an exception. Tragically,
+    # C-based decorator objects define a read-only "__annotations__" dunder
+    # attribute that proxies an original writeable "__annotations__" dunder
+    # attribute of the pure-Python callables they originally decorated. Ergo,
+    # detecting this edge case is non-trivial and most most easily deferred to
+    # this late time. While non-ideal, simplicity >>>> idealism in this case.
+    except AttributeError as exception:
+        # Fully-qualified name of this C-based decorator object.
+        func_name = get_object_name(func)
+
+        # Raise a human-readable exception embedding this name.
+        raise BeartypePep563Exception(
+            f'C-based decorator object {repr(func)} not pure-Python callable. '
+            f'Consider passing the pure-Python callable underlying this '
+            f'C-based decorator object instead (e.g., "{func_name}.__func__").'
+        ) from exception
 
     # print(
     #     f'{func.__name__}() PEP 563-postponed annotations resolved:'

@@ -62,14 +62,19 @@ def test_resolve_pep563() -> None:
     assert their_starry_domes(numberless_and_immeasurable_halls) is (
         numberless_and_immeasurable_halls)
 
-    # Assert that this method unsuccessfully raises the excepted exception, due
-    # to being annotated by a missing forward reference.
-    with raises(BeartypeCallHintForwardRefException):
-        and_thrones_radiant_with_chrysolite.crystal_column(
-            'Than gems or gold, the varying roof of heaven')
-
     # .....................{ FAIL                          }....................
     # Assert that this resolver raises the expected exception when passed an
     # uncallable object.
     with raises(BeartypePep563Exception):
         resolve_pep563('Mont Blanc yet gleams on high:—the power is there,')
+
+    # Assert that this resolver raises the expected exception when passed a
+    # C-based descriptor.
+    with raises(BeartypePep563Exception):
+        resolve_pep563(FrequentWith.until_the_doves)
+
+    # Assert that this method unsuccessfully raises the excepted exception, due
+    # to being annotated by a missing forward reference.
+    with raises(BeartypeCallHintForwardRefException):
+        and_thrones_radiant_with_chrysolite.crystal_column(
+            'Than gems or gold, the varying roof of heaven')

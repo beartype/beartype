@@ -36,7 +36,9 @@ from collections.abc import (
 
 # ....................{ REDUCERS ~ return                  }....................
 def reduce_hint_pep484585_func_return(
-    func: Callable, exception_prefix: str) -> object:
+    func: Callable,
+    exception_prefix: str,
+) -> object:
     '''
     Reduce the possibly PEP-noncompliant type hint annotating the return of the
     passed callable if any to a simpler form to generate optimally efficient

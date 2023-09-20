@@ -34,6 +34,7 @@ from beartype._data.hint.datahinttyping import (
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed)
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
+from beartype._util.func.utilfuncget import get_func_annotations
 from beartype._util.func.utilfunctest import (
     is_func_coro,
     is_func_nested,
@@ -416,13 +417,13 @@ class BeartypeCall(object):
 
         # Annotations dictionary *AFTER* resolving all postponed hints.
         #
-        # The functools.update_wrapper() function underlying the @functools.wrap
-        # decorator underlying all sane decorators propagates this dictionary by
-        # default from lower-level wrappees to higher-level wrappers. We
-        # intentionally classify the annotations dictionary of this higher-level
-        # wrapper, which *SHOULD* be the superset of that of this lower-level
-        # wrappee (and thus more reflective of reality).
-        self.func_arg_name_to_hint = func.__annotations__
+        # Note that the functools.update_wrapper() function underlying the
+        # @functools.wrap decorator underlying all sane decorators propagates
+        # this dictionary from lower-level wrappees to higher-level wrappers by
+        # default. We intentionally classify the annotations dictionary of this
+        # higher-level wrapper, which *SHOULD* be the superset of that of this
+        # lower-level wrappee (and thus more reflective of reality).
+        self.func_arg_name_to_hint = get_func_annotations(func)
 
         # dict.get() method bound to this dictionary.
         self.func_arg_name_to_hint_get = self.func_arg_name_to_hint.get
@@ -495,7 +496,7 @@ def make_beartype_call(
     **The caller must pass the metadata returned by this factory back to the**
     :func:`beartype._util.cache.pool.utilcachepoolobjecttyped.release_object_typed`
     **function.** If accidentally omitted, this metadata will simply be
-    garbage-collected rather than available for efficient reuse by this factory. 
+    garbage-collected rather than available for efficient reuse by this factory.
     Although hardly a worst-case outcome, omitting that explicit call largely
     defeats the purpose of calling this factory in the first place.
 

@@ -4,11 +4,18 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`563` **resolver data submodule.**
+Project-wide :pep:`563` **resolver** data submodule.
 
 This submodule defines callables annotated by :pep:`563`-postponed type hints
 under the ``from __future__ import annotations`` pragma, intended to be
 externally imported and called from unit tests elsewhere in this test suite.
+
+Caveats
+----------
+**Callables and classes defined below are intentionally not decorated by the**
+:func:`beartype.beartype` **decorator.** Why? Because that decorator internally
+calls the :func:`beartype.peps.resolve_pep563` resolver. However, the whole
+point of this submodule is to explicitly call and thus exercise that resolver!
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -16,7 +23,7 @@ from __future__ import annotations
 from beartype.door import die_if_unbearable
 from beartype.typing import (
     Generic,
-    NoReturn,
+    # NoReturn,
     TypeVar,
 )
 
@@ -40,6 +47,30 @@ class FrequentWith(object):
     Arbitrary class defining various problematic methods.
     '''
 
+    # ....................{ CLASS METHODS                  }....................
+    @classmethod
+    def until_the_doves(
+        cls, and_squirrels_would_partake: ExpandAbove) -> ExpandAbove:
+        '''
+        Arbitrary **annotated class method** (i.e., class method annotated by
+        one or more type hints), exercising an edge case in the
+        :func:`beartype.peps.resolve_pep563` resolver.
+        '''
+
+        # Subscripted generic type alias, resolved to this global attribute that
+        # has yet to be defined by the resolve_pep563() function called by the
+        # caller.
+        ExpandAbove_resolved = (
+            FrequentWith.until_the_doves.__func__.__annotations__[
+                'and_squirrels_would_partake'])
+
+        # If this parameter violates this type, raise an exception.
+        die_if_unbearable(and_squirrels_would_partake, ExpandAbove_resolved)
+
+        # Return this parameter as is.
+        return and_squirrels_would_partake
+
+    # ....................{ METHODS                        }....................
     def crystal_column(self, and_clear_shrines: OfPearl) -> OfPearl:
         '''
         Arbitrary method both accepting and returning a value annotated as a

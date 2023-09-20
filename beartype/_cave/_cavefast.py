@@ -260,8 +260,8 @@ standard functions,** including:
 * **Unbound instance methods** (i.e., instance methods accessed on their
   declaring classes rather than bound instances).
 * **Static methods** (i.e., methods decorated with the builtin
-  :func:`staticmethod` decorator, regardless of those methods are accessed on
-  their declaring classes or associated instances).
+  :func:`staticmethod` decorator, regardless of whether those methods are
+  accessed on their declaring classes or associated instances).
 
 **This type matches no callables whatsoever under some non-CPython
 interpreters,** including:

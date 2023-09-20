@@ -209,6 +209,15 @@ func_wrapper_scope, hint_forwardrefs_class_basename)``, where:
 '''
 
 # ....................{ DICT                               }....................
+HintAnnotations = LexicalScope
+'''
+PEP-compliant type hint matching **annotations** (i.e., dictionary mapping from
+the name of each annotated parameter or return of a callable or annotated
+variable of a class to the type hint annotating that parameter, return, or
+variable).
+'''
+
+
 MappingStrToAny = Mapping[str, object]
 '''
 PEP-compliant type hint matching a mapping whose keys are *all* strings.

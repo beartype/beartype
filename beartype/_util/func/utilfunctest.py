@@ -12,9 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import (
-    Any,
-)
+from beartype.typing import Any
 from beartype._data.hint.datahintfactory import TypeGuard
 from beartype._data.hint.datahinttyping import (
     Codeobjable,
@@ -24,13 +22,8 @@ from beartype._util.func.arg.utilfuncargtest import (
     is_func_arg_variadic_positional,
     is_func_arg_variadic_keyword,
 )
-from beartype._util.func.utilfunccodeobj import (
-    get_func_codeobj_or_none,
-)
-from collections.abc import (
-    Callable,
-    # Generator,
-)
+from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
+from collections.abc import Callable
 from inspect import (
     CO_ASYNC_GENERATOR,
     CO_COROUTINE,
@@ -99,7 +92,7 @@ def die_unless_func_python(
         Further details.
     '''
 
-    # If this callable is *NOT* pure-Python, raise an exception.
+    # If that callable is *NOT* pure-Python, raise an exception.
     if not is_func_python(func):
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not class.')
@@ -108,15 +101,15 @@ def die_unless_func_python(
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
 
-        # If this callable is uncallable, raise an appropriate exception.
+        # If that callable is uncallable, raise an appropriate exception.
         if not callable(func):
             raise exception_cls(f'{exception_prefix}{repr(func)} not callable.')
-        # Else, this callable is callable.
+        # Else, that callable is callable.
 
         # Raise a human-readable exception.
         raise exception_cls(
             f'{exception_prefix}{repr(func)} not pure-Python function.')
-    # Else, this callable is pure-Python.
+    # Else, that callable is pure-Python.
 
 # ....................{ VALIDATORS ~ descriptors           }....................
 def die_unless_func_classmethod(
@@ -285,7 +278,7 @@ def die_unless_func_staticmethod(
 # ....................{ TESTERS                            }....................
 def is_func_lambda(func: Any) -> bool:
     '''
-    ``True`` only if the passed object is a **pure-Python lambda function**
+    :data:`True` only if the passed object is a **pure-Python lambda function**
     (i.e., function declared as a ``lambda`` expression embedded in a larger
     statement rather than as a full-blown ``def`` statement).
 
@@ -297,7 +290,7 @@ def is_func_lambda(func: Any) -> bool:
     Returns
     ----------
     bool
-        ``True`` only if this object is a pure-Python lambda function.
+        :data:`True` only if this object is a pure-Python lambda function.
     '''
 
     # Return true only if this both...

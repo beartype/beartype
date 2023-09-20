@@ -147,7 +147,7 @@ def sanify_hint_root_func(
     # and is thus *NOT* performed by the sanify_hint_root_statement() sanitizer.
     if arg_name == ARG_NAME_RETURN:
         hint = reduce_hint_pep484585_func_return(
-            func=bear_call.func_wrappee, exception_prefix=EXCEPTION_PLACEHOLDER)
+            func=bear_call.func_wrappee, exception_prefix=exception_prefix)
     # Else, this hint annotates a parameter.
 
     # Reduce this hint to a lower-level PEP-compliant type hint if this hint is

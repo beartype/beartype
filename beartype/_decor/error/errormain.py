@@ -296,8 +296,8 @@ def get_beartype_violation(
     # If this parameter or return value is unannotated, raise an exception.
     #
     # Note that this should *NEVER* occur, as the caller guarantees this
-    # parameter or return value to be annotated. Nonetheless, since callers
-    # could deface the "__annotations__" dunder dictionary without our
+    # parameter or return to be annotated. However, since malicious callers
+    # *COULD* deface the "__annotations__" dunder dictionary without our
     # knowledge or permission, precautions are warranted.
     if pith_name not in func.__annotations__:
         raise _BeartypeCallHintPepRaiseException(

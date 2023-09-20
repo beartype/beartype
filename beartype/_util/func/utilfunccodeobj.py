@@ -94,11 +94,12 @@ def get_func_codeobj(
         Codeobjable to be inspected.
     is_unwrap: bool, optional
         :data:`True` only if this getter implicitly calls the
-        :func:`.unwrap_func_all_closures_isomorphic` function to unwrap this possibly higher-level
+        :func:`.unwrap_func_all` function to unwrap this possibly higher-level
         wrapper into a possibly lower-level wrappee *before* returning the code
         object of that wrappee. Note that doing so incurs worst-case time
-        complexity ``O(n)`` for ``n`` the number of lower-level wrappees wrapped
-        by this wrapper. Defaults to :data:`False` for efficiency.
+        complexity :math:``O(n)` for :math:`n` the number of lower-level
+        wrappees wrapped by this wrapper. Defaults to :data:`False` for
+        efficiency.
     exception_cls : TypeException, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.
@@ -163,12 +164,12 @@ def get_func_codeobj_or_none(
 
     Caveats
     -------
-    If ``is_unwrap``, **this callable has worst-case time complexity** ``O(n)``
-    **for** ``n`` **the number of lower-level wrappees wrapped by this
-    higher-level wrapper.** That parameter should thus be disabled in
+    If ``is_unwrap``, **this callable has worst-case time complexity**
+    :math:`O(n)` **for** :math:`n` **the number of lower-level wrappees wrapped
+    by this higher-level wrapper.** That parameter should thus be disabled in
     time-critical code paths; instead, the lowest-level wrappee returned by the
-    :func:``beartype._util.func.utilfuncwrap.unwrap_func_all_closures_isomorphic`
-    function should be temporarily stored and then repeatedly passed.
+    :func:``beartype._util.func.utilfuncwrap.unwrap_func_all` function should be
+    temporarily stored and then repeatedly passed.
 
     Parameters
     ----------
@@ -176,12 +177,12 @@ def get_func_codeobj_or_none(
         Codeobjable to be inspected.
     is_unwrap: bool, optional
         :data:`True` only if this getter implicitly calls the
-        :func:`.unwrap_func_all_closures_isomorphic` function to unwrap this possibly
+        :func:`.unwrap_func_all` function to unwrap this possibly
         higher-level wrapper into a possibly lower-level wrappee *before*
         returning the code object of that wrappee. Note that doing so incurs
-        worst-case time complexity ``O(n)`` for ``n`` the number of lower-level
-        wrappees wrapped by this wrapper. Defaults to :data:`False` for both
-        efficiency and disambiguity.
+        worst-case time complexity :math:`O(n)` for :math:`n` the number of
+        lower-level wrappees wrapped by this wrapper. Defaults to :data:`False`
+        for both efficiency and disambiguity.
 
     Returns
     ----------
@@ -267,13 +268,13 @@ def get_func_codeobj_or_none(
     #
     # If this object is a call stack frame, return this frame's code object.
     elif isinstance(func, FrameType):
-        #FIXME: *SUS AF.* This is likely to behave as expected *ONLY* for
-        #frames encapsulating pure-Python callables. For frames encapsulating
-        #C-based callables, this is likely to fail with an "AttributeError"
-        #exception. That said, we have *NO* idea how to test this short of
-        #defining our own C-based callable accepting a pure-Python callable as
-        #a callback parameter and calling that callback. Are there even C-based
-        #callables like that in the wild?
+        #FIXME: *SUS AF.* This is likely to behave as expected *ONLY* for frames
+        #encapsulating pure-Python callables. For frames encapsulating C-based
+        #callables, this is likely to fail with an "AttributeError" exception.
+        #That said, we have *NO* idea how to test this short of defining our own
+        #C-based callable accepting a pure-Python callable as a callback
+        #parameter and calling that callback. Are there even C-based callables
+        #like that in the wild?
         return func.f_code
     # Else, this object is *NOT* a call stack frame. Since none of the above
     # tests matched, this object *MUST* be a C-based callable.
