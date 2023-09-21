@@ -21,7 +21,7 @@ from beartype._util.text.utiltextansi import (
     COLOR_BLUE,
     COLOR_YELLOW,
     STYLE_BOLD,
-    strip_text_ansi,
+    strip_str_ansi,
 )
 
 # ....................{ COLOURIZERS                        }....................
@@ -180,7 +180,7 @@ def strip_text_ansi_if_configured(text: str, conf: BeartypeConf) -> str:
     return (
         # This string with all ANSI stripped when this configuration instructs
         # this function to either...
-        strip_text_ansi(text)
+        strip_str_ansi(text)
         if (
             # Unconditionally strip all ANSI from this string *OR*...
             # Conditionally strip all ANSI from this string only when standard

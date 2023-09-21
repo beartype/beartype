@@ -21,7 +21,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._conf.confcls import BeartypeConf
-from beartype._util.text.utiltextident import die_unless_identifier
+from beartype._util.text.utiltextidentifier import die_unless_identifier
 from collections.abc import Iterable as IterableABC
 
 # ....................{ PRIVATE ~ factories                }....................

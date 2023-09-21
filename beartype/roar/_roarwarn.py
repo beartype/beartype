@@ -4,10 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype warning hierarchy.**
-
-This private submodule publishes a hierarchy of both public and private
-:mod:`beartype`-specific warnings emitted at decoration, call, and usage time.
+Beartype **warning hierarchy** (i.e., public and private warning subclasses
+emitted at decoration, call, and usage time by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

@@ -20,7 +20,7 @@ from beartype._check.forward._fwdref import (
     make_forwardref_indexable_subtype,
     _BeartypeForwardRefIndexableABC,
 )
-from beartype._util.text.utiltextident import die_unless_identifier
+from beartype._util.text.utiltextidentifier import die_unless_identifier
 # from sys import modules as sys_modules
 
 # ....................{ SUBCLASSES                         }....................

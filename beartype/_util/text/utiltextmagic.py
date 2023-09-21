@@ -9,8 +9,6 @@ Project-wide **magic strings** (i.e., globally applicable string constants).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                            }....................
-
 # ....................{ CODE ~ indent                      }....................
 CODE_INDENT_1 = '    '
 '''

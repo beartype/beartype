@@ -11,10 +11,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.meta import _convert_version_str_to_tuple
 from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype._data.hint.datahinttyping import TypeException
-from beartype._util.text.utiltextident import die_unless_identifier
+from beartype._util.text.utiltextidentifier import die_unless_identifier
+from beartype._util.text.utiltextversion import convert_str_version_to_tuple
 from importlib.metadata import version as get_module_version  # type: ignore[attr-defined]
 
 # ....................{ RAISERS                            }....................
@@ -47,7 +47,7 @@ def die_unless_module_attr_name(
 
     Raises
     ----------
-    :exc:`exception_cls`
+    exception_cls
         If either:
 
         * This name is *not* a string.
@@ -185,8 +185,8 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
     version_actual = get_module_version(module_name)
 
     # Tuples of version parts parsed from version strings.
-    version_actual_parts  = _convert_version_str_to_tuple(version_actual)
-    version_minimum_parts = _convert_version_str_to_tuple(version_minimum)
+    version_actual_parts  = convert_str_version_to_tuple(version_actual)
+    version_minimum_parts = convert_str_version_to_tuple(version_minimum)
 
     # Return true only if this module's version satisfies this minimum.
     return version_actual_parts >= version_minimum_parts

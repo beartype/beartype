@@ -4,10 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype exception hierarchy.**
-
-This private submodule publishes a hierarchy of both public and private
-:mod:`beartype`-specific exceptions raised at decoration, call, and usage time.
+Beartype **exception hierarchy** (i.e., public and private exception subclasses
+raised at decoration, call, and usage time by :mod:`beartype`).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -1395,7 +1393,20 @@ class _BeartypeUtilTextIdentifierException(_BeartypeUtilTextException):
     Beartype **Python identifier utility exception.**
 
     This exception is raised by private functions of the private
-    :mod:`beartype._util.text.utiltextident` submodule on fatal edge cases.
+    :mod:`beartype._util.text.utiltextidentifier` submodule on fatal edge cases.
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
+
+class _BeartypeUtilTextVersionException(_BeartypeUtilTextException):
+    '''
+    Beartype **Python version utility exception.**
+
+    This exception is raised by private functions of the private
+    :mod:`beartype._util.text.utiltextversion` submodule on fatal edge cases.
     This exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
     '''

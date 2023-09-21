@@ -7,7 +7,7 @@
 Project-wide **Python identifier** utility unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.text.utiltextident` submodule.
+:mod:`beartype._util.text.utiltextidentifier` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -19,13 +19,13 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS                              }....................
 def test_die_unless_identifier() -> None:
     '''
-    Test the :func:`beartype._util.text.utiltextident.die_unless_identifier`
+    Test the :func:`beartype._util.text.utiltextidentifier.die_unless_identifier`
     exception-raiser.
     '''
 
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilTextIdentifierException
-    from beartype._util.text.utiltextident import die_unless_identifier
+    from beartype._util.text.utiltextidentifier import die_unless_identifier
     from pytest import raises
 
     # Assert this raiser accepts an unqualified Python identifier prefixed by
@@ -52,11 +52,11 @@ def test_die_unless_identifier() -> None:
 
 def test_is_identifier() -> None:
     '''
-    Test the :func:`beartype._util.text.utiltextident.is_identifier` tester.
+    Test the :func:`beartype._util.text.utiltextidentifier.is_identifier` tester.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.text.utiltextident import is_identifier
+    from beartype._util.text.utiltextidentifier import is_identifier
 
     # Assert this tester accepts an unqualified Python identifier prefixed by
     # an underscore and suffixed by a digit.

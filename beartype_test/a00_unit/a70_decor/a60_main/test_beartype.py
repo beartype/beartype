@@ -51,7 +51,7 @@ def test_beartype() -> None:
         # BeartypeDecorHintPep585DeprecationWarning,
     )
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_deprecated
-    from beartype._util.text.utiltextansi import strip_text_ansi
+    from beartype._util.text.utiltextansi import strip_str_ansi
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
         HintPithUnsatisfiedMetadata,
@@ -195,7 +195,7 @@ def test_beartype() -> None:
             # ....................{ EXCEPTION ~ message    }....................
             # Exception message raised by this wrapper function.
             exception_str = str(exception)
-            exception_str = strip_text_ansi(exception_str)
+            exception_str = strip_str_ansi(exception_str)
             # print('exception message: {}'.format(exception_str))
 
             # Assert this exception message is prefixed by a substring

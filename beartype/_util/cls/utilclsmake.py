@@ -23,7 +23,7 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
 )
 from beartype._data.kind.datakinddict import DICT_EMPTY
-from beartype._util.text.utiltextident import die_unless_identifier
+from beartype._util.text.utiltextidentifier import die_unless_identifier
 
 # ....................{ MAKERS                             }....................
 def make_type(

@@ -40,7 +40,7 @@ from beartype._util.func.utilfunctest import (
     is_func_python,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
-# from beartype._util.text.utiltextansi import strip_text_ansi
+# from beartype._util.text.utiltextansi import strip_str_ansi
 from beartype._util.text.utiltextlabel import label_object_context
 from beartype._util.text.utiltextmunge import (
     truncate_str,

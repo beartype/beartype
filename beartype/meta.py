@@ -114,6 +114,7 @@ def _convert_version_str_to_tuple(version_str: str):  # -> _Tuple[int, ...]:
     machine-readable version tuple of corresponding integers.
     '''
     assert isinstance(version_str, str), f'"{version_str}" not version string.'
+
     return tuple(int(version_part) for version_part in version_str.split('.'))
 
 

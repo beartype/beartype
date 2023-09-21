@@ -4,8 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **Python identifier** (i.e., attribute, callable, class, module,
-or variable name) utilities.
+Project-wide **Python identifier utilities** (i.e., low-level callables handling
+unqualified and qualified attribute, callable, class, module, and variable
+names).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

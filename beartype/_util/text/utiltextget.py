@@ -4,8 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype string getting utilities** (i.e., callables getting substrings of
-passed strings, typically prefixes and suffixes satisfying various conditions).
+Project-wide **string getters** (i.e., low-level callables slicing and returning
+substrings out of arbitrary strings, typically to acquire prefixes and suffixes
+satisfying various conditions).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

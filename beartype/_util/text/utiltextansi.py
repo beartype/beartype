@@ -50,7 +50,7 @@ ANSI escape sequence stylizing all subsequent characters as bold.
 '''
 
 # ....................{ TESTERS                            }....................
-def is_text_ansi(text: str) -> bool:
+def is_str_ansi(text: str) -> bool:
     '''
     :data:`True` only if the passed text contains one or more ANSI escape
     sequences.
@@ -73,7 +73,7 @@ def is_text_ansi(text: str) -> bool:
     return _ANSI_REGEX.search(text) is not None
 
 # ....................{ STRIPPERS                          }....................
-def strip_text_ansi(text: str) -> str:
+def strip_str_ansi(text: str) -> str:
     '''
     Strip *all* ANSI escape sequences from the passed string.
 
