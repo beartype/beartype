@@ -51,15 +51,23 @@ def test_resolve_pep563() -> None:
     with raises(BeartypeCallHintForwardRefException):
         their_starry_domes(numberless_and_immeasurable_halls)
     with raises(BeartypeCallHintForwardRefException):
+        and_thrones_radiant_with_chrysolite.until_the_doves(
+            numberless_and_immeasurable_halls)
+    with raises(BeartypeCallHintForwardRefException):
         and_thrones_radiant_with_chrysolite.crystal_column(
             'Nor had that scene of ampler majesty')
 
     # Resolve all PEP 563-postponed type hints annotating these callables.
     resolve_pep563(their_starry_domes)
+    resolve_pep563(FrequentWith.until_the_doves)
     resolve_pep563(FrequentWith.crystal_column)
 
     # Assert that this function successfully accepts and returns this instance.
     assert their_starry_domes(numberless_and_immeasurable_halls) is (
+        numberless_and_immeasurable_halls)
+
+    # Assert that this method successfully accepts and returns this string.
+    assert FrequentWith.until_the_doves(numberless_and_immeasurable_halls) is (
         numberless_and_immeasurable_halls)
 
     # .....................{ FAIL                          }....................
@@ -67,11 +75,6 @@ def test_resolve_pep563() -> None:
     # uncallable object.
     with raises(BeartypePep563Exception):
         resolve_pep563('Mont Blanc yet gleams on high:—the power is there,')
-
-    # Assert that this resolver raises the expected exception when passed a
-    # C-based descriptor.
-    with raises(BeartypePep563Exception):
-        resolve_pep563(FrequentWith.until_the_doves)
 
     # Assert that this method unsuccessfully raises the excepted exception, due
     # to being annotated by a missing forward reference.

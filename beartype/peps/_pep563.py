@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype :pep:`563` **support** (i.e., low-level functions resolving stringified
+Beartype :pep:`563` support (i.e., public callables resolving stringified
 :pep:`563`-compliant type hints implicitly postponed by the active Python
 interpreter via a ``from __future__ import annotations`` statement at the head
 of the external user-defined module currently being introspected).
@@ -20,7 +20,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #Python interpreter targets Python >= 3.10 *AND* the passed callable is nested.
 
 # ....................{ IMPORTS                            }....................
-import __future__
 from beartype.roar import BeartypePep563Exception
 from beartype._check.checkcall import make_beartype_call
 from beartype._check.forward.fwdhint import resolve_hint
@@ -32,7 +31,6 @@ from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     release_object_typed)
 from beartype._util.func.utilfuncget import get_func_annotations
-from beartype._util.utilobject import get_object_name
 from collections.abc import Callable
 
 # ....................{ RESOLVERS                          }....................
@@ -301,36 +299,31 @@ def resolve_pep563(
     # object of some sort (e.g., class, property, or static method descriptor):
     #     AttributeError: 'method' object has no attribute '__annotations__'
     #
-    # Ideally, the above call to the get_func_annotations() getter would have
-    # already detected this to be the case and raised an exception. Tragically,
     # C-based decorator objects define a read-only "__annotations__" dunder
     # attribute that proxies an original writeable "__annotations__" dunder
     # attribute of the pure-Python callables they originally decorated. Ergo,
     # detecting this edge case is non-trivial and most most easily deferred to
     # this late time. While non-ideal, simplicity >>>> idealism in this case.
-    except AttributeError as exception:
-        # Fully-qualified name of this C-based decorator object.
-        func_name = get_object_name(func)
-
-        # Raise a human-readable exception embedding this name.
-        raise BeartypePep563Exception(
-            f'C-based decorator object {repr(func)} not pure-Python callable. '
-            f'Consider passing the pure-Python callable underlying this '
-            f'C-based decorator object instead (e.g., "{func_name}.__func__").'
-        ) from exception
+    except AttributeError:
+        # For the name of each annotated parameter and return of that callable
+        # and the destringified type hint annotating this parameter or return,
+        # overwrite the stringified type hint originally annotating this
+        # parameter or return with this destringified type hint.
+        #
+        # Note that:
+        # * The above assignment is an efficient O(1) operation and thus
+        #   intentionally performed first.
+        # * This iteration-based assignment is an inefficient O(n) operation
+        #   (where "n" is the number of annotated parameters and returns of that
+        #   callable) and thus intentionally performed last here.
+        for arg_name, arg_hint in arg_name_to_hint.items():
+            func.__annotations__[arg_name] = arg_hint
 
     # print(
     #     f'{func.__name__}() PEP 563-postponed annotations resolved:'
     #     f'\n\t------[ POSTPONED ]------\n\t{func_hints_postponed}'
     #     f'\n\t------[ RESOLVED  ]------\n\t{func_hints_resolved}'
     # )
-
-# ....................{ PRIVATE ~ constants                }....................
-_FUTURE_ANNOTATIONS = __future__.annotations
-'''
-:obj:`__future__.annotations` object, globalized as a private constant of this
-submodule to negligibly optimize repeated lookups of this object.
-'''
 
 # ....................{ PRIVATE ~ resolvers                }....................
 #FIXME: We currently no longer require this. See above for further commentary.
