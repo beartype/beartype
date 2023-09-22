@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **Python identifier** utility unit tests.
+Project-wide **Python identifier utility** unit tests.
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.text.utiltextidentifier` submodule.

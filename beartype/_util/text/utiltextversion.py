@@ -16,7 +16,6 @@ from beartype.typing import Tuple
 from re import compile as re_compile
 
 # ....................{ CONVERTERS                         }....................
-#FIXME: Unit test us up, please.
 def convert_str_version_to_tuple(version: str) -> Tuple[int, ...]:
     '''
     Convert the passed human-readable ``.``-delimited version string into a
