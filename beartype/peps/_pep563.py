@@ -163,9 +163,14 @@ def resolve_pep563(
         exception_prefix='Callable ',
     )
 
-    # If the passed callable was *NOT* subject to PEP 563-compliant postponement
-    # of type hints under the standard "from __future__ import annotations"
-    # import, silently reduce to a noop.
+    # If that callable is unannotated, silently reduce to a noop.
+    if not arg_name_to_hint:
+        return
+    # Else, that callable is annotated by one or more type hints.
+
+    # If that callable was *NOT* subject to PEP 563-compliant postponement of
+    # type hints under the standard "from __future__ import annotations" import,
+    # silently reduce to a noop.
     #
     # Note that there exist numerous means of detecting PEP 563. This approach:
     # * Is the least efficient, requiring O(n) iteration for n the number of
