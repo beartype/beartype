@@ -64,7 +64,7 @@ SPHINX_BUILD_ARGS=(
 
     # Suffix raised exceptions with tracebacks. This is *CRITICAL.* By default,
     # Sphinx insanely emits *ONLY* useless exception messages.
-    -T,
+    -T
 
     # Treat non-fatal warnings as fatal errors. This is *CRITICAL.* By default,
     # Sphinx insanely emits non-fatal warnings for fatal errors... Not kidding.

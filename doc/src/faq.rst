@@ -366,11 +366,63 @@ the :func:`os.walk` function, standard NumPy_ arrays, PyTorch_ tensors,
 NetworkX_ graphs, pandas_ data frame columns, and really all scientific
 containers ever.
 
+.. _faq:pure:
+
+*****************************
+What does "pure-Python" mean?
+*****************************
+
+Beartype is implemented entirely in Python. It's Python all the way down.
+Beartype never made a Faustian bargain with unPythonic tech like Cython or C or
+Rust extensions. This has profound advantages *without* any really profound
+disadvantages, which doesn't make sense until you continue reading and possibly
+not even then.
+
+First, the profound advantage. We need to make beartype look good to justify
+this FAQ entry. The advantage of staying pure-Python is that beartype supports
+everything that supports Python – including:
+
+* **Just-in-time (JIT) compilers** like PyPy_.
+* **Ahead-of-time transpilers** like Nuitka_.
+* **Python web distributions** like Pyodide_.
+
+Next, the profound disadvantages... There are none. Ha-ha! Suck it, tradeoffs.
+
+Okay... *look*. Can you handle "the Truth"? I don't even know what that means,
+but it probably relates to the next paragraph.
+
+Ordinarily, beartype being pure-Python would mean that beartype is slow. Python
+is commonly considered to be one of the slowest programming languages, because
+it commonly is. Everything that is pure-Python is slow. Everybody knows that.
+It's common knowledge. This only goes to show that the intersection of "common
+knowledge" and "actual knowledge" is the empty set.
+
+Thankfully, beartype is *not* slow. By confining itself to the subset of Python
+that is fast, [#bearython]_ beartype is micro-optimized to exhibit performance
+on par with horrifying compiled systems languages like Rust, C, and C++.
+
+.. [#bearython]
+   The subset of Python that is fast is commonly referred to as "Overly
+   Obfuscated Python Shenanigans (OOPS)." We just made that up. Therefore, we
+   call first dibs on **Bearython**: it's Python, just fast. Never try coding in
+   Bearython. It may be fast, but it's also unreadable and unmaintainable and
+   explodes each line of once-sane code into a billion lines of now-insane code.
+   Coworkers and project leads alike will resent your existence, no matter how
+   much you point them to this educational and cautionary FAQ entry.
+
+Which leads us straight to...
+
 .. _faq:realtime:
 
-*************************************
-What does "near-real-time" even mean?
-*************************************
+*******************************************************************
+What does "near-real-time" even mean? Are you just making stuff up?
+*******************************************************************
+
+It means stupid-fast. And... yes. I mean no. Of course no! No! Everything you
+read is true, because Somebody on the Internet Said It. I mean, *really*. Would
+beartype just make stuff up? :superscript:`squinty eyes`
+
+Okay... *look*. Here's the real deal. Let us bore this understanding into you.
 
 Beartype type-checks objects at runtime in around **1µs** (i.e., one
 microsecond, one millionth of a second), the standard high-water mark for
@@ -392,7 +444,7 @@ microsecond, one millionth of a second), the standard high-water mark for
    Wall time: 3.56 s  # <-- woah.
    Out[22]: 7615456044
 
-Beartype does *not* contractually guarantee this performance, as this example
+Beartype does *not* contractually guarantee this performance, as that example
 demonstrates. Under abnormal processing loads (e.g., leycec_'s arthritic Athlon™
 II X2 240, because you can't have enough redundant 2's in a product line) or
 when passed edge-case type hints (e.g., classes whose metaclasses implement
@@ -407,6 +459,14 @@ That's bad in most use cases. The outrageous cost of enforcement harms
 real-world performance, stability, and usability.
 
 **NRT.** It's good for you. It's good for your codebase. It's just good.
+
+.. _faq:hybrid:
+
+***************************************
+What does "hybrid runtime-static" mean?
+***************************************
+
+No idea, really. Let's see what @leycec_ writes here tomorrow! *Weeeeeeeeeeeee—*
 
 **********************
 How do I type-check...
@@ -548,7 +608,7 @@ You have more than a few options here. If:
     explicitly supported by beartype <api:numpy>` – also referred to as a
     :ref:`typed NumPy array <api:numpy>`. Beartype fully supports
     :ref:`typed NumPy arrays <api:numpy>`. Because beartype cares. However:
-    note that this can only check the dtype (but not shape) of an array. 
+    note that this can only check the dtype (but not shape) of an array.
 
 * You need support for custom ("structured") dtypes: consider the
   `third-party "nptyping" package <nptyping_>`__.
@@ -978,39 +1038,39 @@ your GigaChad IDE of choice.
 
 .. # ...with type narrowing?
 .. # #######################
-.. # 
+.. #
 .. # Beartype fully supports `type narrowing`_ with the :pep:`647`\ -compliant
 .. # :obj:`typing.TypeGuard` type hint. In fact, beartype supports type narrowing of
 .. # *all* PEP-compliant type hints and is thus the first maximal type narrower.
-.. # 
+.. #
 .. # Specifically, the procedural :func:`beartype.door.is_bearable` function and
 .. # object-oriented :meth:`beartype.door.TypeHint.is_bearable` method both narrow
 .. # the type of the passed test object (which can be *anything*) to the passed type
 .. # hint (which can be *anything* PEP-compliant). Both soft-guarantee runtime
 .. # performance on the order of less than 1µs (i.e., less than one millionth of a
 .. # second), preserving runtime performance and your personal sanity.
-.. # 
+.. #
 .. # Calling either :func:`beartype.door.is_bearable` *or*
 .. # :meth:`beartype.door.TypeHint.is_bearable` in your code enables beartype to
 .. # symbiotically eliminate false positives from static type-checkers checking that
 .. # code, substantially reducing static type-checker spam that went rotten decades
 .. # ago: e.g.,
-.. # 
+.. #
 .. # .. code-block:: python
-.. # 
+.. #
 .. #    # Import the requisite machinery.
 .. #    from beartype.door import is_bearable
-.. # 
+.. #
 .. #    def narrow_types_like_a_boss_with_beartype(lst: list[int | str]):
 .. #        '''
 .. #        This function eliminates false positives from static type-checkers
 .. #        like mypy and pyright by narrowing types with ``is_bearable()``.
-.. # 
+.. #
 .. #        Note that decorating this function with ``@beartype`` is *not*
 .. #        required to inform static type-checkers of type narrowing. Of
 .. #        course, you should still do that anyway. Trust is a fickle thing.
 .. #        '''
-.. # 
+.. #
 .. #        # If this list contains integers rather than strings, call another
 .. #        # function accepting only a list of integers.
 .. #        if is_bearable(lst, list[int]):
@@ -1021,10 +1081,10 @@ your GigaChad IDE of choice.
 .. #        elif is_bearable(lst, list[str]):
 .. #            # "lst": The Story of "lst." The saga of false positives ends now.
 .. #            munch_on_list_of_strings(lst)  # mypy/pyright: OK!
-.. # 
+.. #
 .. #    def munch_on_list_of_strings(lst: list[str]): ...
 .. #    def munch_on_list_of_integers(lst: list[int]): ...
-.. # 
+.. #
 .. # Beartype: *because you no longer care what static type-checkers think.*
 
 ************************************

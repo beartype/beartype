@@ -54,8 +54,8 @@ you no longer have to know how to use software to use software. ``\o/``
 
    # ..................{              TYPEVARS               }..................
    # PEP 484 type variable. While @beartype only partially supports type
-   # variables currently, @beartype 1.0.0.0.0.0.0.0 is expected to fully support
-   # type variables. See also: https://github.com/beartype/beartype/issues/7
+   # variables at the moment, @beartype 1.0.0.0.0.0.0.0 is expected to fully
+   # support type variables.
    T = typing.TypeVar('T')
 
    # ..................{              FUNCTIONS              }..................

@@ -275,6 +275,8 @@
    https://numba.pydata.org
 .. _PyPy:
    https://www.pypy.org
+.. _Pyodide:
+   https://pyodide.org
 
 .. # ------------------( LINKS ~ py : interpreter : cpython  )------------------
 .. _CPython bug tracker:

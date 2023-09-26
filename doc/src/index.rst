@@ -43,9 +43,10 @@
 
 |codecov-badge| |ci-badge| |rtd-badge|
 
-**Beartype** is an `open-source <beartype license_>`__ :ref:`PEP-compliant
-<pep:pep>` :ref:`near-real-time <faq:realtime>` :ref:`pure-Python runtime
-type-checker <eli5:eli5>` emphasizing efficiency, usability, and thrilling puns.
+**Beartype** is an `open-source <beartype license_>`__ :ref:`pure-Python
+<faq:pure>` :ref:`PEP-compliant <pep:pep>` :ref:`near-real-time <faq:realtime>`
+:ref:`hybrid runtime-static <faq:hybrid>` :ref:`type-checker <eli5:eli5>`
+emphasizing efficiency, usability, and thrilling puns.
 
 .. #FIXME: Once we actually receive a sponsor at this tier, please remove this
 .. #placeholder as well as the icon links below. kthx
@@ -62,13 +63,38 @@ type-checker <eli5:eli5>` emphasizing efficiency, usability, and thrilling puns.
 
    # Install beartype.
    $ pip3 install beartype
+   # Edit the "{your_package}.__init__" submodule with your favourite IDE.
+   $ vim {your_package}/__init__.py  # <-- so, you too vim
+
+.. code-block:: pycon
+
+   # ....................{ BEARY FAST                      }....................
+   # Enforce type hints across your entire app in two lines of code with no
+   # runtime overhead. Believe in beartype. /server slowly crashes/
+
+   # Import and install the main beartype import hook.
+   >>> from beartype.claw import beartype_this_package  # <-- this is boring
+   >>> beartype_this_package()  # <-- SO MUCH HYPE!!! yet, so much cringe
+
+Beartype now implicitly type-checks *all* annotated classes, callables, and
+variable assignments defined across *all* submodules of ``{your_package}``.
+Congrats. This day, all bugs die.
+
+*Would you like to know more?*
+
+.. code-block:: bash
+
    # So let's do this.
    $ python3
 
 .. code-block:: pycon
 
+   # ....................{ PURDY SLOW                      }....................
+   # Or just enforce type hints across individual classes and callables with no
+   # runtime overhead. Do this only if you want a repetitive stress injury.
+
    # Import the @beartype decorator.
-   >>> from beartype import beartype
+   >>> from beartype import beartype  # <-- eponymous import is eponymous
 
    # Annotate @beartype-decorated classes and callables with type hints.
    >>> @beartype
@@ -94,8 +120,8 @@ type-checker <eli5:eli5>` emphasizing efficiency, usability, and thrilling puns.
    list[str], as list item 0 value b'Oh, my God! A horrible plane crash!'
    not str.
 
-   # ..................{ VALIDATORS  }..................
-   # Squash bugs by refining type hints with validators.
+   # ....................{ MAKE IT SO                      }....................
+   # Squash bugs by refining type hints with @beartype validators.
    >>> from beartype.vale import Is  # <---- validator factory
    >>> from typing import Annotated  # <---------------- if Python ≥ 3.9.0
    # >>> from typing_extensions import Annotated   # <-- if Python < 3.9.0
@@ -118,9 +144,8 @@ type-checker <eli5:eli5>` emphasizing efficiency, usability, and thrilling puns.
    typing.Annotated[list[str], Is[lambda lst: bool(lst)]], as value []
    violates validator Is[lambda lst: bool(lst)].
 
-   # ..................{ AT ANY TIME }..................
-   # Type-check anything against any type hint –
-   # anywhere at anytime.
+   # ....................{ AT ANY TIME                     }....................
+   # Type-check anything against any type hint – anywhere at anytime.
    >>> from beartype.door import (
    ...     is_bearable,  # <-------- like "isinstance(...)"
    ...     die_if_unbearable,  # <-- like "assert isinstance(...)"
@@ -132,10 +157,9 @@ type-checker <eli5:eli5>` emphasizing efficiency, usability, and thrilling puns.
    violates type hint typing.Annotated[list[str], Is[lambda lst: bool(lst)]],
    as list index 0 item 3405692655 not instance of str.
 
-   # ..................{ GO TO PLAID }..................
-   # Type-check anything in around 1µs (one millionth of
-   # a second) – including this list of one million
-   # 2-tuples of NumPy arrays.
+   # ....................{ GO TO PLAID                     }....................
+   # Type-check anything in around 1µs (one millionth of a second) – including
+   # this list of one million 2-tuples of NumPy arrays.
    >>> from beartype.door import is_bearable
    >>> from numpy import array, ndarray
    >>> data = [(array(i), array(i)) for i in range(1000000)]
@@ -176,8 +200,8 @@ developed Python versions <Python status_>`__, :ref:`all Python package managers
 The Typing Tree
 ###############
 
-Welcome to the **Bearpedia** – your one-stop "free as in freedom" shop for
-beartype's ponderous documentation. It's "typing_ or bust!" as you...
+Welcome to the **Bearpedia** – your one-stop Encyclopedia Beartanica for all
+things @beartype. It's "typing_ or bust!" as you...
 
 .. # Root TOC tree, including:
 .. # * "... <self>", an entry self-referentially referring back to this document
@@ -190,7 +214,8 @@ beartype's ponderous documentation. It's "typing_ or bust!" as you...
 .. #   :titlesonly:
 .. #   :maxdepth: 2
 .. toctree::
-   :caption: Bear with Us
+   :caption: **Bear With Us**
+   :hidden:
 
    Bearpedia <self>
    Install <install>
