@@ -373,41 +373,44 @@ What does "pure-Python" mean?
 *****************************
 
 Beartype is implemented entirely in Python. It's Python all the way down.
-Beartype never made a Faustian bargain with unPythonic tech like Cython or C or
-Rust extensions. This has profound advantages *without* any really profound
-disadvantages, which doesn't make sense until you continue reading and possibly
-not even then.
+Beartype never made a Faustian bargain with diabolical non-Pythonic facehuggers
+like Cython_, C extensions, or Rust extensions. This has profound advantages
+with *no* profound disadvantages (aside from our own loss in sanity) – which
+doesn't make sense until you continue reading. :superscript:`Possibly, not even
+then.`
 
-First, the profound advantage. We need to make beartype look good to justify
+First, **profound advantages.** We need to make beartype look good to justify
 this FAQ entry. The advantage of staying pure-Python is that beartype supports
 everything that supports Python – including:
 
-* **Just-in-time (JIT) compilers** like PyPy_.
-* **Ahead-of-time transpilers** like Nuitka_.
-* **Python web distributions** like Pyodide_.
+* **Just-in-time (JIT) compilers!** So, PyPy_.
+* **Ahead-of-time transpilers!** So, Nuitka_.
+* **Python web distributions!** So, Pyodide_.
 
-Next, the profound disadvantages... There are none. Ha-ha! Suck it, tradeoffs.
-
-Okay... *look*. Can you handle "the Truth"? I don't even know what that means,
-but it probably relates to the next paragraph.
+Next, **profound disadvantages.** There are none. Nobody was expecting that,
+were they? Suck it, tradeoffs. Okay... *look*. Can anybody handle "the Truth"? I
+don't even know what that means, but it probably relates to the next paragraph.
 
 Ordinarily, beartype being pure-Python would mean that beartype is slow. Python
-is commonly considered to be one of the slowest programming languages, because
-it commonly is. Everything that is pure-Python is slow. Everybody knows that.
-It's common knowledge. This only goes to show that the intersection of "common
-knowledge" and "actual knowledge" is the empty set.
+is commonly considered to be Teh Slowest Language Evah, because it commonly is.
+Everything pure-Python is slow (much like our bathroom sink clogged with cat
+hair). Everyone knows that. It is common knowledge. This only goes to show that
+the intersection of "common knowledge" and "actual knowledge" is the empty set.
 
 Thankfully, beartype is *not* slow. By confining itself to the subset of Python
 that is fast, [#bearython]_ beartype is micro-optimized to exhibit performance
-on par with horrifying compiled systems languages like Rust, C, and C++.
+on par with horrifying compiled systems languages like Rust, C, and C++ –
+without sacrificing all of the native things that make Python great.
 
 .. [#bearython]
-   The subset of Python that is fast is commonly referred to as "Overly
-   Obfuscated Python Shenanigans (OOPS)." We just made that up. Therefore, we
-   call first dibs on **Bearython**: it's Python, just fast. Never try coding in
-   Bearython. It may be fast, but it's also unreadable and unmaintainable and
-   explodes each line of once-sane code into a billion lines of now-insane code.
-   Coworkers and project leads alike will resent your existence, no matter how
+   Yes, there *is* a subset of Python that is fast. Yes, beartype is implemented
+   almost entirely in this subset. Some prefer the term "Overly Obfuscated
+   Python Shenanigans (OOPS)." We made that up. We prefer the term
+   **Bearython**: it's Python, only fast. We made that up too. Never code in
+   Bearython. Sure, Bearython is fast. Sure, Bearython is also unreadable,
+   unmaintainable, and undebuggable. Bearython explodes each line of code into a
+   bajillion lines of mud spaghetti. Coworkers, interns, and project leads alike
+   will unite in the common spirit of resenting your existence – no matter how
    much you point them to this educational and cautionary FAQ entry.
 
 Which leads us straight to...
@@ -420,9 +423,8 @@ What does "near-real-time" even mean? Are you just making stuff up?
 
 It means stupid-fast. And... yes. I mean no. Of course no! No! Everything you
 read is true, because Somebody on the Internet Said It. I mean, *really*. Would
-beartype just make stuff up? :superscript:`squinty eyes`
-
-Okay... *look*. Here's the real deal. Let us bore this understanding into you.
+beartype just make stuff up? Okay... *look*. Here's the real deal. Let us bore
+this understanding into you. :superscript:`squinty eyes intensify`
 
 Beartype type-checks objects at runtime in around **1µs** (i.e., one
 microsecond, one millionth of a second), the standard high-water mark for
@@ -444,10 +446,10 @@ microsecond, one millionth of a second), the standard high-water mark for
    Wall time: 3.56 s  # <-- woah.
    Out[22]: 7615456044
 
-Beartype does *not* contractually guarantee this performance, as that example
+Beartype does *not* contractually guarantee this performance – as that example
 demonstrates. Under abnormal processing loads (e.g., leycec_'s arthritic Athlon™
 II X2 240, because you can't have enough redundant 2's in a product line) or
-when passed edge-case type hints (e.g., classes whose metaclasses implement
+when passed worst-case type hints (e.g., classes whose metaclasses implement
 stunningly awful ``__isinstancecheck__()`` dunder methods), beartype's
 worst-case performance could exceed an average-case near-instantaneous response.
 
@@ -462,17 +464,123 @@ real-world performance, stability, and usability.
 
 .. _faq:hybrid:
 
-***************************************
-What does "hybrid runtime-static" mean?
-***************************************
+**************************************************************************
+What does "hybrid runtime-static" mean? Pretty sure you made that up, too.
+**************************************************************************
 
-No idea, really. Let's see what @leycec_ writes here tomorrow! *Weeeeeeeeeeeee—*
+It means that beartype is a `third-generation type-checker <faq:third>`__. The
+**tl;dr** is that beartype seamlessly offers both:
+
+* Old-school **runtime type-checking** via the :func:`beartype.beartype`
+  decorator. When you manually decorate callables and classes with
+  :func:`beartype.beartype`, you type-check only annotated parameters, returns,
+  and class variables. In this older (and mostly obsolete) modality, beartype
+  performs *no* static analysis and thus *no* static type-checking. This
+  suffices for prosaic type hints but fails for exotic type hints. After all,
+  many type hints can *only* be type-checked with static analysis.
+* New-school **runtime-static type-checking** via :ref:`beartype import hooks
+  <api_claw:api_claw>`. When you call import hooks published by the
+  :mod:`beartype.claw` subpackage via simple one-liners, you automagically
+  type-check *all* annotated objects to which those import hooks apply. In this
+  newer (and strongly recommended) modality, beartype performs both runtime
+  *and* static analysis. Unsurprisingly, this suffices for even exotic type
+  hints.
+
+In the usual use case, you call our :func:`beartype.claw.beartype_this_package`
+function from your ``{your_package}.__init__`` submodule to register an import
+hook for your entire package. Beartype then type-checks the following points of
+interest across your entire package:
+
+* All **annotated parameters** and **returns** of all callables, which our
+  import hooks decorate with :func:`beartype.beartype`.
+* All **annotated attributes** of all classes, which (*...wait for it*) our
+  import hooks decorate with :func:`beartype.beartype`.
+* All **annotated variable assignments** (e.g., ``muh_var: int = 42``). After
+  any assignment to a global or local variable annotated by a type hint, our
+  import hooks implicitly append a new statement at the same indentation level
+  calling our :func:`beartype.door.die_if_unbearable` function passed both that
+  variable and that type hint. That is:
+
+  .. code-block:: python
+
+     # Beartype import hooks append each assignment resembling this...
+     {var_name}: {type_hint} = {var_value}
+
+     # ...with a runtime type-check resembling this.
+     die_if_unbearable({var_name}, {type_hint})
+
+* All **annotated variable declarations** (e.g., ``muh_var: int``). After any
+  declaration to a global or local variable annotated by a type hint not
+  assigned a new value, our import hooks implicitly append a new statement at
+  the same indentation level calling our :func:`beartype.door.die_if_unbearable`
+  function passed both that variable and that type hint. That is:
+
+  .. code-block:: python
+
+     # Beartype import hooks append each declaration resembling this...
+     {var_name}: {type_hint}
+
+     # ...with a runtime type-check resembling this.
+     die_if_unbearable({var_name}, {type_hint})
+
+:mod:`beartype.claw`: we broke our wrists so that you don't have to.
+
+.. _faq:third:
+
+***************************************************************
+"Third-generation type-checker" doesn't mean anything, does it?
+***************************************************************
+
+Let's rewind. Follow your arthritic host, `Granpa Leycec <leycec_>`__, on a
+one-way trip through the grubby annals of GitHub history.
+
+Gather around, everyone! It's a tedious lore dump that will leave you enervated,
+exhausted, and wishing you'd never come:
+
+* **Gen 1.** On October 28th, 2012, mypy_ launched the first generation of
+  type-checkers. Like mypy_, first-generation type-checkers are all pure-static
+  type-checkers. They do *not* operate at runtime and thus *cannot* enforce
+  anything at runtime. They operate entirely outside of runtime during an
+  on-demand parser phase referred to as **static analysis time** – usually at
+  the automated behest of a local IDE or remote continuous integration (CI)
+  pipeline. Since they can't enforce anything, they're the monkey on your team's
+  back that you really wish would stop flinging bodily wastes everywhere.
+* **Gen 2.** On December 27th, 2015, [#flashback]_ typeguard_ 1.0.0 launched the
+  second generation of type-checkers. Like typeguard_, second-generation
+  type-checkers are all pure-runtime type-checkers. They operate entirely at
+  runtime and thus *do* enforce everything at runtime – usually with a decorator
+  manually applied to callables and classes. Conversely, they do *not* operate
+  at static analysis time and thus *cannot* validate type hints requiring static
+  analysis. While non-ideal, this tradeoff is generally seen as worthwhile by
+  everybody except the authors of first-generation type-checkers. Enforcing
+  *some* type hints is unequivocally better than enforcing *no* type hints.
+* **Gen 3.** On December 11th, 2019, typeguard_ 2.6.0 (yet again) launched the
+  third generation of type-checkers. Like typeguard_ ≥ 2.6.0, third-generation
+  type-checkers are all a best-of-breed hybridization of first- and
+  second-generation type-checkers. They concurrently perform both:
+
+  * Standard **runtime type-checking** like the :func:`beartype.beartype`
+    decorator.
+  * Standard **static type-checking** like mypy_ and pyright_ but **at runtime**
+    – which ain't standard.
+
+Rather than invent a fundamentally new wheel, third-generation type-checkers
+bolt the existing (but outdated) wheels built by prior generations onto the
+post-apocalyptic chassis of a shambolic doom mobile.
+
+Beartype: shambolic doom mobile *or* bucolic QA utopia? *Only your team
+decides.*
+
+.. [#flashback]
+   Cue Terminator-like flashback to `Granpa Leycec
+   <leycec_>`__ spasmodically clutching a playground fence as Christmas
+   explosions ignite a horror show in the distance. ``</awkward>``
 
 **********************
 How do I type-check...
 **********************
 
-...yes? Go on.
+...yes? Do go on.
 
 ...Boto3 types?
 ###############
@@ -1087,9 +1195,9 @@ your GigaChad IDE of choice.
 .. #
 .. # Beartype: *because you no longer care what static type-checkers think.*
 
-************************************
-How do I *NOT* type-check something?
-************************************
+**************************************
+How do I \*NOT\* type-check something?
+**************************************
 
 **So.** You have installed import hooks with our :mod:`beartype.claw` API, but
 those hooks are complaining about something filthy in your codebase. Now, you

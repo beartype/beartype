@@ -48,6 +48,10 @@
 :ref:`hybrid runtime-static <faq:hybrid>` :ref:`type-checker <eli5:eli5>`
 emphasizing efficiency, usability, and thrilling puns.
 
+Beartype enforces :ref:`type hints <eli5:typing>` across your entire app in
+:mod:`two lines of runtime code with *no* runtime overhead <beartype.claw>`. If
+seeing is believing, prepare to do both of those things.
+
 .. #FIXME: Once we actually receive a sponsor at this tier, please remove this
 .. #placeholder as well as the icon links below. kthx
 .. #The `Bear Team <beartype organization_>`__ gratefully thanks `our family of
@@ -64,23 +68,20 @@ emphasizing efficiency, usability, and thrilling puns.
    # Install beartype.
    $ pip3 install beartype
    # Edit the "{your_package}.__init__" submodule with your favourite IDE.
-   $ vim {your_package}/__init__.py  # <-- so, you too vim
+   $ vim {your_package}/__init__.py      # <-- so, i see that you too vim
 
-.. code-block:: pycon
+.. code-block:: python
 
-   # ....................{ BEARY FAST                      }....................
-   # Enforce type hints across your entire app in two lines of code with no
-   # runtime overhead. Believe in beartype. /server slowly crashes/
-
-   # Import and install the main beartype import hook.
-   >>> from beartype.claw import beartype_this_package  # <-- this is boring
-   >>> beartype_this_package()  # <-- SO MUCH HYPE!!! yet, so much cringe
+   from beartype.claw import beartype_this_package       # <-- begin hype
+   beartype_this_package()                               # <-- end hype
 
 Beartype now implicitly type-checks *all* annotated classes, callables, and
 variable assignments defined across *all* submodules of ``{your_package}``.
-Congrats. This day, all bugs die.
+Congrats. This day all bugs die. :superscript:`...server slowly crashes`
 
-*Would you like to know more?*
+Beartype also publishes a :ref:`plethora of APIs for fine-grained control over
+type-checking <api:api>`. For those who are about to QA, beartype salutes you.
+Would you like to know more?
 
 .. code-block:: bash
 
@@ -89,15 +90,15 @@ Congrats. This day, all bugs die.
 
 .. code-block:: pycon
 
-   # ....................{ PURDY SLOW                      }....................
-   # Or just enforce type hints across individual classes and callables with no
-   # runtime overhead. Do this only if you want a repetitive stress injury.
+   # ....................{ RAISE THE PAW                   }....................
+   # Manually enforce type hints across individual classes and callables.
+   # Do this only if you want a(nother) repetitive stress injury.
 
    # Import the @beartype decorator.
-   >>> from beartype import beartype  # <-- eponymous import is eponymous
+   >>> from beartype import beartype      # <-- eponymous import; it's eponymous
 
    # Annotate @beartype-decorated classes and callables with type hints.
-   >>> @beartype
+   >>> @beartype                          # <-- you too will believe in magic
    ... def quote_wiggum(lines: list[str]) -> None:
    ...     print('“{}”\n\t— Police Chief Wiggum'.format("\n ".join(lines)))
 
@@ -215,7 +216,6 @@ things @beartype. It's "typing_ or bust!" as you...
 .. #   :maxdepth: 2
 .. toctree::
    :caption: **Bear With Us**
-   :hidden:
 
    Bearpedia <self>
    Install <install>

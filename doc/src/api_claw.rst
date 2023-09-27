@@ -13,9 +13,11 @@
 
 .. # ------------------( MAIN                                )------------------
 
-*******************
-Beartype Decoration
-*******************
+.. _api_claw:api_claw:
+
+*********************
+Beartype Import Hooks
+*********************
 
 .. code-block:: text
 

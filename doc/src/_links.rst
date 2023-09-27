@@ -269,6 +269,8 @@
    https://brython.info
 .. _CPython:
    https://github.com/python/cpython
+.. _Cython:
+   https://cython.org
 .. _Nuitka:
    https://nuitka.net
 .. _Numba:
