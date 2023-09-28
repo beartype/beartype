@@ -35,10 +35,11 @@
     induce migraines in 22% of the whole devops population. For your safety,
     that document no longer exists. This is how much beartype cares.
 
-**Beartype** is an `open-source <beartype license_>`__ `PEP-compliant
-<beartype PEPs_>`__ `near-real-time <beartype FAQ_>`__ `pure-Python runtime type
-checker <beartype ELI5_>`__ emphasizing efficiency, usability, and thrilling
-puns.
+**Beartype** is an `open-source <beartype license_>`__ `pure-Python <beartype
+pure_>`__ `PEP-compliant <beartype PEPs_>`__ `near-real-time <beartype FAQ_>`__
+`hybrid runtime-static <beartype hybrid_>`__ `third-generation <beartype
+third_>`__ `type checker <beartype ELI5_>`__ emphasizing efficiency,
+usability, unsubstantiated jargon we just made up, and thrilling puns.
 
 .. #FIXME: Once we actually receive a sponsor at this tier, please remove this
 .. #placeholder as well as the icon links below. kthx
@@ -55,21 +56,41 @@ puns.
 
    # Install beartype.
    $ pip3 install beartype
+   # Edit the "{your_package}.__init__" submodule with your favourite IDE.
+   $ vim {your_package}/__init__.py      # <-- so, i see that you too vim
+
+.. code-block:: python
+
+   from beartype.claw import beartype_this_package       # <-- hype comes
+   beartype_this_package()                               # <-- hype goes
+
+Beartype now implicitly type-checks *all* annotated classes, callables, and
+variable assignments across *all* submodules of ``{your_package}``. Congrats.
+This day all bugs die. :superscript:`...server slowly crashes`
+
+Beartype also publishes a `plethora of APIs for fine-grained control over
+type-checking <beartype APIs>`. For those who are about to QA, beartype salutes
+you. Would you like to know more?
+
    # So let's do this.
    $ python3
 
 .. code-block:: python
 
+   # ....................{ RAISE THE PAW                   }....................
+   # Manually enforce type hints across individual classes and callables.
+   # Do this only if you want a(nother) repetitive stress injury.
+
    # Import the @beartype decorator.
-   >>> from beartype import beartype
+   >>> from beartype import beartype      # <-- eponymous import; it's eponymous
 
    # Annotate @beartype-decorated classes and callables with type hints.
-   >>> @beartype
+   >>> @beartype                          # <-- you too will believe in magic
    ... def quote_wiggum(lines: list[str]) -> None:
    ...     print('“{}”\n\t— Police Chief Wiggum'.format("\n ".join(lines)))
 
    # Call those callables with valid parameters.
-   >>> quote_wiggum(["Okay, folks. Show's over!", "Nothing to see here. Show's…",])
+   >>> quote_wiggum(["Okay, folks. Show's over!", " Nothing to see here. Show's…",])
    “Okay, folks. Show's over!
     Nothing to see here. Show's…”
       — Police Chief Wiggum
@@ -87,8 +108,8 @@ puns.
    list[str], as list item 0 value b'Oh, my God! A horrible plane crash!'
    not str.
 
-   # ..................{ VALIDATORS  }..................
-   # Squash bugs by refining type hints with validators.
+   # ....................{ MAKE IT SO                      }....................
+   # Squash bugs by refining type hints with @beartype validators.
    >>> from beartype.vale import Is  # <---- validator factory
    >>> from typing import Annotated  # <---------------- if Python ≥ 3.9.0
    # >>> from typing_extensions import Annotated   # <-- if Python < 3.9.0
@@ -111,9 +132,8 @@ puns.
    typing.Annotated[list[str], Is[lambda lst: bool(lst)]], as value []
    violates validator Is[lambda lst: bool(lst)].
 
-   # ..................{ AT ANY TIME }..................
-   # Type-check anything against any type hint –
-   # anywhere at anytime.
+   # ....................{ AT ANY TIME                     }....................
+   # Type-check anything against any type hint – anywhere at anytime.
    >>> from beartype.door import (
    ...     is_bearable,  # <-------- like "isinstance(...)"
    ...     die_if_unbearable,  # <-- like "assert isinstance(...)"
@@ -125,10 +145,9 @@ puns.
    violates type hint typing.Annotated[list[str], Is[lambda lst: bool(lst)]],
    as list index 0 item 3405692655 not instance of str.
 
-   # ..................{ GO TO PLAID }..................
-   # Type-check anything in around 1µs (one millionth of
-   # a second) – including this list of one million
-   # 2-tuples of NumPy arrays.
+   # ....................{ GO TO PLAID                     }....................
+   # Type-check anything in around 1µs (one millionth of a second) – including
+   # this list of one million 2-tuples of NumPy arrays.
    >>> from beartype.door import is_bearable
    >>> from numpy import array, ndarray
    >>> data = [(array(i), array(i)) for i in range(1000000)]
@@ -189,21 +208,8 @@ developed Python versions <Python status_>`__, `all Python package managers
    :target: https://beartype.readthedocs.io/en/latest/?badge=latest
    :alt: beartype Read The Docs (RTD) status
 
-.. # ------------------( IMAGES ~ screenshot                 )------------------
-.. |VSCode-Pylance-type-checking-setting| image:: https://user-images.githubusercontent.com/217028/164616311-c4a24889-0c53-4726-9051-29be7263ee9b.png
-   :alt: Disabling pyright-based VSCode Pylance type-checking
-
 .. # ------------------( IMAGES ~ downstream                 )------------------
 .. # Insert links to GitHub Sponsors funding at the icon level here, please!
-
-.. # ------------------( SUBSTITUTIONS                       )------------------
-.. # Non-breaking space, defined as a reST substitution substituting all "|_|"
-.. # substrings with the non-breaking space Unicode character. Note that the
-.. # ":trim:" directive silently removes all whitespace surrounding this "|_|".
-.. # See also this StackOverflow answer strongly inspiring this substitution:
-.. #     https://stackoverflow.com/a/12145490/2809027
-.. |_| unicode:: 0xA0
-   :trim:
 
 .. # ------------------( LINKS ~ beartype : funding          )------------------
 .. _BETSE:
@@ -292,6 +298,8 @@ developed Python versions <Python status_>`__, `all Python package managers
    https://github.com/leycec
 
 .. # ------------------( LINKS ~ beartype : rtd              )------------------
+.. _beartype APIs:
+   https://beartype.readthedocs.io/en/latest/api
 .. _beartype RTD:
    https://beartype.readthedocs.io
 .. _beartype ELI5:
@@ -300,10 +308,16 @@ developed Python versions <Python status_>`__, `all Python package managers
    https://beartype.readthedocs.io/en/latest/faq
 .. _beartype PEPs:
    https://beartype.readthedocs.io/en/latest/pep
+.. _beartype hybrid:
+   https://beartype.readthedocs.io/en/latest/faq/#faq-hybrid
 .. _beartype install:
    https://beartype.readthedocs.io/en/latest/install
 .. _beartype math:
    https://beartype.readthedocs.io/en/latest/math
+.. _beartype pure:
+   https://beartype.readthedocs.io/en/latest/faq/#faq-pure
+.. _beartype third:
+   https://beartype.readthedocs.io/en/latest/faq/#faq-third
 
 .. # ------------------( LINKS ~ github                      )------------------
 .. _GitHub Actions:

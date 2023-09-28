@@ -45,12 +45,13 @@
 
 **Beartype** is an `open-source <beartype license_>`__ :ref:`pure-Python
 <faq:pure>` :ref:`PEP-compliant <pep:pep>` :ref:`near-real-time <faq:realtime>`
-:ref:`hybrid runtime-static <faq:hybrid>` :ref:`type-checker <eli5:eli5>`
-emphasizing efficiency, usability, and thrilling puns.
+:ref:`hybrid runtime-static <faq:hybrid>` :ref:`third-generation <faq:third>`
+:ref:`type-checker <eli5:eli5>` emphasizing efficiency, usability,
+unsubstantiated jargon we just made up, and thrilling puns.
 
 Beartype enforces :ref:`type hints <eli5:typing>` across your entire app in
-:mod:`two lines of runtime code with *no* runtime overhead <beartype.claw>`. If
-seeing is believing, prepare to do both of those things.
+:ref:`two lines of runtime code with no runtime overhead <api_claw:api_claw>`.
+If seeing is believing, prepare to do both those things.
 
 .. #FIXME: Once we actually receive a sponsor at this tier, please remove this
 .. #placeholder as well as the icon links below. kthx
@@ -72,12 +73,12 @@ seeing is believing, prepare to do both of those things.
 
 .. code-block:: python
 
-   from beartype.claw import beartype_this_package       # <-- begin hype
-   beartype_this_package()                               # <-- end hype
+   from beartype.claw import beartype_this_package       # <-- hype comes
+   beartype_this_package()                               # <-- hype goes
 
 Beartype now implicitly type-checks *all* annotated classes, callables, and
-variable assignments defined across *all* submodules of ``{your_package}``.
-Congrats. This day all bugs die. :superscript:`...server slowly crashes`
+variable assignments across *all* submodules of ``{your_package}``. Congrats.
+This day all bugs die. :superscript:`...server slowly crashes`
 
 Beartype also publishes a :ref:`plethora of APIs for fine-grained control over
 type-checking <api:api>`. For those who are about to QA, beartype salutes you.

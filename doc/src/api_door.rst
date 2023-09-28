@@ -104,6 +104,7 @@ Procedural API
    die_if_unbearable( \
        obj: object, \
        hint: object, \
+       *, \
        conf: beartype.BeartypeConf = beartype.BeartypeConf(), \
    ) -> None
 
@@ -153,6 +154,7 @@ Procedural API
    is_bearable( \
        obj: object, \
        hint: object, \
+       *, \
        conf: beartype.BeartypeConf = beartype.BeartypeConf(), \
    ) -> bool
 
@@ -770,6 +772,7 @@ Object-oriented API
    .. py:method::
       die_if_unbearable( \
           obj: object, \
+          *, \
           conf: beartype.BeartypeConf = beartype.BeartypeConf(), \
       ) -> None
 
@@ -807,6 +810,7 @@ Object-oriented API
    .. py:method::
       is_bearable( \
           obj: object, \
+          *, \
           conf: beartype.BeartypeConf = beartype.BeartypeConf(), \
       ) -> bool
 

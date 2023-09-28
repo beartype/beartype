@@ -468,23 +468,23 @@ real-world performance, stability, and usability.
 What does "hybrid runtime-static" mean? Pretty sure you made that up, too.
 **************************************************************************
 
-It means that beartype is a `third-generation type-checker <faq:third>`__. The
-**tl;dr** is that beartype seamlessly offers both:
+Beartype is a `third-generation type-checker <faq:third>`__ seamlessly
+supporting both:
 
+* New-school **runtime-static type-checking** via :ref:`beartype import hooks
+  <api_claw:api_claw>`. When you call import hooks published by the
+  :mod:`beartype.claw` subpackage, you automagically type-check *all* annotated
+  callables, classes, and variable assignments covered by those hooks. In this
+  newer (and highly encouraged) modality, beartype performs both runtime *and*
+  static analysis – enabling beartype to seamlessly support both prosaic and
+  exotic type hints.
 * Old-school **runtime type-checking** via the :func:`beartype.beartype`
-  decorator. When you manually decorate callables and classes with
+  decorator. When you manually decorate callables and classes by
   :func:`beartype.beartype`, you type-check only annotated parameters, returns,
   and class variables. In this older (and mostly obsolete) modality, beartype
   performs *no* static analysis and thus *no* static type-checking. This
   suffices for prosaic type hints but fails for exotic type hints. After all,
   many type hints can *only* be type-checked with static analysis.
-* New-school **runtime-static type-checking** via :ref:`beartype import hooks
-  <api_claw:api_claw>`. When you call import hooks published by the
-  :mod:`beartype.claw` subpackage via simple one-liners, you automagically
-  type-check *all* annotated objects to which those import hooks apply. In this
-  newer (and strongly recommended) modality, beartype performs both runtime
-  *and* static analysis. Unsurprisingly, this suffices for even exotic type
-  hints.
 
 In the usual use case, you call our :func:`beartype.claw.beartype_this_package`
 function from your ``{your_package}.__init__`` submodule to register an import
@@ -523,7 +523,7 @@ interest across your entire package:
      # ...with a runtime type-check resembling this.
      die_if_unbearable({var_name}, {type_hint})
 
-:mod:`beartype.claw`: we broke our wrists so that you don't have to.
+:mod:`beartype.claw`: *We broke our wrists so you don't have to.*
 
 .. _faq:third:
 
@@ -532,7 +532,8 @@ interest across your entire package:
 ***************************************************************
 
 Let's rewind. Follow your arthritic host, `Granpa Leycec <leycec_>`__, on a
-one-way trip through the grubby annals of GitHub history.
+one-way trip you won't soon recover from through the backwater annals of GitHub
+history.
 
 Gather around, everyone! It's a tedious lore dump that will leave you enervated,
 exhausted, and wishing you'd never come:
@@ -545,8 +546,8 @@ exhausted, and wishing you'd never come:
   the automated behest of a local IDE or remote continuous integration (CI)
   pipeline. Since they can't enforce anything, they're the monkey on your team's
   back that you really wish would stop flinging bodily wastes everywhere.
-* **Gen 2.** On December 27th, 2015, [#flashback]_ typeguard_ 1.0.0 launched the
-  second generation of type-checkers. Like typeguard_, second-generation
+* **Gen 2.** On December 27th, 2015, typeguard_ 1.0.0 launched the second
+  generation of type-checkers. [#flashback]_ Like typeguard_, second-generation
   type-checkers are all pure-runtime type-checkers. They operate entirely at
   runtime and thus *do* enforce everything at runtime – usually with a decorator
   manually applied to callables and classes. Conversely, they do *not* operate
@@ -559,22 +560,27 @@ exhausted, and wishing you'd never come:
   type-checkers are all a best-of-breed hybridization of first- and
   second-generation type-checkers. They concurrently perform both:
 
-  * Standard **runtime type-checking** like the :func:`beartype.beartype`
-    decorator.
-  * Standard **static type-checking** like mypy_ and pyright_ but **at runtime**
-    – which ain't standard.
+  * Standard **runtime type-checking** (ala the :func:`beartype.beartype`
+    decorator).
+  * Standard **static type-checking** (ala mypy_ and pyright_) but **at
+    runtime** – which ain't standard.
 
-Rather than invent a fundamentally new wheel, third-generation type-checkers
-bolt the existing (but outdated) wheels built by prior generations onto the
-post-apocalyptic chassis of a shambolic doom mobile.
+  First- and second-generation type-checkers invented a fundamentally new wheel.
+  Third-generation type-checkers then bolted the old, busted, rubber-worn wheels
+  built by prior generations onto the post-apocalyptic chassis of a shambolic
+  doom mobile.
 
-Beartype: shambolic doom mobile *or* bucolic QA utopia? *Only your team
-decides.*
+Beartype is a third-generation type-checker. This is the shock twist in the
+season finale that no one saw coming at all.
+
+    Beartype: shambolic doom mobile *or* bucolic QA utopia? *Only your team
+    decides.*
 
 .. [#flashback]
-   Cue Terminator-like flashback to `Granpa Leycec
-   <leycec_>`__ spasmodically clutching a playground fence as Christmas
-   explosions ignite a horror show in the distance. ``</awkward>``
+   Cue `Terminator-like flashback
+   <https://www.youtube.com/watch?v=LqSMk2IzK2o>`__ to `Granpa Leycec
+   <leycec_>`__ spasmodically clutching a playground fence as QA explosions
+   ignite a bug-filled horror show in the distant codebase. ``</awkward>``
 
 **********************
 How do I type-check...

@@ -6,6 +6,33 @@
 .. # Child reStructuredText (reST) document detailing the public-facing API of
 .. # the @beartype.beartype decorator and associated data structures.
 
+.. # ------------------( TODO                                )------------------
+.. # FIXME: Split this overly large and increasingly unreadable document into
+.. # the following two documents:
+.. # * "api_decor.rst", containing *EVERYTHING* in this document up to but not
+.. #   including the "Beartype Configuration API" subsection.
+.. # * "api_conf.rst", containing *EVERYTHING* in this document at and after the
+.. #   "Beartype Configuration API" subsection.
+.. #
+.. # Sadly, doing so appears to be currently infeasible. Why? Because Sphinx
+.. # currently does *NOT* permit "py:module::" directives to be distributed
+.. # across multiple documents. Ideally, the "api_conf.rst" document would be
+.. # prefixed by a "py:module::" directive resembling:
+.. #     .. py:module:: beartype
+.. #        :noindexentry:
+.. #
+.. # Sadly, even Sphinx 7.0.1 fails to support that:
+.. #     /home/leycec/py/beartype/doc/src/api_conf.rst:12: ERROR: Error in "py:module" directive:
+.. #     unknown option: "noindexentry".
+.. #
+.. #     .. py:module:: beartype
+.. #        :noindexentry:
+.. #
+.. # The ":noindexentry:" option is required to avoid indexing conflicts between
+.. # the two documents while still preserving cross-references as expected.
+.. #
+.. # Consider submitting an upstream Sphinx feature request for this.
+
 .. # ------------------( METADATA                            )------------------
 .. # Fully-qualified name of the (sub)package described by this document,
 .. # enabling this document to be externally referenced as :mod:`{name}`.
@@ -359,7 +386,7 @@ Come for the working examples. Stay for the wild hand-waving.
 Configuration Mode
 ******************
 
-*def* beartype.\ **beartype**\ (conf: beartype.BeartypeConf) ->
+*def* beartype.\ **beartype**\ (\*, conf: beartype.BeartypeConf) ->
 collections.abc.Callable[[T], T]
 
 In configuration mode, :func:`.beartype` dynamically generates a new
@@ -383,6 +410,8 @@ too may cackle villainously as you feel the unbridled power of your keyboard.
        return int_or_float ** int_or_float ^ round(int_or_float)
 
 Configuration: *because you know best*.
+
+.. _api_decor:conf:
 
 Beartype Configuration API
 ==========================
@@ -409,6 +438,21 @@ Beartype Configuration API
      tower_>`__.
    * Disable developer-specific debugging logic.
    * Conditionally output color when standard output is attached to a terminal.
+
+   Beartype configurations may be passed as the optional keyword-only ``conf``
+   parameter accepted by *most* high-level runtime type-checking functions
+   exported by :mod:`beartype` – including:
+
+   * The :func:`beartype.beartype` decorator.
+   * The :func:`beartype.claw.beartype_all` import hook.
+   * The :func:`beartype.claw.beartype_package` import hook.
+   * The :func:`beartype.claw.beartype_packages` import hook.
+   * The :func:`beartype.claw.beartype_this_package` import hook.
+   * The :func:`beartype.claw.beartyping` import hook.
+   * The :func:`beartype.door.die_if_unbearable` type-checker.
+   * The :func:`beartype.door.is_bearable` type-checker.
+   * The :func:`beartype.door.TypeHint.die_if_unbearable` type-checker.
+   * The :func:`beartype.door.TypeHint.is_bearable` type-checker.
 
    Beartype configurations are immutable objects memoized (i.e., cached) on the
    unordered set of all passed parameters:
