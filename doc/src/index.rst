@@ -73,8 +73,9 @@ If seeing is believing, prepare to do both those things.
 
 .. code-block:: python
 
-   from beartype.claw import beartype_this_package       # <-- hype comes
-   beartype_this_package()                               # <-- hype goes
+   # At the very top of your "{your_package}.__init__" submodule:
+   from beartype.claw import beartype_this_package  # <-- boilerplate for victory
+   beartype_this_package()                          # <-- yay! your team just won
 
 Beartype now implicitly type-checks *all* annotated classes, callables, and
 variable assignments across *all* submodules of ``{your_package}``. Congrats.
