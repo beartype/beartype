@@ -108,7 +108,7 @@ def beartype_all(
         **Beartype configuration** (i.e., dataclass configuring the
         :mod:`beartype.beartype` decorator for *all* decoratable objects
         recursively decorated by the path hook added by this function).
-        Defaults to ``BeartypeConf()``, the default ``O(1)`` configuration.
+        Defaults to ``BeartypeConf()``, the default :math:`O(1)` configuration.
 
     Raises
     ----------
@@ -147,7 +147,7 @@ def beartype_this_package(
         **Beartype configuration** (i.e., dataclass configuring the
         :mod:`beartype.beartype` decorator for *all* decoratable objects
         recursively decorated by the path hook added by this function).
-        Defaults to ``BeartypeConf()``, the default ``O(1)`` configuration.
+        Defaults to ``BeartypeConf()``, the default :math:`O(1)` configuration.
 
     Raises
     ----------
@@ -231,7 +231,7 @@ def beartype_package(
         **Beartype configuration** (i.e., dataclass configuring the
         :mod:`beartype.beartype` decorator for *all* decoratable objects
         recursively decorated by the path hook added by this function).
-        Defaults to ``BeartypeConf()``, the default ``O(1)`` configuration.
+        Defaults to ``BeartypeConf()``, the default :math:`O(1)` configuration.
 
     Raises
     ----------
@@ -307,7 +307,7 @@ def beartype_packages(
         **Beartype configuration** (i.e., dataclass configuring the
         :mod:`beartype.beartype` decorator for *all* decoratable objects
         recursively decorated by the path hook added by this function).
-        Defaults to ``BeartypeConf()``, the default ``O(1)`` configuration.
+        Defaults to ``BeartypeConf()``, the default :math:`O(1)` configuration.
 
     Raises
     ----------
