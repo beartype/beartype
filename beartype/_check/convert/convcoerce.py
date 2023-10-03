@@ -402,6 +402,7 @@ def coerce_hint_any(hint: object) -> Any:
     #   this function. In this case, replace this subsequent copy by the first
     #   copy of this hint originally passed to a prior call of this function.
     if is_hint_uncached(hint):
+    # if False:
         return _HINT_REPR_TO_SINGLETON.cache_or_get_cached_value(
             key=repr(hint), value=hint)
         # return _HINT_REPR_TO_SINGLETON.cache_or_get_cached_value(key=repr(hint), value=hint)
@@ -409,6 +410,21 @@ def coerce_hint_any(hint: object) -> Any:
 
     # Return this uncoerced hint as is.
     return hint
+
+# ....................{ CLEARERS                           }....................
+def clear_coerce_hint_caches() -> None:
+    '''
+    Clear (i.e., empty) *all* internal caches specifically leveraged by this
+    submodule, enabling callers to reset this submodule to its initial state.
+
+    Notably, this function clears:
+
+    * The **type hint cache** (i.e., private :data:`._HINT_REPR_TO_SINGLETON`
+      dictionary).
+    '''
+
+    # Clear our type hint cache.
+    _HINT_REPR_TO_SINGLETON.clear()
 
 # ....................{ PRIVATE ~ mappings                 }....................
 _HINT_REPR_TO_SINGLETON = CacheUnboundedStrong()

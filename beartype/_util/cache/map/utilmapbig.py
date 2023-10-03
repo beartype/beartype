@@ -235,3 +235,13 @@ class CacheUnboundedStrong(object):
 
             # Return this value.
             return value
+
+    # ..................{ CLEARERS                           }..................
+    #FIXME: Unit test us up, please.
+    def clear(self) -> None:
+        '''
+        Clear (i.e., empty) this cache.
+        '''
+
+        # Clear your head and be at peace, one-liner.
+        self._key_to_value.clear()

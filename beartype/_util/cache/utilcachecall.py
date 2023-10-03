@@ -659,3 +659,8 @@ Alternatives include (in order of decreasing efficiency):
        setattr(self, {property_name!r}, __property_method(self))
    return getattr(self, {property_name!r})
 '''
+
+
+#FIXME: Uncomment to debug memoization-specific issues. *sigh*
+# def callable_cached(func: _CallableT) -> _CallableT: return func
+# def property_cached(func: _CallableT) -> _CallableT: return func

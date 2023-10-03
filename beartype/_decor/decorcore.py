@@ -17,30 +17,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import (
-    BeartypeException,
-    BeartypeDecorWrappeeException,
-)
-from beartype._cave._cavemap import NoneTypeOr
+from beartype.roar import BeartypeException
 from beartype._conf.confcls import BeartypeConf
-from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
-from beartype._data.hint.datahinttyping import (
-    BeartypeableT,
-    TypeStack,
-)
-from beartype._decor._decormore import (
-    beartype_descriptor_decorator_builtin,
-    beartype_func,
-    beartype_func_contextlib_contextmanager,
-    beartype_nontype,
-    beartype_pseudofunc,
-)
+from beartype._data.hint.datahinttyping import BeartypeableT
+from beartype._decor._decornontype import beartype_nontype
+from beartype._decor._decortype import beartype_type
 from beartype._util.cls.utilclstest import is_type_subclass
-from beartype._util.func.utilfunctest import (
-    is_func_python,
-)
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
-# from beartype._util.text.utiltextansi import strip_str_ansi
 from beartype._util.text.utiltextlabel import label_object_context
 from beartype._util.text.utiltextmunge import (
     truncate_str,
@@ -140,7 +122,7 @@ def _beartype_object_fatal(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # Return either...
     return (
         # If this object is a class, this class decorated with type-checking.
-        _beartype_type(obj, **kwargs)  # type: ignore[return-value]
+        beartype_type(obj, **kwargs)  # type: ignore[return-value]
         if isinstance(obj, type) else
         # Else, this object is a non-class. In this case, this non-class
         # decorated with type-checking.
@@ -276,179 +258,3 @@ def _beartype_object_nonfatal(
     # Return this object unmodified, as @beartype failed to successfully wrap
     # this object with a type-checking class or callable. So it goes, fam.
     return obj  # type: ignore[return-value]
-
-# ....................{ PRIVATE ~ decorators : type        }....................
-def _beartype_type(
-    # Mandatory parameters.
-    cls: BeartypeableT,
-    conf: BeartypeConf,
-
-    # Optional parameters.
-    cls_stack: TypeStack = None,
-) -> BeartypeableT:
-    '''
-    Decorate the passed class with dynamically generated type-checking.
-
-    Parameters
-    ----------
-    cls : BeartypeableT
-        Class to be decorated by :func:`beartype.beartype`.
-    conf : BeartypeConf
-        Beartype configuration configuring :func:`beartype.beartype` uniquely
-        specific to this class.
-    cls_stack : TypeStack, optional
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
-        Defaults to :data:`None`.
-
-    Returns
-    ----------
-    BeartypeableT
-        This class decorated by :func:`beartype.beartype`.
-    '''
-    assert isinstance(cls, type), f'{repr(cls)} not type.'
-    assert isinstance(cls_stack, NoneTypeOr[tuple]), (
-        f'{repr(cls_stack)} neither tuple nor "None".')
-    # assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-    # print(f'Decorating type {repr(obj)}...')
-
-    #FIXME: Insufficient. We also want to set a beartype-specific dunder
-    #attribute -- say, "__beartyped" -- on this class. Additionally, if this
-    #class has already been @beartyped, we want to detect that here and avoid
-    #re-@beartype-ing this class. In short, we want to generalize our existing
-    #"beartype._util.func.mod.utilbeartypefunc" submodule to support classes as
-    #well. Let's shift that submodule somewhere more general, please. Perhaps:
-    #* Rename "beartype._util.func.mod.utilbeartypefunc" to
-    #  "beartype._util.check.utilcheckfunc".
-    #* Define a new "beartype._util.check.utilchecktype" submodule containing
-    #  similar class-specific functionality.
-    #FIXME: Actually... *NO.* We absolutely do *NOT* want to monkey-patch random
-    #@beartype-specific attributes into user-defined classes, because then the
-    #Python ecosystem will shudder, then sway, then crack, and finally tumble
-    #into the churning seas below. Instead, let's find something *ELSE* that is
-    #actually safe to monkey-patch. Method objects are the classic example.
-    #Nobody cares if we monkey-patch those. The most common method object would
-    #be the "cls.__init__" object. Of course, many types do *NOT* define that
-    #object -- but many types also do. We could simply:
-    #* Decide whether the "cls.__init__" method exists.
-    #* Decide whether the "cls.__init__.__beartyped_cls" attribute exists. Note
-    #  that this attribute is distinct from our existing "__beartyped"
-    #  attribute, when records a lower-level and less useful truth.
-    #
-    #For example:
-    #    is_type_beartyped = getattr(
-    #        getattr(cls, '__init__', None), '__beartyped_cls', False)
-    #
-    #Pretty sure that suffices. It's just a simple two-liner. This is only an
-    #optimization, so it doesn't particularly matter if it fails to apply to
-    #some classes. So, let's a-go!
-
-    #FIXME: Unit test us up, please. Test against at least:
-    #* A dataclass. We already do this, of course. Hurrah!
-    #* An uncallable class (i.e., defining *NO* __call__() dunder method)
-    #  defining at least:
-    #  * A class variable (e.g., "muh_classvar: ClassVar[int] = 42").
-    #  * A standard instance method.
-    #  * A class method.
-    #  * A static method.
-    #  * A property getter, setter, and deleter.
-    #* A callable class (i.e., defining a __call__() dunder method).
-    #* A PEP 563-fueled self-referential class. See this as a simple example:
-    #     https://github.com/beartype/beartype/issues/152#issuecomment-1197778501
-
-    # Replace the passed class stack with a new class stack appending this
-    # decorated class to the top of this stack, reflecting the fact that this
-    # decorated class is now the most deeply lexically nested class for the
-    # currently recursive chain of @beartype-decorated classes.
-    cls_stack = (
-        # If the caller passed *NO* class stack, then this class is necessarily
-        # the first decorated class being decorated directly by @beartype and
-        # thus the root decorated class.
-        #
-        # Note this is the common case and thus tested first. Since nested
-        # classes effectively do *NOT* exist in the wild, this comprises
-        # 99.999% of all real-world cases.
-        (cls,)
-        if cls_stack is None else
-        # Else, the caller passed a clack stack comprising at least a root
-        # decorated class. Preserve that class as is to properly expose that
-        # class elsewhere.
-        cls_stack + (cls,)
-    )
-
-    # For the unqualified name and value of each direct (i.e., *NOT* indirectly
-    # inherited) attribute of this class...
-    for attr_name, attr_value in cls.__dict__.items():  # pyright: ignore[reportGeneralTypeIssues]
-        # If this attribute is beartypeable...
-        if isinstance(attr_value, TYPES_BEARTYPEABLE):
-            # This attribute decorated with type-checking configured by this
-            # configuration if *NOT* already decorated.
-            attr_value_beartyped = beartype_object(
-                obj=attr_value,
-                conf=conf,
-                cls_stack=cls_stack,
-            )
-
-            # Attempt to...
-            try:
-                # Replace this undecorated attribute with this decorated
-                # attribute.
-                #
-                # Note that class attributes are *ONLY* settable by calling the
-                # tragically slow setattr() builtin. Attempting to directly set
-                # an attribute on the class dictionary raises an exception. Why?
-                # Because class dictionaries are actually low-level
-                # "mappingproxy" objects that intentionally override the
-                # __setattr__() dunder method to unconditionally raise an
-                # exception. Why? Because that constraint enables the
-                # type.__setattr__() dunder method to enforce critical
-                # efficiency constraints on class attributes -- including that
-                # class attribute keys are *NOT* only strings but also valid
-                # Python identifiers:
-                #     >>> class OhGodHelpUs(object): pass
-                #     >>> OhGodHelpUs.__dict__['even_god_cannot_help'] = 2
-                #     TypeError: 'mappingproxy' object does not support item
-                #     assignment
-                #
-                # See also this relevant StackOverflow answer by Python luminary
-                # Raymond Hettinger:
-                #     https://stackoverflow.com/a/32720603/2809027
-                setattr(cls, attr_name, attr_value_beartyped)
-            # If doing so raises a builtin "TypeError"...
-            except TypeError as exception:
-                #FIXME: Shift this detection logic into a new
-                #is_typeerror_attr_immutable() tester, please.
-
-                # Message raised with this "TypeError".
-                exception_message = str(exception)
-
-                # If this message satisfies a pattern , then this "TypeError" signifies this attribute
-                # to be inherited from an immutable builtin type (e.g., "str")
-                # subclassed by this user-defined subclass. In this case,
-                # silently skip past this uncheckable attribute to the next.
-                #
-                # Note that this pattern depends on the current Python version.
-                if (
-                    # The active Python interpreter targets Python >= 3.10,
-                    # match a message of the form "cannot set '{attr_name}'
-                    # attribute of immutable type '{cls_name}'".
-                    IS_PYTHON_AT_LEAST_3_10 and (
-                        exception_message.startswith("cannot set '") and
-                        "' attribute of immutable type " in exception_message
-                    # Else, the active Python interpreter targets Python <= 3.9.
-                    # In this case, match a message of the form "can't set
-                    # attributes of built-in/extension type '{cls_name}'".
-                    ) or exception_message.startswith(
-                        "can't set attributes of built-in/extension type '")
-                ):
-                    continue
-                # Else, this message does *NOT* satisfy that pattern.
-
-                # Preserve this exception by re-raising this exception.
-                raise
-        # Else, this attribute is *NOT* beartypeable. In this case, silently
-        # ignore this attribute.
-
-    # Return this class as is.
-    return cls  # type: ignore[return-value]

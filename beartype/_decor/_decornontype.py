@@ -4,10 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Unmemoized beartype type-specific decorators** (i.e., core low-level
-unmemoized decorators targeting specific types of decoratable objects underlying
-the higher-level unmemoized decorators generically applicable to *all* types of
-decoratable objects implemented by the parent
+**Unmemoized beartype non-type decorators** (i.e., low-level decorators
+decorating *all* types of decoratable objects except classes, which the sibling
+:mod:`beartype._decor._decortype` submodule handles, on behalf of the parent
 :mod:`beartype._decor.decorcore` submodule).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -232,6 +231,7 @@ def beartype_func(
     #
     # Note that this conditional implicitly handles the prior conditional! :O
     if is_func_unbeartypeable(func):  # type: ignore[arg-type]
+        # print(f'Ignoring unbeartypeable callable {repr(func)}...')
         return func  # type: ignore[return-value]
     # Else, that callable is beartypeable. Let's do this, folks.
 
@@ -268,6 +268,15 @@ def beartype_func(
         #This is trivial. The only question then is: "Which is actually faster?"
         #Before finalizing this refactoring, let's profile both, adopt whichever
         #outperforms the other, and then document this choice in make_func().
+        #FIXME: *WAIT.* We don't need a lambda at all. All we need is to:
+        #* Define a new BeartypeCall.label_func_wrapper() method resembling:
+        #      def label_func_wrapper(self) -> str:
+        #          return f'@beartyped {self.func_wrapper_name}() wrapper'
+        #* Refactor make_func() to accept a new optional keyword-only
+        #  "func_label_factory" parameter, passed here as:
+        #      func_label_factory=bear_call.label_func_wrapper,
+        #
+        #That's absolutely guaranteed to be the fastest approach.
         func_label=f'@beartyped {bear_call.func_wrapper_name}() wrapper',
 
         func_wrapped=func,
