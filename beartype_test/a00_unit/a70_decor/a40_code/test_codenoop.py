@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator noop unit tests.**
+**Beartype decorator noop** unit tests.
 
 This submodule unit tests edge cases of the :func:`beartype.beartype` decorator
 efficiently reducing to a noop.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ sync                      }....................
+# ....................{ TESTS ~ sync                       }....................
 def test_decor_noop_unhinted_sync() -> None:
     '''
     Test that the :func:`beartype.beartype` decorator efficiently reduces to a
@@ -65,7 +65,7 @@ def test_decor_noop_redecorated_sync() -> None:
     # Call this function and assert no value to be returned.
     assert xenos('Luna Wolves', diasporex='Iron Hands Legion') is None
 
-# ....................{ TESTS ~ async                     }....................
+# ....................{ TESTS ~ async                      }....................
 async def test_decor_noop_unhinted_async() -> None:
     '''
     Test that the :func:`beartype.beartype` decorator efficiently reduces to a
@@ -120,7 +120,7 @@ async def test_decor_noop_redecorated_async() -> None:
     assert await isha(
         'God of the hunt', asuryan='ruler of the Aeldari pantheon') is None
 
-# ....................{ TESTS ~ ignorable                 }....................
+# ....................{ TESTS ~ ignorable                  }....................
 def test_decor_noop_hint_ignorable_iter() -> None:
     '''
     Test that the :func:`beartype.beartype` decorator efficiently reduces to a

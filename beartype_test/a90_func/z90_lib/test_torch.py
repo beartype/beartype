@@ -26,6 +26,8 @@ from beartype_test._util.mark.pytskip import (
 #* Gentoo Linux, where @leycec currently receives this well-known exception on
 #  attempting to import PyTorch:
 #      NameError: name '_C' is not defined
+#  Note that this *ONLY* occurs under "pytest". PyTorch remains importable
+#  outside of "pytest", which is all manner of bizarre. *shrug*
 #* GitHub Actions-based continuous integration (CI), where similar issues are
 #  likely to arise under macOS and/or Windows.
 @skip('Currently ignored, due to the non-triviality of installing PyTorch.')

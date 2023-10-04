@@ -90,7 +90,7 @@ def coerce_func_hint_root(
     function would consume space needlessly with *no* useful benefit.
 
     Caveats
-    ----------
+    -------
     This function *cannot* be meaningfully memoized, since the passed type hint
     is *not* guaranteed to be cached somewhere. Only functions passed cached
     type hints can be meaningfully memoized. Since this high-level function
@@ -116,7 +116,7 @@ def coerce_func_hint_root(
         exception message.
 
     Returns
-    ----------
+    -------
     object
         Either:
 
@@ -223,7 +223,7 @@ def coerce_hint_root(hint: object, exception_prefix: str) -> object:
     :func:`callable_cached` decorator). See caveats that follow.
 
     Caveats
-    ----------
+    -------
     This function *cannot* be meaningfully memoized, since the passed type hint
     is *not* guaranteed to be cached somewhere. Only functions passed cached
     type hints can be meaningfully memoized. Since this high-level function
@@ -241,7 +241,7 @@ def coerce_hint_root(hint: object, exception_prefix: str) -> object:
         exception message.
 
     Returns
-    ----------
+    -------
     object
         Either:
 
@@ -354,7 +354,7 @@ def coerce_hint_any(hint: object) -> Any:
     :mod:`beartype` for standard type hints.
 
     Caveats
-    ----------
+    -------
     This function *cannot* be meaningfully memoized, since the passed type hint
     is *not* guaranteed to be cached somewhere. Only functions passed cached
     type hints can be meaningfully memoized. Since this high-level function
@@ -380,7 +380,7 @@ def coerce_hint_any(hint: object) -> Any:
         Type hint to be possibly coerced.
 
     Returns
-    ----------
+    -------
     object
         Either:
 
@@ -402,7 +402,7 @@ def coerce_hint_any(hint: object) -> Any:
     #   this function. In this case, replace this subsequent copy by the first
     #   copy of this hint originally passed to a prior call of this function.
     if is_hint_uncached(hint):
-    # if False:
+        # print(f'Self-caching type hint {repr(hint)}...')
         return _HINT_REPR_TO_SINGLETON.cache_or_get_cached_value(
             key=repr(hint), value=hint)
         # return _HINT_REPR_TO_SINGLETON.cache_or_get_cached_value(key=repr(hint), value=hint)
@@ -450,7 +450,7 @@ This cache does *not* cache:
   importation resembling ``from typing import Dict`` preceded that type hint).
 
 Design
---------------
+------
 **This dictionary is intentionally thread-safe.** Why? Because this dictionary
 is used to modify the ``__attributes__`` dunder variable of arbitrary callables.
 Since most such callables are either module- or class-scoped, that variable is

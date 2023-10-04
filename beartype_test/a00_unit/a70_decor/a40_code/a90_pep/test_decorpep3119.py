@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype :pep:`3119` **unit tests.
+Beartype :pep:`3119` unit tests.
 
 This submodule unit tests :pep:`3119` support implemented in the
 :func:`beartype.beartype` decorator.
