@@ -20,9 +20,8 @@ Beartype Import Hooks
 *********************
 
 **Beartype import hooks** enforce type hints across your entire app in two lines
-of code with *no* runtime overhead. Do it for the new guy sobbing quietly in his
-cubicle. This is beartype import hooks in ten seconds. :superscript:`dyslexia
-notwithstanding`
+of code with *no* runtime overhead. This is beartype import hooks in ten
+seconds. :superscript:`dyslexia notwithstanding`
 
 .. code-block:: python
 
@@ -48,8 +47,9 @@ notwithstanding`
        from {some_package} import {some_thing}      # <-- import more stuff
 
 Beartype import hooks extend the surprisingly sharp claws of :mod:`beartype` to
-your full stack, whether any other devs wanted you to do that or not. Claw your
-way to the top of the bug heap and then sit on that heap with a smug expression.
+your full app stack, whether anyone else wanted you to do that or not. Claw your
+way to the top of the bug heap; then sit on that heap with a smug expression. Do
+it for the new guy sobbing quietly in his cubicle.
 
 .. # ------------------( TABLES OF CONTENTS                  )------------------
 .. # Table of contents, excluding the above document heading. While the
@@ -70,17 +70,22 @@ Beartype import hooks implicitly perform both:
 * Standard **runtime type-checking** (ala the :func:`beartype.beartype`
   decorator).
 * Standard **static type-checking** (ala mypy_ and pyright_) but **at runtime**
-  – which ain't standard.
+  – and that ain't standard.
 
 Automate the :func:`beartype.beartype` decorator away today with magical import
-hooks published by the :mod:`beartype.claw` subpackage! When you install import
+hooks published by the :mod:`beartype.claw` subpackage. When you install import
 hooks from beartype, you augment beartype from a :ref:`pure-runtime
-second-generation type-checker <faq:third>` to a :ref:`hybrid runtime-static
-third-generation type-checker <faq:hybrid>` – instantaneously.
+second-generation type-checker <faq:third>` into a :ref:`hybrid runtime-static
+third-generation type-checker <faq:hybrid>`. That's right.
 
-That's right. Beartype is now a tentacular cyberpunk horror like that mutant
-brain baby from Katsuhiro Otomo's dystopian 80's masterpiece *Akira*. You can't
-look away!
+Beartype is now a tentacular cyberpunk horror like that mutant brain baby from
+Katsuhiro Otomo's dystopian 80's masterpiece *Akira*. You can't look away!
+
+.. image:: https://user-images.githubusercontent.com/217028/272775190-8996c4a2-b320-4ca1-ba83-5c4dd36e6165.png
+   :width: 300
+   :alt: mutant brain baby
+
+:superscript:`May Neo-Tokyo have mercy on your codebase's soul.`
 
 Import Hooks Overview, Part Deux
 ################################
@@ -88,85 +93,135 @@ Import Hooks Overview, Part Deux
 Beartype import hooks is a hobbit hole so deep we had to deescalate it with
 decrepit manga panels from *Akira*. Prepare to enter that hole.
 
-Let's begin by outlining exactly what :func:`.beartype_this_package` does. As
-the simplest and most convenient of several import hooks published by the
-:mod:`beartype.claw` subpackage, the :func:`.beartype_this_package` import hook
-subjects *all* subsequently imported submodules of ``{your_package}`` to
-runtime type-checking based on "high-tech" :mod:`beartype`... tech.
+What Is beartype_this_package()?
+********************************
 
-Notably, :func:`.beartype_this_package`:
+Let's begin by outlining exactly **what** :func:`.beartype_this_package` does.
 
-* Implicitly decorates *all* callables and classes by the
-  :func:`beartype.beartype` decorator. Rejoice, fellow mammals! You no longer
-  need to explicitly decorate anything by :func:`beartype.beartype` ever again.
-  Of course, you *can* if you want to – but there's no compelling reason to do
-  so and many compelling reasons *not* to do so. You have probably just thought
-  of five, but there are even more.
+As the simplest and most convenient of several import hooks published by the
+:mod:`beartype.claw` subpackage, :func:`.beartype_this_package` type-checks
+*all* subsequently imported submodules of ``{your_package}``. Notably,
+:func:`.beartype_this_package`:
+
+* Implicitly decorates *all* callables and classes across ``{your_package}`` by
+  the :func:`beartype.beartype` decorator. Rejoice, fellow mammals! You no
+  longer need to explicitly decorate anything by :func:`beartype.beartype` ever
+  again. Of course, you *can* if you want to – but there's no compelling reason
+  to do so and many compelling reasons *not* to do so. You have probably just
+  thought of five, but there are even more.
 * Implicitly appends *every* :pep:`526`\ -compliant annotated variable
   assignment (e.g., ``muh_int: int = 'Pretty sure this isn't an integer, but
-  not sure.'``) by a new statement at the same indentation level calling the
-  :func:`beartype.door.die_if_unbearable` function passed both that variable and
-  that type hint. Never do that manually. Now, you never do.
+  not sure.'``) across ``{your_package}`` by a new statement at the same
+  indentation level calling the :func:`beartype.door.die_if_unbearable` function
+  passed both that variable and that type hint. Never do that manually. Now, you
+  never do.
 
-For example, :func:`.beartype_this_package` silently transforms your
-``{your_package}.{buggy_submodule}`` which currently lacks runtime type-checking
-from this quietly broken code you insist you never knew about, you swear:
+Examples or we're lying again. :func:`.beartype_this_package` transforms your
+``{your_package}.{buggy_submodule}`` from this quietly broken code that you
+insist you never knew about, you swear:
 
 .. code-block:: python
 
+   # This is "{your_package}.{buggy_submodule}". It is bad, but you never knew.
    import typing as t
 
-   bad_global: int = 'My eyes! The goggles do nothing.'
+   bad_global: int = 'My eyes! The goggles do nothing.'  # <-- no exception
 
    def bad_function() -> str:
        return b"I could've been somebody, instead of a bum byte string."
+   bad_function()  # <-- no exception
 
    class BadClass(object):
        def bad_method(self) -> t.NoReturn:
            return 'Nobody puts BadClass in the corner.'
+   BadClass().bad_method()  # <-- no exception
 
-...into this loudly broken code even your DevOps can no longer ignore:
+...into this loudly broken code that even your unionized QA team can no longer
+ignore:
 
 .. code-block:: python
 
+   # This is "{your_package}.{buggy_submodule}" on beartype_this_package().
+   # Any questions? Actually, that was rhetorical. No questions, please.
    from beartype import beartype
    from beartype.door import die_if_unbearable
    import typing as t
 
    bad_global: int = 'My eyes! The goggles do nothing.'
-   die_if_unbearable(bad_global, int)
+   die_if_unbearable(bad_global, int)  # <-- raises exception
 
    @beartype
    def bad_function() -> str:
        return b"I could've been somebody, instead of a bum byte string."
+   bad_function()  # <-- raises exception
 
    @beartype
    class BadClass(object):
        def bad_method(self) -> t.NoReturn:
            return 'Nobody puts BadClass in the corner.'
+   BadClass().bad_method()  # <-- raises exception
 
 By doing nothing, you saved five lines of extraneous boilerplate you no longer
 need to maintain, preserved `DRY (Don't Repeat Yourself) <DRY_>`__, and mended
 your coworker's career, who you would have blamed for all this. You had nothing
-to do with that code! It's a nothingburger!
+to do with that code. It's a nothingburger!
 
 Beartype believes you. This is why we :func:`.beartype_this_package`.
+
+.. image:: https://user-images.githubusercontent.com/217028/272775040-9bf81c0b-3994-4420-a1d5-ac5835f0a0b2.png
+   :alt: looks kinda bad
+
+:superscript:`This is what happens when we don't beartype_this_package().`
+
+Why Is beartype_this_package()?
+*******************************
+
+Let's continue by justifying **why** you want to use
+:func:`.beartype_this_package`. Don't worry. The "why?" is easier than the
+"what?". It often is. The answer is: "Safety is my middle name."
+:superscript:`<-- more lies`
+
+:func:`.beartype_this_package` isolates its bug-hunting action to the current
+package. This is what everyone wants to try first. Type-checking only *your*
+first-party package under *your* control is the safest course of action, because
+you rigorously stress-tested your package with beartype. You did, didn't you?
+You're not making us look bad here? Don't make us look bad. We already have
+GitHub and Reddit for that.
+
+Other beartype import hooks – like :func:`.beartype_packages` or
+:func:`.beartyping` – can be (mis)used to dangerously type-check *other*
+third-party packages outside your control that have probably *never* been
+stress-tested with beartype. Those packages could raise type-checking violations
+at runtime that you have no control over. If they don't now, they could later.
+Forward compatibility is out the window. ``git blame`` has things to say
+about that.
+
+If :func:`.beartype_this_package` fails, there is no hope for your package. Even
+though it might be beartype's fault, beartype will still blame you for its
+mistakes.
 
 Import Hooks API
 ################
 
 Beartype import hooks come in two flavours:
 
-* :ref:`Permanent import hooks <api_claw:permanent>` (i.e., side-effect-laden
-  import hooks whose effects permanently apply to *all* subsequently imported
-  packages and modules).
-* :ref:`Idempotent import hooks <api_claw:idempotent>` (i.e., side-effect-free
-  import hooks whose effects are isolated to a specific block of code).
+* :ref:`Global import hooks <api_claw:global>`, whose effects globally apply to
+  *all* subsequently imported packages and modules matching various patterns.
+* :ref:`Local import hooks <api_claw:local>`, whose effects are locally isolated
+  to specific packages and modules imported inside specific blocks of code.
+  *All* subsequently imported packages and modules remain unaffected.
 
-.. _api_claw:permanent:
+.. _api_claw:global:
 
-Permanent Import Hooks
-**********************
+Global Import Hooks
+*******************
+
+Global beartype import hooks are... well, *global*. Their claws extend to a
+horizontal slice of your full stack. These hooks globally type-check *all*
+annotated callables, classes, and variable assignments in *all* subsequently
+imported packages and modules (matching various patterns).
+
+With great globality comes great responsibility.
 
 .. py:function::
    beartype_this_package( \
@@ -186,12 +241,11 @@ Permanent Import Hooks
                                                    * ``conf`` is *not* a
                                                      beartype configuration.
 
-   **Self-package runtime-static type-checking import hook.**
-
-   This hook type-checks *all* annotated callables, classes, and variable
-   assignments in *all* submodules of the **current package** (i.e., the
-   caller-defined package directly calling this function), configured by the
-   passed beartype configuration.
+   **Self-package runtime-static type-checking import hook** – type-checking
+   *all* annotated callables, classes, and variable assignments in *all*
+   submodules of the **current package** (i.e., the caller-defined package
+   directly calling this function), configured by the passed beartype
+   configuration.
 
    .. code-block:: python
 
@@ -199,42 +253,30 @@ Permanent Import Hooks
       from beartype.claw import beartype_this_package  # <-- boilerplate: the revenge
       beartype_this_package(conf=BeartypeConf(is_color=False))  # <-- you hate rainbows
 
-   This hook isolates its bug-hunting action to the current package. This is
-   what everyone wants to try first, because this is the safest course of
-   action. Other hooks permissively type-check third-party packages outside your
-   control, which have probably *never* been tested against beartype and are
-   thus likely to raise type-checking violations; ``git blame`` has things to
-   say about that. This hook restrictively type-checks only your first-party
-   package under your control, which *has* been tested against beartype. It has,
-   hasn't it? You're not making us look bad here, are you? If this hook fails,
-   there is no hope for your package. Even though it might be beartype's fault,
-   beartype will still blame you for its mistakes.
-
    This hook is typically called as the first statement in the ``__init__``
    submodule of some caller-defined (sub)package. If this hook is called from:
 
-   * Your top-level ``{your_package}.__init__`` submodule, then this hook
-     type-checks your entire package – including *all* submodules and
-     subpackages of your package.
+   * Your top-level ``{your_package}.__init__`` submodule, this hook type-checks
+     your entire package. This includes *all* submodules and subpackages of your
+     package.
    * Some mid-level ``{your_package}.{your_subpackage}.__init__`` submodule,
-     then this hook type-checks only that subpackage – including *all*
-     submodules and subsubpackages of that subpackage.
+     this hook type-checks only that subpackage. This includes *only* submodules
+     and subsubpackages of that subpackage.
 
    As the term "import hook" implies, this hook only applies to subsequent
    imports performed *after* this hook; previously imported submodules and
    subpackages remain unaffected.
 
-.. _api_claw:idempotent:
+   .. versionadded:: 0.15.0
+   .. image:: https://user-images.githubusercontent.com/217028/272775398-761b9f11-95c2-4410-ad56-fd1ebe99bf04.png
+      :alt: fierce determined face
 
-Idempotent Import Hooks
-***********************
+   :superscript:`beartype_this_package(): it do be like that.`
 
-.. # FIXME: Revise signature up, please.
-.. # .. py:function::
-.. #    beartyping( \
-.. #        *, \
-.. #        conf: beartype.BeartypeConf = beartype.BeartypeConf(), \
-.. #    ) -> None
+.. _api_claw:local:
+
+Local Import Hooks
+******************
 
 Import Hook Configuration
 #########################
