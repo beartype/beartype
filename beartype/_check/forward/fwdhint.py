@@ -454,7 +454,7 @@ def resolve_hint(
         # Initialize this forward scope to the set of all builtin attributes
         # (e.g., "str", "Exception"). Although the eval() builtin does, of
         # course, implicitly evaluate this stringified type hint against all
-        # builtin attributes, it does only *AFTER* invoking the
+        # builtin attributes, it does so only *AFTER* invoking the
         # BeartypeForwardScope.__missing__() dunder method with each such
         # builtin attribute referenced in this hint. Since handling that
         # eccentricity would be less efficient and trivial than simply

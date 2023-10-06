@@ -26,6 +26,7 @@ from beartype._data.hint.datahinttyping import (
 from beartype._check.forward.fwdtype import bear_typistry
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclsmake import make_type
+from beartype._util.cls.utilclstest import is_type_subclass
 
 # ....................{ METACLASSES                        }....................
 #FIXME: Unit test us up, please.
@@ -104,7 +105,7 @@ class _BeartypeForwardRefMeta(type):
             hint_name.endswith('__')
         ):
             raise AttributeError(
-                f'Forward reference proxy {repr(cls)} dunder attribute '
+                f'Forward reference proxy dunder attribute '
                 f'"{cls.__name__}.{hint_name}" not found.'
             )
         # Else, this unqualified basename is *NOT* that of a non-existent dunder
@@ -126,8 +127,8 @@ class _BeartypeForwardRefMeta(type):
         :data:`True` only if the passed object is an instance of the external
         class referenced by the passed **forward reference subclass** (i.e.,
         :class:`._BeartypeForwardRefABC` subclass whose metaclass is this
-        metaclass and whose :attr:`._BeartypeForwardRefABC.__beartype_name__` class
-        variable is the fully-qualified name of that external class).
+        metaclass and whose :attr:`._BeartypeForwardRefABC.__beartype_name__`
+        class variable is the fully-qualified name of that external class).
 
         Parameters
         ----------
@@ -146,7 +147,39 @@ class _BeartypeForwardRefMeta(type):
 
         # Return true only if this forward reference subclass insists that this
         # object satisfies the external class referenced by this subclass.
-        return cls.is_instance(obj)
+        return cls.__beartype_is_instance__(obj)
+
+
+    def __subclasscheck__(  # type: ignore[misc]
+        cls: Type['_BeartypeForwardRefABC'],  # pyright: ignore[reportGeneralTypeIssues]
+        obj: object,
+    ) -> bool:
+        '''
+        :data:`True` only if the passed object is a subclass of the external
+        class referenced by the passed **forward reference subclass** (i.e.,
+        :class:`._BeartypeForwardRefABC` subclass whose metaclass is this
+        metaclass and whose :attr:`._BeartypeForwardRefABC.__beartype_name__`
+        class variable is the fully-qualified name of that external class).
+
+        Parameters
+        ----------
+        cls : Type[_BeartypeForwardRefABC]
+            Forward reference subclass to test this object against.
+        obj : object
+            Arbitrary object to be tested as a subclass of the external class
+            referenced by this forward reference subclass.
+
+        Returns
+        ----------
+        bool
+            :data:`True` only if this object is a subclass of the external class
+            referenced by this forward reference subclass.
+        '''
+
+        # Return true only if this forward reference subclass insists that this
+        # object is an instance of the external class referenced by this
+        # subclass.
+        return cls.__beartype_is_subclass__(obj)
 
 
     def __repr__(  # type: ignore[misc]
@@ -165,11 +198,26 @@ class _BeartypeForwardRefMeta(type):
 
         # If this is a subscripted forward reference subclass, append additional
         # metadata representing this subscription.
-        if issubclass(cls, _BeartypeForwardRefIndexedABC):
+        #
+        # Ideally, we would test whether this is a subclass of the
+        # "_BeartypeForwardRefIndexedABC" superclass as follows:
+        #     if issubclass(cls, _BeartypeForwardRefIndexedABC):
+        #
+        # Sadly, doing so invokes the __subclasscheck__() dunder method defined
+        # above, which invokes the
+        # _BeartypeForwardRefABC.__beartype_is_subclass__() method defined
+        # above, which tests the type referred to by this subclass rather than
+        # this subclass itself. In short, this is why you play with madness.
+        try:
             cls_repr += (
                 f', __beartype_args__={repr(cls.__beartype_args__)}'
                 f', __beartype_kwargs__={repr(cls.__beartype_kwargs__)}'
             )
+        # If doing so fails with the expected "AttributeError", then this is
+        # *NOT* a subscripted forward reference subclass. In this avoid,
+        # silently ignore this common case. *sigh*
+        except AttributeError:
+            pass
 
         # Close this representation.
         cls_repr += ')'
@@ -249,9 +297,9 @@ class _BeartypeForwardRefABC(object, metaclass=_BeartypeForwardRefMeta):
             f'{repr(cls)} not instantiatable.'
         )
 
-    # ....................{ TESTERS                        }....................
+    # ....................{ PRIVATE ~ testers              }....................
     @classmethod
-    def is_instance(cls, obj: object) -> bool:
+    def __beartype_is_instance__(cls, obj: object) -> bool:
         '''
         :data:`True` only if the passed object is an instance of the external
         class referred to by this forward reference.
@@ -262,10 +310,64 @@ class _BeartypeForwardRefABC(object, metaclass=_BeartypeForwardRefMeta):
             Arbitrary object to be tested.
 
         Returns
-        ----------
+        -------
         bool
             :data:`True` only if this object is an instance of the external
             class referred to by this forward reference subclass.
+        '''
+
+        # Resolve the external class referred to by this forward reference and
+        # permanently store that class in the "__beartype_type__" variable.
+        cls.__beartype_resolve_type__()
+
+        # Return true only if this object is an instance of the external class
+        # referenced by this forward reference.
+        return isinstance(obj, cls.__beartype_type__)  # type: ignore[arg-type]
+
+
+    @classmethod
+    def __beartype_is_subclass__(cls, obj: object) -> bool:
+        '''
+        :data:`True` only if the passed object is a subclass of the external
+        class referred to by this forward reference.
+
+        Parameters
+        ----------
+        obj : object
+            Arbitrary object to be tested.
+
+        Returns
+        -------
+        bool
+            :data:`True` only if this object is a subclass of the external class
+            referred to by this forward reference subclass.
+        '''
+
+        # Resolve the external class referred to by this forward reference and
+        # permanently store that class in the "__beartype_type__" variable.
+        cls.__beartype_resolve_type__()
+
+        # Return true only if this object is a subclass of the external class
+        # referenced by this forward reference.
+        return is_type_subclass(obj, cls.__beartype_type__)  # type: ignore[arg-type]
+
+    # ....................{ PRIVATE ~ resolvers            }....................
+    #FIXME: [SPEED] Optimize this by refactoring this into a cached class
+    #property defined on the metaclass of the superclass instead. Since doing so
+    #is a bit non-trivial and nobody particularly cares, the current naive
+    #approach certainly suffices for now. *sigh*
+    @classmethod
+    def __beartype_resolve_type__(cls) -> None:
+        '''
+        **Resolve** (i.e., dynamically lookup) the external class referred to by
+        this forward reference and permanently store that class in the
+        :attr:`__beartype_type__` class variable for subsequent lookup.
+
+        Caveats
+        -------
+        This method should *always* be called before accessing the
+        :attr:`__beartype_type__` class variable, which should *always* be
+        assumed to be :data:`None` before calling this method.
         '''
 
         # If the external class referenced by this forward reference has yet to
@@ -292,11 +394,7 @@ class _BeartypeForwardRefABC(object, metaclass=_BeartypeForwardRefMeta):
         #
         # In either case, that class is now resolved.
 
-        # Return true only if this object is an instance of the external class
-        # referenced by this forward reference.
-        return isinstance(obj, cls.__beartype_type__)
-
-
+# ....................{ SUPERCLASSES ~ index               }....................
 #FIXME: Unit test us up, please.
 class _BeartypeForwardRefIndexedABC(_BeartypeForwardRefABC):
     '''

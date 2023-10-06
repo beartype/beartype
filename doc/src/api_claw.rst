@@ -190,11 +190,11 @@ GitHub and Reddit for that.
 
 Other beartype import hooks – like :func:`.beartype_packages` or
 :func:`.beartyping` – can be (mis)used to dangerously type-check *other*
-third-party packages outside your control that have probably *never* been
+third-party packages outside your control that have probably never been
 stress-tested with beartype. Those packages could raise type-checking violations
 at runtime that you have no control over. If they don't now, they could later.
-Forward compatibility is out the window. ``git blame`` has things to say
-about that.
+Forward compatibility is out the window. ``git blame`` has things to say about
+that.
 
 If :func:`.beartype_this_package` fails, there is no hope for your package. Even
 though it might be beartype's fault, beartype will still blame you for its
@@ -205,11 +205,11 @@ Import Hooks API
 
 Beartype import hooks come in two flavours:
 
-* :ref:`Global import hooks <api_claw:global>`, whose effects globally apply to
-  *all* subsequently imported packages and modules matching various patterns.
-* :ref:`Local import hooks <api_claw:local>`, whose effects are locally isolated
-  to specific packages and modules imported inside specific blocks of code.
-  *All* subsequently imported packages and modules remain unaffected.
+* :ref:`Global import hooks <api_claw:global>`, whose effects encompass *all*
+  subsequently imported packages and modules matching various patterns.
+* :ref:`Local import hooks <api_claw:local>`, whose effects are isolated to only
+  specific packages and modules imported inside specific blocks of code. Any
+  subsequently imported packages or modules remain unaffected.
 
 .. _api_claw:global:
 
@@ -219,7 +219,7 @@ Global Import Hooks
 Global beartype import hooks are... well, *global*. Their claws extend to a
 horizontal slice of your full stack. These hooks globally type-check *all*
 annotated callables, classes, and variable assignments in *all* subsequently
-imported packages and modules (matching various patterns).
+imported packages and modules matching various patterns.
 
 With great globality comes great responsibility.
 
@@ -251,16 +251,16 @@ With great globality comes great responsibility.
 
       from beartype import BeartypeConf                # <-- boilerplate
       from beartype.claw import beartype_this_package  # <-- boilerplate: the revenge
-      beartype_this_package(conf=BeartypeConf(is_color=False))  # <-- you hate rainbows
+      beartype_this_package(conf=BeartypeConf(is_color=False))  # <-- y u hate rainbows?
 
    This hook is typically called as the first statement in the ``__init__``
    submodule of some caller-defined (sub)package. If this hook is called from:
 
    * Your top-level ``{your_package}.__init__`` submodule, this hook type-checks
-     your entire package. This includes *all* submodules and subpackages of your
-     package.
+     your entire package. This includes *all* submodules and subpackages across
+     your entire package.
    * Some mid-level ``{your_package}.{your_subpackage}.__init__`` submodule,
-     this hook type-checks only that subpackage. This includes *only* submodules
+     this hook type-checks only that subpackage. This includes *all* submodules
      and subsubpackages of that subpackage.
 
    As the term "import hook" implies, this hook only applies to subsequent
