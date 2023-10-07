@@ -31,6 +31,7 @@ from beartype import beartype
 from beartype.typing import (
     Generic,
     List,
+    Type,
     TypeVar,
     Union,
 )
@@ -75,8 +76,8 @@ TheDarkestUnionOfTheYear = Union[complex, 'TheDarkestEveningOfTheYear', bytes]
 def but_i_have_promises(to_keep: TheDarkestUnionOfTheYear) -> (
     TheDarkestUnionOfTheYear):
     '''
-    Decorated function annotated by a nested relative forward reference
-    referring to a type that has yet to be declared.
+    Decorated function annotated by a union of arbitrary types *and* a relative
+    forward reference referring to a type that has yet to be declared.
     '''
 
     return to_keep
@@ -104,6 +105,26 @@ def its_fields_of_snow(
     '''
 
     return and_pinnacles_of_ice[0]
+
+
+TheDarkestSubclassOfTheYear = 'Type[TheDarkestEveningOfTheYear]'
+@beartype
+def the_dry_leaf(rustles_in_the_brake: TheDarkestSubclassOfTheYear) -> (
+    TheDarkestSubclassOfTheYear):
+    '''
+    Decorated function annotated by a composite type hint defined as a
+    ``beartype.typing.Type[...]` hint subscripted by a relative forward
+    reference referring to a type that has yet to be declared, exercising an
+    edge case with respect to proxying of :func:`issubclass` type-checks in
+    forward reference proxies.
+
+    See Also
+    --------
+    https://github.com/beartype/beartype/issues/289
+        Issue exposing this edge case.
+    '''
+
+    return rustles_in_the_brake
 
 # ....................{ FUNCTIONS ~ non-pep : discrete     }....................
 # Arbitrary functions annotated by PEP-noncompliant forward references defined

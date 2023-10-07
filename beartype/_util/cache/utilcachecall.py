@@ -580,16 +580,24 @@ def property_cached(func: _CallableT) -> _CallableT:
     return local_attrs['property_method_cached']
 
 # ....................{ PRIVATE ~ constants : var          }....................
-_CALLABLE_CACHED_VAR_NAME_PREFIX = '_beartype_cached__'
+_CALLABLE_CACHED_VAR_NAME_PREFIX = '__beartype_cached__'
 '''
 Substring prefixing the names of all private instance variables to which all
 caching decorators (e.g., :func:`property_cached`) cache values returned by
 decorated callables.
 
-This prefix guarantees uniqueness across *all* instances -- including those
-instantiated from official Python and unofficial third-party classes and those
-internally defined by this application. Doing so permits logic elsewhere (e.g.,
-pickling filtering) to uniquely match and act upon these variables.
+This prefix:
+
+* Guarantees uniqueness across *all* instances -- including those instantiated
+  from official Python and unofficial third-party classes and those internally
+  defined by this application. Doing so permits logic elsewhere (e.g., pickling
+  filtering) to uniquely match and act upon these variables.
+* Is intentionally prefixed by double rather than single underscores (i.e.,
+  ``"__"`` rather than ``"_"``), ensuring that our
+  :meth:`beartype._check.forward._fwdref._BeartypeForwardRefMeta.__getattr__`
+  dunder method ignores the private instance variables cached by our cached
+  :meth:`beartype._check.forward._fwdref._BeartypeForwardRefMeta.__beartype_type__`
+  property.
 '''
 
 

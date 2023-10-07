@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator dataclass unit tests.**
+Beartype decorator **dataclass** unit tests.
 
 This submodule unit tests the :func:`beartype._check.checkcall` submodule.
 '''
