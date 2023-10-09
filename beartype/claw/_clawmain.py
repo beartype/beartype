@@ -15,17 +15,9 @@ this private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Unit test us up. Specifically, test that this approach successfully:
-#* Directly decorates callables declared at:
-#  * Global scope in an on-disk top-level non-package module embedded in our
-#    test suite.
-#  * Class scope in the same module.
-#  * Closure scope in the same module.
-#* Recursively decorates all callables declared by submodules of an on-disk
-#  top-level package.
-#* Does *NOT* conflict with pytest's assertion rewriting mechanism. This will
-#  be non-trivial. Can we isolate another pytest process within the main
-#  currently running pytest process? O_o
+#FIXME: Improve the beartype_package() and beartype_packages() functions to emit
+#non-fatal warnings when the passed package or packages have already been
+#imported (i.e., are in the "sys.modules" list).
 
 # ....................{ IMPORTS                            }....................
 from beartype.claw._pkg.clawpkgenum import BeartypeClawCoverage

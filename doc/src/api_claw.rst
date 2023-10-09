@@ -209,7 +209,7 @@ Beartype import hooks come in two flavours:
   subsequently imported packages and modules matching various patterns.
 * :ref:`Local import hooks <api_claw:local>`, whose effects are isolated to only
   specific packages and modules imported inside specific blocks of code. Any
-  subsequently imported packages or modules remain unaffected.
+  subsequently imported packages and modules remain unaffected.
 
 .. _api_claw:global:
 
@@ -241,37 +241,122 @@ With great globality comes great responsibility.
                                                    * ``conf`` is *not* a
                                                      beartype configuration.
 
-   **Self-package runtime-static type-checking import hook** – type-checking
-   *all* annotated callables, classes, and variable assignments in *all*
+   **Self-package runtime-static type-checking import hook.** Type-check *all*
+   annotated callables, classes, and variable assignments across *all*
    submodules of the **current package** (i.e., the caller-defined package
    directly calling this function), configured by the passed beartype
    configuration.
 
-   .. code-block:: python
-
-      from beartype import BeartypeConf                # <-- boilerplate
-      from beartype.claw import beartype_this_package  # <-- boilerplate: the revenge
-      beartype_this_package(conf=BeartypeConf(is_color=False))  # <-- y u hate rainbows?
+   This hook only applies to subsequent imports performed *after* this hook, as
+   the term "import hook" implies; previously imported submodules and
+   subpackages remain unaffected.
 
    This hook is typically called as the first statement in the ``__init__``
-   submodule of some caller-defined (sub)package. If this hook is called from:
+   submodule of whichever (sub)package you would like to type-check. If you
+   call this hook from:
 
    * Your top-level ``{your_package}.__init__`` submodule, this hook type-checks
      your entire package. This includes *all* submodules and subpackages across
      your entire package.
    * Some mid-level ``{your_package}.{your_subpackage}.__init__`` submodule,
-     this hook type-checks only that subpackage. This includes *all* submodules
-     and subsubpackages of that subpackage.
+     this hook type-checks only that subpackage. This includes *only* submodules
+     and subsubpackages of that subpackage. All other submodules and subpackages
+     of your package remain unaffected (i.e., will *not* be type-checked).
 
-   As the term "import hook" implies, this hook only applies to subsequent
-   imports performed *after* this hook; previously imported submodules and
-   subpackages remain unaffected.
+   .. code-block:: python
+
+      # At the top of your "{your_package}.__init__" submodule:
+      from beartype import BeartypeConf                # <-- boilerplate
+      from beartype.claw import beartype_this_package  # <-- boilerplate: the revenge
+      beartype_this_package(conf=BeartypeConf(is_color=False))  # <-- no color is best color
 
    .. versionadded:: 0.15.0
    .. image:: https://user-images.githubusercontent.com/217028/272775398-761b9f11-95c2-4410-ad56-fd1ebe99bf04.png
       :alt: fierce determined face
 
    :superscript:`beartype_this_package(): it do be like that.`
+
+.. py:function::
+   beartype_package( \
+       package_name: str, \
+       *, \
+       conf: beartype.BeartypeConf = beartype.BeartypeConf() \
+   ) -> None
+
+   :arg package_name: Absolute name of the package or module to be type-checked.
+   :type package_name: str
+   :arg conf: Beartype configuration. Defaults to the default configuration
+              performing :math:`O(1)` type-checking.
+   :type conf: beartype.BeartypeConf
+   :raise beartype.roar.BeartypeClawHookException: If either:
+
+                                                   * ``conf`` is *not* a
+                                                     beartype configuration.
+                                                   * ``package_name`` is either:
+
+                                                     * *Not* a string.
+                                                     * The empty string.
+                                                     * A non-empty string that
+                                                       is *not* a valid
+                                                       **package or module
+                                                       name** (i.e.,
+                                                       ``"."``-delimited
+                                                       concatenation of valid
+                                                       Python identifiers).
+
+   **Single-package** or **single-module runtime-static type-checking import
+   hook.** Type-check *all* annotated callables, classes, and variable
+   assignments across either:
+
+   * If the passed name is that of a (sub)package, *all* submodules of that
+     (sub)package.
+   * If the passed name is that of a (sub)module, *only* that (sub)module.
+
+   This hook permissively accepts either a package or module name. In either
+   case, this hook should be called *before* that package or module is imported;
+   when erroneously called *after* that package or module is imported, this hook
+   silently reduces to a noop (i.e., does nothing regardless of how many times
+   you squint at it suspiciously).
+
+   This hook is typically called as the first statement in the ``__init__``
+   submodule of your top-level ``{your_package}.__init__`` submodule.
+
+   .. code-block:: python
+
+      # At the top of your "{your_package}.__init__" submodule:
+      from beartype import BeartypeConf           # <-- <Ctrl-c> <Ctrl-v>
+      from beartype.claw import beartype_package  # <-- <Ctrl-c> <Ctrl-v> x 2
+      beartype_package('your_package')  # <-- they said explicit is better than implicit,
+                                        #     but all i got was this t-shirt and a hicky.
+
+   Of course, that's fairly worthless. Just call :func:`.beartype_this_package`,
+   right? But what if you want to type-check just *one* subpackage or submodule
+   of your package rather than your *entire* package? In that case,
+   :func:`.beartype_this_package` is overbearing. :superscript:`badum ching`
+   Enter :func:`.beartype_package`, the outer limits of QA where you control the
+   horizontal and the vertical:
+
+   .. code-block:: python
+
+      # Just because you can do something, means you should do something.
+      beartype_package('your_package.your_subpackage.your_submodule')  # <-- fine-grained precision strike
+
+   :func:`.beartype_package` shows it true worth, however, in type-checking
+   *other* people's code. Because the :mod:`beartype.claw` API is a permissive
+   Sarlacc pit, :func:`.beartype_package` happily accepts the absolute name of
+   *any* package or module – whether they wanted you to do that or not:
+
+   .. code-block:: python
+
+      # Whenever you want to break something over your knee, never leave your
+      # favorite IDE [read: Vim] without beartype_package().
+      beartype_package('somebody_elses_package')  # <-- blow it up like you just don't care
+
+   .. versionadded:: 0.15.0
+   .. image:: https://user-images.githubusercontent.com/217028/272775461-e5f62d59-9fe9-49e8-9904-47a1326d8695.png
+      :alt: wizened psychic baby lady
+
+   :superscript:`Truer words were never spoken, wizened psychic baby lady.`
 
 .. _api_claw:local:
 
