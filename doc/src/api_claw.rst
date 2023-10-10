@@ -224,8 +224,7 @@ imported packages and modules matching various patterns.
 With great globality comes great responsibility.
 
 .. py:function::
-   beartype_this_package( \
-       *, conf: beartype.BeartypeConf = beartype.BeartypeConf()) -> None
+   beartype_this_package(*, conf: beartype.BeartypeConf = beartype.BeartypeConf()) -> None
 
    :arg conf: Beartype configuration. Defaults to the default configuration
               performing :math:`O(1)` type-checking.
@@ -241,11 +240,11 @@ With great globality comes great responsibility.
                                                    * ``conf`` is *not* a
                                                      beartype configuration.
 
-   **Self-package runtime-static type-checking import hook.** Type-check *all*
-   annotated callables, classes, and variable assignments across *all*
-   submodules of the **current package** (i.e., the caller-defined package
-   directly calling this function), configured by the passed beartype
-   configuration.
+   **Self-package runtime-static type-checking import hook.** This hook accepts
+   *no* package or module names, instead type-checking *all* annotated
+   callables, classes, and variable assignments across *all* submodules of the
+   **current package** (i.e., the caller-defined package directly calling this
+   function).
 
    This hook only applies to subsequent imports performed *after* this hook, as
    the term "import hook" implies; previously imported submodules and
@@ -270,11 +269,23 @@ With great globality comes great responsibility.
       from beartype.claw import beartype_this_package  # <-- boilerplate: the revenge
       beartype_this_package(conf=BeartypeConf(is_color=False))  # <-- no color is best color
 
+   This hook is effectively syntactic sugar for the following idiomatic
+   one-liners that are so cumbersome, fragile, and unreadable that no one should
+   even be reading this:
+
+   .. code-block:: python
+
+      beartype_this_package()                            # <-- this...
+      beartype_package(__name__.rpartition('.')[0])      # <-- ...is equivalent to this...
+      beartype_packages((__name__.rpartition('.')[0],))  # <-- ...is equivalent to this.
+
+   When in doubt, have no doubt. Just call :func:`.beartype_this_package`.
+
    .. versionadded:: 0.15.0
    .. image:: https://user-images.githubusercontent.com/217028/272775398-761b9f11-95c2-4410-ad56-fd1ebe99bf04.png
       :alt: fierce determined face
 
-   :superscript:`beartype_this_package(): it do be like that.`
+   :superscript:`beartype_this_package(): It do be like that.`
 
 .. py:function::
    beartype_package( \
@@ -304,17 +315,16 @@ With great globality comes great responsibility.
                                                        concatenation of valid
                                                        Python identifiers).
 
-   **Single-package** or **single-module runtime-static type-checking import
-   hook.** Type-check *all* annotated callables, classes, and variable
-   assignments across either:
+   **Uni-package runtime-static type-checking import hook.** This hook accepts
+   only a single package or single module name, type-checking *all* annotated
+   callables, classes, and variable assignments across either:
 
    * If the passed name is that of a (sub)package, *all* submodules of that
      (sub)package.
    * If the passed name is that of a (sub)module, *only* that (sub)module.
 
-   This hook permissively accepts either a package or module name. In either
-   case, this hook should be called *before* that package or module is imported;
-   when erroneously called *after* that package or module is imported, this hook
+   This hook should be called *before* that package or module is imported; when
+   erroneously called *after* that package or module is imported, this hook
    silently reduces to a noop (i.e., does nothing regardless of how many times
    you squint at it suspiciously).
 
@@ -326,8 +336,9 @@ With great globality comes great responsibility.
       # At the top of your "{your_package}.__init__" submodule:
       from beartype import BeartypeConf           # <-- <Ctrl-c> <Ctrl-v>
       from beartype.claw import beartype_package  # <-- <Ctrl-c> <Ctrl-v> x 2
-      beartype_package('your_package')  # <-- they said explicit is better than implicit,
-                                        #     but all i got was this t-shirt and a hicky.
+      beartype_package('your_package', conf=BeartypeConf(is_debug=True))
+                      # ^-- they said explicit is better than implicit,
+                      #     but all i got was this t-shirt and a hicky.
 
    Of course, that's fairly worthless. Just call :func:`.beartype_this_package`,
    right? But what if you want to type-check just *one* subpackage or submodule
@@ -339,7 +350,7 @@ With great globality comes great responsibility.
    .. code-block:: python
 
       # Just because you can do something, means you should do something.
-      beartype_package('your_package.your_subpackage.your_submodule')  # <-- fine-grained precision strike
+      beartype_package('good_package.m.A.A.d_submodule')  # <-- fine-grained precision strike
 
    :func:`.beartype_package` shows it true worth, however, in type-checking
    *other* people's code. Because the :mod:`beartype.claw` API is a permissive
@@ -352,11 +363,170 @@ With great globality comes great responsibility.
       # favorite IDE [read: Vim] without beartype_package().
       beartype_package('somebody_elses_package')  # <-- blow it up like you just don't care
 
+   This hook is effectively syntactic sugar for passing the
+   :func:`.beartype_packages` function a 1-tuple containing only this package or
+   module name.
+
+   .. code-block:: python
+
+      beartype_package('your_package')      # <-- this...
+      beartype_packages(('your_package',))  # <-- ...is equivalent to this.
+
+   Pretend you didn't see that. Just call :func:`.beartype_package`.
+
    .. versionadded:: 0.15.0
    .. image:: https://user-images.githubusercontent.com/217028/272775461-e5f62d59-9fe9-49e8-9904-47a1326d8695.png
       :alt: wizened psychic baby lady
 
    :superscript:`Truer words were never spoken, wizened psychic baby lady.`
+
+.. py:function::
+   beartype_packages( \
+       package_names: collections.abc.Iterable[str], \
+       *, \
+       conf: beartype.BeartypeConf = beartype.BeartypeConf() \
+   ) -> None
+
+   :arg package_name: Iterable of the absolute names of one or more packages or
+                      modules to be type-checked.
+   :type package_name: collections.abc.Iterable[str]
+   :arg conf: Beartype configuration. Defaults to the default configuration
+              performing :math:`O(1)` type-checking.
+   :type conf: beartype.BeartypeConf
+   :raise beartype.roar.BeartypeClawHookException: If either:
+
+                                                   * ``conf`` is *not* a
+                                                     beartype configuration.
+                                                   * ``package_names`` is
+                                                     either:
+
+                                                     * *Not* an iterable.
+                                                     * The empty iterable.
+                                                     * A non-empty iterable
+                                                       containing at least one
+                                                       item that is either:
+
+                                                       * *Not* a string.
+                                                       * The empty string.
+                                                       * A non-empty string that
+                                                         is *not* a valid
+                                                         **package or module
+                                                         name** (i.e.,
+                                                         ``"."``-delimited
+                                                         concatenation of valid
+                                                         Python identifiers).
+
+   **Multi-package runtime-static type-checking import hook.** This hook accepts
+   one or more package and module names in any arbitrary order (i.e., order is
+   insignificant), type-checking *all* annotated callables, classes, and
+   variable assignments across:
+
+   * For each passed name that is a (sub)package, *all* submodules of that
+     (sub)package.
+   * For each passed name that is a (sub)module, *only* that (sub)module.
+
+   This hook should be called *before* those packages and modules are imported;
+   when erroneously called *after* those packages and modules are imported, this
+   hook silently reduces to a noop. Squinting still does nothing.
+
+   This hook is typically called as the first statement in the ``__init__``
+   submodule of your top-level ``{your_package}.__init__`` submodule.
+
+   .. code-block:: python
+
+      # At the top of your "{your_package}.__init__" submodule:
+      from beartype import BeartypeConf            # <-- copy-pasta
+      from beartype.claw import beartype_packages  # <-- copy-pasta intensifies
+      beartype_packages((
+          'your_package',
+          'some_package.published_by.the_rogue_ai.Johnny_Twobits',  # <-- seems trustworthy
+          'numpy',  # <-- ...heh. no one knows what will happen here!
+          'scipy',  # <-- ...but we can guess, can't we? *sigh*
+      ), conf=BeartypeConf(is_pep484_tower=True))  # <-- so. u 2 h8 precision.
+
+   This hook is the penultimate force in :ref:`global import hooks
+   <api_claw:global>`. The terser :func:`.beartype_this_package` and
+   :func:`.beartype_package` hooks are effectively syntactic sugar for this
+   verboser hook.
+
+       One hook to QA them all, and in the darkness of your codebase bind them.
+
+   .. versionadded:: 0.15.0
+   .. image:: https://user-images.githubusercontent.com/217028/272775529-42b85874-56b7-40b4-b9d8-19b603df1657.png
+      :width: 256
+      :alt: it's the end of the road as we know it, and i feel fine
+
+   :superscript:`It’s almost as if we know what “penultimate” means.`
+
+.. py:function::
+   beartype_all(*, conf: beartype.BeartypeConf = beartype.BeartypeConf()) -> None
+
+   :arg conf: Beartype configuration. Defaults to the default configuration
+              performing :math:`O(1)` type-checking.
+   :type conf: beartype.BeartypeConf
+   :raise beartype.roar.BeartypeClawHookException: If ``conf`` is *not* a
+                                                   beartype configuration.
+
+   **All-packages runtime-static type-checking import hook.** This hook accepts
+   *no* package or module names, instead type-checking *all* callables, classes,
+   and variable assignments across *all* submodules of *all* packages.
+
+   This hook should be called *before* those packages and modules are imported;
+   when erroneously called *after* those packages and modules are imported, this
+   hook silently reduces to a noop. Not even squinting can help you now.
+
+   This hook is typically called as the first statement in the ``__init__``
+   submodule of your top-level ``{your_package}.__init__`` submodule.
+
+   .. code-block:: python
+
+      # At the top of your "{your_package}.__init__" submodule,
+      from beartype import BeartypeConf       # <-- @beartype seemed so innocent, once
+      from beartype.claw import beartype_all  # <-- where did it all go wrong?
+      beartype_all(conf=BeartypeConf(claw_is_pep526=False))  # <-- U WILL BE ASSIMILATE
+
+   This hook is the ultimate import hook, spasmodically unleashing a wave of
+   bug-defenestrating action over **the entire Python ecosystem.** After calling
+   this hook, *any* package or module authored by *anybody* (including packages
+   and modules in CPython's standard library) will be subject to the iron claw
+   of :mod:`beartype.claw`. Its rule is law!
+
+   This hook is the runtime equivalent of a full-blown :ref:`pure-static
+   <faq:third>` type-checker like mypy_ or pyright_, enabling full-stack_
+   :ref:`runtime-static <faq:hybrid>` type-checking over your entire app. This
+   includes submodules defined by both:
+
+   * First-party proprietary packages authored explicitly for this app.
+   * Third-party open-source packages authored and maintained elsewhere.
+
+   Nothing is isolated. Everything is permanent. Do not trust this hook.
+
+   Caveat Emptor: Empty Promises Not Even a Cat Would Eat
+   ------------------------------------------------------
+   This hook imposes type-checking on *all* downstream packages importing your
+   package, which may not necessarily want, expect, or tolerate type-checking.
+   This hook is *not* intended to be called from intermediary APIs, libraries,
+   frameworks, or other middleware. Packages imported by other packages should
+   *not* call this hook. This hook is *only* intended to be called from
+   full-stack_ end-user applications as a convenient alternative to manually
+   passing the names of all packages to be type-checked to the more granular
+   :func:`.beartype_packages` hook.
+
+   This hook is the extreme QA nuclear option. Because this hook is the extreme
+   QA nuclear option, **most codebases should not call this hook.**
+
+   :mod:`beartype` cannot be held responsible for a sudden rupture in the
+   plenæne of normalcy, the space-time continuum, or your once-stable job. Pour
+   one out for those who are about to vitriolically explode their own code.
+
+      Nuke Python from orbit. Because now you can.
+
+   .. versionadded:: 0.15.0
+   .. image:: https://github.com/beartype/beartype-assets/assets/217028/cf43dca7-1852-4fec-bcbc-6d4aeca23230
+      :width: 400
+      :alt: quiet, safe life
+
+   :superscript:`The beartype_all() lifestyle. Short but sweet.`
 
 .. _api_claw:local:
 

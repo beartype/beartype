@@ -151,6 +151,8 @@
    https://en.wikipedia.org/wiki/Type_system
 .. _endorheic basins:
    https://en.wikipedia.org/wiki/Endorheic_basin
+.. _full-stack:
+   https://en.wikipedia.org/wiki/Solution_stack
 .. _generative pre-trained transformer:
    https://en.wikipedia.org/wiki/Generative_pre-trained_transformer
 .. _gratis versus libre:

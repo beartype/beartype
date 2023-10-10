@@ -44,40 +44,38 @@ def beartype_all(
     '''
     Register a new **universal beartype import path hook** (i.e., callable
     inserted to the front of the standard :mod:`sys.path_hooks` list recursively
-    decorating *all* typed callables and classes of *all* submodules of *all*
-    packages on the first importation of those submodules with the
-    :func:`beartype.beartype` decorator, wrapping those callables and classes
-    with performant runtime type-checking).
+    decorating *all* annotated callables, classes, and variable assignments
+    across *all* submodules of *all* packages on the first importation of those
+    submodules with the :func:`beartype.beartype` decorator, wrapping those
+    callables and classes with performant runtime type-checking).
 
     This function is the runtime equivalent of a full-blown static type checker
     like ``mypy`` or ``pyright``, enabling full-stack runtime type-checking of
-    *all* typed callables and classes across *all* submodules imported from this
-    end-user application -- including those defined by both:
+    the current app -- including submodules defined by both:
 
-    * First-party proprietary packages directly authored for this application.
+    * First-party proprietary packages directly authored for this app.
     * Third-party open-source packages authored and maintained elsewhere.
 
     This function is thread-safe.
 
     Usage
     ----------
-    This function is intended to be called (usually without passed parameters)
-    from module scope as the first statement of the top-level ``__init__``
-    submodule of the top-level package of an end-user application to be fully
-    type-checked by :func:`beartype.beartype`. This function then registers an
-    import path hook type-checking all typed callables and classes of all
-    submodules of all packages on the first importation of those submodules:
-    e.g.,
+    This function is intended to be called from module scope as the first
+    statement of the top-level ``__init__`` submodule of the top-level package
+    of an app to be fully type-checked by :mod:`beartype`. This function then
+    registers an import path hook type-checking *all* annotated callables,
+    classes, and variable assignments across *all* submodules of *all* packages
+    on the first importation of those submodules: e.g.,
 
     .. code-block:: python
 
-       # In "muh_package.__init__":
-       from beartype.claw import beartype_package
-       beartype_package()  # <-- beartype all subsequent imports, yo
+       # At the very top of "muh_package.__init__":
+       from beartype.claw import beartype_all
+       beartype_all()  # <-- beartype all subsequent imports, yo
 
-       # Import submodules *AFTER* calling beartype_package().
-       from muh_package._some_module import muh_function  # <-- @beartyping!
-       from yer_package.other_module import muh_class     # <-- @beartyping!
+       # Import submodules *AFTER* calling beartype_all().
+       from muh_package._some_module import muh_function  # <-- @beartype it!
+       from yer_package.other_module import muh_class     # <-- @beartype it!
 
     Caveats
     ----------
@@ -85,14 +83,14 @@ def beartype_all(
     libraries, frameworks, or other middleware.** This function is *only*
     intended to be called from full stack end-user applications as a convenient
     alternative to manually passing the names of all packages to be type-checked
-    to the more granular :func:`beartype_package` function. This function
+    to the more granular :func:`.beartype_packages` function. This function
     imposes runtime type-checking on downstream reverse dependencies that may
     not necessarily want, expect, or tolerate runtime type-checking. This
     function should typically *only* be called by proprietary packages not
     expected to be reused by others. Open-source packages are advised to call
-    the more granular :func:`beartype_package` function instead.
+    other functions instead.
 
-    **tl;dr:** *Only call this function in non-reusable end user apps.*
+    **tl;dr:** *Only call this function in non-reusable end-user apps.*
 
     Parameters
     ----------
@@ -127,11 +125,31 @@ def beartype_this_package(
     '''
     Register a new **current package beartype import path hook** (i.e., callable
     inserted to the front of the standard :mod:`sys.path_hooks` list recursively
-    applying the :func:`beartype.beartype` decorator to all typed callables and
-    classes of all submodules of the current user-defined package calling this
-    function on the first importation of those submodules).
+    applying the :func:`beartype.beartype` decorator to *all*
+    annotated callables, classes, and variable assignments across *all*
+    submodules of the current user-defined package calling this function on the
+    first importation of those submodules).
 
     This function is thread-safe.
+
+    Usage
+    ----------
+    This function is intended to be called from module scope as the first
+    statement of the top-level ``__init__`` submodule of any package to be
+    type-checked by :mod:`beartype`. This function then registers an import path
+    hook type-checking *all* annotated callables, classes, and variable
+    assignments across *all* submodules of that package on the first importation
+    of those submodules: e.g.,
+
+    .. code-block:: python
+
+       # At the very top of "muh_package.__init__":
+       from beartype.claw import beartype_this_package
+       beartype_this_package()  # <-- beartype all subsequent imports, yo
+
+       # Import package submodules *AFTER* calling beartype_this_package().
+       from muh_package._some_module import muh_function  # <-- @beartype it!
+       from muh_package.other_module import muh_class     # <-- @beartype it!
 
     Parameters
     ----------
@@ -198,6 +216,8 @@ def beartype_this_package(
     )
 
 
+#FIXME: Add a "Usage" docstring section resembling that of the docstring for the
+#beartype_this_package() function.
 def beartype_package(
     # Mandatory parameters.
     package_name: str,
@@ -209,9 +229,9 @@ def beartype_package(
     '''
     Register a new **single package beartype import path hook** (i.e., callable
     inserted to the front of the standard :mod:`sys.path_hooks` list recursively
-    applying the :func:`beartype.beartype` decorator to all typed callables and
-    classes of all submodules of the package with the passed names on the first
-    importation of those submodules).
+    applying the :func:`beartype.beartype` decorator to *all* annotated
+    callables, classes, and variable assignments across *all* submodules of the
+    package with the passed names on the first importation of those submodules).
 
     This function is thread-safe.
 
@@ -241,9 +261,6 @@ def beartype_package(
 
     See Also
     ----------
-    https://stackoverflow.com/a/43573798/2809027
-        StackOverflow answer strongly inspiring the low-level implementation of
-        this function with respect to inscrutable :mod:`importlib` machinery.
     '''
 
     # Add a new import path hook beartyping this package.
@@ -254,6 +271,8 @@ def beartype_package(
     )
 
 
+#FIXME: Add a "Usage" docstring section resembling that of the docstring for the
+#beartype_this_package() function.
 def beartype_packages(
     # Mandatory parameters.
     package_names: Iterable[str],
@@ -265,30 +284,12 @@ def beartype_packages(
     '''
     Register a new **multiple package beartype import path hook** (i.e.,
     callable inserted to the front of the standard :mod:`sys.path_hooks` list
-    recursively applying the :func:`beartype.beartype` decorator to all typed
-    callables and classes of all submodules of all packages with the passed
-    names on the first importation of those submodules).
+    recursively applying the :func:`beartype.beartype` decorator to *all*
+    annotated callables, classes, and variable assignments across *all*
+    submodules of all packages with the passed names on the first importation of
+    those submodules).
 
     This function is thread-safe.
-
-    Usage
-    ----------
-    This function is intended to be called (usually without passed parameters)
-    from module scope as the first statement of the top-level ``__init__``
-    submodule of any package to be type-checked by :func:`beartype.beartype`.
-    This function then registers an import path hook type-checking all
-    typed callables and classes of all submodules of that package on the first
-    importation of those submodules: e.g.,
-
-    .. code-block:: python
-
-       # In "muh_package.__init__":
-       from beartype.claw import beartype_package
-       beartype_package()  # <-- beartype all subsequent package imports, yo
-
-       # Import package submodules *AFTER* calling beartype_package().
-       from muh_package._some_module import muh_function  # <-- @beartyping!
-       from muh_package.other_module import muh_class     # <-- @beartyping!
 
     Parameters
     ----------
@@ -322,9 +323,6 @@ def beartype_packages(
 
     See Also
     ----------
-    https://stackoverflow.com/a/43573798/2809027
-        StackOverflow answer strongly inspiring the low-level implementation of
-        this function with respect to inscrutable :mod:`importlib` machinery.
     '''
 
     # Add a new import path hook beartyping these packages.
