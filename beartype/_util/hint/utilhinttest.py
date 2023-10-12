@@ -66,7 +66,7 @@ def die_unless_hint(
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPepUnsupportedException
         If this object is a PEP-compliant type hint currently unsupported by
         the :func:`beartype.beartype` decorator.
@@ -114,7 +114,7 @@ def is_hint(hint: object) -> bool:
         Object to be validated.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is either:
 
@@ -125,7 +125,7 @@ def is_hint(hint: object) -> bool:
           PEPs).
 
     Raises
-    ----------
+    ------
     TypeError
         If this object is **unhashable** (i.e., *not* hashable by the builtin
         :func:`hash` function and thus unusable in hash-based containers like
@@ -160,7 +160,7 @@ def is_hint_ignorable(hint: object) -> bool:
         Type hint to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this type hint is ignorable.
     '''
@@ -172,9 +172,9 @@ def is_hint_ignorable(hint: object) -> bool:
     if get_hint_repr(hint) in HINTS_REPR_IGNORABLE_SHALLOW:
         return True
     # Else, this hint is *NOT* shallowly ignorable.
-
+    #
     # If this hint is PEP-compliant...
-    if is_hint_pep(hint):
+    elif is_hint_pep(hint):
         # Avoid circular import dependencies.
         from beartype._util.hint.pep.utilpeptest import (
             is_hint_pep_ignorable)
@@ -182,8 +182,8 @@ def is_hint_ignorable(hint: object) -> bool:
         # Defer to the function testing whether this hint is an ignorable
         # PEP-compliant type hint.
         return is_hint_pep_ignorable(hint)
-
     # Else, this hint is PEP-noncompliant and thus *NOT* deeply ignorable.
+
     # Since this hint is also *NOT* shallowly ignorable, this hint is
     # unignorable. In this case, return false.
     return False
@@ -196,7 +196,7 @@ def is_hint_uncached(hint: object) -> bool:
     already internally cached by its parent class or module).
 
     Caveats
-    ----------
+    -------
     This function *cannot* be meaningfully memoized, since the passed type hint
     is *not* guaranteed to be cached somewhere. Only functions passed cached
     type hints can be meaningfully memoized. Since this high-level function
@@ -210,7 +210,7 @@ def is_hint_uncached(hint: object) -> bool:
         Type hint to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this type hint is uncached.
 
@@ -297,7 +297,7 @@ def is_hint_needs_cls_stack(hint: object) -> bool:
         Type hint to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this type hint is type stack-dependent.
     '''

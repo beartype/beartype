@@ -48,7 +48,7 @@ def die_unless_hint_pep593(
         the exception message. Defaults to the empty string.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep593Exception
         If this object is *not* a :pep:`593`-compliant type metahint.
     '''
@@ -67,7 +67,7 @@ def die_unless_hint_pep593(
 #FIXME: Unit test us up.
 def is_hint_pep593(hint: Any) -> bool:
     '''
-    ``True`` only if the passed object is a :pep:`593`-compliant **type
+    :data:`True` only if the passed object is a :pep:`593`-compliant **type
     metahint** (i.e., subscription of either the :attr:`typing.Annotated` or
     :attr:`typing_extensions.Annotated` type hint factories).
 
@@ -77,9 +77,10 @@ def is_hint_pep593(hint: Any) -> bool:
         Type hint to be inspected.
 
     Returns
-    ----------
+    -------
     bool
-        ``True`` only if this object is a :pep:`593`-compliant type metahint.
+        :data:`True` only if this object is a :pep:`593`-compliant type
+        metahint.
     '''
 
     # Avoid circular import dependencies.
@@ -92,13 +93,18 @@ def is_hint_pep593(hint: Any) -> bool:
 def is_hint_pep593_ignorable_or_none(
     hint: object, hint_sign: HintSign) -> Optional[bool]:
     '''
-    ``True`` only if the passed object is a :pep:`593`-compliant ignorable type
-    hint, ``False`` only if this object is a :pep:`593`-compliant unignorable
-    type hint, and ``None`` if this object is *not* :pep:`593`-compliant.
+    :data:`True` only if the passed object is a :pep:`593`-compliant ignorable
+    type hint, :data:`False` only if this object is a :pep:`593`-compliant
+    unignorable type hint, and :data:`None` if this object is *not*
+    :pep:`593`-compliant.
 
-    Specifically, this tester function returns ``True`` only if this object is
-    the :data:`Annotated` singleton whose first subscripted argument is an
-    ignorable type hints (e.g., ``typing.Annotated[typing.Any, bool]``).
+    Specifically, this tester function returns :data:True` only if this object
+    is the :data:`Annotated` singleton whose:
+
+    * First subscripted argument is an ignorable type hint (e.g.,
+      :obj:`typing.Any`).
+    * Second subscripted argument is *not* a beartype validator (e.g.,
+      ``typing.Annotated[typing.Any, bool]``).
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as this tester is only safely callable
@@ -113,37 +119,42 @@ def is_hint_pep593_ignorable_or_none(
         **Sign** (i.e., arbitrary object uniquely identifying this hint).
 
     Returns
-    ----------
+    -------
     Optional[bool]
         Either:
 
         * If this object is :pep:`593`-compliant:
 
-          * If this object is a ignorable, ``True``.
-          * Else, ``False``.
+          * If this object is a ignorable, :data:`True`.
+          * Else, :data:`False`.
 
-        * If this object is *not* :pep:`593`-compliant, ``None``.
+        * If this object is *not* :pep:`593`-compliant, :data:`None`.
     '''
 
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhinttest import is_hint_ignorable
     # print(f'!!!!!!!Received 593 hint: {repr(hint)} [{repr(hint_sign)}]')
 
-    # Return either...
+    # If this hint *NOT* PEP 593-compliant, return "None".
+    if hint_sign is not HintSignAnnotated:
+        return None
+    # Else, this hint is PEP 593-compliant.
+
+    # Return true only if...
     return (
-        # If this hint is annotated, true only if the PEP-compliant child type
-        # hint annotated by this hint hint is ignorable (e.g., the "Any" in
+        # The first argument subscripting this annotated type hint is ignorable
+        # (e.g., the "Any" in "Annotated[Any, 50, False]") *AND*...
+        is_hint_ignorable(get_hint_pep593_metahint(hint)) and
+        # The second argument subscripting this annotated type hint is *NOT* a
+        # beartype validator and thus also ignorable (e.g., the "50" in
         # "Annotated[Any, 50, False]").
-        is_hint_ignorable(get_hint_pep593_metahint(hint))
-        if hint_sign is HintSignAnnotated else
-        # Else, "None".
-        None
+        not is_hint_pep593_beartype(hint)
     )
 
 # ....................{ TESTERS ~ beartype                 }....................
 def is_hint_pep593_beartype(hint: Any) -> bool:
     '''
-    ``True`` only if the first argument subscripting the passed
+    :data:`True` only if the second argument subscripting the passed
     :pep:`593`-compliant :attr:`typing.Annotated` type hint is
     :mod:`beartype`-specific (e.g., instance of the :class:`BeartypeValidator`
     class produced by subscripting (indexing) the :class:`Is` class).
@@ -154,13 +165,13 @@ def is_hint_pep593_beartype(hint: Any) -> bool:
         :pep:`593`-compliant type hint to be inspected.
 
     Returns
-    ----------
+    -------
     bool
-        ``True`` only if the first argument subscripting this hint is
+        :data:`True` only if the first argument subscripting this hint is
         :mod:`beartype`-specific.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep593Exception
         If this object is *not* a :pep:`593`-compliant type metahint.
     '''
@@ -214,17 +225,17 @@ def get_hint_pep593_metadata(
         exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     type
         Tuple of one or more arbitrary objects annotating this metahint.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep593Exception
         If this object is *not* a :pep:`593`-compliant type metahint.
 
     See Also
-    ----------
+    --------
     :func:`get_hint_pep593_metahint`
         Related getter.
     '''
@@ -266,7 +277,7 @@ def get_hint_pep593_metahint(hint: Any, exception_prefix: str = '') -> Any:
         exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     Any
         PEP-compliant type hint annotated by this metahint.
 
@@ -323,7 +334,7 @@ def reduce_hint_pep593(
     All remaining passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     object
         Lower-level type hint currently supported by :mod:`beartype`.
     '''

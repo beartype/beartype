@@ -276,6 +276,7 @@ def _reduce_hint_uncached(
     # If a callable reducing hints of this sign was previously registered,
     # reduce this hint to another hint via this callable.
     if hint_reducer is not None:
+        # print(f'Reducing hint {repr(hint)} to...')
         hint = hint_reducer(  # type: ignore[call-arg]
             hint=hint,  # pyright: ignore[reportGeneralTypeIssues]
             conf=conf,
@@ -283,6 +284,7 @@ def _reduce_hint_uncached(
             arg_name=arg_name,
             exception_prefix=exception_prefix,
         )
+        # print(f'...{repr(hint)}.')
     # Else, *NO* such callable was registered. Preserve this hint as is, you!
 
     # Return this possibly reduced hint.

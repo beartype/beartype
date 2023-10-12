@@ -61,14 +61,14 @@ def die_if_hint_pep(
         Object to be validated.
     exception_cls : Type[Exception], optional
         Type of the exception to be raised by this function. Defaults to
-        :exc:`BeartypeDecorHintPepException`.
+        :exc:`.BeartypeDecorHintPepException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If this object is a PEP-compliant type hint.
     '''
 
@@ -108,14 +108,14 @@ def die_unless_hint_pep(
         Object to be validated.
     exception_cls : Type[Exception], optional
         Type of the exception to be raised by this function. Defaults to
-        :class:`BeartypeDecorHintPepException`.
+        :class:`.BeartypeDecorHintPepException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If this object is *not* a PEP-compliant type hint.
     '''
 
@@ -151,7 +151,7 @@ def die_if_hint_pep_unsupported(
     :func:`beartype._util.hint.utilhinttest.die_unless_hint` validator.
 
     Caveats
-    ----------
+    -------
     **This validator only shallowly validates this object.** If this object is
     a subscripted PEP-compliant type hint (e.g., ``Union[str, List[int]]``),
     this validator ignores all subscripted arguments (e.g., ``List[int]``) on
@@ -169,7 +169,7 @@ def die_if_hint_pep_unsupported(
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPepException
         If this object is *not* a PEP-compliant type hint.
     BeartypeDecorHintPepUnsupportedException
@@ -253,7 +253,7 @@ def warn_if_hint_pep_deprecated(
         warning message. Defaults to the empty string.
 
     Warns
-    ----------
+    -----
     BeartypeDecorHintPep585DeprecationWarning
         If this hint is a :pep:`484`-compliant type hint deprecated by
         :pep:`585` *and* the active Python interpreter targets Python >= 3.9.
@@ -428,7 +428,7 @@ def is_hint_pep(hint: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a PEP-compliant type hint.
     '''
@@ -458,7 +458,7 @@ def is_hint_pep_deprecated(hint: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a PEP-compliant deprecated type
         hint.
@@ -483,9 +483,10 @@ def is_hint_pep_deprecated(hint: object) -> bool:
     return hint_repr_bare in HINTS_PEP484_REPR_PREFIX_DEPRECATED
 
 # ....................{ TESTERS ~ ignorable                }....................
+#FIXME: *EXTREMELY INEFFICIENT.* See commentary below, please.
 def is_hint_pep_ignorable(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is a **deeply ignorable PEP-compliant
+    :data:`True` only if the passed object is a **deeply ignorable PEP-compliant
     type hint** (i.e., PEP-compliant type hint shown to be ignorable only after
     recursively inspecting the contents of this hint).
 
@@ -500,20 +501,20 @@ def is_hint_pep_ignorable(hint: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
-        ``True`` only if this object is a deeply ignorable PEP-compliant type
-        hint.
+        :data:`True` only if this object is a deeply ignorable PEP-compliant
+        type hint.
 
-    Warnings
-    ----------
+    Warns
+    -----
     BeartypeDecorHintPepIgnorableDeepWarning
         If this object is a deeply ignorable PEP-compliant type hint. Why?
         Because deeply ignorable PEP-compliant type hints convey *no*
         meaningful semantics but superficially appear to do so. Consider
         ``Union[str, List[int], NewType('MetaType', Annotated[object, 53])]``,
         for example; this PEP-compliant type hint effectively reduces to
-        ``typing.Any`` and thus conveys *no* meaningful semantics despite
+        :obj:`typing.Any` and thus conveys *no* meaningful semantics despite
         superficially appearing to do so.
     '''
 
@@ -523,6 +524,19 @@ def is_hint_pep_ignorable(hint: object) -> bool:
 
     # Sign uniquely identifying this hint.
     hint_sign = get_hint_pep_sign(hint)
+
+    #FIXME: *EXTREMELY INEFFICIENT*. What were we thinking? Honestly. This is an
+    #O(N) operation when this should instead be an O(1) operation. Refactor
+    #this immediately to instead resemble the
+    #beartype._check.convert.checkreduce._reduce_hint_cached() function.
+    #Notably:
+    #* Define a new "_HINT_SIGN_TO_IS_HINT_PEP_IGNORABLE_TESTER" private global
+    #  dictionary, refactored from the "_IS_HINT_PEP_IGNORABLE_TESTERS"
+    #  iterable.
+    #* Remove the "_IS_HINT_PEP_IGNORABLE_TESTERS" iterable.
+    #* Refactor this logic to perform a simple lookup into this dictionary.
+    #
+    #We are facepalming ourselves as we speak.
 
     # For each PEP-specific function testing whether this hint is an ignorable
     # type hint fully compliant with that PEP...
@@ -565,7 +579,7 @@ def is_hint_pep_ignorable(hint: object) -> bool:
 @callable_cached
 def is_hint_pep_supported(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is a **PEP-compliant supported type
+    :data:`True` only if the passed object is a **PEP-compliant supported type
     hint** (i.e., :mod:`beartype`-agnostic annotation compliant with
     annotation-centric PEPs currently supported by the
     :func:`beartype.beartype` decorator).
@@ -573,7 +587,7 @@ def is_hint_pep_supported(hint: object) -> bool:
     This tester is memoized for efficiency.
 
     Caveats
-    ----------
+    -------
     **This tester only shallowly inspects this object.** If this object is a
     subscripted PEP-compliant type hint (e.g., ``Union[str, List[int]]``), this
     tester ignores all subscripted arguments (e.g., ``List[int]``) on this hint
@@ -589,9 +603,9 @@ def is_hint_pep_supported(hint: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
-        ``True`` only if this object is a supported PEP-compliant type hint.
+        :data:`True` only if this object is a supported PEP-compliant type hint.
     '''
 
     # If this hint is *NOT* PEP-compliant, immediately return false.
@@ -617,10 +631,9 @@ def is_hint_pep_supported(hint: object) -> bool:
 @callable_cached
 def is_hint_pep_typing(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is an attribute of a **typing module**
-    (i.e., module officially declaring attributes usable for creating
-    PEP-compliant type hints accepted by both static and runtime type
-    checkers).
+    :data:`True` only if the passed object is an attribute of a **typing
+    module** (i.e., module officially declaring attributes usable for creating
+    PEP-compliant type hints accepted by both static and runtime type checkers).
 
     This tester is memoized for efficiency.
 
@@ -630,9 +643,9 @@ def is_hint_pep_typing(hint: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
-        ``True`` only if this object is an attribute of a typing module.
+        :data:`True` only if this object is an attribute of a typing module.
     '''
     # print(f'is_hint_pep_typing({repr(hint)}')
 
@@ -653,14 +666,14 @@ def is_hint_pep_typing(hint: object) -> bool:
 
 def is_hint_pep_type_typing(hint: object) -> bool:
     '''
-    ``True`` only if either the passed object is defined by a **typing module**
-    (i.e., module officially declaring attributes usable for creating
+    :data:`True` only if either the passed object is defined by a **typing
+    module** (i.e., module officially declaring attributes usable for creating
     PEP-compliant type hints accepted by both static and runtime type checkers)
     if this object is a class *or* the class of this object is defined by a
     typing module otherwise (i.e., if this object is *not* a class).
 
     This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
+    :func:`.callable_cached` decorator), as the implementation trivially reduces
     to an efficient one-liner.
 
     Parameters
@@ -669,9 +682,9 @@ def is_hint_pep_type_typing(hint: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
-        ``True`` only if either:
+        :data:`True` only if either:
 
         * If this object is a class, this class is defined by a typing module.
         * Else, the class of this object is defined by a typing module.
@@ -735,16 +748,16 @@ def is_hint_pep_type_typing(hint: object) -> bool:
 #essential to ensuring sanity across type hints and Python versions.
 def is_hint_pep_args(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is a **subscripted PEP-compliant type
+    :data:`True` only if the passed object is a **subscripted PEP-compliant type
     hint** (i.e., PEP-compliant type hint directly indexed by one or more
     objects).
 
     This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
+    :func:`.callable_cached` decorator), as the implementation trivially reduces
     to an efficient one-liner.
 
     Caveats
-    ----------
+    -------
     **Callers should not assume that the objects originally subscripting this
     hint are still accessible.** Although *most* hints preserve their
     subscripted objects over their lifetimes, a small subset of edge-case hints
@@ -762,9 +775,10 @@ def is_hint_pep_args(hint: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
-        ``True`` only if this object is a subscripted PEP-compliant type hint.
+        :data:`True` only if this object is a subscripted PEP-compliant type
+        hint.
     '''
 
     # Avoid circular import dependencies.
@@ -780,7 +794,7 @@ def is_hint_pep_args(hint: object) -> bool:
 #essential to ensuring sanity across type hints and Python versions.
 def is_hint_pep_typevars(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is a PEP-compliant type hint
+    :data:`True` only if the passed object is a PEP-compliant type hint
     parametrized by one or more **type variables** (i.e., instances of the
     :class:`TypeVar` class).
 
@@ -797,7 +811,7 @@ def is_hint_pep_typevars(hint: object) -> bool:
     to an efficient one-liner.
 
     Semantics
-    ----------
+    ---------
     **Generics** (i.e., PEP-compliant type hints whose classes subclass one or
     more public :mod:`typing` pseudo-superclasses) are often but *not* always
     typevared. For example, consider the untypevared generic:
@@ -825,13 +839,13 @@ def is_hint_pep_typevars(hint: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
-        ``True`` only if this object is a PEP-compliant type hint parametrized
-        by one or more type variables.
+        :data:`True` only if this object is a PEP-compliant type hint
+        parametrized by one or more type variables.
 
     Examples
-    ----------
+    --------
         >>> import typing
         >>> from beartype._util.hint.pep.utilpeptest import (
         ...     is_hint_pep_typevars)

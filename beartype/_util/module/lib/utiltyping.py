@@ -17,7 +17,6 @@ from beartype.roar._roarexc import _BeartypeUtilModuleException
 from beartype.typing import (
     Any,
     Iterable,
-    Tuple,
     Union,
 )
 from beartype._data.hint.datahinttyping import TypeException
@@ -50,21 +49,21 @@ def is_typing_attr(
         Unqualified name of the attribute to be imported from a typing module.
 
     Returns
-    ----------
+    -------
     bool
-        :data:`True` only if the :mod:`typing` or :mod:`typing_extensions` modules
-        declare an attribute with this name.
+        :data:`True` only if the :mod:`typing` or :mod:`typing_extensions`
+        modules declare an attribute with this name.
     exception_cls : Type[Exception]
         Type of exception to be raised by this function. Defaults to
-        :class:`_BeartypeUtilModuleException`.
+        :class:`._BeartypeUtilModuleException`.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If this name is syntactically invalid.
 
     Warns
-    ----------
+    -----
     BeartypeModuleUnimportableWarning
         If any of these modules raise module-scoped exceptions at importation
         time. That said, the :mod:`typing` and :mod:`typing_extensions` modules
@@ -102,16 +101,16 @@ def import_typing_attr(
         Unqualified name of the attribute to be imported from a typing module.
     exception_cls : Type[Exception]
         Type of exception to be raised by this function. Defaults to
-        :class:`_BeartypeUtilModuleException`.
+        :class:`._BeartypeUtilModuleException`.
 
     Returns
-    ----------
+    -------
     object
         Attribute with this name dynamically imported from a typing module.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If either:
 
         * This name is syntactically invalid.
@@ -119,15 +118,15 @@ def import_typing_attr(
           declare an attribute with this name.
 
     Warns
-    ----------
+    -----
     BeartypeModuleUnimportableWarning
         If any of these modules raise module-scoped exceptions at importation
         time. That said, the :mod:`typing` and :mod:`typing_extensions` modules
         are scrupulously tested and thus unlikely to raise such exceptions.
 
     See Also
-    ----------
-    :func:`import_module_typing_any_attr_or_none`
+    --------
+    :func:`beartype._util.module.utilmodimport.import_module_typing_any_attr_or_none`
         Further details.
     '''
 
@@ -201,27 +200,27 @@ def import_typing_attr_or_none(
         Unqualified name of the attribute to be imported from a typing module.
     exception_cls : Type[Exception]
         Type of exception to be raised by this function. Defaults to
-        :class:`_BeartypeUtilModuleException`.
+        :class:`._BeartypeUtilModuleException`.
 
     Returns
-    ----------
+    -------
     object
         Attribute with this name dynamically imported from a typing module.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If this name is syntactically invalid.
 
     Warns
-    ----------
+    -----
     BeartypeModuleUnimportableWarning
         If any of these modules raise module-scoped exceptions at importation
         time. That said, the :mod:`typing` and :mod:`typing_extensions` modules
         are scrupulously tested and thus unlikely to raise exceptions.
 
     See Also
-    ----------
+    --------
     :func:`import_typing_attr_or_fallback`
         Further details.
     '''
@@ -275,28 +274,25 @@ def import_typing_attr_or_fallback(
         module declares this attribute.
     exception_cls : Type[Exception]
         Type of exception to be raised by this function. Defaults to
-        :class:`_BeartypeUtilModuleException`.
+        :class:`._BeartypeUtilModuleException`.
 
     Returns
-    ----------
+    -------
     object
         Attribute with this name dynamically imported from a typing module.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If this name is syntactically invalid.
 
     Warns
-    ----------
+    -----
     BeartypeModuleUnimportableWarning
         If any of these modules raise module-scoped exceptions at importation
         time. That said, the :mod:`typing` and :mod:`typing_extensions` modules
         are scrupulously tested and thus unlikely to raise exceptions.
     '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.module.utilmodimport import import_module_attr_or_none
 
     # Attribute with this name imported from the "typing" module if that module
     # declares this attribute *OR* "None" otherwise.
@@ -360,17 +356,17 @@ def iter_typing_attrs(
             imported from that module (in the same order).
           * Else, this generator silently ignores that module.
     is_warn : bool
-        ``True`` only if emitting non-fatal warnings for typing modules failing
-        to define all passed attributes. If ``typing_module_names`` is passed,
-        this parameter should typically also be passed as ``True`` for safety.
-        Defaults to ``False``.
+        :data:`True` only if emitting non-fatal warnings for typing modules
+        failing to define all passed attributes. If ``typing_module_names`` is
+        passed, this parameter should typically also be passed as :data:`True`
+        for safety. Defaults to :data:`False`.
     typing_module_names: Iterable[str]
         Iterable of the fully-qualified names of all typing modules to
         dynamically import this attribute from. Defaults to
         :data:`TYPING_MODULE_NAMES`.
 
     Yields
-    ----------
+    ------
     Union[object, Tuple[object]]
         Either:
 

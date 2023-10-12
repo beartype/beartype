@@ -113,6 +113,8 @@ def add_data(data_module: 'ModuleType') -> None:
     # ..................{ FACTORIES                          }..................
     # For each "Annotated" type hint factory importable from a typing module...
     for Annotated in iter_typing_attrs('Annotated'):
+        # print(f'Exercising PEP 593 {repr(Annotated)}...')
+
         # ..................{ LOCALS                         }..................
         # Local variables requiring an "Annotated" type hint factory.
 
@@ -144,7 +146,7 @@ def add_data(data_module: 'ModuleType') -> None:
         # Add PEP 593-specific test type hints to this tuple global.
         data_module.HINTS_PEP_META.extend((
             # ..............{ ANNOTATED                          }..............
-            # Hashable annotated of an isinstanceable type annotated by an
+            # Annotated of an arbitrary isinstanceable type annotated by an
             # arbitrary hashable object.
             HintPepMetadata(
                 hint=Annotated[str, int],
@@ -159,7 +161,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
 
-            # Annotated of a "typing" type.
+            # Annotated of an arbitrary nested type hint.
             HintPepMetadata(
                 hint=Annotated[List[str], int],
                 pep_sign=HintSignAnnotated,
@@ -190,6 +192,22 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
 
             # ..............{ ANNOTATED ~ beartype : is          }..............
+            # Annotated of the root "object" superclass annotated by one
+            # beartype-specific validator defined as a lambda function.
+            HintPepMetadata(
+                hint=Annotated[object, Is[
+                    lambda obj: hasattr(obj, 'this_mobbed_triste_of')]],
+                pep_sign=HintSignAnnotated,
+                piths_meta=(
+                    # Objects defining attributes with the above name.
+                    HintPithSatisfiedMetadata(BOSS_EMBOSSED_ORDERING),
+                    HintPithSatisfiedMetadata(SORDIDLY_FLABBY_WRMCASTINGS),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata(
+                        'Her timid steps to gaze upon a form'),
+                ),
+            ),
+
             # Annotated of an isinstanceable type annotated by one
             # beartype-specific validator defined as a lambda function.
             HintPepMetadata(
