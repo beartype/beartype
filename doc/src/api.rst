@@ -88,6 +88,7 @@ The Left-Paw Path
 See the left sidebar for links to human-readable API documentation – including:
 
 * :mod:`beartype`, documenting the core :func:`.beartype` decorator API.
+* :mod:`beartype.claw`, documenting the beartype import hook API.
 * :mod:`beartype.door`, documenting the Decidedly Object-Oriented
   Runtime-checker (DOOR) API.
 * :mod:`beartype.roar`, documenting the beartype exception and warning API.
