@@ -85,6 +85,7 @@ def test_api_typing() -> None:
         'collections',
         'collections_abc',
         'contextlib',
+        'copyreg',
         'defaultdict',
         'functools',
         'io',

@@ -33,7 +33,10 @@ performance improvements.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing._typingcache import callable_cached_minimal
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_12,
+    IS_PYTHON_AT_LEAST_3_9,
+)
 from typing import (  # type: ignore[attr-defined]
     EXCLUDED_ATTRIBUTES,  # pyright: ignore[reportGeneralTypeIssues]
     TYPE_CHECKING,
@@ -52,36 +55,35 @@ from typing import (  # type: ignore[attr-defined]
 )
 
 # Note that we intentionally:
-# * Avoid importing these type hint factories from "beartype.typing", as
-#   that would induce a circular import dependency. Instead, we manually
-#   import the relevant type hint factories conditionally depending on the
-#   version of the active Python interpreter. *sigh*
+# * Avoid importing these type hint factories from "beartype.typing", as that
+#   would induce a circular import dependency. Instead, we manually import the
+#   relevant type hint factories conditionally depending on the version of the
+#   active Python interpreter. *sigh*
 # * Test the negation of this condition first. Why? Because mypy quietly
-#   defecates all over itself if the order of these two branches is
-#   reversed. Yeah. It's as bad as it sounds.
+#   defecates all over itself if the order of these two branches is reversed.
+#   Yeah. It's as bad as it sounds.
 if not IS_PYTHON_AT_LEAST_3_9:
     from typing import Dict, Tuple, Type  # type: ignore[misc]
-# Else, the active Python interpreter targets Python >= 3.9 and thus
-# supports PEP 585. In this case, embrace non-deprecated PEP 585-compliant
-# type hints.
+# Else, the active Python interpreter targets Python >= 3.9 and thus supports
+# PEP 585. In this case, embrace non-deprecated PEP 585-compliant type hints.
 else:
     Dict = dict  # type: ignore[misc]
     Tuple = tuple  # type: ignore[assignment]
     Type = type  # type: ignore[assignment]
 
-# If the active Python interpreter was invoked by a static type checker
-# (e.g., mypy), violate privacy encapsulation. Doing so invites breakage
-# under newer Python releases. Confining any potential breakage to this
-# technically optional static type-checking phase minimizes the fallout by
-# ensuring that this API continues to behave as expected at runtime.
+# If the active Python interpreter was invoked by a static type checker (e.g.,
+# mypy), violate privacy encapsulation. Doing so invites breakage under newer
+# Python releases. Confining any potential breakage to this technically optional
+# static type-checking phase minimizes the fallout by ensuring that this API
+# continues to behave as expected at runtime.
 #
 # See also this deep typing voodoo:
 #     https://github.com/python/mypy/issues/11614
 if TYPE_CHECKING:
     from abc import ABCMeta as _ProtocolMeta
-# Else, this interpreter was *NOT* invoked by a static type checker and is
-# thus subject to looser runtime constraints. In this case, access the same
-# metaclass *WITHOUT* violating privacy encapsulation.
+# Else, this interpreter was *NOT* invoked by a static type checker and is thus
+# subject to looser runtime constraints. In this case, access the same metaclass
+# *WITHOUT* violating privacy encapsulation.
 else:
     _ProtocolMeta = type(_ProtocolSlow)
 
@@ -186,13 +188,13 @@ class _CachingProtocolMeta(_ProtocolMeta):
       True
     '''
 
-    # ................{ CLASS VARIABLES                    }................
+    # ................{ CLASS VARIABLES                        }................
     _abc_inst_check_cache: Dict[type, bool]
     '''
-    :func:`isinstance` **cache** (i.e., dictionary mapping from each type
-    of any object previously passed as the first parameter to the
-    :func:`isinstance` builtin whose second parameter was this protocol
-    onto each boolean returned by that call to that builtin).
+    :func:`isinstance` **cache** (i.e., dictionary mapping from each type of any
+    object previously passed as the first parameter to the :func:`isinstance`
+    builtin whose second parameter was this protocol onto each boolean returned
+    by that call to that builtin).
     '''
 
     # ................{ DUNDERS                                }................
@@ -210,45 +212,42 @@ class _CachingProtocolMeta(_ProtocolMeta):
         # If this class is *NOT* the abstract "beartype.typing.Protocol"
         # superclass defined below...
         if name != 'Protocol':
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            # CAUTION: Synchronize this "if" conditional against the
-            # standard "typing" module, which defines the exact same logic
-            # in the Protocol.__init_subclass__() class method.
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # CAUTION: Synchronize this "if" conditional against the standard
+            # "typing" module, which defines the exact same logic in the
+            # Protocol.__init_subclass__() class method.
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # If it is unknown whether this class is an abstract protocol
             # directly subclassing the "Protocol" superclass *OR* a concrete
-            # subclass of an abstract protocol, decide which applies now.
-            # Why? Because upstream performs the same logic. Since this
-            # logic tests the non-transitive dunder tuple "__bases__" of all
-            # *DIRECT* superclasses of this class rather than the transitive
-            # dunder tuple "__mro__" of all direct and indirect superclasses
-            # of this class, upstream logic erroneously detects abstract
-            # fast @beartype protocols as concrete by unconditionally
-            # reducing to:
+            # subclass of an abstract protocol, decide which applies now. Why?
+            # Because upstream performs the same logic. Since this logic tests
+            # the non-transitive dunder tuple "__bases__" of all *DIRECT*
+            # superclasses of this class rather than the transitive dunder tuple
+            # "__mro__" of all direct and indirect superclasses of this class,
+            # upstream logic erroneously detects abstract fast @beartype
+            # protocols as concrete by unconditionally reducing to:
             #     cls._is_protocol = False
             #
             # Why? Because "beartype.typing.Protocol" subclasses
-            # "typing.Protocol", subclasses of "beartype.typing.Protocol"
-            # list "beartype.typing.Protocol" rather than "typing.Protocol"
-            # in their "__bases__" dunder tuple. Disaster, thy name is
-            # "typing"!
+            # "typing.Protocol", subclasses of "beartype.typing.Protocol" list
+            # "beartype.typing.Protocol" rather than "typing.Protocol" in their
+            # "__bases__" dunder tuple. Disaster, thy name is "typing"!
             if not cls.__dict__.get('_is_protocol'):
                 # print(f'Protocol {cls} bases: {cls.__bases__}')
                 cls._is_protocol = any(b is Protocol for b in cls.__bases__)  # type: ignore[attr-defined]
 
-            # If this protocol is concrete rather than abstract,
-            # monkey-patch this concrete protocol to be implicitly
-            # type-checkable at runtime. By default, protocols are *NOT*
-            # type-checkable at runtime unless explicitly decorated by this
-            # nonsensical decorator.
+            # If this protocol is concrete rather than abstract, monkey-patch
+            # this concrete protocol to be implicitly type-checkable at runtime.
+            # By default, protocols are *NOT* type-checkable at runtime unless
+            # explicitly decorated by this nonsensical decorator.
             #
             # Note that the abstract "beartype.typing.Protocol" superclass
-            # *MUST* be explicitly excluded from consideration. Why? For
-            # unknown reasons, monkey-patching that superclass as implicitly
-            # type-checkable at runtime has extreme consequences throughout
-            # the typing ecosystem. In particular, doing so causes *ALL*
-            # non-protocol classes to be subsequently erroneously detected
-            # as being PEP 544-compliant protocols: e.g.,
+            # *MUST* be explicitly excluded from consideration. Why? For unknown
+            # reasons, monkey-patching that superclass as implicitly
+            # type-checkable at runtime has extreme consequences throughout the
+            # typing ecosystem. In particular, doing so causes *ALL*
+            # non-protocol classes to be subsequently erroneously detected as
+            # being PEP 544-compliant protocols: e.g.,
             #     # If we monkey-patched the "Protocol" superclass as well, then
             #     # the following snippet would insanely hold true... wat!?!?!?!
             #     >>> from typing import Protocol
@@ -591,3 +590,35 @@ class SupportsRound(_SupportsRoundSlow[_T_co], Protocol, Generic[_T_co]):
     '''
     __module__: str = 'beartype.typing'
     __slots__: Any = ()
+
+# ....................{ MONKEY-PATCHES                     }....................
+# If the active Python interpreter targets Python >= 3.12, monkey-patch the
+# standard "typing" module to support our "Protocol" superclass.
+if IS_PYTHON_AT_LEAST_3_12:
+    import typing
+    from typing import _generic_class_getitem as _generic_class_getitem_old  # type: ignore[attr-defined]
+
+    def _generic_class_getitem_new(cls, params):
+        '''
+        Beartype-specific wrapper for the private
+        :func:`typing._generic_class_getitem` utility function, enabling that
+        function to transparently support our beartype-specific
+        :class:`beartype.typing.Protocol` superclass equivalent to the standard
+        :class:`typing.Protocol` superclass.
+        '''
+
+        # If the passed class is our "beartype.typing.Protocol" superclass,
+        # silently replace that with "typing.Protocol" *BEFORE* calling the
+        # standard typing._generic_class_getitem() utility function -- which
+        # explicitly only supports the latter.
+        if cls is Protocol:
+            cls = _ProtocolSlow
+        # Else, the passed class is *NOT* our "beartype.typing.Protocol"
+        # superclass. In this case, preserve that class as is.
+
+        # Defer to the standard typing._generic_class_getitem() implementation.
+        return _generic_class_getitem_old(cls, params)
+
+    # Replace the standard typing._generic_class_getitem() implementation with
+    # the wrapper defined above. *gulp*
+    typing._generic_class_getitem = _generic_class_getitem_new  # type: ignore[attr-defined]

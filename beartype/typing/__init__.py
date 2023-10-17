@@ -134,6 +134,7 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 # "import_typing_attr_or_none('Annotated')").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_12 as _IS_PYTHON_AT_LEAST_3_12,
     IS_PYTHON_AT_LEAST_3_11 as _IS_PYTHON_AT_LEAST_3_11,
     IS_PYTHON_AT_LEAST_3_10 as _IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_LEAST_3_9  as _IS_PYTHON_AT_LEAST_3_9,
@@ -245,6 +246,13 @@ if _IS_PYTHON_AT_LEAST_3_10:
                get_overloads as get_overloads,  # pyright: ignore[reportGeneralTypeIssues]
                reveal_type as reveal_type,  # pyright: ignore[reportGeneralTypeIssues]
         )
+
+        # If the active Python interpreter targets Python >= 3.12...
+        if _IS_PYTHON_AT_LEAST_3_12:
+            from typing import (  # type: ignore[attr-defined]
+                TypeAliasType as TypeAliasType,
+                override as override,
+            )
 
 # ....................{ PEP ~ 544                          }....................
 # If this interpreter is performing static type-checking (e.g., via mypy), defer

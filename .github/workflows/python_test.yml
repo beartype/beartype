@@ -108,6 +108,7 @@ jobs:
           - py39-coverage
           - py310-coverage
           - py311-coverage
+          - py312-coverage
           #FIXME: Uncomment after we resolve tests currently broken under *ANY*
           #PyPy version. All tests used to pass under PyPy 3.7 and 3.8, but were
           #recently broken by work generalizing @beartype to decorate builtin
@@ -145,6 +146,8 @@ jobs:
             python-version: "3.10"
           - tox-env: py311-coverage
             python-version: "3.11"
+          - tox-env: py312-coverage
+            python-version: "3.12"
           #- tox-env: pypy37-coverage
           #  python-version: "pypy-3.7"
           #- tox-env: pypy38-coverage
