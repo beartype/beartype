@@ -250,8 +250,8 @@ if _IS_PYTHON_AT_LEAST_3_10:
         # If the active Python interpreter targets Python >= 3.12...
         if _IS_PYTHON_AT_LEAST_3_12:
             from typing import (  # type: ignore[attr-defined]
-                TypeAliasType as TypeAliasType,
-                override as override,
+                TypeAliasType as TypeAliasType,  # pyright: ignore[reportGeneralTypeIssues]
+                override as override,  # pyright: ignore[reportGeneralTypeIssues]
             )
 
 # ....................{ PEP ~ 544                          }....................

@@ -68,6 +68,7 @@ pushd "${script_dirname}" >/dev/null
 # Statically type-check this project's codebase with all passed arguments.
 command pyright beartype "${@}"
 # command pyright --pythonversion 3.8 beartype "${@}"
+# command pyright --pythonversion 3.11 beartype "${@}"
 
 # 0-based exit code reported by the prior command.
 exit_code=$?

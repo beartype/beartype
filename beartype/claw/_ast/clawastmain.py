@@ -519,26 +519,33 @@ class BeartypeNodeTransformer(NodeTransformer):
             This same callable node.
         '''
 
-        # If this callable node has one or more parent nodes previously visited
-        # by this node transformer *AND* the immediate parent node of this
-        # callable node is a class node, then this callable node encapsulates a
-        # method rather than a function. In this case, the visit_ClassDef()
-        # method defined above has already explicitly decorated the class
-        # defining this method by the @beartype decorator, which then implicitly
-        # decorates both this and all other methods of that class by that
-        # decorator. For safety and efficiency, avoid needlessly re-decorating
-        # this method by the same decorator by simply preserving and returning
-        # this node as is.
-        if self._is_node_parent_class:
-            return node
-        # Else, this callable node is either the root node of the current AST
-        # *OR* has a parent node that is not a class node. In either case, this
-        # callable node necessarily encapsulates a function (rather than a
-        # method), which yet to be decorated. Do so now! So say we all.
-        #
-        # If the currently visited callable is annotated by one or more type
-        # hints and thus *NOT* ignorable with respect to beartype decoration...
-        elif is_node_callable_typed(node):
+        # If...
+        if (
+            # * This callable node has one or more parent nodes previously
+            #   visited by this node transformer *AND* the immediate parent node
+            #   of this callable node is a class node, then this callable node
+            #   encapsulates a method rather than a function. In this case, the
+            #   visit_ClassDef() method defined above has already explicitly
+            #   decorated the class defining this method by the @beartype
+            #   decorator, which then implicitly decorates both this and all
+            #   other methods of that class by that decorator. For safety and
+            #   efficiency, avoid needlessly re-decorating this method by the
+            #   same decorator by preserving and returning this node as is.
+            # * That is *NOT* the case, then this callable node is either the
+            #   root node of the current AST *OR* has a parent node that is not
+            #   a class node. In either case, this callable node necessarily
+            #   encapsulates a function (rather than a method), which yet to be
+            #   decorated. Do so now! So say we all.
+            #
+            # This logic corresponds to the above "That is *NOT* the case" case
+            # (i.e., this callable node necessarily encapsulates a function).
+            # Look. Just accept that we have a tenuous grasp on reality at best.
+            not self._is_node_parent_class and
+            # ...and the currently visited callable is annotated by one or more
+            # type hints and thus *NOT* ignorable with respect to beartype
+            # decoration...
+            is_node_callable_typed(node)
+        ):
             # Add a new child decoration node to this parent callable node
             # decorating this callable by @beartype under this configuration.
             decorate_node(node=node, conf=self._conf_beartype)

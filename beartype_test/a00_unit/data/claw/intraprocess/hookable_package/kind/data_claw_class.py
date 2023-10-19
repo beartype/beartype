@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **beartype import hookable class submodule** (i.e., data
-module containing *only* annotated classes, mimicking real-world usage of the
+Project-wide **beartype import hookable class submodule** (i.e., data module
+containing *only* annotated classes, mimicking real-world usage of the
 :func:`beartype.claw.beartype_package` import hook from an external caller).
 '''
 
@@ -14,7 +14,10 @@ from beartype import (
     BeartypeConf,
     beartype,
 )
-from beartype.roar import BeartypeCallHintParamViolation
+from beartype.roar import (
+    BeartypeCallHintParamViolation,
+    BeartypeDoorHintViolation,
+)
 from beartype.typing import (
     List,
     Union,
@@ -49,6 +52,15 @@ class HerFirstSweetKisses(object):
         as is, enabling callers to trivially test whether any call to this
         method violates the type hints annotating this method.
         '''
+
+        # Assert that assigning an annotated local variable a valid value
+        # raises *NO* exception.
+        his_wandering_step: int = len('More graceful than her own')
+
+        # Assert that assigning an annotated local variable an invalid value
+        # raises the expected exception.
+        with raises(BeartypeDoorHintViolation):
+            his_wandering_step: int = 'Obedient to high thoughts, has visited'
 
         # Look, @beartype. Just do it!
         return insect_or_gentle_beast
