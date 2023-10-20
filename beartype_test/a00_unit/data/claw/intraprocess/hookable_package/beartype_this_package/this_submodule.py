@@ -45,11 +45,11 @@ import struct
 # ....................{ PEP 526                            }....................
 # Validate that the beartype_this_package() import hook installed by the parent
 # "beartype_this_package.__init__" submodule implicitly appends all PEP
-# 562-compliant annotated assignment statements in other submodules of this
+# 526-compliant annotated assignment statements in other submodules of this
 # "beartype_this_package" subpackage with calls to beartype's statement-level
 # beartype.door.die_if_unbearable() exception-raiser.
 
-# Assert that a PEP 562-compliant assignment statement assigning an object
+# Assert that a PEP 526-compliant assignment statement assigning an object
 # satisfying the type hint annotating that statement raises *NO* exception.
 #
 # Note that this type hint is intentionally annotated as "float" rather than
@@ -60,7 +60,7 @@ import struct
 # "is_pep484_tower=True").
 loves_philosophy: float = len('The fountains mingle with the river')
 
-# Assert that a PEP 562-compliant assignment statement assigning an object
+# Assert that a PEP 526-compliant assignment statement assigning an object
 # violating the type hint annotating that statement raises the expected
 # exception.
 with raises(BeartypeDoorHintViolation):

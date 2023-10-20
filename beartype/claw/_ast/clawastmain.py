@@ -91,6 +91,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from ast import (
     AST,
     AnnAssign,
+    Attribute,
     Call,
     ClassDef,
     # Constant,
@@ -579,15 +580,16 @@ class BeartypeNodeTransformer(NodeTransformer):
         * ``node.target``, a child node describing the target attribute assigned
           to by this assignment, guaranteed to be an instance of either:
 
-          * :class:`ast.Name`, in which case this assignment is denoted as
-            "simple" via the ``node.simple`` instance variable. This is the
-            common case in which the attribute being assigned to is *NOT*
-            embedded in parentheses and thus denotes a simple attribute name
-            rather than a full-blown Python expression.
+          * :class:`ast.Name`, in which case this is a **simple assignment**
+            (i.e., to a local or global variable). This is the common case in
+            which the attribute being assigned to is *NOT* embedded in
+            parentheses and thus denotes a simple attribute name rather than a
+            full-blown Python expression.
+          * :class:`ast.Attribute`, in which case this is an **object
+            assignment** (i.e., to an instance or class variable of an object).
           * :class:`ast.Subscript`, in which case this assignment is to the item
             subscripted by an index of a container rather than to that container
             itself.
-          * :class:`ast.Attribute`. **WE HAVE NO IDEA.** Look. We just don't.
 
         * ``node.simple``, an integer :superscript:`sigh` that is either:
 
@@ -643,6 +645,9 @@ class BeartypeNodeTransformer(NodeTransformer):
             phenomenal inspiration!
         '''
 
+        # Recursively transform *ALL* child nodes of this parent callable node.
+        self.generic_visit(node)
+
         # If either...
         if (
             # This beartype configuration disables type-checking of PEP
@@ -651,11 +656,13 @@ class BeartypeNodeTransformer(NodeTransformer):
             # This beartype configuration enables type-checking of PEP
             # 526-compliant annotated variable assignments *BUT*...
 
+            #FIXME: Excise us up, please.
             #FIXME: Can and/or should we also support "node.target" child nodes
             #that are instances of "ast.Attribute" and "ast.Subscript"?
-            # This assignment is *NOT* simple (in which case this assignment is
-            # *NOT* assigning to an attribute name) *OR*...
-            not node.simple or
+            # # This assignment is *NOT* simple (in which case this assignment is
+            # # *NOT* assigning to an attribute name) *OR*...
+            # not node.simple or
+
             # This assignment is simple *BUT*...
             #
             # This assignment is *NOT* actually an assignment but simply an
@@ -709,19 +716,60 @@ class BeartypeNodeTransformer(NodeTransformer):
         #   526-compliant annotated variable assignments.
         # * This assignment is simple and assigning to an attribute name.
 
-        # Validate this expectation.
-        assert isinstance(node.target, Name), (
-            f'Non-simple AST annotated assignment node {repr(node)} '
-            f'target {repr(node.target)} not {repr(Name)} instance.')
-
-        # Child node referencing the function performing this type-checking,
-        # previously imported at module scope by visit_FunctionDef() above.
-        node_func_name = Name(
-            BEARTYPE_RAISER_TARGET_ATTR_NAME, ctx=NODE_CONTEXT_LOAD)
+        #FIXME: Excise us up, please.
+        # # Validate this expectation.
+        # assert isinstance(node.target, Name), (
+        #     f'Non-simple AST annotated assignment node {repr(node)} '
+        #     f'target {repr(node.target)} not {repr(Name)} instance.')
 
         # Child node passing the value newly assigned to this attribute by this
         # assignment as the first parameter to die_if_unbearable().
-        node_func_arg_pith = Name(node.target.id, ctx=NODE_CONTEXT_LOAD)
+        node_func_arg_pith: AST = None  # type: ignore[assignment]
+
+        # Child node referencing the target variable being assigned to,
+        # localized purely as a negligible optimization.
+        node_target = node.target
+
+        # If this target variable is a simple local or global variable...
+        if isinstance(node_target, Name):
+            # Child node referencing this local or global variable.
+            node_func_arg_pith = Name(node_target.id, ctx=NODE_CONTEXT_LOAD)
+        # Else, this target variable is *NOT* a simple local or global variable.
+        #
+        # If this target variable is an instance or class variable...
+        elif isinstance(node_target, Attribute):
+            #FIXME: Insufficient. Attributes can contain arbitrary nested child
+            #nodes, including other attributes and/or names. Thankfully, the
+            #only reason to even bother attempting to do this is to rigorously
+            #sanitize line and column numbers -- which doesn't appear to be
+            #particularly necessary or even desirable for dynamically generated
+            #code. For now, we simply shallowly reuse the existing "value" node.
+            # # Child node referencing the object containing this instance or
+            # # class variable (e.g., the "self" in "self.attr: str = 'Attr!'").
+            # node_func_arg_pith_obj = Name(
+            #     node_target.value.id, ctx=NODE_CONTEXT_LOAD)
+            # copy_node_metadata(node_src=node, node_trg=node_func_arg_pith_obj)
+
+            # Child node referencing this instance or class variable.
+            node_func_arg_pith = Attribute(
+                value=node_target.value,
+                # Unqualified basename of this instance or class variable.
+                attr=node_target.attr,
+                ctx=NODE_CONTEXT_LOAD,
+            )
+        # Else, this target variable is *NOT* an instance or class variable. In
+        # this case, this target variable is currently unsupported by this node
+        # transformer for automated type-checking. Simply preserve and return
+        # this node as is.
+        #
+        # Examples include:
+        # * "ast.Subscripted", in which case this target variable is an item of
+        #   a container. It is unclear whether PEP 526 even supports annotated
+        #   variable assignments of container items *OR* whether any @beartype
+        #   users even annotate variable assignments of container items. Ergo,
+        #   this node transformer currently ignores this odd edge case.
+        else:
+            return node
 
         # List of all nodes encapsulating keyword arguments passed to
         # die_if_unbearable(), defaulting to the empty list and thus *NO* such
@@ -742,6 +790,11 @@ class BeartypeNodeTransformer(NodeTransformer):
         # Else, this configuration is simply the default beartype
         # configuration. In this case, avoid passing that configuration to
         # the beartype decorator for both efficiency and simplicity.
+
+        # Child node referencing the function performing this type-checking,
+        # previously imported at module scope by visit_FunctionDef() above.
+        node_func_name = Name(
+            BEARTYPE_RAISER_TARGET_ATTR_NAME, ctx=NODE_CONTEXT_LOAD)
 
         # Child node type-checking this newly assigned attribute against the
         # type hint annotating this assignment via our die_if_unbearable().

@@ -21,11 +21,11 @@ from beartype.typing import (
 
 # ....................{ PEP 526                            }....................
 # Validate that *NO* import hooks installed by the caller apply to this
-# submodule. In this case, assert that PEP 562-compliant annotated assignment
+# submodule. In this case, assert that PEP 526-compliant annotated assignment
 # statements are *NOT* appended with calls to beartype's statement-level
 # beartype.door.die_if_unbearable() exception-raiser.
 
-# Assert that a PEP 562-compliant assignment statement assigning an object
+# Assert that a PEP 526-compliant assignment statement assigning an object
 # violating the type hint annotating that statement raises *NO* exception.
 and_winter_robing: str = b'And winter robing with pure snow and crowns'
 assert isinstance(and_winter_robing, bytes)

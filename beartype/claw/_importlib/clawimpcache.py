@@ -42,7 +42,7 @@ class ModuleNameToBeartypeConf(Dict[str, 'BeartypeConf']):
 
     .. code-block:: python
 
-        # Otherwise syntactically and semantically correct PEP 562-compliant
+        # Otherwise syntactically and semantically correct PEP 526-compliant
         # annotated assignment expressions like this previously raised spurious
         # non-human-readable exceptions from this dictionary resembling:
         #     KeyError: 'muh_module'  # <-- what does this even mean!?!?

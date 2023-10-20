@@ -53,14 +53,32 @@ class HerFirstSweetKisses(object):
         method violates the type hints annotating this method.
         '''
 
-        # Assert that assigning an annotated local variable a valid value
-        # raises *NO* exception.
+        # ....................{ PASS                       }....................
+        # Implicitly assert that assigning a valid value to an annotated local
+        # or global variable in a method raises *NO* exception.
+        #
+        # Note that this edge case is distinct from assigning to an annotated
+        # instance or class variable in a method.
         his_wandering_step: int = len('More graceful than her own')
 
-        # Assert that assigning an annotated local variable an invalid value
-        # raises the expected exception.
+        # Implicitly assert that assigning a valid value to an annotated
+        # instance or class variable in a method raises *NO* exception.
+        #
+        # Note that this edge case is distinct from assigning to an annotated
+        # local or global variable in a method.
+        self.the_awful_ruins: bytes = b'The awful ruins of the days of old:'
+
+        # ....................{ FAIL                       }....................
+        # Explicitly assert that assigning an invalid value to an annotated
+        # local or global variable raises the expected exception.
         with raises(BeartypeDoorHintViolation):
             his_wandering_step: int = 'Obedient to high thoughts, has visited'
+
+        # Explicitly assert that assigning an invalid value to an annotated
+        # instance or class variable raises the expected exception.
+        with raises(BeartypeDoorHintViolation):
+            self.the_awful_ruins: bytes = (
+                'Athens, and Tyre, and Balbec, and the waste')
 
         # Look, @beartype. Just do it!
         return insect_or_gentle_beast
