@@ -64,7 +64,100 @@ def test_decor_class() -> None:
 
     # ....................{ FAIL                           }....................
     # Assert that this method raises the expected exception when passed a
-    # non-string parameter.
+    # invalid parameter.
     with raises(BeartypeCallHintParamViolation):
         of_his_looks.his_bloodless_food(
             ('And the wild antelope,', "that starts whene'er"))
+
+
+def test_decor_subclass() -> None:
+    '''
+    Test decoration of user-defined subclasses of user-defined superclasses by
+    the :func:`beartype.beartype` decorator.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from pytest import raises
+
+    # ....................{ LOCALS                         }....................
+    # Intentionally redecorate a class twice by the @beartype decorator,
+    # exercising an edge case in class decoration.
+    @beartype
+    @beartype
+    class WhereStoodJerusalem(object):
+        '''
+        Arbitrary superclass.
+        '''
+
+        def __init__(self, the_fallen_towers: str) -> None:
+            '''
+            Arbitrary constructor accepting an arbitrary annotated parameter.
+            '''
+
+            self._the_fallen_towers = the_fallen_towers
+
+
+        def of_babylon(self, the_eternal_pyramids: str) -> int:
+            '''
+            Arbitrary annotated method.
+            '''
+
+            return len(self._the_fallen_towers + the_eternal_pyramids)
+
+
+    @beartype
+    @beartype
+    class MemphisAndThebes(WhereStoodJerusalem):
+        '''
+        Arbitrary subclass of the superclass defined above, intentionally:
+
+        * Overriding *all* methods defined by that superclass.
+        * Defining a new subclass-specific method.
+        '''
+
+        def __init__(self, the_fallen_towers: str) -> None:
+            self._the_fallen_towers_len = len(the_fallen_towers)
+
+
+        def of_babylon(self, the_eternal_pyramids: str) -> int:
+            return (
+                self._the_fallen_towers_len * len(the_eternal_pyramids))
+
+
+        def and_whatsoever_of_strange(
+            self, sculptured_on_alabaster_obelisk: str) -> float:
+            '''
+            Arbitrary subclass-specific annotated method.
+            '''
+
+            return (
+                self._the_fallen_towers_len /
+                len(sculptured_on_alabaster_obelisk)
+            )
+
+
+    # Arbitrary instance of this subclass.
+    or_jasper_tomb = MemphisAndThebes('Or jasper tomb, or mutilated sphynx,')
+
+    # ....................{ PASS                           }....................
+    # Assert that these methods passed arbitrary parameters return the expected
+    # values from those parameters.
+    assert or_jasper_tomb.of_babylon(
+        'Of more than man, where marble daemons watch') == 1584
+    assert or_jasper_tomb.and_whatsoever_of_strange(
+        "The Zodiac's brazen mystery, and dead men") == 0.8780487804878049
+
+    # ....................{ FAIL                           }....................
+    # Assert that these methods all raise the expected exception when passed
+    # invalid parameters.
+    with raises(BeartypeCallHintParamViolation):
+        MemphisAndThebes(b'Dark Aethiopia in her desert hills')
+    with raises(BeartypeCallHintParamViolation):
+        or_jasper_tomb.of_babylon((
+            'Conceals.', 'Among the ruined temples there,'))
+    with raises(BeartypeCallHintParamViolation):
+        or_jasper_tomb.and_whatsoever_of_strange(len(
+            'Stupendous columns, and wild images'))

@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **class getters** (i.e., low-level callables querying for various
+Project-wide **class getters** (i.e., low-level callables obtaining various
 properties of arbitrary classes).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -34,7 +34,7 @@ def get_type_filename_or_none(cls: type) -> Optional[str]:
         Class to be inspected.
 
     Returns
-    ----------
+    -------
     Optional[str]
         Either:
 
@@ -70,6 +70,7 @@ def get_type_filename_or_none(cls: type) -> Optional[str]:
         if type_module:
             # Return the filename defining this module if any *OR* "None".
             return get_module_filename_or_none(type_module)
+    # Else, *NO* modules defines this type.
 
     # If all else fails, this type was probably declared in-memory rather than
     # on-disk. In this case, fallback to merely returning "None". 
@@ -89,14 +90,14 @@ def get_type_locals(
     attribute directly declared by that class) for the passed class.
 
     Caveats
-    ----------
+    -------
     **This getter returns an immutable rather than mutable mapping.** Callers
     requiring the latter are encouraged to manually coerce the immutable mapping
     returned by this getter into a mutable mapping (e.g., by passing the former
     to the :class:`dict` constructor as is).
 
     Design
-    ----------
+    ------
     This getter currently reduces to a trivial one-liner returning
     ``cls.__dict__`` and has thus been defined mostly just for orthogonality
     with the comparable
@@ -149,13 +150,13 @@ def get_type_locals(
         :exc:`_BeartypeUtilTypeException`.
 
     Returns
-    ----------
+    -------
     LexicalScope
         Local scope for this class.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If the next non-ignored frame following the last ignored frame is *not*
         the parent callable or module directly declaring the passed callable.
     '''

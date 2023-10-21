@@ -26,8 +26,8 @@ from beartype._data.hint.datahinttyping import (
     BeartypeableT,
     TypeStack,
 )
+from beartype._util.cls.utilclsset import set_type_attr
 from beartype._util.module.utilmodget import get_object_module_name_or_none
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from collections import defaultdict
 from functools import wraps
 
@@ -98,7 +98,7 @@ def beartype_type(
     # "object" superclass. Unfortunately, *ALL* of these methods are C-based and
     # thus do *NOT* directly support monkey-patching: e.g.,
     #     >>> class AhMahGoddess(object): pass
-    #     >>> AhMahGoddess.__init__.__beartyped_cls = True
+    #     >>> AhMahGoddess.__init__.__beartyped_cls = AhMahGoddess
     #     AttributeError: 'wrapper_descriptor' object has no attribute
     #     '__beartyped_cls'
     #
@@ -115,14 +115,17 @@ def beartype_type(
     cls_sizeof_old = cls.__sizeof__
 
     # True only if this decorator has already decorated this class, as indicated
-    # by the @beartype-specific instance variable "__beartyped_cls"
-    # monkey-patched into a pure-Python __sizeof__() dunder method wrapper by a
-    # prior call to this decorator passed this class.
-    is_cls_beartyped = getattr(cls_sizeof_old, '__beartyped_cls', False)
+    # by the @beartype-specific class variable "__beartyped_cls" monkey-patched
+    # into a pure-Python __sizeof__() dunder method wrapper by a prior call to
+    # this decorator passed this class.
+    is_cls_beartyped = getattr(cls_sizeof_old, '__beartyped_cls', None)
 
-    # If this decorator has already decorated this class, silently reduce to a
-    # noop by returning this class as is.
-    if is_cls_beartyped:
+    # If the value of this variable is that of this class, a prior call to this
+    # decorator has already decorated this class. In this case, silently reduce
+    # to a noop by returning this class as is.
+    #
+    # See where this variable is set below for further details.
+    if is_cls_beartyped is cls:
         # print(f'Ignoring repeat decoration of {repr(cls)}...')
         return cls  # type: ignore[return-value]
     # Else, this decorator has yet to decorate this class.
@@ -245,7 +248,7 @@ def beartype_type(
             )
 
             # Replace this undecorated attribute with this decorated attribute.
-            _set_type_attr(cls, attr_name, attr_value_beartyped)
+            set_type_attr(cls, attr_name, attr_value_beartyped)
         # Else, this attribute is *NOT* beartypeable. In this case, silently
         # ignore this attribute.
 
@@ -257,15 +260,25 @@ def beartype_type(
         return cls_sizeof_old(self)  # type: ignore[call-arg]
 
     # Monkey-patch a @beartype-specific instance variable into this wrapper,
-    # recording that this decorator has now decorated this class. For safety,
-    # leverage our high-level _set_type_attr() setter rather than attempting to
-    # set this low-level attribute directly. Although doing so efficiently
-    # succeeds for standard mutable classes, doing so fails catastrophically
-    # for edge-case immutable classes (e.g., "enum.Enum" subclasses).
-    cls_sizeof_new.__beartyped_cls = True  # type: ignore[attr-defined]
+    # recording that this decorator has now decorated this class.
+    #
+    # Note that we intentionally set this variable to this class rather than an
+    # arbitrary value (e.g., "False", "None"). Why? Because subclasses of this
+    # class will inherit this wrapper. If we simply set this variable to an
+    # arbitrary value, we would be unable to decide above between the following
+    # two cases:
+    # * Whether this wrapper was inherited from its superclass, in which case
+    #   this class has yet to be decorated by @beartype.
+    # * Whether this wrapper was *NOT* inherited from its superclass, in which
+    #   case this class has already been decorated by @beartype.
+    cls_sizeof_new.__beartyped_cls = cls  # type: ignore[attr-defined]
 
     # Replace the original C-based __sizeof__() dunder method with this wrapper.
-    _set_type_attr(cls, '__sizeof__', cls_sizeof_new)
+    # We intentionally call our set_type_attr() setter rather than attempting to
+    # set this attribute directly. The latter approach efficiently succeeds for
+    # standard pure-Python mutable classes but catastrophically fails for
+    # non-standard C-based immutable classes (e.g., "enum.Enum" subclasses).
+    set_type_attr(cls, '__sizeof__', cls_sizeof_new)
 
     # Return this class as is.
     return cls  # type: ignore[return-value]
@@ -278,76 +291,3 @@ fully-qualified name of each module defining one or more classes decorated by
 the :func:`beartype.beartype` decorator to the set of the unqualified basenames
 of all classes in that module decorated by that decorator).
 '''
-
-# ....................{ PRIVATE ~ setters                  }....................
-def _set_type_attr(cls: type, attr_name: str, attr_value: object) -> None:
-    '''
-    Dynamically set the class attribute with the passed name to the passed value
-    on the dictionary of the passed class.
-
-    Parameters
-    ----------
-    cls : type
-        Class to set this attribute on.
-    attr_name : str
-        Name of the class attribute to be set.
-    attr_value : object
-        Value to set this class attribute to.
-
-    Caveats
-    -------
-    **This function is unavoidably slow.** Class attributes are *only* settable
-    by calling the tragically slow :func:`setattr` builtin. Attempting to
-    directly set an attribute on the class dictionary raises an exception. Why?
-    Because class dictionaries are actually low-level :class:`mappingproxy`
-    objects that intentionally override the ``__setattr__()`` dunder method to
-    unconditionally raise an exception. Why? Because that constraint enables the
-    :meth:`type.__setattr__` dunder method to enforce critical efficiency
-    constraints on class attributes -- including that class attribute keys are
-    *not* only strings but also valid Python identifiers:
-
-    .. code-block:: pycon
-
-       >>> class OhGodHelpUs(object): pass
-       >>> OhGodHelpUs.__dict__['even_god_cannot_help'] = 2
-       TypeError: 'mappingproxy' object does not support item
-       assignment
-
-    See also this `relevant StackOverflow answer by Python luminary
-    Raymond Hettinger <answer_>`__.
-
-    .. _answer:
-       https://stackoverflow.com/a/32720603/2809027
-    '''
-
-    # Attempt to set the class attribute with this name to this value.
-    try:
-        setattr(cls, attr_name, attr_value)
-    # If doing so raises a builtin "TypeError"...
-    except TypeError as exception:
-        # Message raised with this "TypeError".
-        exception_message = str(exception)
-
-        # If this message satisfies a well-known pattern unique to the current
-        # Python version, then this exception signifies this attribute to be
-        # inherited from an immutable builtin type (e.g., "str") subclassed by
-        # this user-defined subclass. In this case, silently skip past this
-        # uncheckable attribute to the next.
-        if (
-            # The active Python interpreter targets Python >= 3.10, match a
-            # message of the form "cannot set '{attr_name}' attribute of
-            # immutable type '{cls_name}'".
-            IS_PYTHON_AT_LEAST_3_10 and (
-                exception_message.startswith("cannot set '") and
-                "' attribute of immutable type " in exception_message
-            # Else, the active Python interpreter targets Python <= 3.9. In this
-                # case, match a message of the form "can't set attributes of
-                # built-in/extension type '{cls_name}'".
-            ) or exception_message.startswith(
-                "can't set attributes of built-in/extension type '")
-        ):
-            return
-        # Else, this message does *NOT* satisfy that pattern.
-
-        # Preserve this exception by re-raising this exception.
-        raise
