@@ -25,7 +25,7 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
-from beartype._util.func.utilfuncwrap import unwrap_func_all_closures_isomorphic
+from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 from collections.abc import Callable
 from enum import (
     Enum,
@@ -198,7 +198,7 @@ def iter_func_args(
       :data:`ArgMandatory`).
 
     Caveats
-    ----------
+    -------
     **This highly optimized generator function should always be called in lieu
     of the highly unoptimized** :func:`inspect.signature` **function,** which
     implements a similar introspection as this generator with significantly
@@ -214,7 +214,7 @@ def iter_func_args(
         comparatively slower :func:`get_func_codeobj` function.
     is_unwrap: bool, optional
         :data:`True` only if this generator implicitly calls the
-        :func:`unwrap_func_all_closures_isomorphic` function to unwrap this possibly higher-level
+        :func:`unwrap_func_all_isomorphic` function to unwrap this possibly higher-level
         wrapper into its possibly lowest-level wrappee *before* returning the
         code object of that wrappee. Note that doing so incurs worst-case time
         complexity ``O(n)`` for ``n`` the number of lower-level wrappees
@@ -233,13 +233,13 @@ def iter_func_args(
         to :class:`._BeartypeUtilCallableException`.
 
     Yields
-    ----------
+    ------
     ArgMeta
         Parameter metadata tuple describing the currently yielded parameter.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
          If that callable is *not* pure-Python.
     '''
 
@@ -247,7 +247,7 @@ def iter_func_args(
     # If unwrapping that callable, do so *BEFORE* obtaining the code object of
     # that callable for safety (to avoid desynchronization between the two).
     if is_unwrap:
-        func = unwrap_func_all_closures_isomorphic(func)
+        func = unwrap_func_all_isomorphic(func)
     # Else, that callable is assumed to have already been unwrapped by the
     # caller. We should probably assert that, but doing so requires an
     # expensive call to hasattr(). What you gonna do?

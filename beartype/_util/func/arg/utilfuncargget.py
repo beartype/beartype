@@ -46,14 +46,14 @@ def get_func_arg_first_name_or_none(
         Pure-Python callable, frame, or code object to be inspected.
     is_unwrap: bool, optional
         :data:`True` only if this getter implicitly calls the
-        :func:`.unwrap_func_all_closures_isomorphic` function. Defaults to :data:`True` for safety. See
+        :func:`.unwrap_func_all_isomorphic` function. Defaults to :data:`True` for safety. See
         :func:`.iter_func_args` for further commentary.
     exception_cls : type, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.
 
     Returns
-    ----------
+    -------
     Optional[str]
         Either:
 
@@ -62,8 +62,8 @@ def get_func_arg_first_name_or_none(
         * Else, :data:`None`.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
          If that callable is *not* pure-Python.
     '''
 
@@ -102,20 +102,20 @@ def get_func_args_flexible_len(
         Pure-Python callable, frame, or code object to be inspected.
     is_unwrap: bool, optional
         :data:`True` only if this getter implicitly calls the
-        :func:`.unwrap_func_all_closures_isomorphic` function. Defaults to :data:`True` for safety. See
-        :func:`.iter_func_args` for further commentary.
+        :func:`.unwrap_func_all_isomorphic` function. Defaults to :data:`True`
+        for safety. See :func:`.iter_func_args` for further commentary.
     exception_cls : type, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.
 
     Returns
-    ----------
+    -------
     int
         Number of flexible parameters accepted by this callable.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
          If that callable is *not* pure-Python.
     '''
 
@@ -150,20 +150,20 @@ def get_func_args_nonvariadic_len(
         Pure-Python callable, frame, or code object to be inspected.
     is_unwrap: bool, optional
         :data:`True` only if this getter implicitly calls the
-        :func:`.unwrap_func_all_closures_isomorphic` function. Defaults to :data:`True` for safety. See
-        :func:`.iter_func_args` for further commentary.
+        :func:`.unwrap_func_all_isomorphic` function. Defaults to :data:`True`
+        for safety. See :func:`.iter_func_args` for further commentary.
     exception_cls : type, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.
 
     Returns
-    ----------
+    -------
     int
         Number of flexible parameters accepted by this callable.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
          If that callable is *not* pure-Python.
     '''
 

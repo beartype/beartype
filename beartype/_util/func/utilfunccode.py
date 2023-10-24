@@ -657,11 +657,11 @@ https://stackoverflow.com/questions/59498679/how-can-i-get-exactly-the-code-of-a
 #     if isinstance(func, CallableTypes):
 #         # Avoid circular import dependencies.
 #         from beartype._util.func.utilfuncfile import get_func_filename_or_none
-#         from beartype._util.func.utilfuncwrap import unwrap_func_all_closures_isomorphic
+#         from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 #
 #         # Code object underlying the passed pure-Python callable unwrapped if
 #         # this callable is pure-Python *OR* "None" otherwise.
-#         func_filename = get_func_filename_or_none(unwrap_func_all_closures_isomorphic(func))
+#         func_filename = get_func_filename_or_none(unwrap_func_all_isomorphic(func))
 #
 #         # If this callable has a code object, set this label to either the
 #         # absolute filename of the physical Python module or script declaring

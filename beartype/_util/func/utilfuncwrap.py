@@ -110,7 +110,7 @@ def unwrap_func_all(func: Any) -> Callable:
 
 
 #FIXME: Unit test us up, please.
-def unwrap_func_all_closures_isomorphic(func: Any) -> Callable:
+def unwrap_func_all_isomorphic(func: Any) -> Callable:
     '''
     Lowest-level **non-isomorphic wrappee** (i.e., callable wrapped by the
     passed wrapper callable) of the passed higher-level **isomorphic wrapper**
@@ -143,18 +143,11 @@ def unwrap_func_all_closures_isomorphic(func: Any) -> Callable:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfunctest import (
-        is_func_closure_isomorphic,
-        is_func_wrapper,
-    )
+    from beartype._util.func.utilfunctest import is_func_wrapper_isomorphic
 
-    # While ...
-    while (
-        # That callable wraps a lower-level callable...
-        is_func_wrapper(func) and
-        # ...with a higher-level isomorphic wrapper...
-        is_func_closure_isomorphic(func)
-    ):
+    # While that callable wraps a lower-level callable with a higher-level
+    # isomorphic wrapper...
+    while is_func_wrapper_isomorphic(func):
         # Undo one layer of wrapping by reducing the former to the latter.
         # print(f'Unwrapping isomorphic closure wrapper {func} to wrappee {func.__wrapped__}...')
         func = func.__wrapped__  # type: ignore[attr-defined]

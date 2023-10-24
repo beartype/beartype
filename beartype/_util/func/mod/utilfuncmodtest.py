@@ -98,7 +98,7 @@ def is_func_contextlib_contextmanager(func: Any) -> TypeGuard[Callable]:
     # @contextlib.contextmanager decorator.
     #
     # Note that we *COULD* technically also explicitly test whether that
-    # callable satisfies the is_func_closure_isomorphic() tester, but that
+    # callable satisfies the is_func_wrapper_isomorphic() tester, but that
     # there's no benefit and a minor efficiency cost  to doing so.
     return func_codeobj_name == CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME
 

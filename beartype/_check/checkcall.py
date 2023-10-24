@@ -39,7 +39,7 @@ from beartype._util.func.utilfunctest import (
     is_func_coro,
     is_func_nested,
 )
-from beartype._util.func.utilfuncwrap import unwrap_func_all_closures_isomorphic
+from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 
 # ....................{ CLASSES                            }....................
 class BeartypeCall(object):
@@ -365,7 +365,7 @@ class BeartypeCall(object):
         self.func_wrappee = func
 
         # Possibly unwrapped callable unwrapped from this wrappee callable.
-        self.func_wrappee_wrappee = unwrap_func_all_closures_isomorphic(func)
+        self.func_wrappee_wrappee = unwrap_func_all_isomorphic(func)
         # self.func_wrappee_wrappee = unwrap_func_all(func)
         # print(f'func_wrappee: {self.func_wrappee}')
         # print(f'func_wrappee_wrappee: {self.func_wrappee_wrappee}')

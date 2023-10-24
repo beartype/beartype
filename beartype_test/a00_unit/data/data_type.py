@@ -20,8 +20,11 @@ from beartype.typing import (
 )
 from beartype._util.func.utilfuncmake import make_func
 from contextlib import contextmanager
-from functools import lru_cache
 from enum import Enum
+from functools import (
+    lru_cache,
+    wraps,
+)
 from sys import exc_info
 
 # ....................{ CLASSES                            }....................
@@ -285,6 +288,17 @@ def function_in_memory():
 Arbitrary pure-Python function dynamically declared in-memory.
 ''')
 
+
+@wraps(function)
+def wrapper_isomorphic(*args, **kwargs):
+    '''
+    **Isomorphic wrapper** (i.e., higher-level function transparently preserving
+    both the positions and types of all parameters and returns passed to the
+    lowel-level wrappee callable).
+    '''
+
+    return function(*args, **kwargs)
+
 # ....................{ CALLABLES ~ sync : decorator       }....................
 def decorator(func: Callable) -> Callable:
     '''
@@ -307,15 +321,12 @@ def decorator_isomorphic(func):
     parameters passed to the passed callable).
     '''
 
-    # Defer decorator-specific imports.
-    from functools import wraps
-
     @wraps(func)
     def _closure_isomorphic(*args, **kwargs):
         '''
         **Isomorphic decorator closure** (i.e., closure transparently
-        preserving both the positions and types of all parameters passed to the
-        decorated callable).
+        preserving both the positions and types of all parameters and returns
+        passed to the decorated callable).
         '''
 
         return func(*args, **kwargs)

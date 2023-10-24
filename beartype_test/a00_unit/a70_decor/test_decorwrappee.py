@@ -345,6 +345,89 @@ def test_wrappee_descriptor_builtin_chain() -> None:
         'And the green earth lost in his heart its claims'
     )
 
+# ....................{ TESTS ~ wrapper                    }....................
+def test_wrappee_wrapper_isomorphic() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator on **isomorphic wrappers**
+    (i.e., callables decorated by the standard :func:`functools.wraps` decorator
+    for wrapping pure-Python callables with additional functionality defined by
+    higher-level decorators such that those wrappers isomorphically preserve
+    both the number and types of all passed parameters and returns by accepting
+    only a variadic positional argument and a variadic keyword argument).
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from collections.abc import Callable
+    from functools import wraps
+    from pytest import raises
+
+    # ....................{ WRAPPERS                       }....................
+    def hang_their_mute_thoughts(on_the_mute_walls_around: str) -> int:
+        '''
+        Arbitrary **undecorated wrappee** (i.e., lower-level callable wrapped by
+        the higher-level :func:`hang_their_mute_thoughts` wrapper intentionally
+        *not* decorated by the :func:`.beartype` decorator).
+        '''
+
+        return len(on_the_mute_walls_around)
+
+
+    @beartype
+    @wraps(hang_their_mute_thoughts)
+    def he_lingered(*args, **kwargs):
+        '''
+        Arbitrary **decorated isomorphic non-closure wrapper** (i.e., isomorphic
+        wrapper defined as a function rather than closure, decorated by the
+        :func:`.beartype` decorator).
+        '''
+
+        return hang_their_mute_thoughts(*args, **kwargs)
+
+
+    @beartype
+    def of_the_worlds_youth(func: Callable) -> Callable:
+        '''
+        Arbitrary **decorated isomorphic non-closure wrapper decorator** (i.e.,
+        decorator function creating and returning an isomorphic wrapper defined
+        as a closure, all decorated by the :func:`.beartype` decorator).
+        '''
+
+        @beartype
+        @wraps(func)
+        def through_the_long_burning_day(*args, **kwargs):
+            '''
+            Arbitrary **decorated isomorphic closure wrapper** (i.e., isomorphic
+            wrapper defined as a closure, decorated by the :func:`.beartype`
+            decorator).
+            '''
+
+            return func(*args, **kwargs)
+
+        # Return this wrapper.
+        return through_the_long_burning_day
+
+
+    # Isomorphic closure wrapper created and returned by the above decorator.
+    when_the_moon = of_the_worlds_youth(hang_their_mute_thoughts)
+
+    # ....................{ PASS                           }....................
+    # Assert that these wrappers passed valid parameters return the expected
+    # values.
+    assert he_lingered('He lingered, poring on memorials') == 32
+    assert when_the_moon(
+        'Gazed on those speechless shapes, nor, when the moon') == 52
+
+    # ....................{ FAIL                           }....................
+    # Assert that these wrappers passed invalid parameters raise the expected
+    # exceptions.
+    with raises(BeartypeCallHintParamViolation):
+        he_lingered(b"Of the world's youth, through the long burning day")
+    with raises(BeartypeCallHintParamViolation):
+        when_the_moon(b"Filled the mysterious halls with floating shades")
+
 # ....................{ TESTS ~ fail : wrappee             }....................
 def test_wrappee_type_fail() -> None:
     '''

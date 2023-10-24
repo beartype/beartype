@@ -18,6 +18,9 @@ from beartype._data.hint.datahinttyping import (
     Codeobjable,
     TypeException,
 )
+from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.func.arg.utilfuncargget import (
+    get_func_args_nonvariadic_len)
 from beartype._util.func.arg.utilfuncargtest import (
     is_func_arg_variadic_positional,
     is_func_arg_variadic_keyword,
@@ -332,41 +335,6 @@ def is_func_python(func: object) -> TypeGuard[Callable]:
     # Return true only if a pure-Python code object underlies this object.
     # C-based callables are associated with *NO* code objects.
     return get_func_codeobj_or_none(func) is not None
-
-
-def is_func_wrapper(func: Any) -> TypeGuard[Callable]:
-    '''
-    :data:`True` only if the passed object is a **callable wrapper** (i.e.,
-    object created by the standard :func:`functools.wraps` decorator for
-    wrapping a pure-Python callable with additional functionality defined by a
-    higher-level decorator).
-
-    Note that this tester returns :data:`True` for both pure-Python and C-based
-    callable wrappers. As an example of the latter, the standard
-    :func:`functools.lru_cache` decorator creates and returns low-level C-based
-    callable wrappers of the private type :class:`functools._lru_cache_wrapper`
-    wrapping pure-Python callables.
-
-    Parameters
-    ----------
-    func : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        :data:`True` only if this object is a callable wrapper.
-    '''
-
-    # Return true only if this object defines a dunder attribute uniquely
-    # specific to the @functools.wraps decorator.
-    #
-    # Technically, *ANY* callable (including non-wrappers *NOT* created by the
-    # @functools.wraps decorator) could trivially define this attribute; ergo,
-    # this invites the possibility of false positives. Pragmatically, doing so
-    # would violate ad-hoc standards and real-world practice across the
-    # open-source ecosystem; ergo, this effectively excludes false positives.
-    return hasattr(func, '__wrapped__')
 
 # ....................{ TESTERS ~ descriptor               }....................
 def is_func_classmethod(func: Any) -> TypeGuard[classmethod]:
@@ -772,18 +740,57 @@ def is_func_closure(func: Any) -> TypeGuard[Callable]:
     # * If that callable is C-based, undefined.
     return getattr(func, '__closure__', None) is not None
 
-
-def is_func_closure_isomorphic(func: Any) -> TypeGuard[Callable]:
+# ....................{ TESTERS ~ wrapper                  }....................
+def is_func_wrapper(func: Any) -> TypeGuard[Callable]:
     '''
-    :data:`True` only if the passed object is an **isomorphic decorator
-    closure** (i.e., closure both defined and returned by a decorator such that
-    that closure isomorphically preserves both the number and types of all
-    passed parameters and returns, implemented as a closure accepting only a
-    variadic positional argument and a variadic keyword argument).
+    :data:`True` only if the passed object is a **callable wrapper** (i.e.,
+    callable decorated by the standard :func:`functools.wraps` decorator for
+    wrapping a pure-Python callable with additional functionality defined by a
+    higher-level decorator).
+
+    Note that this tester returns :data:`True` for both pure-Python and C-based
+    callable wrappers. As an example of the latter, the standard
+    :func:`functools.lru_cache` decorator creates and returns low-level C-based
+    callable wrappers of the private type :class:`functools._lru_cache_wrapper`
+    wrapping pure-Python callables.
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    ----------
+    bool
+        :data:`True` only if this object is a callable wrapper.
+    '''
+
+    # Return true only if this object defines a dunder attribute uniquely
+    # specific to the @functools.wraps decorator.
+    #
+    # Technically, *ANY* callable (including non-wrappers *NOT* created by the
+    # @functools.wraps decorator) could trivially define this attribute; ergo,
+    # this invites the possibility of false positives. Pragmatically, doing so
+    # would violate ad-hoc standards and real-world practice across the
+    # open-source ecosystem; ergo, this effectively excludes false positives.
+    return hasattr(func, '__wrapped__')
+
+
+@callable_cached
+def is_func_wrapper_isomorphic(func: Any) -> TypeGuard[Callable]:
+    '''
+    :data:`True` only if the passed object is an **isomorphic wrapper** (i.e.,
+    callable decorated by the standard :func:`functools.wraps` decorator for
+    wrapping a pure-Python callable with additional functionality defined by a
+    higher-level decorator such that that wrapper isomorphically preserves both
+    the number and types of all passed parameters and returns by accepting only
+    a variadic positional argument and a variadic keyword argument).
 
     This tester enables callers to detect when a user-defined callable has been
     decorated by an isomorphic decorator, which constitutes *most* real-world
     decorators of interest.
+
+    This tester is memoized for efficiency.
 
     Caveats
     ----------
@@ -799,13 +806,13 @@ def is_func_closure_isomorphic(func: Any) -> TypeGuard[Callable]:
     Returns
     ----------
     bool
-        :data:`True` only if this object is an isomorphic decorator closure.
+        :data:`True` only if this object is an isomorphic decorator wrapper.
     '''
 
-    # If the passed callable is *NOT* a closure, immediately return false.
-    if not is_func_closure(func):
+    # If the passed callable is *NOT* a wrapper, immediately return false.
+    if not is_func_wrapper(func):
         return False
-    # Else, that callable is a closure.
+    # Else, that callable is a wrapper.
 
     # Code object underlying that callable as is (rather than possibly unwrapped
     # to another code object entirely) if that callable is pure-Python *OR*
@@ -818,6 +825,8 @@ def is_func_closure_isomorphic(func: Any) -> TypeGuard[Callable]:
         func_codeobj is not None and
         # That callable accepts a variadic positional argument *AND*...
         is_func_arg_variadic_positional(func_codeobj) and
-        # That callable accepts a variadic keyword argument.
-        is_func_arg_variadic_keyword(func_codeobj)
+        # That callable accepts a variadic keyword argument *AND*...
+        is_func_arg_variadic_keyword(func_codeobj) and
+        # That callable accepts *NO* non-variadic arguments.
+        get_func_args_nonvariadic_len(func_codeobj) == 0
     )

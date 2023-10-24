@@ -51,7 +51,7 @@ def die_unless_func_args_len_flexible_equal(
         Number of flexible parameters to validate this callable as accepting.
     is_unwrap: bool, optional
         ``True`` only if this validator implicitly calls the
-        :func:`unwrap_func_all_closures_isomorphic` function to unwrap this possibly higher-level
+        :func:`unwrap_func_all_isomorphic` function to unwrap this possibly higher-level
         wrapper into its possibly lowest-level wrappee *before* returning the
         code object of that wrappee. Note that doing so incurs worst-case time
         complexity ``O(n)`` for ``n`` the number of lower-level wrappees
@@ -71,8 +71,8 @@ def die_unless_func_args_len_flexible_equal(
         :class:`_BeartypeUtilCallableException`.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If this callable either:
 
         * Is *not* callable.
@@ -173,13 +173,13 @@ def is_func_argless(
         :class:`_BeartypeUtilCallableException`.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if the passed callable accepts *no* arguments.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
          If the passed callable is *not* pure-Python.
     '''
 
@@ -209,12 +209,12 @@ def is_func_arg_nonvariadic(func: Codeobjable) -> bool:
         Pure-Python callable, frame, or code object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if that callable accepts any non-variadic parameters.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilCallableException
          If that callable is *not* pure-Python.
     '''
@@ -239,7 +239,7 @@ def is_func_arg_variadic(func: Codeobjable) -> bool:
         Pure-Python callable, frame, or code object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if that callable accepts either:
 
@@ -247,7 +247,7 @@ def is_func_arg_variadic(func: Codeobjable) -> bool:
         * Variadic keyword arguments (e.g., ``**kwargs``).
 
     Raises
-    ----------
+    ------
     _BeartypeUtilCallableException
          If that callable is *not* pure-Python.
     '''
@@ -274,13 +274,13 @@ def is_func_arg_variadic_positional(func: Codeobjable) -> bool:
         Pure-Python callable, frame, or code object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if the passed callable accepts a variadic positional
         argument.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilCallableException
          If the passed callable is *not* pure-Python.
     '''
@@ -307,13 +307,13 @@ def is_func_arg_variadic_keyword(func: Codeobjable) -> bool:
         Pure-Python callable, frame, or code object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if the passed callable accepts a variadic keyword
         argument.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilCallableException
          If the passed callable is *not* pure-Python.
     '''
@@ -346,7 +346,7 @@ def is_func_arg_name(func: Callable, arg_name: str) -> bool:
     with the passed name.
 
     Caveats
-    ----------
+    -------
     **This tester exhibits worst-case time complexity** ``O(n)`` **for** ``n``
     **the total number of arguments accepted by this callable,** due to
     unavoidably performing a linear search for an argument with this name is
@@ -361,12 +361,12 @@ def is_func_arg_name(func: Callable, arg_name: str) -> bool:
         Name of the argument to be searched for.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if that callable accepts an argument with this name.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilCallableException
          If the passed callable is *not* pure-Python.
     '''
