@@ -94,13 +94,12 @@ from ast import (
     Attribute,
     Call,
     ClassDef,
-    # Constant,
+    Constant,
     Expr,
     ImportFrom,
     Module,
     Name,
     NodeTransformer,
-    Str,
     # Subscript,
     # alias,
     # expr,
@@ -363,7 +362,7 @@ class BeartypeNodeTransformer(NodeTransformer):
                 # docstring by reducing that docstring to an ignorable string.)
                 (
                     isinstance(node_import_prev, Expr) and
-                    isinstance(node_import_prev.value, Str)
+                    isinstance(node_import_prev.value, Constant)
                 ) or
                 # A future import (i.e., import of the form "from __future__
                 # ...") *OR*...
@@ -573,7 +572,7 @@ class BeartypeNodeTransformer(NodeTransformer):
           hint annotating this assignment, typically an instance of either:
 
           * :class:`ast.Name`.
-          * :class:`ast.Str`.
+          * :class:`ast.Constant`.
 
           Note that this node is *not* itself a valid PEP-compliant type hint
           and should *not* be treated as such here or elsewhere.

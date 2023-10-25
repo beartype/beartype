@@ -8,7 +8,10 @@ Project-wide :pep:`585`-compliant **type hint test data.**
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_MOST_3_11,
+    IS_PYTHON_AT_LEAST_3_9,
+)
 
 # ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:
@@ -62,7 +65,6 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPithUnsatisfiedMetadata,
     )
     from collections.abc import (
-        ByteString,
         Callable,
         Container,
         Iterable,
@@ -71,8 +73,15 @@ def add_data(data_module: 'ModuleType') -> None:
         Sized,
     )
     from contextlib import AbstractContextManager
-    from re import Match, Pattern
-    from typing import Any, TypeVar, Union
+    from re import (
+        Match,
+        Pattern,
+    )
+    from typing import (
+        Any,
+        TypeVar,
+        Union,
+    )
 
     # ..................{ TYPEVARS                           }..................
     S = TypeVar('S')
@@ -239,45 +248,6 @@ def add_data(data_module: 'ModuleType') -> None:
     # ..................{ MAPPINGS                           }..................
     # Add PEP 585-specific test type hints to this dictionary global.
     data_module.HINTS_PEP_META.extend((
-        # ................{ BYTESTRING                         }................
-        # Byte string of integer constants satisfying the builtin "int" type.
-        #
-        # Note that *ALL* byte strings necessarily contain only integer
-        # constants, regardless of whether those byte strings are instantiated
-        # as "bytes" or "bytearray" instances. Ergo, subscripting
-        # "collections.abc.ByteString" by any class other than those satisfying
-        # the standard integer protocol raises a runtime error from @beartype.
-        # Yes, this means that subscripting "collections.abc.ByteString"
-        # conveys no information and is thus nonsensical. Welcome to PEP 585.
-        HintPepMetadata(
-            hint=ByteString[int],
-            pep_sign=HintSignByteString,
-            isinstanceable_type=ByteString,
-            is_pep585_builtin=True,
-            piths_meta=(
-                # Byte string constant.
-                HintPithSatisfiedMetadata(b'Ingratiatingly'),
-                # String constant.
-                HintPithUnsatisfiedMetadata('For an Ǽeons’ æon.'),
-            ),
-        ),
-
-        # Byte string of integer constants satisfying the stdlib
-        # "numbers.Integral" protocol.
-        HintPepMetadata(
-            hint=ByteString[IntType],
-            pep_sign=HintSignByteString,
-            isinstanceable_type=ByteString,
-            is_pep585_builtin=True,
-            piths_meta=(
-                # Byte array initialized from a byte string constant.
-                HintPithSatisfiedMetadata(bytearray(b'Cutting Wit')),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    'Of birch‐rut, smut‐smitten papers and'),
-            ),
-        ),
-
         # ................{ CALLABLE                           }................
         # Callable accepting no parameters and returning a string.
         HintPepMetadata(
@@ -1070,7 +1040,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Nested union of one non-"typing" type and one "typing" type.
         HintPepMetadata(
-            hint=Sequence[Union[str, ByteString]],
+            hint=Sequence[Union[str, bytes]],
             pep_sign=HintSignSequence,
             isinstanceable_type=Sequence,
             is_pep585_builtin=True,
@@ -1087,7 +1057,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
                     exception_str_match_regexes=(
-                        r'\bByteString\b',
+                        r'\bbytes\b',
                         r'\bstr\b',
                     ),
                     # Match that the exception message raised for this object
@@ -1106,7 +1076,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     exception_str_match_regexes=(
                         # Declares all non-"typing" types *NOT* satisfied by a
                         # random tuple item *NOT* satisfying this hint.
-                        r'\bByteString\b',
+                        r'\bbytes\b',
                         r'\bstr\b',
                         # Declares the index of the random tuple item *NOT*
                         # satisfying this hint.
@@ -1118,7 +1088,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Nested union of no non-"typing" type and multiple "typing" types.
         HintPepMetadata(
-            hint=MutableSequence[Union[ByteString, Callable]],
+            hint=MutableSequence[Union[bytes, Callable]],
             pep_sign=HintSignMutableSequence,
             isinstanceable_type=MutableSequence,
             is_pep585_builtin=True,
@@ -1134,7 +1104,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
                     exception_str_match_regexes=(
-                        r'\bByteString\b',
+                        r'\bbytes\b',
                         r'\bCallable\b',
                     ),
                     # Match that the exception message raised for this object
@@ -1156,7 +1126,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     exception_str_match_regexes=(
                         # Declares all non-"typing" types *NOT* satisfied by a
                         # random list item *NOT* satisfying this hint.
-                        r'\bByteString\b',
+                        r'\bbytes\b',
                         r'\bCallable\b',
                         # Declares the index of the random list item *NOT*
                         # satisfying this hint.
@@ -1166,3 +1136,70 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
     ))
+
+    # ....................{ VERSION                        }....................
+    # PEP-compliant type hints conditionally dependent on the major version of
+    # Python targeted by the active Python interpreter.
+
+    # If the active Python interpreter targets at most Python <= 3.11...
+    if IS_PYTHON_AT_MOST_3_11:
+        # ..................{ IMPORTS                        }..................
+        # Defer importation of standard abstract base classes (ABCs) deprecated
+        # under Python >= 3.12.
+        from collections.abc import ByteString
+
+        # ..................{ MAPPINGS                       }..................
+        # Add PEP 585-specific test type hints to this dictionary global.
+        data_module.HINTS_PEP_META.extend((
+            # ................{ BYTESTRING                     }................
+            # Byte string of integer constants satisfying the builtin "int"
+            # type. However, note that:
+            # * *ALL* byte strings necessarily contain only integer constants,
+            #   regardless of whether those byte strings are instantiated as
+            #   "bytes" or "bytearray" instances. Ergo, subscripting
+            #   "collections.abc.ByteString" by any class other than those
+            #   satisfying the standard integer protocol raises a runtime
+            #   error from @beartype. Yes, this means that subscripting
+            #   "collections.abc.ByteString" conveys no information and is thus
+            #   nonsensical. Welcome to PEP 585.
+            # * Python >= 3.12 provides *NO* corresponding analogue. Oddly,
+            #   neither the builtin "bytes" type *NOR* the newly introduced
+            #   "collections.abc.Buffer" ABC are subscriptable under Python >=
+            #   3.12 despite both roughly corresponding to the deprecated
+            #   "collections.abc.ByteString" ABC. Notably:
+            #       $ python3.12
+            #       >>> bytes[str]
+            #       TypeError: type 'bytes' is not subscriptable
+            #
+            #       >>> from collections.abc import Buffer
+            #       >>> Buffer[str]
+            #       TypeError: type 'Buffer' is not subscriptable
+            HintPepMetadata(
+                hint=ByteString[int],
+                pep_sign=HintSignByteString,
+                isinstanceable_type=ByteString,
+                is_pep585_builtin=True,
+                piths_meta=(
+                    # Byte string constant.
+                    HintPithSatisfiedMetadata(b'Ingratiatingly'),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata('For an Ǽeons’ æon.'),
+                ),
+            ),
+
+            # Byte string of integer constants satisfying the stdlib
+            # "numbers.Integral" protocol.
+            HintPepMetadata(
+                hint=ByteString[IntType],
+                pep_sign=HintSignByteString,
+                isinstanceable_type=ByteString,
+                is_pep585_builtin=True,
+                piths_meta=(
+                    # Byte array initialized from a byte string constant.
+                    HintPithSatisfiedMetadata(bytearray(b'Cutting Wit')),
+                    # String constant.
+                    HintPithUnsatisfiedMetadata(
+                        'Of birch‐rut, smut‐smitten papers and'),
+                ),
+            ),
+        ))

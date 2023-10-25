@@ -271,7 +271,10 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
 
         pass
 
-    # ..................{ LISTS                              }..................
+    # ..................{ LISTS ~ cases                      }..................
+    # List of all hint subhint cases (i.e., 3-tuples "(subhint, superhint,
+    # is_subhint)" describing the subhint relations between two PEP-compliant
+    # type hints) to be returned by this fixture.
     HINT_SUBHINT_CASES = [
         # ..................{ PEP 484 ~ argless : any        }..................
         # PEP 484-compliant catch-all type hint.
@@ -462,30 +465,84 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
         (MuhDict, dict, True),
     ]
 
+    # ..................{ LISTS ~ typing                     }..................
+    # List of the unqualified basenames of all standard ABCs published by
+    # the standard "collections.abc" module, defined as...
+    COLLECTIONS_ABC_BASENAMES = [
+        # For the unqualified basename of each attribute defined by the standard
+        # "collections.abc" module...
+        COLLECTIONS_ABC_BASENAME
+        for COLLECTIONS_ABC_BASENAME in dir(collections.abc)
+        # If this basename is *NOT* prefixed by an underscore, this attribute is
+        # public and thus an actual ABC. In this case, include this ABC.
+        if not COLLECTIONS_ABC_BASENAME.startswith('_')
+        # Else, this is an unrelated private attribute. In this case, silently
+        # ignore this attribute and continue to the next.
+    ]
+
+    # List of the unqualified basenames of all standard abstract base classes
+    # (ABCs) supported by the standard "typing" module, defined as the
+    # concatenation of...
+    TYPING_ABC_BASENAMES = (
+        # List of the unqualified basenames of all standard ABCs published by
+        # the standard "collections.abc" module *PLUS*...
+        COLLECTIONS_ABC_BASENAMES +
+        # List of the unqualified basenames of all ancillary ABCs *NOT*
+        # published by the standard "collections.abc" module but nonetheless
+        # supported by the standard "typing" module.
+        ['Deque']
+    )
+
     # ..................{ HINTS ~ abcs                       }..................
-    # Smoke test for all "typing" ABCs. Smoke out those bugs, pytest!
-    for cls_name in dir(collections.abc) + ['Deque']:
-        if not cls_name.startswith("_"):
-            typing_abc = getattr(typing, cls_name)
+    # For the unqualified basename of each standard ABCs supported by the
+    # standard "typing" module...
+    #
+    # Note this also constitutes a smoke test (i.e., high-level test validating
+    # core functionality) for whether the DOOR API supports standard abstract
+    # base classes (ABCs). Smoke out those API inconsistencies, pytest!
+    for TYPING_ABC_BASENAME in TYPING_ABC_BASENAMES:
+        #FIXME: This logic is likely to fail under a future Python release.
+        # Type hint factory published by the "typing" module corresponding to
+        # this ABC if any *OR* "None" otherwise (i.e., if "typing" publishes
+        # *NO* such type hint factory).
+        TypingABC = getattr(typing, TYPING_ABC_BASENAME, None)
 
-            #FIXME: This logic (probably) isn't behaving as expected under
-            #Python >= 3.9, where unsubscripted "typing" factories (probably)
-            #are *NOT* parametrized by type variables. Let's research this up!
+        # If "typing" publishes *NO* such type hint factory, silently ignore
+        # this ABC and continue to the next.
+        if TypingABC is None:
+            continue
+        # Else, "typing" publishes this type hint factory.
 
-            # Tuple of the zero or more type variables parametrizing this ABC.
-            typing_abc_typevars = get_hint_pep_typevars(typing_abc)
+        # Number of type variables parametrizing this ABC, defined as either...
+        TYPING_ABC_TYPEVARS_LEN = (
+            # If the active Python interpreter targets Python >= 3.9, a private
+            # instance variable of this type hint factory yielding this
+            # metadata. Under Python >= 3.9, unsubscripted type hint factories
+            # are *NOT* parametrized by type variables.
+            TypingABC._nparams
+            if IS_PYTHON_AT_LEAST_3_9 else
+            # Else, the active Python interpreter targets Python < 3.9. In this
+            # case, the number of type variables directly parametrizing this
+            # ABC.
+            len(get_hint_pep_typevars(TypingABC))
+        )
 
-            # Number of type variables parametrizing this ABC.
-            nparams = len(typing_abc_typevars)
+        # If this ABC is parametrized by one or more type variables, exercise
+        # that this ABC subscripted by one or more arbitrary concrete types is a
+        # non-trivial subhint of this same ABC subscripted by one or more
+        # arbitrary different ABCs of those concrete types.
+        if TYPING_ABC_TYPEVARS_LEN:
+            subhint =   TypingABC[(list,)     * TYPING_ABC_TYPEVARS_LEN]
+            superhint = TypingABC[(Sequence,) * TYPING_ABC_TYPEVARS_LEN]
+        # Else, this ABC is parametrized by *NO* type variables. In this case,
+        # fallback to exercising that this ABC is a trivial subhint of itself.
+        else:
+            subhint =   TypingABC
+            superhint = TypingABC
 
-            if nparams:
-                sub = typing_abc[(list,) * nparams]
-                sup = typing_abc[(Sequence,) * nparams]
-            else:
-                sub = typing_abc
-                sup = typing_abc
-
-            HINT_SUBHINT_CASES.append((sub, sup, True))
+        # Append a new hint subhint case exercising that this subhint is
+        # actually a subhint of this superhint.
+        HINT_SUBHINT_CASES.append((subhint, superhint, True))
 
     # ..................{ HINTS ~ version                    }..................
     # If the active Python interpreter targets Python >= 3.9 and thus

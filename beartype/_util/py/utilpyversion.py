@@ -20,15 +20,36 @@ IS_PYTHON_AT_LEAST_4_0 = version_info >= (4, 0)
 '''
 
 
-#FIXME: After dropping Python 3.12 support:
+#FIXME: After dropping Python 3.13 support:
+#* Refactor all code conditionally testing this global to be unconditional.
+#* Remove this global.
+#* Remove all decorators resembling:
+#  @skip_if_python_version_less_than('3.13.0')
+IS_PYTHON_AT_LEAST_3_13 = IS_PYTHON_AT_LEAST_4_0 or version_info >= (3, 13)
+'''
+:data:`True` only if the active Python interpreter targets at least Python
+3.12.0.
+'''
+
+#FIXME: After dropping Python 3.13 support:
 #* Refactor all code conditionally testing this global to be unconditional.
 #* Remove this global.
 #* Remove all decorators resembling:
 #  @skip_if_python_version_less_than('3.12.0')
-IS_PYTHON_AT_LEAST_3_12 = IS_PYTHON_AT_LEAST_4_0 or version_info >= (3, 12)
+IS_PYTHON_AT_LEAST_3_12 = IS_PYTHON_AT_LEAST_3_13 or version_info >= (3, 12)
 '''
 :data:`True` only if the active Python interpreter targets at least Python
-3.12.0.
+3.13.0.
+'''
+
+
+#FIXME: After dropping Python 3.10 support:
+#* Refactor all code conditionally testing this global to be unconditional.
+#* Remove this global.
+IS_PYTHON_AT_MOST_3_11 = not IS_PYTHON_AT_LEAST_3_12
+'''
+:data:`True` only if the active Python interpreter targets at most Python
+3.11.x.
 '''
 
 

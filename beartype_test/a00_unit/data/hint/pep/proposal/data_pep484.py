@@ -50,7 +50,6 @@ from typing import (
     Any,
     AnyStr,
     BinaryIO,
-    ByteString,
     Callable,
     Container,
     ContextManager,
@@ -301,6 +300,7 @@ def add_data(data_module: 'ModuleType') -> None:
     from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
         HINT_PEP484_FORWARDREF_TYPE)
     from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_MOST_3_11,
         IS_PYTHON_AT_LEAST_3_10,
         IS_PYTHON_AT_LEAST_3_9,
     )
@@ -369,29 +369,6 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Any,
             pep_sign=HintSignAny,
             is_ignorable=True,
-        ),
-
-        # Unsubscripted "ByteString" singleton. Bizarrely, note that:
-        # * "collections.abc.ByteString" is subscriptable under PEP 585.
-        # * "typing.ByteString" is *NOT* subscriptable under PEP 484.
-        # Since neither PEP 484 nor 585 comment on "ByteString" in detail (or
-        # at all, really), this non-orthogonality remains inexplicable,
-        # frustrating, and utterly unsurprising. We elect to merely shrug.
-        HintPepMetadata(
-            hint=ByteString,
-            pep_sign=HintSignByteString,
-            isinstanceable_type=collections_abc.ByteString,
-            piths_meta=(
-                # Byte string constant.
-                HintPithSatisfiedMetadata(
-                    b'By nautical/particle consciousness'),
-                # Byte array initialized from a byte string constant.
-                HintPithSatisfiedMetadata(
-                    bytearray(b"Hour's straight fates, (distemperate-ly)")),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    'At that atom-nestled canticle'),
-            ),
         ),
 
         # Unsubscripted "Hashable" attribute.
@@ -1712,7 +1689,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Nested union of one non-"typing" type and one "typing" type.
         HintPepMetadata(
-            hint=Sequence[Union[str, ByteString]],
+            hint=Sequence[Union[str, bytes]],
             pep_sign=HintSignSequence,
             isinstanceable_type=collections_abc.Sequence,
             piths_meta=(
@@ -1728,7 +1705,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
                     exception_str_match_regexes=(
-                        r'\bByteString\b',
+                        r'\bbytes\b',
                         r'\bstr\b',
                     ),
                     # Match that the exception message raised for this object
@@ -1746,7 +1723,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     exception_str_match_regexes=(
                         # Declares all non-"typing" types *NOT* satisfied by a
                         # random tuple item *NOT* satisfying this hint.
-                        r'\bByteString\b',
+                        r'\bbytes\b',
                         r'\bstr\b',
                         # Declares the index of the random tuple item *NOT*
                         # satisfying this hint.
@@ -1758,7 +1735,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
         # Nested union of *NO* isinstanceable type and multiple "typing" types.
         HintPepMetadata(
-            hint=MutableSequence[Union[ByteString, Callable]],
+            hint=MutableSequence[Union[bytes, Callable]],
             pep_sign=HintSignMutableSequence,
             isinstanceable_type=collections_abc.MutableSequence,
             piths_meta=(
@@ -1773,7 +1750,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     # Match that the exception message raised for this object
                     # declares the types *NOT* satisfied by this object.
                     exception_str_match_regexes=(
-                        r'\bByteString\b',
+                        r'\bbytes\b',
                         r'\bCallable\b',
                     ),
                     # Match that the exception message raised for this object
@@ -1795,7 +1772,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     exception_str_match_regexes=(
                         # Declares all non-"typing" types *NOT* satisfied by a
                         # random list item *NOT* satisfying this hint.
-                        r'\bByteString\b',
+                        r'\bbytes\b',
                         r'\bCallable\b',
                         # Declares the index of the random list item *NOT*
                         # satisfying this hint.
@@ -1946,8 +1923,11 @@ def add_data(data_module: 'ModuleType') -> None:
         ),
     ))
 
+    # ....................{ VERSION                        }....................
     # PEP-compliant type hints conditionally dependent on the major version of
     # Python targeted by the active Python interpreter.
+
+    # If the active Python interpreter targets at least Python <= 3.9...
     if IS_PYTHON_AT_LEAST_3_9:
         data_module.HINTS_PEP_META.extend((
             # ..............{ GENERICS ~ user                    }..............
@@ -1979,3 +1959,41 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
         ))
+
+        # If the active Python interpreter targets at most Python <= 3.11...
+        if IS_PYTHON_AT_MOST_3_11:
+            # ..................{ IMPORTS                    }..................
+            # Defer importation of standard PEP 484-specific type hint factories
+            # deprecated under Python >= 3.12.
+            from typing import ByteString
+
+            # ..................{ MAPPINGS                   }..................
+            # Add PEP 484-specific test type hints to this dictionary global.
+            data_module.HINTS_PEP_META.extend((
+                # ................{ UNSUBSCRIPTED              }................
+                # Unsubscripted "ByteString" singleton. Bizarrely, note that:
+                # * "collections.abc.ByteString" is subscriptable under PEP 585.
+                # * "typing.ByteString" is *NOT* subscriptable under PEP 484.
+                #
+                # Since neither PEP 484 nor 585 comment on "ByteString" in
+                # detail (or at all, really), this non-orthogonality remains
+                # inexplicable, frustrating, and utterly unsurprising. We elect
+                # to merely shrug.
+                HintPepMetadata(
+                    hint=ByteString,
+                    pep_sign=HintSignByteString,
+                    isinstanceable_type=collections_abc.ByteString,
+                    piths_meta=(
+                        # Byte string constant.
+                        HintPithSatisfiedMetadata(
+                            b'By nautical/particle consciousness'),
+                        # Byte array initialized from a byte string constant.
+                        HintPithSatisfiedMetadata(
+                            bytearray(
+                                b"Hour's straight fates, (distemperate-ly)")),
+                        # String constant.
+                        HintPithUnsatisfiedMetadata(
+                            'At that atom-nestled canticle'),
+                    ),
+                ),
+            ))
