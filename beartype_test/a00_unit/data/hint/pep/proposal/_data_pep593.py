@@ -8,7 +8,6 @@ Project-wide :pep:`593`-compliant **type hint test data.**
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype_test._util.module.pytmodtyping import is_typing_attrs
 
 # ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:
@@ -22,16 +21,24 @@ def add_data(data_module: 'ModuleType') -> None:
         Module to be added to.
     '''
 
-    # If *NO* typing module declares an "Annotated" factory, the active Python
-    # interpreter fails to support PEP 593. In this case, reduce to a noop.
-    if not is_typing_attrs('Annotated'):
+    # ..................{ IMPORTS                            }..................
+    # Defer early-time fixture-specific imports.
+    from beartype._util.module.lib.utiltyping import (
+        is_typing_attr,
+        iter_typing_attrs,
+    )
+
+    # If *NO* currently importable "typing" module declares this type hint
+    # factory, the active Python interpreter fails to support this PEP. In this
+    # case, return the empty tuple.
+    if not is_typing_attr('Annotated'):
         # print('Ignoring "Annotated"...')
         return
     # print('Testing "Annotated"...')
-    # Else, this interpreter supports PEP 593.
+    # Else, this interpreter supports this PEP.
 
-    # ..................{ IMPORTS                            }..................
-    # Defer data-specific imports.
+    # ..................{ IMPORTS ~ moar                     }..................
+    # Defer all remaining fixture-specific imports.
     from beartype.typing import (
         Any,
         List,
@@ -50,7 +57,6 @@ def add_data(data_module: 'ModuleType') -> None:
         HintSignAnnotated,
         HintSignList,
     )
-    from beartype._util.module.lib.utiltyping import iter_typing_attrs
     from beartype_test.a00_unit.data.data_type import (
         Class,
         Subclass,
@@ -111,7 +117,8 @@ def add_data(data_module: 'ModuleType') -> None:
         'An atomical caroller', 'carousing Thanatos', '(nucl‐eating',]
 
     # ..................{ FACTORIES                          }..................
-    # For each "Annotated" type hint factory importable from a typing module...
+    # For each PEP-specific type hint factory importable from each currently
+    # importable "typing" module...
     for Annotated in iter_typing_attrs('Annotated'):
         # print(f'Exercising PEP 593 {repr(Annotated)}...')
 

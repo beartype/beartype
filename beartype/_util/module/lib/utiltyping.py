@@ -323,7 +323,67 @@ def import_typing_attr_or_fallback(
     # attribute *OR* this fallback otherwise.
     return typing_attr
 
+# ....................{ GETTERS                            }....................
+#FIXME: Unit test us up, please.
+@callable_cached
+def get_typing_attrs(typing_attr_basename: str) -> frozenset:
+    '''
+    Frozen set of all attributes with the passed unqualified basename declared
+    by all importable typing modules, silently ignoring those modules failing to
+    declare this attribute.
+
+    This getter intentionally returns a set rather than a list. Why? Duplicates.
+    The third-party :mod:`typing_extensions` module duplicates *all* type hint
+    factories implemented by the standard :mod:`typing` module under the most
+    recently released version of Python.
+
+    This getter is memoized for efficiency.
+
+    Attributes
+    ----------
+    typing_attr_basename : str
+        Unqualified name of the attribute to be dynamically imported from
+        each typing module.
+
+    Yields
+    ------
+    set
+        Set of all attributes with the passed unqualified basename declared by
+        all importable typing modules.
+    '''
+    assert isinstance(typing_attr_basename, str), (
+        f'{repr(typing_attr_basename)} not string.')
+
+    # Set of all importable attributes to be returned by this getter.
+    typing_attrs: set = set()
+
+    # For the fully-qualified name of each quasi-standard typing module...
+    for typing_module_name in TYPING_MODULE_NAMES:
+        # Fully-qualified name of this attribute declared by that module.
+        module_attr_name = f'{typing_module_name}.{typing_attr_basename}'
+
+        # Attribute with this name dynamically imported from that module if
+        # that module defines this attribute *OR* "None" otherwise.
+        typing_attr = import_module_attr_or_none(
+            module_attr_name=module_attr_name,
+            exception_prefix=f'"{typing_module_name}" attribute ',
+        )
+
+        # If that module fails to define this attribute, silently continue to
+        # the next module.
+        if typing_attr is None:
+            continue
+        # Else, that module declares this attribute.
+
+        # Append this attribute to this list.
+        typing_attrs.add(typing_attr)
+
+    # Return this set, coerced into a frozen set for caching purposes.
+    return frozenset(typing_attrs)
+
 # ....................{ ITERATORS                          }....................
+#FIXME: Replace *ALL* calls to this by calls to get_typing_attrs(), please.
+#FIXME: Currently unused but preserved for posterity. Consider excising, please.
 def iter_typing_attrs(
     # Mandatory parameters.
     typing_attr_basenames: Union[str, Iterable[str]],
@@ -363,11 +423,11 @@ def iter_typing_attrs(
     typing_module_names: Iterable[str]
         Iterable of the fully-qualified names of all typing modules to
         dynamically import this attribute from. Defaults to
-        :data:`TYPING_MODULE_NAMES`.
+        :data:`.TYPING_MODULE_NAMES`.
 
     Yields
     ------
-    Union[object, Tuple[object]]
+    Union[object, Tuple[object, ...]]
         Either:
 
         * If passed only an attribute basename, the attribute with that
@@ -440,12 +500,12 @@ def iter_typing_attrs(
             typing_attrs.append(typing_attr)
         # If that module declares *ALL* attributes...
         else:
-            # If exactly one attribute name was passed, yield this attribute
-            # as is (*WITHOUT* packing this attribute into a tuple).
+            # If exactly one attribute name was passed, yield this attribute as
+            # is (*WITHOUT* packing this attribute into a tuple).
             if len(typing_attrs) == 1:
                 yield typing_attrs[0]
-            # Else, two or more attribute names were passed. In this case,
-            # yield these attributes as a tuple.
+            # Else, two or more attribute names were passed. In this case, yield
+            # these attributes as a tuple.
             else:
                 yield tuple(typing_attrs)
         # Else, that module failed to declare one or more attributes. In this

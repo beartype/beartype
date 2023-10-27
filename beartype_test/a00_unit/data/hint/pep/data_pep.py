@@ -122,12 +122,13 @@ demonstrate this fact).
 # Initialized by the _init() function below.
 HINTS_PEP_META = []
 '''
-Tuple of **PEP-compliant type hint metadata** (i.e., :class:`HintPepMetadata`
+Tuple of **PEP-compliant type hint metadata** (i.e.,
+:class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
 instances describing test-specific PEP-compliant type hints with metadata
 leveraged by various testing scenarios).
 
 Design
-----------
+------
 This tuple was initially designed as a dictionary mapping from PEP-compliant
 type hints to :class:`HintPepMetadata` instances describing those hints, until
 :mod:`beartype` added support for PEPs enabling unhashable PEP-compliant type
@@ -141,6 +142,30 @@ def _init() -> None:
     Initialize this submodule.
     '''
 
+    #FIXME: Refactor this into a standard pytest fixture-based approach, please.
+    # Defer fixture-specific imports.
+    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep589 import (
+        hints_pep_meta_pep589)
+
+    # Submodule globals to be redefined below.
+    global \
+        HINTS_PEP_HASHABLE, \
+        HINTS_PEP_IGNORABLE_DEEP, \
+        HINTS_PEP_IGNORABLE_SHALLOW, \
+        HINTS_PEP_META
+
+    # Tuple of all fixtures defining "HINTS_PEP_META" subiterables.
+    HINTS_PEP_META_FIXTURES = (
+        hints_pep_meta_pep589,
+    )
+
+    # For each fixture defining a "HINTS_PEP_META" subiterable, extend the main
+    # "HINTS_PEP_META" iterable by this subiterable.
+    for hints_pep_meta_fixture in HINTS_PEP_META_FIXTURES:
+        HINTS_PEP_META.extend(hints_pep_meta_fixture())
+
+    #FIXME: Excise almost everything below in favour of the standard pytest
+    #fixture-based approach above, please.
     # Defer function-specific imports.
     import sys
     from beartype._util.utilobject import is_object_hashable
@@ -159,13 +184,6 @@ def _init() -> None:
         _data_pep675,
     )
 
-    # Submodule globals to be redefined below.
-    global \
-        HINTS_PEP_HASHABLE, \
-        HINTS_PEP_IGNORABLE_DEEP, \
-        HINTS_PEP_IGNORABLE_SHALLOW, \
-        HINTS_PEP_META
-
     # Current submodule, obtained via the standard idiom. See also:
     #     https://stackoverflow.com/a/1676860/2809027
     CURRENT_SUBMODULE = sys.modules[__name__]
@@ -177,7 +195,7 @@ def _init() -> None:
         _data_pep544,
         _data_pep585,
         _data_pep586,
-        _data_pep589,
+        # _data_pep589,
         _data_pep593,
         _data_pep604,
         _data_pep675,

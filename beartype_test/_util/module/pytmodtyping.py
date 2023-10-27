@@ -16,43 +16,10 @@ attributes with arbitrary names dynamically imported from typing modules).
 #these two submodules unknowingly, which is simply horrid. Gah! I cry at night.
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Any,
-    Iterable,
-    Union,
-)
+from beartype.typing import Any
 from beartype._util.module.utilmodimport import import_module_attr_or_none
-from beartype._util.module.lib.utiltyping import iter_typing_attrs
-
-# ....................{ TESTERS                            }....................
-def is_typing_attrs(typing_attr_basenames: Union[str, Iterable[str]]) -> bool:
-    '''
-    :data:`True` only if at least one quasi-standard typing module declares an
-    attribute with the passed basename.
-
-    Attributes
-    ----------
-    typing_attr_basenames : Union[str, Iterable[str]]
-        Unqualified name of the attribute to be tested as existing in at least
-        one typing module.
-
-    Returns
-    ----------
-    bool
-        :data:`True` only if at least one quasi-standard typing module declares
-        an attribute with this basename.
-    '''
-
-    # Return true only if at least one typing module defines an attribute with
-    # this name. Glory be to the obtuse generator comprehension expression!
-    return bool(tuple(iter_typing_attrs(
-        typing_attr_basenames=typing_attr_basenames,
-        is_warn=False,
-    )))
 
 # ....................{ IMPORTERS                          }....................
-#FIXME: Is this still required? Seriously. Shouldn't "typing_extensions"
-#*ALWAYS* be sufficiently new under remote CI? *sigh*
 def import_typing_attr_or_none_safe(typing_attr_basename: str) -> Any:
     '''
     Dynamically import and return the **typing attribute** (i.e., object
@@ -62,7 +29,7 @@ def import_typing_attr_or_none_safe(typing_attr_basename: str) -> Any:
     otherwise (i.e., if this attribute is *not* importable from these modules).
 
     Caveats
-    ----------
+    -------
     **This higher-level wrapper should typically be called in lieu of the
     lower-level**
     :func:`beartype._util.module.lib.utiltyping.import_typing_attr_or_none`
@@ -76,17 +43,17 @@ def import_typing_attr_or_none_safe(typing_attr_basename: str) -> Any:
         Unqualified name of the attribute to be imported from a typing module.
 
     Returns
-    ----------
+    -------
     object
         Attribute with this name dynamically imported from a typing module.
 
     Raises
-    ----------
+    ------
     beartype.roar._roarexc._BeartypeUtilModuleException
         If this name is syntactically invalid.
 
     Warns
-    ----------
+    -----
     BeartypeModuleUnimportableWarning
         If any of these modules raise module-scoped exceptions at importation
         time. That said, the :mod:`typing` and :mod:`typing_extensions` modules

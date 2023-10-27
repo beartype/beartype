@@ -8,7 +8,6 @@ Project-wide :pep:`586`-compliant **type hint test data.**
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype_test._util.module.pytmodtyping import is_typing_attrs
 
 # ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:
@@ -22,13 +21,22 @@ def add_data(data_module: 'ModuleType') -> None:
         Module to be added to.
     '''
 
-    # If *NO* typing module declares a "Literal" factory, the active Python
-    # interpreter fails to support PEP 586. In this case, reduce to a noop.
-    if not is_typing_attrs('Literal'):
-        # print('Ignoring "Literal"...')
+    # ..................{ IMPORTS                            }..................
+    # Defer early-time fixture-specific imports.
+    from beartype._util.module.lib.utiltyping import (
+        is_typing_attr,
+        iter_typing_attrs,
+    )
+
+    # If *NO* currently importable "typing" module declares this type hint
+    # factory, the active Python interpreter fails to support this PEP. In this
+    # case, return the empty tuple.
+    if not is_typing_attr('Literal'):
         return
-    # print('Testing "Literal"...')
-    # Else, this interpreter supports PEP 586.
+    # Else, this interpreter supports this PEP.
+
+    # ..................{ IMPORTS ~ moar                     }..................
+    # Defer all remaining fixture-specific imports.
 
     # ..................{ IMPORTS                            }..................
     # Defer data-dependent imports.
@@ -37,7 +45,6 @@ def add_data(data_module: 'ModuleType') -> None:
         HintSignList,
         HintSignLiteral,
     )
-    from beartype._util.module.lib.utiltyping import iter_typing_attrs
     from beartype_test.a00_unit.data.data_type import (
         MasterlessDecreeVenomlessWhich)
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
