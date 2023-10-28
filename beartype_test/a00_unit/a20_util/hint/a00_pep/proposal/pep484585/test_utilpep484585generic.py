@@ -18,11 +18,17 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ testers                    }....................
-def test_is_hint_pep484585_generic() -> None:
+def test_is_hint_pep484585_generic(hints_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585generic.is_hint_pep484585_generic`
     tester.
+
+    Parameters
+    ----------
+    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        List of PEP-compliant type hint metadata describing sample PEP-compliant
+        type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
 
     # Defer test-specific imports.
@@ -30,13 +36,11 @@ def test_is_hint_pep484585_generic() -> None:
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
         is_hint_pep484585_generic)
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.a00_unit.data.hint.pep.data_pep import (
-        HINTS_PEP_META)
 
     # Assert this tester:
     # * Accepts generic PEP 484-compliant generics.
     # * Rejects concrete PEP-compliant type hints.
-    for hint_pep_meta in HINTS_PEP_META:
+    for hint_pep_meta in hints_pep_meta:
         assert is_hint_pep484585_generic(hint_pep_meta.hint) is (
             hint_pep_meta.pep_sign is HintSignGeneric)
 
@@ -45,26 +49,30 @@ def test_is_hint_pep484585_generic() -> None:
         assert is_hint_pep484585_generic(not_hint_pep) is False
 
 # ....................{ TESTS ~ getters                    }....................
-def test_get_hint_pep484585_generic_type_or_none() -> None:
+def test_get_hint_pep484585_generic_type_or_none(hints_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585generic.get_hint_pep484585_generic_type_or_none`
     getter.
+
+    Parameters
+    ----------
+    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        List of PEP-compliant type hint metadata describing sample PEP-compliant
+        type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
 
     # Defer test-specific imports.
     from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
         get_hint_pep484585_generic_type_or_none)
-    from beartype_test.a00_unit.data.hint.pep.data_pep import (
-        HINTS_PEP_META)
 
     # Assert this getter returns the expected type origin for all
     # PEP-compliant type hint generics. While we could support non-generics as
     # well, there's little benefit and significant costs to doing so. Instead,
     # we assert this getter only returns the expected type origin for a small
     # subset of type hints.
-    for hint_pep_meta in HINTS_PEP_META:
+    for hint_pep_meta in hints_pep_meta:
         if hint_pep_meta.pep_sign is HintSignGeneric:
             assert get_hint_pep484585_generic_type_or_none(
                 hint_pep_meta.hint) is hint_pep_meta.generic_type
@@ -84,11 +92,17 @@ def test_get_hint_pep484585_generic_type_or_none() -> None:
     #     assert get_hint_pep484585_generic_type_or_none(not_hint_pep) is None
 
 
-def test_get_hint_pep484585_generic_bases_unerased() -> None:
+def test_get_hint_pep484585_generic_bases_unerased(hints_pep_meta) -> None:
     '''
     Test the
     :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585generic.get_hint_pep484585_generic_bases_unerased`
     getter.
+
+    Parameters
+    ----------
+    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        List of PEP-compliant type hint metadata describing sample PEP-compliant
+        type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
 
     # Defer test-specific imports.
@@ -98,11 +112,10 @@ def test_get_hint_pep484585_generic_bases_unerased() -> None:
         get_hint_pep484585_generic_bases_unerased)
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_type_typing
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
     from pytest import raises
 
     # Assert this getter...
-    for hint_pep_meta in HINTS_PEP_META:
+    for hint_pep_meta in hints_pep_meta:
         # Returns one or more unerased pseudo-superclasses for PEP-compliant
         # generics.
         if hint_pep_meta.pep_sign is HintSignGeneric:

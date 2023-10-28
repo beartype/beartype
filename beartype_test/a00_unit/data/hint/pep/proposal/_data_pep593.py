@@ -7,45 +7,19 @@
 Project-wide :pep:`593`-compliant **type hint test data.**
 '''
 
-# ....................{ IMPORTS                            }....................
-
 # ....................{ ADDERS                             }....................
-def add_data(data_module: 'ModuleType') -> None:
+def hints_pep_meta_pep593() -> 'List[HintPepMetadata]':
     '''
-    Add :pep:`593`-compliant type hint test data to various global containers
-    declared by the passed module.
-
-    Parameters
-    ----------
-    data_module : ModuleType
-        Module to be added to.
+    Session-scoped fixture returning a list of :pep:`593`-compliant **type hint
+    metadata** (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    instances describing test-specific :pep:`593`-compliant sample type hints
+    with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer early-time fixture-specific imports.
-    from beartype._util.module.lib.utiltyping import (
-        is_typing_attr,
-        iter_typing_attrs,
-    )
-
-    # If *NO* currently importable "typing" module declares this type hint
-    # factory, the active Python interpreter fails to support this PEP. In this
-    # case, return the empty tuple.
-    if not is_typing_attr('Annotated'):
-        # print('Ignoring "Annotated"...')
-        return
-    # print('Testing "Annotated"...')
-    # Else, this interpreter supports this PEP.
-
-    # ..................{ IMPORTS ~ moar                     }..................
-    # Defer all remaining fixture-specific imports.
-    from beartype.typing import (
-        Any,
-        List,
-        NewType,
-        Optional,
-        Union,
-    )
+    # Defer fixture-specific imports.
+    from beartype.typing import List
     from beartype.vale import (
         Is,
         IsAttr,
@@ -57,6 +31,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintSignAnnotated,
         HintSignList,
     )
+    from beartype._util.module.lib.utiltyping import get_typing_attrs
     from beartype_test.a00_unit.data.data_type import (
         Class,
         Subclass,
@@ -116,10 +91,14 @@ def add_data(data_module: 'ModuleType') -> None:
     SORDIDLY_FLABBY_WRMCASTINGS.this_mobbed_triste_of = [
         'An atomical caroller', 'carousing Thanatos', '(nucl‐eating',]
 
+    # ..................{ LOCALS                             }..................
+    # List of all PEP-specific type hint metadata to be returned.
+    hints_pep_meta = []
+
     # ..................{ FACTORIES                          }..................
     # For each PEP-specific type hint factory importable from each currently
     # importable "typing" module...
-    for Annotated in iter_typing_attrs('Annotated'):
+    for Annotated in get_typing_attrs('Annotated'):
         # print(f'Exercising PEP 593 {repr(Annotated)}...')
 
         # ..................{ LOCALS                         }..................
@@ -129,29 +108,9 @@ def add_data(data_module: 'ModuleType') -> None:
         # validator defined as a lambda function.
         AnnotatedStrIsLength = Annotated[str, IsLengthy]
 
-        # ................{ SETS                               }................
-        # Add PEP 593-specific deeply ignorable test type hints to that global.
-        data_module.HINTS_PEP_IGNORABLE_DEEP.update((
-            # Annotated of shallowly ignorable type hints.
-            Annotated[Any, int],
-            Annotated[object, int],
-
-            # Annotated of ignorable unions and optionals.
-            Annotated[Union[Any, float, str,], int],
-            Annotated[Optional[Any], int],
-
-            # Unions and optionals of ignorable annotateds.
-            Union[complex, int, Annotated[Any, int]],
-            Optional[Annotated[object, int]],
-
-            # Deeply ignorable PEP 484-, 585-, and 593-compliant type hint
-            # exercising numerous edge cases broken under prior releases.
-            Union[str, List[int], NewType('MetaType', Annotated[object, 53])],
-        ))
-
         # ................{ TUPLES                             }................
         # Add PEP 593-specific test type hints to this tuple global.
-        data_module.HINTS_PEP_META.extend((
+        hints_pep_meta.extend((
             # ..............{ ANNOTATED                          }..............
             # Annotated of an arbitrary isinstanceable type annotated by an
             # arbitrary hashable object.
@@ -548,4 +507,56 @@ def add_data(data_module: 'ModuleType') -> None:
                     ),
                 ),
             ),
+        ))
+
+    # ..................{ RETURN                             }..................
+    # Return this list of all PEP-specific type hint metadata.
+    return hints_pep_meta
+
+# ....................{ ADDERS                             }....................
+#FIXME: Obsolete us up with a fixture-based approach, please. *sigh*
+def add_data(data_module: 'ModuleType') -> None:
+    '''
+    Add :pep:`593`-compliant type hint test data to various global containers
+    declared by the passed module.
+
+    Parameters
+    ----------
+    data_module : ModuleType
+        Module to be added to.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer fixture-specific imports.
+    from beartype.typing import (
+        Any,
+        List,
+        NewType,
+        Optional,
+        Union,
+    )
+    from beartype._util.module.lib.utiltyping import get_typing_attrs
+
+    # ..................{ FACTORIES                          }..................
+    # For each PEP-specific type hint factory importable from each currently
+    # importable "typing" module...
+    for Annotated in get_typing_attrs('Annotated'):
+        # ................{ SETS                               }................
+        # Add PEP 593-specific deeply ignorable test type hints to that global.
+        data_module.HINTS_PEP_IGNORABLE_DEEP.update((
+            # Annotated of shallowly ignorable type hints.
+            Annotated[Any, int],
+            Annotated[object, int],
+
+            # Annotated of ignorable unions and optionals.
+            Annotated[Union[Any, float, str,], int],
+            Annotated[Optional[Any], int],
+
+            # Unions and optionals of ignorable annotateds.
+            Union[complex, int, Annotated[Any, int]],
+            Optional[Annotated[object, int]],
+
+            # Deeply ignorable PEP 484-, 585-, and 593-compliant type hint
+            # exercising numerous edge cases broken under prior releases.
+            Union[str, List[int], NewType('MetaType', Annotated[object, 53])],
         ))

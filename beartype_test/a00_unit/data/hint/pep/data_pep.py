@@ -72,6 +72,9 @@ unit test submodules.
 #their own PEP-specific fixtures, which are then composable into even larger
 #PEP-agnostic fixtures. It just makes sense. Let's do this sometime, everybody.
 
+# ....................{ IMPORTS                            }....................
+from pytest import fixture
+
 # ....................{ SETS                               }....................
 # Initialized by the _init() function below.
 HINTS_PEP_HASHABLE = None
@@ -119,6 +122,19 @@ demonstrate this fact).
 '''
 
 # ....................{ TUPLES                             }....................
+@fixture(scope='session')
+def hints_pep_meta() -> 'List[HintPepMetadata]':
+    '''
+    Session-scoped fixture returning a list of **type hint metadata** (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    instances, each describing a sample type hint exercising an edge case in the
+    :mod:`beartype` codebase).
+    '''
+
+    return HINTS_PEP_META
+
+
+#FIXME: Replace all usage of this with the "hints_pep_meta" fixture, please.
 # Initialized by the _init() function below.
 HINTS_PEP_META = []
 '''
@@ -142,10 +158,13 @@ def _init() -> None:
     Initialize this submodule.
     '''
 
-    #FIXME: Refactor this into a standard pytest fixture-based approach, please.
     # Defer fixture-specific imports.
     from beartype_test.a00_unit.data.hint.pep.proposal._data_pep589 import (
         hints_pep_meta_pep589)
+    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep593 import (
+        hints_pep_meta_pep593)
+    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep604 import (
+        hints_pep_meta_pep604)
 
     # Submodule globals to be redefined below.
     global \
@@ -157,6 +176,8 @@ def _init() -> None:
     # Tuple of all fixtures defining "HINTS_PEP_META" subiterables.
     HINTS_PEP_META_FIXTURES = (
         hints_pep_meta_pep589,
+        hints_pep_meta_pep593,
+        hints_pep_meta_pep604,
     )
 
     # For each fixture defining a "HINTS_PEP_META" subiterable, extend the main

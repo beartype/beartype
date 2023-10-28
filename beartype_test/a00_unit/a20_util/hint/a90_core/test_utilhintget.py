@@ -17,17 +17,21 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_get_hint_repr() -> None:
+def test_get_hint_repr(hints_pep_meta) -> None:
     '''
     Test the :func:`beartype._util.hint.utilhintget.get_hint_repr` getter.
+
+    Parameters
+    ----------
+    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        List of type hint metadata describing sample type hints exercising edge
+        cases in the :mod:`beartype` codebase.
     '''
 
     # Defer test-specific imports.
     from beartype._util.hint.utilhintget import get_hint_repr
     from beartype_test.a00_unit.data.hint.data_hint import (
         NOT_HINTS, HINTS_NONPEP)
-    from beartype_test.a00_unit.data.hint.pep.data_pep import (
-        HINTS_PEP_META)
 
     # Assert this getter returns the expected representations of objects *NOT*
     # supported as either PEP-noncompliant or -compliant type hints.
@@ -41,7 +45,7 @@ def test_get_hint_repr() -> None:
 
     # Assert this getter returns the expected representations of PEP-compliant
     # type hints.
-    for hint_pep_meta in HINTS_PEP_META:
+    for hint_pep_meta in hints_pep_meta:
         # PEP-compliant type hint to be tested.
         hint_pep = hint_pep_meta.hint
 

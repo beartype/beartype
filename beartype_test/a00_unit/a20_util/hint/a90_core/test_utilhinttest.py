@@ -17,9 +17,15 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ raiser                     }....................
-def test_die_unless_hint() -> None:
+def test_die_unless_hint(hints_pep_meta) -> None:
     '''
     Test the :func:`beartype._util.hint.utilhinttest.die_unless_hint` raiser.
+
+    Parameters
+    ----------
+    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        List of type hint metadata describing sample type hints exercising edge
+        cases in the :mod:`beartype` codebase.
     '''
 
     # Defer test-specific imports.
@@ -32,8 +38,6 @@ def test_die_unless_hint() -> None:
         HINTS_NONPEP,
         NOT_HINTS,
     )
-    from beartype_test.a00_unit.data.hint.pep.data_pep import (
-        HINTS_PEP_META)
     from pytest import raises
 
     # Assert this function accepts PEP-noncompliant type hints.
@@ -41,7 +45,7 @@ def test_die_unless_hint() -> None:
         die_unless_hint(nonhint_pep)
 
     # Assert this function...
-    for hint_pep_meta in HINTS_PEP_META:
+    for hint_pep_meta in hints_pep_meta:
         # Accepts supported PEP-compliant type hints.
         if hint_pep_meta.is_supported:
             die_unless_hint(hint_pep_meta.hint)
@@ -57,9 +61,15 @@ def test_die_unless_hint() -> None:
             die_unless_hint(non_hint)
 
 # ....................{ TESTS ~ tester                     }....................
-def test_is_hint() -> None:
+def test_is_hint(hints_pep_meta) -> None:
     '''
     Test the :func:`beartype._util.hint.utilhinttest.is_hint` tester.
+
+    Parameters
+    ----------
+    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        List of type hint metadata describing sample type hints exercising edge
+        cases in the :mod:`beartype` codebase.
     '''
 
     # Defer test-specific imports.
@@ -68,7 +78,6 @@ def test_is_hint() -> None:
         HINTS_NONPEP,
         NOT_HINTS,
     )
-    from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
 
     # Assert this tester accepts PEP-noncompliant type hints.
     for nonhint_pep in HINTS_NONPEP:
@@ -77,7 +86,7 @@ def test_is_hint() -> None:
     # Assert this tester:
     # * Accepts supported PEP-compliant type hints.
     # * Rejects unsupported PEP-compliant type hints.
-    for hint_pep_meta in HINTS_PEP_META:
+    for hint_pep_meta in hints_pep_meta:
         assert is_hint(hint_pep_meta.hint) is hint_pep_meta.is_supported
 
     # Assert this tester rejects objects *NOT* supported as either
@@ -89,9 +98,15 @@ def test_is_hint() -> None:
 # Prevent pytest from capturing and displaying all expected non-fatal
 # beartype-specific warnings emitted by the is_hint_ignorable() tester.
 # @ignore_warnings(BeartypeDecorHintPepIgnorableDeepWarning)
-def test_is_hint_ignorable() -> None:
+def test_is_hint_ignorable(hints_pep_meta) -> None:
     '''
     Test the :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
+
+    Parameters
+    ----------
+    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        List of type hint metadata describing sample type hints exercising edge
+        cases in the :mod:`beartype` codebase.
     '''
 
     # Defer test-specific imports.
@@ -100,7 +115,6 @@ def test_is_hint_ignorable() -> None:
         HINTS_IGNORABLE,
         HINTS_NONPEP_UNIGNORABLE,
     )
-    from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
 
     # Assert this tester accepts ignorable type hints.
     for hint_ignorable in HINTS_IGNORABLE:
@@ -113,15 +127,21 @@ def test_is_hint_ignorable() -> None:
     # Assert this tester:
     # * Accepts unignorable PEP-compliant type hints.
     # * Rejects ignorable PEP-compliant type hints.
-    for hint_pep_meta in HINTS_PEP_META:
+    for hint_pep_meta in hints_pep_meta:
         assert is_hint_ignorable(hint_pep_meta.hint) is (
             hint_pep_meta.is_ignorable)
 
 # ....................{ TESTS ~ tester : needs             }....................
-def test_is_hint_needs_cls_stack() -> None:
+def test_is_hint_needs_cls_stack(hints_pep_meta) -> None:
     '''
     Test the :func:`beartype._util.hint.utilhinttest.is_hint_needs_cls_stack`
     tester.
+
+    Parameters
+    ----------
+    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        List of type hint metadata describing sample type hints exercising edge
+        cases in the :mod:`beartype` codebase.
     '''
 
     # Defer test-specific imports.
@@ -131,7 +151,6 @@ def test_is_hint_needs_cls_stack() -> None:
         HINTS_NONPEP,
         NOT_HINTS,
     )
-    from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
 
     # Assert this tester rejects *ALL* PEP-noncompliant type hints.
     for nonhint_pep in HINTS_NONPEP:
@@ -139,7 +158,7 @@ def test_is_hint_needs_cls_stack() -> None:
 
     # Assert this tester rejects *ALL* type stack-independent PEP-compliant type
     # hints.
-    for hint_pep_meta in HINTS_PEP_META:
+    for hint_pep_meta in hints_pep_meta:
         assert is_hint_needs_cls_stack(hint_pep_meta.hint) is False
 
     # Assert this tester rejects objects *NOT* supported as either

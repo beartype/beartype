@@ -18,7 +18,7 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_get_hint_pep484585_callable_params_and_return() -> None:
+def test_get_hint_pep484585_callable_params_and_return(hints_pep_meta) -> None:
     '''
     Test both the ``get_hint_pep484585_callable_params`` and
     ``get_hint_pep484585_callable_return`` getters declared by the
@@ -27,6 +27,12 @@ def test_get_hint_pep484585_callable_params_and_return() -> None:
 
     Since these getters are inextricably interrelated, this unit test exercises
     both within the same test to satisfy Don't Repeat Yourself (DRY).
+
+    Parameters
+    ----------
+    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        List of PEP-compliant type hint metadata describing sample PEP-compliant
+        type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -43,7 +49,6 @@ def test_get_hint_pep484585_callable_params_and_return() -> None:
         IS_PYTHON_AT_LEAST_3_9,
     )
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
     from pytest import raises
 
     # ..................{ GENERIC                            }..................
@@ -51,7 +56,7 @@ def test_get_hint_pep484585_callable_params_and_return() -> None:
     # globally defined type hints.
 
     # Assert these getters...
-    for hint_pep_meta in HINTS_PEP_META:
+    for hint_pep_meta in hints_pep_meta:
         # Return zero or more arguments for PEP-compliant callable type hints.
         if hint_pep_meta.pep_sign is HintSignCallable:
             hint_callable_params = get_hint_pep484585_callable_params(

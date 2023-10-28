@@ -358,9 +358,15 @@ def test_door_typehint_len():
 #                 hint_pep_meta.is_ignorable)
 
 
-def test_door_typehint_is_ignorable() -> None:
+def test_door_typehint_is_ignorable(hints_pep_meta) -> None:
     '''
     Test the :meth:`beartype.door.TypeHint.is_ignorable` property.
+
+    Parameters
+    ----------
+    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        List of type hint metadata describing sample type hints exercising edge
+        cases in the :mod:`beartype` codebase.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -372,7 +378,6 @@ def test_door_typehint_is_ignorable() -> None:
     from beartype._util.hint.pep.proposal.pep484.utilpep484typevar import (
         get_hint_pep484_typevar_bound_or_none)
     from beartype_test.a00_unit.data.hint.data_hint import HINTS_IGNORABLE
-    from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
     from contextlib import suppress
 
     # ....................{ PASS                           }....................
@@ -386,7 +391,7 @@ def test_door_typehint_is_ignorable() -> None:
     # Assert this property:
     # * Accepts unignorable PEP-compliant type hints.
     # * Rejects ignorable PEP-compliant type hints.
-    for hint_pep_meta in HINTS_PEP_META:
+    for hint_pep_meta in hints_pep_meta:
         # Hint to be tested.
         hint = hint_pep_meta.hint
 
