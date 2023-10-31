@@ -23,9 +23,17 @@ from beartype_test._util.mark.pytmark import ignore_warnings
 # Prevent pytest from capturing and displaying all expected non-fatal
 # beartype-specific warnings emitted by this test. Urgh!
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
-def test_door_die_if_unbearable() -> None:
+def test_door_die_if_unbearable(iter_hints_piths_meta) -> None:
     '''
     Test the :class:`beartype.door.die_if_unbearable` raiser function.
+
+    Parameters
+    ----------
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.util.data_hintmetautil.HintPithMetadata]]
+        Factory function creating and returning a generator iteratively yielding
+        ``HintPithMetadata`` instances, each describing a sample type hint
+        exercising an edge case in the :mod:`beartype` codebase paired with a
+        related object either satisfying or violating that hint.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -38,8 +46,6 @@ def test_door_die_if_unbearable() -> None:
     )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithUnsatisfiedMetadata)
-    from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
-        iter_hints_piths_meta)
     from pytest import raises
 
     # ....................{ PASS                           }....................
@@ -95,7 +101,7 @@ def test_door_die_if_unbearable() -> None:
 
 # See above for @ignore_warnings() discussion.
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
-def test_door_typehint_die_if_unbearable() -> None:
+def test_door_typehint_die_if_unbearable(iter_hints_piths_meta) -> None:
     '''
     Test the :meth:`beartype.door.TypeHint.die_if_unbearable` raiser method.
 
@@ -103,6 +109,14 @@ def test_door_typehint_die_if_unbearable() -> None:
     avoid violating Don't Repeat Yourself (DRY). This tester internally defers
     to the procedural :class:`beartype.door.die_if_unbearable` tester, already
     exhaustively tested by preceding unit tests.
+
+    Parameters
+    ----------
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.util.data_hintmetautil.HintPithMetadata]]
+        Factory function creating and returning a generator iteratively yielding
+        ``HintPithMetadata`` instances, each describing a sample type hint
+        exercising an edge case in the :mod:`beartype` codebase paired with a
+        related object either satisfying or violating that hint.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -114,8 +128,6 @@ def test_door_typehint_die_if_unbearable() -> None:
     )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithUnsatisfiedMetadata)
-    from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
-        iter_hints_piths_meta)
     from contextlib import suppress
     from pytest import raises
 
@@ -151,9 +163,17 @@ def test_door_typehint_die_if_unbearable() -> None:
 # ....................{ TESTS ~ testers                    }....................
 # See above for @ignore_warnings() discussion.
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
-def test_door_is_bearable() -> None:
+def test_door_is_bearable(iter_hints_piths_meta) -> None:
     '''
     Test the :class:`beartype.door.is_bearable` tester function.
+
+    Parameters
+    ----------
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.util.data_hintmetautil.HintPithMetadata]]
+        Factory function creating and returning a generator iteratively yielding
+        ``HintPithMetadata`` instances, each describing a sample type hint
+        exercising an edge case in the :mod:`beartype` codebase paired with a
+        related object either satisfying or violating that hint.
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -166,8 +186,6 @@ def test_door_is_bearable() -> None:
     )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithUnsatisfiedMetadata)
-    from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
-        iter_hints_piths_meta)
     from beartype_test.a00_unit.data.hint.data_hint import HINTS_IGNORABLE
     from pytest import raises
 
@@ -238,7 +256,7 @@ def test_door_is_bearable() -> None:
 
 # See above for @ignore_warnings() discussion.
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
-def test_door_typehint_is_bearable() -> None:
+def test_door_typehint_is_bearable(iter_hints_piths_meta) -> None:
     '''
     Test the :meth:`beartype.door.TypeHint.is_bearable` tester method.
 
@@ -246,6 +264,14 @@ def test_door_typehint_is_bearable() -> None:
     avoid violating Don't Repeat Yourself (DRY). This tester internally defers
     to the procedural :class:`beartype.door.is_bearable` tester, already
     exhaustively tested by preceding unit tests.
+
+    Parameters
+    ----------
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.util.data_hintmetautil.HintPithMetadata]]
+        Factory function creating and returning a generator iteratively yielding
+        ``HintPithMetadata`` instances, each describing a sample type hint
+        exercising an edge case in the :mod:`beartype` codebase paired with a
+        related object either satisfying or violating that hint.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -254,8 +280,6 @@ def test_door_typehint_is_bearable() -> None:
     from beartype.roar import BeartypeDoorNonpepException
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithUnsatisfiedMetadata)
-    from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
-        iter_hints_piths_meta)
     from contextlib import suppress
 
     # ....................{ PASS                           }....................

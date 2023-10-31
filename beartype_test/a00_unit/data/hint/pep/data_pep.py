@@ -75,6 +75,19 @@ unit test submodules.
 # ....................{ IMPORTS                            }....................
 from pytest import fixture
 
+# ....................{ FIXTURES                           }....................
+@fixture(scope='session')
+def hints_pep_meta() -> 'List[HintPepMetadata]':
+    '''
+    Session-scoped fixture yielding a list of **PEP-compliant type hint
+    metadata** (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    instances, each describing a sample PEP-compliant type hint exercising an
+    edge case in the :mod:`beartype` codebase).
+    '''
+
+    yield HINTS_PEP_META
+
 # ....................{ SETS                               }....................
 # Initialized by the _init() function below.
 HINTS_PEP_HASHABLE = None
@@ -122,18 +135,6 @@ demonstrate this fact).
 '''
 
 # ....................{ TUPLES                             }....................
-@fixture(scope='session')
-def hints_pep_meta() -> 'List[HintPepMetadata]':
-    '''
-    Session-scoped fixture returning a list of **type hint metadata** (i.e.,
-    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
-    instances, each describing a sample type hint exercising an edge case in the
-    :mod:`beartype` codebase).
-    '''
-
-    return HINTS_PEP_META
-
-
 #FIXME: Replace all usage of this with the "hints_pep_meta" fixture, please.
 # Initialized by the _init() function below.
 HINTS_PEP_META = []
@@ -165,6 +166,8 @@ def _init() -> None:
         hints_pep_meta_pep593)
     from beartype_test.a00_unit.data.hint.pep.proposal._data_pep604 import (
         hints_pep_meta_pep604)
+    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep675 import (
+        hints_pep_meta_pep675)
 
     # Submodule globals to be redefined below.
     global \
@@ -178,6 +181,7 @@ def _init() -> None:
         hints_pep_meta_pep589,
         hints_pep_meta_pep593,
         hints_pep_meta_pep604,
+        hints_pep_meta_pep675,
     )
 
     # For each fixture defining a "HINTS_PEP_META" subiterable, extend the main
@@ -199,10 +203,8 @@ def _init() -> None:
         _data_pep544,
         _data_pep585,
         _data_pep586,
-        _data_pep589,
         _data_pep593,
         _data_pep604,
-        _data_pep675,
     )
 
     # Current submodule, obtained via the standard idiom. See also:
@@ -216,10 +218,8 @@ def _init() -> None:
         _data_pep544,
         _data_pep585,
         _data_pep586,
-        # _data_pep589,
         _data_pep593,
         _data_pep604,
-        _data_pep675,
     )
 
     # Initialize all private submodules of this subpackage.
@@ -242,9 +242,9 @@ def _init() -> None:
     # Frozen sets defined *AFTER* initializing these private submodules and
     # thus the lower-level globals required by these sets.
     HINTS_PEP_HASHABLE = frozenset(
-        hint_pep_meta.hint
-        for hint_pep_meta in HINTS_PEP_META
-        if is_object_hashable(hint_pep_meta.hint)
+        pep_meta.hint
+        for pep_meta in HINTS_PEP_META
+        if is_object_hashable(pep_meta.hint)
     )
     HINTS_PEP_IGNORABLE_DEEP = frozenset(HINTS_PEP_IGNORABLE_DEEP)
     HINTS_PEP_IGNORABLE_SHALLOW = frozenset(HINTS_PEP_IGNORABLE_SHALLOW)

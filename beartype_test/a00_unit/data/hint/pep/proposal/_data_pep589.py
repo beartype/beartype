@@ -103,8 +103,8 @@ def hints_pep_meta_pep589() -> 'List[HintPepMetadata]':
             # PEP-noncompliant instance of an isinstanceable type.
             separate_fantasy: Union[Type[Exception], bytes]
 
-        # ..................{ TUPLES                         }..................
-        # Add PEP-specific type hint metadata to this tuple global.
+        # ..................{ LISTS                          }..................
+        # Add PEP-specific type hint metadata to this list.
         hints_pep_meta.extend((
             # ................{ TYPEDDICT                      }................
             # Empty typed dictionary. Look, this is ridiculous. What can you do?

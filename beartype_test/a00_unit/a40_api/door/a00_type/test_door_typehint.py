@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype Decidedly Object-Oriented Runtime-checking (DOOR) API object-oriented
-unit tests.**
+Beartype **Decidedly Object-Oriented Runtime-checking (DOOR) API
+object-oriented** unit tests.
 
 This submodule unit tests the subset of the public API of the public
 :mod:`beartype.door` subpackage that is object-oriented.
@@ -69,12 +69,20 @@ def test_door_typehint_new() -> None:
         typehint = TypeHint(b'Is there, that from the boundaries of the sky')
 
 
-def test_door_typehint_mapping() -> None:
+def test_door_typehint_mapping(iter_hints_piths_meta) -> None:
     '''
     Test that the :meth:`beartype.door.TypeHint.__new__` factory method
     successfully creates and returns an instance of a concrete subclass of the
     abstract :class:`beartype.door.TypeHint` superclass conditionally handling
     the kind of low-level type hint passed to that factory method.
+
+    Parameters
+    ----------
+    iter_hints_piths_meta : Callable[[], Iterable[beartype_test.a00_unit.data.hint.util.data_hintmetautil.HintPithMetadata]]
+        Factory function creating and returning a generator iteratively yielding
+        ``HintPithMetadata`` instances, each describing a sample type hint
+        exercising an edge case in the :mod:`beartype` codebase paired with a
+        related object either satisfying or violating that hint.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -82,8 +90,6 @@ def test_door_typehint_mapping() -> None:
     from beartype.door import TypeHint
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata)
-    from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (
-        iter_hints_piths_meta)
 
     # ....................{ ASSERTS                        }....................
     # For each predefined type hint and associated metadata...

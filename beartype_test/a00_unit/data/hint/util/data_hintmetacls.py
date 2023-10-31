@@ -47,10 +47,11 @@ class HintPithSatisfiedMetadata(object):
         If this pith is *not* a context manager, this boolean is ignored.
         Defaults to ``False``.
     is_pith_factory : bool
-        ``True`` only if this pith is actually a **pith factory** (i.e.,
+        :data:`True` only if this pith is actually a **pith factory** (i.e.,
         callable accepting *no* parameters and dynamically creating and
         returning the value to be used as the desired pith, presumably by
-        passing this value to the decorated callable). Defaults to ``False``.
+        passing this value to the decorated callable). Defaults to
+        :data:`False`.
     '''
 
     # ..................{ INITIALIZERS                       }..................

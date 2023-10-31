@@ -26,17 +26,30 @@ from beartype_test.a00_unit.data.hint.pep.data_pep import (
     HINTS_PEP_IGNORABLE_DEEP,
     HINTS_PEP_META,
 )
+from pytest import fixture
 
-# ....................{ HINTS ~ tuples                     }....................
-HINTS_META = HINTS_PEP_META + HINTS_NONPEP_META
-'''
-Tuple of all **PEP-agnostic type hint metadata** (i.e.,
-:class:`HintPepMetadata` instances describing test-specific type hints with
-metadata leveraged by various testing scenarios -- including both PEP-compliant
-and -noncompliant type hints).
-'''
+# ....................{ FIXTURES                           }....................
+@fixture(scope='session')
+def hints_meta(hints_pep_meta) -> 'List[HintNonpepMetadata]':
+    '''
+    Session-scoped fixture yielding a list of **PEP-agnostic type hint
+    metadata** (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintNonpepMetadata`
+    instances, each describing a sample type hint exercising an edge case in the
+    :mod:`beartype` codebase -- including both PEP-compliant and -noncompliant
+    type hints).
+
+    Parameters
+    ----------
+    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        List of PEP-compliant type hint metadata describing sample PEP-compliant
+        type hints exercising edge cases in the :mod:`beartype` codebase.
+    '''
+
+    yield hints_pep_meta + HINTS_NONPEP_META
 
 # ....................{ NON-HINTS ~ sets                   }....................
+#FIXME: Refactor *ALL* remaining globals below into comparable fixtures, please.
 NOT_HINTS_HASHABLE = frozenset((
     # Scalar that is neither a type nor string (i.e., forward reference).
     0.12345678910111213141516,
