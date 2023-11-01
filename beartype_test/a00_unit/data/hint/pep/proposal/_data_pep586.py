@@ -7,44 +7,24 @@
 Project-wide :pep:`586`-compliant **type hint test data.**
 '''
 
-# ....................{ IMPORTS                            }....................
-
-# ....................{ ADDERS                             }....................
-def add_data(data_module: 'ModuleType') -> None:
+# ....................{ FIXTURES                           }....................
+def hints_pep_meta_pep586() -> 'List[HintPepMetadata]':
     '''
-    Add :pep:`586`-compliant type hint test data to various global containers
-    declared by the passed module.
-
-    Parameters
-    ----------
-    data_module : ModuleType
-        Module to be added to.
+    Session-scoped fixture returning a list of :pep:`586`-compliant **type hint
+    metadata** (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    instances describing test-specific :pep:`586`-compliant sample type hints
+    with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer early-time fixture-specific imports.
-    from beartype._util.module.lib.utiltyping import (
-        is_typing_attr,
-        iter_typing_attrs,
-    )
-
-    # If *NO* currently importable "typing" module declares this type hint
-    # factory, the active Python interpreter fails to support this PEP. In this
-    # case, return the empty tuple.
-    if not is_typing_attr('Literal'):
-        return
-    # Else, this interpreter supports this PEP.
-
-    # ..................{ IMPORTS ~ moar                     }..................
-    # Defer all remaining fixture-specific imports.
-
-    # ..................{ IMPORTS                            }..................
-    # Defer data-dependent imports.
+    # Defer fixture-specific imports.
     from beartype.typing import List
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignList,
         HintSignLiteral,
     )
+    from beartype._util.module.lib.utiltyping import get_typing_attrs
     from beartype_test.a00_unit.data.data_type import (
         MasterlessDecreeVenomlessWhich)
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
@@ -53,11 +33,16 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPithUnsatisfiedMetadata,
     )
 
+    # ..................{ LOCALS                             }..................
+    # List of all PEP-specific type hint metadata to be returned.
+    hints_pep_meta = []
+
     # ..................{ FACTORIES                          }..................
-    # For each "Literal" type hint factory importable from a typing module...
-    for Literal in iter_typing_attrs('Literal'):
+    # For each PEP-specific type hint factory importable from each currently
+    # importable "typing" module...
+    for Literal in get_typing_attrs('Literal'):
         # Add PEP 586-specific test type hints to this tuple global.
-        data_module.HINTS_PEP_META.extend((
+        hints_pep_meta.extend((
             # ..............{ LITERALS                           }..............
             # Literal "None" singleton. Look, this is ridiculous. What you do?
             HintPepMetadata(
@@ -92,7 +77,7 @@ def add_data(data_module: 'ModuleType') -> None:
                     HintPithSatisfiedMetadata(True),
                     # Boolean constant defined by different syntax but
                     # semantically equal to the same boolean.
-                    HintPithSatisfiedMetadata(data_module is data_module),
+                    HintPithSatisfiedMetadata(__name__ is __name__),
                     # Boolean constant *NOT* equal to the same boolean.
                     HintPithUnsatisfiedMetadata(
                         pith=False,
@@ -369,3 +354,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
         ))
+
+    # ..................{ RETURN                             }..................
+    # Return this list of all PEP-specific type hint metadata.
+    return hints_pep_meta
