@@ -160,6 +160,8 @@ def _init() -> None:
     '''
 
     # Defer fixture-specific imports.
+    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep544 import (
+        hints_pep_meta_pep544)
     from beartype_test.a00_unit.data.hint.pep.proposal._data_pep586 import (
         hints_pep_meta_pep586)
     from beartype_test.a00_unit.data.hint.pep.proposal._data_pep589 import (
@@ -180,6 +182,7 @@ def _init() -> None:
 
     # Tuple of all fixtures defining "HINTS_PEP_META" subiterables.
     HINTS_PEP_META_FIXTURES = (
+        hints_pep_meta_pep544,
         hints_pep_meta_pep586,
         hints_pep_meta_pep589,
         hints_pep_meta_pep593,
