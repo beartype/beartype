@@ -7,34 +7,42 @@
 Project-wide :pep:`585`-compliant **type hint test data.**
 '''
 
-# ....................{ IMPORTS                            }....................
-from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_MOST_3_11,
-    IS_PYTHON_AT_LEAST_3_9,
-)
-
-# ....................{ ADDERS                             }....................
-def add_data(data_module: 'ModuleType') -> None:
+# ....................{ FIXTURES                           }....................
+def hints_pep_meta_pep585() -> 'List[HintPepMetadata]':
     '''
-    Add :pep:`585`-compliant type hint test data to various global containers
-    declared by the passed module.
-
-    Parameters
-    ----------
-    data_module : ModuleType
-        Module to be added to.
+    Session-scoped fixture returning a list of :pep:`585`-compliant **type hint
+    metadata** (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    instances describing test-specific :pep:`585`-compliant sample type hints
+    with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer fixture-specific imports.
+    from beartype._util.py.utilpyversion import (
+        IS_PYTHON_AT_MOST_3_11,
+        IS_PYTHON_AT_LEAST_3_9,
+    )
+
+    # ..................{ LOCALS                             }..................
+    # List of all PEP-specific type hint metadata to be returned.
+    hints_pep_meta = []
 
     # If the active Python interpreter targets less than Python < 3.9, this
-    # interpreter fails to support PEP 585. In this case, reduce to a noop.
+    # interpreter fails to support PEP 585. In this case, return the empty list.
     if not IS_PYTHON_AT_LEAST_3_9:
-        return
+        return hints_pep_meta
     # Else, the active Python interpreter targets at least Python >= 3.9 and
     # thus supports PEP 585.
 
     # ..................{ IMPORTS                            }..................
     # Defer Python >= 3.9-specific imports.
     import re
+    from beartype.typing import (
+        Any,
+        TypeVar,
+        Union,
+    )
     from beartype._cave._cavefast import IntType
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignByteString,
@@ -77,23 +85,11 @@ def add_data(data_module: 'ModuleType') -> None:
         Match,
         Pattern,
     )
-    from typing import (
-        Any,
-        TypeVar,
-        Union,
-    )
 
-    # ..................{ TYPEVARS                           }..................
+    # ..................{ LOCALS                             }..................
+    # User-defined generic "typing" type variables.
     S = TypeVar('S')
-    '''
-    User-defined generic :mod:`typing` type variable.
-    '''
-
-
     T = TypeVar('T')
-    '''
-    User-defined generic :mod:`typing` type variable.
-    '''
 
     # ..................{ GENERICS ~ single                  }..................
     # Note we intentionally do *NOT* declare unsubscripted PEP 585-compliant
@@ -232,22 +228,17 @@ def add_data(data_module: 'ModuleType') -> None:
             return len(self._iterable)
 
     # ..................{ PRIVATE ~ forwardref               }..................
+    # Fully-qualified classname of an arbitrary class guaranteed to be
+    # importable.
     _TEST_PEP585_FORWARDREF_CLASSNAME = (
         'beartype_test.a00_unit.data.data_type.Subclass')
-    '''
-    Fully-qualified classname of an arbitrary class guaranteed to be
-    importable.
-    '''
 
-
+    # Arbitrary class referred to by :data:`_PEP484_FORWARDREF_CLASSNAME`.
     _TEST_PEP585_FORWARDREF_TYPE = Subclass
-    '''
-    Arbitrary class referred to by :data:`_PEP484_FORWARDREF_CLASSNAME`.
-    '''
 
-    # ..................{ MAPPINGS                           }..................
-    # Add PEP 585-specific test type hints to this dictionary global.
-    data_module.HINTS_PEP_META.extend((
+    # ..................{ LISTS                              }..................
+    # Add PEP-specific type hint metadata to this list.
+    hints_pep_meta.extend((
         # ................{ CALLABLE                           }................
         # Callable accepting no parameters and returning a string.
         HintPepMetadata(
@@ -1148,9 +1139,9 @@ def add_data(data_module: 'ModuleType') -> None:
         # under Python >= 3.12.
         from collections.abc import ByteString
 
-        # ..................{ MAPPINGS                       }..................
-        # Add PEP 585-specific test type hints to this dictionary global.
-        data_module.HINTS_PEP_META.extend((
+        # ..................{ LISTS                          }..................
+        # Add PEP-specific type hint metadata to this list.
+        hints_pep_meta.extend((
             # ................{ BYTESTRING                     }................
             # Byte string of integer constants satisfying the builtin "int"
             # type. However, note that:
@@ -1203,3 +1194,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 ),
             ),
         ))
+
+    # ..................{ RETURN                             }..................
+    # Return this list of all PEP-specific type hint metadata.
+    return hints_pep_meta
