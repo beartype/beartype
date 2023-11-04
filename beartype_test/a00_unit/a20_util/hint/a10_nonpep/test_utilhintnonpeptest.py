@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,19 +10,24 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.hint.nonpep.utilnonpeptest` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ validator                 }....................
-def test_die_unless_hint_nonpep() -> None:
+# ....................{ TESTS ~ validator                  }....................
+def test_die_unless_hint_nonpep(not_hints_nonpep) -> None:
     '''
     Test the
     :func:`beartype._util.hint.nonpep.utilnonpeptest.die_unless_hint_nonpep`
     validator.
+
+    Parameters
+    ----------
+    not_hints_nonpep : frozenset
+        Frozen set of various objects that are *not* PEP-noncompliant type hints
+        exercising well-known edge cases.
     '''
 
     # Defer test-specific imports.
@@ -30,14 +35,17 @@ def test_die_unless_hint_nonpep() -> None:
     from beartype._util.hint.nonpep.utilnonpeptest import (
         die_unless_hint_nonpep)
     from beartype_test.a00_unit.data.hint.data_hint import (
-        NOT_HINTS_UNHASHABLE, HINTS_NONPEP, NOT_HINTS_NONPEP,)
+        HINTS_NONPEP,
+        NOT_HINTS_UNHASHABLE,
+    )
+    from pytest import raises
 
     # Assert this function accepts PEP-noncompliant type hints.
     for hint_nonpep in HINTS_NONPEP:
         die_unless_hint_nonpep(hint_nonpep)
 
     # Assert this function rejects objects excepted to be rejected.
-    for not_hint_nonpep in NOT_HINTS_NONPEP:
+    for not_hint_nonpep in not_hints_nonpep:
         with raises(BeartypeDecorHintNonpepException):
             die_unless_hint_nonpep(not_hint_nonpep)
 
@@ -46,25 +54,33 @@ def test_die_unless_hint_nonpep() -> None:
         with raises(BeartypeDecorHintNonpepException):
             die_unless_hint_nonpep(not_hint_unhashable)
 
-# ....................{ TESTS ~ tester                    }....................
-def test_is_hint_nonpep() -> None:
+# ....................{ TESTS ~ tester                     }....................
+def test_is_hint_nonpep(not_hints_nonpep) -> None:
     '''
     Test the
     :func:`beartype._util.hint.nonpep.utilnonpeptest.is_hint_nonpep`
     tester.
+
+    Parameters
+    ----------
+    not_hints_nonpep : frozenset
+        Frozen set of various objects that are *not* PEP-noncompliant type hints
+        exercising well-known edge cases.
     '''
 
     # Defer test-specific imports.
     from beartype._util.hint.nonpep.utilnonpeptest import is_hint_nonpep
     from beartype_test.a00_unit.data.hint.data_hint import (
-        NOT_HINTS_UNHASHABLE, HINTS_NONPEP, NOT_HINTS_NONPEP,)
+        HINTS_NONPEP,
+        NOT_HINTS_UNHASHABLE,
+    )
 
     # Assert this function accepts PEP-noncompliant type hints.
     for hint_nonpep in HINTS_NONPEP:
         assert is_hint_nonpep(hint=hint_nonpep, is_str_valid=True) is True
 
     # Assert this function rejects objects excepted to be rejected.
-    for not_hint_nonpep in NOT_HINTS_NONPEP:
+    for not_hint_nonpep in not_hints_nonpep:
         assert is_hint_nonpep(hint=not_hint_nonpep, is_str_valid=True) is False
 
     # Assert this function rejects unhashable objects.
@@ -73,18 +89,25 @@ def test_is_hint_nonpep() -> None:
             hint=non_hint_unhashable, is_str_valid=True) is False
 
 
-def test_is_hint_nonpep_tuple() -> None:
+def test_is_hint_nonpep_tuple(not_hints_nonpep) -> None:
     '''
     Test the
     :func:`beartype._util.hint.nonpep.utilnonpeptest._is_hint_nonpep_tuple`
     tester.
+
+    Parameters
+    ----------
+    not_hints_nonpep : frozenset
+        Frozen set of various objects that are *not* PEP-noncompliant type hints
+        exercising well-known edge cases.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.hint.nonpep.utilnonpeptest import (
-        _is_hint_nonpep_tuple)
+    from beartype._util.hint.nonpep.utilnonpeptest import _is_hint_nonpep_tuple
     from beartype_test.a00_unit.data.hint.data_hint import (
-        NOT_HINTS_UNHASHABLE, HINTS_NONPEP, NOT_HINTS_NONPEP,)
+        HINTS_NONPEP,
+        NOT_HINTS_UNHASHABLE,
+    )
 
     # Assert this function accepts PEP-noncompliant tuples.
     for hint_nonpep in HINTS_NONPEP:
@@ -92,7 +115,7 @@ def test_is_hint_nonpep_tuple() -> None:
             hint_nonpep, tuple)
 
     # Assert this function rejects objects excepted to be rejected.
-    for not_hint_nonpep in NOT_HINTS_NONPEP:
+    for not_hint_nonpep in not_hints_nonpep:
         assert _is_hint_nonpep_tuple(not_hint_nonpep, True) is False
 
     # Assert this function rejects unhashable objects.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,7 +10,7 @@ declared by the third-party :mod:`numpy` package) test data.
 These hints include:
 
 * **Typed NumPy arrays** (i.e., subscriptions of the
-  :attr:`numpy.typing.NDArray` type hint factory).
+  :obj:`numpy.typing.NDArray` type hint factory).
 
 Caveats
 ----------
@@ -19,39 +19,46 @@ Although NumPy-specific type hints are technically PEP-noncompliant, the
 dramatically simplify code generation for these hints. Ergo, so we do.
 '''
 
-# ....................{ IMPORTS                           }....................
-from beartype_test._util.module.pytmodtest import (
-    is_package_numpy_typing_ndarray_deep)
-
-# ....................{ ADDERS                            }....................
-def add_data(data_module: 'ModuleType') -> None:
+# ....................{ FIXTURES                           }....................
+def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
     '''
-    Add :mod:`numpy`-specific type hint test data to various global containers
-    declared by the passed module.
-
-    Parameters
-    ----------
-    data_module : ModuleType
-        Module to be added to.
+    Session-scoped fixture returning a list of **NumPy type hint metadata**
+    (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    instances describing test-specific sample NumPy type hints with metadata
+    generically leveraged by various PEP-agnostic unit tests).
     '''
+
+    # ..................{ IMPORTS ~ early                    }..................
+    # Defer early-time imports.
+    from beartype_test._util.module.pytmodtest import (
+        is_package_numpy_typing_ndarray_deep)
+
+    # ..................{ LOCALS                            }..................
+    # List of all PEP-specific type hint metadata to be returned.
+    hints_pep_meta = []
 
     # ..................{ UNSUPPORTED                       }..................
     # If beartype does *NOT* deeply support "numpy.typing.NDArray" type hints
-    # under the active Python interpreter, silently reduce to a noop.
+    # under the active Python interpreter, return the empty list.
     if not is_package_numpy_typing_ndarray_deep():
-        return
+        return hints_pep_meta
     # Else, beartype deeply supports "numpy.typing.NDArray" type hints under
     # the active Python interpreter.
 
-    # ..................{ IMPORTS                           }..................
-    # Defer attribute-dependent imports.
-    from beartype.typing import Tuple
+    # ..................{ IMPORTS                            }..................
+    # Defer fixture-specific imports.
+    from beartype.typing import (
+        Any,
+        Tuple,
+    )
     from beartype.vale import Is
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignNumpyArray,
         HintSignTuple,
     )
     from beartype._util.module.lib.utiltyping import import_typing_attr
+    # from beartype._util.module.lib.utiltyping import get_typing_attrs
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
@@ -62,12 +69,23 @@ def add_data(data_module: 'ModuleType') -> None:
     # Defer NumPy-specific imports.
     from numpy import asarray, dtype, float32, float64, floating
     from numpy.typing import NDArray
-    from typing import Any
 
-    # ..................{ TUPLES                            }..................
-    # Add NumPy-specific test type hints to this tuple global.
-    data_module.HINTS_PEP_META.extend((
-        # ................{ NUMPY ~ array                     }................
+    # ..................{ VALIDATORS                         }..................
+    # "typing.Annotated" type hint factory imported from either the "typing" or
+    # "typing_extensions" modules if importable *OR* "None" otherwise. By prior
+    # validation, this factory *MUST* be non-"None" here.
+    Annotated = import_typing_attr('Annotated')
+
+    # Validator matching one-dimensional NumPy arrays of floats of 64-bit
+    # precision, combining both validator and NumPy type hinting syntax. This
+    # exercises an edge case previously generating syntactically invalid code.
+    Numpy1DFloat64Array = Annotated[
+        NDArray[float64], Is[lambda array: array.ndim == 1]]
+
+    # ..................{ LISTS                              }..................
+    # Add PEP-specific type hint metadata to this list.
+    hints_pep_meta.extend((
+        # ................{ NUMPY ~ array                      }................
         # Untyped unsubscripted NumPy array.
         HintPepMetadata(
             hint=NDArray,
@@ -128,7 +146,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ NUMPY ~ array : dtype : equals    }................
+        # ................{ NUMPY ~ array : dtype : equals     }................
         # Typed NumPy array subscripted by an actual data type (i.e., instance
         # of the "numpy.dtype" class).
         HintPepMetadata(
@@ -188,7 +206,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
 
-        # ................{ NUMPY ~ array : dtype : subclass  }................
+        # ................{ NUMPY ~ array : dtype : subclass   }................
         # Typed NumPy array subscripted by a data type superclass.
         HintPepMetadata(
             hint=NDArray[floating],
@@ -214,24 +232,8 @@ def add_data(data_module: 'ModuleType') -> None:
                     (3, 6, 5, 12, 7, 18, 9, 12, 11, 30, 13, 16, 15, 18, 17,))),
             ),
         ),
-    ))
 
-    # ..................{ VALIDATORS ~ hints                }..................
-    # "typing.Annotated" type hint factory imported from either the "typing" or
-    # "typing_extensions" modules if importable *OR* "None" otherwise. By prior
-    # validation, this factory *MUST* be non-"None" here.
-    Annotated = import_typing_attr('Annotated')
-
-    # Validator matching one-dimensional NumPy arrays of floats of 64-bit
-    # precision, combining both validator and NumPy type hinting syntax. This
-    # exercises an edge case previously generating syntactically invalid code.
-    Numpy1DFloat64Array = Annotated[
-        NDArray[float64], Is[lambda array: array.ndim == 1]]
-
-    # ..................{ VALIDATORS ~ tuples               }..................
-    # Add NumPy-specific test type hints to this tuple global.
-    data_module.HINTS_PEP_META.extend((
-        # ................{ NUMPY ~ array : nested            }................
+        # ................{ NUMPY ~ array : nested             }................
         # 2-tuple of one-dimensional typed NumPy arrays of 64-bit floats.
         HintPepMetadata(
             hint=Tuple[Numpy1DFloat64Array, Numpy1DFloat64Array],
@@ -267,3 +269,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
     ))
+
+    # ..................{ RETURN                             }..................
+    # Return this list of all PEP-specific type hint metadata.
+    return hints_pep_meta

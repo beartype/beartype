@@ -77,32 +77,113 @@ from pytest import fixture
 
 # ....................{ FIXTURES                           }....................
 @fixture(scope='session')
-def hints_pep_meta() -> 'List[HintPepMetadata]':
+def hints_pep_meta() -> 'Tuple[HintPepMetadata]':
     '''
-    Session-scoped fixture yielding a list of **PEP-compliant type hint
+    Session-scoped fixture yielding a tuple of **PEP-compliant type hint
     metadata** (i.e.,
     :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
     instances, each describing a sample PEP-compliant type hint exercising an
     edge case in the :mod:`beartype` codebase).
+
+    Design
+    ------
+    This tuple was initially designed as a dictionary mapping from PEP-compliant
+    type hints to :class:`HintPepMetadata` instances describing those hints,
+    until :mod:`beartype` added support for PEPs enabling unhashable
+    PEP-compliant type hints (e.g., ``collections.abc.Callable[[], str]`` under
+    :pep:`585`) impermissible for use as dictionary keys or set members.
     '''
 
-    yield HINTS_PEP_META
+    # ..................{ IMPORTS                            }..................
+    # Defer fixture-specific imports.
+    from beartype_test.a00_unit.data.hint.pep.module._data_hintmodnumpy import (
+        hints_pep_meta_numpy)
+    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
+        hints_pep_meta_pep484)
+    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep544 import (
+        hints_pep_meta_pep544)
+    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep585 import (
+        hints_pep_meta_pep585)
+    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep586 import (
+        hints_pep_meta_pep586)
+    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep589 import (
+        hints_pep_meta_pep589)
+    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep593 import (
+        hints_pep_meta_pep593)
+    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep604 import (
+        hints_pep_meta_pep604)
+    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep675 import (
+        hints_pep_meta_pep675)
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+        HintPepMetadata)
+
+    # ..................{ LOCALS                             }..................
+    # Tuple of all fixtures defining "HINTS_PEP_META" subiterables.
+    HINTS_PEP_META_FIXTURES = (
+        # Standard type hints.
+        hints_pep_meta_pep484,
+        hints_pep_meta_pep544,
+        hints_pep_meta_pep585,
+        hints_pep_meta_pep586,
+        hints_pep_meta_pep589,
+        hints_pep_meta_pep593,
+        hints_pep_meta_pep604,
+        hints_pep_meta_pep675,
+
+        # Non-standard type hints.
+        hints_pep_meta_numpy,
+    )
+
+    # ..................{ LISTS                              }..................
+    # List of all PEP-compliant type hint metadata to be returned.
+    _hints_pep_meta = []
+
+    # For each fixture defining a "HINTS_PEP_META" subiterable, extend the main
+    # "HINTS_PEP_META" iterable by this subiterable.
+    for hints_pep_meta_fixture in HINTS_PEP_META_FIXTURES:
+        _hints_pep_meta.extend(hints_pep_meta_fixture())
+
+    # Assert this global to contain only instances of its expected dataclass.
+    assert (
+        isinstance(hint_pep_meta, HintPepMetadata)
+        for hint_pep_meta in _hints_pep_meta
+    ), f'{repr(_hints_pep_meta)} not iterable of "HintPepMetadata" instances.'
+
+    # Yield this list coerced into a tuple.
+    yield tuple(_hints_pep_meta)
+
+
+@fixture(scope='session')
+def hints_pep_hashable(hints_pep_meta) -> frozenset:
+    '''
+    Session-scoped fixture yielding a frozen set of **hashable PEP-compliant
+    non-class type hints** (i.e., PEP-compliant type hints that are *not*
+    classes but *are* accepted by the builtin :func:`hash` function *without*
+    raising an exception and thus usable in hash-based containers like
+    dictionaries and sets).
+
+    Hashable PEP-compliant class type hints (e.g., generics, protocols) are
+    largely indistinguishable from PEP-noncompliant class type hints and thus
+    useless for testing purposes.
+
+    Parameters
+    ----------
+    hints_pep_meta : Tuple[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        Tuple of PEP-compliant type hint metadata describing PEP-compliant type
+        hints exercising edge cases in the :mod:`beartype` codebase.
+    '''
+
+    # Defer fixture-specific imports.
+    from beartype._util.utilobject import is_object_hashable
+
+    # Yield this frozen set.
+    yield frozenset(
+        hint_meta.hint
+        for hint_meta in hints_pep_meta
+        if is_object_hashable(hint_meta.hint)
+    )
 
 # ....................{ SETS                               }....................
-# Initialized by the _init() function below.
-HINTS_PEP_HASHABLE = None
-'''
-Frozen set of **hashable PEP-compliant non-class type hints** (i.e.,
-PEP-compliant type hints that are *not* classes but *are* accepted by the
-builtin :func:`hash` function *without* raising an exception and thus usable in
-hash-based containers like dictionaries and sets).
-
-Hashable PEP-compliant class type hints (e.g., generics, protocols) are largely
-indistinguishable from PEP-noncompliant class type hints and thus useless for
-testing purposes.
-'''
-
-
 # Initialized by the _init() function below.
 HINTS_PEP_IGNORABLE_SHALLOW = {
     # ..................{ NON-PEP                            }..................
@@ -134,79 +215,16 @@ nonetheless ignorable and thus require dynamic testing by the high-level
 demonstrate this fact).
 '''
 
-# ....................{ TUPLES                             }....................
-#FIXME: Replace all usage of this with the "hints_pep_meta" fixture, please.
-# Initialized by the _init() function below.
-HINTS_PEP_META = []
-'''
-Tuple of **PEP-compliant type hint metadata** (i.e.,
-:class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
-instances describing test-specific PEP-compliant type hints with metadata
-leveraged by various testing scenarios).
-
-Design
-------
-This tuple was initially designed as a dictionary mapping from PEP-compliant
-type hints to :class:`HintPepMetadata` instances describing those hints, until
-:mod:`beartype` added support for PEPs enabling unhashable PEP-compliant type
-hints (e.g., ``collections.abc.Callable[[], str]`` under :pep:`585`)
-impermissible for use as dictionary keys or set members.
-'''
-
 # ....................{ INITIALIZERS                       }....................
 def _init() -> None:
     '''
     Initialize this submodule.
     '''
 
-    # Defer fixture-specific imports.
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep544 import (
-        hints_pep_meta_pep544)
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep585 import (
-        hints_pep_meta_pep585)
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep586 import (
-        hints_pep_meta_pep586)
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep589 import (
-        hints_pep_meta_pep589)
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep593 import (
-        hints_pep_meta_pep593)
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep604 import (
-        hints_pep_meta_pep604)
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep675 import (
-        hints_pep_meta_pep675)
-
-    # Submodule globals to be redefined below.
-    global \
-        HINTS_PEP_HASHABLE, \
-        HINTS_PEP_IGNORABLE_DEEP, \
-        HINTS_PEP_IGNORABLE_SHALLOW, \
-        HINTS_PEP_META
-
-    # Tuple of all fixtures defining "HINTS_PEP_META" subiterables.
-    HINTS_PEP_META_FIXTURES = (
-        hints_pep_meta_pep544,
-        hints_pep_meta_pep585,
-        hints_pep_meta_pep586,
-        hints_pep_meta_pep589,
-        hints_pep_meta_pep593,
-        hints_pep_meta_pep604,
-        hints_pep_meta_pep675,
-    )
-
-    # For each fixture defining a "HINTS_PEP_META" subiterable, extend the main
-    # "HINTS_PEP_META" iterable by this subiterable.
-    for hints_pep_meta_fixture in HINTS_PEP_META_FIXTURES:
-        HINTS_PEP_META.extend(hints_pep_meta_fixture())
-
     #FIXME: Excise almost everything below in favour of the standard pytest
     #fixture-based approach above, please.
     # Defer function-specific imports.
     import sys
-    from beartype._util.utilobject import is_object_hashable
-    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-        HintPepMetadata)
-    from beartype_test.a00_unit.data.hint.pep.module import (
-        _data_hintmodnumpy)
     from beartype_test.a00_unit.data.hint.pep.proposal import (
         data_pep484,
         _data_pep544,
@@ -214,13 +232,17 @@ def _init() -> None:
         _data_pep604,
     )
 
+    # Submodule globals to be redefined below.
+    global \
+        HINTS_PEP_IGNORABLE_DEEP, \
+        HINTS_PEP_IGNORABLE_SHALLOW
+
     # Current submodule, obtained via the standard idiom. See also:
     #     https://stackoverflow.com/a/1676860/2809027
     CURRENT_SUBMODULE = sys.modules[__name__]
 
     # Tuple of all private submodules of this subpackage to be initialized.
     DATA_HINT_PEP_SUBMODULES = (
-        _data_hintmodnumpy,
         data_pep484,
         _data_pep544,
         _data_pep593,
@@ -236,24 +258,9 @@ def _init() -> None:
         'Set global "HINTS_PEP_IGNORABLE_DEEP" empty.')
     assert HINTS_PEP_IGNORABLE_SHALLOW, (
         'Set global "HINTS_PEP_IGNORABLE_SHALLOW" empty.')
-    assert HINTS_PEP_META, 'Tuple global "HINTS_PEP_META" empty.'
 
-    # Assert this global to contain only instances of its expected dataclass.
-    assert (
-        isinstance(hint_pep_meta, HintPepMetadata)
-        for hint_pep_meta in HINTS_PEP_META
-    ), f'{repr(HINTS_PEP_META)} not iterable of "HintPepMetadata" instances.'
-
-    # Frozen sets defined *AFTER* initializing these private submodules and
-    # thus the lower-level globals required by these sets.
-    HINTS_PEP_HASHABLE = frozenset(
-        pep_meta.hint
-        for pep_meta in HINTS_PEP_META
-        if is_object_hashable(pep_meta.hint)
-    )
     HINTS_PEP_IGNORABLE_DEEP = frozenset(HINTS_PEP_IGNORABLE_DEEP)
     HINTS_PEP_IGNORABLE_SHALLOW = frozenset(HINTS_PEP_IGNORABLE_SHALLOW)
-    HINTS_PEP_META = tuple(HINTS_PEP_META)
 
 
 # Initialize this submodule.

@@ -40,12 +40,13 @@ from beartype_test.a00_unit.data.data_type import (
     # OtherSubclassSubclass,
     context_manager_factory,
 )
-from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-    HintPepMetadata,
-    HintPithSatisfiedMetadata,
-    HintPithUnsatisfiedMetadata,
+from collections.abc import (
+    Callable as CallableABC,
+    Hashable as HashableABC,
+    MutableSequence as MutableSequenceABC,
+    Sequence as SequenceABC,
+    Sized as SizedABC,
 )
-from collections import abc as collections_abc
 from typing import (
     Any,
     AnyStr,
@@ -144,7 +145,7 @@ class _Pep484GenericUntypevaredDeepSingle(List[List[str]]):
 
 # ....................{ PRIVATE ~ generics : multiple      }....................
 class _Pep484GenericUntypevaredMultiple(
-    collections_abc.Callable, ContextManager[str], Sequence[str]):
+    CallableABC, ContextManager[str], Sequence[str]):
     '''
     :pep:`484`-compliant user-defined generic subclassing multiple
     unparametrized :mod:`typing` types *and* a non-:mod:`typing` abstract base
@@ -213,7 +214,7 @@ class _Pep484GenericTypevaredShallowMultiple(Iterable[T], Container[T]):
 
 
 class _Pep484GenericTypevaredDeepMultiple(
-    collections_abc.Sized, Iterable[Tuple[S, T]], Container[Tuple[S, T]]):
+    SizedABC, Iterable[Tuple[S, T]], Container[Tuple[S, T]]):
     '''
     :pep:`484`-compliant user-defined generic subclassing multiple indirectly
     parametrized :mod:`typing` types *and* a non-:mod:`typing` abstract base
@@ -253,16 +254,14 @@ _TEST_PEP484_FORWARDREF_TYPE = Subclass
 Arbitrary class referred to by :data:`_PEP484_FORWARDREF_CLASSNAME`.
 '''
 
-# ....................{ ADDERS                             }....................
-def add_data(data_module: 'ModuleType') -> None:
+# ....................{ FIXTURES                           }....................
+def hints_pep_meta_pep484() -> 'List[HintPepMetadata]':
     '''
-    Add :pep:`484`-compliant type hint test data to various global containers
-    declared by the passed module.
-
-    Parameters
-    ----------
-    data_module : ModuleType
-        Module to be added to.
+    Session-scoped fixture returning a list of :pep:`484`-compliant **type hint
+    metadata** (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
+    instances describing test-specific :pep:`484`-compliant sample type hints
+    with metadata generically leveraged by various PEP-agnostic unit tests).
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -304,8 +303,16 @@ def add_data(data_module: 'ModuleType') -> None:
         IS_PYTHON_AT_LEAST_3_10,
         IS_PYTHON_AT_LEAST_3_9,
     )
+    from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
+        HintPepMetadata,
+        HintPithSatisfiedMetadata,
+        HintPithUnsatisfiedMetadata,
+    )
 
-    # ..................{ BOOLEANS                           }..................
+    # ..................{ LOCALS                             }..................
+    # List of all PEP-specific type hint metadata to be returned.
+    hints_pep_meta = []
+
     # True only if unsubscripted typing attributes (i.e., public attributes of
     # the "typing" module without arguments) are parametrized by one or more
     # type variables under the active Python interpreter.
@@ -324,41 +331,9 @@ def add_data(data_module: 'ModuleType') -> None:
     # 3.9, oddly. (We don't make the rules. We simply complain about them.)
     _IS_ARGS_HIDDEN = False
 
-    # ..................{ SETS                               }..................
-    # Add PEP 484-specific shallowly ignorable test type hints to that set
-    # global.
-    data_module.HINTS_PEP_IGNORABLE_SHALLOW.update((
-        # The "Generic" superclass imposes no constraints and is thus also
-        # semantically synonymous with the ignorable PEP-noncompliant
-        # "beartype.cave.AnyType" and hence "object" types. Since PEP
-        # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
-        # singleton including "typing.Generic" semantically expands to that
-        # singelton subscripted by an implicit "Any" argument, "Generic"
-        # semantically expands to the implicit "Generic[Any]" singleton.
-        Generic,
-    ))
-
-    # Add PEP 484-specific deeply ignorable test type hints to this set global.
-    data_module.HINTS_PEP_IGNORABLE_DEEP.update((
-        # Parametrizations of the "typing.Generic" abstract base class (ABC).
-        Generic[S, T],
-
-        # New type aliasing any ignorable type hint.
-        NewType('TotallyNotAny', Any),
-        NewType('TotallyNotObject', object),
-
-        # Optionals containing any ignorable type hint.
-        Optional[Any],
-        Optional[object],
-
-        # Unions containing any ignorable type hint.
-        Union[Any, float, str,],
-        Union[complex, int, object,],
-    ))
-
-    # ..................{ TUPLES ~ pep                       }..................
-    # Add PEP 484-specific test type hints to this dictionary global.
-    data_module.HINTS_PEP_META.extend((
+    # ..................{ LISTS                              }..................
+    # Add PEP-specific type hint metadata to this list.
+    hints_pep_meta.extend((
         # ................{ UNSUBSCRIPTED                      }................
         # Note that the PEP 484-compliant unsubscripted "NoReturn" type hint is
         # permissible *ONLY* as a return annotation and *MUST* thus be
@@ -375,7 +350,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Hashable,
             pep_sign=HintSignHashable,
-            isinstanceable_type=collections_abc.Hashable,
+            isinstanceable_type=HashableABC,
             piths_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata(
@@ -397,7 +372,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Sized,
             pep_sign=HintSignSized,
-            isinstanceable_type=collections_abc.Sized,
+            isinstanceable_type=SizedABC,
             piths_meta=(
                 # String constant.
                 HintPithSatisfiedMetadata('Faire, a'),
@@ -558,7 +533,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=Callable[[], str],
             pep_sign=HintSignCallable,
             typehint_cls=CallableTypeHint,
-            isinstanceable_type=collections_abc.Callable,
+            isinstanceable_type=CallableABC,
             piths_meta=(
                 # Lambda function returning a string constant.
                 HintPithSatisfiedMetadata(lambda: 'Eudaemonia.'),
@@ -1691,7 +1666,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=Sequence[Union[str, bytes]],
             pep_sign=HintSignSequence,
-            isinstanceable_type=collections_abc.Sequence,
+            isinstanceable_type=SequenceABC,
             piths_meta=(
                 # Sequence of string and bytestring constants.
                 HintPithSatisfiedMetadata((
@@ -1737,7 +1712,7 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPepMetadata(
             hint=MutableSequence[Union[bytes, Callable]],
             pep_sign=HintSignMutableSequence,
-            isinstanceable_type=collections_abc.MutableSequence,
+            isinstanceable_type=MutableSequenceABC,
             piths_meta=(
                 # Mutable sequence of string and bytestring constants.
                 HintPithSatisfiedMetadata([
@@ -1929,7 +1904,7 @@ def add_data(data_module: 'ModuleType') -> None:
 
     # If the active Python interpreter targets at least Python <= 3.9...
     if IS_PYTHON_AT_LEAST_3_9:
-        data_module.HINTS_PEP_META.extend((
+        hints_pep_meta.append(
             # ..............{ GENERICS ~ user                    }..............
             # Subscripted generic subclassing a single unsubscripted "typing"
             # type. Note that these types constitute an edge case supported
@@ -1957,19 +1932,20 @@ def add_data(data_module: 'ModuleType') -> None:
                         'Freedom’s unappealing, Passive delights',
                     ]),
                 ),
-            ),
-        ))
+            )
+        )
 
         # If the active Python interpreter targets at most Python <= 3.11...
         if IS_PYTHON_AT_MOST_3_11:
             # ..................{ IMPORTS                    }..................
             # Defer importation of standard PEP 484-specific type hint factories
             # deprecated under Python >= 3.12.
+            from collections.abc import ByteString as ByteStringABC
             from typing import ByteString
 
             # ..................{ MAPPINGS                   }..................
             # Add PEP 484-specific test type hints to this dictionary global.
-            data_module.HINTS_PEP_META.extend((
+            hints_pep_meta.append(
                 # ................{ UNSUBSCRIPTED              }................
                 # Unsubscripted "ByteString" singleton. Bizarrely, note that:
                 # * "collections.abc.ByteString" is subscriptable under PEP 585.
@@ -1982,7 +1958,7 @@ def add_data(data_module: 'ModuleType') -> None:
                 HintPepMetadata(
                     hint=ByteString,
                     pep_sign=HintSignByteString,
-                    isinstanceable_type=collections_abc.ByteString,
+                    isinstanceable_type=ByteStringABC,
                     piths_meta=(
                         # Byte string constant.
                         HintPithSatisfiedMetadata(
@@ -1995,5 +1971,53 @@ def add_data(data_module: 'ModuleType') -> None:
                         HintPithUnsatisfiedMetadata(
                             'At that atom-nestled canticle'),
                     ),
-                ),
-            ))
+                )
+            )
+
+    # ..................{ RETURN                             }..................
+    # Return this list of all PEP-specific type hint metadata.
+    return hints_pep_meta
+
+# ....................{ ADDERS                             }....................
+def add_data(data_module: 'ModuleType') -> None:
+    '''
+    Add :pep:`484`-compliant type hint test data to various global containers
+    declared by the passed module.
+
+    Parameters
+    ----------
+    data_module : ModuleType
+        Module to be added to.
+    '''
+
+    # ..................{ SETS                               }..................
+    # Add PEP 484-specific shallowly ignorable test type hints to that set
+    # global.
+    data_module.HINTS_PEP_IGNORABLE_SHALLOW.update((
+        # The "Generic" superclass imposes no constraints and is thus also
+        # semantically synonymous with the ignorable PEP-noncompliant
+        # "beartype.cave.AnyType" and hence "object" types. Since PEP
+        # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
+        # singleton including "typing.Generic" semantically expands to that
+        # singelton subscripted by an implicit "Any" argument, "Generic"
+        # semantically expands to the implicit "Generic[Any]" singleton.
+        Generic,
+    ))
+
+    # Add PEP 484-specific deeply ignorable test type hints to this set global.
+    data_module.HINTS_PEP_IGNORABLE_DEEP.update((
+        # Parametrizations of the "typing.Generic" abstract base class (ABC).
+        Generic[S, T],
+
+        # New type aliasing any ignorable type hint.
+        NewType('TotallyNotAny', Any),
+        NewType('TotallyNotObject', object),
+
+        # Optionals containing any ignorable type hint.
+        Optional[Any],
+        Optional[object],
+
+        # Unions containing any ignorable type hint.
+        Union[Any, float, str,],
+        Union[complex, int, object,],
+    ))
