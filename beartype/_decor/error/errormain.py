@@ -363,14 +363,17 @@ def get_beartype_violation(
     # ....................{ EXCEPTION                      }....................
     # Substring prefixing this exception message.
     exception_message_prefix = (
-        f'{exception_prefix}violates type hint {color_hint(repr(hint))}')
+        f'{exception_prefix}violates type hint {color_hint(repr(hint))}'
+        if not conf.is_simplified_exception else
+        f'{exception_prefix}was expected to be of type {color_hint(repr(hint))}'
+    )
 
     # If this configuration is *NOT* the default configuration, append the
     # machine-readable representation of this non-default configuration to this
     # exception message for disambiguity and clarity.
     exception_message_conf = (
         ''
-        if conf == BEARTYPE_CONF_DEFAULT else
+        if (conf == BEARTYPE_CONF_DEFAULT) or (conf.is_simplified_exception) else
         f' under non-default configuration {repr(conf)}'
     )
 
@@ -378,6 +381,8 @@ def get_beartype_violation(
     exception_message = (
         f'{exception_message_prefix}{exception_message_conf}, as '
         f'{violation_cause_suffixed}'
+    ) if not conf.is_simplified_exception else (
+        f'{exception_message_prefix}{exception_message_conf}.'
     )
 
     #FIXME: Unit test us up, please.
@@ -388,10 +393,13 @@ def get_beartype_violation(
 
     #FIXME: Unit test that the caller receives the expected culprit, please.
     # Exception of the desired class embedding this cause.
-    exception = exception_cls(  # type: ignore[misc]
-        message=exception_message,
-        culprits=tuple(violation_culprits),
-    )
+    if not conf.is_simplified_exception:
+        exception = exception_cls(  # type: ignore[misc]
+            message=exception_message,
+            culprits=tuple(violation_culprits),
+        )
+    else:
+        exception = TypeError(exception_message)
 
     # Return this exception to the @beartype-generated type-checking wrapper
     # (which directly calls this function), which will then squelch the

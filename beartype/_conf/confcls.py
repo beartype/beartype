@@ -82,6 +82,9 @@ class BeartypeConf(object):
     _is_debug : bool
         :data:`True` only if debugging :mod:`beartype`. See also the
         :meth:`__new__` method docstring.
+    _is_simplified_exception : bool
+        :data:`True` to generate TypeError instead of BeartypeCallHintParamViolation
+        or BeartypeCallHintReturnViolation, with a simplified exception message.
     _is_pep484_tower : bool
         :data:`True` only if enabling support for the :pep:`484`-compliant
         implicit numeric tower. See also the :meth:`__new__` method docstring.
@@ -123,6 +126,7 @@ class BeartypeConf(object):
         '_conf_kwargs',
         '_is_color',
         '_is_debug',
+        '_is_simplified_exception',
         '_is_pep484_tower',
         '_is_warning_cls_on_decorator_exception_set',
         '_strategy',
@@ -137,6 +141,7 @@ class BeartypeConf(object):
         _conf_kwargs: Dict[str, object]
         _is_color: Optional[bool]
         _is_debug: bool
+        _is_simplified_exception: bool
         _is_pep484_tower: bool
         _is_warning_cls_on_decorator_exception_set: bool
         _strategy: BeartypeStrategy
@@ -164,6 +169,7 @@ class BeartypeConf(object):
         claw_is_pep526: bool = True,
         is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,
         is_debug: bool = False,
+        is_simplified_exception: bool = False,
         is_pep484_tower: bool = False,
         strategy: BeartypeStrategy = BeartypeStrategy.O1,
         warning_cls_on_decorator_exception: Optional[TypeWarning] = (
@@ -314,6 +320,9 @@ class BeartypeConf(object):
               enabling this boolean.
 
             Defaults to :data:`False`.
+        is_simplified_exception : bool, optional
+            :data:`True` to generate TypeError instead of BeartypeCallHintParamViolation
+            or BeartypeCallHintReturnViolation, with a simplified exception message.
         is_pep484_tower : bool, optional
             :data:`True` only if enabling support for the :pep:`484`-compliant
             **implicit numeric tower** (i.e., lossy conversion of integers to
@@ -422,6 +431,7 @@ class BeartypeConf(object):
                 claw_is_pep526,
                 is_color,
                 is_debug,
+                is_simplified_exception,
                 is_pep484_tower,
                 strategy,
                 warning_cls_on_decorator_exception,
@@ -462,6 +472,14 @@ class BeartypeConf(object):
                     f'value {repr(is_debug)} not boolean.'
                 )
             # Else, "is_debug" is a boolean.
+            #
+            # If "is_simplified_exception" is *NOT* a boolean, raise an exception.
+            elif not isinstance(is_simplified_exception, bool):
+                raise BeartypeConfParamException(
+                    f'Beartype configuration parameter "is_simplified_exception" '
+                    f'value {repr(is_simplified_exception)} not boolean.'
+                )
+            # Else, "is_simplified_exception" is a boolean.
             #
             # If "is_pep484_tower" is *NOT* a boolean, raise an exception.
             elif not isinstance(is_pep484_tower, bool):
@@ -527,6 +545,7 @@ class BeartypeConf(object):
             self._claw_is_pep526 = claw_is_pep526
             self._is_color = is_color
             self._is_debug = is_debug
+            self._is_simplified_exception = is_simplified_exception
             self._is_pep484_tower = is_pep484_tower
             self._warning_cls_on_decorator_exception = (
                 warning_cls_on_decorator_exception)
@@ -542,6 +561,7 @@ class BeartypeConf(object):
                 claw_is_pep526=claw_is_pep526,
                 is_color=is_color,
                 is_debug=is_debug,
+                is_simplified_exception=is_simplified_exception,
                 is_pep484_tower=is_pep484_tower,
                 strategy=strategy,
                 warning_cls_on_decorator_exception=(
@@ -646,6 +666,21 @@ class BeartypeConf(object):
         '''
 
         return self._is_debug
+
+
+    @property
+    def is_simplified_exception(self) -> bool:
+        '''
+        :data:`True` to generate TypeError instead of BeartypeCallHintParamViolation
+        or BeartypeCallHintReturnViolation, with a simplified exception message.
+
+        See Also
+        ----------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._is_simplified_exception
 
 
     @property
@@ -777,6 +812,7 @@ class BeartypeConf(object):
             f'claw_is_pep526={repr(self._claw_is_pep526)}'
             f', is_color={repr(self._is_color)}'
             f', is_debug={repr(self._is_debug)}'
+            f', is_simplified_exception={repr(self._is_simplified_exception)}'
             f', is_pep484_tower={repr(self._is_pep484_tower)}'
             f', strategy={repr(self._strategy)}'
             f', warning_cls_on_decorator_exception={repr(self._warning_cls_on_decorator_exception)}'
