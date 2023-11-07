@@ -558,7 +558,7 @@ class BeartypeConf(object):
             ):
                 raise BeartypeConfParamException(
                     f'Beartype configuration parameter "violation_verbosity" '
-                    f'value {repr(violation_verbosity)} not int.'
+                    f'value {repr(violation_verbosity)} not int between 1 and 5.'
                 )
             # Else, "violation_verbosity" is an int
             #
