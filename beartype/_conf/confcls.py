@@ -21,7 +21,7 @@ callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
-    BeartypeConfParamException,
+    BeartypeConfParamException, BeartypeCallHintParamViolation, BeartypeCallHintReturnViolation
 )
 from beartype.roar._roarwarn import (
     _BeartypeConfReduceDecoratorExceptionToWarningDefault)
@@ -29,6 +29,7 @@ from beartype.typing import (
     TYPE_CHECKING,
     Dict,
     Optional,
+    Type,
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confenum import BeartypeStrategy
@@ -82,9 +83,6 @@ class BeartypeConf(object):
     _is_debug : bool
         :data:`True` only if debugging :mod:`beartype`. See also the
         :meth:`__new__` method docstring.
-    _is_simplified_exception : bool
-        :data:`True` to generate TypeError instead of BeartypeCallHintParamViolation
-        or BeartypeCallHintReturnViolation, with a simplified exception message.
     _is_pep484_tower : bool
         :data:`True` only if enabling support for the :pep:`484`-compliant
         implicit numeric tower. See also the :meth:`__new__` method docstring.
@@ -101,6 +99,16 @@ class BeartypeConf(object):
         Configuration parameter governing whether the :func:`beartype.beartype`
         decorator reduces otherwise fatal exceptions raised at decoration time
         to equivalent non-fatal warnings of this warning category. See also the
+        :meth:`__new__` method docstring.
+    _violation_param_type : Type[Exception]
+        :data:The exception that beartype raises in case of parameter type hint violation.
+        :meth:`__new__` method docstring.
+    _violation_return_type : Type[Exception]
+        :data:The exception that beartype raises in case of return type hint violation.
+        :meth:`__new__` method docstring.
+    _violation_verbosity : int
+        :data:An integer between 1 and 5 that defines the level of verbosity in the
+        violation exception message. 1 is the least verbose, 5 is the most verbose.
         :meth:`__new__` method docstring.
     '''
 
@@ -126,11 +134,13 @@ class BeartypeConf(object):
         '_conf_kwargs',
         '_is_color',
         '_is_debug',
-        '_is_simplified_exception',
         '_is_pep484_tower',
         '_is_warning_cls_on_decorator_exception_set',
         '_strategy',
         '_warning_cls_on_decorator_exception',
+        '_violation_param_type',
+        '_violation_return_type',
+        '_violation_verbosity',
     )
 
     # Squelch false negatives from mypy. This is absurd. This is mypy. See:
@@ -141,11 +151,13 @@ class BeartypeConf(object):
         _conf_kwargs: Dict[str, object]
         _is_color: Optional[bool]
         _is_debug: bool
-        _is_simplified_exception: bool
         _is_pep484_tower: bool
         _is_warning_cls_on_decorator_exception_set: bool
         _strategy: BeartypeStrategy
         _warning_cls_on_decorator_exception: Optional[TypeWarning]
+        _violation_param_type: Type[Exception]
+        _violation_return_type: Type[Exception]
+        _violation_verbosity: int
 
     # ..................{ INSTANTIATORS                      }..................
     # Note that this __new__() dunder method implements the superset of the
@@ -169,11 +181,13 @@ class BeartypeConf(object):
         claw_is_pep526: bool = True,
         is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,
         is_debug: bool = False,
-        is_simplified_exception: bool = False,
         is_pep484_tower: bool = False,
         strategy: BeartypeStrategy = BeartypeStrategy.O1,
         warning_cls_on_decorator_exception: Optional[TypeWarning] = (
             _BeartypeConfReduceDecoratorExceptionToWarningDefault),
+        violation_param_type: Type[Exception] = BeartypeCallHintParamViolation,
+        violation_return_type: Type[Exception] = BeartypeCallHintReturnViolation,
+        violation_verbosity: int = 5,
     ) -> 'BeartypeConf':
         '''
         Instantiate this configuration if needed (i.e., if *no* prior
@@ -320,9 +334,6 @@ class BeartypeConf(object):
               enabling this boolean.
 
             Defaults to :data:`False`.
-        is_simplified_exception : bool, optional
-            :data:`True` to generate TypeError instead of BeartypeCallHintParamViolation
-            or BeartypeCallHintReturnViolation, with a simplified exception message.
         is_pep484_tower : bool, optional
             :data:`True` only if enabling support for the :pep:`484`-compliant
             **implicit numeric tower** (i.e., lossy conversion of integers to
@@ -382,6 +393,21 @@ class BeartypeConf(object):
               by :mod:`beartype.claw` will successfully decorate the entirety of
               their target packages rather than prematurely halt with a single
               fatal exception at the first decoration issue.
+        violation_param_type : Type[Exception], optional
+            The exception that beartype raises in case of parameter type hint violation.
+            Defaults to :class:BeartypeCallHintParamViolation.
+        violation_return_type : Type[Exception], optional
+            The exception that beartype raises in case of return type hint violation.
+            Defaults to :class:BeartypeCallHintReturnViolation.
+        violation_verbosity : int, optional
+            An integer between 1 and 5 that defines the level of verbosity in the
+            violation exception message::
+            1. Minimal verbosity
+            2. Reserved for later, currently same as 1
+            3. Provides more details on the exact cause of type hint violation.
+            4. Reserved for later, currently same as 3
+            5. Full verbosity. Like 3, but with additional information on current
+               configuration settings. Defaults to :data:5.
 
         Returns
         ----------
@@ -431,10 +457,12 @@ class BeartypeConf(object):
                 claw_is_pep526,
                 is_color,
                 is_debug,
-                is_simplified_exception,
                 is_pep484_tower,
                 strategy,
                 warning_cls_on_decorator_exception,
+                violation_param_type,
+                violation_return_type,
+                violation_verbosity,
             )
 
             # If this method has already instantiated a configuration with these
@@ -473,14 +501,6 @@ class BeartypeConf(object):
                 )
             # Else, "is_debug" is a boolean.
             #
-            # If "is_simplified_exception" is *NOT* a boolean, raise an exception.
-            elif not isinstance(is_simplified_exception, bool):
-                raise BeartypeConfParamException(
-                    f'Beartype configuration parameter "is_simplified_exception" '
-                    f'value {repr(is_simplified_exception)} not boolean.'
-                )
-            # Else, "is_simplified_exception" is a boolean.
-            #
             # If "is_pep484_tower" is *NOT* a boolean, raise an exception.
             elif not isinstance(is_pep484_tower, bool):
                 raise BeartypeConfParamException(
@@ -514,6 +534,35 @@ class BeartypeConf(object):
             # Else, "warning_cls_on_decorator_exception" is either
             # "None" *OR* a warning category.
 
+            # If "violation_param_type" is *NOT* an exception, raise an exception.
+            elif not is_type_subclass(violation_param_type, Exception):
+                raise BeartypeConfParamException(
+                    f'Beartype configuration parameter "violation_param_type" '
+                    f'value {repr(violation_param_type)} not exception.'
+                )
+            # Else, "violation_param_type" is an exception.
+            #
+            # If "violation_return_type" is *NOT* an exception, raise an exception.
+            elif not is_type_subclass(violation_return_type, Exception):
+                raise BeartypeConfParamException(
+                    f'Beartype configuration parameter "violation_return_type" '
+                    f'value {repr(violation_return_type)} not exception.'
+                )
+            # Else, "violation_return_type" is an exception.
+            #
+            # If "violation_verbosity" is *NOT* an int between 1 and 5, raise an exception.
+            elif (
+                not isinstance(violation_verbosity, int)
+                or violation_verbosity < 1
+                or violation_verbosity > 5
+            ):
+                raise BeartypeConfParamException(
+                    f'Beartype configuration parameter "violation_verbosity" '
+                    f'value {repr(violation_verbosity)} not int.'
+                )
+            # Else, "violation_verbosity" is an int
+            #
+
             # Instantiate a new configuration of this type.
             self = super().__new__(cls)
 
@@ -545,11 +594,13 @@ class BeartypeConf(object):
             self._claw_is_pep526 = claw_is_pep526
             self._is_color = is_color
             self._is_debug = is_debug
-            self._is_simplified_exception = is_simplified_exception
             self._is_pep484_tower = is_pep484_tower
             self._warning_cls_on_decorator_exception = (
                 warning_cls_on_decorator_exception)
             self._strategy = strategy
+            self._violation_param_type = violation_param_type
+            self._violation_return_type = violation_return_type
+            self._violation_verbosity = violation_verbosity
 
             # Cache this configuration with all relevant dictionary singletons.
             _beartype_conf_args_to_conf[conf_args] = self
@@ -561,11 +612,13 @@ class BeartypeConf(object):
                 claw_is_pep526=claw_is_pep526,
                 is_color=is_color,
                 is_debug=is_debug,
-                is_simplified_exception=is_simplified_exception,
                 is_pep484_tower=is_pep484_tower,
                 strategy=strategy,
                 warning_cls_on_decorator_exception=(
                     warning_cls_on_decorator_exception),
+                violation_param_type=violation_param_type,
+                violation_return_type=violation_return_type,
+                violation_verbosity=violation_verbosity,
             )
 
             # Assert that these two data structures encapsulate the same number
@@ -669,21 +722,6 @@ class BeartypeConf(object):
 
 
     @property
-    def is_simplified_exception(self) -> bool:
-        '''
-        :data:`True` to generate TypeError instead of BeartypeCallHintParamViolation
-        or BeartypeCallHintReturnViolation, with a simplified exception message.
-
-        See Also
-        ----------
-        :meth:`__new__`
-            Further details.
-        '''
-
-        return self._is_simplified_exception
-
-
-    @property
     def is_pep484_tower(self) -> bool:
         '''
         :data:`True` only if enabling support for the :pep:`484`-compliant
@@ -725,6 +763,53 @@ class BeartypeConf(object):
         '''
 
         return self._warning_cls_on_decorator_exception
+
+    @property
+    def violation_param_type(self) -> Type[Exception]:
+        '''
+        The exception that beartype raises in case of parameter type hint violation.
+
+        See Also
+        ----------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._violation_param_type
+
+    @property
+    def violation_return_type(self) -> Type[Exception]:
+        '''
+        The exception that beartype raises in case of return type hint violation.
+
+        See Also
+        ----------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._violation_return_type
+
+    @property
+    def violation_verbosity(self) -> int:
+        '''
+        An integer that defines the level of verbosity in the violation exception message.
+
+        1. Minimal verbosity
+        2. Reserved for later, currently same as 1
+        3. Provides more details on the exact cause of type hint violation.
+        4. Reserved for later, currently same as 3
+        5. Full verbosity. Like 3, but with additional information on current
+           configuration settings.
+
+        See Also
+        ----------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._violation_verbosity
+
 
     # ..................{ DUNDERS                            }..................
     def __eq__(self, other: object) -> bool:
@@ -812,10 +897,12 @@ class BeartypeConf(object):
             f'claw_is_pep526={repr(self._claw_is_pep526)}'
             f', is_color={repr(self._is_color)}'
             f', is_debug={repr(self._is_debug)}'
-            f', is_simplified_exception={repr(self._is_simplified_exception)}'
             f', is_pep484_tower={repr(self._is_pep484_tower)}'
             f', strategy={repr(self._strategy)}'
             f', warning_cls_on_decorator_exception={repr(self._warning_cls_on_decorator_exception)}'
+            f', violation_param_type={repr(self._violation_param_type)}'
+            f', violation_return_type={repr(self._violation_return_type)}'
+            f', violation_verbosity={repr(self._violation_verbosity)}'
             f')'
         )
 
