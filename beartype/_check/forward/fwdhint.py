@@ -14,8 +14,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintForwardRefException
+from __future__ import annotations
+from beartype.roar import (
+    BeartypeDecorHintForwardRefException,
+    BeartypeDecorHintPep604Exception,
+)
 from beartype.roar._roarexc import _BeartypeUtilCallableScopeNotFoundException
+from beartype.typing import Optional
 from beartype._check.checkcall import BeartypeCall
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._data.hint.datahinttyping import TypeException
@@ -27,6 +32,7 @@ from beartype._util.func.utilfuncscope import (
     get_func_locals,
 )
 from beartype._util.module.utilmodget import get_object_module_name
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_9
 from builtins import __dict__ as func_builtins  # type: ignore[attr-defined]
 
 # ....................{ RESOLVERS                          }....................
@@ -488,23 +494,106 @@ def resolve_hint(
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
 
-        # Human-readable message to be raised.
-        exception_message = (
-            f'{exception_prefix}stringified type hint '
-            f'{repr(hint)} syntactically invalid '
-            f'(i.e., {repr(exception)}).'
-        )
+        # Human-readable message to be raised if this message has been defined
+        # *OR* "None" otherwise (i.e., if this message has yet to be defined).
+        exception_message: Optional[str] = None
 
-        # If the beartype configuration associated with the decorated callable
-        # enabled debugging, append debug-specific metadata to this message.
-        if bear_call.conf.is_debug:
-            exception_message += (
-                f' Composite global and local scope enclosing this hint:\n\n'
-                f'{repr(bear_call.func_wrappee_scope_forward)}'
+        # If the following conditions all hold:
+        # * The active Python interpreter targets Python < 3.10 *AND*...
+        # * The external module defining this stringified type hint was prefixed
+        #   by the "from __future__ import annotations" pragma enabling PEP 563
+        #   *AND*...
+        # * This hint contains one or more PEP 604-compliant new unions (e.g.,
+        #   "int | str")...
+        #
+        # ...then this interpreter fails to syntactically support this hint at
+        # runtime (because only Python >= 3.10 supports PEP 604) but nonetheless
+        # superficially appears to do so under PEP 563 by simply stringifying
+        # this otherwise unsupported hint into a string. Indeed, PEP 563
+        # superficially appears to support a countably infinite set of
+        # syntactically and semantically invalid type hints -- including but
+        # certainly not limited to PEP 604 under Python < 3.10: e.g.,
+        #     from __future__ import annotations  # <-- enable PEP 563
+        #     def bad() -> int | str: # <-- invalid under Python < 3.10, but
+        #         pass                #     silently ignored by PEP 563
+        #     def BAD() -> int ** str:  # <-- invalid under all Python versions,
+        #         pass                  #     but silently ignored by PEP 563
+        #
+        # Clearly, exponentiating one type by another is both syntactically and
+        # semantically invalid -- but PEP 563 blindly accepts and stringifies
+        # that invalid type hint into the string "int ** str". This is nonsense.
+        #
+        # This branch detects this discrepancy between PEP 563 and 604 and, when
+        # detected, raises a human-readable exception advising the caller with
+        # recommendations of how to resolve this. Although we could also simply
+        # do nothing, doing nothing results in non-human-readable exceptions
+        # resembling the following, which only generates confusion: e.g.,
+        #     $ python3.9
+        #     >>> int | str
+        #     Traceback (most recent call last):
+        #       File "<stdin>", line 1, in <module>
+        #     TypeError: unsupported operand type(s) for |: 'type' and 'type'
+        #
+        # Specifically, if...
+        if (
+            # The active Python interpreter targets Python <= 3.9 *AND*...
+            IS_PYTHON_AT_MOST_3_9 and
+            # Evaluating this stringified type hint raised a "TypeError"...
+            isinstance(exception, TypeError)
+        ):
+            # If the exception message raised by this "TypeError" is prefixed by
+            # a well-known substring implying this exception to have been
+            # produced by a discrepancy between PEP 563 and 604...
+            if str(exception).startswith(
+                'unsupported operand type(s) for |: '):
+                # PEP 604-specific exception type, forcefully overriding the
+                # passed exception type (for disambiguity).
+                exception_cls = BeartypeDecorHintPep604Exception
+
+                # Human-readable message providing various recommendations.
+                exception_message = (
+                    f'{exception_prefix}stringified PEP 604 type hint '
+                    f'{repr(hint)} syntactically invalid under Python < 3.10 '
+                    f'(i.e., {repr(exception)}). Consider either:\n'
+                    f'* Requiring Python >= 3.10. Abandon Python < 3.10 all '
+                    f'ye who code here.\n'
+                    f'* Refactoring PEP 604 type hints into '
+                    f'equivalent PEP 484 type hints: e.g.,\n'
+                    f'    # Instead of this...\n'
+                    f'    from __future__ import annotations\n'
+                    f'    def bad_func() -> int | str: ...\n'
+                    f'\n'
+                    f'    # Do this. Ugly, yet it works. Worky >>>> pretty.\n'
+                    f'    from typing import Union\n'
+                    f'    def bad_func() -> Union[int, str]: ...'
+                )
+            # Else, this another kind of "TypeError" entirely. In this case,
+            # defer to the default message defined below.
+        # Else, either the active Python interpreter targets Python >= 3.10 *OR*
+        # another type of exception was raised. In either case, defer to the
+        # default message defined below.
+
+        # If a human-readable message has yet to be defined, fallback to a
+        # default message generically applicable to *ALL* stringified hints.
+        if exception_message is None:
+            # Human-readable message to be raised.
+            exception_message = (
+                f'{exception_prefix}stringified type hint '
+                f'{repr(hint)} syntactically invalid '
+                f'(i.e., {repr(exception)}).'
             )
-        # Else, the beartype configuration associated with the decorated
-        # callable disabled debugging. In this case, avoid appending
-        # debug-specific metadata to this message.
+
+            # If the beartype configuration associated with the decorated callable
+            # enabled debugging, append debug-specific metadata to this message.
+            if bear_call.conf.is_debug:
+                exception_message += (
+                    f' Composite global and local scope enclosing this hint:\n\n'
+                    f'{repr(bear_call.func_wrappee_scope_forward)}'
+                )
+            # Else, the beartype configuration associated with the decorated
+            # callable disabled debugging. In this case, avoid appending
+            # debug-specific metadata to this message.
+        # Else, a human-readable message has already been defined.
 
         # Raise a human-readable exception wrapping the typically
         # non-human-readable exception raised above.

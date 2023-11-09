@@ -16,11 +16,13 @@ submodule and then call that callable.
 # ....................{ IMPORTS                            }....................
 from __future__ import annotations
 from beartype import beartype
-from beartype.typing import List
+from beartype.typing import (
+    List,
+    Union,
+)
 from beartype._cave._cavefast import IntType
 from beartype_test.a00_unit.data.data_type import decorator
 from collections.abc import Callable
-from typing import Union
 
 # ....................{ CONSTANTS                          }....................
 _MINECRAFT_END_TXT_STANZAS = (
@@ -102,22 +104,38 @@ _MINECRAFT_END_TXT_STANZAS = (
     'Wake up.',
 )
 
-# ....................{ CALLABLES ~ module                 }....................
-# Callables exercising module-scoped edge cases under PEP 563.
+# ....................{ CALLABLES ~ module : undecorated   }....................
+# Callables exercising module-scoped PEP 563 edge cases.
 
 def get_minecraft_end_txt(player_name: str) -> str:
     '''
-    Callable *not* decorated by :func:`beartype.beartype`.
-
-    The ``test_pep_563()`` unit test tests that :func:`beartype.beartype`
-    silently accepts callables with one or more non-postponed annotations under
-    PEP 563 by manually resolving all postponed annotations on this callable
-    and then manually passing this callable to :func:`beartype.beartype`.
+    Callable *not* decorated by :func:`beartype.beartype`, exercising that
+    :func:`beartype.beartype` silently accepts callables with one or more
+    non-postponed annotations under :pep:`563` by manually resolving all
+    postponed annotations on this callable and then manually passing this
+    callable to :func:`beartype.beartype`.
     '''
 
     return ''.join(_MINECRAFT_END_TXT_STANZAS).format(player_name=player_name)
 
 
+def get_minecraft_end_txt_pep604(player_name: str | int) -> str | int:
+    '''
+    Callable *not* decorated by :func:`beartype.beartype`, exercising that
+    :func:`beartype.beartype` either:
+
+    * Under Python < 3.10, raises an exception when decorating a callable
+      annotated by one or more :pep:`604`-compliant new unions postponed by
+      :pep:`563`.
+    * Under Python >= 3.10, decorates this callable as expected *without*
+      raising an exception.
+    '''
+
+    # Defer to the existing getter defined above, decorated by @beartype.
+    return beartype(get_minecraft_end_txt)(player_name)
+
+# ....................{ CALLABLES ~ module : decorated     }....................
+# @beartype-decorated callables exercising module-scoped PEP 563 edge cases.
 @beartype
 def get_minecraft_end_txt_stanza(
     player_name: str, stanza_index: IntType) -> str:

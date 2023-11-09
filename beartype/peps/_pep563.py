@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype :pep:`563` support (i.e., public callables resolving stringified
-:pep:`563`-compliant type hints implicitly postponed by the active Python
-interpreter via a ``from __future__ import annotations`` statement at the head
-of the external user-defined module currently being introspected).
+Beartype :pep:`563` **resolvers** (i.e., public high-level callables resolving
+stringified :pep:`563`-compliant type hints implicitly postponed by the active
+Python interpreter via a ``from __future__ import annotations`` statement at the
+head of the external user-defined module currently being introspected).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

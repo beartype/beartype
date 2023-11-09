@@ -24,4 +24,5 @@ intended to be used both by downstream third-party packages and the
 # than merely "from argparse import ArgumentParser").
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype.peps._pep563 import (
-    resolve_pep563 as resolve_pep563)
+    resolve_pep563 as resolve_pep563,
+)
