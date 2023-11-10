@@ -79,6 +79,7 @@ from beartype.typing import (
     Dict,
     # NoReturn,
     Optional,
+    Type,
 )
 # from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import (
@@ -143,7 +144,7 @@ def get_beartype_violation(
     # Optional parameters.
     cls_stack: TypeStack = None,
     random_int: Optional[int] = None,
-) -> BeartypeCallHintViolation:
+) -> Type[Exception]:
     '''
     Human-readable exception detailing the failure of the parameter with the
     passed name *or* return if this name is the magic string ``return`` of the
@@ -231,10 +232,11 @@ def get_beartype_violation(
 
     Returns
     ----------
-    BeartypeCallHintViolation
+    Exception
         Human-readable exception detailing the failure of this parameter or
         return to satisfy the PEP-compliant type hint annotating this parameter
-        or return value, guaranteed to be an instance of either:
+        or return value. Under default configuration, it is guaranteed to be an instance
+        of either:
 
         * :class:`.BeartypeCallHintParamViolation`, if the object failing to
           satisfy this hint is a parameter.
@@ -279,13 +281,13 @@ def get_beartype_violation(
     # If the name of this parameter is the magic string implying the passed
     # object to be a return value, set the above local variables appropriately.
     if pith_name == ARG_NAME_RETURN:
-        exception_cls = BeartypeCallHintReturnViolation
+        exception_cls = conf.violation_return_type
         exception_prefix = prefix_beartypeable_return_value(
             func=func, return_value=pith_value)
     # Else, the passed object is a parameter. In this case, set the above local
     # variables appropriately.
     else:
-        exception_cls = BeartypeCallHintParamViolation
+        exception_cls = conf.violation_param_type
         exception_prefix = prefix_beartypeable_arg_value(
             func=func, arg_name=pith_name, arg_value=pith_value)
 
@@ -362,22 +364,37 @@ def get_beartype_violation(
 
     # ....................{ EXCEPTION                      }....................
     # Substring prefixing this exception message.
-    exception_message_prefix = (
-        f'{exception_prefix}violates type hint {color_hint(repr(hint))}')
+    exception_message_prefixes = {
+        1: f'{exception_prefix}was expected to be of type {color_hint(repr(hint))}',
+        2: f'{exception_prefix}was expected to be of type {color_hint(repr(hint))}',
+        3: f'{exception_prefix}violates type hint {color_hint(repr(hint))}',
+        4: f'{exception_prefix}violates type hint {color_hint(repr(hint))}',
+        5: f'{exception_prefix}violates type hint {color_hint(repr(hint))}',
+    }
 
     # If this configuration is *NOT* the default configuration, append the
     # machine-readable representation of this non-default configuration to this
     # exception message for disambiguity and clarity.
-    exception_message_conf = (
-        ''
-        if conf == BEARTYPE_CONF_DEFAULT else
-        f' under non-default configuration {repr(conf)}'
-    )
+    exception_message_confs = {
+        1: '',
+        2: '',
+        3: '',
+        4: '',
+        5: f' under non-default configuration {repr(conf)}',
+    }
 
-    # Exception message embedding this cause.
+    exception_message_suffixes = {
+        1: '.',
+        2: '.',
+        3: f', as {violation_cause_suffixed}',
+        4: f', as {violation_cause_suffixed}',
+        5: f', as {violation_cause_suffixed}',
+    }
+
     exception_message = (
-        f'{exception_message_prefix}{exception_message_conf}, as '
-        f'{violation_cause_suffixed}'
+        exception_message_prefixes[conf.violation_verbosity]
+        + exception_message_confs[conf.violation_verbosity]
+        + exception_message_suffixes[conf.violation_verbosity]
     )
 
     #FIXME: Unit test us up, please.
@@ -388,10 +405,13 @@ def get_beartype_violation(
 
     #FIXME: Unit test that the caller receives the expected culprit, please.
     # Exception of the desired class embedding this cause.
-    exception = exception_cls(  # type: ignore[misc]
-        message=exception_message,
-        culprits=tuple(violation_culprits),
-    )
+    try:
+        exception = exception_cls(  # type: ignore[misc]
+            message=exception_message,
+            culprits=tuple(violation_culprits),
+        )
+    except TypeError:  # Standard exceptions do not have arguments. Oooh, this is ugly.
+        exception = exception_cls(exception_message)
 
     # Return this exception to the @beartype-generated type-checking wrapper
     # (which directly calls this function), which will then squelch the
