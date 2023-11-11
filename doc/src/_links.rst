@@ -309,12 +309,16 @@
    https://www.djangoproject.com
 .. _Hypothesis:
    https://hypothesis.readthedocs.io
+.. _JAX:
+   https://jax.readthedocs.io
 .. _NetworkX:
    https://networkx.org
 .. _PyTorch:
    https://pytorch.org
 .. _SymPy:
    https://www.sympy.org
+.. _TensorFlow:
+   https://www.tensorflow.org
 .. _numerary:
    https://github.com/posita/numerary
 .. _pyenv:

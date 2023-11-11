@@ -46,7 +46,7 @@ warnings. Beartype is fastidious to a fault. Error handling is no...
 .. # heading will automatically prepend this table, this does *NOT* appear to
 .. # be the case. Instead, this heading must be explicitly declared.
 
-.. contents:: **Bear With Us**
+.. contents:: **Bear with Us**
    :local:
 
 .. # ------------------( DESCRIPTION                         )------------------

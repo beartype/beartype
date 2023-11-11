@@ -68,26 +68,24 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.meta import URL_ISSUES
 from beartype.roar._roarexc import (
-    BeartypeCallHintViolation,
-    BeartypeCallHintParamViolation,
-    BeartypeCallHintReturnViolation,
     _BeartypeCallHintPepRaiseException,
     _BeartypeCallHintPepRaiseDesynchronizationException,
 )
 from beartype.typing import (
     Callable,
     Dict,
-    # NoReturn,
     Optional,
-    Type,
 )
 # from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import (
-    BEARTYPE_CONF_DEFAULT,
+    # BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-from beartype._data.hint.datahinttyping import TypeStack
+from beartype._data.hint.datahinttyping import (
+    TypeException,
+    TypeStack,
+)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
@@ -119,7 +117,6 @@ from beartype._util.text.utiltextmunge import (
     uppercase_str_char_first,
 )
 from beartype._util.text.utiltextrepr import represent_object
-from beartype._data.hint.datahinttyping import TypeException
 
 # ....................{ GLOBALS                            }....................
 # Initialized with automated inspection below in the _init() function.
@@ -144,7 +141,7 @@ def get_beartype_violation(
     # Optional parameters.
     cls_stack: TypeStack = None,
     random_int: Optional[int] = None,
-) -> Type[Exception]:
+) -> Exception:
     '''
     Human-readable exception detailing the failure of the parameter with the
     passed name *or* return if this name is the magic string ``return`` of the
@@ -160,7 +157,7 @@ def get_beartype_violation(
     Instead, that wrapper function raises this exception directly from itself.
 
     Design
-    ----------
+    ------
     The :mod:`beartype` package actually implements two parallel PEP-compliant
     runtime type-checkers, each complementing the other by providing
     functionality unsuited for the other. These are:
@@ -231,17 +228,15 @@ def get_beartype_violation(
         time by default.
 
     Returns
-    ----------
+    -------
     Exception
         Human-readable exception detailing the failure of this parameter or
-        return to satisfy the PEP-compliant type hint annotating this parameter
-        or return value. Under default configuration, it is guaranteed to be an instance
-        of either:
+        return to satisfy the type hint annotating this parameter or return.
+        Under the default beartype configuration, this is guaranteed to be an
+        instance of either:
 
-        * :class:`.BeartypeCallHintParamViolation`, if the object failing to
-          satisfy this hint is a parameter.
-        * :class:`.BeartypeCallHintReturnViolation`, if the object failing to
-          satisfy this hint is a return.
+        * If this is a parameter, :class:`.BeartypeCallHintParamViolation`.
+        * If this is a return, :class:`.BeartypeCallHintReturnViolation`.
 
     Raises
     ----------
@@ -406,9 +401,9 @@ def get_beartype_violation(
     #FIXME: Unit test that the caller receives the expected culprit, please.
     # Exception of the desired class embedding this cause.
     try:
-        exception = exception_cls(  # type: ignore[misc]
-            message=exception_message,
-            culprits=tuple(violation_culprits),
+        exception = exception_cls(  # type: ignore[call-arg]
+            message=exception_message,  # pyright: ignore[reportGeneralTypeIssues]
+            culprits=tuple(violation_culprits),  # pyright: ignore[reportGeneralTypeIssues]
         )
     except TypeError:  # Standard exceptions do not have arguments. Oooh, this is ugly.
         exception = exception_cls(exception_message)

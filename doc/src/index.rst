@@ -217,7 +217,7 @@ things @beartype. It's "typing_ or bust!" as you...
 .. #   :titlesonly:
 .. #   :maxdepth: 2
 .. toctree::
-   :caption: **Bear With Us**
+   :caption: Bear with Us
 
    Bearpedia <self>
    Install <install>
@@ -237,7 +237,7 @@ things @beartype. It's "typing_ or bust!" as you...
 .. # heading will automatically prepend this table, this does *NOT* appear to
 .. # be the case. Instead, this heading must be explicitly declared.
 
-.. contents:: **Bear With Us**
+.. contents:: **Bear with Us**
    :local:
 
 .. # ------------------( DESCRIPTION                         )------------------

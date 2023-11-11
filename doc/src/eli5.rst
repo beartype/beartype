@@ -37,7 +37,7 @@ applications, stacks, modules, and scripts already annotating callables with
 .. # heading will automatically prepend this table, this does *NOT* appear to
 .. # be the case. Instead, this heading must be explicitly declared.
 
-.. contents:: **Bear With Us**
+.. contents:: **Bear with Us**
    :local:
 
 .. # ------------------( DESCRIPTION                         )------------------

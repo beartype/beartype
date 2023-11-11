@@ -57,7 +57,7 @@ it for the new guy sobbing quietly in his cubicle.
 .. # heading will automatically prepend this table, this does *NOT* appear to
 .. # be the case. Instead, this heading must be explicitly declared.
 
-.. contents:: **Bear With Us**
+.. contents:: **Bear with Us**
    :local:
 
 .. # ------------------( DESCRIPTION                         )------------------
