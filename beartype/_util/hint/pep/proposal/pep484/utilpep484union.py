@@ -13,8 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Union
+from beartype._util.cache.utilcachecall import callable_cached
 
-# ....................{ MAKERS                             }....................
+# ....................{ FACTORIES                          }....................
+@callable_cached
 def make_hint_pep484_union(hints: tuple) -> object:
     '''
     :pep:`484`-compliant **union type hint** (:attr:`typing.Union`
@@ -23,9 +25,14 @@ def make_hint_pep484_union(hints: tuple) -> object:
     PEP-compliant type hint in this tuple if this tuple contains only one item,
     *or* raise an exception otherwise (i.e., if this tuple is empty).
 
-    This maker is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the :attr:`typing.Union` type hint
-    factory already caches its subscripted arguments.
+    This factory is memoized for efficiency. Technically, the
+    :attr:`typing.Union` type hint factory already caches its subscripted
+    arguments. Pragmatically, that caching is slow and thus worth optimizing
+    with trivial optimization on our end. Moreover, this factory is called by
+    the performance-sensitive
+    :func:`beartype._check.convert.convcoerce.coerce_hint_any` coercer in an
+    early-time code path of the :func:`beartype.beartype` decorator. Optimizing
+    this factory thus optimizes :func:`beartype.beartype` itself.
 
     Parameters
     ----------

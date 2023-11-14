@@ -437,9 +437,14 @@ def is_hint_pep(hint: object) -> bool:
     from beartype._util.hint.pep.utilpepget import (
         get_hint_pep_sign_or_none)
 
-    # Return true only if this object is uniquely identified by a sign and thus
-    # a PEP-compliant type hint.
-    return get_hint_pep_sign_or_none(hint) is not None
+    # Sign uniquely identifying this hint if this hint is PEP-compliant *OR*
+    # "None" otherwise (i.e., if this hint is *NOT* PEP-compliant).
+    hint_sign = get_hint_pep_sign_or_none(hint)
+    # print(f'hint: {repr(hint)}; sign: {repr(hint_sign)}')
+
+    # Return true *ONLY* if this hint is uniquely identified by a sign and thus
+    # PEP-compliant.
+    return hint_sign is not None
 
 
 def is_hint_pep_deprecated(hint: object) -> bool:

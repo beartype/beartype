@@ -70,6 +70,7 @@ def test_coerce_hint_any() -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
+    from beartype.typing import Union
     from beartype._check.convert.convcoerce import coerce_hint_any
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_LEAST_3_10,
@@ -103,15 +104,20 @@ def test_coerce_hint_any() -> None:
     # PEP 604...
     if IS_PYTHON_AT_LEAST_3_10:
         # Arbitrary PEP 604-compliant union.
-        hint_pep604 = int | str | None
+        union_pep604 = int | str | None
 
-        # Assert this coercer preserves the first passed instance of a PEP
-        # 604-compliant union as is.
-        assert coerce_hint_any(hint_pep604) is hint_pep604
+        # Equivalent PEP 484-compliant union
+        union_pep484 = Union[int, str, type(None)]
 
-        # Assert this coercer returns the first passed instance of a PEP
-        # 604-compliant type hint when passed a copy of that instance. PEP
-        # 604-compliant type hints are *NOT* self-caching: e.g.,
+        # Assert this coercer transforms the first passed instance of a PEP
+        # 604-compliant union into the equivalent PEP 484-compliant union.
+        assert coerce_hint_any(union_pep604) is union_pep484
+
+        # Assert this coercer returns the same PEP 484-compliant union when
+        # passed a copy of the same PEP 604-compliant union. PEP 484-compliant
+        # unions are self-caching; PEP 604-compliant unions are *NOT*: e.g.,
+        #     >>> Union[int, str] is Union[int, str]
+        #     True
         #     >>> int | str is int | str
         #     False
-        assert coerce_hint_any(int | str | None) is hint_pep604
+        assert coerce_hint_any(int | str | None) is union_pep484

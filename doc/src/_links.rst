@@ -319,6 +319,8 @@
    https://www.sympy.org
 .. _TensorFlow:
    https://www.tensorflow.org
+.. _nptyping:
+   https://github.com/ramonhagenaars/nptyping
 .. _numerary:
    https://github.com/posita/numerary
 .. _pyenv:

@@ -34,11 +34,11 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
     from beartype_test._util.module.pytmodtest import (
         is_package_numpy_typing_ndarray_deep)
 
-    # ..................{ LOCALS                            }..................
+    # ..................{ LOCALS                             }..................
     # List of all PEP-specific type hint metadata to be returned.
     hints_pep_meta = []
 
-    # ..................{ UNSUPPORTED                       }..................
+    # ..................{ UNSUPPORTED                        }..................
     # If beartype does *NOT* deeply support "numpy.typing.NDArray" type hints
     # under the active Python interpreter, return the empty list.
     if not is_package_numpy_typing_ndarray_deep():

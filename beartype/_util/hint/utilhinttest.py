@@ -87,15 +87,15 @@ def die_unless_hint(
     # BEGIN: Synchronize changes here with is_hint() below.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    # If this hint is PEP-compliant, raise an exception only if this hint is
-    # currently unsupported by @beartype.
+    # If this hint is PEP-compliant *AND* currently unsupported by @beartype,
+    # raise an exception.
     if is_hint_pep(hint):
         die_if_hint_pep_unsupported(
             hint=hint, exception_prefix=exception_prefix)
     # Else, this hint is *NOT* PEP-compliant. In this case...
 
-    # Raise an exception only if this hint is also *NOT* PEP-noncompliant. By
-    # definition, all PEP-noncompliant type hints are supported by @beartype.
+    # If this PEP-noncompliant hint but still currently unsupported by
+    # @beartype, raise an exception.
     die_unless_hint_nonpep(hint=hint, exception_prefix=exception_prefix)
 
 # ....................{ TESTERS                            }....................
