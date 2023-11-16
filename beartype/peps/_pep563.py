@@ -22,7 +22,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypePep563Exception
 from beartype._check.checkcall import make_beartype_call
-from beartype._check.forward.fwdhint import resolve_hint
+from beartype._check.forward.fwdmain import resolve_hint
 from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,

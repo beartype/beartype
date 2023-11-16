@@ -81,7 +81,7 @@ class BeartypeForwardScope(LexicalScope):
             provide both. Why? Because this forward scope is principally
             intended to be passed as the second and last parameter to the
             :func:`eval` builtin, called by the
-            :func:`beartype._check.forward.fwdhint.resolve_hint` function. For
+            :func:`beartype._check.forward.fwdmain.resolve_hint` function. For
             unknown reasons, :func:`eval` only calls the :meth:`__missing__`
             dunder method of this forward scope when passed only two parameters
             (i.e., when passed only a global scope); :func:`eval` does *not*

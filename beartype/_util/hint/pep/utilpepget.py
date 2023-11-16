@@ -22,7 +22,6 @@ from beartype.typing import (
     Optional,
     # Union,
 )
-# from beartype._cave._cavefast import HintGenericSubscriptedType
 from beartype._data.hint.datahinttyping import (
     # HintSignTrie,
     TypeException,
@@ -49,8 +48,10 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
     get_hint_pep585_generic_typevars,
     is_hint_pep585_generic,
 )
+from beartype._util.hint.pep.proposal.utilpep604 import (
+    die_if_hint_pep604_inconsistent)
 from beartype._util.py.utilpyversion import (
-    # IS_PYTHON_AT_LEAST_3_11,
+    IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_MOST_3_9,
     IS_PYTHON_AT_LEAST_3_9,
 )
@@ -554,6 +555,21 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
             return hint_sign
         # Else, this hint is *NOT* identifiable by its necessarily subscripted
         # representation.
+
+        # If this hint is inconsistent with respect to PEP 604-style new unions,
+        # raise an exception. Although awkward, this is ultimately the ideal
+        # location for this validation. Why? Because this validation:
+        # * *ONLY* applies to hints permissible as items of PEP 604-compliant
+        #   new unions; this means classes and subscripted generics. If this
+        #   hint is identifiable by its classname, this hint is neither a class
+        #   *NOR* subscripted generic. Since this hint is *NOT* identifiable by
+        #   its classname, however, this hint could still be either a class *OR*
+        #   subscripted generic. It's best not to ask.
+        # * Does *NOT* apply to well-known type hints detected above (e.g.,
+        #   those produced by Python itself, the standard library, and
+        #   well-known third-party type hint factories), which are all
+        #   guaranteed to be consistent with respect to PEP 604.
+        die_if_hint_pep604_inconsistent(hint)
     # Else, this representation (and thus this hint) is unsubscripted.
 
     # ..................{ PHASE ~ repr : trie                }..................
@@ -566,17 +582,17 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     #
     # Note that:
     # * This phase is principally intended to ignore PEP-noncompliant type hints
-    #   defined by third-party packages in an efficient and robust manner.
-    #   Well, reasonably efficient and robust... anyway. *sigh*
+    #   defined by third-party packages in an efficient and robust manner. Well,
+    #   reasonably efficient and robust anyway. *sigh*
     # * This phase must be performed *BEFORE* the subsequent phase that detects
     #   generics. Generics defined in modules mapped by tries should
     #   preferentially be identified as their module-specific signs rather than
     #   as generics. (See the prior note.)
     #
     # Since doing so requires splitting a string and iterating over substrings,
-    # this phase is significantly slower than prior phases and thus *NOT*
-    # performed almost last. Since this phase identifies an extremely small
-    # subset of hints, efficiency is (mostly) incidental.
+    # this phase is significantly slower than prior phases and thus performed
+    # almost last. Since this phase identifies an extremely small subset of
+    # hints, efficiency is (mostly) incidental.
 
     # Iterable of module names split from the unsubscripted machine-readable
     # representation of this hint. For example, doing so splits
@@ -680,7 +696,10 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
         return HintSignNewType
 
     # ..................{ ERROR                              }..................
-    # Else, this hint is unrecognized. In this case, return "None".
+    # Else, this hint is unrecognized. In this case, this hint is of unknown
+    # third-party origin and provenance.
+
+    # Return "None".
     return None
 
 # ....................{ GETTERS ~ origin                   }....................

@@ -66,7 +66,10 @@ from enum import (
     EnumMeta as _EnumMeta,
 )
 from io import IOBase as _IOBase
-from typing import Any
+from typing import (
+    Any,
+    Tuple as _TupleTyping,
+)
 
 # Note that:
 #
@@ -910,7 +913,7 @@ that enumeration's type and should be directly referenced as such: e.g.,
 
 # ....................{ TYPES ~ hint                       }....................
 # Define this type as either...
-HintGenericSubscriptedType: Any = (
+HintGenericSubscriptedType: type = (
     # If the active Python interpreter targets at least Python >= 3.9 and thus
     # supports PEP 585, this type;
     type(list[str])  # type: ignore[misc]
@@ -920,18 +923,17 @@ HintGenericSubscriptedType: Any = (
 )
 '''
 C-based type of all subscripted generics if the active Python interpreter
-targets Python >= 3.9 *or* :class:`UnavailableType` otherwise.
+targets Python >= 3.9 *or* :class:`.UnavailableType` otherwise.
 
-Subscripted generics include:
+This type is a version-agnostic generalization of the standard
+:class:`types.GenericAlias` type available only under Python >= 3.9. Subscripted
+generics include:
 
 * :pep:`585`-compliant **builtin type hints** (i.e., C-based type hints
   instantiated by subscripting either a concrete builtin container class like
   :class:`list` or :class:`tuple` *or* an abstract base class (ABC) declared by
   the :mod:`collections.abc` submodule like :class:`collections.abc.Iterable`
-  or :class:`collections.abc.Sequence`). Since *all* :pep:`585`-compliant
-  builtin type hints are classes, this C-based type is the class of those
-  classes and thus effectively itself a metaclass. It's probably best not to
-  think about that.
+  or :class:`collections.abc.Sequence`).
 * :pep:`484`-compliant **subscripted generics** (i.e., user-defined classes
   subclassing one or more :pep:`484`-compliant type hints subsequently
   subscripted by one or more PEP-compliant type hints).
@@ -953,6 +955,18 @@ These include:
   detecting :pep:`585`-compliant builtin type hints.
 * :func:`beartype._util.hint.pep.proposal.utilpep585.is_hint_pep585_generic`,
   detecting :pep:`585`-compliant generic type hints.
+'''
+
+
+HintPep604Types: _TupleTyping[type, ...] = (type, HintGenericSubscriptedType)
+'''
+Tuple of all :pep:`604`-compliant **new union item types** (i.e., types of all
+objects permissible as the items of new unions), including:
+
+* The C-based type of all types (e.g., the type of the first item in the new
+  union ``list | None``).
+* The C-based type of all subscripted generics (e.g., the type of the first item
+  in the new union ``list[dict[str, int]] | None``).
 '''
 
 # ....................{ TYPES ~ scalar                     }....................

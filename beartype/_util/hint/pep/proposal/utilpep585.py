@@ -157,7 +157,7 @@ else:
 # ....................{ TESTERS ~ doc                      }....................
 # Docstring for this function regardless of implementation details.
 is_hint_pep585_builtin.__doc__ = '''
-    ``True`` only if the passed object is a C-based :pep:`585`-compliant
+    :data:`True` only if the passed object is a C-based :pep:`585`-compliant
     **builtin type hint** (i.e., C-based type hint instantiated by subscripting
     either a concrete builtin container class like :class:`list` or
     :class:`tuple` *or* an abstract base class (ABC) declared by the
@@ -177,10 +177,11 @@ is_hint_pep585_builtin.__doc__ = '''
     ----------
     **This test returns false for** :pep:`585`-compliant **generics,** which
     fail to satisfy the same API as all other :pep:`585`-compliant type hints.
-    Why? Because :pep:`560`-type erasure erases this API on :pep:`585`-compliant
-    generics immediately after those generics are declared, preventing their
-    subsequent detection as :pep:`585`-compliant. Instead, :pep:`585`-compliant
-    generics are only detectable by calling either:
+    Why? Because :pep:`560`-type erasure erases the low-level superclass
+    detected by this tester on :pep:`585`-compliant generics immediately after
+    those generics are declared, preventing their subsequent detection as
+    :pep:`585`-compliant. Instead, :pep:`585`-compliant generics are only
+    detectable by calling either:
 
     * The high-level PEP-agnostic
       :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep484585_generic`
@@ -195,12 +196,12 @@ is_hint_pep585_builtin.__doc__ = '''
     Returns
     ----------
     bool
-        ``True`` only if this object is a :pep:`585`-compliant type hint.
+        :data:`True` only if this object is a :pep:`585`-compliant type hint.
     '''
 
 
 is_hint_pep585_generic.__doc__ = '''
-    ``True`` only if the passed object is a :pep:`585`-compliant **generic**
+    :data:`True` only if the passed object is a :pep:`585`-compliant **generic**
     (i.e., object that may *not* actually be a class originally subclassing at
     least one subscripted :pep:`585`-compliant pseudo-superclass).
 
@@ -214,7 +215,7 @@ is_hint_pep585_generic.__doc__ = '''
     Returns
     ----------
     bool
-        ``True`` only if this object is a :pep:`585`-compliant generic.
+        :data:`True` only if this object is a :pep:`585`-compliant generic.
     '''
 
 # ....................{ GETTERS                            }....................

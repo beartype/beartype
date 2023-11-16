@@ -62,13 +62,11 @@ from beartype._cave._cavefast import NotImplementedType
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
 from beartype._check.checkcall import BeartypeCall
-from beartype._check.forward.fwdhint import resolve_hint
+from beartype._check.forward.fwdmain import resolve_hint
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.hint.utilhinttest import is_hint_uncached
-from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
     make_hint_pep484_union)
-from beartype._util.hint.pep.proposal.utilpep604 import is_hint_pep604
 
 # ....................{ COERCERS ~ root                    }....................
 #FIXME: Document mypy-specific coercion in the docstring as well, please.
@@ -392,70 +390,6 @@ def coerce_hint_any(hint: object) -> Any:
     '''
 
     # ..................{ NON-SELF-CACHING                   }..................
-    # If this hint is PEP 604-compliant new union (e.g., "int | str"), this hint
-    # is *NOT* self-caching (e.g., "int | str is not int | str") and *MUST* thus
-    # be explicitly cached here.
-    #
-    # Ideally, new unions would *NOT* require explicit caching here but could
-    # instead simply be implicitly cached below by the existing "elif
-    # is_hint_uncached(hint):" conditional. Indeed, that is exactly how new
-    # unions were once cached. Tragically, that approach no longer suffices.
-    # Why? Because poorly implemented third-party packages like "nptyping"
-    # dynamically generate in-memory classes that all share the same
-    # fully-qualified names despite being fundamentally different classes: e.g.,
-    #     $ python3.12
-    #     >>> from nptyping import Float64, NDArray, Shape
-    #     >>> foo = NDArray[Shape["N, N"], Float64]
-    #     >>> bar = NDArray[Shape["*"], Float64]
-    #
-    #     >>> foo == bar
-    #     False    # <-- this is sane
-    #     >>> foo.__name__
-    #     NDArray  # <-- this is insane
-    #     >>> bar.__name__
-    #     NDArray  # <-- still insane after all these years
-    #
-    #     >>> foo | None == bar | None
-    #     False           # <-- this is sane
-    #     >>> repr(foo | None)
-    #     NDArray | None  # <-- big yikes
-    #     >>> repr(bar | None)
-    #     NDArray | None  # <-- yikes intensifies
-    #
-    # Alternately, it could be argued that the implementation of the
-    # types.UnionType.__repr__() dunder method underlying the repr() strings
-    # printed above is at fault. Ideally, that method should embed the repr()
-    # strings of its child hints in the string it returns; instead, that method
-    # merely embeds the classnames of its child hints in the string it returns.
-    # Since the implementation of this method is unlikely to improve, however,
-    # the burden remains on third-party authors to correctly name classes.
-    #
-    # In either case, reducing new unions on the overly simplistic basis of
-    # their repr() strings fails in the general case of poorly implemented
-    # third-party packages that violate Python standards.
-    #
-    # Instead, this new approach transforms PEP 604-compliant new unions to
-    # equivalent PEP 484-compliant old unions (e.g., from "int | str" to
-    # "typing.Union[int, str]"). While substantially slower than the old
-    # approach, the new approach is substantially more resilient against bad
-    # behaviour in third-party packages. Ultimately, worky >>>>> speed.
-    if is_hint_pep604(hint):
-        # Tuple of the two or more child type hints subscripting this new union.
-        hint_args = get_hint_pep_args(hint)
-
-        # Reduce this hint the equivalent PEP 484-compliant old union. Why?
-        # Because old unions implicitly self-cache, whereas new unions do *NOT*:
-        #     >>> int | str is int | str
-        #     False
-        #
-        #     >>> from typing import Union
-        #     >>> Union[int, str] is Union[int, str]
-        #     True
-        #
-        # Note that this factory function is memoized and thus optimized.
-        hint = make_hint_pep484_union(hint_args)
-    # Else, this hint is *NOT* a PEP 604-compliant new union.
-    #
     # If this hint is *NOT* self-caching, this hint *MUST* thus be explicitly
     # cached here. Failing to do so would disable subsequent memoization,
     # reducing decoration- and call-time efficiency when decorating callables
@@ -467,7 +401,7 @@ def coerce_hint_any(hint: object) -> Any:
     # * Else, one or more prior copies of this hint have already been passed to
     #   this function. In this case, replace this subsequent copy by the first
     #   copy of this hint originally passed to a prior call of this function.
-    elif is_hint_uncached(hint):
+    if is_hint_uncached(hint):
         # print(f'Self-caching type hint {repr(hint)}...')
         return _HINT_REPR_TO_SINGLETON.cache_or_get_cached_value(
             key=repr(hint), value=hint)
