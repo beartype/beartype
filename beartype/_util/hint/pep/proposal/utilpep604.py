@@ -38,8 +38,23 @@ if IS_PYTHON_AT_LEAST_3_10:
         # Machine-readable representation of this hint.
         hint_repr = get_hint_repr(hint)
 
-        # if hint_repr.startswith("<class '"):
-        #     return
+        # If this representation is prefixed by the "<" character, this
+        # representation is assumed to be (at least *SOMEWHAT*) standardized and
+        # thus internally consistent. This includes:
+        # * Standard classes (e.g., "<class 'bool'>").
+        # * @beartype-specific forward reference subclasses (e.g., "<forwardref
+        #   UndeclaredClass(__beartype_scope__='some_package')>").
+        #
+        # This is *NOT* simply an optimization. Standardized representations
+        # *MUST* be excluded from consideration, as the representations of new
+        # unions containing these hints is *NOT* prefixed by "<": e.g.,
+        #     >>> repr(bool)
+        #     <class 'bool'>
+        #     >>> bool | None
+        #     bool | None
+        if hint_repr[0] == '<':
+            return
+        # Else, this representation is *NOT* prefixed by the "<" character.
 
         # Arbitrary PEP 604-compliant new union defined as the conjunction
         # of this hint with an arbitrary builtin type guaranteed to exist.

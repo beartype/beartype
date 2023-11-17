@@ -556,20 +556,20 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
         # Else, this hint is *NOT* identifiable by its necessarily subscripted
         # representation.
 
-        # If this hint is inconsistent with respect to PEP 604-style new unions,
-        # raise an exception. Although awkward, this is ultimately the ideal
-        # location for this validation. Why? Because this validation:
-        # * *ONLY* applies to hints permissible as items of PEP 604-compliant
-        #   new unions; this means classes and subscripted generics. If this
-        #   hint is identifiable by its classname, this hint is neither a class
-        #   *NOR* subscripted generic. Since this hint is *NOT* identifiable by
-        #   its classname, however, this hint could still be either a class *OR*
-        #   subscripted generic. It's best not to ask.
-        # * Does *NOT* apply to well-known type hints detected above (e.g.,
-        #   those produced by Python itself, the standard library, and
-        #   well-known third-party type hint factories), which are all
-        #   guaranteed to be consistent with respect to PEP 604.
-        die_if_hint_pep604_inconsistent(hint)
+        # # If this hint is inconsistent with respect to PEP 604-style new unions,
+        # # raise an exception. Although awkward, this is ultimately the ideal
+        # # location for this validation. Why? Because this validation:
+        # # * *ONLY* applies to hints permissible as items of PEP 604-compliant
+        # #   new unions; this means classes and subscripted generics. If this
+        # #   hint is identifiable by its classname, this hint is neither a class
+        # #   *NOR* subscripted generic. Since this hint is *NOT* identifiable by
+        # #   its classname, however, this hint could still be either a class *OR*
+        # #   subscripted generic. It's best not to ask.
+        # # * Does *NOT* apply to well-known type hints detected above (e.g.,
+        # #   those produced by Python itself, the standard library, and
+        # #   well-known third-party type hint factories), which are all
+        # #   guaranteed to be consistent with respect to PEP 604.
+        # die_if_hint_pep604_inconsistent(hint)
     # Else, this representation (and thus this hint) is unsubscripted.
 
     # ..................{ PHASE ~ repr : trie                }..................
@@ -698,6 +698,21 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # ..................{ ERROR                              }..................
     # Else, this hint is unrecognized. In this case, this hint is of unknown
     # third-party origin and provenance.
+
+    # If this hint is inconsistent with respect to PEP 604-style new unions,
+    # raise an exception. Although awkward, this is ultimately the ideal
+    # location for this validation. Why? Because this validation:
+    # * *ONLY* applies to hints permissible as items of PEP 604-compliant new
+    #   unions; this means classes and subscripted generics. If this hint is
+    #   identifiable by its classname, this hint is neither a class *NOR*
+    #   subscripted generic. Since this hint is *NOT* identifiable by its
+    #   classname, however, this hint could still be either a class *OR*
+    #   subscripted generic. It's best not to ask.
+    # * Does *NOT* apply to well-known type hints detected above (e.g., those
+    #   produced by Python itself, the standard library, and well-known
+    #   third-party type hint factories), which are all guaranteed to be
+    #   consistent with respect to PEP 604.
+    die_if_hint_pep604_inconsistent(hint)
 
     # Return "None".
     return None

@@ -6,7 +6,7 @@
 '''
 Beartype decorator **forward reference utility** unit tests.
 
-This submodule unit tests the :func:`beartype._check.forward._fwdref` submodule.
+This submodule unit tests the :func:`beartype._check.forward.fwdref` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -19,13 +19,13 @@ This submodule unit tests the :func:`beartype._check.forward._fwdref` submodule.
 def test_make_forwardref_indexable_subtype() -> None:
     '''
     Test the
-    :func:`beartype._check.forward._fwdref.make_forwardref_indexable_subtype`
+    :func:`beartype._check.forward.fwdref.make_forwardref_indexable_subtype`
     factory.
     '''
 
     # ....................{ LOCALS                         }....................
     # Defer test-specific imports.
-    from beartype._check.forward._fwdref import (
+    from beartype._check.forward.fwdref import (
         make_forwardref_indexable_subtype)
     from beartype_test.a00_unit.data.data_type import Subclass
     # from pytest import raises

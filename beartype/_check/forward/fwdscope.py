@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import Type
 from beartype._data.hint.datahinttyping import LexicalScope
-from beartype._check.forward._fwdref import (
+from beartype._check.forward.fwdref import (
     make_forwardref_indexable_subtype,
     _BeartypeForwardRefIndexableABC,
 )
@@ -143,7 +143,7 @@ class BeartypeForwardScope(LexicalScope):
 
         This method transparently replaces this unresolved type hint with a
         **forward reference proxy** (i.e., concrete subclass of the private
-        :class:`beartype._check.forward._fwdref._BeartypeForwardRefABC` abstract
+        :class:`beartype._check.forward.fwdref._BeartypeForwardRefABC` abstract
         base class (ABC), which resolves this type hint on the first call to the
         :func:`isinstance` builtin whose second argument is that subclass).
 

@@ -594,9 +594,9 @@ This prefix:
   filtering) to uniquely match and act upon these variables.
 * Is intentionally prefixed by double rather than single underscores (i.e.,
   ``"__"`` rather than ``"_"``), ensuring that our
-  :meth:`beartype._check.forward._fwdref._BeartypeForwardRefMeta.__getattr__`
+  :meth:`beartype._check.forward.fwdref._BeartypeForwardRefMeta.__getattr__`
   dunder method ignores the private instance variables cached by our cached
-  :meth:`beartype._check.forward._fwdref._BeartypeForwardRefMeta.__beartype_type__`
+  :meth:`beartype._check.forward.fwdref._BeartypeForwardRefMeta.__beartype_type__`
   property.
 '''
 

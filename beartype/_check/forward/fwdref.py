@@ -192,8 +192,17 @@ class _BeartypeForwardRefMeta(type):
         '''
 
         # Machine-readable representation to be returned.
+        #
+        # Note that this representation is intentionally prefixed by the
+        # @beartype-specific substring "<forwardref ", resembling the
+        # representation of classes (e.g., "<class 'bool'>"). Why? Because
+        # various other @beartype submodules ignore objects whose
+        # representations are prefixed by the "<" character, which are usefully
+        # treated as having a standard representation that is ignorable for most
+        # intents and purposes. This includes:
+        # * The die_if_hint_pep604_inconsistent() raiser.
         cls_repr = (
-            f'{cls.__name__}('
+            f'<forwardref {cls.__name__}('
               f'__beartype_scope_name__={repr(cls.__beartype_scope_name__)}'
             f', __beartype_name__={repr(cls.__beartype_name__)}'
         )
@@ -222,7 +231,7 @@ class _BeartypeForwardRefMeta(type):
             pass
 
         # Close this representation.
-        cls_repr += ')'
+        cls_repr += ')>'
 
         # Return this representation.
         return cls_repr
@@ -529,6 +538,28 @@ _BeartypeForwardRefIndexedABC_BASES = (_BeartypeForwardRefIndexedABC,)
 1-tuple containing *only* the :class:`._BeartypeForwardRefIndexedABC`
 superclass to reduce space and time consumption.
 '''
+
+# ....................{ TESTERS                            }....................
+#FIXME: Unit test us up, please.
+def is_forwardref(obj: object) -> bool:
+    '''
+    :data:`True` only if the passed object is a **forward reference subclass**
+    (i.e., class whose metaclass is class:`._BeartypeForwardRefMeta`).
+
+    Parameters
+    ----------
+    obj : object
+        Object to be tested.
+
+    Returns
+    ----------
+    bool
+        :data:`True` only if this object is a forward reference subclass.
+    '''
+
+    # Return true only if the class of this object is the metaclass of all
+    # forward reference subclasses, implying this object to be such a subclass.
+    return obj.__class__ is _BeartypeForwardRefMeta
 
 # ....................{ FACTORIES                          }....................
 @callable_cached
