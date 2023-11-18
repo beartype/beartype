@@ -319,6 +319,8 @@
    https://www.sympy.org
 .. _TensorFlow:
    https://www.tensorflow.org
+.. _equinox:
+   https://github.com/patrick-kidger/equinox
 .. _nptyping:
    https://github.com/ramonhagenaars/nptyping
 .. _numerary:

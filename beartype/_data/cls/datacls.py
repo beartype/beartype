@@ -38,6 +38,50 @@ from beartype._cave._cavefast import (
     NotImplementedType,
 )
 
+# ....................{ BEARTYPEABLE                       }....................
+# Types of *ALL* objects that may be decorated by @beartype, intentionally
+# listed in descending order of real-world prevalence for negligible efficiency
+# gains when performing isinstance()-based tests against this tuple. These
+# include the types of *ALL*...
+TYPES_BEARTYPEABLE = (
+    # Pure-Python unbound functions and methods.
+    FunctionType,
+    # Pure-Python classes.
+    ClassType,
+    # C-based builtin method descriptors wrapping pure-Python unbound methods,
+    # including class methods, static methods, and property methods.
+    MethodDecoratorBuiltinTypes,
+)
+'''
+Tuple set of all **beartypeable types** (i.e., types of all objects that may be
+decorated by the :func:`beartype.beartype` decorator).
+'''
+
+
+TYPES_UNBEARTYPEABLE = frozenset((
+    object,
+    type,
+))
+'''
+Frozen set of all **non-beartypeable types** (i.e., types of all objects that
+are *not* safely decoratable by the :func:`beartype.beartype` decorator despite
+otherwise being beartypeable types).
+
+Notably, this includes:
+
+* The :class:`object` and :class:`type` superclasses, which
+  :func:`beartype.beartype` decorator should *obviously* never attempt to
+  decorate. Doing so:
+
+  * Is needlessly inefficient. Like all C-based types, these superclasses are
+    *not* annotated. Decorating these types thus reduces to an expensive noop.
+    Since numerous classes (e.g., *all* concrete subclasses of the standard
+    :class:`enum.Enum` superclass) contain class attributes whose values are
+    either :class:`object` or :class:`type`, this edge case arises frequently.
+  * Invites catastrophic issues, including **INFINITE FRIGGIN' RECURSION.** See
+    also the :func:`beartype._decor._decortype.beartype_type` function.
+'''
+
 # ....................{ SETS                               }....................
 TYPES_BUILTIN_FAKE = frozenset((
     AsyncCoroutineCType,
@@ -116,23 +160,4 @@ https://stackoverflow.com/a/62258339/2809027
 https://stackoverflow.com/a/60319462/2809027
     StackOverflow answer introducing an alternate non-portable technique for
     obtaining the PyCapsule type itself.
-'''
-
-# ....................{ TUPLES                             }....................
-# Types of *ALL* objects that may be decorated by @beartype, intentionally
-# listed in descending order of real-world prevalence for negligible efficiency
-# gains when performing isinstance()-based tests against this tuple. These
-# include the types of *ALL*...
-TYPES_BEARTYPEABLE = (
-    # Pure-Python unbound functions and methods.
-    FunctionType,
-    # Pure-Python classes.
-    ClassType,
-    # C-based builtin method descriptors wrapping pure-Python unbound methods,
-    # including class methods, static methods, and property methods.
-    MethodDecoratorBuiltinTypes,
-)
-'''
-Tuple set of all **beartypeable types** (i.e., types of all objects that may be
-decorated by the :func:`beartype.beartype` decorator).
 '''

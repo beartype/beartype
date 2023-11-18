@@ -21,7 +21,10 @@ from beartype.typing import (
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert.convcoerce import clear_coerce_hint_caches
 from beartype._conf.confcls import BeartypeConf
-from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
+from beartype._data.cls.datacls import (
+    TYPES_BEARTYPEABLE,
+    TYPES_UNBEARTYPEABLE,
+)
 from beartype._data.hint.datahinttyping import (
     BeartypeableT,
     TypeStack,
@@ -136,6 +139,8 @@ def beartype_type(
     # dynamically defined in-memory outside of any module structure).
     module_name = get_object_module_name_or_none(cls)
 
+    #FIXME: Consider relegating this logic to a new private
+    #_beartype_type_reloaded() function for maintainability, please.
     # If this class is defined by a module...
     if module_name:
         # Unqualified basename of this class.
@@ -234,11 +239,91 @@ def beartype_type(
     )
 
     # ....................{ DECORATION                     }....................
+    #FIXME: Consider relegating this logic to a new private
+    #_beartype_type_attrs() function for maintainability, please.
     # For the unqualified name and value of each direct (i.e., *NOT* indirectly
     # inherited) attribute of this class...
     for attr_name, attr_value in cls.__dict__.items():  # pyright: ignore[reportGeneralTypeIssues]
-        # If this attribute is beartypeable...
-        if isinstance(attr_value, TYPES_BEARTYPEABLE):
+        # True only if this attribute is directly beartypeable (e.g., is either
+        # a function, class, or builtin method descriptor).
+        is_attr_beartypeable = isinstance(attr_value, TYPES_BEARTYPEABLE)
+
+        # If this attribute is *NOT* directly beartypeable (e.g., is neither a
+        # function, class, nor builtin method descriptor), this attribute
+        # *COULD* still be indirectly beartypeable. How? By being a non-standard
+        # object implemented by some third-party package wrapping a standard
+        # object that *is* directly beartypeable. Although the original use case
+        # was non-standard function wrappers implemented by the third-party
+        # Equinox package, this logic transparently generalizes to *ALL*
+        # third-party packages. Consequently, *ALL* third-party packages
+        # defining non-standard objects wrapping standard objects should
+        # endeavour to support @beartype by reproducing the general-purpose
+        # solution that Equinox adopted.
+        #
+        # Notably, third-party packages should ideally add "support for such
+        # monkey-patching, by adding a __setattr__() that checks for functions
+        # and wraps them into one of Equinox's function-wrappers." See also:
+        #     https://github.com/patrick-kidger/equinox/issues/584#issuecomment-1806260288
+        #
+        # Specifically, if...
+        if not (
+            # This attribute is neither directly beartypeable *NOR*...
+            is_attr_beartypeable or
+            # A dunder attribute (i.e., prefixed and suffixed by "__")...
+            #
+            # Note that dunder attributes *MUST* explicitly be excluded. Why?
+            # Because attempting to decorate the dynamic values of arbitrary
+            # dunder attributes with @beartype is intrinsically dangerous and
+            # frequently induces *INFINITE FRIGGIN' RECURSION* on standard
+            # types, including:
+            # * "enum.Enum" subclasses, which define a private "_member_type_"
+            #   attribute whose value is the "object" superclass, which
+            #   @beartype then attempts to decorate. However, the "object"
+            #   superclass defines the "__class__" dunder attribute whose value
+            #   is the "type" superclass, which @beartype then attempts to
+            #   decorate. However, the "type" superclass defines the "__base__"
+            #   dunder attribute whose value is the "object" superclass, which
+            #   @beartype then attempts to decorate. Anarchy ensues.
+            (
+                attr_name.startswith('__') and
+                attr_name.endswith  ('__')
+            )
+        ):
+            # Uncomment to debug this insanity. *sigh*
+            # attr_value_old = attr_value
+
+            # Override the previously retrieved static value of this attribute
+            # (i.e., the direct value of this attribute *WITHOUT* regard to
+            # dynamic descriptor lookup, which in the case of a standard
+            # descriptor builtin like @classmethod is that C-based @classmethod
+            # descriptor itself) with the dynamic value of this attribute
+            # (i.e., the indirect value of this attribute *WITH* regard to
+            # dynamic descriptor lookup, which in the case of a standard
+            # descriptor builtin like @classmethod is the pure-Python function
+            # wrapped by that C-based @classmethod descriptor) if this attribute
+            # supports the descriptor protocol *OR* reduce to a noop otherwise.
+            attr_value = getattr(cls, attr_name)
+
+            # True only if this attribute is directly beartypeable.
+            is_attr_beartypeable = isinstance(attr_value, TYPES_BEARTYPEABLE)
+        # Else, this attribute is directly beartypeable.
+
+        # If this attribute is...
+        if (
+            # Now directly beartypeable *AND*...
+            is_attr_beartypeable and
+            # It is *NOT* the case that...
+            not (
+                # This attribute is a class *AND*...
+                isinstance(attr_value, type) and
+                # This class is non-beartypeable, in which case @beartype should
+                # avoid attempting to @beartype this class despite technically
+                # being capable of doing so. Why? Because doing so frequently
+                # induces *INFINITE FRIGGIN' RECURSION.* See the above
+                # "enum.Enum" discussion for a pragmatic example.
+                attr_value in TYPES_UNBEARTYPEABLE
+            )
+        ):
             # This attribute decorated with type-checking configured by this
             # configuration if *NOT* already decorated.
             attr_value_beartyped = beartype_object(
