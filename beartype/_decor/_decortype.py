@@ -21,10 +21,7 @@ from beartype.typing import (
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert.convcoerce import clear_coerce_hint_caches
 from beartype._conf.confcls import BeartypeConf
-from beartype._data.cls.datacls import (
-    TYPES_BEARTYPEABLE,
-    TYPES_UNBEARTYPEABLE,
-)
+from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
 from beartype._data.hint.datahinttyping import (
     BeartypeableT,
     TypeStack,
@@ -241,6 +238,7 @@ def beartype_type(
     # ....................{ DECORATION                     }....................
     #FIXME: Consider relegating this logic to a new private
     #_beartype_type_attrs() function for maintainability, please.
+
     # For the unqualified name and value of each direct (i.e., *NOT* indirectly
     # inherited) attribute of this class...
     for attr_name, attr_value in cls.__dict__.items():  # pyright: ignore[reportGeneralTypeIssues]
@@ -265,30 +263,8 @@ def beartype_type(
         # and wraps them into one of Equinox's function-wrappers." See also:
         #     https://github.com/patrick-kidger/equinox/issues/584#issuecomment-1806260288
         #
-        # Specifically, if...
-        if not (
-            # This attribute is neither directly beartypeable *NOR*...
-            is_attr_beartypeable or
-            # A dunder attribute (i.e., prefixed and suffixed by "__")...
-            #
-            # Note that dunder attributes *MUST* explicitly be excluded. Why?
-            # Because attempting to decorate the dynamic values of arbitrary
-            # dunder attributes with @beartype is intrinsically dangerous and
-            # frequently induces *INFINITE FRIGGIN' RECURSION* on standard
-            # types, including:
-            # * "enum.Enum" subclasses, which define a private "_member_type_"
-            #   attribute whose value is the "object" superclass, which
-            #   @beartype then attempts to decorate. However, the "object"
-            #   superclass defines the "__class__" dunder attribute whose value
-            #   is the "type" superclass, which @beartype then attempts to
-            #   decorate. However, the "type" superclass defines the "__base__"
-            #   dunder attribute whose value is the "object" superclass, which
-            #   @beartype then attempts to decorate. Anarchy ensues.
-            (
-                attr_name.startswith('__') and
-                attr_name.endswith  ('__')
-            )
-        ):
+        # Specifically, if this attribute is *NOT* directly beartypeable...
+        if not is_attr_beartypeable:
             # Uncomment to debug this insanity. *sigh*
             # attr_value_old = attr_value
 
@@ -313,15 +289,57 @@ def beartype_type(
             # Now directly beartypeable *AND*...
             is_attr_beartypeable and
             # It is *NOT* the case that...
+            #
+            # Note that this condition intentionally excludes class variables
+            # whose values are types from consideration, thus preventing
+            # @beartype from erroneously decorating those types. Why? Because
+            # the caller did *NOT* explicitly instruct us to decorate those
+            # types. Moreover, attempting to do so can ignite infinite recursion
+            # in common edge cases and is thus fundamentally dangerous.
+            #
+            # Consider this sample user-defined class:
+            #     class ParentClass(object):
+            #         class_var: type = type
+            #         class NestedClass(object):
+            #             pass
+            #
+            # Syntactically, the class variable "ParentClass.class_var" and
+            # nested class "ParentClass.NestedClass" share *NO* commonality.
+            # Semantically, however, @beartype treats those two attributes of
+            # the parent class "ParentClass" as effectively identical. The
+            # values of those two attributes are both classes, which @beartype
+            # typically tries to recursively decorate. But only the latter are
+            # safely decoratable by @beartype.
+            #
+            # Class variables whose values are types are *NOT* safely
+            # decoratable by @beartype. In the best case, doing so would
+            # decorate external classes *NOT* intended to be decorated; in the
+            # worst case, doing so would provoke infinite recursion. Indeed, the
+            # worst case is exactly what once happened. Previously, decorating
+            # concrete "enum.Enum" subclasses with @beartype once provoked
+            # infinite recursion. Why? Because:
+            #
+            # * *All* :class:`enum.Enum` subclasses define a private
+            #   "_member_type_" attribute whose value is the "object"
+            #   superclass, which @beartype then decorated.
+            # * However, the :class:`object` superclass defines the "__class__"
+            #   dunder attribute whose value is the "type" superclass, which
+            #   @beartype then decorated.
+            # * However, the "type" superclass defines the "__base__" dunder
+            #   attribute whose value is the "object" superclass, which
+            #   @beartype then decorated.
+            # * *INFINITE FRIGGIN' RECURSION*. Anarchy today.
+            #
+            # In both the best and worst cases above, class variables whose
+            # values are types *CANNOT* be safely decorated by @beartype.
             not (
                 # This attribute is a class *AND*...
                 isinstance(attr_value, type) and
-                # This class is non-beartypeable, in which case @beartype should
-                # avoid attempting to @beartype this class despite technically
-                # being capable of doing so. Why? Because doing so frequently
-                # induces *INFINITE FRIGGIN' RECURSION.* See the above
-                # "enum.Enum" discussion for a pragmatic example.
-                attr_value in TYPES_UNBEARTYPEABLE
+                # This class was declared elsewhere and merely defined here as a
+                # class attribute of the currently decorated class whose value
+                # is this class (rather than as a nested class of the currently
+                # decorated class)...
+                not attr_value.__qualname__.startswith(cls.__qualname__)
             )
         ):
             # This attribute decorated with type-checking configured by this
