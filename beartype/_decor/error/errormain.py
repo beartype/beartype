@@ -78,9 +78,10 @@ from beartype.typing import (
 )
 # from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confcls import (
-    # BEARTYPE_CONF_DEFAULT,
+    BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
+from beartype._conf.confenum import BeartypeViolationVerbosity
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahinttyping import (
     TypeException,
@@ -358,38 +359,54 @@ def get_beartype_violation(
     # case, avoid adding duplicate items to this list.
 
     # ....................{ EXCEPTION                      }....................
-    # Substring prefixing this exception message.
-    exception_message_prefixes = {
-        1: f'{exception_prefix}was expected to be of type {color_hint(repr(hint))}',
-        2: f'{exception_prefix}was expected to be of type {color_hint(repr(hint))}',
-        3: f'{exception_prefix}violates type hint {color_hint(repr(hint))}',
-        4: f'{exception_prefix}violates type hint {color_hint(repr(hint))}',
-        5: f'{exception_prefix}violates type hint {color_hint(repr(hint))}',
+    # Violation verbosity, localized for negligible efficiency. *vomits*
+    violation_verbosity = conf.violation_verbosity
+
+    # Dictionary mapping from each possibly violation verbosity to a
+    # corresponding substring prepending this exception message.
+    VIOLATION_VERBOSITY_TO_PREFIX = {
+        BeartypeViolationVerbosity.MINIMUM: (
+            f'{exception_prefix}was expected to be of type '
+            f'{color_hint(repr(hint))}'
+        ),
+        BeartypeViolationVerbosity.DEFAULT: (
+            f'{exception_prefix}violates type hint {color_hint(repr(hint))}'),
+    }
+    VIOLATION_VERBOSITY_TO_PREFIX[BeartypeViolationVerbosity.MAXIMUM] = (  # <-- alias!
+        VIOLATION_VERBOSITY_TO_PREFIX[BeartypeViolationVerbosity.DEFAULT])
+
+    # Dictionary mapping from each possibly violation verbosity to a
+    # corresponding substring embedded in the middle of this exception message.
+    VIOLATION_VERBOSITY_TO_INFIX = {
+        BeartypeViolationVerbosity.MINIMUM: '',
+        BeartypeViolationVerbosity.DEFAULT: '',
+        BeartypeViolationVerbosity.MAXIMUM: (
+            # If this configuration is the default configuration, avoid
+            # needlessly representing this default configuration.
+            ''
+            if conf == BEARTYPE_CONF_DEFAULT else
+            # Else, this configuration is *NOT* the default configuration. In
+            # this case, append the machine-readable representation of this
+            # non-default configuration to this exception message for
+            # disambiguity and clarity.
+            f' under non-default configuration {repr(conf)}'
+        ),
     }
 
-    # If this configuration is *NOT* the default configuration, append the
-    # machine-readable representation of this non-default configuration to this
-    # exception message for disambiguity and clarity.
-    exception_message_confs = {
-        1: '',
-        2: '',
-        3: '',
-        4: '',
-        5: f' under non-default configuration {repr(conf)}',
+    # Dictionary mapping from each possibly violation verbosity to a
+    # corresponding substring appending this exception message.
+    VIOLATION_VERBOSITY_TO_SUFFIX = {
+        BeartypeViolationVerbosity.MINIMUM: '.',
+        BeartypeViolationVerbosity.DEFAULT: f', as {violation_cause_suffixed}',
     }
+    VIOLATION_VERBOSITY_TO_SUFFIX[BeartypeViolationVerbosity.MAXIMUM] = (  # <-- alias!
+        VIOLATION_VERBOSITY_TO_SUFFIX[BeartypeViolationVerbosity.DEFAULT])
 
-    exception_message_suffixes = {
-        1: '.',
-        2: '.',
-        3: f', as {violation_cause_suffixed}',
-        4: f', as {violation_cause_suffixed}',
-        5: f', as {violation_cause_suffixed}',
-    }
-
+    # Human-readable violation message to be raised.
     exception_message = (
-        exception_message_prefixes[conf.violation_verbosity]
-        + exception_message_confs[conf.violation_verbosity]
-        + exception_message_suffixes[conf.violation_verbosity]
+        f'{VIOLATION_VERBOSITY_TO_PREFIX[violation_verbosity]}'
+        f'{VIOLATION_VERBOSITY_TO_INFIX[violation_verbosity]}'
+        f'{VIOLATION_VERBOSITY_TO_SUFFIX[violation_verbosity]}'
     )
 
     #FIXME: Unit test us up, please.
@@ -399,13 +416,16 @@ def get_beartype_violation(
         text=exception_message, conf=conf)
 
     #FIXME: Unit test that the caller receives the expected culprit, please.
-    # Exception of the desired class embedding this cause.
+    # Exception of the desired class embedding this cause. By default, attempt
+    # to pass @beartype-specific parameters to this exception subclass.
     try:
         exception = exception_cls(  # type: ignore[call-arg]
             message=exception_message,  # pyright: ignore[reportGeneralTypeIssues]
             culprits=tuple(violation_culprits),  # pyright: ignore[reportGeneralTypeIssues]
         )
-    except TypeError:  # Standard exceptions do not have arguments. Oooh, this is ugly.
+    # If this exception subclass fails to support @beartype-specific parameters,
+    # fallback to the standard exception idiom of a positionally passed message.
+    except TypeError:
         exception = exception_cls(exception_message)
 
     # Return this exception to the @beartype-generated type-checking wrapper
