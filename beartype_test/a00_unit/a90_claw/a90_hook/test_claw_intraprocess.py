@@ -35,7 +35,12 @@ def test_claw_intraprocess_beartype_this_package() -> None:
     # configured by a non-default beartype configuration, installed by importing
     # *ANYTHING* from this package.
     from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.beartype_this_package import (
-        this_submodule)
+        this_submodule,
+        empty_doc_nofuture,
+        empty_doc_future,
+        empty_nodoc_future,
+        empty_nodoc_nofuture,
+    )
 
     # Import an arbitrary submodule *NOT* subject to that import hook.
     from beartype_test.a00_unit.data.claw.intraprocess import unhookable_module
@@ -69,7 +74,7 @@ def test_claw_intraprocess_beartype_package() -> None:
     # Import all submodules of the package hooked above, exercising that these
     # submodules are subject to that import hook.
     from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.kind import (
-        data_claw_class,
+        data_claw_type,
         data_claw_func,
     )
     from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.pep import (
@@ -149,7 +154,7 @@ def test_claw_intraprocess_beartype_packages() -> None:
     # Import all submodules of the package hooked above, exercising that these
     # submodules are subject to that import hook.
     from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.kind import (
-        data_claw_class,
+        data_claw_type,
         data_claw_func,
     )
     from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.pep import (
@@ -232,7 +237,7 @@ def test_claw_intraprocess_beartype_all() -> None:
     # Import *ALL* "beartype.claw"-specific data submodules, exercising that
     # these submodules are subject to that import hook.
     from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.kind import (
-        data_claw_class,
+        data_claw_type,
         data_claw_func,
     )
     from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.pep import (
@@ -303,7 +308,7 @@ def test_claw_intraprocess_beartyping() -> None:
         # configuration silently succeeds.
         with beartyping(conf=BeartypeConf(is_debug=True)):
             from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.kind import (
-                data_claw_class,
+                data_claw_type,
                 data_claw_func,
             )
 

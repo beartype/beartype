@@ -322,23 +322,31 @@ class BeartypeNodeTransformer(NodeTransformer):
             That same module node.
         '''
 
-        # 0-based index of the first safe position in the list of all child
-        # nodes of this parent module node to insert an import statement
-        # importing our beartype decorator, initialized to the erroneous index
-        # "-1" to enable detection of empty modules (i.e., modules whose module
-        # nodes containing *NO* child nodes) below.
-        node_import_beartype_attrs_index = -1
+        # 0-based index of an early child node of this parent module node
+        # immediately *BEFORE* which to insert one or more statements importing
+        # beartype-specific attributes, defaulting to the first child node of
+        # this parent module. Specifically, if this module begins with:
+        # * Neither a module docstring *NOR* any "from __future__" imports, this
+        #   index is guaranteed to be 0.
+        # * Only a module docstring but *NO* "from __future__" imports, this
+        #   index is guaranteed to be 1.
+        # * A module docstring and one or more "from __future__" imports, this
+        #   index is guaranteed to be one more than the number of such imports.
+        node_index_import_beartype_attrs = 0
+
+        # 0-based index of the last child node of this parent module node.
+        node_index_last = len(node.body)
 
         # Child node of this parent module node immediately preceding the output
         # import child node to be added below, defaulting to this parent module
-        # node to ensure that the copy_node_metadata() function below
-        # *ALWAYS* copies from a valid node (for simplicity).
-        node_import_prev: AST = node
+        # node to ensure that the copy_node_metadata() function below *ALWAYS*
+        # copies from a valid node (for simplicity).
+        node_prev: AST = node
 
         # For the 0-based index and value of each direct child node of this
         # parent module node...
         #
-        # This iteration efficiently finds "node_import_beartype_attrs_index"
+        # This iteration efficiently finds "node_index_import_beartype_attrs"
         # (i.e., the 0-based index of the first safe position in the list of all
         # child nodes of this parent module node to insert an import statement
         # importing our beartype decorator). Despite superficially appearing to
@@ -346,10 +354,11 @@ class BeartypeNodeTransformer(NodeTransformer):
         # node and thus exhibit worst-case O(n) time complexity, this iteration
         # is guaranteed to exhibit worst-case O(1) time complexity. \o/
         #
-        # Note that the "body" instance variable for module nodes is a list of
-        # all child nodes of this parent module node.
-        for node_import_beartype_attrs_index, node_import_prev in enumerate(
-            node.body):
+        # Note that the "node.body" instance variable for module nodes is a list
+        # of *ALL* child nodes of this parent module node.
+        for node_prev in node.body:
+            # print(f'node_index_import_beartype_attrs [IN]: {node_index_import_beartype_attrs}')
+
             # If it is *NOT* the case that this child node signifies either...
             if not (
                 # A module docstring...
@@ -361,8 +370,8 @@ class BeartypeNodeTransformer(NodeTransformer):
                 # docstring. (The latter would destroy the semantics of that
                 # docstring by reducing that docstring to an ignorable string.)
                 (
-                    isinstance(node_import_prev, Expr) and
-                    isinstance(node_import_prev.value, Constant)
+                    isinstance(node_prev, Expr) and
+                    isinstance(node_prev.value, Constant)
                 ) or
                 # A future import (i.e., import of the form "from __future__
                 # ...") *OR*...
@@ -373,8 +382,8 @@ class BeartypeNodeTransformer(NodeTransformer):
                 # statements that are actually imports -- including the import
                 # statement added below.
                 (
-                    isinstance(node_import_prev, ImportFrom) and
-                    node_import_prev.module == '__future__'
+                    isinstance(node_prev, ImportFrom) and
+                    node_prev.module == '__future__'
                 )
             # Then immediately halt iteration, guaranteeing O(1) runtime.
             ):
@@ -382,14 +391,22 @@ class BeartypeNodeTransformer(NodeTransformer):
             # Else, this child node signifies either a module docstring of
             # future import. In this case, implicitly skip past this child node
             # to the next child node.
-            #
-        # "node_import_beartype_attrs_index" is now the index of the first safe
-        # position in this list to insert output child import nodes below.
 
-        # If this is *NOT* the erroneous index to which this index was
-        # initialized above, this module contains one or more child nodes and is
-        # thus non-empty. In this case...
-        if node_import_beartype_attrs_index >= 0:
+            # Insert beartype-specific attributes immediately *AFTER* this node.
+            node_index_import_beartype_attrs += 1
+        # "node_index_import_beartype_attrs" is now the index of the first safe
+        # position in this list to insert output child import nodes below.
+        # print(f'node_index_import_beartype_attrs [AFTER]: {node_index_import_beartype_attrs}')
+        # print(f'len(node.body): {len(node.body)}')
+
+        # If the 0-based index of an early child node of this parent module node
+        # immediately *BEFORE* which to insert one or more statements importing
+        # beartype-specific attributes is *NOT* that of the last child node of
+        # this parent module node, this module contains one or more semantically
+        # meaningful child nodes and is thus non-empty. In this case...
+        if node_index_import_beartype_attrs != node_index_last:
+            # print('Injecting beartype imports...')
+
             # Module-scoped import nodes (i.e., child nodes to be inserted under
             # the parent node encapsulating the currently visited submodule in
             # the AST for that module).
@@ -417,7 +434,7 @@ class BeartypeNodeTransformer(NodeTransformer):
                 module_name=BEARTYPE_DECORATOR_MODULE_NAME,
                 source_attr_name=BEARTYPE_DECORATOR_SOURCE_ATTR_NAME,
                 target_attr_name=BEARTYPE_DECORATOR_TARGET_ATTR_NAME,
-                node_sibling=node_import_prev,
+                node_sibling=node_prev,
             )
 
             # Node importing our public beartype.door.die_if_unbearable()
@@ -431,7 +448,7 @@ class BeartypeNodeTransformer(NodeTransformer):
                 module_name=BEARTYPE_RAISER_MODULE_NAME,
                 source_attr_name=BEARTYPE_RAISER_SOURCE_ATTR_NAME,
                 target_attr_name=BEARTYPE_RAISER_TARGET_ATTR_NAME,
-                node_sibling=node_import_prev,
+                node_sibling=node_prev,
             )
 
             # Node importing our private "claw_state" singleton.
@@ -439,7 +456,7 @@ class BeartypeNodeTransformer(NodeTransformer):
                 module_name=BEARTYPE_CLAW_STATE_MODULE_NAME,
                 source_attr_name=BEARTYPE_CLAW_STATE_SOURCE_ATTR_NAME,
                 target_attr_name=BEARTYPE_CLAW_STATE_TARGET_ATTR_NAME,
-                node_sibling=node_import_prev,
+                node_sibling=node_prev,
             )
 
             # Insert these output child import nodes at this safe position of
@@ -448,14 +465,25 @@ class BeartypeNodeTransformer(NodeTransformer):
             # Note that this syntax efficiently (albeit unreadably) inserts
             # these output child import nodes at the desired index (in this
             # arbitrary order) of this parent module node.
-            node.body[node_import_beartype_attrs_index:0] = (
+            node.body[node_index_import_beartype_attrs:0] = (
                 node_import_decorator,
                 node_import_raiser,
                 node_import_claw_state,
             )
-        # Else, this module is empty. In this case, silently reduce to a noop.
-        # Since this edge case is *EXTREMELY* uncommon, avoid optimizing for
-        # this edge case (here or elsewhere).
+        # Else, the 0-based index of an early child node of this parent module
+        # node immediately *BEFORE* which to insert one or more statements
+        # importing beartype-specific attributes is that of the last child node
+        # of this parent module node. In this case, this module contains *NO*
+        # semantically meaningful child nodes and is thus effectively empty.
+        # In this case, silently reduce to a noop. This edge case is *EXTREMELY*
+        # uncommon and thus *NOT* optimized for (either here or elsewhere).
+        #
+        # Note that this edge cases cleanly matches:
+        # * Syntactically empty modules containing only zero or more whitespace
+        #   characters and zero or more inline comments.
+        # * Syntactically non-empty modules containing only a prefacing module
+        #   docstring and/or one or more "from __future__" import statements.
+        #   Semantically, these sorts of modules are effectively empty as well.
 
         # Recursively transform *ALL* child nodes of this parent module node.
         node = self.generic_visit(node)

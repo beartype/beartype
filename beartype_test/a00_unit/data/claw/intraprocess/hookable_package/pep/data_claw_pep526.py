@@ -18,7 +18,7 @@ from beartype.typing import (
 )
 from pytest import raises
 
-# Import another submodule of this subpackage implicitly installing another
+# Import another submodule of this subpackage implicitly installing different
 # import hooks configured by another beartype configuration isolated to that
 # submodule. Doing so exercises that beartype import hooks correctly support
 # import hook composition (i.e., combinations of arbitrary import hooks).
