@@ -15,8 +15,7 @@ Project-wide :pep:`544`-compliant **type hint test data.**
 # ....................{ FIXTURES                           }....................
 def hints_pep_meta_pep544() -> 'List[HintPepMetadata]':
     '''
-    Session-scoped fixture returning a list of :pep:`544`-compliant **type hint
-    metadata** (i.e.,
+    List of :pep:`544`-compliant **type hint metadata** (i.e.,
     :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
     instances describing test-specific :pep:`544`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
@@ -54,6 +53,10 @@ def hints_pep_meta_pep544() -> 'List[HintPepMetadata]':
     # List of all PEP-specific type hint metadata to be returned.
     hints_pep_meta = []
 
+    # Absolute filename of this data submodule, to be subsequently opened for
+    # cross-platform IO testing purposes.
+    SUBMODULE_FILENAME = __file__
+
     # Type variables.
     T = TypeVar('T')
 
@@ -63,7 +66,7 @@ def hints_pep_meta_pep544() -> 'List[HintPepMetadata]':
         Function returning an open read-only file handle in text mode.
         '''
 
-        return open(_DATA_HINTPEP544_FILENAME, 'r', encoding='utf8')
+        return open(SUBMODULE_FILENAME, 'r', encoding='utf8')
 
 
     def open_file_binary():
@@ -71,7 +74,7 @@ def hints_pep_meta_pep544() -> 'List[HintPepMetadata]':
         Function returning an open read-only file handle in binary mode.
         '''
 
-        return open(_DATA_HINTPEP544_FILENAME, 'rb')
+        return open(SUBMODULE_FILENAME, 'rb')
 
 
     # List of one or more "HintPithUnsatisfiedMetadata" instances validating
@@ -583,14 +586,47 @@ def hints_pep_meta_pep544() -> 'List[HintPepMetadata]':
     # Return this list of all PEP-specific type hint metadata.
     return hints_pep_meta
 
-# ....................{ PRIVATE ~ constants                }....................
-_DATA_HINTPEP544_FILENAME = __file__
-'''
-Absolute filename of this data submodule, to be subsequently opened for
-cross-platform IO testing purposes by the :func:`add_data` function.
-'''
+
+def hints_pep544_ignorable_shallow() -> list:
+    '''
+    List of :pep:`544`-compliant **shallowly ignorable type hints** (i.e.,
+    ignorable on the trivial basis of their machine-readable representations).
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    from beartype._util.module.lib.utiltyping import get_typing_attrs
+
+    # ..................{ LOCALS                             }..................
+    # List of all PEP-specific shallowly ignorable type hints to be returned.
+    hints_pep_ignorable_shallow = []
+
+    # ..................{ LISTS                              }..................
+    # For the PEP 544-specific "Protocol" superclass importable from any typing
+    # module...
+    for Protocol in get_typing_attrs('Protocol'):
+        # ................{ SETS                               }................
+        # Add PEP-specific shallowly ignorable type hints to this list.
+        hints_pep_ignorable_shallow.append(
+            # Ignoring the "typing.Protocol" superclass is vital. For unknown
+            # and probably uninteresting reasons, *ALL* possible objects satisfy
+            # this superclass. Ergo, this superclass is synonymous with the
+            # root "object" superclass: e.g.,
+            #     >>> import typing as t
+            #     >>> isinstance(object(), t.Protocol)
+            #     True  # <-- wat
+            #     >>> isinstance('wtfbro', t.Protocol)
+            #     True  # <-- WAT
+            #     >>> isinstance(0x696969, t.Protocol)
+            #     True  # <-- i'm outta here.
+            Protocol,
+        )
+
+    # ..................{ RETURN                             }..................
+    # Return this list.
+    return hints_pep_ignorable_shallow
 
 # ....................{ ADDERS                             }....................
+#FIXME: Excise us up, please.
 def add_data(data_module: 'ModuleType') -> None:
     '''
     Add :pep:`544`-compliant type hint test data to various global containers

@@ -36,7 +36,7 @@ def hints_pep_meta_pep604() -> 'List[HintPepMetadata]':
 
     # ..................{ TUPLES                             }..................
     # If the active Python interpreter targets Python >= 3.10, this interpreter
-    # support PEP 604s. In this case...
+    # supports PEP 604. In this case...
     if IS_PYTHON_AT_LEAST_3_10:
         # Add PEP 604-specific test type hints to this tuple global.
         hints_pep_meta.extend((
@@ -219,6 +219,7 @@ def add_data(data_module: 'ModuleType') -> None:
         Module to be added to.
     '''
 
+    # Defer fixture-specific imports.
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 
     # If the active Python interpreter targets Python < 3.10, this interpreter

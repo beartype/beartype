@@ -183,34 +183,128 @@ def hints_pep_hashable(hints_pep_meta) -> frozenset:
         if is_object_hashable(hint_meta.hint)
     )
 
+# ....................{ FIXTURES ~ ignorable               }....................
+@fixture(scope='session')
+def hints_pep_ignorable_shallow() -> frozenset:
+    '''
+    Session-scoped fixture yielding a frozen set of **shallowly ignorable
+    PEP-compliant type hints** (i.e., ignorable on the trivial basis of their
+    machine-readable representations alone and are thus in the low-level
+    :obj:`beartype._data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_SHALLOW` set,
+    but which are typically *not* safely instantiable from those representations
+    and thus require explicit instantiation here).
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer fixture-specific imports.
+    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
+        hints_pep484_ignorable_shallow)
+    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep544 import (
+        hints_pep544_ignorable_shallow)
+
+    # ..................{ LOCALS                             }..................
+    # Tuple of all fixtures defining "HINTS_PEP_IGNORABLE_SHALLOW" subiterables.
+    HINTS_PEP_IGNORABLE_SHALLOW_FIXTURES = (
+        hints_pep484_ignorable_shallow,
+        hints_pep544_ignorable_shallow,
+    )
+
+    # ..................{ LISTS                              }..................
+    # List of all shallowly ignorable PEP-compliant type hints to be returned.
+    from beartype.typing import Any
+    _hints_pep_ignorable_shallow = [
+        #FIXME: Shift into hints_pep484_ignorable_shallow(), please.
+
+        # ..................{ PEP 484                        }..................
+        # The "Any" catch-all. By definition, *ALL* objects annotated as
+        # "Any" unconditionally satisfy this catch-all and thus semantically
+        # reduce to unannotated objects.
+        Any,
+
+        # The root "object" superclass, which *ALL* objects annotated as
+        # "object" unconditionally satisfy under isinstance()-based type
+        # covariance and thus semantically reduce to unannotated objects.
+        # "object" is equivalent to the "typing.Any" type hint singleton.
+        object,
+    ]
+
+    # For each fixture defining a "HINTS_PEP_META" subiterable, extend the main
+    # "HINTS_PEP_META" iterable by this subiterable.
+    for hints_pep_ignorable_shallow_fixture in (
+        HINTS_PEP_IGNORABLE_SHALLOW_FIXTURES):
+        _hints_pep_ignorable_shallow.extend(
+            hints_pep_ignorable_shallow_fixture())
+
+    # Yield this list coerced into a frozen set.
+    yield frozenset(_hints_pep_ignorable_shallow)
+
+
+@fixture(scope='session')
+def hints_pep_ignorable_deep() -> frozenset:
+    '''
+    Session-scoped fixture yielding a frozen set of **deeply ignorable
+    PEP-compliant type hints** (i.e., *not* ignorable on the trivial basis of
+    their machine-readable representations alone and are thus *not* in the
+    low-level
+    :obj:`beartype._data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_DEEP` set,
+    but which are nonetheless ignorable and thus require dynamic testing by the
+    high-level :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester
+    function to demonstrate this fact).
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer fixture-specific imports.
+    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
+        hints_pep484_ignorable_deep)
+    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep544 import (
+        hints_pep544_ignorable_deep)
+
+    # ..................{ LOCALS                             }..................
+    # Tuple of all fixtures defining "HINTS_PEP_IGNORABLE_DEEP" subiterables.
+    HINTS_PEP_IGNORABLE_DEEP_FIXTURES = (
+        hints_pep484_ignorable_deep,
+        hints_pep544_ignorable_deep,
+    )
+
+    # ..................{ LISTS                              }..................
+    # List of all deeply ignorable PEP-compliant type hints to be returned.
+    _hints_pep_ignorable_deep = []
+
+    # For each fixture defining a "HINTS_PEP_META" subiterable, extend the main
+    # "HINTS_PEP_META" iterable by this subiterable.
+    for hints_pep_ignorable_deep_fixture in (
+        HINTS_PEP_IGNORABLE_DEEP_FIXTURES):
+        _hints_pep_ignorable_deep.extend(
+            hints_pep_ignorable_deep_fixture())
+
+    # Yield this list coerced into a frozen set.
+    yield frozenset(_hints_pep_ignorable_deep)
+
 # ....................{ SETS                               }....................
 # Initialized by the _init() function below.
 HINTS_PEP_IGNORABLE_SHALLOW = {
     # ..................{ NON-PEP                            }..................
-    # The PEP-noncompliant builtin "object" type is the transitive superclass
-    # of all classes, parameters and return values annotated as "object"
-    # unconditionally match *ALL* objects under isinstance()-based type
-    # covariance and thus semantically reduce to unannotated parameters and
-    # return values. This is literally the "beartype.cave.AnyType" type.
+    # The root "object" superclass, which *ALL* parameters and returns annotated
+    # as "object" unconditionally satisfy under isinstance()-based type
+    # covariance and semantically reduce to unannotated parameters and returns.
+    # "object" is thus equivalent to the "typing.Any" type hint singleton.
     object,
 }
 '''
-Frozen set of **shallowly ignorable PEP-compliant type hints** (i.e.,
-PEP-compliant type hints that are shallowly ignorable and whose
+Frozen set of **shallowly ignorable PEP-compliant type hints** (i.e., whose
 machine-readable representations are in the low-level
-:attr:`beartype._data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_SHALLOW`
-set, but which are typically *not* safely instantiable from those
-representations and thus require explicit instantiation here).
+:obj:`beartype._data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_SHALLOW` set but
+which are typically *not* safely instantiable from those representations and
+thus require explicit instantiation here).
 '''
 
 
 # Initialized by the _init() function below.
 HINTS_PEP_IGNORABLE_DEEP = set()
 '''
-Frozen set of **deeply ignorable PEP-compliant type hints** (i.e.,
-PEP-compliant type hints that are *not* shallowly ignorable and thus *not* in
-the low-level :data:`HINTS_PEP_IGNORABLE_SHALLOW` set, but which are
-nonetheless ignorable and thus require dynamic testing by the high-level
+Frozen set of **deeply ignorable PEP-compliant type hints** (i.e., *not* in the
+low-level :data:`.HINTS_PEP_IGNORABLE_SHALLOW` set but which are nonetheless
+ignorable and thus require dynamic testing by the high-level
 :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester function to
 demonstrate this fact).
 '''
