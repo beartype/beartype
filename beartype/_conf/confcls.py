@@ -78,6 +78,14 @@ class BeartypeConf(object):
         from the names of all keyword parameters accepted by the :meth:`__new__`
         method to the corresponding values of those parameters in this
         configuration).
+    _hint_overrides : Dict[type, type]
+        Instructs beartype to evaluate given types as other types. This
+        is useful for defining a strict API but accepting a looser runtime
+        type evaluation. For instance, calling `def function(param : int)`
+        would fail by default if param is a `numpy.int64`, which does not
+        inherit from `int`. By setting `hint_overrides={int: numbers.Integral}`,
+        the same call would not fail because beartype now considers any
+        `numbers.Integrals` as being an `int`.
     _is_color : Optional[bool]
         Tri-state boolean governing how and whether beartype colours
         **type-checking violations** (i.e.,
@@ -151,6 +159,7 @@ class BeartypeConf(object):
         '_claw_is_pep526',
         '_conf_args',
         '_conf_kwargs',
+        '_hint_overrides',
         '_is_color',
         '_is_debug',
         '_is_pep484_tower',
@@ -168,6 +177,7 @@ class BeartypeConf(object):
         _claw_is_pep526: bool
         _conf_args: tuple
         _conf_kwargs: Dict[str, object]
+        _hint_overrides: Dict[type, type]
         _is_color: Optional[bool]
         _is_debug: bool
         _is_pep484_tower: bool
@@ -198,6 +208,7 @@ class BeartypeConf(object):
         # check_time_max_multiplier: Union[int, None] = 1000,
 
         claw_is_pep526: bool = True,
+        hint_overrides: Dict[type, type] = dict(),
         is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,
         is_debug: bool = False,
         is_pep484_tower: bool = False,
@@ -299,6 +310,15 @@ class BeartypeConf(object):
             performance-sensitive modules *after* profiling those modules to
             suffer performance regressions under import hooks published by the
             :mod:`beartype.claw` subpackage. Defaults to :data:`True`.
+        hint_overrides : Dict[type, type]
+            Instructs beartype to evaluate given types as other types. This
+            is useful for defining a strict API but accepting a looser runtime
+            type evaluation. For instance, calling `def function(param : int)`
+            would fail by default if param is a `numpy.int64`, which does not
+            inherit from `int`. By optionally setting
+            `hint_overrides={int: numbers.Integral}`,
+            the same call would not fail because beartype now considers any
+            `numbers.Integrals` as being an `int`.
         is_color : BoolTristateUnpassable
             Tri-state boolean governing how and whether beartype colours
             **type-checking violations** (i.e.,
@@ -478,6 +498,7 @@ class BeartypeConf(object):
             # Efficiently hashable tuple of these parameters in arbitrary order.
             conf_args = (
                 claw_is_pep526,
+                hint_overrides,
                 is_color,
                 is_debug,
                 is_pep484_tower,
@@ -506,6 +527,19 @@ class BeartypeConf(object):
                 )
             # Else, "claw_is_pep526" is a boolean.
             #
+            # If "hint_overrides" is *NOT* dict of types:types, raise an exception.
+            elif (
+                not isinstance(hint_overrides, Dict)
+                or not all(isinstance(_, type) for _ in hint_overrides.keys())
+                or not all(isinstance(_, type) for _ in hint_overrides.values())
+            ):
+                raise BeartypeConfParamException(
+                    f'Beartype configuration parameter "hint_overrides" '
+                    f'value {repr(hint_overrides)} not a dict with both '
+                    'keys and values being types.'
+                )
+            # Else, "hint_overrides" is a dict of types:types.
+            
             # If "is_color" is *NOT* a tri-state boolean, raise an exception.
             elif not isinstance(is_color, NoneTypeOr[bool]):
                 raise BeartypeConfParamException(
@@ -613,6 +647,7 @@ class BeartypeConf(object):
             # ..................{ CLASSIFY                   }..................
             # Classify all passed parameters with this configuration.
             self._claw_is_pep526 = claw_is_pep526
+            self._hint_overrides = hint_overrides
             self._is_color = is_color
             self._is_debug = is_debug
             self._is_pep484_tower = is_pep484_tower
@@ -631,6 +666,7 @@ class BeartypeConf(object):
             self._conf_args = conf_args
             self._conf_kwargs = dict(
                 claw_is_pep526=claw_is_pep526,
+                hint_overrides=hint_overrides,
                 is_color=is_color,
                 is_debug=is_debug,
                 is_pep484_tower=is_pep484_tower,
@@ -726,6 +762,21 @@ class BeartypeConf(object):
         '''
 
         return self._is_color
+
+
+    @property
+    def hint_overrides(self) -> Dict[type, type]:
+        '''
+        Instructs beartype to evaluate given types as other types. This
+        is useful for defining a strict API but accepting a looser runtime
+        type evaluation. For instance, calling `def function(param : int)`
+        would fail by default if param is a `numpy.int64`, which does not
+        inherit from `int`. By setting `hint_overrides={int: numbers.Integral}`,
+        the same call would not fail because beartype now considers any
+        `numbers.Integrals` as being an `int`.
+        '''
+        
+        return self._hint_overrides
 
 
     @property
