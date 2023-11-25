@@ -135,6 +135,8 @@ def hints_pep_meta() -> 'Tuple[HintPepMetadata]':
     )
 
     # ..................{ LISTS                              }..................
+    #FIXME: Refactor to defer to our new
+    #beartype_test._util.kind.utilkindmake.make_container_from_funcs() factory!
     # List of all PEP-compliant type hint metadata to be returned.
     _hints_pep_meta = []
 
@@ -228,6 +230,8 @@ def hints_pep_ignorable_shallow() -> frozenset:
         object,
     ]
 
+    #FIXME: Refactor to defer to our new
+    #beartype_test._util.kind.utilkindmake.make_container_from_funcs() factory!
     # For each fixture defining a "HINTS_PEP_META" subiterable, extend the main
     # "HINTS_PEP_META" iterable by this subiterable.
     for hints_pep_ignorable_shallow_fixture in (
@@ -267,6 +271,8 @@ def hints_pep_ignorable_deep() -> frozenset:
     )
 
     # ..................{ LISTS                              }..................
+    #FIXME: Refactor to defer to our new
+    #beartype_test._util.kind.utilkindmake.make_container_from_funcs() factory!
     # List of all deeply ignorable PEP-compliant type hints to be returned.
     _hints_pep_ignorable_deep = []
 
