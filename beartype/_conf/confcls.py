@@ -782,7 +782,7 @@ class BeartypeConf(object):
         `numbers.Integrals` as being an `int`.
         '''
         
-        return self._hint_overrides
+        return dict(self._hint_overrides)
 
 
     @property
@@ -978,6 +978,7 @@ class BeartypeConf(object):
         return (
             f'{self.__class__.__name__}('
             f'claw_is_pep526={repr(self._claw_is_pep526)}'
+            f', hint_overrides={repr(self._hint_overrides)}'
             f', is_color={repr(self._is_color)}'
             f', is_debug={repr(self._is_debug)}'
             f', is_pep484_tower={repr(self._is_pep484_tower)}'
