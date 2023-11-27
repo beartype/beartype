@@ -51,6 +51,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  sign. This is trivial, as these aliases are detectable as an instance of
 #  "types.TypeAliasType". I think... or something? *sigh*
 #* Define a new PEP 695-specific reduce_pep695() reducer resembling:
+#      from beartype.roar import BeartypeDecorHintPep695Exception
 #      from beartype._cave._cavefast import Pep695TypeAlias
 #
 #      def reduce_pep695(hint: Pep695TypeAlias) -> object:
@@ -67,12 +68,29 @@ This private submodule is *not* intended for importation by downstream callers.
 #          # If this reduction raises a "NameError", this type alias is a forward
 #          # reference to an undeclared attribute. In this case, reduce this type alias
 #          # to a stringified type hint referring to that attribute.
-#          except NameError:
+#          except NameError as exception:
 #              hint_aliased = repr(hint)
-#              assert is_identifier(hint_aliased), (
-#                  f'PEP 695 type alias forward reference {repr(hint_aliased)} '
-#                  f'not identifier.'
-#              )
+#
+#              if not is_identifier(hint_aliased):
+#                  subhint_ref = get_nameerror_attr_name(exception)
+#
+#                  hint_aliased_quoted = hint.replace(
+#                      subhint_ref, repr(subhint_ref))
+#
+#                  raise BeartypeDecorHintPep695Exception(
+#                      f'PEP 695 type alias {hint_aliased} '
+#                      f'unquoted relative forward reference {repr(subhint_ref)} '
+#                      f'unsupported outside "beartype.claw" import hooks. '
+#                      f'Consider either:\n'
+#                      f'* Quoting this forward reference in this type alias: '
+#                      f'e.g.,\n'
+#                      f'     {hint_aliased_quoted}\n'
+#                      f'* Applying "beartype.claw" import hooks to the '
+#                      f'module defining this type alias: e.g.,\n'
+#                      f'     # In the "this_package.__init__" submodule:\n'
+#                      f'     from beartype.claw import beartype_this_package\n'
+#                      f'     beartype_this_package()'
+#                  )
 #
 #          # Return this de-aliased type hint.
 #          return hint_aliased
