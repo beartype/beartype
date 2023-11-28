@@ -267,6 +267,10 @@ def _reduce_hint_cached(
         * If the passed hint is reducible, another hint reduced from this hint.
         * Else, this hint as is unmodified.
     '''
+    # If this configuration maps this hint to another hint, do so now.
+    # This one-liner looks ridiculous, but actually works. More
+    # importantly, this is the fastest way to accomplish this. Flex!
+    hint = conf.hint_overrides.get(hint, hint)    
 
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.
