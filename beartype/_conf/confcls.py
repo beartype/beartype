@@ -52,6 +52,7 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._conf._conffrozendict import _BeartypeFrozenDict as BeartypeHintOverrides
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
+from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._util.cls.utilclstest import is_type_subclass
 from threading import Lock
 
@@ -207,9 +208,12 @@ class BeartypeConf(object):
 
         # Uncomment us when implementing O(n) type-checking, please.
         # check_time_max_multiplier: Union[int, None] = 1000,
-
         claw_is_pep526: bool = True,
-        hint_overrides: Dict = {},
+
+        #FIXME: Non-ideal. If we preserve this, replace this with "None" to
+        #avoid linter and static type-checking complaints about mutability.
+        hint_overrides: dict = DICT_EMPTY,
+
         is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,
         is_debug: bool = False,
         is_pep484_tower: bool = False,
@@ -532,18 +536,20 @@ class BeartypeConf(object):
                     f'value {repr(claw_is_pep526)} not boolean.'
                 )
             # Else, "claw_is_pep526" is a boolean.
-            #
+
+            #FIXME: Additionally validate that this dictionary contains *NO*
+            #subscription-style recursive overrides. See also:
+            #    https://github.com/beartype/beartype/pull/309#issuecomment-1829200331
             # If "hint_overrides" is *NOT* dict of types:types, raise an exception.
-            elif (
-                not isinstance(hint_overrides_as_BeartypeHintOverrides, BeartypeHintOverrides)
-            ):
+            elif not isinstance(
+                hint_overrides_as_BeartypeHintOverrides, BeartypeHintOverrides):
                 raise BeartypeConfParamException(
                     f'Beartype configuration parameter "hint_overrides" '
                     f'value {repr(hint_overrides)} not a dict with both '
                     'keys and values being types.'
                 )
             # Else, "hint_overrides" is a dict of types:types.
-            
+            #
             # If "is_color" is *NOT* a tri-state boolean, raise an exception.
             elif not isinstance(is_color, NoneTypeOr[bool]):
                 raise BeartypeConfParamException(
@@ -598,7 +604,8 @@ class BeartypeConf(object):
             #
             # If "violation_verbosity" is *NOT* an enumeration member, raise an
             # exception.
-            elif not isinstance(violation_verbosity, BeartypeViolationVerbosity):
+            elif not isinstance(
+                violation_verbosity, BeartypeViolationVerbosity):
                 raise BeartypeConfParamException(
                     f'Beartype configuration parameter "violation_verbosity" '
                     f'value {repr(violation_verbosity)} not '
@@ -779,7 +786,7 @@ class BeartypeConf(object):
         the same call would not fail because beartype now considers any
         `numbers.Integrals` as being an `int`.
         '''
-        
+
         return dict(self._hint_overrides)
 
 

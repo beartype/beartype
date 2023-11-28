@@ -31,10 +31,12 @@ class _BeartypeFrozenDict(dict):
         self._hash = hash(frozen_items)  # <---- more clever stuff
 
 
-    def __hash__(self) -> int:
+    def __hash__(self) -> int:  # type: ignore[override]
         return self._hash
 
 
+    #FIXME: Implement all of the other mutable methods similarly, too. See also:
+    #    https://stackoverflow.com/q/1151658/2809027
     def __setitem__(self, key, value) -> None:
         raise NotImplementedError(
             f'Immutable dictionary {repr(self)}" '
