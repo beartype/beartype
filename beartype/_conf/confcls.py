@@ -79,7 +79,7 @@ class BeartypeConf(object):
         from the names of all keyword parameters accepted by the :meth:`__new__`
         method to the corresponding values of those parameters in this
         configuration).
-    _hint_overrides : Dict[type, type]
+    _hint_overrides : Dict
         Instructs beartype to evaluate given types as other types. This
         is useful for defining a strict API but accepting a looser runtime
         type evaluation. For instance, calling `def function(param : int)`
@@ -178,7 +178,7 @@ class BeartypeConf(object):
         _claw_is_pep526: bool
         _conf_args: tuple
         _conf_kwargs: Dict[str, object]
-        _hint_overrides: Dict[type, type]
+        _hint_overrides: Dict
         _is_color: Optional[bool]
         _is_debug: bool
         _is_pep484_tower: bool
@@ -209,7 +209,7 @@ class BeartypeConf(object):
         # check_time_max_multiplier: Union[int, None] = 1000,
 
         claw_is_pep526: bool = True,
-        hint_overrides: Dict[type, type] = {},
+        hint_overrides: Dict = {},
         is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,
         is_debug: bool = False,
         is_pep484_tower: bool = False,
@@ -311,7 +311,7 @@ class BeartypeConf(object):
             performance-sensitive modules *after* profiling those modules to
             suffer performance regressions under import hooks published by the
             :mod:`beartype.claw` subpackage. Defaults to :data:`True`.
-        hint_overrides : Dict[type, type]
+        hint_overrides : Dict
             A dict that instructs beartype to evaluate given types as other
             types. This is useful for defining a strict API but accepting a
             looser runtime type evaluation. For instance, calling
@@ -536,8 +536,6 @@ class BeartypeConf(object):
             # If "hint_overrides" is *NOT* dict of types:types, raise an exception.
             elif (
                 not isinstance(hint_overrides_as_BeartypeHintOverrides, BeartypeHintOverrides)
-                or not all(isinstance(_, type) for _ in hint_overrides.keys())
-                or not all(isinstance(_, type) for _ in hint_overrides.values())
             ):
                 raise BeartypeConfParamException(
                     f'Beartype configuration parameter "hint_overrides" '
@@ -771,7 +769,7 @@ class BeartypeConf(object):
 
 
     @property
-    def hint_overrides(self) -> Dict[type, type]:
+    def hint_overrides(self) -> Dict:
         '''
         Instructs beartype to evaluate given types as other types. This
         is useful for defining a strict API but accepting a looser runtime
