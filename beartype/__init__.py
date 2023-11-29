@@ -68,6 +68,9 @@ if 'beartype.__is_installing__' not in _modules:
         BeartypeStrategy as BeartypeStrategy,
         BeartypeViolationVerbosity as BeartypeViolationVerbosity,
     )
+    from beartype._conf._conffrozendict import (
+        _BeartypeFrozenDict as BeartypeTypeOverrides
+    )
 # Else, this submodule is *NOT* being imported at install time.
 
 # Delete the temporarily imported "sys.modules" global for ultimate safety.
