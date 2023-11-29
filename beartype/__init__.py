@@ -69,7 +69,7 @@ if 'beartype.__is_installing__' not in _modules:
         BeartypeViolationVerbosity as BeartypeViolationVerbosity,
     )
     from beartype._conf._conffrozendict import (
-        _BeartypeFrozenDict as BeartypeTypeOverrides
+        _BeartypeFrozenDict as BeartypeHintOverrides
     )
 # Else, this submodule is *NOT* being imported at install time.
 
