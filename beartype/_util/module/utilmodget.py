@@ -30,7 +30,7 @@ def get_object_module_or_none(obj: object) -> Optional[ModuleType]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     Optional[ModuleType]
         Either:
 
@@ -60,12 +60,12 @@ def get_object_module(obj: object) -> ModuleType:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     ModuleType
         Module declaring this object.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilModuleException
         If this object does *not* define the ``__module__`` dunder attribute.
     '''
@@ -102,13 +102,13 @@ def get_object_module_line_number_begin(obj: object) -> int:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     int
         1-based index of the first line of the source code of the module
         declaring the passed object.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilModuleException
         If this object is neither a callable nor class.
     '''
@@ -165,12 +165,12 @@ def get_object_module_name(obj: object) -> str:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     str
         Fully-qualified name of the module declaring this object.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilModuleException
         If this object does *not* define the ``__module__`` dunder attribute.
     '''
@@ -206,7 +206,7 @@ def get_object_module_name_or_none(obj: object) -> Optional[str]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     Optional[str]
         Either:
 
@@ -226,7 +226,7 @@ def get_object_type_module_name_or_none(obj: object) -> Optional[str]:
     declaring package) of the module declaring either the passed object if this
     object is a class *or* the class of this object otherwise (i.e., if this
     object is *not* a class) if this class declares the ``__module__`` dunder
-    instance variable *or* ``None`` otherwise.
+    instance variable *or* :data:`None` otherwise.
 
     Parameters
     ----------
@@ -234,13 +234,13 @@ def get_object_type_module_name_or_none(obj: object) -> Optional[str]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     Optional[str]
         Either:
 
         * Fully-qualified name of the module declaring the type of this object
           if this type declares a ``__module__`` dunder attribute.
-        * ``None`` otherwise.
+        * :data:`None` otherwise.
     '''
 
     # Avoid circular import dependencies.
@@ -264,13 +264,13 @@ def get_module_dir(module: ModuleType) -> Path:
         Module to be inspected.
 
     Returns
-    ----------
+    -------
     Path
         High-level :class:`Path` object encapsulating the absolute dirname of
         the parent directory containing this on-disk module.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilModuleException
         If this module *only* resides in memory.
     '''
@@ -302,17 +302,17 @@ def get_module_filename(module: ModuleType) -> str:
         Module to be inspected.
 
     Returns
-    ----------
+    -------
     str
         Absolute filename of this on-disk module.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilModuleException
         If this module *only* resides in memory.
 
     See Also
-    ----------
+    --------
     :func:`get_module_filename_or_none`
         Further details.
     '''
@@ -356,7 +356,7 @@ def get_module_filename_or_none(module: ModuleType) -> Optional[str]:
         Module to be inspected.
 
     Returns
-    ----------
+    -------
     Optional[str]
         Either:
 

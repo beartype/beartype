@@ -268,31 +268,20 @@ def _reduce_hint_cached(
         * Else, this hint as is unmodified.
     '''
 
-    #FIXME: Temporarily disabled, as this is currently inducing severe and
-    #non-trivial unit test failures (e.g., in
-    #test_pep563_class_self_reference_reloaded()). Since passing unit tests
-    #takes preference over new features, let's temporarily disable this until we
-    #can work out exactly what went wrong here.
-    #
-    #We suspect the assignment is to blame. Let's try expanding this to a more
-    #traditional "if:" statement. If that still fails, let's try refactoring the
-    #"BeartypeConf(hint_overrides)" parameter from a "dict" into a full-fledged
-    #"_BeartypeFrozenDict". Mutability might be to blame. *shrug*
-
-    # # Attempt to...
-    # try:
-    #     # If this beartype configuration coercively overrides this source hint
-    #     # with a corresponding target hint, do so now *BEFORE* attempting to
-    #     # reduce this hint via standard reduction heuristics. User preferences
-    #     # take preference over standards.
-    #     #
-    #     # Note that this one-liner looks ridiculous, but actually works. More
-    #     # importantly, this is the fastest way to accomplish this. Flex!
-    #     hint = conf.hint_overrides.get(hint, hint)
-    # # If doing so raises a "TypeError", this source hint is unhashable and thus
-    # # inapplicable for hint overriding. In this case, silently ignore this hint.
-    # except TypeError:
-    #     pass
+    # Attempt to...
+    try:
+        # If this beartype configuration coercively overrides this source hint
+        # with a corresponding target hint, do so now *BEFORE* attempting to
+        # reduce this hint via standard reduction heuristics. User preferences
+        # take preference over standards.
+        #
+        # Note that this one-liner looks ridiculous, but actually works. More
+        # importantly, this is the fastest way to accomplish this. Flex!
+        hint = conf.hint_overrides.get(hint, hint)
+    # If doing so raises a "TypeError", this source hint is unhashable and thus
+    # inapplicable for hint overriding. In this case, silently ignore this hint.
+    except TypeError:
+        pass
 
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
     # "None" otherwise.

@@ -49,7 +49,7 @@ def is_object_context_manager(obj: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a context manager.
     '''
@@ -72,7 +72,7 @@ def is_object_hashable(obj: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is hashable.
     '''
@@ -126,12 +126,12 @@ def get_object_name(obj: Any) -> str:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     str
         Fully-qualified name of this object.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilObjectNameException
         If this object defines neither ``__qualname__`` *nor* ``__name__``
         dunder attributes.
@@ -203,7 +203,7 @@ def get_object_basename_scoped(obj: Any) -> str:
     #. Unqualified basename of this object.
 
     Caveats
-    ----------
+    -------
     **The higher-level** :func:`get_object_name` **getter should typically be
     called instead of this lower-level getter.** This getter unsafely:
 
@@ -224,12 +224,12 @@ def get_object_basename_scoped(obj: Any) -> str:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     str
         Lexically scoped name of this object.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilObjectNameException
         If this object defines neither ``__qualname__`` *nor* ``__name__``
         dunder attributes.
@@ -281,9 +281,9 @@ def get_object_filename_or_none(obj: object) -> Optional[str]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     Optional[str]
-        Either: 
+        Either:
 
         * If this object is either a callable or class physically declared
           on-disk, the filename of the module or script physically declaring
@@ -334,7 +334,7 @@ def get_object_type_unless_type(obj: object) -> type:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     type
         Type of this object.
     '''
@@ -354,7 +354,7 @@ def get_object_type_basename(obj: object) -> str:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     str
         Unqualified name of this class.
     '''
@@ -375,7 +375,7 @@ def get_object_type_name(obj: object) -> str:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     str
         Fully-qualified name of the type of this object.
     '''

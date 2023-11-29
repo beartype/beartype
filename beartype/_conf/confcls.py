@@ -504,6 +504,8 @@ class BeartypeConf(object):
             #FIXME: Currently type checking is done after this conversion.
             #Therefore this conversion may fail before being checked.
             hint_overrides_as_BeartypeHintOverrides = BeartypeHintOverrides(hint_overrides)
+            # print(f'hint_overrides: {repr(hint_overrides)}')
+            # print(f'hint_overrides_as_BeartypeHintOverrides: {repr(hint_overrides_as_BeartypeHintOverrides)}')
 
             # Efficiently hashable tuple of these parameters in arbitrary order.
             conf_args = (
@@ -658,7 +660,7 @@ class BeartypeConf(object):
             # ..................{ CLASSIFY                   }..................
             # Classify all passed parameters with this configuration.
             self._claw_is_pep526 = claw_is_pep526
-            self._hint_overrides = hint_overrides
+            self._hint_overrides = hint_overrides_as_BeartypeHintOverrides
             self._is_color = is_color
             self._is_debug = is_debug
             self._is_pep484_tower = is_pep484_tower
@@ -677,7 +679,7 @@ class BeartypeConf(object):
             self._conf_args = conf_args
             self._conf_kwargs = dict(
                 claw_is_pep526=claw_is_pep526,
-                hint_overrides=hint_overrides,
+                hint_overrides=hint_overrides_as_BeartypeHintOverrides,
                 is_color=is_color,
                 is_debug=is_debug,
                 is_pep484_tower=is_pep484_tower,
@@ -965,6 +967,12 @@ class BeartypeConf(object):
         #   but almost certainly applies here.
         # * Optimally uniformly distributed, thus minimizing the likelihood of
         #   expensive hash collisions.
+
+        #FIXME: For efficiency, precompute this at __new__() time as:
+        #    self._hash = hash(self._conf_args)
+        #
+        #Then here, simply:
+        #    return self._hash
         return hash(self._conf_args)
 
 
@@ -980,6 +988,25 @@ class BeartypeConf(object):
             Representation of this configuration.
         '''
 
+        #FIXME: Non-ideal. Notably:
+        #* This is now *EXTREMELY* overly verbose. The only parameters that
+        #  should be explicitly printed in this repr() are those that deviate
+        #  from default values.
+        #* This should be automated via iterative inspection of the
+        #  "_conf_kwargs" dictionary. Manually maintaining this is becoming a
+        #  source of desynchronization woes and concomitant frustration.
+        #
+        #To resolve these concerns:
+        #* Define a new "_repr" instance variable, defaulting to "None" in the
+        #  __new__() method: e.g.,
+        #      self._repr = None
+        #* If "self._repr is None" here, then compute that here; else, return
+        #  the already computed "self._repr" string as is.
+        #* Compute "self._repr" by iterating over the items of
+        #  "self._conf_kwargs". For each such item, if the same key of
+        #  "BEARTYPE_CONF_DEFAULT._conf_kwargs" has the same value, ignore that
+        #  key-value pair. Else, append a substring exhibiting that non-default
+        #  value as is currently done below.
         return (
             f'{self.__class__.__name__}('
             f'claw_is_pep526={repr(self._claw_is_pep526)}'
