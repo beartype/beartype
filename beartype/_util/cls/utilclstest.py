@@ -285,7 +285,7 @@ def is_type_subclass(
       * A subclass of one of those superclasses.
 
     Caveats
-    ----------
+    -------
     **This higher-level tester should always be called in lieu of the
     lower-level** :func:`issubclass` **builtin,** which raises an undescriptive
     exception when the first passed parameter is *not* a class: e.g.,

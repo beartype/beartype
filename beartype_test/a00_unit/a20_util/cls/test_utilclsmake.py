@@ -16,7 +16,7 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ tester                     }....................
+# ....................{ TESTS                              }....................
 def test_make_type() -> None:
     '''
     Test the :func:`beartype._util.cls.utilclsmake.make_type` tester.
