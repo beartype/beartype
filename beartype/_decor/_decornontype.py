@@ -221,7 +221,7 @@ def beartype_func(
     # same callable... Doing so prevents all subsequent decorations from
     # erroneously ignoring this previously applied no-time strategy.
     if conf.strategy is BeartypeStrategy.O0:
-        no_type_check(func)
+        no_type_check(func)  # pyright: ignore[reportGeneralTypeIssues]
     # Else, this configuration enables a positive-time strategy performing at
     # least the minimal amount of type-checking.
 
@@ -236,7 +236,7 @@ def beartype_func(
     # Else, that callable is beartypeable. Let's do this, folks.
 
     # Beartype call metadata describing that callable.
-    bear_call = make_beartype_call(func, conf, **kwargs)
+    bear_call = make_beartype_call(func, conf, **kwargs)  # pyright: ignore[reportGeneralTypeIssues]
 
     # Generate the raw string of Python statements implementing this wrapper.
     func_wrapper_code = generate_code(bear_call)
