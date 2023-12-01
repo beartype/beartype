@@ -4,10 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype frozen dict, used to memoize configuration options such as
-hint_overrides.
+Project-wide **frozen dictionary** (i.e., immutable mapping preserving
+:math:`O(1)` complexity while prohibiting modification) class hierarchy.
 '''
 
+# ....................{ CLASSES                            }....................
 class _BeartypeFrozenDict(dict):
     '''
     **Frozen dictionary** (i.e., immutable mapping preserving :math:`O(1)`
@@ -42,3 +43,10 @@ class _BeartypeFrozenDict(dict):
             f'Immutable dictionary {repr(self)}" '
             f'key {repr(key)} not settable to {repr(value)}.'
         )
+
+# ....................{ GLOBALS                            }....................
+BEARTYPE_FROZEN_DICT_EMPTY = _BeartypeFrozenDict()
+'''
+**Empty frozen dictionary singleton** (i.e., :class:`._BeartypeFrozenDict`
+instance containing *no* key-value pairs).
+'''

@@ -50,7 +50,10 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeWarning,
 )
-from beartype._conf._conffrozendict import _BeartypeFrozenDict as BeartypeHintOverrides
+from beartype._conf._conffrozendict import (
+    BEARTYPE_FROZEN_DICT_EMPTY,
+    _BeartypeFrozenDict as BeartypeHintOverrides,
+)
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
 from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._util.cls.utilclstest import is_type_subclass
@@ -73,21 +76,19 @@ class BeartypeConf(object):
         under import hooks published by the :mod:`beartype.claw` subpackage. See
         also the :meth:`__new__` method docstring.
     _conf_args : tuple
-        Efficiently hashable tuple of *all* parameters (in arbitrary order) with
-        which this configuration was originally instantiated.
+        Tuple of the values of *all* possible keyword parameters (in arbitrary
+        order) configuring this configuration.
     _conf_kwargs : Dict[str, object]
-        **Beartype configuration keyword dictionary** (i.e., dictionary mapping
-        from the names of all keyword parameters accepted by the :meth:`__new__`
-        method to the corresponding values of those parameters in this
-        configuration).
+        Dictionary mapping from the names to values of *all* possible keyword
+        parameters configuring this configuration.
     _hint_overrides : Dict
-        Instructs beartype to evaluate given types as other types. This
-        is useful for defining a strict API but accepting a looser runtime
-        type evaluation. For instance, calling `def function(param : int)`
-        would fail by default if param is a `numpy.int64`, which does not
-        inherit from `int`. By setting `hint_overrides={int: numbers.Integral}`,
-        the same call would not fail because beartype now considers any
-        `numbers.Integrals` as being an `int`.
+        **Type hint overrides** (i.e., frozen dictionary mapping from arbitrary
+        source to target type hints), enabling callers to lie to both their
+        users and all other packages other than :mod:`beartype`. This dictionary
+        enables callers to externally present a public API annotated by
+        simplified type hints while internally instructing :mod:`beartype` to
+        privately type-check that API under a completely different set of
+        (typically more complicated) type hints.
     _is_color : Optional[bool]
         Tri-state boolean governing how and whether beartype colours
         **type-checking violations** (i.e.,
@@ -179,7 +180,7 @@ class BeartypeConf(object):
         _claw_is_pep526: bool
         _conf_args: tuple
         _conf_kwargs: Dict[str, object]
-        _hint_overrides: Dict
+        _hint_overrides: BeartypeHintOverrides
         _is_color: Optional[bool]
         _is_debug: bool
         _is_pep484_tower: bool
@@ -209,11 +210,7 @@ class BeartypeConf(object):
         # Uncomment us when implementing O(n) type-checking, please.
         # check_time_max_multiplier: Union[int, None] = 1000,
         claw_is_pep526: bool = True,
-
-        #FIXME: Non-ideal. If we preserve this, replace this with "None" to
-        #avoid linter and static type-checking complaints about mutability.
-        hint_overrides: dict = DICT_EMPTY,
-
+        hint_overrides: BeartypeHintOverrides = BEARTYPE_FROZEN_DICT_EMPTY,
         is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,
         is_debug: bool = False,
         is_pep484_tower: bool = False,
@@ -315,15 +312,46 @@ class BeartypeConf(object):
             performance-sensitive modules *after* profiling those modules to
             suffer performance regressions under import hooks published by the
             :mod:`beartype.claw` subpackage. Defaults to :data:`True`.
-        hint_overrides : Dict
-            A dict that instructs beartype to evaluate given types as other
-            types. This is useful for defining a strict API but accepting a
-            looser runtime type evaluation. For instance, calling
-            `def function(param : int)` would fail by default if param is a
-            `numpy.int64`, which does not inherit from `int`. By optionally
-            setting `hint_overrides={int: numbers.Integral}`, the same call
-            would not fail because beartype now considers any
-            `numbers.Integrals` as being an `int`.
+        hint_overrides : BeartypeHintOverrides
+            **Type hint overrides** (i.e., frozen dictionary mapping from
+            arbitrary source to target type hints), enabling callers to lie to
+            both their users and all other packages other than :mod:`beartype`.
+            This dictionary enables callers to externally present a public API
+            annotated by simplified type hints while internally instructing
+            :mod:`beartype` to privately type-check that API under a completely
+            different set of (typically more complicated) type hints. Doing so
+            preserves a facade of simplicity for downstream consumers like end
+            users, static type-checkers, and document generators. Defaults to
+            the empty dictionary.
+
+            Specifically, for each source type hint annotating each callable,
+            class, or variable assignment observed by :mod:`beartype`, if that
+            source type hint is a key of this dictionary, :mod:`beartype` maps
+            that source type hint to the corresponding target type hint in this
+            dictionary. That target type hint then globally "overrides" (i.e.,
+            replaces, substitutes for) that source type hint. :mod:`beartype`
+            then uses that target type hint in place of that source type hint.
+
+            For example, consider this Abomination Unto the Eyes of Guido:
+
+            .. code-block:: python
+
+               from beartype, BeartypeConf, BeartypeHintOverrides
+
+               # @beartype decorator configured to expand all "float" type hints
+               # to "int | float" type hints.
+               lyingbeartype = beartype(conf=BeartypeConf(
+                   hint_overrides=BeartypeHintOverrides({float: int | float})))
+
+               # The @lyingbeartype decorator now expands this signature...
+               @lyingbeartype
+               def lies(all_lies: list[int]) -> int:
+                   return all_lies[0]
+
+               # ...as if it had been annotated like this instead.
+               @beartype
+               def lies(all_lies: list[int | float]) -> int | float:
+                   return all_lies[0]
         is_color : BoolTristateUnpassable
             Tri-state boolean governing how and whether beartype colours
             **type-checking violations** (i.e.,
@@ -500,17 +528,10 @@ class BeartypeConf(object):
             # value of the ${BEARTYPE_IS_COLOR} environment variable (if set).
             is_color = get_is_color(is_color)
 
-            # Convert hintoverrides from dict to BeartypeHintOverrides
-            #FIXME: Currently type checking is done after this conversion.
-            #Therefore this conversion may fail before being checked.
-            hint_overrides_as_BeartypeHintOverrides = BeartypeHintOverrides(hint_overrides)
-            # print(f'hint_overrides: {repr(hint_overrides)}')
-            # print(f'hint_overrides_as_BeartypeHintOverrides: {repr(hint_overrides_as_BeartypeHintOverrides)}')
-
             # Efficiently hashable tuple of these parameters in arbitrary order.
             conf_args = (
                 claw_is_pep526,
-                hint_overrides_as_BeartypeHintOverrides,
+                hint_overrides,
                 is_color,
                 is_debug,
                 is_pep484_tower,
@@ -542,15 +563,14 @@ class BeartypeConf(object):
             #FIXME: Additionally validate that this dictionary contains *NO*
             #subscription-style recursive overrides. See also:
             #    https://github.com/beartype/beartype/pull/309#issuecomment-1829200331
-            # If "hint_overrides" is *NOT* dict of types:types, raise an exception.
-            elif not isinstance(
-                hint_overrides_as_BeartypeHintOverrides, BeartypeHintOverrides):
+            # If "hint_overrides" is *NOT* a frozen dict, raise an exception.
+            elif not isinstance(hint_overrides, BeartypeHintOverrides):
                 raise BeartypeConfParamException(
                     f'Beartype configuration parameter "hint_overrides" '
-                    f'value {repr(hint_overrides)} not a dict with both '
-                    'keys and values being types.'
+                    f'value {repr(hint_overrides)} not frozen dictionary '
+                    f'(i.e., "beartype.BeartypeHintOverrides" instance).'
                 )
-            # Else, "hint_overrides" is a dict of types:types.
+            # Else, "hint_overrides" is a frozen dict.
             #
             # If "is_color" is *NOT* a tri-state boolean, raise an exception.
             elif not isinstance(is_color, NoneTypeOr[bool]):
@@ -660,7 +680,7 @@ class BeartypeConf(object):
             # ..................{ CLASSIFY                   }..................
             # Classify all passed parameters with this configuration.
             self._claw_is_pep526 = claw_is_pep526
-            self._hint_overrides = hint_overrides_as_BeartypeHintOverrides
+            self._hint_overrides = hint_overrides
             self._is_color = is_color
             self._is_debug = is_debug
             self._is_pep484_tower = is_pep484_tower
@@ -679,7 +699,7 @@ class BeartypeConf(object):
             self._conf_args = conf_args
             self._conf_kwargs = dict(
                 claw_is_pep526=claw_is_pep526,
-                hint_overrides=hint_overrides_as_BeartypeHintOverrides,
+                hint_overrides=hint_overrides,
                 is_color=is_color,
                 is_debug=is_debug,
                 is_pep484_tower=is_pep484_tower,
@@ -740,12 +760,15 @@ class BeartypeConf(object):
     # instantiated (as keyword-only parameters).
 
     @property
-    def claw_is_pep526(self) -> bool:
+    def hint_overrides(self) -> BeartypeHintOverrides:
         '''
-        :data:`True` only if type-checking **annotated variable assignments**
-        (i.e., :pep:`526`-compliant assignments to local, global, class, and
-        instance variables annotated by type hints) when importing modules
-        under import hooks published by the :mod:`beartype.claw` subpackage.
+        **Type hint overrides** (i.e., frozen dictionary mapping from arbitrary
+        source to target type hints), enabling callers to lie to both their
+        users and all other packages other than :mod:`beartype`. This dictionary
+        enables callers to externally present a public API annotated by
+        simplified type hints while internally instructing :mod:`beartype` to
+        privately type-check that API under a completely different set of
+        (typically more complicated) type hints.
 
         See Also
         ----------
@@ -753,72 +776,7 @@ class BeartypeConf(object):
             Further details.
         '''
 
-        return self._claw_is_pep526
-
-
-    @property
-    def is_color(self) -> Optional[bool]:
-        '''
-        Tri-state boolean governing how and whether beartype colours
-        **type-checking violations** (i.e.,
-        :class:`beartype.roar.BeartypeCallHintViolation` exceptions) with
-        POSIX-compliant ANSI escape sequences for readability. Specifically, if
-        this boolean is:
-
-        * :data:`False`, beartype *never* colours type-checking violations
-          raised by callables configured with this configuration.
-        * :data:`True`, beartype *always* colours type-checking violations
-          raised by callables configured with this configuration.
-        * :data:`None`, beartype conditionally colours type-checking violations
-          raised by callables configured with this configuration only when
-          standard output is attached to an interactive terminal.
-        '''
-
-        return self._is_color
-
-
-    @property
-    def hint_overrides(self) -> Dict:
-        '''
-        Instructs beartype to evaluate given types as other types. This
-        is useful for defining a strict API but accepting a looser runtime
-        type evaluation. For instance, calling `def function(param : int)`
-        would fail by default if param is a `numpy.int64`, which does not
-        inherit from `int`. By setting `hint_overrides={int: numbers.Integral}`,
-        the same call would not fail because beartype now considers any
-        `numbers.Integrals` as being an `int`.
-        '''
-
-        return dict(self._hint_overrides)
-
-
-    @property
-    def is_debug(self) -> bool:
-        '''
-        :data:`True` only if debugging :mod:`beartype`.
-
-        See Also
-        ----------
-        :meth:`__new__`
-            Further details.
-        '''
-
-        return self._is_debug
-
-
-    @property
-    def is_pep484_tower(self) -> bool:
-        '''
-        :data:`True` only if enabling support for the :pep:`484`-compliant
-        implicit numeric tower.
-
-        See Also
-        ----------
-        :meth:`__new__`
-            Further details.
-        '''
-
-        return self._is_pep484_tower
+        return self._hint_overrides
 
 
     @property
@@ -900,6 +858,81 @@ class BeartypeConf(object):
         '''
 
         return self._warning_cls_on_decorator_exception
+
+    # ..................{ PROPERTIES ~ parameters : bool     }..................
+    # Read-only public properties with which this configuration was originally
+    # instantiated (as keyword-only parameters).
+
+    @property
+    def claw_is_pep526(self) -> bool:
+        '''
+        :data:`True` only if type-checking **annotated variable assignments**
+        (i.e., :pep:`526`-compliant assignments to local, global, class, and
+        instance variables annotated by type hints) when importing modules
+        under import hooks published by the :mod:`beartype.claw` subpackage.
+
+        See Also
+        ----------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._claw_is_pep526
+
+
+    @property
+    def is_color(self) -> Optional[bool]:
+        '''
+        Tri-state boolean governing how and whether beartype colours
+        **type-checking violations** (i.e.,
+        :class:`beartype.roar.BeartypeCallHintViolation` exceptions) with
+        POSIX-compliant ANSI escape sequences for readability. Specifically, if
+        this boolean is:
+
+        * :data:`False`, beartype *never* colours type-checking violations
+          raised by callables configured with this configuration.
+        * :data:`True`, beartype *always* colours type-checking violations
+          raised by callables configured with this configuration.
+        * :data:`None`, beartype conditionally colours type-checking violations
+          raised by callables configured with this configuration only when
+          standard output is attached to an interactive terminal.
+
+        See Also
+        ----------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._is_color
+
+
+    @property
+    def is_debug(self) -> bool:
+        '''
+        :data:`True` only if debugging :mod:`beartype`.
+
+        See Also
+        ----------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._is_debug
+
+
+    @property
+    def is_pep484_tower(self) -> bool:
+        '''
+        :data:`True` only if enabling support for the :pep:`484`-compliant
+        implicit numeric tower.
+
+        See Also
+        ----------
+        :meth:`__new__`
+            Further details.
+        '''
+
+        return self._is_pep484_tower
 
     # ..................{ DUNDERS                            }..................
     def __eq__(self, other: object) -> bool:
