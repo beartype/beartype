@@ -56,21 +56,18 @@ if 'beartype.__is_installing__' not in _modules:
     # Publicize the private @beartype._decor.beartype decorator as
     # @beartype.beartype, preserving all implementation details as private.
     from beartype._decor.decormain import (
-        beartype as beartype,
-    )
+        beartype as beartype)
 
     # Publicize all top-level configuration attributes required to configure the
     # @beartype.beartype decorator.
     from beartype._conf.confcls import (
-        BeartypeConf as BeartypeConf,
-    )
+        BeartypeConf as BeartypeConf)
     from beartype._conf.confenum import (
         BeartypeStrategy as BeartypeStrategy,
         BeartypeViolationVerbosity as BeartypeViolationVerbosity,
     )
-    from beartype._conf._conffrozendict import (
-        _BeartypeFrozenDict as BeartypeHintOverrides
-    )
+    from beartype._conf.confoverrides import (
+        BeartypeHintOverrides as BeartypeHintOverrides)
 # Else, this submodule is *NOT* being imported at install time.
 
 # Delete the temporarily imported "sys.modules" global for ultimate safety.

@@ -28,7 +28,7 @@ from beartype.vale._util._valeutilsnip import (
 from beartype.vale._core._valecore import BeartypeValidator
 from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.kind.utilkinddict import update_mapping
+from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.text.utiltextrepr import represent_object
 from beartype._util.utilobject import SENTINEL

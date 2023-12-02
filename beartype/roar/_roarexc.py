@@ -913,6 +913,47 @@ class BeartypeDoorPepUnsupportedException(BeartypeDoorPepException):
 
     pass
 
+# ....................{ API ~ kind                         }....................
+class BeartypeKindException(BeartypeException):
+    '''
+    Abstract base class of all **beartype container exceptions.**
+
+    Instances of subclasses of this exception are raised at usage (e.g.,
+    instantiation, callable call) time from various class hierarchies
+    implementing **beartype containers** (i.e., pure-Python data structures
+    defined by :mod:`beartype`).
+    '''
+
+    pass
+
+# ....................{ API ~ kind : dict                  }....................
+class BeartypeKindFrozenDictException(BeartypeException):
+    '''
+    **Beartype frozen dictionary exception.**
+
+    This exception is raised from various methods of the private
+    :class:`beartype._util.kind.map.utilmapfrozen.FrozenDict` class publicly
+    exposed as the :class:`beartype.BeartypeHintOverrides` subclass, typically
+    due to external callers erroneously attempting to modify key-value pairs of
+    instances of this class.
+    '''
+
+    pass
+
+
+class BeartypeHintOverridesException(BeartypeKindFrozenDictException):
+    '''
+    **Beartype hint overrides exception.**
+
+    This exception is raised from various methods of the public
+    :class:`beartype.BeartypeHintOverrides` class, typically due to external
+    callers erroneously attempting to instantiate instances of this class with
+    **recursive hint overrides** (e.g.,
+    ``BeartypeHintOverrides{str: list[str]})``).
+    '''
+
+    pass
+
 # ....................{ API ~ vale                         }....................
 class BeartypeValeException(BeartypeException):
     '''
@@ -920,7 +961,7 @@ class BeartypeValeException(BeartypeException):
 
     Instances of subclasses of this exception are raised at usage (e.g.,
     instantiation, callable call) time from the class hierarchy published by
-    the :func:`beartype.vale` subpackage.
+    the :mod:`beartype.vale` subpackage.
     '''
 
     pass
@@ -931,7 +972,7 @@ class BeartypeValeSubscriptionException(BeartypeValeException):
     **Beartype validator subscription exception.**
 
     This exception is raised at instantiation time when subscripting (indexing)
-    factories published by the :func:`beartype.vale` subpackage, including
+    factories published by the :mod:`beartype.vale` subpackage, including
     attempts to:
 
     * Instantiate *any* of these factories. Like standard type hints, these
@@ -1020,7 +1061,7 @@ class _BeartypeUtilExceptionException(_BeartypeUtilException):
     '''
     **Beartype exception utility exception.**
 
-    This exception is raised by public functions of the private
+    This exception is raised by various functions of the private
     :mod:`beartype.roar._roarexc` subpackage.
 
     This exception denotes a critical internal issue and should thus *never* be
@@ -1188,7 +1229,7 @@ class _BeartypeUtilCallFrameException(_BeartypeUtilException):
     '''
     **Beartype call stack frame utility exception.**
 
-    This exception is raised by public functions of the private
+    This exception is raised by various functions of the private
     :mod:`beartype._util.utilfunc` subpackage. This exception denotes a critical
     internal issue and should thus *never* be raised -- let alone allowed to
     percolate up the call stack to end users.
@@ -1201,8 +1242,8 @@ class _BeartypeUtilMappingException(_BeartypeUtilException):
     '''
     **Beartype mapping utility exception.**
 
-    This exception is raised by public functions of the private
-    :mod:`beartype._util.kind.utilkinddict` submodule. This exception denotes a
+    This exception is raised by various functions of the private
+    :mod:`beartype._util.kind.map` subpackage. This exception denotes a
     critical internal issue and should thus *never* be raised -- let alone
     allowed to percolate up the call stack to end users.
     '''
@@ -1214,7 +1255,7 @@ class _BeartypeUtilModuleException(_BeartypeUtilException):
     '''
     **Beartype module utility exception.**
 
-    This exception is raised by public functions of the private
+    This exception is raised by various functions of the private
     :mod:`beartype._util.module.utilmodget` subpackage. Notably, this includes:
 
     * When dynamically importing an unimportable external user-defined module,
@@ -1234,7 +1275,7 @@ class _BeartypeUtilPathException(_BeartypeUtilException):
     '''
     **Beartype path utility exception.**
 
-    This exception is raised by public functions of the private
+    This exception is raised by various functions of the private
     :mod:`beartype._util.path` subpackage on various fatal edge cases. This
     exception denotes a critical internal issue and should thus *never* be
     raised -- let alone allowed to percolate up the call stack to end users.
@@ -1260,7 +1301,7 @@ class _BeartypeUtilCallableException(_BeartypeUtilException):
     '''
     **Beartype callable utility exception.**
 
-    This exception is raised by public functions of the private
+    This exception is raised by various functions of the private
     :mod:`beartype._util.func` subpackage.
 
     This exception denotes a critical internal issue and should thus *never* be
@@ -1274,7 +1315,7 @@ class _BeartypeUtilCallableScopeException(_BeartypeUtilCallableException):
     '''
     **Beartype callable scope utility exception.**
 
-    This exception is raised by public functions of the private
+    This exception is raised by various functions of the private
     :mod:`beartype._util.func.utilfuncscope` submodule.
 
     This exception denotes a critical internal issue and should thus *never* be
@@ -1306,7 +1347,7 @@ class _BeartypeUtilCallableWrapperException(_BeartypeUtilCallableException):
     '''
     **Beartype callable wrapper utility exception.**
 
-    This exception is raised by public functions of the private
+    This exception is raised by various functions of the private
     :mod:`beartype._util.func.utilfuncwrap` subpackage.
 
     This exception denotes a critical internal issue and should thus *never* be

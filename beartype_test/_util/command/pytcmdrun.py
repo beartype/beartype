@@ -414,7 +414,7 @@ def _init_popen_kwargs(
     '''
 
     # Defer test-specific imports.
-    from beartype._util.kind.utilkinddict import is_mapping_keys_any
+    from beartype._util.kind.map.utilmaptest import is_mapping_keys_any
     from beartype._util.os.utilostest import is_os_windows_vanilla
 
     # If these keyword arguments are empty, default to the empty dictionary

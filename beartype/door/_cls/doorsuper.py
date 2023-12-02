@@ -63,7 +63,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     testing) subclasses.
 
     Sorting
-    --------
+    -------
     **Type hint wrappers are partially ordered** with respect to one another.
     Type hints wrappers support all binary comparators (i.e., ``==``, ``!=``,
     ``<``, ``<=``, ``>``, and ``>=``) such that for any three type hint wrappers
@@ -95,8 +95,8 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         >>> list(hint_b)
         [TypeHint(typing.Union[int, str]), TypeHint(typing.Sequence[typing.Any])]
 
-    Attributes (Private)
-    --------
+    Attributes
+    ----------
     _args : Tuple[object, ...]
         Tuple of the zero or more low-level child type hints subscripting
         (indexing) the low-level parent type hint wrapped by this wrapper.
@@ -205,7 +205,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             Other type hint to be tested against this type hint.
 
         Returns
-        ----------
+        -------
         bool
             ``True`` only if this type hint is equal to that other hint.
         '''
@@ -342,7 +342,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
               child type hints wrapped by new :class:`TypeHint` instances.
 
         Returns
-        ----------
+        -------
         Union['TypeHint', Tuple['TypeHint', ...]]
             Child type hint wrapper(s) at these ind(ex|ices), as detailed above.
         '''
@@ -485,7 +485,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         This property is memoized for efficiency.
 
         Returns
-        ----------
+        -------
         bool
             :data:`True` only if this type hint is ignorable.
         '''
@@ -519,12 +519,12 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             constant-time configuration.
 
         Raises
-        ----------
+        ------
         BeartypeDoorHintViolation
             If this object violates this hint.
 
         Examples
-        ----------
+        --------
             >>> from beartype.door import TypeHint
             >>> TypeHint(list[str]).die_if_unbearable(
             ...     ['And', 'what', 'rough', 'beast,'], )
@@ -575,19 +575,19 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             constant-time configuration.
 
         Returns
-        ----------
+        -------
         bool
             :data:`True` only if this object satisfies this hint.
 
         Raises
-        ----------
+        ------
         beartype.roar.BeartypeDecorHintForwardRefException
             If this hint contains one or more relative forward references, which
             this tester explicitly prohibits to improve both the efficiency and
             portability of calls to this tester.
 
         Examples
-        ----------
+        --------
             >>> from beartype.door import TypeHint
             >>> TypeHint(list[str]).is_bearable(['Things', 'fall', 'apart;'])
             True
@@ -621,12 +621,12 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             Other type hint to be tested against this type hint.
 
         Returns
-        ----------
+        -------
         bool
             :data:`True` only if this type hint is a subhint of that other hint.
 
         See Also
-        ----------
+        --------
         :func:`beartype.door.is_subhint`
             Further details.
         '''
@@ -660,13 +660,13 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             Other type hint to be tested against this type hint.
 
         Returns
-        ----------
+        -------
         bool
             :data:`True` only if this type hint is a superhint of that other
             hint.
 
         See Also
-        ----------
+        --------
         :func:`beartype.door.is_subhint`
             Further details.
         '''
@@ -726,7 +726,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             Other type hint to be tested against this type hint.
 
         Returns
-        ----------
+        -------
         bool
             :data:`True` only if this type hint is equal to that other hint.
         '''
@@ -762,12 +762,12 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             Other type hint to be tested against this type hint.
 
         Returns
-        ----------
+        -------
         bool
             :data:`True` only if this type hint is a subhint of that other hint.
 
         See Also
-        ----------
+        --------
         :func:`beartype.door.is_subhint`
             Further details.
         '''
@@ -792,7 +792,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             Conditional branch of another type hint to be tested against.
 
         See Also
-        ----------
+        --------
         :meth:`__le__`
             Further details.
         '''

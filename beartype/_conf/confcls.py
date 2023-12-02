@@ -44,18 +44,17 @@ from beartype._conf.confenum import (
     BeartypeStrategy,
     BeartypeViolationVerbosity,
 )
+from beartype._conf.confoverrides import (
+    BEARTYPE_HINT_OVERRIDES_EMPTY,
+    BeartypeHintOverrides as BeartypeHintOverrides,
+)
 from beartype._conf._confget import get_is_color
 from beartype._data.hint.datahinttyping import (
     BoolTristateUnpassable,
     TypeException,
     TypeWarning,
 )
-from beartype._conf._conffrozendict import (
-    BEARTYPE_FROZEN_DICT_EMPTY,
-    _BeartypeFrozenDict as BeartypeHintOverrides,
-)
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
-from beartype._data.kind.datakinddict import DICT_EMPTY
 from beartype._util.cls.utilclstest import is_type_subclass
 from threading import Lock
 
@@ -210,7 +209,7 @@ class BeartypeConf(object):
         # Uncomment us when implementing O(n) type-checking, please.
         # check_time_max_multiplier: Union[int, None] = 1000,
         claw_is_pep526: bool = True,
-        hint_overrides: BeartypeHintOverrides = BEARTYPE_FROZEN_DICT_EMPTY,
+        hint_overrides: BeartypeHintOverrides = BEARTYPE_HINT_OVERRIDES_EMPTY,
         is_color: BoolTristateUnpassable = ARG_VALUE_UNPASSED,
         is_debug: bool = False,
         is_pep484_tower: bool = False,
@@ -486,12 +485,12 @@ class BeartypeConf(object):
               fatal exception at the first decoration issue.
 
         Returns
-        ----------
+        -------
         BeartypeConf
             Beartype configuration memoized with these parameters.
 
         Raises
-        ----------
+        ------
         BeartypeConfParamException
             If either:
 

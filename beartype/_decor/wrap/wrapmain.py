@@ -76,7 +76,7 @@ from beartype._util.hint.utilhinttest import (
     is_hint_ignorable,
     is_hint_needs_cls_stack,
 )
-from beartype._util.kind.utilkinddict import update_mapping
+from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextprefix import (
     prefix_beartypeable_arg,

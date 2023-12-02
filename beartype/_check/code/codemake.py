@@ -137,7 +137,7 @@ from beartype._util.hint.pep.utilpeptest import (
 )
 from beartype._check.convert.convsanify import sanify_hint_any
 from beartype._util.hint.utilhinttest import is_hint_ignorable
-from beartype._util.kind.utilkinddict import update_mapping
+from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.text.utiltextmagic import (
     CODE_INDENT_1,
     CODE_INDENT_2,

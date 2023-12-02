@@ -166,7 +166,7 @@ def test_pep561_mypy() -> None:
 #   complicate CI workflows and consume excess CI minutes for *NO* gain.
 @skip_unless_pathable('pyright')
 @skip_if_ci()
-def test_pep561_pyright() -> None:
+def test_pep561_pyright(monkeypatch) -> None:
     '''
     Functional test testing this project's compliance with :pep:`561` by
     externally running :mod:`pyright` (i.e., the most popular third-party static
@@ -194,6 +194,7 @@ def test_pep561_pyright() -> None:
     from beartype.meta import PACKAGE_NAME
     from beartype._util.py.utilpyversion import get_python_version_major_minor
     from beartype_test._util.command.pytcmdrun import run_command_forward_output
+    from beartype_test._util.path.pytpathmain import get_main_dir
 
     # ....................{ COMMAND                        }....................
     # Tuple of all shell words with which to run the external "pyright" command.
@@ -220,6 +221,16 @@ def test_pep561_pyright() -> None:
         # that dirname encapsulates a Python package. *sigh*
         PACKAGE_NAME,
     )
+
+    # Temporarily change to the root directory for this project *BEFORE* running
+    # the "pyright" command. Unlike the "mypy" command, "pyright" fails to
+    # accept an option or argument specifying the target directory containing
+    # the specified package. If this directory is *NOT* changed to here,
+    # "pyright" fails with a fatal error under "tox" resembling:
+    #      File or directory
+    #      "/home/leycec/py/beartype/.tox/py311-coverage/tmp/beartype" does not
+    #      exist.
+    monkeypatch.chdir(str(get_main_dir()))
 
     # Run this command, raising an exception on subprocess failure while
     # forwarding all standard output and error output by this subprocess to the
