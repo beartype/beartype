@@ -27,10 +27,22 @@ def test_api_conf_dataclass() -> None:
     # Defer test-specific imports.
     from beartype import (
         BeartypeConf,
+        BeartypeHintOverrides,
         BeartypeStrategy,
     )
     from beartype.roar import BeartypeConfParamException
+    from beartype.typing import Union
+    from beartype._conf.confoverrides import BEARTYPE_HINT_OVERRIDES_EMPTY
     from pytest import raises
+
+    # ....................{ CLASSES                        }....................
+    class FakeBool(object):
+        '''
+        Fake boolean class, just because. Look. Just accept it.
+        '''
+
+        def __bool__(self) -> bool:
+            return False
 
     # ....................{ LOCALS                         }....................
     # Tuple of all substrings to assert as trivially contained within the string
@@ -40,6 +52,7 @@ def test_api_conf_dataclass() -> None:
     BEAR_CONF_REPR_SUBSTRS = (
         'BeartypeConf',
         'claw_is_pep526',
+        'hint_overrides',
         'is_color',
         'is_debug',
         'is_pep484_tower',
@@ -49,10 +62,16 @@ def test_api_conf_dataclass() -> None:
     # Default (i.e., unparametrized) beartype configuration.
     BEAR_CONF_DEFAULT = BeartypeConf()
 
+    # Non-empty hint overrides mapping one or more arbitrary source type hints
+    # to corresponding arbitrary target type hints.
+    BEAR_HINT_OVERRIDES_NONEMPTY = BeartypeHintOverrides(
+        {bool: Union[bool, FakeBool]})
+
     # All possible keyword arguments initialized to non-default values with
     # which to instantiate a non-default beartype configuration.
     BEAR_CONF_NONDEFAULT_KWARGS = dict(
         claw_is_pep526=False,
+        hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
         is_color=True,
         is_debug=True,
         is_pep484_tower=True,
@@ -74,12 +93,27 @@ def test_api_conf_dataclass() -> None:
     # the order in which parameters are passed.
     assert BeartypeConf() is BeartypeConf()
     assert (
-        BeartypeConf(strategy=BeartypeStrategy.On, claw_is_pep526=False, is_debug=True, is_color=True, is_pep484_tower=True) is
-        BeartypeConf(is_pep484_tower=True, is_color=True, is_debug=True, claw_is_pep526=False, strategy=BeartypeStrategy.On)
+        BeartypeConf(
+            strategy=BeartypeStrategy.On,
+            claw_is_pep526=False,
+            hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
+            is_debug=True,
+            is_color=True,
+            is_pep484_tower=True,
+        ) is
+        BeartypeConf(
+            is_pep484_tower=True,
+            is_color=True,
+            is_debug=True,
+            hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
+            claw_is_pep526=False,
+            strategy=BeartypeStrategy.On,
+        )
     )
 
     # Assert that the default configuration contains the expected fields.
     assert BEAR_CONF_DEFAULT.claw_is_pep526 is True
+    assert BEAR_CONF_DEFAULT.hint_overrides is BEARTYPE_HINT_OVERRIDES_EMPTY
     assert BEAR_CONF_DEFAULT.is_color is None
     assert BEAR_CONF_DEFAULT.is_debug is False
     assert BEAR_CONF_DEFAULT.is_pep484_tower is False
@@ -89,6 +123,7 @@ def test_api_conf_dataclass() -> None:
 
     # Assert that the non-default configuration contains the expected fields.
     assert BEAR_CONF_NONDEFAULT.claw_is_pep526 is False
+    assert BEAR_CONF_NONDEFAULT.hint_overrides is BEAR_HINT_OVERRIDES_NONEMPTY
     assert BEAR_CONF_NONDEFAULT.is_color is True
     assert BEAR_CONF_NONDEFAULT.is_debug is True
     assert BEAR_CONF_NONDEFAULT.is_pep484_tower is True
@@ -127,6 +162,9 @@ def test_api_conf_dataclass() -> None:
         BeartypeConf(claw_is_pep526=(
             'The fountains mingle with the river'))
     with raises(BeartypeConfParamException):
+        BeartypeConf(hint_overrides=(
+            'Wildered, and wan, and panting, she returned.'))
+    with raises(BeartypeConfParamException):
         BeartypeConf(is_color=(
             'And many sounds, and much of life and death.'))
     with raises(BeartypeConfParamException):
@@ -145,6 +183,8 @@ def test_api_conf_dataclass() -> None:
     # Assert that attempting to modify any public raises the expected exception.
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.claw_is_pep526 = True
+    with raises(AttributeError):
+        BEAR_CONF_DEFAULT.hint_overrides = {}
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.is_color = True
     with raises(AttributeError):
@@ -272,3 +312,17 @@ def test_api_conf_strategy() -> None:
     assert isinstance(BeartypeStrategy.O1, BeartypeStrategy)
     assert isinstance(BeartypeStrategy.Ologn, BeartypeStrategy)
     assert isinstance(BeartypeStrategy.On, BeartypeStrategy)
+
+
+def test_api_conf_violation_verbosity() -> None:
+    '''
+    Test the public :func:`beartype.BeartypeViolationVerbosity` enumeration.
+    '''
+
+    # Defer test-specific imports.
+    from beartype import BeartypeViolationVerbosity
+
+    # Assert this enumeration declares the expected members.
+    assert isinstance(BeartypeViolationVerbosity.MINIMAL, int)
+    assert isinstance(BeartypeViolationVerbosity.DEFAULT, int)
+    assert isinstance(BeartypeViolationVerbosity.MAXIMAL, int)

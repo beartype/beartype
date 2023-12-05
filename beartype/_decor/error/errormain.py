@@ -365,22 +365,22 @@ def get_beartype_violation(
     # Dictionary mapping from each possibly violation verbosity to a
     # corresponding substring prepending this exception message.
     VIOLATION_VERBOSITY_TO_PREFIX = {
-        BeartypeViolationVerbosity.MINIMUM: (
+        BeartypeViolationVerbosity.MINIMAL: (
             f'{exception_prefix}was expected to be of type '
             f'{color_hint(repr(hint))}'
         ),
         BeartypeViolationVerbosity.DEFAULT: (
             f'{exception_prefix}violates type hint {color_hint(repr(hint))}'),
     }
-    VIOLATION_VERBOSITY_TO_PREFIX[BeartypeViolationVerbosity.MAXIMUM] = (  # <-- alias!
+    VIOLATION_VERBOSITY_TO_PREFIX[BeartypeViolationVerbosity.MAXIMAL] = (  # <-- alias!
         VIOLATION_VERBOSITY_TO_PREFIX[BeartypeViolationVerbosity.DEFAULT])
 
     # Dictionary mapping from each possibly violation verbosity to a
     # corresponding substring embedded in the middle of this exception message.
     VIOLATION_VERBOSITY_TO_INFIX = {
-        BeartypeViolationVerbosity.MINIMUM: '',
+        BeartypeViolationVerbosity.MINIMAL: '',
         BeartypeViolationVerbosity.DEFAULT: '',
-        BeartypeViolationVerbosity.MAXIMUM: (
+        BeartypeViolationVerbosity.MAXIMAL: (
             # If this configuration is the default configuration, avoid
             # needlessly representing this default configuration.
             ''
@@ -396,10 +396,10 @@ def get_beartype_violation(
     # Dictionary mapping from each possibly violation verbosity to a
     # corresponding substring appending this exception message.
     VIOLATION_VERBOSITY_TO_SUFFIX = {
-        BeartypeViolationVerbosity.MINIMUM: '.',
+        BeartypeViolationVerbosity.MINIMAL: '.',
         BeartypeViolationVerbosity.DEFAULT: f', as {violation_cause_suffixed}',
     }
-    VIOLATION_VERBOSITY_TO_SUFFIX[BeartypeViolationVerbosity.MAXIMUM] = (  # <-- alias!
+    VIOLATION_VERBOSITY_TO_SUFFIX[BeartypeViolationVerbosity.MAXIMAL] = (  # <-- alias!
         VIOLATION_VERBOSITY_TO_SUFFIX[BeartypeViolationVerbosity.DEFAULT])
 
     # Human-readable violation message to be raised.

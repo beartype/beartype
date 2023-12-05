@@ -101,13 +101,13 @@ class BeartypeViolationVerbosity(IntEnum):
 
     Attributes
     ----------
-    MINIMUM : EnumMemberType
+    MINIMAL : EnumMemberType
         **Minimal verbosity,** intended for end users potentially lacking core
         expertise in Python.
     DEFAULT : EnumMemberType
         **Default verbosity,** intended for a general developer audience assumed
         to be fluent in Python.
-    MAXIMUM : EnumMemberType
+    MAXIMAL : EnumMemberType
         **Maximum verbosity,** extending the default verbosity with additional
         contextual metadata intended for debugging violations. This includes:
 
@@ -115,6 +115,6 @@ class BeartypeViolationVerbosity(IntEnum):
           which the current violation occurred.
     '''
 
-    MINIMUM = next_enum_member_value()
+    MINIMAL = next_enum_member_value()
     DEFAULT = next_enum_member_value()
-    MAXIMUM = next_enum_member_value()
+    MAXIMAL = next_enum_member_value()
