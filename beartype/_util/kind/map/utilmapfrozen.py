@@ -16,7 +16,8 @@ from beartype.typing import (
     SupportsIndex,
     Tuple,
 )
-from beartype._util.utilobject import get_object_type_name
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.utilobject import get_object_type_basename
 from collections.abc import Mapping
 
 # ....................{ CLASSES                            }....................
@@ -41,16 +42,19 @@ class FrozenDict(dict):
     # complexity of both reading and writing variables across frequently called
     # @beartype decorations. Slotting has been shown to reduce read and write
     # costs by approximately ~10%, which is non-trivial.
-    __slots__ = (
-        '_hash',
-    )
+    __slots__ = ('_hash',)
 
     # ..................{ CLASS METHODS                      }..................
     @classmethod
     def fromkeys(cls, *args, **kwargs) -> 'FrozenDict':
 
         # Create and return a new immutable dictionary encapsulating the mutable
-        # dictionary created and returned by the superclass class method.
+        # dictionary created and returned by the superclass method.
+        #
+        # Note that this implementation intentionally calls the dict.fromkeys()
+        # class method directly rather than calling super().fromkey(). While
+        # seemingly equivalent, the latter implicitly calls the __setitem__()
+        # dunder method of this subclass, which then raises an exception.
         return cls(dict.fromkeys(*args, **kwargs))
 
     # ..................{ INITIALIZERS                       }..................
@@ -78,46 +82,6 @@ class FrozenDict(dict):
         return self._hash
 
 
-    def __or__(self, other: Mapping) -> 'FrozenDict':
-        '''
-        Create and return a new immutable dictionary containing all key-value
-        pairs contained in both the current and passed immutable dictionaries.
-
-        Parameters
-        ----------
-        other: Mapping
-            Possibly mutable dictionary to be added to this immutable
-            dictionary.
-
-        Returns
-        -------
-        'FrozenDict'
-            Immutable dictionary adding the current and passed dictionaries.
-
-        Raises
-        ------
-        BeartypeKindFrozenDictException
-            If the passed dictionary is *not* actually a dictionary.
-        '''
-
-        # If the passed dictionary is *NOT* a dictionary, raise an exception.
-        if not isinstance(other, Mapping):
-            raise BeartypeKindFrozenDictException(
-                f'Non-dictionary {repr(other)} not addable to '
-                f'immutable dictionary {repr(self)}.'
-            )
-        # Else, the passed dictionary is a dictionary.
-
-        # Type of immutable dictionary to be created and returned.
-        cls = type(self)
-
-        # Standard dictionary adding this and the passed dictionaries.
-        dict_added = dict(self) | dict(other)  # type: ignore[operator]
-
-        # Create and return a new immutable dictionary wrapping this dictionary.
-        return cls(dict_added)
-
-
     def __reduce_ex__(self, protocol: SupportsIndex) -> Tuple[type, object]:
         '''
         Pickle this immutable dictionary.
@@ -134,7 +98,7 @@ class FrozenDict(dict):
         '''
 
         # Dark magic is both dark and magical.
-        return (type(self), (dict(self)))
+        return (type(self), (dict(self),))
 
 
     def __repr__(self) -> str:
@@ -147,15 +111,58 @@ class FrozenDict(dict):
         dict_repr = super().__repr__()
 
         # Fully-qualified name of the possible subclass of this dictionary.
-        type_name = get_object_type_name(self)
+        type_name = get_object_type_basename(self)
 
         # Return an appropriate representation of this immutable dictionary.
         return f'{type_name}({dict_repr})'
 
-    # ..................{ DUNDERS ~ mutable                  }..................
-    # Override all mutators (i.e., "dict" dunder methods attempting to modify
-    # the current immutable dictionary) to raise exceptions instead.
 
+    # If the active Python interpreter targets Python >= 3.9, the standard
+    # "dict" class defines the __or__() dunder method. In this case, override
+    # that method with a subclass-specific implementation.
+    if IS_PYTHON_AT_LEAST_3_9:
+        def __or__(self, other: Mapping) -> 'FrozenDict':
+            '''
+            Create and return a new immutable dictionary containing all key-value
+            pairs contained in both the current and passed immutable dictionaries.
+
+            Parameters
+            ----------
+            other: Mapping
+                Possibly mutable dictionary to be added to this immutable
+                dictionary.
+
+            Returns
+            -------
+            FrozenDict
+                Immutable dictionary adding the current and passed dictionaries.
+
+            Raises
+            ------
+            BeartypeKindFrozenDictException
+                If the passed dictionary is *not* actually a dictionary.
+            '''
+
+            # If the passed dictionary is *NOT* a dictionary, raise an exception.
+            if not isinstance(other, Mapping):
+                raise BeartypeKindFrozenDictException(
+                    f'Non-dictionary {repr(other)} not addable to '
+                    f'immutable dictionary {repr(self)}.'
+                )
+            # Else, the passed dictionary is a dictionary.
+
+            # Type of immutable dictionary to be created and returned.
+            cls = type(self)
+
+            # Standard dictionary uniting this and the passed dictionaries.
+            dict_united = super().__or__(dict(other))  # type: ignore[misc]
+
+            # Create and return a new immutable dictionary wrapping this dictionary.
+            return cls(dict_united)
+
+    # ..................{ MUTATORS                           }..................
+    # Override all mutators (i.e., "dict" methods attempting to modify the
+    # current immutable dictionary) to raise exceptions instead.
     def __setitem__(self, key, value) -> NoReturn:
         raise BeartypeKindFrozenDictException(
             f'Immutable dictionary {repr(self)} '

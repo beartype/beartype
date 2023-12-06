@@ -12,10 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
-from beartype.typing import (
-    Optional,
-    Type,
-)
+from beartype.typing import Optional
 from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeException,
@@ -105,13 +102,13 @@ def make_func(
         :exc:`._BeartypeUtilCallableException`.
 
     Returns
-    ----------
+    -------
     Callable
         Function with this name declared by this snippet.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If either:
 
         * ``func_locals`` contains a key whose value is that of ``func_name``,
