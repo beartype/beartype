@@ -12,15 +12,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._data.hint.datahinttyping import (
-    Pep484TowerComplex,
-    Pep484TowerFloat,
-)
+# from beartype._data.hint.datahinttyping import (
+#     Pep484TowerComplex,
+#     Pep484TowerFloat,
+# )
 from beartype._conf.confcls import BeartypeConf
 from beartype._util.hint.utilhinttest import die_unless_hint
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Unit test us up, please.
 def reduce_hint_pep_unsigned(
     hint: object,
     conf: BeartypeConf,
@@ -62,36 +61,40 @@ def reduce_hint_pep_unsigned(
     object
         PEP-compliant type hint reduced from this... PEP-compliant type hint.
     '''
-    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
 
-    # If...
-    if (
-        # This configuration enables support for the PEP 484-compliant
-        # implicit numeric tower *AND*...
-        conf.is_pep484_tower and
-        # This hint is either the builtin "float" or "complex" classes
-        # governed by this tower...
-        (hint is float or hint is complex)
-    # Then expand this hint to the corresponding numeric tower.
-    ):
-        # Expand this hint to match...
-        hint = (
-            # If this hint is the builtin "float" class, both the builtin
-            # "float" and "int" classes;
-            Pep484TowerFloat
-            if hint is float else
-            # Else, this hint is the builtin "complex" class by the above
-            # condition; in this case, the builtin "complex", "float", and
-            # "int" classes.
-            Pep484TowerComplex
-        )
-    # Else, this hint is truly unidentifiable.
-    else:
-        # If this hint is *NOT* a valid type hint, raise an exception.
-        #
-        # Note this function call is effectively memoized and thus fast.
-        die_unless_hint(hint=hint, exception_prefix=exception_prefix)
-        # Else, this hint is a valid type hint.
+    # FIXME: Preserved in perpetuity. Although currently unused, this logic will
+    # probably be desired again at some point. *shrug*
+    # assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
+    #
+    # # If...
+    # if (
+    #     # This configuration enables support for the PEP 484-compliant
+    #     # implicit numeric tower *AND*...
+    #     conf.is_pep484_tower and
+    #     # This hint is either the builtin "float" or "complex" classes
+    #     # governed by this tower...
+    #     (hint is float or hint is complex)
+    # # Then expand this hint to the corresponding numeric tower.
+    # ):
+    #     # Expand this hint to match...
+    #     hint = (
+    #         # If this hint is the builtin "float" class, both the builtin
+    #         # "float" and "int" classes;
+    #         Pep484TowerFloat
+    #         if hint is float else
+    #         # Else, this hint is the builtin "complex" class by the above
+    #         # condition; in this case, the builtin "complex", "float", and
+    #         # "int" classes.
+    #         Pep484TowerComplex
+    #     )
+    # # Else, this hint is truly unidentifiable.
+    # else:
+
+    # If this hint is *NOT* a valid type hint, raise an exception.
+    #
+    # Note this function call is effectively memoized and thus fast.
+    die_unless_hint(hint=hint, exception_prefix=exception_prefix)
+    # Else, this hint is a valid type hint.
 
     # Return this hint as is unmodified.
     return hint

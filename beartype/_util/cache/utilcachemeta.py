@@ -64,7 +64,7 @@ class BeartypeCachingMeta(type):
 
     # ..................{ INITIALIZERS                       }..................
     @callable_cached
-    def __call__(cls: Type[_T], *args) -> _T:
+    def __call__(cls: Type[_T], *args) -> _T:  # type: ignore[reportIncompatibleMethodOverride]
         '''
         Instantiate the passed class with the passed positional arguments if
         this is the first instantiation of this class passed these arguments

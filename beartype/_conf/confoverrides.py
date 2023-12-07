@@ -11,6 +11,10 @@ parameter accepted by the :class:`beartype.BeartypeConf.__init__` method).
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeHintOverridesException
+from beartype._data.hint.datahinttyping import (
+    Pep484TowerComplex,
+    Pep484TowerFloat,
+)
 from beartype._util.kind.map.utilmapfrozen import FrozenDict
 from re import (
     escape as re_escape,
@@ -81,6 +85,27 @@ class BeartypeHintOverrides(FrozenDict):
 # ....................{ GLOBALS                            }....................
 BEARTYPE_HINT_OVERRIDES_EMPTY = BeartypeHintOverrides()
 '''
-**Empty frozen dictionary singleton** (i.e., :class:`.BeartypeHintOverrides`
-instance containing *no* key-value pairs).
+**Empty type hint overrides** (i.e., default :class:`.BeartypeHintOverrides`
+instance overriding *no* type hints).
+'''
+
+
+BEARTYPE_HINT_OVERRIDES_PEP484_TOWER = BeartypeHintOverrides({
+    float: Pep484TowerFloat,
+    complex: Pep484TowerComplex,
+})
+'''
+:pep:`484`-compliant **implicit tower type hint overrides** (i.e.,
+:class:`.BeartypeHintOverrides` instance lossily convering integers to
+floating-point numbers *and* both integers and floating-point numbers to complex
+numbers).
+
+Specifically, these overrides instruct :mod:`beartype` to automatically expand:
+
+* All :class:`float` type hints to ``float | int``, thus implicitly accepting
+  both integers and floating-point numbers for objects annotated as only
+  accepting floating-point numbers.
+* All :class:`complex` type hints to ``complex | float | int``, thus implicitly
+  accepting integers, floating-point, and complex numbers for objects annotated
+  as only accepting complex numbers.
 '''

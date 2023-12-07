@@ -7,7 +7,7 @@
 **Beartype configuration unit tests.**
 
 This submodule unit tests the subset of the public API of the :mod:`beartype`
-package defined by the private :mod:`beartype._conf` submodule.
+package defined by the private :mod:`beartype._conf.confcls` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -18,7 +18,7 @@ package defined by the private :mod:`beartype._conf` submodule.
 from pytest import MonkeyPatch
 
 # ....................{ TESTS                              }....................
-def test_api_conf_dataclass() -> None:
+def test_conf_dataclass() -> None:
     '''
     Test the public :func:`beartype.BeartypeConf` class.
     '''
@@ -32,7 +32,11 @@ def test_api_conf_dataclass() -> None:
     )
     from beartype.roar import BeartypeConfParamException
     from beartype.typing import Union
-    from beartype._conf.confoverrides import BEARTYPE_HINT_OVERRIDES_EMPTY
+    from beartype._conf.confoverrides import (
+        BEARTYPE_HINT_OVERRIDES_EMPTY,
+        BEARTYPE_HINT_OVERRIDES_PEP484_TOWER,
+    )
+    from beartype._util.utilobject import get_object_type_basename
     from pytest import raises
 
     # ....................{ CLASSES                        }....................
@@ -111,6 +115,7 @@ def test_api_conf_dataclass() -> None:
         )
     )
 
+    # ....................{ PASS ~ properties              }....................
     # Assert that the default configuration contains the expected fields.
     assert BEAR_CONF_DEFAULT.claw_is_pep526 is True
     assert BEAR_CONF_DEFAULT.hint_overrides is BEARTYPE_HINT_OVERRIDES_EMPTY
@@ -123,7 +128,8 @@ def test_api_conf_dataclass() -> None:
 
     # Assert that the non-default configuration contains the expected fields.
     assert BEAR_CONF_NONDEFAULT.claw_is_pep526 is False
-    assert BEAR_CONF_NONDEFAULT.hint_overrides is BEAR_HINT_OVERRIDES_NONEMPTY
+    assert BEAR_CONF_NONDEFAULT.hint_overrides == (
+        BEAR_HINT_OVERRIDES_NONEMPTY | BEARTYPE_HINT_OVERRIDES_PEP484_TOWER)
     assert BEAR_CONF_NONDEFAULT.is_color is True
     assert BEAR_CONF_NONDEFAULT.is_debug is True
     assert BEAR_CONF_NONDEFAULT.is_pep484_tower is True
@@ -132,6 +138,7 @@ def test_api_conf_dataclass() -> None:
     assert BEAR_CONF_NONDEFAULT._is_warning_cls_on_decorator_exception_set is (
         True)
 
+    # ....................{ PASS ~ equals                  }....................
     # Assert that two differing configurations compare unequal.
     assert BEAR_CONF_DEFAULT != BEAR_CONF_NONDEFAULT
 
@@ -139,6 +146,7 @@ def test_api_conf_dataclass() -> None:
     assert BEAR_CONF_DEFAULT == BeartypeConf()
     assert BEAR_CONF_NONDEFAULT == BeartypeConf(**BEAR_CONF_NONDEFAULT_KWARGS)
 
+    # ....................{ PASS ~ hash                    }....................
     # Assert that two identical configurations hash equal.
     assert hash(BEAR_CONF_DEFAULT) == hash(BeartypeConf())
     assert hash(BEAR_CONF_NONDEFAULT) == hash(
@@ -147,13 +155,35 @@ def test_api_conf_dataclass() -> None:
     # Assert that two differing configurations hash unequal.
     assert hash(BEAR_CONF_DEFAULT) != hash(BEAR_CONF_NONDEFAULT)
 
-    # Machine-readable representation of an arbitrary configuration.
-    BEAR_CONF_REPR = repr(BEAR_CONF_NONDEFAULT)
+    # ....................{ PASS ~ repr                    }....................
+    # Unqualified basename of the class of all beartype configurations.
+    BEAR_CONF_BASENAME = get_object_type_basename(BEAR_CONF_DEFAULT)
 
-    # Assert that this representation to contain the names of this class and all
-    # public fields of this class.
-    for BEAR_CONF_REPR_SUBSTR in BEAR_CONF_REPR_SUBSTRS:
-        assert BEAR_CONF_REPR_SUBSTR in BEAR_CONF_REPR
+    # Machine-readable representation of the default configuration.
+    BEAR_CONF_DEFAULT_REPR = repr(BEAR_CONF_DEFAULT)
+
+    # Assert that this representation is simply the unqualified basename of the
+    # class of this configuration followed by empty parens.
+    assert BEAR_CONF_DEFAULT_REPR == f'{BEAR_CONF_BASENAME}()'
+
+    # Machine-readable representation of a non-default configuration.
+    BEAR_CONF_NONDEFAULT_REPR = repr(BEAR_CONF_NONDEFAULT)
+
+    # Assert that this representation is prefixed by the unqualified basename of
+    # the class of this configuration followed by an opening parens.
+    assert BEAR_CONF_NONDEFAULT_REPR.startswith(f'{BEAR_CONF_BASENAME}(')
+
+    # Assert that this representation is suffixed by a closing parens.
+    assert BEAR_CONF_NONDEFAULT_REPR.endswith(')')
+
+    # Assert that this representation is *NOT* suffixed by a
+    # whitespace-delimited comma followed by a closing parens.
+    assert not BEAR_CONF_NONDEFAULT_REPR.endswith(', )')
+
+    # Assert that this representation embeds the names and values of all public
+    # non-default fields of this configuration.
+    for bear_conf_repr_substr in BEAR_CONF_REPR_SUBSTRS:
+        assert bear_conf_repr_substr in BEAR_CONF_NONDEFAULT_REPR
 
     # ....................{ FAIL                           }....................
     # Assert that instantiating a configuration with an invalid parameter raises
@@ -180,6 +210,20 @@ def test_api_conf_dataclass() -> None:
         BeartypeConf(warning_cls_on_decorator_exception=(
             'He lived, he died, he sung, in solitude.'))
 
+    # Assert that instantiating a configuration with conflicting
+    # "is_pep484_tower" and "hint_overrides" parameters raises the expected
+    # exception.
+    with raises(BeartypeConfParamException):
+        BeartypeConf(
+            is_pep484_tower=True,
+            hint_overrides=BeartypeHintOverrides({float: complex})
+        )
+    with raises(BeartypeConfParamException):
+        BeartypeConf(
+            is_pep484_tower=True,
+            hint_overrides=BeartypeHintOverrides({complex: int})
+        )
+
     # Assert that attempting to modify any public raises the expected exception.
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.claw_is_pep526 = True
@@ -195,7 +239,7 @@ def test_api_conf_dataclass() -> None:
         BEAR_CONF_DEFAULT.strategy = BeartypeStrategy.O0
 
 # ....................{ TESTS ~ arg                        }....................
-def test_api_conf_is_color(monkeypatch: MonkeyPatch) -> None:
+def test_conf_is_color(monkeypatch: MonkeyPatch) -> None:
     '''
     Test the``is_color`` parameter accepted by the
     :class:`beartype.BeartypeConf` class with respect to the external
@@ -297,32 +341,3 @@ def test_api_conf_is_color(monkeypatch: MonkeyPatch) -> None:
     # Assert that this exception message contains an expected substring, whose
     # construction is non-trivial and thus liable to improper construction.
     assert '"True", "False", or "None"' in str(exception_info.value)
-
-
-def test_api_conf_strategy() -> None:
-    '''
-    Test the public :func:`beartype.BeartypeStrategy` enumeration.
-    '''
-
-    # Defer test-specific imports.
-    from beartype import BeartypeStrategy
-
-    # Assert this enumeration declares the expected members.
-    assert isinstance(BeartypeStrategy.O0, BeartypeStrategy)
-    assert isinstance(BeartypeStrategy.O1, BeartypeStrategy)
-    assert isinstance(BeartypeStrategy.Ologn, BeartypeStrategy)
-    assert isinstance(BeartypeStrategy.On, BeartypeStrategy)
-
-
-def test_api_conf_violation_verbosity() -> None:
-    '''
-    Test the public :func:`beartype.BeartypeViolationVerbosity` enumeration.
-    '''
-
-    # Defer test-specific imports.
-    from beartype import BeartypeViolationVerbosity
-
-    # Assert this enumeration declares the expected members.
-    assert isinstance(BeartypeViolationVerbosity.MINIMAL, int)
-    assert isinstance(BeartypeViolationVerbosity.DEFAULT, int)
-    assert isinstance(BeartypeViolationVerbosity.MAXIMAL, int)

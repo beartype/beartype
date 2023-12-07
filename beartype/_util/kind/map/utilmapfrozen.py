@@ -117,48 +117,61 @@ class FrozenDict(dict):
         return f'{type_name}({dict_repr})'
 
 
-    # If the active Python interpreter targets Python >= 3.9, the standard
-    # "dict" class defines the __or__() dunder method. In this case, override
-    # that method with a subclass-specific implementation.
-    if IS_PYTHON_AT_LEAST_3_9:
-        def __or__(self, other: Mapping) -> 'FrozenDict':
-            '''
-            Create and return a new immutable dictionary containing all key-value
-            pairs contained in both the current and passed immutable dictionaries.
+    def __or__(self, other: Mapping) -> 'FrozenDict':
+        '''
+        Create and return a new immutable dictionary containing all key-value
+        pairs contained in both the current and passed immutable dictionaries.
 
-            Parameters
-            ----------
-            other: Mapping
-                Possibly mutable dictionary to be added to this immutable
-                dictionary.
+        Parameters
+        ----------
+        other: Mapping
+            Possibly mutable dictionary to be added to this immutable
+            dictionary.
 
-            Returns
-            -------
-            FrozenDict
-                Immutable dictionary adding the current and passed dictionaries.
+        Returns
+        -------
+        FrozenDict
+            Immutable dictionary adding the current and passed dictionaries.
 
-            Raises
-            ------
-            BeartypeKindFrozenDictException
-                If the passed dictionary is *not* actually a dictionary.
-            '''
+        Raises
+        ------
+        BeartypeKindFrozenDictException
+            If the passed dictionary is *not* actually a dictionary.
+        '''
 
-            # If the passed dictionary is *NOT* a dictionary, raise an exception.
-            if not isinstance(other, Mapping):
-                raise BeartypeKindFrozenDictException(
-                    f'Non-dictionary {repr(other)} not addable to '
-                    f'immutable dictionary {repr(self)}.'
-                )
-            # Else, the passed dictionary is a dictionary.
+        # If the passed dictionary is *NOT* a dictionary, raise an exception.
+        if not isinstance(other, Mapping):
+            raise BeartypeKindFrozenDictException(
+                f'Non-dictionary {repr(other)} not addable to '
+                f'immutable dictionary {repr(self)}.'
+            )
+        # Else, the passed dictionary is a dictionary.
 
-            # Type of immutable dictionary to be created and returned.
-            cls = type(self)
+        # Type of immutable dictionary to be created and returned.
+        cls = type(self)
 
-            # Standard dictionary uniting this and the passed dictionaries.
+        # Standard dictionary uniting this and the passed dictionaries.
+        dict_united: dict = None  # type: ignore[assignment]
+
+        # If the active Python interpreter targets Python >= 3.9, the standard
+        # "dict" class defines the __or__() dunder method. In this case...
+        if IS_PYTHON_AT_LEAST_3_9:
+            # Trivially defer to that method to implement this method.
             dict_united = super().__or__(dict(other))  # type: ignore[misc]
+        # Else, the active Python interpreter targets Python 3.8. In this case,
+        # implement this operation manually via a dictionary merger.
+        else:
+            # Mutable dictionary uniting these two immutable dictionaries,
+            # initialized to the contents of the current immutable dictionary.
+            dict_united = dict(self)
 
-            # Create and return a new immutable dictionary wrapping this dictionary.
-            return cls(dict_united)
+            # For each key-value pair in the passed immutable dictionary...
+            for other_key, other_value in other.items():
+                # Add this key-value pair to this mutable dictionary.
+                dict_united[other_key] = other_value
+
+        # Create and return a new immutable dictionary wrapping this dictionary.
+        return cls(dict_united)
 
     # ..................{ MUTATORS                           }..................
     # Override all mutators (i.e., "dict" methods attempting to modify the

@@ -46,16 +46,20 @@ from beartype._conf.confenum import (
 )
 from beartype._conf.confoverrides import (
     BEARTYPE_HINT_OVERRIDES_EMPTY,
+    BEARTYPE_HINT_OVERRIDES_PEP484_TOWER,
     BeartypeHintOverrides as BeartypeHintOverrides,
 )
 from beartype._conf._confget import get_is_color
 from beartype._data.hint.datahinttyping import (
     BoolTristateUnpassable,
+    Pep484TowerComplex,
+    Pep484TowerFloat,
     TypeException,
     TypeWarning,
 )
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
 from beartype._util.cls.utilclstest import is_type_subclass
+from beartype._util.utilobject import get_object_type_basename
 from threading import Lock
 
 # ....................{ CLASSES                            }....................
@@ -112,6 +116,12 @@ class BeartypeConf(object):
         :data:`True` only if the caller explicitly passed the
         :attr:`_warning_cls_on_decorator_exception` parameter. See
         also the :meth:`__new__` method docstring.
+    _repr : Optional[str]
+        Either:
+
+        * If the :func:`repr` builtin has yet to call the :meth:`__repr__`
+          dunder method, :data:`None`.
+        * Else, the machine-readable representation of this configuration,
     _strategy : BeartypeStrategy
         **Type-checking strategy** (i.e., :class:`BeartypeStrategy` enumeration
         member) with which to implement all type-checks in the wrapper function
@@ -166,6 +176,7 @@ class BeartypeConf(object):
         '_is_debug',
         '_is_pep484_tower',
         '_is_warning_cls_on_decorator_exception_set',
+        '_repr',
         '_strategy',
         '_violation_param_type',
         '_violation_return_type',
@@ -184,6 +195,7 @@ class BeartypeConf(object):
         _is_debug: bool
         _is_pep484_tower: bool
         _is_warning_cls_on_decorator_exception_set: bool
+        _repr: Optional[str]
         _strategy: BeartypeStrategy
         _violation_param_type: TypeException
         _violation_return_type: TypeException
@@ -408,7 +420,7 @@ class BeartypeConf(object):
         is_pep484_tower : bool, optional
             :data:`True` only if enabling support for the :pep:`484`-compliant
             **implicit numeric tower** (i.e., lossy conversion of integers to
-            floating-point numbers as well as both integers and floating-point
+            floating-point numbers *and* both integers and floating-point
             numbers to complex numbers). Specifically, enabling this instructs
             :mod:`beartype` to automatically expand:
 
@@ -653,7 +665,72 @@ class BeartypeConf(object):
             # Instantiate a new configuration of this type.
             self = super().__new__(cls)
 
+            # Nullify critical instance variables for safety.
+            self._repr = None
+
+            # Store data structures encapsulating these passed parameters for
+            # subsequent reuse *BEFORE* possibly modifying the values of these
+            # parameters below.
+            self._conf_args = conf_args
+            self._conf_kwargs = dict(
+                claw_is_pep526=claw_is_pep526,
+                hint_overrides=hint_overrides,
+                is_color=is_color,
+                is_debug=is_debug,
+                is_pep484_tower=is_pep484_tower,
+                strategy=strategy,
+                violation_param_type=violation_param_type,
+                violation_return_type=violation_return_type,
+                violation_verbosity=violation_verbosity,
+                warning_cls_on_decorator_exception=(
+                    warning_cls_on_decorator_exception),
+            )
+
+            # Assert that these two data structures encapsulate the same number
+            # of configuration parameters (as a feeble safety check).
+            assert len(self._conf_args) == len(self._conf_kwargs)
+
+            # Cache this configuration with all relevant dictionary singletons
+            # *BEFORE* possibly modifying the values of passed parameters below.
+            _beartype_conf_args_to_conf[conf_args] = self
+
             # ..................{ DEFAULT                    }..................
+            # If enabling the PEP 484-compliant implicit numeric tower...
+            if is_pep484_tower:
+                # Whichever of the "float" or "complex" types are already
+                # existing overrides in the passed type hint overrides.
+                hint_override_cls_conflict: Optional[type] = None
+
+                # If these overrides already define conflicting overrides for
+                # either the "float" or "complex" types, record that fact.
+                if float in hint_overrides:
+                    hint_override_cls_conflict = float
+                if complex in hint_overrides:
+                    hint_override_cls_conflict = complex
+                # Else, these overrides do *NOT* already define conflicting
+                # overrides for either the "float" or "complex" types.
+
+                # If these overrides already define conflicting overrides for
+                # either the "float" or "complex" types, raise an exception.
+                if hint_override_cls_conflict is not None:
+                    raise BeartypeConfParamException(
+                        f'Beartype configuration '
+                        f'parameter "is_pep484_tower" conflicts with '
+                        f'parameter "hint_overrides" key '
+                        f'"{hint_override_cls_conflict.__name__}" '
+                        f'value '
+                        f'{repr(hint_overrides[hint_override_cls_conflict])}.'
+                    )
+                # Else, these overrides do *NOT* already define conflicting
+                # overrides for either the "float" or "complex" types.
+
+                # Add hint overrides expanding the passed type hint overrides
+                # with additional overrides mapping the "float" type to "float |
+                # int" and the "complex" type to "complex | float | int".
+                hint_overrides = (
+                    hint_overrides | BEARTYPE_HINT_OVERRIDES_PEP484_TOWER)  # type: ignore[assignment]
+            # Else, the PEP 484-compliant implicit numeric tower is disabled.
+
             # If the value of the "warning_cls_on_decorator_exception" parameter
             # is still the default private fake warning category established
             # above, then the caller failed to explicitly pass a valid value. In
@@ -677,7 +754,8 @@ class BeartypeConf(object):
                 self._is_warning_cls_on_decorator_exception_set = True
 
             # ..................{ CLASSIFY                   }..................
-            # Classify all passed parameters with this configuration.
+            # Classify all passed parameters that have now been possibly
+            # modified above with this configuration.
             self._claw_is_pep526 = claw_is_pep526
             self._hint_overrides = hint_overrides
             self._is_color = is_color
@@ -689,30 +767,6 @@ class BeartypeConf(object):
             self._violation_verbosity = violation_verbosity
             self._warning_cls_on_decorator_exception = (
                 warning_cls_on_decorator_exception)
-
-            # Cache this configuration with all relevant dictionary singletons.
-            _beartype_conf_args_to_conf[conf_args] = self
-
-            # Store data structures encapsulating these passed parameters for
-            # subsequent reuse.
-            self._conf_args = conf_args
-            self._conf_kwargs = dict(
-                claw_is_pep526=claw_is_pep526,
-                hint_overrides=hint_overrides,
-                is_color=is_color,
-                is_debug=is_debug,
-                is_pep484_tower=is_pep484_tower,
-                strategy=strategy,
-                violation_param_type=violation_param_type,
-                violation_return_type=violation_return_type,
-                violation_verbosity=violation_verbosity,
-                warning_cls_on_decorator_exception=(
-                    warning_cls_on_decorator_exception),
-            )
-
-            # Assert that these two data structures encapsulate the same number
-            # of configuration parameters (as a feeble safety check).
-            assert len(self._conf_args) == len(self._conf_kwargs)
 
         # Return this configuration.
         return self
@@ -1020,39 +1074,46 @@ class BeartypeConf(object):
             Representation of this configuration.
         '''
 
-        #FIXME: Non-ideal. Notably:
-        #* This is now *EXTREMELY* overly verbose. The only parameters that
-        #  should be explicitly printed in this repr() are those that deviate
-        #  from default values.
-        #* This should be automated via iterative inspection of the
-        #  "_conf_kwargs" dictionary. Manually maintaining this is becoming a
-        #  source of desynchronization woes and concomitant frustration.
-        #
-        #To resolve these concerns:
-        #* Define a new "_repr" instance variable, defaulting to "None" in the
-        #  __new__() method: e.g.,
-        #      self._repr = None
-        #* If "self._repr is None" here, then compute that here; else, return
-        #  the already computed "self._repr" string as is.
-        #* Compute "self._repr" by iterating over the items of
-        #  "self._conf_kwargs". For each such item, if the same key of
-        #  "BEARTYPE_CONF_DEFAULT._conf_kwargs" has the same value, ignore that
-        #  key-value pair. Else, append a substring exhibiting that non-default
-        #  value as is currently done below.
-        return (
-            f'{self.__class__.__name__}('
-            f'claw_is_pep526={repr(self._claw_is_pep526)}'
-            f', hint_overrides={repr(self._hint_overrides)}'
-            f', is_color={repr(self._is_color)}'
-            f', is_debug={repr(self._is_debug)}'
-            f', is_pep484_tower={repr(self._is_pep484_tower)}'
-            f', strategy={repr(self._strategy)}'
-            f', violation_param_type={repr(self._violation_param_type)}'
-            f', violation_return_type={repr(self._violation_return_type)}'
-            f', violation_verbosity={repr(self._violation_verbosity)}'
-            f', warning_cls_on_decorator_exception={repr(self._warning_cls_on_decorator_exception)}'
-            f')'
-        )
+        # If machine-readable representation of this configuration has yet to be
+        # computed...
+        if self._repr is None:
+            # Initialize this representation to the unqualified basename of the
+            # class of this configuration.
+            conf_repr = f'{get_object_type_basename(self)}('
+
+            # Dictionary mapping from the names to values of *ALL* possible
+            # keyword parameters configuring the default beartype configuration.
+            KWARGS_DEFAULT = BEARTYPE_CONF_DEFAULT._conf_kwargs
+
+            # For the name and value of each keyword parameter with which this
+            # configuration was instantiated...
+            for kwarg_name, kwarg_value in self._conf_kwargs.items():
+                # If this value differs from that of the default value for this
+                # keyword parameter...
+                if kwarg_value != KWARGS_DEFAULT[kwarg_name]:
+                    # Append a comma-delimited representation of this keyword
+                    # argument to this representation.
+                    conf_repr += f'{kwarg_name}={kwarg_value}, '
+                # Else, this value is the default value for this keyword
+                # parameter. In this case, silently ignore this value. Appending
+                # this value to this representation would convey *NO* meaningful
+                # semantics and, indeed, only inhibit the readability of this
+                # representation for end users and developers alike.
+
+            # If this representation is suffixed by a whitespaced comma, remove
+            # that suffix.
+            if conf_repr[-2:] == ', ':
+                conf_repr = conf_repr[:-2]
+            # Else, this representation is *NOT* suffixed by a comma. In this
+            # case, preserve this representation as is.
+
+            # Preserve this representation for subsequent use.
+            self._repr = f'{conf_repr})'
+        # Else, the machine-readable representation of this configuration has
+        # already been computed.
+
+        # Return the machine-readable representation of this configuration.
+        return self._repr
 
 # ....................{ PRIVATE ~ globals                  }....................
 _beartype_conf_lock = Lock()

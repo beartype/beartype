@@ -27,7 +27,6 @@ def test_frozendict() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeKindFrozenDictException
     from beartype._util.kind.map.utilmapfrozen import FrozenDict
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
     from pickle import (
         HIGHEST_PROTOCOL,
         dumps,
@@ -80,13 +79,10 @@ def test_frozendict() -> None:
     THE_POET_UNPICKLED = loads(THE_POET_PICKLED)
     assert THE_POET_UNPICKLED == THE_POET
 
-    # If the active Python interpreter targets Python >= 3.9, the standard
-    # "dict" class defines the __or__() dunder method. In this case...
-    if IS_PYTHON_AT_LEAST_3_9:
-        # Assert that uniting two frozen dictionaries produces a third frozen
-        # dictionary containing all key-value pairs in the first two.
-        HE_STRETCHED = THE_POET | ITS_LONELIEST_DELL
-        assert BESIDE_A_SPARKLING_RIVULET == HE_STRETCHED
+    # Assert that uniting two frozen dictionaries produces a third frozen
+    # dictionary containing all key-value pairs in the first two.
+    HE_STRETCHED = THE_POET | ITS_LONELIEST_DELL
+    assert BESIDE_A_SPARKLING_RIVULET == HE_STRETCHED
 
     # Assert that the dict.fromkeys() class method behaves as expected.
     THE_POET_FROMKEYS = THE_POET.fromkeys(
