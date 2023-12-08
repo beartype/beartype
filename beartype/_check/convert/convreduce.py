@@ -27,18 +27,16 @@ from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
-    # HintSignBinaryIO,
-    HintSignDataclassInitVar,
     HintSignFinal,
     HintSignGeneric,
-    # HintSignIO,
     HintSignLiteralString,
     HintSignNewType,
     HintSignNone,
     HintSignNumpyArray,
     HintSignPanderaAny,
+    HintSignPep557DataclassInitVar,
+    HintSignPep585BuiltinSubscriptedUnknown,
     HintSignSelf,
-    # HintSignTextIO,
     HintSignType,
     HintSignTypeGuard,
     HintSignTypeVar,
@@ -62,6 +60,8 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
     reduce_hint_pep484585_type)
 from beartype._util.hint.pep.proposal.utilpep557 import (
     reduce_hint_pep557_initvar)
+from beartype._util.hint.pep.proposal.utilpep585 import (
+    reduce_hint_pep585_builtin_subscripted_unknown)
 from beartype._util.hint.pep.proposal.utilpep589 import reduce_hint_pep589
 from beartype._util.hint.pep.proposal.utilpep591 import reduce_hint_pep591
 from beartype._util.hint.pep.proposal.utilpep593 import reduce_hint_pep593
@@ -383,7 +383,19 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _DictReducer = {
     # variable (i.e., instance of the PEP 557-compliant "dataclasses.InitVar"
     # class introduced by Python 3.8.0), reduce this functionally useless hint
     # to the functionally useful child type hint subscripting this parent hint.
-    HintSignDataclassInitVar: reduce_hint_pep557_initvar,
+    HintSignPep557DataclassInitVar: reduce_hint_pep557_initvar,
+
+    # ..................{ PEP 585                            }..................
+    # If this hint is a PEP 585-compliant unrecognized subscripted builtin type
+    # hint (i.e., C-based type hint that is *NOT* an isinstanceable type,
+    # instantiated by subscripting a pure-Python origin class subclassing the
+    # C-based "types.GenericAlias" type where that origin class is unrecognized
+    # by :mod:`beartype` and thus PEP-noncompliant), reduce this C-based type
+    # hint (which is *NOT* type-checkable as is) to its unsubscripted
+    # pure-Python origin class (which is type-checkable as is). Examples include
+    # "os.PathLike[...]" and "weakref.weakref[...]" type hints.
+    HintSignPep585BuiltinSubscriptedUnknown: (
+        reduce_hint_pep585_builtin_subscripted_unknown),
 
     # ..................{ PEP 589                            }..................
     #FIXME: Remove *AFTER* deeply type-checking typed dictionaries. For now,
@@ -443,8 +455,9 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _DictReducer = {
 }
 '''
 Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
-to that sign's **cached reducer** (i.e., callable efficiently memoized by the
-:func:`.callable_cached` decorator reducing those higher- to lower-level hints).
+to that sign's **cached reducer** (i.e., low-level function efficiently memoized
+by the :func:`.callable_cached` decorator reducing those higher- to lower-level
+hints).
 
 Each value of this dictionary should be a valid reducer, defined as a function
 with signature resembling:
@@ -498,8 +511,9 @@ _HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _DictReducer = {
 }
 '''
 Dictionary mapping from each sign uniquely identifying various type hints to
-that sign's **cached reducer** (i.e., callable efficiently memoized by the
-:func:`.callable_cached` decorator reducing those higher- to lower-level hints).
+that sign's **uncached reducer** (i.e., low-level function whose reduction
+decision contextually depends on the currently decorated callable and thus
+*cannot* be efficiently memoized by the :func:`.callable_cached` decorator).
 
 See Also
 ----------

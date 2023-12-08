@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 """
-**Beartype string munging utilities** (i.e., callables transforming passed
+Project-wide **string munging utilities** (i.e., callables transforming passed
 strings into new strings with generic string operations).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -30,7 +30,7 @@ def uppercase_str_char_first(text: str) -> str:
         String whose first character is to be uppercased.
 
     Returns
-    ----------
+    -------
     str
         This string with the first character uppercased.
     '''
@@ -61,7 +61,7 @@ def number_str_lines(text: str) -> str:
         String whose lines are to be numbered.
 
     Returns
-    ----------
+    -------
     str
         This string with all lines numbered.
     '''
@@ -69,9 +69,11 @@ def number_str_lines(text: str) -> str:
 
     # For radical benevolence!
     return '\n'.join(
+        # Note that a format() call rather than f-string is intentionally
+        # applied here, as the former affords more functionality for string
+        # munging than the latter.
         '(line {:0>4d}) {}'.format(text_line_number, text_line)
-        for text_line_number, text_line in enumerate(
-            text.splitlines(), start=1)
+        for text_line_number, text_line in enumerate(text.splitlines(), start=1)
     )
 
 # ....................{ REPLACERS                          }....................
@@ -83,7 +85,7 @@ def replace_str_substrs(text: str, old: str, new: str) -> str:
     contains *no* such instance).
 
     Caveats
-    ----------
+    -------
     **This higher-level function should always be called in lieu of the
     lower-level** :meth:`str.replace` method, which unconditionally succeeds
     regardless of whether this subject string contains at least one instance of
@@ -100,19 +102,19 @@ def replace_str_substrs(text: str, old: str, new: str) -> str:
         subject string.
 
     Returns
-    ----------
+    -------
     str
         Subject string with all instances of this source substring globally
         replaced by this target substring.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilTextException
         If this subject string contains *no* instances of this source
         substring.
 
     Examples
-    ----------
+    --------
         >>> from beartype._util.text.utiltextmunge import replace_str_substrs
         >>> replace_str_substrs(
         ...     text='And now the STORM-BLAST came, and he',
@@ -153,7 +155,7 @@ def suffix_str_unless_suffixed(text: str, suffix: str) -> str:
         Suffix to be conditionally appended to this string.
 
     Returns
-    ----------
+    -------
     str
         Either:
 
@@ -186,7 +188,7 @@ def truncate_str(
       replaced by an ASCII ellipsis (i.e., ``"..."`` substring).
 
     Caveats
-    ----------
+    -------
     **This function is unavoidably slow and should thus not be called from
     optimized performance-critical code.** This function internally performs
     mildly expensive operations, including iterating-based string munging.
@@ -202,7 +204,7 @@ def truncate_str(
         line length of 100 characters minus output indentation of 4 characters.
 
     Returns
-    ----------
+    -------
     str
         This string possibly truncated.
     '''

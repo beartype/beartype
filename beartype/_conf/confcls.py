@@ -662,6 +662,7 @@ class BeartypeConf(object):
             # Else, "warning_cls_on_decorator_exception" is either "None" *OR* a
             # warning category.
 
+            # ..................{ INSTANTIATE                }..................
             # Instantiate a new configuration of this type.
             self = super().__new__(cls)
 
@@ -694,7 +695,7 @@ class BeartypeConf(object):
             # *BEFORE* possibly modifying the values of passed parameters below.
             _beartype_conf_args_to_conf[conf_args] = self
 
-            # ..................{ DEFAULT                    }..................
+            # ..................{ MUTATE                     }..................
             # If enabling the PEP 484-compliant implicit numeric tower...
             if is_pep484_tower:
                 # Whichever of the "float" or "complex" types are already

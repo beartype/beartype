@@ -47,10 +47,10 @@ def is_hint_pep484585_generic(hint: object) -> bool:
     Specifically, this tester returns :data:`True` only if this object is
     either:
 
-    * A :pep:`585`-compliant generic as tested by the lower-level
-      :func:`is_hint_pep585_generic` function.
     * A :pep:`484`-compliant generic as tested by the lower-level
       :func:`is_hint_pep484_generic` function.
+    * A :pep:`585`-compliant generic as tested by the lower-level
+      :func:`is_hint_pep585_generic` function.
 
     This tester is memoized for efficiency. Although the implementation
     trivially reduces to a one-liner, constant factors associated with that
@@ -58,7 +58,7 @@ def is_hint_pep484585_generic(hint: object) -> bool:
     enough to warrant its reduction to an efficient lookup.
 
     Caveats
-    ----------
+    -------
     **Generics are not necessarily classes,** despite originally being declared
     as classes. Although *most* generics are classes, subscripting a generic
     class usually produces a generic non-class that *must* nonetheless be
@@ -80,12 +80,12 @@ def is_hint_pep484585_generic(hint: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a generic.
 
     See Also
-    ----------
+    --------
     :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep_typevars`
         Commentary on the relation between generics and parametrized hints.
     '''
@@ -128,7 +128,7 @@ def get_hint_pep484585_generic_bases_unerased(
     to an efficient one-liner.
 
     Caveats
-    ----------
+    -------
     **This function should always be called in lieu of attempting to directly
     access the low-level** ``__orig_bases__`` **dunder instance variable.**
     Most PEP-compliant type hints fail to declare that variable, guaranteeing
@@ -250,12 +250,12 @@ def get_hint_pep484585_generic_bases_unerased(
         the exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     Tuple[object]
         Tuple of the one or more unerased pseudo-superclasses of this generic.
 
     Raises
-    ----------
+    ------
     exception_cls
         If this hint is either:
 
@@ -264,7 +264,7 @@ def get_hint_pep484585_generic_bases_unerased(
           pseudo-superclasses.
 
     Examples
-    ----------
+    --------
         >>> import typing
         >>> from beartype._util.hint.pep.utilpepget import (
         ...     get_hint_pep484585_generic_bases_unerased)
@@ -356,10 +356,10 @@ def get_hint_pep484585_generic_type(
     to an efficient one-liner.
 
     Caveats
-    ----------
+    -------
     **This getter returns false positives in edge cases.** That is, this getter
-    returns non-``None`` values for both generics and non-generics -- notably,
-    non-generics defining the ``__origin__`` dunder attribute to an
+    returns non-:data:`None` values for both generics and non-generics --
+    notably, non-generics defining the ``__origin__`` dunder attribute to an
     isinstanceable class. Callers *must* perform subsequent tests to distinguish
     these two cases.
 
@@ -375,17 +375,17 @@ def get_hint_pep484585_generic_type(
         the exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     type
         Class originating this generic.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If this hint is *not* a generic.
 
     See Also
-    ----------
+    --------
     :func:`get_hint_pep484585_generic_type_or_none`
         Further details.
     '''
@@ -414,8 +414,8 @@ def get_hint_pep484585_generic_type_or_none(hint: object) -> Optional[type]:
     possibly *not* an actual class) if **unsubscripted** (i.e., indexed by *no*
     arguments or type variables), the unsubscripted generic underlying this
     generic if **subscripted** (i.e., indexed by one or more child type hints
-    and/or type variables), *or* ``None`` otherwise (i.e., if this hint is *not*
-    a generic).
+    and/or type variables), *or* :data:`None` otherwise (i.e., if this hint is
+    *not* a generic).
 
     Specifically, this getter returns (in order):
 
@@ -423,17 +423,17 @@ def get_hint_pep484585_generic_type_or_none(hint: object) -> Optional[type]:
       class such that *all* objects satisfying this hint are instances of that
       class), this type regardless of whether this hint is already a class.
     * Else if this hint is already a class, this hint as is.
-    * Else, ``None``.
+    * Else, :data:`None`.
 
     This getter is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
     to an efficient one-liner.
 
     Caveats
-    ----------
+    -------
     **This getter returns false positives in edge cases.** That is, this getter
-    returns non-``None`` values for both generics and non-generics -- notably,
-    non-generics defining the ``__origin__`` dunder attribute to an
+    returns non-:data:`None`` values for both generics and non-generics --
+    notably, non-generics defining the ``__origin__`` dunder attribute to an
     isinstanceable class. Callers *must* perform subsequent tests to distinguish
     these two cases.
 
@@ -443,15 +443,15 @@ def get_hint_pep484585_generic_type_or_none(hint: object) -> Optional[type]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     Optional[type]
         Either:
 
         * If this hint is a generic, the class originating this generic.
-        * Else, ``None``.
+        * Else, :data:`None`.
 
     See Also
-    ----------
+    --------
     :func:`get_hint_pep_origin_or_none`
         Further details.
     '''
@@ -541,14 +541,14 @@ def find_hint_pep484585_generic_module_base_first(
         the exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     type
         First unerased superclass transitively defined under this package or
         module subclassed by the unsubscripted generic type underlying this
         generic type hint.
 
     Examples
-    ----------
+    --------
         >>> from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
         ...     find_hint_pep484585_generic_base_first_in_module)
 
@@ -698,7 +698,7 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
 
     :pep:`585`-compliant generics suffer no such issues:
 
-        >>> from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin
+        >>> from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin_subscripted
         >>> class UserGeneric(list[int]): pass
         >>> class UserSubgeneric(UserGeneric[int]): pass
         >>> UserSubgeneric.__orig_bases__
@@ -708,7 +708,7 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
         True  # <-- good
         >>> UserGenericUnerased.__mro__
         (UserGeneric, list, object)
-        >>> is_hint_pep585_builtin(UserGenericUnerased)
+        >>> is_hint_pep585_builtin_subscripted(UserGenericUnerased)
         True
 
     Iteratively walking up the unerased inheritance hierarchy for any such
@@ -737,26 +737,26 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
         the exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     Iterable
         Breadth-first search (BFS) generator iteratively yielding the one or
         more unignorable unerased transitive pseudo-superclasses originally
         declared as superclasses prior to their type erasure of this generic.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If this hint is *not* a generic.
 
     See Also
-    ----------
+    --------
     :func:`get_hint_pep484585_generic_type_or_none`
         Further details.
     '''
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.utilpep585 import (
-        is_hint_pep585_builtin)
+        is_hint_pep585_builtin_subscripted)
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
     from beartype._util.hint.utilhinttest import is_hint_ignorable
@@ -820,8 +820,8 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
                 # Is neither...
                 not (
                     # A PEP 585-compliant superclass *NOR*...
-                    is_hint_pep585_builtin(hint_base) and
-                    # A PEP 484- nor 544-compliant superclass defined by the
+                    is_hint_pep585_builtin_subscripted(hint_base) and
+                    # A PEP 484- or 544-compliant superclass defined by the
                     # "typing" module...
                     is_hint_pep_typing(hint_base)
                 )

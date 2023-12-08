@@ -183,40 +183,71 @@ HintSignUnpack = _HintSign(name='Unpack')
 # Signs with *NO* explicit analogues in the stdlib "typing" module but
 # nonetheless standardized by one or more PEPs.
 
-# PEP 484 explicitly supports the "None" singleton, albeit implicitly:
-#     When used in a type hint, the expression None is considered equivalent to
-#     type(None).
 HintSignNone = _HintSign(name='None')
+'''
+:pep:`484` explicitly supports the :data:`None` singleton, albeit implicitly:
 
-# PEP 557 defines the "dataclasses.InitVar" type hint factory for annotating
-# class-scoped variable annotations of @dataclass.dataclass-decorated classes.
-HintSignDataclassInitVar = _HintSign(name='DataclassInitVar')
+    When used in a type hint, the expression None is considered equivalent to
+    type(None).
+'''
+
+
+# dataclasses.InitVar[...].
+HintSignPep557DataclassInitVar = _HintSign(name='Pep557DataclassInitVar')
+'''
+PEP 557 defines the "dataclasses.InitVar" type hint factory for annotating
+class-scoped variable annotations of @dataclass.dataclass-decorated classes.
+'''
+
+# os.PathLike[...], weakref.weakref[...], et al.
+HintSignPep585BuiltinSubscriptedUnknown = _HintSign(
+    name='Pep585BuiltinSubscriptedUnknown')
+'''
+:pep:`585` defines the C-based :class:`types.GenericAlias` superclass
+inheritable by PEP-noncompliant pure-Python subclasses in either the standard
+library or third-party packages, which when subscripted by otherwise
+PEP-compliant child type hints produce PEP-noncompliant **unrecognized
+subscripted builtin type hints** (i.e., C-based type hints that are *not*
+isinstanceable types, instantiated by subscripting pure-Python origin classes
+unrecognized by :mod:`beartype` and thus PEP-noncompliant). Examples include:
+
+* ``os.PathLike[...]`` type hints.
+* ``weakref.weakref[...]`` type hints.
+
+Unsurprisingly, :mod:`beartype` reduces C-based unrecognized subscripted builtin
+type hints (which are *not* type-checkable as is) to their unsubscripted
+pure-Python origin classes (which are type-checkable as is).
+'''
 
 # ....................{ SIGNS ~ implicit : lib             }....................
 # Signs identifying PEP-noncompliant third-party type hints published by...
 #
 # ....................{ SIGNS ~ implicit : lib : numpy     }....................
-# ...the "numpy.typing" subpackage.
 HintSignNumpyArray = _HintSign(name='NumpyArray')   # <-- "numpy.typing.NDArray"
+'''
+...the :mod:`numpy.typing` subpackage.
+'''
 
 # ....................{ SIGNS ~ implicit : lib : pandera   }....................
-# ...the "pandera.typing" subpackage. Specifically, define a single sign
-# unconditionally matching *ALL* type hints published by the "pandera.typing"
-# subpackage. Why? Because Pandera insanely publishes its own Pandera-specific
-# PEP-noncompliant runtime type-checking decorator @pandera.check_types() that
-# supports *ONLY* Pandera-specific PEP-noncompliant "pandera.typing" type hints.
-# Since Pandera users are already accustomed to decorating *ALL* Pandera-based
-# callables (i.e., callables accepting one or more parameters and/or returning
-# one or more values which are Pandera objects) by @pandera.check_types(),
-# attempting to type-check the same objects already type-checked by that
-# decorator would only inefficiently and needlessly slow @beartype down. Ergo,
-# we ignore *ALL* Pandera type hints by:
-# * Defining this catch-all singleton for Pandera type hints here.
-# * Denoting this singleton to be unconditionally ignorable elsewhere.
 HintSignPanderaAny = _HintSign(name='PanderaAny')   # <-- "pandera.typing.*"
+'''
+...the :mod:`pandera.typing` subpackage.
 
-#FIXME: Excise us up, please.
-# HintSignPanderaAny = HintSignGeneric
+Specifically, define a single sign unconditionally matching *all* type hints
+published by the :mod:`pandera.typing` subpackage. Why? Because Pandera insanely
+publishes its own Pandera-specific PEP-noncompliant runtime type-checking
+decorator :func:`pandera.check_types` that supports *only* Pandera-specific
+PEP-noncompliant :mod:`pandera.typing` type hints. Since Pandera users are
+already accustomed to decorating *all* Pandera-based callables (i.e., callables
+accepting one or more parameters and/or returning one or more values which are
+Pandera objects) by :func:`pandera.check_types`, attempting to type-check the
+same objects already type-checked by that decorator would only inefficiently and
+needlessly slow :mod:`beartype` down. Ergo, we ignore *all* Pandera type hints
+by:
+
+* Defining this catch-all singleton for Pandera type hints here.
+* Denoting this singleton to be unconditionally ignorable elsewhere.
+'''
 
 # ....................{ CLEANUP                            }....................
 # Prevent all attributes imported above from polluting this namespace. Why?

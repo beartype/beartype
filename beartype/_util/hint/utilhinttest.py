@@ -222,7 +222,7 @@ def is_hint_uncached(hint: object) -> bool:
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.utilpep585 import (
-        is_hint_pep585_builtin)
+        is_hint_pep585_builtin_subscripted)
     from beartype._util.hint.pep.proposal.utilpep604 import is_hint_pep604
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -241,7 +241,7 @@ def is_hint_uncached(hint: object) -> bool:
         # Note that this additionally includes all third-party type hints that
         # derive from the "types.GenericAlias" superclass, including:
         # * "numpy.typing.NDArray[...]" type hints.
-        is_hint_pep585_builtin(hint) or
+        is_hint_pep585_builtin_subscripted(hint) or
         # PEP 604-compliant (e.g., "int | str"), this hint is *NOT* self-caching
         # (e.g., "int | str is not int | str").
         #

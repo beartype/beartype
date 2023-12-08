@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep557Exception
 from beartype._data.hint.datahinttyping import TypeException
-from beartype._data.hint.pep.sign.datapepsigns import HintSignDataclassInitVar
+from beartype._data.hint.pep.sign.datapepsigns import HintSignPep557DataclassInitVar
 
 # ....................{ GETTERS                            }....................
 def get_hint_pep557_initvar_arg(
@@ -64,7 +64,7 @@ def get_hint_pep557_initvar_arg(
 
     # If this hint is *NOT* a dataclass initialization-only instance variable
     # type hint, raise an exception.
-    if hint_sign is not HintSignDataclassInitVar:
+    if hint_sign is not HintSignPep557DataclassInitVar:
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
         raise exception_cls(

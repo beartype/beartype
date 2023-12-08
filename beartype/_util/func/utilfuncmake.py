@@ -33,9 +33,9 @@ def make_func(
 
     # Optional arguments.
     func_globals: Optional[LexicalScope] = None,
-    func_locals:  Optional[LexicalScope] = None,
+    func_locals: Optional[LexicalScope] = None,
     func_doc: Optional[str] = None,
-    func_label:   Optional[str] = None,
+    func_label: Optional[str] = None,
     func_wrapped: Optional[Callable] = None,
     is_debug: bool = False,
     exception_cls: TypeException = _BeartypeUtilCallableException,
@@ -54,24 +54,25 @@ def make_func(
         signature prefixed by zero or more decorations *and* body. **This
         snippet must be unindented.** If this snippet is indented, this factory
         raises a syntax error.
-    func_globals : Optional[Dict[str, Any]]
+    func_globals : dict[str, Any] | None
         Dictionary mapping from the name to value of each **globally scoped
         attribute** (i.e., internally referenced in the body of the function
         declared by this code snippet). Defaults to the empty dictionary.
-    func_locals : Optional[Dict[str, Any]]
+    func_locals : dict[str, Any] | None
         Dictionary mapping from the name to value of each **locally scoped
         attribute** (i.e., internally referenced either in the signature of
         the function declared by this code snippet *or* as decorators
         decorating that function). **Note that this factory necessarily
         modifies the contents of this dictionary.** Defaults to the empty
         dictionary.
-    func_doc : Optional[str]
+    func_doc : str | None
         Human-readable docstring documenting this function. Defaults to
         :data:`None`, in which case this function remains undocumented.
-    func_label : str, optional
+    func_label : str | None
         Human-readable label describing this function for error-handling
-        purposes. Defaults to ``"{func_name}()"``.
-    func_wrapped : Callable, optional
+        purposes. Defaults to :data:`None`, in which case this label effectively
+        defaults to ``"{func_name}()"``.
+    func_wrapped : Callable | None
         Callable wrapped by the function to be created. If non-:data:`None`,
         special dunder attributes will be propagated (i.e., copied) from this
         wrapped callable into this created function; these include:
@@ -278,10 +279,10 @@ def make_func(
             f'{number_str_lines(func_code)}'
         )
     # Else, that function is callable.
-
+    #
     # If that function is a wrapper wrapping a wrappee callable, propagate
     # dunder attributes from that wrappee onto this wrapper.
-    if func_wrapped is not None:
+    elif func_wrapped is not None:
         assert callable(func_wrapped), f'{repr(func_wrapped)} uncallable.'
         update_wrapper(wrapper=func, wrapped=func_wrapped)
     # Else, that function is *NOT* such a wrapper.
@@ -329,6 +330,7 @@ def make_func(
         def _remove_func_linecache_entry():
             linecache_cache.pop(func_filename, None)
         finalize(func, _remove_func_linecache_entry)
+    # Else, this function is *NOT* being debugged.
 
     # Return that function.
     return func

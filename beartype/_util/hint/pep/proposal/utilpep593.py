@@ -326,7 +326,7 @@ def reduce_hint_pep593(
     Parameters
     ----------
     hint : object
-        Type variable to be reduced.
+        Type hint to be reduced.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message.

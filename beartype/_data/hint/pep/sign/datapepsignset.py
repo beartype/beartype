@@ -32,7 +32,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignContextManager,
     HintSignCoroutine,
     HintSignCounter,
-    HintSignDataclassInitVar,
+    HintSignPep557DataclassInitVar,
     HintSignDefaultDict,
     HintSignDeque,
     HintSignDict,
@@ -543,7 +543,7 @@ HINT_SIGNS_SUPPORTED_DEEP = frozenset((
     HintSignProtocol,
 
     # ..................{ PEP 557                            }..................
-    HintSignDataclassInitVar,
+    HintSignPep557DataclassInitVar,
 
     # ..................{ PEP 586                            }..................
     HintSignLiteral,

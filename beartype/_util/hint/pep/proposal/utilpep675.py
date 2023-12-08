@@ -29,7 +29,7 @@ def reduce_hint_pep675(*args, **kwargs) -> Type[str]:
     All passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     Type[str]
         Builtin :class:`str` class.
     '''

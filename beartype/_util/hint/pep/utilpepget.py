@@ -17,6 +17,7 @@ from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepSignException,
 )
+from beartype.roar._roarexc import _BeartypeUtilTypeException
 from beartype.typing import (
     Any,
     Optional,
@@ -37,6 +38,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignGeneric,
     HintSignNewType,
     HintSignTypedDict,
+    HintSignPep585BuiltinSubscriptedUnknown,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
@@ -44,14 +46,18 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
     is_hint_pep484_newtype_pre_python310)
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+    is_hint_pep484585_generic)
 from beartype._util.hint.pep.proposal.utilpep585 import (
     get_hint_pep585_generic_typevars,
+    is_hint_pep585_builtin_subscripted,
     is_hint_pep585_generic,
 )
+from beartype._util.hint.pep.proposal.utilpep589 import is_hint_pep589
 from beartype._util.hint.pep.proposal.utilpep604 import (
     die_if_hint_pep604_inconsistent)
 from beartype._util.py.utilpyversion import (
-    IS_PYTHON_AT_LEAST_3_10,
+    # IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_MOST_3_9,
     IS_PYTHON_AT_LEAST_3_9,
 )
@@ -124,7 +130,7 @@ get_hint_pep_args.__doc__ = '''
     to an efficient one-liner.
 
     Caveats
-    ----------
+    -------
     **This getter should always be called in lieu of attempting to directly
     access the low-level** ``__args__`` **dunder attribute.** Various
     singleton objects defined by the :mod:`typing` module (e.g.,
@@ -152,7 +158,7 @@ get_hint_pep_args.__doc__ = '''
         PEP-compliant type hint to be inspected.
 
     Returns
-    ----------
+    -------
     tuple
         Either:
 
@@ -161,7 +167,7 @@ get_hint_pep_args.__doc__ = '''
         * Else, the empty tuple.
 
     Examples
-    ----------
+    --------
         >>> import typing
         >>> from beartype._util.hint.pep.utilpepget import (
         ...     get_hint_pep_args)
@@ -229,7 +235,7 @@ get_hint_pep_typevars.__doc__ = '''
     to an efficient one-liner.
 
     Caveats
-    ----------
+    -------
     **This function should always be called in lieu of attempting to directly
     access the low-level** ``__parameters__`` **dunder attribute.** Various
     singleton objects defined by the :mod:`typing` module (e.g.,
@@ -244,7 +250,7 @@ get_hint_pep_typevars.__doc__ = '''
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     Tuple[TypeVar, ...]
         Either:
 
@@ -253,7 +259,7 @@ get_hint_pep_typevars.__doc__ = '''
         * Else, the empty tuple.
 
     Examples
-    ----------
+    --------
         >>> import typing
         >>> from beartype._util.hint.pep.utilpepget import (
         ...     get_hint_pep_typevars)
@@ -261,7 +267,7 @@ get_hint_pep_typevars.__doc__ = '''
         >>> T = typing.TypeVar('T')
         >>> get_hint_pep_typevars(typing.Any)
         ()
-        >>> get_hint_pep_typevars(typing.List[T, int, S, str, T)
+        >>> get_hint_pep_typevars(typing.List[T, int, S, str, T])
         (T, S)
     '''
 
@@ -288,20 +294,20 @@ def get_hint_pep_sign(
     hint : object
         Type hint to be inspected.
     exception_cls : TypeException, optional
-        Type of exception to be raised. Defaults to
-        :exc:`BeartypeDecorHintPepSignException`.
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPepSignException`.
     exception_prefix : str, optional
         Human-readable substring prefixing the representation of this object in
         the exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     dict
         Sign uniquely identifying this hint.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If this hint is either:
 
         * PEP-compliant but *not* uniquely identifiable by a sign.
@@ -309,7 +315,7 @@ def get_hint_pep_sign(
         * *Not* a hint (i.e., neither PEP-compliant nor -noncompliant).
 
     See Also
-    ----------
+    --------
     :func:`get_hint_pep_sign_or_none`
         Further details.
     '''
@@ -319,6 +325,11 @@ def get_hint_pep_sign(
 
     # If this hint is unrecognized...
     if hint_sign is None:
+        assert isinstance(exception_cls, type), (
+            f'{exception_cls} not exception type.')
+        assert isinstance(exception_prefix, str), (
+            f'{exception_prefix} not string.')
+
         # Avoid circular import dependencies.
         from beartype._util.hint.nonpep.utilnonpeptest import die_if_hint_nonpep
 
@@ -340,9 +351,9 @@ def get_hint_pep_sign(
         raise exception_cls(
             f'{exception_prefix}type hint {repr(hint)} '
             f'currently unsupported by beartype. '
-            f'You suddenly feel encouraged to submit '
-            f'a feature request for this hint to our '
-            f'friendly issue tracker at:\n\t{URL_ISSUES}'
+            f'You suddenly feel encouraged to submit a feature request '
+            f'for this hint to our friendly issue tracker at:\n'
+            f'\t{URL_ISSUES}'
         )
     # Else, this hint is recognized.
 
@@ -411,17 +422,17 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
         Type hint to be inspected.
 
     Returns
-    ----------
+    -------
     dict
         Sign uniquely identifying this hint.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPepException
         If this hint is *not* PEP-compliant.
 
     Examples
-    ----------
+    --------
         >>> import typing
         >>> from beartype._util.hint.pep.utilpepget import (
         ...     get_hint_pep_sign_or_none)
@@ -631,11 +642,6 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # For minor efficiency gains, the following tests are intentionally ordered
     # in descending likelihood of a match.
 
-    # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
-        is_hint_pep484585_generic)
-    from beartype._util.hint.pep.proposal.utilpep589 import is_hint_pep589
-
     # If this hint is a PEP 484- or 585-compliant generic (i.e., user-defined
     # class superficially subclassing at least one PEP 484- or 585-compliant
     # type hint), return that sign. However, note that:
@@ -700,19 +706,33 @@ def get_hint_pep_sign_or_none(hint: Any) -> Optional[HintSign]:
     # third-party origin and provenance.
 
     # If this hint is inconsistent with respect to PEP 604-style new unions,
-    # raise an exception. Although awkward, this is ultimately the ideal
-    # location for this validation. Why? Because this validation:
+    # raise an exception. Although awkward, this is ultimately the ideal context
+    # for this validation. Why? Because this validation:
     # * *ONLY* applies to hints permissible as items of PEP 604-compliant new
-    #   unions; this means classes and subscripted generics. If this hint is
-    #   identifiable by its classname, this hint is neither a class *NOR*
-    #   subscripted generic. Since this hint is *NOT* identifiable by its
+    #   unions; this means classes and subscripted builtins. If this hint is
+    #   identifiable by its classname, this hint is neither a class *NOR* a
+    #   subscripted builtin. Since this hint is *NOT* identifiable by its
     #   classname, however, this hint could still be either a class *OR*
-    #   subscripted generic. It's best not to ask.
+    #   subscripted builtin. It's best not to ask.
     # * Does *NOT* apply to well-known type hints detected above (e.g., those
     #   produced by Python itself, the standard library, and well-known
     #   third-party type hint factories), which are all guaranteed to be
     #   consistent with respect to PEP 604.
     die_if_hint_pep604_inconsistent(hint)
+    # Else, this hint is consistent with respect to PEP 604-style new unions.
+
+    #FIXME: Unit test us up, please.
+    # If this hint is an unrecognized subscripted builtin type hint (i.e.,
+    # C-based type hint instantiated by subscripting a pure-Python origin class
+    # unrecognized by @beartype and thus PEP-noncompliant), return this sign.
+    # Examples include "os.PathLike[...]" and "weakref.weakref[...]" type hints.
+    #
+    # This is a last-ditch fallback preferable to merely returning "None", which
+    # conveys substantially less semantics and would imply this object to be an
+    # isinstanceable class, which subscripted builtin type hints are *NOT*.
+    if is_hint_pep585_builtin_subscripted(hint):
+        return HintSignPep585BuiltinSubscriptedUnknown
+    # Else, this hint is *NOT* an unrecognized subscripted builtin type hint.
 
     # Return "None".
     return None
@@ -732,7 +752,7 @@ def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
     to an efficient one-liner.
 
     Caveats
-    ----------
+    -------
     **The high-level** :func:`get_hint_pep_origin_type_isinstanceable` getter
     should always be called in lieu of this low-level function.** Whereas the
     former is guaranteed to return either an isinstanceable class or
@@ -761,7 +781,7 @@ def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     Optional[Any]
         Either:
 
@@ -769,7 +789,7 @@ def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
         * Else, :data:`None`.
 
     Examples
-    ----------
+    --------
     .. code-block:: pycon
 
        >>> import typing
@@ -808,11 +828,91 @@ def get_hint_pep_origin_or_none(hint: Any) -> Optional[Any]:
 
 # ....................{ GETTERS ~ origin : type            }....................
 #FIXME: Unit test us up, please.
+def get_hint_pep_origin_type(
+    # Mandatory parameters.
+    hint: object,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilTypeException,
+    exception_prefix: str = '',
+) -> type:
+    '''
+    **Origin type** (i.e., class such that *all* objects satisfying the passed
+    PEP-compliant type hint are instances of this class) originating this hint
+    if this hint originates from such a type *or* raise an exception otherwise
+    (i.e., if this hint does *not* originate from such a type).
+
+    This getter is memoized for efficiency.
+
+    Parameters
+    ----------
+    hint : object
+        Type hint to be inspected.
+    exception_cls : TypeException, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`._BeartypeUtilTypeException`.
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to the empty string.
+
+    Returns
+    -------
+    type
+        Type originating this hint.
+
+    Raises
+    -------
+    exception_cls
+        If this hint either:
+
+        * Does *not* originate from another object.
+        * Originates from an object that is *not* a type.
+
+    See Also
+    --------
+    :func:`.get_hint_pep_origin_or_none`
+        Further details.
+    '''
+
+    # Origin type originating this hint if any *OR* "None" otherwise.
+    hint_origin = get_hint_pep_origin_type_or_none(hint)
+
+    # If *NO* origin type originates this hint...
+    if hint_origin is None:
+        assert isinstance(exception_cls, type), (
+            f'{exception_cls} not exception type.')
+        assert isinstance(exception_prefix, str), (
+            f'{exception_prefix} not string.')
+
+        # Origin non-type originating this hint if any *OR* "None" otherwise.
+        hint_origin = get_hint_pep_origin_or_none(hint)
+
+        # If this hint does *NOT* originate from another object, raise an
+        # appropriate exception.
+        if hint_origin is None:
+            raise exception_cls(
+                f'{exception_prefix}type hint {repr(hint)} '
+                f'originates from no other object.'
+            )
+        # Else, this hint originates from another object. By definition, this
+        # object *CANNOT* be a type.
+
+        # Raise an appropriate exception.
+        raise exception_cls(
+            f'{exception_prefix}type hint {repr(hint)} '
+            f'originates from non-type {repr(hint_origin)}.'
+        )
+    # Else, this origin type originates this hint.
+
+    # Return this origin type.
+    return hint_origin
+
+
+#FIXME: Unit test us up, please.
 @callable_cached
 def get_hint_pep_origin_type_or_none(hint: Any) -> Optional[type]:
     '''
-    **Standard origin type** (i.e., isinstanceable class declared by Python's
-    standard library such that *all* objects satisfying the passed
+    **Origin type** (i.e., class such that *all* objects satisfying the passed
     PEP-compliant type hint are instances of this class) originating this hint
     if this hint originates from such a type *or* :data:`None` otherwise (i.e.,
     if this hint does *not* originate from such a type).
@@ -820,7 +920,7 @@ def get_hint_pep_origin_type_or_none(hint: Any) -> Optional[type]:
     This getter is memoized for efficiency.
 
     Caveats
-    ----------
+    -------
     **This high-level getter should always be called in lieu of the low-level**
     :func:`get_hint_pep_origin_or_none` **getter on attempting to
     directly access the low-level** ``__origin__`` **dunder attribute.**
@@ -828,18 +928,18 @@ def get_hint_pep_origin_type_or_none(hint: Any) -> Optional[type]:
     Parameters
     ----------
     hint : object
-        Object to be inspected.
+        Type hint to be inspected.
 
     Returns
-    ----------
+    -------
     Optional[type]
         Either:
 
-        * If this hint originates from a standard origin type, that type.
+        * If this hint originates from a type, that type.
         * Else, :data:`None`.
 
     See Also
-    ----------
+    --------
     :func:`.get_hint_pep_origin_or_none`
         Further details.
     '''
@@ -855,7 +955,7 @@ def get_hint_pep_origin_type_or_none(hint: Any) -> Optional[type]:
     # PEP-compliant type hints. For unknown reasons, type hint factories defined
     # by the standard "typing" module often set their origins to those same type
     # hint factories, despite those factories *NOT* being types. Why? Frankly,
-    # we have no idea and neither does anyone else:
+    # we have no idea and neither does anyone else. Behold, true horror:
     #    >>> import typing
     #    >>> typing.Literal[1, 2].__origin__
     #    typing.Literal  # <-- do you even know what you are doing, python?
@@ -874,7 +974,7 @@ def get_hint_pep_origin_type_or_none(hint: Any) -> Optional[type]:
         )
     # Else, this origin is a type.
 
-    # Return this origin.
+    # Return this origin type.
     return hint_origin
 
 
@@ -896,20 +996,20 @@ def get_hint_pep_origin_type_isinstanceable(hint: object) -> type:
     Parameters
     ----------
     hint : object
-        Object to be inspected.
+        Type hint to be inspected.
 
     Returns
-    ----------
+    -------
     type
         Standard origin type originating this hint.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPepException
         If this hint does *not* originate from a standard origin type.
 
     See Also
-    ----------
+    --------
     :func:`get_hint_pep_origin_type_isinstanceable_or_none`
         Related getter.
     '''
@@ -946,7 +1046,7 @@ def get_hint_pep_origin_type_isinstanceable_or_none(
     to an efficient one-liner.
 
     Caveats
-    ----------
+    -------
     **This high-level getter should always be called in lieu of the low-level**
     :func:`get_hint_pep_origin_or_none` **getter or attempting to
     directly access the low-level** ``__origin__`` **dunder attribute.**
@@ -957,7 +1057,7 @@ def get_hint_pep_origin_type_isinstanceable_or_none(
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     Optional[type]
         Either:
 
@@ -965,7 +1065,7 @@ def get_hint_pep_origin_type_isinstanceable_or_none(
         * Else, :data:`None`.
 
     See Also
-    ----------
+    --------
     :func:`get_hint_pep_origin_type_isinstanceable`
         Related getter.
     :func:`get_hint_pep_origin_or_none`

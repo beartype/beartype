@@ -152,10 +152,10 @@ def die_if_hint_pep_unsupported(
 
     Caveats
     -------
-    **This validator only shallowly validates this object.** If this object is
-    a subscripted PEP-compliant type hint (e.g., ``Union[str, List[int]]``),
-    this validator ignores all subscripted arguments (e.g., ``List[int]``) on
-    this hint and may thus return false positives for hints that are directly
+    **This validator only shallowly validates this object.** If this object is a
+    subscripted PEP-compliant type hint (e.g., ``Union[str, List[int]]``), this
+    validator ignores all subscripted arguments (e.g., ``List[int]``) on this
+    hint and may thus return false positives for hints that are directly
     supported but whose subscripted arguments are not. To deeply validate this
     object, iteratively call this validator during a recursive traversal (such
     as a breadth-first search) over each subscripted argument of this object.

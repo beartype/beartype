@@ -37,7 +37,6 @@ from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
-# from beartype._data.hint.datahintfactory import TypeGuard
 from beartype._data.hint.datahinttyping import CallableMethodGetitemArg
 from beartype._util.cache.utilcachecall import (
     method_cached_arg_by_id,
@@ -45,7 +44,6 @@ from beartype._util.cache.utilcachecall import (
 )
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_args,
-    # get_hint_pep_origin_or_none,
     get_hint_pep_origin_type_or_none,
     get_hint_pep_sign_or_none,
 )

@@ -10,6 +10,7 @@ parameter accepted by the :class:`beartype.BeartypeConf.__init__` method).
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeHintOverridesException
 from beartype._data.hint.datahinttyping import (
     Pep484TowerComplex,
@@ -77,8 +78,9 @@ class BeartypeHintOverrides(FrozenDict):
                 raise BeartypeHintOverridesException(
                     f'Recursive type hint override '
                     f'{repr(hint_override_src)}: {repr(hint_override_trg)} '
-                    f'currently unsupported. Please complain loudly on the '
-                    f'@beartype issue tracker if you feel that this is dumb.'
+                    f'currently unsupported. Please complain on our friendly '
+                    f'issue tracker if you feel that this is dumb:\n'
+                    f'\t{URL_ISSUES}'
                 )
             # Else, this hint override contains *NO* such recursion.
 

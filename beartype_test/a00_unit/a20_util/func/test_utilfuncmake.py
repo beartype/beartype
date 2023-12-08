@@ -21,6 +21,165 @@ This submodule unit tests the public API of the private
 AND_SEE_THE_GREAT_ACHILLES = 'whom we knew'
 
 # ....................{ TESTS ~ make                       }....................
+def test_make_func(capsys) -> None:
+    '''
+    Test the :func:`beartype._util.func.utilfuncmake.make_func` function.
+
+    Parameters
+    ----------
+    capsys
+        :mod:`pytest` fixture enabling standard output and error to be reliably
+        captured and tested against from within unit tests and fixtures.
+
+    Parameters
+    ----------
+    https://docs.pytest.org/en/latest/how-to/capture-stdout-stderr.html#accessing-captured-output-from-a-test-function
+        Official ``capsys`` reference documentation.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorWrapperException
+    from beartype.roar._roarexc import _BeartypeUtilCallableException
+    from beartype.typing import Optional
+    from beartype._util.func.utilfuncmake import make_func
+    from linecache import cache as linecache_cache
+    from pytest import raises
+
+    # ....................{ LOCALS                         }....................
+    # Arbitrary local referenced in functions created below.
+    THO_MUCH_IS_TAKEN = 'much abides; and tho’'
+
+    # ....................{ FUNCS                          }....................
+    # Arbitrary callable wrapped by wrappers created below.
+    def we_are_not_now_that_strength_which_in_old_days() -> str:
+        '''
+        One equal temper of heroic hearts,
+        '''
+
+        return 'Moved earth and heaven, that which we are, we are;'
+
+    # Arbitrary wrapper accessing both globally and locally scoped attributes,
+    # exercising most optional parameters.
+    ulysses = make_func(
+        func_name='it_may_be_that_the_gulfs_will_wash_us_down',
+        func_code='''
+def it_may_be_that_the_gulfs_will_wash_us_down(
+    it_may_be_we_shall_touch_the_happy_isles: Optional[str]) -> str:
+    return (
+        AND_SEE_THE_GREAT_ACHILLES +
+        THO_MUCH_IS_TAKEN +
+        we_are_not_now_that_strength_which_in_old_days() +
+        (
+            it_may_be_we_shall_touch_the_happy_isles or
+            'Made weak by time and fate, but strong in will'
+        )
+    )
+''',
+        func_globals={
+            'AND_SEE_THE_GREAT_ACHILLES': AND_SEE_THE_GREAT_ACHILLES,
+            'THO_MUCH_IS_TAKEN': THO_MUCH_IS_TAKEN,
+            'we_are_not_now_that_strength_which_in_old_days': (
+                we_are_not_now_that_strength_which_in_old_days),
+        },
+        func_locals={
+            'Optional': Optional,
+        },
+        func_wrapped=we_are_not_now_that_strength_which_in_old_days,
+    )
+
+    # ....................{ PASS                           }....................
+    # Assert this wrapper wrapped this wrappee.
+    assert ulysses.__doc__ == (
+        we_are_not_now_that_strength_which_in_old_days.__doc__)
+
+    # Assert this wrapper returns an expected value.
+    odyssey = ulysses('Made weak by time and fate, but strong in will')
+    assert 'Made weak by time and fate, but strong in will' in odyssey
+
+    # Arbitrary debuggable callable accessing no scoped attributes.
+    to_strive_to_seek_to_find = make_func(
+        func_name='to_strive_to_seek_to_find',
+        func_code='''
+def to_strive_to_seek_to_find(and_not_to_yield: str) -> str:
+    return and_not_to_yield
+''',
+        # Print the definition of this callable to standard output, captured by
+        # the "capsys" fixture passed above for testing against below.
+        is_debug=True,
+    )
+
+    # Assert this callable returns an expected value.
+    assert (
+        to_strive_to_seek_to_find('Tis not too late to seek a newer world.') ==
+        'Tis not too late to seek a newer world.'
+    )
+
+    # Pytest object freezing the current state of standard output and error as
+    # uniquely written to by this unit test up to this statement.
+    standard_captured = capsys.readouterr()
+
+    # Assert the prior make_func() call printed the expected definition.
+    assert standard_captured.out.count('\n') == 2
+    assert 'line' in standard_captured.out
+    assert 'def to_strive_to_seek_to_find(' in standard_captured.out
+    assert 'return and_not_to_yield' in standard_captured.out
+
+    # Assert the prior make_func() call cached the expected definition.
+    func_filename = to_strive_to_seek_to_find.__code__.co_filename
+    func_cache = linecache_cache.get(func_filename)
+    assert isinstance(func_cache, tuple)
+    assert len(func_cache) == 4
+    assert isinstance(func_cache[0], int)
+    assert func_cache[1] is None
+    assert func_cache[3] == func_filename
+    func_cache_code = ''.join(func_cache[2])
+    assert 'def to_strive_to_seek_to_find(' in func_cache_code
+    assert 'return and_not_to_yield' in func_cache_code
+
+    # ....................{ FAIL                           }....................
+    # Assert that attempting to create a function whose name collides with that
+    # of a caller-defined local variable raises the expected exception.
+    with raises(_BeartypeUtilCallableException):
+        make_func(
+            func_name='come_my_friends',
+            func_code='''
+def come_my_friends(T: str) -> str:
+    return T + 'is not too late to seek a newer world'
+''',
+            func_label='Magnanimous come_my_friends() function',
+            func_locals={
+                'come_my_friends': 'Push off, and sitting well in order smite',
+            },
+        )
+
+    # Assert that attempting to execute a syntactically invalid snippet raises
+    # the expected exception.
+    with raises(BeartypeDecorWrapperException):
+        make_func(
+            func_name='to_sail_beyond_the_sunset',
+            func_code='''
+def to_sail_beyond_the_sunset(and_the_baths: str) -> str:
+    Of all the western stars, until I die.
+''',
+            func_label='Heroic to_sail_beyond_the_sunset() function',
+            exception_cls=BeartypeDecorWrapperException,
+        )
+
+    # Assert that attempting to execute a syntactically valid snippet failing
+    # to declare this function raises the expected exception.
+    with raises(BeartypeDecorWrapperException):
+        make_func(
+            func_name='you_and_i_are_old',
+            func_code='''
+def old_age_hath_yet_his_honour_and_his_toil() -> str:
+    return 'Death closes all: but something ere the end'
+''',
+            func_label='Geriatric you_and_i_are_old() function',
+            exception_cls=BeartypeDecorWrapperException,
+        )
+
+# ....................{ TESTS ~ make                       }....................
 #FIXME: Consider excising. Although awesome, this is no longer needed.
 # def test_copy_func_shallow_pass() -> None:
 #     '''
@@ -102,167 +261,3 @@ AND_SEE_THE_GREAT_ACHILLES = 'whom we knew'
 #         copy_func_shallow(
 #             func=iter, exception_cls=BeartypeDecorWrapperException)
 
-# ....................{ TESTS ~ make                       }....................
-def test_make_func_pass(capsys) -> None:
-    '''
-    Test successful usage of the
-    :func:`beartype._util.func.utilfuncmake.make_func` function.
-
-    Parameters
-    ----------
-    capsys
-        :mod:`pytest` fixture enabling standard output and error to be reliably
-        captured and tested against from within unit tests and fixtures.
-
-    Parameters
-    ----------
-    https://docs.pytest.org/en/latest/how-to/capture-stdout-stderr.html#accessing-captured-output-from-a-test-function
-        Official ``capsys`` reference documentation.
-    '''
-
-    # Defer test-specific imports.
-    from beartype._util.func.utilfuncmake import make_func
-    from beartype.typing import Optional
-    from linecache import cache as linecache_cache
-
-    # Arbitrary local referenced in functions created below.
-    THO_MUCH_IS_TAKEN = 'much abides; and tho’'
-
-    # Arbitrary callable wrapped by wrappers created below.
-    def we_are_not_now_that_strength_which_in_old_days() -> str:
-        '''
-        One equal temper of heroic hearts,
-        '''
-
-        return 'Moved earth and heaven, that which we are, we are;'
-
-    # Arbitrary wrapper accessing both globally and locally scoped attributes,
-    # exercising most optional parameters.
-    ulysses = make_func(
-        func_name='it_may_be_that_the_gulfs_will_wash_us_down',
-        func_code='''
-def it_may_be_that_the_gulfs_will_wash_us_down(
-    it_may_be_we_shall_touch_the_happy_isles: Optional[str]) -> str:
-    return (
-        AND_SEE_THE_GREAT_ACHILLES +
-        THO_MUCH_IS_TAKEN +
-        we_are_not_now_that_strength_which_in_old_days() +
-        (
-            it_may_be_we_shall_touch_the_happy_isles or
-            'Made weak by time and fate, but strong in will'
-        )
-    )
-''',
-        func_globals={
-            'AND_SEE_THE_GREAT_ACHILLES': AND_SEE_THE_GREAT_ACHILLES,
-            'THO_MUCH_IS_TAKEN': THO_MUCH_IS_TAKEN,
-            'we_are_not_now_that_strength_which_in_old_days': (
-                we_are_not_now_that_strength_which_in_old_days),
-        },
-        func_locals={
-            'Optional': Optional,
-        },
-        func_wrapped=we_are_not_now_that_strength_which_in_old_days,
-    )
-
-    # Assert this wrapper wrapped this wrappee.
-    assert ulysses.__doc__ == (
-        we_are_not_now_that_strength_which_in_old_days.__doc__)
-
-    # Assert this wrapper returns an expected value.
-    odyssey = ulysses('Made weak by time and fate, but strong in will')
-    assert 'Made weak by time and fate, but strong in will' in odyssey
-
-    # Arbitrary debuggable callable accessing no scoped attributes.
-    to_strive_to_seek_to_find = make_func(
-        func_name='to_strive_to_seek_to_find',
-        func_code='''
-def to_strive_to_seek_to_find(and_not_to_yield: str) -> str:
-    return and_not_to_yield
-''',
-        # Print the definition of this callable to standard output, captured by
-        # the "capsys" fixture passed above for testing against below.
-        is_debug=True,
-    )
-
-    # Assert this callable returns an expected value.
-    assert (
-        to_strive_to_seek_to_find('Tis not too late to seek a newer world.') ==
-        'Tis not too late to seek a newer world.'
-    )
-
-    # Pytest object freezing the current state of standard output and error as
-    # uniquely written to by this unit test up to this statement.
-    standard_captured = capsys.readouterr()
-
-    # Assert the prior make_func() call printed the expected definition.
-    assert standard_captured.out.count('\n') == 2
-    assert 'line' in standard_captured.out
-    assert 'def to_strive_to_seek_to_find(' in standard_captured.out
-    assert 'return and_not_to_yield' in standard_captured.out
-
-    # Assert the prior make_func() call cached the expected definition.
-    func_filename = to_strive_to_seek_to_find.__code__.co_filename
-    func_cache = linecache_cache.get(func_filename)
-    assert isinstance(func_cache, tuple)
-    assert len(func_cache) == 4
-    assert isinstance(func_cache[0], int)
-    assert func_cache[1] is None
-    assert func_cache[3] == func_filename
-    func_cache_code = ''.join(func_cache[2])
-    assert 'def to_strive_to_seek_to_find(' in func_cache_code
-    assert 'return and_not_to_yield' in func_cache_code
-
-
-def test_make_func_fail() -> None:
-    '''
-    Test unsuccessful usage of the
-    :func:`beartype._util.func.utilfuncmake.make_func` function.
-    '''
-
-    # Defer test-specific imports.
-    from beartype.roar import BeartypeDecorWrapperException
-    from beartype.roar._roarexc import _BeartypeUtilCallableException
-    from beartype._util.func.utilfuncmake import make_func
-    from pytest import raises
-
-    # Assert that attempting to create a function whose name collides with that
-    # of a caller-defined local variable raises the expected exception.
-    with raises(_BeartypeUtilCallableException):
-        make_func(
-            func_name='come_my_friends',
-            func_code='''
-def come_my_friends(T: str) -> str:
-    return T + 'is not too late to seek a newer world'
-''',
-            func_label='Magnanimous come_my_friends() function',
-            func_locals={
-                'come_my_friends': 'Push off, and sitting well in order smite',
-            },
-        )
-
-    # Assert that attempting to execute a syntactically invalid snippet raises
-    # the expected exception.
-    with raises(BeartypeDecorWrapperException):
-        make_func(
-            func_name='to_sail_beyond_the_sunset',
-            func_code='''
-def to_sail_beyond_the_sunset(and_the_baths: str) -> str:
-    Of all the western stars, until I die.
-''',
-            func_label='Heroic to_sail_beyond_the_sunset() function',
-            exception_cls=BeartypeDecorWrapperException,
-        )
-
-    # Assert that attempting to execute a syntactically valid snippet failing
-    # to declare this function raises the expected exception.
-    with raises(BeartypeDecorWrapperException):
-        make_func(
-            func_name='you_and_i_are_old',
-            func_code='''
-def old_age_hath_yet_his_honour_and_his_toil() -> str:
-    return 'Death closes all: but something ere the end'
-''',
-            func_label='Geriatric you_and_i_are_old() function',
-            exception_cls=BeartypeDecorWrapperException,
-        )

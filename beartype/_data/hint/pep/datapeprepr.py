@@ -26,7 +26,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     # HintSignAnnotated,
     # HintSignAny,
     HintSignAsyncContextManager,
-    HintSignDataclassInitVar,
+    HintSignPep557DataclassInitVar,
     HintSignAsyncIterable,
     HintSignAsyncIterator,
     HintSignAsyncGenerator,
@@ -289,7 +289,7 @@ HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
     # ..................{ PEP 557                            }..................
     # Python >= 3.8 implements PEP 557-compliant "dataclasses.InitVar" type
     # hints as instances of that class.
-    'dataclasses.InitVar': HintSignDataclassInitVar,
+    'dataclasses.InitVar': HintSignPep557DataclassInitVar,
 
     # ..................{ PEP 604                            }..................
     # PEP 604-compliant |-style unions (e.g., "int | float") are internally

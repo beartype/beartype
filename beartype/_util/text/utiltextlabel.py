@@ -36,7 +36,7 @@ def label_beartypeable_kind(
         Beartypeable to describe the kind of.
 
     Returns
-    ----------
+    -------
     str
         Human-readable label describing the kind of this beartypeable.
     '''
@@ -165,7 +165,7 @@ def label_callable(
         Defaults to :data:`None`.
 
     Returns
-    ----------
+    -------
     str
         Human-readable label describing this callable.
     '''
@@ -237,7 +237,7 @@ def label_object_context(obj: object) -> str:
         Object to label the context of.
 
     Returns
-    ----------
+    -------
     str
         Human-readable label describing the context of this object.
     '''
@@ -271,7 +271,7 @@ def label_exception(exception: Exception) -> str:
     Human-readable label describing the passed exception.
 
     Caveats
-    ----------
+    -------
     **The label returned by this function does not describe the traceback
     originating this exception.** To do so, consider calling the standard
     :func:`traceback.format_exc` function instead.
@@ -282,7 +282,7 @@ def label_exception(exception: Exception) -> str:
         Exception to be labelled.
 
     Returns
-    ----------
+    -------
     str
         Human-readable label describing this exception.
     '''
@@ -303,7 +303,7 @@ def label_type(cls: type) -> str:
         Class to be labelled.
 
     Returns
-    ----------
+    -------
     str
         Human-readable label describing this class.
     '''
@@ -374,7 +374,7 @@ def label_object_type(obj: object) -> str:
         Object whose class is to be labelled.
 
     Returns
-    ----------
+    -------
     str
         Human-readable label describing the class of this object.
     '''
