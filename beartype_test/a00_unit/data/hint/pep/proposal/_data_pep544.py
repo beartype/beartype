@@ -13,7 +13,7 @@ Project-wide :pep:`544`-compliant **type hint test data.**
 #superclasses) once @beartype supports these protocols as well.
 
 # ....................{ FIXTURES                           }....................
-def hints_pep_meta_pep544() -> 'List[HintPepMetadata]':
+def hints_pep544_meta() -> 'List[HintPepMetadata]':
     '''
     List of :pep:`544`-compliant **type hint metadata** (i.e.,
     :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
@@ -624,6 +624,40 @@ def hints_pep544_ignorable_shallow() -> list:
     # ..................{ RETURN                             }..................
     # Return this list.
     return hints_pep_ignorable_shallow
+
+
+def hints_pep544_ignorable_deep() -> list:
+    '''
+    List of :pep:`544`-compliant **deeply ignorable type hints** (i.e.,
+    ignorable only on the non-trivial basis of their nested child type hints).
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    from beartype._util.module.lib.utiltyping import get_typing_attrs
+    from beartype.typing import TypeVar
+
+    # ..................{ LOCALS                             }..................
+    # List of all PEP-specific deeply ignorable type hints to be returned.
+    hints_pep_ignorable_deep = []
+
+    # Type variables.
+    S = TypeVar('S')
+    T = TypeVar('T')
+
+    # ..................{ LISTS                              }..................
+    # For the PEP 544-specific "Protocol" superclass importable from any typing
+    # module...
+    for Protocol in get_typing_attrs('Protocol'):
+        # ................{ SETS                               }................
+        # Add PEP-specific deeply ignorable type hints to this list.
+        hints_pep_ignorable_deep.append(
+            # Parametrizations of the "typing.Protocol" abstract base class.
+            Protocol[S, T],
+        )
+
+    # ..................{ RETURN                             }..................
+    # Return this list.
+    return hints_pep_ignorable_deep
 
 # ....................{ ADDERS                             }....................
 #FIXME: Excise us up, please.

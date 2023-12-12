@@ -255,10 +255,9 @@ Arbitrary class referred to by :data:`_PEP484_FORWARDREF_CLASSNAME`.
 '''
 
 # ....................{ FIXTURES                           }....................
-def hints_pep_meta_pep484() -> 'List[HintPepMetadata]':
+def hints_pep484_meta() -> 'List[HintPepMetadata]':
     '''
-    Session-scoped fixture returning a list of :pep:`484`-compliant **type hint
-    metadata** (i.e.,
+    List of :pep:`484`-compliant **type hint metadata** (i.e.,
     :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
     instances describing test-specific :pep:`484`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
@@ -1977,6 +1976,36 @@ def hints_pep_meta_pep484() -> 'List[HintPepMetadata]':
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
     return hints_pep_meta
+
+
+def hints_pep484_ignorable_shallow() -> list:
+    '''
+    List of :pep:`544`-compliant **shallowly ignorable type hints** (i.e.,
+    ignorable on the trivial basis of their machine-readable representations).
+    '''
+
+    # Return this list of all PEP-specific shallowly ignorable type hints.
+    return [
+        # The "Any" catch-all. By definition, *ALL* objects annotated as "Any"
+        # unconditionally satisfy this catch-all and thus semantically reduce to
+        # unannotated objects.
+        Any,
+
+        # The root "object" superclass, which *ALL* objects annotated as
+        # "object" unconditionally satisfy under isinstance()-based type
+        # covariance and thus semantically reduce to unannotated objects.
+        # "object" is equivalent to the "typing.Any" type hint singleton.
+        object,
+
+        # The "Generic" superclass imposes no constraints and is thus also
+        # semantically synonymous with the ignorable PEP-noncompliant
+        # "beartype.cave.AnyType" and hence "object" types. Since PEP 484
+        # stipulates that *ANY* unsubscripted subscriptable PEP-compliant
+        # singleton including "typing.Generic" semantically expands to that
+        # singelton subscripted by an implicit "Any" argument, "Generic"
+        # semantically expands to the implicit "Generic[Any]" singleton.
+        Generic,
+    ]
 
 # ....................{ ADDERS                             }....................
 def add_data(data_module: 'ModuleType') -> None:

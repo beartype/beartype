@@ -8,7 +8,7 @@ Project-wide :pep:`604`-compliant **type hint test data.**
 '''
 
 # ....................{ FIXTURES                           }....................
-def hints_pep_meta_pep604() -> 'List[HintPepMetadata]':
+def hints_pep604_meta() -> 'List[HintPepMetadata]':
     '''
     Session-scoped fixture returning a list of :pep:`604`-compliant **type hint
     metadata** (i.e.,
@@ -205,6 +205,38 @@ def hints_pep_meta_pep604() -> 'List[HintPepMetadata]':
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
     return hints_pep_meta
+
+
+def hints_pep604_ignorable_deep() -> list:
+    '''
+    List of :pep:`604`-compliant **deeply ignorable type hints** (i.e.,
+    ignorable only on the non-trivial basis of their nested child type hints).
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    from beartype.typing import Any
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
+
+    # If the active Python interpreter targets Python < 3.10, this interpreter
+    # fails to support PEP 604. In this case, return the empty list.
+    if not IS_PYTHON_AT_LEAST_3_10:
+        return []
+    # Else, this interpreter supports PEP 604.
+
+    # ..................{ RETURN                             }..................
+    # Return this list of all PEP-specific deeply ignorable type hints.
+    return [
+        # "|"-style unions containing any ignorable type hint.
+        #
+        # Note that including *ANY* "typing"-based type hint (including
+        # "typing.Any") in an "|"-style union causes Python to implicitly
+        # produce a PEP 484- rather than PEP 604-compliant union (e.g.,
+        # "typing.Union[Any, float, str]" in this case). Since that is more or
+        # less fine in this context, we intentionally list such a deeply
+        # ignorable hint here.
+        Any | float | str,
+        complex | int | object,
+    ]
 
 # ....................{ ADDERS                             }....................
 #FIXME: Obsolete us up with a fixture-based approach, please.

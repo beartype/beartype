@@ -8,7 +8,7 @@ Project-wide :pep:`593`-compliant **type hint test data.**
 '''
 
 # ....................{ ADDERS                             }....................
-def hints_pep_meta_pep593() -> 'List[HintPepMetadata]':
+def hints_pep593_meta() -> 'List[HintPepMetadata]':
     '''
     Session-scoped fixture returning a list of :pep:`593`-compliant **type hint
     metadata** (i.e.,
@@ -512,6 +512,55 @@ def hints_pep_meta_pep593() -> 'List[HintPepMetadata]':
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.
     return hints_pep_meta
+
+
+def hints_pep593_ignorable_deep() -> list:
+    '''
+    List of :pep:`593`-compliant **deeply ignorable type hints** (i.e.,
+    ignorable only on the non-trivial basis of their nested child type hints).
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    from beartype.typing import (
+        Any,
+        List,
+        NewType,
+        Optional,
+        Union,
+    )
+    from beartype._util.module.lib.utiltyping import get_typing_attrs
+
+    # ..................{ LOCALS                             }..................
+    # List of all PEP-specific deeply ignorable type hints to be returned.
+    hints_pep_ignorable_deep = []
+
+    # ..................{ LISTS                              }..................
+    # For each PEP-specific type hint factory importable from each currently
+    # importable "typing" module...
+    for Annotated in get_typing_attrs('Annotated'):
+        # ................{ SETS                               }................
+        # Add PEP 593-specific deeply ignorable test type hints to that global.
+        hints_pep_ignorable_deep.extend((
+            # Annotated of shallowly ignorable type hints.
+            Annotated[Any, int],
+            Annotated[object, int],
+
+            # Annotated of ignorable unions and optionals.
+            Annotated[Union[Any, float, str,], int],
+            Annotated[Optional[Any], int],
+
+            # Unions and optionals of ignorable annotateds.
+            Union[complex, int, Annotated[Any, int]],
+            Optional[Annotated[object, int]],
+
+            # Deeply ignorable PEP 484-, 585-, and 593-compliant type hint
+            # exercising numerous edge cases broken under prior releases.
+            Union[str, List[int], NewType('MetaType', Annotated[object, 53])],
+        ))
+
+    # ..................{ RETURN                             }..................
+    # Return this list.
+    return hints_pep_ignorable_deep
 
 # ....................{ ADDERS                             }....................
 #FIXME: Obsolete us up with a fixture-based approach, please. *sigh*

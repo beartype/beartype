@@ -19,6 +19,8 @@ from beartype_test.a00_unit.data.hint.data_hint import (
 )
 from beartype_test.a00_unit.data.hint.pep.data_pep import (
     hints_pep_hashable,
+    hints_pep_ignorable_deep,
+    hints_pep_ignorable_shallow,
     hints_pep_meta,
 )
 from beartype_test.a00_unit.data.hint.util.data_hintmetautil import (

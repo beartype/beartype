@@ -358,9 +358,10 @@ def reduce_hint_pep585_builtin_subscripted_unknown(
     '''
     Reduce the passed :pep:`585`-compliant **unrecognized subscripted builtin
     type hints** (i.e., C-based type hints that are *not* isinstanceable types,
-    instantiated by subscripting pure-Python origin classes unrecognized by
-    :mod:`beartype` and thus *not* type-checkable as is) to their
-    **unsubscripted origin classes** (which are almost always pure-Python
+    instantiated by subscripting pure-Python origin classes subclassing the
+    C-based :class:`types.GenericAlias` superclass such that those classes are
+    unrecognized by :mod:`beartype` and thus *not* type-checkable as is) to
+    their unsubscripted origin classes (which are almost always pure-Python
     isinstanceable types and thus type-checkable as is).
 
     This reducer is intentionally *not* memoized (e.g., by the
@@ -376,7 +377,7 @@ def reduce_hint_pep585_builtin_subscripted_unknown(
 
     Returns
     -------
-    object
+    type
         Unsubscripted origin class originating this unrecognized subscripted
         builtin type hint.
     '''

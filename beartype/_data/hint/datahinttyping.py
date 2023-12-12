@@ -115,11 +115,13 @@ BeartypeableT = TypeVar(
 )
 '''
 :pep:`484`-compliant **generic beartypeable type variable** (i.e., type hint
-matching any arbitrary callable or class).
+matching any arbitrary object decoratable by the :func:`beartype.beartype`
+decorator, including pure-Python callables and classes, C-based descriptors, and
+even more exotic objects).
 
 This type variable notifies static analysis performed by both static type
 checkers (e.g., :mod:`mypy`) and type-aware IDEs (e.g., VSCode) that the
-:mod:`beartype` decorator preserves:
+:func:`beartype.beartype` decorator preserves:
 
 * Callable signatures by creating and returning callables with the same
   signatures as passed callables.
@@ -130,11 +132,20 @@ checkers (e.g., :mod:`mypy`) and type-aware IDEs (e.g., VSCode) that the
 # ....................{ CALLABLE                           }....................
 # Callable-specific type hints *NOT* required by subsequent type hints below.
 
+BeartypeDecorator = Callable[[BeartypeableT], BeartypeableT]
+'''
+PEP-compliant type hint matching a **beartype-like decorator** (i.e., callable
+presumably decorating a passed object by the :func:`beartype.beartype` decorator
+under a possibly non-default beartype configuration and returning the resulting
+decorated object).
+'''
+
+
 CallableTester = Callable[[object], bool]
 '''
 PEP-compliant type hint matching a **tester callable** (i.e., arbitrary callable
-accepting a single arbitrary object and returning either ``True`` if that object
-satisfies an arbitrary constraint *or* ``False`` otherwise).
+accepting a single arbitrary object and returning either :data:`True` if that
+object satisfies an arbitrary constraint *or* :data:`False` otherwise).
 '''
 
 

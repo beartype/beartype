@@ -96,62 +96,30 @@ def hints_pep_meta() -> 'Tuple[HintPepMetadata]':
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype_test.a00_unit.data.hint.pep.module._data_hintmodnumpy import (
-        hints_pep_meta_numpy)
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
-        hints_pep_meta_pep484)
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep544 import (
-        hints_pep_meta_pep544)
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep585 import (
-        hints_pep_meta_pep585)
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep586 import (
-        hints_pep_meta_pep586)
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep589 import (
-        hints_pep_meta_pep589)
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep593 import (
-        hints_pep_meta_pep593)
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep604 import (
-        hints_pep_meta_pep604)
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep675 import (
-        hints_pep_meta_pep675)
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata)
+    from beartype_test._util.kind.pytkindmake import make_container_from_funcs
 
-    # ..................{ LOCALS                             }..................
-    # Tuple of all fixtures defining "HINTS_PEP_META" subiterables.
-    HINTS_PEP_META_FIXTURES = (
-        # Standard type hints.
-        hints_pep_meta_pep484,
-        hints_pep_meta_pep544,
-        hints_pep_meta_pep585,
-        hints_pep_meta_pep586,
-        hints_pep_meta_pep589,
-        hints_pep_meta_pep593,
-        hints_pep_meta_pep604,
-        hints_pep_meta_pep675,
+    # ..................{ FIXTURE                            }..................
+    _hints_pep_meta = make_container_from_funcs((
+        'beartype_test.a00_unit.data.hint.pep.module._data_hintmodnumpy.hints_pep_meta_numpy',
+        'beartype_test.a00_unit.data.hint.pep.proposal.data_pep484.hints_pep484_meta',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep544.hints_pep544_meta',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep585.hints_pep585_meta',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep586.hints_pep586_meta',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep589.hints_pep589_meta',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep593.hints_pep593_meta',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep604.hints_pep604_meta',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep675.hints_pep675_meta',
+    ))
 
-        # Non-standard type hints.
-        hints_pep_meta_numpy,
-    )
-
-    # ..................{ LISTS                              }..................
-    #FIXME: Refactor to defer to our new
-    #beartype_test._util.kind.utilkindmake.make_container_from_funcs() factory!
-    # List of all PEP-compliant type hint metadata to be returned.
-    _hints_pep_meta = []
-
-    # For each fixture defining a "HINTS_PEP_META" subiterable, extend the main
-    # "HINTS_PEP_META" iterable by this subiterable.
-    for hints_pep_meta_fixture in HINTS_PEP_META_FIXTURES:
-        _hints_pep_meta.extend(hints_pep_meta_fixture())
-
-    # Assert this global to contain only instances of its expected dataclass.
+    # Assert this list contains *ONLY* instances of the expected dataclass.
     assert (
         isinstance(hint_pep_meta, HintPepMetadata)
         for hint_pep_meta in _hints_pep_meta
     ), f'{repr(_hints_pep_meta)} not iterable of "HintPepMetadata" instances.'
 
-    # Yield this list coerced into a tuple.
+    # Yield a tuple coerced from this list.
     yield tuple(_hints_pep_meta)
 
 
@@ -199,47 +167,16 @@ def hints_pep_ignorable_shallow() -> frozenset:
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
-        hints_pep484_ignorable_shallow)
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep544 import (
-        hints_pep544_ignorable_shallow)
+    from beartype_test._util.kind.pytkindmake import make_container_from_funcs
 
-    # ..................{ LOCALS                             }..................
-    # Tuple of all fixtures defining "HINTS_PEP_IGNORABLE_SHALLOW" subiterables.
-    HINTS_PEP_IGNORABLE_SHALLOW_FIXTURES = (
-        hints_pep484_ignorable_shallow,
-        hints_pep544_ignorable_shallow,
-    )
-
-    # ..................{ LISTS                              }..................
+    # ..................{ FIXTURE                            }..................
     # List of all shallowly ignorable PEP-compliant type hints to be returned.
-    from beartype.typing import Any
-    _hints_pep_ignorable_shallow = [
-        #FIXME: Shift into hints_pep484_ignorable_shallow(), please.
+    _hints_pep_ignorable_shallow = make_container_from_funcs((
+        'beartype_test.a00_unit.data.hint.pep.proposal.data_pep484.hints_pep484_ignorable_shallow',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep544.hints_pep544_ignorable_shallow',
+    ))
 
-        # ..................{ PEP 484                        }..................
-        # The "Any" catch-all. By definition, *ALL* objects annotated as
-        # "Any" unconditionally satisfy this catch-all and thus semantically
-        # reduce to unannotated objects.
-        Any,
-
-        # The root "object" superclass, which *ALL* objects annotated as
-        # "object" unconditionally satisfy under isinstance()-based type
-        # covariance and thus semantically reduce to unannotated objects.
-        # "object" is equivalent to the "typing.Any" type hint singleton.
-        object,
-    ]
-
-    #FIXME: Refactor to defer to our new
-    #beartype_test._util.kind.utilkindmake.make_container_from_funcs() factory!
-    # For each fixture defining a "HINTS_PEP_META" subiterable, extend the main
-    # "HINTS_PEP_META" iterable by this subiterable.
-    for hints_pep_ignorable_shallow_fixture in (
-        HINTS_PEP_IGNORABLE_SHALLOW_FIXTURES):
-        _hints_pep_ignorable_shallow.extend(
-            hints_pep_ignorable_shallow_fixture())
-
-    # Yield this list coerced into a frozen set.
+    # Yield a frozen set coerced from this list.
     yield frozenset(_hints_pep_ignorable_shallow)
 
 
@@ -258,35 +195,21 @@ def hints_pep_ignorable_deep() -> frozenset:
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
-        hints_pep484_ignorable_deep)
-    from beartype_test.a00_unit.data.hint.pep.proposal._data_pep544 import (
-        hints_pep544_ignorable_deep)
+    from beartype_test._util.kind.pytkindmake import make_container_from_funcs
 
-    # ..................{ LOCALS                             }..................
-    # Tuple of all fixtures defining "HINTS_PEP_IGNORABLE_DEEP" subiterables.
-    HINTS_PEP_IGNORABLE_DEEP_FIXTURES = (
-        hints_pep484_ignorable_deep,
-        hints_pep544_ignorable_deep,
-    )
-
-    # ..................{ LISTS                              }..................
-    #FIXME: Refactor to defer to our new
-    #beartype_test._util.kind.utilkindmake.make_container_from_funcs() factory!
+    # ..................{ FIXTURE                            }..................
     # List of all deeply ignorable PEP-compliant type hints to be returned.
-    _hints_pep_ignorable_deep = []
+    _hints_pep_ignorable_deep = make_container_from_funcs((
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep544.hints_pep544_ignorable_deep',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep593.hints_pep593_ignorable_deep',
+        'beartype_test.a00_unit.data.hint.pep.proposal._data_pep604.hints_pep604_ignorable_deep',
+    ))
 
-    # For each fixture defining a "HINTS_PEP_META" subiterable, extend the main
-    # "HINTS_PEP_META" iterable by this subiterable.
-    for hints_pep_ignorable_deep_fixture in (
-        HINTS_PEP_IGNORABLE_DEEP_FIXTURES):
-        _hints_pep_ignorable_deep.extend(
-            hints_pep_ignorable_deep_fixture())
-
-    # Yield this list coerced into a frozen set.
+    # Yield a frozen set coerced from this list.
     yield frozenset(_hints_pep_ignorable_deep)
 
 # ....................{ SETS                               }....................
+#FIXME: Excise us up, please.
 # Initialized by the _init() function below.
 HINTS_PEP_IGNORABLE_SHALLOW = {
     # ..................{ NON-PEP                            }..................
@@ -305,6 +228,7 @@ thus require explicit instantiation here).
 '''
 
 
+#FIXME: Excise us up, please.
 # Initialized by the _init() function below.
 HINTS_PEP_IGNORABLE_DEEP = set()
 '''
@@ -316,6 +240,7 @@ demonstrate this fact).
 '''
 
 # ....................{ INITIALIZERS                       }....................
+#FIXME: Excise us up, please.
 def _init() -> None:
     '''
     Initialize this submodule.

@@ -833,6 +833,9 @@ def get_hint_pep_origin_type(
     hint: object,
 
     # Optional parameters.
+    #FIXME: This should probably be a new "BeartypeDecorHintPepOriginException"
+    #type, instead. But it's unclear whether users will even ever see this
+    #exception. So, for now, laziness prevails. Huzzah! *sigh*
     exception_cls: TypeException = _BeartypeUtilTypeException,
     exception_prefix: str = '',
 ) -> type:

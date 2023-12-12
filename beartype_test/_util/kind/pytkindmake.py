@@ -14,22 +14,20 @@ functions creating and returning objects, typically for use in higher-level
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from collections.abc import Iterable
+from collections.abc import (
+    Iterable,
+)
 
 # ....................{ CONTEXTS                           }....................
-def make_container_from_funcs(
-    cls: 'Type[T]', func_names: 'Iterable[str]') -> 'T':
+def make_container_from_funcs(func_names: 'Iterable[str]') -> list:
     '''
-    Container of the passed type created by iterating over the passed iterable
-    and, for the fully-qualified name of each callable in that iterable,
-    dynamically importing that callable, calling that callable, and adding the
-    items of the container returned by that callable to the callable returned by
-    this factory function.
+    List created by iterating over the passed iterable and, for the
+    fully-qualified name of each callable in that iterable, dynamically
+    importing that callable, calling that callable, and adding the items of the
+    container returned by that callable to this list..
 
     Parameters
     ----------
-    cls: Type[T]
-        Type of container to be created and returned.
     func_names : Iterable[str]
         Iterable of the fully-qualified names of all callables to be called.
 
@@ -39,7 +37,6 @@ def make_container_from_funcs(
         Instance of this container, iteratively composed from the containers
         returned by these callables.
     '''
-    assert isinstance(cls, type), f'{repr(cls)} not class.'
     assert isinstance(func_names, Iterable), f'{repr(func_names)} not iterable.'
 
     # Defer utility-specific imports.
@@ -61,5 +58,5 @@ def make_container_from_funcs(
         # Append all items in this list to this larger list to be returned.
         main_list.extend(func_list)
 
-    # Return a new instance of this container, coerced from this list.
-    return cls(main_list)
+    # Return this list.
+    return main_list
