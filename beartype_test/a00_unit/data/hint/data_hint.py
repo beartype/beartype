@@ -18,12 +18,7 @@ from beartype._cave._cavefast import (
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype_test.a00_unit.data.hint.nonpep.data_nonpep import (
-    HINTS_NONPEP_META,
-)
-from beartype_test.a00_unit.data.hint.pep.data_pep import (
-    HINTS_PEP_IGNORABLE_SHALLOW,
-    HINTS_PEP_IGNORABLE_DEEP,
-)
+    HINTS_NONPEP_META)
 from pytest import fixture
 
 # ....................{ FIXTURES                           }....................
@@ -44,7 +39,33 @@ def hints_meta(hints_pep_meta) -> 'Tuple[HintNonpepMetadata]':
         hints exercising edge cases in the :mod:`beartype` codebase.
     '''
 
+    # One world. One-liner. Let's get together and code alright.
     yield hints_pep_meta + HINTS_NONPEP_META
+
+
+@fixture(scope='session')
+def hints_ignorable(
+    hints_pep_ignorable_shallow,
+    hints_pep_ignorable_deep,
+) -> frozenset:
+    '''
+    Session-scoped fixture yielding a frozen set of **ignorable
+    PEP-agnostic type hints,** including both PEP-compliant *and* -noncompliant
+    and shallowly *and* deeply ignorable type hints.
+
+    Parameters
+    ----------
+    hints_pep_ignorable_shallow : frozenset
+        Frozen set of all shallowly ignorable PEP-compliant type hints.
+    hints_pep_ignorable_deep : frozenset
+        Frozen set of all deeply ignorable PEP-compliant type hints.
+    '''
+
+    # I code the one-liner, but I did not code the two-liner.
+    yield (
+        hints_pep_ignorable_shallow |
+        hints_pep_ignorable_deep
+    )
 
 # ....................{ FIXTURES ~ not : sets              }....................
 @fixture(scope='session')
@@ -202,16 +223,4 @@ NOT_HINTS_PEP = (
 '''
 Tuple of various objects that are *not* PEP-compliant type hints exercising
 well-known edge cases.
-'''
-
-# ....................{ NOT ~ tuples                       }....................
-HINTS_IGNORABLE = (
-    # Shallowly ignorable PEP-compliant type hints.
-    HINTS_PEP_IGNORABLE_SHALLOW |
-    # Deeply ignorable PEP-compliant type hints.
-    HINTS_PEP_IGNORABLE_DEEP
-)
-'''
-Frozen set of **ignorable type hints** (i.e., type hints that are either
-shallowly ignorable *or* deeply ignorable PEP-compliant type hints).
 '''

@@ -163,7 +163,7 @@ def test_door_typehint_die_if_unbearable(iter_hints_piths_meta) -> None:
 # ....................{ TESTS ~ testers                    }....................
 # See above for @ignore_warnings() discussion.
 @ignore_warnings(BeartypeDecorHintPep585DeprecationWarning)
-def test_door_is_bearable(iter_hints_piths_meta) -> None:
+def test_door_is_bearable(iter_hints_piths_meta, hints_ignorable) -> None:
     '''
     Test the :class:`beartype.door.is_bearable` tester function.
 
@@ -174,6 +174,8 @@ def test_door_is_bearable(iter_hints_piths_meta) -> None:
         ``HintPithMetadata`` instances, each describing a sample type hint
         exercising an edge case in the :mod:`beartype` codebase paired with a
         related object either satisfying or violating that hint.
+    hints_ignorable : frozenset
+        Frozen set of ignorable PEP-agnostic type hints.
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -186,7 +188,6 @@ def test_door_is_bearable(iter_hints_piths_meta) -> None:
     )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithUnsatisfiedMetadata)
-    from beartype_test.a00_unit.data.hint.data_hint import HINTS_IGNORABLE
     from pytest import raises
 
     # ..................{ PASS ~ ignorable                   }..................
@@ -194,7 +195,7 @@ def test_door_is_bearable(iter_hints_piths_meta) -> None:
     pith = 'The breath and blood of distant lands, for ever'
 
     # For each predefined ignorable type hint...
-    for hint_ignorable in HINTS_IGNORABLE:
+    for hint_ignorable in hints_ignorable:
         # Assert this tester returns true when passed this object and this hint.
         assert is_bearable(pith, hint_ignorable) is True
 

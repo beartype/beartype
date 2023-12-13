@@ -121,20 +121,24 @@ async def test_decor_noop_redecorated_async() -> None:
         'God of the hunt', asuryan='ruler of the Aeldari pantheon') is None
 
 # ....................{ TESTS ~ ignorable                  }....................
-def test_decor_noop_hint_ignorable_iter() -> None:
+def test_decor_noop_hint_ignorable_iter(hints_ignorable) -> None:
     '''
     Test that the :func:`beartype.beartype` decorator efficiently reduces to a
     noop on callables annotated with only ignorable type hints in a manner
     generically exercising non-trivial edge cases with iteration.
+
+    Parameters
+    ----------
+    hints_ignorable : frozenset
+        Frozen set of ignorable PEP-agnostic type hints.
     '''
 
     # Defer test-specific imports.
     from beartype import beartype
-    from beartype_test.a00_unit.data.hint.data_hint import HINTS_IGNORABLE
 
     # Assert that @beartype efficiently reduces to a noop when passed only type
     # hints known to be ignorable.
-    for hint_ignorable in HINTS_IGNORABLE:
+    for hint_ignorable in hints_ignorable:
         def revenant_scout_titan(
             antecedent:  hint_ignorable,
             preposition: hint_ignorable,

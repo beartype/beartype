@@ -2007,34 +2007,15 @@ def hints_pep484_ignorable_shallow() -> list:
         Generic,
     ]
 
-# ....................{ ADDERS                             }....................
-def add_data(data_module: 'ModuleType') -> None:
-    '''
-    Add :pep:`484`-compliant type hint test data to various global containers
-    declared by the passed module.
 
-    Parameters
-    ----------
-    data_module : ModuleType
-        Module to be added to.
+def hints_pep484_ignorable_deep() -> list:
+    '''
+    List of :pep:`544`-compliant **deeply ignorable type hints** (i.e.,
+    ignorable only on the non-trivial basis of their nested child type hints).
     '''
 
-    # ..................{ SETS                               }..................
-    # Add PEP 484-specific shallowly ignorable test type hints to that set
-    # global.
-    data_module.HINTS_PEP_IGNORABLE_SHALLOW.update((
-        # The "Generic" superclass imposes no constraints and is thus also
-        # semantically synonymous with the ignorable PEP-noncompliant
-        # "beartype.cave.AnyType" and hence "object" types. Since PEP
-        # 484 stipulates that *ANY* unsubscripted subscriptable PEP-compliant
-        # singleton including "typing.Generic" semantically expands to that
-        # singelton subscripted by an implicit "Any" argument, "Generic"
-        # semantically expands to the implicit "Generic[Any]" singleton.
-        Generic,
-    ))
-
-    # Add PEP 484-specific deeply ignorable test type hints to this set global.
-    data_module.HINTS_PEP_IGNORABLE_DEEP.update((
+    # Return this list of all PEP-specific shallowly ignorable type hints.
+    return [
         # Parametrizations of the "typing.Generic" abstract base class (ABC).
         Generic[S, T],
 
@@ -2049,4 +2030,4 @@ def add_data(data_module: 'ModuleType') -> None:
         # Unions containing any ignorable type hint.
         Union[Any, float, str,],
         Union[complex, int, object,],
-    ))
+    ]

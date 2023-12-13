@@ -15,6 +15,7 @@ child submodules of the test subpackage containing this :mod:`pytest` plugin).
 # by submodules of this subpackage.
 from beartype_test.a00_unit.data.hint.data_hint import (
     hints_meta,
+    hints_ignorable,
     not_hints_nonpep,
 )
 from beartype_test.a00_unit.data.hint.pep.data_pep import (

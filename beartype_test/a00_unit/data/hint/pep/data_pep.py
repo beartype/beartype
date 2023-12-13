@@ -159,7 +159,7 @@ def hints_pep_ignorable_shallow() -> frozenset:
     '''
     Session-scoped fixture yielding a frozen set of **shallowly ignorable
     PEP-compliant type hints** (i.e., ignorable on the trivial basis of their
-    machine-readable representations alone and are thus in the low-level
+    machine-readable representations alone and thus in the low-level
     :obj:`beartype._data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_SHALLOW` set,
     but which are typically *not* safely instantiable from those representations
     and thus require explicit instantiation here).
@@ -185,8 +185,7 @@ def hints_pep_ignorable_deep() -> frozenset:
     '''
     Session-scoped fixture yielding a frozen set of **deeply ignorable
     PEP-compliant type hints** (i.e., *not* ignorable on the trivial basis of
-    their machine-readable representations alone and are thus *not* in the
-    low-level
+    their machine-readable representations alone and thus *not* in the low-level
     :obj:`beartype._data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_DEEP` set,
     but which are nonetheless ignorable and thus require dynamic testing by the
     high-level :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester
@@ -200,6 +199,7 @@ def hints_pep_ignorable_deep() -> frozenset:
     # ..................{ FIXTURE                            }..................
     # List of all deeply ignorable PEP-compliant type hints to be returned.
     _hints_pep_ignorable_deep = make_container_from_funcs((
+        'beartype_test.a00_unit.data.hint.pep.proposal.data_pep484.hints_pep484_ignorable_deep',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep544.hints_pep544_ignorable_deep',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep593.hints_pep593_ignorable_deep',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep604.hints_pep604_ignorable_deep',
@@ -207,86 +207,3 @@ def hints_pep_ignorable_deep() -> frozenset:
 
     # Yield a frozen set coerced from this list.
     yield frozenset(_hints_pep_ignorable_deep)
-
-# ....................{ SETS                               }....................
-#FIXME: Excise us up, please.
-# Initialized by the _init() function below.
-HINTS_PEP_IGNORABLE_SHALLOW = {
-    # ..................{ NON-PEP                            }..................
-    # The root "object" superclass, which *ALL* parameters and returns annotated
-    # as "object" unconditionally satisfy under isinstance()-based type
-    # covariance and semantically reduce to unannotated parameters and returns.
-    # "object" is thus equivalent to the "typing.Any" type hint singleton.
-    object,
-}
-'''
-Frozen set of **shallowly ignorable PEP-compliant type hints** (i.e., whose
-machine-readable representations are in the low-level
-:obj:`beartype._data.hint.pep.datapeprepr.HINTS_REPR_IGNORABLE_SHALLOW` set but
-which are typically *not* safely instantiable from those representations and
-thus require explicit instantiation here).
-'''
-
-
-#FIXME: Excise us up, please.
-# Initialized by the _init() function below.
-HINTS_PEP_IGNORABLE_DEEP = set()
-'''
-Frozen set of **deeply ignorable PEP-compliant type hints** (i.e., *not* in the
-low-level :data:`.HINTS_PEP_IGNORABLE_SHALLOW` set but which are nonetheless
-ignorable and thus require dynamic testing by the high-level
-:func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester function to
-demonstrate this fact).
-'''
-
-# ....................{ INITIALIZERS                       }....................
-#FIXME: Excise us up, please.
-def _init() -> None:
-    '''
-    Initialize this submodule.
-    '''
-
-    #FIXME: Excise almost everything below in favour of the standard pytest
-    #fixture-based approach above, please.
-    # Defer function-specific imports.
-    import sys
-    from beartype_test.a00_unit.data.hint.pep.proposal import (
-        data_pep484,
-        _data_pep544,
-        _data_pep593,
-        _data_pep604,
-    )
-
-    # Submodule globals to be redefined below.
-    global \
-        HINTS_PEP_IGNORABLE_DEEP, \
-        HINTS_PEP_IGNORABLE_SHALLOW
-
-    # Current submodule, obtained via the standard idiom. See also:
-    #     https://stackoverflow.com/a/1676860/2809027
-    CURRENT_SUBMODULE = sys.modules[__name__]
-
-    # Tuple of all private submodules of this subpackage to be initialized.
-    DATA_HINT_PEP_SUBMODULES = (
-        data_pep484,
-        _data_pep544,
-        _data_pep593,
-        _data_pep604,
-    )
-
-    # Initialize all private submodules of this subpackage.
-    for data_hint_pep_submodule in DATA_HINT_PEP_SUBMODULES:
-        data_hint_pep_submodule.add_data(CURRENT_SUBMODULE)
-
-    # Assert these global to have been initialized by these private submodules.
-    assert HINTS_PEP_IGNORABLE_DEEP, (
-        'Set global "HINTS_PEP_IGNORABLE_DEEP" empty.')
-    assert HINTS_PEP_IGNORABLE_SHALLOW, (
-        'Set global "HINTS_PEP_IGNORABLE_SHALLOW" empty.')
-
-    HINTS_PEP_IGNORABLE_DEEP = frozenset(HINTS_PEP_IGNORABLE_DEEP)
-    HINTS_PEP_IGNORABLE_SHALLOW = frozenset(HINTS_PEP_IGNORABLE_SHALLOW)
-
-
-# Initialize this submodule.
-_init()

@@ -338,22 +338,28 @@ def test_door_typehint_len():
 #FIXME: Implement this up, please. We'll want to pay particular attention to
 #edge cases in those "TypeHint" implementations overriding the _make_args()
 #superclass method. In all likelihood, this will warrant yet another fixture.
-# def test_door_typehint_args() -> None:
+# def test_door_typehint_args(hints_pep_meta, hints_ignorable) -> None:
 #     '''
 #     Test the read-only :meth:`beartype.door.TypeHint.args` property.
+#
+#     Parameters
+#     ----------
+#     hints_pep_meta : tuple[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+#         Tuple of type hint metadata describing sample type hints exercising edge
+#         cases in the :mod:`beartype` codebase.
+#     hints_ignorable : frozenset
+#         Frozen set of ignorable PEP-agnostic type hints.
 #     '''
 #
 #     # Defer test-specific imports.
 #     from beartype.door import TypeHint
 #     from beartype.roar import BeartypeDoorException, BeartypeDoorNonpepException
-#     from beartype_test.a00_unit.data.hint.data_hint import HINTS_IGNORABLE
-#     from beartype_test.a00_unit.data.hint.pep.data_pep import HINTS_PEP_META
 #     from contextlib import suppress
 #
 #     # Assert this method:
 #     # * Accepts unignorable PEP-compliant type hints.
 #     # * Rejects ignorable PEP-compliant type hints.
-#     for hint_pep_meta in HINTS_PEP_META:
+#     for hint_pep_meta in hints_pep_meta:
 #         #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
 #         #all currently unsupported type hints. Most of these will be
 #         #"BeartypeDoorNonpepException", but there are some covariant type hints
@@ -364,15 +370,17 @@ def test_door_typehint_len():
 #                 hint_pep_meta.is_ignorable)
 
 
-def test_door_typehint_is_ignorable(hints_pep_meta) -> None:
+def test_door_typehint_is_ignorable(hints_pep_meta, hints_ignorable) -> None:
     '''
     Test the :meth:`beartype.door.TypeHint.is_ignorable` property.
 
     Parameters
     ----------
-    hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
-        List of type hint metadata describing sample type hints exercising edge
+    hints_pep_meta : tuple[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
+        Tuple of type hint metadata describing sample type hints exercising edge
         cases in the :mod:`beartype` codebase.
+    hints_ignorable : frozenset
+        Frozen set of ignorable PEP-agnostic type hints.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -383,12 +391,11 @@ def test_door_typehint_is_ignorable(hints_pep_meta) -> None:
     from beartype._util.hint.utilhinttest import is_hint_ignorable
     from beartype._util.hint.pep.proposal.pep484.utilpep484typevar import (
         get_hint_pep484_typevar_bound_or_none)
-    from beartype_test.a00_unit.data.hint.data_hint import HINTS_IGNORABLE
     from contextlib import suppress
 
     # ....................{ PASS                           }....................
     # Assert this property accepts ignorable type hints.
-    for hint_ignorable in HINTS_IGNORABLE:
+    for hint_ignorable in hints_ignorable:
         #FIXME: Remove this suppression *AFTER* improving "TypeHint" to support
         #all currently unsupported type hints.
         with suppress(BeartypeDoorNonpepException):
@@ -445,7 +452,7 @@ def test_door_typehint_is_ignorable(hints_pep_meta) -> None:
 def test_door_typehint_is_subhint_fail() -> None:
     '''
     Test unsuccessful usage of the
-    :meth:`beartype.door.TypeHint.is_subhint` tester.
+    :meth:`beartype.door.TypeHint.is_subhint` tester method.
     '''
 
     # Defer test-specific imports.
@@ -455,13 +462,23 @@ def test_door_typehint_is_subhint_fail() -> None:
     from pytest import raises
 
     hint = TypeHint(Callable[[], list])
+
     with raises(BeartypeDoorException, match='not type hint wrapper'):
         hint.is_subhint(int)
 
 
-def test_door_types_that_are_just_origins():
+def test_door_typehint_is_args_ignorable():
+    '''
+    Test the private :attr:`beartype.door.TypeHint._is_args_ignorable` boolean
+    instance variable.
+    '''
+
     from beartype.door import TypeHint
-    from beartype.typing import Any, Callable, Tuple
+    from beartype.typing import (
+        Any,
+        Callable,
+        Tuple,
+    )
 
     assert TypeHint(Callable)._is_args_ignorable
     assert TypeHint(Callable[..., Any])._is_args_ignorable
