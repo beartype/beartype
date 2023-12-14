@@ -341,3 +341,44 @@ def test_conf_is_color(monkeypatch: MonkeyPatch) -> None:
     # Assert that this exception message contains an expected substring, whose
     # construction is non-trivial and thus liable to improper construction.
     assert '"True", "False", or "None"' in str(exception_info.value)
+
+
+def test_conf_overrides() -> None:
+    '''
+    Test the public :func:`beartype.BeartypeHintOverrides` class.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import BeartypeHintOverrides
+    from beartype.roar import BeartypeHintOverridesException
+    from beartype.typing import (
+        List,
+        Tuple,
+    )
+    from numbers import Real
+    from pytest import raises
+
+    # ....................{ FAIL                           }....................
+    # Assert that the "BeartypeHintOverrides" class raises the expected
+    # exception when instantiated with one or more recursive type hints (which
+    # currently induce infinite recursion during code generation) *OTHER* than
+    # recursive union type hints (which are currently explicitly supported).
+    with raises(BeartypeHintOverridesException) as exception_info:
+        BeartypeHintOverrides({
+            # Valid non-recursive type hint.
+            float: Real,
+
+            # Valid recursive union type hint.
+            complex: complex | float | int,
+
+            # Invalid recursive non-union type hint.
+            List[str]: Tuple[List[str], ...],
+        })
+
+    # Message of the exception raised above.
+    exception_message = str(exception_info.value)
+
+    # Assert that this message embeds the machine-readable representation of the
+    # invalid recursive non-union type hint in question.
+    assert repr(List[str]) in exception_message

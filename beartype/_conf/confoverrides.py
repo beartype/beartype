@@ -60,12 +60,26 @@ class BeartypeHintOverrides(FrozenDict):
                 # that are *NOT* the corresponding closing "]" delimiter.
                 r'\[[^]]*'
                 # The machine-readable representation of this source override,
-                # bounded on both sides by word boundaries.
-                fr'\b{HINT_OVERRIDE_SRC_REPR}\b'
+                # bounded before but *NOT* after by a word boundary. Why?
+                # Consider an invalid recursive non-union type hint resembling:
+                #     BeartypeHintOverrides({List[str]: Tuple[List[str], ...]})
+                #
+                # In the above case, "HINT_OVERRIDE_SRC_REPR == 'List[str]'.
+                # Bounding that source string:
+                # * Before by a word boundary guards against false positives
+                #   that would otherwise match valid larger target strings
+                #   merely suffixed by that string but otherwise unrelated and
+                #   thus non-recursive (e.g., "Tuple[MuhList[str]]").
+                # * After by a word boundary would effectively prevent
+                #   *ANYTHING* from matching, because only alphanumeric
+                #   characters match the word boundary following a punctuation
+                #   character (e.g., "List[str]]!]?...").
+                fr'\b{HINT_OVERRIDE_SRC_REPR}'
                 # Zero or more characters that are *NOT* the corresponding
                 # closing "]" delimiter followed by that delimiter.
                 r'[^]]*\]'
             )
+            # print(f'HINT_OVERRIDE_RECURSION_REGEX: {HINT_OVERRIDE_RECURSION_REGEX}')
 
             # Match object if this hint override contains one or more instances
             # of subscription-style recursion *OR* "None" otherwise.
