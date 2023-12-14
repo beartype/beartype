@@ -37,6 +37,7 @@ from beartype._cave._cavefast import (
     NoneType,
     NotImplementedType,
 )
+from pathlib import Path
 
 # ....................{ BEARTYPEABLE                       }....................
 # Types of *ALL* objects that may be decorated by @beartype, intentionally
@@ -57,7 +58,7 @@ Tuple set of all **beartypeable types** (i.e., types of all objects that may be
 decorated by the :func:`beartype.beartype` decorator).
 '''
 
-# ....................{ SETS                               }....................
+# ....................{ FAKE ~ builtin                     }....................
 TYPES_BUILTIN_FAKE = frozenset((
     AsyncCoroutineCType,
     AsyncGeneratorCType,
@@ -113,7 +114,7 @@ See Also
     as an essential sanity check on that runtime-specific set.
 '''
 
-# ....................{ STRINGS                            }....................
+
 TYPE_BUILTIN_FAKE_PYCAPSULE_NAME = 'PyCapsule'
 '''
 Unqualified classname of the **PyCapsule type** (i.e., the type of all opaque
@@ -135,4 +136,17 @@ https://stackoverflow.com/a/62258339/2809027
 https://stackoverflow.com/a/60319462/2809027
     StackOverflow answer introducing an alternate non-portable technique for
     obtaining the PyCapsule type itself.
+'''
+
+# ....................{ FAKE ~ context manager             }....................
+TYPES_CONTEXTMANAGER_FAKE = (Path,)
+'''
+Tuple of all **fake context manager types** (i.e., types that erroneously
+masquerade as being context managers by defining fake ``__enter__()`` dunder
+methods, which typically emit non-fatal warnings and reduce to noops).
+
+This set includes:
+
+* The :class:`pathlib.Path` superclass, whose subclasses under Python < 3.13
+  defined fake ``__enter__()`` dunder methods that are now deprecated.
 '''

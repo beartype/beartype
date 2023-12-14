@@ -16,6 +16,7 @@ from beartype.typing import (
     Any,
     Optional,
 )
+from beartype._data.cls.datacls import TYPES_CONTEXTMANAGER_FAKE
 from contextlib import AbstractContextManager
 
 # ....................{ CLASSES                            }....................
@@ -54,8 +55,16 @@ def is_object_context_manager(obj: object) -> bool:
         :data:`True` only if this object is a context manager.
     '''
 
-    # One-liners for frivolous inanity.
-    return isinstance(obj, AbstractContextManager)
+    # Return true only if...
+    return (
+        # This object satisfies the context manager protocol (i.e., defines both
+        # the __enter__() and __exit__() dunder methods) *AND*...
+        isinstance(obj, AbstractContextManager) and
+        # This object is *NOT* a "fake" context manager (i.e., defines erroneous
+        # __enter__() and __exit__() dunder methods trivially reducing to noops
+        # and also emitting non-fatal deprecation warnings).
+        not isinstance(obj, TYPES_CONTEXTMANAGER_FAKE)
+    )
 
 
 # Note that this tester function *CANNOT* be memoized by the @callable_cached

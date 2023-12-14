@@ -58,8 +58,8 @@ def die_unless_hint_pep585_generic(
         the exception message. Defaults to the empty string.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If this object is *not* a :pep:`585`-compliant generic.
     '''
 

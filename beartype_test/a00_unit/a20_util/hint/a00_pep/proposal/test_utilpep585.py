@@ -37,7 +37,7 @@ def test_is_hint_pep585_builtin(hints_pep_meta) -> None:
     # Assert this tester accepts only PEP 585-compliant type hints.
     for hint_pep_meta in hints_pep_meta:
         assert is_hint_pep585_builtin_subscripted(hint_pep_meta.hint) is (
-            hint_pep_meta.is_pep585_builtin)
+            hint_pep_meta.is_pep585_builtin_subscripted)
 
 # ....................{ TESTS ~ kind : generic            }....................
 def test_is_hint_pep585_generic(hints_pep_meta) -> None:

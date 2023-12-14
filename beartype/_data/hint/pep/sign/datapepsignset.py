@@ -64,6 +64,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPanderaAny,
     HintSignParamSpec,
     HintSignPattern,
+    HintSignPep585BuiltinSubscriptedUnknown,
     HintSignProtocol,
     HintSignReversible,
     HintSignSelf,
@@ -193,27 +194,27 @@ guaranteed ``O(1)`` indexation across all sequence items).
 
 This set intentionally excludes the:
 
-* :attr:`typing.AnyStr` sign, which accepts only the :class:`str` and
+* :obj:`typing.AnyStr` sign, which accepts only the :class:`str` and
   :class:`bytes` types as its sole subscripted argument, which does *not*
   unconditionally constrain *all* items (i.e., unencoded and encoded characters
   respectively) of compliant sequences but instead parametrizes this attribute.
-* :attr:`typing.ByteString` sign, which accepts *no* subscripted arguments.
-  :attr:`typing.ByteString` is simply an alias for the
+* :obj:`typing.ByteString` sign, which accepts *no* subscripted arguments.
+  :obj:`typing.ByteString` is simply an alias for the
   :class:`collections.abc.ByteString` abstract base class (ABC) and thus
   already handled by our fallback logic for supported PEP-compliant type hints.
-* :attr:`typing.Deque` sign, whose compliant objects (i.e.,
+* :obj:`typing.Deque` sign, whose compliant objects (i.e.,
   :class:`collections.deque` instances) only `guarantee O(n) indexation across
   all sequence items <collections.deque_>`__:
 
      Indexed access is ``O(1)`` at both ends but slows to ``O(n)`` in the
      middle. For fast random access, use lists instead.
 
-* :attr:`typing.NamedTuple` sign, which embeds a variadic number of
+* :obj:`typing.NamedTuple` sign, which embeds a variadic number of
   PEP-compliant field type hints and thus requires special-cased handling.
-* :attr:`typing.Text` sign, which accepts *no* subscripted arguments.
-  :attr:`typing.Text` is simply an alias for the builtin :class:`str` type and
+* :obj:`typing.Text` sign, which accepts *no* subscripted arguments.
+  :obj:`typing.Text` is simply an alias for the builtin :class:`str` type and
   thus handled elsewhere as a PEP-noncompliant type hint.
-* :attr:`typing.Tuple` sign, which accepts a variadic number of subscripted
+* :obj:`typing.Tuple` sign, which accepts a variadic number of subscripted
   arguments and thus requires special-cased handling.
 
 .. _collections.deque:
@@ -233,13 +234,13 @@ arguments into a disjunctive set union of these arguments).
 
 If the active Python interpreter targets:
 
-* Python >= 3.9, the :attr:`typing.Optional` and :attr:`typing.Union`
+* Python >= 3.9, the :obj:`typing.Optional` and :obj:`typing.Union`
   attributes are distinct.
-* Python < 3.9, the :attr:`typing.Optional` attribute reduces to the
-  :attr:`typing.Union` attribute, in which case this set is technically
+* Python < 3.9, the :obj:`typing.Optional` attribute reduces to the
+  :obj:`typing.Union` attribute, in which case this set is technically
   semantically redundant. Since tests of both object identity and set
   membership are ``O(1)``, this set incurs no significant performance penalty
-  versus direct usage of the :attr:`typing.Union` attribute and is thus
+  versus direct usage of the :obj:`typing.Union` attribute and is thus
   unconditionally used as is irrespective of Python version.
 '''
 
@@ -286,6 +287,9 @@ HINT_SIGNS_ORIGIN_ISINSTANCEABLE = frozenset((
     HintSignTuple,
     HintSignType,
     HintSignValuesView,
+
+    # ..................{ NON-PEP                            }..................
+    HintSignPep585BuiltinSubscriptedUnknown,
 ))
 '''
 Frozen set of all signs uniquely identifying PEP-compliant type hints
@@ -414,7 +418,7 @@ annotated as returning a type compatible with generator objects -- including:
   :data:`HintSignIterator`.
 
 Technically, :pep:`484` states that generator callables may only be annotated
-as only returning a subscription of the :attr:`typing.Generator` factory:
+as only returning a subscription of the :obj:`typing.Generator` factory:
 
     The return type of generator functions can be annotated by the generic type
     ``Generator[yield_type, send_type, return_type]`` provided by ``typing.py``
@@ -423,7 +427,7 @@ as only returning a subscription of the :attr:`typing.Generator` factory:
 Pragmatically, official documentation for the :mod:`typing` module seemingly
 *never* standardized by an existing PEP additionally states that generator
 callables may be annotated as also returning a subscription of either the
-:attr:`typing.Iterable` or :attr:`typing.Iterator` factories:
+:obj:`typing.Iterable` or :obj:`typing.Iterator` factories:
 
     Alternatively, annotate your generator as having a return type of either
     ``Iterable[YieldType]`` or ``Iterator[YieldType]``:
@@ -449,7 +453,7 @@ their ``__module__`` dunder instance variable to that of that type).
 
 Notably, this set contains the signs of:
 
-* :pep:`484`-compliant :attr:`typing.NewType` type hints under Python >= 3.10,
+* :pep:`484`-compliant :obj:`typing.NewType` type hints under Python >= 3.10,
   which badly masquerade as their first passed argument to such an extreme
   degree that they even intentionally prefix their machine-readable
   representation by the fully-qualified name of the caller's module: e.g.,
@@ -462,7 +466,7 @@ Notably, this set contains the signs of:
      >>> repr(new_type)
      __main__.List   # <---- this is genuine bollocks
 
-* :pep:`593`-compliant :attr:`typing.Annotated` type hints, which badly
+* :pep:`593`-compliant :obj:`typing.Annotated` type hints, which badly
   masquerade as their first subscripted argument (e.g., the :class:`int` in
   ``typing.Annotated[int, 63]``) such that the value of the ``__module__``
   attributes of these hints is that of that argument rather than their own.

@@ -23,7 +23,6 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    import pathlib
     from abc import (
         ABC,
         abstractmethod,
@@ -48,6 +47,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     )
     from beartype_test._util.module.pytmodtest import (
         is_package_beartype_vale_usable)
+    from pathlib import Path
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific type hint metadata to be returned.
@@ -461,13 +461,13 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
                 piths_meta=(
                     # Platform-agnostic filesystem path object constant.
                     #
-                    # Note that exceedingly few stdlib types actually define
-                    # the __bytes__() dunder method. Among the few include
-                    # classes defined by the "pathlib" module, which is why we
+                    # Note that exceedingly few stdlib types actually define the
+                    # __bytes__() dunder method. Among the few are classes
+                    # defined by the "pathlib" module, which is why we
                     # instantiate such an atypical class here. See also:
                     #     https://stackoverflow.com/questions/45522536/where-can-the-bytes-method-be-found
                     HintPithSatisfiedMetadata(
-                        pith=lambda: pathlib.Path('/'),
+                        pith=lambda: Path('/'),
                         is_context_manager=True,
                         is_pith_factory=True,
                     ),

@@ -378,7 +378,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 hint=List[AnnotatedStrIsLength],
                 pep_sign=HintSignList,
                 isinstanceable_type=list,
-                is_pep585_builtin=List is list,
+                is_pep585_builtin_subscripted=List is list,
                 piths_meta=(
                     # List of string constants satisfying this validator.
                     HintPithSatisfiedMetadata([

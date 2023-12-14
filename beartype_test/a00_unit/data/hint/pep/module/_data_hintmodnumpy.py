@@ -5,15 +5,15 @@
 
 '''
 **NumPy-specific PEP-noncompliant type hints** (i.e., unofficial type hints
-declared by the third-party :mod:`numpy` package) test data.
+published by the third-party :mod:`numpy` package) test data.
 
 These hints include:
 
-* **Typed NumPy arrays** (i.e., subscriptions of the
-  :obj:`numpy.typing.NDArray` type hint factory).
+* **Typed NumPy arrays** (i.e., subscriptions of the :obj:`numpy.typing.NDArray`
+  type hint factory).
 
 Caveats
-----------
+-------
 Although NumPy-specific type hints are technically PEP-noncompliant, the
 :mod:`beartype` codebase currently treats these hints as PEP-compliant to
 dramatically simplify code generation for these hints. Ergo, so we do.
@@ -22,8 +22,7 @@ dramatically simplify code generation for these hints. Ergo, so we do.
 # ....................{ FIXTURES                           }....................
 def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
     '''
-    Session-scoped fixture returning a list of **NumPy type hint metadata**
-    (i.e.,
+    List of **NumPy type hint metadata** (i.e.,
     :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
     instances describing test-specific sample NumPy type hints with metadata
     generically leveraged by various PEP-agnostic unit tests).
@@ -93,7 +92,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
             # "NDArray" is implemented as:
             # * Under Python >= 3.9, a PEP 585-compliant generic.
             # * Under Python >= 3.8, a pure-Python generic backport.
-            is_pep585_builtin=IS_PYTHON_AT_LEAST_3_9,
+            is_pep585_builtin_subscripted=IS_PYTHON_AT_LEAST_3_9,
             is_type_typing=False,
             is_typing=False,
             # Oddly, NumPy implicitly parametrizes the "NDArray[Any]" type hint
@@ -123,7 +122,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=NDArray[Any],
             pep_sign=HintSignNumpyArray,
-            is_pep585_builtin=IS_PYTHON_AT_LEAST_3_9,
+            is_pep585_builtin_subscripted=IS_PYTHON_AT_LEAST_3_9,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(
@@ -152,7 +151,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=NDArray[dtype(float64)],
             pep_sign=HintSignNumpyArray,
-            is_pep585_builtin=IS_PYTHON_AT_LEAST_3_9,
+            is_pep585_builtin_subscripted=IS_PYTHON_AT_LEAST_3_9,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(
@@ -182,7 +181,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=NDArray[float64],
             pep_sign=HintSignNumpyArray,
-            is_pep585_builtin=IS_PYTHON_AT_LEAST_3_9,
+            is_pep585_builtin_subscripted=IS_PYTHON_AT_LEAST_3_9,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(
@@ -211,7 +210,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=NDArray[floating],
             pep_sign=HintSignNumpyArray,
-            is_pep585_builtin=IS_PYTHON_AT_LEAST_3_9,
+            is_pep585_builtin_subscripted=IS_PYTHON_AT_LEAST_3_9,
             is_type_typing=False,
             is_typing=False,
             piths_meta=(
@@ -239,7 +238,7 @@ def hints_pep_meta_numpy() -> 'List[HintPepMetadata]':
             hint=Tuple[Numpy1DFloat64Array, Numpy1DFloat64Array],
             pep_sign=HintSignTuple,
             isinstanceable_type=tuple,
-            is_pep585_builtin=Tuple is tuple,
+            is_pep585_builtin_subscripted=Tuple is tuple,
             piths_meta=(
                 # 2-tuple of NumPy arrays containing only 64-bit floats.
                 HintPithSatisfiedMetadata((

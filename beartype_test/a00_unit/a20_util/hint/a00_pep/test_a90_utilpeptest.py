@@ -192,7 +192,7 @@ def test_is_hint_pep_args(hints_pep_meta) -> None:
 #         # True only if we expect this hint to be non-self-cached, including.
 #         is_hint_pep_uncached_expected = (
 #             # If th
-#             hint_pep_meta.is_pep585_builtin or
+#             hint_pep_meta.is_pep585_builtin_subscripted or
 #             (
 #                 IS_PYTHON_AT_LEAST_3_9 and
 #                 hint_pep_meta

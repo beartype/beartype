@@ -12,6 +12,10 @@ regardless of the Python version targeted by the active Python interpreter).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+# ....................{ TODO                               }....................
+#FIXME: Embed the number of each PEP for PEP-specific signs into the names of
+#those signs (e.g., rename "HintSignAnnotated" to "HintSignPep593Annotated").
+
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: Attributes imported here at module scope *MUST* be explicitly

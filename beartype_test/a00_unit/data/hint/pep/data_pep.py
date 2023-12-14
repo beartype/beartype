@@ -102,7 +102,7 @@ def hints_pep_meta() -> 'Tuple[HintPepMetadata]':
 
     # ..................{ FIXTURE                            }..................
     _hints_pep_meta = make_container_from_funcs((
-        'beartype_test.a00_unit.data.hint.pep.module._data_hintmodnumpy.hints_pep_meta_numpy',
+        # PEP-compliant type hints.
         'beartype_test.a00_unit.data.hint.pep.proposal.data_pep484.hints_pep484_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep544.hints_pep544_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep585.hints_pep585_meta',
@@ -111,6 +111,16 @@ def hints_pep_meta() -> 'Tuple[HintPepMetadata]':
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep593.hints_pep593_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep604.hints_pep604_meta',
         'beartype_test.a00_unit.data.hint.pep.proposal._data_pep675.hints_pep675_meta',
+
+        # PEP-noncompliant type hints defined by both standard and third-party
+        # packages internally treated by @beartype as PEP-compliant to
+        # streamline code generation.
+        #
+        # PEP-noncompliant type hints are intentionally tested *AFTER*
+        # PEP-compliant type hints to simplify debugging in the event that core
+        # functionality is catastrophically broken. *gulp*
+        'beartype_test.a00_unit.data.hint.pep.module._data_hintmodnumpy.hints_pep_meta_numpy',
+        'beartype_test.a00_unit.data.hint.pep.module._data_hintmodos.hints_pep_meta_os',
     ))
 
     # Assert this list contains *ONLY* instances of the expected dataclass.
