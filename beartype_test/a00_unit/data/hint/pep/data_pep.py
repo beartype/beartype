@@ -121,6 +121,7 @@ def hints_pep_meta() -> 'Tuple[HintPepMetadata]':
         # functionality is catastrophically broken. *gulp*
         'beartype_test.a00_unit.data.hint.pep.module._data_hintmodnumpy.hints_pep_meta_numpy',
         'beartype_test.a00_unit.data.hint.pep.module._data_hintmodos.hints_pep_meta_os',
+        'beartype_test.a00_unit.data.hint.pep.module._data_hintmodweakref.hints_pep_meta_weakref',
     ))
 
     # Assert this list contains *ONLY* instances of the expected dataclass.

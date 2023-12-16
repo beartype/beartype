@@ -80,9 +80,9 @@ def hints_pep_meta_weakref() -> 'List[HintPepMetadata]':
     streams_and_breezes = LikeWovenSounds()
 
     # Weak references to these instances.
-    heard_in_ref = heard_in
-    its_music_long_ref = its_music_long
-    streams_and_breezes_ref = streams_and_breezes
+    heard_in_ref = ref(heard_in)
+    its_music_long_ref = ref(its_music_long)
+    streams_and_breezes_ref = ref(streams_and_breezes)
 
     # Delete one but *NOT* the other of these instances.
     del its_music_long

@@ -101,6 +101,7 @@ def die_if_unbearable(
         'round'] violates type hint list[int], as list index 0 item 'its' not
         instance of int.
     '''
+    # conf._is_debug = True
 
     # @beartype-decorated closure raising an
     # "BeartypeCallHintReturnViolation" exception when the parameter passed to

@@ -11,8 +11,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-#FIXME: Export these types from "beartype.cave", please.
+from beartype.typing import FrozenSet
 from beartype._cave._cavefast import (
+    #FIXME: Export these types from "beartype.cave", please.
     AsyncCoroutineCType,
     AsyncGeneratorCType,
     CallableCodeObjectType,
@@ -59,29 +60,8 @@ decorated by the :func:`beartype.beartype` decorator).
 '''
 
 # ....................{ FAKE ~ builtin                     }....................
-TYPES_BUILTIN_FAKE = frozenset((
-    AsyncCoroutineCType,
-    AsyncGeneratorCType,
-    CallableCodeObjectType,
-    CallableFrameType,
-    ClassDictType,
-    ClosureVarCellType,
-    EllipsisType,
-    ExceptionTracebackType,
-    FunctionType,
-    FunctionOrMethodCType,
-    GeneratorCType,
-    MethodBoundInstanceDunderCType,
-    MethodBoundInstanceOrClassType,
-    MethodUnboundClassCType,
-    MethodUnboundInstanceDunderCType,
-    MethodUnboundInstanceNondunderCType,
-    MethodUnboundPropertyNontrivialCExtensionType,
-    MethodUnboundPropertyTrivialCExtensionType,
-    ModuleType,
-    NoneType,
-    NotImplementedType,
-))
+# Defined below by the _init() function.
+TYPES_BUILTIN_FAKE: FrozenSet[type] = None  # type: ignore[assignment]
 '''
 Frozen set of all **fake builtin types** (i.e., types that are *not* builtin
 but which nonetheless erroneously masquerade as being builtin).
@@ -150,3 +130,61 @@ This set includes:
 * The :class:`pathlib.Path` superclass, whose subclasses under Python < 3.13
   defined fake ``__enter__()`` dunder methods that are now deprecated.
 '''
+
+# ....................{ PRIVATE ~ init                     }....................
+def _init() -> None:
+    '''
+    Initialize this submodule.
+    '''
+
+    # Function-specific imports.
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+
+    # Global variables redefined below.
+    global TYPES_BUILTIN_FAKE
+
+    # List of all fake builtin types.
+    _TYPES_BUILTIN_FAKE = [
+        AsyncCoroutineCType,
+        AsyncGeneratorCType,
+        CallableCodeObjectType,
+        CallableFrameType,
+        ClassDictType,
+        ClosureVarCellType,
+        EllipsisType,
+        ExceptionTracebackType,
+        FunctionType,
+        FunctionOrMethodCType,
+        GeneratorCType,
+        MethodBoundInstanceDunderCType,
+        MethodBoundInstanceOrClassType,
+        MethodUnboundClassCType,
+        MethodUnboundInstanceDunderCType,
+        MethodUnboundInstanceNondunderCType,
+        MethodUnboundPropertyNontrivialCExtensionType,
+        MethodUnboundPropertyTrivialCExtensionType,
+        ModuleType,
+        NoneType,
+        NotImplementedType,
+    ]
+
+    # If the active Python interpreter targets Python 3.9, then the non-builtin
+    # "weakref.ref" class erroneously masquerades as a builtin type:
+    #     >>> from weakref import ref
+    #     >>> class Weakreferee(object): pass
+    #     >>> weakreferee = Weakreferee()
+    #     >>> weakreference = ref(weakreferee)
+    #     >>> weakreference.__class__.__module__
+    #     builtins  # <-- the hell u say!?
+    #
+    # Thankfully, neither Python 3.8 nor Python >= 3.10 suffer this deficit.
+    if IS_PYTHON_AT_LEAST_3_9:
+        from weakref import ref
+        _TYPES_BUILTIN_FAKE.append(ref)
+
+    # Coerce this local list into a global frozenset for efficiency and safety.
+    TYPES_BUILTIN_FAKE = frozenset(_TYPES_BUILTIN_FAKE)
+
+
+# Initialize this submodule.
+_init()

@@ -72,17 +72,17 @@ def join_delimited(
         to :data:`False`.
 
     Returns
-    ----------
+    -------
     str
         Concatenation of these strings.
 
     Examples
-    ----------
+    --------
         >>> join_delimited(
         ...     strs=('Fulgrim', 'Perturabo', 'Angron', 'Mortarion'),
         ...     delimiter_if_two=' and ',
         ...     delimiter_if_three_or_more_nonlast=', ',
-        ...     delimiter_if_three_or_more_last=', and '
+        ...     delimiter_if_three_or_more_last=', and ',
         ... )
         'Fulgrim, Perturabo, Angron, and Mortarion'
     '''
@@ -161,7 +161,7 @@ def join_delimited_disjunction(strs: IterableStrs, **kwargs) -> str:
     :func:`.join_delimeted` function underlying this higher-level function.
 
     Returns
-    ----------
+    -------
     str
         Disjunctive concatenation of these strings.
     '''
@@ -191,7 +191,7 @@ def join_delimited_disjunction_types(types: typing_Iterable[type]) -> str:
         concatenated disjunctively.
 
     Returns
-    ----------
+    -------
     str
         Disjunctive concatenation of these classnames.
     '''
