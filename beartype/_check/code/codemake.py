@@ -88,7 +88,7 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     release_object_typed,
 )
 from beartype._data.hint.datahinttyping import LexicalScope
-from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
+from beartype._util.error.utilerrorraise import EXCEPTION_PLACEHOLDER
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignForwardRef,
@@ -254,10 +254,10 @@ def make_check_expr(
       :meth:`str.replace` method) to generate the desired non-generic working
       code type-checking that parameter or return value.
     * Raises generic non-human-readable exceptions containing the placeholder
-      :attr:`beartype._util.error.utilerror.EXCEPTION_PLACEHOLDER` substring
+      :attr:`beartype._util.error.utilerrorraise.EXCEPTION_PLACEHOLDER` substring
       that the caller is required to explicitly catch and raise non-generic
       human-readable exceptions from by calling the
-      :func:`beartype._util.error.utilerror.reraise_exception_placeholder`
+      :func:`beartype._util.error.utilerrorraise.reraise_exception_placeholder`
       function.
 
     Parameters

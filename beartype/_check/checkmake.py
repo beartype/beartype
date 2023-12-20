@@ -85,7 +85,7 @@ from beartype._check._checksnip import (
     FUNC_TESTER_CODE_SIGNATURE,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
+from beartype._util.error.utilerrorraise import EXCEPTION_PLACEHOLDER
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from itertools import count
@@ -122,10 +122,10 @@ def make_func_tester(
     which would rather defeat the point. Instead, this factory only:
 
     * Raises generic non-human-readable exceptions containing the placeholder
-      :attr:`beartype._util.error.utilerror.EXCEPTION_PLACEHOLDER` substring
+      :attr:`beartype._util.error.utilerrorraise.EXCEPTION_PLACEHOLDER` substring
       that the caller is required to explicitly catch and raise non-generic
       human-readable exceptions from by calling the
-      :func:`beartype._util.error.utilerror.reraise_exception_placeholder`
+      :func:`beartype._util.error.utilerrorraise.reraise_exception_placeholder`
       function.
 
     **This factory intentionally accepts no** ``exception_cls`` **parameter.**

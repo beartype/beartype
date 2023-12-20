@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **exception handling utilities** (i.e., low-level functions
-manipulating exceptions in a general-purpose manner).
+Project-wide **exception raisers** (i.e., low-level callables raising
+human-readable exceptions in a general-purpose manner).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -23,7 +23,7 @@ target substring in the messages of memoized exceptions passed to the
 This substring prefixes most exception messages raised by memoized callables,
 including code generation factories memoized on passed PEP-compliant type hints
 (e.g., the :mod:`beartype._check` and :mod:`beartype._decor` submodules). The
-:func:`beartype._util.error.utilerror.reraise_exception_placeholder` function
+:func:`beartype._util.error.utilerrorraise.reraise_exception_placeholder` function
 then dynamically replaces this prefix of the message of the passed exception
 with a human-readable synopsis of the current unmemoized exception context,
 including the name of both the currently decorated callable *and* the currently
@@ -31,7 +31,7 @@ iterated parameter or return of that callable for aforementioned code generation
 factories.
 
 Usage
-----------
+-----
 This substring is typically hard-coded into non-human-readable exception
 messages raised by low-level callables memoized with the
 :func:`beartype._util.cache.utilcachecall.callable_cached` decorator. Why?
@@ -110,63 +110,64 @@ def reraise_exception_placeholder(
         Defaults to :data:`.EXCEPTION_PLACEHOLDER`.
 
     Raises
-    ----------
+    ------
     exception
         The passed exception, globally replacing all instances of this source
         substring in this exception's message with this target substring.
 
-
     See Also
-    ----------
+    --------
     :data:`.EXCEPTION_PLACEHOLDER`
         Further commentary on usage and motivation.
     https://stackoverflow.com/a/62662138/2809027
         StackOverflow answer mildly inspiring this implementation.
 
     Examples
-    ----------
-        >>> from beartype.roar import BeartypeDecorHintPepException
-        >>> from beartype._util.cache.utilcachecall import callable_cached
-        >>> from beartype._util.error.utilerror import (
-        ...     reraise_exception_placeholder, EXCEPTION_PLACEHOLDER)
-        >>> from random import getrandbits
-        >>> @callable_cached
-        ... def portend_low_level_winter(is_winter_coming: bool) -> str:
-        ...     if is_winter_coming:
-        ...         raise BeartypeDecorHintPepException(
-        ...             '{} intimates that winter is coming.'.format(
-        ...                 EXCEPTION_PLACEHOLDER))
-        ...     else:
-        ...         return 'PRAISE THE SUN'
-        >>> def portend_high_level_winter() -> None:
-        ...     try:
-        ...         print(portend_low_level_winter(is_winter_coming=False))
-        ...         print(portend_low_level_winter(is_winter_coming=True))
-        ...     except BeartypeDecorHintPepException as exception:
-        ...         reraise_exception_placeholder(
-        ...             exception=exception,
-        ...             target_str=(
-        ...                 'Random "Song of Fire and Ice" spoiler' if getrandbits(1) else
-        ...                 'Random "Dark Souls" plaintext meme'
-        ...             ))
-        >>> portend_high_level_winter()
-        PRAISE THE SUN
-        Traceback (most recent call last):
-          File "<input>", line 30, in <module>
-            portend_high_level_winter()
-          File "<input>", line 27, in portend_high_level_winter
-            'Random "Dark Souls" plaintext meme'
-          File "/home/leycec/py/beartype/beartype._util.error.utilerror.py", line 225, in reraise_exception_placeholder
-            raise exception.with_traceback(exception.__traceback__)
-          File "<input>", line 20, in portend_high_level_winter
-            print(portend_low_level_winter(is_winter_coming=True))
-          File "/home/leycec/py/beartype/beartype/_util/cache/utilcachecall.py", line 296, in _callable_cached
-            raise exception
-          File "/home/leycec/py/beartype/beartype/_util/cache/utilcachecall.py", line 289, in _callable_cached
-            *args, **kwargs)
-          File "<input>", line 13, in portend_low_level_winter
-            EXCEPTION_PLACEHOLDER))
-        beartype.roar.BeartypeDecorHintPepException: Random "Song of Fire and Ice" spoiler intimates that winter is coming.
+    --------
+    .. code-block:: pycon
+
+       >>> from beartype.roar import BeartypeDecorHintPepException
+       >>> from beartype._util.cache.utilcachecall import callable_cached
+       >>> from beartype._util.error.utilerrorraise import (
+       ...     reraise_exception_placeholder, EXCEPTION_PLACEHOLDER)
+       >>> from random import getrandbits
+       >>> @callable_cached
+       ... def portend_low_level_winter(is_winter_coming: bool) -> str:
+       ...     if is_winter_coming:
+       ...         raise BeartypeDecorHintPepException(
+       ...             '{} intimates that winter is coming.'.format(
+       ...                 EXCEPTION_PLACEHOLDER))
+       ...     else:
+       ...         return 'PRAISE THE SUN'
+       >>> def portend_high_level_winter() -> None:
+       ...     try:
+       ...         print(portend_low_level_winter(is_winter_coming=False))
+       ...         print(portend_low_level_winter(is_winter_coming=True))
+       ...     except BeartypeDecorHintPepException as exception:
+       ...         reraise_exception_placeholder(
+       ...             exception=exception,
+       ...             target_str=(
+       ...                 'Random "Song of Fire and Ice" spoiler' if getrandbits(1) else
+       ...                 'Random "Dark Souls" plaintext meme'
+       ...             ))
+       >>> portend_high_level_winter()
+       PRAISE THE SUN
+       Traceback (most recent call last):
+         File "<input>", line 30, in <module>
+           portend_high_level_winter()
+         File "<input>", line 27, in portend_high_level_winter
+           'Random "Dark Souls" plaintext meme'
+         File "/home/leycec/py/beartype/beartype._util.error.utilerrorraise.py", line 225, in reraise_exception_placeholder
+           raise exception.with_traceback(exception.__traceback__)
+         File "<input>", line 20, in portend_high_level_winter
+           print(portend_low_level_winter(is_winter_coming=True))
+         File "/home/leycec/py/beartype/beartype/_util/cache/utilcachecall.py", line 296, in _callable_cached
+           raise exception
+         File "/home/leycec/py/beartype/beartype/_util/cache/utilcachecall.py", line 289, in _callable_cached
+           *args, **kwargs)
+         File "<input>", line 13, in portend_low_level_winter
+           EXCEPTION_PLACEHOLDER))
+       beartype.roar.BeartypeDecorHintPepException: Random "Song of Fire and Ice" spoiler intimates that winter is coming.
     '''
     assert isinstance(exception, Exception), (
         f'{repr(exception)} not exception.')

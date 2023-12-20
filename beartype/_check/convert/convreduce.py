@@ -36,6 +36,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPanderaAny,
     HintSignPep557DataclassInitVar,
     HintSignPep585BuiltinSubscriptedUnknown,
+    HintSignPep695TypeAlias,
     HintSignSelf,
     HintSignType,
     HintSignTypeGuard,
@@ -68,6 +69,7 @@ from beartype._util.hint.pep.proposal.utilpep593 import reduce_hint_pep593
 from beartype._util.hint.pep.proposal.utilpep647 import reduce_hint_pep647
 from beartype._util.hint.pep.proposal.utilpep673 import reduce_hint_pep673
 from beartype._util.hint.pep.proposal.utilpep675 import reduce_hint_pep675
+from beartype._util.hint.pep.proposal.utilpep695 import reduce_hint_pep695
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpepreduce import reduce_hint_pep_unsigned
 from collections.abc import Callable
@@ -440,6 +442,11 @@ _HINT_SIGN_TO_REDUCE_HINT_CACHED: _DictReducer = {
     # If this hint is a PEP 675-compliant "typing.LiteralString" type hint,
     # reduce this hint to the standard "str" type.
     HintSignLiteralString: reduce_hint_pep675,
+
+    # ..................{ PEP 695                            }..................
+    # If this hint is a PEP 695-compliant "type" alias, reduce this alias to the
+    # underlying hint lazily referred to by this alias.
+    HintSignPep695TypeAlias: reduce_hint_pep695,
 
     # ..................{ NON-PEP ~ numpy                    }..................
     # If this hint is a PEP-noncompliant typed NumPy array (e.g.,

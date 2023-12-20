@@ -54,7 +54,7 @@ from beartype._conf.confcls import (
 # from beartype._data.hint.datahintfactory import TypeGuard
 from beartype._decor.decorcache import beartype
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.error.utilerror import reraise_exception_placeholder
+from beartype._util.error.utilerrorraise import reraise_exception_placeholder
 from beartype._util.hint.utilhinttest import die_unless_hint
 
 # ....................{ VALIDATORS                         }....................

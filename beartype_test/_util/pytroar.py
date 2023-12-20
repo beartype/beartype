@@ -30,9 +30,9 @@ def raises_uncached(exception_cls: TypeException) -> 'ExceptionInfo':
     Context manager validating that the block exercised by this manager raises
     a **cached exception** (i.e., whose message previously containing one or
     more instances of the magic
-    :data:`beartype._util.error.utilerror.EXCEPTION_PLACEHOLDER`
+    :data:`beartype._util.error.utilerrorraise.EXCEPTION_PLACEHOLDER`
     substring since replaced by the
-    :func:`beartype._util.error.utilerror.reraise_exception_placeholder`
+    :func:`beartype._util.error.utilerrorraise.reraise_exception_placeholder`
     function) of the passed type.
 
     Parameters
@@ -53,7 +53,7 @@ def raises_uncached(exception_cls: TypeException) -> 'ExceptionInfo':
     '''
 
     # Defer test-specific imports.
-    from beartype._util.error.utilerror import (
+    from beartype._util.error.utilerrorraise import (
         EXCEPTION_PLACEHOLDER)
 
     # Within a "pytest"-specific context manager validating this contextual

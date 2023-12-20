@@ -44,17 +44,17 @@ def reduce_hint_pep673(
         :func:`.beartype_object` decorator for further commentary.
     exception_prefix : str, optional
         Human-readable substring prefixing exception messages raised by this
-        function.
+        reducer.
 
     All remaining passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     type
         Most deeply nested class on this type stack.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep673Exception
         If either:
 

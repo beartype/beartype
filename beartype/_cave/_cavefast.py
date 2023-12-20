@@ -41,9 +41,11 @@ requiring those imports. Until resolved, that subpackage is considered tainted.
 import functools as _functools
 import numbers as _numbers
 import re as _re
+import typing as _typing
 from beartype.roar import BeartypeCallUnavailableTypeException
 from beartype._cave._caveabc import BoolType
 from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_12,
     IS_PYTHON_AT_LEAST_3_9,
 )
 from collections import deque as _deque
@@ -67,6 +69,7 @@ from enum import (
 )
 from io import IOBase as _IOBase
 from typing import (
+    TYPE_CHECKING,
     Any,
     Tuple as _TupleTyping,
 )
@@ -253,7 +256,7 @@ Type of all **pure-Python functions** (i.e., functions implemented in Python
 *not* associated with an owning class or instance of a class).
 
 Caveats
-----------
+-------
 **This type ambiguously matches many callables not commonly associated with
 standard functions,** including:
 
@@ -275,7 +278,7 @@ interpreters,** including:
   initially defined in Python or C.
 
 See Also
-----------
+--------
 :class:`MethodBoundInstanceOrClassType`
     Type of all pure-Python bound instance and class methods.
 '''
@@ -297,7 +300,7 @@ implemented in pure Python, bound to either instances of classes or classes
 *and* implicitly passed those instances or classes as their first parameters).
 
 Caveats
-----------
+-------
 There exists *no* corresponding :class:`MethodUnboundInstanceType` type, as
 unbound pure-Python instance methods are ambiguously implemented as functions of
 type :class:`FunctionType` indistinguishable from conventional functions.
@@ -323,7 +326,7 @@ implemented in low-level C, associated with special methods of builtin types
 when accessed as instance rather than class attributes).
 
 See Also
-----------
+--------
 :class:`MethodUnboundInstanceDunderCType`
     Type of all C-based unbound dunder method wrapper descriptors.
 '''
@@ -359,7 +362,7 @@ Despite being unbound, method descriptor wrappers remain callable (e.g., by
 explicitly passing the intended ``self`` objects as their first parameters).
 
 See Also
-----------
+--------
 :class:`MethodBoundInstanceDunderCType`
     Type of all C-based unbound dunder method wrappers.
 :class:`MethodUnboundInstanceNondunderCType`
@@ -381,7 +384,7 @@ Despite being unbound, method descriptors remain callable (e.g., by explicitly
 passing the intended ``self`` objects as their first parameters).
 
 See Also
-----------
+--------
 :class:`MethodUnboundInstanceDunderCType`
     Type of all C-based unbound dunder method wrapper descriptors.
 '''
@@ -418,7 +421,7 @@ accessed with the low-level :attr:`object.__dict__` dictionary rather than as
 class or instance attributes).
 
 Caveats
-----------
+-------
 Class method objects are *only* directly accessible via the low-level
 :attr:`object.__dict__` dictionary. When accessed as class or instance
 attributes, class methods reduce to instances of the standard
@@ -437,7 +440,7 @@ low-level C, associated with property getter and setter methods implemented in
 pure Python, and accessed as class rather than instance attributes).
 
 Caveats
-----------
+-------
 Property objects are directly accessible both as class attributes *and* via the
 low-level :attr:`object.__dict__` dictionary. Property objects are *not*
 accessible as instance attributes, for hopefully obvious reasons.
@@ -456,7 +459,7 @@ accessed with the low-level :attr:`object.__dict__` dictionary rather than as
 class or instance attributes).
 
 Caveats
-----------
+-------
 Static method objects are *only* directly accessible via the low-level
 :attr:`object.__dict__` dictionary. When accessed as class or instance
 attributes, static methods reduce to instances of the standard
@@ -474,7 +477,7 @@ callables implemented in pure Python containing one or more ``yield``
 statements whose declaration is preceded by the ``async`` keyword).
 
 Caveats
-----------
+-------
 **This is not the type of asynchronous generator callables** but rather the
 type implicitly created and *returned* by these callables. Since these
 callables are simply callables subject to syntactic sugar, the type of these
@@ -489,7 +492,7 @@ implemented in pure Python *not* containing one or more ``yield`` statements
 whose declaration is preceded by the ``async`` keyword).
 
 Caveats
-----------
+-------
 **This is not the type of asynchronous coroutine callables** but rather the
 type implicitly created and *returned* by these callables. Since these
 callables are simply callables subject to syntactic sugar, the type of these
@@ -509,14 +512,14 @@ implementing the :class:`collections.abc.Generator` protocol), including:
   ``(`` and ``)``.
 
 Caveats
-----------
+-------
 **This is not the type of generator callables** but rather the type implicitly
 created and *returned* by these callables. Since these callables are simply
 callables subject to syntactic sugar, the type of these callables is simply
 :data:`CallableTypes`.
 
 See Also
-----------
+--------
 :class:`GeneratorCType`
     Subtype of all C-based generators.
 '''
@@ -532,7 +535,7 @@ well as the C-based type of all **pure-Python generator comprehensions** (i.e.,
 implicitly converted at runtime to return a C-based iterator of this type).
 
 Caveats
-----------
+-------
 **This is not the type of generator callables** but rather the type implicitly
 created and *returned* by these callables. Since these callables are simply
 callables subject to syntactic sugar, the type of these callables is simply
@@ -561,7 +564,7 @@ whose classes implement all abstract methods declared by that base class
 regardless of whether those classes actually subclass that base class).
 
 Caveats
-----------
+-------
 This type ambiguously matches both:
 
 * **Explicit container subtypes** (i.e., concrete subclasses of the
@@ -577,14 +580,14 @@ usually be seen as overly specific. So, this ambiguity is *not* necessarily a
 BadThing™.
 
 What is a BadThing™ is that container ABCs violate the "explicit is better than
-implicit" maxim of `PEP 20 -- The Zen of Python <PEP 20_>`__ by intentionally
-deceiving you for your own benefit, which you of course appreciate. Thanks to
-arcane dunder magics buried in the :class:`abc.ABCMeta` metaclass, the
-:func:`isinstance` and :func:`issubclass` builtin functions (which the
-:func:`beartype.beartype` decorator internally defers to) ambiguously mistype
-structural container subtypes as explicit container subtypes:
+implicit" maxim of :pep:`20` by intentionally deceiving you for your own
+benefit, which you of course appreciate. Thanks to arcane dunder magics buried
+in the :class:`abc.ABCMeta` metaclass, the :func:`isinstance` and
+:func:`issubclass` builtin functions (which the :func:`beartype.beartype`
+decorator internally defers to) ambiguously mistype structural container
+subtypes as explicit container subtypes:
 
-.. code-block:: python
+.. code-block:: pycon
 
    >>> from collections.abc import Container
    >>> class FakeContainer(object):
@@ -595,9 +598,6 @@ structural container subtypes as explicit container subtypes:
    True
    >>> isinstance(FakeContainer(), Container)
    True
-
-.. _PEP 20:
-   https://www.python.org/dev/peps/pep-0020
 '''
 
 
@@ -615,7 +615,7 @@ This type also matches **NumPy arrays** (i.e., instances of the concrete
 :class:`numpy.ndarray` class) via structural subtyping.
 
 See Also
-----------
+--------
 :class:`ContainerType`
     Further details on structural subtyping.
 :class:`IteratorType`
@@ -640,7 +640,7 @@ Iterators implement at least two dunder methods:
   well.
 
 See Also
-----------
+--------
 :class:`ContainerType`
     Further details on structural subtyping.
 :class:`IterableType`
@@ -658,7 +658,7 @@ This type also matches **NumPy arrays** (i.e., instances of the concrete
 :class:`numpy.ndarray` class) via structural subtyping.
 
 See Also
-----------
+--------
 :class:`ContainerType`
     Further details on structural subtyping.
 '''
@@ -675,7 +675,7 @@ This type also matches **NumPy arrays** (i.e., instances of the concrete
 :class:`numpy.ndarray` class) via structural subtyping.
 
 See Also
-----------
+--------
 :class:`ContainerType`
     Further details on structural subtyping.
 '''
@@ -688,7 +688,7 @@ Type of all **double-ended queues** (i.e., instances of the concrete
 stdlib).
 
 Caveats
-----------
+-------
 The :mod:`collections.abc` subpackage currently provides no corresponding
 abstract interface to formalize queue types. Double-ended queues are it, sadly.
 '''
@@ -706,7 +706,7 @@ This type matches both the standard :class:`set` and :class:`frozenset` types
 methods.
 
 See Also
-----------
+--------
 :class:`ContainerType`
     Further details on structural subtyping.
 '''
@@ -720,7 +720,7 @@ implementing the ``__hash__()`` dunder method required for all dictionary keys
 and set items).
 
 See Also
-----------
+--------
 :class:`ContainerType`
     Further details on structural subtyping.
 '''
@@ -734,7 +734,7 @@ class; dictionary-like containers containing key-value pairs mapping from
 hashable keys to corresponding values).
 
 Caveats
-----------
+-------
 **This type does not guarantee mutability** (i.e., the capacity to modify
 instances of this type after instantiation). This type ambiguously matches both
 mutable mapping types (e.g., :class:`dict`) and immutable mapping types (e.g.,
@@ -742,7 +742,7 @@ mutable mapping types (e.g., :class:`dict`) and immutable mapping types (e.g.,
 :class:`MappingMutableType` type instead.
 
 See Also
-----------
+--------
 :class:`ContainerType`
     Further details on structural subtyping.
 '''
@@ -756,7 +756,7 @@ dictionary-like containers permitting modification of contained key-value
 pairs).
 
 See Also
-----------
+--------
 :class:`ContainerType`
     Further details on structural subtyping.
 :class:`MappingType`
@@ -772,7 +772,7 @@ class; reversible collections whose items are efficiently accessible but *not*
 necessarily modifiable with 0-based integer-indexed lookup).
 
 Caveats
-----------
+-------
 **This type does not guarantee mutability** (i.e., the capacity to modify
 instances of this type after instantiation). This type ambiguously matches both
 mutable sequence types (e.g., :class:`list`) and immutable sequence types
@@ -803,7 +803,7 @@ should thus be typed to accept NumPy arrays as well. To do so, prefer either:
   matching both mutable sequences and NumPy arrays.
 
 See Also
-----------
+--------
 :class:`ContainerType`
     Further details on structural subtyping.
 '''
@@ -817,7 +817,7 @@ collections whose items are both efficiently accessible *and* modifiable with
 0-based integer-indexed lookup).
 
 Caveats
-----------
+-------
 **This type does not match NumPy arrays (i.e., instances of the concrete
 :class:`numpy.ndarray` class),** which satisfy most but *not* all of the
 :class:`collections.abc.MutableSequence` API. Specifically, NumPy arrays fail
@@ -839,7 +839,7 @@ prefer the :class:`beartype.cave.SequenceMutableOrNumpyArrayTypes` tuple of
 types matching both mutable sequences and NumPy arrays.
 
 See Also
-----------
+--------
 :class:`ContainerType`
     Further details on structural subtyping.
 :class:`SequenceType`
@@ -868,7 +868,7 @@ Why? Because *all* enumeration types are instances of this type rather than the
 adhere to standard Pythonic semantics. Notably, the following non-standard
 invariants hold across *all* enumerations:
 
-.. code-block:: python
+.. code-block:: pycon
 
    >>> from enum import Enum
    >>> GyreType = Enum(
@@ -897,21 +897,23 @@ Type of all **enumeration members** (i.e., abstract base class of all
 alternative choices defined as enumeration fields).
 
 Caveats
-----------
+-------
 When type checking callable parameters, this class should *only* be referenced
 where the callable permissively accepts any enumeration member type rather than
 a specific enumeration member type. In the latter case, that type is simply
 that enumeration's type and should be directly referenced as such: e.g.,
 
-    >>> from enum import Enum
-    >>> from beartype import beartype
-    >>> EndymionType = Enum('EndymionType', ('BEAUTY', 'JOY',))
-    >>> @beartype
-    ... def our_feet_were_soft_in_flowers(superlative: EndymionType) -> str:
-    ...     return str(superlative).lower()
+.. code-block:: pycon
+
+   >>> from enum import Enum
+   >>> from beartype import beartype
+   >>> EndymionType = Enum('EndymionType', ('BEAUTY', 'JOY',))
+   >>> @beartype
+   ... def our_feet_were_soft_in_flowers(superlative: EndymionType) -> str:
+   ...     return str(superlative).lower()
 '''
 
-# ....................{ TYPES ~ hint                       }....................
+# ....................{ TYPES ~ hint : pep : 585           }....................
 # Define this type as either...
 HintGenericSubscriptedType: type = (
     # If the active Python interpreter targets at least Python >= 3.9 and thus
@@ -957,7 +959,7 @@ These include:
   detecting :pep:`585`-compliant generic type hints.
 '''
 
-
+# ....................{ TYPES ~ hint : pep : 604           }....................
 HintPep604Types: _TupleTyping[type, ...] = (type, HintGenericSubscriptedType)
 '''
 Tuple of all :pep:`604`-compliant **new union item types** (i.e., types of all
@@ -968,6 +970,40 @@ objects permissible as the items of new unions), including:
 * The C-based type of all subscripted generics (e.g., the type of the first item
   in the new union ``list[dict[str, int]] | None``).
 '''
+
+# ....................{ TYPES ~ hint : pep : 695           }....................
+# If this submodule is currently being statically type-checked by a pure static
+# type-checker, ignore false positives complaining that this type is not a type.
+# Notably, mypy inexplicably refuses to accept this by emitting "errors"
+# resembling the following wherever this type is accessed:
+#     beartype/_util/hint/pep/proposal/utilpep695.py:120: error: Variable
+#         "beartype._cave._cavefast.HintPep695Type" is not valid as a type
+#         [valid-type]
+#     beartype/_util/hint/pep/proposal/utilpep695.py:120: note: See
+#         https://mypy.readthedocs.io/en/stable/common_issues.html#variables-vs-type-aliases
+if TYPE_CHECKING:
+    class HintPep695Type(object): pass
+# Else, this submodule is *NOT* currently being statically type-checked by a
+# pure static type-checker. In this case, define this type properly. *sigh*
+else:
+    # Define this type as either...
+    HintPep695Type: type = (
+        # If the active Python interpreter targets at least Python >= 3.12 and
+        # thus supports PEP 695, this type;
+        _typing.TypeAliasType
+        if IS_PYTHON_AT_LEAST_3_12 else
+        # Else, a placeholder type.
+        UnavailableType
+    )
+    '''
+    C-based type of all :pep:`695`-compliant **type aliases** (i.e., objects
+    created by statements of the form ``type {alias_name} = {alias_value}``) if
+    the active Python interpreter targets Python >= 3.12 *or*
+    :class:`.UnavailableType` otherwise.
+
+    This type is a version-agnostic generalization of the standard
+    :class:`typing.TypeAliasType` type available only under Python >= 3.12.
+    '''
 
 # ....................{ TYPES ~ scalar                     }....................
 StrType = str    # Well, isn't that special.

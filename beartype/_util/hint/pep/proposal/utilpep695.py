@@ -33,7 +33,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #            alias.__value__
 #            break
 #        except NameError as exception:
-#            undeclared_attr_name = get_nameerror_attr_name(exception)
+#            undeclared_attr_name = get_name_error_attr_name(exception)
 #            exec(f'type {undeclared_attr_name} = {undeclared_attr_name}')
 #            type alias = UndeclaredClass | UndeclaredType
 #
@@ -44,53 +44,147 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #Given the above transformation, supporting forward references embedded within
 #PEP 695-style "type" aliases is now trivial. How? Simply:
-#* Define a new "HintSignPep695TypeAlias" sign. Note that there already exists a
-#  deprecated "typing.TypeAlias" type. Ergo, disambiguation is required for both
-#  sanity and maintainability here.
-#* Detect PEP 695-style "type" aliases via this new "HintSignPep695TypeAlias"
-#  sign. This is trivial, as these aliases are detectable as an instance of
-#  "types.TypeAliasType". I think... or something? *sigh*
-#* Define a new PEP 695-specific reduce_pep695() reducer resembling:
-#      from beartype.roar import BeartypeDecorHintPep695Exception
-#      from beartype._cave._cavefast import Pep695TypeAlias
+#FIXME: Horrifying. Our above idea of performing this transformation:
+#    # "beartype.claw" should transform this...
+#    type alias = UndeclaredClass | UndeclaredType
 #
-#      def reduce_pep695(hint: Pep695TypeAlias) -> object:
+#    # ...into this.
+#    type alias = UndeclaredClass | UndeclaredType
+#    while True:
+#        try:
+#            alias.__value__
+#            break
+#        except NameError as exception:
+#            undeclared_attr_name = get_name_error_attr_name(exception)
+#            exec(f'type {undeclared_attr_name} = {undeclared_attr_name}')
+#            type alias = UndeclaredClass | UndeclaredType
 #
-#          # De-aliased type hint to be returned.
-#          hint_aliased = None
+#...fundamentally fails, as each type loop f'type {undeclared_attr_name} =
+#{undeclared_attr_name}' is simply a self-recursive tautology that fails to
+#correctly update itself when that undeclared attribute becomes declared.
 #
-#          # Attempt to reduce this PEP 695-compliant type alias to the type hint it
-#          # lazily encapsulates. If this type alias is *NOT* itself a forward
-#          # reference to an undeclared attribute, this reduction is guaranteed to
-#          # succeed.
-#          try:
-#              hint_aliased = hint.__value__
-#          # If this reduction raises a "NameError", this type alias is a forward
-#          # reference to an undeclared attribute. In this case, reduce this type alias
-#          # to a stringified type hint referring to that attribute.
-#          except NameError as exception:
-#              hint_aliased = repr(hint)
+#We now have *NO* recourse but to fall back to our age-old standby, the
+#beartype._check.forward.fwdref.make_forwardref_indexable_subtype() factory. In
+#short, perform the following transformation instead:
+#    # "beartype.claw" should transform this...
+#    type alias = UndeclaredClass | UndeclaredType
 #
-#              if not is_identifier(hint_aliased):
-#                  subhint_ref = get_nameerror_attr_name(exception)
+#    # ...into this.
+#    from beartype._check.forward.fwdref import (
+#        make_forwardref_indexable_subtype as
+#        __beartype_make_forwardref_indexable_subtype
+#    )
+#    from beartype._util.error.utilerrorget import (
+#        get_name_error_attr_name as __beartype_get_name_error_attr_name)
 #
-#                  hint_aliased_quoted = hint.replace(
-#                      subhint_ref, repr(subhint_ref))
+#    type alias = UndeclaredClass | UndeclaredType
+#    while True:
+#        try:
+#            alias.__value__
+#            break
+#        except NameError as __beartype_exception:
+#            __beartype_hint_name = __beartype_get_name_error_attr_name(
+#                __beartype_exception)
+#            __beartype_forwardref = __beartype_make_forwardref_indexable_subtype(
+#                # Fully-qualified name of the current module.
+#                __name__,
+#                # Unqualified basename of this unresolved type hint.
+#                __beartype_hint_name,
+#            )
 #
-#                  raise BeartypeDecorHintPep695Exception(
-#                      f'PEP 695 type alias {hint_aliased} '
-#                      f'unquoted relative forward reference {repr(subhint_ref)} '
-#                      f'unsupported outside "beartype.claw" import hooks. '
-#                      f'Consider either:\n'
-#                      f'* Quoting this forward reference in this type alias: '
-#                      f'e.g.,\n'
-#                      f'     {hint_aliased_quoted}\n'
-#                      f'* Applying "beartype.claw" import hooks to the '
-#                      f'module defining this type alias: e.g.,\n'
-#                      f'     # In the "this_package.__init__" submodule:\n'
-#                      f'     from beartype.claw import beartype_this_package\n'
-#                      f'     beartype_this_package()'
-#                  )
+#            # If the current scope is module scope, prefer an efficient
+#            # non-exec()-based solution. Note that this optimization does *NOT*
+#            # generalize to other scopes, for obscure reasons delineated here:
+#            #     https://stackoverflow.com/a/8028772/2809027
+#            if globals() is locals():
+#                globals()[__beartype_hint_name] = __beartype_forwardref
+#            # Else, the current scope is *NOT* module scope. In this case,
+#            # fallback to an inefficient exec()-based solution.
+#            else:
+#                exec(f'{__beartype_hint_name} = __beartype_forwardref')
 #
-#          # Return this de-aliased type hint.
-#          return hint_aliased
+#            # Delete the above local variables to avoid polluting namespaces.
+#            del (
+#                __beartype_exception,
+#                __beartype_forwardref,
+#                __beartype_hint_name,
+#            )
+
+# ....................{ IMPORTS                            }....................
+from beartype.roar import BeartypeDecorHintPep695Exception
+from beartype._cave._cavefast import HintPep695Type
+from beartype._util.error.utilerrorget import get_name_error_attr_name
+
+# ....................{ REDUCERS                           }....................
+def reduce_hint_pep695(
+    hint: HintPep695Type,
+    exception_prefix: str,
+    *args, **kwargs
+) -> object:
+    '''
+    Reduce the passed :pep:`695`-compliant **type alias** (i.e., objects created
+    by statements of the form ``type {alias_name} = {alias_value}``) to the
+    underlying type hint lazily referred to by this type alias.
+
+    This reducer is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as reducers cannot be memoized.
+
+    Parameters
+    ----------
+    hint : object
+        Self type hint to be reduced.
+    exception_prefix : str, optional
+        Human-readable substring prefixing exception messages raised by this
+        reducer.
+
+    All remaining passed arguments are silently ignored.
+
+    Returns
+    -------
+    object
+        Underlying type hint lazily referred to by this type alias.
+    '''
+
+    # Underlying type hint to be returned.
+    hint_aliased: object = None
+
+    # Attempt to reduce this type alias to the type hint it lazily refers to. If
+    # this alias contains *NO* forward references to undeclared attributes, this
+    # reduction is mostly guaranteed to succeed. So, not at all guaranteed.
+    try:
+        hint_aliased = hint.__value__  # type: ignore[attr-defined]
+    # If doing so raises a builtin "NameError" exception, this alias contains
+    # one or more forward references to undeclared attributes. In this case...
+    except NameError as exception:
+        # Unqualified basename of this type alias (i.e., the name of the global
+        # or local variable assigned to by the left-hand side of this alias).
+        hint_name = repr(hint)
+
+        # Unqualified basename of the first relative forward reference embedded
+        # within this alias.
+        hint_ref_name = get_name_error_attr_name(exception)
+
+        # Raise a human-readable exception embedding these names.
+        raise BeartypeDecorHintPep695Exception(
+            f'{exception_prefix}PEP 695 type alias "{hint_name}" '
+            f'unquoted relative forward reference "{hint_ref_name}" '
+            f'unsupported outside "beartype.claw" import hooks, '
+            f'due to inadequacies in the runtime implementation of '
+            f'type aliases beyond the purview of @beartype '
+            f'(i.e., PEP 695 is dumb and CPython devs should feel bad). '
+            f'Consider either:\n'
+            f'* Applying "beartype.claw" import hooks to the '
+            f'module defining this type alias: e.g.,\n'
+            f'     # In the "{{your_package}}.__init__" submodule:\n'
+            f'     from beartype.claw import beartype_this_package\n'
+            f'     beartype_this_package()\n'
+            f'* Quoting this forward reference in this type alias: e.g.,\n'
+            f'     # Instead of this...\n'
+            f'     type {hint_name} = ... {hint_ref_name} ...\n'
+            f'\n'
+            f'     # Do this.\n'
+            f'     type {hint_name} = ... "{hint_ref_name}" ...'
+        ) from exception
+
+    # Return this underlying type hint.
+    return hint_aliased

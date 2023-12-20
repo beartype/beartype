@@ -195,34 +195,6 @@ HintSignNone = _HintSign(name='None')
     type(None).
 '''
 
-
-# dataclasses.InitVar[...].
-HintSignPep557DataclassInitVar = _HintSign(name='Pep557DataclassInitVar')
-'''
-PEP 557 defines the "dataclasses.InitVar" type hint factory for annotating
-class-scoped variable annotations of @dataclass.dataclass-decorated classes.
-'''
-
-# os.PathLike[...], weakref.weakref[...], et al.
-HintSignPep585BuiltinSubscriptedUnknown = _HintSign(
-    name='Pep585BuiltinSubscriptedUnknown')
-'''
-:pep:`585` defines the C-based :class:`types.GenericAlias` superclass
-inheritable by PEP-noncompliant pure-Python subclasses in either the standard
-library or third-party packages, which when subscripted by otherwise
-PEP-compliant child type hints produce PEP-noncompliant **unrecognized
-subscripted builtin type hints** (i.e., C-based type hints that are *not*
-isinstanceable types, instantiated by subscripting pure-Python origin classes
-unrecognized by :mod:`beartype` and thus PEP-noncompliant). Examples include:
-
-* ``os.PathLike[...]`` type hints.
-* ``weakref.weakref[...]`` type hints.
-
-Unsurprisingly, :mod:`beartype` reduces C-based unrecognized subscripted builtin
-type hints (which are *not* type-checkable as is) to their unsubscripted
-pure-Python origin classes (which are type-checkable as is).
-'''
-
 # ....................{ SIGNS ~ implicit : lib             }....................
 # Signs identifying PEP-noncompliant third-party type hints published by...
 #
@@ -251,6 +223,47 @@ by:
 
 * Defining this catch-all singleton for Pandera type hints here.
 * Denoting this singleton to be unconditionally ignorable elsewhere.
+'''
+
+# ....................{ SIGNS ~ implicit : pep : 557       }....................
+# dataclasses.InitVar[...].
+HintSignPep557DataclassInitVar = _HintSign(name='Pep557DataclassInitVar')
+'''
+:pep:`557`-compliant :obj:`dataclasses.InitVar` type hint factory, annotating
+class-scoped variable annotations of :func:`dataclass.dataclass`-decorated
+data classes.
+'''
+
+# ....................{ SIGNS ~ implicit : pep : 585       }....................
+# os.PathLike[...], weakref.weakref[...], et al.
+HintSignPep585BuiltinSubscriptedUnknown = _HintSign(
+    name='Pep585BuiltinSubscriptedUnknown')
+'''
+:pep:`585`-compliant C-based :class:`types.GenericAlias` superclass inheritable
+by PEP-noncompliant pure-Python subclasses in either the standard library or
+third-party packages, which when subscripted by otherwise PEP-compliant child
+type hints produce PEP-noncompliant **unrecognized subscripted builtin type
+hints** (i.e., C-based type hints that are *not* isinstanceable types,
+instantiated by subscripting pure-Python origin classes unrecognized by
+:mod:`beartype` and thus PEP-noncompliant).
+
+Examples include:
+
+* ``os.PathLike[...]`` type hints.
+* ``weakref.weakref[...]`` type hints.
+
+Unsurprisingly, :mod:`beartype` reduces C-based unrecognized subscripted builtin
+type hints (which are *not* type-checkable as is) to their unsubscripted
+pure-Python origin classes (which are type-checkable as is).
+'''
+
+# ....................{ SIGNS ~ implicit : pep : 695       }....................
+# "type {alias_name} = {alias_value}" statements.
+HintSignPep695TypeAlias = _HintSign(name='HintSignPep695TypeAlias')
+'''
+:pep:`695`-compliant C-based :class:`types.TypeAliasType` class of all
+:pep:`695`-compliant **type aliases** (i.e., objects created as the left-hand
+sides of statements of the form ``type {alias_name} = {alias_value}``).
 '''
 
 # ....................{ CLEANUP                            }....................

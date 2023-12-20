@@ -27,7 +27,7 @@ from beartype._conf.confcls import BeartypeConf
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
-from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
+from beartype._util.error.utilerrorraise import EXCEPTION_PLACEHOLDER
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
     reduce_hint_pep484585_func_return)
 

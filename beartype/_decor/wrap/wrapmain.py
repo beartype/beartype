@@ -60,7 +60,7 @@ from beartype._decor.wrap.wrapsnip import (
     PEP484_CODE_CHECK_NORETURN,
 )
 from beartype._decor.wrap._wrapcode import make_func_wrapper_code
-from beartype._util.error.utilerror import (
+from beartype._util.error.utilerrorraise import (
     EXCEPTION_PLACEHOLDER,
     reraise_exception_placeholder,
 )

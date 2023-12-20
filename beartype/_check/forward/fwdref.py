@@ -16,7 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import (
     NoReturn,
-    Optional,
+    # Optional,
     Type,
 )
 from beartype._data.hint.datahinttyping import (
@@ -283,7 +283,7 @@ class _BeartypeForwardRefABC(object, metaclass=_BeartypeForwardRefMeta):
     yet to be defined).
 
     Caveats
-    ----------
+    -------
     **This ABC prohibits instantiation.** This ABC *only* exists to sanitize,
     simplify, and streamline the definition of subclasses passed as the second
     parameter to the :func:`isinstance` builtin, whose
@@ -450,7 +450,7 @@ class _BeartypeForwardRefIndexedABC(_BeartypeForwardRefABC):
     yet to be declared (e.g., ``"MuhGeneric[int]"``).
 
     Caveats
-    ----------
+    -------
     **This ABC currently ignores subscription.** Technically, this ABC *does*
     store all positional and keyword parameters subscripting this forward
     reference. Pragmatically, this ABC otherwise silently ignores these
@@ -552,7 +552,7 @@ def is_forwardref(obj: object) -> bool:
         Object to be tested.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a forward reference subclass.
     '''
@@ -567,23 +567,24 @@ def make_forwardref_indexable_subtype(
     scope_name: str, hint_name: str) -> Type[_BeartypeForwardRefIndexableABC]:
     '''
     Create and return a new **subscriptable forward reference subclass** (i.e.,
-    concrete subclass of the :class:`._BeartypeForwardRefIndexableABC`
-    abstract base class (ABC) deferring the resolution of the type hint with the
-    passed name transparently permitting this type hint to be subscripted by any
-    arbitrary positional and keyword parameters).
+    concrete subclass of the :class:`._BeartypeForwardRefIndexableABC` abstract
+    base class (ABC) deferring the resolution of the unresolved type hint with
+    the passed name, transparently permitting this type hint to be subscripted
+    by any arbitrary positional and keyword parameters).
 
     Parameters
     ----------
     scope_name : str
         Absolute (i.e., fully-qualified) name of the lexical scope to which this
-        type hint is relative.
+        unresolved type hint is relative.
     hint_name : str
-        Fully-qualified name of the type hint to be referenced.
+        Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
+        this unresolved type hint to be referenced.
 
     This factory is memoized for efficiency.
 
     Returns
-    ----------
+    -------
     Type[_BeartypeForwardRefIndexableABC]
         Subscriptable forward reference subclass referencing this type hint.
     '''
@@ -626,7 +627,7 @@ def _make_forwardref_subtype(
         :class:`._BeartypeForwardRefIndexableABC` subclass.
 
     Returns
-    ----------
+    -------
     Type[_BeartypeForwardRefIndexableABC]
         Forward reference subclass referencing this type hint.
     '''

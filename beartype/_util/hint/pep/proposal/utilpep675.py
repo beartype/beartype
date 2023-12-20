@@ -18,8 +18,8 @@ from beartype.typing import Type
 def reduce_hint_pep675(*args, **kwargs) -> Type[str]:
     '''
     Reduce the passed :pep:`675`-compliant **literal string type hint** (i.e.,
-    the :obj:`typing.LiteralString` singleton) to the builtin :class:`str` class
-    as advised by :pep:`675` when performing runtime type-checking.
+    :obj:`typing.LiteralString` singleton) to the builtin :class:`str` class as
+    advised by :pep:`675` when performing runtime type-checking.
 
     This reducer is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as reducers cannot be memoized.

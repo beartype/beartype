@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.error.utilerror import EXCEPTION_PLACEHOLDER
+from beartype._util.error.utilerrorraise import EXCEPTION_PLACEHOLDER
 from itertools import count
 
 # ....................{ EXCEPTION                          }....................

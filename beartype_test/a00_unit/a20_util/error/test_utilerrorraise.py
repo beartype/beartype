@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype exception caching utility unit tests.**
+**Beartype exception raiser utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.error.utilerror` submodule.
+:mod:`beartype._util.error.utilerrorraise` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -15,35 +15,38 @@ This submodule unit tests the public API of the private
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import raises
-from random import getrandbits
 
-# ....................{ CLASSES                            }....................
-class CachedException(ValueError):
-    '''
-    Test-specific exception raised by unit tests exercising the
-    :func:`beartype._util.error.utilerror.reraise_exception_placeholder`
-    function.
-    '''
-
-    pass
-
-# ....................{ TESTS ~ exception                  }....................
+# ....................{ TESTS                              }....................
 def test_reraise_exception_cached() -> None:
     '''
     Test the
-    :func:`beartype._util.error.utilerror.reraise_exception_placeholder`
+    :func:`beartype._util.error.utilerrorraise.reraise_exception_placeholder`
     function.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.cache.utilcachecall import callable_cached
-    from beartype._util.error.utilerror import reraise_exception_placeholder
+    from beartype._util.error.utilerrorraise import reraise_exception_placeholder
+    from pytest import raises
+    from random import getrandbits
 
+    # ....................{ CLASSES                        }....................
+    class CachedException(ValueError):
+        '''
+        Test-specific exception raised by unit tests exercising the
+        :func:`beartype._util.error.utilerrorraise.reraise_exception_placeholder`
+        function.
+        '''
+
+        pass
+
+    # ....................{ LOCALS                         }....................
     # Source substring to be hard-coded into the messages of all exceptions
     # raised by the low-level memoized callable defined below.
     TEST_SOURCE_STR = '{its_got_bro}'
 
+    # ....................{ CALLABLES                      }....................
     # Low-level memoized callable raising non-human-readable exceptions
     # conditionally depending on the value of passed parameters.
     @callable_cached
@@ -75,6 +78,7 @@ def test_reraise_exception_cached() -> None:
                 ),
             )
 
+    # ....................{ ASSERT                         }....................
     # Assert this high-level non-memoized callable raises the same type of
     # exception raised by this low-level memoized callable and preserve this
     # exception for subsequent assertion.

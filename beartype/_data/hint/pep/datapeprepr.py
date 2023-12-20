@@ -26,7 +26,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     # HintSignAnnotated,
     # HintSignAny,
     HintSignAsyncContextManager,
-    HintSignPep557DataclassInitVar,
     HintSignAsyncIterable,
     HintSignAsyncIterator,
     HintSignAsyncGenerator,
@@ -73,6 +72,8 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPanderaAny,
     HintSignParamSpec,
     # HintSignParamSpecArgs,
+    HintSignPep557DataclassInitVar,
+    HintSignPep695TypeAlias,
     # HintSignProtocol,
     HintSignReversible,
     HintSignSequence,
@@ -304,6 +305,11 @@ HINT_TYPE_NAME_TO_SIGN: Dict[str, HintSign] = {
     # Python >= 3.10 implements PEP 612-compliant "typing.ParamSpec" type hints
     # as instances of that class.
     'typing.ParamSpec': HintSignParamSpec,
+
+    # ..................{ PEP 695                            }..................
+    # Python >= 3.12 implements PEP 695-compliant "type" aliases as instances of
+    # the low-level C-based "typing.TypeAliasType" type.
+    'typing.TypeAliasType': HintSignPep695TypeAlias,
 }
 '''
 Dictionary mapping from the fully-qualified classnames of all PEP-compliant
