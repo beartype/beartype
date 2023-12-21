@@ -751,10 +751,10 @@ def _unmemoize_func_wrapper_code(
                     f'{hint_forwardref_class_basename}'
                     f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX}'
                 ),
-                # Python expression evaluating to this class when accessed
-                # via the private "__beartypistry" parameter.
+                # Python expression evaluating to this class when accessed via
+                # the private "__beartypistry" parameter.
                 new=get_hint_forwardref_code(
-                    # Fully-qualified classname referred to by this forward
+                    # Fully qualified classname referred to by this forward
                     # reference relative to the decorated callable.
                     get_hint_pep484585_forwardref_classname_relative_to_object(
                         hint=hint_forwardref_class_basename, obj=func)

@@ -28,14 +28,14 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
     # List of all PEP-specific type hint metadata to be returned.
     hints_pep_meta = []
 
-    # If the active Python interpreter targets less than Python < 3.9, this
-    # interpreter fails to support PEP 585. In this case, return the empty list.
+    # If the active Python interpreter targets Python < 3.9, this interpreter
+    # fails to support PEP 585. In this case, return the empty list.
     if not IS_PYTHON_AT_LEAST_3_9:
         return hints_pep_meta
-    # Else, the active Python interpreter targets at least Python >= 3.9 and
-    # thus supports PEP 585.
+    # Else, the active Python interpreter targets Python >= 3.9 and thus
+    # supports PEP 585.
 
-    # ..................{ IMPORTS                            }..................
+    # ..................{ IMPORTS ~ version                  }..................
     # Defer version-specific imports.
     import re
     from beartype.typing import (

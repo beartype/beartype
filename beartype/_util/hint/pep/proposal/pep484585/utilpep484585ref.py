@@ -93,7 +93,7 @@ def die_unless_hint_pep484585_forwardref(
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintForwardRefException
         If this object is *not* a forward reference type hint.
     '''
@@ -117,8 +117,7 @@ def die_unless_hint_pep484585_forwardref(
 #performing that validation somewhere, so let's reuse that here, please.
 #Right. So, we already have an is_identifier() tester; now, we just need to
 #define a new die_unless_identifier() validator.
-def get_hint_pep484585_forwardref_classname(
-    hint: Pep484585ForwardRef) -> str:
+def get_hint_pep484585_forwardref_classname(hint: Pep484585ForwardRef) -> str:
     '''
     Possibly unqualified classname referred to by the passed :pep:`484`- or
     :pep:`585`-compliant **forward reference type hint** (i.e., object
@@ -148,18 +147,18 @@ def get_hint_pep484585_forwardref_classname(
         Forward reference to be inspected.
 
     Returns
-    ----------
+    -------
     str
         Possibly unqualified classname referred to by this forward reference.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintForwardRefException
         If this forward reference is *not* actually a forward reference.
 
     See Also
-    ----------
-    :func:`get_hint_pep484585_forwardref_classname_relative_to_object`
+    --------
+    :func:`.get_hint_pep484585_forwardref_classname_relative_to_object`
         Getter returning fully-qualified forward reference classnames.
     '''
 
@@ -181,8 +180,8 @@ def get_hint_pep484585_forwardref_classname(
 def get_hint_pep484585_forwardref_classname_relative_to_object(
     hint: Pep484585ForwardRef, obj: object) -> str:
     '''
-    Fully-qualified classname referred to by the passed **forward reference
-    type hint** (i.e., object indirectly referring to a user-defined class that
+    Fully-qualified classname referred to by the passed **forward reference type
+    hint** (i.e., object indirectly referring to a user-defined class that
     typically has yet to be defined) canonicalized if this hint is unqualified
     relative to the module declaring the passed object (e.g., callable, class).
 
@@ -199,13 +198,13 @@ def get_hint_pep484585_forwardref_classname_relative_to_object(
         reference if that classname is unqualified (i.e., relative).
 
     Returns
-    ----------
+    -------
     str
         Fully-qualified classname referred to by this forward reference
         relative to this callable.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintForwardRefException
         If either:
 

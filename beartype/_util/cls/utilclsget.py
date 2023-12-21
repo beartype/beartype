@@ -48,7 +48,7 @@ def get_type_filename_or_none(cls: type) -> Optional[str]:
         get_module_filename_or_none,
         get_object_module_name_or_none,
     )
-    from beartype._util.module.utilmodimport import get_module_imported_or_none
+    from beartype._util.module.utilmodget import get_module_imported_or_none
 
     # Fully-qualified name of the module declaring this type if any *OR* "None".
     #

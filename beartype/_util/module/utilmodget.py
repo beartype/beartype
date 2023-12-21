@@ -18,6 +18,31 @@ from inspect import findsource
 from pathlib import Path
 from sys import modules as sys_modules
 
+# ....................{ GETTERS                            }....................
+#FIXME: Unit test us up, please.
+def get_module_imported_or_none(module_name: str) -> Optional[ModuleType]:
+    '''
+    Previously imported module, package, or C extension with the passed
+    fully-qualified name if previously imported *or* :data:`None` otherwise
+    (i.e., if that module, package, or C extension has yet to be imported).
+
+    Parameters
+    ----------
+    module_name : str
+        Fully-qualified name of the previously imported module to be returned.
+
+    Returns
+    -------
+    Either:
+
+    * If a module, package, or C extension with this fully-qualified name has
+      already been imported, that module, package, or C extension.
+    * Else, :data:`None`.
+    '''
+
+    # Donkey One-liner Country: Codebase Freeze!
+    return sys_modules.get(module_name)
+
 # ....................{ GETTERS ~ object                   }....................
 def get_object_module_or_none(obj: object) -> Optional[ModuleType]:
     '''
@@ -45,7 +70,7 @@ def get_object_module_or_none(obj: object) -> Optional[ModuleType]:
     # Return either:
     # * If a module defines this object, that module.
     # * Else, "None".
-    return sys_modules.get(module_name) if module_name else None
+    return get_module_imported_or_none(module_name) if module_name else None
 
 
 def get_object_module(obj: object) -> ModuleType:
@@ -75,7 +100,7 @@ def get_object_module(obj: object) -> ModuleType:
     module_name = get_object_module_name(obj)
 
     # Module defining this object if any *OR* "None" otherwise.
-    module = sys_modules.get(module_name)
+    module = get_module_imported_or_none(module_name)
 
     # If this module was *NOT* previously imported despite this object existing
     # and thus having been imported from something, this object deceptively lies

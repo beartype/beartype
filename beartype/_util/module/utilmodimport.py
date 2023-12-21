@@ -19,34 +19,8 @@ from beartype.typing import (
 )
 from beartype._data.hint.datahinttyping import TypeException
 from importlib import import_module as importlib_import_module
-from sys import modules as sys_modules
 from types import ModuleType
 from warnings import warn
-
-# ....................{ GETTERS                            }....................
-#FIXME: Unit test us up, please.
-def get_module_imported_or_none(module_name: str) -> Optional[ModuleType]:
-    '''
-    Previously imported module, package, or C extension with the passed
-    fully-qualified name if previously imported *or* :data:`None` otherwise
-    (i.e., if that module, package, or C extension has yet to be imported).
-
-    Parameters
-    ----------
-    module_name : str
-        Fully-qualified name of the previously imported module to be returned.
-
-    Returns
-    ----------
-    Either:
-
-    * If a module, package, or C extension with this fully-qualified name has
-      already been imported, that module, package, or C extension.
-    * Else, :data:`None`.
-    '''
-
-    # Donkey One-liner Country: Codebase Freeze!
-    return sys_modules.get(module_name)
 
 # ....................{ IMPORTERS                          }....................
 #FIXME: Preserved until requisite, which shouldn't be long.
@@ -113,7 +87,7 @@ def import_module_or_none(module_name: str) -> Optional[ModuleType]:
         Fully-qualified name of the module to be imported.
 
     Returns
-    ----------
+    -------
     Either:
 
     * If a module, package, or C extension with this fully-qualified name is
@@ -121,12 +95,15 @@ def import_module_or_none(module_name: str) -> Optional[ModuleType]:
     * Else, :data:`None`.
 
     Warns
-    ----------
+    -----
     BeartypeModuleUnimportableWarning
         If a module with this name exists *but* that module is unimportable
         due to raising module-scoped exceptions at importation time.
     '''
     assert isinstance(module_name, str), f'{repr(module_name)} not string.'
+
+    # Avoid circular import dependencies.
+    from beartype._util.module.utilmodget import get_module_imported_or_none
 
     # Module cached with "sys.modules" if this module has already been imported
     # elsewhere under the active Python interpreter *OR* "None" otherwise.
@@ -183,13 +160,13 @@ def import_module_attr(
         exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     object
         The module attribute with this fully-qualified name.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If either:
 
         * This name is syntactically invalid.
@@ -198,13 +175,13 @@ def import_module_attr(
           attribute by this name.
 
     Warns
-    ----------
-    :class:`BeartypeModuleUnimportableWarning`
+    -----
+    BeartypeModuleUnimportableWarning
         If a module prefixed by this name exists *but* that module is
         unimportable due to module-scoped side effects at importation time.
 
     See Also
-    ----------
+    --------
     :func:`import_module_attr_or_none`
         Further commentary.
     '''
@@ -252,7 +229,7 @@ def import_module_attr_or_none(
         exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     object
         Either:
 
@@ -262,13 +239,13 @@ def import_module_attr_or_none(
         * Else, the module attribute with this fully-qualified name.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If this name is syntactically invalid.
 
     Warns
-    ----------
-    :class:`BeartypeModuleUnimportableWarning`
+    -----
+    BeartypeModuleUnimportableWarning
         If a module with this name exists *but* that module is unimportable
         due to raising module-scoped exceptions at importation time.
     '''
