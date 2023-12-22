@@ -34,7 +34,6 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
     # ..................{ IMPORTS ~ version                  }..................
     # Defer version-specific imports.
     from beartype._data.hint.pep.sign.datapepsigns import (
-        HintSignList,
         HintSignPep695TypeAlias,
     )
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
@@ -49,8 +48,9 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
     # forward references, recursion, or type variables).
     type AliasSimple = int | list[str]
 
-    #FIXME: Test us up tomorrow, please.
-    # type alias_generic[T] = list[T] | set[T]
+    # Generic type alias whose value is a union of two or more generic type
+    # hints parametrized by the same type variable subscripting this alias.
+    type AliasGeneric[T] = list[T] | set[T]
 
     # ..................{ TUPLES                             }..................
     # Add PEP 604-specific test type hints to this tuple global.
@@ -80,6 +80,44 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
                     exception_str_match_regexes=(
                         r'\blist\b',
                         r'\bint\b',
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* contain a newline or bullet delimiter.
+                    exception_str_not_match_regexes=(
+                        r'\n',
+                        r'\*',
+                    ),
+                ),
+            ),
+        ),
+
+        # Generic type alias whose value is a union of two or more generic type
+        # hints parametrized by the same type variable subscripting this alias.
+        HintPepMetadata(
+            hint=AliasGeneric,
+            pep_sign=HintSignPep695TypeAlias,
+            is_type_typing=True,
+            is_typevars=True,
+            is_typing=False,
+            piths_meta=(
+                # List of arbitrary objects all of the same type.
+                HintPithSatisfiedMetadata([
+                    'Knowledge and truth and virtue were her theme,',
+                    'And lofty hopes of divine liberty,',
+                ]),
+                # Set of arbitrary objects all of the same type.
+                HintPithSatisfiedMetadata({
+                    b'Thoughts the most dear to him, and poesy,',
+                    b'Herself a poet. Soon the solemn mood',
+                }),
+                # Integer constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=0xFACECAFE,
+                    # Match that the exception message raised for this object
+                    # declares the types *NOT* satisfied by this object.
+                    exception_str_match_regexes=(
+                        r'\blist\b',
+                        r'\bset\b',
                     ),
                     # Match that the exception message raised for this object
                     # does *NOT* contain a newline or bullet delimiter.

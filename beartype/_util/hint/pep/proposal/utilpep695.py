@@ -86,6 +86,7 @@ def reduce_hint_pep695(
             # Unqualified basename of the next remaining undeclared attribute
             # contained in this alias relative to that module.
             hint_ref_name = get_name_error_attr_name(exception)
+            # print(f'hint: {hint}; hint_ref_name: {hint_ref_name}')
 
             # If this attribute is the same as that of the prior iteration of
             # this "while" loop, then that iteration *MUST* have failed to
@@ -125,8 +126,12 @@ def reduce_hint_pep695(
             # Else, that module does *NOT* yet define this attribute.
 
             # Forward reference proxy to this undeclared attribute.
+            #
+            # Note that this call is intentionally passed only positional
+            # parameters to satisfy the @callable_cached decorator memoizing
+            # this factory function.
             hint_ref = make_forwardref_indexable_subtype(
-                scope_name=hint_module_name, hint_name=hint_ref_name)
+                hint_module_name, hint_ref_name)
 
             # Define this attribute as a global variable of that module whose
             # value is this forward reference proxy.

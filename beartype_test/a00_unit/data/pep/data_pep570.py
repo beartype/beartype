@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2023 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -9,19 +9,19 @@ Project-wide :pep:`570` **data submodule.**
 This submodule exercises :pep:`570` support for positional-only parameters
 implemented in the :func:`beartype.beartype` decorator by declaring callables
 accepting one or more positional-only parameters. For safety, these callables
-are intentionally isolated from the main codebase.
+are intentionally isolated from the main test suite.
 
 Caveats
 ----------
 **This submodule requires the active Python interpreter to target at least
 Python 3.8.0.** If this is *not* the case, importing this submodule raises an
-:class:`SyntaxError` exception.
+:exc:`SyntaxError` exception.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 from typing import Union
 
-# ....................{ CALLABLES                         }....................
+# ....................{ CALLABLES                          }....................
 def pep570_posonly(
     now_take_away_that_flesh: Union[bytearray, str],
     take_away_the_teeth: Union[bool, str] = ('and the tongue'),

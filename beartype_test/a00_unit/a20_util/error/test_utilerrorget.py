@@ -28,11 +28,31 @@ def test_get_name_error_attr_name() -> None:
     from beartype._util.error.utilerrorget import get_name_error_attr_name
 
     # ....................{ ASSERT                         }....................
-    # Attempt to access an undefined attribute.
+    # Attempt to access an attribute *NEVER* defined in either the global or
+    # local scopes of this unit test.
     try:
         undefined_attr
     # When doing so necessarily raises the standard "NameError" exception...
-    except NameError as name_error:
+    except NameError as exception:
         # Assert that the unqualified basename of this undefined attribute
         # returned by this getter is the expected basename.
-        assert get_name_error_attr_name(name_error) == 'undefined_attr'
+        assert get_name_error_attr_name(exception) == 'undefined_attr'
+
+    # Attempt to access a currently undefined free attribute (i.e., local
+    # attribute subsequently defined in the local scope of this unit test).
+    try:
+        FreeAttr
+    # When doing so necessarily raises the standard "NameError" exception...
+    except NameError as exception:
+        # Assert that the unqualified basename of this currently undefined free
+        # attribute returned by this getter is the expected basename.
+        assert get_name_error_attr_name(exception) == 'FreeAttr'
+
+    # ....................{ ATTRIBUTES                     }....................
+    class FreeAttr(object):
+        '''
+        Arbitrary class whose name is that of a previously undefined free
+        attribute referenced above.
+        '''
+
+        pass

@@ -11,7 +11,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from abc import ABCMeta, abstractmethod
+from abc import (
+    ABCMeta,
+    abstractmethod,
+)
 from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._core._valecore import BeartypeValidator
 from beartype.vale._util._valeutiltext import format_diagnosis_line
@@ -60,7 +63,7 @@ class BeartypeValidatorUnaryABC(BeartypeValidator, metaclass=ABCMeta):
             Lower-level validator operated upon by this higher-level validator.
 
         Raises
-        ----------
+        ------
         BeartypeValeSubscriptionException
             If this operand is *not* itself a beartype validator.
         '''
@@ -158,7 +161,7 @@ class BeartypeValidatorNegation(BeartypeValidatorUnaryABC):
             Validator operated upon by this higher-level validator.
 
         Raises
-        ----------
+        ------
         BeartypeValeSubscriptionException
             If this operand is *not* a beartype validator.
         '''
@@ -194,7 +197,7 @@ def _validate_operand(
         Validator operated upon by this higher-level validator.
 
     Raises
-    ----------
+    ------
     BeartypeValeSubscriptionException
         If this operand is *not* a beartype validator.
     '''

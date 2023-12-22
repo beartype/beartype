@@ -62,8 +62,8 @@ class _BeartypeForwardRefMeta(type):
         '''
         **Fully-qualified forward reference subclass** (i.e.,
         :class:`._BeartypeForwardRefABC` subclass whose metaclass is this
-        metaclass and whose :attr:`._BeartypeForwardRefABC.__beartype_name__` class
-        variable is the fully-qualified name of an external class).
+        metaclass and whose :attr:`._BeartypeForwardRefABC.__beartype_name__`
+        class variable is the fully-qualified name of an external class).
 
         This dunder method creates and returns a new forward reference subclass
         referring to an external class whose name is concatenated from (in
