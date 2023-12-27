@@ -27,8 +27,10 @@ def test_make_forwardref_indexable_subtype() -> None:
     # Defer test-specific imports.
     from beartype._check.forward.fwdref import (
         make_forwardref_indexable_subtype)
+    from beartype_test.a00_unit.data._check.forward.data_fwdref import (
+        FORWARDREF_RELATIVE_CIRCULAR)
     from beartype_test.a00_unit.data.data_type import Subclass
-    # from pytest import raises
+    from pytest import raises
 
     # ....................{ LOCALS                         }....................
     # Fully-qualified name of a module containing an arbitrary class.
@@ -79,3 +81,15 @@ def test_make_forwardref_indexable_subtype() -> None:
     # Assert that subclass is also a subclass of both of these proxies.
     assert issubclass(Subclass, forwardref_absolute)
     assert issubclass(Subclass, forwardref_relative)
+
+    # ....................{ FAIL                           }....................
+    #FIXME: Uncomment after worky, please. *sigh*
+    # # Assert that attempting to test an arbitrary object as an instance of a
+    # # circular forward reference raises the expected exception.
+    # with raises(...):
+    #     assert isinstance(instance, FORWARDREF_RELATIVE_CIRCULAR)
+
+    # # Assert that attempting to test an arbitrary type as a subclass of a
+    # # circular forward reference raises the expected exception.
+    # with raises(...):
+        # assert issubclass(Subclass, FORWARDREF_RELATIVE_CIRCULAR)

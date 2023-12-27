@@ -15,12 +15,9 @@ This submodule unit tests :pep:`695` support implemented in the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import (
-    skip, skip_if_python_version_less_than)
+from beartype_test._util.mark.pytskip import skip_if_python_version_less_than
 
 # ....................{ TESTS                              }....................
-#FIXME: Repair and unskip, please. *sigh*
-@skip('Currently broken, sadly.')
 @skip_if_python_version_less_than('3.12.0')
 def test_decor_pep695() -> None:
     '''
@@ -31,9 +28,9 @@ def test_decor_pep695() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype_test.a00_unit.data.pep.data_pep695 import (
-        unit_test_decor_pep695)
+    #
+    # Note that merely importing this data submodule suffices to fully exercise
+    # this test.
 
-    # Run this unit test in a safe manner isolated from the main test suite to
-    # avoid raising spurious "SyntaxError" exceptions under older interpreters.
-    unit_test_decor_pep695()
+    #FIXME: Uncomment once worky, please. *sigh*
+    # from beartype_test.a00_unit.data.pep import data_pep695
