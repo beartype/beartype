@@ -13,7 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeDecorHintForwardRefException
+from beartype.roar import (
+    BeartypeCallHintForwardRefException,
+    BeartypeDecorHintForwardRefException,
+)
 from beartype.typing import (
     NoReturn,
     # Optional,
@@ -31,21 +34,20 @@ from beartype._util.cache.utilcachecall import (
 from beartype._util.cls.utilclsmake import make_type
 
 # ....................{ METACLASSES                        }....................
-#FIXME: Unit test us up, please.
 class _BeartypeForwardRefMeta(type):
     '''
     **Forward reference metaclass** (i.e., metaclass of the
-    :class:`._BeartypeForwardRefABC` superclass deferring the resolution of a
+    :class:`.BeartypeForwardRefABC` superclass deferring the resolution of a
     stringified type hint referencing an attribute that has yet to be defined
     and annotating a class or callable decorated by the
     :func:`beartype.beartype` decorator).
 
     This metaclass memoizes each **forward reference** (i.e.,
-    :class:`._BeartypeForwardRefABC` instance) according to the fully-qualified
+    :class:`.BeartypeForwardRefABC` instance) according to the fully-qualified
     name of the attribute referenced by that forward reference. Doing so ensures
-    that only the first :class:`._BeartypeForwardRefABC` instance referring to a
+    that only the first :class:`.BeartypeForwardRefABC` instance referring to a
     unique attribute is required to dynamically resolve that attribute at
-    runtime; all subsequent :class:`._BeartypeForwardRefABC` instances referring
+    runtime; all subsequent :class:`.BeartypeForwardRefABC` instances referring
     to the same attribute transparently reuse the attribute previously resolved
     by the first such instance, effectively reducing the time cost of resolving
     forward references to a constant-time operation with negligible constants.
@@ -61,8 +63,8 @@ class _BeartypeForwardRefMeta(type):
         cls, hint_name: str) -> Type['_BeartypeForwardRefIndexableABC']:
         '''
         **Fully-qualified forward reference subclass** (i.e.,
-        :class:`._BeartypeForwardRefABC` subclass whose metaclass is this
-        metaclass and whose :attr:`._BeartypeForwardRefABC.__beartype_name__`
+        :class:`.BeartypeForwardRefABC` subclass whose metaclass is this
+        metaclass and whose :attr:`.BeartypeForwardRefABC.__beartype_name__`
         class variable is the fully-qualified name of an external class).
 
         This dunder method creates and returns a new forward reference subclass
@@ -76,7 +78,7 @@ class _BeartypeForwardRefMeta(type):
 
         Parameters
         ----------
-        cls : Type[_BeartypeForwardRefABC]
+        cls : Type[BeartypeForwardRefABC]
             Forward reference subclass to concatenate this basename against.
         hint_name : str
             Unqualified basename to be concatenated against this forward
@@ -118,23 +120,25 @@ class _BeartypeForwardRefMeta(type):
         return make_forwardref_indexable_subtype(
             cls.__beartype_scope_name__,  # type: ignore[arg-type]
             f'{cls.__beartype_name__}.{hint_name}',
+            # f'{cls.__beartype_scope_name__}.{cls.__beartype_name__}',  # type: ignore[arg-type]
+            # hint_name,
         )
 
 
     def __instancecheck__(  # type: ignore[misc]
-        cls: Type['_BeartypeForwardRefABC'],  # pyright: ignore[reportGeneralTypeIssues]
+        cls: Type['BeartypeForwardRefABC'],  # pyright: ignore[reportGeneralTypeIssues]
         obj: object,
     ) -> bool:
         '''
         :data:`True` only if the passed object is an instance of the external
         class referenced by the passed **forward reference subclass** (i.e.,
-        :class:`._BeartypeForwardRefABC` subclass whose metaclass is this
-        metaclass and whose :attr:`._BeartypeForwardRefABC.__beartype_name__`
+        :class:`.BeartypeForwardRefABC` subclass whose metaclass is this
+        metaclass and whose :attr:`.BeartypeForwardRefABC.__beartype_name__`
         class variable is the fully-qualified name of that external class).
 
         Parameters
         ----------
-        cls : Type[_BeartypeForwardRefABC]
+        cls : Type[BeartypeForwardRefABC]
             Forward reference subclass to test this object against.
         obj : object
             Arbitrary object to be tested as an instance of the external class
@@ -153,19 +157,19 @@ class _BeartypeForwardRefMeta(type):
 
 
     def __subclasscheck__(  # type: ignore[misc]
-        cls: Type['_BeartypeForwardRefABC'],  # pyright: ignore[reportGeneralTypeIssues]
+        cls: Type['BeartypeForwardRefABC'],  # pyright: ignore[reportGeneralTypeIssues]
         obj: object,
     ) -> bool:
         '''
         :data:`True` only if the passed object is a subclass of the external
         class referenced by the passed **forward reference subclass** (i.e.,
-        :class:`._BeartypeForwardRefABC` subclass whose metaclass is this
-        metaclass and whose :attr:`._BeartypeForwardRefABC.__beartype_name__`
+        :class:`.BeartypeForwardRefABC` subclass whose metaclass is this
+        metaclass and whose :attr:`.BeartypeForwardRefABC.__beartype_name__`
         class variable is the fully-qualified name of that external class).
 
         Parameters
         ----------
-        cls : Type[_BeartypeForwardRefABC]
+        cls : Type[BeartypeForwardRefABC]
             Forward reference subclass to test this object against.
         obj : object
             Arbitrary object to be tested as a subclass of the external class
@@ -185,7 +189,7 @@ class _BeartypeForwardRefMeta(type):
 
 
     def __repr__(  # type: ignore[misc]
-        cls: Type['_BeartypeForwardRefABC'],  # pyright: ignore[reportGeneralTypeIssues]
+        cls: Type['BeartypeForwardRefABC'],  # pyright: ignore[reportGeneralTypeIssues]
     ) -> str:
         '''
         Machine-readable string representing this forward reference subclass.
@@ -207,6 +211,7 @@ class _BeartypeForwardRefMeta(type):
             f', __beartype_name__={repr(cls.__beartype_name__)}'
         )
 
+        #FIXME: Unit test this edge case, please.
         # If this is a subscripted forward reference subclass, append additional
         # metadata representing this subscription.
         #
@@ -216,7 +221,7 @@ class _BeartypeForwardRefMeta(type):
         #
         # Sadly, doing so invokes the __subclasscheck__() dunder method defined
         # above, which invokes the
-        # _BeartypeForwardRefABC.__beartype_is_subclass__() method defined
+        # BeartypeForwardRefABC.__beartype_is_subclass__() method defined
         # above, which tests the type referred to by this subclass rather than
         # this subclass itself. In short, this is why you play with madness.
         try:
@@ -225,8 +230,8 @@ class _BeartypeForwardRefMeta(type):
                 f', __beartype_kwargs__={repr(cls.__beartype_kwargs__)}'
             )
         # If doing so fails with the expected "AttributeError", then this is
-        # *NOT* a subscripted forward reference subclass. In this avoid,
-        # silently ignore this common case. *sigh*
+        # *NOT* a subscripted forward reference subclass. Since this is
+        # ignorable, silently ignore this common case. *sigh*
         except AttributeError:
             pass
 
@@ -241,28 +246,51 @@ class _BeartypeForwardRefMeta(type):
     @property_cached
     def __beartype_type__(cls) -> type:
         '''
-        Type hint referenced by this forward reference subclass.
+        **Forward referee** (i.e., type hint referenced by this forward
+        reference subclass, which is usually but *not* necessarily a class).
 
-        This class property is memoized on its first access for efficiency.
+        This class property is memoized for efficiency.
+
+        Raises
+        ------
+        BeartypeCallHintForwardRefException
+            If this forward referee is this forward reference subclass, implying
+            this subclass circularly proxies itself.
         '''
 
-        # Fully-qualified name of that class, defined as either...
-        type_name = (
-            # If that name already contains one or more "." delimiters and
-            # is thus presumably already fully-qualified, that name as is;
+        # Fully-qualified name of this forward referee (i.e., type hint
+        # referenced by this forward reference subclass, which is usually but
+        # *not* necessarily a class), defined as either...
+        referee_name = (
+            # If that name already contains one or more "." delimiters and is
+            # thus presumably already fully-qualified, that name as is;
             cls.__beartype_name__
             if '.' in cls.__beartype_name__ else  # type: ignore[operator]
             # Else, that name contains *NO* "." delimiters and is thus
             # unqualified. In this case, canonicalize that name into a
-            # fully-qualified name relative to the fully-qualified name of
-            # the scope presumably declaring that class.
+            # fully-qualified name relative to the fully-qualified name of the
+            # scope presumably declaring that forward referee.
             f'{cls.__beartype_scope_name__}.{cls.__beartype_name__}'
         )
 
-        # Resolve that class by deferring to our existing "bear_typistry"
-        # dictionary, which already performs lookup-based resolution and
-        # caching of arbitrary forward references at runtime.
-        return bear_typistry[type_name]
+        # Forward referee, dynamically resolved by deferring to our existing
+        # "bear_typistry" dictionary, which already performs lookup-based
+        # resolution and caching of arbitrary forward references at runtime.
+        referee = bear_typistry[referee_name]
+
+        # If this referee is this forward reference subclass, then this subclass
+        # circularly proxies itself. Since allowing this edge case would openly
+        # invite infinite recursion, we detect this edge case and instead raise
+        # a human-readable exception.
+        if cls is referee:
+            raise BeartypeCallHintForwardRefException(
+                f'Forward reference proxy {repr(cls)} '
+                f'circularly (i.e., infinitely recursively) references itself.'
+            )
+        # Else, this referee is *NOT* this forward reference subclass.
+
+        # Return this forward referee.
+        return referee
 
 # ....................{ SUPERCLASSES                       }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -275,7 +303,7 @@ class _BeartypeForwardRefMeta(type):
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #FIXME: Unit test us up, please.
-class _BeartypeForwardRefABC(object, metaclass=_BeartypeForwardRefMeta):
+class BeartypeForwardRefABC(object, metaclass=_BeartypeForwardRefMeta):
     '''
     Abstract base class (ABC) of all **forward reference subclasses** (i.e.,
     classes whose :class:`._BeartypeForwardRefMeta` metaclass defers the
@@ -332,7 +360,7 @@ class _BeartypeForwardRefABC(object, metaclass=_BeartypeForwardRefMeta):
 
         # Instantiatable. It's a word or my username isn't @UncleBobOnAStick.
         raise BeartypeDecorHintForwardRefException(
-            f'{repr(_BeartypeForwardRefABC)} subclass '
+            f'{repr(BeartypeForwardRefABC)} subclass '
             f'{repr(cls)} not instantiatable.'
         )
 
@@ -438,7 +466,7 @@ class _BeartypeForwardRefABC(object, metaclass=_BeartypeForwardRefMeta):
 
 # ....................{ SUPERCLASSES ~ index               }....................
 #FIXME: Unit test us up, please.
-class _BeartypeForwardRefIndexedABC(_BeartypeForwardRefABC):
+class _BeartypeForwardRefIndexedABC(BeartypeForwardRefABC):
     '''
     Abstract base class (ABC) of all **subscripted forward reference
     subclasses** (i.e., classes whose :class:`._BeartypeForwardRefMeta`
@@ -474,7 +502,7 @@ class _BeartypeForwardRefIndexedABC(_BeartypeForwardRefABC):
 
 
 #FIXME: Unit test us up, please.
-class _BeartypeForwardRefIndexableABC(_BeartypeForwardRefABC):
+class _BeartypeForwardRefIndexableABC(BeartypeForwardRefABC):
     '''
     Abstract base class (ABC) of all **subscriptable forward reference
     subclasses** (i.e., classes whose :class:`._BeartypeForwardRefMeta`
@@ -575,8 +603,19 @@ def make_forwardref_indexable_subtype(
     Parameters
     ----------
     scope_name : str
-        Absolute (i.e., fully-qualified) name of the lexical scope to which this
-        unresolved type hint is relative.
+        Possibly ignored lexical scope name. Specifically:
+
+        * If ``hint_name`` is absolute (i.e., contains one or more ``.``
+          delimiters), this parameter is silently ignored in favour of the
+          fully-qualified name of the module prefixing ``hint_name``.
+        * If ``hint_name`` is relative (i.e., contains *no* ``.`` delimiters),
+          this parameter declares the absolute (i.e., fully-qualified) name of
+          the lexical scope to which this unresolved type hint is relative.
+
+        The fully-qualified name of the module prefixing ``hint_name`` (if any)
+        thus *always* takes precedence over this lexical scope name, which only
+        provides a fallback to resolve relative forward references. While
+        unintuitive, this is needed to resolve absolute forward references.
     hint_name : str
         Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
         this unresolved type hint to be referenced.
@@ -602,7 +641,7 @@ def make_forwardref_indexable_subtype(
 # ....................{ PRIVATE ~ factories                }....................
 def _make_forwardref_subtype(
     scope_name: str, hint_name: str, type_bases: TupleTypes) -> Type[
-    _BeartypeForwardRefABC]:
+    BeartypeForwardRefABC]:
     '''
     Create and return a new **forward reference subclass** (i.e., concrete
     subclass of the passed abstract base class (ABC) deferring the resolution of
@@ -615,8 +654,8 @@ def _make_forwardref_subtype(
     Parameters
     ----------
     scope_name : str
-        Absolute (i.e., fully-qualified) name of the lexical scope to which this
-        type hint is relative.
+        Possibly ignored lexical scope name. See
+        :func:`.make_forwardref_indexable_subtype` for further details.
     hint_name : str
         Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of
         the type hint referenced by this forward reference subclass.
@@ -648,6 +687,7 @@ def _make_forwardref_subtype(
     #   * This module name is the empty string and thus ignorable.
     #   * This basename is this name as is.
     type_module_name, _, type_name = hint_name.rpartition('.')
+    # _, _, type_name = hint_name.rpartition('.')
 
     # If this module name is the empty string, this type hint is a relative
     # forward reference relative to the passed fully-qualified name of the
@@ -659,7 +699,7 @@ def _make_forwardref_subtype(
     # Forward reference subclass to be returned.
     forwardref_subtype: Type[_BeartypeForwardRefIndexableABC] = make_type(
         type_name=type_name,
-        type_module_name=type_module_name,
+        type_module_name=scope_name,  # type_module_name,
         type_bases=type_bases,
     )
 

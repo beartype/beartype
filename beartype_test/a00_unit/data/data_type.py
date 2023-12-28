@@ -61,6 +61,16 @@ class Class(object):
     Arbitrary pure-Python class defining arbitrary methods.
     '''
 
+    # ....................{ NESTED                         }....................
+    class NestedClass(object):
+        '''
+        Arbitrary pure-Python **nested class** whose definition is nested inside
+        the definition of another class.
+        '''
+
+        pass
+
+    # ....................{ METHODS                        }....................
     def instance_method(self):
         '''
         Arbitrary pure-Python instance method.

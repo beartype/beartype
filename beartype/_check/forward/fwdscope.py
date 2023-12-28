@@ -143,7 +143,7 @@ class BeartypeForwardScope(LexicalScope):
 
         This method transparently replaces this unresolved type hint with a
         **forward reference proxy** (i.e., concrete subclass of the private
-        :class:`beartype._check.forward.fwdref._BeartypeForwardRefABC` abstract
+        :class:`beartype._check.forward.fwdref.BeartypeForwardRefABC` abstract
         base class (ABC), which resolves this type hint on the first call to the
         :func:`isinstance` builtin whose second argument is that subclass).
 

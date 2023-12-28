@@ -11,6 +11,8 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
+#FIXME: Define a new ignore_hint_pep695() ignorer, please.
+
 #FIXME: Consider generalizing @beartype's PEP 695 implementation to additionally
 #support local type aliases (i.e., defined in the local scope of a callable
 #rather than at global scope) containing one or more unquoted forward
