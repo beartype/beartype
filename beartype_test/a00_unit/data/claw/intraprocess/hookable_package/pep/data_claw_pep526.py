@@ -49,3 +49,19 @@ such_magic_as_compels_the_charmed_night: str
 with raises(BeartypeDoorHintViolation):
     of_starry_ice: Union[float, List[str]] = len(
         'Of starry ice the grey grass and bare boughs;')
+
+# ....................{ CLASSES                            }....................
+class ThePausesOfHerMusic(object):
+    and_her_breath: int = 'The pauses of her music, and her breath'
+    '''
+    Class variable whose initial value violates the :pep:`526`-compliant` type
+    hint annotating this variable.
+
+    This variable effectively validates that the import hook presumably
+    installed by the caller ignores all :pep:`526`-compliant annotated class
+    variable assignment statements by *not* implicitly appending these
+    statements with calls to beartype's statement-level
+    :func:`beartype.door.die_if_unbearable` exception-raiser.
+    '''
+
+    pass

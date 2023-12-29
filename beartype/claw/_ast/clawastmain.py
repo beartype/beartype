@@ -90,23 +90,14 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from ast import (
     AST,
-    AnnAssign,
-    Attribute,
-    Call,
     ClassDef,
     Constant,
     Expr,
     ImportFrom,
     Module,
-    Name,
     NodeTransformer,
-    # Subscript,
-    # alias,
-    # expr,
-    # keyword,
 )
 from beartype.claw._clawmagic import (
-    NODE_CONTEXT_LOAD,
     BEARTYPE_CLAW_STATE_MODULE_NAME,
     BEARTYPE_CLAW_STATE_SOURCE_ATTR_NAME,
     BEARTYPE_CLAW_STATE_TARGET_ATTR_NAME,
@@ -117,26 +108,24 @@ from beartype.claw._clawmagic import (
     BEARTYPE_RAISER_SOURCE_ATTR_NAME,
     BEARTYPE_RAISER_TARGET_ATTR_NAME,
 )
-from beartype.claw._ast._clawastmunge import (
-    decorate_node,
-    make_node_keyword_conf,
-)
+from beartype.claw._ast.pep.clawastpep526 import (
+    BeartypeNodeTransformerPep526Mixin)
+from beartype.claw._ast.pep.clawastpep695 import (
+    BeartypeNodeTransformerPep695Mixin)
+from beartype.claw._ast._clawastmunge import decorate_node
 from beartype.claw._clawtyping import (
     NodeCallable,
     NodeT,
-    NodeVisitResult,
 )
 from beartype.typing import (
     List,
     Optional,
+    Type,
 )
-from beartype._conf.confcls import (
-    BEARTYPE_CONF_DEFAULT,
-    BeartypeConf,
-)
+from beartype._data.cls.datacls import TYPES_AST_SCOPE
+from beartype._conf.confcls import BeartypeConf
 # from beartype._util.ast.utilastget import get_node_repr_indented
 from beartype._util.ast.utilastmake import make_node_importfrom
-from beartype._util.ast.utilastmunge import copy_node_metadata
 from beartype._util.ast.utilasttest import is_node_callable_typed
 
 # ....................{ SUBCLASSES                         }....................
@@ -147,7 +136,15 @@ from beartype._util.ast.utilasttest import is_node_callable_typed
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #FIXME: Unit test us up, please.
-class BeartypeNodeTransformer(NodeTransformer):
+class BeartypeNodeTransformer(
+    # PEP-agnostic superclass defining "core" AST node transformation logic.
+    NodeTransformer,
+
+    # PEP-specific mixins defining additional AST node transformations in a
+    # PEP-specific manner.
+    BeartypeNodeTransformerPep526Mixin,
+    BeartypeNodeTransformerPep695Mixin,
+):
     '''
     **Beartype abstract syntax tree (AST) node transformer** (i.e., visitor
     pattern recursively transforming the AST tree passed to the :meth:`visit`
@@ -155,7 +152,7 @@ class BeartypeNodeTransformer(NodeTransformer):
     :func:`beartype.beartype` decorator).
 
     Design
-    ----------
+    ------
     This class was largely designed by reverse-engineering the standard
     :mod:`ast` module using the following code snippet. When run as the body of
     a script from the command line (e.g., ``python3 {muh_script}.py``), this
@@ -190,31 +187,25 @@ class BeartypeNodeTransformer(NodeTransformer):
         **Beartype configuration** (i.e., dataclass configuring the
         :mod:`beartype.beartype` decorator for *all* decoratable objects
         recursively decorated by this node transformer).
-    _node_stack_beartype : List[AST]
-        **Current visitation stack** (i.e., list of the zero or more parent
-        nodes of the current node being visited by this node transformer), such
-        that:
+    _scope_stack_beartype : list[type[AST]]
+        **Current lexical scope stack** (i.e., list of the zero or more types of
+        parent nodes of the node being recursively visited by this node
+        transformer such that each of those parent nodes declares a new lexical
+        scope). Specifically:
 
-        * The first node on this stack is the **module node** encapsulating the
-          module currently being visited by this node transformer.
-        * The last node on this stack is the **parent node** of the current node
-          being visited (and possibly transformed) by this node transformer.
+        * If this stack is empty, the current node directly resides in the body
+          of a module (i.e., is a global attribute).
+        * If this stack is non-empty, the current node does *not* directly
+          reside in the body of a module. Instead, if the last item of this
+          stack is:
 
-        Note that the principal purpose of this stack is to deterministically
-        differentiate the two different types of callables, each of which
-        requires a correspondingly different type of decoration. These are:
-
-        * Nodes encapsulating pure-Python **functions**, which this transformer
-          directly decorates by the :func:`beartype.beartype` decorator.
-        * Nodes encapsulating pure-Python **methods**, which this transformer
-          does *not* directly decorate by that decorator. Why? Because this
-          transformer already decorates classes by that decorator, which then
-          implicitly decorates *all* methods defined by those classes.
-          Needlessly re-decorating the same methods by the same decorator only
-          harms runtime efficiency for no tangible gain.
+          * The :class:`ClassDef` node type, the current node directly resides
+            in the body of a class (i.e., is a class attribute or method).
+          * The :class:`FunctionDef` node type, the current node directly
+            resides in the body of a callable (i.e., is a local attribute).
 
     See Also
-    ----------
+    --------
     https://github.com/agronholm/typeguard/blob/fe5b578595e00d5e45c3795d451dcd7935743809/src/typeguard/importhook.py
         Last commit of the third-party Python package whose
         ``@typeguard.importhook.TypeguardTransformer`` class implements import
@@ -258,7 +249,7 @@ class BeartypeNodeTransformer(NodeTransformer):
         self._conf_beartype = conf_beartype
 
         # Nullify all remaining instance variables for safety.
-        self._node_stack_beartype: List[AST] = []
+        self._scope_stack_beartype: List[Type[AST]] = []
 
     # ..................{ SUPERCLASS                         }..................
     # Overridden methods first defined by the "NodeTransformer" superclass.
@@ -274,21 +265,34 @@ class BeartypeNodeTransformer(NodeTransformer):
             Parent node to transform *all* child nodes of.
 
         Returns
-        ----------
+        -------
         NodeT
             Parent node returned and thus preserved as is.
         '''
 
-        # Add this parent node to the top of the stack of all current parent
-        # nodes *BEFORE* visiting any child nodes of this parent node.
-        self._node_stack_beartype.append(node)
+        # Type of this parent node.
+        node_type = type(node)
 
-        # Recursively visit *ALL* child nodes of this parent node.
-        super().generic_visit(node)
+        # If this parent node declares a new lexical scope...
+        if node_type in TYPES_AST_SCOPE:
+            # Add the type of this parent node to the top of the stack of all
+            # current lexical scopes *BEFORE* visiting any child nodes of this
+            # parent node.
+            self._scope_stack_beartype.append(node_type)
 
-        # Remove this parent node from the top of the stack of all current
-        # parent nodes *AFTER* visiting all child nodes of this parent node.
-        self._node_stack_beartype.pop()
+            # Recursively visit *ALL* child nodes of this parent node.
+            super().generic_visit(node)
+
+            # Remove the type of this parent node from the top of the stack of
+            # all current lexical scopes *AFTER* visiting all child nodes of
+            # this parent node.
+            self._scope_stack_beartype.pop()
+        # Else, this parent node does *NOT* declare a new lexical scope. In this
+        # case...
+        else:
+            # Recursively visit all child nodes of this parent node *WITHOUT*.
+            # modifying the stack of all current lexical scopes.
+            super().generic_visit(node)
 
         # Return this parent node as is.
         return node
@@ -317,7 +321,7 @@ class BeartypeNodeTransformer(NodeTransformer):
             Module node to be transformed.
 
         Returns
-        ----------
+        -------
         Module
             That same module node.
         '''
@@ -512,7 +516,7 @@ class BeartypeNodeTransformer(NodeTransformer):
             Class node to be transformed.
 
         Returns
-        ----------
+        -------
         Optional[ClassDef]
             This same class node.
         '''
@@ -542,7 +546,7 @@ class BeartypeNodeTransformer(NodeTransformer):
             Callable node to be transformed.
 
         Returns
-        ----------
+        -------
         Optional[NodeCallable]
             This same callable node.
         '''
@@ -568,7 +572,7 @@ class BeartypeNodeTransformer(NodeTransformer):
             # This logic corresponds to the above "That is *NOT* the case" case
             # (i.e., this callable node necessarily encapsulates a function).
             # Look. Just accept that we have a tenuous grasp on reality at best.
-            not self._is_node_parent_class and
+            not self._is_scope_class_beartype and
             # ...and the currently visited callable is annotated by one or more
             # type hints and thus *NOT* ignorable with respect to beartype
             # decoration...
@@ -583,300 +587,42 @@ class BeartypeNodeTransformer(NodeTransformer):
         # Recursively transform *ALL* child nodes of this parent callable node.
         return self.generic_visit(node)
 
-    # ..................{ VISITORS ~ pep : 526               }..................
-    def visit_AnnAssign(self, node: AnnAssign) -> NodeVisitResult:
-        '''
-        Add a new child node to the passed **annotated assignment node** (i.e.,
-        node signifying the assignment of an attribute annotated by a
-        :pep:`526`-compliant type hint) inserting a subsequent statement
-        following that annotated assignment type-checking that attribute against
-        that type hint by passing both to our :func:`beartype.door.is_bearable`
-        tester.
-
-        Note that the :class:`.AnnAssign` subclass defines these instance
-        variables:
-
-        * ``node.annotation``, a child node describing the PEP-compliant type
-          hint annotating this assignment, typically an instance of either:
-
-          * :class:`ast.Name`.
-          * :class:`ast.Constant`.
-
-          Note that this node is *not* itself a valid PEP-compliant type hint
-          and should *not* be treated as such here or elsewhere.
-        * ``node.target``, a child node describing the target attribute assigned
-          to by this assignment, guaranteed to be an instance of either:
-
-          * :class:`ast.Name`, in which case this is a **simple assignment**
-            (i.e., to a local or global variable). This is the common case in
-            which the attribute being assigned to is *NOT* embedded in
-            parentheses and thus denotes a simple attribute name rather than a
-            full-blown Python expression.
-          * :class:`ast.Attribute`, in which case this is an **object
-            assignment** (i.e., to an instance or class variable of an object).
-          * :class:`ast.Subscript`, in which case this assignment is to the item
-            subscripted by an index of a container rather than to that container
-            itself.
-
-        * ``node.simple``, an integer :superscript:`sigh` that is either:
-
-          * If ``node.target`` is an :class:`ast.Name` node, 1.
-          * Else, 0.
-
-        * ``node.value``, an optional child node defined as either:
-
-          * If this attribute is actually assigned to, a node encapsulating
-            the new value assigned to this target attribute.
-          * Else, :data:`None`.
-
-          You may now be thinking to yourself as you wear a bear hat while
-          rummaging through this filthy code: "What do you mean, 'if this
-          attribute is actually assigned to'? Isn't this attribute necessarily
-          assigned to? Isn't that what the 'AnnAssign' subclass means? I mean,
-          it's right there in the bloody subclass name: 'AnnAssign', right?
-          Clearly, *SOMETHING* is bloody well being assigned to. Right?"
-          Wrong. The name of the :class:`.AnnAssign` subclass was poorly chosen.
-          That subclass ambiguously encapsulates both:
-
-          * Annotated variable assignments (e.g., ``muh_attr: int = 42``).
-          * Annotated variables *without* assignments (e.g., ``muh_attr: int``).
-
-        Parameters
-        ----------
-        node : AnnAssign
-            Annotated assignment node to be transformed.
-
-        Returns
-        ----------
-        NodeVisitResult
-            Either:
-
-            * If this annotated assignment node is *not* **simple** (i.e., the
-              attribute being assigned to is embedded in parentheses and thus
-              denotes a full-blown Python expression rather than a simple
-              attribute name), that same parent node unmodified.
-            * If this annotated assignment node is *not* **assigned** (i.e., the
-              attribute in question is simply annotated with a type hint rather
-              than both annotated with a type hint *and* assigned to), that same
-              parent node unmodified.
-            * Else, a 2-list comprising both that node and a new adjacent
-              :class:`Call` node performing this type-check.
-
-        See Also
-        ----------
-        https://github.com/awf/awfutils
-            Third-party Python package whose ``@awfutils.typecheck`` decorator
-            implements statement-level :func:`isinstance`-based type-checking in
-            a similar manner, strongly inspiring this implementation. Thanks so
-            much to Cambridge researcher @awf (Andrew Fitzgibbon) for the
-            phenomenal inspiration!
-        '''
-
-        # Recursively transform *ALL* child nodes of this parent callable node.
-        self.generic_visit(node)
-
-        # If either...
-        if (
-            # This beartype configuration disables type-checking of PEP
-            # 526-compliant annotated variable assignments *OR*...
-            not self._conf_beartype.claw_is_pep526 or
-            # This beartype configuration enables type-checking of PEP
-            # 526-compliant annotated variable assignments *BUT*...
-
-            #FIXME: Excise us up, please.
-            #FIXME: Can and/or should we also support "node.target" child nodes
-            #that are instances of "ast.Attribute" and "ast.Subscript"?
-            # # This assignment is *NOT* simple (in which case this assignment is
-            # # *NOT* assigning to an attribute name) *OR*...
-            # not node.simple or
-
-            # This assignment is simple *BUT*...
-            #
-            # This assignment is *NOT* actually an assignment but simply an
-            # unassigned annotation of an attribute (e.g., "var: int") *OR*...
-            not node.value or
-            # This assignment node has one or more parent nodes previously
-            # visited by this node transformer *AND* the immediate parent node
-            # of this assignment node is a class node, then this assignment node
-            # encapsulates a PEP 681-compliant annotated field declaration
-            # rather than an PEP 526-compliant annotated variable assignment. In
-            # this case, the visit_ClassDef() method defined above has already
-            # explicitly decorated the class declaring this annotated field by
-            # the @beartype decorator, which then implicitly decorates both this
-            # and all other fields of that class by that decorator. For safety
-            # and efficiency, avoid needlessly re-decorating this field by the
-            # same decorator by simply preserving and returning this node as is.
-            #
-            # Note, however, that this is *NOT* simply an efficiency concern.
-            # This is a significant semantic concern. While a subset of PEP
-            # 681-compliant annotated field declarations *ARE* amenable to
-            # type-checking by our die_if_unbearable(), still others are
-            # absolutely *NOT* amenable to such type-checking. Indeed, in both
-            # the average and the worst case, PEP 681-compliant annotated field
-            # declarations both supersede and violate PEP 484 typing semantics.
-            # Since PEP 681 assumes supremacy over PEP 484 here, @beartype has
-            # little to say and much to ignore: e.g.,
-            #
-            #     from dataclasses import dataclass, field
-            #
-            #     @dataclass
-            #     class MuhDataclass(object):
-            #         # This annotated field declaration is safely
-            #         # type-checkable by die_if_unbearable(), clearly.
-            #         muh_safe_field: int = 0xBABECAFE
-            #
-            #         # This annotated field declaration is *NOT* safely
-            #         # type-checkable by die_if_unbearable(). Clearly, a
-            #         # dataclass "field" instance is *NOT* a valid integer and
-            #         # thus violates the type hint annotating this field. Since
-            #         # PEP 681 standardizes declarations like this as
-            #         # semantically valid, @beartype has *NO* alternative but
-            #         # to quietly turn a blind eye to what otherwise might be
-            #         # considered a type violation.
-            #         muh_unsafe_field: int = field(default=0xCAFEBABE)
-            self._is_node_parent_class
-        ):
-            # Then simply preserve and return this node as is.
-            return node
-        # Else:
-        # * This beartype configuration enables type-checking of PEP
-        #   526-compliant annotated variable assignments.
-        # * This assignment is simple and assigning to an attribute name.
-
-        #FIXME: Excise us up, please.
-        # # Validate this expectation.
-        # assert isinstance(node.target, Name), (
-        #     f'Non-simple AST annotated assignment node {repr(node)} '
-        #     f'target {repr(node.target)} not {repr(Name)} instance.')
-
-        # Child node passing the value newly assigned to this attribute by this
-        # assignment as the first parameter to die_if_unbearable().
-        node_func_arg_pith: AST = None  # type: ignore[assignment]
-
-        # Child node referencing the target variable being assigned to,
-        # localized purely as a negligible optimization.
-        node_target = node.target
-
-        # If this target variable is a simple local or global variable...
-        if isinstance(node_target, Name):
-            # Child node referencing this local or global variable.
-            node_func_arg_pith = Name(node_target.id, ctx=NODE_CONTEXT_LOAD)
-        # Else, this target variable is *NOT* a simple local or global variable.
-        #
-        # If this target variable is an instance or class variable...
-        elif isinstance(node_target, Attribute):
-            #FIXME: Insufficient. Attributes can contain arbitrary nested child
-            #nodes, including other attributes and/or names. Thankfully, the
-            #only reason to even bother attempting to do this is to rigorously
-            #sanitize line and column numbers -- which doesn't appear to be
-            #particularly necessary or even desirable for dynamically generated
-            #code. For now, we simply shallowly reuse the existing "value" node.
-            # # Child node referencing the object containing this instance or
-            # # class variable (e.g., the "self" in "self.attr: str = 'Attr!'").
-            # node_func_arg_pith_obj = Name(
-            #     node_target.value.id, ctx=NODE_CONTEXT_LOAD)
-            # copy_node_metadata(node_src=node, node_trg=node_func_arg_pith_obj)
-
-            # Child node referencing this instance or class variable.
-            node_func_arg_pith = Attribute(
-                value=node_target.value,
-                # Unqualified basename of this instance or class variable.
-                attr=node_target.attr,
-                ctx=NODE_CONTEXT_LOAD,
-            )
-        # Else, this target variable is *NOT* an instance or class variable. In
-        # this case, this target variable is currently unsupported by this node
-        # transformer for automated type-checking. Simply preserve and return
-        # this node as is.
-        #
-        # Examples include:
-        # * "ast.Subscripted", in which case this target variable is an item of
-        #   a container. It is unclear whether PEP 526 even supports annotated
-        #   variable assignments of container items *OR* whether any @beartype
-        #   users even annotate variable assignments of container items. Ergo,
-        #   this node transformer currently ignores this odd edge case.
-        else:
-            return node
-
-        # List of all nodes encapsulating keyword arguments passed to
-        # die_if_unbearable(), defaulting to the empty list and thus *NO* such
-        # keyword arguments.
-        node_func_kwargs = []
-
-        # If the current beartype configuration is *NOT* the default beartype
-        # configuration, this configuration is a user-defined beartype
-        # configuration which *MUST* be passed as well. In this case...
-        if self._conf_beartype != BEARTYPE_CONF_DEFAULT:
-            # Node encapsulating the passing of this configuration as
-            # the "conf" keyword argument to die_if_unbearable().
-            node_func_kwarg_conf = make_node_keyword_conf(node_sibling=node)
-
-            # Append this node to the list of all keyword arguments passed to
-            # die_if_unbearable().
-            node_func_kwargs.append(node_func_kwarg_conf)
-        # Else, this configuration is simply the default beartype
-        # configuration. In this case, avoid passing that configuration to
-        # the beartype decorator for both efficiency and simplicity.
-
-        # Child node referencing the function performing this type-checking,
-        # previously imported at module scope by visit_FunctionDef() above.
-        node_func_name = Name(
-            BEARTYPE_RAISER_TARGET_ATTR_NAME, ctx=NODE_CONTEXT_LOAD)
-
-        # Child node type-checking this newly assigned attribute against the
-        # type hint annotating this assignment via our die_if_unbearable().
-        node_func_call = Call(
-            func=node_func_name,
-            args=[
-                # Child node passing the value newly assigned to this
-                # attribute by this assignment as the first parameter.
-                node_func_arg_pith,
-                # Child node passing the type hint annotating this assignment as
-                # the second parameter.
-                node.annotation,
-            ],
-            keywords=node_func_kwargs,
-        )
-
-        # Adjacent node encapsulating this type-check as a Python statement.
-        node_func = Expr(node_func_call)
-
-        # Copy all source code metadata from this AST annotated assignment node
-        # onto *ALL* AST nodes created above.
-        copy_node_metadata(node_src=node, node_trg=(
-            node_func_name,
-            node_func_arg_pith,
-            node_func_call,
-            node_func,
-        ))
-
-        # Return a list comprising these two adjacent nodes.
-        #
-        # Note that order is *EXTREMELY* significant. This order ensures that
-        # this attribute is type-checked after being assigned to, as expected.
-        return [node, node_func]
-
-    # ..................{ VISITORS ~ pep : 526               }..................
+    # ..................{ PRIVATE ~ properties               }..................
     @property
-    def _is_node_parent_class(self) -> bool:
+    def _is_scope_module_beartype(self) -> bool:
         '''
-        :data:`True` only if the currently visited has a parent node (i.e., is
-        *not* the root node of the current abstract syntax tree (AST)) *and*
-        that parent node is a **class node** (i.e., :class:`.ClassDef` instance
-        encapsulating the declaration of a user-defined class).
+        :data:`True` only if the lexical scope of the currently visited node is
+        the **module scope** (i.e., this node is declared directly in the body
+        of the current user-defined module, implying this node to be a global).
 
         Returns
-        ----------
+        -------
         bool
-            :data:`True` only if the currently visited has a parent node *and*
-            that parent node is a class node.
+            :data:`True` only if the current lexical scope is a module scope.
+        '''
+
+        # Return true only if the stack of all lexical nodes is currently empty,
+        # implying the current node resides directly in the body of a module.
+        return not self._scope_stack_beartype
+
+
+    @property
+    def _is_scope_class_beartype(self) -> bool:
+        '''
+        :data:`True` only if the lexical scope of the currently visited node is
+        a **class scope** (i.e., this node resides directly in the body of a
+        user-defined class).
+
+        Returns
+        -------
+        bool
+            :data:`True` only if the current lexical scope is a class scope.
         '''
 
         # Return true only if...
         return (
-            # This callable node has one or more parent nodes previously visited
-            # by this node transformer *AND*...
-            bool(self._node_stack_beartype) and
-            # The immediate parent node of this callable node is a class node.
-            isinstance(self._node_stack_beartype[-1], ClassDef)
+            # The stack of all lexical scope is currently non-empty *AND*...
+            bool(self._scope_stack_beartype) and
+            # The current node resides directly in the body of a class.
+            self._scope_stack_beartype[-1] is ClassDef
         )

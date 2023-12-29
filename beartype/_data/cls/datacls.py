@@ -38,7 +38,21 @@ from beartype._cave._cavefast import (
     NoneType,
     NotImplementedType,
 )
+from ast import (
+    ClassDef,
+    FunctionDef,
+)
 from pathlib import Path
+
+# ....................{ AST                                }....................
+TYPES_AST_SCOPE = frozenset((
+    ClassDef,
+    FunctionDef,
+))
+'''
+Frozen set of all **lexically scoping abstract syntax tree (AST) node types**
+(i.e., types of all AST nodes whose declaration defines a new lexical scope).
+'''
 
 # ....................{ BEARTYPEABLE                       }....................
 # Types of *ALL* objects that may be decorated by @beartype, intentionally
@@ -55,7 +69,7 @@ TYPES_BEARTYPEABLE = (
     MethodDecoratorBuiltinTypes,
 )
 '''
-Tuple set of all **beartypeable types** (i.e., types of all objects that may be
+Tuple of all **beartypeable types** (i.e., types of all objects that may be
 decorated by the :func:`beartype.beartype` decorator).
 '''
 

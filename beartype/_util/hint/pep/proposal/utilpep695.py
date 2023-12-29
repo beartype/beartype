@@ -106,21 +106,28 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.meta import URL_ISSUES
 from beartype.roar import BeartypeDecorHintPep695Exception
-from beartype.typing import Optional
+from beartype.typing import (
+    Iterable,
+    Optional,
+)
 from beartype._cave._cavefast import HintPep695Type
-from beartype._check.forward.fwdref import make_forwardref_indexable_subtype
+from beartype._check.forward.fwdref import (
+    _BeartypeForwardRefMeta,
+    make_forwardref_indexable_subtype,
+)
 from beartype._util.error.utilerrorget import get_name_error_attr_name
 from beartype._util.module.utilmodget import get_module_imported_or_none
 
 # ....................{ REDUCERS                           }....................
+#FIXME: Refactor to leverage iter_hint_pep695_forwardrefs(), please.
 def reduce_hint_pep695(
     hint: HintPep695Type,
     exception_prefix: str,
     *args, **kwargs
 ) -> object:
     '''
-    Reduce the passed :pep:`695`-compliant **type alias** (i.e., objects created
-    by statements of the form ``type {alias_name} = {alias_value}``) to the
+    Reduce the passed :pep:`695`-compliant **type alias** (i.e., object created
+    by a statement of the form ``type {alias_name} = {alias_value}``) to the
     underlying type hint lazily referred to by this type alias.
 
     This reducer is intentionally *not* memoized (e.g., by the
@@ -129,7 +136,7 @@ def reduce_hint_pep695(
     Parameters
     ----------
     hint : object
-        Self type hint to be reduced.
+        Type alias to be reduced.
     exception_prefix : str, optional
         Human-readable substring prefixing exception messages raised by this
         reducer.
@@ -140,10 +147,116 @@ def reduce_hint_pep695(
     -------
     object
         Underlying type hint lazily referred to by this type alias.
+
+    Raises
+    ------
+    BeartypeDecorHintPep695Exception
+        If this type alias contains one or more unquoted relative forward
+        references to undefined attributes. Note that this *only* occurs when
+        callers avoid beartype import hooks in favour of manually decorating
+        callables and classes with the :func:`beartype.beartype` decorator.
     '''
 
     # Underlying type hint to be returned.
     hint_aliased: object = None
+
+    # Attempt to...
+    try:
+        # Reduce this alias to the type hint it lazily refers to. If this alias
+        # contains *NO* forward references to undeclared attributes, this
+        # reduction *SHOULD* succeed. Let's pretend we mean that.
+        hint_aliased = hint.__value__  # type: ignore[attr-defined]
+    # If doing so raises a builtin "NameError" exception, this alias contains
+    # one or more forward references to undeclared attributes. In this case...
+    except NameError as exception:
+        # Unqualified basename of this alias (i.e., name of the global or local
+        # variable assigned to by the left-hand side of this alias).
+        hint_name = repr(hint)
+
+        # Fully-qualified name of the third-party module defining this alias.
+        hint_module_name = hint.__module__
+        # print(f'hint_module_name: {hint_module_name}')
+
+        # Unqualified basename of the next remaining undeclared attribute
+        # contained in this alias relative to that module.
+        hint_ref_name = get_name_error_attr_name(exception)
+        # print(f'hint: {hint}; hint_ref_name: {hint_ref_name}')
+
+        # Raise a human-readable exception describing this issue.
+        raise BeartypeDecorHintPep695Exception(
+            f'{exception_prefix}PEP 695 type alias "{hint_name}" '
+            f'unquoted relative forward reference {repr(hint_ref_name)} in '
+            f'module "{hint_module_name}" unsupported outside '
+            f'"beartype.claw" import hooks. Consider either:\n'
+            f'* Quoting this forward reference in this type alias: e.g.,\n'
+            f'      # Instead of an unquoted forward reference...\n'
+            f'      type {hint_name} = ... {hint_ref_name} ...\n'
+            f'\n'
+            f'      # Prefer a quoted forward reference.\n'
+            f'      type {hint_name} = ... "{hint_ref_name}" ...\n'
+            f'* Applying "beartype.claw" import hooks to '
+            f'module "{hint_module_name}": e.g.,\n'
+            f'      # In your "this_package.__init__" submodule:\n'
+            f'      from beartype.claw import beartype_this_package\n'
+            f'      beartype_this_package()'
+        ) from exception
+    # Else, doing so raised *NO* exceptions, implying this alias contains *NO*
+    # forward references to undeclared attributes.
+
+    # Return this underlying type hint.
+    return hint_aliased
+
+# ....................{ ITERATORS                          }....................
+#FIXME: Unit test us up, please.
+def iter_hint_pep695_forwardrefs(
+    hint: HintPep695Type,
+    exception_prefix: str,
+) -> Iterable[_BeartypeForwardRefMeta]:
+    '''
+    Iteratively create and yield one **forward reference proxy** (i.e.,
+    :class:`beartype._check.forward.fwdtype.BeartypeForwardRefABC` subclass) for
+    each unquoted relative forward reference in the passed :pep:`695`-compliant
+    **type alias** (i.e., object created by a statement of the form ``type
+    {alias_name} = {alias_value}``) to the
+    underlying type hint lazily referred to by this type alias.
+
+    This iterator is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as this iterator is intended to be
+    called only once per type alias in userspace code dynamically instrumented
+    by beartype import hook abstract syntax tree (AST) node transformers.
+    Since those transformers are expected to replace *all* unquoted relative
+    forward references in this type alias with corresponding forward reference
+    proxies, calling this iterator again on any type alias instrumented in this
+    way *should* silently reduce to a noop.
+
+    Parameters
+    ----------
+    hint : object
+        Type alias to be iterated over.
+    exception_prefix : str, optional
+        Human-readable substring prefixing exception messages raised by this
+        reducer.
+
+    Yields
+    ------
+    _BeartypeForwardRefMeta
+        Forward reference proxy encapsulating the next unquoted relative forward
+        reference in this :pep:`695`-compliant type alias.
+
+    Raises
+    ------
+    BeartypeDecorHintPep695Exception
+        If this type hint is *not* a PEP 695-compliant type alias.
+    '''
+
+    # If this type hint is *NOT* a PEP 695-compliant type alias, raise an
+    # exception.
+    if not isinstance(hint, HintPep695Type):
+        raise BeartypeDecorHintPep695Exception(
+            f'{exception_prefix} type hint {repr(hint)} '
+            f'not PEP 695 type alias.'
+        )
+    # Else, this type hint is a PEP 695-compliant type alias.
 
     # Unqualified basename of the previous undeclared attribute in this alias.
     hint_ref_name_prev: Optional[str] = None
@@ -156,7 +269,7 @@ def reduce_hint_pep695(
             # Reduce this alias to the type hint it lazily refers to. If this
             # alias contains *NO* forward references to undeclared attributes,
             # this reduction *SHOULD* succeed. Let's pretend we mean that.
-            hint_aliased = hint.__value__  # type: ignore[attr-defined]
+            hint.__value__  # type: ignore[attr-defined]
 
             # This reduction raised *NO* exception and thus succeeded. In this
             # case, immediately halt iteration.
@@ -182,70 +295,13 @@ def reduce_hint_pep695(
             hint_ref_name = get_name_error_attr_name(exception)
             # print(f'hint: {hint}; hint_ref_name: {hint_ref_name}')
 
-            # If that module fails to define this alias as a global variable,
-            # this alias *MUST* necessarily have been defined as a local
-            # variable (e.g., in a callable of that module). In this case, raise
-            # an exception.
-            #
-            # Why? Because the current C-based implementation of type aliases in
-            # the CPython interpreter appears to *ONLY* be able to dynamically
-            # resolve referees (i.e., the objects that forward references refer
-            # to) when those referees are declared in the same scope as those
-            # type aliases. Notably:
-            # * Global type aliases declared in a global scope are able to
-            #   resolve global referees declared in that same global scope.
-            # * Local type aliases declared in a local scope are:
-            #   * *UNABLE* to resolve global referees declared in the global
-            #     scope of the module lexically containing that local scope.
-            #   * Probably able to resolve local referees declared in that same
-            #     global scope. We actually have no idea; we didn't bother even
-            #     testing this, as resolution of local referees is irrelevant to
-            #     the monkey-patch implemented below.
-            #
-            # Why does this matter? Because the monkey-patch implemented below
-            # declares the objects that these forward references refer to as
-            # global forward reference proxies of that module. Due to
-            # deficiencies [read: bugs] in CPython's type alias implementation,
-            # local type aliases remain unable to resolve global referees. Ergo,
-            # we have no recourse but to detect this edge case and raise a
-            # human-readable exception advising the caller with recommendations.
-            if not hasattr(hint_module, hint_name):
-                raise BeartypeDecorHintPep695Exception(
-                    f'{exception_prefix}PEP 695 local type alias "{hint_name}" '
-                    f'unquoted relative forward reference "{hint_ref_name}" '
-                    f"unsupported, due to inadequacies in CPython's runtime "
-                    f'implementation of PEP 695 local type aliases '
-                    f'(i.e., PEP 695 is dumb, CPython is dumber, '
-                    f"it's not beartype's fault, and CPython should feel bad)."
-                    f'Consider either:\n'
-                    f'* Refactoring this local type alias into a '
-                    f'global type alias: e.g.,\n'
-                    f'      # Instead of a local type alias...\n'
-                    f'      def muh_func(...) -> ...:\n'
-                    f'          type {hint_name} = ...\n'
-                    f'\n'
-                    f'      # Prefer a global type alias.\n'
-                    f'      type {hint_name} = ...\n'
-                    f'* Quoting this forward reference in this type alias: e.g.,\n'
-                    f'      # Instead of an unquoted forward reference...\n'
-                    f'      type {hint_name} = ... {hint_ref_name} ...\n'
-                    f'\n'
-                    f'      # Prefer a quoted forward reference.\n'
-                    f'      type {hint_name} = ... "{hint_ref_name}" ...\n'
-                    f'* Complaining about this on the beartype issue tracker '
-                    f'and then kindly waiting for @leycec to finish '
-                    f'his latest JRPG Christmas binge (...not a great idea):\n'
-                    f'\t{URL_ISSUES}'
-                ) from exception
-            # Else, that module defines this alias as a global variable.
-            #
             # If this attribute is the same as that of the prior iteration of
             # this "while" loop, then that iteration *MUST* have failed to
             # define this attribute as a global variable of that module. In this
             # case, raise an exception.
             #
             # Note that this should *NEVER* happen. Of course, this will happen.
-            elif hint_ref_name == hint_ref_name_prev:
+            if hint_ref_name == hint_ref_name_prev:
                 raise BeartypeDecorHintPep695Exception(  # pragma: no cover
                     f'{exception_prefix}PEP 695 type alias "{hint_name}" '
                     f'unquoted relative forward reference "{hint_ref_name}" '
@@ -290,13 +346,9 @@ def reduce_hint_pep695(
             hint_ref = make_forwardref_indexable_subtype(
                 hint_module_name, hint_ref_name)
 
-            # Define this attribute as a global variable of that module whose
-            # value is this forward reference proxy.
-            setattr(hint_module, hint_ref_name, hint_ref)
+            # Yield this forward reference proxy to the caller.
+            yield hint_ref
 
             # Store the unqualified basename of this previously undeclared
-            # attribute for detection by the next iteration of this "while" loop.
+            # attribute for detection by the next iteration of this loop.
             hint_ref_name_prev = hint_ref_name
-
-    # Return this underlying type hint.
-    return hint_aliased
