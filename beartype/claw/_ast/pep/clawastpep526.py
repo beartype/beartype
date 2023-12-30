@@ -17,18 +17,19 @@ from ast import (
     AST,
     AnnAssign,
     Attribute,
-    Call,
     Expr,
     Name,
 )
-from beartype.claw._clawmagic import (
-    NODE_CONTEXT_LOAD,
-    BEARTYPE_RAISER_TARGET_ATTR_NAME,
-)
+from beartype.claw._clawmagic import BEARTYPE_RAISER_FUNC_NAME
 from beartype.claw._ast._clawastmunge import make_node_keyword_conf
 from beartype.claw._clawtyping import NodeVisitResult
 from beartype._conf.confcls import BEARTYPE_CONF_DEFAULT
+from beartype._data.ast.dataast import NODE_CONTEXT_LOAD
 from beartype._util.ast.utilastmunge import copy_node_metadata
+from beartype._util.ast.utilastmake import (
+    make_node_call,
+    make_node_name_load,
+)
 
 # ....................{ SUBCLASSES                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -223,8 +224,9 @@ class BeartypeNodeTransformerPep526Mixin(object):
 
         # If this target variable is a simple local or global variable...
         if isinstance(node_target, Name):
-            # Child node referencing this local or global variable.
-            node_func_arg_pith = Name(node_target.id, ctx=NODE_CONTEXT_LOAD)
+            # Child node accessing this local or global variable.
+            node_func_arg_pith = make_node_name_load(
+                name=node_target.id, node_sibling=node)
         # Else, this target variable is *NOT* a simple local or global variable.
         #
         # If this target variable is an instance or class variable...
@@ -248,6 +250,9 @@ class BeartypeNodeTransformerPep526Mixin(object):
                 attr=node_target.attr,
                 ctx=NODE_CONTEXT_LOAD,
             )
+
+            # Copy all source code metadata onto this new node.
+            copy_node_metadata(node_src=node, node_trg=node_func_arg_pith)
         # Else, this target variable is *NOT* an instance or class variable. In
         # this case, this target variable is currently unsupported by this node
         # transformer for automated type-checking. Simply preserve and return
@@ -282,16 +287,11 @@ class BeartypeNodeTransformerPep526Mixin(object):
         # configuration. In this case, avoid passing that configuration to
         # the beartype decorator for both efficiency and simplicity.
 
-        # Child node referencing the function performing this type-checking,
-        # previously imported at module scope by visit_FunctionDef() above.
-        node_func_name = Name(
-            BEARTYPE_RAISER_TARGET_ATTR_NAME, ctx=NODE_CONTEXT_LOAD)
-
         # Child node type-checking this newly assigned attribute against the
         # type hint annotating this assignment via our die_if_unbearable().
-        node_func_call = Call(
-            func=node_func_name,
-            args=[
+        node_func_call = make_node_call(
+            func_name=BEARTYPE_RAISER_FUNC_NAME,
+            nodes_args=[
                 # Child node passing the value newly assigned to this
                 # attribute by this assignment as the first parameter.
                 node_func_arg_pith,
@@ -299,20 +299,15 @@ class BeartypeNodeTransformerPep526Mixin(object):
                 # the second parameter.
                 node.annotation,
             ],
-            keywords=node_func_kwargs,
+            nodes_kwargs=node_func_kwargs,
+            node_sibling=node,
         )
 
         # Adjacent node encapsulating this type-check as a Python statement.
         node_func = Expr(node_func_call)
 
-        # Copy all source code metadata from this AST annotated assignment node
-        # onto *ALL* AST nodes created above.
-        copy_node_metadata(node_src=node, node_trg=(
-            node_func_name,
-            node_func_arg_pith,
-            node_func_call,
-            node_func,
-        ))
+        # Copy all source code metadata onto this new node.
+        copy_node_metadata(node_src=node, node_trg=node_func)
 
         # Return a list comprising these two adjacent nodes.
         #

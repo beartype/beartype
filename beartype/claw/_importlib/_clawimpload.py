@@ -465,10 +465,17 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         module_ast_beartyped = ast_beartyper.visit(module_ast)
 
         #FIXME: Conditionally perform this logic if "conf.is_debug", please.
+        #Note that printing to "stderr" is pivotal. For some reason, Python
+        #fails to forward printing to "stdout" across subprocesses even when we
+        #explicitly tell it to. Look. I don't even know. Just roll with it!
+        # from sys import stderr
         # print(
-        #     f'Module "{self._module_name_beartype}" abstract syntax tree (AST) '
-        #     f'transformed by @beartype to:\n\n'
-        #     f'{get_node_repr_indented(module_ast_beartyped)}'
+        #     (
+        #         f'Module "{self._module_name_beartype}" abstract syntax tree (AST) '
+        #         f'transformed by @beartype to:\n\n'
+        #         f'{get_node_repr_indented(module_ast_beartyped)}'
+        #     ),
+        #     file=stderr,
         # )
 
         # Attempt to...

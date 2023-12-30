@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`604` **type hint utility unit tests.**
+Project-wide :pep:`604` **type hint utility unit tests.**
 
 This submodule unit tests the public API of the private
 :mod:`beartype._util.hint.pep.proposal.utilpep604` submodule.
@@ -19,7 +19,7 @@ This submodule unit tests the public API of the private
 # ....................{ TESTS ~ tester                     }....................
 def test_is_hint_pep604() -> None:
     '''
-    Test usage of the private
+    Test the private
     :mod:`beartype._util.hint.pep.proposal.utilpep604.is_hint_pep604` tester.
     '''
 
@@ -30,7 +30,7 @@ def test_is_hint_pep604() -> None:
     # If the active Python interpreter targets Python >= 3.10 and thus supports
     # PEP 604...
     if IS_PYTHON_AT_LEAST_3_10:
-        # Assert this tester accepts a PEP 604-compliant union. 
+        # Assert this tester accepts a PEP 604-compliant union.
         assert is_hint_pep604(int | str | None) is True
     # Else, this interpreter targets Python < 3.10 and thus fails to support PEP
     # 604.

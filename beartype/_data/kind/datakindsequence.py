@@ -14,8 +14,16 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     Any,
+    List,
     Tuple,
 )
+
+# ....................{ LISTS                              }....................
+# Note that this exact type annotation is required to avoid mypy complaints. :O
+LIST_EMPTY: List[Any] = []
+'''
+**Empty list singleton.**
+'''
 
 # ....................{ TUPLES                             }....................
 # Note that this exact type annotation is required to avoid mypy complaints. :O

@@ -36,7 +36,9 @@ def test_claw_extraprocess_executable_submodule(
     from beartype._util.py.utilpyinterpreter import (
         get_interpreter_command_words)
     from beartype_test._util.command.pytcmdrun import (
-        run_command_forward_stderr_return_stdout)
+        run_command_forward_output,
+        run_command_forward_stderr_return_stdout,
+    )
     from beartype_test._util.path.pytpathtest import (
         get_test_unit_data_claw_extraprocess_dir)
 
@@ -54,16 +56,28 @@ def test_claw_extraprocess_executable_submodule(
         '-m', 'executable_submodule.main_submodule',
     )
 
-    # Standard output emitted by running this this module as a script, raising
-    # an exception on subprocess failure while forwarding all standard error
-    # emitted by this subprocess to the standard error file handle of this
-    # parent Python process.
-    PYTHON_STDOUT = run_command_forward_stderr_return_stdout(
-        command_words=PYTHON_ARGS)
+    # Attempt to...
+    try:
+        # Standard output emitted by running this this module as a script,
+        # raising an exception on subprocess failure while forwarding all
+        # standard error emitted by this subprocess to the standard error file
+        # handle of this parent Python process.
+        PYTHON_STDOUT = run_command_forward_stderr_return_stdout(
+            command_words=PYTHON_ARGS)
 
-    # Assert this output to be the expected output printed by this module.
-    assert PYTHON_STDOUT == str(float(len(
-        'His infancy was nurtured. Every sight')))
+        # Assert this output to be the expected output printed by this module.
+        assert PYTHON_STDOUT == str(float(len(
+            'His infancy was nurtured. Every sight')))
+    # If doing so raised *ANY* exception whatsoever...
+    except:
+        # Re-run the same module as a script except forward both all standard
+        # output *AND* error emitted by this subprocess to the standard output
+        # and error file handles of this parent Python process. Doing so
+        # significantly improves debuggability in the event of a fatal error.
+        run_command_forward_output(command_words=PYTHON_ARGS)
+
+        # Re-raise this exception.
+        raise
 
 
 def test_claw_extraprocess_executable_package(monkeypatch: MonkeyPatch) -> None:

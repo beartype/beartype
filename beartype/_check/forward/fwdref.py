@@ -34,7 +34,7 @@ from beartype._util.cache.utilcachecall import (
 from beartype._util.cls.utilclsmake import make_type
 
 # ....................{ METACLASSES                        }....................
-class _BeartypeForwardRefMeta(type):
+class BeartypeForwardRefMeta(type):
     '''
     **Forward reference metaclass** (i.e., metaclass of the
     :class:`.BeartypeForwardRefABC` superclass deferring the resolution of a
@@ -299,14 +299,14 @@ class _BeartypeForwardRefMeta(type):
 # * Suffixed by "__".
 # If this is *NOT* done, these variables could induce a namespace conflict with
 # user-defined subpackages, submodules, and classes of the same names
-# concatenated via the _BeartypeForwardRefMeta.__getattr__() dunder method.
+# concatenated via the BeartypeForwardRefMeta.__getattr__() dunder method.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #FIXME: Unit test us up, please.
-class BeartypeForwardRefABC(object, metaclass=_BeartypeForwardRefMeta):
+class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     '''
     Abstract base class (ABC) of all **forward reference subclasses** (i.e.,
-    classes whose :class:`._BeartypeForwardRefMeta` metaclass defers the
+    classes whose :class:`.BeartypeForwardRefMeta` metaclass defers the
     resolution of stringified type hints referencing actual type hints that have
     yet to be defined).
 
@@ -315,7 +315,7 @@ class BeartypeForwardRefABC(object, metaclass=_BeartypeForwardRefMeta):
     **This ABC prohibits instantiation.** This ABC *only* exists to sanitize,
     simplify, and streamline the definition of subclasses passed as the second
     parameter to the :func:`isinstance` builtin, whose
-    :class:`._BeartypeForwardRefMeta.__instancecheck__` dunder method then
+    :class:`.BeartypeForwardRefMeta.__instancecheck__` dunder method then
     implicitly resolves the forward references encapsulated by those subclasses.
     The :func:`.make_forwardref_subtype` function dynamically creates and
     returns one concrete subclass of this ABC for each unique forward reference
@@ -345,7 +345,7 @@ class BeartypeForwardRefABC(object, metaclass=_BeartypeForwardRefMeta):
     # Type hint referenced by this forward reference subclass if this subclass has
     # already been passed at least once as the second parameter to the
     # :func:`isinstance` builtin (i.e., as the first parameter to the
-    # :meth:`._BeartypeForwardRefMeta.__instancecheck__` dunder method and
+    # :meth:`.BeartypeForwardRefMeta.__instancecheck__` dunder method and
     # :meth:`is_instance` method) *or* :data:`None` otherwise.
     #
     # Note that this class variable is an optimization reducing space and time
@@ -469,7 +469,7 @@ class BeartypeForwardRefABC(object, metaclass=_BeartypeForwardRefMeta):
 class _BeartypeForwardRefIndexedABC(BeartypeForwardRefABC):
     '''
     Abstract base class (ABC) of all **subscripted forward reference
-    subclasses** (i.e., classes whose :class:`._BeartypeForwardRefMeta`
+    subclasses** (i.e., classes whose :class:`.BeartypeForwardRefMeta`
     metaclass defers the resolution of stringified type hints referencing actual
     type hints that have yet to be defined, subscripted by any arbitrary
     positional and keyword parameters).
@@ -505,7 +505,7 @@ class _BeartypeForwardRefIndexedABC(BeartypeForwardRefABC):
 class _BeartypeForwardRefIndexableABC(BeartypeForwardRefABC):
     '''
     Abstract base class (ABC) of all **subscriptable forward reference
-    subclasses** (i.e., classes whose :class:`._BeartypeForwardRefMeta`
+    subclasses** (i.e., classes whose :class:`.BeartypeForwardRefMeta`
     metaclass defers the resolution of stringified type hints referencing actual
     type hints that have yet to be defined, transparently permitting these type
     hints to be subscripted by any arbitrary positional and keyword parameters).
@@ -572,7 +572,7 @@ superclass to reduce space and time consumption.
 def is_forwardref(obj: object) -> bool:
     '''
     :data:`True` only if the passed object is a **forward reference subclass**
-    (i.e., class whose metaclass is class:`._BeartypeForwardRefMeta`).
+    (i.e., class whose metaclass is class:`.BeartypeForwardRefMeta`).
 
     Parameters
     ----------
@@ -587,7 +587,7 @@ def is_forwardref(obj: object) -> bool:
 
     # Return true only if the class of this object is the metaclass of all
     # forward reference subclasses, implying this object to be such a subclass.
-    return obj.__class__ is _BeartypeForwardRefMeta
+    return obj.__class__ is BeartypeForwardRefMeta
 
 # ....................{ FACTORIES                          }....................
 @callable_cached

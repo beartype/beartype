@@ -65,22 +65,22 @@ This private submodule is *not* intended for importation by downstream callers.
 #    # ...into this.
 #    from beartype._util.hint.pep.proposal.utilpep695 import (
 #        iter_hint_pep695_forwardrefs as
-#        __beartype_iter_hint_pep695_forwardrefs__
+#        __iter_hint_pep695_forwardref_beartype__
 #    )
 #    type {alias_name} = {alias_value}
-#    for __beartype_hint_pep695_forwardref__ in (
-#        __beartype_iter_hint_pep695_forwardrefs__({alias_name})):
+#    for __hint_pep695_forwardref_beartype__ in (
+#        __iter_hint_pep695_forwardref_beartype__({alias_name})):
 #        # If the current scope is module scope, prefer an efficient
 #        # non-exec()-based solution. Note that this optimization does *NOT*
 #        # generalize to other scopes, for obscure reasons delineated here:
 #        #     https://stackoverflow.com/a/8028772/2809027
 #        if globals() is locals():
-#            globals()[__beartype_hint_pep695_forwardref__.__beartype_name__] =
-#                __beartype_hint_pep695_forwardref__)
+#            globals()[__hint_pep695_forwardref_beartype__.__beartype_name__] =
+#                __hint_pep695_forwardref_beartype__)
 #        # Else, the current scope is *NOT* module scope. In this case,
 #        # fallback to an inefficient exec()-based solution.
 #        else:
-#            exec(f'{__beartype_hint_pep695_forwardref__} = __beartype_hint_pep695_forwardref__')
+#            exec(f'{__hint_pep695_forwardref_beartype__.__beartype_name__} = __hint_pep695_forwardref_beartype__')
 #
 #    #FIXME: Technically, this *ONLY* needs to be done if the
 #    #iter_hint_pep695_forwardrefs() iterator returned something. *shrug*
@@ -112,7 +112,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavefast import HintPep695Type
 from beartype._check.forward.fwdref import (
-    _BeartypeForwardRefMeta,
+    BeartypeForwardRefMeta,
     make_forwardref_indexable_subtype,
 )
 from beartype._util.error.utilerrorget import get_name_error_attr_name
@@ -137,7 +137,7 @@ def reduce_hint_pep695(
     ----------
     hint : object
         Type alias to be reduced.
-    exception_prefix : str, optional
+    exception_prefix : str
         Human-readable substring prefixing exception messages raised by this
         reducer.
 
@@ -209,9 +209,12 @@ def reduce_hint_pep695(
 # ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.
 def iter_hint_pep695_forwardrefs(
+    # Mandatory parameters.
     hint: HintPep695Type,
-    exception_prefix: str,
-) -> Iterable[_BeartypeForwardRefMeta]:
+
+    # Optional parameters.
+    exception_prefix: str = '',
+) -> Iterable[BeartypeForwardRefMeta]:
     '''
     Iteratively create and yield one **forward reference proxy** (i.e.,
     :class:`beartype._check.forward.fwdtype.BeartypeForwardRefABC` subclass) for
@@ -235,11 +238,11 @@ def iter_hint_pep695_forwardrefs(
         Type alias to be iterated over.
     exception_prefix : str, optional
         Human-readable substring prefixing exception messages raised by this
-        reducer.
+        reducer. Defaults to the empty string.
 
     Yields
     ------
-    _BeartypeForwardRefMeta
+    BeartypeForwardRefMeta
         Forward reference proxy encapsulating the next unquoted relative forward
         reference in this :pep:`695`-compliant type alias.
 
@@ -253,7 +256,7 @@ def iter_hint_pep695_forwardrefs(
     # exception.
     if not isinstance(hint, HintPep695Type):
         raise BeartypeDecorHintPep695Exception(
-            f'{exception_prefix} type hint {repr(hint)} '
+            f'{exception_prefix}type hint {repr(hint)} '
             f'not PEP 695 type alias.'
         )
     # Else, this type hint is a PEP 695-compliant type alias.
@@ -266,6 +269,8 @@ def iter_hint_pep695_forwardrefs(
     while True:
         # Attempt to...
         try:
+            # print(f'type {hint.__name__} = {hint.__value__}')
+
             # Reduce this alias to the type hint it lazily refers to. If this
             # alias contains *NO* forward references to undeclared attributes,
             # this reduction *SHOULD* succeed. Let's pretend we mean that.
@@ -302,7 +307,7 @@ def iter_hint_pep695_forwardrefs(
             #
             # Note that this should *NEVER* happen. Of course, this will happen.
             if hint_ref_name == hint_ref_name_prev:
-                raise BeartypeDecorHintPep695Exception(  # pragma: no cover
+                raise BeartypeDecorHintPep695Exception(
                     f'{exception_prefix}PEP 695 type alias "{hint_name}" '
                     f'unquoted relative forward reference "{hint_ref_name}" '
                     f'still undefined in module "{hint_module_name}", '

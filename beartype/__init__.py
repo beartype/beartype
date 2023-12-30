@@ -97,6 +97,7 @@ For PEP 8 compliance, this specifier has the canonical name
 
 __all__ = [
     'BeartypeConf',
+    'BeartypeHintOverrides',
     'BeartypeStrategy',
     'BeartypeViolationVerbosity',
     'beartype',

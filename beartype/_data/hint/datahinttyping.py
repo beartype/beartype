@@ -13,12 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from ast import AST
 from beartype.typing import (
     # TYPE_CHECKING,
     Any,
     Callable,
     Dict,
     Iterable,
+    List,
     Literal,
     Mapping,
     Optional,
@@ -42,6 +44,13 @@ from types import (
     FrameType,
     GeneratorType,
 )
+
+# ....................{ AST                                }....................
+ListNodes = List[AST]
+'''
+PEP-compliant type hint matching an **abstract syntax tree (AST) node list**
+(i.e., list of zero or more AST nodes).
+'''
 
 # ....................{ BOOL                               }....................
 BoolTristate = Literal[True, False, None]

@@ -34,7 +34,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #Score @beartype!
 #
 #See the BeartypeConf.__new__() method for relevant logic. \o/
-#FIXME: Oh, wait. We probably do *NOT* want to cache -- at least, not within
+#FIXME: Oh, wait. We probably do *NOT* want to cache -- at least, not without
 #defining a comparable reinit() method as we do for "BeartypeCall". After
 #retrieving a cached "BeartypeNodeTransformer" instance, we'll need to
 #immediately call BeartypeNodeTransformer.reinit() to reinitialize that
@@ -42,50 +42,6 @@ This private submodule is *not* intended for importation by downstream callers.
 #
 #This is all feasible, of course -- but let's just roll with the naive
 #implementation for now, please.
-
-#FIXME: [PEP 675] *OMG.* See also the third-party "executing" Python package:
-#    https://github.com/alexmojaki/executing
-#
-#IPython itself internally leverages "executing" via "stack_data" (i.e., a
-#slightly higher-level third-party Python package that internally leverages
-#"executing") to syntax-highlight the currently executing AST node. Indeed,
-#"executing" sports an intense test suite (much like ours) effectively
-#guaranteeing a one-to-one mapping between stack frames and AST nodes.
-#
-#So, what's the Big Idea here? The Big Idea here is that @beartype can
-#internally (...possibly only optionally, but possibly mandatorily) leverage
-#"executing" to begin performing full-blown static type-checking at runtime --
-#especially of mission critical type hints like "typing.LiteralString" which can
-#*ONLY* be type-checked via static analysis. :o
-#
-#So, what's the Little Idea here? The Little Idea here is that @beartype can
-#generate type-checking wrappers that type-check parameters or returns annotated
-#by "typing.LiteralString" by calling an internal private utility function --
-#say, "_die_unless_literalstring(func: Callable, arg_name: str) -> None" -- with
-#"func" as the current type-checking wrapper and "arg_name" as either the name
-#of that parameter or "return". The _die_unless_literalstring() raiser then:
-#* Dynamically searches up the call stack for the stack frame encapsulating an
-#  external call to the passed "func" callable.
-#* Passes that stack frame to the "executing" package.
-#* "executing" then returns the AST node corresponding to that stack frame.
-#* Introspects that node for the passed parameter whose name is "arg_name".
-#* Raises an exception unless the value of that parameter is an AST node
-#  corresponding to a string literal.
-#
-#Of course, that won't necessarily be fast -- but it will be accurate. Since
-#security trumps speed, speed is significantly less of a concern insofar as
-#"typing.LiteralString" is concerned. Of course, we should also employ
-#significant caching... if we even can.
-#FIXME: Actually, while demonstrably awesome, even the above fails to suffice to
-#to statically type-check "typing.LiteralString". We failed to fully read PEP
-#675, which contains a section on inference. In the worst case, nothing less
-#than a complete graph of the entire app and all transitive dependencies thereof
-#suffices to decide whether a parameter satisfies "typing.LiteralString".
-#
-#Thankfully, the above idea generalizes from "typing.LiteralString" to other
-#fascinating topics as well. Indeed, given sufficient caching, one could begin
-#to internally generate and cache a mypy-like graph network whose nodes are
-#typed attributes and whose edges are relations between those typed attributes.
 
 # ....................{ IMPORTS                            }....................
 from ast import (
@@ -96,17 +52,6 @@ from ast import (
     ImportFrom,
     Module,
     NodeTransformer,
-)
-from beartype.claw._clawmagic import (
-    BEARTYPE_CLAW_STATE_MODULE_NAME,
-    BEARTYPE_CLAW_STATE_SOURCE_ATTR_NAME,
-    BEARTYPE_CLAW_STATE_TARGET_ATTR_NAME,
-    BEARTYPE_DECORATOR_MODULE_NAME,
-    BEARTYPE_DECORATOR_SOURCE_ATTR_NAME,
-    BEARTYPE_DECORATOR_TARGET_ATTR_NAME,
-    BEARTYPE_RAISER_MODULE_NAME,
-    BEARTYPE_RAISER_SOURCE_ATTR_NAME,
-    BEARTYPE_RAISER_TARGET_ATTR_NAME,
 )
 from beartype.claw._ast.pep.clawastpep526 import (
     BeartypeNodeTransformerPep526Mixin)
@@ -307,14 +252,6 @@ class BeartypeNodeTransformer(
         importing various attributes required by lower-level child nodes added
         by subsequent visitor methods defined by this transformer.
 
-        Specifically, this method adds nodes importing:
-
-        * Our private
-          :func:`beartype._decor.decorcore.beartype_object_nonfatal` decorator.
-        * Our private
-          :obj:`beartype.claw._clawcache.claw_state` singleton global.
-        * Our public :func:`beartype.door.die_if_unbearable` exception raiser.
-
         Parameters
         ----------
         node : Module
@@ -432,34 +369,14 @@ class BeartypeNodeTransformer(
             #   the standard "copy" module are pure-Python and thus shockingly
             #   slow -- which defeats the purpose.
 
-            # Node importing our private
-            # beartype._decor.decorcore.beartype_object_nonfatal() decorator.
-            node_import_decorator = make_node_importfrom(
-                module_name=BEARTYPE_DECORATOR_MODULE_NAME,
-                source_attr_name=BEARTYPE_DECORATOR_SOURCE_ATTR_NAME,
-                target_attr_name=BEARTYPE_DECORATOR_TARGET_ATTR_NAME,
-                node_sibling=node_prev,
-            )
-
-            # Node importing our public beartype.door.die_if_unbearable()
-            # exception-raiser, intentionally imported from our private
-            # "beartype.door._doorcheck" submodule rather than our public
-            # "beartype.door" subpackage. Why? Because the former consumes
-            # marginally less space and time to import than the latter. Whereas
-            # the latter imports the full "TypeHint" hierarchy, the former only
-            # imports low-level utility functions.
-            node_import_raiser = make_node_importfrom(
-                module_name=BEARTYPE_RAISER_MODULE_NAME,
-                source_attr_name=BEARTYPE_RAISER_SOURCE_ATTR_NAME,
-                target_attr_name=BEARTYPE_RAISER_TARGET_ATTR_NAME,
-                node_sibling=node_prev,
-            )
-
-            # Node importing our private "claw_state" singleton.
-            node_import_claw_state = make_node_importfrom(
-                module_name=BEARTYPE_CLAW_STATE_MODULE_NAME,
-                source_attr_name=BEARTYPE_CLAW_STATE_SOURCE_ATTR_NAME,
-                target_attr_name=BEARTYPE_CLAW_STATE_TARGET_ATTR_NAME,
+            # Node importing all beartype-specific attributes explicitly
+            # imported and implicitly exported by our private
+            # "beartype.claw._ast.clawaststar" submodule, comprising the set of
+            # all attributes required by code dynamically injected into this AST
+            # by this AST transformer.
+            node_import_all = make_node_importfrom(
+                module_name='beartype.claw._ast._clawaststar',
+                source_attr_name='*',
                 node_sibling=node_prev,
             )
 
@@ -469,11 +386,7 @@ class BeartypeNodeTransformer(
             # Note that this syntax efficiently (albeit unreadably) inserts
             # these output child import nodes at the desired index (in this
             # arbitrary order) of this parent module node.
-            node.body[node_index_import_beartype_attrs:0] = (
-                node_import_decorator,
-                node_import_raiser,
-                node_import_claw_state,
-            )
+            node.body[node_index_import_beartype_attrs:0] = (node_import_all,)
         # Else, the 0-based index of an early child node of this parent module
         # node immediately *BEFORE* which to insert one or more statements
         # importing beartype-specific attributes is that of the last child node
