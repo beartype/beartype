@@ -64,7 +64,7 @@ class BeartypeForwardRefMeta(type):
         '''
         **Fully-qualified forward reference subclass** (i.e.,
         :class:`.BeartypeForwardRefABC` subclass whose metaclass is this
-        metaclass and whose :attr:`.BeartypeForwardRefABC.__beartype_name__`
+        metaclass and whose :attr:`.BeartypeForwardRefABC.__name_beartype__`
         class variable is the fully-qualified name of an external class).
 
         This dunder method creates and returns a new forward reference subclass
@@ -118,9 +118,9 @@ class BeartypeForwardRefMeta(type):
         # Return a new fully-qualified forward reference subclass concatenated
         # as described above.
         return make_forwardref_indexable_subtype(
-            cls.__beartype_scope_name__,  # type: ignore[arg-type]
-            f'{cls.__beartype_name__}.{hint_name}',
-            # f'{cls.__beartype_scope_name__}.{cls.__beartype_name__}',  # type: ignore[arg-type]
+            cls.__scope_name_beartype__,  # type: ignore[arg-type]
+            f'{cls.__name_beartype__}.{hint_name}',
+            # f'{cls.__scope_name_beartype__}.{cls.__name_beartype__}',  # type: ignore[arg-type]
             # hint_name,
         )
 
@@ -133,7 +133,7 @@ class BeartypeForwardRefMeta(type):
         :data:`True` only if the passed object is an instance of the external
         class referenced by the passed **forward reference subclass** (i.e.,
         :class:`.BeartypeForwardRefABC` subclass whose metaclass is this
-        metaclass and whose :attr:`.BeartypeForwardRefABC.__beartype_name__`
+        metaclass and whose :attr:`.BeartypeForwardRefABC.__name_beartype__`
         class variable is the fully-qualified name of that external class).
 
         Parameters
@@ -153,7 +153,7 @@ class BeartypeForwardRefMeta(type):
 
         # Return true only if this forward reference subclass insists that this
         # object satisfies the external class referenced by this subclass.
-        return cls.__beartype_is_instance__(obj)
+        return cls.__is_instance_beartype__(obj)
 
 
     def __subclasscheck__(  # type: ignore[misc]
@@ -164,7 +164,7 @@ class BeartypeForwardRefMeta(type):
         :data:`True` only if the passed object is a subclass of the external
         class referenced by the passed **forward reference subclass** (i.e.,
         :class:`.BeartypeForwardRefABC` subclass whose metaclass is this
-        metaclass and whose :attr:`.BeartypeForwardRefABC.__beartype_name__`
+        metaclass and whose :attr:`.BeartypeForwardRefABC.__name_beartype__`
         class variable is the fully-qualified name of that external class).
 
         Parameters
@@ -185,7 +185,7 @@ class BeartypeForwardRefMeta(type):
         # Return true only if this forward reference subclass insists that this
         # object is an instance of the external class referenced by this
         # subclass.
-        return cls.__beartype_is_subclass__(obj)
+        return cls.__is_subclass_beartype__(obj)
 
 
     def __repr__(  # type: ignore[misc]
@@ -207,8 +207,8 @@ class BeartypeForwardRefMeta(type):
         # * The die_if_hint_pep604_inconsistent() raiser.
         cls_repr = (
             f'<forwardref {cls.__name__}('
-              f'__beartype_scope_name__={repr(cls.__beartype_scope_name__)}'
-            f', __beartype_name__={repr(cls.__beartype_name__)}'
+              f'__scope_name_beartype__={repr(cls.__scope_name_beartype__)}'
+            f', __name_beartype__={repr(cls.__name_beartype__)}'
         )
 
         #FIXME: Unit test this edge case, please.
@@ -221,13 +221,13 @@ class BeartypeForwardRefMeta(type):
         #
         # Sadly, doing so invokes the __subclasscheck__() dunder method defined
         # above, which invokes the
-        # BeartypeForwardRefABC.__beartype_is_subclass__() method defined
+        # BeartypeForwardRefABC.__is_subclass_beartype__() method defined
         # above, which tests the type referred to by this subclass rather than
         # this subclass itself. In short, this is why you play with madness.
         try:
             cls_repr += (
-                f', __beartype_args__={repr(cls.__beartype_args__)}'
-                f', __beartype_kwargs__={repr(cls.__beartype_kwargs__)}'
+                f', __args_beartype__={repr(cls.__args_beartype__)}'
+                f', __kwargs_beartype__={repr(cls.__kwargs_beartype__)}'
             )
         # If doing so fails with the expected "AttributeError", then this is
         # *NOT* a subscripted forward reference subclass. Since this is
@@ -244,7 +244,7 @@ class BeartypeForwardRefMeta(type):
     # ....................{ PROPERTIES                     }....................
     @property  # type: ignore[misc]
     @property_cached
-    def __beartype_type__(cls) -> type:
+    def __type_beartype__(cls) -> type:
         '''
         **Forward referee** (i.e., type hint referenced by this forward
         reference subclass, which is usually but *not* necessarily a class).
@@ -264,13 +264,13 @@ class BeartypeForwardRefMeta(type):
         referee_name = (
             # If that name already contains one or more "." delimiters and is
             # thus presumably already fully-qualified, that name as is;
-            cls.__beartype_name__
-            if '.' in cls.__beartype_name__ else  # type: ignore[operator]
+            cls.__name_beartype__
+            if '.' in cls.__name_beartype__ else  # type: ignore[operator]
             # Else, that name contains *NO* "." delimiters and is thus
             # unqualified. In this case, canonicalize that name into a
             # fully-qualified name relative to the fully-qualified name of the
             # scope presumably declaring that forward referee.
-            f'{cls.__beartype_scope_name__}.{cls.__beartype_name__}'
+            f'{cls.__scope_name_beartype__}.{cls.__name_beartype__}'
         )
 
         # Forward referee, dynamically resolved by deferring to our existing
@@ -324,23 +324,23 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     '''
 
     # ....................{ PRIVATE ~ class vars           }....................
-    __beartype_scope_name__: str = None  # type: ignore[assignment]
+    __scope_name_beartype__: str = None  # type: ignore[assignment]
     '''
     Fully-qualified name of the lexical scope to which the type hint referenced
     by this forward reference subclass is relative if that type hint is relative
-    (i.e., if :attr:`__beartype_name__` is relative) *or* ignored otherwise
-    (i.e., if :attr:`__beartype_name__` is absolute).
+    (i.e., if :attr:`__name_beartype__` is relative) *or* ignored otherwise
+    (i.e., if :attr:`__name_beartype__` is absolute).
     '''
 
 
-    __beartype_name__: str = None  # type: ignore[assignment]
+    __name_beartype__: str = None  # type: ignore[assignment]
     '''
     Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of the
     type hint referenced by this forward reference subclass.
     '''
 
 
-    # __beartype_type__: Optional[type] = None
+    # __type_beartype__: Optional[type] = None
     # '''
     # Type hint referenced by this forward reference subclass if this subclass has
     # already been passed at least once as the second parameter to the
@@ -366,7 +366,7 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
 
     # ....................{ PRIVATE ~ testers              }....................
     @classmethod
-    def __beartype_is_instance__(cls, obj: object) -> bool:
+    def __is_instance_beartype__(cls, obj: object) -> bool:
         '''
         :data:`True` only if the passed object is an instance of the external
         class referred to by this forward reference.
@@ -384,16 +384,16 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
         '''
 
         # # Resolve the external class referred to by this forward reference and
-        # # permanently store that class in the "__beartype_type__" variable.
+        # # permanently store that class in the "__type_beartype__" variable.
         # cls.__beartype_resolve_type__()
 
         # Return true only if this object is an instance of the external class
         # referenced by this forward reference.
-        return isinstance(obj, cls.__beartype_type__)  # type: ignore[arg-type]
+        return isinstance(obj, cls.__type_beartype__)  # type: ignore[arg-type]
 
 
     @classmethod
-    def __beartype_is_subclass__(cls, obj: object) -> bool:
+    def __is_subclass_beartype__(cls, obj: object) -> bool:
         '''
         :data:`True` only if the passed object is a subclass of the external
         class referred to by this forward reference.
@@ -411,12 +411,12 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
         '''
 
         # # Resolve the external class referred to by this forward reference and
-        # # permanently store that class in the "__beartype_type__" variable.
+        # # permanently store that class in the "__type_beartype__" variable.
         # cls.__beartype_resolve_type__()
 
         # Return true only if this object is a subclass of the external class
         # referenced by this forward reference.
-        return issubclass(obj, cls.__beartype_type__)  # type: ignore[arg-type]
+        return issubclass(obj, cls.__type_beartype__)  # type: ignore[arg-type]
 
     # ....................{ PRIVATE ~ resolvers            }....................
     #FIXME: [SPEED] Optimize this by refactoring this into a cached class
@@ -425,41 +425,41 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     #approach certainly suffices for now. *sigh*
     #
     #On doing so, note that we'll also need to disable this line below:
-    #    forwardref_subtype.__beartype_type__ = None  # pyright: ignore[reportGeneralTypeIssues]
+    #    forwardref_subtype.__type_beartype__ = None  # pyright: ignore[reportGeneralTypeIssues]
     # @classmethod
     # def __beartype_resolve_type__(cls) -> None:
     #     '''
     #     **Resolve** (i.e., dynamically lookup) the external class referred to by
     #     this forward reference and permanently store that class in the
-    #     :attr:`__beartype_type__` class variable for subsequent lookup.
+    #     :attr:`__type_beartype__` class variable for subsequent lookup.
     #
     #     Caveats
     #     -------
     #     This method should *always* be called before accessing the
-    #     :attr:`__beartype_type__` class variable, which should *always* be
+    #     :attr:`__type_beartype__` class variable, which should *always* be
     #     assumed to be :data:`None` before calling this method.
     #     '''
     #
     #     # If the external class referenced by this forward reference has yet to
     #     # be resolved, do so now.
-    #     if cls.__beartype_type__ is None:
+    #     if cls.__type_beartype__ is None:
     #         # Fully-qualified name of that class, defined as either...
     #         type_name = (
     #             # If that name already contains one or more "." delimiters and
     #             # is thus presumably already fully-qualified, that name as is;
-    #             cls.__beartype_name__
-    #             if '.' in cls.__beartype_name__ else
+    #             cls.__name_beartype__
+    #             if '.' in cls.__name_beartype__ else
     #             # Else, that name contains *NO* "." delimiters and is thus
     #             # unqualified. In this case, canonicalize that name into a
     #             # fully-qualified name relative to the fully-qualified name of
     #             # the scope presumably declaring that class.
-    #             f'{cls.__beartype_scope_name__}.{cls.__beartype_name__}'
+    #             f'{cls.__scope_name_beartype__}.{cls.__name_beartype__}'
     #         )
     #
     #         # Resolve that class by deferring to our existing "bear_typistry"
     #         # dictionary, which already performs lookup-based resolution and
     #         # caching of arbitrary forward references at runtime.
-    #         cls.__beartype_type__ = bear_typistry[type_name]
+    #         cls.__type_beartype__ = bear_typistry[type_name]
     #     # Else, that class has already been resolved.
     #     #
     #     # In either case, that class is now resolved.
@@ -489,13 +489,13 @@ class _BeartypeForwardRefIndexedABC(BeartypeForwardRefABC):
     '''
 
     # ....................{ PRIVATE ~ class vars           }....................
-    __beartype_args__: tuple = None  # type: ignore[assignment]
+    __args_beartype__: tuple = None  # type: ignore[assignment]
     '''
     Tuple of all positional arguments subscripting this forward reference.
     '''
 
 
-    __beartype_kwargs__: LexicalScope = None  # type: ignore[assignment]
+    __kwargs_beartype__: LexicalScope = None  # type: ignore[assignment]
     '''
     Dictionary of all keyword arguments subscripting this forward reference.
     '''
@@ -541,14 +541,14 @@ class _BeartypeForwardRefIndexableABC(BeartypeForwardRefABC):
         # _make_forwardref_subtype() factory function.
         forwardref_indexed_subtype: Type[_BeartypeForwardRefIndexedABC] = (
             _make_forwardref_subtype(  # type: ignore[assignment]
-                scope_name=cls.__beartype_scope_name__,
-                hint_name=cls.__beartype_name__,
+                scope_name=cls.__scope_name_beartype__,
+                hint_name=cls.__name_beartype__,
                 type_bases=_BeartypeForwardRefIndexedABC_BASES,
             ))
 
         # Classify the arguments subscripting this forward reference.
-        forwardref_indexed_subtype.__beartype_args__ = args  # pyright: ignore[reportGeneralTypeIssues]
-        forwardref_indexed_subtype.__beartype_kwargs__ = kwargs  # pyright: ignore[reportGeneralTypeIssues]
+        forwardref_indexed_subtype.__args_beartype__ = args  # pyright: ignore[reportGeneralTypeIssues]
+        forwardref_indexed_subtype.__kwargs_beartype__ = kwargs  # pyright: ignore[reportGeneralTypeIssues]
 
         # Return this subscripted forward reference.
         return forwardref_indexed_subtype
@@ -704,11 +704,11 @@ def _make_forwardref_subtype(
     )
 
     # Classify passed parameters with this subclass.
-    forwardref_subtype.__beartype_name__ = hint_name  # pyright: ignore[reportGeneralTypeIssues]
-    forwardref_subtype.__beartype_scope_name__ = scope_name  # pyright: ignore[reportGeneralTypeIssues]
+    forwardref_subtype.__name_beartype__ = hint_name  # pyright: ignore[reportGeneralTypeIssues]
+    forwardref_subtype.__scope_name_beartype__ = scope_name  # pyright: ignore[reportGeneralTypeIssues]
 
     # Nullify all remaining class variables of this subclass for safety.
-    # forwardref_subtype.__beartype_type__ = None  # pyright: ignore[reportGeneralTypeIssues]
+    # forwardref_subtype.__type_beartype__ = None  # pyright: ignore[reportGeneralTypeIssues]
 
     # Return this subclass.
     return forwardref_subtype

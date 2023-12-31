@@ -17,17 +17,15 @@ from ast import (
     AST,
     AnnAssign,
     Attribute,
-    Expr,
     Name,
 )
 from beartype.claw._clawmagic import BEARTYPE_RAISER_FUNC_NAME
 from beartype.claw._ast._clawastmunge import make_node_keyword_conf
 from beartype.claw._clawtyping import NodeVisitResult
 from beartype._conf.confcls import BEARTYPE_CONF_DEFAULT
-from beartype._data.ast.dataast import NODE_CONTEXT_LOAD
-from beartype._util.ast.utilastmunge import copy_node_metadata
 from beartype._util.ast.utilastmake import (
-    make_node_call,
+    make_node_attribute_load,
+    make_node_call_expr,
     make_node_name_load,
 )
 
@@ -244,15 +242,11 @@ class BeartypeNodeTransformerPep526Mixin(object):
             # copy_node_metadata(node_src=node, node_trg=node_func_arg_pith_obj)
 
             # Child node referencing this instance or class variable.
-            node_func_arg_pith = Attribute(
-                value=node_target.value,
-                # Unqualified basename of this instance or class variable.
-                attr=node_target.attr,
-                ctx=NODE_CONTEXT_LOAD,
+            node_func_arg_pith = make_node_attribute_load(
+                node_name_load=node_target.value,
+                attr_name=node_target.attr,
+                node_sibling=node,
             )
-
-            # Copy all source code metadata onto this new node.
-            copy_node_metadata(node_src=node, node_trg=node_func_arg_pith)
         # Else, this target variable is *NOT* an instance or class variable. In
         # this case, this target variable is currently unsupported by this node
         # transformer for automated type-checking. Simply preserve and return
@@ -289,7 +283,7 @@ class BeartypeNodeTransformerPep526Mixin(object):
 
         # Child node type-checking this newly assigned attribute against the
         # type hint annotating this assignment via our die_if_unbearable().
-        node_func_call = make_node_call(
+        node_func = make_node_call_expr(
             func_name=BEARTYPE_RAISER_FUNC_NAME,
             nodes_args=[
                 # Child node passing the value newly assigned to this
@@ -302,12 +296,6 @@ class BeartypeNodeTransformerPep526Mixin(object):
             nodes_kwargs=node_func_kwargs,
             node_sibling=node,
         )
-
-        # Adjacent node encapsulating this type-check as a Python statement.
-        node_func = Expr(node_func_call)
-
-        # Copy all source code metadata onto this new node.
-        copy_node_metadata(node_src=node, node_trg=node_func)
 
         # Return a list comprising these two adjacent nodes.
         #

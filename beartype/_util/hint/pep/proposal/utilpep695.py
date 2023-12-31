@@ -75,12 +75,12 @@ This private submodule is *not* intended for importation by downstream callers.
 #        # generalize to other scopes, for obscure reasons delineated here:
 #        #     https://stackoverflow.com/a/8028772/2809027
 #        if globals() is locals():
-#            globals()[__hint_pep695_forwardref_beartype__.__beartype_name__] =
+#            globals()[__hint_pep695_forwardref_beartype__.__name_beartype__] =
 #                __hint_pep695_forwardref_beartype__)
 #        # Else, the current scope is *NOT* module scope. In this case,
 #        # fallback to an inefficient exec()-based solution.
 #        else:
-#            exec(f'{__hint_pep695_forwardref_beartype__.__beartype_name__} = __hint_pep695_forwardref_beartype__')
+#            exec(f'{__hint_pep695_forwardref_beartype__.__name_beartype__} = __hint_pep695_forwardref_beartype__')
 #
 #    #FIXME: Technically, this *ONLY* needs to be done if the
 #    #iter_hint_pep695_forwardrefs() iterator returned something. *shrug*

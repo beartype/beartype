@@ -99,16 +99,16 @@ def test_make_forwardref_indexable_subtype() -> None:
     assert fwdref_module_class.__module__ == __name__
 
     # Assert that these proxies have the expected hint names.
-    assert fwdref_absolute.__beartype_name__ == CLASS_NAME
-    assert fwdref_relative.__beartype_name__ == CLASS_BASENAME
-    assert fwdref_module_absolute.__beartype_name__ == MODULE_NAME
-    assert fwdref_module_class.__beartype_name__ == CLASS_NAME
+    assert fwdref_absolute.__name_beartype__ == CLASS_NAME
+    assert fwdref_relative.__name_beartype__ == CLASS_BASENAME
+    assert fwdref_module_absolute.__name_beartype__ == MODULE_NAME
+    assert fwdref_module_class.__name_beartype__ == CLASS_NAME
 
     # Assert that these proxies have the expected scope names.
-    assert fwdref_absolute.__beartype_scope_name__ == __name__
-    assert fwdref_relative.__beartype_scope_name__ == MODULE_NAME
-    assert fwdref_module_absolute.__beartype_scope_name__ == __name__
-    assert fwdref_module_class.__beartype_scope_name__ == __name__
+    assert fwdref_absolute.__scope_name_beartype__ == __name__
+    assert fwdref_relative.__scope_name_beartype__ == MODULE_NAME
+    assert fwdref_module_absolute.__scope_name_beartype__ == __name__
+    assert fwdref_module_class.__scope_name_beartype__ == __name__
 
     # ....................{ PASS ~ check                   }....................
     # Assert that an arbitrary instance of a subclass of that class is also an
@@ -125,9 +125,9 @@ def test_make_forwardref_indexable_subtype() -> None:
     # ....................{ PASS ~ property                }....................
     # Assert that this property of these forward reference proxies has the
     # expected values.
-    assert fwdref_absolute.__beartype_type__ is Class
-    assert fwdref_relative.__beartype_type__ is Class
-    assert fwdref_module_class.__beartype_type__ is Class
+    assert fwdref_absolute.__type_beartype__ is Class
+    assert fwdref_relative.__type_beartype__ is Class
+    assert fwdref_module_class.__type_beartype__ is Class
 
     # ....................{ PASS ~ repr                    }....................
     # Machine-readable representation of a forward reference proxy.
@@ -139,8 +139,8 @@ def test_make_forwardref_indexable_subtype() -> None:
         fwdref_absolute.__name__,
         # Machine-readable representations of all class variables of all
         # unsubscripted forward reference proxies.
-        repr(fwdref_absolute.__beartype_scope_name__),
-        repr(fwdref_absolute.__beartype_name__),
+        repr(fwdref_absolute.__scope_name_beartype__),
+        repr(fwdref_absolute.__name_beartype__),
     )
 
     # Assert that this representation contains the expected substrings.

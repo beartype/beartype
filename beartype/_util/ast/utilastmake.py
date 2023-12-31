@@ -14,7 +14,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from ast import (
     AST,
+    Attribute,
     Call,
+    Expr,
     ImportFrom,
     Name,
     alias,
@@ -34,69 +36,6 @@ from beartype._data.kind.datakindsequence import LIST_EMPTY
 from beartype._util.ast.utilastmunge import copy_node_metadata
 
 # ....................{ FACTORIES                          }....................
-#FIXME: Unit test us up, please.
-def make_node_call(
-    # Mandatory parameters.
-    func_name: str,
-    node_sibling: AST,
-
-    # Optional parameters.
-    nodes_args: ListNodes = LIST_EMPTY,
-    nodes_kwargs: List[keyword] = LIST_EMPTY,
-) -> Call:
-    '''
-    Create and return a new **callable call abstract syntax tree (AST) node**
-    (i.e., node encapsulating a call to an arbitrary function or method)
-    calling the function or method with the passed name, positional arguments,
-    and keyword arguments.
-
-    Parameters
-    ----------
-    func_name : str
-        Fully-qualified name of the module to import this attribute from.
-    node_sibling : AST
-        Sibling node to copy source code metadata from.
-    nodes_args : ListNodes, optional
-        List of zero or more **positional parameter AST nodes** comprising the
-        tuple of all positional parameters to be passed to this call. Defaults
-        to the empty list.
-    nodes_kwargs : ListNodes, optional
-        List of zero or more **keyword parameter AST nodes** comprising the
-        dictionary of all keyword parameters to be passed to this call. Defaults
-        to the empty list.
-
-    Returns
-    -------
-    Call
-        Callable call node calling this callable with these parameters.
-    '''
-    assert isinstance(nodes_args, list), f'{repr(nodes_args)} not list.'
-    assert isinstance(nodes_kwargs, list), f'{repr(nodes_kwargs)} not list.'
-    assert all(
-        isinstance(node_args, AST) for node_args in nodes_args), (
-        f'{repr(nodes_args)} not list of AST nodes.')
-    assert all(
-        isinstance(node_kwargs, keyword) for node_kwargs in nodes_kwargs), (
-        f'{repr(nodes_kwargs)} not list of keyword nodes.')
-
-    # Child node referencing the callable to be called.
-    node_func_name = make_node_name_load(name=func_name, node_sibling=node_sibling)
-
-    # Child node calling this callable.
-    node_func_call = Call(
-        func=node_func_name,
-        args=nodes_args,
-        keywords=nodes_kwargs,
-    )
-
-    # Copy all source code metadata (e.g., line numbers) from this sibling node
-    # onto this new node.
-    copy_node_metadata(node_src=node_sibling, node_trg=node_func_call)
-
-    # Return this import-from node.
-    return node_func_call
-
-
 #FIXME: Unit test us up, please.
 def make_node_importfrom(
     # Mandatory parameters.
@@ -172,6 +111,149 @@ def make_node_importfrom(
     # Return this import-from node.
     return node_importfrom
 
+# ....................{ FACTORIES ~ attribute              }....................
+#FIXME: Unit test us up, please.
+def make_node_attribute_load(
+    # Mandatory parameters.
+    node_name_load: AST,
+    attr_name: str,
+    node_sibling: AST,
+) -> Attribute:
+    '''
+    Create and return a new **object attribute access abstract syntax tree (AST)
+    node** (i.e., node encapsulating an access of an object attribute) of the
+    passed object with the passed attribute name.
+
+    Parameters
+    ----------
+    node_name_load : AST
+        Name node accessing the parent object to access this attribute from.
+    attr_name : str
+        Unqualified basename of the attribute of this object to be accessed.
+    node_sibling : AST
+        Sibling node to copy source code metadata from.
+
+    Returns
+    -------
+    Attribute
+        Object attribute node accessing this attribute of this object.
+    '''
+    assert isinstance(node_name_load, AST), (
+        f'{repr(node_name_load)} not AST node.')
+    assert isinstance(attr_name, str), f'{repr(attr_name)} not string.'
+
+    # Object attribute node accessing this attribute of this object.
+    node_attribute_load = Attribute(
+        value=node_name_load, attr=attr_name, ctx=NODE_CONTEXT_LOAD)
+
+    # Copy source code metadata from this sibling node onto this new node.
+    copy_node_metadata(node_src=node_sibling, node_trg=node_attribute_load)
+
+    # Return this node.
+    return node_attribute_load
+
+# ....................{ FACTORIES ~ call                   }....................
+#FIXME: Unit test us up, please.
+def make_node_call_expr(
+    *args,
+    node_sibling: AST,
+    **kwargs
+) -> Expr:
+    '''
+    Create and return a new **callable call expression abstract syntax tree
+    (AST) node** (i.e., node encapsulating a Python expression expressing a call
+    to an arbitrary function or method) calling the function or method with the
+    passed name, positional arguments, and keyword arguments.
+
+    Parameters
+    ----------
+    node_sibling : AST
+        Sibling node to copy source code metadata from.
+
+    All remaining passed positional and keyword parameters are passed to the
+    lower-level :func:`.make_node_call` factory function as is.
+
+    Returns
+    -------
+    Expr
+        Expression node calling this callable with these parameters.
+    '''
+
+    # Child node calling this callable.
+    node_func_call = make_node_call(*args, node_sibling=node_sibling, **kwargs)  # type: ignore[misc]
+
+    # Child node expressing this call as a Python expression.
+    node_func = Expr(node_func_call)
+
+    # Copy source code metadata from this sibling node onto this new node.
+    copy_node_metadata(node_src=node_sibling, node_trg=node_func)
+
+    # Return this expression node.
+    return node_func
+
+
+#FIXME: Unit test us up, please.
+def make_node_call(
+    # Mandatory parameters.
+    func_name: str,
+    node_sibling: AST,
+
+    # Optional parameters.
+    nodes_args: ListNodes = LIST_EMPTY,
+    nodes_kwargs: List[keyword] = LIST_EMPTY,
+) -> Call:
+    '''
+    Create and return a new **callable call abstract syntax tree (AST) node**
+    (i.e., node encapsulating a call to an arbitrary function or method)
+    calling the function or method with the passed name, positional arguments,
+    and keyword arguments.
+
+    Parameters
+    ----------
+    func_name : str
+        Fully-qualified name of the module to import this attribute from.
+    node_sibling : AST
+        Sibling node to copy source code metadata from.
+    nodes_args : ListNodes, optional
+        List of zero or more **positional parameter AST nodes** comprising the
+        tuple of all positional parameters to be passed to this call. Defaults
+        to the empty list.
+    nodes_kwargs : ListNodes, optional
+        List of zero or more **keyword parameter AST nodes** comprising the
+        dictionary of all keyword parameters to be passed to this call. Defaults
+        to the empty list.
+
+    Returns
+    -------
+    Call
+        Callable call node calling this callable with these parameters.
+    '''
+    assert isinstance(nodes_args, list), f'{repr(nodes_args)} not list.'
+    assert isinstance(nodes_kwargs, list), f'{repr(nodes_kwargs)} not list.'
+    assert all(
+        isinstance(node_args, AST) for node_args in nodes_args), (
+        f'{repr(nodes_args)} not list of AST nodes.')
+    assert all(
+        isinstance(node_kwargs, keyword) for node_kwargs in nodes_kwargs), (
+        f'{repr(nodes_kwargs)} not list of keyword nodes.')
+
+    # Child node referencing the callable to be called.
+    node_func_name = make_node_name_load(
+        name=func_name, node_sibling=node_sibling)
+
+    # Child node calling this callable.
+    node_func_call = Call(
+        func=node_func_name,
+        args=nodes_args,
+        keywords=nodes_kwargs,
+    )
+
+    # Copy source code metadata from this sibling node onto this new node.
+    copy_node_metadata(node_src=node_sibling, node_trg=node_func_call)
+
+    # Return this call node.
+    return node_func_call
+
 # ....................{ FACTORIES ~ name                   }....................
 #FIXME: Unit test us up.
 def make_node_name_load(name: str, node_sibling: AST) -> Name:
@@ -197,8 +279,7 @@ def make_node_name_load(name: str, node_sibling: AST) -> Name:
     # Child node accessing this attribute in the current lexical scope.
     node_name = Name(name, ctx=NODE_CONTEXT_LOAD)
 
-    # Copy all source code metadata (e.g., line numbers) from this sibling node
-    # onto this child node.
+    # Copy source code metadata from this sibling node onto this new node.
     copy_node_metadata(node_src=node_sibling, node_trg=node_name)
 
     # Return this child node.
@@ -229,8 +310,7 @@ def make_node_name_store(name: str, node_sibling: AST) -> Name:
     # Child node assigning this attribute in the current lexical scope.
     node_name = Name(name, ctx=NODE_CONTEXT_STORE)
 
-    # Copy all source code metadata (e.g., line numbers) from this sibling node
-    # onto this child node.
+    # Copy source code metadata from this sibling node onto this new node.
     copy_node_metadata(node_src=node_sibling, node_trg=node_name)
 
     # Return this child node.

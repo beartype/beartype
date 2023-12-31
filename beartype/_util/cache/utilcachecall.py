@@ -596,7 +596,7 @@ This prefix:
   ``"__"`` rather than ``"_"``), ensuring that our
   :meth:`beartype._check.forward.fwdref.BeartypeForwardRefMeta.__getattr__`
   dunder method ignores the private instance variables cached by our cached
-  :meth:`beartype._check.forward.fwdref.BeartypeForwardRefMeta.__beartype_type__`
+  :meth:`beartype._check.forward.fwdref.BeartypeForwardRefMeta.__type_beartype__`
   property.
 '''
 
