@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2014-2023 Beartype authors.
+# Copyright (c) 2014-2024 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
 Project-wide **beartype import hookable** :pep:`557` **submodule** (i.e., data
 module containing *only* :pep:`557`-compliant dataclass declarations, mimicking
-real-world usage of the :func:`beartype.claw.beartype_package` import hook from
-an external caller).
+real-world usage of the :func:`beartype.claw.beartype_package` import hook on an
+external package declaring these dataclasses).
 '''
 
 # ....................{ IMPORTS                            }....................

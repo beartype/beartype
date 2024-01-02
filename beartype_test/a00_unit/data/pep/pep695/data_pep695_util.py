@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2014-2023 Beartype authors.
+# Copyright (c) 2014-2024 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
@@ -18,8 +18,7 @@ Caveats
 Python 3.12.0.** If this is *not* the case, importing this submodule raises an
 :exc:`SyntaxError` exception.
 '''
-
-# ....................{ TESTS                              }....................
+# ....................{ TESTS ~ iterator                   }....................
 def unit_test_iter_hint_pep695_forwardrefs() -> None:
     '''
     Test the private
@@ -27,7 +26,7 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
     iterator.
     '''
 
-    # ....................{ LOCALS                     }....................
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep695Exception
     from beartype._check.forward.fwdref import BeartypeForwardRefMeta
@@ -35,7 +34,7 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
         iter_hint_pep695_forwardrefs)
     from pytest import raises
 
-    # ....................{ LOCALS                     }....................
+    # ....................{ LOCALS                         }....................
     # Type alias containing *NO* unquoted forward references.
     type of_intermitted_song = str | int
 
@@ -45,13 +44,13 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
     # Type alias containing two or more unquoted forward reference.
     type as_if_her_heart = ImpatientlyEndured | complex | AtTheSoundHeTurned
 
-    # ....................{ ASSERTS ~ null             }....................
+    # ....................{ ASSERTS ~ null                 }....................
     # Assert that this iterator yields nothing when passed a type alias
     # containing *NO* unquoted forward references.
     their_own_life = list(iter_hint_pep695_forwardrefs(of_intermitted_song))
     assert not their_own_life
 
-    # ....................{ ASSERTS ~ single           }....................
+    # ....................{ ASSERTS ~ single               }....................
     # Assert that this iterator yields a single forward reference proxy
     # referring to the single unquoted forward reference embedded in a
     # passed type alias containing only that reference.
@@ -78,7 +77,7 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
     with raises(StopIteration):
         next(and_saw_by)
 
-    # ....................{ ASSERTS ~ multiple         }....................
+    # ....................{ ASSERTS ~ multiple             }....................
     # Assert that this iterator first yields a forward reference proxy
     # referring to the first unquoted forward reference embedded in a
     # passed type alias containing only that reference.
@@ -114,3 +113,36 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
     # undefined attribute.
     with raises(StopIteration):
         next(her_glowing_limbs)
+
+# ....................{ TESTS ~ reducer                    }....................
+def unit_test_reduce_hint_pep695() -> None:
+    '''
+    Test the private
+    :mod:`beartype._util.hint.pep.proposal.utilpep695.reduce_hint_pep695`
+    reducer.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeDecorHintPep695Exception
+    from beartype._util.hint.pep.proposal.utilpep695 import reduce_hint_pep695
+    from pytest import raises
+
+    # ....................{ LOCALS                         }....................
+    # Type alias containing *NO* unquoted forward references.
+    type her_dark_locks = str | int
+
+    # Type alias containing one unquoted forward reference.
+    type floating_in = TheBreathOfNight | bool
+
+    # ....................{ PASS                           }....................
+    # Assert that this reducer returns the type hint underlying the passed type
+    # alias containing *NO* unquoted forward references.
+    assert reduce_hint_pep695(
+        hint=her_dark_locks, exception_prefix='') == str | int
+
+    # ....................{ FAIL                           }....................
+    # Assert that this reducer raises the expected exception when passed a type
+    # alias containing one unquoted forward reference.
+    with raises(BeartypeDecorHintPep695Exception):
+        reduce_hint_pep695(hint=floating_in, exception_prefix='')

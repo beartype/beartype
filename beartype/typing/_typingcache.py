@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2014-2023 Beartype authors.
+# Copyright (c) 2014-2024 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
@@ -23,22 +23,21 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from functools import wraps
+from typing import TYPE_CHECKING
 
-# Note that we intentionally:
-# * Avoid importing these type hint factories from "beartype.typing", as that
-#   would induce a circular import dependency. Instead, we manually import the
-#   relevant type hint factories conditionally depending on the version of the
-#   active Python interpreter. *sigh*
-# * Test the negation of this condition first. Why? Because mypy quietly
-#   defecates all over itself if the order of these two branches is reversed.
-#   Yeah. It's as bad as it sounds.
-if not IS_PYTHON_AT_LEAST_3_9:
-    from typing import Callable, Dict  # type: ignore[misc]
-# Else, the active Python interpreter targets Python >= 3.9 and thus supports
-# PEP 585. In this case, embrace non-deprecated PEP 585-compliant type hints.
-else:
+# If either a pure-static type-checker is currently statically type-checking
+# @beartype *OR* the active Python interpreter targets Python >= 3.9, PEP 585 is
+# supported. In this case, embrace non-deprecated PEP 585-compliant type hints.
+if TYPE_CHECKING or IS_PYTHON_AT_LEAST_3_9:
     from collections.abc import Callable
-    Dict = dict  # type: ignore[misc]
+    Dict = dict
+# Else, the active Python interpreter targets Python < 3.9 and thus fails to
+# support PEP 585. Note that we intentionally avoid importing these type hint
+# factories from "beartype.typing", as that would induce a circular import
+# dependency. Instead, we manually import the relevant type hint factories
+# conditionally depending on the version of the active Python interpreter.
+else:
+    from typing import Callable, Dict
 
 # ....................{ CONSTANTS                          }....................
 _SENTINEL = object()

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2014-2023 Beartype authors.
+# Copyright (c) 2014-2024 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
@@ -17,6 +17,7 @@ from ast import (
     Attribute,
     Call,
     Expr,
+    FormattedValue,
     ImportFrom,
     Name,
     alias,
@@ -253,6 +254,50 @@ def make_node_call(
 
     # Return this call node.
     return node_func_call
+
+# ....................{ FACTORIES ~ f-string               }....................
+def make_node_fstr_field(node_expr: AST, node_sibling: AST) -> FormattedValue:
+    '''
+    Create and return a new **f-string formatting field abstract syntax tree
+    (AST) node** (i.e., node embedding the substring created and returned by the
+    evaluation of the passed arbitrary expression in some parent node
+    encapsulating an f-string embedding this field).
+
+    This factory function creates substrings resembling ``{some_fstr_field}`` in
+    larger f-strings resembling ``f'This is {some_fstr_field}, isn't it?'``.
+
+    Caveats
+    -------
+    This field assumes *no* suffixing ``!``-prefixed conversion (e.g., "!a",
+    "!r", "!s"). Thankfully, those conversions are only syntactic sugar for more
+    human-readable builtins (e.g., ``repr()``, ``str()``). Ergo, this caveat
+    does *not* actually constitute a hard constraint. Just prefer the builtins.
+
+    Parameters
+    ----------
+    node_expr : AST
+        Formatting field to be embedded in some parent f-string node.
+    node_sibling : AST
+        Sibling node to copy source code metadata from.
+
+    Returns
+    -------
+    Name
+        Name node accessing this attribute in the current lexical scope.
+    '''
+    assert isinstance(node_expr, AST), f'{repr(node_expr)} not AST node.'
+
+    # Child node encapsulating a formatting field "{node_expr.value}" in some
+    # parent node encapsulating an f-string embedding this field. For unknown
+    # reasons, the standard "ast" module requires that the "conversion"
+    # parameter be passed as a non-standard magic integer constant. Whatevahs!
+    node_fstr_field = FormattedValue(value=node_expr, conversion=-1)
+
+    # Copy source code metadata from this sibling node onto this new node.
+    copy_node_metadata(node_src=node_sibling, node_trg=node_fstr_field)
+
+    # Return this f-string field node.
+    return node_fstr_field
 
 # ....................{ FACTORIES ~ name                   }....................
 #FIXME: Unit test us up.

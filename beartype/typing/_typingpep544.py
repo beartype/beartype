@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2014-2023 Beartype authors.
+# Copyright (c) 2014-2024 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
@@ -54,6 +54,15 @@ from typing import (  # type: ignore[attr-defined]
     runtime_checkable,
 )
 
+# If either *NO* pure-static type-checker is currently statically type-checking
+# @beartype *OR* the active Python interpreter targets Python < 3.9, the active
+# Python interpreter targets Python < 3.9 and thus fails to support PEP 585. In
+# this case, embrace non-deprecated PEP 585-compliant type hints.
+if not (TYPE_CHECKING or IS_PYTHON_AT_LEAST_3_9):
+    from typing import Dict, Tuple, Type
+# Else, the active Python interpreter targets Python < 3.9 and thus fails to
+# support PEP 585.
+#
 # Note that we intentionally:
 # * Avoid importing these type hint factories from "beartype.typing", as that
 #   would induce a circular import dependency. Instead, we manually import the
@@ -62,14 +71,10 @@ from typing import (  # type: ignore[attr-defined]
 # * Test the negation of this condition first. Why? Because mypy quietly
 #   defecates all over itself if the order of these two branches is reversed.
 #   Yeah. It's as bad as it sounds.
-if not IS_PYTHON_AT_LEAST_3_9:
-    from typing import Dict, Tuple, Type  # type: ignore[misc]
-# Else, the active Python interpreter targets Python >= 3.9 and thus supports
-# PEP 585. In this case, embrace non-deprecated PEP 585-compliant type hints.
 else:
-    Dict = dict  # type: ignore[misc]
-    Tuple = tuple  # type: ignore[assignment]
-    Type = type  # type: ignore[assignment]
+    Dict = dict
+    Tuple = tuple
+    Type = type
 
 # If the active Python interpreter was invoked by a static type checker (e.g.,
 # mypy), violate privacy encapsulation. Doing so invites breakage under newer
@@ -189,7 +194,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
     '''
 
     # ................{ CLASS VARIABLES                        }................
-    _abc_inst_check_cache: Dict[type, bool]
+    _abc_inst_check_cache: Dict[type, bool]  # pyright: ignore
     '''
     :func:`isinstance` **cache** (i.e., dictionary mapping from each type of any
     object previously passed as the first parameter to the :func:`isinstance`
@@ -199,15 +204,15 @@ class _CachingProtocolMeta(_ProtocolMeta):
 
     # ................{ DUNDERS                                }................
     def __new__(
-        mcls: Type[_TT],  # pyright: ignore[reportSelfClsParameterName]
+        mcls: Type[_TT],  # pyright: ignore[reportGeneralTypeIssues]
         name: str,
-        bases: Tuple[type, ...],
-        namespace: Dict[str, Any],
+        bases: Tuple[type, ...],  # pyright: ignore
+        namespace: Dict[str, Any],  # pyright: ignore
         **kw: Any,
     ) -> _TT:
 
         # See <https://github.com/python/mypy/issues/9282>
-        cls = super().__new__(mcls, name, bases, namespace, **kw)
+        cls = super().__new__(mcls, name, bases, namespace, **kw)  # pyright: ignore[reportGeneralTypeIssues]
 
         # If this class is *NOT* the abstract "beartype.typing.Protocol"
         # superclass defined below...

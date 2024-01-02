@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2014-2023 Beartype authors.
+# Copyright (c) 2014-2024 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
@@ -117,94 +117,6 @@ from beartype._check.forward.fwdref import (
 )
 from beartype._util.error.utilerrorget import get_name_error_attr_name
 from beartype._util.module.utilmodget import get_module_imported_or_none
-
-# ....................{ REDUCERS                           }....................
-#FIXME: Refactor to leverage iter_hint_pep695_forwardrefs(), please.
-def reduce_hint_pep695(
-    hint: HintPep695Type,
-    exception_prefix: str,
-    *args, **kwargs
-) -> object:
-    '''
-    Reduce the passed :pep:`695`-compliant **type alias** (i.e., object created
-    by a statement of the form ``type {alias_name} = {alias_value}``) to the
-    underlying type hint lazily referred to by this type alias.
-
-    This reducer is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as reducers cannot be memoized.
-
-    Parameters
-    ----------
-    hint : object
-        Type alias to be reduced.
-    exception_prefix : str
-        Human-readable substring prefixing exception messages raised by this
-        reducer.
-
-    All remaining passed arguments are silently ignored.
-
-    Returns
-    -------
-    object
-        Underlying type hint lazily referred to by this type alias.
-
-    Raises
-    ------
-    BeartypeDecorHintPep695Exception
-        If this type alias contains one or more unquoted relative forward
-        references to undefined attributes. Note that this *only* occurs when
-        callers avoid beartype import hooks in favour of manually decorating
-        callables and classes with the :func:`beartype.beartype` decorator.
-    '''
-
-    # Underlying type hint to be returned.
-    hint_aliased: object = None
-
-    # Attempt to...
-    try:
-        # Reduce this alias to the type hint it lazily refers to. If this alias
-        # contains *NO* forward references to undeclared attributes, this
-        # reduction *SHOULD* succeed. Let's pretend we mean that.
-        hint_aliased = hint.__value__  # type: ignore[attr-defined]
-    # If doing so raises a builtin "NameError" exception, this alias contains
-    # one or more forward references to undeclared attributes. In this case...
-    except NameError as exception:
-        # Unqualified basename of this alias (i.e., name of the global or local
-        # variable assigned to by the left-hand side of this alias).
-        hint_name = repr(hint)
-
-        # Fully-qualified name of the third-party module defining this alias.
-        hint_module_name = hint.__module__
-        # print(f'hint_module_name: {hint_module_name}')
-
-        # Unqualified basename of the next remaining undeclared attribute
-        # contained in this alias relative to that module.
-        hint_ref_name = get_name_error_attr_name(exception)
-        # print(f'hint: {hint}; hint_ref_name: {hint_ref_name}')
-
-        # Raise a human-readable exception describing this issue.
-        raise BeartypeDecorHintPep695Exception(
-            f'{exception_prefix}PEP 695 type alias "{hint_name}" '
-            f'unquoted relative forward reference {repr(hint_ref_name)} in '
-            f'module "{hint_module_name}" unsupported outside '
-            f'"beartype.claw" import hooks. Consider either:\n'
-            f'* Quoting this forward reference in this type alias: e.g.,\n'
-            f'      # Instead of an unquoted forward reference...\n'
-            f'      type {hint_name} = ... {hint_ref_name} ...\n'
-            f'\n'
-            f'      # Prefer a quoted forward reference.\n'
-            f'      type {hint_name} = ... "{hint_ref_name}" ...\n'
-            f'* Applying "beartype.claw" import hooks to '
-            f'module "{hint_module_name}": e.g.,\n'
-            f'      # In your "this_package.__init__" submodule:\n'
-            f'      from beartype.claw import beartype_this_package\n'
-            f'      beartype_this_package()'
-        ) from exception
-    # Else, doing so raised *NO* exceptions, implying this alias contains *NO*
-    # forward references to undeclared attributes.
-
-    # Return this underlying type hint.
-    return hint_aliased
 
 # ....................{ ITERATORS                          }....................
 #FIXME: Unit test us up, please.
@@ -357,3 +269,90 @@ def iter_hint_pep695_forwardrefs(
             # Store the unqualified basename of this previously undeclared
             # attribute for detection by the next iteration of this loop.
             hint_ref_name_prev = hint_ref_name
+
+# ....................{ REDUCERS                           }....................
+def reduce_hint_pep695(
+    hint: HintPep695Type,
+    exception_prefix: str,
+    *args, **kwargs
+) -> object:
+    '''
+    Reduce the passed :pep:`695`-compliant **type alias** (i.e., object created
+    by a statement of the form ``type {alias_name} = {alias_value}``) to the
+    underlying type hint lazily referred to by this type alias.
+
+    This reducer is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as reducers cannot be memoized.
+
+    Parameters
+    ----------
+    hint : object
+        Type alias to be reduced.
+    exception_prefix : str
+        Human-readable substring prefixing exception messages raised by this
+        reducer.
+
+    All remaining passed arguments are silently ignored.
+
+    Returns
+    -------
+    object
+        Underlying type hint lazily referred to by this type alias.
+
+    Raises
+    ------
+    BeartypeDecorHintPep695Exception
+        If this type alias contains one or more unquoted relative forward
+        references to undefined attributes. Note that this *only* occurs when
+        callers avoid beartype import hooks in favour of manually decorating
+        callables and classes with the :func:`beartype.beartype` decorator.
+    '''
+
+    # Underlying type hint to be returned.
+    hint_aliased: object = None
+
+    # Attempt to...
+    try:
+        # Reduce this alias to the type hint it lazily refers to. If this alias
+        # contains *NO* forward references to undeclared attributes, this
+        # reduction *SHOULD* succeed. Let's pretend we mean that.
+        hint_aliased = hint.__value__  # type: ignore[attr-defined]
+    # If doing so raises a builtin "NameError" exception, this alias contains
+    # one or more forward references to undeclared attributes. In this case...
+    except NameError as exception:
+        # Unqualified basename of this alias (i.e., name of the global or local
+        # variable assigned to by the left-hand side of this alias).
+        hint_name = repr(hint)
+
+        # Fully-qualified name of the third-party module defining this alias.
+        hint_module_name = hint.__module__
+        # print(f'hint_module_name: {hint_module_name}')
+
+        # Unqualified basename of the next remaining undeclared attribute
+        # contained in this alias relative to that module.
+        hint_ref_name = get_name_error_attr_name(exception)
+        # print(f'hint: {hint}; hint_ref_name: {hint_ref_name}')
+
+        # Raise a human-readable exception describing this issue.
+        raise BeartypeDecorHintPep695Exception(
+            f'{exception_prefix}PEP 695 type alias "{hint_name}" '
+            f'unquoted relative forward reference {repr(hint_ref_name)} in '
+            f'module "{hint_module_name}" unsupported outside '
+            f'"beartype.claw" import hooks. Consider either:\n'
+            f'* Quoting this forward reference in this type alias: e.g.,\n'
+            f'      # Instead of an unquoted forward reference...\n'
+            f'      type {hint_name} = ... {hint_ref_name} ...\n'
+            f'\n'
+            f'      # Prefer a quoted forward reference.\n'
+            f'      type {hint_name} = ... "{hint_ref_name}" ...\n'
+            f'* Applying "beartype.claw" import hooks to '
+            f'module "{hint_module_name}": e.g.,\n'
+            f'      # In your "this_package.__init__" submodule:\n'
+            f'      from beartype.claw import beartype_this_package\n'
+            f'      beartype_this_package()'
+        ) from exception
+    # Else, doing so raised *NO* exceptions, implying this alias contains *NO*
+    # forward references to undeclared attributes.
+
+    # Return this underlying type hint.
+    return hint_aliased

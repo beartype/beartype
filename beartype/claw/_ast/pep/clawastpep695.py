@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # --------------------( LICENSE                            )--------------------
-# Copyright (c) 2014-2023 Beartype authors.
+# Copyright (c) 2014-2024 Beartype authors.
 # See "LICENSE" for further details.
 
 '''
@@ -84,6 +84,7 @@ from beartype._util.ast.utilastmake import (
     make_node_attribute_load,
     make_node_call,
     make_node_call_expr,
+    make_node_fstr_field,
     make_node_name_load,
     make_node_name_store,
 )
@@ -254,38 +255,73 @@ class BeartypeNodeTransformerPep695Mixin(object):
         # case, fallback to an inefficient exec() node dynamically defining
         # this proxy as a new local.
         else:
-            # Child node encapsulating the name of a local variable referring to
-            # the currently iterated forward reference proxy as the formatting
-            # field "{_.__name_beartype__}" in the f-string defining the code
-            # snippet to be dynamically evaluated by this exec() statement.
-            node_forwardref_local_name_str = FormattedValue(
-                node_forwardref_name_load)
+            #FIXME: *LOLBRO.* "type" aliases ignore exec() statements. Well,
+            #alrighty then. Srsly. This is so lame, guys.
+            # # Child node encapsulating the name of a local variable referring to
+            # # the currently iterated forward reference proxy as the formatting
+            # # field "{_.__name_beartype__}" in the f-string defining the code
+            # # snippet to be dynamically evaluated by this exec() statement.
+            # node_forwardref_local_name_str = make_node_fstr_field(
+            #     node_expr=node_forwardref_name_load, node_sibling=node)
+            #
+            # # Child node encapsulating the value of that local variable in the
+            # # f-string defining the code snippet to be dynamically evaluated by
+            # # this exec() statement.
+            # node_forwardref_local_value_str = Constant(' = _')
+            #
+            # # Child node encapsulating the f-string defining the code snippet to
+            # # be dynamically evaluated by this exec() statement.
+            # node_forwardref_local_str = JoinedStr([
+            #     node_forwardref_local_name_str,
+            #     node_forwardref_local_value_str,
+            # ])
+            #
+            # # Copy all source code metadata onto these new sibling nodes.
+            # copy_node_metadata(node_src=node, node_trg=(
+            #     node_forwardref_local_str,
+            #     node_forwardref_local_value_str,
+            # ))
+            #
+            # # Child node inefficiently defining this proxy as a new local
+            # # by dynamically calling the exec() builtin.
+            # node_forwardref_define = make_node_call_expr(
+            #     func_name='exec',
+            #     nodes_args=[node_forwardref_local_str],
+            #     node_sibling=node,
+            # )
 
-            # Child node encapsulating the value of that local variable in the
-            # f-string defining the code snippet to be dynamically evaluated by
-            # this exec() statement.
-            node_forwardref_local_value_str = Constant(' = _')
+            # Child node subscripting the...
+            node_forwardref_global_store = Subscript(
+                # Dictionary of all currently defined global variables returned
+                # by a call to the builtin globals() function. Thankfully, this
+                # dictionary is efficiently modifiable and behaves in the
+                # typical way when directly modified.
+                #
+                # Note that the same *CANNOT* be said for the builtin globals()
+                # function, whose behaviour is effectively non-deterministic.
+                # Ergo, the inefficient fallback approach adopted below.
+                value=make_node_call(func_name='globals', node_sibling=node),
+                # Assign the key of the returned dictionary whose name is given
+                # by the "BeartypeForwardRefABC.__name_beartype__" class
+                # variable of this proxy, stored in the scratch variable.
+                slice=node_forwardref_name_load,
+                ctx=NODE_CONTEXT_STORE,
+            )
 
-            # Child node encapsulating the f-string defining the code snippet to
-            # be dynamically evaluated by this exec() statement.
-            node_forwardref_local_str = JoinedStr([
-                node_forwardref_local_name_str,
-                node_forwardref_local_value_str,
-            ])
+            # Copy all source code metadata onto this new sibling node.
+            copy_node_metadata(
+                node_src=node, node_trg=node_forwardref_global_store)
 
-            # Copy all source code metadata onto these new sibling nodes.
-            copy_node_metadata(node_src=node, node_trg=(
-                node_forwardref_local_str,
-                node_forwardref_local_name_str,
-                node_forwardref_local_value_str,
-            ))
-
-            # Child node inefficiently defining this proxy as a new local
-            # by dynamically calling the exec() builtin.
-            node_forwardref_define = make_node_call_expr(
-                func_name='exec',
-                nodes_args=[node_forwardref_local_str],
-                node_sibling=node,
+            # Child node efficiently defining this proxy as a new global,
+            # implemented as an assignment to...
+            node_forwardref_define = Assign(
+                # The global variable whose name is the unqualified basename of
+                # the undefined attribute referred to by the currently iterated
+                # forward reference proxy.
+                targets=[node_forwardref_global_store],
+                # Assigned the value of the scratch variable, which is a
+                # subclass of the "BeartypeForwardRefABC" superclass.
+                value=node_scratch_var_name_load,
             )
 
         # Child node iterating over all forward reference proxies generated by
