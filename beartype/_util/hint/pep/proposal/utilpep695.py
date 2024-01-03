@@ -119,7 +119,6 @@ from beartype._util.error.utilerrorget import get_name_error_attr_name
 from beartype._util.module.utilmodget import get_module_imported_or_none
 
 # ....................{ ITERATORS                          }....................
-#FIXME: Unit test us up, please.
 def iter_hint_pep695_forwardrefs(
     # Mandatory parameters.
     hint: HintPep695Type,
@@ -132,8 +131,8 @@ def iter_hint_pep695_forwardrefs(
     :class:`beartype._check.forward.fwdtype.BeartypeForwardRefABC` subclass) for
     each unquoted relative forward reference in the passed :pep:`695`-compliant
     **type alias** (i.e., object created by a statement of the form ``type
-    {alias_name} = {alias_value}``) to the
-    underlying type hint lazily referred to by this type alias.
+    {alias_name} = {alias_value}``) to the underlying type hint lazily referred
+    to by this type alias.
 
     This iterator is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as this iterator is intended to be
@@ -217,17 +216,54 @@ def iter_hint_pep695_forwardrefs(
             # define this attribute as a global variable of that module. In this
             # case, raise an exception.
             #
-            # Note that this should *NEVER* happen. Of course, this will happen.
+            # Note that this should *NEVER* happen. Of course, this frequently
+            # happens. Specifically, this happens whenever the caller defines a
+            # callable defining type alias as a local variable containing one or
+            # more unquoted relative forward reference to user-defined classes
+            # that have yet to be defined. Why? Because CPython's low-level
+            # C-based implementation of PEP 695-compliant type aliases currently
+            # fails to properly resolve unquoted relative forward references
+            # defined in a local rather than global scope: e.g.,
+            #    >>> def foo():
+            #    ...     type bar = wut
+            #    ...     globals()['wut'] = str
+            #    ...     print(bar.__value__)
+            #    ...     class wut(object): pass  # <-- causes madness; WTF!?!?
+            #    >>> foo()
+            #    NameError: cannot access free variable 'wut' where it is not
+            #    associated with a value in enclosing scope
+            #
+            # Why does this matter? Because the abstract syntax tree (AST)
+            # transformation implemented by "beartype.claw" import hooks
+            # dynamically declares the objects that these forward references
+            # refer. Due to deficiencies [read: bugs] in CPython's type alias
+            # implementation, local type aliases remain unable to resolve either
+            # global *OR* local referees that are defined dynamically. Ergo, we
+            # have no recourse but to detect this edge case and raise a
+            # human-readable exception advising the caller with recommendations.
             if hint_ref_name == hint_ref_name_prev:
                 raise BeartypeDecorHintPep695Exception(
-                    f'{exception_prefix}PEP 695 type alias "{hint_name}" '
+                    f'{exception_prefix}PEP 695 local type alias "{hint_name}" '
                     f'unquoted relative forward reference "{hint_ref_name}" '
-                    f'still undefined in module "{hint_module_name}", '
-                    f'despite purportedly being defined there. '
-                    f'In theory, this should never happen. '
-                    f'Of course, this happened. You suddenly feel the '
-                    f'horrifying urge to report this grievous failure to the '
-                    f'beartype issue tracker:\n\t{URL_ISSUES}'
+                    f"unsupported, due to severe deficiencies in CPython's "
+                    f'runtime implementation of PEP 695 local type aliases '
+                    f"outside beartype's control. Consider either:\n"
+                    f'* Refactoring this local type alias into a '
+                    f'global type alias:\n'
+                    f'      # Instead of a local type alias '
+                    f'defined in a callable like this...\n'
+                    f'      def muh_func(...) -> ...:\n'
+                    f'          type {hint_name} = ...\n'
+                    f'\n'
+                    f'      # Prefer a global type alias defined at module scope.\n'
+                    f'      type {hint_name} = ...\n'
+                    f'* Quoting this forward reference in this type alias:\n'
+                    f'      # Instead of an unquoted forward reference '
+                    f'like this...\n'
+                    f'      type {hint_name} = ... {hint_ref_name} ...\n'
+                    f'\n'
+                    f'      # Prefer a quoted forward reference.\n'
+                    f'      type {hint_name} = ... "{hint_ref_name}" ...'
                 ) from exception
             # Else, this attribute differs from that of the prior iteration of
             # this "while" loop.

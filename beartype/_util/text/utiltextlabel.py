@@ -289,8 +289,9 @@ def label_exception(exception: Exception) -> str:
     assert isinstance(exception, Exception), (
         f'{repr(exception)} not exception.')
 
-    # Return this exception's label.
-    return f'{exception.__class__.__qualname__}: {str(exception)}'
+    # Return the fully-qualified name of the class of this exception followed by
+    # this exception's message.
+    return f'{get_object_type_name(exception)}: {str(exception)}'
 
 # ....................{ LABELLERS ~ type                   }....................
 def label_type(cls: type) -> str:

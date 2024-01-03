@@ -64,15 +64,43 @@ This private submodule is *not* intended for importation by downstream callers.
 #    NameError: name 'Animal' is not defined
 #
 #*FACEPALM*
+#FIXME: *BIG YIKES.* CPython's low-level C-based implementation of PEP
+#695-compliant type aliases currently fails to properly resolve unquoted
+#relative forward references defined in a local rather than global scope. I
+#tried literally everything to get this to work via AST transformations -- but
+#whatever arcane type alias machinery it is that they've implemented simply does
+#*NOT* behave as expected at local scope. That said, we've verified this
+#*SHOULD* work via this simple snippet:
+#    def foo():
+#        type bar = wut
+#        globals()['wut'] = str
+#        print(bar.__value__)
+#    foo()
+#
+#That behaves as expected -- until you actually then define the expected class
+#at local scope:
+#    def foo():
+#        type bar = wut
+#        globals()['wut'] = str
+#        print(bar.__value__)
+#        class wut(object): pass  # <-- this causes madness; WTF!?!?!?
+#
+#The above print() statement now raises non-human readable exceptions
+#resembling:
+#    NameError: cannot access free variable 'wut' where it is not associated
+#    with a value in enclosing scope
+#
+#Clearly, this is madness. At the point at which the print() statement is run,
+#the "wut" class has yet to be redefined as a class. This constitutes a profound
+#CPython bug. Please submit us up the F-F-F-bomb.
 
 # ....................{ IMPORTS                            }....................
 from ast import (
     AST,
     Assign,
-    Constant,
+    # Constant,
     For,
-    FormattedValue,
-    JoinedStr,
+    # JoinedStr,
     Subscript,
 )
 from beartype.claw._clawmagic import (
@@ -83,8 +111,8 @@ from beartype._util.ast.utilastmunge import copy_node_metadata
 from beartype._util.ast.utilastmake import (
     make_node_attribute_load,
     make_node_call,
-    make_node_call_expr,
-    make_node_fstr_field,
+    # make_node_call_expr,
+    # make_node_fstr_field,
     make_node_name_load,
     make_node_name_store,
 )
@@ -215,114 +243,35 @@ class BeartypeNodeTransformerPep695Mixin(object):
         # * Value is that proxy.
         node_forwardref_define: AST = None  # type: ignore[assignment]
 
-        # If this type alias is declared at module scope, prefer...
-        if self._is_scope_module_beartype:  # type: ignore[attr-defined]
-            # Child node subscripting the...
-            node_forwardref_global_store = Subscript(
-                # Dictionary of all currently defined global variables returned
-                # by a call to the builtin globals() function. Thankfully, this
-                # dictionary is efficiently modifiable and behaves in the
-                # typical way when directly modified.
-                #
-                # Note that the same *CANNOT* be said for the builtin locals()
-                # function, whose behaviour is effectively non-deterministic.
-                # Ergo, the inefficient fallback approach adopted below.
-                value=make_node_call(func_name='globals', node_sibling=node),
-                # Assign the key of the returned dictionary whose name is given
-                # by the "BeartypeForwardRefABC.__name_beartype__" class
-                # variable of this proxy, stored in the scratch variable.
-                slice=node_forwardref_name_load,
-                ctx=NODE_CONTEXT_STORE,
-            )
-
-            # Copy all source code metadata onto this new sibling node.
-            copy_node_metadata(
-                node_src=node, node_trg=node_forwardref_global_store)
-
-            # Child node efficiently defining this proxy as a new global,
-            # implemented as an assignment to...
-            node_forwardref_define = Assign(
-                # The global variable whose name is the unqualified basename of
-                # the undefined attribute referred to by the currently iterated
-                # forward reference proxy.
-                targets=[node_forwardref_global_store],
-                # Assigned the value of the scratch variable, which is a
-                # subclass of the "BeartypeForwardRefABC" superclass.
-                value=node_scratch_var_name_load,
-            )
-        # Else, this type alias is *NOT* declared at module scope and is
-        # thus declared at a lower scope (e.g., class, callable). In this
-        # case, fallback to an inefficient exec() node dynamically defining
-        # this proxy as a new local.
-        else:
-            #FIXME: *LOLBRO.* "type" aliases ignore exec() statements. Well,
-            #alrighty then. Srsly. This is so lame, guys.
-            # # Child node encapsulating the name of a local variable referring to
-            # # the currently iterated forward reference proxy as the formatting
-            # # field "{_.__name_beartype__}" in the f-string defining the code
-            # # snippet to be dynamically evaluated by this exec() statement.
-            # node_forwardref_local_name_str = make_node_fstr_field(
-            #     node_expr=node_forwardref_name_load, node_sibling=node)
+        # Child node subscripting the...
+        node_forwardref_global_store = Subscript(
+            # Dictionary of all currently defined global variables returned by a
+            # call to the builtin globals() function. Thankfully, this
+            # dictionary is efficiently modifiable and behaves in the typical
+            # way when directly modified.
             #
-            # # Child node encapsulating the value of that local variable in the
-            # # f-string defining the code snippet to be dynamically evaluated by
-            # # this exec() statement.
-            # node_forwardref_local_value_str = Constant(' = _')
-            #
-            # # Child node encapsulating the f-string defining the code snippet to
-            # # be dynamically evaluated by this exec() statement.
-            # node_forwardref_local_str = JoinedStr([
-            #     node_forwardref_local_name_str,
-            #     node_forwardref_local_value_str,
-            # ])
-            #
-            # # Copy all source code metadata onto these new sibling nodes.
-            # copy_node_metadata(node_src=node, node_trg=(
-            #     node_forwardref_local_str,
-            #     node_forwardref_local_value_str,
-            # ))
-            #
-            # # Child node inefficiently defining this proxy as a new local
-            # # by dynamically calling the exec() builtin.
-            # node_forwardref_define = make_node_call_expr(
-            #     func_name='exec',
-            #     nodes_args=[node_forwardref_local_str],
-            #     node_sibling=node,
-            # )
+            # Note that the same *CANNOT* be said for the builtin locals()
+            # function, whose behaviour is effectively non-deterministic. Ergo,
+            # the inefficient fallback approach adopted below.
+            value=make_node_call(func_name='globals', node_sibling=node),
+            # Assign the key of the returned dictionary whose name is given by
+            # the "BeartypeForwardRefABC.__name_beartype__" class variable of
+            # this proxy, stored in the scratch variable.
+            slice=node_forwardref_name_load,
+            ctx=NODE_CONTEXT_STORE,
+        )
 
-            # Child node subscripting the...
-            node_forwardref_global_store = Subscript(
-                # Dictionary of all currently defined global variables returned
-                # by a call to the builtin globals() function. Thankfully, this
-                # dictionary is efficiently modifiable and behaves in the
-                # typical way when directly modified.
-                #
-                # Note that the same *CANNOT* be said for the builtin globals()
-                # function, whose behaviour is effectively non-deterministic.
-                # Ergo, the inefficient fallback approach adopted below.
-                value=make_node_call(func_name='globals', node_sibling=node),
-                # Assign the key of the returned dictionary whose name is given
-                # by the "BeartypeForwardRefABC.__name_beartype__" class
-                # variable of this proxy, stored in the scratch variable.
-                slice=node_forwardref_name_load,
-                ctx=NODE_CONTEXT_STORE,
-            )
-
-            # Copy all source code metadata onto this new sibling node.
-            copy_node_metadata(
-                node_src=node, node_trg=node_forwardref_global_store)
-
-            # Child node efficiently defining this proxy as a new global,
-            # implemented as an assignment to...
-            node_forwardref_define = Assign(
-                # The global variable whose name is the unqualified basename of
-                # the undefined attribute referred to by the currently iterated
-                # forward reference proxy.
-                targets=[node_forwardref_global_store],
-                # Assigned the value of the scratch variable, which is a
-                # subclass of the "BeartypeForwardRefABC" superclass.
-                value=node_scratch_var_name_load,
-            )
+        # Child node efficiently defining this proxy as a new global,
+        # implemented as an assignment to...
+        node_forwardref_define = Assign(
+            # The global variable whose name is the unqualified basename of the
+            # undefined attribute referred to by the currently iterated forward
+            # reference proxy.
+            targets=[node_forwardref_global_store],
+            # Assigned the value of the scratch variable, which is a subclass of
+            # the "BeartypeForwardRefABC" superclass.
+            value=node_scratch_var_name_load,
+        )
 
         # Child node iterating over all forward reference proxies generated by
         # this iterator and, for each such proxy:
@@ -341,6 +290,7 @@ class BeartypeNodeTransformerPep695Mixin(object):
         # Copy all source code metadata from this type alias node onto *ALL*
         # sibling nodes created above.
         copy_node_metadata(node_src=node, node_trg=(
+            node_forwardref_global_store,
             node_forwardref_define,
             node_forwardrefs_define,
         ))

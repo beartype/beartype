@@ -34,10 +34,14 @@ See Also
 # Defer test-specific imports.
 from beartype.roar import (
     BeartypeCallHintParamViolation,
+    BeartypeClawDecorWarning,
     BeartypeDecorHintPep695Exception,
 )
 from beartype.typing import Union
-from pytest import raises
+from pytest import (
+    raises,
+    warns,
+)
 
 # ....................{ ALIASES                            }....................
 # Global forward referenced type alias containing:
@@ -116,50 +120,57 @@ def _sweeping_from_some_strange_harp() -> None:
     #but whatever arcane type alias machinery it is that they've implemented
     #simply does *NOT* behave as expected at local scope. That said, we've
     #verified this *SHOULD* work via this simple snippet:
+    #    >>> type bar = wut
+    #    >>> globals()['wut'] = str
+    #    >>> print(bar.__value__)
+    #    str
+    #
+    #That behaves as expected -- until you actually then define the expected
+    #class at local scope:
     #    def foo():
     #        type bar = wut
     #        globals()['wut'] = str
     #        print(bar.__value__)
+    #        class wut(object): pass  # <-- this causes madness; WTF!?!?!?
     #    foo()
     #
-    #That behaves as expected. So why doesn't our AST transformation? Unknown.
-    #Let's hammer on this a little more before giving up, please. *sigh*
-    pass
+    #The above print() statement now raises non-human readable exceptions
+    #resembling:
+    #    NameError: cannot access free variable 'wut' where it is not associated
+    #    with a value in enclosing scope
+    #
+    #Clearly, this is madness. At the point at which the print() statement is
+    #run, the "wut" class has yet to be redefined as a class. This constitutes a
+    #profound CPython bug. Please submit us up the F-F-F-bomb.
 
-    # # ....................{ ALIASES                        }....................
-    # # Local forward referenced type alias containing an unquoted relative
-    # # forward reference to a user-defined class that has yet to be defined.
-    # type LocalRefAlias = StrangeSymphony
-    #
-    # # ....................{ CALLABLES                      }....................
-    # def in_their_branching_veins(
-    #     the_eloquent_blood: LocalRefAlias | None) -> LocalRefAlias:
-    #     '''
-    #     Arbitrary :func:`.beartype`-decorated nested callable annotated by a
-    #     local forward referenced type alias containing one or more forward
-    #     references.
-    #     '''
-    #
-    #     return StrangeSymphony(the_eloquent_blood.told_an_ineffable_tale)
-    #
-    # # ....................{ FAIL                           }....................
-    # # Assert that @beartype raises the expected exception when decorating a
-    # # nested function annotated by a non-trivial local type alias containing one
-    # # or more forward references.
-    # # with raises(BeartypeDecorHintPep695Exception):
-    #
-    # # ....................{ CLASSES                        }....................
-    # class StrangeSymphony(object):
-    #     '''
-    #     Arbitrary class referred to by the above type alias.
-    #     '''
-    #
-    #     told_an_ineffable_tale: str = 'Her beamy bending eyes, her parted lips'
-    #
-    #
-    # # Instance of the above class.
-    # her_beamy_bending_eyes = StrangeSymphony()
-    #
+    # ....................{ ALIASES                        }....................
+    # Local forward referenced type alias containing an unquoted relative
+    # forward reference to a user-defined class that has yet to be defined.
+    type LocalRefAlias = StrangeSymphony
+
+    # ....................{ CALLABLES                      }....................
+    def in_their_branching_veins(
+        the_eloquent_blood: LocalRefAlias | None) -> LocalRefAlias:
+        '''
+        Arbitrary :func:`.beartype`-decorated nested callable annotated by a
+        local forward referenced type alias containing one or more forward
+        references.
+        '''
+
+        return StrangeSymphony(the_eloquent_blood.told_an_ineffable_tale)
+
+    # ....................{ CLASSES                        }....................
+    class StrangeSymphony(object):
+        '''
+        Arbitrary class referred to by the above type alias.
+        '''
+
+        told_an_ineffable_tale: str = 'Her beamy bending eyes, her parted lips'
+
+
+    # Instance of the above class.
+    her_beamy_bending_eyes = StrangeSymphony()
+
     # # ....................{ PASS                           }....................
     # # Assert that a @beartype-decorated function annotated by a global forward
     # # referenced type alias returns the expected object.
@@ -174,5 +185,11 @@ def _sweeping_from_some_strange_harp() -> None:
     #     in_their_branching_veins(
     #         'Outstretched, and pale, and quivering eagerly.')
 
-# Call the callable defined above.
-_sweeping_from_some_strange_harp()
+# ....................{ FAIL                               }....................
+# Assert that @beartype raises the expected exception when attempting to define
+# a local forward referenced type alias containing an unquoted relative forward
+# reference to a user-defined class that has yet to be defined. Sadly, CPython's
+# current implementation of PEP 695 is fundamentally broken -- especially in
+# local scopes. See above.
+with raises(BeartypeDecorHintPep695Exception):
+    _sweeping_from_some_strange_harp()

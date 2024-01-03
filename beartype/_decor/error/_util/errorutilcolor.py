@@ -107,9 +107,8 @@ def color_type(text: str) -> str:
 #FIXME: Inefficient and thus non-ideal. Since efficiency isn't a pressing
 #concern in an exception raiser, this is more a matter of design purity than
 #anything. Still, it would be preferable to avoid embedding ANSI escape
-#sequences in the cause when the user requests that rather than forcibly
-#stripping those sequences out after the fact via an inefficient regex. To do
-#so, we'll want to:
+#sequences when the user requests that rather than forcibly stripping those
+#sequences out after the fact via an inefficient regex. To do so, we'll want to:
 #* Augment the color_*() family of functions with a mandatory "conf:
 #  BeartypeConf" parameter.
 #* Pass that parameter to *EVERY* call to one of those functions.

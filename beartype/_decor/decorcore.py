@@ -23,7 +23,10 @@ from beartype._data.hint.datahinttyping import BeartypeableT
 from beartype._decor._decornontype import beartype_nontype
 from beartype._decor._decortype import beartype_type
 from beartype._util.cls.utilclstest import is_type_subclass
-from beartype._util.text.utiltextlabel import label_object_context
+from beartype._util.text.utiltextlabel import (
+    label_exception,
+    label_object_context,
+)
 from beartype._util.text.utiltextmunge import (
     truncate_str,
     uppercase_str_char_first,
@@ -213,20 +216,15 @@ def _beartype_object_nonfatal(
         assert is_type_subclass(warning_category, Warning), (
             f'{repr(warning_category)} not warning category.')
 
-        # Original error message to be embedded in the warning message to be
-        # emitted, stripped of *ALL* ANSI color. While colors improve the
-        # readability of exception messages that percolate down to an ANSI-aware
-        # command line, warnings are usually harvested and then regurgitated by
-        # intermediary packages into ANSI-unaware logfiles.
-        #
-        # This message is defined as either...
+        # Original lower-level error message to be embedded in the higher-level
+        # warning message to be emitted below, defined as either...
         error_message = (
             # If this exception is beartype-specific, this exception's message
             # is probably human-readable as is. In this case, maximize brevity
             # and readability by coercing *ONLY* this message (rather than both
             # this message *AND* traceback) truncated to a reasonable maximum
             # length into a warning message.
-            truncate_str(text=str(exception), max_len=1024)
+            truncate_str(text=label_exception(exception), max_len=1024)
             if isinstance(exception, BeartypeException) else
             # Else, this exception is *NOT* beartype-specific. In this case,
             # this exception's message is probably *NOT* human-readable as is.
@@ -237,18 +235,18 @@ def _beartype_object_nonfatal(
             format_exc()
         )
 
-        # Indent this exception message by globally replacing *EVERY* newline in
-        # this message with a newline followed by four spaces. Doing so visually
+        # Indent this message by globally replacing *EVERY* newline in this
+        # message with a newline followed by four spaces. Doing so visually
         # offsets this lower-level exception message from the higher-level
         # warning message embedding this exception message below.
-        error_message = error_message.replace('\n', '\n    ')
+        error_message = f'\n{error_message}'.replace('\n', '\n    ')
 
         # Warning message to be emitted, consisting of:
         # * A human-readable label contextually describing this beartypeable,
         #   capitalized such that the first character is uppercase.
         # * This indented exception message.
         warning_message = uppercase_str_char_first(
-            f'{prefix_beartypeable(obj)}{label_object_context(obj)}:\n'
+            f'{prefix_beartypeable(obj)}{label_object_context(obj)}:'
             f'{error_message}'
         )
 

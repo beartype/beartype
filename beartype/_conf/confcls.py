@@ -52,8 +52,6 @@ from beartype._conf.confoverrides import (
 from beartype._conf._confget import get_is_color
 from beartype._data.hint.datahinttyping import (
     BoolTristateUnpassable,
-    Pep484TowerComplex,
-    Pep484TowerFloat,
     TypeException,
     TypeWarning,
 )
@@ -228,7 +226,8 @@ class BeartypeConf(object):
         strategy: BeartypeStrategy = BeartypeStrategy.O1,
         violation_param_type: TypeException = BeartypeCallHintParamViolation,
         violation_return_type: TypeException = BeartypeCallHintReturnViolation,
-        violation_verbosity: BeartypeViolationVerbosity = BeartypeViolationVerbosity.DEFAULT,
+        violation_verbosity: BeartypeViolationVerbosity = (
+            BeartypeViolationVerbosity.DEFAULT),
         warning_cls_on_decorator_exception: Optional[TypeWarning] = (
             _BeartypeConfReduceDecoratorExceptionToWarningDefault),
     ) -> 'BeartypeConf':
