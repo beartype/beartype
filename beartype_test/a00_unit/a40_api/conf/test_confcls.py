@@ -15,7 +15,6 @@ package defined by the private :mod:`beartype._conf.confcls` submodule.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import MonkeyPatch
 
 # ....................{ TESTS                              }....................
 def test_conf_dataclass() -> None:
@@ -29,8 +28,13 @@ def test_conf_dataclass() -> None:
         BeartypeConf,
         BeartypeHintOverrides,
         BeartypeStrategy,
+        BeartypeViolationVerbosity,
     )
-    from beartype.roar import BeartypeConfParamException
+    from beartype.roar import (
+        BeartypeConfParamException,
+        BeartypeCallHintParamViolation,
+        BeartypeCallHintReturnViolation,
+    )
     from beartype.typing import Union
     from beartype._conf.confoverrides import (
         BEARTYPE_HINT_OVERRIDES_EMPTY,
@@ -61,6 +65,10 @@ def test_conf_dataclass() -> None:
         'is_debug',
         'is_pep484_tower',
         'strategy',
+        'violation_param_type',
+        'violation_return_type',
+        'violation_verbosity',
+        'warning_cls_on_decorator_exception',
     )
 
     # Default (i.e., unparametrized) beartype configuration.
@@ -80,6 +88,9 @@ def test_conf_dataclass() -> None:
         is_debug=True,
         is_pep484_tower=True,
         strategy=BeartypeStrategy.Ologn,
+        violation_param_type=TypeError,
+        violation_return_type=ValueError,
+        violation_verbosity=BeartypeViolationVerbosity.MINIMAL,
         warning_cls_on_decorator_exception=None,
     )
 
@@ -104,8 +115,16 @@ def test_conf_dataclass() -> None:
             is_debug=True,
             is_color=True,
             is_pep484_tower=True,
+            violation_param_type=TypeError,
+            violation_return_type=ValueError,
+            violation_verbosity=BeartypeViolationVerbosity.MINIMAL,
+            warning_cls_on_decorator_exception=UserWarning,
         ) is
         BeartypeConf(
+            warning_cls_on_decorator_exception=UserWarning,
+            violation_verbosity=BeartypeViolationVerbosity.MINIMAL,
+            violation_return_type=ValueError,
+            violation_param_type=TypeError,
             is_pep484_tower=True,
             is_color=True,
             is_debug=True,
@@ -123,6 +142,12 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_DEFAULT.is_debug is False
     assert BEAR_CONF_DEFAULT.is_pep484_tower is False
     assert BEAR_CONF_DEFAULT.strategy is BeartypeStrategy.O1
+    assert BEAR_CONF_DEFAULT.violation_param_type is (
+        BeartypeCallHintParamViolation)
+    assert BEAR_CONF_DEFAULT.violation_return_type is (
+        BeartypeCallHintReturnViolation)
+    assert BEAR_CONF_DEFAULT.violation_verbosity is (
+        BeartypeViolationVerbosity.DEFAULT)
     assert BEAR_CONF_DEFAULT.warning_cls_on_decorator_exception is None
     assert BEAR_CONF_DEFAULT._is_warning_cls_on_decorator_exception_set is False
 
@@ -134,6 +159,10 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_NONDEFAULT.is_debug is True
     assert BEAR_CONF_NONDEFAULT.is_pep484_tower is True
     assert BEAR_CONF_NONDEFAULT.strategy is BeartypeStrategy.Ologn
+    assert BEAR_CONF_NONDEFAULT.violation_param_type is TypeError
+    assert BEAR_CONF_NONDEFAULT.violation_return_type is ValueError
+    assert BEAR_CONF_NONDEFAULT.violation_verbosity is (
+        BeartypeViolationVerbosity.MINIMAL)
     assert BEAR_CONF_NONDEFAULT.warning_cls_on_decorator_exception is None
     assert BEAR_CONF_NONDEFAULT._is_warning_cls_on_decorator_exception_set is (
         True)
@@ -207,8 +236,23 @@ def test_conf_dataclass() -> None:
         BeartypeConf(strategy=(
             'By all, but which the wise, and great, and good'))
     with raises(BeartypeConfParamException):
+        BeartypeConf(violation_param_type=(
+            'His strong heart sunk and sickened with excess'))
+    with raises(BeartypeConfParamException):
+        BeartypeConf(violation_param_type=str)
+    with raises(BeartypeConfParamException):
+        BeartypeConf(violation_return_type=(
+            'Of love. He reared his shuddering limbs and quelled'))
+    with raises(BeartypeConfParamException):
+        BeartypeConf(violation_return_type=int)
+    with raises(BeartypeConfParamException):
+        BeartypeConf(violation_verbosity=(
+            'His gasping breath, and spread his arms to meet'))
+    with raises(BeartypeConfParamException):
         BeartypeConf(warning_cls_on_decorator_exception=(
             'He lived, he died, he sung, in solitude.'))
+    with raises(BeartypeConfParamException):
+        BeartypeConf(warning_cls_on_decorator_exception=RuntimeError)
 
     # Assert that instantiating a configuration with conflicting
     # "is_pep484_tower" and "hint_overrides" parameters raises the expected
@@ -224,7 +268,8 @@ def test_conf_dataclass() -> None:
             hint_overrides=BeartypeHintOverrides({complex: int})
         )
 
-    # Assert that attempting to modify any public raises the expected exception.
+    # Assert that attempting to modify any public read-only property of this
+    # dataclass raises the expected exception.
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.claw_is_pep526 = True
     with raises(AttributeError):
@@ -237,9 +282,18 @@ def test_conf_dataclass() -> None:
         BEAR_CONF_DEFAULT.is_pep484_tower = True
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.strategy = BeartypeStrategy.O0
+    with raises(AttributeError):
+        BEAR_CONF_DEFAULT.violation_param_type = TypeError
+    with raises(AttributeError):
+        BEAR_CONF_DEFAULT.violation_return_type = ValueError
+    with raises(AttributeError):
+        BEAR_CONF_DEFAULT.violation_verbosity = (
+            BeartypeViolationVerbosity.MINIMAL)
+    with raises(AttributeError):
+        BEAR_CONF_DEFAULT.warning_cls_on_decorator_exception = None
 
 # ....................{ TESTS ~ arg                        }....................
-def test_conf_is_color(monkeypatch: MonkeyPatch) -> None:
+def test_conf_is_color(monkeypatch: 'pytest.MonkeyPatch') -> None:
     '''
     Test the``is_color`` parameter accepted by the
     :class:`beartype.BeartypeConf` class with respect to the external
@@ -341,54 +395,3 @@ def test_conf_is_color(monkeypatch: MonkeyPatch) -> None:
     # Assert that this exception message contains an expected substring, whose
     # construction is non-trivial and thus liable to improper construction.
     assert '"True", "False", or "None"' in str(exception_info.value)
-
-
-def test_conf_overrides() -> None:
-    '''
-    Test the public :func:`beartype.BeartypeHintOverrides` class.
-    '''
-
-    # ....................{ IMPORTS                        }....................
-    # Defer test-specific imports.
-    from beartype import BeartypeHintOverrides
-    from beartype.roar import BeartypeHintOverridesException
-    from beartype.typing import (
-        List,
-        Tuple,
-    )
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
-    from numbers import Real
-    from pytest import raises
-
-    # ....................{ LOCALS                         }....................
-    # Problematic hint overrides containing one or more recursive hint overrides
-    # (which currently induce infinite recursion during code generation) *OTHER*
-    # than recursive union hint overrides (which are explicitly supported).
-    hint_overrides_bad = {
-        # Valid non-recursive hint override.
-        float: Real,
-    }
-
-    # If the active Python interpreter targets Python >= 3.10 and thus supports
-    # PEP 604-compliant new unions...
-    if IS_PYTHON_AT_LEAST_3_10:
-        # Valid recursive union hint override, intentionally listed *BEFORE* an
-        # invalid recursive non-union hint override. Doing so exercises that
-        # @beartype supports the former but *NOT* the latter.
-        hint_overrides_bad[complex] = complex | float | int,
-
-    # Invalid recursive non-union hint override.
-    hint_overrides_bad[List[str]] = Tuple[List[str], ...],
-
-    # ....................{ FAIL                           }....................
-    # Assert that the "BeartypeHintOverrides" class raises the expected
-    # exception when instantiated with these hint overrides.
-    with raises(BeartypeHintOverridesException) as exception_info:
-        BeartypeHintOverrides(hint_overrides_bad)
-
-    # Message of the exception raised above.
-    exception_message = str(exception_info.value)
-
-    # Assert that this message embeds the machine-readable representation of the
-    # invalid recursive non-union type hint in question.
-    assert repr(List[str]) in exception_message

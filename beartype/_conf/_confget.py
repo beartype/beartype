@@ -4,9 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype **configuration class getters** (i.e., low-level utility functions
-returning various objects of interest, intended to be internally called by
-various methods of the high-level :class:`beartype.BeartypeConf` class).
+Beartype **configuration class getters** (i.e., low-level callables inspecting
+and introspecting various metadata of interest to the high-level
+:class:`beartype.BeartypeConf` dataclass).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

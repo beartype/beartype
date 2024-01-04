@@ -10,8 +10,7 @@ Project-wide :pep:`695`-compliant **type hint test data.**
 # ....................{ FIXTURES                           }....................
 def hints_pep695_meta() -> 'List[HintPepMetadata]':
     '''
-    Session-scoped fixture returning a list of :pep:`695`-compliant **type hint
-    metadata** (i.e.,
+    List of :pep:`695`-compliant **type hint metadata** (i.e.,
     :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata`
     instances describing test-specific :pep:`695`-compliant sample type hints
     with metadata generically leveraged by various PEP-agnostic unit tests).
@@ -52,8 +51,8 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
     # hints parametrized by the same type variable subscripting this alias.
     type AliasGeneric[T] = list[T] | set[T]
 
-    # ..................{ TUPLES                             }..................
-    # Add PEP 604-specific test type hints to this tuple global.
+    # ..................{ LISTS                              }..................
+    # Add PEP 604-specific test type hints to this list.
     hints_pep_meta.extend((
         # ................{ TYPE ALIAS                         }................
         # Simple type alias whose value is a standard type hint containing *NO*

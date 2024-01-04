@@ -17,13 +17,12 @@ from beartype._cave._cavefast import (
     NoneType,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype_test.a00_unit.data.hint.nonpep.data_nonpep import (
-    HINTS_NONPEP_META)
 from pytest import fixture
 
 # ....................{ FIXTURES                           }....................
 @fixture(scope='session')
-def hints_meta(hints_pep_meta) -> 'Tuple[HintNonpepMetadata]':
+def hints_meta(hints_pep_meta, hints_nonpep_meta) -> (
+    'Tuple[HintNonpepMetadata]'):
     '''
     Session-scoped fixture yielding a tuple of **PEP-agnostic type hint
     metadata** (i.e.,
@@ -37,10 +36,13 @@ def hints_meta(hints_pep_meta) -> 'Tuple[HintNonpepMetadata]':
     hints_pep_meta : Tuple[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
         Tuple of PEP-compliant type hint metadata describing PEP-compliant type
         hints exercising edge cases in the :mod:`beartype` codebase.
+    hints_nonpep_meta : Tuple[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintNonpepMetadata]
+        Tuple of PEP-noncompliant type hint metadata describing PEP-noncompliant
+        type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
 
     # One world. One-liner. Let's get together and code alright.
-    yield hints_pep_meta + HINTS_NONPEP_META
+    yield hints_pep_meta + hints_nonpep_meta
 
 
 @fixture(scope='session')

@@ -36,12 +36,11 @@ def test_get_beartype_violation() -> None:
     from beartype.typing import (
         List,
         Tuple,
+        Union,
     )
+    from beartype._data.func.datafuncarg import ARG_NAME_RETURN
     from beartype._decor.error.errormain import get_beartype_violation
-    from beartype._util.os.utilostty import is_stdout_terminal
-    from beartype._util.text.utiltextansi import is_str_ansi
     from pytest import raises
-    from typing import Union
 
     # ..................{ LOCALS                             }..................
     def forest_unknown(
@@ -78,8 +77,8 @@ def test_get_beartype_violation() -> None:
     assert isinstance(violation, BeartypeCallHintParamViolation)
 
     # Assert this function returns the expected exception when passed a
-    # parameter annotated by a PEP-compliant type hint failing to deeply
-    # satisfy the type of that type hint.
+    # parameter annotated by a PEP-compliant type hint failing to deeply satisfy
+    # the type of that type hint.
     violation = get_beartype_violation(
         pith_name='secret_orchard',
         pith_value=[
@@ -107,7 +106,7 @@ def test_get_beartype_violation() -> None:
     # return value annotated by a PEP-compliant type hint failing to satisfy
     # that type hint.
     violation = get_beartype_violation(
-        pith_name='return',
+        pith_name=ARG_NAME_RETURN,
         pith_value=[
             'Sunbirds leave their dark recesses.',
             'Shadows glide the archways.',
@@ -115,41 +114,6 @@ def test_get_beartype_violation() -> None:
         **kwargs
     )
     assert isinstance(violation, BeartypeCallHintReturnViolation)
-
-    # ..................{ PASS ~ ansi                        }..................
-    # Keyword arguments to be unconditionally passed to calls of the
-    # get_beartype_violation() getter testing ANSI-specific functionality.
-    kwargs_ansi = dict(
-        func=forest_unknown,
-        pith_name='secret_orchard',
-        pith_value=(
-            'We walked into the night',
-            'Am I to bid you farewell?',
-        ),
-    )
-
-    # Violation configured to contain ANSI escape sequences.
-    violation = get_beartype_violation(
-        conf=BeartypeConf(is_color=True), **kwargs_ansi)
-
-    # Assert this violation message contains ANSI escape sequences.
-    assert is_str_ansi(str(violation)) is True
-
-    # Violation configured to contain *NO* ANSI escape sequences.
-    violation = get_beartype_violation(
-        conf=BeartypeConf(is_color=False), **kwargs_ansi)
-
-    # Assert this violation message contains *NO* ANSI escape sequences.
-    assert is_str_ansi(str(violation)) is False
-
-    # Violation configured to conditionally contain ANSI escape sequences only
-    # when standard output is attached to an interactive terminal.
-    violation = get_beartype_violation(
-        conf=BeartypeConf(is_color=None), **kwargs_ansi)
-
-    # Assert this violation message contains ANSI escape sequences only when
-    # standard output is attached to an interactive terminal.
-    assert is_str_ansi(str(violation)) is is_stdout_terminal()
 
     # ..................{ FAIL                               }..................
     # Assert this function raises the expected exception when passed an
@@ -181,3 +145,207 @@ def test_get_beartype_violation() -> None:
             ),
             **kwargs
         )
+
+# ....................{ TESTS ~ conf                       }....................
+def test_get_beartype_violation_conf_is_color() -> None:
+    '''
+    Test the
+    :func:`beartype._decor.error.errormain.get_beartype_violation`
+    function with respect to the :attr:`beartype.BeartypeConf.is_color`
+    configuration parameter.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype import BeartypeConf
+    from beartype.typing import (
+        List,
+        Tuple,
+        Union,
+    )
+    from beartype._decor.error.errormain import get_beartype_violation
+    from beartype._util.os.utilostty import is_stdout_terminal
+    from beartype._util.text.utiltextansi import is_str_ansi
+
+    # ..................{ LOCALS                             }..................
+    def she_drew_back(
+        a_while: List[str], then_yielding) -> Union[int, Tuple[str, ...]]:
+        '''
+        Arbitrary callable exercised below.
+        '''
+
+        return then_yielding
+
+    # Keyword arguments to be unconditionally passed to *ALL* calls of the
+    # get_beartype_violation() getter below.
+    kwargs = dict(
+        func=she_drew_back,
+        pith_name='a_while',
+        pith_value=(
+            'With frantic gesture and short breathless cry',
+            'Folded his frame in her dissolving arms.',
+        ),
+    )
+
+    # ..................{ PASS                               }..................
+    # Violation configured to contain ANSI escape sequences.
+    violation = get_beartype_violation(
+        conf=BeartypeConf(is_color=True), **kwargs)
+
+    # Assert this violation message contains ANSI escape sequences.
+    assert is_str_ansi(str(violation)) is True
+
+    # Violation configured to contain *NO* ANSI escape sequences.
+    violation = get_beartype_violation(
+        conf=BeartypeConf(is_color=False), **kwargs)
+
+    # Assert this violation message contains *NO* ANSI escape sequences.
+    assert is_str_ansi(str(violation)) is False
+
+    # Violation configured to conditionally contain ANSI escape sequences only
+    # when standard output is attached to an interactive terminal.
+    violation = get_beartype_violation(
+        conf=BeartypeConf(is_color=None), **kwargs)
+
+    # Assert this violation message contains ANSI escape sequences only when
+    # standard output is attached to an interactive terminal.
+    assert is_str_ansi(str(violation)) is is_stdout_terminal()
+
+
+def test_get_beartype_violation_conf_violation_types() -> None:
+    '''
+    Test the
+    :func:`beartype._decor.error.errormain.get_beartype_violation`
+    function with respect to the
+    :attr:`beartype.BeartypeConf.violation_param_type` and
+    :attr:`beartype.BeartypeConf.violation_return_type` configuration
+    parameters.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype import BeartypeConf
+    from beartype.typing import (
+        List,
+        Tuple,
+        Union,
+    )
+    from beartype._data.func.datafuncarg import ARG_NAME_RETURN
+    from beartype._decor.error.errormain import get_beartype_violation
+
+    # ..................{ CLASSES                            }..................
+    class InvolvedAndSwallowed(Exception):
+        '''
+        Arbitrary exception subclass.
+        '''
+
+        pass
+
+    # ..................{ LOCALS                             }..................
+    def now_blackness(
+        veiled_his: List[str], dizzy_eyes) -> Union[int, Tuple[str, ...]]:
+        '''
+        Arbitrary callable exercised below.
+        '''
+
+        return dizzy_eyes
+
+    # Keyword arguments to be unconditionally passed to *ALL* calls of the
+    # get_beartype_violation() getter below.
+    kwargs = dict(func=now_blackness)
+
+    # ..................{ PASS                               }..................
+    # Parameter violation configured to be a non-default exception subclass.
+    param_violation = get_beartype_violation(
+        conf=BeartypeConf(violation_param_type=InvolvedAndSwallowed),
+        pith_name='veiled_his',
+        pith_value=(
+            'Now blackness veiled his dizzy eyes, and night',
+            'Involved and swallowed up the vision; sleep,',
+        ),
+        **kwargs
+    )
+
+    # Assert that this violation is the expected non-default exception subclass.
+    assert type(param_violation) is InvolvedAndSwallowed
+
+    # Return violation configured to be a non-default exception subclass.
+    return_violation = get_beartype_violation(
+        conf=BeartypeConf(violation_return_type=InvolvedAndSwallowed),
+        pith_name=ARG_NAME_RETURN,
+        pith_value=[
+            'Like a dark flood suspended in its course',
+            'Rolled back its impulse on his vacant brain.',
+        ],
+        **kwargs
+    )
+
+    # Assert that this violation is the expected non-default exception subclass.
+    assert type(return_violation) is InvolvedAndSwallowed
+
+
+def test_get_beartype_violation_conf_violation_verbosity() -> None:
+    '''
+    Test the
+    :func:`beartype._decor.error.errormain.get_beartype_violation`
+    function with respect to the
+    :attr:`beartype.BeartypeConf.violation_verbosity` configuration parameter.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype import (
+        BeartypeConf,
+        BeartypeViolationVerbosity,
+    )
+    from beartype.typing import (
+        List,
+        Tuple,
+        Union,
+    )
+    from beartype._decor.error.errormain import get_beartype_violation
+
+    # ..................{ LOCALS                             }..................
+    def like_a_dark_flood(
+        suspended_in: List[str], its_course) -> Union[int, Tuple[str, ...]]:
+        '''
+        Arbitrary callable exercised below.
+        '''
+
+        return its_course
+
+    # Keyword arguments to be unconditionally passed to *ALL* calls of the
+    # get_beartype_violation() getter below.
+    kwargs = dict(
+        func=like_a_dark_flood,
+        pith_name='suspended_in',
+        pith_value=(
+            'Roused by the shock he started from his trance—',
+            'The cold white light of morning, the blue moon',
+        ),
+    )
+
+    # ..................{ PASS                               }..................
+    # Tuple of all otherwise equivalent violations produced by iteratively
+    # increasing the level of violation verbosity.
+    violations = tuple(
+        # Violation whose message is configured to be this verbose...
+        get_beartype_violation(
+            conf=BeartypeConf(violation_verbosity=violation_verbosity),
+            **kwargs
+        )
+        # For each kind of violation verbosity.
+        for violation_verbosity in BeartypeViolationVerbosity
+    )
+
+    # Previously iterated violation, defaulting to the minimally verbose (i.e.,
+    # maximally terse) violation.
+    violation_prev = violations[0]
+
+    # For each increasingly verbose violation following the first...
+    for violation in violations[1:]:
+        # Assert that this violation message is more verbose than the last.
+        assert len(str(violation)) > len(str(violation_prev))
+
+        # Store the previously iterated violation for subsequent reference.
+        violation_prev = violation

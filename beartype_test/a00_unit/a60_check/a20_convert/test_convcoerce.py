@@ -29,6 +29,7 @@ def test_coerce_func_hint_root() -> None:
     from beartype import BeartypeConf
     from beartype._check.checkcall import BeartypeCall
     from beartype._check.convert.convcoerce import coerce_func_hint_root
+    from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 
     # ..................{ CALLABLES                          }..................
     def one_legion_of_wild_thoughts() -> str:
@@ -46,7 +47,7 @@ def test_coerce_func_hint_root() -> None:
     # Assert this coercer preserves an isinstanceable type as is.
     assert coerce_func_hint_root(
         hint=str,
-        arg_name='return',
+        arg_name=ARG_NAME_RETURN,
         bear_call=bear_call,
         exception_prefix='',
     ) is str

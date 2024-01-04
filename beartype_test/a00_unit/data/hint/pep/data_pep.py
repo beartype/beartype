@@ -90,8 +90,8 @@ def hints_pep_meta() -> 'Tuple[HintPepMetadata]':
     This tuple was initially designed as a dictionary mapping from PEP-compliant
     type hints to :class:`HintPepMetadata` instances describing those hints,
     until :mod:`beartype` added support for PEPs enabling unhashable
-    PEP-compliant type hints (e.g., ``collections.abc.Callable[[], str]`` under
-    :pep:`585`) impermissible for use as dictionary keys or set members.
+    PEP-compliant type hints (e.g., ``typing.Annotated[list, []]`` under
+    :pep:`593`) impermissible for use as dictionary keys or set members.
     '''
 
     # ..................{ IMPORTS                            }..................

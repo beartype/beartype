@@ -39,7 +39,6 @@ from beartype.typing import (
     Dict,
     Optional,
 )
-from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confenum import (
     BeartypeStrategy,
     BeartypeViolationVerbosity,
@@ -47,16 +46,17 @@ from beartype._conf.confenum import (
 from beartype._conf.confoverrides import (
     BEARTYPE_HINT_OVERRIDES_EMPTY,
     BEARTYPE_HINT_OVERRIDES_PEP484_TOWER,
-    BeartypeHintOverrides as BeartypeHintOverrides,
+    BeartypeHintOverrides,
 )
 from beartype._conf._confget import get_is_color
+from beartype._conf._conftest import die_if_conf_invalid
 from beartype._data.hint.datahinttyping import (
     BoolTristateUnpassable,
+    DictStrToAny,
     TypeException,
     TypeWarning,
 )
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
-from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.utilobject import get_object_type_basename
 from threading import Lock
 
@@ -187,7 +187,7 @@ class BeartypeConf(object):
     if TYPE_CHECKING:
         _claw_is_pep526: bool
         _conf_args: tuple
-        _conf_kwargs: Dict[str, object]
+        _conf_kwargs: DictStrToAny
         _hint_overrides: BeartypeHintOverrides
         _is_color: Optional[bool]
         _is_debug: bool
@@ -561,105 +561,27 @@ class BeartypeConf(object):
             # these parameters. In this case, continue to do so and then cache
             # that configuration.
 
-            # ..................{ VALIDATE                   }..................
-            # If "claw_is_pep526" is *NOT* a boolean, raise an exception.
-            elif not isinstance(claw_is_pep526, bool):
-                raise BeartypeConfParamException(
-                    f'Beartype configuration parameter "claw_is_pep526" '
-                    f'value {repr(claw_is_pep526)} not boolean.'
-                )
-            # Else, "claw_is_pep526" is a boolean.
+            # Dictionary mapping from the names to values of *ALL* possible
+            # keyword parameters configuring this configuration, intentionally
+            # defined *AFTER* this method first attempts to efficiently reduce
+            # to a noop by returning a previously instantiated configuration.
+            conf_kwargs = dict(
+                claw_is_pep526=claw_is_pep526,
+                hint_overrides=hint_overrides,
+                is_color=is_color,
+                is_debug=is_debug,
+                is_pep484_tower=is_pep484_tower,
+                strategy=strategy,
+                violation_param_type=violation_param_type,
+                violation_return_type=violation_return_type,
+                violation_verbosity=violation_verbosity,
+                warning_cls_on_decorator_exception=(
+                    warning_cls_on_decorator_exception),
+            )
 
-            #FIXME: Additionally validate that this dictionary contains *NO*
-            #subscription-style recursive overrides. See also:
-            #    https://github.com/beartype/beartype/pull/309#issuecomment-1829200331
-            # If "hint_overrides" is *NOT* a frozen dict, raise an exception.
-            elif not isinstance(hint_overrides, BeartypeHintOverrides):
-                raise BeartypeConfParamException(
-                    f'Beartype configuration parameter "hint_overrides" '
-                    f'value {repr(hint_overrides)} not frozen dictionary '
-                    f'(i.e., "beartype.BeartypeHintOverrides" instance).'
-                )
-            # Else, "hint_overrides" is a frozen dict.
-            #
-            # If "is_color" is *NOT* a tri-state boolean, raise an exception.
-            elif not isinstance(is_color, NoneTypeOr[bool]):
-                raise BeartypeConfParamException(
-                    f'Beartype configuration parameter "is_color" '
-                    f'value {repr(is_color)} not tri-state boolean '
-                    f'(i.e., "True", "False", or "None").'
-                )
-            # Else, "is_color" is a tri-state boolean.
-            #
-            # If "is_debug" is *NOT* a boolean, raise an exception.
-            elif not isinstance(is_debug, bool):
-                raise BeartypeConfParamException(
-                    f'Beartype configuration parameter "is_debug" '
-                    f'value {repr(is_debug)} not boolean.'
-                )
-            # Else, "is_debug" is a boolean.
-            #
-            # If "is_pep484_tower" is *NOT* a boolean, raise an exception.
-            elif not isinstance(is_pep484_tower, bool):
-                raise BeartypeConfParamException(
-                    f'Beartype configuration parameter "is_pep484_tower" '
-                    f'value {repr(is_debug)} not boolean.'
-                )
-            # Else, "is_pep484_tower" is a boolean.
-            #
-            # If "strategy" is *NOT* an enumeration member, raise an exception.
-            elif not isinstance(strategy, BeartypeStrategy):
-                raise BeartypeConfParamException(
-                    f'Beartype configuration parameter "strategy" '
-                    f'value {repr(strategy)} not '
-                    f'"beartype.BeartypeStrategy" enumeration member.'
-                )
-            # Else, "strategy" is an enumeration member.
-            #
-            # If "violation_param_type" is *NOT* an exception, raise an
-            # exception.
-            elif not is_type_subclass(violation_param_type, Exception):
-                raise BeartypeConfParamException(
-                    f'Beartype configuration parameter "violation_param_type" '
-                    f'value {repr(violation_param_type)} not exception type.'
-                )
-            # Else, "violation_param_type" is an exception.
-            #
-            # If "violation_return_type" is *NOT* an exception, raise an
-            # exception.
-            elif not is_type_subclass(violation_return_type, Exception):
-                raise BeartypeConfParamException(
-                    f'Beartype configuration parameter "violation_return_type" '
-                    f'value {repr(violation_return_type)} not exception type.'
-                )
-            # Else, "violation_return_type" is an exception.
-            #
-            # If "violation_verbosity" is *NOT* an enumeration member, raise an
-            # exception.
-            elif not isinstance(
-                violation_verbosity, BeartypeViolationVerbosity):
-                raise BeartypeConfParamException(
-                    f'Beartype configuration parameter "violation_verbosity" '
-                    f'value {repr(violation_verbosity)} not '
-                    f'"beartype.BeartypeViolationVerbosity" enumeration member.'
-                )
-            # Else, "violation_verbosity" is an enumeration member.
-            #
-            # If "warning_cls_on_decorator_exception" is neither "None" *NOR* a
-            # warning category, raise an exception.
-            elif not (
-                warning_cls_on_decorator_exception is None or
-                is_type_subclass(warning_cls_on_decorator_exception, Warning)
-            ):
-                raise BeartypeConfParamException(
-                    f'Beartype configuration parameter '
-                    f'"warning_cls_on_decorator_exception" value '
-                    f'{repr(warning_cls_on_decorator_exception)} '
-                    f'neither "None" nor warning category '
-                    f'(i.e., "Warning" subclass).'
-                )
-            # Else, "warning_cls_on_decorator_exception" is either "None" *OR* a
-            # warning category.
+            # If one or more passed parameters are invalid, raise an exception.
+            die_if_conf_invalid(conf_kwargs)
+            # Else, all passed parameters are valid.
 
             # ..................{ INSTANTIATE                }..................
             # Instantiate a new configuration of this type.
@@ -777,7 +699,7 @@ class BeartypeConf(object):
 
     #FIXME: Publicly document this in our reST-formatted docos, please.
     @property
-    def kwargs(self) -> Dict[str, object]:
+    def kwargs(self) -> DictStrToAny:
         '''
         **Beartype configuration keyword dictionary** (i.e., dictionary mapping
         from the names of all keyword parameters accepted by the :meth:`__new__`

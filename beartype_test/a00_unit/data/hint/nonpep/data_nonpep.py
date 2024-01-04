@@ -4,70 +4,47 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **PEP-compliant type hints test data.**
+Project-wide **PEP-noncompliant type hints test data.**
 
 This submodule predefines low-level global constants whose values are
 PEP-noncompliant type hints, exercising known edge cases on behalf of
 higher-level unit test submodules.
 '''
 
-# ....................{ TUPLES                            }....................
-# Initialized by the _init() function below.
-HINTS_NONPEP_META = []
-'''
-Tuple of **PEP-noncompliant type hint metadata** (i.e.,
-:class:`HintNonpepMetadata` instances describing test-specific PEP-noncompliant
-type hints with metadata leveraged by various testing scenarios).
-'''
+# ....................{ IMPORTS                            }....................
+from pytest import fixture
 
-# ....................{ INITIALIZERS                      }....................
-def _init() -> None:
+# ....................{ FIXTURES                           }....................
+@fixture(scope='session')
+def hints_nonpep_meta() -> 'Tuple[HintNonpepMetadata]':
     '''
-    Initialize this submodule.
+    Session-scoped fixture yielding a tuple of **PEP-noncompliant type hint
+    metadata** (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintNonpepMetadata`
+    instances, each describing a sample PEP-noncompliant type hint exercising an
+    edge case in the :mod:`beartype` codebase).
     '''
 
-    # Defer function-specific imports.
-    import sys
-    from beartype_test.a00_unit.data.hint.nonpep.beartype import (
-        _data_nonpepbeartype,
-    )
-    from beartype_test.a00_unit.data.hint.nonpep.proposal import (
-        _data_nonpep484,
-    )
+    # ..................{ IMPORTS                            }..................
+    # Defer fixture-specific imports.
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintNonpepMetadata)
+    from beartype_test._util.kind.pytkindmake import make_container_from_funcs
 
-    # Submodule globals to be redefined below.
-    global HINTS_NONPEP_META
+    # ..................{ LIST                               }..................
+    _hints_nonpep_meta = make_container_from_funcs((
+        # PEP-compliant type hints.
+        'beartype_test.a00_unit.data.hint.nonpep.beartype._data_nonpepbeartype.hints_nonpepbeartype_meta',
+        'beartype_test.a00_unit.data.hint.nonpep.proposal._data_nonpep484.hints_nonpep484_meta',
+    ))
 
-    # Current submodule, obtained via the standard idiom. See also:
-    #     https://stackoverflow.com/a/1676860/2809027
-    CURRENT_SUBMODULE = sys.modules[__name__]
-
-    # Tuple of all private submodules of this subpackage to be initialized.
-    DATA_HINT_NONPEP_SUBMODULES = (
-        _data_nonpep484,
-        _data_nonpepbeartype,
-    )
-
-    # Initialize all private submodules of this subpackage.
-    for data_hint_nonpep_submodule in DATA_HINT_NONPEP_SUBMODULES:
-        data_hint_nonpep_submodule.add_data(CURRENT_SUBMODULE)
-
-    # Assert these global to have been initialized by these private submodules.
-    assert HINTS_NONPEP_META, 'Tuple global "HINTS_NONPEP_META" empty.'
-
-    # Assert this global to contain only instances of its expected dataclass.
+    # ..................{ YIELD                              }..................
+    # Assert this list contains *ONLY* instances of the expected dataclass.
     assert (
         isinstance(hint_nonpep_meta, HintNonpepMetadata)
-        for hint_nonpep_meta in HINTS_NONPEP_META
-    ), (f'{repr(HINTS_NONPEP_META)} not iterable of '
+        for hint_nonpep_meta in _hints_nonpep_meta
+    ), (f'{repr(_hints_nonpep_meta)} not iterable of '
         f'"HintNonpepMetadata" instances.')
 
-    # Frozen sets defined *AFTER* initializing these private submodules and
-    # thus the lower-level globals required by these sets.
-    HINTS_NONPEP_META = tuple(HINTS_NONPEP_META)
-
-
-# Initialize this submodule.
-_init()
+    # Yield a tuple coerced from this list.
+    yield tuple(_hints_nonpep_meta)

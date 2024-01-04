@@ -16,28 +16,14 @@ PEP-noncompliant type hints include:
   returning :class:`dict` instances annotated by PEP-compliant type hints.
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: *WOOPS.* We should have read the standards a bit closer. Neither
-#"typing.NamedTuple" or "typing.TypedDict" are intended for direct use as type
-#hints. To quote official "typing" documentation:
-#    These are not used in annotations. They are building blocks for declaring
-#    types.
-#
-#Of course, all types *ARE* valid type hints. "typing.NamedTuple" and
-#"typing.TypedDict" subclasses are types and thus also valid type hints. So, the
-#superficial testing we perform below is certainly useful; we just don't need to
-#do anything further, really. Phew!
-
-# ....................{ ADDERS                             }....................
-def add_data(data_module: 'ModuleType') -> None:
+# ....................{ FIXTURES                           }....................
+def hints_nonpep484_meta() -> 'List[HintNonpepMetadata]':
     '''
-    Add :pep:`484`-compliant PEP-noncompliant type hint test data to various
-    global containers declared by the passed module.
-
-    Parameters
-    ----------
-    data_module : ModuleType
-        Module to be added to.
+    List of :pep:`484`-sorta-compliant **type hint metadata** (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintNonpepMetadata`
+    instances describing test-specific :pep:`484`--sorta-compliant sample type
+    hints with metadata generically leveraged by various PEP-agnostic unit
+    tests).
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -63,16 +49,30 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPithUnsatisfiedMetadata,
     )
 
-    # ....................{ LOCALS                         }....................
+    # ..................{ LOCALS                             }..................
+    # List of all PEP-noncompliant type hint metadata to be returned.
+    hints_nonpep_meta = []
+
+    #FIXME: *WOOPS.* We should have read the standards a bit closer. Neither
+    #"typing.NamedTuple" or "typing.TypedDict" are intended for direct use as
+    #type hints. To quote official "typing" documentation:
+    #    These are not used in annotations. They are building blocks for declaring
+    #    types.
+    #
+    #Of course, all types *ARE* valid type hints. "typing.NamedTuple" and
+    #"typing.TypedDict" subclasses are types and thus also valid type hints. So,
+    #the superficial testing we perform below is certainly useful; we just don't
+    #need to do anything further, really. Phew!
+
     # PEP-compliant user-defined "collections.namedtuple" instance typed with
     # PEP-compliant type hints.
     NamedTupleType = NamedTuple(
         'NamedTupleType', [('fumarole', str), ('enrolled', int)])
 
-    # ..................{ TUPLES                             }..................
+    # ..................{ LISTS                              }..................
     # Add PEP 484-specific (albeit technically PEP-noncompliant from the
-    # @beartype perspective) test type hints to this dictionary global.
-    data_module.HINTS_NONPEP_META.extend((
+    # beartype perspective) test type hints to this list.
+    hints_nonpep_meta.extend((
         # ................{ NAMEDTUPLE                         }................
         # "NamedTuple" instances transparently reduce to standard tuples and
         # *MUST* thus be handled as non-"typing" type hints.
@@ -350,7 +350,7 @@ def add_data(data_module: 'ModuleType') -> None:
             hint=FunctionType,
             piths_meta=(
                 # Pure-Python function.
-                HintPithSatisfiedMetadata(add_data),
+                HintPithSatisfiedMetadata(hints_nonpep484_meta),
                 # String constant.
                 HintPithUnsatisfiedMetadata('Nomenclature weather‐vanes of'),
             ),
@@ -415,3 +415,7 @@ def add_data(data_module: 'ModuleType') -> None:
             ),
         ),
     ))
+
+    # ..................{ RETURN                             }..................
+    # Return this list of all PEP-noncompliant type hint metadata.
+    return hints_nonpep_meta

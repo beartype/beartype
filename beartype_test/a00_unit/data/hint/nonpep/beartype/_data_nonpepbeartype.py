@@ -15,20 +15,18 @@ These hints include:
   forward references to standard classes).
 '''
 
-# ....................{ ADDERS                             }....................
-def add_data(data_module: 'ModuleType') -> None:
+# ....................{ FIXTURES                           }....................
+def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
     '''
-    Add :mod:`beartype`-specific PEP-noncompliant type hint test data to
-    various global containers declared by the passed module.
-
-    Parameters
-    ----------
-    data_module : ModuleType
-        Module to be added to.
+    List of :mod:`beartype`-specific **type hint metadata** (i.e.,
+    :class:`beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintNonpepMetadata`
+    instances describing test-specific :mod:`beartype`-specific PEP-noncompliant
+    sample type hints with metadata generically leveraged by various
+    PEP-agnostic unit tests).
     '''
 
     # ..................{ IMPORTS                            }..................
-    # Defer data-specific imports.
+    # Defer test-specific imports.
     from beartype.plug import BeartypeHintable
     from beartype.vale import Is
     from beartype._util.module.lib.utiltyping import iter_typing_attrs
@@ -38,10 +36,13 @@ def add_data(data_module: 'ModuleType') -> None:
         HintPithUnsatisfiedMetadata,
     )
 
-    # ..................{ TUPLES                             }..................
-    # Add beartype-specific PEP-noncompliant test type hints to this dictionary
-    # global.
-    data_module.HINTS_NONPEP_META.extend((
+    # ..................{ LOCALS                             }..................
+    # List of all PEP-noncompliant type hint metadata to be returned.
+    hints_nonpep_meta = []
+
+    # ..................{ LISTS                              }..................
+    # Add beartype-specific PEP-noncompliant test type hints to this list.
+    hints_nonpep_meta.extend((
         # ................{ TUPLE UNION                        }................
         # Beartype-specific tuple unions (i.e., tuples containing one or more
         # isinstanceable classes).
@@ -171,3 +172,7 @@ def add_data(data_module: 'ModuleType') -> None:
         #         ),
         #     ),
         # ))
+
+    # ..................{ RETURN                             }..................
+    # Return this list of all PEP-noncompliant type hint metadata.
+    return hints_nonpep_meta

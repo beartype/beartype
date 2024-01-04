@@ -106,7 +106,7 @@ def test_is_hint_pep_type_typing(hints_pep_meta) -> None:
         assert is_hint_pep_type_typing(not_hint_pep) is False
 
 # ....................{ TESTS                              }....................
-def test_is_hint_pep(hints_pep_meta) -> None:
+def test_is_hint_pep(hints_pep_meta, hints_nonpep_meta) -> None:
     '''
     Test the :func:`beartype._util.hint.pep.utilpeptest.is_hint_pep`
     tester.
@@ -116,13 +116,14 @@ def test_is_hint_pep(hints_pep_meta) -> None:
     hints_pep_meta : List[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintPepMetadata]
         List of PEP-compliant type hint metadata describing sample PEP-compliant
         type hints exercising edge cases in the :mod:`beartype` codebase.
+    hints_nonpep_meta : Tuple[beartype_test.a00_unit.data.hint.util.data_hintmetacls.HintNonpepMetadata]
+        Tuple of PEP-noncompliant type hint metadata describing PEP-noncompliant
+        type hints exercising edge cases in the :mod:`beartype` codebase.
     '''
 
     # Defer test-specific imports.
     from beartype._util.hint.pep.utilpeptest import is_hint_pep
     from beartype_test.a00_unit.data.hint.data_hint import NOT_HINTS_PEP
-    from beartype_test.a00_unit.data.hint.nonpep.data_nonpep import (
-        HINTS_NONPEP_META)
 
     # Assert this tester accepts PEP-compliant type hints.
     for hint_pep_meta in hints_pep_meta:
@@ -131,7 +132,7 @@ def test_is_hint_pep(hints_pep_meta) -> None:
     # Assert this tester rejects PEP-noncompliant type hints implemented by the
     # "typing" module as normal types indistinguishable from non-"typing" types
     # and thus effectively non-PEP-compliant for all practical intents.
-    for hint_nonpep_meta in HINTS_NONPEP_META:
+    for hint_nonpep_meta in hints_nonpep_meta:
         # if is_hint_pep(hint_nonpep_meta.hint) is True:
         #     from beartype._util.hint.pep.utilpepget import (
         #         get_hint_pep_sign_or_none)
@@ -228,7 +229,9 @@ def test_is_hint_pep_supported(hints_pep_meta) -> None:
     # Defer test-specific imports.
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_supported
     from beartype_test.a00_unit.data.hint.data_hint import (
-        NOT_HINTS_UNHASHABLE, NOT_HINTS_PEP)
+        NOT_HINTS_PEP,
+        NOT_HINTS_UNHASHABLE,
+    )
 
     # Assert this tester:
     # * Accepts supported PEP-compliant type hints.

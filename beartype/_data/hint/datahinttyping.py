@@ -197,8 +197,39 @@ of the :func:`beartype.beartype` decorator, including calls to that decorator
 in both configuration and decoration modes.
 '''
 
+# ....................{ DICT                               }....................
+HintSignTrie = Dict[str, Union[HintSign, 'HintSignTrie']]
+'''
+PEP-compliant type hint matching a **sign trie** (i.e.,
+dictionary-of-dictionaries tree data structure enabling efficient mapping from
+the machine-readable representations of type hints created by an arbitrary
+number of type hint factories defined by an external third-party package to
+their identifying sign).
+'''
+
+# ....................{ DICT ~ any                         }....................
+DictStrToAny = Dict[str, Any]
+'''
+PEP-compliant type hint matching a mapping whose keys are *all* strings.
+'''
+
+
+HintAnnotations = DictStrToAny
+'''
+PEP-compliant type hint matching **annotations** (i.e., dictionary mapping from
+the name of each annotated parameter or return of a callable or annotated
+variable of a class to the type hint annotating that parameter, return, or
+variable).
+'''
+
+
+MappingStrToAny = Mapping[str, object]
+'''
+PEP-compliant type hint matching a mapping whose keys are *all* strings.
+'''
+
 # ....................{ CODE                               }....................
-LexicalScope = Dict[str, Any]
+LexicalScope = DictStrToAny
 '''
 PEP-compliant type hint matching a **lexical scope** (i.e., dictionary mapping
 from the relative unqualified name to value of each locally or globally scoped
@@ -226,31 +257,6 @@ func_wrapper_scope, hint_forwardrefs_class_basename)``, where:
   of :pep:`484`-compliant relative forward references visitable from this hint
   (e.g., ``('MuhClass', 'YoClass')`` given the hint ``Union['MuhClass',
   List['YoClass']]``).
-'''
-
-# ....................{ DICT                               }....................
-HintAnnotations = LexicalScope
-'''
-PEP-compliant type hint matching **annotations** (i.e., dictionary mapping from
-the name of each annotated parameter or return of a callable or annotated
-variable of a class to the type hint annotating that parameter, return, or
-variable).
-'''
-
-
-MappingStrToAny = Mapping[str, object]
-'''
-PEP-compliant type hint matching a mapping whose keys are *all* strings.
-'''
-
-
-HintSignTrie = Dict[str, Union[HintSign, 'HintSignTrie']]
-'''
-PEP-compliant type hint matching a **sign trie** (i.e.,
-dictionary-of-dictionaries tree data structure enabling efficient mapping from
-the machine-readable representations of type hints created by an arbitrary
-number of type hint factories defined by an external third-party package to
-their identifying sign).
 '''
 
 # ....................{ ITERABLE                           }....................
