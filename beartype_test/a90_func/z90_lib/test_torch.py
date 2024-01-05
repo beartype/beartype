@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **PyTorch** integration tests.
+Project-wide **PyTorch integration tests.**
 
 This submodule functionally tests the :mod:`beartype` package against the
 third-party PyTorch package.
@@ -47,7 +47,7 @@ def test_torch() -> None:
         get_interpreter_command_words)
     from beartype_test._util.command.pytcmdrun import run_command_forward_output
 
-    # ....................{ LOCAL                          }....................
+    # ....................{ LOCALS                         }....................
     # Tuple of all arguments to be passed to the active Python interpreter rerun
     # as an external command.
     _PYTHON_ARGS = get_interpreter_command_words() + ('-c', 'import torch',)

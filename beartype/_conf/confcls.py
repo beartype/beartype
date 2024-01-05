@@ -594,19 +594,7 @@ class BeartypeConf(object):
             # subsequent reuse *BEFORE* possibly modifying the values of these
             # parameters below.
             self._conf_args = conf_args
-            self._conf_kwargs = dict(
-                claw_is_pep526=claw_is_pep526,
-                hint_overrides=hint_overrides,
-                is_color=is_color,
-                is_debug=is_debug,
-                is_pep484_tower=is_pep484_tower,
-                strategy=strategy,
-                violation_param_type=violation_param_type,
-                violation_return_type=violation_return_type,
-                violation_verbosity=violation_verbosity,
-                warning_cls_on_decorator_exception=(
-                    warning_cls_on_decorator_exception),
-            )
+            self._conf_kwargs = conf_kwargs
 
             # Assert that these two data structures encapsulate the same number
             # of configuration parameters (as a feeble safety check).
