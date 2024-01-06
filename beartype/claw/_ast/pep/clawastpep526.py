@@ -206,12 +206,6 @@ class BeartypeNodeTransformerPep526Mixin(object):
         #   526-compliant annotated variable assignments.
         # * This assignment is simple and assigning to an attribute name.
 
-        #FIXME: Excise us up, please.
-        # # Validate this expectation.
-        # assert isinstance(node.target, Name), (
-        #     f'Non-simple AST annotated assignment node {repr(node)} '
-        #     f'target {repr(node.target)} not {repr(Name)} instance.')
-
         # Child node passing the value newly assigned to this attribute by this
         # assignment as the first parameter to die_if_unbearable().
         node_func_arg_pith: AST = None  # type: ignore[assignment]

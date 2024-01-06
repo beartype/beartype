@@ -15,23 +15,10 @@ third-party PyTorch package.
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype_test._util.mark.pytskip import (
-    skip,
-    skip_unless_package,
-)
+from beartype_test._util.mark.pytskip import skip_unless_package
 
 # ....................{ TESTS                              }....................
-#FIXME: Remove this unconditional skip *AFTER* we resolve outstanding issues
-#surrounding PyTorch installation on various platforms, including:
-#* Gentoo Linux, where @leycec currently receives this well-known exception on
-#  attempting to import PyTorch:
-#      NameError: name '_C' is not defined
-#  Note that this *ONLY* occurs under "pytest". PyTorch remains importable
-#  outside of "pytest", which is all manner of bizarre. *shrug*
-#* GitHub Actions-based continuous integration (CI), where similar issues are
-#  likely to arise under macOS and/or Windows.
-@skip('Currently ignored, due to the non-triviality of installing PyTorch.')
-# @skip_unless_package('torch')
+@skip_unless_package('torch')
 def test_torch() -> None:
     '''
     Functional test validating that the :mod:`beartype` package raises *no*

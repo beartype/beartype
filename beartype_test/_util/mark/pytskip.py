@@ -343,7 +343,16 @@ def skip_unless_package(
     # Skip the decorated test or fixture unless the requisite dunder submodule
     # declared by this package satisfies these requirements.
     return skip_unless_module(
-        module_name=f'{package_name}.__init__',
+        module_name=package_name,
+
+        #FIXME: Fascinatingly, this submodule importation worked for *ALL*
+        #third-party packages except PyTorch. For unknown reasons, attempting to
+        #dynamically import the "torch.__init__" submodule raises:
+        #    NameError: name '_C' is not defined
+        #
+        #Thankfully, directly importing the package as is suffices. *shrug*
+        # module_name=f'{package_name}.__init__',
+
         minimum_version=minimum_version,
     )
 
