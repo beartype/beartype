@@ -163,9 +163,11 @@ exclude_patterns = [
 rst_prolog = '''
 .. tip::
 
-   `Feed the bear <GitHub Sponsors_>`__! `Animals wearing jewelry
-   <beadspace9_>`__! *What is even going on with this banner!?*
+   `Feed the bear! The bear is rifling around in the refuse pile outside.
+   <GitHub Sponsors_>` You feel sadness, then trepidation.
 '''
+   # `Feed the bear <GitHub Sponsors_>`__! `Animals wearing jewelry
+   # <beadspace9_>`__! *What is even going on with this banner!?*
 
 # String of arbitrary reStructuredText (reST) to be implicitly appended to the
 # contents of *ALL* reST documents rendered by this configuration, initialized

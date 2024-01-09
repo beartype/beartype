@@ -14,11 +14,10 @@ active Python process).
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from pytest import MonkeyPatch
 
 # ....................{ TESTS                              }....................
 def test_claw_extraprocess_executable_submodule(
-    monkeypatch: MonkeyPatch) -> None:
+    monkeypatch: 'MonkeyPatch') -> None:
     '''
     Test an arbitrary :mod:`beartype.claw` import hook against a data submodule
     in this test suite run as a script within a Python subprocess forked from
@@ -80,7 +79,8 @@ def test_claw_extraprocess_executable_submodule(
         raise
 
 
-def test_claw_extraprocess_executable_package(monkeypatch: MonkeyPatch) -> None:
+def test_claw_extraprocess_executable_package(
+    monkeypatch: 'MonkeyPatch') -> None:
     '''
     Test an arbitrary :mod:`beartype.claw` import hook against a data package
     in this test suite run as a script within a Python subprocess forked from

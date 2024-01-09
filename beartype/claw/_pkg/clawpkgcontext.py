@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype import path hook context managers** (i.e., data structure caching package names
-on behalf of the higher-level :func:`beartype.claw._clawmain` submodule, which
-beartype import path hooks internally created by that submodule subsequently
-lookup when deciding whether or not (and how) to decorate by
+Beartype **import path hook context managers** (i.e., data structure caching
+package names on behalf of the higher-level :func:`beartype.claw._clawmain`
+submodule, which beartype import path hooks internally created by that submodule
+subsequently lookup when deciding whether or not (and how) to decorate by
 :func:`beartype.beartype` the currently imported user-specific submodule).
 
 This private submodule is *not* intended for importation by downstream callers.
@@ -19,7 +19,7 @@ from beartype.claw._clawstate import (
     claw_state,
 )
 from beartype.claw._pkg.clawpkgtrie import (
-    is_packages_trie,
+    die_if_packages_trie,
     remove_beartype_pathhook_unless_packages_trie,
 )
 from beartype.typing import (
@@ -63,21 +63,21 @@ def beartyping(
         **Beartype configuration** (i.e., dataclass configuring the
         :mod:`beartype.beartype` decorator for *all* decoratable objects
         recursively decorated by the path hook added by this function).
-        Defaults to ``BeartypeConf()``, the default ``O(1)`` configuration.
+        Defaults to ``BeartypeConf()``, the default :math:`O(1)` configuration.
 
     Yields
-    ----------
+    ------
     None
         This context manager yields *no* objects.
 
     Raises
-    ----------
+    ------
     BeartypeClawHookException
         If the passed ``conf`` parameter is *not* a beartype configuration
-        (i.e., :class:`BeartypeConf` instance).
+        (i.e., :class:`.BeartypeConf` instance).
 
     See Also
-    ----------
+    --------
     :func:`beartype.claw.beartype_all`
         Arguably unsafer alternative to this function globalizing the effect of
         this function to *all* imports performed anywhere.
@@ -142,21 +142,22 @@ def packages_trie_cleared() -> Iterator[None]:
     This context manager is thread-safe.
 
     Caveats
-    ----------
+    -------
     **This context manager is intentionally hidden from users as a private
     attribute of this submodule** rather than publicly exported. Why? Because
     this context manager is *only* intended to be invoked by unit and
     integration tests in our test suite.
 
     Yields
-    ----------
+    ------
     None
         This context manager yields *no* objects.
     '''
 
-    # Assert that *NO* packages are still registered by a prior call to a
-    # beartype import hook.
-    assert not is_packages_trie()
+    # If one or more packages are still registered by a prior call to a beartype
+    # import hook, raise an exception.
+    die_if_packages_trie()
+    # Else, *NO* packages are still registered.
 
     # Perform the caller-defined body of the parent "with" statement.
     try:

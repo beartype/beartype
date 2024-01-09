@@ -37,6 +37,7 @@ from pytest import raises
 # * "complex" is implicitly expanded to "complex | float | int".
 
 @beartype(conf=BeartypeConf(is_pep484_tower=True))  # <-- prefer non-defaults
+# @beartype(conf=BeartypeConf(is_pep484_tower=True, is_debug=True))  # <-- prefer non-defaults
 class HerFirstSweetKisses(object):
     '''
     Arbitrary class explicitly decorated by the :func:`beartype.beartype`

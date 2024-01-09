@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.claw._importlib.clawimppath import remove_beartype_pathhook
+from beartype.roar import BeartypeClawHookException
 from beartype.typing import (
     Dict,
     Iterable,
@@ -80,13 +81,13 @@ class PackagesTrie(
     Let's do this, fam.
 
     Caveats
-    ----------
+    -------
     **This dictionary is only safely accessible in a thread-safe manner from
     within a** ``with claw_lock:`` **context manager.** Equivalently, this
     dictionary is *not* safely accessible outside that manager.
 
     Examples
-    ----------
+    --------
     An example instance of this dictionary hooked on submodules of the root
     ``package_z`` package, the child ``package_a.subpackage_k`` submodule, and
     the ``package_a.subpackage_b.subpackage_c`` and
@@ -183,6 +184,44 @@ class PackagesTrie(
             f')',
         ))
 
+# ....................{ RAISERS                            }....................
+def die_if_packages_trie() -> None:
+    '''
+    Raise an exception if one or more packages have been registered by a prior
+    call to the :func:`beartype.claw._pkg.clawpkghook.hook_packages` function.
+
+    Raises
+    ------
+    BeartypeClawHookException
+        If one or more packages have been registered by a prior call to the
+        :func:`beartype.claw._pkg.clawpkghook.hook_packages` function.
+    '''
+
+    # If one or more packages have been registered...
+    if is_packages_trie():
+        # Avoid circular import dependencies.
+        from beartype.claw._clawstate import claw_state
+
+        # If a global configuration has been added by a prior call to the public
+        # beartype.claw.beartype_all() function, raise an exception.
+        if claw_state.packages_trie.conf_if_hooked is not None:
+            raise BeartypeClawHookException(
+                f'Prior call to package-agnostic import hook '
+                f'beartype.claw.beartype_all() already registered all packages '
+                f'for type-checking under global beartype configuration '
+                f'{repr(claw_state.packages_trie.conf_if_hooked)}.'
+            )
+        # Else, or more package-specific configurations have been added by prior
+        # calls to public beartype.claw.beartype_*() functions. In this case,
+        # raise another exception.
+        else:
+            raise BeartypeClawHookException(
+                f'Prior call to package-specific import hook '
+                f'beartype.claw.beartype_*() already registered some packages '
+                f'for type-checking under beartype configurations:\n\t'
+                f'{repr(claw_state.packages_trie)}'
+            )
+
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
 def is_packages_trie() -> bool:
@@ -191,7 +230,7 @@ def is_packages_trie() -> bool:
     call to the :func:`beartype.claw._pkg.clawpkghook.hook_packages` function.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if one or more packages have been registered.
     '''
@@ -225,7 +264,7 @@ def get_package_conf_or_none(package_name: str) -> Optional[BeartypeConf]:
         Fully-qualified name of the package to be inspected.
 
     Returns
-    ----------
+    -------
     Optional[BeartypeConf]
         Either:
 
@@ -292,7 +331,7 @@ def iter_packages_trie(package_name: str) -> Iterable[PackagesTrie]:
         Fully-qualified name of the package to be inspected.
 
     Yields
-    ----------
+    ------
     PackagesTrie
         (Sub)package configuration (sub)trie describing the currently iterated
         transitive parent package of the package with this name.
@@ -350,7 +389,7 @@ def remove_beartype_pathhook_unless_packages_trie() -> None:
     to be added or one or more packages are still registered).
 
     Caveats
-    ----------
+    -------
     **This function is non-thread-safe.** For both simplicity and efficiency,
     the caller is expected to provide thread-safety through a higher-level
     locking primitive managed by the caller.

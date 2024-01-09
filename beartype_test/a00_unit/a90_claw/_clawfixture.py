@@ -33,7 +33,7 @@ def clean_claws() -> None:  # <-- heh. get it... clean *CLAWS*? it is punny.
     :mod:`beartype.claw` subpackage in the main codebase.
 
     See Also
-    ----------
+    --------
     :func:`beartype._util.path.utilpathremove.remove_package_bytecode_files`
         Further details.
     '''

@@ -45,7 +45,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #  callers to generate violation exceptions with arbitrary context-specific
 #  human-readable prefixes.
 #* Shift code currently residing in the BeartypeCall.reinit() method that
-#  adds "ARG_NAME_RAISE_EXCEPTION" to "func_wrapper_scope" into the
+#  adds "ARG_NAME_GET_VIOLATION" to "func_wrapper_scope" into the
 #  make_func_raiser_code() factory instead.
 #* Refactor the original lower-level
 #  beartype._decor.error.errormain.get_beartype_violation() getter in terms of

@@ -110,6 +110,14 @@ class BeartypeConf(object):
     _is_pep484_tower : bool
         :data:`True` only if enabling support for the :pep:`484`-compliant
         implicit numeric tower. See also the :meth:`__new__` method docstring.
+    _is_violation_param_warn : bool
+        :data:`True` only if :attr:`violation_param_type` is a warning subclass.
+        Note that this is stored only as a negligible optimization to avoid
+        needless recomputation of this boolean during code generation.
+    _is_violation_return_warn : bool
+        :data:`True` only if :attr:`violation_return_type` is a warning
+        subclass. Note that this is stored only as a negligible optimization to
+        avoid needless recomputation of this boolean during code generation.
     _is_warning_cls_on_decorator_exception_set : bool
         :data:`True` only if the caller explicitly passed the
         :attr:`_warning_cls_on_decorator_exception` parameter. See
@@ -173,6 +181,8 @@ class BeartypeConf(object):
         '_is_color',
         '_is_debug',
         '_is_pep484_tower',
+        '_is_violation_param_warn',
+        '_is_violation_return_warn',
         '_is_warning_cls_on_decorator_exception_set',
         '_repr',
         '_strategy',
@@ -192,6 +202,8 @@ class BeartypeConf(object):
         _is_color: Optional[bool]
         _is_debug: bool
         _is_pep484_tower: bool
+        _is_violation_param_warn: bool
+        _is_violation_return_warn: bool
         _is_warning_cls_on_decorator_exception_set: bool
         _repr: Optional[str]
         _strategy: BeartypeStrategy
@@ -677,6 +689,12 @@ class BeartypeConf(object):
             self._violation_verbosity = violation_verbosity
             self._warning_cls_on_decorator_exception = (
                 warning_cls_on_decorator_exception)
+
+            # Classify all remaining instance variables.
+            self._is_violation_param_warn = issubclass(
+                violation_param_type, Warning)
+            self._is_violation_return_warn = issubclass(
+                violation_return_type, Warning)
 
         # Return this configuration.
         return self

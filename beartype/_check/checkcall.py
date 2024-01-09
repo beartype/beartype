@@ -23,7 +23,7 @@ from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.checkmagic import (
     ARG_NAME_BEARTYPE_CONF,
     ARG_NAME_FUNC,
-    ARG_NAME_RAISE_EXCEPTION,
+    ARG_NAME_GET_VIOLATION,
 )
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._conf.confcls import BeartypeConf
@@ -405,7 +405,7 @@ class BeartypeCall(object):
         #lower-level code generating factory function that actually embeds the
         #call to this function (e.g.,
         #beartype._check._checkcode.make_func_code()).
-        self.func_wrapper_scope[ARG_NAME_RAISE_EXCEPTION] = (
+        self.func_wrapper_scope[ARG_NAME_GET_VIOLATION] = (
             get_beartype_violation)
 
         # Machine-readable name of the wrapper function to be generated.
