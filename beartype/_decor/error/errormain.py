@@ -487,8 +487,7 @@ def _init() -> None:
 
     # Map each union-specific sign to its corresponding getter.
     for pep_sign_type_union in HINT_SIGNS_UNION:
-        HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_type_union] = (
-            find_cause_union)
+        HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_type_union] = find_cause_union
 
     # Map each sign validated by a unique getter to that getter *AFTER* all
     # other mappings. These sign-specific getters are intended to replace all

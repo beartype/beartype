@@ -94,6 +94,8 @@ from beartype.roar._roarexc import (
     BeartypeHintOverridesException as BeartypeHintOverridesException,
     BeartypePepException as BeartypePepException,
     BeartypePep563Exception as BeartypePep563Exception,
+    BeartypePlugException as BeartypePlugException,
+    BeartypePlugInstancecheckStrException as BeartypePlugInstancecheckStrException,
     BeartypeValeException as BeartypeValeException,
     BeartypeValeSubscriptionException as BeartypeValeSubscriptionException,
     BeartypeValeValidationException as BeartypeValeValidationException,

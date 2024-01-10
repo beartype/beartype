@@ -85,13 +85,13 @@ def die_unless_func_python(
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
          If the passed callable is C-based.
 
     See Also
-    ----------
-    :func:`is_func_python`
+    --------
+    :func:`.is_func_python`
         Further details.
     '''
 
@@ -143,13 +143,13 @@ def die_unless_func_classmethod(
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
          If the passed object is *not* a class method descriptor.
 
     See Also
-    ----------
-    :func:`is_func_classmethod`
+    --------
+    :func:`.is_func_classmethod`
         Further details.
     '''
 
@@ -197,13 +197,13 @@ def die_unless_func_property(
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
          If the passed object is *not* a property method descriptor.
 
     See Also
-    ----------
-    :func:`is_func_property`
+    --------
+    :func:`.is_func_property`
         Further details.
     '''
 
@@ -252,13 +252,13 @@ def die_unless_func_staticmethod(
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
          If the passed object is *not* a static method descriptor.
 
     See Also
     ----------
-    :func:`is_func_staticmethod`
+    :func:`.is_func_staticmethod`
         Further details.
     '''
 
@@ -291,7 +291,7 @@ def is_func_lambda(func: Any) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a pure-Python lambda function.
     '''
@@ -327,7 +327,7 @@ def is_func_python(func: object) -> TypeGuard[Callable]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a pure-Python callable.
     '''
@@ -347,7 +347,7 @@ def is_func_classmethod(func: Any) -> TypeGuard[classmethod]:
     instance attributes).
 
     Caveats
-    ----------
+    -------
     Class method objects are *only* directly accessible via the low-level
     :attr:`object.__dict__` dictionary. When accessed as class or instance
     attributes, class methods reduce to instances of the standard
@@ -362,7 +362,7 @@ def is_func_classmethod(func: Any) -> TypeGuard[classmethod]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a C-based unbound class method
         descriptor.
@@ -381,7 +381,7 @@ def is_func_property(func: Any) -> TypeGuard[property]:
     than instance attribute).
 
     Caveats
-    ----------
+    -------
     Property objects are directly accessible both as class attributes *and* via
     the low-level :attr:`object.__dict__` dictionary. Property objects are *not*
     accessible as instance attributes, for hopefully obvious reasons.
@@ -395,7 +395,7 @@ def is_func_property(func: Any) -> TypeGuard[property]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a pure-Python property.
     '''
@@ -414,7 +414,7 @@ def is_func_staticmethod(func: Any) -> TypeGuard[staticmethod]:
     attributes).
 
     Caveats
-    ----------
+    -------
     Static method objects are *only* directly accessible via the low-level
     :attr:`object.__dict__` dictionary. When accessed as class or instance
     attributes, static methods reduce to instances of the standard
@@ -429,7 +429,7 @@ def is_func_staticmethod(func: Any) -> TypeGuard[staticmethod]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a pure-Python static method.
     '''
@@ -453,12 +453,12 @@ def is_func_async(func: object) -> TypeGuard[Callable]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is an asynchronous callable.
 
     See Also
-    ----------
+    --------
     :func:`inspect.iscoroutinefunction`
     :func:`inspect.isasyncgenfunction`
         Stdlib functions strongly inspiring this implementation.
@@ -515,7 +515,7 @@ def is_func_coro(func: object) -> TypeGuard[Callable]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is an asynchronous coroutine factory.
 
@@ -553,7 +553,7 @@ def is_func_async_generator(func: object) -> TypeGuard[Callable]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is an asynchronous generator.
 
@@ -590,7 +590,7 @@ def is_func_sync_generator(func: object) -> TypeGuard[Callable]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a synchronous generator.
 
@@ -655,7 +655,7 @@ def is_func_nested(func: Callable) -> bool:
         Callable to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this callable is nested.
     '''
@@ -728,7 +728,7 @@ def is_func_closure(func: Any) -> TypeGuard[Callable]:
         Callable to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this callable is a closure.
     '''
@@ -760,7 +760,7 @@ def is_func_wrapper(func: Any) -> TypeGuard[Callable]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a callable wrapper.
     '''
@@ -793,7 +793,7 @@ def is_func_wrapper_isomorphic(func: Any) -> TypeGuard[Callable]:
     This tester is memoized for efficiency.
 
     Caveats
-    ----------
+    -------
     **This tester is merely a heuristic** -- albeit a reasonably robust
     heuristic likely to succeed in almost all real-world use cases. Nonetheless,
     this tester *could* return false positives and negatives in edge cases.
@@ -804,7 +804,7 @@ def is_func_wrapper_isomorphic(func: Any) -> TypeGuard[Callable]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is an isomorphic decorator wrapper.
     '''

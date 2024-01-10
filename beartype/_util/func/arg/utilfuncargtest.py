@@ -37,11 +37,12 @@ def die_unless_func_args_len_flexible_equal(
     # Optional parameters.
     is_unwrap: bool = True,
     exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
 ) -> None:
     '''
-    Raise an exception unless the passed pure-Python callable accepts the
-    passed number of **flexible parameters** (i.e., parameters passable as
-    either positional or keyword arguments).
+    Raise an exception unless the passed pure-Python callable accepts the passed
+    number of **flexible parameters** (i.e., parameters passable as either
+    positional or keyword arguments).
 
     Parameters
     ----------
@@ -50,25 +51,27 @@ def die_unless_func_args_len_flexible_equal(
     func_args_len_flexible : int
         Number of flexible parameters to validate this callable as accepting.
     is_unwrap: bool, optional
-        ``True`` only if this validator implicitly calls the
-        :func:`unwrap_func_all_isomorphic` function to unwrap this possibly higher-level
-        wrapper into its possibly lowest-level wrappee *before* returning the
-        code object of that wrappee. Note that doing so incurs worst-case time
-        complexity ``O(n)`` for ``n`` the number of lower-level wrappees
-        wrapped by this wrapper. Defaults to ``True`` for robustness. Why?
-        Because this validator *must* always introspect lowest-level wrappees
-        rather than higher-level wrappers. The latter typically do *not*
-        accurately replicate the signatures of the former. In particular,
-        decorator wrappers typically wrap decorated callables with variadic
-        positional and keyword parameters (e.g., ``def _decorator_wrapper(*args,
-        **kwargs)``). Since neither constitutes a flexible parameter, this
-        validator raises an exception when passed such a wrapper with this
-        boolean set to ``False``. For this reason, only set this boolean to
-        ``False`` if you pretend to know what you're doing.
+        :data:`True` only if this validator implicitly calls the
+        :func:`unwrap_func_all_isomorphic` function to unwrap this possibly
+        higher-level wrapper into its possibly lowest-level wrappee *before*
+        returning the code object of that wrappee. Note that doing so incurs
+        worst-case time complexity :math:`O(n)` for :math:`n` the number of
+        lower-level wrappees wrapped by this wrapper. Defaults to :data:`True`
+        for robustness. Why? Because this validator *must* always introspect
+        lowest-level wrappees rather than higher-level wrappers. The latter
+        typically do *not* accurately replicate the signatures of the former. In
+        particular, decorator wrappers typically wrap decorated callables with
+        variadic positional and keyword parameters (e.g., ``def
+        _decorator_wrapper(*args, **kwargs)``). Since neither constitutes a
+        flexible parameter, this validator raises an exception when passed such
+        a wrapper with this boolean set to :data:`False`. Only set this boolean
+        to :data:`False` if you pretend to know what you're doing.
     exception_cls : type, optional
-        Type of exception to be raised if this callable is neither a
-        pure-Python function nor method. Defaults to
-        :class:`_BeartypeUtilCallableException`.
+        Type of exception to be raised. Defaults to
+        :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing this exception message. Defaults to the
+        empty string.
 
     Raises
     ------
@@ -91,6 +94,7 @@ def die_unless_func_args_len_flexible_equal(
         func=func,
         is_unwrap=is_unwrap,
         exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
     )
 
     # If this callable accepts more or less than this number of flexible
@@ -98,9 +102,15 @@ def die_unless_func_args_len_flexible_equal(
     if func_args_len_flexible_actual != func_args_len_flexible:
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not class.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
         raise exception_cls(
-            f'Callable {repr(func)} flexible argument count '
-            f'{func_args_len_flexible_actual} != {func_args_len_flexible}.'
+            f'{exception_prefix}callable {repr(func)} flexible argument count '
+            f'{func_args_len_flexible_actual} != {func_args_len_flexible} '
+            f'(i.e., {repr(func)} accepts {func_args_len_flexible_actual} '
+            f'rather than {func_args_len_flexible} positional and/or keyword '
+            f'parameters).'
         )
     # Else, this callable accepts exactly this number of flexible parameters.
 
@@ -170,7 +180,7 @@ def is_func_argless(
         Pure-Python callable, frame, or code object to be inspected.
     exception_cls : type, optional
         Type of exception to be raised in the event of fatal error. Defaults to
-        :class:`_BeartypeUtilCallableException`.
+        :class:`._BeartypeUtilCallableException`.
 
     Returns
     -------

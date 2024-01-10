@@ -89,6 +89,7 @@ def get_func_args_flexible_len(
     # Optional parameters.
     is_unwrap: bool = True,
     exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
 ) -> int:
     '''
     Number of **flexible parameters** (i.e., parameters passable as either
@@ -107,6 +108,9 @@ def get_func_args_flexible_len(
     exception_cls : type, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the message of any exception raised in
+        the event of a fatal error. Defaults to the empty string.
 
     Returns
     -------
@@ -124,6 +128,7 @@ def get_func_args_flexible_len(
         func=func,
         is_unwrap=is_unwrap,
         exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
     )
 
     # Return the number of flexible parameters accepted by this callable.

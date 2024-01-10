@@ -967,6 +967,34 @@ class BeartypeHintOverridesException(BeartypeKindFrozenDictException):
 
     pass
 
+# ....................{ API ~ plug                         }....................
+class BeartypePlugException(BeartypeException):
+    '''
+    Abstract base class of all **beartype plugin exceptions.**
+
+    Instances of subclasses of this exception are raised at various times from
+    functionality utilizing :mod:`beartype`-specific plugin APIs standardized by
+    the :mod:`beartype.plug` subpackage, typically on detecting invalid usage of
+    a :mod:`beartype`-specific plugin API within a third-party Python package or
+    module.
+    '''
+
+    pass
+
+
+class BeartypePlugInstancecheckStrException(BeartypePlugException):
+    '''
+    **Beartype** ``__instancecheck_str__()`` **exception.**
+
+    This exception is raised at various times from functionality utilizing the
+    :mod:`beartype`-specific ``__instancecheck_str__()`` plugin API (i.e., a
+    :mod:`beartype`-specific dunder method defined on metaclasses of classes to
+    return human-readable substrings describing the failure of arbitrary objects
+    to satisfy those classes).
+    '''
+
+    pass
+
 # ....................{ API ~ vale                         }....................
 class BeartypeValeException(BeartypeException):
     '''

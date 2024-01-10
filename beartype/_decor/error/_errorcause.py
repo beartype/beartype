@@ -89,7 +89,7 @@ class ViolationCause(object):
         If this pith either:
 
         * Violates this hint, a human-readable string describing this violation.
-        * Satisfies this hint, ``None``.
+        * Satisfies this hint, :data:`None`.
     cls_stack : TypeStack, optional
         **Type stack** (i.e., either a tuple of the one or more
         :func:`beartype.beartype`-decorated classes lexically containing the
@@ -133,9 +133,6 @@ class ViolationCause(object):
         such integer). See the same parameter accepted by the higher-level
         :func:`beartype._decor.error.errormain.get_beartype_violation`
         function for further details.
-
-    Attributes (Private)
-    ----------
     _hint : Any
         Type hint to validate this object against.
     '''
@@ -400,15 +397,15 @@ class ViolationCause(object):
             # origin types.
             cause_finder = find_cause_type_instance_origin
         # Else, this hint is either subscripted *OR* unsubscripted but not
-        # originating from a standard type origin. In either case, this hint
-        # was type-checked deeply.
+        # originating from a standard type origin. In either case, this hint was
+        # type-checked deeply.
         else:
             # Avoid circular import dependencies.
             from beartype._decor.error.errormain import (
                 HINT_SIGN_TO_GET_CAUSE_FUNC)
 
-            # Getter function returning the desired string for this attribute
-            # if any *OR* "None" otherwise.
+            # Getter function returning the desired string for this attribute if
+            # any *OR* "None" otherwise.
             cause_finder = HINT_SIGN_TO_GET_CAUSE_FUNC.get(
                 self.hint_sign, None)  # type: ignore[arg-type]
 

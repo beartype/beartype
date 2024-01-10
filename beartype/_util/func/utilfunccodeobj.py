@@ -47,6 +47,7 @@ def get_func_codeobj(
     # Optional parameters.
     is_unwrap: bool = False,
     exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
 ) -> CodeType:
     '''
     **Code object** (i.e., instance of the :class:`CodeType` type) underlying
@@ -103,6 +104,9 @@ def get_func_codeobj(
     exception_cls : TypeException, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the message of any exception raised in
+        the event of a fatal error. Defaults to the empty string.
 
     Returns
     ----------
@@ -125,7 +129,11 @@ def get_func_codeobj(
         from beartype._util.func.utilfunctest import die_unless_func_python
 
         # Raise an exception.
-        die_unless_func_python(func=func, exception_cls=exception_cls)
+        die_unless_func_python(
+            func=func,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        )
     # Else, this callable is pure-Python and this code object exists.
 
     # Return this code object.
