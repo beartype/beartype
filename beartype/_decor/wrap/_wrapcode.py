@@ -223,12 +223,12 @@ def make_func_wrapper_code_violation(
 
     # If either...
     if (
-        # A parameter is being type-checked and this configuration requests that
-        # non-fatal warnings being emitted for invalid parameters *OR*...
-        (is_param and conf._is_violation_param_warn) or
-        # A return is being type-checked and this configuration requests that
-        # non-fatal warnings being emitted for invalid returns...
-        (is_param and conf._is_violation_return_warn)
+        # This configuration requests that non-fatal warnings being emitted for
+        # invalid parameters and a parameter is being type-checked *OR*...
+        (conf._is_violation_param_warn and is_param) or
+        # This configuration requests that non-fatal warnings being emitted for
+        # invalid returns and a return is being type-checked *OR*...
+        (conf._is_violation_return_warn and not is_param)
     ):
         # Emit a non-fatal warning.
         func_wrapper_code_violation = CODE_HINT_VIOLATION_WARN

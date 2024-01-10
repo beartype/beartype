@@ -29,6 +29,7 @@ def test_decor_conf() -> None:
     parameter agnostic of parameters instantiating that configuration.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import (
         BeartypeConf,
@@ -38,6 +39,7 @@ def test_decor_conf() -> None:
     from beartype.roar import BeartypeConfException
     from pytest import raises
 
+    # ....................{ PASS                           }....................
     # Assert that @beartype in configuration mode returns the default private
     # decorator when repeatedly invoked with the default configuration.
     assert (
@@ -64,6 +66,7 @@ def test_decor_conf() -> None:
         ))
     )
 
+    # ....................{ FAIL                           }....................
     # Assert that @beartype raises the expected exception when passed a "conf"
     # parameter that is *NOT* a configuration.
     with raises(BeartypeConfException):
@@ -242,4 +245,3 @@ def _earthquake(and_fiery_flood: int, and_hurricane: int) -> bool:
     '''
 
     return len(and_fiery_flood) % and_hurricane == 0
-

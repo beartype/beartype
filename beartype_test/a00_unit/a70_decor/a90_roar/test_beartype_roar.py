@@ -16,8 +16,8 @@ to exceptions raised by the :mod:`beartype._decor.error.errormain` submodule.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ decorator                  }....................
-def test_beartypecallhintviolation() -> None:
+# ....................{ TESTS                              }....................
+def test_decor_violation_culprits() -> None:
     '''
     Test the :func:`beartype.beartype` decorator with respect to **type-checking
     violations** (i.e., :exc:`beartype.roar.BeartypeCallHintViolation`
@@ -126,3 +126,134 @@ def test_beartypecallhintviolation() -> None:
     assert isinstance(leaf_culprit, str)
     assert root_culprit == repr(DO_NOT_GO_THERE_SPIRIT_BEAR)
     assert leaf_culprit == repr(YOU_WENT_THERE_SPIRIT_BEAR)
+
+
+def test_decor_violation_types() -> None:
+    '''
+    Test the
+    :func:`beartype.beartype` decorator with respect to the
+    :attr:`beartype.BeartypeConf.violation_param_type` and
+    :attr:`beartype.BeartypeConf.violation_return_type` configuration
+    parameters.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype import (
+        BeartypeConf,
+        beartype,
+    )
+    from beartype.typing import (
+        List,
+        Tuple,
+        Union,
+    )
+    from pytest import (
+        raises,
+        warns,
+    )
+
+    # ..................{ CLASSES                            }..................
+    class TheVacantWoods(Exception):
+        '''
+        Arbitrary exception subclass.
+        '''
+
+        pass
+
+
+    class SpreadRoundHim(Exception):
+        '''
+        Arbitrary exception subclass.
+        '''
+
+        pass
+
+
+    class LowInTheWest(UserWarning):
+        '''
+        Arbitrary warning subclass.
+        '''
+
+        pass
+
+
+    class WhereHeStood(UserWarning):
+        '''
+        Arbitrary warning subclass.
+        '''
+
+        pass
+
+    # ..................{ CALLABLES                          }..................
+    def the_clear_and(
+        garish_hills: List[str], the_distinct_valley) -> (
+        Union[int, Tuple[str, ...]]):
+        '''
+        Arbitrary callable to be decorated by the :func:`beartype.beartype`
+        decorator, configured in various ways below.
+        '''
+
+        return the_distinct_valley
+
+    # Beartype decorator configured to raise different types of user-defined
+    # exceptions on invalid parameters and returns.
+    beartype_raise = beartype(conf=BeartypeConf(
+        violation_param_type=TheVacantWoods,
+        violation_return_type=SpreadRoundHim,
+    ))
+
+    # Beartype decorator configured to emit different types of user-defined
+    # warnings on invalid parameters and returns.
+    beartype_warn = beartype(conf=BeartypeConf(
+        violation_param_type=LowInTheWest,
+        violation_return_type=WhereHeStood,
+        # is_debug=True,
+    ))
+
+    # Above callable decorated with type-checking raising custom exceptions.
+    the_clear_and_raise = beartype_raise(the_clear_and)
+
+    # Above callable decorated with type-checking emitting custom warnings.
+    the_clear_and_warn = beartype_warn(the_clear_and)
+
+    # ..................{ CONSTANTS                          }..................
+    # Arbitrary list of strings to be passed to these callables.
+    WHITHER_HAVE_FLED = [
+        'Low in the west, the clear and garish hills,',
+        'The distinct valley and the vacant woods,',
+    ]
+
+    # Arbitrary tuple of strings to be passed to these callables.
+    THE_HUES_OF_HEAVEN = (
+        'Spread round him where he stood. Whither have fled',
+        'The hues of heaven that canopied his bower',
+    )
+
+    # ..................{ PASS                               }..................
+    # Assert that these decorated callables neither raise exceptions nor emit
+    # warnings when passed valid parameters.
+    assert the_clear_and_raise(WHITHER_HAVE_FLED, THE_HUES_OF_HEAVEN) is (
+        THE_HUES_OF_HEAVEN)
+    assert the_clear_and_warn(WHITHER_HAVE_FLED, THE_HUES_OF_HEAVEN) is (
+        THE_HUES_OF_HEAVEN)
+
+    # Assert that this decorated callable raises the expected exception that
+    # this callable was configured to raise on receiving an invalid parameter.
+    with raises(TheVacantWoods):
+        the_clear_and_raise(THE_HUES_OF_HEAVEN, WHITHER_HAVE_FLED)
+
+    # Assert that this decorated callable raises the expected exception that
+    # this callable was configured to raise on returning an invalid return.
+    with raises(SpreadRoundHim):
+        the_clear_and_raise(WHITHER_HAVE_FLED, WHITHER_HAVE_FLED)
+
+    # Assert that this decorated callable emits the expected warning that
+    # this callable was configured to emit on receiving an invalid parameter.
+    with warns(LowInTheWest):
+        the_clear_and_warn(THE_HUES_OF_HEAVEN, THE_HUES_OF_HEAVEN)
+
+    # Assert that this decorated callable emits the expected warning that
+    # this callable was configured to emit on returning an invalid return.
+    with warns(WhereHeStood):
+        the_clear_and_warn(WHITHER_HAVE_FLED, WHITHER_HAVE_FLED)

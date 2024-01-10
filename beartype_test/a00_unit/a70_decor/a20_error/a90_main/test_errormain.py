@@ -211,7 +211,7 @@ def test_get_beartype_violation_conf_is_color() -> None:
     # standard output is attached to an interactive terminal.
     assert is_str_ansi(str(violation)) is is_stdout_terminal()
 
-
+# ....................{ TESTS ~ conf : violation_*         }....................
 def test_get_beartype_violation_conf_violation_types() -> None:
     '''
     Test the
