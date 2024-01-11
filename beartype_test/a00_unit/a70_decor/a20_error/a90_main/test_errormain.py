@@ -20,8 +20,7 @@ This submodule unit tests the public API of the private
 def test_get_beartype_violation() -> None:
     '''
     Test the
-    :func:`beartype._decor.error.errormain.get_beartype_violation`
-    function.
+    :func:`beartype._decor.error.errormain.get_beartype_violation` getter.
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -150,9 +149,8 @@ def test_get_beartype_violation() -> None:
 def test_get_beartype_violation_conf_is_color() -> None:
     '''
     Test the
-    :func:`beartype._decor.error.errormain.get_beartype_violation`
-    function with respect to the :attr:`beartype.BeartypeConf.is_color`
-    configuration parameter.
+    :func:`beartype._decor.error.errormain.get_beartype_violation` getter with
+    respect to the :attr:`beartype.BeartypeConf.is_color` option.
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -215,11 +213,10 @@ def test_get_beartype_violation_conf_is_color() -> None:
 def test_get_beartype_violation_conf_violation_types() -> None:
     '''
     Test the
-    :func:`beartype._decor.error.errormain.get_beartype_violation`
-    function with respect to the
+    :func:`beartype._decor.error.errormain.get_beartype_violation` getter with
+    respect to the
     :attr:`beartype.BeartypeConf.violation_param_type` and
-    :attr:`beartype.BeartypeConf.violation_return_type` configuration
-    parameters.
+    :attr:`beartype.BeartypeConf.violation_return_type` options.
     '''
 
     # ..................{ IMPORTS                            }..................
@@ -287,9 +284,9 @@ def test_get_beartype_violation_conf_violation_types() -> None:
 def test_get_beartype_violation_conf_violation_verbosity() -> None:
     '''
     Test the
-    :func:`beartype._decor.error.errormain.get_beartype_violation`
-    function with respect to the
-    :attr:`beartype.BeartypeConf.violation_verbosity` configuration parameter.
+    :func:`beartype._decor.error.errormain.get_beartype_violation` getter with
+    respect to the
+    :attr:`beartype.BeartypeConf.violation_verbosity` option.
     '''
 
     # ..................{ IMPORTS                            }..................
