@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`593`-compliant **type hint violation describers** (i.e.,
+Beartype :pep:`593`-compliant **type hint violation describers** (i.e.,
 functions returning human-readable strings explaining violations of
 :pep:`593`-compliant :attr:`typing.Annotated` type hints).
 
@@ -38,7 +38,7 @@ def find_cause_annotated(cause: ViolationCause) -> ViolationCause:
         Input cause providing this data.
 
     Returns
-    ----------
+    -------
     ViolationCause
         Output cause type-checking this data.
     '''

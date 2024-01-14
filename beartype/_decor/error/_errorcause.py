@@ -286,7 +286,7 @@ class ViolationCause(object):
         satisfies or violates the type hint of this input cause.
 
         Design
-        ----------
+        ------
         This method is intentionally generalized to support objects both
         satisfying and *not* satisfying hints as equally valid use cases. While
         the parent
@@ -317,12 +317,12 @@ class ViolationCause(object):
         human-readable cause.
 
         Returns
-        ----------
+        -------
         ViolationCause
             Output cause type-checking this pith against this type hint.
 
         Raises
-        ----------
+        ------
         _BeartypeCallHintPepRaiseException
             If this type hint is either:
 
@@ -437,19 +437,19 @@ class ViolationCause(object):
         this object (e.g., ``hint``, ``pith``).
 
         Returns
-        ----------
+        -------
         ViolationCause
             Shallow copy of this object such that each keyword argument
             overwrites the instance variable of the same name in this copy.
 
         Raises
-        ----------
+        ------
         _BeartypeCallHintPepRaiseException
             If the name of any passed keyword argument is *not* the name of an
             existing instance variable of this object.
 
         Examples
-        ----------
+        --------
             >>> sleuth = ViolationCause(
             ...     pith=[42,]
             ...     hint=typing.List[int],

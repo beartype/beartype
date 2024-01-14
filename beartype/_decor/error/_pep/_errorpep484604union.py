@@ -39,7 +39,7 @@ def find_cause_union(cause: ViolationCause) -> ViolationCause:
         Input cause providing this data.
 
     Returns
-    ----------
+    -------
     ViolationCause
         Output cause type-checking this data.
     '''
@@ -52,15 +52,22 @@ def find_cause_union(cause: ViolationCause) -> ViolationCause:
     # demarcate child from parent causes in multiline strings.
     CAUSE_INDENT_CHILD = cause.cause_indent + '  '
 
+    # List of all human-readable strings describing the failure of this pith to
+    # satisfy each of these child hints.
+    cause_strs = []
+
     # Subset of all classes shallowly associated with these child hints (i.e.,
     # by being either these child hints in the case of non-"typing" classes
     # *OR* the classes originating these child hints in the case of
     # PEP-compliant type hints) that this pith fails to shallowly satisfy.
     hint_types_violated = set()
 
-    # List of all human-readable strings describing the failure of this pith to
-    # satisfy each of these child hints.
-    cause_strs = []
+    # Truncated object representation of this pith.
+    pith_repr = represent_pith(cause.pith)
+
+    # 0-based index of the first non-whitespace character following this
+    # representation in violation causes collected below. Look. Just accept it.
+    PITH_REPR_INDEX = len(pith_repr) + 1
 
     # For each subscripted argument of this union...
     for hint_child in cause.hint_childs:
@@ -96,8 +103,7 @@ def find_cause_union(cause: ViolationCause) -> ViolationCause:
             # Child hint output cause to be returned, type-checking only whether
             # this pith deeply satisfies this child hint.
             cause_child = cause.permute(
-                hint=hint_child,
-                cause_indent=CAUSE_INDENT_CHILD,
+                hint=hint_child, cause_indent=CAUSE_INDENT_CHILD,
             ).find_cause()
 
             # If this pith deeply satisfies this child hint, return this cause
@@ -107,9 +113,30 @@ def find_cause_union(cause: ViolationCause) -> ViolationCause:
                 return cause
             # Else, this pith deeply violates this child hint.
 
+            # Cause of this violation.
+            cause_str = cause_child.cause_str_or_none
+
+            # If this cause is prefixed by the truncated object representation
+            # of this pith...
+            #
+            # Note that this should *ALWAYS* be the case. Nonetheless, let's
+            # *NOT* assume anything to avoid exploding everything.
+            if cause_str.startswith(pith_repr):
+                # Strip the prefixing
+                # representation of this pith from this cause (e.g., the prefix
+                # "MuhClass <object MuhClass at 0x7fbc277a2cf0>" from the cause
+                # 'MuhClass <object MuhClass at 0x7fbc277a2cf0> not instance of
+                # <protocol "muh_package.MuhProtocol">'). Why? Because the block
+                # of text preceding the bulleted list containing this cause is
+                # already redundantly prefixed by this representation.
+                cause_str = cause_str[PITH_REPR_INDEX:]
+            # Else, this cause is *NOT* prefixed by the truncated object
+            # representation of this pith. In this case, silently accept that
+            # Bad Things have happened and that we should move to a Bad Future.
+
             # Append the cause of this violation as a bullet-prefixed line to
             # the running list of these lines.
-            cause_strs.append(cause_child.cause_str_or_none)
+            cause_strs.append(cause_str)
         # Else, this child hint is PEP-noncompliant. In this case...
         else:
             # Assert this child hint to be a non-"typing" class. Note that
@@ -175,9 +202,6 @@ def find_cause_union(cause: ViolationCause) -> ViolationCause:
             f'{repr(cause.hint)} failure causes unknown.'
         )
     # Else, prior logic appended one or more strings describing these failures.
-
-    # Truncated object representation of this pith.
-    pith_repr = represent_pith(cause.pith)
 
     # Output cause to be returned, permuted from this input cause such that the
     # output cause justification is either...

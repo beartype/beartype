@@ -239,8 +239,8 @@ def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
         if not is_hint_ignorable(hint_child):
             # Arbitrary iterator satisfying the enumerate() protocol, yielding
             # zero or more 2-tuples of the form "(item_index, item)", where:
-            # * "item" is an arbitrary item of this sequence.
             # * "item_index" is the 0-based index of this item.
+            # * "item" is an arbitrary item of this sequence.
             pith_enumerator = None
 
             # If this sequence was indexed by the parent @beartype-generated

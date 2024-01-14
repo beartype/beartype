@@ -163,14 +163,13 @@ def iter_hint_pep695_forwardrefs(
         If this type hint is *not* a PEP 695-compliant type alias.
     '''
 
-    # If this type hint is *NOT* a PEP 695-compliant type alias, raise an
-    # exception.
+    # If this hint is *NOT* a PEP 695-compliant type alias, raise an exception.
     if not isinstance(hint, HintPep695Type):
         raise BeartypeDecorHintPep695Exception(
             f'{exception_prefix}type hint {repr(hint)} '
             f'not PEP 695 type alias.'
         )
-    # Else, this type hint is a PEP 695-compliant type alias.
+    # Else, this hint is a PEP 695-compliant type alias.
 
     # Unqualified basename of the previous undeclared attribute in this alias.
     hint_ref_name_prev: Optional[str] = None

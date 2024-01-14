@@ -88,15 +88,6 @@ from beartype._data.hint.datahinttyping import (
     TypeStack,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignAnnotated,
-    HintSignForwardRef,
-    HintSignGeneric,
-    HintSignLiteral,
-    HintSignNoReturn,
-    HintSignTuple,
-    HintSignType,
-)
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
@@ -453,6 +444,15 @@ def _init() -> None:
     '''
 
     # Defer heavyweight imports.
+    from beartype._data.hint.pep.sign.datapepsigns import (
+        HintSignAnnotated,
+        HintSignForwardRef,
+        HintSignGeneric,
+        HintSignLiteral,
+        HintSignNoReturn,
+        HintSignTuple,
+        HintSignType,
+    )
     from beartype._decor.error._errortype import (
         find_cause_instance_type_forwardref,
         find_cause_subclass_type,
@@ -460,7 +460,7 @@ def _init() -> None:
     )
     from beartype._decor.error._pep._pep484._errornoreturn import (
         find_cause_noreturn)
-    from beartype._decor.error._pep._pep484._errorunion import (
+    from beartype._decor.error._pep._errorpep484604union import (
         find_cause_union)
     from beartype._decor.error._pep._pep484585._errorgeneric import (
         find_cause_generic)
