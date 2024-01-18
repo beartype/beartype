@@ -10,25 +10,6 @@ against PEP-compliant type hints at *any* time during the lifecycle of the
 active Python process).
 '''
 
-# ....................{ TODO                               }....................
-#FIXME: Re-enable type-narrowing (i.e., "typing.TypeGuard[...]") for both the
-#is_bearable() function defined below *AND* TypeHint.is_bearable() method
-#defined elsewhere *AFTER* resolving this effectively still-open issue:
-#    https://github.com/beartype/beartype/issues/255
-#
-#Note that doing so will require upstream static type-checkers to explicitly
-#support this use case, which they appear loathe to do. In short, this is
-#unlikely to work this decade -- possibly, this century. The future depends upon
-#us and we failed it, everybody! *gurgles*
-#FIXME: Consider validating the signatures of both the is_bearable() function
-#defined below *AND* TypeHint.is_bearable() method defined elsewhere to have
-#returns annotated as "TypeGuard[T]" from the perspective of static
-#type-checking. Sadly, doing so is extremely non-trivial -- requiring usage of a
-#new mandatory "pytest-mypy-plugins" test-time dependency, which itself requires
-#definition of mypy-specific cases in a new supplementary top-level directory.
-#Honestly, it's all a bit insane. We just wish we could call mypy's fake
-#reveal_type() function at runtime, honestly. *sigh*
-
 # ....................{ IMPORTS                            }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # CAUTION: This submodule intentionally does *not* import the
@@ -37,25 +18,22 @@ active Python process).
 # whereas the API defined by this submodule is expected to unconditionally
 # operate as expected regardless of the current context.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.door._doortyping import (
-    # T,
-    BeartypeTypeChecker,
-)
-from beartype.roar import (
-    BeartypeCallHintReturnViolation,
-    BeartypeDoorHintViolation,
-)
+from beartype.door._doortyping import BeartypeTypeChecker
+from beartype.roar import BeartypeDoorHintViolation
 from beartype.roar._roarexc import _BeartypeDoorTextException
-from beartype._check.checkmake import make_func_tester
+from beartype._check.checkmake import (
+    # make_func_raiser,
+    make_func_tester,
+)
 from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
-# from beartype._data.hint.datahintfactory import TypeGuard
 from beartype._decor.decorcache import beartype
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerrorraise import reraise_exception_placeholder
 from beartype._util.hint.utilhinttest import die_unless_hint
+from warnings import warn
 
 # ....................{ VALIDATORS                         }....................
 def die_if_unbearable(
@@ -83,7 +61,7 @@ def die_if_unbearable(
         to ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
 
     Raises
-    ----------
+    ------
     beartype.roar.BeartypeDecorHintNonpepException
         If this hint is *not* PEP-compliant (i.e., complies with *no* Python
         Enhancement Proposals (PEPs) currently supported by :mod:`beartype`).
@@ -93,7 +71,7 @@ def die_if_unbearable(
         If this object violates this hint.
 
     Examples
-    ----------
+    --------
         >>> from beartype.door import die_if_unbearable
         >>> die_if_unbearable(['And', 'what', 'rough', 'beast,'], list[str])
         >>> die_if_unbearable(['its', 'hour', 'come', 'round'], list[int])
@@ -108,55 +86,98 @@ def die_if_unbearable(
     # this closure violates the hint passed to this parent tester.
     _check_object = _get_object_checker(hint, conf)
 
+    #FIXME: ...yeah. This is awful and absolutely needs to go as soon as
+    #possible. Roadblocks to doing so, however, include:
+    #* We'll almost certainly want to define a new
+    #  "BeartypeConf.violation_door_type: Type[Exception] =
+    #  beartype.roar.BeartypeDoorHintViolation" option governing which exception
+    #  this raises.
+    #* Once we've gone that far, though, *EVERYBODY* (including us) will then
+    #  want us to define a new
+    #  "BeartypeConf.violation_type: Optional[Type[Exception]] = None" option
+    #  conveniently controlling the three distinct
+    #  "violation_door_type", "violation_param_type", and
+    #  "violation_return_type" options. *sigh*
+    #* To preserve backward compatibility, if we notice that a user has
+    #  explicitly passed "violation_param_type" and "violation_return_type" but
+    #  *NOT* "violation_door_type", we can then emit a non-fatal warning
+    #  encouraging them to instead pass "violation_type".
+    #FIXME: *UGH*. This fails for warnings, as warnings aren't catchable. Gah!
+
     # Attempt to type-check this object by passing this object to this closure,
     # which then implicitly type-checks this object as a return value.
     try:
         _check_object(obj)
-    # If this closure raises a beartype-specific exception implying that this
-    # object violates this hint...
-    except BeartypeCallHintReturnViolation as exception:
-        # Exception message.
-        exception_message = str(exception)
+    # If this closure raises any exception whatsoever...
+    except Exception as violation:
+        # If the type of this violation is *NOT* the type raised when a return
+        # violates a type-check as configured by this beartype configuration,
+        # this is an unexpected spurious violation. In this case, re-raise this
+        # violation back up the call stack to the caller.
+        if not isinstance(violation, conf.violation_return_type):
+            raise
+        # Else, the type of this violation is the type raised when a return
+        # violates a type-check as configured by this beartype configuration.
+        # In this case, the passed object violates this hint.
 
-        # If this exception message is *NOT* prefixed by the expected substring,
-        # raise an exception.
+        # Violation message.
+        violation_message = str(violation)
+
+        # If this violation message is *NOT* prefixed by the expected substring,
+        # raise a private exception.
         #
         # Note that this should *NEVER* occur in production releases, but that
         # this could potentially occur during pre-production testing. Ergo, it
         # is worth explicitly checking but *NOT* worth investing time and effort
-        # in raising a human-readable exception.
-        if not exception_message.startswith(
+        # in raising a human-readable violation.
+        if not violation_message.startswith(
             _TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX):
             raise _BeartypeDoorTextException(
-                f'_check_object() exception '
-                f'"{exception_message}" not prefixed by '
+                f'_check_object() violation '
+                f'"{violation_message}" not prefixed by '
                 f'"{_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX}".'
-            ) from exception
-        # Else, this exception message is prefixed by the expected substring.
+            ) from violation
+        # Else, this violation message is prefixed by the expected substring.
 
         # Replace the irrelevant substring prefixing this message with a
         # relevant substring applicable to this higher-level function.
-        exception_message = (
+        violation_message = (
             f'Object '
-            f'{exception_message[_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX_LEN:]}'
+            f'{violation_message[_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX_LEN:]}'
         )
 
-        # Wrap this exception in a more readable higher-level exception.
+        # Wrap this violation in a more readable higher-level violation.
         raise BeartypeDoorHintViolation(
-            message=exception_message,
-            culprits=exception.culprits,
-        ) from exception
-    # Else, this closure raised another exception. In this case, percolate this
-    # exception back up this call stack.
+            message=violation_message,
+
+            #FIXME: *TOTALLY WRONG.* Valid only for beartype exceptions. *sigh*
+            culprits=violation.culprits,  # type: ignore[attr-defined]
+        ) from violation
+
+        #FIXME: Doesn't work. You can't warn() exceptions. *sigh*
+        # # If this violation is a non-fatal warning, emit this violation as a
+        # # non-fatal warning.
+        # if issubclass(violation, Warning):
+        #     warn(violation_message, BeartypeDoorHintViolation)
+        # # Else, this violation is a fatal exception. In this case, wrap this
+        # # violation in a more readable higher-level violation.
+        # else:
+        #     raise BeartypeDoorHintViolation(
+        #         message=violation_message,
+        #         culprits=violation.culprits,
+        #     ) from violation
+    # Else, this closure raised *NO* exception. In this case, the passed object
+    # satisfies this hint.
 
 # ....................{ TESTERS                            }....................
 def is_subhint(subhint: object, superhint: object) -> bool:
     '''
-    ``True`` only if the first passed hint is a **subhint** of the second passed
-    hint, in which case this second hint is a **superhint** of this first hint.
+    :data:`True` only if the first passed hint is a **subhint** of the second
+    passed hint, in which case this second hint is a **superhint** of this first
+    hint.
 
-    Equivalently, this tester returns ``True`` only if *all* of the following
-    conditions apply:
+    Equivalently, this tester returns :data:`True` only if *all* of the
+    following conditions apply:
 
     * These two hints are **semantically related** (i.e., convey broadly similar
       semantics enabling these two hints to be reasonably compared). For
@@ -196,7 +217,7 @@ def is_subhint(subhint: object, superhint: object) -> bool:
     Returns
     -------
     bool
-        ``True`` only if this first hint is a subhint of this second hint.
+        :data:`True` only if this first hint is a subhint of this second hint.
 
     Examples
     --------
@@ -216,22 +237,14 @@ def is_subhint(subhint: object, superhint: object) -> bool:
     return TypeHint(subhint).is_subhint(TypeHint(superhint))
 
 # ....................{ TESTERS ~ is_bearable              }....................
-#FIXME: Improve unit tests to exhaustively exercise edge cases, including:
-#* Invalid hints. In this case, test that the raised exception is prefixed by
-#  the expected substring rather than our exception placeholder.
-
 def is_bearable(
     # Mandatory flexible parameters.
     obj: object,
-    #FIXME: Re-enable after static type-checkers support "TypeGuard[T]". See above!
-    # hint: T,
     hint: object,
 
     # Optional keyword-only parameters.
     *,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-#FIXME: Re-enable after static type-checkers support "TypeGuard[T]". See above!
-# ) -> TypeGuard[T]:
 ) -> bool:
     '''
     :data:`True` only if the passed arbitrary object satisfies the passed
@@ -249,12 +262,12 @@ def is_bearable(
         to ``BeartypeConf()``, the default constant-time configuration.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object satisfies this hint.
 
     Raises
-    ----------
+    ------
     beartype.roar.BeartypeConfException
         If this configuration is *not* a :class:`BeartypeConf` instance.
     beartype.roar.BeartypeDecorHintForwardRefException
@@ -268,7 +281,7 @@ def is_bearable(
         If this hint is currently unsupported by :mod:`beartype`.
 
     Examples
-    ----------
+    --------
         >>> from beartype.door import is_bearable
         >>> is_bearable(['Things', 'fall', 'apart;'], list[str])
         True
@@ -349,12 +362,12 @@ def _get_object_checker(
         object is type-checked).
 
     Returns
-    ----------
+    -------
     BeartypeTypeChecker
         Synthetic runtime type-checker specific to this hint and configuration.
 
     Raises
-    ----------
+    ------
     beartype.roar.BeartypeDecorHintPepUnsupportedException
         If this hint is a PEP-compliant type hint currently unsupported by
         the :func:`beartype.beartype` decorator.

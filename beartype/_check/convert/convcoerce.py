@@ -56,9 +56,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
     Any,
+    Optional,
     Union,
 )
 from beartype._cave._cavefast import NotImplementedType
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
 from beartype._check.checkcall import BeartypeCall
@@ -72,8 +74,7 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
 #FIXME: Document mypy-specific coercion in the docstring as well, please.
 def coerce_func_hint_root(
     hint: object,
-    #FIXME: Rename to "pith_name" for orthogonality with everything else.
-    arg_name: str,
+    pith_name: Optional[str],
     bear_call: BeartypeCall,
     exception_prefix: str,
 ) -> object:
@@ -103,12 +104,13 @@ def coerce_func_hint_root(
     ----------
     hint : object
         Possibly PEP-noncompliant type hint to be possibly coerced.
-    arg_name : str
+    pith_name : Optional[str]
         Either:
 
-        * If this hint annotates a parameter of that callable, the name of that
+        * If this hint annotates a parameter of some callable, the name of that
           parameter.
-        * If this hint annotates the return of that callable, ``"return"``.
+        * If this hint annotates the return of some callable, ``"return"``.
+        * Else, :data:`None`.
     bear_call : BeartypeCall
         Decorated callable annotated by this hint.
     exception_prefix : str
@@ -124,7 +126,8 @@ def coerce_func_hint_root(
           type hint coerced from this hint.
         * Else, this hint as is unmodified.
     '''
-    assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
+    assert isinstance(pith_name, NoneTypeOr[str]), (
+        f'{repr(pith_name)} neither string nor "None".')
     assert bear_call.__class__ is BeartypeCall, (
         f'{repr(bear_call)} not @beartype call.')
 
@@ -147,7 +150,7 @@ def coerce_func_hint_root(
     # If...
     if (
         # This hint annotates the return for the decorated callable *AND*...
-        arg_name == ARG_NAME_RETURN and
+        pith_name == ARG_NAME_RETURN and
         # The decorated callable is a binary dunder method (e.g., __eq__())...
         bear_call.func_wrapper_name in METHOD_NAMES_DUNDER_BINARY
     ):

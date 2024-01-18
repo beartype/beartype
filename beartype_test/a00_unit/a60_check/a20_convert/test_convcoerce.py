@@ -47,7 +47,7 @@ def test_coerce_func_hint_root() -> None:
     # Assert this coercer preserves an isinstanceable type as is.
     assert coerce_func_hint_root(
         hint=str,
-        arg_name=ARG_NAME_RETURN,
+        pith_name=ARG_NAME_RETURN,
         bear_call=bear_call,
         exception_prefix='',
     ) is str

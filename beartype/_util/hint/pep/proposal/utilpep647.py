@@ -22,7 +22,7 @@ from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 #FIXME: Unit test us up, please.
 def reduce_hint_pep647(
     hint: object,
-    arg_name: Optional[str],
+    pith_name: Optional[str],
     exception_prefix: str,
     *args, **kwargs
 ) -> Type[bool]:
@@ -31,18 +31,18 @@ def reduce_hint_pep647(
     subscription of the :obj:`typing.TypeGuard` type hint factory) to the
     builtin :class:`bool` class as advised by :pep:`647` when performing
     runtime type-checking if this hint annotates the return of some callable
-    (i.e., if ``arg_name`` is ``"return"``) *or* raise an exception otherwise
+    (i.e., if ``pith_name`` is ``"return"``) *or* raise an exception otherwise
     (i.e., if this hint annotates the return of *no* callable).
 
     This reducer is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
+    ``@callable_cached`` decorator), as the implementation trivially reduces
     to an efficient one-liner.
 
     Parameters
     ----------
     hint : object
         Final type hint to be reduced.
-    arg_name : Optional[str]
+    pith_name : Optional[str]
         Either:
 
         * If this hint annotates a parameter of some callable, the name of that
@@ -56,12 +56,12 @@ def reduce_hint_pep647(
     All remaining passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     Type[bool]
         Builtin :class:`bool` class.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep647Exception
         If this type guard does *not* annotate the return of some callable
         (i.e., if ``arg_kind`` is *not* :data:`True`).
@@ -71,14 +71,14 @@ def reduce_hint_pep647(
     # guard to the builtin "bool" class. Sadly, type guards are useless at
     # runtime and exist exclusively as a means of superficially improving the
     # computational intelligence of (...wait for it) static type-checkers.
-    if arg_name == ARG_NAME_RETURN:
+    if pith_name == ARG_NAME_RETURN:
         return bool
     # Else, this type guard does *NOT* annotate the return of some callable.
 
     # Raise an exception. Type guards are contextually valid *ONLY* as top-level
     # return annotations.
     raise BeartypeDecorHintPep647Exception(
-        f'{exception_prefix}PEP 647 type hint "{repr(hint)}" '
+        f'{exception_prefix}PEP 647 type hint {repr(hint)} '
         f'invalid in this type hint context (i.e., '
-        f'"{repr(hint)}" valid only as non-nested return annotation).'
+        f'{repr(hint)} valid only as non-nested return annotation).'
     )

@@ -392,7 +392,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # readily consumable by @beartype's code generator *BEFORE* passing
             # this hint to any further callables.
             hint_sane = sanify_hint_root_func(
-                hint=hint, arg_name=arg_name, bear_call=bear_call)
+                hint=hint, pith_name=arg_name, bear_call=bear_call)
 
             # If this hint is ignorable, continue to the next parameter.
             #
@@ -582,7 +582,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
         #
         # Do this first *BEFORE* passing this hint to any further callables.
         hint = sanify_hint_root_func(
-            hint=hint, arg_name=ARG_NAME_RETURN, bear_call=bear_call)
+            hint=hint, pith_name=ARG_NAME_RETURN, bear_call=bear_call)
 
         # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
         # *ONLY* as a return annotation...

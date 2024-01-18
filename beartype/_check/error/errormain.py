@@ -5,70 +5,19 @@
 
 '''
 **Beartype exception raisers** (i.e., high-level callables raising
-human-readable exceptions called by :func:`beartype.beartype`-decorated
-callables on the first invalid parameter or return value failing a type-check
-against the type hint annotating that parameter or return).
+human-readable exceptions called by various runtime type-checkers published by
+:mod:`beartype` when an arbitrary object violates a type hint).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Generalizing the "random_int" concept (i.e., the optional "random_int"
-#parameter accepted by the get_beartype_violation() function) that enables
-#O(1) rather than O(n) exception handling to containers that do *NOT* provide
-#efficient random access like mappings and sets will be highly non-trivial.
-#While there exist a number of alternative means of implementing that
-#generalization, the most reasonable *BY FAR* is probably to:
-#
-#* Embed additional assignment expressions in the type-checking tests generated
-#  by the make_func_wrapper_code() function that uniquely store the value of
-#  each item, key, or value returned by each access of a non-indexable container
-#  iterator into a new unique local variable. Note this unavoidably requires:
-#  * Adding a new index to the "hint_curr_meta" tuples internally created by
-#    that function -- named, say, "_HINT_META_INDEX_ITERATOR_NAME". The value
-#    of the tuple item at this index should either be:
-#    * If the currently iterated type hint is a non-indexable container, the
-#      name of the new unique local variable assigned to by this assignment
-#      expression whose value is obtained from the iterator cached for that
-#      container.
-#    * Else, "None".
-#    Actually... hmm. Perhaps we only need a new local variable
-#    "iterator_nonsequence_names" whose value is a cached "FixedList" of
-#    sufficiently large size (so, "FIXED_LIST_SIZE_MEDIUM"?). We could then simply
-#    iteratively insert the names of the wrapper-specific new unique local
-#    variables into this list.
-#    Actually... *WAIT.* Is all we need a single counter initialized to, say:
-#        iterators_nonsequence_len = 0
-#    We then both use that counter to:
-#    * Uniquify the names of these wrapper-specific new unique local variables
-#      during iteration over type hints.
-#    * Trivially generate a code snippet passing a list of these names to the
-#      "iterators_nonsequence" parameter of get_beartype_violation() function
-#      after iteration over type hints.
-#    Right. That looks like The Way, doesn't it? This would seem to be quite a
-#    bit easier than we'd initially thought, which is always nice. Oi!
-#  * Python >= 3.8, but that's largely fine. Python 3.6 and 3.7 are
-#    increasingly obsolete in 2021.
-#* Add a new optional "iterators_nonsequence" parameter to the
-#  get_beartype_violation() function, accepting either:
-#  * If the current parameter or return of the parent wrapper function was
-#    annotated with one or more non-indexable container type hints, a *LIST* of
-#    the *VALUES* of all unique local variables assigned to by assignment
-#    expressions in that parent wrapper function. These values were obtained
-#    from the iterators cached for those containers. To enable these exception
-#    handlers to efficiently treat this list like a FIFO stack (e.g., with the
-#    list.pop() method), this list should be sorted in the reverse order that
-#    these assignment expressions are defined in.
-#* Refactor exception handlers to then preferentially retrieve non-indexable
-#  container items in O(1) time from this stack rather than simply iterating
-#  over all container items in O(n) brute-force time. Obviously, extreme care
-#  must be taken here to ensure that this exception handling algorithm visits
-#  containers in the exact same order as visited by our testing algorithm.
+#FIXME: Refactor *ALMOST* all of the existing "beartype._decor.error" subpackage
+#into this subpackage, please. The latter now defers to the former.
 
 # ....................{ IMPORTS                            }....................
 from beartype.meta import URL_ISSUES
 from beartype.roar._roarexc import (
-    _BeartypeCallHintPepRaiseException,
     _BeartypeCallHintPepRaiseDesynchronizationException,
 )
 from beartype.typing import (
@@ -82,7 +31,6 @@ from beartype._conf.confcls import (
     BeartypeConf,
 )
 from beartype._conf.confenum import BeartypeViolationVerbosity
-from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeStack,
@@ -99,11 +47,7 @@ from beartype._decor.error._util.errorutilcolor import (
     color_repr,
     strip_text_ansi_if_configured,
 )
-from beartype._decor.error._util.errorutiltext import (
-    prefix_beartypeable_arg_value,
-    prefix_beartypeable_return_value,
-)
-# from beartype._util.hint.utilhinttest import die_unless_hint
+from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.text.utiltextmunge import (
     suffix_str_unless_suffixed,
     uppercase_str_char_first,
@@ -124,22 +68,23 @@ failures specific to that unsubscripted :mod:`typing` attribute.
 '''
 
 # ....................{ GETTERS                            }....................
-def get_beartype_violation(
+def get_raiser_violation(
     # Mandatory parameters.
-    func: CallableABC,
+    obj: object,
+    hint: object,
     conf: BeartypeConf,
-    pith_name: str,
-    pith_value: object,
+    exception_cls: TypeException,
+    exception_prefix: str,
 
     # Optional parameters.
+    func : Optional[CallableABC] = None,
+    pith_name : Optional[str] = None,
     cls_stack: TypeStack = None,
     random_int: Optional[int] = None,
 ) -> Exception:
     '''
-    Human-readable exception detailing the failure of the parameter with the
-    passed name *or* return if this name is the magic string ``return`` of the
-    passed decorated function fails to satisfy the PEP-compliant type hint
-    annotating this parameter or return.
+    Human-readable exception detailing the failure of the passed object to
+    satisfy the passed type hint under the passed beartype configuration.
 
     This function intentionally returns rather than raises this exception. Why?
     Because the ignorable stack frame encapsulating the call of the parent
@@ -178,21 +123,36 @@ def get_beartype_violation(
 
     Parameters
     ----------
-    func : CallableTypes
-        Decorated callable to raise this exception from.
+    obj : object
+        Arbitrary object to be type-checked against this type hint.
+    hint : object
+        Type hint against which to type-check this object.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all flags, options, settings, and other metadata configuring the
-        current decoration of the decorated callable or class).
-    pith_name : str
+        validation of this object against this type hint).
+    exception_cls : TypeException
+        Type of exception to be raised.
+    exception_prefix : str
+        Substring prefixing the message of the violation to be returned,
+        typically describing the passed object in a context-sensitive manner.
+    func : Optional[CallableABC]
         Either:
 
-        * If the object failing to satisfy this hint is a passed parameter, the
-          name of this parameter.
-        * Else, the magic string ``"return"`` implying this object to be the
-          value returned from this callable.
-    pith_value : object
-        Passed parameter or returned value violating this hint.
+        * If this violation originates from a decorated callable, that
+          callable.
+        * Else, :data:`None`.
+
+        Defaults to :data:`None`.
+    pith_name : Optional[str]
+        Either:
+
+        * If this hint annotates a parameter of some callable, the name of that
+          parameter.
+        * If this hint annotates the return of some callable, ``"return"``.
+        * Else, :data:`None`.
+
+        Defaults to :data:`None`.
     cls_stack : TypeStack, optional
         **Type stack** (i.e., either a tuple of the one or more
         :func:`beartype.beartype`-decorated classes lexically containing the
@@ -208,13 +168,13 @@ def get_beartype_violation(
         this exception handler runs in constant or linear time. Specifically, if
         this parameter is:
 
-        * An integer, this handler runs in **constant time.** Since there
-          exists a one-to-one relation between this integer and the random
-          container item(s) type-checked by the parent
-          :func:`beartype.beartype` wrapper function, receiving this integer
-          enables this handler to efficiently re-type-check the same random
-          container item(s) type-checked by the parent in constant time rather
-          type-checking all container items in linear time.
+        * An integer, this handler runs in **constant time.** Since there exists
+          a one-to-one relation between this integer and the random container
+          item(s) type-checked by the parent :func:`beartype.beartype` wrapper
+          function, receiving this integer enables this handler to efficiently
+          re-type-check the same random container item(s) type-checked by the
+          parent in constant time rather type-checking all container items in
+          linear time.
         * :data:`None`, this handler runs in **linear time.**
 
         Defaults to :data:`None`, implying this exception handler runs in linear
@@ -223,13 +183,14 @@ def get_beartype_violation(
     Returns
     -------
     Exception
-        Human-readable exception detailing the failure of this parameter or
-        return to satisfy the type hint annotating this parameter or return.
-        Under the default beartype configuration, this is guaranteed to be an
-        instance of either:
+        Human-readable exception detailing the failure of this object to satisfy
+        the type hint. Under the default beartype configuration, this is
+        guaranteed to be an instance of either:
 
-        * If this is a parameter, :class:`.BeartypeCallHintParamViolation`.
-        * If this is a return, :class:`.BeartypeCallHintReturnViolation`.
+        * If this is a parameter,
+          :class:`beartype.roar.BeartypeCallHintParamViolation`.
+        * If this is a return,
+          :class:`beartype.roar.BeartypeCallHintReturnViolation`.
 
     Raises
     ------
@@ -247,9 +208,11 @@ def get_beartype_violation(
           false positive by erroneously misdetecting this pith as satisfying
           this type check when in fact this pith fails to do so.
     '''
-    assert callable(func), f'{repr(func)} uncallable.'
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-    assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
+    assert is_type_subclass(exception_cls, Exception), (
+        f'{repr(exception_cls)} not exception type.')
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
 
     # print('''get_beartype_violation(
     #     func={!r},
@@ -259,54 +222,19 @@ def get_beartype_violation(
     # )'''.format(func, conf, pith_name, pith_value))
 
     # ....................{ LOCALS                         }....................
-    # Type of exception to be raised.
-    exception_cls: TypeException = None  # type: ignore[assignment]
-
-    # Substring prefixing the message of the violation to be raised below,
-    # initialized to a human-readable label describing this parameter or return.
-    exception_prefix: str = None  # type: ignore[assignment]
-
-    # If the name of this parameter is the magic string implying the passed
-    # object to be a return value, set the above local variables appropriately.
-    if pith_name == ARG_NAME_RETURN:
-        exception_cls = conf.violation_return_type
-        exception_prefix = prefix_beartypeable_return_value(
-            func=func, return_value=pith_value)
-    # Else, the passed object is a parameter. In this case, set the above local
-    # variables appropriately.
-    else:
-        exception_cls = conf.violation_param_type
-        exception_prefix = prefix_beartypeable_arg_value(
-            func=func, arg_name=pith_name, arg_value=pith_value)
-
-    # Uppercase the first character of this violation message prefix if needed.
+    # Uppercase the first character of this violation prefix for readability.
     exception_prefix = uppercase_str_char_first(exception_prefix)
-
-    # ....................{ HINTS                          }....................
-    # If this parameter or return value is unannotated, raise an exception.
-    #
-    # Note that this should *NEVER* occur, as the caller guarantees this
-    # parameter or return to be annotated. However, since malicious callers
-    # *COULD* deface the "__annotations__" dunder dictionary without our
-    # knowledge or permission, precautions are warranted.
-    if pith_name not in func.__annotations__:
-        raise _BeartypeCallHintPepRaiseException(
-            f'{exception_prefix}unannotated.')
-    # Else, this parameter or return value is annotated.
-
-    # PEP-compliant type hint annotating this parameter or return value.
-    hint = func.__annotations__[pith_name]
 
     # ....................{ CAUSE                          }....................
     # Cause describing the failure of this pith to satisfy this hint.
     violation_cause = ViolationCause(
-        func=func,
         cause_indent='',
         cls_stack=cls_stack,
         conf=conf,
         exception_prefix=exception_prefix,
+        func=func,
         hint=hint,
-        pith=pith_value,
+        pith=obj,
         pith_name=pith_name,
         random_int=random_int,
     ).find_cause()
@@ -319,7 +247,7 @@ def get_beartype_violation(
     # exception encouraging the end user to submit an upstream issue with us.
     if not violation_cause.cause_str_or_none:
         pith_value_repr = represent_object(
-            obj=pith_value, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)
+            obj=obj, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)
         raise _BeartypeCallHintPepRaiseDesynchronizationException(
             f'{exception_prefix}violates type hint {color_hint(repr(hint))}, '
             f'but utility function get_beartype_violation() '
@@ -338,19 +266,19 @@ def get_beartype_violation(
 
     # List of the one or more culprits responsible for this violation,
     # initialized to the passed parameter or returned value violating this hint.
-    violation_culprits = [pith_value,]
+    violation_culprits = [obj,]
 
     # If the actual object directly responsible for this violation is *NOT* the
     # passed parameter or returned value indirectly violating this hint, then
     # the latter is almost certainly a container transitively containing the
     # former as an item. In this case, add this item to this list as well.
-    if pith_value is not violation_cause.pith:
+    if obj is not violation_cause.pith:
         violation_culprits.append(violation_cause.pith)
     # Else, the actual object directly responsible for this violation is the
     # passed parameter or returned value indirectly violating this hint. In this
     # case, avoid adding duplicate items to this list.
 
-    # ....................{ EXCEPTION                      }....................
+    # ....................{ VERBOSITY                      }....................
     # Violation verbosity, localized for negligible efficiency. *vomits*
     violation_verbosity = conf.violation_verbosity
 
@@ -394,6 +322,7 @@ def get_beartype_violation(
     VIOLATION_VERBOSITY_TO_SUFFIX[BeartypeViolationVerbosity.MAXIMAL] = (  # <-- alias!
         VIOLATION_VERBOSITY_TO_SUFFIX[BeartypeViolationVerbosity.DEFAULT])
 
+    # ....................{ EXCEPTION                      }....................
     # Human-readable violation message to be raised.
     exception_message = (
         f'{VIOLATION_VERBOSITY_TO_PREFIX[violation_verbosity]}'

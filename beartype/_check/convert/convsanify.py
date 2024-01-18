@@ -36,7 +36,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
 def sanify_hint_root_func(
     # Mandatory parameters.
     hint: object,
-    arg_name: str,
+    pith_name: str,
     bear_call: BeartypeCall,
 
     # Optional parameters.
@@ -87,7 +87,7 @@ def sanify_hint_root_func(
         :func:`beartype.beartype`-decorated classes lexically containing the
         class variable or method annotated by this hint *or* :data:`None`).
         Defaults to :data:`None`.
-    arg_name : str
+    pith_name : str
         Either:
 
         * If this hint annotates a parameter, the name of that parameter.
@@ -125,10 +125,10 @@ def sanify_hint_root_func(
     # PEP-noncompliant type hint if this hint is coercible *OR* this hint as is
     # otherwise. Since the passed hint is *NOT* necessarily PEP-compliant,
     # perform this coercion *BEFORE* validating this hint to be PEP-compliant.
-    hint = bear_call.func_wrappee.__annotations__[arg_name] = (
+    hint = bear_call.func_wrappee.__annotations__[pith_name] = (
         coerce_func_hint_root(
             hint=hint,
-            arg_name=arg_name,
+            pith_name=pith_name,
             bear_call=bear_call,
             exception_prefix=exception_prefix,
         )
@@ -145,7 +145,7 @@ def sanify_hint_root_func(
     #
     # Note that this logic *ONLY* pertains to callables (rather than statements)
     # and is thus *NOT* performed by the sanify_hint_root_statement() sanitizer.
-    if arg_name == ARG_NAME_RETURN:
+    if pith_name == ARG_NAME_RETURN:
         hint = reduce_hint_pep484585_func_return(
             func=bear_call.func_wrappee, exception_prefix=exception_prefix)
     # Else, this hint annotates a parameter.
@@ -178,7 +178,7 @@ def sanify_hint_root_func(
         hint=hint,
         conf=bear_call.conf,
         cls_stack=bear_call.cls_stack,
-        arg_name=arg_name,
+        pith_name=pith_name,
         exception_prefix=exception_prefix,
     )
 
@@ -271,7 +271,7 @@ def sanify_hint_any(
 
     # Optional parameters.
     cls_stack: TypeStack = None,
-    arg_name: Optional[str] = None,
+    pith_name: Optional[str] = None,
 ) -> Any:
     '''
     PEP-compliant type hint sanified (i.e., sanitized) from the passed
@@ -294,7 +294,7 @@ def sanify_hint_any(
         :func:`beartype.beartype`-decorated classes lexically containing the
         class variable or method annotated by this hint *or* :data:`None`).
         Defaults to :data:`None`.
-    arg_name : Optional[str], optional
+    pith_name : Optional[str], optional
         Either:
 
         * If this hint directly annotates a callable parameter (as the root type
@@ -326,7 +326,7 @@ def sanify_hint_any(
         hint=hint,
         conf=conf,
         cls_stack=cls_stack,
-        arg_name=arg_name,
+        pith_name=pith_name,
         exception_prefix=exception_prefix,
     )
 

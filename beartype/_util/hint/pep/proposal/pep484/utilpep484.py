@@ -99,7 +99,7 @@ def is_hint_pep484_ignorable_or_none(
         **Sign** (i.e., arbitrary object uniquely identifying this hint).
 
     Returns
-    ----------
+    -------
     Optional[bool]
         Either:
 
@@ -216,7 +216,7 @@ def reduce_hint_pep484_none(hint: object, *args, **kwargs) -> type:
     All remaining passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     NoneType
         Type of the :data:`None` singleton.
     '''

@@ -102,11 +102,17 @@ class ViolationCause(object):
         Human-readable label describing the parameter or return value from
         which this object originates, typically embedded in exceptions raised
         from this getter in the event of unexpected runtime failure.
-    func : Callable
-        Decorated callable generating this type-checking error.
+    func : Optional[Callable]
+        Either:
+
+        * If this violation originates from a decorated callable, that
+          callable.
+        * Else, :data:`None`.
     hint_sign : Any
-        Unsubscripted :mod:`typing` attribute identifying this hint if this hint
-        is PEP-compliant *or* ``None`` otherwise.
+        Either:
+
+        * If this hint is PEP-compliant, the sign identifying this hint.
+        * Else, :data:`None` otherwise.
     hint_childs : Optional[Tuple]
         Either:
 
@@ -183,14 +189,14 @@ class ViolationCause(object):
         self,
 
         # Mandatory parameters.
-        func: Callable,
         cls_stack: TypeStack,
+        cause_indent: str,
         conf: BeartypeConf,
+        exception_prefix: str,
+        func: Optional[Callable],
+        hint: Any,
         pith: Any,
         pith_name: Optional[str],
-        hint: Any,
-        cause_indent: str,
-        exception_prefix: str,
         random_int: Optional[int],
 
         # Optional parameters.
@@ -203,7 +209,8 @@ class ViolationCause(object):
         ----------
         See the class docstring for a description of these parameters.
         '''
-        assert callable(func), f'{repr(func)} not callable.'
+        assert func is None or callable(func), (
+            f'{repr(func)} neither callable nor "None".')
         assert isinstance(cls_stack, NoneTypeOr[tuple]), (
             f'{repr(cls_stack)} neither tuple nor "None".')
         assert isinstance(conf, BeartypeConf), (
@@ -264,7 +271,7 @@ class ViolationCause(object):
             conf=self.conf,
             exception_prefix=self.exception_prefix,
             cls_stack=self.cls_stack,
-            arg_name=self.pith_name,
+            pith_name=self.pith_name,
         )
 
         # If this hint is PEP-compliant...

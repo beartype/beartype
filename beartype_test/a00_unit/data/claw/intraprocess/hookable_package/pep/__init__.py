@@ -12,8 +12,8 @@ various :func:`beartype.claw` import hooks on various PEPs).
 # ....................{ IMPORTS                            }....................
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
 from beartype_test.a00_unit.data.claw.intraprocess.hookable_package.pep import (
-    data_claw_pep526,
     data_claw_pep557,
+    pep526,
 )
 
 # If the active Python interpreter targets Python >= 3.12 and thus supports PEP

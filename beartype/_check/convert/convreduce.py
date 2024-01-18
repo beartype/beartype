@@ -82,7 +82,7 @@ def reduce_hint(
 
     # Optional parameters.
     cls_stack: TypeStack = None,
-    arg_name: Optional[str] = None,
+    pith_name: Optional[str] = None,
     exception_prefix: str = '',
 ) -> object:
     '''
@@ -91,7 +91,7 @@ def reduce_hint(
     this hint is irreducible).
 
     This reducer *cannot* be meaningfully memoized, since multiple passed
-    parameters (e.g., ``arg_name``, ``cls_stack``) are typically isolated to a
+    parameters (e.g., ``pith_name``, ``cls_stack``) are typically isolated to a
     handful of callables across the codebase currently being decorated by
     :mod:`beartype`. Memoizing this reducer would needlessly consume space and
     time. To improve efficiency, this reducer is instead implemented in terms of
@@ -115,7 +115,7 @@ def reduce_hint(
         :func:`beartype.beartype`-decorated classes lexically containing the
         class variable or method annotated by this hint *or* :data:`None`).
         Defaults to :data:`None`.
-    arg_name : Optional[str], optional
+    pith_name : Optional[str], optional
         Either:
 
         * If this hint annotates a parameter of some callable, the name of that
@@ -129,7 +129,7 @@ def reduce_hint(
         to the empty string.
 
     Returns
-    ----------
+    -------
     object
         Either:
 
@@ -147,7 +147,7 @@ def reduce_hint(
     hint = _reduce_hint_uncached(
         hint=hint,
         conf=conf,
-        arg_name=arg_name,
+        pith_name=pith_name,
         cls_stack=cls_stack,
         exception_prefix=exception_prefix,
     )
@@ -163,7 +163,7 @@ def _reduce_hint_uncached(
     hint: Any,
     conf: BeartypeConf,
     cls_stack: TypeStack,
-    arg_name: Optional[str],
+    pith_name: Optional[str],
     exception_prefix: str,
 ) -> object:
     '''
@@ -174,7 +174,7 @@ def _reduce_hint_uncached(
     this hint as is otherwise (i.e., if this hint is irreducible).
 
     This reducer *cannot* be meaningfully memoized, since multiple passed
-    parameters (e.g., ``arg_name``, ``cls_stack``) are typically isolated to a
+    parameters (e.g., ``pith_name``, ``cls_stack``) are typically isolated to a
     handful of callables across the codebase currently being decorated by
     :mod:`beartype`. Thankfully, this reducer is responsible for reducing only a
     small subset of type hints requiring these problematic parameters.
@@ -189,7 +189,7 @@ def _reduce_hint_uncached(
     cls_stack : TypeStack
         **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
         :data:`None`). See also the :func:`.beartype_object` decorator.
-    arg_name : Optional[str]
+    pith_name : Optional[str]
         Either:
 
         * If this hint annotates a parameter of some callable, the name of that
@@ -200,7 +200,7 @@ def _reduce_hint_uncached(
         Substring prefixing exception messages raised by this function.
 
     Returns
-    ----------
+    -------
     object
         Either:
 
@@ -225,7 +225,7 @@ def _reduce_hint_uncached(
             hint=hint,  # pyright: ignore[reportGeneralTypeIssues]
             conf=conf,
             cls_stack=cls_stack,
-            arg_name=arg_name,
+            pith_name=pith_name,
             exception_prefix=exception_prefix,
         )
         # print(f'...{repr(hint)}.')
@@ -262,7 +262,7 @@ def _reduce_hint_cached(
         Substring prefixing exception messages raised by this function.
 
     Returns
-    ----------
+    -------
     object
         Either:
 
@@ -474,7 +474,7 @@ with signature resembling:
    def reduce_hint_pep{pep_number}(
        hint: object,
        conf: BeartypeConf,
-       arg_name: Optional[str],
+       pith_name: Optional[str],
        exception_prefix: str,
        *args, **kwargs
    ) -> object:
