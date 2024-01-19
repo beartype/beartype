@@ -97,9 +97,9 @@ def is_hint_beartypehintable(hint: object) -> bool:
 #FIXME: Unit test us up, please.
 #FIXME: Significant complications exist suggesting that we should immediately
 #release beartype 0.12.0 and contemplate implementing this later:
-#* The "beartype._decor.error" subpackage will need to implement a comparable
+#* The "beartype._check.error" subpackage will need to implement a comparable
 #  mechanism as the "beartype._check.code" subpackage for detecting and avoiding
-#  recursion in this reduction. Curiously, "beartype._decor.error" only ever
+#  recursion in this reduction. Curiously, "beartype._check.error" only ever
 #  calls the sanify_hint_any() sanifier in a single place. That simplifies
 #  things a bit. Still, we'll need to add a similar "set" somewhere in that
 #  subpackage tracking which "BeartypeHintable" objects have already been
@@ -139,7 +139,7 @@ def is_hint_beartypehintable(hint: object) -> bool:
 #       hint_root = reduce_hint(hint_root)
 #  * On each child type hint:
 #       # This exact logic is likely to be duplicated into
-#       # "beartype._decor.error". That's not particularly a problem -- just
+#       # "beartype._check.error". That's not particularly a problem -- just
 #       # something worth noting. One approach to preserving DRY here would be
 #       # to shift this "if" statement into sanify_hint_any(). Of course,
 #       # everything then becomes non-trivial, because we would then need to

@@ -730,7 +730,7 @@ def make_check_expr(
             # NOTE: Whenever adding support for (i.e., when generating code
             # type-checking) a new "typing" attribute below, similar support
             # for that attribute *MUST* also be added to the parallel:
-            # * "beartype._util.hint.pep.errormain" submodule, which
+            # * "beartype._util.hint.pep.errorget" submodule, which
             #   raises exceptions on the current pith failing this check.
             # * "beartype._data.hint.pep.sign.datapepsignset.HINT_SIGNS_SUPPORTED_DEEP"
             #   frozen set of all signs for which this function generates

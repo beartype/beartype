@@ -7,7 +7,7 @@
 **Beartype error-handling plugin unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._decor.error.errormain` submodule with respect to
+:mod:`beartype._check.error.errorget` submodule with respect to
 :mod:`beartype`-specific plugin APIs (e.g., the ``__instancecheck_str__()``
 dunder method).
 '''
@@ -19,10 +19,10 @@ dunder method).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_get_beartype_violation_instancecheck_str() -> None:
+def test_get_func_pith_violation_instancecheck_str() -> None:
     '''
     Test the
-    :func:`beartype._decor.error.errormain.get_beartype_violation`
+    :func:`beartype._check.error.errorget.get_func_pith_violation`
     getter with respect to the :mod:`beartype`-specific
     ``__instancecheck_str__()`` dunder method plugin API.
     '''
@@ -32,7 +32,7 @@ def test_get_beartype_violation_instancecheck_str() -> None:
     from beartype import BeartypeConf
     from beartype.roar import BeartypePlugInstancecheckStrException
     from beartype.typing import Any
-    from beartype._decor.error.errormain import get_beartype_violation
+    from beartype._check.error.errorget import get_func_pith_violation
     from pytest import raises
 
     # ..................{ METACLASSES                        }..................
@@ -101,7 +101,7 @@ def test_get_beartype_violation_instancecheck_str() -> None:
         return the_sounds_that
 
     # Keyword arguments to be unconditionally passed to *ALL* calls of the
-    # get_beartype_violation() getter below.
+    # get_func_pith_violation() getter below.
     kwargs = dict(
         func=of_yesternight,
         conf=BeartypeConf(),
@@ -115,7 +115,7 @@ def test_get_beartype_violation_instancecheck_str() -> None:
     # call of the function defined above when passed a non-empty string as the
     # value of the parameter annotated by an arbitrary class whose metaclass
     # correctly defines __instancecheck_str__().
-    violation = get_beartype_violation(
+    violation = get_func_pith_violation(
         pith_name='the_sounds_that',
         pith_value=HIS_WAN_EYES,
         **kwargs
@@ -133,7 +133,7 @@ def test_get_beartype_violation_instancecheck_str() -> None:
     # object as the value of the parameter annotated by an arbitrary class whose
     # metaclass correctly defines __instancecheck_str__().
     with raises(BeartypePlugInstancecheckStrException):
-        get_beartype_violation(
+        get_func_pith_violation(
             pith_name='the_sounds_that',
             pith_value=b"As ocean's moon looks on the moon in heaven.",
             **kwargs
@@ -144,7 +144,7 @@ def test_get_beartype_violation_instancecheck_str() -> None:
     # value of the parameter annotated by an arbitrary class whose metaclass
     # correctly defines __instancecheck_str__().
     with raises(BeartypePlugInstancecheckStrException):
-        get_beartype_violation(
+        get_func_pith_violation(
             pith_name='the_sounds_that',
             pith_value='',
             **kwargs
@@ -155,7 +155,7 @@ def test_get_beartype_violation_instancecheck_str() -> None:
     # value of the parameter annotated by an arbitrary class whose metaclass
     # incorrectly defines __instancecheck_str__().
     with raises(BeartypePlugInstancecheckStrException):
-        get_beartype_violation(
+        get_func_pith_violation(
             pith_name='of_earth',
             pith_value='Gaze on the empty scene as vacantly',
             **kwargs

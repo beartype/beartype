@@ -20,11 +20,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.checkmagic import (
-    ARG_NAME_BEARTYPE_CONF,
-    ARG_NAME_FUNC,
-    ARG_NAME_GET_VIOLATION,
-)
+from beartype._check.checkmagic import ARG_NAME_BEARTYPE_CONF
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahinttyping import (
@@ -49,7 +45,7 @@ class BeartypeCall(object):
     :func:`beartype.beartype` decorator).
 
     Design
-    ----------
+    ------
     This the *only* object instantiated by that decorator for that callable,
     substantially reducing both space and time costs. That decorator then
     passes this object to most lower-level functions, which then:
@@ -61,10 +57,10 @@ class BeartypeCall(object):
        decorated callable by setting various instance variables of this object.
 
     Caveats
-    ----------
+    -------
     **This object cannot be used to communicate state between low-level
     memoized callables** (e.g.,
-    :func:`beartype._check.code.codemake.make_func_wrapper_code`) **and
+    :func:`beartype._check.code.codemake.make_func_pith_code`) **and
     higher-level callables** (e.g.,
     :func:`beartype._decor.wrap.wrapmain.generate_code`). Instead, memoized
     callables *must* return that state as additional return values up the call
@@ -242,7 +238,7 @@ class BeartypeCall(object):
         Initialize this metadata by nullifying all instance variables.
 
         Caveats
-        ----------
+        -------
         **This class is not intended to be explicitly instantiated.** Instead,
         callers are expected to (in order):
 
@@ -303,7 +299,7 @@ class BeartypeCall(object):
             by the :func:`beartype._decor.decorcore.beartype_object` function.
 
         Raises
-        ----------
+        ------
         BeartypePep563Exception
             If evaluating a postponed annotation on this callable raises an
             exception (e.g., due to that annotation referring to local state no
@@ -325,9 +321,6 @@ class BeartypeCall(object):
         # exhaustive profiling has shown that creating that substring consumes a
         # non-trivial slice of decoration time. In other words, efficiency.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        # Avoid circular import dependencies.
-        from beartype._decor.error.errormain import get_beartype_violation
 
         # If this callable is uncallable, raise an exception.
         if not callable(func):
@@ -398,15 +391,7 @@ class BeartypeCall(object):
         # Efficiently reduce this local scope back to the dictionary of all
         # parameters unconditionally required by *ALL* wrapper functions.
         self.func_wrapper_scope.clear()
-        self.func_wrapper_scope[ARG_NAME_FUNC] = func
         self.func_wrapper_scope[ARG_NAME_BEARTYPE_CONF] = conf
-
-        #FIXME: Non-ideal. This should *NOT* be set here but rather in the
-        #lower-level code generating factory function that actually embeds the
-        #call to this function (e.g.,
-        #beartype._check._checkcode.make_func_code()).
-        self.func_wrapper_scope[ARG_NAME_GET_VIOLATION] = (
-            get_beartype_violation)
 
         # Machine-readable name of the wrapper function to be generated.
         self.func_wrapper_name = func.__name__
@@ -486,7 +471,7 @@ def make_beartype_call(
     :func:`beartype.beartype` decorator).
 
     Caveats
-    ----------
+    -------
     **This higher-level factory function should always be called in lieu of
     instantiating the** :class:`.BeartypeCall` **class directly.** Why?
     Brute-force efficiency. This factory efficiently reuses previously
@@ -512,7 +497,7 @@ def make_beartype_call(
     :meth:`.BeartypeCall.reinit` method.
 
     Returns
-    ----------
+    -------
     BeartypeCall
         Beartype call metadata describing this callable.
 

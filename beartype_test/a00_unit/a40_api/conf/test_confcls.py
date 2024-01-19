@@ -34,6 +34,7 @@ def test_conf_dataclass() -> None:
         BeartypeConfParamException,
         BeartypeCallHintParamViolation,
         BeartypeCallHintReturnViolation,
+        BeartypeDoorHintViolation,
     )
     from beartype.typing import Union
     from beartype._conf.confoverrides import (
@@ -65,6 +66,7 @@ def test_conf_dataclass() -> None:
         'is_debug',
         'is_pep484_tower',
         'strategy',
+        'violation_door_type',
         'violation_param_type',
         'violation_return_type',
         'violation_verbosity',
@@ -88,6 +90,7 @@ def test_conf_dataclass() -> None:
         is_debug=True,
         is_pep484_tower=True,
         strategy=BeartypeStrategy.Ologn,
+        violation_door_type=RuntimeError,
         violation_param_type=TypeError,
         violation_return_type=ValueError,
         violation_verbosity=BeartypeViolationVerbosity.MINIMAL,
@@ -115,6 +118,7 @@ def test_conf_dataclass() -> None:
             is_debug=True,
             is_color=True,
             is_pep484_tower=True,
+            violation_door_type=RuntimeError,
             violation_param_type=TypeError,
             violation_return_type=ValueError,
             violation_verbosity=BeartypeViolationVerbosity.MINIMAL,
@@ -125,6 +129,7 @@ def test_conf_dataclass() -> None:
             violation_verbosity=BeartypeViolationVerbosity.MINIMAL,
             violation_return_type=ValueError,
             violation_param_type=TypeError,
+            violation_door_type=RuntimeError,
             is_pep484_tower=True,
             is_color=True,
             is_debug=True,
@@ -142,6 +147,8 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_DEFAULT.is_debug is False
     assert BEAR_CONF_DEFAULT.is_pep484_tower is False
     assert BEAR_CONF_DEFAULT.strategy is BeartypeStrategy.O1
+    assert BEAR_CONF_DEFAULT.violation_door_type is (
+        BeartypeDoorHintViolation)
     assert BEAR_CONF_DEFAULT.violation_param_type is (
         BeartypeCallHintParamViolation)
     assert BEAR_CONF_DEFAULT.violation_return_type is (
@@ -159,6 +166,7 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_NONDEFAULT.is_debug is True
     assert BEAR_CONF_NONDEFAULT.is_pep484_tower is True
     assert BEAR_CONF_NONDEFAULT.strategy is BeartypeStrategy.Ologn
+    assert BEAR_CONF_NONDEFAULT.violation_door_type is RuntimeError
     assert BEAR_CONF_NONDEFAULT.violation_param_type is TypeError
     assert BEAR_CONF_NONDEFAULT.violation_return_type is ValueError
     assert BEAR_CONF_NONDEFAULT.violation_verbosity is (
@@ -236,6 +244,11 @@ def test_conf_dataclass() -> None:
         BeartypeConf(strategy=(
             'By all, but which the wise, and great, and good'))
     with raises(BeartypeConfParamException):
+        BeartypeConf(violation_door_type=(
+            'A vision to the sleep of him who spurned'))
+    with raises(BeartypeConfParamException):
+        BeartypeConf(violation_door_type=bool)
+    with raises(BeartypeConfParamException):
         BeartypeConf(violation_param_type=(
             'His strong heart sunk and sickened with excess'))
     with raises(BeartypeConfParamException):
@@ -282,6 +295,8 @@ def test_conf_dataclass() -> None:
         BEAR_CONF_DEFAULT.is_pep484_tower = True
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.strategy = BeartypeStrategy.O0
+    with raises(AttributeError):
+        BEAR_CONF_DEFAULT.violation_door_type = RuntimeError
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.violation_param_type = TypeError
     with raises(AttributeError):

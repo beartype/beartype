@@ -132,6 +132,50 @@ def join_delimited(
     # Return these two substrings, delimited appropriately.
     return f'{strs_nonlast}{delimiter_if_three_or_more_nonlast}{strs_last}'
 
+# ....................{ JOINERS ~ conjunction              }....................
+#FIXME: Unit test us up, please.
+def join_delimited_conjunction(strs: IterableStrs, **kwargs) -> str:
+    '''
+    Concatenate the passed iterable of zero or more strings delimited by commas
+    and/or the conjunction "and" (conditionally depending on both the length of
+    this iterable and index of each string in this iterable), yielding a
+    human-readable string listing arbitrarily many substrings conjunctively.
+
+    Specifically, this function returns either:
+
+    * If this iterable contains no strings, the empty string.
+    * If this iterable contains one string, this string as is is unmodified.
+    * If this iterable contains two strings, these strings delimited by the
+      conjunction "and".
+    * If this iterable contains three or more strings, a string listing these
+      contained strings such that:
+
+      * All contained strings except the last two are suffixed by commas.
+      * The last two contained strings are delimited by the conjunction "and".
+
+    Parameters
+    ----------
+    strs : Iterable[str]
+        Iterable of all strings to be concatenated conjunctively.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.join_delimeted` function underlying this higher-level function.
+
+    Returns
+    -------
+    str
+        Conjunctive concatenation of these strings.
+    '''
+
+    # One of us. We accept one-liner. One of us.
+    return join_delimited(
+        strs=strs,
+        delimiter_if_two=' and ',
+        delimiter_if_three_or_more_nonlast=', ',
+        delimiter_if_three_or_more_last=', and ',
+        **kwargs
+    )
+
 # ....................{ JOINERS ~ disjunction              }....................
 def join_delimited_disjunction(strs: IterableStrs, **kwargs) -> str:
     '''

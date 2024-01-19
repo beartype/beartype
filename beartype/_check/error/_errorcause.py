@@ -137,7 +137,7 @@ class ViolationCause(object):
         the current call to that function) if that function generated such an
         integer *or* ``None`` otherwise (i.e., if that function generated *no*
         such integer). See the same parameter accepted by the higher-level
-        :func:`beartype._decor.error.errormain.get_beartype_violation`
+        :func:`beartype._check.error.errorget.get_func_pith_violation`
         function for further details.
     _hint : Any
         Type hint to validate this object against.
@@ -209,12 +209,12 @@ class ViolationCause(object):
         ----------
         See the class docstring for a description of these parameters.
         '''
-        assert func is None or callable(func), (
-            f'{repr(func)} neither callable nor "None".')
         assert isinstance(cls_stack, NoneTypeOr[tuple]), (
             f'{repr(cls_stack)} neither tuple nor "None".')
         assert isinstance(conf, BeartypeConf), (
             f'{repr(conf)} not configuration.')
+        assert func is None or callable(func), (
+            f'{repr(func)} neither callable nor "None".')
         assert isinstance(pith_name, NoneTypeOr[str]), (
             f'{repr(pith_name)} not string or "None".')
         assert isinstance(cause_indent, str), (
@@ -297,12 +297,12 @@ class ViolationCause(object):
         This method is intentionally generalized to support objects both
         satisfying and *not* satisfying hints as equally valid use cases. While
         the parent
-        :func:`beartype._decor.error.errormain.get_beartype_violation` function
+        :func:`beartype._check.error.errorget.get_func_pith_violation` function
         calling this method is *always* passed an object *not* satisfying the
         passed hint, this method is under no such constraints. Why? Because this
         method is also called to find which of an arbitrary number of objects
         transitively nested in the object passed to
-        :func:`beartype._decor.error.errormain.get_beartype_violation` fails to
+        :func:`beartype._check.error.errorget.get_func_pith_violation` fails to
         satisfy the corresponding hint transitively nested in the hint passed to
         that function.
 
@@ -365,7 +365,7 @@ class ViolationCause(object):
             # If this hint is a tuple union...
             if isinstance(self.hint, tuple):
                 # Avoid circular import dependencies.
-                from beartype._decor.error._errortype import (
+                from beartype._check.error._errortype import (
                     find_cause_instance_types_tuple)
 
                 # Defer to the getter function specific to tuple unions.
@@ -375,7 +375,7 @@ class ViolationCause(object):
             # getter deferred to below raises a human-readable exception.
             else:
                 # Avoid circular import dependencies.
-                from beartype._decor.error._errortype import (
+                from beartype._check.error._errortype import (
                     find_cause_instance_type)
 
                 # Defer to the getter function specific to classes.
@@ -397,7 +397,7 @@ class ViolationCause(object):
         # type origin. In this case, this hint was type-checked shallowly.
         ):
             # Avoid circular import dependencies.
-            from beartype._decor.error._errortype import (
+            from beartype._check.error._errortype import (
                 find_cause_type_instance_origin)
 
             # Defer to the getter function supporting hints originating from
@@ -408,7 +408,7 @@ class ViolationCause(object):
         # type-checked deeply.
         else:
             # Avoid circular import dependencies.
-            from beartype._decor.error.errormain import (
+            from beartype._check.error._errordata import (
                 HINT_SIGN_TO_GET_CAUSE_FUNC)
 
             # Getter function returning the desired string for this attribute if

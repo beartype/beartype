@@ -16,11 +16,11 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1)
-from beartype._decor.error._errorcause import ViolationCause
-from beartype._decor.error._errortype import (
+from beartype._check.error._errorcause import ViolationCause
+from beartype._check.error._errortype import (
     find_cause_type_instance_origin)
-from beartype._decor.error._util.errorutilcolor import color_type
-from beartype._decor.error._util.errorutiltext import represent_pith
+from beartype._check.error._util.errorutilcolor import color_type
+from beartype._check.error._util.errorutiltext import represent_pith
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.hint.utilhinttest import is_hint_ignorable

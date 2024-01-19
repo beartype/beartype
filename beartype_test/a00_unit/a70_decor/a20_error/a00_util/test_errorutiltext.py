@@ -7,7 +7,7 @@
 **Beartype error-handling string munging unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._decor.error._util.errorutiltext` submodule.
+:mod:`beartype._check.error._util.errorutiltext` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,11 +20,11 @@ This submodule unit tests the public API of the private
 def test_represent_pith() -> None:
     '''
     Test the
-    :func:`beartype._decor.error._util.errorutiltext.represent_pith` function.
+    :func:`beartype._check.error._util.errorutiltext.represent_pith` function.
     '''
 
     # Defer test-specific imports.
-    from beartype._decor.error._util.errorutiltext import represent_pith
+    from beartype._check.error._util.errorutiltext import represent_pith
 
     # Custom type to be represented below.
     class CustomType(object):

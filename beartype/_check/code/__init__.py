@@ -188,7 +188,7 @@
 #              isinstance(muh_param, list) and
 #              all(isinstance(muh_item, str) for muh_item in list)
 #          ):
-#              raise get_beartype_violation(...)
+#              raise get_func_pith_violation(...)
 #          ...
 #
 #  Trivial. Now, note the non-naive implementation of the same O(n) type-check
@@ -232,7 +232,7 @@
 #          # *AND* @beartype has yet to exceed its scheduled deadline for
 #          # non-constant type-checks...
 #          ) and ({check_time_max_multiplier - 1}*monotonic() < CHECK_TIME_MAX):
-#              raise get_beartype_violation(...)
+#              raise get_func_pith_violation(...)
 #          # Else, this pith either satisfies this hint *OR* @beartype has
 #          # exceeded its scheduled deadline for non-constant type-checks.
 #
@@ -258,7 +258,7 @@
 #need to pursue anyway regardless of the above concerns.
 #
 #The solution is to make the breadth-first search (BFS) internally performed
-#by the make_func_wrapper_code() function below more recursion-esque. We will
+#by the make_func_pith_code() function below more recursion-esque. We will
 #*NOT* be refactoring that function to leverage:
 #
 #* Recursion rather than iteration for all of the obvious reasons.
@@ -1298,7 +1298,7 @@
 #    "next(counter)" is the 0-based index of the next item of that tuple to be
 #    type-checked.
 #
-#Given that low-level infrastructure, the make_func_wrapper_code() function below
+#Given that low-level infrastructure, the make_func_pith_code() function below
 #then generates code perfectly type-checking arbitrary tuples in O(1) time that
 #should ideally resemble (where "__beartype_pith_j" is the current pith
 #referring to this tuple):

@@ -66,7 +66,7 @@ def sanify_hint_root_func(
       thus invalid as a type hint), raise an exception.
 
     Caveats
-    ----------
+    -------
     This sanifier *cannot* be meaningfully memoized, since the passed type hint
     is *not* guaranteed to be cached somewhere. Only functions passed cached
     type hints can be meaningfully memoized. Even if this function *could* be
@@ -99,7 +99,7 @@ def sanify_hint_root_func(
         function. Defaults to :data:`EXCEPTION_PLACEHOLDER`.
 
     Returns
-    ----------
+    -------
     object
         Either:
 
@@ -108,7 +108,7 @@ def sanify_hint_root_func(
         * If this hint is PEP-compliant, this hint unmodified as is.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintNonpepException
         If this object is neither:
 
@@ -222,7 +222,7 @@ def sanify_hint_root_statement(
         exception message.
 
     Returns
-    ----------
+    -------
     object
         Either:
 
@@ -231,7 +231,7 @@ def sanify_hint_root_statement(
         * If this hint is PEP-compliant, this hint unmodified as is.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintNonpepException
         If this object is neither:
 
@@ -239,7 +239,7 @@ def sanify_hint_root_statement(
         * A supported PEP-compliant type hint.
 
     See Also
-    ----------
+    --------
     :func:`.sanify_hint_root_func`
         Further details.
     '''
@@ -306,7 +306,7 @@ def sanify_hint_any(
         Defaults to :data:`None`.
 
     Returns
-    ----------
+    -------
     object
         PEP-compliant type hint sanified from this hint.
     '''
@@ -352,7 +352,7 @@ This cache does *not* cache:
   importation resembling ``from typing import Dict`` preceded that type hint).
 
 Design
---------------
+------
 **This dictionary is intentionally thread-safe.** Why? Because this dictionary
 is used to modify the ``__attributes__`` dunder variable of arbitrary callables.
 Since most of those callables are either module- or class-scoped, that variable

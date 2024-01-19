@@ -13,12 +13,15 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.typing import Optional
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.checkmagic import (
     ARG_NAME_GETRANDBITS,
     ARG_NAME_WARN,
 )
 from beartype._check.code.codemake import make_check_expr
 from beartype._conf.confcls import BeartypeConf
+from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahinttyping import (
     CodeGenerated,
     LexicalScope,
@@ -38,11 +41,11 @@ from warnings import warn
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
 @callable_cached
-def make_func_wrapper_code(
+def make_func_pith_code(
     hint: object,
     conf: BeartypeConf,
     cls_stack: TypeStack,
-    is_param: bool,
+    pith_name: Optional[str],
 ) -> CodeGenerated:
     '''
     **Type-checking wrapper function code factory** (i.e., low-level function
@@ -63,12 +66,13 @@ def make_func_wrapper_code(
         **Type stack** (i.e., either a tuple of the one or more
         :func:`beartype.beartype`-decorated classes lexically containing the
         class variable or method annotated by this hint *or* :data:`None`).
-    is_param : bool
-        If the code snippet generated and returned by this factory is
-        type-checking a previously localized:
+    pith_name : Optional[str]
+        Either:
 
-        * Parameter, :data:`True`.
-        * Return, :data:`False`.
+        * If this hint annotates a parameter of some callable, the name of that
+          parameter.
+        * If this hint annotates the return of some callable, ``"return"``.
+        * Else, :data:`None`.
 
     Returns
     -------
@@ -91,7 +95,6 @@ def make_func_wrapper_code(
     :func:`.make_check_expr`
         Further details.
     '''
-    assert isinstance(is_param, bool), f'{repr(is_param)} not bool.'
 
     # Python code snippet comprising a single boolean expression type-checking
     # an arbitrary object against this hint.
@@ -137,10 +140,10 @@ def make_func_wrapper_code(
     # Code snippet handling the previously generated violation by either raising
     # that violation as a fatal exception or emitting that violation as a
     # non-fatal warning.
-    func_wrapper_code_violation = make_func_wrapper_code_violation(
+    func_wrapper_code_violation = make_func_pith_code_violation(
         conf=conf,
         func_wrapper_scope=func_wrapper_scope,
-        is_param=is_param,
+        pith_name=pith_name,
     )
 
     # Code snippet type-checking the root pith against the root hint.
@@ -159,10 +162,10 @@ def make_func_wrapper_code(
     )
 
 
-def make_func_wrapper_code_violation(
+def make_func_pith_code_violation(
     conf: BeartypeConf,
     func_wrapper_scope: LexicalScope,
-    is_param: bool,
+    pith_name: Optional[str],
 ) -> str:
     '''
     **Type-checking wrapper function code suffix factory** (i.e., low-level
@@ -183,12 +186,13 @@ def make_func_wrapper_code_violation(
         **Lexical scope** (i.e., dictionary mapping from the relative
         unqualified name to value of each locally or globally scoped attribute
         accessible to a callable or class).
-    is_param : bool
-        If the code snippet generated and returned by this factory is
-        type-checking a previously localized:
+    pith_name : Optional[str]
+        Either:
 
-        * Parameter, :data:`True`.
-        * Return, :data:`False`.
+        * If this hint annotates a parameter of some callable, the name of that
+          parameter.
+        * If this hint annotates the return of some callable, ``"return"``.
+        * Else, :data:`None`.
 
     Returns
     -------
@@ -214,21 +218,33 @@ def make_func_wrapper_code_violation(
     assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
     assert isinstance(func_wrapper_scope, dict), (
         f'{repr(func_wrapper_scope)} not dictionary.')
-    assert isinstance(is_param, bool), f'{repr(is_param)} not bool.'
+    assert isinstance(pith_name, NoneTypeOr[str]), (
+        f'{repr(pith_name)} neither string nor "None".')
 
     # Code snippet handling the previously generated violation by either raising
     # that violation as a fatal exception or emitting that violation as a
     # non-fatal warning, contextually initialized below.
     func_wrapper_code_violation = ''  # type: ignore[assignment]
 
-    # If either...
+    # If this code snippet produces this violation by emitting a non-fatal
+    # warning (rather than raising an exception), detected as either...
     if (
-        # This configuration requests that non-fatal warnings being emitted for
-        # invalid parameters and a parameter is being type-checked *OR*...
-        (conf._is_violation_param_warn and is_param) or
-        # This configuration requests that non-fatal warnings being emitted for
-        # invalid returns and a return is being type-checked *OR*...
-        (conf._is_violation_return_warn and not is_param)
+        # If this object is neither a parameter nor return of a decorated
+        # callable, this object was directly passed to either the
+        # beartype.door.is_bearable() or beartype.door.die_if_unbearable()
+        # functions. In either case, set this boolean to this previously
+        # computed DOOR-specific boolean.
+        conf._is_violation_door_warn if pith_name is None else
+        # Else, this object is either a parameter or return of a decorated
+        # callable.
+        #
+        # If this object is a return of a decorated callable, set this boolean
+        # to this previously computed return-specific boolean.
+        conf._is_violation_return_warn if pith_name == ARG_NAME_RETURN else
+        # Else, this object is *NOT* a return of a decorated callable. In this
+        # case, this object *MUST* be a parameter of a decorated callable. Set
+        # this boolean to this previously computed parameter-specific boolean.
+        conf._is_violation_param_warn
     ):
         # Emit a non-fatal warning.
         func_wrapper_code_violation = CODE_HINT_VIOLATION_WARN

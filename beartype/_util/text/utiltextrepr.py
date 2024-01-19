@@ -45,7 +45,7 @@ def represent_object(
        two produces non-human-readable output:
 
            >>> def wat(mate: typing.List[str]) -> int: return len(mate)
-           >>> get_beartype_violation(
+           >>> get_func_pith_violation(
            ...     func=muh_func, pith_name='mate', pith_value=[7,])
            beartype.roar.BeartypeCallHintParamViolation: @beartyped wat()
            parameter mate=[7] violates PEP type hint typing.List[str], as list

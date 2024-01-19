@@ -660,7 +660,7 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
     visited by this BFS should be visitable as is via whatever external parent
     BFS is currently iterating over the tree of all transitive type hints (e.g.,
     our code generation algorithm implemented by the
-    :func:`beartype._check.code.codemake.make_func_wrapper_code` function).
+    :func:`beartype._check.code.codemake.make_func_pith_code` function).
     That's how we transitively visit all other kinds of type hints, right?
     Sadly, that simple solution fails to scale to all possible edge cases that
     arise with generics. Why? Because our code generation algorithm sensibly

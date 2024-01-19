@@ -83,7 +83,7 @@ def make_func_signature(
         Defaults to the empty string and thus synchronous behaviour.
 
     Yields
-    ----------
+    ------
     str
         Signature of this callable.
     '''
@@ -150,7 +150,4 @@ def make_func_signature(
     )
 
     # Return this signature suffixed by zero or more preliminary statements.
-    return (
-        f'{code_signature}'
-        f'{code_body_init}'
-    )
+    return f'{code_signature}{code_body_init}'

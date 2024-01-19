@@ -90,9 +90,9 @@ to defer and delegate the generation of code type-checking each child argument
 of that hint to the later time at which that child argument is visited.
 
 Example
-----------
+-------
 For example, the
-:func:`beartype._decor._hint._pep._pephint.make_func_wrapper_code` function might
+:func:`beartype._decor._hint._pep._pephint.make_func_pith_code` function might
 generate intermediary code resembling the following on visiting the
 :data:`Union` parent of a ``Union[int, str]`` object *before* visiting either
 the :class:`int` or :class:`str` children of that object:
@@ -101,7 +101,7 @@ the :class:`int` or :class:`str` children of that object:
         @{0}! or
         @{1}!
     ):
-        raise get_beartype_violation(
+        raise get_func_pith_violation(
             func=__beartype_func,
             pith_name=$%PITH_ROOT_NAME/~,
             pith_value=__beartype_pith_root,
@@ -116,7 +116,7 @@ final code memoized by that function might then resemble:
         isinstance(__beartype_pith_root, int) or
         isinstance(__beartype_pith_root, str)
     ):
-        raise get_beartype_violation(
+        raise get_func_pith_violation(
             func=__beartype_func,
             pith_name=$%PITH_ROOT_NAME/~,
             pith_value=__beartype_pith_root,

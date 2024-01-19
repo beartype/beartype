@@ -12,12 +12,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._decor.error._errorcause import ViolationCause
+from beartype._check.error._errorcause import ViolationCause
 from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
 from beartype._util.hint.pep.proposal.utilpep586 import (
     get_hint_pep586_literals)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
-from beartype._decor.error._util.errorutiltext import represent_pith
+from beartype._check.error._util.errorutiltext import represent_pith
 
 # ....................{ GETTERS                            }....................
 def find_cause_literal(cause: ViolationCause) -> ViolationCause:

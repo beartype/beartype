@@ -45,7 +45,7 @@ def prefix_beartypeable_arg_value(
     assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
 
     # Avoid circular import dependencies.
-    from beartype._decor.error._util.errorutilcolor import color_repr
+    from beartype._check.error._util.errorutilcolor import color_repr
 
     # Human-readable string depicting this parameter name and value.
     arg_name_value = color_repr(f'{arg_name}={represent_object(arg_value)}')
@@ -76,7 +76,7 @@ def prefix_beartypeable_return_value(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._decor.error._util.errorutilcolor import color_repr
+    from beartype._check.error._util.errorutilcolor import color_repr
 
     # Create and return this label.
     return (
@@ -103,7 +103,7 @@ def represent_pith(pith: object) -> str:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._decor.error._util.errorutilcolor import (
+    from beartype._check.error._util.errorutilcolor import (
         color_error,
         color_repr,
     )

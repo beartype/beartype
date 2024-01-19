@@ -34,7 +34,11 @@ from beartype.roar import (
 )
 from beartype.typing import NoReturn
 from beartype._check.checkcall import BeartypeCall
-from beartype._check.checkmagic import ARG_NAME_TYPISTRY
+from beartype._check.checkmagic import (
+    ARG_NAME_FUNC,
+    ARG_NAME_GET_VIOLATION,
+    ARG_NAME_TYPISTRY,
+)
 from beartype._check.code._codesnip import (
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
     PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
@@ -63,9 +67,10 @@ from beartype._decor.wrap.wrapsnip import (
     PEP484_CODE_CHECK_NORETURN,
 )
 from beartype._decor.wrap._wrapcode import (
-    make_func_wrapper_code,
-    make_func_wrapper_code_violation,
+    make_func_pith_code,
+    make_func_pith_code_violation,
 )
+from beartype._check.error.errorget import get_func_pith_violation
 from beartype._util.error.utilerrorraise import (
     EXCEPTION_PLACEHOLDER,
     reraise_exception_placeholder,
@@ -198,8 +203,8 @@ def generate_code(
     if not code_check_return:
         # If all callable parameters also require *NO* type-checking, this
         # callable itself requires *NO* type-checking. In this case, return the
-        # empty string instructing the parent @beartype decorator to reduce to
-        # a noop (i.e., the identity decorator returning this callable as is).
+        # empty string instructing the parent @beartype decorator to reduce to a
+        # noop (i.e., the identity decorator returning this callable as is).
         if not code_check_params:
             return ''
         # Else, one or more callable parameters require type-checking.
@@ -209,6 +214,14 @@ def generate_code(
         code_check_return = CODE_RETURN_UNCHECKED_format(
             func_call_prefix=bear_call.func_wrapper_code_call_prefix)
     # Else, the callable return requires type-checking.
+
+    # Dictionary mapping from the name to value of each attribute referenced in
+    # the signature of this wrapper function, localized merely for readability.
+    func_wrapper_scope = bear_call.func_wrapper_scope
+
+    # Pass parameters unconditionally required by *ALL* wrapper functions.
+    func_wrapper_scope[ARG_NAME_FUNC] = bear_call.func_wrappee
+    func_wrapper_scope[ARG_NAME_GET_VIOLATION] = get_func_pith_violation
 
     # Python code snippet declaring the signature of this type-checking wrapper
     # function, deferred for efficiency until *AFTER* confirming that a wrapper
@@ -457,11 +470,11 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 code_param_check_pith,
                 func_wrapper_scope,
                 hint_forwardrefs_class_basename,
-            ) = make_func_wrapper_code(
+            ) = make_func_pith_code(
                 hint_sane,
                 bear_call.conf,
                 cls_stack,
-                True,  # <-- "True" only if this is a parameter
+                arg_name,
             )
 
             # Merge the local scope required to check this parameter into the
@@ -587,6 +600,14 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
         # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
         # *ONLY* as a return annotation...
         if hint is NoReturn:
+            #FIXME: Inefficient. This should instead be memoized by:
+            #* Defining in the "_wrapcode" submodule a new @callable_cached
+            #  make_func_return_pep484_noreturn_code() factory resembling the.
+            #  make_func_pith_code() factory.
+            #* Shifting the code below into that new
+            #  make_func_return_pep484_noreturn_code() factory.
+            #* Calling make_func_return_pep484_noreturn_code() here.
+
             # Initialize this lexical scope to the empty dictionary.
             func_wrapper_scope = {}
 
@@ -598,10 +619,10 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
             # Code snippet handling the previously generated violation by either
             # raising that violation as a fatal exception or emitting that
             # violation as a non-fatal warning.
-            code_noreturn_violation = make_func_wrapper_code_violation(
+            code_noreturn_violation = make_func_pith_code_violation(
                 conf=bear_call.conf,
                 func_wrapper_scope=func_wrapper_scope,
-                is_param=False,
+                pith_name=ARG_NAME_RETURN,
             )
 
             # Full code snippet to be returned.
@@ -637,11 +658,11 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                     code_return_check_pith,
                     func_wrapper_scope,
                     hint_forwardrefs_class_basename,
-                ) = make_func_wrapper_code(  # type: ignore[assignment]
+                ) = make_func_pith_code(  # type: ignore[assignment]
                     hint,
                     bear_call.conf,
                     cls_stack,
-                    False,  # <-- "True" only if this is a parameter
+                    ARG_NAME_RETURN,
                 )
 
                 # Unmemoize this snippet against this return.

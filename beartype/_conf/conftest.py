@@ -12,7 +12,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.roar import BeartypeConfParamException
+import beartype
+from beartype.roar import (
+    BeartypeConfException,
+    BeartypeConfParamException,
+)
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confenum import (
     BeartypeStrategy,
@@ -23,7 +27,32 @@ from beartype._data.hint.datahinttyping import DictStrToAny
 from beartype._util.cls.utilclstest import is_type_subclass
 
 # ....................{ RAISERS                            }....................
-def die_if_conf_invalid(conf_kwargs: DictStrToAny) -> None:
+def die_unless_conf(conf: 'beartype.BeartypeConf') -> None:
+    '''
+    Raise an exception unless the passed object is a beartype configuration.
+
+    Parameters
+    ----------
+    conf : beartype.BeartypeConf
+        Object to be validated.
+
+    Raises
+    ------
+    BeartypeConfException
+        If this object is *not* a beartype configuration.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._conf.confcls import BeartypeConf
+
+    # If this object is *NOT* a configuration, raise an exception.
+    if not isinstance(conf, BeartypeConf):
+        raise BeartypeConfException(
+            f'{repr(conf)} not beartype configuration.')
+    # Else, this object is a configuration.
+
+
+def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     '''
     Raise an exception if one or more configuration parameters in the passed
     dictionary of such parameters are invalid.
@@ -93,26 +122,6 @@ def die_if_conf_invalid(conf_kwargs: DictStrToAny) -> None:
         )
     # Else, "strategy" is an enumeration member.
     #
-    # If "violation_param_type" is *NOT* an exception, raise an
-    # exception.
-    elif not is_type_subclass(conf_kwargs['violation_param_type'], Exception):
-        raise BeartypeConfParamException(
-            f'Beartype configuration parameter "violation_param_type" '
-            f'value {repr(conf_kwargs["violation_param_type"])} not '
-            f'exception type.'
-        )
-    # Else, "violation_param_type" is an exception.
-    #
-    # If "violation_return_type" is *NOT* an exception, raise an
-    # exception.
-    elif not is_type_subclass(conf_kwargs['violation_return_type'], Exception):
-        raise BeartypeConfParamException(
-            f'Beartype configuration parameter "violation_return_type" '
-            f'value {repr(conf_kwargs["violation_return_type"])} not '
-            f'exception type.'
-        )
-    # Else, "violation_return_type" is an exception.
-    #
     # If "violation_verbosity" is *NOT* an enumeration member, raise an
     # exception.
     elif not isinstance(
@@ -140,3 +149,29 @@ def die_if_conf_invalid(conf_kwargs: DictStrToAny) -> None:
         )
     # Else, "warning_cls_on_decorator_exception" is either "None" *OR* a
     # warning category.
+
+    # For the name of each keyword parameter whose value is expected to be an
+    # exception subclass...
+    for arg_name_exception_subclass in _ARG_NAMES_EXCEPTION_SUBCLASS:
+        # If the value of this keyword parameter is *NOT* an exception subclass,
+        # raise an exception.
+        if not is_type_subclass(
+            conf_kwargs[arg_name_exception_subclass], Exception):
+            raise BeartypeConfParamException(
+                f'Beartype configuration parameter '
+                f'"{arg_name_exception_subclass}" value '
+                f'{repr(conf_kwargs[arg_name_exception_subclass])} not '
+                f'exception type.'
+            )
+
+# ....................{ PRIVATE ~ globals                  }....................
+_ARG_NAMES_EXCEPTION_SUBCLASS = (
+    'violation_door_type',
+    'violation_param_type',
+    'violation_return_type',
+)
+'''
+Tuple of the names of all keyword parameters to the
+:meth:`beartype.BeartypeConf.__new__` dunder method whose values are expected to
+be exception subclasses.
+'''

@@ -23,8 +23,8 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignType,
 )
-from beartype._decor.error._errorcause import ViolationCause
-from beartype._decor.error._util.errorutilcolor import color_hint
+from beartype._check.error._errorcause import ViolationCause
+from beartype._check.error._util.errorutilcolor import color_hint
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_isinstanceable,
@@ -42,7 +42,7 @@ from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextlabel import label_type
-from beartype._decor.error._util.errorutiltext import represent_pith
+from beartype._check.error._util.errorutiltext import represent_pith
 
 # ....................{ GETTERS ~ instance : type          }....................
 def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
