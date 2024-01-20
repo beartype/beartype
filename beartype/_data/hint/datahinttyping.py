@@ -244,7 +244,7 @@ a Python code snippet dynamically generated on-the-fly by a
 :mod:`beartype`-specific code generator and metadata describing that code).
 
 Specifically, this hint matches a 3-tuple ``(func_wrapper_code,
-func_wrapper_scope, hint_forwardrefs_class_basename)``, where:
+func_wrapper_scope, hint_refs_type_basename)``, where:
 
 * ``func_wrapper_code`` is a Python code snippet type-checking an arbitrary
   object against this hint. For the common case of code generated for a
@@ -253,7 +253,7 @@ func_wrapper_scope, hint_forwardrefs_class_basename)``, where:
 * ``func_wrapper_scope`` is the **local scope** (i.e., dictionary mapping from
   the name to value of each attribute referenced one or more times in this code)
   of the body of the function embedding this code.
-* ``hint_forwardrefs_class_basename`` is a tuple of the unqualified classnames
+* ``hint_refs_type_basename`` is a tuple of the unqualified classnames
   of :pep:`484`-compliant relative forward references visitable from this hint
   (e.g., ``('MuhClass', 'YoClass')`` given the hint ``Union['MuhClass',
   List['YoClass']]``).

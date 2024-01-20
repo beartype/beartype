@@ -45,7 +45,7 @@ currently visited parent hint).
 '''
 
 # ....................{ HINT ~ placeholder : forwardref    }....................
-PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX = '${FORWARDREF:'
+CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX = '${FORWARDREF:'
 '''
 Prefix of each **placeholder unqualified forward reference classname
 substring** (i.e., placeholder to be globally replaced by a Python code snippet
@@ -55,7 +55,7 @@ caller-defined module declaring the currently decorated callable).
 '''
 
 
-PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX = ']?'
+CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX = ']?'
 '''
 Suffix of each **placeholder unqualified forward reference classname
 substring** (i.e., placeholder to be globally replaced by a Python code snippet
@@ -69,14 +69,15 @@ PEP484585_CODE_HINT_GENERIC_PREFIX = '''(
 {indent_curr}    # True only if this pith is of this generic type.
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
 '''
-PEP-compliant code snippet prefixing all code type-checking the current pith
-against each unerased pseudo-superclass subclassed by a :pep:`484`-compliant
-**generic** (i.e., PEP-compliant type hint subclassing a combination of one or
-more of the :mod:`typing.Generic` superclass, the :mod:`typing.Protocol`
-superclass, and/or other :mod:`typing` non-class objects).
+:pep:`484`- and :pep:`585`-compliant code snippet prefixing all code
+type-checking the current pith against each unerased pseudo-superclass
+subclassed by a :pep:`484`-compliant **generic** (i.e., PEP-compliant type hint
+subclassing a combination of one or more of the :mod:`typing.Generic`
+superclass, the :mod:`typing.Protocol` superclass, and/or other :mod:`typing`
+non-class objects).
 
 Caveats
-----------
+-------
 The ``{indent_curr}`` format variable is intentionally brace-protected to
 efficiently defer its interpolation until the complete PEP-compliant code
 snippet type-checking the current pith against *all* subscripted arguments of
@@ -87,9 +88,9 @@ this parent type has been generated.
 PEP484585_CODE_HINT_GENERIC_SUFFIX = '''
 {indent_curr})'''
 '''
-PEP-compliant code snippet suffixing all code type-checking the current pith
-against each unerased pseudo-superclass subclassed by a :pep:`484`-compliant
-generic.
+:pep:`484`- and :pep:`585`-compliant code snippet suffixing all code
+type-checking the current pith against each unerased pseudo-superclass
+subclassed by a :pep:`484`-compliant generic.
 '''
 
 
@@ -98,11 +99,12 @@ PEP484585_CODE_HINT_GENERIC_CHILD = '''
 {{indent_curr}}    # pseudo-superclass of this generic.
 {{indent_curr}}    {hint_child_placeholder} and'''
 '''
-PEP-compliant code snippet type-checking the current pith against the current
-unerased pseudo-superclass subclassed by a :pep:`484`-compliant generic.
+:pep:`484`- and :pep:`585`-compliant code snippet type-checking the current pith
+against the current unerased pseudo-superclass subclassed by a
+:pep:`484`-compliant generic.
 
 Caveats
-----------
+-------
 The caller is required to manually slice the trailing suffix ``" and"`` after
 applying this snippet to the last unerased pseudo-superclass of such a generic.
 While there exist alternate and more readable means of accomplishing this, this
@@ -123,14 +125,15 @@ PEP484585_CODE_HINT_SEQUENCE_ARGS_1 = '''(
 {indent_curr}    (not {pith_curr_var_name} or {hint_child_placeholder})
 {indent_curr})'''
 '''
-PEP-compliant code snippet type-checking the current pith against a parent
-**standard sequence type** (i.e., PEP-compliant type hint accepting exactly one
-subscripted type hint unconditionally constraining *all* items of this pith,
-which necessarily satisfies the :class:`collections.abc.Sequence` protocol with
-guaranteed ``O(1)`` indexation across all sequence items).
+:pep:`484`- and :pep:`585`-compliant code snippet type-checking the current pith
+against a parent **standard sequence type** (i.e., PEP-compliant type hint
+accepting exactly one subscripted type hint unconditionally constraining *all*
+items of this pith, which necessarily satisfies the
+:class:`collections.abc.Sequence` protocol with guaranteed ``O(1)`` indexation
+across all sequence items).
 
 Caveats
-----------
+-------
 **This snippet cannot contain ternary conditionals.** For unknown reasons
 suggesting a critical defect in the current implementation of Python 3.8's
 assignment expressions, this snippet raises :class:`UnboundLocalError`
@@ -161,8 +164,9 @@ based on ternary conditional (albeit slightly less intuitive).
 PEP484585_CODE_HINT_SEQUENCE_ARGS_1_PITH_CHILD_EXPR = (
     f'''{{pith_curr_var_name}}[{VAR_NAME_RANDOM_INT} % len({{pith_curr_var_name}})]''')
 '''
-PEP-compliant Python expression yielding the value of a randomly indexed item
-of the current pith (which, by definition, *must* be a standard sequence).
+:pep:`484`- and :pep:`585`-compliant Python expression yielding the value of a
+randomly indexed item of the current pith (which, by definition, *must* be a
+standard sequence).
 '''
 
 # ....................{ HINT ~ pep : (484|585) : tuple     }....................
@@ -170,18 +174,20 @@ PEP484585_CODE_HINT_TUPLE_FIXED_PREFIX = '''(
 {indent_curr}    # True only if this pith is a tuple.
 {indent_curr}    isinstance({pith_curr_assign_expr}, tuple) and'''
 '''
-PEP-compliant code snippet prefixing all code type-checking the current pith
-against each subscripted child hint of an itemized :class:`typing.Tuple` type
-of the form ``typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]``.
+:pep:`484`- and :pep:`585`-compliant code snippet prefixing all code
+type-checking the current pith against each subscripted child hint of an
+itemized :class:`typing.Tuple` type of the form ``typing.Tuple[{typename1},
+{typename2}, ..., {typenameN}]``.
 '''
 
 
 PEP484585_CODE_HINT_TUPLE_FIXED_SUFFIX = '''
 {indent_curr})'''
 '''
-PEP-compliant code snippet suffixing all code type-checking the current pith
-against each subscripted child hint of an itemized :class:`typing.Tuple` type
-of the form ``typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]``.
+:pep:`484`- and :pep:`585`-compliant code snippet suffixing all code
+type-checking the current pith against each subscripted child hint of an
+itemized :class:`typing.Tuple` type of the form ``typing.Tuple[{typename1},
+{typename2}, ..., {typenameN}]``.
 '''
 
 
@@ -189,12 +195,12 @@ PEP484585_CODE_HINT_TUPLE_FIXED_EMPTY = '''
 {{indent_curr}}    # True only if this tuple is empty.
 {{indent_curr}}    not {pith_curr_var_name} and'''
 '''
-PEP-compliant code snippet prefixing all code type-checking the current pith
-to be empty against an itemized :class:`typing.Tuple` type of the non-standard
-form ``typing.Tuple[()]``.
+:pep:`484`- and :pep:`585`-compliant code snippet prefixing all code
+type-checking the current pith to be empty against an itemized
+:class:`typing.Tuple` type of the non-standard form ``typing.Tuple[()]``.
 
 See Also
-----------
+--------
 :data:`PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_CHILD`
     Further details.
 '''
@@ -204,12 +210,12 @@ PEP484585_CODE_HINT_TUPLE_FIXED_LEN = '''
 {{indent_curr}}    # True only if this tuple is of the expected length.
 {{indent_curr}}    len({pith_curr_var_name}) == {hint_childs_len} and'''
 '''
-PEP-compliant code snippet prefixing all code type-checking the current pith
-to be of the expected length against an itemized :class:`typing.Tuple` type of
-the non-standard form ``typing.Tuple[()]``.
+:pep:`484`- and :pep:`585`-compliant code snippet prefixing all code
+type-checking the current pith to be of the expected length against an itemized
+:class:`typing.Tuple` type of the non-standard form ``typing.Tuple[()]``.
 
 See Also
-----------
+--------
 :data:`PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_CHILD`
     Further details.
 '''
@@ -220,12 +226,12 @@ PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_CHILD = '''
 {{indent_curr}}    # satisfies this child hint.
 {{indent_curr}}    {hint_child_placeholder} and'''
 '''
-PEP-compliant code snippet type-checking the current pith against the current
-child hint subscripting an itemized :class:`typing.Tuple` type of the form
-``typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]``.
+:pep:`484`- and :pep:`585`-compliant code snippet type-checking the current pith
+against the current child hint subscripting an itemized :class:`typing.Tuple`
+type of the form ``typing.Tuple[{typename1}, {typename2}, ..., {typenameN}]``.
 
 Caveats
-----------
+-------
 The caller is required to manually slice the trailing suffix ``" and"`` after
 applying this snippet to the last subscripted child hint of an itemized
 :class:`typing.Tuple` type. While there exist alternate and more readable means
@@ -241,8 +247,9 @@ this parent type has been generated.
 PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR = (
     '''{pith_curr_var_name}[{pith_child_index}]''')
 '''
-PEP-compliant Python expression yielding the value of the currently indexed
-item of the current pith (which, by definition, *must* be a tuple).
+:pep:`484`- and :pep:`585`-compliant Python expression yielding the value of the
+currently indexed item of the current pith (which, by definition, *must* be a
+tuple).
 '''
 
 # ....................{ HINT ~ pep : (484|585) : subclass  }....................
@@ -253,16 +260,17 @@ PEP484585_CODE_HINT_SUBCLASS = '''(
 {indent_curr}    issubclass({pith_curr_var_name}, {hint_curr_expr})
 {indent_curr})'''
 '''
-PEP-compliant code snippet type-checking the current pith to be a subclass of
-the subscripted child hint of a :pep:`484`- or :pep:`585`-compliant **subclass
-type hint** (e.g., :attr:`typing.Type`, :class:`type`).
+:pep:`484`- and :pep:`585`-compliant code snippet type-checking the current pith
+to be a subclass of the subscripted child hint of a :pep:`484`- or
+:pep:`585`-compliant **subclass type hint** (e.g., :attr:`typing.Type`,
+:class:`type`).
 '''
 
 # ....................{ HINT ~ pep : 484 : instance        }....................
 PEP484_CODE_HINT_INSTANCE = (
     '''isinstance({pith_curr_expr}, {hint_curr_expr})''')
 '''
-PEP-compliant code snippet type-checking the current pith against the
+:pep:`484`-compliant code snippet type-checking the current pith against the
 current child PEP-compliant type expected to be a trivial non-:mod:`typing`
 type (e.g., :class:`int`, :class:`str`).
 '''
@@ -270,28 +278,28 @@ type (e.g., :class:`int`, :class:`str`).
 # ....................{ HINT ~ pep : 484 : union           }....................
 PEP484_CODE_HINT_UNION_PREFIX = '''('''
 '''
-PEP-compliant code snippet prefixing all code type-checking the current pith
-against each subscripted argument of a :class:`typing.Union` type hint.
+:pep:`484`-compliant code snippet prefixing all code type-checking the current
+pith against each subscripted argument of a :class:`typing.Union` type hint.
 '''
 
 
 PEP484_CODE_HINT_UNION_SUFFIX = '''
 {indent_curr})'''
 '''
-PEP-compliant code snippet suffixing all code type-checking the current pith
-against each subscripted argument of a :class:`typing.Union` type hint.
+:pep:`484`-compliant code snippet suffixing all code type-checking the current
+pith against each subscripted argument of a :class:`typing.Union` type hint.
 '''
 
 
 PEP484_CODE_HINT_UNION_CHILD_PEP = '''
 {{indent_curr}}    {hint_child_placeholder} or'''
 '''
-PEP-compliant code snippet type-checking the current pith against the current
-PEP-compliant child argument subscripting a parent :class:`typing.Union` type
-hint.
+:pep:`484`-compliant code snippet type-checking the current pith against the
+current PEP-compliant child argument subscripting a parent :class:`typing.Union`
+type hint.
 
 Caveats
-----------
+-------
 The caller is required to manually slice the trailing suffix ``" or"`` after
 applying this snippet to the last subscripted argument of such a hint. While
 there exist alternate and more readable means of accomplishing this, this
@@ -308,12 +316,12 @@ PEP484_CODE_HINT_UNION_CHILD_NONPEP = '''
 {{indent_curr}}    # True only if this pith is of one of these types.
 {{indent_curr}}    isinstance({pith_curr_expr}, {hint_curr_expr}) or'''
 '''
-PEP-compliant code snippet type-checking the current pith against the current
-PEP-noncompliant child argument subscripting a parent :class:`typing.Union`
-type hint.
+:pep:`484`-compliant code snippet type-checking the current pith against the
+current PEP-noncompliant child argument subscripting a parent
+:class:`typing.Union` type hint.
 
 See Also
-----------
+--------
 :data:`PEP484_CODE_HINT_UNION_CHILD_PEP`
     Further details.
 '''
@@ -323,18 +331,18 @@ PEP586_CODE_HINT_PREFIX = '''(
 {{indent_curr}}    # True only if this pith is of one of these literal types.
 {{indent_curr}}    isinstance({pith_curr_assign_expr}, {hint_child_types_expr}) and ('''
 '''
-PEP-compliant code snippet prefixing all code type-checking the current pith
-against a :pep:`586`-compliant :class:`typing.Literal` type hint subscripted by
-one or more literal objects.
+:pep:`586`-compliant code snippet prefixing all code type-checking the current
+pith against a :pep:`586`-compliant :class:`typing.Literal` type hint
+subscripted by one or more literal objects.
 '''
 
 
 PEP586_CODE_HINT_SUFFIX = '''
 {indent_curr}))'''
 '''
-PEP-compliant code snippet suffixing all code type-checking the current pith
-against a :pep:`586`-compliant :class:`typing.Literal` type hint subscripted by
-one or more literal objects.
+:pep:`586`-compliant code snippet suffixing all code type-checking the current
+pith against a :pep:`586`-compliant :class:`typing.Literal` type hint
+subscripted by one or more literal objects.
 '''
 
 
@@ -342,12 +350,12 @@ PEP586_CODE_HINT_LITERAL = '''
 {{indent_curr}}        # True only if this pith is equal to this literal.
 {{indent_curr}}        {pith_curr_var_name} == {hint_child_expr} or'''
 '''
-PEP-compliant code snippet type-checking the current pith against the current
-child literal object subscripting a :pep:`586`-compliant
+:pep:`586`-compliant code snippet type-checking the current pith against the
+current child literal object subscripting a :pep:`586`-compliant
 :class:`typing.Literal` type hint.
 
 Caveats
-----------
+-------
 The caller is required to manually slice the trailing suffix ``" and"`` after
 applying this snippet to the last subscripted argument of such a
 :class:`typing.Literal` type. While there exist alternate and more readable
@@ -363,17 +371,17 @@ this parent hint has been generated.
 PEP593_CODE_HINT_VALIDATOR_PREFIX = '''(
 {indent_curr}    {hint_child_placeholder} and'''
 '''
-PEP-compliant code snippet prefixing all code type-checking the current pith
-against a :pep:`593`-compliant :class:`typing.Annotated` type hint subscripted
-by one or more :class:`beartype.vale.BeartypeValidator` objects.
+:pep:`593`-compliant code snippet prefixing all code type-checking the current
+pith against a :pep:`593`-compliant :class:`typing.Annotated` type hint
+subscripted by one or more :class:`beartype.vale.BeartypeValidator` objects.
 '''
 
 
 PEP593_CODE_HINT_VALIDATOR_SUFFIX = '''
 {indent_curr})'''
 '''
-PEP-compliant code snippet suffixing all code type-checking the current pith
-against each a :pep:`593`-compliant :class:`typing.Annotated` type hint
+:pep:`593`-compliant code snippet suffixing all code type-checking the current
+pith against each a :pep:`593`-compliant :class:`typing.Annotated` type hint
 subscripted by one or more :class:`beartype.vale.BeartypeValidator` objects.
 '''
 
@@ -383,14 +391,14 @@ PEP593_CODE_HINT_VALIDATOR_CHILD = '''
 {indent_curr}    # validator of this annotated.
 {indent_curr}    {hint_child_expr} and'''
 '''
-PEP-compliant code snippet type-checking the current pith against
+:pep:`593`-compliant code snippet type-checking the current pith against
 :mod:`beartype`-specific **data validator code** (i.e., caller-defined
 :meth:`beartype.vale.BeartypeValidator._is_valid_code` string) of the current
 child :class:`beartype.vale.BeartypeValidator` argument subscripting a parent `PEP
 593`_-compliant :class:`typing.Annotated` type hint.
 
 Caveats
-----------
+-------
 The caller is required to manually slice the trailing suffix ``" and"`` after
 applying this snippet to the last subscripted argument of such a
 :class:`typing.Annotated` type. While there exist alternate and more readable

@@ -39,9 +39,13 @@ from beartype._check.checkmagic import (
     ARG_NAME_GET_VIOLATION,
     ARG_NAME_TYPISTRY,
 )
-from beartype._check.code._codesnip import (
-    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
-    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
+from beartype._check.checkmake import (
+    make_code_raiser_check,
+    make_code_raiser_violation,
+)
+from beartype._check.code.codesnip import (
+    CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,
+    CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
 )
 from beartype._check.convert.convsanify import sanify_hint_root_func
 from beartype._check.forward.fwdtype import (
@@ -57,6 +61,7 @@ from beartype._data.hint.datahinttyping import (
     LexicalScope,
 )
 from beartype._decor.wrap.wrapsnip import (
+    CODE_HINT_ROOT_SUFFIX,
     CODE_INIT_ARGS_LEN,
     CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
     CODE_RETURN_CHECK_PREFIX,
@@ -65,10 +70,6 @@ from beartype._decor.wrap.wrapsnip import (
     CODE_SIGNATURE,
     PARAM_KIND_TO_CODE_LOCALIZE,
     PEP484_CODE_CHECK_NORETURN,
-)
-from beartype._decor.wrap._wrapcode import (
-    make_func_pith_code,
-    make_func_pith_code_violation,
 )
 from beartype._check.error.errorget import get_func_pith_violation
 from beartype._util.error.utilerrorraise import (
@@ -217,18 +218,18 @@ def generate_code(
 
     # Dictionary mapping from the name to value of each attribute referenced in
     # the signature of this wrapper function, localized merely for readability.
-    func_wrapper_scope = bear_call.func_wrapper_scope
+    func_scope = bear_call.func_wrapper_scope
 
     # Pass parameters unconditionally required by *ALL* wrapper functions.
-    func_wrapper_scope[ARG_NAME_FUNC] = bear_call.func_wrappee
-    func_wrapper_scope[ARG_NAME_GET_VIOLATION] = get_func_pith_violation
+    func_scope[ARG_NAME_FUNC] = bear_call.func_wrappee
+    func_scope[ARG_NAME_GET_VIOLATION] = get_func_pith_violation
 
     # Python code snippet declaring the signature of this type-checking wrapper
     # function, deferred for efficiency until *AFTER* confirming that a wrapper
     # function is even required.
     code_signature = make_func_signature(
         func_name=bear_call.func_wrapper_name,
-        func_scope=bear_call.func_wrapper_scope,
+        func_scope=func_scope,
         code_signature_format=CODE_SIGNATURE,
         code_signature_prefix=bear_call.func_wrapper_code_signature_prefix,
         conf=bear_call.conf,
@@ -244,11 +245,7 @@ def generate_code(
     #
     # Since string concatenation is heavily optimized by the official CPython
     # interpreter, the simplest approach is the most ideal. KISS, bro.
-    return (
-        f'{code_signature}'
-        f'{code_check_params}'
-        f'{code_check_return}'
-    )
+    return f'{code_signature}{code_check_params}{code_check_return}'
 
 # ....................{ PRIVATE ~ constants                }....................
 #FIXME: Remove this set *AFTER* handling these kinds of parameters.
@@ -401,6 +398,10 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 continue
             # Else, this parameter is non-ignorable.
 
+            #FIXME: Definitely the wrong way around. This should simply be
+            #"hint" -- *NOT* "hint_sane". Define a new "hint_insane = hint"
+            #alias preserving the original insane hint, please.
+
             # Sanitize this hint into a possibly different type hint more
             # readily consumable by @beartype's code generator *BEFORE* passing
             # this hint to any further callables.
@@ -468,18 +469,19 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # Code snippet type-checking any parameter with an arbitrary name.
             (
                 code_param_check_pith,
-                func_wrapper_scope,
-                hint_forwardrefs_class_basename,
-            ) = make_func_pith_code(
+                func_scope,
+                hint_refs_type_basename,
+            ) = make_code_raiser_check(
                 hint_sane,
                 bear_call.conf,
+                CODE_HINT_ROOT_SUFFIX,
                 cls_stack,
-                arg_name,
+                True,  # <-- True only for parameters
             )
 
             # Merge the local scope required to check this parameter into the
             # local scope currently required by the current wrapper function.
-            update_mapping(bear_call.func_wrapper_scope, func_wrapper_scope)
+            update_mapping(bear_call.func_wrapper_scope, func_scope)
 
             # Python code snippet localizing this parameter.
             code_param_localize = PARAM_LOCALIZE_TEMPLATE.format(
@@ -490,7 +492,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 bear_call=bear_call,
                 func_wrapper_code=code_param_check_pith,
                 pith_repr=repr(arg_name),
-                hint_forwardrefs_class_basename=hint_forwardrefs_class_basename,
+                hint_refs_type_basename=hint_refs_type_basename,
             )
 
             # Append code type-checking this parameter against this hint.
@@ -579,7 +581,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
     # Lexical scope (i.e., dictionary mapping from the relative unqualified name
     # to value of each locally or globally scoped attribute accessible to a
     # callable or class), initialized to "None" for safety.
-    func_wrapper_scope: LexicalScope = None  # type: ignore[assignment]
+    func_scope: LexicalScope = None  # type: ignore[assignment]
 
     # Attempt to...
     try:
@@ -609,7 +611,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
             #* Calling make_func_return_pep484_noreturn_code() here.
 
             # Initialize this lexical scope to the empty dictionary.
-            func_wrapper_scope = {}
+            func_scope = {}
 
             # Pre-generated code snippet validating this callable to *NEVER*
             # successfully return by unconditionally generating a violation.
@@ -619,17 +621,12 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
             # Code snippet handling the previously generated violation by either
             # raising that violation as a fatal exception or emitting that
             # violation as a non-fatal warning.
-            code_noreturn_violation = make_func_pith_code_violation(
-                conf=bear_call.conf,
-                func_wrapper_scope=func_wrapper_scope,
-                pith_name=ARG_NAME_RETURN,
-            )
+            code_noreturn_violation = make_code_raiser_violation(
+                conf=bear_call.conf, func_scope=func_scope, is_param=False)
 
             # Full code snippet to be returned.
             func_wrapper_code = (
-                f'{code_noreturn_check}'
-                f'{code_noreturn_violation}'
-            )
+                f'{code_noreturn_check}{code_noreturn_violation}')
         # Else, this is *NOT* "typing.NoReturn". In this case...
         else:
             # If this PEP-compliant hint is unignorable, generate and return a
@@ -651,18 +648,19 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
 
                 # Empty tuple, passed below to satisfy the
                 # _unmemoize_func_wrapper_code() API.
-                hint_forwardrefs_class_basename = ()
+                hint_refs_type_basename = ()
 
                 # Code snippet type-checking any arbitrary return.
                 (
                     code_return_check_pith,
-                    func_wrapper_scope,
-                    hint_forwardrefs_class_basename,
-                ) = make_func_pith_code(  # type: ignore[assignment]
+                    func_scope,
+                    hint_refs_type_basename,
+                ) = make_code_raiser_check(  # type: ignore[assignment]
                     hint,
                     bear_call.conf,
+                    CODE_HINT_ROOT_SUFFIX,
                     cls_stack,
-                    ARG_NAME_RETURN,
+                    False,  # <-- True only for parameters
                 )
 
                 # Unmemoize this snippet against this return.
@@ -671,8 +669,8 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                         bear_call=bear_call,
                         func_wrapper_code=code_return_check_pith,
                         pith_repr=ARG_NAME_RETURN_REPR,
-                        hint_forwardrefs_class_basename=(
-                            hint_forwardrefs_class_basename),
+                        hint_refs_type_basename=(
+                            hint_refs_type_basename),
                     ))
 
                 #FIXME: [SPEED] Optimize the following two string munging
@@ -716,8 +714,8 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
 
     # If a local scope is required to type-check this return, merge this scope
     # into the local scope currently required by the current wrapper function.
-    if func_wrapper_scope:
-        update_mapping(bear_call.func_wrapper_scope, func_wrapper_scope)
+    if func_scope:
+        update_mapping(bear_call.func_wrapper_scope, func_scope)
     # Else, *NO* local scope is required to type-check this return.
 
     # Return this code.
@@ -728,7 +726,7 @@ def _unmemoize_func_wrapper_code(
     bear_call: BeartypeCall,
     func_wrapper_code: str,
     pith_repr: str,
-    hint_forwardrefs_class_basename: tuple,
+    hint_refs_type_basename: tuple,
 ) -> str:
     '''
     Convert the passed memoized code snippet type-checking any parameter or
@@ -756,7 +754,7 @@ def _unmemoize_func_wrapper_code(
     pith_repr : str
         Machine-readable representation of the name of this parameter or
         return.
-    hint_forwardrefs_class_basename : tuple
+    hint_refs_type_basename : tuple
         Tuple of the unqualified classnames referred to by all relative forward
         reference type hints visitable from the current root type hint.
 
@@ -772,8 +770,8 @@ def _unmemoize_func_wrapper_code(
     assert isinstance(func_wrapper_code, str), (
         f'{repr(func_wrapper_code)} not string.')
     assert isinstance(pith_repr, str), f'{repr(pith_repr)} not string.'
-    assert isinstance(hint_forwardrefs_class_basename, Iterable), (
-        f'{repr(hint_forwardrefs_class_basename)} not iterable.')
+    assert isinstance(hint_refs_type_basename, Iterable), (
+        f'{repr(hint_refs_type_basename)} not iterable.')
 
     # Generate an unmemoized parameter-specific code snippet type-checking this
     # parameter by replacing in this parameter-agnostic code snippet...
@@ -788,7 +786,7 @@ def _unmemoize_func_wrapper_code(
     # If this code contains one or more relative forward reference placeholder
     # substrings memoized into this code, unmemoize this code by globally
     # resolving these placeholders relative to the decorated callable.
-    if hint_forwardrefs_class_basename:
+    if hint_refs_type_basename:
         # Callable currently being decorated by @beartype.
         func = bear_call.func_wrappee
 
@@ -798,16 +796,16 @@ def _unmemoize_func_wrapper_code(
 
         # For each unqualified classname referred to by a relative forward
         # reference type hints visitable from the current root type hint...
-        for hint_forwardref_class_basename in hint_forwardrefs_class_basename:
+        for hint_forwardref_class_basename in hint_refs_type_basename:
             # Generate an unmemoized callable-specific code snippet checking
             # this class by globally replacing in this callable-agnostic code...
             func_wrapper_code = replace_str_substrs(
                 text=func_wrapper_code,
                 # This placeholder substring cached into this code with...
                 old=(
-                    f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX}'
+                    f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX}'
                     f'{hint_forwardref_class_basename}'
-                    f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX}'
+                    f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX}'
                 ),
                 # Python expression evaluating to this class when accessed via
                 # the private "__beartypistry" parameter.

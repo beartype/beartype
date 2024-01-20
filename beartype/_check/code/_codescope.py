@@ -56,9 +56,9 @@ from beartype._check.forward.fwdtype import (
     get_hint_forwardref_code,
 )
 from beartype._check.checkmagic import ARG_NAME_TYPISTRY
-from beartype._check.code._codesnip import (
-    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX,
-    PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX,
+from beartype._check.code.codesnip import (
+    CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,
+    CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
 )
 from beartype._util.cls.pep.utilpep3119 import die_unless_type_isinstanceable
 from beartype._util.cls.utilclstest import is_type_builtin
@@ -526,9 +526,9 @@ def express_func_scope_type_forwardref(
         # relative to the module declaring the currently decorated callable
         # when accessed via the private "__beartypistry" parameter.
         forwardref_expr = (
-            f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_PREFIX}'
+            f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX}'
             f'{forwardref_classname}'
-            f'{PEP_CODE_HINT_FORWARDREF_UNQUALIFIED_PLACEHOLDER_SUFFIX}'
+            f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX}'
         )
 
     # Return a 2-tuple of this expression and set of unqualified classnames.
