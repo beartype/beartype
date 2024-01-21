@@ -35,7 +35,7 @@ from beartype._util.func.arg.utilfuncargtest import (
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep_tuple)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    import_pep484585_forwardref_type_relative_to_object)
+    import_pep484585_ref_type_relative_to_object)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
     get_hint_pep484585_type_superclass)
 from beartype._util.hint.pep.utilpepget import (
@@ -173,8 +173,8 @@ def find_cause_instance_type_forwardref(
     '''
     Output cause describing whether the pith of the passed input cause either is
     or is not an instance of the class referred to by the **forward reference
-    type hint** (i.e., string whose value is the name of a user-defined class
-    which has yet to be defined) of that cause.
+    type hint** (i.e., string whose value is the either absolute *or* relative
+    name of a user-defined type which has yet to be defined) of that cause.
 
     Parameters
     ----------
@@ -190,12 +190,8 @@ def find_cause_instance_type_forwardref(
     assert cause.hint_sign is HintSignForwardRef, (
         f'{cause.hint_sign} not forward reference.')
 
-    # If this cause lacks an associated callable, raise an exception.
-    _die_unless_cause_func(cause)
-    # Else, this cause has an associated callable.
-
-    # Class referred to by this forward reference.
-    hint_forwardref_type = import_pep484585_forwardref_type_relative_to_object(
+    # Class referred to by this absolute or relative forward reference.
+    hint_forwardref_type = import_pep484585_ref_type_relative_to_object(
         hint=cause.hint,
         obj=cause.func,
         exception_cls=BeartypeCallHintForwardRefException,
@@ -317,13 +313,9 @@ def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:
     # performed above by the get_hint_pep484585_type_superclass() getter be
     # a forward reference to a class. In this case...
     if not isinstance(hint_superclass, TestableTypes):
-        # If this cause lacks an associated callable, raise an exception.
-        _die_unless_cause_func(cause=cause, hint=hint_superclass)
-        # Else, this cause has an associated callable.
-
-        # Reduce this superclass to the class referred to by this forward
-        # reference.
-        hint_superclass = import_pep484585_forwardref_type_relative_to_object(
+        # Reduce this superclass to the class referred to by this absolute or
+        # relative forward reference.
+        hint_superclass = import_pep484585_ref_type_relative_to_object(
             hint=hint_superclass,  # type: ignore[arg-type]
             obj=cause.func,
             exception_cls=BeartypeCallHintForwardRefException,
@@ -366,47 +358,3 @@ def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:
 
     # Return this cause.
     return cause_return
-
-# ....................{ PRIVATE ~ raisers                  }....................
-def _die_unless_cause_func(
-    # Mandatory parameters.
-    cause: ViolationCause,
-
-    # Optional parameters.
-    hint: Optional[object] = None,
-) -> None:
-    '''
-    Raise an exception if the passed cause lacks an **associated callable**
-    (i.e., if the :attr:`.ViolationCause.func` instance variable of this cause
-    is :data:`None`, as it is when the :func:`beartype.door.die_if_unbearable`
-    function is called).
-
-    Parameters
-    ----------
-    cause : ViolationCause
-        Cause to be inspected.
-    hint : Optional[object]
-        Type hint whose type-check requires an associated callable. Defaults to
-        :data:`None`, in which case this hint defaults to ``cause.hint``.
-
-    Raises
-    ------
-    BeartypeCallHintForwardRefException
-        If this cause lacks an associated callable.
-    '''
-    assert isinstance(cause, ViolationCause), f'{repr(cause)} not cause.'
-
-    # If this cause lacks an associated callable...
-    if cause.func is None:
-        # If the caller passed *NO* type hint, default to "cause.hint".
-        if hint is None:
-            hint = cause.hint
-        # Else, the caller passed a type hint.
-
-        # Raise an exception.
-        raise BeartypeCallHintForwardRefException(
-            f'{cause.exception_prefix}relative forward reference '
-            f'{repr(hint)} currently only type-checkable relative to '
-            f'@beartype-decorated callables or classes.'
-        )
-    # Else, this cause has an associated callable.

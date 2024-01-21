@@ -80,7 +80,7 @@ class FrequentWith(object):
         :func:`beartype.peps.resolve_pep563` resolver.
 
         Raises
-        ----------
+        ------
         BeartypeCallHintForwardRefException
             Unconditionally.
         '''
@@ -109,8 +109,8 @@ def their_starry_domes(of_diamond_and_of_gold: ExpandAbove) -> ExpandAbove:
     resolver.
 
     Raises
-    ----------
-    BeartypeCallHintForwardRefException
+    ------
+    BeartypeDecorHintForwardRefException
         If this function has yet to be passed to the
         :func:`beartype.peps.resolve_pep563` resolver.
     '''

@@ -67,8 +67,8 @@ from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep_type)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     Pep484585ForwardRef,
-    die_unless_hint_pep484585_forwardref,
-    get_hint_pep484585_forwardref_classname,
+    die_unless_hint_pep484585_ref,
+    get_hint_pep484585_ref_classname,
 )
 from beartype._util.utilobject import get_object_type_basename
 from beartype._data.hint.datahinttyping import (
@@ -482,12 +482,12 @@ def express_func_scope_type_forwardref(
         f'{repr(forwardrefs_class_basename)} neither set nor "None".')
 
     # If this object is *NOT* a forward reference, raise an exception.
-    die_unless_hint_pep484585_forwardref(
+    die_unless_hint_pep484585_ref(
         hint=forwardref, exception_prefix=exception_prefix)
     # Else, this object is a forward reference.
 
     # Fully-qualified or unqualified classname referred to by this reference.
-    forwardref_classname = get_hint_pep484585_forwardref_classname(forwardref)
+    forwardref_classname = get_hint_pep484585_ref_classname(forwardref)
 
     # If this classname contains one or more "." characters, this classname is
     # fully-qualified. In this case...

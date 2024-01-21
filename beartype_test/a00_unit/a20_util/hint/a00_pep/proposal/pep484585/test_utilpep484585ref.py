@@ -18,9 +18,9 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ kind : subclass            }....................
-def test_get_hint_pep484585_forwardref_classname_relative_to_object() -> None:
+def test_get_hint_pep484585_ref_classname_relative_to_object() -> None:
     '''
-    Test the ``get_hint_pep484585_forwardref_classname_relative_to_object``
+    Test the ``get_hint_pep484585_ref_classname_relative_to_object``
     getter defined by the
     :mod:`beartype._util.hint.pep.proposal.pep484585.utilpep484585ref`
     submodule.
@@ -32,8 +32,8 @@ def test_get_hint_pep484585_forwardref_classname_relative_to_object() -> None:
     from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
         HINT_PEP484_FORWARDREF_TYPE)
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-        get_hint_pep484585_forwardref_classname,
-        get_hint_pep484585_forwardref_classname_relative_to_object,
+        get_hint_pep484585_ref_classname,
+        get_hint_pep484585_ref_classname_relative_to_object,
     )
     from pytest import raises
 
@@ -62,7 +62,7 @@ def test_get_hint_pep484585_forwardref_classname_relative_to_object() -> None:
     # Assert this getter preserves the passed absolute forward reference as is
     # when defined as a string, regardless of whether the second passed object
     # defines the "__module__" dunder attribute.
-    assert get_hint_pep484585_forwardref_classname_relative_to_object(
+    assert get_hint_pep484585_ref_classname_relative_to_object(
         hint=THE_MASK_OF_ANARCHY,
         obj=b'There came a voice from over the Sea,',
     ) is THE_MASK_OF_ANARCHY
@@ -70,14 +70,14 @@ def test_get_hint_pep484585_forwardref_classname_relative_to_object() -> None:
     # Assert this getter preserves the passed absolute forward reference as is
     # when defined as a non-string, regardless of whether the second passed
     # object defines the "__module__" dunder attribute.
-    assert get_hint_pep484585_forwardref_classname_relative_to_object(
+    assert get_hint_pep484585_ref_classname_relative_to_object(
         hint=WITH_GREAT_POWER,
         obj=b'To walk in the visions of Poesy.',
-    ) == get_hint_pep484585_forwardref_classname(WITH_GREAT_POWER)
+    ) == get_hint_pep484585_ref_classname(WITH_GREAT_POWER)
 
     # Assert this getter canonicalizes the passed relative forward reference
     # against the "__module__" dunder attribute of the second passed object.
-    assert get_hint_pep484585_forwardref_classname_relative_to_object(
+    assert get_hint_pep484585_ref_classname_relative_to_object(
         hint=VERY_SMOOTH, obj=IMetMurderOnTheWay) == (
         f'{IMetMurderOnTheWay.__module__}.{VERY_SMOOTH}')
 
@@ -86,7 +86,7 @@ def test_get_hint_pep484585_forwardref_classname_relative_to_object() -> None:
     # forward reference and the second object does *NOT* define the "__module__"
     # dunder attribute.
     with raises(BeartypeDecorHintForwardRefException):
-        get_hint_pep484585_forwardref_classname_relative_to_object(
+        get_hint_pep484585_ref_classname_relative_to_object(
             hint=VERY_SMOOTH,
             obj='Seven blood-hounds followed him:',
         )

@@ -114,8 +114,8 @@ def get_func_pith_violation(
     '''
     Human-readable exception detailing the failure of the parameter with the
     passed name *or* return if this name is the magic string ``return`` of the
-    passed decorated function fails to satisfy the PEP-compliant type hint
-    annotating this parameter or return.
+    passed decorated function fails to satisfy the type hint annotating this
+    parameter or return.
 
     Parameters
     ----------

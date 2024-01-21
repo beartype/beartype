@@ -2032,17 +2032,16 @@ def make_check_expr(
     # Else, the breadth-first search above successfully generated code.
 
     # ..................{ CODE ~ scope                       }..................
-    # If type-checking for the root pith requires the type stack...
+    # If type-checking for the root pith requires the type stack, pass a hidden
+    # parameter to this wrapper function exposing this stack.
     if cls_stack:
-        # Pass the current type stack to this wrapper function as an optional
-        # hidden parameter.
         func_wrapper_scope[ARG_NAME_CLS_STACK] = cls_stack
     # Else, type-checking for the root pith requires *NO* type stack.
 
-    # If type-checking for the root pith requires a pseudo-random integer...
+    # If type-checking for the root pith requires a pseudo-random integer, pass
+    # a hidden parameter to this wrapper function exposing the
+    # random.getrandbits() function required to generate this integer.
     if is_var_random_int_needed:
-        # Pass the random.getrandbits() function required to generate this
-        # integer to this wrapper function as an optional hidden parameter.
         func_wrapper_scope[ARG_NAME_GETRANDBITS] = getrandbits
     # Else, type-checking for the root pith requires *NO* pseudo-random integer.
 

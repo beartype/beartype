@@ -150,6 +150,23 @@ decorated object).
 '''
 
 
+CallableRaiser = Callable[[object], None]
+'''
+PEP-compliant type hint matching a **raiser callable** (i.e., arbitrary callable
+accepting a single arbitrary object and either raising an exception or emitting
+a warning rather than returning any value).
+'''
+
+
+CallableRaiserOrTester = Callable[[object], Optional[bool]]
+'''
+PEP-compliant type hint matching a **raiser or tester callable** (i.e.,
+arbitrary callable accepting a single arbitrary object and either returning no
+value or returning either :data:`True` if that object satisfies an arbitrary
+constraint *or* :data:`False` otherwise).
+'''
+
+
 CallableTester = Callable[[object], bool]
 '''
 PEP-compliant type hint matching a **tester callable** (i.e., arbitrary callable

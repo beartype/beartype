@@ -20,7 +20,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.checkmagic import ARG_NAME_BEARTYPE_CONF
+from beartype._check.checkmagic import ARG_NAME_CONF
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahinttyping import (
@@ -391,7 +391,6 @@ class BeartypeCall(object):
         # Efficiently reduce this local scope back to the dictionary of all
         # parameters unconditionally required by *ALL* wrapper functions.
         self.func_wrapper_scope.clear()
-        self.func_wrapper_scope[ARG_NAME_BEARTYPE_CONF] = conf
 
         # Machine-readable name of the wrapper function to be generated.
         self.func_wrapper_name = func.__name__

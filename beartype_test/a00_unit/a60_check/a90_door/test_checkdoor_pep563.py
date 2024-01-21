@@ -4,10 +4,12 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype :pep:`563` unit tests.
+**Beartype :pep:`563` **unit tests.**
 
 This submodule unit tests the public :func:`beartype.peps.resolve_pep563`
-function.
+function, which internally leverages the :mod:`beartype.door` subpackage to
+validate itself and is thus intentionally deferred to this DOOR-specific test
+subpackage.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -27,6 +29,7 @@ def test_resolve_pep563() -> None:
     from beartype.peps import resolve_pep563
     from beartype.roar import (
         BeartypeCallHintForwardRefException,
+        BeartypeDecorHintForwardRefException,
         BeartypePep563Exception,
     )
     from beartype_test.a00_unit.data.pep.pep563.data_pep563_resolve import (
@@ -48,12 +51,12 @@ def test_resolve_pep563() -> None:
     # Assert that this function unsuccessfully raises the expected exception
     # *BEFORE* resolving all PEP 563-postponed type hints annotating these
     # callables.
-    with raises(BeartypeCallHintForwardRefException):
+    with raises(BeartypeDecorHintForwardRefException):
         their_starry_domes(numberless_and_immeasurable_halls)
-    with raises(BeartypeCallHintForwardRefException):
+    with raises(BeartypeDecorHintForwardRefException):
         and_thrones_radiant_with_chrysolite.until_the_doves(
             numberless_and_immeasurable_halls)
-    with raises(BeartypeCallHintForwardRefException):
+    with raises(BeartypeDecorHintForwardRefException):
         and_thrones_radiant_with_chrysolite.crystal_column(
             'Nor had that scene of ampler majesty')
 

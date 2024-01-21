@@ -6,8 +6,8 @@
 '''
 **Beartype Decidedly Object-Oriented Runtime-checking (DOOR) procedural
 type-checkers** (i.e., high-level functions type-checking arbitrary objects
-against PEP-compliant type hints at *any* time during the lifecycle of the
-active Python process).
+against type hints at *any* time during the lifecycle of the active Python
+process).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -18,22 +18,26 @@ active Python process).
 # whereas the API defined by this submodule is expected to unconditionally
 # operate as expected regardless of the current context.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-from beartype.door._doortyping import BeartypeTypeChecker
-from beartype.roar import BeartypeDoorHintViolation
-from beartype.roar._roarexc import _BeartypeDoorTextException
 from beartype._check.checkmake import (
-    # make_func_raiser,
+    make_func_raiser,
     make_func_tester,
 )
 from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
-from beartype._decor.decorcache import beartype
-from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.error.utilerrorraise import reraise_exception_placeholder
-from beartype._util.hint.utilhinttest import die_unless_hint
-from warnings import warn
+
+#FIXME: Consider:
+#* Once we've gone that far, though, *EVERYBODY* (including us) will then
+#  want us to define a new
+#  "BeartypeConf.violation_type: Optional[Type[Exception]] = None" option
+#  conveniently controlling the three distinct
+#  "violation_door_type", "violation_param_type", and
+#  "violation_return_type" options. *sigh*
+#* To preserve backward compatibility, if we notice that a user has
+#  explicitly passed "violation_param_type" and "violation_return_type" but
+#  *NOT* "violation_door_type", we can then emit a non-fatal warning
+#  encouraging them to instead pass "violation_type".
 
 # ....................{ VALIDATORS                         }....................
 def die_if_unbearable(
@@ -46,19 +50,20 @@ def die_if_unbearable(
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
 ) -> None:
     '''
-    Raise an exception if the passed arbitrary object violates the passed
-    PEP-compliant type hint under the passed beartype configuration.
+    Raise an exception if the passed arbitrary object violates the passed type
+    hint under the passed beartype configuration.
 
     Parameters
     ----------
     obj : object
         Arbitrary object to be tested against this hint.
     hint : object
-        PEP-compliant type hint to test this object against.
+        Type hint to test this object against.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
-        to ``BeartypeConf()``, the default ``O(1)`` constant-time configuration.
+        to ``BeartypeConf()``, the default :math:`O(1)` constant-time
+        configuration.
 
     Raises
     ------
@@ -81,93 +86,19 @@ def die_if_unbearable(
     '''
     # conf._is_debug = True
 
-    # @beartype-decorated closure raising an
-    # "BeartypeCallHintReturnViolation" exception when the parameter passed to
-    # this closure violates the hint passed to this parent tester.
-    _check_object = _get_object_checker(hint, conf)
+    # Memoized low-level type-checking raiser function either raising an
+    # exception or emitting a warning only if the passed object passed violates
+    # the type hint passed to this high-level type-checking raiser function.
+    #
+    # Note that parameters are intentionally passed positionally for efficiency.
+    # Since make_func_raiser() is memoized, passing parameters by keyword would
+    # raise a non-fatal
+    # "_BeartypeUtilCallableCachedKwargsWarning" warning.
+    func_raiser = make_func_raiser(hint, conf)
 
-    #FIXME: ...yeah. This is awful and absolutely needs to go as soon as
-    #possible. Roadblocks to doing so, however, include:
-    #* We'll almost certainly want to define a new
-    #  "BeartypeConf.violation_door_type: Type[Exception] =
-    #  beartype.roar.BeartypeDoorHintViolation" option governing which exception
-    #  this raises.
-    #* Once we've gone that far, though, *EVERYBODY* (including us) will then
-    #  want us to define a new
-    #  "BeartypeConf.violation_type: Optional[Type[Exception]] = None" option
-    #  conveniently controlling the three distinct
-    #  "violation_door_type", "violation_param_type", and
-    #  "violation_return_type" options. *sigh*
-    #* To preserve backward compatibility, if we notice that a user has
-    #  explicitly passed "violation_param_type" and "violation_return_type" but
-    #  *NOT* "violation_door_type", we can then emit a non-fatal warning
-    #  encouraging them to instead pass "violation_type".
-    #FIXME: *UGH*. This fails for warnings, as warnings aren't catchable. Gah!
-
-    # Attempt to type-check this object by passing this object to this closure,
-    # which then implicitly type-checks this object as a return value.
-    try:
-        _check_object(obj)
-    # If this closure raises any exception whatsoever...
-    except Exception as violation:
-        # If the type of this violation is *NOT* the type raised when a return
-        # violates a type-check as configured by this beartype configuration,
-        # this is an unexpected spurious violation. In this case, re-raise this
-        # violation back up the call stack to the caller.
-        if not isinstance(violation, conf.violation_return_type):
-            raise
-        # Else, the type of this violation is the type raised when a return
-        # violates a type-check as configured by this beartype configuration.
-        # In this case, the passed object violates this hint.
-
-        # Violation message.
-        violation_message = str(violation)
-
-        # If this violation message is *NOT* prefixed by the expected substring,
-        # raise a private exception.
-        #
-        # Note that this should *NEVER* occur in production releases, but that
-        # this could potentially occur during pre-production testing. Ergo, it
-        # is worth explicitly checking but *NOT* worth investing time and effort
-        # in raising a human-readable violation.
-        if not violation_message.startswith(
-            _TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX):
-            raise _BeartypeDoorTextException(
-                f'_check_object() violation '
-                f'"{violation_message}" not prefixed by '
-                f'"{_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX}".'
-            ) from violation
-        # Else, this violation message is prefixed by the expected substring.
-
-        # Replace the irrelevant substring prefixing this message with a
-        # relevant substring applicable to this higher-level function.
-        violation_message = (
-            f'Object '
-            f'{violation_message[_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX_LEN:]}'
-        )
-
-        # Wrap this violation in a more readable higher-level violation.
-        raise BeartypeDoorHintViolation(
-            message=violation_message,
-
-            #FIXME: *TOTALLY WRONG.* Valid only for beartype exceptions. *sigh*
-            culprits=violation.culprits,  # type: ignore[attr-defined]
-        ) from violation
-
-        #FIXME: Doesn't work. You can't warn() exceptions. *sigh*
-        # # If this violation is a non-fatal warning, emit this violation as a
-        # # non-fatal warning.
-        # if issubclass(violation, Warning):
-        #     warn(violation_message, BeartypeDoorHintViolation)
-        # # Else, this violation is a fatal exception. In this case, wrap this
-        # # violation in a more readable higher-level violation.
-        # else:
-        #     raise BeartypeDoorHintViolation(
-        #         message=violation_message,
-        #         culprits=violation.culprits,
-        #     ) from violation
-    # Else, this closure raised *NO* exception. In this case, the passed object
-    # satisfies this hint.
+    # Either raise an exception or emit a warning only if the passed object
+    # violates this hint.
+    func_raiser(obj)  # pyright: ignore[reportUnboundVariable]
 
 # ....................{ TESTERS                            }....................
 def is_subhint(subhint: object, superhint: object) -> bool:
@@ -210,9 +141,9 @@ def is_subhint(subhint: object, superhint: object) -> bool:
     Parameters
     ----------
     subhint : object
-        PEP-compliant type hint or type to be tested as the subhint.
+        Type hint or type to be tested as the subhint.
     superhint : object
-        PEP-compliant type hint or type to be tested as the superhint.
+        Type hint or type to be tested as the superhint.
 
     Returns
     -------
@@ -248,14 +179,14 @@ def is_bearable(
 ) -> bool:
     '''
     :data:`True` only if the passed arbitrary object satisfies the passed
-    PEP-compliant type hint under the passed beartype configuration.
+    type hint under the passed beartype configuration.
 
     Parameters
     ----------
     obj : object
         Arbitrary object to be tested against this hint.
     hint : object
-        PEP-compliant type hint to test this object against.
+        Type hint to test this object against.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
@@ -289,131 +220,15 @@ def is_bearable(
         False
     '''
 
-    # Attempt to dynamically generate a memoized low-level type-checking
-    # tester function returning true only if the object passed to that
-    # tester satisfies the type hint passed to this high-level type-checking
-    # tester function.
+    # Memoized low-level type-checking tester function returning true only if
+    # the object passed to that tester satisfies the type hint passed to this
+    # high-level type-checking tester function.
     #
-    # Note that parameters are intentionally passed positionally for
-    # efficiency. Since make_func_tester() is memoized, passing parameters
-    # by keyword would raise a non-fatal
+    # Note that parameters are intentionally passed positionally for efficiency.
+    # Since make_func_tester() is memoized, passing parameters by keyword would
+    # raise a non-fatal
     # "_BeartypeUtilCallableCachedKwargsWarning" warning.
-    try:
-        func_tester = make_func_tester(hint, conf)
-    # If any exception was raised, reraise this exception with each placeholder
-    # substring (i.e., "EXCEPTION_PLACEHOLDER" instance) replaced by the passed
-    # exception prefix.
-    except Exception as exception:
-        reraise_exception_placeholder(
-            exception=exception, target_str='is_bearable() ')
+    func_tester = make_func_tester(hint, conf)
 
     # Return true only if the passed object satisfies this hint.
     return func_tester(obj)  # pyright: ignore[reportUnboundVariable]
-
-# ....................{ PRIVATE ~ getters                  }....................
-#FIXME: Shift into a more public location for widespread usage elsewhere: e.g.,
-#* Define a new "beartype._check.checkget" submodule.
-#* Rename this function to get_object_checker() in that submodule.
-#* Shift the "_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX*" globals into that
-#  submodule as well, probably publicized and renamed to:
-#  * "CHECKER_EXCEPTION_MESSAGE_PREFIX".
-#  * "CHECKER_EXCEPTION_MESSAGE_PREFIX_LEN".
-#* *COPY* (i.e., do *NOT* move) the die_if_unbearable() into that submodule,
-#  renamed to either:
-#  * check_object(). This is the one, due to orthogonality with the
-#    get_object_checker() getter.
-#  * die_if_object_violates_hint(). Fairly long, but disambiguous.
-#* Generalize check_object() to accept additional *MANDATORY* "exception_cls"
-#  and "exception_prefix" parameters. Replace the currently hard-coded 'Object '
-#  prefix in check_object() by "exception_prefix".
-#* Refactor die_if_unbearable() in this submodule to defer entirely to
-#  check_object() in that submodule.
-#* Shift the "BeartypeTypeChecker" type hint into the existing
-#  "beartype._data.hint.datahinttyping" submodule, publicized and renamed to
-#  "BeartypeChecker".
-#FIXME: And... the prior "FIXME:" comment is almost certainly obsolete already.
-#Eventually, we want to eliminate this getter entirely in favour of dynamically
-#generating a full-blown exception raiser specific to the passed hint. *shrig*
-@callable_cached
-def _get_object_checker(
-    hint: object, conf: BeartypeConf) -> BeartypeTypeChecker:
-    '''
-    Create, cache, and return a **synthetic runtime type-checker** (i.e.,
-    function raising a :exc:`.BeartypeCallHintReturnViolation` exception when
-    the object passed to that function violates the hint passed to this parent
-    getter under the passed beartype configuration).
-
-    This factory intentionally raises :exc:`BeartypeCallHintReturnViolation`
-    rather than :exc:`BeartypeCallHintParamViolation` exceptions. Since
-    type-checking returns is *slightly* faster than type-checking parameters,
-    this factory intentionally annotates the return rather than a parameter of
-    this checker.
-
-    This factory is memoized for efficiency.
-
-    Parameters
-    ----------
-    hint : object
-        Type hint to validate *all* objects passed to the checker returned by
-        this factory against.
-    conf : BeartypeConf, optional
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all flags, options, settings, and other metadata configuring how this
-        object is type-checked).
-
-    Returns
-    -------
-    BeartypeTypeChecker
-        Synthetic runtime type-checker specific to this hint and configuration.
-
-    Raises
-    ------
-    beartype.roar.BeartypeDecorHintPepUnsupportedException
-        If this hint is a PEP-compliant type hint currently unsupported by
-        the :func:`beartype.beartype` decorator.
-    beartype.roar.BeartypeDecorHintNonpepException
-        If this hint is neither a:
-
-        * Supported PEP-compliant type hint.
-        * Supported PEP-noncompliant type hint.
-    '''
-
-    # If this hint is unsupported, raise an exception.
-    #
-    # Note that this technically duplicates a similar check performed by the
-    # @beartype decorator below except that the exception prefix passed here
-    # results in substantially more readable and relevant exceptions.
-    die_unless_hint(hint=hint, exception_prefix='Functional ')
-    # Else, this hint is supported.
-
-    # @beartype-decorated closure raising an
-    # "BeartypeCallHintReturnViolation" exception when the parameter passed to
-    # this closure violates the hint passed to this parent tester.
-    @beartype(conf=conf)
-    def _die_if_unbearable(pith) -> hint:  # type: ignore[valid-type]
-        return pith
-
-    # Return this closure.
-    return _die_if_unbearable
-
-# ....................{ PRIVATE ~ constants                }....................
-_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX = (
-    'Function '
-    'beartype.door._doorcheck._get_object_checker._die_if_unbearable() '
-    'return '
-)
-'''
-Irrelevant substring prefixing *all* exception messages raised by *all*
-**synthetic runtime type-checkers** (i.e., callables dynamically created and
-returned by the :func:`._get_object_checker` getter).
-'''
-
-
-_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX_LEN = (
-    len(_TYPE_CHECKER_EXCEPTION_MESSAGE_PREFIX))
-'''
-Length of the irrelevant substring prefixing *all*
-exception messages raised by *all* **synthetic runtime type-checkers** (i.e.,
-callables dynamically created and returned by the :func:`._get_object_checker`
-getter).
-'''

@@ -36,12 +36,12 @@ from beartype.typing import NoReturn
 from beartype._check.checkcall import BeartypeCall
 from beartype._check.checkmagic import (
     ARG_NAME_FUNC,
-    ARG_NAME_GET_VIOLATION,
     ARG_NAME_TYPISTRY,
+    CODE_PITH_ROOT_NAME_PLACEHOLDER,
 )
 from beartype._check.checkmake import (
-    make_code_raiser_check,
-    make_code_raiser_violation,
+    make_code_raiser_func_pith_check,
+    make_code_raiser_func_pep484_noreturn_check,
 )
 from beartype._check.code.codesnip import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,
@@ -61,9 +61,7 @@ from beartype._data.hint.datahinttyping import (
     LexicalScope,
 )
 from beartype._decor.wrap.wrapsnip import (
-    CODE_HINT_ROOT_SUFFIX,
     CODE_INIT_ARGS_LEN,
-    CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
     CODE_RETURN_CHECK_PREFIX,
     CODE_RETURN_CHECK_SUFFIX,
     CODE_RETURN_UNCHECKED,
@@ -71,7 +69,6 @@ from beartype._decor.wrap.wrapsnip import (
     PARAM_KIND_TO_CODE_LOCALIZE,
     PEP484_CODE_CHECK_NORETURN,
 )
-from beartype._check.error.errorget import get_func_pith_violation
 from beartype._util.error.utilerrorraise import (
     EXCEPTION_PLACEHOLDER,
     reraise_exception_placeholder,
@@ -83,7 +80,7 @@ from beartype._util.func.arg.utilfuncargiter import (
     iter_func_args,
 )
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    get_hint_pep484585_forwardref_classname_relative_to_object)
+    get_hint_pep484585_ref_classname_relative_to_object)
 from beartype._util.hint.utilhinttest import (
     is_hint_ignorable,
     is_hint_needs_cls_stack,
@@ -222,7 +219,6 @@ def generate_code(
 
     # Pass parameters unconditionally required by *ALL* wrapper functions.
     func_scope[ARG_NAME_FUNC] = bear_call.func_wrappee
-    func_scope[ARG_NAME_GET_VIOLATION] = get_func_pith_violation
 
     # Python code snippet declaring the signature of this type-checking wrapper
     # function, deferred for efficiency until *AFTER* confirming that a wrapper
@@ -471,10 +467,9 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 code_param_check_pith,
                 func_scope,
                 hint_refs_type_basename,
-            ) = make_code_raiser_check(
+            ) = make_code_raiser_func_pith_check(
                 hint_sane,
                 bear_call.conf,
-                CODE_HINT_ROOT_SUFFIX,
                 cls_stack,
                 True,  # <-- True only for parameters
             )
@@ -602,17 +597,6 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
         # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
         # *ONLY* as a return annotation...
         if hint is NoReturn:
-            #FIXME: Inefficient. This should instead be memoized by:
-            #* Defining in the "_wrapcode" submodule a new @callable_cached
-            #  make_func_return_pep484_noreturn_code() factory resembling the.
-            #  make_func_pith_code() factory.
-            #* Shifting the code below into that new
-            #  make_func_return_pep484_noreturn_code() factory.
-            #* Calling make_func_return_pep484_noreturn_code() here.
-
-            # Initialize this lexical scope to the empty dictionary.
-            func_scope = {}
-
             # Pre-generated code snippet validating this callable to *NEVER*
             # successfully return by unconditionally generating a violation.
             code_noreturn_check = PEP484_CODE_CHECK_NORETURN.format(
@@ -621,8 +605,11 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
             # Code snippet handling the previously generated violation by either
             # raising that violation as a fatal exception or emitting that
             # violation as a non-fatal warning.
-            code_noreturn_violation = make_code_raiser_violation(
-                conf=bear_call.conf, func_scope=func_scope, is_param=False)
+            (
+                code_noreturn_violation,
+                func_scope,
+                _
+            ) = make_code_raiser_func_pep484_noreturn_check(bear_call.conf)
 
             # Full code snippet to be returned.
             func_wrapper_code = (
@@ -655,10 +642,9 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                     code_return_check_pith,
                     func_scope,
                     hint_refs_type_basename,
-                ) = make_code_raiser_check(  # type: ignore[assignment]
+                ) = make_code_raiser_func_pith_check(  # type: ignore[assignment]
                     hint,
                     bear_call.conf,
-                    CODE_HINT_ROOT_SUFFIX,
                     cls_stack,
                     False,  # <-- True only for parameters
                 )
@@ -736,7 +722,7 @@ def _unmemoize_func_wrapper_code(
     Specifically, this function (in order):
 
     #. Globally replaces all references to the
-       :data:`.CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER` placeholder substring
+       :data:`.CODE_PITH_ROOT_NAME_PLACEHOLDER` placeholder substring
        cached into this code with the passed ``pith_repr`` parameter.
     #. Unmemoizes this code by globally replacing all relative forward
        reference placeholder substrings cached into this code with Python
@@ -778,7 +764,7 @@ def _unmemoize_func_wrapper_code(
     func_wrapper_code = replace_str_substrs(
         text=func_wrapper_code,
         # This placeholder substring cached into this code with...
-        old=CODE_PITH_ROOT_PARAM_NAME_PLACEHOLDER,
+        old=CODE_PITH_ROOT_NAME_PLACEHOLDER,
         # This object representation of the name of this parameter or return.
         new=pith_repr,
     )
@@ -812,7 +798,7 @@ def _unmemoize_func_wrapper_code(
                 new=get_hint_forwardref_code(
                     # Fully qualified classname referred to by this forward
                     # reference relative to the decorated callable.
-                    get_hint_pep484585_forwardref_classname_relative_to_object(
+                    get_hint_pep484585_ref_classname_relative_to_object(
                         hint=hint_forwardref_class_basename, obj=func)
                 ),
             )

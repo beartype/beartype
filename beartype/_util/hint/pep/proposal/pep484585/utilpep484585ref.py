@@ -56,17 +56,24 @@ Union of all :pep:`484`- or :pep:`585`-compliant **forward reference types**
 (i.e., classes of all forward reference objects).
 
 See Also
-----------
-:data`HINT_PEP484585_FORWARDREF_TYPES`
+--------
+:data:`HINT_PEP484585_FORWARDREF_TYPES`
     Further details.
 '''
 
 # ....................{ VALIDATORS                         }....................
-def die_unless_hint_pep484585_forwardref(
+#FIXME: Validate that this forward reference string is *NOT* the empty string.
+#FIXME: Validate that this forward reference string is a syntactically valid
+#"."-delimited concatenation of Python identifiers. We already have logic
+#performing that validation somewhere, so let's reuse that here, please.
+#Right. So, we already have an is_identifier() tester; now, we just need to
+#define a new die_unless_identifier() validator.
+def die_unless_hint_pep484585_ref(
     # Mandatory parameters.
     hint: object,
 
     # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintForwardRefException,
     exception_prefix: str = '',
 ) -> None:
     '''
@@ -88,22 +95,27 @@ def die_unless_hint_pep484585_forwardref(
     ----------
     hint : object
         Object to be validated.
+    exception_cls : Type[Exception]
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintForwardRefException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
 
     Raises
     ------
-    BeartypeDecorHintForwardRefException
+    exception_cls
         If this object is *not* a forward reference type hint.
     '''
 
     # If this object is *NOT* a forward reference type hint, raise an exception.
     if not isinstance(hint, HINT_PEP484585_FORWARDREF_TYPES):
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not exception subclass.')
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
 
-        raise BeartypeDecorHintForwardRefException(
+        raise exception_cls(
             f'{exception_prefix}type hint {repr(hint)} not forward reference '
             f'(i.e., neither string nor "typing.ForwardRef" instance).'
         )
@@ -111,13 +123,14 @@ def die_unless_hint_pep484585_forwardref(
 
 # ....................{ GETTERS ~ kind : forwardref        }....................
 #FIXME: Unit test against nested classes.
-#FIXME: Validate that this forward reference string is *NOT* the empty string.
-#FIXME: Validate that this forward reference string is a syntactically valid
-#"."-delimited concatenation of Python identifiers. We already have logic
-#performing that validation somewhere, so let's reuse that here, please.
-#Right. So, we already have an is_identifier() tester; now, we just need to
-#define a new die_unless_identifier() validator.
-def get_hint_pep484585_forwardref_classname(hint: Pep484585ForwardRef) -> str:
+def get_hint_pep484585_ref_classname(
+    # Mandatory parameters.
+    hint: Pep484585ForwardRef,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintForwardRefException,
+    exception_prefix: str = '',
+) -> str:
     '''
     Possibly unqualified classname referred to by the passed :pep:`484`- or
     :pep:`585`-compliant **forward reference type hint** (i.e., object
@@ -145,6 +158,12 @@ def get_hint_pep484585_forwardref_classname(hint: Pep484585ForwardRef) -> str:
     ----------
     hint : object
         Forward reference to be inspected.
+    exception_cls : Type[Exception]
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintForwardRefException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Returns
     -------
@@ -153,17 +172,21 @@ def get_hint_pep484585_forwardref_classname(hint: Pep484585ForwardRef) -> str:
 
     Raises
     ------
-    BeartypeDecorHintForwardRefException
+    exception_cls
         If this forward reference is *not* actually a forward reference.
 
     See Also
     --------
-    :func:`.get_hint_pep484585_forwardref_classname_relative_to_object`
+    :func:`.get_hint_pep484585_ref_classname_relative_to_object`
         Getter returning fully-qualified forward reference classnames.
     '''
 
     # If this is *NOT* a forward reference type hint, raise an exception.
-    die_unless_hint_pep484585_forwardref(hint)
+    die_unless_hint_pep484585_ref(
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
 
     # Return either...
     return (
@@ -177,8 +200,15 @@ def get_hint_pep484585_forwardref_classname(hint: Pep484585ForwardRef) -> str:
 
 
 #FIXME: Unit test against nested classes.
-def get_hint_pep484585_forwardref_classname_relative_to_object(
-    hint: Pep484585ForwardRef, obj: object) -> str:
+def get_hint_pep484585_ref_classname_relative_to_object(
+    # Mandatory parameters.
+    hint: Pep484585ForwardRef,
+    obj: object,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintForwardRefException,
+    exception_prefix: str = '',
+) -> str:
     '''
     Fully-qualified classname referred to by the passed **forward reference type
     hint** (i.e., object indirectly referring to a user-defined class that
@@ -205,7 +235,7 @@ def get_hint_pep484585_forwardref_classname_relative_to_object(
 
     Raises
     ------
-    BeartypeDecorHintForwardRefException
+    exception_cls
         If either:
 
         * This forward reference is *not* actually a forward reference.
@@ -214,18 +244,22 @@ def get_hint_pep484585_forwardref_classname_relative_to_object(
           ``__module__`` dunder instance variable.
 
     See Also
-    ----------
-    :func:`get_hint_pep484585_forwardref_classname`
+    --------
+    :func:`.get_hint_pep484585_ref_classname`
         Getter returning possibly unqualified forward reference classnames.
     '''
 
     # Possibly unqualified classname referred to by this forward reference.
-    forwardref_classname = get_hint_pep484585_forwardref_classname(hint)
+    ref_classname = get_hint_pep484585_ref_classname(
+        hint=hint,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
 
     # If this classname contains one or more "." characters and is thus already
     # (...hopefully) fully-qualified, return this classname as is.
-    if '.' in forwardref_classname:
-        return forwardref_classname
+    if '.' in ref_classname:
+        return ref_classname
     # Else, this classname contains *NO* "." characters and is thus *NOT*
     # fully-qualified.
 
@@ -248,18 +282,35 @@ def get_hint_pep484585_forwardref_classname_relative_to_object(
     # reference by returning the "."-delimited concatenation of the
     # fully-qualified name of this module with this unqualified classname.
     if obj_module_name:
-        return f'{get_object_module_name_or_none(obj)}.{forwardref_classname}'
+        return f'{get_object_module_name_or_none(obj)}.{ref_classname}'
     # Else, this object is *NOT* declared by a module.
+    #
+    # If this object is the "None" singleton, this function was almost certainly
+    # transitively called by a high-level "beartype.door" runtime type-checker
+    # (e.g., is_bearable(), die_if_unbearable()). In this case, raise an
+    # exception appropriate for this common edge case.
+    elif obj is None:
+        raise exception_cls(
+            f'{exception_prefix}relative forward reference "{ref_classname}" '
+            f'currently only type-checkable in type hints annotating '
+            f'@beartype-decorated callables and classes. '
+            f'For your own safety and those of the codebases you love, '
+            f'consider canonicalizing this '
+            f'relative forward reference into an absolute forward reference '
+            f'(e.g., by replacing "{ref_classname}" with '
+            f'"{{some_package}}.{ref_classname}").'
+        )
+    # Else, this object is *NOT* the "None" singleton.
 
-    # Raise a human-readable exception. (See above.)
-    raise BeartypeDecorHintForwardRefException(
-        f'Relative forward reference "{forwardref_classname}" not '
-        f'canonicalizeable against module-less {repr(obj)}.'
+    # Raise a generic exception suitable for an arbitrary object.
+    raise exception_cls(
+        f'{exception_prefix}relative forward reference "{ref_classname}" '
+        f'not type-checkable against module-less {repr(obj)}.'
     )
 
 # ....................{ IMPORTERS                          }....................
 #FIXME: Unit test us up, please.
-def import_pep484585_forwardref_type_relative_to_object(
+def import_pep484585_ref_type_relative_to_object(
     # Mandatory parameters.
     hint: Pep484585ForwardRef,
     obj: object,
@@ -288,45 +339,49 @@ def import_pep484585_forwardref_type_relative_to_object(
         Object to canonicalize the classname referred to by this forward
         reference if that classname is unqualified (i.e., relative).
     exception_cls : Type[Exception]
-        Type of exception to be raised by this function. Defaults to
-        :class:`BeartypeDecorHintForwardRefException`.
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintForwardRefException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     type
         Class referred to by this forward reference.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If the object referred to by this forward reference is either undefined
         *or* is defined but is not a class.
     '''
 
     # Human-readable label prefixing exception messages raised below.
-    EXCEPTION_PREFIX = f'{exception_prefix}{repr(hint)} referenced class '
+    exception_prefix = f'{exception_prefix}{repr(hint)} referenced class '
 
     # Fully-qualified classname referred to by this forward reference relative
     # to this object.
     hint_forwardref_classname = (
-        get_hint_pep484585_forwardref_classname_relative_to_object(
-            hint=hint, obj=obj))
+        get_hint_pep484585_ref_classname_relative_to_object(
+            hint=hint,
+            obj=obj,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        ))
 
     # Object dynamically imported from this classname.
     hint_forwardref_type = import_module_attr(
         module_attr_name=hint_forwardref_classname,
         exception_cls=exception_cls,
-        exception_prefix=EXCEPTION_PREFIX,
+        exception_prefix=exception_prefix,
     )
 
     # If this object is *NOT* a class, raise an exception.
     die_unless_type(
         cls=hint_forwardref_type,
         exception_cls=exception_cls,
-        exception_prefix=EXCEPTION_PREFIX,
+        exception_prefix=exception_prefix,
     )
     # Else, this object is a class.
 
