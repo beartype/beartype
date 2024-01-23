@@ -6,12 +6,13 @@
 '''
 Project-wide **beartype import hookable** :pep:`526` **warning submodule**
 (i.e., data module containing *only* :pep:`526`-compliant annotated variable
-assignments emitting :exc:`UserWarning` violations, mimicking real-world usage
-of the :func:`beartype.claw.beartype_package` import hook from an external
-caller).
+assignments emitting :exc:`beartype.roar.BeartypeValeLambdaWarning` violations,
+mimicking real-world usage of the :func:`beartype.claw.beartype_package` import
+hook from an external caller).
 '''
 
 # ....................{ IMPORTS                            }....................
+from beartype.roar import BeartypeValeLambdaWarning
 from beartype.typing import (
     List,
     Union,
@@ -38,6 +39,7 @@ looks_on_the_moon: str
 # Assert that a PEP 526-compliant annotated assignment statement assigning an
 # object violating the type hint annotating that statement emits the expected
 # warning.
-with warns(UserWarning):
+with warns(BeartypeValeLambdaWarning):
     in_heaven: Union[float, List[str]] = len(
         'The spirit of sweet human love has sent')
+# print('!!!!!!YAY!!!!!!!!!')

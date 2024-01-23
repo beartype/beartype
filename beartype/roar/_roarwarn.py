@@ -355,8 +355,8 @@ class _BeartypeConfReduceDecoratorExceptionToWarningDefault(
     **fake warning default.**
 
     This warning is *not* actually emitted at all anywhere but instead
-    constitutes an intentional design abuse of this submodule. Specifically,
-    this warning is used as the default value for the public
+    constitutes intentional design abuse of this submodule. Specifically, this
+    warning is used as the default value for the public
     :attr:`beartype.BeartypeConf.warning_cls_on_decorator_exception`
     configuration parameter, enabling private functionality elsewhere to
     distinguish between the following two common cases:
