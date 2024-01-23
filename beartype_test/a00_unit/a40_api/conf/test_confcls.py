@@ -69,6 +69,7 @@ def test_conf_dataclass() -> None:
         'violation_door_type',
         'violation_param_type',
         'violation_return_type',
+        'violation_type',
         'violation_verbosity',
         'warning_cls_on_decorator_exception',
     )
@@ -93,12 +94,22 @@ def test_conf_dataclass() -> None:
         violation_door_type=RuntimeError,
         violation_param_type=TypeError,
         violation_return_type=ValueError,
+        violation_type=AttributeError,
         violation_verbosity=BeartypeViolationVerbosity.MINIMAL,
         warning_cls_on_decorator_exception=None,
     )
 
     # Arbitrary parametrized beartype configuration.
     BEAR_CONF_NONDEFAULT = BeartypeConf(**BEAR_CONF_NONDEFAULT_KWARGS)
+
+    # Arbitrary parametrized beartype configurations setting all possible
+    # combinations of a default violation type and another violation type.
+    BEAR_CONF_NONDEFAULT_VIOLATION_DOOR = BeartypeConf(
+        violation_type=AttributeError, violation_door_type=RuntimeError)
+    BEAR_CONF_NONDEFAULT_VIOLATION_PARAM = BeartypeConf(
+        violation_type=AttributeError, violation_param_type=TypeError)
+    BEAR_CONF_NONDEFAULT_VIOLATION_RETURN = BeartypeConf(
+        violation_type=AttributeError, violation_return_type=ValueError)
 
     # # Tuple of these beartype configurations.
     # BEAR_CONFS = (BEAR_CONF_DEFAULT, BEAR_CONF_NONDEFAULT)
@@ -121,12 +132,14 @@ def test_conf_dataclass() -> None:
             violation_door_type=RuntimeError,
             violation_param_type=TypeError,
             violation_return_type=ValueError,
+            violation_type=AttributeError,
             violation_verbosity=BeartypeViolationVerbosity.MINIMAL,
             warning_cls_on_decorator_exception=UserWarning,
         ) is
         BeartypeConf(
             warning_cls_on_decorator_exception=UserWarning,
             violation_verbosity=BeartypeViolationVerbosity.MINIMAL,
+            violation_type=AttributeError,
             violation_return_type=ValueError,
             violation_param_type=TypeError,
             violation_door_type=RuntimeError,
@@ -153,6 +166,7 @@ def test_conf_dataclass() -> None:
         BeartypeCallHintParamViolation)
     assert BEAR_CONF_DEFAULT.violation_return_type is (
         BeartypeCallHintReturnViolation)
+    assert BEAR_CONF_DEFAULT.violation_type is None
     assert BEAR_CONF_DEFAULT.violation_verbosity is (
         BeartypeViolationVerbosity.DEFAULT)
     assert BEAR_CONF_DEFAULT.warning_cls_on_decorator_exception is None
@@ -169,11 +183,37 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_NONDEFAULT.violation_door_type is RuntimeError
     assert BEAR_CONF_NONDEFAULT.violation_param_type is TypeError
     assert BEAR_CONF_NONDEFAULT.violation_return_type is ValueError
+    assert BEAR_CONF_NONDEFAULT.violation_type is AttributeError
     assert BEAR_CONF_NONDEFAULT.violation_verbosity is (
         BeartypeViolationVerbosity.MINIMAL)
     assert BEAR_CONF_NONDEFAULT.warning_cls_on_decorator_exception is None
     assert BEAR_CONF_NONDEFAULT._is_warning_cls_on_decorator_exception_set is (
         True)
+
+    # Assert that the non-default violation-specific configurations contain the
+    # expected fields.
+    assert BEAR_CONF_NONDEFAULT_VIOLATION_DOOR.violation_type is AttributeError
+    assert BEAR_CONF_NONDEFAULT_VIOLATION_DOOR.violation_door_type is (
+        RuntimeError)
+    assert BEAR_CONF_NONDEFAULT_VIOLATION_DOOR.violation_param_type is (
+        AttributeError)
+    assert BEAR_CONF_NONDEFAULT_VIOLATION_DOOR.violation_return_type is (
+        AttributeError)
+    assert BEAR_CONF_NONDEFAULT_VIOLATION_PARAM.violation_type is AttributeError
+    assert BEAR_CONF_NONDEFAULT_VIOLATION_PARAM.violation_door_type is (
+        AttributeError)
+    assert BEAR_CONF_NONDEFAULT_VIOLATION_PARAM.violation_param_type is (
+        TypeError)
+    assert BEAR_CONF_NONDEFAULT_VIOLATION_PARAM.violation_return_type is (
+        AttributeError)
+    assert BEAR_CONF_NONDEFAULT_VIOLATION_RETURN.violation_type is (
+        AttributeError)
+    assert BEAR_CONF_NONDEFAULT_VIOLATION_RETURN.violation_door_type is (
+        AttributeError)
+    assert BEAR_CONF_NONDEFAULT_VIOLATION_RETURN.violation_param_type is (
+        AttributeError)
+    assert BEAR_CONF_NONDEFAULT_VIOLATION_RETURN.violation_return_type is (
+        ValueError)
 
     # ....................{ PASS ~ equals                  }....................
     # Assert that two differing configurations compare unequal.
@@ -259,6 +299,11 @@ def test_conf_dataclass() -> None:
     with raises(BeartypeConfParamException):
         BeartypeConf(violation_return_type=int)
     with raises(BeartypeConfParamException):
+        BeartypeConf(violation_type=(
+            'Her choicest gifts. He eagerly pursues'))
+    with raises(BeartypeConfParamException):
+        BeartypeConf(violation_type=complex)
+    with raises(BeartypeConfParamException):
         BeartypeConf(violation_verbosity=(
             'His gasping breath, and spread his arms to meet'))
     with raises(BeartypeConfParamException):
@@ -301,6 +346,8 @@ def test_conf_dataclass() -> None:
         BEAR_CONF_DEFAULT.violation_param_type = TypeError
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.violation_return_type = ValueError
+    with raises(AttributeError):
+        BEAR_CONF_DEFAULT.violation_type = AttributeError
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.violation_verbosity = (
             BeartypeViolationVerbosity.MINIMAL)
