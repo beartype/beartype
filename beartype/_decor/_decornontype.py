@@ -390,7 +390,7 @@ def beartype_descriptor_decorator_builtin(
         # function (but *NOT* necessarily a setter or deleter function). This
         # function is thus guaranteed to be non-"None".
         descriptor_getter = beartype_func(  # type: ignore[type-var]
-            func=descriptor_getter,  # pyright: ignore[reportGeneralTypeIssues]
+            func=descriptor_getter,  # pyright: ignore
             **kwargs
         )
 
@@ -520,7 +520,7 @@ def _beartype_descriptor_method_bound(
     #   descriptor (created below) encapsulating this wrapper function. Bad!
     #   Thankfully, only one such attribute exists as of this time: "__doc__".
     #   We propagate this attribute manually below.
-    descriptor_func_new = beartype_func(func=descriptor_func_old, **kwargs)  # pyright: ignore[reportGeneralTypeIssues]
+    descriptor_func_new = beartype_func(func=descriptor_func_old, **kwargs)  # pyright: ignore
 
     # New instance method descriptor rebinding this function to the instance of
     # the class bound to the prior descriptor.

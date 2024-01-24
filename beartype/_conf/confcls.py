@@ -717,25 +717,25 @@ class BeartypeConf(object):
             # parameters from the "conf_kwargs" dictionary possibly modified by
             # the above call to the default_conf_kwargs() function rather than
             # the original passed values of these parameters.
-            self._claw_is_pep526 = conf_kwargs['claw_is_pep526']  # pyright: ignore[reportGeneralTypeIssues]
-            self._hint_overrides = conf_kwargs['hint_overrides']  # pyright: ignore[reportGeneralTypeIssues]
-            self._is_color = conf_kwargs['is_color']  # pyright: ignore[reportGeneralTypeIssues]
-            self._is_debug = conf_kwargs['is_debug']  # pyright: ignore[reportGeneralTypeIssues]
-            self._is_pep484_tower = conf_kwargs['is_pep484_tower']  # pyright: ignore[reportGeneralTypeIssues]
-            self._strategy = conf_kwargs['strategy']  # pyright: ignore[reportGeneralTypeIssues]
-            self._violation_door_type = conf_kwargs['violation_door_type']  # pyright: ignore[reportGeneralTypeIssues]
-            self._violation_param_type = conf_kwargs['violation_param_type']  # pyright: ignore[reportGeneralTypeIssues]
-            self._violation_return_type = conf_kwargs['violation_return_type']  # pyright: ignore[reportGeneralTypeIssues]
-            self._violation_type = conf_kwargs['violation_type']  # pyright: ignore[reportGeneralTypeIssues]
-            self._violation_verbosity = conf_kwargs['violation_verbosity']  # pyright: ignore[reportGeneralTypeIssues]
+            self._claw_is_pep526 = conf_kwargs['claw_is_pep526']  # pyright: ignore
+            self._hint_overrides = conf_kwargs['hint_overrides']  # pyright: ignore
+            self._is_color = conf_kwargs['is_color']  # pyright: ignore
+            self._is_debug = conf_kwargs['is_debug']  # pyright: ignore
+            self._is_pep484_tower = conf_kwargs['is_pep484_tower']  # pyright: ignore
+            self._strategy = conf_kwargs['strategy']  # pyright: ignore
+            self._violation_door_type = conf_kwargs['violation_door_type']  # pyright: ignore
+            self._violation_param_type = conf_kwargs['violation_param_type']  # pyright: ignore
+            self._violation_return_type = conf_kwargs['violation_return_type']  # pyright: ignore
+            self._violation_type = conf_kwargs['violation_type']  # pyright: ignore
+            self._violation_verbosity = conf_kwargs['violation_verbosity']  # pyright: ignore
 
             # Classify all remaining instance variables.
             self._is_violation_door_warn = issubclass(
-                self._violation_door_type, Warning)  # pyright: ignore[reportGeneralTypeIssues]
+                self._violation_door_type, Warning)  # pyright: ignore
             self._is_violation_param_warn = issubclass(
-                self._violation_param_type, Warning)  # pyright: ignore[reportGeneralTypeIssues]
+                self._violation_param_type, Warning)  # pyright: ignore
             self._is_violation_return_warn = issubclass(
-                self._violation_return_type, Warning)  # pyright: ignore[reportGeneralTypeIssues]
+                self._violation_return_type, Warning)  # pyright: ignore
 
             # ..................{ CLASSIFY ~ more            }..................
             # If the value of the "warning_cls_on_decorator_exception" parameter

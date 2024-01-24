@@ -40,11 +40,13 @@ seconds. :superscript:`dyslexia notwithstanding`
    from beartype.claw import beartype_packages      # <-- boring intensifies
    beartype_packages(('{your_package}',))           # <-- the more slow way
 
-   # ....................{ THE WAY OF THE BEAR NINJA       }....................
-   from beartype.claw import beartyping             # <-- getting weird here
-   with beartyping():                               # <-- weird context manager
-       from {your_package} import {your_thing}      # <-- import some stuff
-       from {some_package} import {some_thing}      # <-- import more stuff
+.. #FIXME: Uncomment *AFTER* we actually build out a reasonable first iteration
+.. #of our local import hook API. *sigh*
+.. #   # ....................{ THE WAY OF THE BEAR NINJA       }....................
+.. #   from beartype.claw import beartyping             # <-- getting weird here
+.. #   with beartyping():                               # <-- weird context manager
+.. #       from {your_package} import {your_thing}      # <-- import some stuff
+.. #       from {some_package} import {some_thing}      # <-- import more stuff
 
 Beartype import hooks extend the surprisingly sharp claws of :mod:`beartype` to
 your full app stack, whether anyone else wanted you to do that or not. Claw your
@@ -530,8 +532,10 @@ With great globality comes great responsibility.
 
 .. _api_claw:local:
 
-Local Import Hooks
-******************
+.. #FIXME: Uncomment *AFTER* we actually build out a reasonable first iteration
+.. #of our local import hook API. *sigh*
+.. Local Import Hooks
+.. ******************
 
 Import Hook Configuration
 #########################

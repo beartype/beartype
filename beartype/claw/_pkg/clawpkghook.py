@@ -85,7 +85,7 @@ def hook_packages(
         Defaults to :data:`None`.
 
     Raises
-    ----------
+    ------
     BeartypeClawHookException
         If either:
 
@@ -107,7 +107,7 @@ def hook_packages(
           :class:`BeartypeConf` instance).
 
     See Also
-    ----------
+    --------
     https://stackoverflow.com/a/43573798/2809027
         StackOverflow answer strongly inspiring the low-level implementation of
         this function with respect to inscrutable :mod:`importlib` machinery.
@@ -277,7 +277,7 @@ def unhook_packages(
     passed names on the first importation of those submodules).
 
     See Also
-    ----------
+    --------
     :func:`.hook_packages`
         Further details.
     '''
@@ -367,7 +367,7 @@ def unhook_packages(
 
                         # Delete this child sub-subpackages trie from this
                         # parent subpackages trie.
-                        del subpackages_trie[subsubpackage_basename]  # pyright: ignore[reportGeneralTypeIssues]
+                        del subpackages_trie[subsubpackage_basename]  # pyright: ignore
                     # Else, this is the first iteration of this loop.
 
                     # Treat this parent subpackages trie as the child

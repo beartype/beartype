@@ -40,7 +40,7 @@ def make_hint_pep484_union(hints: tuple) -> object:
         Type hint to be inspected.
 
     Returns
-    ----------
+    -------
     object
         Either:
 
@@ -49,11 +49,11 @@ def make_hint_pep484_union(hints: tuple) -> object:
         * If this tuple contains only one item, this item as is.
 
     Raises
-    ----------
+    ------
     :exc:`TypeError`
         If this tuple is empty.
     '''
     assert isinstance(hints, tuple), f'{repr(hints)} not tuple.'
 
     # These are the one-liners of our lives.
-    return Union.__getitem__(hints)  # pyright: ignore[reportGeneralTypeIssues]
+    return Union.__getitem__(hints)  # pyright: ignore

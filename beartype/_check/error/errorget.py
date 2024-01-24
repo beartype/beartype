@@ -469,13 +469,12 @@ def get_hint_object_violation(
     exception_message = strip_text_ansi_if_configured(
         text=exception_message, conf=conf)
 
-    #FIXME: Unit test that the caller receives the expected culprit, please.
     # Exception of the desired class embedding this cause. By default, attempt
     # to pass @beartype-specific parameters to this exception subclass.
     try:
         exception = exception_cls(  # type: ignore[call-arg]
-            message=exception_message,  # pyright: ignore[reportGeneralTypeIssues]
-            culprits=tuple(violation_culprits),  # pyright: ignore[reportGeneralTypeIssues]
+            message=exception_message,  # pyright: ignore
+            culprits=tuple(violation_culprits),  # pyright: ignore
         )
     # If this exception subclass fails to support @beartype-specific parameters,
     # fallback to the standard exception idiom of a positionally passed message.

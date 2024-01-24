@@ -38,7 +38,7 @@ from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_9,
 )
 from typing import (  # type: ignore[attr-defined]
-    EXCLUDED_ATTRIBUTES,  # pyright: ignore[reportGeneralTypeIssues]
+    EXCLUDED_ATTRIBUTES,  # pyright: ignore
     TYPE_CHECKING,
     Any,
     Generic,
@@ -47,7 +47,7 @@ from typing import (  # type: ignore[attr-defined]
     SupportsBytes as _SupportsBytesSlow,
     SupportsComplex as _SupportsComplexSlow,
     SupportsFloat as _SupportsFloatSlow,
-    SupportsIndex as _SupportsIndexSlow,  # pyright: ignore[reportGeneralTypeIssues]
+    SupportsIndex as _SupportsIndexSlow,  # pyright: ignore
     SupportsInt as _SupportsIntSlow,
     SupportsRound as _SupportsRoundSlow,
     TypeVar,
@@ -204,7 +204,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
 
     # ................{ DUNDERS                                }................
     def __new__(
-        mcls: Type[_TT],  # pyright: ignore[reportGeneralTypeIssues]
+        mcls: Type[_TT],  # pyright: ignore
         name: str,
         bases: Tuple[type, ...],  # pyright: ignore
         namespace: Dict[str, Any],  # pyright: ignore
@@ -212,7 +212,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
     ) -> _TT:
 
         # See <https://github.com/python/mypy/issues/9282>
-        cls = super().__new__(mcls, name, bases, namespace, **kw)  # pyright: ignore[reportGeneralTypeIssues]
+        cls = super().__new__(mcls, name, bases, namespace, **kw)  # pyright: ignore
 
         # If this class is *NOT* the abstract "beartype.typing.Protocol"
         # superclass defined below...
@@ -261,7 +261,7 @@ class _CachingProtocolMeta(_ProtocolMeta):
             #     True  # <-- we have now destroyed the world, folks.
             if cls._is_protocol:  # type: ignore[attr-defined]
                 # print(f'Protocol {cls} mro: {cls.__mro__}')
-                runtime_checkable(cls)  # pyright: ignore[reportGeneralTypeIssues]
+                runtime_checkable(cls)  # pyright: ignore
         # Else, this class is the abstract "beartype.typing.Protocol"
         # superclass defined below. In this case, avoid dangerously
         # monkey-patching this superclass.
@@ -452,7 +452,7 @@ class Protocol(
         # Superclass __class_getitem__() dunder method, localized for
         # brevity, efficiency, and (most importantly) to squelch false
         # positive "errors" from pyright with a single pragma comment.
-        super_class_getitem = super().__class_getitem__  # pyright: ignore[reportGeneralTypeIssues]
+        super_class_getitem = super().__class_getitem__  # pyright: ignore
 
         # If the superclass typing.Protocol.__class_getitem__() dunder
         # method has been wrapped as expected with caching by the private

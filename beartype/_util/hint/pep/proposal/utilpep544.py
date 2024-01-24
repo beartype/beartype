@@ -201,7 +201,7 @@ def is_hint_pep544_protocol(hint: object) -> bool:
         # Do *NOT* ignore fake builtins for the purposes of this test. Why?
         # Because even fake builtins (e.g., "type(None)") erroneously
         # masquerade as PEP 544-compliant protocols! :o
-        not is_type_builtin_or_fake(hint)
+        not is_type_builtin_or_fake(hint)  # pyright: ignore
     )
 
 # ....................{ REDUCERS                           }....................
@@ -505,7 +505,7 @@ def _init() -> None:
             pass
 
         @abstractmethod
-        def __enter__(self) -> '_Pep544IO[AnyStr]':  # pyright: ignore[reportGeneralTypeIssues]
+        def __enter__(self) -> '_Pep544IO[AnyStr]':  # pyright: ignore
             pass
 
         @abstractmethod
@@ -528,7 +528,7 @@ def _init() -> None:
 
         @property
         @abstractmethod
-        def buffer(self) -> _Pep544BinaryIO:  # pyright: ignore[reportGeneralTypeIssues]
+        def buffer(self) -> _Pep544BinaryIO:  # pyright: ignore
             pass
 
         @property
@@ -552,7 +552,7 @@ def _init() -> None:
             pass
 
         @abstractmethod
-        def __enter__(self) -> '_Pep544TextIO':  # pyright: ignore[reportGeneralTypeIssues]
+        def __enter__(self) -> '_Pep544TextIO':  # pyright: ignore
             pass
 
     # ..................{ PROTOCOLS ~ validator              }..................

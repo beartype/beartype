@@ -414,6 +414,9 @@ requirements strings of the format ``{project_name}
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 LIBS_TESTTIME_OPTIONAL = (
+    # Required by optional Equinox-specific integration tests.
+    'equinox',
+
     # Require a reasonably recent version of mypy known to behave well. Less
     # recent versions are significantly deficient with respect to error
     # reporting and *MUST* thus be blacklisted.

@@ -28,7 +28,7 @@ from beartype._conf.confcls import BeartypeConf
 from beartype._util.ast.utilastget import get_node_repr_indented
 from beartype._util.text.utiltextlabel import label_exception
 from importlib import (  # type: ignore[attr-defined]
-    _bootstrap_external,  # pyright: ignore[reportGeneralTypeIssues]
+    _bootstrap_external,  # pyright: ignore
 )
 from importlib.machinery import SourceFileLoader
 from importlib.util import decode_source
@@ -439,7 +439,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # that module as is by simply deferring to the superclass method.
         if self._module_conf_beartype is None:
             return super().source_to_code(  # type: ignore[call-arg]
-                data=data, path=path, _optimize=_optimize)  # pyright: ignore[reportGeneralTypeIssues]
+                data=data, path=path, _optimize=_optimize)  # pyright: ignore
         # Else, that module has been registered for type-checking.
 
         # Plaintext decoded contents of that module.
