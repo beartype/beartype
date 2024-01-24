@@ -484,7 +484,9 @@ LIBS_TESTTIME_OPTIONAL = (
     'sphinx; python_version >= "3.8.0"',
 
     # Required by optional PyTorch-specific integration tests.
-    'torch',
+    #
+    # Note that PyTorch has yet to release a Python >= 3.12-compatible version.
+    'torch; python_version < "3.12.0"',
 
     # Required to exercise third-party backports of type hint factories
     # published by the standard "typing" module under newer versions of Python.
