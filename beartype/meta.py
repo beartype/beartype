@@ -483,6 +483,9 @@ LIBS_TESTTIME_OPTIONAL = (
     #     Deprecated call to `pkg_resources.declare_namespace('sphinxcontrib')`.
     'sphinx; python_version >= "3.8.0"',
 
+    # Required by optional PyTorch-specific integration tests.
+    'torch',
+
     # Required to exercise third-party backports of type hint factories
     # published by the standard "typing" module under newer versions of Python.
     (
