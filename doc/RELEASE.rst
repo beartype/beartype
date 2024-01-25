@@ -177,11 +177,7 @@ Beartype is releasable to all supported platforms as follows:
      ``{version}`` is the current value of the ``beartype.__version__`` global.
    * Next line lists all GitHub Sponsors at the Papa Bear tier and higher.
      **THIS IS CRITICALLY VITAL. DO _NOT_ NEGLECT THIS WONDERFUL USERBASE.** As
-     of now, relevant Sponsors include:
-
-     * [**ZeroGuard:** The Modern Threat Hunting
-       Platform](https://zeroguard.com).
-
+     of now, relevant Sponsors include... *nobody*, sadly! We've failed money.
    * Remaining lines are a changelog synopsizing the significant changes
      implemented by this release -- ideally in GitHub-flavoured Markdown (GHFM)
      format, as depicted below. Note that this format requires enabling the

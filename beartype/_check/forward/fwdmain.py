@@ -37,8 +37,6 @@ from builtins import __dict__ as func_builtins  # type: ignore[attr-defined]
 
 # ....................{ RESOLVERS                          }....................
 #FIXME: Unit test us up, please.
-#FIXME: Docstring us up, please -- especially with respect to
-#"BeartypeDecorHintForwardRefException" error conditions.
 def resolve_hint(
     # Mandatory parameters.
     hint: str,
@@ -75,7 +73,7 @@ def resolve_hint(
         exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     object
         Either:
 
@@ -84,11 +82,16 @@ def resolve_hint(
         * Else, this hint as is unmodified.
 
     Raises
-    ----------
+    ------
     exception_cls
-        If either:
-
-        ...
+        If attempting to dynamically evaluate this stringified type hint into a
+        non-string type hint against both the global and local scopes of the
+        decorated callable raises an exception, typically due to this
+        stringified type hint being syntactically invalid.
+    BeartypeDecorHintPep604Exception
+        If the active Python interpreter is Python <= 3.9 and this stringified
+        type hint is a :pep:`604`-compliant new-style union, which requires
+        Python >= 3.10.
     '''
     assert isinstance(hint, str), f'{repr(hint)} not stringified type hint.'
     assert isinstance(bear_call, BeartypeCall), (
@@ -583,8 +586,9 @@ def resolve_hint(
                 f'(i.e., {repr(exception)}).'
             )
 
-            # If the beartype configuration associated with the decorated callable
-            # enabled debugging, append debug-specific metadata to this message.
+            # If the beartype configuration associated with the decorated
+            # callable enabled debugging, append debug-specific metadata to this
+            # message.
             if bear_call.conf.is_debug:
                 exception_message += (
                     f' Composite global and local scope enclosing this hint:\n\n'
