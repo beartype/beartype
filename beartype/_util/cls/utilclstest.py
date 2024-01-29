@@ -48,7 +48,7 @@ def die_unless_type(
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
+    ------
     exception_cls
         If this object is *not* a class.
     '''
@@ -89,7 +89,7 @@ def die_unless_type_or_types(
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
+    ------
     exception_cls
         If this object is neither a class *nor* tuple of one or more classes.
     '''
@@ -149,7 +149,7 @@ def is_type_or_types(type_or_types: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is either a class *or* tuple of one or
         more classes.
@@ -190,12 +190,12 @@ def is_type_builtin(cls: type) -> bool:
         Class to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this class is builtin.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilTypeException
         If this object is *not* a class.
     '''
@@ -237,12 +237,12 @@ def is_type_builtin_or_fake(cls: type) -> bool:
         Class to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this class is builtin.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilTypeException
         If this object is *not* a class.
     '''
@@ -310,7 +310,7 @@ def is_type_subclass(
         * A tuple of one or more classes.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is an inclusive subclass of these
         superclass(es).
@@ -355,7 +355,7 @@ def is_type_subclass_proper(
         * A tuple of one or more classes.
 
     Returns
-    ----------
+    -------
     bool
         ``True`` only if this object is a proper subclass of these
         superclass(es).

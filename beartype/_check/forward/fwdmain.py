@@ -96,6 +96,7 @@ def resolve_hint(
     assert isinstance(hint, str), f'{repr(hint)} not stringified type hint.'
     assert isinstance(bear_call, BeartypeCall), (
         f'{repr(bear_call)} not @beartype call.')
+    # print(f'Resolving stringified type hint {repr(hint)}...')
 
     # ..................{ LOCALS                             }..................
     # Decorated callable and metadata associated with that callable, localized
@@ -107,10 +108,10 @@ def resolve_hint(
     if bear_call.func_wrappee_scope_nested_names is None:
         # Decide this frozen set as either...
         bear_call.func_wrappee_scope_nested_names = (
-            # If the decorated callable is nested, the non-empty frozen set
-            # of the unqualified names of all parent callables lexically
-            # containing this nested decorated callable (including this
-            # nested decorated callable itself);
+            # If the decorated callable is nested, the non-empty frozen set of
+            # the unqualified names of all parent callables lexically containing
+            # this nested decorated callable (including this nested decorated
+            # callable itself);
             frozenset(func.__qualname__.rsplit(sep='.'))
             if bear_call.func_wrappee_is_nested else
             # Else, the decorated callable is a global function. In this
@@ -121,14 +122,14 @@ def resolve_hint(
     #
     # In either case, this frozen set is now decided. I choose you!
 
-    # If this hint is the unqualified name of a parent callable or class of
-    # the decorated callable, then this hint is a relative forward reference
-    # to a parent callable or class of the decorated callable that is
-    # currently being defined but has yet to be defined in full. If PEP 563
-    # postponed this type hint under "from __future__ import annotations",
-    # this hint *MUST* have been a locally or globally scoped attribute of
-    # the decorated callable before being postponed by PEP 563 into a
-    # relative forward reference to that attribute: e.g.,
+    # If this hint is the unqualified name of a parent callable or class of the
+    # decorated callable, then this hint is a relative forward reference to a
+    # parent callable or class of the decorated callable that is currently being
+    # defined but has yet to be defined in full. If PEP 563 postponed this type
+    # hint under "from __future__ import annotations", this hint *MUST* have
+    # been a locally or globally scoped attribute of the decorated callable
+    # before being postponed by PEP 563 into a relative forward reference to
+    # that attribute: e.g.,
     #     from __future__ import annotations
     #
     #     # If this is a PEP 563-postponed type hint...
@@ -143,9 +144,9 @@ def resolve_hint(
     #         def muh_method(self) -> MuhClass: ...
     #
     # In this case, avoid attempting to resolve this forward reference. Why?
-    # Disambiguity. Although the "MuhClass" class has yet to be defined at
-    # the time @beartype decorates the muh_method() method, an attribute of
-    # the same name may already have been defined at that time: e.g.,
+    # Disambiguity. Although the "MuhClass" class has yet to be defined at the
+    # time @beartype decorates the muh_method() method, an attribute of the same
+    # name may already have been defined at that time: e.g.,
     #     # While bad form, PEP 563 postpones this valid logic...
     #     MuhClass = "Just kidding! Had you going there, didn't I?"
     #     class MuhClass:
@@ -158,8 +159,8 @@ def resolve_hint(
     #         @beartype
     #         def muh_method(self) -> 'MuhClass': ...
     #
-    # Naively resolving this forward reference would erroneously replace
-    # this hint with the previously declared attribute rather than the class
+    # Naively resolving this forward reference would erroneously replace this
+    # hint with the previously declared attribute rather than the class
     # currently being declared: e.g.,
     #     # Naive PEP 563 resolution would replace the above by this!
     #     MuhClass = "Just kidding! Had you going there, didn't I?"
@@ -170,33 +171,31 @@ def resolve_hint(
     #
     # This isn't just an edge-case disambiguity, however. This situation
     # commonly arises when reloading modules containing @beartype-decorated
-    # callables annotated with self-references (e.g., by passing those
-    # modules to the standard importlib.reload() function). Why? Because
-    # module reloading is ill-defined and mostly broken under Python. Since
-    # the importlib.reload() function fails to delete any of the attributes
-    # of the module to be reloaded before reloading that module, the parent
-    # callable or class referred to by this hint will be briefly defined for
-    # the duration of @beartype's decoration of the decorated callable as
-    # the prior version of that parent callable or class!
+    # callables annotated with self-references (e.g., by passing those modules
+    # to the standard importlib.reload() function). Why? Because module
+    # reloading is ill-defined and mostly broken under Python. Since the
+    # importlib.reload() function fails to delete any of the attributes of the
+    # module to be reloaded before reloading that module, the parent callable or
+    # class referred to by this hint will be briefly defined for the duration of
+    # @beartype's decoration of the decorated callable as the prior version of
+    # that parent callable or class!
     #
     # Resolving this hint would thus superficially succeed, while actually
-    # erroneously replacing this hint with the prior rather than current
-    # version of that parent callable or class. @beartype would then wrap
-    # the decorated callable with a wrapper expecting the prior rather than
-    # current version of that parent callable or class. All subsequent calls
-    # to that wrapper would then fail. Since this actually happened, we
-    # ensure it never does again.
+    # erroneously replacing this hint with the prior rather than current version
+    # of that parent callable or class. @beartype would then wrap the decorated
+    # callable with a wrapper expecting the prior rather than current version of
+    # that parent callable or class. All subsequent calls to that wrapper would
+    # then fail. Since this actually happened, we ensure it never does again.
     #
     # Lastly, note that this edge case *ONLY* supports top-level relative
     # forward references (i.e., syntactically valid Python identifier names
-    # subscripting *NO* parent type hints). Child relative forward
-    # references will continue to raise exceptions. As resolving PEP
-    # 563-postponed type hints effectively reduces to a single "all or
-    # nothing" call of the low-level eval() builtin accepting *NO*
-    # meaningful configuration, there exists *NO* means of only partially
-    # resolving parent type hints while preserving relative forward
-    # references subscripting those hints. The solution in those cases is
-    # for end users to either:
+    # subscripting *NO* parent type hints). Child relative forward references
+    # will continue to raise exceptions. As resolving PEP 563-postponed type
+    # hints effectively reduces to a single "all or nothing" call of the
+    # low-level eval() builtin accepting *NO* meaningful configuration, there
+    # exists *NO* means of only partially resolving parent type hints while
+    # preserving relative forward references subscripting those hints. The
+    # solution in those cases is for end users to either:
     #
     # * Decorate classes rather than methods: e.g.,
     #     # Users should replace this method decoration, which will fail at
@@ -301,12 +300,13 @@ def resolve_hint(
                         0 if cls_stack is None else len(cls_stack)),
 
                     #FIXME: Consider dynamically calculating exactly how many
-                    #additional @beartype-specific frames are ignorable on the first
-                    #call to this function, caching that number, and then reusing
-                    #that cached number on all subsequent calls to this function.
-                    #The current approach employed below of naively hard-coding a
-                    #number of frames to ignore was incredibly fragile and had to be
-                    #effectively disabled, which hampers runtime efficiency.
+                    #additional @beartype-specific frames are ignorable on the
+                    #first call to this function, caching that number, and then
+                    #reusing that cached number on all subsequent calls to this
+                    #function. The current approach employed below of naively
+                    #hard-coding a number of frames to ignore was incredibly
+                    #fragile and had to be effectively disabled, which hampers
+                    #runtime efficiency.
 
                     # Ignore additional frames on the call stack embodying:
                     # * The current call to this function.
@@ -326,7 +326,7 @@ def resolve_hint(
                 )
             # If this local scope cannot be found (i.e., if this getter found
             # the lexical scope of the module declaring the decorated callable
-            # *before* that of the parent callable or class declaring that
+            # *BEFORE* that of the parent callable or class declaring that
             # callable), then this resolve_hint() function was called *AFTER*
             # rather than *DURING* the declaration of the decorated callable.
             # This implies that that callable is not, in fact, currently being
@@ -490,6 +490,7 @@ def resolve_hint(
     # against both the global and local scopes of the decorated callable.
     try:
         hint_resolved = eval(hint, bear_call.func_wrappee_scope_forward)
+        # print(f'Resolved stringified type hint {repr(hint)} to {repr(hint_resolved)}...')
     # If doing so failed for *ANY* reason whatsoever...
     except Exception as exception:
         assert isinstance(exception_cls, type), (

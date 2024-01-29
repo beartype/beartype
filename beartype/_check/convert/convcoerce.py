@@ -130,8 +130,49 @@ def coerce_func_hint_root(
         f'{repr(pith_name)} neither string nor "None".')
     assert bear_call.__class__ is BeartypeCall, (
         f'{repr(bear_call)} not @beartype call.')
+    # print(f'Coercing pith "{pith_name}" annotated by type hint {repr(hint)}...')
 
     # ..................{ FORWARD REFERENCE                  }..................
+    #FIXME: Fascinating. This simplistic test fails to account for stringified
+    #type hints encapsulated by "typing.ForwardRef" objects, which the
+    #"typing.NamedTuple" superclass imposes on subclasses under PEP 563.
+    #FIXME: Ah-ha! We need to fundamentally improve the existing
+    #express_func_scope_type_forwardref() function as follows...
+    #*WAIT.* Probably, we want to generalize the lower-level
+    #get_hint_pep484585_ref_classname() getter as follows:
+    #* If the active Python interpreter targets Python >= 3.9 *AND* the passed
+    #  hint is a "ForwardRef" object, then this object defines the
+    #  "__forward_module__: Optional[str]" dunder attribute. In this case:
+    #  * If that attribute is *NOT* "None", then this function should
+    #    canonicalize this reference if relative against that module into an
+    #    absolute forward reference.
+    #
+    #Unit test that up, please. Seriously. This is getting scary.
+    #FIXME: Consider renaming get_hint_pep484585_ref_classname() to simply
+    #get_hint_pep484585_ref_name().
+    #FIXME: That's great, but still insufficient. Honestly, it kinda seems like
+    #we need a new reduce_hint_pep484585_ref() function that behaves as follows:
+    #* If the passed hint is relative (i.e., contains no "." character) *AND*
+    #  also satisfies the is_type_builtin() tester, then this hint should be
+    #  dynamically reduced to the corresponding builtin type.
+    #
+    #The most efficient implementation would probably resemble:
+    #    import builtins
+    #    from beartype._util.utilobject import SENTINEL
+    #
+    #    def reduce_hint_pep484585_ref(...):
+    #        hint_ref_name = get_hint_pep484585_ref_classname(
+    #            hint=hint, exception_prefix=exception_prefix)
+    #        hint_ref_type_builtin = builtins.get(hint_ref_name, SENTINEL)
+    #
+    #        return (
+    #            hint
+    #            if hint_ref_type_builtin is SENTINEL else
+    #            hint_ref_type_builtin
+    #        )
+    #
+    #Again, unit test that up, please. Seriously. This is getting scary.
+
     # If this hint is stringified (e.g., as a PEP 484- or 563-compliant forward
     # reference), resolve this hint to the non-string hint to which this hint
     # refers *BEFORE* performing any subsequent logic with this hint -- *ALL* of

@@ -123,6 +123,7 @@ def die_unless_hint_pep484585_ref(
 
 # ....................{ GETTERS ~ kind : forwardref        }....................
 #FIXME: Unit test against nested classes.
+#FIXME: This should probably be memoized, now. This is increasingly non-trivial.
 def get_hint_pep484585_ref_classname(
     # Mandatory parameters.
     hint: Pep484585ForwardRef,
