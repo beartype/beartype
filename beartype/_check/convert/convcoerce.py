@@ -139,7 +139,7 @@ def coerce_func_hint_root(
     #FIXME: Ah-ha! We need to fundamentally improve the existing
     #express_func_scope_type_forwardref() function as follows...
     #*WAIT.* Probably, we want to generalize the lower-level
-    #get_hint_pep484585_ref_classname() getter as follows:
+    #get_hint_pep484585_ref_name() getter as follows:
     #* If the active Python interpreter targets Python >= 3.9 *AND* the passed
     #  hint is a "ForwardRef" object, then this object defines the
     #  "__forward_module__: Optional[str]" dunder attribute. In this case:
@@ -148,7 +148,7 @@ def coerce_func_hint_root(
     #    absolute forward reference.
     #
     #Unit test that up, please. Seriously. This is getting scary.
-    #FIXME: Consider renaming get_hint_pep484585_ref_classname() to simply
+    #FIXME: Consider renaming get_hint_pep484585_ref_name() to simply
     #get_hint_pep484585_ref_name().
     #FIXME: That's great, but still insufficient. Honestly, it kinda seems like
     #we need a new reduce_hint_pep484585_ref() function that behaves as follows:
@@ -161,7 +161,7 @@ def coerce_func_hint_root(
     #    from beartype._util.utilobject import SENTINEL
     #
     #    def reduce_hint_pep484585_ref(...):
-    #        hint_ref_name = get_hint_pep484585_ref_classname(
+    #        hint_ref_name = get_hint_pep484585_ref_name(
     #            hint=hint, exception_prefix=exception_prefix)
     #        hint_ref_type_builtin = builtins.get(hint_ref_name, SENTINEL)
     #

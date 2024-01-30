@@ -80,7 +80,7 @@ from beartype._util.func.arg.utilfuncargiter import (
     iter_func_args,
 )
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    get_hint_pep484585_ref_classname_relative_to_object)
+    get_hint_pep484585_ref_name_relative_to_object)
 from beartype._util.hint.utilhinttest import (
     is_hint_ignorable,
     is_hint_needs_cls_stack,
@@ -798,7 +798,7 @@ def _unmemoize_func_wrapper_code(
                 new=get_hint_forwardref_code(
                     # Fully qualified classname referred to by this forward
                     # reference relative to the decorated callable.
-                    get_hint_pep484585_ref_classname_relative_to_object(
+                    get_hint_pep484585_ref_name_relative_to_object(
                         hint=hint_forwardref_class_basename, obj=func)
                 ),
             )

@@ -19,7 +19,7 @@ typically have yet to be defined).
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_pep484_forwardref_data() -> None:
+def test_pep484_ref_data() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator with
     respect to both PEP-compliant and -noncompliant forward references by
@@ -83,7 +83,7 @@ def test_pep484_forwardref_data() -> None:
     # assert to_watch_his_woods(STOP) == STOP
 
 # ....................{ TESTS ~ pass                       }....................
-def test_pep484_forwardref_arg_pass() -> None:
+def test_pep484_ref_arg_pass() -> None:
     '''
     Test successful usage of the :func:`beartype.beartype` decorator for a
     callable passed a parameter annotated with a PEP-noncompliant
@@ -117,7 +117,7 @@ def test_pep484_forwardref_arg_pass() -> None:
         ESTABLISHMENT_DATE_MIN, ESTABLISHMENT_DATE_MAX + 1)
 
 # ....................{ TESTS ~ fail                       }....................
-def test_pep484_forwardref_decor_fail() -> None:
+def test_pep484_ref_decor_fail() -> None:
     '''
     Test unsuccessful decorator-time usage of the :func:`beartype.beartype`
     decorator with respect to both PEP-compliant and -noncompliant forward
@@ -171,7 +171,7 @@ def test_pep484_forwardref_decor_fail() -> None:
             return i_hear_it
 
 
-def test_pep484_forwardref_call_fail() -> None:
+def test_pep484_ref_call_fail() -> None:
     '''
     Test unsuccessful call-time usage of the :func:`beartype.beartype`
     decorator with respect to both PEP-compliant and -noncompliant forward
@@ -241,7 +241,7 @@ def test_pep484_forwardref_call_fail() -> None:
         somewhere_ages('I doubted if I should ever come back.')
 
 
-def test_pep484_forwardref_call_arg_fail() -> None:
+def test_pep484_ref_call_arg_fail() -> None:
     '''
     Test unsuccessful call-time usage of the :func:`beartype.beartype`
     decorator for callables passed parameters annotated with PEP-noncompliant

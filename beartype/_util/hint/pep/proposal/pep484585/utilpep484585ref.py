@@ -18,8 +18,8 @@ from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.cls.utilclstest import die_unless_type
 from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
     HINT_PEP484_FORWARDREF_TYPE,
-    get_hint_pep484_forwardref_type_basename,
-    is_hint_pep484_forwardref,
+    get_hint_pep484_ref_name,
+    is_hint_pep484_ref,
 )
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.module.utilmodimport import import_module_attr
@@ -124,7 +124,7 @@ def die_unless_hint_pep484585_ref(
 # ....................{ GETTERS ~ kind : forwardref        }....................
 #FIXME: Unit test against nested classes.
 #FIXME: This should probably be memoized, now. This is increasingly non-trivial.
-def get_hint_pep484585_ref_classname(
+def get_hint_pep484585_ref_name(
     # Mandatory parameters.
     hint: Pep484585ForwardRef,
 
@@ -144,8 +144,8 @@ def get_hint_pep484585_ref_classname(
       of the :class:`typing.ForwardRef` class), the typically unqualified
       classname referred to by that reference. Although :pep:`484` only
       explicitly supports unqualified classnames as forward references, the
-      :class:`typing.ForwardRef` class imposes *no* runtime constraints and
-      thus implicitly supports both qualified and unqualified classnames.
+      :class:`typing.ForwardRef` class imposes *no* runtime constraints and thus
+      implicitly supports both qualified and unqualified classnames.
     * If this hint is a :pep:`585`-compliant forward reference (i.e., string),
       this string as is referring to a possibly unqualified classname. Both
       :pep:`585` and :mod:`beartype` itself impose *no* runtime constraints and
@@ -178,7 +178,7 @@ def get_hint_pep484585_ref_classname(
 
     See Also
     --------
-    :func:`.get_hint_pep484585_ref_classname_relative_to_object`
+    :func:`.get_hint_pep484585_ref_name_relative_to_object`
         Getter returning fully-qualified forward reference classnames.
     '''
 
@@ -193,15 +193,15 @@ def get_hint_pep484585_ref_classname(
     return (
         # If this hint is a PEP 484-compliant forward reference, the typically
         # unqualified classname referred to by this reference.
-        get_hint_pep484_forwardref_type_basename(hint)  # type: ignore[return-value]
-        if is_hint_pep484_forwardref(hint) else
+        get_hint_pep484_ref_name(hint)  # type: ignore[return-value]
+        if is_hint_pep484_ref(hint) else
         # Else, this hint is a string. In this case, this string as is.
         hint
     )
 
 
 #FIXME: Unit test against nested classes.
-def get_hint_pep484585_ref_classname_relative_to_object(
+def get_hint_pep484585_ref_name_relative_to_object(
     # Mandatory parameters.
     hint: Pep484585ForwardRef,
     obj: object,
@@ -246,12 +246,12 @@ def get_hint_pep484585_ref_classname_relative_to_object(
 
     See Also
     --------
-    :func:`.get_hint_pep484585_ref_classname`
+    :func:`.get_hint_pep484585_ref_name`
         Getter returning possibly unqualified forward reference classnames.
     '''
 
     # Possibly unqualified classname referred to by this forward reference.
-    ref_classname = get_hint_pep484585_ref_classname(
+    ref_classname = get_hint_pep484585_ref_name(
         hint=hint,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
@@ -364,7 +364,7 @@ def import_pep484585_ref_type_relative_to_object(
     # Fully-qualified classname referred to by this forward reference relative
     # to this object.
     hint_forwardref_classname = (
-        get_hint_pep484585_ref_classname_relative_to_object(
+        get_hint_pep484585_ref_name_relative_to_object(
             hint=hint,
             obj=obj,
             exception_cls=exception_cls,

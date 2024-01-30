@@ -18,6 +18,7 @@ from beartype.typing import (
     ForwardRef,
 )
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
 # ....................{ HINTS                              }....................
 #FIXME: Refactor this now-useless global away, please. Specifically:
@@ -32,9 +33,9 @@ when subscripted by a string).
 '''
 
 # ....................{ TESTERS                            }....................
-def is_hint_pep484_forwardref(hint: object) -> bool:
+def is_hint_pep484_ref(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is a :pep:`484`-compliant **forward
+    :data:`True` only if the passed object is a :pep:`484`-compliant **forward
     reference type hint** (i.e., instance of the :class:`typing.ForwardRef`
     class implicitly replacing all string arguments subscripting :mod:`typing`
     objects).
@@ -45,8 +46,8 @@ def is_hint_pep484_forwardref(hint: object) -> bool:
     variables, for nebulous reasons that make little justifiable sense.
 
     This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    ``callable_cached`` decorator), as the implementation trivially reduces to
+    an efficient one-liner.
 
     Parameters
     ----------
@@ -54,9 +55,9 @@ def is_hint_pep484_forwardref(hint: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
-        ``True`` only if this object is a :pep:`484`-compliant forward
+        :data:`True` only if this object is a :pep:`484`-compliant forward
         reference type hint.
     '''
 
@@ -66,18 +67,20 @@ def is_hint_pep484_forwardref(hint: object) -> bool:
 
 # ....................{ GETTERS                            }....................
 @callable_cached
-def get_hint_pep484_forwardref_type_basename(hint: Any) -> str:
+def get_hint_pep484_ref_name(hint: Any) -> str:
     '''
-    **Unqualified classname** (i.e., name of a class *not* containing a ``.``
-    delimiter and thus relative to the fully-qualified name of the lexical
-    scope declaring that class) referred to by the passed :pep:`484`-compliant
-    **forward reference type hint** (i.e., instance of the
-    :class:`typing.ForwardRef` class implicitly replacing all string arguments
-    subscripting :mod:`typing` objects).
+    **Possibly qualified classname** (i.e., either the fully-qualified name of a
+    class containing one or more ``.`` delimiters and thus absolute *or* the
+    unqualified name of a class containing *no* ``.`` delimiters and thus
+    relative to the fully-qualified name of the lexical scope declaring that
+    class) referred to by the passed :pep:`484`-compliant **forward reference
+    type hint** (i.e., instance of the :class:`typing.ForwardRef` class
+    implicitly replacing all string arguments subscripting :mod:`typing`
+    objects).
 
     This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    ``callable_cached`` decorator), as the implementation trivially reduces to
+    an efficient one-liner.
 
     Parameters
     ----------
@@ -85,35 +88,73 @@ def get_hint_pep484_forwardref_type_basename(hint: Any) -> str:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     str
-        Unqualified classname referred to by this :pep:`484`-compliant forward
-        reference type hint.
+        Possibly qualified classname referred to by this :pep:`484`-compliant
+        forward reference type hint.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintForwardRefException
         If this object is *not* a :pep:`484`-compliant forward reference.
 
     See Also
-    ----------
-    :func:`is_hint_pep484_forwardref`
+    --------
+    :func:`.is_hint_pep484_ref`
         Further commentary.
     '''
 
     # If this object is *NOT* a PEP 484-compliant forward reference, raise an
     # exception.
-    if not is_hint_pep484_forwardref(hint):
+    if not is_hint_pep484_ref(hint):
         raise BeartypeDecorHintForwardRefException(
             f'Type hint {repr(hint)} not forward reference.')
     # Else, this object is a PEP 484-compliant forward reference.
 
-    # Return the unqualified classname referred to by this reference. Note
-    # that:
-    # * This requires violating privacy encapsulation by accessing a dunder
-    #   instance variable unique to the "typing.ForwardRef" class.
+    # Unqualified basename of the type referred to by this reference.
+    hint_name = hint.__forward_arg__
+
+    # If the active Python interpreter targets >= Python 3.9, then this
+    # "typing.ForwardRef" object defines an additional optional
+    # "__forward_module__: Optional[str] = None" dunder attribute whose value is
+    # either:
+    # * If Python passed the "module" parameter when instantiating this
+    #   "typing.ForwardRef" object, the value of that parameter -- which is
+    #   presumably the fully-qualified name of the module to which this
+    #   presumably relative forward reference is relative to.
+    # * Else, "None".
+    #
+    # Note that:
+    # * This requires violating privacy encapsulation by accessing dunder
+    #   attributes unique to "typing.ForwardRef" objects.
     # * This object defines a significant number of other "__forward_"-prefixed
     #   dunder instance variables, which exist *ONLY* to enable the blatantly
     #   useless typing.get_type_hints() function to avoid repeatedly (and thus
     #   inefficiently) reevaluating the same forward reference. *sigh*
-    return hint.__forward_arg__
+    #
+    # In this case...
+    if IS_PYTHON_AT_LEAST_3_9:
+        # Fully-qualified name of the module to which this presumably relative
+        # forward reference is relative to if any *OR* "None" otherwise (i.e.,
+        # if *NO* such name was passed at forward reference instantiation time).
+        hint_module_name = hint.__forward_module__
+
+        #FIXME: This seems a bit overly simplistic. We should probably ensure
+        #that "hint_name" is relative (i.e., contains *NO* "." delimiters) or at
+        #least that "hint_name" does not already start with "hint_module_name".
+        #For now, laziness prevails. \o/
+
+        # If this reference is relative to this module, canonicalize this
+        # unqualified basename into a fully-qualified name relative to this
+        # module name.
+        if hint_module_name:
+            hint_name = f'{hint_module_name}.{hint_name}'
+        # Else, this reference is presumably relative to the external function
+        # call transitively responsible for this call stack. Since we can't
+        # particularly do anything about that from here, percolate this relative
+        # forward reference back up the call stack to the caller.
+    # Else, the active Python interpreter targets < Python 3.9 and thus fails to
+    # define the  "__forward_module__" dunder attribute.
+
+    # Return this possibly qualified name.
+    return hint_name

@@ -67,7 +67,7 @@ from beartype._util.error.utilerrorraise import (
 )
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    get_hint_pep484585_ref_classname_relative_to_object)
+    get_hint_pep484585_ref_name_relative_to_object)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from itertools import count
 from warnings import warn
@@ -648,7 +648,7 @@ def _make_func_checker(
         # type-checkers) sufficiently slow as to be pragmatically infeasible.
         if hint_refs_type_basename:
             # Defer to a low-level getter to raise a human-readable exception.
-            get_hint_pep484585_ref_classname_relative_to_object(
+            get_hint_pep484585_ref_name_relative_to_object(
                 # First relative forward reference in this type hint,
                 # arbitrarily chosen for convenience.
                 hint=hint_refs_type_basename[0],
