@@ -21,10 +21,10 @@ This private submodule is *not* intended for importation by downstream callers.
 #    comments in the "beartype.plug._plughintable" submodule pertaining to that
 #    protocol for further details on properly building out this stack.
 #  * When that algorithm visits a forward reference:
-#    * That algorithm calls the express_func_scope_type_forwardref() function
+#    * That algorithm calls the express_func_scope_type_ref() function
 #      generating type-checking code for that reference. Refactor that call to
 #      additionally pass that stack of parent hints to that function.
-#    * Refactor the express_func_scope_type_forwardref() function to:
+#    * Refactor the express_func_scope_type_ref() function to:
 #      * If the passed forward reference is relative, additionally return that
 #        stack in the returned 3-tuple
 #        "(forwardref_expr, forwardrefs_class_basename, forwardref_parent_hints)",
@@ -36,7 +36,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #      basename of an existing attribute in a local or global scope of the
 #      currently decorated callable *AND* the value of that attribute is a
 #      parent type hint on the stack of parent type hints returned by the
-#      previously called express_func_scope_type_forwardref() function, then
+#      previously called express_func_scope_type_ref() function, then
 #      *THIS REFERENCE INDICATES A RECURSIVE TYPE HINT.* In this case:
 #      * Replace this forward reference with a new recursive type-checking
 #        "beartype._check.forward.fwdref.BeartypeForwardRef_{forwardref}"
@@ -48,8 +48,11 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintNonpepException
+from beartype.typing import (
+    Optional,
+    Tuple,
+)
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.hint.datahinttyping import LexicalScope
 from beartype._check.forward.fwdtype import (
     TYPISTRY_HINT_NAME_TUPLE_PREFIX,
     bear_typistry,
@@ -60,47 +63,24 @@ from beartype._check.code.codesnip import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
 )
+from beartype._data.cls.datacls import TYPES_SET_OR_TUPLE
+from beartype._data.hint.datahinttyping import (
+    LexicalScope,
+    Pep484585ForwardRef,
+    SetOrTupleTypes,
+    TypeOrTupleTypes,
+)
 from beartype._util.cls.pep.utilpep3119 import die_unless_type_isinstanceable
 from beartype._util.cls.utilclstest import is_type_builtin
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep_type)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    Pep484585ForwardRef,
     die_unless_hint_pep484585_ref,
     get_hint_pep484585_ref_name,
 )
 from beartype._util.utilobject import get_object_type_basename
-from beartype._data.hint.datahinttyping import (
-    TypeOrTupleTypes,
-    TupleTypes,
-)
 from collections.abc import Set
-from typing import AbstractSet, Optional, Tuple, Union
-
-# ....................{ PRIVATE                            }....................
-_SET_OR_TUPLE = (Set, tuple)
-'''
-2-tuple containing the superclasses of all frozen sets and tuples.
-
-Note that the :class:`Set` abstract base class (ABC) rather than the concrete
-:class:`set` subclass is intentionally listed here, as the concrete
-:class:`frozenset` subclass subclasses the former but *not* latter: e.g.,
-
-.. code-block:: python
-
-   >>> from collections.abc import Set
-   >>> issubclass(frozenset, Set)
-   True
-   >>> issubclass(frozenset, set)
-   False
-'''
-
-
-_SetOrTupleOfTypes = Union[AbstractSet[type], TupleTypes]
-'''
-PEP-compliant type hint matching a set *or* tuple of zero or more classes.
-'''
 
 # ....................{ ADDERS ~ type                      }....................
 #FIXME: Unit test us up, please.
@@ -246,7 +226,7 @@ def add_func_scope_type(
 
 def add_func_scope_types(
     # Mandatory parameters.
-    types: _SetOrTupleOfTypes,
+    types: SetOrTupleTypes,
     func_scope: LexicalScope,
 
     # Optional parameters.
@@ -360,7 +340,7 @@ def add_func_scope_types(
     assert is_unique.__class__ is bool, f'{repr(is_unique)} not bool.'
 
     # If this object is neither a set nor tuple, raise an exception.
-    if not isinstance(types, _SET_OR_TUPLE):
+    if not isinstance(types, TYPES_SET_OR_TUPLE):
         raise BeartypeDecorHintNonpepException(
             f'{exception_prefix}{repr(types)} neither set nor tuple.')
     # Else, this object is either a set or tuple.
@@ -420,7 +400,7 @@ def add_func_scope_types(
         attr=types, func_scope=func_scope, exception_prefix=exception_prefix)
 
 # ....................{ EXPRESSERS ~ type                  }....................
-def express_func_scope_type_forwardref(
+def express_func_scope_type_ref(
     # Mandatory parameters.
     forwardref: Pep484585ForwardRef,
     forwardrefs_class_basename: Optional[set],

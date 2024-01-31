@@ -42,7 +42,7 @@ from beartype._check.code._codescope import (
     add_func_scope_type,
     add_func_scope_types,
     add_func_scope_type_or_types,
-    express_func_scope_type_forwardref,
+    express_func_scope_type_ref,
 )
 from beartype._check.code.codesnip import (
     PEP_CODE_HINT_CHILD_PLACEHOLDER_PREFIX,
@@ -841,7 +841,7 @@ def make_check_expr(
                 #   set instantiated by this call; else, this assignment
                 #   preserves this local set as is.
                 hint_curr_expr, hint_refs_type_basename = (
-                    express_func_scope_type_forwardref(
+                    express_func_scope_type_ref(
                         forwardref=hint_curr,
                         forwardrefs_class_basename=(
                             hint_refs_type_basename),
@@ -1739,7 +1739,7 @@ def make_check_expr(
                         # Render this forward reference accessible to the body
                         # of this wrapper function. See above for commentary.
                         hint_curr_expr, hint_refs_type_basename = (
-                            express_func_scope_type_forwardref(
+                            express_func_scope_type_ref(
                                 forwardref=hint_child,  # type: ignore[arg-type]
                                 forwardrefs_class_basename=(
                                     hint_refs_type_basename),

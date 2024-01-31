@@ -14,7 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype.typing import (
-    # Any,
     Tuple,
     TypeVar,
     Union,
@@ -24,14 +23,13 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignType,
     HintSignUnion,
 )
+from beartype._data.hint.datahinttyping import Pep484585ForwardRef
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_issubclassable,
     die_unless_type_or_types_issubclassable,
 )
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
     get_hint_pep484585_args_1)
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    Pep484585ForwardRef)
 from typing import (
     Type as typing_Type,  # <-- intentional to distinguish from "type" below
 )
@@ -70,7 +68,7 @@ def get_hint_pep484585_type_superclass(
         exception message.
 
     Returns
-    ----------
+    -------
     _HINT_PEP484585_SUBCLASS_ARGS_1_UNION
         Argument subscripting this subclass type hint, guaranteed to be either:
 
@@ -86,7 +84,7 @@ def get_hint_pep484585_type_superclass(
           :class:`typing.TypeVar` instance).
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep3119Exception
         If this superclass subscripting this type hint is *not*
         **issubclassable** (i.e., class whose metaclass defines a
@@ -203,7 +201,7 @@ def reduce_hint_pep484585_type(
     All remaining passed arguments are silently ignored.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep484585Exception
         If this hint is neither a :pep:`484`- nor :pep:`585`-compliant subclass
         type hint.

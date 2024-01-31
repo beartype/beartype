@@ -15,10 +15,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from ast import AST
 from beartype.typing import (
-    # TYPE_CHECKING,
+    AbstractSet,
     Any,
     Callable,
     Dict,
+    ForwardRef,
     Iterable,
     List,
     Literal,
@@ -310,6 +311,12 @@ Equivalently, this hint matches all objects passable as the second parameters
 to the :func:`isinstance` and :func:`issubclass` builtins.
 '''
 
+
+SetOrTupleTypes = Union[AbstractSet[type], TupleTypes]
+'''
+PEP-compliant type hint matching a set *or* tuple of zero or more classes.
+'''
+
 # ....................{ TUPLE ~ stack                      }....................
 TypeStack = Optional[Tuple[type, ...]]
 '''
@@ -424,6 +431,20 @@ Pep484TowerFloat = Union[float, int]
 '''
 :pep:`484`-compliant type hint matching the **implicit floating-point tower**
 (i.e., both floating-point numbers and integers).
+'''
+
+# ....................{ PEP (484|585)                      }....................
+# Type hints required to fully comply with both PEP 484 *AND* 585.
+
+Pep484585ForwardRef = Union[str, ForwardRef]
+'''
+Union of all :pep:`484`- or :pep:`585`-compliant **forward reference types**
+(i.e., classes of all forward reference objects).
+
+See Also
+--------
+:data:`HINT_PEP484585_FORWARDREF_TYPES`
+    Further details.
 '''
 
 # ....................{ TYPE                               }....................

@@ -11,7 +11,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import FrozenSet
+from beartype.typing import (
+    ForwardRef,
+    FrozenSet,
+)
 from beartype._cave._cavefast import (
     #FIXME: Export these types from "beartype.cave", please.
     AsyncCoroutineCType,
@@ -41,6 +44,9 @@ from beartype._cave._cavefast import (
 from ast import (
     ClassDef,
     FunctionDef,
+)
+from collections.abc import (
+    Set as SetABC,
 )
 from pathlib import Path
 
@@ -73,6 +79,24 @@ Tuple of all **beartypeable types** (i.e., types of all objects that may be
 decorated by the :func:`beartype.beartype` decorator).
 '''
 
+# ....................{ CONTAINER                          }....................
+TYPES_SET_OR_TUPLE = (SetABC, tuple)
+'''
+2-tuple containing the superclasses of all frozen sets and tuples.
+
+Note that the :class:`Set` abstract base class (ABC) rather than the concrete
+:class:`set` subclass is intentionally listed here, as the concrete
+:class:`frozenset` subclass subclasses the former but *not* latter: e.g.,
+
+.. code-block:: python
+
+   >>> from collections.abc import Set
+   >>> issubclass(frozenset, Set)
+   True
+   >>> issubclass(frozenset, set)
+   False
+'''
+
 # ....................{ FAKE ~ builtin                     }....................
 # Defined below by the _init() function.
 TYPES_BUILTIN_FAKE: FrozenSet[type] = None  # type: ignore[assignment]
@@ -99,7 +123,7 @@ way and almost certain everyone else would defend these edge cases.
 We're *not* dying on that lonely hill. We obey the Iron Law of Guido.
 
 See Also
-----------
+--------
 :data:`beartype_test.a00_unit.data.TYPES_BUILTIN_FAKE`
     Related test-time set. Whereas this runtime-specific set is efficiently
     defined explicitly by listing all non-builtin builtin mimic types, that
@@ -115,7 +139,7 @@ Unqualified classname of the **PyCapsule type** (i.e., the type of all opaque
 values encapsulating ``void*`` pointers in C extensions).
 
 Caveats
-----------
+-------
 **Python currently publishes *no* official PyCapsule type.** A little-known
 technique to access the ``PyCapsule`` type from pure-Python code *does* exist
 but is sufficiently non-portable to render that technique inadvisable in the
@@ -124,7 +148,7 @@ technique in the :func:`beartype._util.cls.utilclstest.is_type_builtin` tester
 known to be portable across Python versions and various platforms.
 
 See Also
-----------
+--------
 https://stackoverflow.com/a/62258339/2809027
     StackOverflow answer strongly inspiring this global.
 https://stackoverflow.com/a/60319462/2809027
@@ -143,6 +167,28 @@ This set includes:
 
 * The :class:`pathlib.Path` superclass, whose subclasses under Python < 3.13
   defined fake ``__enter__()`` dunder methods that are now deprecated.
+'''
+
+# ....................{ PEP ~ (484|585)                    }....................
+TYPES_PEP484585_REF = (str, ForwardRef)
+'''
+Tuple union of all :pep:`484`- or :pep:`585`-compliant **forward reference
+types** (i.e., classes of all forward reference objects).
+
+Specifically, this union contains:
+
+* :class:`str`, the class of all :pep:`585`-compliant forward reference objects
+  implicitly preserved by all :pep:`585`-compliant type hint factories when
+  subscripted by a string.
+* :class:`HINT_PEP484_FORWARDREF_TYPE`, the class of all :pep:`484`-compliant
+  forward reference objects implicitly created by all :mod:`typing` type hint
+  factories when subscripted by a string.
+
+While :pep:`585`-compliant type hint factories preserve string-based forward
+references as is, :mod:`typing` type hint factories coerce string-based forward
+references into higher-level objects encapsulating those strings. The latter
+approach is the demonstrably wrong approach, because encapsulating strings only
+harms space and time complexity at runtime with *no* concomitant benefits.
 '''
 
 # ....................{ PRIVATE ~ init                     }....................

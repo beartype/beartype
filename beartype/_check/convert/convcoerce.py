@@ -137,7 +137,7 @@ def coerce_func_hint_root(
     #type hints encapsulated by "typing.ForwardRef" objects, which the
     #"typing.NamedTuple" superclass imposes on subclasses under PEP 563.
     #FIXME: Ah-ha! We need to fundamentally improve the existing
-    #express_func_scope_type_forwardref() function as follows...
+    #express_func_scope_type_ref() function as follows...
     #*WAIT.* Probably, we want to generalize the lower-level
     #get_hint_pep484585_ref_name() getter as follows:
     #* If the active Python interpreter targets Python >= 3.9 *AND* the passed

@@ -55,6 +55,7 @@ from typing import (
     Container,
     ContextManager,
     Dict,
+    ForwardRef,
     Generic,
     Hashable,
     IO,
@@ -295,8 +296,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignTypeVar,
         HintSignUnion,
     )
-    from beartype._util.hint.pep.proposal.pep484.utilpep484ref import (
-        HINT_PEP484_FORWARDREF_TYPE)
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_MOST_3_11,
         IS_PYTHON_AT_LEAST_3_10,
@@ -409,8 +408,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
 
         # Unsubscripted forward reference defined as a typing object.
         HintPepMetadata(
-            hint=HINT_PEP484_FORWARDREF_TYPE(
-                _TEST_PEP484_FORWARDREF_CLASSNAME),
+            hint=ForwardRef(_TEST_PEP484_FORWARDREF_CLASSNAME),
             pep_sign=HintSignForwardRef,
             piths_meta=(
                 # Instance of the class referred to by this reference.
