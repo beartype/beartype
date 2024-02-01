@@ -98,10 +98,10 @@ def test_get_hint_pep484585_ref_name() -> None:
             b'Beyond the realms of dream that fleeting shade;')
 
 
-def test_get_hint_pep484585_ref_name_relative_to_object() -> None:
+def test_get_hint_pep484585_ref_name_absolute() -> None:
     '''
     Test
-    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585ref.get_hint_pep484585_ref_name_relative_to_object`
+    :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585ref.get_hint_pep484585_ref_name_absolute`
     getter.
     '''
 
@@ -111,11 +111,15 @@ def test_get_hint_pep484585_ref_name_relative_to_object() -> None:
     from beartype.typing import ForwardRef
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
         get_hint_pep484585_ref_name,
-        get_hint_pep484585_ref_name_relative_to_object,
+        get_hint_pep484585_ref_name_absolute,
     )
+    from beartype_test.a00_unit.data.data_type import function
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
+    # Fully-qualified name of the current module defining this unit test.
+    THIS_MODULE_NAME = __name__
+
     # Arbitrary absolute forward reference defined as a string.
     THE_MASK_OF_ANARCHY = 'as_I.lay_asleep.in_Italy'
 
@@ -128,45 +132,150 @@ def test_get_hint_pep484585_ref_name_relative_to_object() -> None:
     # Arbitrary relative forward reference defined as a string.
     VERY_SMOOTH = 'Very_smooth_he_looked_yet_grim'
 
+    # ....................{ CALLABLES                      }....................
+    def and_pendent_mountains():
+        '''
+        Arbitrary function whose ``__module__`` dunder attribute is preserved as
+        the fully-qualified name of this currently importable module.
+        '''
+
+        pass
+
+
+    def thy_mysterious_paradise() -> None:
+        '''
+        Arbitrary function to be monkey-patched with a ``__module__`` dunder
+        attribute whose value is the fully-qualified name of an imaginary and
+        thus unimportable module that does *not* physically exist.
+        '''
+
+        pass
+
+    # Monkey-patch this function with a "__module__" dunder attribute referring
+    # to an imaginary module.
+    thy_mysterious_paradise.__module__ = CASTLEREAGH
+
+
+    def does_the_bright_arch(cls) -> None:
+        '''
+        Arbitrary function to be monkey-patched with a ``__module__`` dunder
+        attribute whose value is :data:`None`.
+        '''
+
+        pass
+
+    # Monkey-patch this function with a "__module__" dunder attribute that is
+    # "None".
+    does_the_bright_arch.__module__ = None
+
     # ....................{ CLASSES                        }....................
+    class OfRainbowClouds(object):
+        '''
+        Arbitrary class whose ``__module__`` dunder attribute is preserved as
+        the fully-qualified name of this currently importable module.
+        '''
+
+        pass
+
+
     class IMetMurderOnTheWay(object):
         '''
-        Arbitrary class to be monkey-patched with a well-defined ``__module__``
-        dunder attribute below.
+        Arbitrary class to be monkey-patched with a ``__module__`` dunder
+        attribute whose value is the fully-qualified name of an imaginary and
+        thus unimportable module that does *not* physically exist.
         '''
 
-    # Monkey-patch this class with a well-defined "__module__" dunder attribute.
+        pass
+
+    # Monkey-patch this class with a "__module__" dunder attribute referring to
+    # an imaginary module.
     IMetMurderOnTheWay.__module__ = CASTLEREAGH
 
+
+    class OSleep(object):
+        '''
+        Arbitrary class to be monkey-patched with a ``__module__`` dunder
+        attribute whose value is :data:`None`.
+        '''
+
+        pass
+
+    # Monkey-patch this class with a "__module__" dunder attribute that is none.
+    OSleep.__module__ = None
+
     # ....................{ PASS                           }....................
-    # Assert this getter preserves the passed absolute forward reference as is
-    # when defined as a string, regardless of whether the second passed object
-    # defines the "__module__" dunder attribute.
-    assert get_hint_pep484585_ref_name_relative_to_object(
-        hint=THE_MASK_OF_ANARCHY,
-        obj=b'There came a voice from over the Sea,',
-    ) is THE_MASK_OF_ANARCHY
+    # Assert that this getter preserves an absolute forward reference in string
+    # format as is.
+    assert get_hint_pep484585_ref_name_absolute(THE_MASK_OF_ANARCHY) is (
+        THE_MASK_OF_ANARCHY)
 
-    # Assert this getter preserves the passed absolute forward reference as is
-    # when defined as a non-string, regardless of whether the second passed
-    # object defines the "__module__" dunder attribute.
-    assert get_hint_pep484585_ref_name_relative_to_object(
-        hint=WITH_GREAT_POWER,
-        obj=b'To walk in the visions of Poesy.',
-    ) == get_hint_pep484585_ref_name(WITH_GREAT_POWER)
+    # Assert that this getter preserves an absolute forward reference in
+    # "typing.ForwardRef" format as is.
+    assert get_hint_pep484585_ref_name_absolute(WITH_GREAT_POWER) == (
+        get_hint_pep484585_ref_name(WITH_GREAT_POWER))
 
-    # Assert this getter canonicalizes the passed relative forward reference
-    # against the "__module__" dunder attribute of the second passed object.
-    assert get_hint_pep484585_ref_name_relative_to_object(
-        hint=VERY_SMOOTH, obj=IMetMurderOnTheWay) == (
-        f'{CASTLEREAGH}.{VERY_SMOOTH}')
+    # Assert that this getter canonicalizes a relative forward reference against
+    # the "__module__" dunder attribute of a class rather than a function to the
+    # expected string.
+    assert get_hint_pep484585_ref_name_absolute(
+        hint=VERY_SMOOTH, cls_stack=[OfRainbowClouds], func=function) == (
+        f'{THIS_MODULE_NAME}.{VERY_SMOOTH}')
+
+    # Assert that this getter canonicalizes a relative forward reference against
+    # the "__module__" dunder attribute of a function to the expected string.
+    assert get_hint_pep484585_ref_name_absolute(
+        hint=VERY_SMOOTH, func=and_pendent_mountains) == (
+        f'{THIS_MODULE_NAME}.{VERY_SMOOTH}')
 
     # ....................{ FAIL                           }....................
-    # Assert this getter raises the expected exception when passed a relative
-    # forward reference and the second object does *NOT* define the "__module__"
-    # dunder attribute.
+    # Assert that this getter raises the expected exception when passed a
+    # relative forward reference and neither a class *NOR* callable.
     with raises(BeartypeDecorHintForwardRefException):
-        get_hint_pep484585_ref_name_relative_to_object(
+        get_hint_pep484585_ref_name_absolute(VERY_SMOOTH)
+
+    # Assert that this getter raises the expected exception when passed a
+    # relative forward reference and callable *NOT* defining the "__module__"
+    # attribute.
+    with raises(BeartypeDecorHintForwardRefException):
+        get_hint_pep484585_ref_name_absolute(
+            hint=VERY_SMOOTH, func='Seven blood-hounds followed him:')
+
+    # Assert that this getter raises the expected exception when passed a
+    # relative forward reference and a class and callable both defining the
+    # "__module__" dunder attribute to be the fully-qualified names of imaginary
+    # and thus unimportable modules that do *NOT* physically exist.
+    with raises(BeartypeDecorHintForwardRefException):
+        get_hint_pep484585_ref_name_absolute(
             hint=VERY_SMOOTH,
-            obj='Seven blood-hounds followed him:',
+            cls_stack=[IMetMurderOnTheWay],
+            func=thy_mysterious_paradise,
+        )
+
+    # Assert that this getter raises the expected exception when passed a
+    # relative forward reference and a class and callable both defining the
+    # "__module__" dunder attribute to be "None".
+    with raises(BeartypeDecorHintForwardRefException):
+        get_hint_pep484585_ref_name_absolute(
+            hint=VERY_SMOOTH,
+            cls_stack=[OSleep],
+            func=does_the_bright_arch,
+        )
+
+    # Assert that this getter raises the expected exception when passed a
+    # relative forward reference and *ONLY* a callable defining the
+    # "__module__" dunder attribute to be the fully-qualified name of an
+    # imaginary and thus unimportable module that does *NOT* physically exist.
+    with raises(BeartypeDecorHintForwardRefException):
+        get_hint_pep484585_ref_name_absolute(
+            hint=VERY_SMOOTH,
+            func=thy_mysterious_paradise,
+        )
+
+    # Assert that this getter raises the expected exception when passed a
+    # relative forward reference and *ONLY* a callable defining the
+    # "__module__" dunder attribute to be "None".
+    with raises(BeartypeDecorHintForwardRefException):
+        get_hint_pep484585_ref_name_absolute(
+            hint=VERY_SMOOTH,
+            func=does_the_bright_arch,
         )

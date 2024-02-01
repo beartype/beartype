@@ -46,7 +46,7 @@ def die_unless_module_attr_name(
         exception message. Defaults to something reasonably sane.
 
     Raises
-    ----------
+    ------
     exception_cls
         If either:
 
@@ -105,7 +105,7 @@ def is_module(module_name: str) -> bool:
     fully-qualified name is importable under the active Python interpreter.
 
     Caveats
-    ----------
+    -------
     **This tester dynamically imports this module as an unavoidable side effect
     of performing this test.**
 
@@ -115,12 +115,12 @@ def is_module(module_name: str) -> bool:
         Fully-qualified name of the module to be imported.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this module is importable.
 
     Warns
-    ----------
+    -----
     BeartypeModuleUnimportableWarning
         If a module with this name exists *but* that module is unimportable
         due to raising module-scoped exceptions at importation time.
@@ -145,7 +145,7 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
     *and* at least as new as the passed version.
 
     Caveats
-    ----------
+    -------
     **This tester dynamically imports this module as an unavoidable side effect
     of performing this test.**
 
@@ -158,7 +158,7 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
         :pep:`440`-compliant version specifier (e.g., ``42.42.42rc42.post42``).
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if:
 
@@ -166,7 +166,7 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
         * This module's version is at least the passed version.
 
     Warns
-    ----------
+    -----
     BeartypeModuleUnimportableWarning
         If a module with this name exists *but* that module is unimportable
         due to raising module-scoped exceptions at importation time.
@@ -199,7 +199,7 @@ def is_package(package_name: str) -> bool:
     importable under the active Python interpreter.
 
     Caveats
-    ----------
+    -------
     **This tester dynamically imports this module as an unavoidable side effect
     of performing this test.**
 
@@ -209,13 +209,13 @@ def is_package(package_name: str) -> bool:
         Fully-qualified name of the package to be imported.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this package is importable.
 
     Warns
-    ----------
-    :class:`BeartypeModuleUnimportableWarning`
+    -----
+    BeartypeModuleUnimportableWarning
         If a package with this name exists *but* that package is unimportable
         due to raising module-scoped exceptions from the top-level `__init__`
         submodule of this package at importation time.

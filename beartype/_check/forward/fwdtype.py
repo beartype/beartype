@@ -40,10 +40,10 @@ prefix, this prefix suffices to uniquely distinguish key-value pairs whose
 values are types from pairs whose values are tuples.
 '''
 
-# ....................{ REGISTRARS ~ forwardref            }....................
+# ....................{ REGISTRARS                         }....................
 #FIXME: Unit test us up.
 @callable_cached
-def get_hint_forwardref_code(hint_name: str) -> str:
+def make_code_resolve_ref_type(hint_name: str) -> str:
     '''
     Python expression evaluating to the type hint referred to by the passed
     **fully-qualified forward reference** (i.e., absolute ``"."``-delimited name
@@ -349,7 +349,8 @@ class _Beartypistry(dict):
 
         # Return this class. The superclass dict.__getitem__() dunder method
         # then implicitly maps the passed missing key to this class by
-        # effectively assigning this name to this class: e.g.,
+        # effectively assigning this name to this class by calling our subclass
+        # implementation of the __setitem__() dunder method defined above: e.g.,
         #     self[hint_name] = hint
         return hint  # type: ignore[return-value]
 
@@ -362,7 +363,7 @@ classnames of all type hints annotating callables decorated by the
 
 See Also
 --------
-:class:`_Beartypistry`
+:class:`._Beartypistry`
     Further details.
 '''
 

@@ -56,7 +56,7 @@ from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.fwdtype import (
     TYPISTRY_HINT_NAME_TUPLE_PREFIX,
     bear_typistry,
-    get_hint_forwardref_code,
+    make_code_resolve_ref_type,
 )
 from beartype._check.checkmagic import ARG_NAME_TYPISTRY
 from beartype._check.code.codesnip import (
@@ -490,7 +490,7 @@ def express_func_scope_type_ref(
 
         # Python expression evaluating to this class when accessed via this
         # private "__beartypistry" attribute.
-        forwardref_expr = get_hint_forwardref_code(forwardref_classname)
+        forwardref_expr = make_code_resolve_ref_type(forwardref_classname)
     # Else, this classname is unqualified. In this case...
     else:
         # If this set of unqualified classnames referred to by all relative

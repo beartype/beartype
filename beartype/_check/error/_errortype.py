@@ -35,7 +35,7 @@ from beartype._util.func.arg.utilfuncargtest import (
 from beartype._util.hint.nonpep.utilnonpeptest import (
     die_unless_hint_nonpep_tuple)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    import_pep484585_ref_type_relative_to_object)
+    import_pep484585_ref_type)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
     get_hint_pep484585_type_superclass)
 from beartype._util.hint.pep.utilpepget import (
@@ -191,15 +191,16 @@ def find_cause_instance_type_forwardref(
         f'{cause.hint_sign} not forward reference.')
 
     # Class referred to by this absolute or relative forward reference.
-    hint_forwardref_type = import_pep484585_ref_type_relative_to_object(
+    hint_ref_type = import_pep484585_ref_type(
         hint=cause.hint,
-        obj=cause.func,
+        func=cause.func,
+        cls_stack=cause.cls_stack,
         exception_cls=BeartypeCallHintForwardRefException,
         exception_prefix=cause.exception_prefix,
     )
 
     # Defer to the function handling isinstanceable classes. Neato!
-    return find_cause_instance_type(cause.permute(hint=hint_forwardref_type))
+    return find_cause_instance_type(cause.permute(hint=hint_ref_type))
 
 
 def find_cause_type_instance_origin(cause: ViolationCause) -> ViolationCause:
@@ -310,14 +311,15 @@ def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:
 
     # If this superclass is neither a class nor tuple of classes, this
     # superclass *MUST* by process of elimination and the validation already
-    # performed above by the get_hint_pep484585_type_superclass() getter be
-    # a forward reference to a class. In this case...
+    # performed above by the get_hint_pep484585_type_superclass() getter be a
+    # forward reference to a class. In this case...
     if not isinstance(hint_superclass, TestableTypes):
         # Reduce this superclass to the class referred to by this absolute or
         # relative forward reference.
-        hint_superclass = import_pep484585_ref_type_relative_to_object(
+        hint_superclass = import_pep484585_ref_type(
             hint=hint_superclass,  # type: ignore[arg-type]
-            obj=cause.func,
+            func=cause.func,
+            cls_stack=cause.cls_stack,
             exception_cls=BeartypeCallHintForwardRefException,
             exception_prefix=cause.exception_prefix,
         )

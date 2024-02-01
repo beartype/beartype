@@ -50,7 +50,7 @@ from beartype._check.code.codesnip import (
 from beartype._check.convert.convsanify import sanify_hint_root_func
 from beartype._check.forward.fwdtype import (
     bear_typistry,
-    get_hint_forwardref_code,
+    make_code_resolve_ref_type,
 )
 from beartype._check.util.checkutilmake import make_func_signature
 from beartype._data.func.datafuncarg import (
@@ -80,7 +80,7 @@ from beartype._util.func.arg.utilfuncargiter import (
     iter_func_args,
 )
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    get_hint_pep484585_ref_name_relative_to_object)
+    get_hint_pep484585_ref_name_absolute)
 from beartype._util.hint.utilhinttest import (
     is_hint_ignorable,
     is_hint_needs_cls_stack,
@@ -650,14 +650,12 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                 )
 
                 # Unmemoize this snippet against this return.
-                code_return_check_pith_unmemoized = (
-                    _unmemoize_func_wrapper_code(
-                        bear_call=bear_call,
-                        func_wrapper_code=code_return_check_pith,
-                        pith_repr=ARG_NAME_RETURN_REPR,
-                        hint_refs_type_basename=(
-                            hint_refs_type_basename),
-                    ))
+                code_return_check = _unmemoize_func_wrapper_code(
+                    bear_call=bear_call,
+                    func_wrapper_code=code_return_check_pith,
+                    pith_repr=ARG_NAME_RETURN_REPR,
+                    hint_refs_type_basename=hint_refs_type_basename,
+                )
 
                 #FIXME: [SPEED] Optimize the following two string munging
                 #operations into a single string-munging operation resembling:
@@ -684,7 +682,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
                 # * Returning this return from this wrapper function.
                 func_wrapper_code = (
                     f'{code_return_check_prefix}'
-                    f'{code_return_check_pith_unmemoized}'
+                    f'{code_return_check}'
                     f'{CODE_RETURN_CHECK_SUFFIX}'
                 )
             # Else, this hint is ignorable.
@@ -773,8 +771,10 @@ def _unmemoize_func_wrapper_code(
     # substrings memoized into this code, unmemoize this code by globally
     # resolving these placeholders relative to the decorated callable.
     if hint_refs_type_basename:
-        # Callable currently being decorated by @beartype.
+        # Metadata describing the callable currently being decorated by
+        # @beartype, localized purely as a negligible optimization.
         func = bear_call.func_wrappee
+        cls_stack = bear_call.cls_stack
 
         # Pass the beartypistry singleton as a private "__beartypistry"
         # parameter to this wrapper function.
@@ -782,7 +782,16 @@ def _unmemoize_func_wrapper_code(
 
         # For each unqualified classname referred to by a relative forward
         # reference type hints visitable from the current root type hint...
-        for hint_forwardref_class_basename in hint_refs_type_basename:
+        for hint_basename in hint_refs_type_basename:
+            # Fully-qualified classname referred to by this forward reference
+            # relative to the decorated callable.
+            hint_name = get_hint_pep484585_ref_name_absolute(
+                hint=hint_basename,
+                cls_stack=cls_stack,
+                func=func,
+                exception_prefix=EXCEPTION_PLACEHOLDER,
+            )
+
             # Generate an unmemoized callable-specific code snippet checking
             # this class by globally replacing in this callable-agnostic code...
             func_wrapper_code = replace_str_substrs(
@@ -790,17 +799,12 @@ def _unmemoize_func_wrapper_code(
                 # This placeholder substring cached into this code with...
                 old=(
                     f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX}'
-                    f'{hint_forwardref_class_basename}'
+                    f'{hint_basename}'
                     f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX}'
                 ),
                 # Python expression evaluating to this class when accessed via
                 # the private "__beartypistry" parameter.
-                new=get_hint_forwardref_code(
-                    # Fully qualified classname referred to by this forward
-                    # reference relative to the decorated callable.
-                    get_hint_pep484585_ref_name_relative_to_object(
-                        hint=hint_forwardref_class_basename, obj=func)
-                ),
+                new=make_code_resolve_ref_type(hint_name),
             )
 
     # Return this unmemoized callable-specific code snippet.

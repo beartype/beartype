@@ -67,7 +67,7 @@ from beartype._util.error.utilerrorraise import (
 )
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    get_hint_pep484585_ref_name_relative_to_object)
+    get_hint_pep484585_ref_name_absolute)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from itertools import count
 from warnings import warn
@@ -648,11 +648,10 @@ def _make_func_checker(
         # type-checkers) sufficiently slow as to be pragmatically infeasible.
         if hint_refs_type_basename:
             # Defer to a low-level getter to raise a human-readable exception.
-            get_hint_pep484585_ref_name_relative_to_object(
+            get_hint_pep484585_ref_name_absolute(
                 # First relative forward reference in this type hint,
                 # arbitrarily chosen for convenience.
                 hint=hint_refs_type_basename[0],
-                obj=None,
                 exception_prefix=(
                     f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '),
             )
@@ -676,17 +675,12 @@ def _make_func_checker(
         func_checker_code = f'{code_signature}{code_check}'
 
         # ....................{ FUNCTION                   }....................
-        # Human-readable substring prefixing exception messages raised by the
-        # following call to the make_func() factory.
-        func_label = (
-            f'{EXCEPTION_PLACEHOLDER}type-checker {func_checker_name}()')
-
         # Type-checking tester function to be returned.
         func_tester = make_func(
             func_name=func_checker_name,
             func_code=func_checker_code,
             func_locals=func_scope,
-            func_label=func_label,
+            func_label='die_if_unbearable() or is_bearable() type-checker',
             is_debug=conf.is_debug,
         )
     # If doing so raises *ANY* exception, reraise this exception with each

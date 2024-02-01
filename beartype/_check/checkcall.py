@@ -20,7 +20,6 @@ from beartype.typing import (
 )
 from beartype._cave._cavefast import CallableCodeObjectType
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.checkmagic import ARG_NAME_CONF
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahinttyping import (
