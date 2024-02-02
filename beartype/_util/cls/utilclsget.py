@@ -12,11 +12,14 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilTypeException
-from beartype.typing import Optional
+from beartype.typing import (
+    Optional,
+)
 from beartype._data.hint.datahinttyping import (
     LexicalScope,
     TypeException,
 )
+from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up.

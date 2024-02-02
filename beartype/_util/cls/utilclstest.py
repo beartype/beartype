@@ -13,16 +13,12 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilTypeException
 from beartype._cave._cavefast import TestableTypes as TestableTypesTuple
-from beartype._data.cls.datacls import (
-    TYPES_BUILTIN_FAKE,
-    TYPE_BUILTIN_FAKE_PYCAPSULE_NAME,
-)
-from beartype._data.module.datamodpy import BUILTINS_MODULE_NAME
+from beartype._data.cls.datacls import TYPES_BUILTIN
 from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeOrTupleTypes,
 )
-from beartype._util.cache.utilcachecall import callable_cached
+from beartype._data.module.datamodpy import BUILTINS_MODULE_NAME
 
 # ....................{ RAISERS                            }....................
 def die_unless_type(
@@ -170,19 +166,19 @@ def is_type_or_types(type_or_types: object) -> bool:
     )
 
 # ....................{ TESTERS ~ builtin                  }....................
-@callable_cached
 def is_type_builtin(cls: type) -> bool:
     '''
-    :data:`True` only if the passed class is **builtin** (i.e., a globally
-    accessible C-based type requiring *no* explicit importation).
+    :data:`True` only if the passed object is a **builtin type** (i.e., globally
+    accessible C-based type implicitly accessible from all scopes and thus
+    requiring *no* explicit importation).
 
-    Note that this tester intentionally ignores **fake builtin types** (i.e.,
-    types that are *not* builtin but nonetheless erroneously masquerade as being
-    builtin, which includes the type of the :data:`None` singleton) by returning
-    :data:`False` when passed a fake builtin type. If this is undesirable,
-    consider calling the lower-level :func:`is_type_builtin_or_fake` tester.
-
-    This tester is memoized for efficiency.
+    Caveats
+    -------
+    This tester intentionally ignores **fake builtin types** (i.e., types that
+    are *not* builtin but nonetheless erroneously masquerade as being builtin,
+    including the type of the :data:`None` singleton) by returning :data:`False`
+    when passed a fake builtin type. If this is undesirable, consider calling
+    the lower-level :func:`.is_type_builtin_or_fake` tester.
 
     Parameters
     ----------
@@ -193,44 +189,47 @@ def is_type_builtin(cls: type) -> bool:
     -------
     bool
         :data:`True` only if this class is builtin.
-
-    Raises
-    ------
-    _BeartypeUtilTypeException
-        If this object is *not* a class.
     '''
 
-    # This return true only if...
-    return (
-        # This is a possibly fake builtin type *AND*...
-        is_type_builtin_or_fake(cls) and
-        # This type is *NOT* a fake builtin. Specifically, neither...
-        not (
-            # This type is a non-PyCapsule fake builtin *NOR*...
-            cls in TYPES_BUILTIN_FAKE or
-            # This type is the PyCapsule fake builtin. See the docstring of this
-            # global for further commentary. There be bugbears here.
-            cls.__name__ == TYPE_BUILTIN_FAKE_PYCAPSULE_NAME
-        # Then this type is a fake builtin. In this case, reject this type.
-        )
-    )
+    # Return true only if this is a builtin type.
+    return cls in TYPES_BUILTIN
 
 
 def is_type_builtin_or_fake(cls: type) -> bool:
     '''
-    :data:`True` only if the passed class is a **possibly fake builtin** (i.e.,
-    a type declared by the standard :mod:`builtins` module).
-
-    Note that this tester intentionally accepts **fake builtin types** (i.e.,
-    types that are *not* builtin but nonetheless erroneously masquerade as being
-    builtin, which includes the type of the :data:`None` singleton) by returning
-    :data:`True` when passed a fake builtin type. If this is undesirable,
-    consider calling the higher-level :func:`is_type_builtin` tester.
+    :data:`True` only if the passed object is a **possibly fake builtin type**
+    (i.e., type declared by the standard :mod:`builtins` module).
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator), as the implementation trivially reduces
     to an efficient one-liner.
 
+    Caveats
+    -------
+    This tester intentionally accepts **fake builtin types** (i.e., types that
+    are *not* builtin but nonetheless erroneously masquerade as being builtin,
+    including the type of the :data:`None` singleton) by returning :data:`True`
+    when passed a fake builtin type. If this is undesirable, consider calling
+    the higher-level :func:`.is_type_builtin` tester.
+
+    Like all non-builtin types, fake builtin types are globally inaccessible
+    until explicitly imported into the current lexical variable scope. Unlike
+    all non-builtin types, however, fake builtin types declare themselves to be
+    builtin. The standard example is the type of the :data:`None` singleton:
+
+    .. code-block:: python
+
+       >>> f'{type(None).__module__}.{type(None).__name__}'
+       'builtins.NoneType'
+       >>> NoneType
+       NameError: name 'NoneType' is not defined    # <---- this is balls
+
+    These inconsistencies almost certainly constitute bugs in the CPython
+    interpreter itself, but it seems doubtful CPython developers would see it
+    that way and almost certain everyone else would defend these edge cases.
+
+    We're *not* dying on that lonely hill. We obey the Iron Law of Guido.
+
     Parameters
     ----------
     cls : type
@@ -239,20 +238,16 @@ def is_type_builtin_or_fake(cls: type) -> bool:
     Returns
     -------
     bool
-        :data:`True` only if this class is builtin.
-
-    Raises
-    ------
-    _BeartypeUtilTypeException
-        If this object is *not* a class.
+        :data:`True` only if this object is a possibly fake builtin type.
     '''
 
     # Avoid circular import dependencies.
     from beartype._util.module.utilmodget import (
         get_object_type_module_name_or_none)
 
-    # If this object is *NOT* a type, raise an exception.
-    die_unless_type(cls)
+    # If this object is *NOT* a type, return false.
+    if not isinstance(cls, type):
+        return False
     # Else, this object is a type.
 
     # Fully-qualified name of the module defining this type if this type is

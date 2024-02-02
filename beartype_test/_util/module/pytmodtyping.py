@@ -16,8 +16,7 @@ attributes with arbitrary names dynamically imported from typing modules).
 #these two submodules unknowingly, which is simply horrid. Gah! I cry at night.
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Any
-from beartype._util.module.utilmodimport import import_module_attr_or_none
+from typing import Any
 
 # ....................{ IMPORTERS                          }....................
 def import_typing_attr_or_none_safe(typing_attr_basename: str) -> Any:
@@ -62,21 +61,22 @@ def import_typing_attr_or_none_safe(typing_attr_basename: str) -> Any:
 
     # Defer test-specific imports.
     from beartype._util.module.lib.utiltyping import import_typing_attr_or_none
-    # from beartype._util.module.utilmodimport import import_module_attr_or_none
-    from beartype_test._util.module.pytmodtest import is_package_typing_extensions
+    from beartype._util.module.utilmodimport import import_module_attr_or_none
+    from beartype._util.utilobject import SENTINEL
+    from beartype_test._util.module.pytmodtest import (
+        is_package_typing_extensions)
     # print(f'is_package_typing_extensions: {is_package_typing_extensions()}')
 
-    # Return either...
-    return (
-        # If a reasonably recent version of the third-party "typing_extensions"
-        # package is importable under the active Python interpreter, defer to
-        # this higher-level importer possibly returning an attribute from that
-        # package;
-        import_typing_attr_or_none(typing_attr_basename)
-        if is_package_typing_extensions() else
-        # Else, either "typing_extensions" is unimportable or only an obsolete
-        # version of "typing_extensions" is importable; in either case, avoid
-        # possibly returning a possibly broken attribute from that package by
-        # importing only from the official "typing" module.
-        import_module_attr_or_none(f'typing.{typing_attr_basename}')
-    )
+    # If a reasonably recent version of the third-party "typing_extensions"
+    # package is importable under the active Python interpreter, defer to this
+    # higher-level importer possibly returning an attribute from that package;
+    if is_package_typing_extensions():
+        return import_typing_attr_or_none(typing_attr_basename)
+    # Else, either "typing_extensions" is unimportable or only an obsolete
+    # version of "typing_extensions" is importable; in either case, avoid
+    # possibly returning a possibly broken attribute from that package by
+    # importing only from the official "typing" module.
+
+    # Return the typing attribute imported from the official "typing" module if
+    # defined by this version of Python *OR* "None" otherwise.
+    return import_module_attr_or_none(f'typing.{typing_attr_basename}')

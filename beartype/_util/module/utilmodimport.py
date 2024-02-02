@@ -17,7 +17,9 @@ from beartype.typing import (
     Any,
     Optional,
 )
+from beartype._data.cls.datacls import TYPES_BUILTIN
 from beartype._data.hint.datahinttyping import TypeException
+from beartype._util.utilobject import SENTINEL
 from importlib import import_module as importlib_import_module
 from types import ModuleType
 from warnings import warn
@@ -145,8 +147,8 @@ def import_module_attr(
 ) -> Any:
     '''
     Dynamically import and return the **module attribute** (i.e., object
-    declared at module scope) with the passed fully-qualified name if
-    importable *or* raise an exception otherwise.
+    declared at module scope) with the passed fully-qualified name if importable
+    *or* raise an exception otherwise.
 
     Parameters
     ----------
@@ -154,7 +156,7 @@ def import_module_attr(
         Fully-qualified name of the module attribute to be imported.
     exception_cls : Type[Exception]
         Type of exception to be raised by this function. Defaults to
-        :class:`_BeartypeUtilModuleException`.
+        :class:`._BeartypeUtilModuleException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -182,20 +184,20 @@ def import_module_attr(
 
     See Also
     --------
-    :func:`import_module_attr_or_none`
+    :func:`.import_module_attr_or_sentinel`
         Further commentary.
     '''
 
     # Module attribute with this name if that module declares this attribute
-    # *OR* "None" otherwise.
-    module_attr = import_module_attr_or_none(
+    # *OR* the sentinel placeholder otherwise.
+    module_attr = import_module_attr_or_sentinel(
         module_attr_name=module_attr_name,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
 
     # If this module declares *NO* such attribute, raise an exception.
-    if module_attr is None:
+    if module_attr is SENTINEL:
         raise exception_cls(
             f'{exception_prefix}"{module_attr_name}" unimportable.')
     # Else, this module declares this attribute.
@@ -204,26 +206,50 @@ def import_module_attr(
     return module_attr
 
 
-def import_module_attr_or_none(
+def import_module_attr_or_sentinel(
     # Mandatory parameters.
     module_attr_name: str,
 
     # Optional parameters.
+    is_import_builtin_type_fallback: bool = False,
     exception_cls: TypeException = _BeartypeUtilModuleException,
     exception_prefix: str = 'Module attribute ',
 ) -> Any:
     '''
     Dynamically import and return the **module attribute** (i.e., object
-    declared at module scope) with the passed fully-qualified name if
-    importable *or* return :data:`None` otherwise.
+    declared at module scope) with the passed fully-qualified name if importable
+    *or* the placeholder :data:`.SENTINEL` otherwise.
 
     Parameters
     ----------
     module_attr_name : str
         Fully-qualified name of the module attribute to be imported.
+    is_import_builtin_type_fallback : bool
+        If this module attribute is unimportable *and* this boolean is:
+
+        * :data:`True`, then fallback to attempting to import the unqualified
+          basename of this attribute as a **builtin type** (i.e., globally
+          accessible C-based type implicitly accessible from all scopes and thus
+          requiring *no* explicit importation) from the standard :mod:`builtins`
+          module. Builtins are globally accessible and could thus be considered
+          to be globally "importable" from *any* module. This perspective is
+          particularly useful when dynamically resolving relative forward
+          references (e.g., ``typing.ForwardRef('int')``) in type-checking
+          wrapper functions, which attempt to (in order):
+
+          #. Resolve those references against the module defining the decorated
+             callable and, failing that...
+          #. Resolve those references against the standard :mod:`builtins`
+             module and, failing that...
+          #. Raise an exception.
+
+        * :data:`False`, then avoid performing that fallback behaviour by simply
+          returning :data:`.SENTINEL` immediately.
+
+        Defaults to :data:`False` for safety.
     exception_cls : Type[Exception]
         Type of exception to be raised by this function. Defaults to
-        :class:`_BeartypeUtilModuleException`.
+        :class:`._BeartypeUtilModuleException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -233,9 +259,9 @@ def import_module_attr_or_none(
     object
         Either:
 
-        * If *no* module prefixed this name exists, :data:`None`.
+        * If *no* module prefixed this name exists, :data:`.SENTINEL`.
         * If a module prefixed by this name exists *but* that module declares
-          no attribute by this name, ``None``.
+          no attribute by this name, :data:`.SENTINEL`.
         * Else, the module attribute with this fully-qualified name.
 
     Raises
@@ -246,9 +272,11 @@ def import_module_attr_or_none(
     Warns
     -----
     BeartypeModuleUnimportableWarning
-        If a module with this name exists *but* that module is unimportable
-        due to raising module-scoped exceptions at importation time.
+        If a module prefixed by this name exists *but* that module is
+        unimportable due to module-scoped side effects at importation time.
     '''
+    assert isinstance(is_import_builtin_type_fallback, bool), (
+        f'{repr(is_import_builtin_type_fallback)} not boolean.')
 
     # Avoid circular import dependencies.
     from beartype._util.module.utilmodtest import die_unless_module_attr_name
@@ -273,12 +301,73 @@ def import_module_attr_or_none(
     # That module if importable *OR* "None" otherwise.
     module = import_module_or_none(module_name)
 
-    # Return either...
-    return (
-        # If that module is importable, the module attribute with this name
-        # if that module declares this attribute *OR* "None" otherwise;
-        getattr(module, module_attr_basename, None)
-        if module is not None else
-        # Else, that module is unimportable. In this case, "None".
-        None
-    )
+    # If that module is unimportable, return "None".
+    if module is None:
+        return SENTINEL
+    # Else, that module is importable.
+
+    # Module attribute with this name if that module declares this attribute
+    # *OR* the sentinel placeholder otherwise.
+    module_attr = getattr(module, module_attr_basename, SENTINEL)
+
+    #FIXME: Unit test us up, please.
+    if (
+        module_attr is SENTINEL and
+        is_import_builtin_type_fallback
+    ):
+        module_attr = getattr(TYPES_BUILTIN, module_attr_basename, SENTINEL)
+
+    # Return this module attribute.
+    return module_attr
+
+
+
+def import_module_attr_or_none(*args, **kwargs) -> Any:
+    '''
+    Dynamically import and return the **module attribute** (i.e., object
+    declared at module scope) with the passed fully-qualified name if importable
+    *or* :data:`None` otherwise.
+
+    Caveats
+    -------
+    **This importer ambiguously returns false negatives in edge cases and is
+    thus mildly unsafe.** Consider calling the unambiguous
+    :func:`.import_module_attr_or_sentinel` importer instead. Why? Because this
+    importer returns :data:`None` both when this attribute is unimportable *and*
+    when this attribute is importable but has a value of :data:`None`.
+    Nonetheless, this importer remains convenient for various use cases in which
+    this distinction is mostly irrelevant.
+
+    Parameters
+    ----------
+    All parameters are passed as is to the lower-level
+    :func:`.import_module_attr_or_sentinel` importer.
+
+    Returns
+    -------
+    object
+        Either:
+
+        * If *no* module prefixed this name exists, :data:`None`.
+        * If a module prefixed by this name exists *but* that module declares
+          no attribute by this name, :data:`None`.
+        * Else, the module attribute with this fully-qualified name.
+
+    Raises
+    ------
+    exception_cls
+        If this name is syntactically invalid.
+
+    Warns
+    -----
+    BeartypeModuleUnimportableWarning
+        If a module prefixed by this name exists *but* that module is
+        unimportable due to module-scoped side effects at importation time.
+    '''
+
+    # Module attribute with this name if that module declares this attribute
+    # *OR* the sentinel placeholder otherwise.
+    module_attr = import_module_attr_or_sentinel(*args, **kwargs)
+
+    # Return either this attribute if importable *OR* "None" otherwise.
+    return module_attr if module_attr is not SENTINEL else None

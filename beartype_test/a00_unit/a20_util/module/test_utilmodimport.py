@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2024 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,13 +10,13 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.module.utilmodimport` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ....................{ IMPORTS                            }....................
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 def test_import_module_or_none() -> None:
     '''
     Test the
@@ -53,7 +53,7 @@ def test_import_module_or_none() -> None:
             'beartype_test.a00_unit.data.util.mod.data_utilmodule_bad') is (
                 None)
 
-# ....................{ TESTS ~ attr                      }....................
+# ....................{ TESTS ~ attr                       }....................
 def test_import_module_attr() -> None:
     '''
     Test the
@@ -81,24 +81,32 @@ def test_import_module_attr() -> None:
             'beartype_test.a00_unit.data.util.mod.data_utilmodule_good.attrbad')
 
 
-def test_import_module_attr_or_none() -> None:
+def test_import_module_attr_or_sentinel() -> None:
     '''
     Test the
-    :func:`beartype._util.module.utilmodget.import_module_attr_or_none` function.
+    :func:`beartype._util.module.utilmodget.import_module_attr_or_sentinel`
+    function.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeModuleUnimportableWarning
     from beartype.roar._roarexc import _BeartypeUtilModuleException
-    from beartype._util.module.utilmodimport import import_module_attr_or_none
-    from pytest import raises, warns
+    from beartype._util.module.utilmodimport import (
+        import_module_attr_or_sentinel)
+    from beartype._util.utilobject import SENTINEL
+    from pytest import (
+        raises,
+        warns,
+    )
 
+    # ....................{ PASS                           }....................
     # Attribute declared by an importable module.
-    module_attr_good = import_module_attr_or_none(
+    module_attr_good = import_module_attr_or_sentinel(
         'beartype_test.a00_unit.data.util.mod.data_utilmodule_good.attrgood')
 
     # Attribute *NOT* declared by an importable module.
-    module_attr_bad = import_module_attr_or_none(
+    module_attr_bad = import_module_attr_or_sentinel(
         'beartype_test.a00_unit.data.util.mod.data_utilmodule_good.attrbad')
 
     # Assert this to be the expected attribute.
@@ -106,22 +114,24 @@ def test_import_module_attr_or_none() -> None:
     assert module_attr_good.startswith(
         'I started to see human beings as little')
 
-    # Assert this function returns "None" when passed the syntactically valid
-    # fully-qualified name of a non-existent attribute of an importable module.
-    assert module_attr_bad is None
+    # Assert this importer returns the sentinel when passed the syntactically
+    # valid fully-qualified name of a non-existent attribute of an importable
+    # module.
+    assert module_attr_bad is SENTINEL
 
+    # ....................{ FAIL                           }....................
     # Assert this function emits the expected warning when passed the
-    # syntactically valid fully-qualified name of a non-existent attribute of
-    # an unimportable module.
+    # syntactically valid fully-qualified name of a non-existent attribute of an
+    # unimportable module.
     with warns(BeartypeModuleUnimportableWarning):
-        bad_module_attr = import_module_attr_or_none(
+        bad_module_attr = import_module_attr_or_sentinel(
             'beartype_test.a00_unit.data.util.mod.data_utilmodule_bad.attrbad')
-        assert bad_module_attr is None
+        assert bad_module_attr is SENTINEL
 
     # Assert this function raises the expected exception when passed a
     # non-string.
     with raises(_BeartypeUtilModuleException):
-        import_module_attr_or_none(
+        import_module_attr_or_sentinel(
             b'In far countries little men have closely studied your longing '
             b'to be an indiscriminate slave.'
         )
@@ -129,7 +139,7 @@ def test_import_module_attr_or_none() -> None:
     # Assert this function raises the expected exception when passed a
     # string containing no "." characters.
     with raises(_BeartypeUtilModuleException):
-        import_module_attr_or_none(
+        import_module_attr_or_sentinel(
             'These little men were not born in mansions, '
             'they rose from your ranks'
         )
@@ -138,7 +148,7 @@ def test_import_module_attr_or_none() -> None:
     # string containing one or more "." characters but syntactically invalid as
     # a fully-qualified module attribute name.
     with raises(_BeartypeUtilModuleException):
-        import_module_attr_or_none(
+        import_module_attr_or_sentinel(
             'They have gone hungry like you, suffered like you. And they have '
             'found a quicker way of changing masters.'
         )
