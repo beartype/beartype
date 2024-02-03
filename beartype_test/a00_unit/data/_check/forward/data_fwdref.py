@@ -7,12 +7,12 @@
 Project-wide **forward reference proxy data** submodule.
 
 This submodule predefines **forward reference proxies** (i.e., low-level objects
-created by the :func:`beartype._check.forward.fwdref` submodule) exercising
-known edge cases on behalf of higher-level unit test submodules.
+created by the :func:`beartype._check.forward.reference.fwdrefmake` submodule)
+exercising known edge cases on behalf of higher-level unit test submodules.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.forward.fwdref import (
+from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_indexable_subtype)
 
 # ....................{ GLOBALS                            }....................

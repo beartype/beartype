@@ -39,7 +39,7 @@ This private submodule is *not* intended for importation by downstream callers.
 #      previously called express_func_scope_type_ref() function, then
 #      *THIS REFERENCE INDICATES A RECURSIVE TYPE HINT.* In this case:
 #      * Replace this forward reference with a new recursive type-checking
-#        "beartype._check.forward.fwdref.BeartypeForwardRef_{forwardref}"
+#        "beartype._check.forward.reference.fwdrefabc.BeartypeForwardRef_{forwardref}"
 #        subclass whose is_instance() tester method recursively calls itself
 #        indefinitely. If doing so generates a "RecursionError", @beartype
 #        considers that the user's problem. *wink*

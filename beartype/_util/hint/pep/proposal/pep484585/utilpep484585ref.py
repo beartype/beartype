@@ -13,7 +13,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
-from beartype.typing import Optional
+from beartype.typing import (
+    Optional,
+    Tuple,
+)
 from beartype._data.cls.datacls import TYPES_PEP484585_REF
 from beartype._data.hint.datahinttyping import (
     Pep484585ForwardRef,
@@ -193,6 +196,7 @@ def get_hint_pep484585_ref_name(hint: Pep484585ForwardRef) -> str:
     return hint_name
 
 
+#FIXME: Obsolete in favour of the get_hint_pep484585_ref_data() getter, please.
 def get_hint_pep484585_ref_name_absolute(
     # Mandatory parameters.
     hint: Pep484585ForwardRef,
@@ -458,6 +462,275 @@ def get_hint_pep484585_ref_name_absolute(
 
     # Fully-qualified forward reference relative to this module.
     return f'{hint_module_name}.{hint_name}'
+
+
+#FIXME: Unit test us up, please.
+#FIXME: Docstring us up, please.
+def get_hint_pep484585_ref_data(
+    # Mandatory parameters.
+    hint: Pep484585ForwardRef,
+
+    # Optional parameters.
+    cls_stack: TypeStack = None,
+    func: Optional[Callable] = None,
+    exception_cls: TypeException = BeartypeDecorHintForwardRefException,
+    exception_prefix: str = '',
+) -> Tuple[str, Optional[str]]:
+    '''
+    Fully-qualified classname referred to by the passed **forward reference type
+    hint** (i.e., object indirectly referring to a user-defined class that
+    typically has yet to be defined) canonicalized if this hint is unqualified
+    relative to the module declaring the passed object (e.g., callable, class).
+
+    This getter is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the implementation mostly reduces to
+    an efficient one-liner.
+
+    Caveats
+    -------
+    This getter preferentially canonicalizes this forward reference if relative
+    against the fully-qualified name of the module defining (in order):
+
+    #. The passed class stack if *not* :data:`None`.
+    #. The passed callable.
+
+    This getter thus prioritizes classes over callables. Why? Because classes
+    are more likely to define ``__module__`` dunder attributes referring to
+    importable modules that physically exist. Why? Because dynamically
+    synthesizing in-memory callables residing in imaginary and thus unimportable
+    modules is trivial; dynamically synthesizing in-memory classes residing in
+    imaginary and thus unimportable modules is less trivial.
+
+    Consider the standard use case for :mod:`beartype`: beartype import hooks
+    declared by the :mod:`beartype.claw` subpackage. Although hooks directly
+    apply the :func:`beartype.beartype` decorator to classes and functions
+    residing in importable modules that physically exist, that decorator then
+    dynamically iterates over the methods of those classes. That iteration is
+    dynamic and iterates over methods that both physically exist and only
+    dynamically exist in-memory in unimportable modules.
+
+    Does this edge case arise in real-world code? All too frequently. For
+    unknown reasons, the :class:`typing.NamedTuple` superclass dynamically
+    generates dunder methods (e.g., ``__new__``) whose ``__module__`` dunder
+    attributes erroneously refer to imaginary and thus unimportable modules
+    ``named_{subclass_name}`` for the unqualified basename ``{subclass_name}``
+    of the current user-defined class subclassing :class:`typing.NamedTuple`
+    despite that user-defined class residing in an importable module: e.g.,
+
+    .. code-block:: pycon
+
+       >>> from beartype import beartype
+       >>> from typing import NamedTuple
+
+       >>> @beartype
+       ... class NamelessTupleIsBlameless(NamedTuple):
+       ...     forward_ref: 'UndefinedType'
+
+       >>> NamelessTupleIsBlameless.__module__
+       '__main__'                        # <-- makes sense
+       >>> NamelessTupleIsBlameless.__new__.__module__
+       'named_NamelessTupleIsBlameless'  # <-- lol wut
+
+    If this getter erroneously prioritized callables over classes *and* blindly
+    accepted imaginary modules as valid, this getter would erroneously resolve
+    the relative forward reference ``'UndefinedType'`` to
+    ``'named_NamelessTupleIsBlameless.UndefinedType'`` rather than to
+    ``'__main__.UndefinedType'``. And... this is why @leycec is currently bald.
+
+    Parameters
+    ----------
+    hint : object
+        Forward reference to be canonicalized.
+    cls_stack : TypeStack
+        Either:
+
+        * If this forward reference annotates a method of a class, the
+          corresponding **type stack** (i.e., tuple of the one or more
+          :func:`beartype.beartype`-decorated classes lexically containing that
+          method). If this forward reference is unqualified (i.e., relative),
+          this getter then canonicalizes this reference against that class.
+        * Else, :data:`None`.
+
+        Defaults to :data:`None`.
+    func : Optional[Callable]
+        Either:
+
+        * If this forward reference annotates a callable, that callable.
+          If this forward reference is also unqualified (i.e., relative), this
+          getter then canonicalizes this reference against that callable.
+        * Else, :data:`None`.
+
+        Defaults to :data:`None`.
+    exception_cls : Type[Exception]
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintForwardRefException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Returns
+    -------
+    str
+        Fully-qualified classname referred to by this forward reference
+        relative to this callable.
+
+    Raises
+    ------
+    exception_cls
+        If either:
+
+        * This forward reference is *not* actually a forward reference.
+        * This forward reference is **relative** (i.e., contains *no* ``.``
+          delimiters) and either:
+
+          * Neither the passed callable nor class define the ``__module__``
+            dunder attribute.
+          * The passed callable and/or class define the ``__module__``
+            dunder attribute, but the values of those attributes all refer to
+            unimportable modules that do *not* appear to physically exist.
+
+    See Also
+    --------
+    :func:`.get_hint_pep484585_ref_name`
+        Lower-level getter returning possibly relative forward references.
+    '''
+
+    # Possibly unqualified classname referred to by this forward reference.
+    hint_name = get_hint_pep484585_ref_name(hint)
+
+    # If this classname contains one or more "." characters and is thus already
+    # (...hopefully) fully-qualified, return this classname as is.
+    if '.' in hint_name:
+        return hint_name, None
+    # Else, this classname contains *NO* "." characters and is thus *NOT*
+    # fully-qualified.
+    #
+    # If this reference does *NOT* annotate a callable, then this reference also
+    # does *NOT* annotate a method of a class (i.e., "cls is None"). Then there
+    # exists *NO* owner object against which to canonicalize this reference.
+    # This edge case occurs when this getter is transitively called by a
+    # high-level "beartype.door" runtime type-checker (e.g., is_bearable(),
+    # die_if_unbearable()). In this case, raise an appropriate exception.
+    elif not func:
+        raise exception_cls(
+            f'{exception_prefix}relative forward reference "{hint_name}" '
+            f'currently only type-checkable in type hints annotating '
+            f'@beartype-decorated callables and classes. '
+            f'For your own safety and those of the codebases you love, '
+            f'consider canonicalizing this '
+            f'relative forward reference into an absolute forward reference '
+            f'(e.g., replace "{hint_name}" with '
+            f'"{{some_package}}.{hint_name}").'
+        )
+    # Else, an owner object against which to canonicalize this reference exists.
+
+    # Fully-qualified name of the module to which this reference is relative if
+    # this reference is relative to an importable module *OR* "None" otherwise
+    # (i.e., if this reference is relative to an unimportable module).
+    #
+    # Note that, although *ALL* callables and classes should define the
+    # "__module__" instance variable underlying the call to this getter
+    # function, *SOME* real-world callables and classes do not. For this reason,
+    # we intentionally:
+    # * Call the get_object_module_name_or_none() rather than
+    #   get_object_module_name() function.
+    # * Explicitly detect "None".
+    # * Raise a human-readable exception.
+    #
+    # Doing so produces significantly more readable exceptions than merely
+    # calling get_object_module_name(). Problematic objects include:
+    # * Objects defined in Sphinx-specific "conf.py" configuration files. In all
+    #   likelihood, Sphinx is running these files in some sort of arcane and
+    #   non-standard manner (over which beartype has *NO* control).
+    hint_module_name: Optional[str] = None
+
+    # If this reference annotates a method of a class...
+    if cls_stack:
+        # Class currently being decorated by @beartype.
+        cls = cls_stack[-1]
+
+        # Fully-qualified name of the module defining that class.
+        hint_module_name = get_object_module_name_or_none(cls)
+    # Else, this reference does *NOT* annotate a method of a class.
+
+    # If it is *NOT* the case that...
+    if not (
+        # That class is declared by a module *AND*...
+        hint_module_name and
+        # That module is importable...
+        is_module(hint_module_name)
+    # Fallback to...
+    ):
+        # Fully-qualified name of the callable annotated by this reference.
+        hint_module_name = get_object_module_name_or_none(func)
+
+        # If it is *NOT* the case that...
+        if not (
+            # That callable is declared by a module *AND*...
+            hint_module_name and
+            # That module is importable...
+            is_module(hint_module_name)
+        # Then there exists *NO* owner module against which to canonicalize this
+        # reference. In this case, raise an exception.
+        ):
+            # If this reference annotates a method of a class...
+            if cls_stack:
+                # Exception message to be raised.
+                exception_message = (
+                    f'{exception_prefix}forward reference "{hint_name}" '
+                    f'relative to:\n'
+                )
+
+                # Fully-qualified name of the module defining that class.
+                type_module_name = get_object_module_name_or_none(cls)  # pyright: ignore
+
+                # If that class defines a "__module__" dunder attribute, suffix
+                # this message by an appropriate substring.
+                if type_module_name:
+                    exception_message += (
+                        f'* {repr(cls)} in '  # pyright: ignore
+                        f'unimportable module "{type_module_name}".\n* '
+                    )
+                # Else, that class defines *NO* "__module__" dunder attribute.
+                # In this case, suffix this message by an appropriate substring.
+                else:
+                    exception_message += (
+                        f'* {repr(cls)} with '  # pyright: ignore
+                        f'undefined "__module__" attribute.\n* '
+                    )
+            # Else, this reference annotates a global or local function. In
+            # this case, construct an exception message to be raised.
+            else:
+                exception_message = (
+                    f'{exception_prefix}forward reference "{hint_name}" '
+                    f'relative to '
+                )
+
+            # If that callable defines a "__module__" dunder attribute, suffix
+            # this message by an appropriate substring.
+            if hint_module_name:
+                exception_message += (
+                    f'{repr(func)} in '
+                    f'unimportable module "{hint_module_name}".\n* '
+                )
+            # Else, that callable defines *NO* "__module__" dunder attribute.
+            # In this case, suffix this message by an appropriate substring.
+            else:
+                exception_message += (
+                    f'{repr(func)} with '
+                    f'undefined "__module__" attribute.\n* '
+                )
+
+            # Raise this exception.
+            raise exception_cls(exception_message)
+        # Else, that function is declared by an importable module.
+    # Else, that class is declared by an importable module.
+    #
+    # In either case, at least one of either that class or function is declared
+    # by an importable module.
+
+    # Return metadata describing this forward reference relative to this module.
+    return hint_name, hint_module_name
 
 # ....................{ IMPORTERS                          }....................
 #FIXME: Unit test us up, please.

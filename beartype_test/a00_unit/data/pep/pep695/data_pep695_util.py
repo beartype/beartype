@@ -29,7 +29,8 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep695Exception
-    from beartype._check.forward.fwdref import BeartypeForwardRefMeta
+    from beartype._check.forward.reference.fwdrefmeta import (
+        BeartypeForwardRefMeta)
     from beartype._util.hint.pep.proposal.utilpep695 import (
         iter_hint_pep695_forwardrefs)
     from pytest import raises

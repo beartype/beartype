@@ -111,10 +111,9 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavefast import HintPep695Type
-from beartype._check.forward.fwdref import (
-    BeartypeForwardRefMeta,
-    make_forwardref_indexable_subtype,
-)
+from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
+from beartype._check.forward.reference.fwdrefmake import (
+    make_forwardref_indexable_subtype)
 from beartype._util.error.utilerrorget import get_name_error_attr_name
 from beartype._util.module.utilmodget import get_module_imported_or_none
 

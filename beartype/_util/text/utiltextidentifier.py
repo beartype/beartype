@@ -42,12 +42,12 @@ def die_unless_identifier(
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
+    ------
     exception_cls
         If this string is *not* a valid Python attribute name.
 
     See Also
-    ----------
+    --------
     :func:`.is_identifier`
         Further details.
     '''
@@ -64,6 +64,28 @@ def die_unless_identifier(
     # Else, this string is a valid Python attribute name.
 
 # ....................{ TESTERS                            }....................
+def is_dunder(text: str) -> bool:
+    '''
+    :data:`True` only if the passed string vaguely conforms to the name of a
+    **dunder attribute** (i.e., attribute whose name is both prefixed and
+    suffixed by ``"__"`` double underscore substrings).
+
+    Parameters
+    ----------
+    text : str
+        String to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this string conforms to a dunder attribute name.
+    '''
+    assert isinstance(text, str), f'{repr(text)} not string.'
+
+    # Return us up the powerful one-liner of power.
+    return text.startswith('__') and text.endswith('__')
+
+
 def is_identifier(text: str) -> bool:
     '''
     :data:`True` only if the passed string is a valid **Python attribute name**
@@ -96,7 +118,7 @@ def is_identifier(text: str) -> bool:
         String to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this string is the ``.``-delimited concatenation of
         one or more syntactically valid Python identifiers.

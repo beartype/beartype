@@ -311,6 +311,7 @@ def import_module_attr_or_sentinel(
     module_attr = getattr(module, module_attr_basename, SENTINEL)
 
     #FIXME: Unit test us up, please.
+    #FIXME: Comment us up, please.
     if (
         module_attr is SENTINEL and
         is_import_builtin_type_fallback
