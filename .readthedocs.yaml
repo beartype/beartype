@@ -15,7 +15,7 @@ build:
   os: ubuntu-22.04
   tools:
     # Build under the most recently released minor version of CPython.
-    python: '3.11'
+    python: '3.12'
 
 # ....................{ PYTHON                             }....................
 python:
