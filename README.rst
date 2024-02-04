@@ -65,8 +65,29 @@ usability, unsubstantiated jargon we just made up, and thrilling puns.
    beartype_this_package()                               # <-- hype goes
 
 Beartype now implicitly type-checks *all* annotated classes, callables, and
-variable assignments across *all* submodules of ``{your_package}``. Congrats.
-This day all bugs die. :superscript:`...server slowly crashes`
+variable assignments across *all* submodules of your package. Congrats. This day
+all bugs die.
+
+But why stop at the burning tires in only *your* code? Your app depends on a
+sprawling ghetto of other packages, modules, and services. How riddled with
+infectious diseases is *that* code? You're about to find out.
+
+.. code-block:: python
+
+   # ....................{ BIG BEAR                        }....................
+   # Warn about type hint violations in *OTHER* packages outside your control;
+   # only raise exceptions from violations in your package under your control.
+   # Again, at the very top of your "{your_package}.__init__" submodule:
+   from beartype import BeartypeConf                              # <-- this isn't your fault
+   from beartype.claw import beartype_all, beartype_this_package  # <-- you didn't sign up for this
+   beartype_this_package()                                        # <-- raise exceptions in your code
+   beartype_all(conf=BeartypeConf(violation_type=UserWarning)     # <-- emit warnings from other code
+
+Beartype now implicitly type-checks *all* annotated classes, callables, and
+variable assignments across *all* submodules of *all* packages. When **your**
+package violates type safety, beartype raises an exception. When any **other**
+package violates type safety, beartype just emits a warning. The triumphal
+fanfare you hear is probably your userbase cheering. This is how the QA was won.
 
 Beartype also publishes a `plethora of APIs for fine-grained control over
 type-checking <beartype APIs>`. For those who are about to QA, beartype salutes
