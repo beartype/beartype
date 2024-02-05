@@ -11,6 +11,8 @@ classnames of all type hints annotating callables decorated by the
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
+#FIXME: Excise this entire submodule, please. This should no longer be required.
+
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
     BeartypeCallHintForwardRefException,
@@ -324,7 +326,7 @@ class _Beartypistry(dict):
         # Type hint whose fully-qualified name is this forward reference,
         # dynamically imported here at presumably callable call-time.
         hint = import_module_attr(
-            module_attr_name=hint_name,
+            attr_name=hint_name,
             exception_cls=BeartypeCallHintForwardRefException,
             exception_prefix='Forward reference ',
         )

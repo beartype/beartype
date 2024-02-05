@@ -466,7 +466,7 @@ def get_hint_pep484585_ref_name_absolute(
 
 #FIXME: Unit test us up, please.
 #FIXME: Docstring us up, please.
-def get_hint_pep484585_ref_data(
+def get_hint_pep484585_ref_names(
     # Mandatory parameters.
     hint: Pep484585ForwardRef,
 
@@ -475,16 +475,17 @@ def get_hint_pep484585_ref_data(
     func: Optional[Callable] = None,
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
     exception_prefix: str = '',
-) -> Tuple[str, Optional[str]]:
+) -> Tuple[Optional[str], str]:
     '''
-    Fully-qualified classname referred to by the passed **forward reference type
-    hint** (i.e., object indirectly referring to a user-defined class that
-    typically has yet to be defined) canonicalized if this hint is unqualified
-    relative to the module declaring the passed object (e.g., callable, class).
+    Possibly undefined fully-qualified module name and possibly qualified
+    classname referred to by the passed **forward reference type hint** (i.e.,
+    object indirectly referring to a user-defined class that typically has yet
+    to be defined), canonicalized relative to the module declaring the passed
+    type stack and/or callable (in that order) if this classname is unqualified.
 
     This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation mostly reduces to
-    an efficient one-liner.
+    ``callable_cached`` decorator), as the implementation mostly reduces to an
+    efficient one-liner.
 
     Caveats
     -------
@@ -595,15 +596,85 @@ def get_hint_pep484585_ref_data(
         Lower-level getter returning possibly relative forward references.
     '''
 
-    # Possibly unqualified classname referred to by this forward reference.
-    hint_name = get_hint_pep484585_ref_name(hint)
+    # If this is *NOT* a forward reference, raise an exception.
+    die_unless_hint_pep484585_ref(hint)
+    # Else, this is a forward reference.
 
-    # If this classname contains one or more "." characters and is thus already
-    # (...hopefully) fully-qualified, return this classname as is.
-    if '.' in hint_name:
-        return hint_name, None
-    # Else, this classname contains *NO* "." characters and is thus *NOT*
-    # fully-qualified.
+    # Possibly unqualified basename of the class to which reference refers.
+    hint_name: str = None  # type: ignore[assignment]
+
+    # Fully-qualified name of the module to which this reference is relative if
+    # this reference is relative to an importable module *OR* "None" otherwise
+    # (i.e., if this reference is either absolute and thus not relative to a
+    # module *OR* relative to an unimportable module).
+    #
+    # Note that, although *ALL* callables and classes should define the
+    # "__module__" instance variable underlying the call to this getter, *SOME*
+    # callables and classes do not. For this reason, we intentionally:
+    # * Call the get_object_module_name_or_none() getter rather than
+    #   get_object_module_name().
+    # * Explicitly detect "None".
+    # * Raise a human-readable exception.
+    #
+    # Doing so produces significantly more readable exceptions than merely
+    # calling get_object_module_name(). Problematic objects include:
+    # * Objects defined in Sphinx-specific "conf.py" configuration files. In all
+    #   likelihood, Sphinx is running these files in some sort of arcane and
+    #   non-standard manner (over which beartype has *NO* control).
+    hint_module_name: Optional[str] = None
+
+    # If this reference is a string, the classname of this reference is this
+    # reference itself.
+    if isinstance(hint, str):
+        hint_name = hint
+    # Else, this reference is *NOT* a string. By process of elimination, this
+    # reference *MUST* be a "typing.ForwardRef" instance. In this case...
+    else:
+        # Forward reference classname referred to by this reference.
+        hint_name = hint.__forward_arg__
+
+        # If the active Python interpreter targets >= Python 3.9, then this
+        # "typing.ForwardRef" object defines an optional "__forward_module__:
+        # Optional[str] = None" dunder attribute whose value is either:
+        # * If Python passed the "module" parameter when instantiating this
+        #   "typing.ForwardRef" object, the value of that parameter -- which is
+        #   presumably the fully-qualified name of the module to which this
+        #   presumably relative forward reference is relative to.
+        # * Else, "None".
+        #
+        # Note that:
+        # * This requires violating privacy encapsulation by accessing dunder
+        #   attributes unique to "typing.ForwardRef" objects. Sad, yet true.
+        # * This object defines a significant number of other
+        #   "__forward_"-prefixed dunder instance variables, which exist *ONLY*
+        #   to enable the blatantly useless typing.get_type_hints() function to
+        #   avoid repeatedly (and thus inefficiently) reevaluating the same
+        #   forward reference. *sigh*
+        #
+        # In this case...
+        if IS_PYTHON_AT_LEAST_3_9:
+            # Fully-qualified name of the module to which this presumably
+            # relative forward reference is relative to if any *OR* "None"
+            # otherwise (i.e., if *NO* such name was passed at forward reference
+            # instantiation time).
+            hint_module_name = hint.__forward_module__
+        # Else, the active Python interpreter targets < Python 3.9 and thus
+        # fails to define the  "__forward_module__" dunder attribute.
+
+    # If either...
+    if (
+        # This reference was instantiated with a module name...
+        hint_module_name or
+        # This classname contains one or more "." characters and is thus already
+        # (...hopefully) fully-qualified...
+        '.' in hint_name
+    ):
+        # Then this classname is either absolute *OR* relative to some module.
+        # In either case, the class referred to by this reference can now be
+        # dynamically imported at a later time. Return this metadata as is.
+        return hint_module_name, hint_name
+    # Else, this classname is relative to a module whose fully-qualified name
+    # has yet to be decided.
     #
     # If this reference does *NOT* annotate a callable, then this reference also
     # does *NOT* annotate a method of a class (i.e., "cls is None"). Then there
@@ -623,26 +694,6 @@ def get_hint_pep484585_ref_data(
             f'"{{some_package}}.{hint_name}").'
         )
     # Else, an owner object against which to canonicalize this reference exists.
-
-    # Fully-qualified name of the module to which this reference is relative if
-    # this reference is relative to an importable module *OR* "None" otherwise
-    # (i.e., if this reference is relative to an unimportable module).
-    #
-    # Note that, although *ALL* callables and classes should define the
-    # "__module__" instance variable underlying the call to this getter
-    # function, *SOME* real-world callables and classes do not. For this reason,
-    # we intentionally:
-    # * Call the get_object_module_name_or_none() rather than
-    #   get_object_module_name() function.
-    # * Explicitly detect "None".
-    # * Raise a human-readable exception.
-    #
-    # Doing so produces significantly more readable exceptions than merely
-    # calling get_object_module_name(). Problematic objects include:
-    # * Objects defined in Sphinx-specific "conf.py" configuration files. In all
-    #   likelihood, Sphinx is running these files in some sort of arcane and
-    #   non-standard manner (over which beartype has *NO* control).
-    hint_module_name: Optional[str] = None
 
     # If this reference annotates a method of a class...
     if cls_stack:
@@ -671,55 +722,49 @@ def get_hint_pep484585_ref_data(
             # That module is importable...
             is_module(hint_module_name)
         # Then there exists *NO* owner module against which to canonicalize this
-        # reference. In this case, raise an exception.
+        # relative reference. In this case, raise an exception.
         ):
+            # Exception message to be raised.
+            exception_message = (
+                f'{exception_prefix}forward reference "{hint_name}" '
+                f'relative to'
+            )
+
             # If this reference annotates a method of a class...
             if cls_stack:
-                # Exception message to be raised.
-                exception_message = (
-                    f'{exception_prefix}forward reference "{hint_name}" '
-                    f'relative to:\n'
-                )
-
                 # Fully-qualified name of the module defining that class.
                 type_module_name = get_object_module_name_or_none(cls)  # pyright: ignore
 
-                # If that class defines a "__module__" dunder attribute, suffix
-                # this message by an appropriate substring.
-                if type_module_name:
-                    exception_message += (
-                        f'* {repr(cls)} in '  # pyright: ignore
-                        f'unimportable module "{type_module_name}".\n* '
-                    )
-                # Else, that class defines *NO* "__module__" dunder attribute.
-                # In this case, suffix this message by an appropriate substring.
-                else:
-                    exception_message += (
-                        f'* {repr(cls)} with '  # pyright: ignore
-                        f'undefined "__module__" attribute.\n* '
-                    )
+                # Append this message by...
+                exception_message += (
+                    # Substring describing this class *AND*...
+                    f':\n* {repr(cls)} ' +  # pyright: ignore
+                    (
+                        # If that class defines a "__module__" dunder attribute,
+                        # substring describing that module.
+                        f'in unimportable module "{type_module_name}".'
+                        if type_module_name else
+                        # Else, that class defines *NO* such attribute. In this
+                        # case, a substring describing that failure.
+                        'with undefined "__module__" attribute.'
+                    ) +
+                    # Substring suffixing this item and prefixing the next item.
+                    '\n* '
+                )
             # Else, this reference annotates a global or local function. In
-            # this case, construct an exception message to be raised.
+            # this case, append a substring prefixing the next item.
             else:
-                exception_message = (
-                    f'{exception_prefix}forward reference "{hint_name}" '
-                    f'relative to '
-                )
+                exception_message += ' '
 
-            # If that callable defines a "__module__" dunder attribute, suffix
-            # this message by an appropriate substring.
-            if hint_module_name:
-                exception_message += (
-                    f'{repr(func)} in '
-                    f'unimportable module "{hint_module_name}".\n* '
+            # Append this message by an appropriate substring as above.
+            exception_message += (
+                f'{repr(func)} ' +
+                (
+                    f'in unimportable module "{hint_module_name}".'
+                    if hint_module_name else
+                    ' with undefined "__module__" attribute.'
                 )
-            # Else, that callable defines *NO* "__module__" dunder attribute.
-            # In this case, suffix this message by an appropriate substring.
-            else:
-                exception_message += (
-                    f'{repr(func)} with '
-                    f'undefined "__module__" attribute.\n* '
-                )
+            )
 
             # Raise this exception.
             raise exception_cls(exception_message)
@@ -730,9 +775,10 @@ def get_hint_pep484585_ref_data(
     # by an importable module.
 
     # Return metadata describing this forward reference relative to this module.
-    return hint_name, hint_module_name
+    return hint_module_name, hint_name
 
 # ....................{ IMPORTERS                          }....................
+#FIXME: Excise us up, please. In theory, this should no longer be needed.
 #FIXME: Unit test us up, please.
 def import_pep484585_ref_type(
     # Mandatory parameters.
@@ -834,7 +880,7 @@ def import_pep484585_ref_type(
 
     # Object dynamically imported from this classname.
     hint_ref_type = import_module_attr(
-        module_attr_name=hint_ref_name,
+        attr_name=hint_ref_name,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )

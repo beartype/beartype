@@ -15,9 +15,14 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeCallHintForwardRefException
 from beartype.typing import Type
-from beartype._check.forward.fwdtype import bear_typistry
 from beartype._check.forward.reference import fwdrefabc  # <-- satisfy mypy
 from beartype._util.cache.utilcachecall import property_cached
+from beartype._util.cls.pep.utilpep3119 import die_unless_type_isinstanceable
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
+    is_hint_pep484585_generic,
+    get_hint_pep484585_generic_type,
+)
+from beartype._util.module.utilmodimport import import_module_attr
 from beartype._util.text.utiltextidentifier import is_dunder
 
 # ....................{ PRIVATE ~ hints                    }....................
@@ -91,19 +96,8 @@ class BeartypeForwardRefMeta(type):
         from beartype._check.forward.reference.fwdrefmake import (
             make_forwardref_indexable_subtype)
 
-        #FIXME: Alternately, we might consider explicitly:
-        #* Defining the set of *ALL* known dunder attributes (e.g., methods,
-        #  class variables). This is non-trivial and error-prone, due to the
-        #  introduction of new dunder attributes across Python versions.
-        #* Detecting whether this "hint_name" is in that set.
-        #
-        #That would have the advantage of supporting forward references
-        #containing dunder attributes. Until someone actually wants to do that,
-        #however, let's avoid doing that. The increase in fragility is *BRUTAL*.
-
         # If this unqualified basename is that of a non-existent dunder
-        # attribute both prefixed *AND* suffixed by the magic substring "__",
-        # raise the standard "AttributeError" exception.
+        # attribute, raise the standard "AttributeError" exception.
         if is_dunder(hint_name):
             raise AttributeError(
                 f'Forward reference proxy dunder attribute '
@@ -194,8 +188,8 @@ class BeartypeForwardRefMeta(type):
         # * The die_if_hint_pep604_inconsistent() raiser.
         cls_repr = (
             f'<forwardref {cls.__name__}('
-              f'__scope_name_beartype__={repr(cls.__scope_name_beartype__)}'
-            f', __name_beartype__={repr(cls.__name_beartype__)}'
+              f'__name_beartype__={repr(cls.__name_beartype__)}'
+            f', __scope_name_beartype__={repr(cls.__scope_name_beartype__)}'
         )
 
         #FIXME: Unit test this edge case, please.
@@ -241,42 +235,53 @@ class BeartypeForwardRefMeta(type):
         Raises
         ------
         BeartypeCallHintForwardRefException
-            If this forward referee is this forward reference subclass, implying
-            this subclass circularly proxies itself.
+            If either:
+
+            * This forward referee is unimportable.
+            * This forward referee is importable but either:
+
+              * Not a type.
+              * A type that is this forward reference subclass, implying this
+                subclass circularly proxies itself.
         '''
 
-        # Fully-qualified name of this forward referee (i.e., type hint
-        # referenced by this forward reference subclass, which is usually but
-        # *not* necessarily a class), initialized to the existing name as is.
-        referee_name: str = cls.__name_beartype__
-
-        # If this name contains *NO* "." delimiters and is thus unqualified
-        # (i.e., relative)...
-        if '.' not in referee_name:  # type: ignore[operator]
-            # Canonicalize this name into a fully-qualified name relative to the
-            # fully-qualified name of the scope presumably declaring this
-            # forward referee.
-            referee_name = f'{cls.__scope_name_beartype__}.{referee_name}'
-        # Else, this name contains one or more "." delimiters and is thus
-        # presumably fully-qualified (i.e., absolute).
-
-        #FIXME: *NOPE.* Let's obviate the "bear_typistry" entirely by deferring
-        #to lower-level import_module_attr*() importers, please.
-        # Forward referee, dynamically resolved by deferring to our existing
-        # "bear_typistry" dictionary, which already performs lookup-based
-        # resolution and caching of arbitrary forward references at runtime.
-        referee = bear_typistry[referee_name]
+        # Forward referee dynamically imported from this module.
+        referee = import_module_attr(
+            attr_name=cls.__name_beartype__,
+            module_name=cls.__scope_name_beartype__,
+            exception_cls=BeartypeCallHintForwardRefException,
+            exception_prefix='Forward reference ',
+        )
 
         # If this referee is this forward reference subclass, then this subclass
         # circularly proxies itself. Since allowing this edge case would openly
         # invite infinite recursion, we detect this edge case and instead raise
         # a human-readable exception.
-        if cls is referee:
+        if referee is cls:
             raise BeartypeCallHintForwardRefException(
                 f'Forward reference proxy {repr(cls)} '
                 f'circularly (i.e., infinitely recursively) references itself.'
             )
         # Else, this referee is *NOT* this forward reference subclass.
+        #
+        # If this referee is a subscripted generic (e.g., ``MuhGeneric[int]``),
+        # reduce this referee to the class subscripting this generic (e.g.,
+        # "int").
+        elif is_hint_pep484585_generic(referee):
+            referee = get_hint_pep484585_generic_type(
+                hint=referee,
+                exception_cls=BeartypeCallHintForwardRefException,
+                exception_prefix='Forward reference ',
+            )
+        # Else, this referee is *NOT* a subscripted generic.
+
+        # If this referee is *NOT* an isinstanceable class, raise an exception.
+        die_unless_type_isinstanceable(
+            cls=referee,
+            exception_cls=BeartypeCallHintForwardRefException,
+            exception_prefix='Forward reference ',
+        )
+        # Else, this referee is an isinstanceable class.
 
         # Return this forward referee.
         return referee

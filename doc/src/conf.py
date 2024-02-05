@@ -163,7 +163,8 @@ exclude_patterns = [
 rst_prolog = '''
 .. tip::
 
-   `Feed the bear! The bear is rooting around in your refuse pile <GitHub Sponsors_>`__.
+   `Feed the bear! The bear is rooting around in your refuse pile <GitHub
+   Sponsors_>`__. You feel sadness – then trepidation.
 '''
    # `Feed the bear <GitHub Sponsors_>`__! `Animals wearing jewelry
    # <beadspace9_>`__! *What is even going on with this banner!?*

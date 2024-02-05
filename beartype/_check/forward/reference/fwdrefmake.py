@@ -16,6 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import (
+    Optional,
     Type,
 )
 from beartype._data.hint.datahinttyping import (
@@ -28,11 +29,14 @@ from beartype._check.forward.reference.fwdrefabc import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclsmake import make_type
+from beartype._util.text.utiltextidentifier import die_unless_identifier
 
 # ....................{ FACTORIES                          }....................
 @callable_cached
 def make_forwardref_indexable_subtype(
-    scope_name: str, hint_name: str) -> Type[_BeartypeForwardRefIndexableABC]:
+    scope_name: Optional[str],
+    hint_name: str,
+) -> Type[_BeartypeForwardRefIndexableABC]:
     '''
     Create and return a new **subscriptable forward reference subclass** (i.e.,
     concrete subclass of the :class:`._BeartypeForwardRefIndexableABC` abstract
@@ -42,7 +46,7 @@ def make_forwardref_indexable_subtype(
 
     Parameters
     ----------
-    scope_name : str
+    scope_name : Optional[str]
         Possibly ignored lexical scope name. Specifically:
 
         * If ``hint_name`` is absolute (i.e., contains one or more ``.``
@@ -66,6 +70,17 @@ def make_forwardref_indexable_subtype(
     -------
     Type[_BeartypeForwardRefIndexableABC]
         Subscriptable forward reference subclass referencing this type hint.
+
+    Raises
+    ------
+    BeartypeDecorHintForwardRefException
+        If either:
+
+        * ``hint_name`` is *not* a syntactically valid Python identifier.
+        * ``scope_name`` is neither:
+
+          * A syntactically valid Python identifier.
+          * :data:`None`.
     '''
 
     # Subscriptable forward reference to be returned.
@@ -80,7 +95,7 @@ def make_forwardref_indexable_subtype(
 
 # ....................{ PRIVATE ~ factories                }....................
 def _make_forwardref_subtype(
-    scope_name: str,
+    scope_name: Optional[str],
     hint_name: str,
     type_bases: TupleTypes,
 ) -> Type[BeartypeForwardRefABC]:
@@ -95,7 +110,7 @@ def _make_forwardref_subtype(
 
     Parameters
     ----------
-    scope_name : str
+    scope_name : Optional[str]
         Possibly ignored lexical scope name. See
         :func:`.make_forwardref_indexable_subtype` for further details.
     hint_name : str
@@ -115,45 +130,50 @@ def _make_forwardref_subtype(
     Raises
     ------
     BeartypeDecorHintForwardRefException
-        If this is a **relative forward reference** (i.e., ``hint_name``
-        contains *no* ``.`` delimiters) *and* ``scope_name`` is :data:`None`,
-        preventing this reference from being canonicalized into an absolute
-        forward reference.
+        If either:
+
+        * ``hint_name`` is *not* a syntactically valid Python identifier.
+        * ``scope_name`` is neither:
+
+          * A syntactically valid Python identifier.
+          * :data:`None`.
     '''
     assert isinstance(hint_name, str), f'{repr(hint_name)} not string.'
     assert isinstance(scope_name, str), f'{repr(scope_name)} not string.'
     assert len(type_bases) == 1, (
         f'{repr(type_bases)} not 1-tuple of a single superclass.')
 
-    # Fully-qualified module name *AND* unqualified basename of the type hint
-    # referenced by this forward reference subclass. Specifically, if the name
-    # of this type hint is:
-    # * Fully-qualified:
-    #   * This module name is the substring of this name preceding the last "."
-    #     delimiter in this name.
-    #   * This basename is the substring of this name following the last "."
-    #     delimiter in this name.
-    # * Unqualified:
-    #   * This module name is the empty string and thus ignorable.
-    #   * This basename is this name as is.
-    type_module_name, _, type_name = hint_name.rpartition('.')
-    # _, _, type_name = hint_name.rpartition('.')
+    # If this attribute name is *NOT* a syntactically valid Python identifier,
+    # raise an exception.
+    die_unless_identifier(
+        text=hint_name,
+        exception_cls=BeartypeDecorHintForwardRefException,
+        exception_prefix='Forward reference ',
+    )
+    # Else, this attribute name is a syntactically valid Python identifier.
 
-    # If this module name is the empty string *AND* no lexical scope name was
-    # passed, this type hint is a relative forward reference relative to *NO*
-    # lexical scope. In this case, raise an exception.
-    if not (scope_name or type_module_name):
+    # Possibly empty fully-qualified module name and unqualified basename of the
+    # type referred to by this forward reference.
+    type_module_name, _, type_name = hint_name.rpartition('.')
+
+    # If this module name is empty, fallback to the passed module name if any.
+    #
+    # Note that we intentionally perform *NO* additional validation. Why?
+    # Builtin types. Notably, it is valid to pass an unqualified "hint_name"
+    # and a "scope_name" that is "None" only if "hint_name" is the name of a
+    # builtin type (e.g., "int", "str"). Since validating this edge case is
+    # non-trivial, we defer this validation to subsequent importation logic.
+    if not type_module_name:
         type_module_name = scope_name
-    # Else, either this module name is non-empty *OR* a lexical scope name was
-    # passed. This type hint is thus either already an absolute forward
-    # reference or a relative forward reference relative to a lexical scope that
-    # can be canonicalized into an absolute forward reference.
+    # Else, this module name is non-empty.
 
     # Forward reference subclass to be returned.
     forwardref_subtype: Type[_BeartypeForwardRefIndexableABC] = make_type(
         type_name=type_name,
-        type_module_name=scope_name,
+        type_module_name=type_module_name,
         type_bases=type_bases,
+        exception_cls=BeartypeDecorHintForwardRefException,
+        exception_prefix='Forward reference ',
     )
 
     # Classify passed parameters with this subclass.

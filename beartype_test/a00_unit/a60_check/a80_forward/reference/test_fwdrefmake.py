@@ -94,10 +94,10 @@ def test_make_forwardref_indexable_subtype() -> None:
     assert fwdref_module_class.__name__ == CLASS_BASENAME
 
     # Assert that these proxies have the expected module names.
-    assert fwdref_absolute.__module__ == __name__
+    assert fwdref_absolute.__module__ == MODULE_NAME
     assert fwdref_relative.__module__ == MODULE_NAME
-    assert fwdref_module_absolute.__module__ == __name__
-    assert fwdref_module_class.__module__ == __name__
+    assert fwdref_module_absolute.__module__ == PACKAGE_NAME
+    assert fwdref_module_class.__module__ == f'{PACKAGE_NAME}.{MODULE_BASENAME}'
 
     # Assert that these proxies have the expected hint names.
     assert fwdref_absolute.__name_beartype__ == CLASS_NAME

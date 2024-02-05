@@ -36,7 +36,6 @@ from beartype.typing import NoReturn
 from beartype._check.checkcall import BeartypeCall
 from beartype._check.checkmagic import (
     ARG_NAME_FUNC,
-    ARG_NAME_TYPISTRY,
     CODE_PITH_ROOT_NAME_PLACEHOLDER,
 )
 from beartype._check.checkmake import (
@@ -48,10 +47,8 @@ from beartype._check.code.codesnip import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
 )
 from beartype._check.convert.convsanify import sanify_hint_root_func
-from beartype._check.forward.fwdtype import (
-    bear_typistry,
-    make_code_resolve_ref_type,
-)
+from beartype._check.forward.reference.fwdrefmake import (
+    make_forwardref_indexable_subtype)
 from beartype._check.util.checkutilmake import make_func_signature
 from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
@@ -79,8 +76,9 @@ from beartype._util.func.arg.utilfuncargiter import (
     ArgKind,
     iter_func_args,
 )
+from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    get_hint_pep484585_ref_name_absolute)
+    get_hint_pep484585_ref_names)
 from beartype._util.hint.utilhinttest import (
     is_hint_ignorable,
     is_hint_needs_cls_stack,
@@ -772,25 +770,32 @@ def _unmemoize_func_wrapper_code(
     # resolving these placeholders relative to the decorated callable.
     if hint_refs_type_basename:
         # Metadata describing the callable currently being decorated by
-        # @beartype, localized purely as a negligible optimization.
+        # beartype, localized purely as a negligible optimization.
         func = bear_call.func_wrappee
+        func_scope = bear_call.func_wrapper_scope
         cls_stack = bear_call.cls_stack
-
-        # Pass the beartypistry singleton as a private "__beartypistry"
-        # parameter to this wrapper function.
-        bear_call.func_wrapper_scope[ARG_NAME_TYPISTRY] = bear_typistry
 
         # For each unqualified classname referred to by a relative forward
         # reference type hints visitable from the current root type hint...
         for hint_basename in hint_refs_type_basename:
-            # Fully-qualified classname referred to by this forward reference
-            # relative to the decorated callable.
-            hint_name = get_hint_pep484585_ref_name_absolute(
+            # Possibly undefined fully-qualified module name and possibly
+            # unqualified classname referred to by this relative forward
+            # reference, relative to the decorated type stack and callable.
+            hint_module_name, hint_name = get_hint_pep484585_ref_names(
                 hint=hint_basename,
                 cls_stack=cls_stack,
                 func=func,
                 exception_prefix=EXCEPTION_PLACEHOLDER,
             )
+
+            # Forward reference proxy referring to this class.
+            hint_ref = make_forwardref_indexable_subtype(
+                hint_module_name, hint_name)
+
+            # Name of the hidden parameter providing this forward reference
+            # proxy to be passed to this wrapper function.
+            hint_ref_arg_name = add_func_scope_attr(
+                attr=hint_ref, func_scope=func_scope)
 
             # Generate an unmemoized callable-specific code snippet checking
             # this class by globally replacing in this callable-agnostic code...
@@ -803,8 +808,8 @@ def _unmemoize_func_wrapper_code(
                     f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX}'
                 ),
                 # Python expression evaluating to this class when accessed via
-                # the private "__beartypistry" parameter.
-                new=make_code_resolve_ref_type(hint_name),
+                # this hidden parameter.
+                new=hint_ref_arg_name,
             )
 
     # Return this unmemoized callable-specific code snippet.

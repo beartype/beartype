@@ -18,6 +18,7 @@ from beartype._util.text.utiltextversion import convert_str_version_to_tuple
 from importlib.metadata import version as get_module_version  # type: ignore[attr-defined]
 
 # ....................{ RAISERS                            }....................
+#FIXME: Excise us up. This function is no longer called anywhere. *sigh*
 def die_unless_module_attr_name(
     # Mandatory parameters.
     module_attr_name: str,

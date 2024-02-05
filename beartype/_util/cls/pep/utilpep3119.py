@@ -85,7 +85,7 @@ def die_unless_type_isinstanceable(
     *before* checking objects against those classes at call time.
 
     Caveats
-    ----------
+    -------
     **This function considers all classes whose metaclasses define
     ``__instancecheck__()`` dunder methods that raise exceptions other than**
     :exc:`TypeError` **to be isinstanceable.** This function *only* considers
@@ -148,13 +148,13 @@ def die_unless_type_isinstanceable(
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep3119Exception
         If this object is *not* an isinstanceable class.
 
     See Also
-    ----------
-    :func:`die_unless_type_isinstanceable`
+    --------
+    :func:`.die_unless_type_isinstanceable`
         Further details.
     '''
 
@@ -170,7 +170,7 @@ def die_unless_type_isinstanceable(
     # Else, this object is a class.
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with the is_type_or_types_isinstanceable() tester.
+    # CAUTION: Synchronize with the is_type_isinstanceable() tester.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Attempt to pass this class as the second parameter to isinstance().
     try:
@@ -255,7 +255,7 @@ def die_unless_type_or_types_isinstanceable(
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep3119Exception
         If this object is neither:
 
@@ -288,7 +288,7 @@ def die_unless_type_or_types_isinstanceable(
     # validation) be a tuple of classes. In this case...
     else:
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize with the is_type_or_types_isinstanceable() tester.
+        # CAUTION: Synchronize with the is_type_isinstanceable() tester.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # Attempt to pass this tuple of classes as the second parameter to
         # isinstance().
@@ -386,7 +386,7 @@ def die_unless_type_issubclassable(
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep3119Exception
         If this object is *not* an issubclassable class.
     '''
@@ -403,7 +403,7 @@ def die_unless_type_issubclassable(
     # Else, this hint is a class.
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # CAUTION: Synchronize with the is_type_or_types_issubclassable() tester.
+    # CAUTION: Synchronize with the is_type_issubclassable() tester.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # Attempt to pass this class as the second parameter to issubclass().
     try:
@@ -457,14 +457,14 @@ def die_unless_type_or_types_issubclassable(
         Object to be validated.
     exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
-        :exc:`BeartypeDecorHintPep3119Exception`.
+        :exc:`.BeartypeDecorHintPep3119Exception`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
 
     Raises
-    ----------
-    :exc:`BeartypeDecorHintPep3119Exception`
+    ------
+    BeartypeDecorHintPep3119Exception
         If this object is neither:
 
         * An issubclassable class.
@@ -496,7 +496,7 @@ def die_unless_type_or_types_issubclassable(
     # validation) be a tuple of classes. In this case...
     else:
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize with the is_type_or_types_issubclassable() tester.
+        # CAUTION: Synchronize with the is_type_issubclassable() tester.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # Attempt to pass this tuple of classes as the second parameter to
         # issubclass().
@@ -541,9 +541,9 @@ def die_unless_type_or_types_issubclassable(
             pass
 
 # ....................{ TESTERS                            }....................
-def is_type_or_types_isinstanceable(cls: object) -> bool:
+def is_type_isinstanceable(cls: object) -> bool:
     '''
-    ``True`` only if the passed object is either an **isinstanceable class**
+    :data:`True` only if the passed object is either an **isinstanceable class**
     (i.e., class whose metaclass does *not* define an ``__instancecheck__()``
     dunder method that raises a :exc:`TypeError` exception) *or* tuple
     containing only isinstanceable classes.
@@ -555,7 +555,7 @@ def is_type_or_types_isinstanceable(cls: object) -> bool:
     exceptions and is thus largely ignorable.
 
     Caveats
-    ----------
+    -------
     **This tester may return false positives in unlikely edge cases.**
     Internally, this tester tests whether this class is isinstanceable by
     detecting whether passing the ``None`` singleton and this class to the
@@ -577,16 +577,16 @@ def is_type_or_types_isinstanceable(cls: object) -> bool:
         Object to be tested.
 
     Returns
-    ----------
+    -------
     bool
-        ``True`` only if this object is either:
+        :data:`True` only if this object is either:
 
         * An isinstanceable class.
         * A tuple containing only isinstanceable classes.
 
     See Also
-    ----------
-    :func:`die_unless_type_isinstanceable`
+    --------
+    :func:`.die_unless_type_isinstanceable`
         Further details.
     '''
 
@@ -629,9 +629,9 @@ def is_type_or_types_isinstanceable(cls: object) -> bool:
     return True
 
 
-def is_type_or_types_issubclassable(cls: object) -> bool:
+def is_type_issubclassable(cls: object) -> bool:
     '''
-    ``True`` only if the passed object is either an **issubclassable class**
+    :data:`True` only if the passed object is either an **issubclassable class**
     (i.e., class whose metaclass does *not* define a ``__subclasscheck__()``
     dunder method that raises a :exc:`TypeError` exception) *or* tuple
     containing only issubclassable classes.
@@ -643,9 +643,9 @@ def is_type_or_types_issubclassable(cls: object) -> bool:
     exceptions and is thus largely ignorable.
 
     Caveats
-    ----------
+    -------
     See also the "Caveats" sections of the
-    :func:`is_type_or_types_isinstanceable` docstring for further discussion,
+    :func:`.is_type_isinstanceable` docstring for further discussion,
     substituting:
 
     * ``__instancecheck__()`` for ``__subclasscheck__()``.
@@ -657,16 +657,16 @@ def is_type_or_types_issubclassable(cls: object) -> bool:
         Object to be tested.
 
     Returns
-    ----------
+    -------
     bool
-        ``True`` only if this object is either:
+        :data:`True` only if this object is either:
 
         * An issubclassable class.
         * A tuple containing only issubclassable classes.
 
     See Also
-    ----------
-    :func:`die_unless_type_issubclassable`
+    --------
+    :func:`.die_unless_type_issubclassable`
         Further details.
     '''
 

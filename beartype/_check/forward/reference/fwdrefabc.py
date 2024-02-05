@@ -16,6 +16,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import (
     NoReturn,
+    Optional,
     Type,
 )
 from beartype._data.hint.datahinttyping import (
@@ -55,15 +56,6 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     '''
 
     # ....................{ PRIVATE ~ class vars           }....................
-    __scope_name_beartype__: str = None  # type: ignore[assignment]
-    '''
-    Fully-qualified name of the lexical scope to which the type hint referenced
-    by this forward reference subclass is relative if that type hint is relative
-    (i.e., if :attr:`__name_beartype__` is relative) *or* ignored otherwise
-    (i.e., if :attr:`__name_beartype__` is absolute).
-    '''
-
-
     __name_beartype__: str = None  # type: ignore[assignment]
     '''
     Absolute (i.e., fully-qualified) or relative (i.e., unqualified) name of the
@@ -71,17 +63,13 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     '''
 
 
-    # __type_beartype__: Optional[type] = None
-    # '''
-    # Type hint referenced by this forward reference subclass if this subclass has
-    # already been passed at least once as the second parameter to the
-    # :func:`isinstance` builtin (i.e., as the first parameter to the
-    # :meth:`.BeartypeForwardRefMeta.__instancecheck__` dunder method and
-    # :meth:`is_instance` method) *or* :data:`None` otherwise.
-    #
-    # Note that this class variable is an optimization reducing space and time
-    # complexity for subsequent lookup of this same type hint.
-    # '''
+    __scope_name_beartype__: Optional[str] = None
+    '''
+    Fully-qualified name of the lexical scope to which the type hint referenced
+    by this forward reference subclass is relative if that type hint is relative
+    (i.e., if :attr:`__name_beartype__` is relative) *or* ignored otherwise
+    (i.e., if :attr:`__name_beartype__` is absolute).
+    '''
 
     # ....................{ INITIALIZERS                   }....................
     def __new__(cls, *args, **kwargs) -> NoReturn:
@@ -276,8 +264,8 @@ class _BeartypeForwardRefIndexableABC(BeartypeForwardRefABC):
         # _make_forwardref_subtype() factory function.
         forwardref_indexed_subtype: Type[_BeartypeForwardRefIndexedABC] = (
             _make_forwardref_subtype(  # type: ignore[assignment]
-                scope_name=cls.__scope_name_beartype__,
                 hint_name=cls.__name_beartype__,
+                scope_name=cls.__scope_name_beartype__,
                 type_bases=_BeartypeForwardRefIndexedABC_BASES,
             ))
 

@@ -297,7 +297,7 @@ def import_typing_attr_or_fallback(
     # Attribute with this name imported from the "typing" module if that module
     # declares this attribute *OR* "None" otherwise.
     typing_attr = import_module_attr_or_none(
-        module_attr_name=f'typing.{typing_attr_basename}',
+        attr_name=f'typing.{typing_attr_basename}',
         exception_cls=exception_cls,
         exception_prefix='Typing attribute ',
     )
@@ -307,7 +307,7 @@ def import_typing_attr_or_fallback(
         # Attribute with this name imported from the "typing_extensions" module
         # if that module declares this attribute *OR* "None" otherwise.
         typing_attr = import_module_attr_or_none(
-            module_attr_name=f'typing_extensions.{typing_attr_basename}',
+            attr_name=f'typing_extensions.{typing_attr_basename}',
             exception_cls=exception_cls,
             exception_prefix='Typing attribute ',
         )
@@ -359,15 +359,10 @@ def get_typing_attrs(typing_attr_basename: str) -> frozenset:
 
     # For the fully-qualified name of each quasi-standard typing module...
     for typing_module_name in TYPING_MODULE_NAMES:
-        # Fully-qualified name of this attribute declared by that module.
-        module_attr_name = f'{typing_module_name}.{typing_attr_basename}'
-
         # Attribute with this name dynamically imported from that module if
         # that module defines this attribute *OR* "None" otherwise.
         typing_attr = import_module_attr_or_none(
-            module_attr_name=module_attr_name,
-            exception_prefix=f'"{typing_module_name}" attribute ',
-        )
+            f'{typing_module_name}.{typing_attr_basename}')
 
         # If that module fails to define this attribute, silently continue to
         # the next module.
@@ -472,14 +467,11 @@ def iter_typing_attrs(
         # For the basename of each attribute to be imported from that module...
         for typing_attr_basename in typing_attr_basenames:
             # Fully-qualified name of this attribute declared by that module.
-            module_attr_name = f'{typing_module_name}.{typing_attr_basename}'
+            typing_attr_name = f'{typing_module_name}.{typing_attr_basename}'
 
             # Attribute with this name dynamically imported from that module if
             # that module defines this attribute *OR* "None" otherwise.
-            typing_attr = import_module_attr_or_none(
-                module_attr_name=module_attr_name,
-                exception_prefix=f'"{typing_module_name}" attribute ',
-            )
+            typing_attr = import_module_attr_or_none(typing_attr_name)
 
             # If that module fails to define this attribute...
             if typing_attr is None:
@@ -487,7 +479,7 @@ def iter_typing_attrs(
                 if is_warn:
                     warn(
                         f'Ignoring undefined typing attribute '
-                        f'"{module_attr_name}"...',
+                        f'"{typing_attr_name}"...',
                         BeartypeModuleAttributeNotFoundWarning,
                     )
                 # Else, silently reduce to a noop.

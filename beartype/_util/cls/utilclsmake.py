@@ -33,6 +33,7 @@ def make_type(
     type_scope: Optional[LexicalScope] = None,
     type_doc: Optional[str] = None,
     exception_cls: TypeException = _BeartypeUtilTypeException,
+    exception_prefix: str = '',
 ) -> type:
     '''
     Dynamically create and return a new class with the passed name subclassing
@@ -60,6 +61,9 @@ def make_type(
     exception_cls : Type[Exception], optional
         Type of exception to raise in the event of a fatal error. Defaults to
         :exc:`._BeartypeUtilTypeException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
 
     Returns
     -------
@@ -90,7 +94,8 @@ def make_type(
     # * An invalid Python identifier.
     # * A valid fully-qualified Python identifier.
     if not type_name.isidentifier():
-        raise exception_cls(f'Class name {repr(type_name)} invalid.')
+        raise exception_cls(
+            f'{exception_prefix}class name {repr(type_name)} invalid.')
     # Else, this classname is a valid unqualified Python identifier.
 
     # Default all unpassed parameters.

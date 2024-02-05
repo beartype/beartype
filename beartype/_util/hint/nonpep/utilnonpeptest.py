@@ -22,7 +22,7 @@ from beartype.roar import BeartypeDecorHintNonpepException
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_isinstanceable,
-    is_type_or_types_isinstanceable,
+    is_type_isinstanceable,
 )
 from beartype._data.hint.datahinttyping import TypeException
 
@@ -302,7 +302,7 @@ def die_unless_hint_nonpep_type(
 #* Else, we:
 #  * Perform a new optimized EAFP-style isinstance() check resembling that
 #    performed by die_unless_type_isinstanceable().
-#  * Likewise for _is_hint_nonpep_tuple() vis-a-vis is_type_or_types_isinstanceable().
+#  * Likewise for _is_hint_nonpep_tuple() vis-a-vis is_type_isinstanceable().
 #Fortunately, tuple unions are now sufficiently rare in the wild (i.e., in
 #real-world use cases) that this mild inefficiency probably no longer matters.
 #FIXME: Indeed! Now that we have the die_unless_type_or_types_isinstanceable()
@@ -550,7 +550,7 @@ def _is_hint_nonpep_tuple(
         # Each item of this tuple is either a caller-permitted forward
         # reference *OR* an isinstanceable class.
         all(
-            is_type_or_types_isinstanceable(hint_item) if isinstance(hint_item, type) else
+            is_type_isinstanceable(hint_item) if isinstance(hint_item, type) else
             is_str_valid                               if isinstance(hint_item, str) else
             False
             for hint_item in hint
@@ -586,4 +586,4 @@ def _is_hint_nonpep_type(hint: object) -> bool:
     # Return true only if this object is isinstanceable and *NOT* a
     # PEP-compliant class, in which case this *MUST* be a PEP-noncompliant
     # class by definition.
-    return is_type_or_types_isinstanceable(hint) and not is_hint_pep(hint)
+    return is_type_isinstanceable(hint) and not is_hint_pep(hint)

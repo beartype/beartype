@@ -53,7 +53,7 @@ def die_unless_identifier(
     '''
 
     # If this string is *NOT* a valid Python attribute name, raise an exception.
-    if not is_identifier(text):
+    if not (isinstance(text, str) and is_identifier(text)):
         assert isinstance(exception_cls, type), (
             'f{repr(exception_cls)} not exception class.')
         assert isinstance(exception_prefix, str), (
