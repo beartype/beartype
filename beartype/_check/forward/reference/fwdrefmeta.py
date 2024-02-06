@@ -16,7 +16,6 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeCallHintForwardRefException
 from beartype.typing import Type
 from beartype._check.forward.reference import fwdrefabc  # <-- satisfy mypy
-from beartype._util.cache.utilcachecall import property_cached
 from beartype._util.cls.pep.utilpep3119 import die_unless_type_isinstanceable
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
     is_hint_pep484585_generic,
@@ -223,14 +222,27 @@ class BeartypeForwardRefMeta(type):
         return cls_repr
 
     # ....................{ PROPERTIES                     }....................
-    @property  # type: ignore[misc]
-    @property_cached
-    def __type_beartype__(cls: ForwardRef) -> type:
+    @property
+    def __type_beartype__(cls: ForwardRef) -> type:  # type: ignore[misc]
         '''
         **Forward referee** (i.e., type hint referenced by this forward
         reference subclass, which is usually but *not* necessarily a class).
 
-        This class property is memoized for efficiency.
+        This class property is manually memoized for efficiency. However, note
+        this class property is *not* automatically memoized (e.g., by the
+        ``property_cached`` decorator). Why? Because manual memoization enables
+        other functionality in the beartype codebase to explicitly unmemoize all
+        previously memoized forward referees across all forward reference
+        proxies, effectively forcing all subsequent calls of this property
+        across all forward reference proxies to reimport their forward referees.
+        Why is that desirable? Because other functionality in the beartype
+        codebase detects when the user has manually reloaded user-defined
+        modules defining user-defined types annotating user-defined callables
+        previously decorated by the :mod:`beartype.beartype` decorator. Since
+        reloading those modules redefines those types, all previously cached
+        types (including those memoized by this property) *must* then be assumed
+        to be invalid and thus uncached. In short, manual memoization allows
+        beartype to avoid desynchronization between memoized and actual types.
 
         Raises
         ------
@@ -245,43 +257,53 @@ class BeartypeForwardRefMeta(type):
                 subclass circularly proxies itself.
         '''
 
-        # Forward referee dynamically imported from this module.
-        referee = import_module_attr(
-            attr_name=cls.__name_beartype__,
-            module_name=cls.__scope_name_beartype__,
-            exception_cls=BeartypeCallHintForwardRefException,
-            exception_prefix='Forward reference ',
-        )
-
-        # If this referee is this forward reference subclass, then this subclass
-        # circularly proxies itself. Since allowing this edge case would openly
-        # invite infinite recursion, we detect this edge case and instead raise
-        # a human-readable exception.
-        if referee is cls:
-            raise BeartypeCallHintForwardRefException(
-                f'Forward reference proxy {repr(cls)} '
-                f'circularly (i.e., infinitely recursively) references itself.'
-            )
-        # Else, this referee is *NOT* this forward reference subclass.
-        #
-        # If this referee is a subscripted generic (e.g., ``MuhGeneric[int]``),
-        # reduce this referee to the class subscripting this generic (e.g.,
-        # "int").
-        elif is_hint_pep484585_generic(referee):
-            referee = get_hint_pep484585_generic_type(
-                hint=referee,
+        # If this forward referee has yet to be resolved, this is the first call
+        # to this property. In this case...
+        if cls.__type_imported_beartype__ is None:  # type: ignore[has-type]
+            # Forward referee dynamically imported from this module.
+            referee = import_module_attr(
+                attr_name=cls.__name_beartype__,
+                module_name=cls.__scope_name_beartype__,
                 exception_cls=BeartypeCallHintForwardRefException,
                 exception_prefix='Forward reference ',
             )
-        # Else, this referee is *NOT* a subscripted generic.
 
-        # If this referee is *NOT* an isinstanceable class, raise an exception.
-        die_unless_type_isinstanceable(
-            cls=referee,
-            exception_cls=BeartypeCallHintForwardRefException,
-            exception_prefix='Forward reference ',
-        )
-        # Else, this referee is an isinstanceable class.
+            # If this referee is this forward reference subclass, then this
+            # subclass circularly proxies itself. Since allowing this edge case
+            # would openly invite infinite recursion, we detect this edge case
+            # and instead raise a human-readable exception.
+            if referee is cls:
+                raise BeartypeCallHintForwardRefException(
+                    f'Forward reference proxy {repr(cls)} circularly '
+                    f'(i.e., infinitely recursively) references itself.'
+                )
+            # Else, this referee is *NOT* this forward reference subclass.
+            #
+            # If this referee is a subscripted generic (e.g.,
+            # "MuhGeneric[int]"), reduce this referee to the class subscripting
+            # this generic (e.g., "int").
+            elif is_hint_pep484585_generic(referee):
+                referee = get_hint_pep484585_generic_type(
+                    hint=referee,
+                    exception_cls=BeartypeCallHintForwardRefException,
+                    exception_prefix='Forward reference ',
+                )
+            # Else, this referee is *NOT* a subscripted generic.
 
-        # Return this forward referee.
-        return referee
+            # If this referee is *NOT* an isinstanceable class, raise an
+            # exception.
+            die_unless_type_isinstanceable(
+                cls=referee,
+                exception_cls=BeartypeCallHintForwardRefException,
+                exception_prefix='Forward reference ',
+            )
+            # Else, this referee is an isinstanceable class.
+
+            # Cache this referee for subsequent lookup by this property.
+            cls.__type_imported_beartype__ = referee
+        # Else, this referee has already been resolved.
+        #
+        # In either case, this referee is now resolved.
+
+        # Return this previously resolved referee.
+        return cls.__type_imported_beartype__  # type: ignore[return-value]

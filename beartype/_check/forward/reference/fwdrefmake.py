@@ -177,11 +177,11 @@ def _make_forwardref_subtype(
     )
 
     # Classify passed parameters with this subclass.
-    forwardref_subtype.__name_beartype__ = hint_name  # pyright: ignore[reportGeneralTypeIssues]
-    forwardref_subtype.__scope_name_beartype__ = scope_name  # pyright: ignore[reportGeneralTypeIssues]
+    forwardref_subtype.__name_beartype__ = hint_name  # pyright: ignore
+    forwardref_subtype.__scope_name_beartype__ = scope_name  # pyright: ignore
 
     # Nullify all remaining class variables of this subclass for safety.
-    # forwardref_subtype.__type_beartype__ = None  # pyright: ignore[reportGeneralTypeIssues]
+    forwardref_subtype.__type_imported_beartype__ = None  # pyright: ignore
 
     # Return this subclass.
     return forwardref_subtype

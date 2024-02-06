@@ -244,6 +244,9 @@ def import_module_attr(
         assert isinstance(exception_prefix, str), (
             f'{exception_prefix} not string.')
 
+        # Avoid circular import dependencies.
+        from beartype._util.module.utilmodtest import is_module
+
         # Exception message to be raised.
         exception_message = f'{exception_prefix}"{attr_name}" unimportable'
 
@@ -263,14 +266,30 @@ def import_module_attr(
                     '(i.e., contains no "." delimiters).\n'
                     '* Not the name of a builtin type (e.g., "int", "str").'
                 )
-            # Else, a non-empty module name was passed. Append an appropriate
+            # Else, a non-empty module name was passed.
+            #
+            # If this module is importable, append an appropriate substring.
+            elif is_module(module_name):
+                exception_message += f' from module "{module_name}".'
+            # Else, this module is unimportable. Append an appropriate
             # substring.
             else:
-                exception_message += f' from module "{module_name}".'
-        # Else, this attribute name contains one or more "." characters. Append
-        # an appropriate substring.
+                exception_message += (
+                    f' from unimportable module "{module_name}".')
+        # Else, this attribute name contains one or more "." characters. In
+        # this case...
         else:
-            exception_message += '.'
+            # Fully-qualified name of the module declaring this attribute.
+            module_name, _, _ = attr_name.rpartition('.')
+
+            # If this module is importable, append an appropriate substring.
+            if is_module(module_name):
+                exception_message += '.'
+            # Else, this module is unimportable. Append an appropriate
+            # substring.
+            else:
+                exception_message += (
+                    f' from unimportable module "{module_name}".')
 
         # Raise this exception.
         raise exception_cls(exception_message)
@@ -280,7 +299,6 @@ def import_module_attr(
     return module_attr
 
 
-#FIXME: Fix up all calls to this function, please.
 #FIXME: Fix up all tests of this function, please.
 #FIXME: Fix up docstring, please.
 def import_module_attr_or_sentinel(
@@ -364,12 +382,15 @@ def import_module_attr_or_sentinel(
     )
     # Else, this attribute name is a syntactically valid Python identifier.
 
+    # True only if this attribute name contains *NO* "." characters and is thus
+    # an unqualified basename relative to this module name.
+    is_attr_name_unqualified = '.' not in attr_name
+
     # Unqualified basename of this attribute, defaulting to this attribute name.
     attr_basename = attr_name
 
-    # If this attribute name contains *NO* "." characters, this is an
-    # unqualified basename. In this case...
-    if '.' not in attr_name:
+    # If this attribute name is an unqualified basename...
+    if is_attr_name_unqualified:
         # If either no module name was passed *OR* only an empty module name was
         # passed...
         if not module_name:
@@ -408,6 +429,30 @@ def import_module_attr_or_sentinel(
     # Attribute with this name if that module declares this attribute *OR* the
     # sentinel otherwise.
     module_attr = getattr(module, attr_basename, SENTINEL)
+
+    # If...
+    if (
+        # That module does not declare this attribute *AND*...
+        module_attr is SENTINEL and
+        # This attribute name is an unqualified basename...
+        is_attr_name_unqualified
+    # Then this attribute was imported relative to this module. In this case,
+    # this attribute could still be the name of a builtin type.
+    ):
+        # Builtin type with this name if any *OR* the sentinel otherwise
+        # (i.e., if *NO* builtin type with this name exists).
+        #
+        # Note that this edge case is distinct from the prior edge case and thus
+        # *MUST* be handled distinctly. Why? Because this module *COULD* have
+        # globally overridden a builtin type by declaring a global attribute of
+        # the same name. Although extremely unlikely (and strongly frowned
+        # upon), Python *DOES* permit insanity like:
+        #     # In some user-defined module at global scope...
+        #     class int(object): ...  # <-- by all the gods never do this
+        module_attr = getattr(TYPES_BUILTIN, attr_basename, SENTINEL)
+    # Else, either that module declared this attribute *OR* this attribute name
+    # is fully-qualified and thus not the name of a builtin type. In either
+    # case, return this attribute as is.
 
     # Return this attribute.
     return module_attr

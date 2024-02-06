@@ -71,6 +71,20 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     (i.e., if :attr:`__name_beartype__` is absolute).
     '''
 
+
+    __type_imported_beartype__: Optional[type] = None
+    '''
+    Type hint referenced by this forward reference subclass if this subclass has
+    already been passed at least once as the second parameter to either the
+    :func:`isinstance` or :func:`issubclass` builtins (i.e., as the first
+    parameter to the :meth:`.BeartypeForwardRefMeta.__instancecheck__` or
+    :meth:`.BeartypeForwardRefMeta.__subclasscheck__` dunder methods) *or*
+    :data:`None` otherwise.
+
+    Note that this class variable is an optimization reducing space and time
+    complexity for subsequent lookup of this same type hint.
+    '''
+
     # ....................{ INITIALIZERS                   }....................
     def __new__(cls, *args, **kwargs) -> NoReturn:
         '''
@@ -136,52 +150,6 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
         # Return true only if this object is a subclass of the external class
         # referenced by this forward reference.
         return issubclass(obj, cls.__type_beartype__)  # type: ignore[arg-type]
-
-    # ....................{ PRIVATE ~ resolvers            }....................
-    #FIXME: [SPEED] Optimize this by refactoring this into a cached class
-    #property defined on the metaclass of the superclass instead. Since doing so
-    #is a bit non-trivial and nobody particularly cares, the current naive
-    #approach certainly suffices for now. *sigh*
-    #
-    #On doing so, note that we'll also need to disable this line below:
-    #    forwardref_subtype.__type_beartype__ = None  # pyright: ignore[reportGeneralTypeIssues]
-    # @classmethod
-    # def __beartype_resolve_type__(cls) -> None:
-    #     '''
-    #     **Resolve** (i.e., dynamically lookup) the external class referred to by
-    #     this forward reference and permanently store that class in the
-    #     :attr:`__type_beartype__` class variable for subsequent lookup.
-    #
-    #     Caveats
-    #     -------
-    #     This method should *always* be called before accessing the
-    #     :attr:`__type_beartype__` class variable, which should *always* be
-    #     assumed to be :data:`None` before calling this method.
-    #     '''
-    #
-    #     # If the external class referenced by this forward reference has yet to
-    #     # be resolved, do so now.
-    #     if cls.__type_beartype__ is None:
-    #         # Fully-qualified name of that class, defined as either...
-    #         type_name = (
-    #             # If that name already contains one or more "." delimiters and
-    #             # is thus presumably already fully-qualified, that name as is;
-    #             cls.__name_beartype__
-    #             if '.' in cls.__name_beartype__ else
-    #             # Else, that name contains *NO* "." delimiters and is thus
-    #             # unqualified. In this case, canonicalize that name into a
-    #             # fully-qualified name relative to the fully-qualified name of
-    #             # the scope presumably declaring that class.
-    #             f'{cls.__scope_name_beartype__}.{cls.__name_beartype__}'
-    #         )
-    #
-    #         # Resolve that class by deferring to our existing "bear_typistry"
-    #         # dictionary, which already performs lookup-based resolution and
-    #         # caching of arbitrary forward references at runtime.
-    #         cls.__type_beartype__ = bear_typistry[type_name]
-    #     # Else, that class has already been resolved.
-    #     #
-    #     # In either case, that class is now resolved.
 
 # ....................{ SUPERCLASSES ~ index               }....................
 #FIXME: Unit test us up, please.
