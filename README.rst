@@ -81,7 +81,7 @@ infectious diseases is *that* code? You're about to find out.
    from beartype import BeartypeConf                              # <-- this isn't your fault
    from beartype.claw import beartype_all, beartype_this_package  # <-- you didn't sign up for this
    beartype_this_package()                                        # <-- raise exceptions in your code
-   beartype_all(conf=BeartypeConf(violation_type=UserWarning)     # <-- emit warnings from other code
+   beartype_all(conf=BeartypeConf(violation_type=UserWarning))     # <-- emit warnings from other code
 
 Beartype now implicitly type-checks *all* annotated classes, callables, and
 variable assignments across *all* submodules of *all* packages. When **your**
