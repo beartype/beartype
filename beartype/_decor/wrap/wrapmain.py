@@ -42,13 +42,12 @@ from beartype._check.checkmake import (
     make_code_raiser_func_pith_check,
     make_code_raiser_func_pep484_noreturn_check,
 )
+from beartype._check.code.codescope import add_func_scope_ref
 from beartype._check.code.codesnip import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
 )
 from beartype._check.convert.convsanify import sanify_hint_root_func
-from beartype._check.forward.reference.fwdrefmake import (
-    make_forwardref_indexable_subtype)
 from beartype._check.util.checkutilmake import make_func_signature
 from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
@@ -76,9 +75,8 @@ from beartype._util.func.arg.utilfuncargiter import (
     ArgKind,
     iter_func_args,
 )
-from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    get_hint_pep484585_ref_names)
+    get_hint_pep484585_ref_names_relative_to)
 from beartype._util.hint.utilhinttest import (
     is_hint_ignorable,
     is_hint_needs_cls_stack,
@@ -777,25 +775,25 @@ def _unmemoize_func_wrapper_code(
 
         # For each unqualified classname referred to by a relative forward
         # reference type hints visitable from the current root type hint...
-        for hint_basename in hint_refs_type_basename:
+        for ref_basename in hint_refs_type_basename:
             # Possibly undefined fully-qualified module name and possibly
             # unqualified classname referred to by this relative forward
             # reference, relative to the decorated type stack and callable.
-            hint_module_name, hint_name = get_hint_pep484585_ref_names(
-                hint=hint_basename,
+            ref_module_name, ref_name = get_hint_pep484585_ref_names_relative_to(
+                hint=ref_basename,
                 cls_stack=cls_stack,
                 func=func,
                 exception_prefix=EXCEPTION_PLACEHOLDER,
             )
 
-            # Forward reference proxy referring to this class.
-            hint_ref = make_forwardref_indexable_subtype(
-                hint_module_name, hint_name)
-
             # Name of the hidden parameter providing this forward reference
             # proxy to be passed to this wrapper function.
-            hint_ref_arg_name = add_func_scope_attr(
-                attr=hint_ref, func_scope=func_scope)
+            ref_expr = add_func_scope_ref(
+                func_scope=func_scope,
+                ref_module_name=ref_module_name,
+                ref_name=ref_name,
+                exception_prefix=EXCEPTION_PLACEHOLDER,
+            )
 
             # Generate an unmemoized callable-specific code snippet checking
             # this class by globally replacing in this callable-agnostic code...
@@ -804,12 +802,12 @@ def _unmemoize_func_wrapper_code(
                 # This placeholder substring cached into this code with...
                 old=(
                     f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX}'
-                    f'{hint_basename}'
+                    f'{ref_name}'
                     f'{CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX}'
                 ),
                 # Python expression evaluating to this class when accessed via
                 # this hidden parameter.
-                new=hint_ref_arg_name,
+                new=ref_expr,
             )
 
     # Return this unmemoized callable-specific code snippet.

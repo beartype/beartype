@@ -18,7 +18,7 @@ from beartype.typing import (
     Optional,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._data.cls.datacls import TYPES_BUILTIN
+from beartype._data.cls.datacls import TYPE_BUILTIN_NAME_TO_TYPE
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 from beartype._util.utilobject import SENTINEL
@@ -396,7 +396,7 @@ def import_module_attr_or_sentinel(
         if not module_name:
             # Builtin type with this name if any *OR* the sentinel otherwise
             # (i.e., if *NO* builtin type with this name exists).
-            module_attr = getattr(TYPES_BUILTIN, attr_name, SENTINEL)
+            module_attr = TYPE_BUILTIN_NAME_TO_TYPE.get(attr_name, SENTINEL)
 
             # Return this object.
             return module_attr
@@ -449,7 +449,9 @@ def import_module_attr_or_sentinel(
         # upon), Python *DOES* permit insanity like:
         #     # In some user-defined module at global scope...
         #     class int(object): ...  # <-- by all the gods never do this
-        module_attr = getattr(TYPES_BUILTIN, attr_basename, SENTINEL)
+        module_attr = TYPE_BUILTIN_NAME_TO_TYPE.get(attr_basename, SENTINEL)
+        # print(f'Attempting to import "{attr_basename}" as builtin type {repr(module_attr)}...')
+        # print(f'TYPE_BUILTIN_NAME_TO_TYPE: {TYPE_BUILTIN_NAME_TO_TYPE}')
     # Else, either that module declared this attribute *OR* this attribute name
     # is fully-qualified and thus not the name of a builtin type. In either
     # case, return this attribute as is.

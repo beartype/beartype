@@ -16,54 +16,6 @@ to :pep:`484`-compliant type hints.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ argument : namedtuple      }....................
-def test_decor_pep484_arg_namedtuple() -> None:
-    '''
-    Test the :func:`beartype.beartype` decorator against all edge cases of
-    instances of user-defined subclasses of the :pep:`484`-compliant
-    :attr:`typing.NamedTuple` superclass, which are instances rather than types
-    and thus invalid as actual type hints.
-    '''
-
-    # ..................{ IMPORTS                            }..................
-    # Defer test-specific imports.
-    from beartype import beartype
-    from beartype.roar import BeartypeCallHintParamViolation
-    from typing import (
-        NamedTuple,
-        Optional,
-    )
-    from pytest import raises
-
-    # ..................{ LOCALS                             }..................
-    @beartype
-    class WindsContend(NamedTuple):
-        '''
-        Arbitrary named tuple type-checked by :func:`beartype.beartype`.
-        '''
-
-        starbeams: Optional[str]
-        '''
-        Standard instance variable passed by the :class:`NamedTuple` metaclass
-        to the the implicit ``__new__()`` method synthesized for this subclass.
-        '''
-
-    # Arbitrary instance of this named tuple exercising all edge cases.
-    dart_through_them = WindsContend(
-        starbeams='Or the star-beams dart through them. Winds contend')
-
-    # ..................{ PASS                               }..................
-    # Assert this dataclass defines the expected attributes.
-    assert dart_through_them.starbeams == (
-        'Or the star-beams dart through them. Winds contend')
-
-    # ..................{ FAIL                               }..................
-    # Assert that attempting to instantiate an instance of this dataclass with a
-    # parameter violating the corresponding type hint annotating the field of
-    # the same name raises the expected exception.
-    with raises(BeartypeCallHintParamViolation):
-        WindsContend(starbeams=0xBABECAFE)
-
 # ....................{ TESTS ~ decor : no_type_check      }....................
 def test_decor_pep484_no_type_check() -> None:
     '''
@@ -185,6 +137,54 @@ async def test_decor_pep484_hint_noreturn_async() -> None:
         raise ValueError('The work of hunters is another thing:')
 
 # ....................{ TESTS ~ hint : sequence            }....................
+def test_decor_pep484_namedtuple() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator against all edge cases of
+    instances of user-defined subclasses of the :pep:`484`-compliant
+    :attr:`typing.NamedTuple` superclass, which are instances rather than types
+    and thus invalid as actual type hints.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from typing import (
+        NamedTuple,
+        Optional,
+    )
+    from pytest import raises
+
+    # ..................{ LOCALS                             }..................
+    @beartype
+    class WindsContend(NamedTuple):
+        '''
+        Arbitrary named tuple type-checked by :func:`beartype.beartype`.
+        '''
+
+        starbeams: Optional[str]
+        '''
+        Standard instance variable passed by the :class:`NamedTuple` metaclass
+        to the the implicit ``__new__()`` method synthesized for this subclass.
+        '''
+
+    # Arbitrary instance of this named tuple exercising all edge cases.
+    dart_through_them = WindsContend(
+        starbeams='Or the star-beams dart through them. Winds contend')
+
+    # ..................{ PASS                               }..................
+    # Assert this dataclass defines the expected attributes.
+    assert dart_through_them.starbeams == (
+        'Or the star-beams dart through them. Winds contend')
+
+    # ..................{ FAIL                               }..................
+    # Assert that attempting to instantiate an instance of this dataclass with a
+    # parameter violating the corresponding type hint annotating the field of
+    # the same name raises the expected exception.
+    with raises(BeartypeCallHintParamViolation):
+        WindsContend(starbeams=0xBABECAFE)
+
+
 def test_decor_pep484_hint_sequence_args_1_cached() -> None:
     '''
     Test that a `subtle issue <issue #5_>`__ of the :func:`beartype.beartype`
@@ -192,7 +192,7 @@ def test_decor_pep484_hint_sequence_args_1_cached() -> None:
     sequence hints** (e.g., :attr:`typing.List`) cached via memoization across
     calls to that decorator has been resolved and *not* regressed.
 
-    Note that the more general-purpose :func:`test_p484` test *should* already
+    Note that more general-purpose :pep:`484` unit tests *should* already
     exercise this issue, but that this issue was sufficiently dire to warrant
     special-purposed testing exercising this exact issue.
 
@@ -200,10 +200,12 @@ def test_decor_pep484_hint_sequence_args_1_cached() -> None:
        https://github.com/beartype/beartype/issues/5
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.typing import Union
 
+    # ....................{ CALLABLES                      }....................
     # Callable annotated by an arbitrary PEP 484 standard sequence type hint.
     @beartype
     def fern_hill(prince_of_the_apple_towns: Union[int, str]) -> str:
@@ -218,6 +220,7 @@ def test_decor_pep484_hint_sequence_args_1_cached() -> None:
     ) -> str:
         return famous_among_the_barns + first_spinning_place
 
+    # ....................{ PASS                           }....................
     # Validate that these callables behave as expected.
     assert fern_hill(
         'Now as I was young and easy under the apple boughs'

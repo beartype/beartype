@@ -12,34 +12,14 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import (
+    Dict,
     ForwardRef,
     FrozenSet,
 )
 from beartype._cave._cavefast import (
-    #FIXME: Export these types from "beartype.cave", please.
-    AsyncCoroutineCType,
-    AsyncGeneratorCType,
-    CallableCodeObjectType,
-    CallableFrameType,
-    ClassDictType,
     ClassType,
-    ClosureVarCellType,
-    EllipsisType,
-    ExceptionTracebackType,
     FunctionType,
-    FunctionOrMethodCType,
-    GeneratorCType,
-    MethodBoundInstanceDunderCType,
-    MethodBoundInstanceOrClassType,
     MethodDecoratorBuiltinTypes,
-    MethodUnboundClassCType,
-    MethodUnboundInstanceDunderCType,
-    MethodUnboundInstanceNondunderCType,
-    MethodUnboundPropertyNontrivialCExtensionType,
-    MethodUnboundPropertyTrivialCExtensionType,
-    ModuleType,
-    NoneType,
-    NotImplementedType,
 )
 from ast import (
     ClassDef,
@@ -112,6 +92,15 @@ decorated by the :func:`beartype.beartype` decorator).
 
 # ....................{ TYPES ~ module                     }....................
 # Defined below by the _init() function.
+TYPE_BUILTIN_NAME_TO_TYPE: Dict[str, type] = None  # type: ignore[assignment]
+'''
+Dictionary mapping from the name of each **builtin type** (i.e., globally
+accessible C-based type implicitly accessible from all scopes and thus
+requiring *no* explicit importation) to that type.
+'''
+
+
+# Defined below by the _init() function.
 TYPES_BUILTIN: FrozenSet[type] = None  # type: ignore[assignment]
 '''
 Frozen set of all **builtin types** (i.e., globally accessible C-based types
@@ -151,12 +140,12 @@ def _init() -> None:
     from builtins import __dict__ as BUILTIN_NAME_TO_TYPE  # type: ignore[attr-defined]
 
     # Global variables redefined below.
-    global TYPES_BUILTIN
+    global TYPE_BUILTIN_NAME_TO_TYPE, TYPES_BUILTIN
 
-    # Construct this global frozenset from a set comprehension, defined as...
-    TYPES_BUILTIN = frozenset(
-        # This builtin type...
-        builtin_value
+    # Dictionary mapping from,...
+    TYPE_BUILTIN_NAME_TO_TYPE = {
+        # The name of each builtin type to that type
+        builtin_name: builtin_value
         # For each attribute defined by the standard "builtins" module...
         for builtin_name, builtin_value in BUILTIN_NAME_TO_TYPE.items()
         # If...
@@ -169,7 +158,10 @@ def _init() -> None:
                 builtin_name.endswith  ('__')
             )
         )
-    )
+    }
+
+    # Frozenset of all builtin types, derived from this dictionary.
+    TYPES_BUILTIN = frozenset(TYPE_BUILTIN_NAME_TO_TYPE.values())
 
 
 # Initialize this submodule.

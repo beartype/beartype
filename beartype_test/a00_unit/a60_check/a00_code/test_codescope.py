@@ -7,7 +7,7 @@
 **Beartype decorator PEP-compliant code wrapper scope utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._check.code._codescope` submodule.
+:mod:`beartype._check.code.codescope` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,7 +20,7 @@ This submodule unit tests the public API of the private
 def test_add_func_scope_type() -> None:
     '''
     Test the
-    :func:`beartype._check.code._codescope.add_func_scope_type` adder.
+    :func:`beartype._check.code.codescope.add_func_scope_type` adder.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -28,7 +28,7 @@ def test_add_func_scope_type() -> None:
     from beartype.roar import BeartypeDecorHintPep3119Exception
     from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._cave._cavefast import NoneType, RegexCompiledType
-    from beartype._check.code._codescope import add_func_scope_type
+    from beartype._check.code.codescope import add_func_scope_type
     from beartype._util.utilobject import get_object_type_basename
     from beartype_test.a00_unit.data.data_type import NonIsinstanceableClass
     from pytest import raises
@@ -88,23 +88,24 @@ def test_add_func_scope_type() -> None:
 def test_add_func_scope_types() -> None:
     '''
     Test the
-    :func:`beartype._check.code._codescope.add_func_scope_types` adder.
+    :func:`beartype._check.code.codescope.add_func_scope_types` adder.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype.roar import BeartypeDecorHintNonpepException
+    from beartype.roar import (
+        BeartypeDecorHintNonpepException,
+        BeartypeDecorHintPep3119Exception,
+    )
     from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._cave._cavefast import CallableTypes, ModuleOrStrTypes
     from beartype._cave._cavemap import NoneTypeOr
-    from beartype._check.code._codescope import add_func_scope_types
+    from beartype._check.code.codescope import add_func_scope_types
     from beartype._util.utilobject import get_object_type_basename
     from beartype_test.a00_unit.data.data_type import (
         Class,
         NonIsinstanceableClass,
     )
-    from beartype_test.a00_unit.data.hint.pep.proposal.data_pep484 import (
-        Pep484GenericTypevaredSingle)
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -177,24 +178,6 @@ def test_add_func_scope_types() -> None:
     # Arbitrary scope to be added to below.
     func_scope = {}
 
-    # Assert this function raises the expected exception for unhashable tuples.
-    with raises(BeartypeDecorHintNonpepException):
-        add_func_scope_types(
-            types=(
-                int, str, {
-                    'Had': "I the heaven’s embroidered cloths,",
-                    'Enwrought': "with golden and silver light,",
-                    'The': 'blue and the dim and the dark cloths',
-                    'Of': 'night and light and the half-light,',
-                    'I': 'would spread the cloths under your feet:',
-                    'But': 'I, being poor, have only my dreams;',
-                    'I have': 'spread my dreams under your feet;',
-                    'Tread': 'softly because you tread on my dreams.',
-                },
-            ),
-            func_scope=func_scope,
-        )
-
     # Assert this function raises the expected exception for non-tuples.
     with raises(BeartypeDecorHintNonpepException):
         add_func_scope_types(
@@ -211,18 +194,29 @@ def test_add_func_scope_types() -> None:
     with raises(BeartypeDecorHintNonpepException):
         add_func_scope_types(types=(), func_scope=func_scope)
 
-    # Assert this function raises the expected exception for tuples containing
-    # one or more PEP-compliant types.
-    with raises(BeartypeDecorHintNonpepException):
+    # Assert this function raises the expected exception for unhashable objects
+    # embedded in an otherwise hashable tuple.
+    with raises(BeartypeDecorHintPep3119Exception):
         add_func_scope_types(
-            types=(int, Pep484GenericTypevaredSingle, str,),
+            types=(
+                int, str, {
+                    'Had': "I the heaven’s embroidered cloths,",
+                    'Enwrought': "with golden and silver light,",
+                    'The': 'blue and the dim and the dark cloths',
+                    'Of': 'night and light and the half-light,',
+                    'I': 'would spread the cloths under your feet:',
+                    'But': 'I, being poor, have only my dreams;',
+                    'I have': 'spread my dreams under your feet;',
+                    'Tread': 'softly because you tread on my dreams.',
+                },
+            ),
             func_scope=func_scope,
         )
 
     # Assert this function raises the expected exception for tuples containing
     # one or more PEP 560-compliant classes whose metaclasses define an
     # __instancecheck__() dunder method to unconditionally raise exceptions.
-    with raises(BeartypeDecorHintNonpepException):
+    with raises(BeartypeDecorHintPep3119Exception):
         add_func_scope_types(
             types=(bool, NonIsinstanceableClass, float,),
             func_scope=func_scope,
@@ -232,7 +226,7 @@ def test_add_func_scope_types() -> None:
 def test_express_func_scope_type_ref() -> None:
     '''
     Test the
-    :func:`beartype._check.code._codescope.express_func_scope_type_ref`
+    :func:`beartype._check.code.codescope.express_func_scope_type_ref`
     function.
     '''
 
@@ -240,10 +234,7 @@ def test_express_func_scope_type_ref() -> None:
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintForwardRefException
     from beartype.typing import ForwardRef
-    from beartype._check.forward.fwdtype import bear_typistry
-    from beartype._check.checkmagic import ARG_NAME_TYPISTRY
-    from beartype._check.code._codescope import (
-        express_func_scope_type_ref)
+    from beartype._check.code.codescope import express_func_scope_type_ref
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -280,7 +271,7 @@ def test_express_func_scope_type_ref() -> None:
     )
 
     # ....................{ PASS                           }....................
-    # For each PEP-compliant forward reference to a fully-qualified class...
+    # For each absolute forward reference...
     for forwardref_qualified in FORWARDREFS_QUALIFIED:
         # Express a fully-qualified forward reference to a non-existing class.
         forwardref_expr, forwardrefs_class_basename = (
@@ -290,15 +281,14 @@ def test_express_func_scope_type_ref() -> None:
                 func_scope=func_scope,
             ))
 
-        # Assert this expression references this class.
-        assert CLASSNAME_QUALIFIED in forwardref_expr
-
         # Assert this set remains empty.
         assert forwardrefs_class_basename is None
 
-        # Assert the beartypistry singleton has been added to this scope as a
-        # private "__beartypistry" attribute.
-        assert func_scope[ARG_NAME_TYPISTRY] is bear_typistry
+        # Forward reference proxy added to this scope by the above call.
+        forwardref = func_scope[forwardref_expr]
+
+        # Assert this proxy encapsulates this forward reference.
+        assert CLASSNAME_QUALIFIED in repr(forwardref)
 
         # Assert this function rexpresses the same forward reference.
         forwardref_expr_again, forwardrefs_class_basename_again = (
@@ -310,7 +300,7 @@ def test_express_func_scope_type_ref() -> None:
         assert forwardref_expr_again == forwardref_expr
         assert forwardrefs_class_basename_again is forwardrefs_class_basename
 
-    # For each PEP-compliant forward reference to an unqualified class...
+    # For each relative forward reference...
     for forwardref_unqualified in FORWARDREFS_UNQUALIFIED:
         # Express an unqualified forward reference to a non-existing class.
         forwardref_expr, forwardrefs_class_basename = (

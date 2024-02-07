@@ -19,6 +19,7 @@ from beartype.typing import (
     Optional,
     Type,
 )
+from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.hint.datahinttyping import (
     TupleTypes,
 )
@@ -138,8 +139,9 @@ def _make_forwardref_subtype(
           * A syntactically valid Python identifier.
           * :data:`None`.
     '''
+    assert isinstance(scope_name, NoneTypeOr[str]), (
+        f'{repr(scope_name)} neither string nor "None".')
     assert isinstance(hint_name, str), f'{repr(hint_name)} not string.'
-    assert isinstance(scope_name, str), f'{repr(scope_name)} not string.'
     assert len(type_bases) == 1, (
         f'{repr(type_bases)} not 1-tuple of a single superclass.')
 

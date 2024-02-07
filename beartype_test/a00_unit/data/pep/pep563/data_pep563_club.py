@@ -181,8 +181,8 @@ class Karma(object):
         edge case unique to :pep:`563`-specific forward references.
 
         See Also
-        ----------
-        :meth:`Chameleon.like_my_dreams`
+        --------
+        :meth:`.Chameleon.like_my_dreams`
         '''
 
         return Karma(DREAMS)
@@ -196,7 +196,7 @@ def to_love_and_wonder() -> NoReturn:
     :func:`beartype.beartype` decorator.
 
     Raises
-    ----------
+    ------
     HeWouldLingerLong
         Unconditionally.
     '''

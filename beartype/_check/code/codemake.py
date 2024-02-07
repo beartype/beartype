@@ -38,7 +38,7 @@ from beartype._check.code.codemagic import (
     HINT_META_INDEX_PITH_VAR_NAME,
     HINT_META_INDEX_INDENT,
 )
-from beartype._check.code._codescope import (
+from beartype._check.code.codescope import (
     add_func_scope_type,
     add_func_scope_types,
     add_func_scope_type_or_types,
@@ -843,8 +843,7 @@ def make_check_expr(
                 hint_curr_expr, hint_refs_type_basename = (
                     express_func_scope_type_ref(
                         forwardref=hint_curr,
-                        forwardrefs_class_basename=(
-                            hint_refs_type_basename),
+                        forwardrefs_class_basename=hint_refs_type_basename,
                         func_scope=func_wrapper_scope,
                         exception_prefix=_EXCEPTION_PREFIX,
                     ))

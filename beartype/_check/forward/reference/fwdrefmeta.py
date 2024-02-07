@@ -97,10 +97,26 @@ class BeartypeForwardRefMeta(type):
 
         # If this unqualified basename is that of a non-existent dunder
         # attribute, raise the standard "AttributeError" exception.
+        #
+        # Note that we intentionally avoid suffixing the exception message by a
+        # "." character here. Why? Because Python treats "AttributeError"
+        # exceptions as special. Notably, Python appears to actually:
+        # 1. Parse apart the messages of these exceptions for the double-quoted
+        #    attribute name embedded in these messages.
+        # 2. Suffix these messages by a "." character followed by a sentence
+        #    suggesting an existing attribute with a similar name to that of the
+        #    attribute name previously parsed from these messages.
+        #
+        # For example, given an erroneous lookup of a non-existent dunder
+        # attribute "__nomnom_beartype__", Python expands the exception message
+        # raised below into:
+        #     AttributeError: Forward reference proxy "MuhRef" dunder attribute
+        #     "__nomnom_beartype__" not found. Did you mean:
+        #     '__name_beartype__'?
         if is_dunder(hint_name):
             raise AttributeError(
-                f'Forward reference proxy dunder attribute '
-                f'"{cls.__name__}.{hint_name}" not found.'
+                f'Forward reference proxy "{cls.__name__}" dunder attribute '
+                f'"{hint_name}" not found'
             )
         # Else, this unqualified basename is *NOT* that of a non-existent dunder
         # attribute.
@@ -260,6 +276,8 @@ class BeartypeForwardRefMeta(type):
         # If this forward referee has yet to be resolved, this is the first call
         # to this property. In this case...
         if cls.__type_imported_beartype__ is None:  # type: ignore[has-type]
+            # print(f'Importing forward ref "{cls.__name_beartype__}" from module "{cls.__scope_name_beartype__}"...')
+
             # Forward referee dynamically imported from this module.
             referee = import_module_attr(
                 attr_name=cls.__name_beartype__,

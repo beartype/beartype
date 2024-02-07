@@ -142,7 +142,7 @@ def die_unless_type_isinstanceable(
         Object to be validated.
     exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
-        :exc:`BeartypeDecorHintPep3119Exception`.
+        :exc:`.BeartypeDecorHintPep3119Exception`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -249,7 +249,7 @@ def die_unless_type_or_types_isinstanceable(
         Object to be validated.
     exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
-        :exc:`BeartypeDecorHintPep3119Exception`.
+        :exc:`.BeartypeDecorHintPep3119Exception`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.

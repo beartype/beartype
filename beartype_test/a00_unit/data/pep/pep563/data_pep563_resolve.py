@@ -11,7 +11,7 @@ under the ``from __future__ import annotations`` pragma, intended to be
 externally imported and called from unit tests elsewhere in this test suite.
 
 Caveats
-----------
+-------
 **Callables and classes defined below are intentionally not decorated by the**
 :func:`beartype.beartype` **decorator.** Why? Because that decorator internally
 calls the :func:`beartype.peps.resolve_pep563` resolver. However, the whole
