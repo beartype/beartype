@@ -219,10 +219,9 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
         None, WITH_GREAT_POWER_IT)
 
     # Assert that this getter canonicalizes a relative forward reference against
-    # the "__module__" dunder attribute of a class rather than a function to the
-    # expected string.
+    # the "__module__" dunder attribute of a function to the expected string.
     assert get_hint_pep484585_ref_names_relative_to(
-        hint=VERY_SMOOTH, cls_stack=[OfRainbowClouds], func=function) == (
+        hint=VERY_SMOOTH, func=and_pendent_mountains) == (
         THIS_MODULE_NAME, VERY_SMOOTH)
 
     # Assert that this getter canonicalizes a relative forward reference against
@@ -230,6 +229,23 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     assert get_hint_pep484585_ref_names_relative_to(
         hint=VERY_SMOOTH, func=and_pendent_mountains) == (
         THIS_MODULE_NAME, VERY_SMOOTH)
+
+    # Assert that this getter preserves the passed relative forward reference as
+    # is when this reference is the name of a builtin type, even when passed
+    # neither a class *NOR* callable.
+    assert get_hint_pep484585_ref_names_relative_to('int') == (
+        'builtins', 'int')
+
+    # Assert that this getter preserves the passed relative forward reference as
+    # is when this reference is the name of a builtin type, even when passed
+    # a class and callable both defining the "__module__" dunder attribute to be
+    # the fully-qualified names of imaginary and thus unimportable modules that
+    # do *NOT* physically exist.
+    assert get_hint_pep484585_ref_names_relative_to(
+        hint='int',
+        cls_stack=(IMetMurderOnTheWay,),
+        func=thy_mysterious_paradise,
+    ) == ('builtins', 'int')
 
     # If the active Python interpreter targets >= Python 3.9, then this
     # typing.ForwardRef.__init__() method accepts an additional optional
@@ -270,20 +286,13 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
         get_hint_pep484585_ref_names_relative_to(VERY_SMOOTH)
 
     # Assert that this getter raises the expected exception when passed a
-    # relative forward reference and callable *NOT* defining the "__module__"
-    # attribute.
-    with raises(BeartypeDecorHintForwardRefException):
-        get_hint_pep484585_ref_names_relative_to(
-            hint=VERY_SMOOTH, func='Seven blood-hounds followed him:')
-
-    # Assert that this getter raises the expected exception when passed a
     # relative forward reference and a class and callable both defining the
     # "__module__" dunder attribute to be the fully-qualified names of imaginary
     # and thus unimportable modules that do *NOT* physically exist.
     with raises(BeartypeDecorHintForwardRefException):
         get_hint_pep484585_ref_names_relative_to(
             hint=VERY_SMOOTH,
-            cls_stack=[IMetMurderOnTheWay],
+            cls_stack=(IMetMurderOnTheWay,),
             func=thy_mysterious_paradise,
         )
 
@@ -293,7 +302,7 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     with raises(BeartypeDecorHintForwardRefException):
         get_hint_pep484585_ref_names_relative_to(
             hint=VERY_SMOOTH,
-            cls_stack=[OSleep],
+            cls_stack=(OSleep,),
             func=does_the_bright_arch,
         )
 

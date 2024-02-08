@@ -20,6 +20,7 @@ from beartype.typing import (
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.convert.convcoerce import clear_coerce_hint_caches
+# from beartype._check.forward.reference import clear_forwardref_caches
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
 from beartype._data.hint.datahinttyping import (
@@ -131,89 +132,6 @@ def beartype_type(
     # Else, this decorator has yet to decorate this class.
 
     # ....................{ LOCALS                         }....................
-    # Fully-qualified name of the module defining this class if this class is
-    # defined by a module *OR* "None" otherwise (e.g., if this class is only
-    # dynamically defined in-memory outside of any module structure).
-    module_name = get_object_module_name_or_none(cls)
-
-    #FIXME: Consider relegating this logic to a new private
-    #_beartype_type_reloaded() function for maintainability, please.
-    # If this class is defined by a module...
-    if module_name:
-        # Unqualified basename of this class.
-        type_name = cls.__name__
-
-        # Set of the unqualified basenames of *ALL* classes in that module
-        # previously decorated by this decorator.
-        type_names_beartyped = _BEARTYPED_MODULE_TO_TYPE_NAME[module_name]
-
-        # If a class with the same unqualified basename defined in a module with
-        # the same fully-qualified name has already been marked as decorated by
-        # this decorator, then either:
-        # * That module has been externally reloaded. In this case, this class
-        #   (along with the remainder of that module) has now been redefined.
-        #   Common examples include:
-        #   * Rerunning a Jupyter cell defining this class.
-        #   * Refreshing a web app enabling hot reloading (i.e., automatic
-        #     reloading of on-disk modules whose contents have been externally
-        #     modified *AFTER* that app was initially run). Since most Python
-        #     web app frameworks (e.g., Flask, Streamlit) support hot reloading,
-        #     this is the common case.
-        # * That module has internally redefined this class two or more times.
-        #   This behaviour, while typically a bug, is also technically valid:
-        #   e.g.,
-        #       @beartype
-        #       def MuhClass(object): ...
-        #       @beartype
-        #       def MuhClass(object): ...   # <-- this makes me squint
-        #
-        # In this case, clear *ALL* beartype-specific internal caches that have
-        # been shown to fail when a class is redefined.
-        if type_name in type_names_beartyped:
-            #FIXME: Consider emitting a logging message instead if this branch
-            #ever becomes computationally intensive, please.
-            # print(f'@beartyped class "{module_name}.{type_name}" redefined!')
-
-            # Clear the previously accessed set of the unqualified basenames of
-            # *ALL* classes in that module previously decorated by this
-            # decorator. Technically, this is optional. Pragmatically, this
-            # *SHOULD* significantly improve the space and time constraints
-            # associated with this class redefinition. Why? Because this class
-            # being redefined implies that the module defining this class is
-            # being redefined, which implies that all classes in that module are
-            # being redefined as well. If we did *NOT* clear this set here, then
-            # this set would continue to contain the unqualified basenames of
-            # those other classes in that module; each @beartype-decorated
-            # redefinition of those other classes would then unnecessarily clear
-            # the same caches already cleared by the first @beartype-decorated
-            # redefinition of a class in that module. Since doing so would be
-            # overly aggressive and thus inefficient, avoiding doing so improves
-            # efficiency in the common case of module redefinition.
-            _BEARTYPED_MODULE_TO_TYPE_NAME.clear()
-
-            # Clear *ALL* type hint coercion caches, which map from the
-            # machine-readable representations of previously seen
-            # non-self-cached type hints (e.g., "list[MuhClass]") to the first
-            # seen instance of those hints (e.g., list[MuhClass]). Since this
-            # class has been redefined, the first seen instance of those hints
-            # could contain a reference to the first definition of this class;
-            # if so, there now exists a discrepancy between the current
-            # definition of this class and cached hints containing the prior
-            # definition of this class. For safety, all caches possibly
-            # containing those hints must now be assumed to be invalid. Failing
-            # to clear these caches causes @beartype-decorated wrapper functions
-            # to raise erroneous type-checking violations. See also:
-            #     https://github.com/beartype/beartype/issues/288
-            clear_coerce_hint_caches()
-        # Else, this is the first decoration of this class by this decorator.
-        # In this case...
-        else:
-            # Record that this class has now been decorated by this decorator.
-            # Technically, this should (probably) be performed *AFTER* this
-            # decorator has actually successfully decorated this class.
-            # Pragmatically, doing so here is simply faster and... simpler.
-            type_names_beartyped.add(type_name)
-    # Else, this class is *NOT* defined by a module.
 
     # Replace the passed class stack with a new class stack appending this
     # decorated class to the top of this stack, reflecting the fact that this
@@ -236,8 +154,10 @@ def beartype_type(
     )
 
     # ....................{ DECORATION                     }....................
-    #FIXME: Consider relegating this logic to a new private
-    #_beartype_type_attrs() function for maintainability, please.
+    # Clear *ALL* beartype-specific internal caches that have been shown to fail
+    # when a class is redefined if the passed class is detected as having been
+    # redefined in its module.
+    _uncache_beartype_if_type_redefined(cls)
 
     # For the unqualified name and value of each direct (i.e., *NOT* indirectly
     # inherited) attribute of this class...
@@ -394,3 +314,113 @@ fully-qualified name of each module defining one or more classes decorated by
 the :func:`beartype.beartype` decorator to the set of the unqualified basenames
 of all classes in that module decorated by that decorator).
 '''
+
+# ....................{ PRIVATE ~ globals                  }....................
+def _uncache_beartype_if_type_redefined(cls: type) -> None:
+    '''
+    Clear *all* :mod:`beartype`-specific internal caches that have been shown to
+    fail when a class is redefined if the passed class is detected as having
+    been redefined in its module.
+
+    If a class with the same unqualified basename defined in a module with the
+    same fully-qualified name has already been marked as decorated by this
+    decorator, then either:
+
+    * That module has been externally reloaded. In this case, this class (along
+      with the remainder of that module) has now been redefined. Common examples
+      include:
+
+      * Rerunning a Jupyter cell defining this class.
+      * Refreshing a web app enabling hot reloading (i.e., automatic reloading
+        of on-disk modules whose contents have been externally modified *after*
+        that app was initially run). Since most Python web app frameworks (e.g.,
+        Flask, Streamlit) support hot reloading, this is the common case.
+
+    * That module has internally redefined this class two or more times. This
+      behaviour, while typically a bug, is also technically valid: e.g.,
+
+      .. code-block:: python
+
+         @beartype
+         def MuhClass(object): ...
+         @beartype
+         def MuhClass(object): ...   # <-- this makes me squint
+
+    In either case, this class has been redefined. Since :mod:`beartype` has no
+    efficient means of deciding which internal caches to clear in response,
+    :mod:`beartype` instead now unconditionally clears *all* internal caches.
+    Doing so incurs a minor performance penalty whenever a module reload occurs
+    while preserving user-facing usability across module reloads. In short, the
+    minor performance penalty is worth this major usability gain.
+    '''
+
+    # Fully-qualified name of the module defining this class if this class is
+    # defined by a module *OR* "None" otherwise (e.g., if this class is only
+    # dynamically defined in-memory outside of any module structure).
+    module_name = get_object_module_name_or_none(cls)
+
+    # If this class is defined by a module...
+    if module_name:
+        # Unqualified basename of this class.
+        type_name = cls.__name__
+
+        # Set of the unqualified basenames of *ALL* classes in that module
+        # previously decorated by this decorator.
+        type_names_beartyped = _BEARTYPED_MODULE_TO_TYPE_NAME[module_name]
+
+        # If a class with the same unqualified basename defined in a module with
+        # the same fully-qualified name has already been marked as decorated by
+        # this decorator, then this class is currently being redefined. In this
+        # case, clear *ALL* beartype-specific internal caches that have been
+        # shown to fail when classes are redefined.
+        if type_name in type_names_beartyped:
+            #FIXME: Consider emitting a logging message instead if this branch
+            #ever becomes computationally intensive, please.
+            #FIXME: *THIS BRANCH HAS NOW BECOME COMPUTATIONALLY INTENSIVE.* Emit
+            #logging messages, please.
+            # print(f'@beartyped class "{module_name}.{type_name}" redefined!')
+
+            # Clear the previously accessed set of the unqualified basenames of
+            # *ALL* classes in that module previously decorated by this
+            # decorator. Technically, this is optional. Pragmatically, this
+            # *SHOULD* significantly improve the space and time constraints
+            # associated with this class redefinition. Why? Because this class
+            # being redefined implies that the module defining this class is
+            # being redefined, which implies that all classes in that module are
+            # being redefined as well. If we did *NOT* clear this set here, then
+            # this set would continue to contain the unqualified basenames of
+            # those other classes in that module; each @beartype-decorated
+            # redefinition of those other classes would then unnecessarily clear
+            # the same caches already cleared by the first @beartype-decorated
+            # redefinition of a class in that module. Since doing so would be
+            # overly aggressive and thus inefficient, avoiding doing so improves
+            # efficiency in the common case of module redefinition.
+            _BEARTYPED_MODULE_TO_TYPE_NAME.clear()
+
+            # Clear *ALL* type hint coercion caches, which map from the
+            # machine-readable representations of previously seen
+            # non-self-cached type hints (e.g., "list[MuhClass]") to the first
+            # seen instance of those hints (e.g., list[MuhClass]). Since this
+            # class has been redefined, the first seen instance of those hints
+            # could contain a reference to the first definition of this class;
+            # if so, there now exists a discrepancy between the current
+            # definition of this class and cached hints containing the prior
+            # definition of this class. For safety, all caches possibly
+            # containing those hints must now be assumed to be invalid. Failing
+            # to clear these caches causes @beartype-decorated wrapper functions
+            # to raise erroneous type-checking violations. See also:
+            #     https://github.com/beartype/beartype/issues/288
+            clear_coerce_hint_caches()
+
+            # clear_forwardref_caches()
+
+            #FIXME: Clear the beartypistry as well, please.
+        # Else, this is the first decoration of this class by this decorator.
+        # In this case...
+        else:
+            # Record that this class has now been decorated by this decorator.
+            # Technically, this should (probably) be performed *AFTER* this
+            # decorator has actually successfully decorated this class.
+            # Pragmatically, doing so here is simply faster and... simpler.
+            type_names_beartyped.add(type_name)
+    # Else, this class is *NOT* defined by a module.

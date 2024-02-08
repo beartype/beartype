@@ -227,9 +227,6 @@ class _BeartypeForwardRefIndexableABC(BeartypeForwardRefABC):
             _make_forwardref_subtype)
 
         # Subscripted forward reference to be returned.
-        #
-        # Note that parameters *MUST* be passed positionally to the memoized
-        # _make_forwardref_subtype() factory function.
         forwardref_indexed_subtype: Type[_BeartypeForwardRefIndexedABC] = (
             _make_forwardref_subtype(  # type: ignore[assignment]
                 hint_name=cls.__name_beartype__,

@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
+import beartype #  <-- satisfy mypy [note to self: i can't stand you, mypy]
 from ast import AST
 from beartype.typing import (
     AbstractSet,
@@ -51,6 +52,16 @@ ListNodes = List[AST]
 '''
 PEP-compliant type hint matching an **abstract syntax tree (AST) node list**
 (i.e., list of zero or more AST nodes).
+'''
+
+# ....................{ BEARTYPE                           }....................
+BeartypeForwardRef = Type[
+    'beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC']  # pyright: ignore
+'''
+PEP-compliant type hint matching a **forward reference proxy** (i.e., concrete
+subclass of the abstract
+:class:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC`
+superclass).
 '''
 
 # ....................{ BOOL                               }....................

@@ -77,9 +77,7 @@ from beartype._util.cls.pep.utilpep3119 import (
 from beartype._util.cls.utilclstest import is_type_builtin
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
-    die_unless_hint_pep484585_ref,
-    get_hint_pep484585_ref_names,
-)
+    get_hint_pep484585_ref_names)
 from beartype._util.utilobject import get_object_type_basename
 from collections.abc import Set
 
@@ -137,7 +135,7 @@ def add_func_scope_ref(
 
     # Name of a new parameter passing this forward reference proxy.
     hint_ref_arg_name = add_func_scope_attr(
-        attr=hint_ref, func_scope=func_scope)
+        func_scope=func_scope, attr=hint_ref)
 
     # Return this name.
     return hint_ref_arg_name
@@ -518,13 +516,9 @@ def express_func_scope_type_ref(
     BeartypeDecorHintForwardRefException
         If this forward reference is *not* actually a forward reference.
     '''
-    assert isinstance(func_scope, dict), f'{repr(func_scope)} not dictionary.'
-    assert isinstance(forwardrefs_class_basename, NoneTypeOr[set]), (
-        f'{repr(forwardrefs_class_basename)} neither set nor "None".')
 
-    # Possibly undefined fully-qualified module name and possibly
-    # unqualified classname referred to by this relative forward
-    # reference, relative to the decorated type stack and callable.
+    # Possibly undefined fully-qualified module name and possibly unqualified
+    # classname referred to by this forward reference.
     ref_module_name, ref_name = get_hint_pep484585_ref_names(
         hint=forwardref, exception_prefix=exception_prefix)
 
@@ -549,6 +543,9 @@ def express_func_scope_type_ref(
         )
     # Else, this classname is unqualified. In this case...
     else:
+        assert isinstance(forwardrefs_class_basename, NoneTypeOr[set]), (
+            f'{repr(forwardrefs_class_basename)} neither set nor "None".')
+
         # If this set of unqualified classnames referred to by all relative
         # forward references has yet to be instantiated, do so.
         if forwardrefs_class_basename is None:

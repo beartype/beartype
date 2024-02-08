@@ -193,8 +193,8 @@ def find_cause_instance_type_forwardref(
     # Class referred to by this absolute or relative forward reference.
     hint_ref_type = import_pep484585_ref_type(
         hint=cause.hint,
-        func=cause.func,
         cls_stack=cause.cls_stack,
+        func=cause.func,
         exception_cls=BeartypeCallHintForwardRefException,
         exception_prefix=cause.exception_prefix,
     )
@@ -318,8 +318,8 @@ def find_cause_subclass_type(cause: ViolationCause) -> ViolationCause:
         # relative forward reference.
         hint_superclass = import_pep484585_ref_type(
             hint=hint_superclass,  # type: ignore[arg-type]
-            func=cause.func,
             cls_stack=cause.cls_stack,
+            func=cause.func,
             exception_cls=BeartypeCallHintForwardRefException,
             exception_prefix=cause.exception_prefix,
         )

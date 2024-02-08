@@ -334,8 +334,6 @@ def test_pep563_closure_nested() -> None:
         'It is reading our thoughts as though they were words on a screen.')
 
 # .....................{ TESTS ~ pep 484                   }....................
-#FIXME: Resurrect this test, please. *sigh*
-@skip('Currently broken, sadly.')
 def test_pep563_hint_pep484_namedtuple() -> None:
     '''
     Test module-scoped :pep:`563` support implemented in the

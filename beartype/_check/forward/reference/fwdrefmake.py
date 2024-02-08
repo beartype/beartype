@@ -16,24 +16,43 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import (
+    Dict,
     Optional,
+    Tuple,
     Type,
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.hint.datahinttyping import (
+    BeartypeForwardRef,
     TupleTypes,
 )
 from beartype._check.forward.reference.fwdrefabc import (
-    BeartypeForwardRefABC,
     _BeartypeForwardRefIndexableABC,
     _BeartypeForwardRefIndexableABC_BASES,
 )
-from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclsmake import make_type
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 
+# ....................{ GLOBALS                            }....................
+make_forwardref_subtype_args_to_cls: Dict[
+    Tuple[Optional[str], str, TupleTypes], BeartypeForwardRef] = {}
+'''
+**Forward reference proxy cache** (i.e., dictionary mapping from the tuple of
+all parameters passed to each prior call of the
+:func:`._make_forwardref_subtype` factory function to the forward reference
+subclass dynamically created and returned by that call).
+
+This cache serves a dual purpose. Notably, this cache both enables:
+
+* External callers to iterate over all previously instantiated forward reference
+  proxies. This is particularly useful when responding to module reloading,
+  which requires that *all* previously cached types be uncached.
+* :func:`._make_forwardref_subtype` to internally memoize itself over its
+  passed parameters. Since the existing ``callable_cached`` decorator could
+  trivially do so as well, however, this is only a negligible side effect.
+'''
+
 # ....................{ FACTORIES                          }....................
-@callable_cached
 def make_forwardref_indexable_subtype(
     scope_name: Optional[str],
     hint_name: str,
@@ -45,27 +64,30 @@ def make_forwardref_indexable_subtype(
     the passed name, transparently permitting this type hint to be subscripted
     by any arbitrary positional and keyword parameters).
 
+    This factory is intentionally *not* memoized (e.g., by the
+    :func:`callable_cached` decorator), as the lower-level private
+    :func:`._make_forwardref_subtype` factory called by this higher-level public
+    factory is itself memoized.
+
     Parameters
     ----------
     scope_name : Optional[str]
         Possibly ignored lexical scope name. Specifically:
 
-        * If ``hint_name`` is absolute (i.e., contains one or more ``.``
+        * If "hint_name" is absolute (i.e., contains one or more ``.``
           delimiters), this parameter is silently ignored in favour of the
-          fully-qualified name of the module prefixing ``hint_name``.
-        * If ``hint_name`` is relative (i.e., contains *no* ``.`` delimiters),
+          fully-qualified name of the module prefixing "hint_name".
+        * If "hint_name" is relative (i.e., contains *no* ``.`` delimiters),
           this parameter declares the absolute (i.e., fully-qualified) name of
           the lexical scope to which this unresolved type hint is relative.
 
-        The fully-qualified name of the module prefixing ``hint_name`` (if any)
+        The fully-qualified name of the module prefixing "hint_name" (if any)
         thus *always* takes precedence over this lexical scope name, which only
         provides a fallback to resolve relative forward references. While
         unintuitive, this is needed to resolve absolute forward references.
     hint_name : str
         Relative (i.e., unqualified) or absolute (i.e., fully-qualified) name of
         this unresolved type hint to be referenced.
-
-    This factory is memoized for efficiency.
 
     Returns
     -------
@@ -85,9 +107,6 @@ def make_forwardref_indexable_subtype(
     '''
 
     # Subscriptable forward reference to be returned.
-    #
-    # Note that parameters *MUST* be passed positionally to the memoized
-    # _make_forwardref_subtype() factory function.
     return _make_forwardref_subtype(  # type: ignore[return-value]
         scope_name=scope_name,
         hint_name=hint_name,
@@ -99,15 +118,13 @@ def _make_forwardref_subtype(
     scope_name: Optional[str],
     hint_name: str,
     type_bases: TupleTypes,
-) -> Type[BeartypeForwardRefABC]:
+) -> BeartypeForwardRef:
     '''
     Create and return a new **forward reference subclass** (i.e., concrete
     subclass of the passed abstract base class (ABC) deferring the resolution of
     the type hint with the passed name transparently).
 
-    This factory is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as *all* higher-level public factories
-    calling this private factory are themselves already memoized.
+    This factory is internally memoized for efficiency.
 
     Parameters
     ----------
@@ -119,13 +136,13 @@ def _make_forwardref_subtype(
         the type hint referenced by this forward reference subclass.
     type_bases : Tuple[type, ...]
         Tuple of all base classes to be inherited by this forward reference
-        subclass. For simplicity, this *must* be a 1-tuple
-        ``(type_base,)`` where ``type_base`` is a
-        :class:`._BeartypeForwardRefIndexableABC` subclass.
+        subclass. For simplicity, this *must* be a 1-tuple ``(type_base,)``
+        where ``type_base`` is a :class:`._BeartypeForwardRefIndexableABC`
+        subclass.
 
     Returns
     -------
-    Type[_BeartypeForwardRefIndexableABC]
+    BeartypeForwardRef
         Forward reference subclass referencing this type hint.
 
     Raises
@@ -139,6 +156,21 @@ def _make_forwardref_subtype(
           * A syntactically valid Python identifier.
           * :data:`None`.
     '''
+
+    # Tuple of all passed parameters (in arbitrary order).
+    args = (scope_name, hint_name, type_bases)
+
+    # Forward reference proxy previously created and returned by a prior call to
+    # this function passed these parameters if any *OR* "None" otherwise (i.e.,
+    # if this is the first call to this function passed these parameters).
+    # forwardref_subtype: Optional[BeartypeForwardRef] = (
+    forwardref_subtype = make_forwardref_subtype_args_to_cls.get(args, None)
+
+    # If this proxy has already been created, reuse and return this proxy as is.
+    if forwardref_subtype is not None:
+        return forwardref_subtype
+    # Else, this proxy has yet to be created.
+
     assert isinstance(scope_name, NoneTypeOr[str]), (
         f'{repr(scope_name)} neither string nor "None".')
     assert isinstance(hint_name, str), f'{repr(hint_name)} not string.'
@@ -169,8 +201,8 @@ def _make_forwardref_subtype(
         type_module_name = scope_name
     # Else, this module name is non-empty.
 
-    # Forward reference subclass to be returned.
-    forwardref_subtype: Type[_BeartypeForwardRefIndexableABC] = make_type(
+    # Forward reference proxy to be returned.
+    forwardref_subtype = make_type(
         type_name=type_name,
         type_module_name=type_module_name,
         type_bases=type_bases,
@@ -178,12 +210,16 @@ def _make_forwardref_subtype(
         exception_prefix='Forward reference ',
     )
 
-    # Classify passed parameters with this subclass.
+    # Classify passed parameters with this proxy.
     forwardref_subtype.__name_beartype__ = hint_name  # pyright: ignore
     forwardref_subtype.__scope_name_beartype__ = scope_name  # pyright: ignore
 
-    # Nullify all remaining class variables of this subclass for safety.
+    # Nullify all remaining class variables of this proxy for safety.
     forwardref_subtype.__type_imported_beartype__ = None  # pyright: ignore
 
-    # Return this subclass.
+    # Cache this proxy for reuse by subsequent calls to this factory function
+    # passed the same parameters.
+    make_forwardref_subtype_args_to_cls[args] = forwardref_subtype
+
+    # Return this proxy.
     return forwardref_subtype

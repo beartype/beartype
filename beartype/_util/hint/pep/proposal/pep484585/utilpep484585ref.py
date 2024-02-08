@@ -17,19 +17,25 @@ from beartype.typing import (
     Optional,
     Tuple,
 )
-from beartype._data.cls.datacls import TYPES_PEP484585_REF
+from beartype._cave._cavemap import NoneTypeOr
+from beartype._data.cls.datacls import (
+    TYPE_BUILTIN_NAME_TO_TYPE,
+    TYPES_PEP484585_REF,
+)
 from beartype._data.hint.datahinttyping import (
     Pep484585ForwardRef,
     TypeException,
     TypeStack,
 )
-from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cls.utilclstest import die_unless_type
+from beartype._data.module.datamodpy import BUILTINS_MODULE_NAME
 from beartype._util.module.utilmodget import get_object_module_name_or_none
-from beartype._util.module.utilmodimport import import_module_attr
 from beartype._util.module.utilmodtest import is_module
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from collections.abc import Callable
+from beartype._util.text.utiltextlabel import label_callable
+from collections.abc import (
+    Callable,
+    Sequence,
+)
 
 # ....................{ VALIDATORS                         }....................
 #FIXME: Validate that this forward reference string is *NOT* the empty string.
@@ -378,7 +384,7 @@ def get_hint_pep484585_ref_names_relative_to(
 
     # Possibly undefined fully-qualified module name and possibly unqualified
     # classname referred to by this forward reference.
-    hint_module_name, hint_name = get_hint_pep484585_ref_names(
+    hint_module_name, hint_ref_name = get_hint_pep484585_ref_names(
         hint=hint,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
@@ -386,41 +392,58 @@ def get_hint_pep484585_ref_names_relative_to(
 
     # If either...
     if (
-        # This reference was instantiated with a module name...
+        # This reference was instantiated with a module name *OR*...
         hint_module_name or
         # This classname contains one or more "." characters and is thus already
         # (...hopefully) fully-qualified...
-        '.' in hint_name
+        '.' in hint_ref_name
     # Then this classname is either absolute *OR* relative to some module. In
     # either case, the class referred to by this reference can now be
     # dynamically imported at a later time. In this case...
     ):
         # Return this metadata as is.
-        return hint_module_name, hint_name
+        return hint_module_name, hint_ref_name
     # Else, this classname is relative to a module whose fully-qualified name
     # has yet to be decided.
     #
     # If this reference does *NOT* annotate a callable, then this reference also
-    # does *NOT* annotate a method of a class (i.e., "cls is None"). Then there
-    # exists *NO* owner object against which to canonicalize this reference.
-    # This edge case occurs when this getter is transitively called by a
-    # high-level "beartype.door" runtime type-checker (e.g., is_bearable(),
-    # die_if_unbearable()). In this case, raise an appropriate exception.
+    # does *NOT* annotate a method of a class (i.e., "cls is None"). Why?
+    # Because a method is a callable. In this case...
     elif not func:
-        raise exception_cls(
-            f'{exception_prefix}relative forward reference "{hint_name}" '
-            f'currently only type-checkable in type hints annotating '
-            f'@beartype-decorated callables and classes. '
-            f'For your own safety and those of the codebases you love, '
-            f'consider canonicalizing this '
-            f'relative forward reference into an absolute forward reference '
-            f'(e.g., replace "{hint_name}" with '
-            f'"{{your_package}}.{{your_submodule}}.{hint_name}").'
-        )
-    # Else, an owner object against which to canonicalize this reference exists.
-    #
+        # If a builtin type with this classname exists, assume this reference
+        # refers to this builtin type exposed by the standard "builtins" module.
+        if hint_ref_name in TYPE_BUILTIN_NAME_TO_TYPE:
+            hint_module_name = BUILTINS_MODULE_NAME
+        # Else, this reference does *NOT* refer to a builtin type. In this
+        # case, there exists *NO* owner module against which to canonicalize
+        # this relative reference. This edge case occurs when this getter is
+        # transitively called by a high-level "beartype.door" runtime
+        # type-checker (e.g., is_bearable(), die_if_unbearable()). In this case,
+        # raise an exception.
+        else:
+            raise exception_cls(
+                f'{exception_prefix}type hint relative forward reference '
+                f'"{hint_ref_name}" currently only type-checkable in '
+                f'type hints annotating '
+                f'@beartype-decorated callables and classes. '
+                f'For your own safety and those of the codebases you love, '
+                f'consider canonicalizing this '
+                f'relative forward reference into an '
+                f'absolute forward reference '
+                f'(e.g., replace "{hint_ref_name}" with '
+                f'"{{your_package}}.{{your_submodule}}.{hint_ref_name}").'
+            )
+    # Else, this reference annotates a callable and is thus relative to the
+    # module defining this callable.
+
+    # Validate sanity.
+    assert isinstance(cls_stack, NoneTypeOr[Sequence]), (
+        f'{repr(cls_stack)} neither sequence nor "None".')
+    assert isinstance(func, NoneTypeOr[Callable]), (
+        f'{repr(func)} neither callable nor "None".')
+
     # If this reference annotates a method of a class...
-    elif cls_stack:
+    if cls_stack:
         # Class currently being decorated by @beartype.
         cls = cls_stack[-1]
 
@@ -445,53 +468,76 @@ def get_hint_pep484585_ref_names_relative_to(
             hint_module_name and
             # That module is importable...
             is_module(hint_module_name)
-        # Then there exists *NO* owner module against which to canonicalize this
-        # relative reference. In this case, raise an exception.
+        # Fallback to...
         ):
-            # Exception message to be raised.
-            exception_message = (
-                f'{exception_prefix}forward reference "{hint_name}" '
-                f'relative to'
-            )
-
-            # If this reference annotates a method of a class...
-            if cls_stack:
-                # Fully-qualified name of the module defining that class.
-                type_module_name = get_object_module_name_or_none(cls)  # pyright: ignore
-
-                # Append this message by...
-                exception_message += (
-                    # Substring describing this class *AND*...
-                    f':\n* {repr(cls)} ' +  # pyright: ignore
-                    (
-                        # If that class defines a "__module__" dunder attribute,
-                        # substring describing that module.
-                        f'in unimportable module "{type_module_name}".'
-                        if type_module_name else
-                        # Else, that class defines *NO* such attribute. In this
-                        # case, a substring describing that failure.
-                        'with undefined "__module__" attribute.'
-                    ) +
-                    # Substring suffixing this item and prefixing the next item.
-                    '\n* '
-                )
-            # Else, this reference annotates a global or local function. In
-            # this case, append a substring prefixing the next item.
+            # If a builtin type with this name exists, assume this reference
+            # refers to this builtin type exposed by the "builtins" module.
+            #
+            # Note that this edge case is shockingly common *AND* distinct from
+            # the above similar edge case. Why? The "typing.NamedTuple"
+            # superclass, which dynamically generates subclass dunder methods
+            # (e.g., __new__()) residing in unimportable fake modules with the
+            # name "named_{subclass_name}".
+            if hint_ref_name in TYPE_BUILTIN_NAME_TO_TYPE:
+                hint_module_name = BUILTINS_MODULE_NAME
+            # Else, this reference does *NOT* refer to a builtin type. In this
+            # case, there exists *NO* owner module against which to canonicalize
+            # this relative reference. Raise an exception, please.
             else:
-                exception_message += ' '
-
-            # Append this message by an appropriate substring as above.
-            exception_message += (
-                f'{repr(func)} ' +
-                (
-                    f'in unimportable module "{hint_module_name}".'
-                    if hint_module_name else
-                    ' with undefined "__module__" attribute.'
+                # Exception message to be raised.
+                exception_message = (
+                    f'{exception_prefix}type hint relative forward reference '
+                    f'"{hint_ref_name}" unresolvable relative to'
                 )
-            )
 
-            # Raise this exception.
-            raise exception_cls(exception_message)
+                # If this reference annotates a method of a class...
+                if cls_stack:
+                    # Fully-qualified name of the module defining that class.
+                    type_module_name = get_object_module_name_or_none(cls)  # pyright: ignore
+
+                    # Append this message by...
+                    exception_message += (
+                        # Substring describing this class *AND*...
+                        f':\n* {repr(cls)} ' +  # pyright: ignore
+                        (
+                            # If that class defines a "__module__" dunder
+                            # attribute, substring describing that module.
+                            f'in unimportable module "{type_module_name}".'
+                            if type_module_name else
+                            # Else, that class defines *NO* such attribute. In
+                            # this case, a substring describing that failure.
+                            'with undefined "__module__" attribute.'
+                        ) +
+                        # Substring suffixing this item and prefixing the next
+                        # item.
+                        '\n* '
+                    )
+                # Else, this reference annotates a global or local function. In
+                # this case, append a substring prefixing the next item.
+                else:
+                    exception_message += ' '
+
+                # Append this message by an appropriate substring defined as
+                # the dynamic concatenation of...
+                exception_message += (
+                    # Substring describing this callable if callable is actually
+                    # callable or falling back to its representation otherwise
+                    # *AND*...
+                    (
+                        f'{label_callable(func)} '
+                        if callable(func) else
+                        f'{repr(func)} '
+                    ) +
+                    # Substring describing this module.
+                    (
+                        f'in unimportable module "{hint_module_name}".'
+                        if hint_module_name else
+                        'with undefined "__module__" attribute.'
+                    )
+                )
+
+                # Raise this exception.
+                raise exception_cls(exception_message)
         # Else, that function is declared by an importable module.
     # Else, that class is declared by an importable module.
     #
@@ -499,22 +545,18 @@ def get_hint_pep484585_ref_names_relative_to(
     # by an importable module.
 
     # Return metadata describing this forward reference relative to this module.
-    return hint_module_name, hint_name
+    return hint_module_name, hint_ref_name
 
 # ....................{ IMPORTERS                          }....................
-#FIXME: Excise us up, please. In theory, this should no longer be needed. This
-#is currently only called twice in the "beartype._check.error__errortype"
-#submodule. Gah!
 #FIXME: Unit test us up, please.
 def import_pep484585_ref_type(
     # Mandatory parameters.
     hint: Pep484585ForwardRef,
 
     # Optional parameters.
-    cls_stack: TypeStack = None,
-    func: Optional[Callable] = None,
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
     exception_prefix: str = '',
+    **kwargs
 ) -> type:
     '''
     Class referred to by the passed :pep:`484` or :pep:`585`-compliant
@@ -532,32 +574,15 @@ def import_pep484585_ref_type(
     ----------
     hint : Pep484585ForwardRef
         Forward reference type hint to be resolved.
-    cls_stack : TypeStack
-        Either:
-
-        * If this forward reference annotates a method of a class, the
-          corresponding **type stack** (i.e., tuple of the one or more
-          :func:`beartype.beartype`-decorated classes lexically containing that
-          method). If this forward reference is unqualified (i.e., relative),
-          this getter then canonicalizes this reference against that class.
-        * Else, :data:`None`.
-
-        Defaults to :data:`None`.
-    func : Optional[Callable]
-        Either:
-
-        * If this forward reference annotates a callable, that callable.
-          If this forward reference is also unqualified (i.e., relative), this
-          getter then canonicalizes this reference against that callable.
-        * Else, :data:`None`.
-
-        Defaults to :data:`None`.
     exception_cls : Type[Exception]
         Type of exception to be raised in the event of a fatal error. Defaults
         to :exc:`.BeartypeDecorHintForwardRefException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
+
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.get_hint_pep484585_ref_names_relative_to` getter.
 
     Returns
     -------
@@ -585,36 +610,27 @@ def import_pep484585_ref_type(
 
     See Also
     --------
-    :func:`.get_hint_pep484585_ref_name_absolute`
+    :func:`.get_hint_pep484585_ref_names_relative_to`
         Further details.
     '''
+
+    # Avoid circular import dependencies.
+    from beartype._check.forward.reference.fwdrefmake import (
+        make_forwardref_indexable_subtype)
 
     # Possibly undefined fully-qualified module name and possibly unqualified
     # classname referred to by this forward reference relative to this type
     # stack and callable.
-    hint_module_name, hint_name = get_hint_pep484585_ref_names_relative_to(
+    hint_module_name, hint_ref_name = get_hint_pep484585_ref_names_relative_to(
         hint=hint,
-        cls_stack=cls_stack,
-        func=func,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
+        **kwargs
     )
 
-    # Object dynamically imported from this classname.
-    hint_ref_type = import_module_attr(
-        attr_name=hint_name,
-        module_name=hint_module_name,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
+    # Forward reference proxy referring to this class.
+    hint_ref = make_forwardref_indexable_subtype(
+        hint_module_name, hint_ref_name)
 
-    # If this object is *NOT* a class, raise an exception.
-    die_unless_type(
-        cls=hint_ref_type,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
-    # Else, this object is a class.
-
-    # Return this class.
-    return hint_ref_type
+    # Return the class dynamically imported from this proxy.
+    return hint_ref.__type_beartype__

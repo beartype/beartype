@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeCallHintForwardRefException
 from beartype.typing import Type
-from beartype._check.forward.reference import fwdrefabc  # <-- satisfy mypy
+from beartype._data.hint.datahinttyping import BeartypeForwardRef
 from beartype._util.cls.pep.utilpep3119 import die_unless_type_isinstanceable
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
     is_hint_pep484585_generic,
@@ -25,13 +25,6 @@ from beartype._util.module.utilmodimport import import_module_attr
 from beartype._util.text.utiltextidentifier import is_dunder
 
 # ....................{ PRIVATE ~ hints                    }....................
-ForwardRef = Type['fwdrefabc.BeartypeForwardRefABC']
-'''
-PEP-compliant type hint matching a **forward reference proxy** (i.e., concrete
-subclass of the abstract
-:class:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC`
-superclass).
-'''
 
 # ....................{ METACLASSES                        }....................
 class BeartypeForwardRefMeta(type):
@@ -59,8 +52,8 @@ class BeartypeForwardRefMeta(type):
     '''
 
     # ....................{ DUNDERS                        }....................
-    def __getattr__(cls: ForwardRef, hint_name: str) -> Type[  # type: ignore[misc]
-        'fwdrefabc._BeartypeForwardRefIndexableABC']:
+    def __getattr__(cls: BeartypeForwardRef, hint_name: str) -> (  # type: ignore[misc]
+        BeartypeForwardRef):
         '''
         **Fully-qualified forward reference subclass** (i.e.,
         :class:`.BeartypeForwardRefABC` subclass whose metaclass is this
@@ -129,7 +122,7 @@ class BeartypeForwardRefMeta(type):
         )
 
 
-    def __instancecheck__(cls: ForwardRef, obj: object) -> bool:  # type: ignore[misc]
+    def __instancecheck__(cls: BeartypeForwardRef, obj: object) -> bool:  # type: ignore[misc]
         '''
         :data:`True` only if the passed object is an instance of the external
         class referenced by the passed **forward reference subclass** (i.e.,
@@ -157,7 +150,7 @@ class BeartypeForwardRefMeta(type):
         return cls.__is_instance_beartype__(obj)
 
 
-    def __subclasscheck__(cls: ForwardRef, obj: object) -> bool:  # type: ignore[misc]
+    def __subclasscheck__(cls: BeartypeForwardRef, obj: object) -> bool:  # type: ignore[misc]
         '''
         :data:`True` only if the passed object is a subclass of the external
         class referenced by the passed **forward reference subclass** (i.e.,
@@ -186,7 +179,7 @@ class BeartypeForwardRefMeta(type):
         return cls.__is_subclass_beartype__(obj)
 
 
-    def __repr__(cls: ForwardRef) -> str:  # type: ignore[misc]
+    def __repr__(cls: BeartypeForwardRef) -> str:  # type: ignore[misc]
         '''
         Machine-readable string representing this forward reference subclass.
         '''
@@ -239,7 +232,7 @@ class BeartypeForwardRefMeta(type):
 
     # ....................{ PROPERTIES                     }....................
     @property
-    def __type_beartype__(cls: ForwardRef) -> type:  # type: ignore[misc]
+    def __type_beartype__(cls: BeartypeForwardRef) -> type:  # type: ignore[misc]
         '''
         **Forward referee** (i.e., type hint referenced by this forward
         reference subclass, which is usually but *not* necessarily a class).
