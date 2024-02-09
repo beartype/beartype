@@ -71,20 +71,6 @@ class BeartypeForwardRefABC(object, metaclass=BeartypeForwardRefMeta):
     (i.e., if :attr:`__name_beartype__` is absolute).
     '''
 
-
-    __type_imported_beartype__: Optional[type] = None
-    '''
-    Type hint referenced by this forward reference subclass if this subclass has
-    already been passed at least once as the second parameter to either the
-    :func:`isinstance` or :func:`issubclass` builtins (i.e., as the first
-    parameter to the :meth:`.BeartypeForwardRefMeta.__instancecheck__` or
-    :meth:`.BeartypeForwardRefMeta.__subclasscheck__` dunder methods) *or*
-    :data:`None` otherwise.
-
-    Note that this class variable is an optimization reducing space and time
-    complexity for subsequent lookup of this same type hint.
-    '''
-
     # ....................{ INITIALIZERS                   }....................
     def __new__(cls, *args, **kwargs) -> NoReturn:
         '''

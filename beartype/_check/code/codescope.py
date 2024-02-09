@@ -53,7 +53,7 @@ from beartype.typing import (
     Tuple,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.forward.fwdtype import (
+from beartype._check.forward.fwdcache import (
     TYPISTRY_HINT_NAME_TUPLE_PREFIX,
     bear_typistry,
 )

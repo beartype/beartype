@@ -54,16 +54,6 @@ PEP-compliant type hint matching an **abstract syntax tree (AST) node list**
 (i.e., list of zero or more AST nodes).
 '''
 
-# ....................{ BEARTYPE                           }....................
-BeartypeForwardRef = Type[
-    'beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC']  # pyright: ignore
-'''
-PEP-compliant type hint matching a **forward reference proxy** (i.e., concrete
-subclass of the abstract
-:class:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC`
-superclass).
-'''
-
 # ....................{ BOOL                               }....................
 BoolTristate = Literal[True, False, None]
 '''
@@ -398,6 +388,25 @@ resolution can only find the parent callable lexically containing that nested
 class hierarchy on the current call stack (if any) by leveraging the total
 number of classes lexically nesting the currently decorated class as input
 metadata, as trivially provided by the length of this tuple.
+'''
+
+# ....................{ MODULE ~ beartype                  }....................
+BeartypeForwardRef = Type[
+    'beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC']  # pyright: ignore
+'''
+PEP-compliant type hint matching a **forward reference proxy** (i.e., concrete
+subclass of the abstract
+:class:`beartype._check.forward.reference.fwdrefabc.BeartypeForwardRefABC`
+superclass).
+'''
+
+
+BeartypeForwardRefArgs = Tuple[Optional[str], str, TupleTypes]
+'''
+PEP-compliant type hint matching a **forward reference proxy argument list**
+(i.e., tuple of all parameters passed to each call of the low-level private
+:func:`beartype._check.forward.reference.fwdrefmake._make_forwardref_subtype`
+factory function, in the same order as positionally accepted by that function).
 '''
 
 # ....................{ MODULE ~ importlib                 }....................

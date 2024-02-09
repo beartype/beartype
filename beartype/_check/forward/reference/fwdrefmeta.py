@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeCallHintForwardRefException
-from beartype.typing import Type
+from beartype.typing import Dict
 from beartype._data.hint.datahinttyping import BeartypeForwardRef
 from beartype._util.cls.pep.utilpep3119 import die_unless_type_isinstanceable
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
@@ -23,8 +23,6 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
 )
 from beartype._util.module.utilmodimport import import_module_attr
 from beartype._util.text.utiltextidentifier import is_dunder
-
-# ....................{ PRIVATE ~ hints                    }....................
 
 # ....................{ METACLASSES                        }....................
 class BeartypeForwardRefMeta(type):
@@ -262,13 +260,18 @@ class BeartypeForwardRefMeta(type):
             * This forward referee is importable but either:
 
               * Not a type.
-              * A type that is this forward reference subclass, implying this
-                subclass circularly proxies itself.
+              * A type that is this forward reference proxy, implying this proxy
+                circularly proxies itself.
         '''
+
+        # Forward referee referred to by this forward reference proxy if a prior
+        # access of this property has already resolved this referee *OR* "None"
+        # otherwise (i.e., if this is the first access of this property).
+        referee = _forwardref_to_referee.get(cls)
 
         # If this forward referee has yet to be resolved, this is the first call
         # to this property. In this case...
-        if cls.__type_imported_beartype__ is None:  # type: ignore[has-type]
+        if referee is None:  # type: ignore[has-type]
             # print(f'Importing forward ref "{cls.__name_beartype__}" from module "{cls.__scope_name_beartype__}"...')
 
             # Forward referee dynamically imported from this module.
@@ -311,10 +314,28 @@ class BeartypeForwardRefMeta(type):
             # Else, this referee is an isinstanceable class.
 
             # Cache this referee for subsequent lookup by this property.
-            cls.__type_imported_beartype__ = referee
+            _forwardref_to_referee[cls] = referee
         # Else, this referee has already been resolved.
         #
         # In either case, this referee is now resolved.
 
         # Return this previously resolved referee.
-        return cls.__type_imported_beartype__  # type: ignore[return-value]
+        return referee  # type: ignore[return-value]
+
+# ....................{ PRIVATE ~ globals                  }....................
+_forwardref_to_referee: Dict[BeartypeForwardRef, type] = {}
+'''
+**Forward reference referee cache** (i.e., dictionary mapping from each forward
+reference proxy to the arbitrary class referred to by that proxy).
+
+This cache serves a dual purpose. Notably, this cache both enables:
+
+* External callers to iterate over all previously instantiated forward reference
+  proxies. This is particularly useful when responding to module reloading,
+  which requires that *all* previously cached types be uncached.
+* The
+  :attr:`.BeartypeForwardRefMeta.__type_beartype__` property to internally
+  memoize the arbitrary class referred to by this referee. Since the existing
+  ``property_cached`` decorator could trivially do so as well, however, this is
+  only a negligible side effect.
+'''

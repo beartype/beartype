@@ -426,7 +426,7 @@ def clear_coerce_hint_caches() -> None:
       dictionary).
     '''
 
-    # Clear our type hint cache.
+    # Clear the type hint cache.
     _HINT_REPR_TO_SINGLETON.clear()
 
 # ....................{ PRIVATE ~ mappings                 }....................

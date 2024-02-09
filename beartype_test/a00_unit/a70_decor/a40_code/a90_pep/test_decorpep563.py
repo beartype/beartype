@@ -26,19 +26,12 @@ This submodule unit tests :pep:`563` support implemented in the
 # an "from __future__ import annotations" import.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import (
-    skip,
+    # skip,
     skip_if_pypy,
     skip_if_python_version_greater_than_or_equal_to,
 )
 
 # .....................{ TESTS ~ club                      }....................
-#FIXME: Resurrect this test, please. Pretty sure this is now failing because our
-#reloading functionality is beartypistry-dependent, which we no longer even use.
-#The only plausible solution that I see is to somehow augment our
-#@property_cached decorator memoizing our "__type_beartype__" forward reference
-#property to be internally aware of our reloading functionality. How? No idea.
-#Private global boolean somewhere, maybe? *sigh*
-@skip('Currently broken, sadly.')
 def test_pep563_class_self_reference_reloaded() -> None:
     '''
     Test module-scoped :pep:`563` support implemented in the
@@ -67,8 +60,8 @@ def test_pep563_class_self_reference_reloaded() -> None:
     # .....................{ IMPORTS                       }....................
     # Defer test-specific imports.
     #
-    # Note that the "data_pep563_club" submodule is intentionally imported as
-    # an attribute rather than importing the requisite attributes from that
+    # Note that the "data_pep563_club" submodule is intentionally imported as an
+    # attribute rather than importing the requisite attributes from that
     # submodule. Why? Because the entire intention of this test is to exercise
     # reloading of @beartype-decorated callables annotated with circular
     # references under PEP 563.

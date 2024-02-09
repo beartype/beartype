@@ -18,12 +18,12 @@ from beartype.roar import BeartypeDecorHintForwardRefException
 from beartype.typing import (
     Dict,
     Optional,
-    Tuple,
     Type,
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.hint.datahinttyping import (
     BeartypeForwardRef,
+    BeartypeForwardRefArgs,
     TupleTypes,
 )
 from beartype._check.forward.reference.fwdrefabc import (
@@ -32,25 +32,6 @@ from beartype._check.forward.reference.fwdrefabc import (
 )
 from beartype._util.cls.utilclsmake import make_type
 from beartype._util.text.utiltextidentifier import die_unless_identifier
-
-# ....................{ GLOBALS                            }....................
-make_forwardref_subtype_args_to_cls: Dict[
-    Tuple[Optional[str], str, TupleTypes], BeartypeForwardRef] = {}
-'''
-**Forward reference proxy cache** (i.e., dictionary mapping from the tuple of
-all parameters passed to each prior call of the
-:func:`._make_forwardref_subtype` factory function to the forward reference
-subclass dynamically created and returned by that call).
-
-This cache serves a dual purpose. Notably, this cache both enables:
-
-* External callers to iterate over all previously instantiated forward reference
-  proxies. This is particularly useful when responding to module reloading,
-  which requires that *all* previously cached types be uncached.
-* :func:`._make_forwardref_subtype` to internally memoize itself over its
-  passed parameters. Since the existing ``callable_cached`` decorator could
-  trivially do so as well, however, this is only a negligible side effect.
-'''
 
 # ....................{ FACTORIES                          }....................
 def make_forwardref_indexable_subtype(
@@ -158,13 +139,13 @@ def _make_forwardref_subtype(
     '''
 
     # Tuple of all passed parameters (in arbitrary order).
-    args = (scope_name, hint_name, type_bases)
+    args: BeartypeForwardRefArgs = (scope_name, hint_name, type_bases)
 
     # Forward reference proxy previously created and returned by a prior call to
     # this function passed these parameters if any *OR* "None" otherwise (i.e.,
     # if this is the first call to this function passed these parameters).
     # forwardref_subtype: Optional[BeartypeForwardRef] = (
-    forwardref_subtype = make_forwardref_subtype_args_to_cls.get(args, None)
+    forwardref_subtype = _forwardref_args_to_forwardref.get(args, None)
 
     # If this proxy has already been created, reuse and return this proxy as is.
     if forwardref_subtype is not None:
@@ -214,12 +195,28 @@ def _make_forwardref_subtype(
     forwardref_subtype.__name_beartype__ = hint_name  # pyright: ignore
     forwardref_subtype.__scope_name_beartype__ = scope_name  # pyright: ignore
 
-    # Nullify all remaining class variables of this proxy for safety.
-    forwardref_subtype.__type_imported_beartype__ = None  # pyright: ignore
-
     # Cache this proxy for reuse by subsequent calls to this factory function
     # passed the same parameters.
-    make_forwardref_subtype_args_to_cls[args] = forwardref_subtype
+    _forwardref_args_to_forwardref[args] = forwardref_subtype
 
     # Return this proxy.
     return forwardref_subtype
+
+# ....................{ PRIVATE ~ globals                  }....................
+_forwardref_args_to_forwardref: Dict[
+    BeartypeForwardRefArgs, BeartypeForwardRef] = {}
+'''
+**Forward reference proxy cache** (i.e., dictionary mapping from the tuple of
+all parameters passed to each prior call of the
+:func:`._make_forwardref_subtype` factory function to the forward reference
+proxy dynamically created and returned by that call).
+
+This cache serves a dual purpose. Notably, this cache both enables:
+
+* External callers to iterate over all previously instantiated forward reference
+  proxies. This is particularly useful when responding to module reloading,
+  which requires that *all* previously cached types be uncached.
+* :func:`._make_forwardref_subtype` to internally memoize itself over its
+  passed parameters. Since the existing ``callable_cached`` decorator could
+  trivially do so as well, however, this is only a negligible side effect.
+'''

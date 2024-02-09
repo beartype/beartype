@@ -127,7 +127,7 @@ def iter_hint_pep695_forwardrefs(
 ) -> Iterable[BeartypeForwardRefMeta]:
     '''
     Iteratively create and yield one **forward reference proxy** (i.e.,
-    :class:`beartype._check.forward.fwdtype.BeartypeForwardRefABC` subclass) for
+    :class:`beartype._check.forward.fwdcache.BeartypeForwardRefABC` subclass) for
     each unquoted relative forward reference in the passed :pep:`695`-compliant
     **type alias** (i.e., object created by a statement of the form ``type
     {alias_name} = {alias_value}``) to the underlying type hint lazily referred
