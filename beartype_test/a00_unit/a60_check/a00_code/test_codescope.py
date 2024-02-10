@@ -26,7 +26,6 @@ def test_add_func_scope_type() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep3119Exception
-    from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._cave._cavefast import NoneType, RegexCompiledType
     from beartype._check.code.codescope import add_func_scope_type
     from beartype._util.utilobject import get_object_type_basename
@@ -97,7 +96,6 @@ def test_add_func_scope_types() -> None:
         BeartypeDecorHintNonpepException,
         BeartypeDecorHintPep3119Exception,
     )
-    from beartype.roar._roarexc import _BeartypeDecorBeartypistryException
     from beartype._cave._cavefast import CallableTypes, ModuleOrStrTypes
     from beartype._cave._cavemap import NoneTypeOr
     from beartype._check.code.codescope import add_func_scope_types

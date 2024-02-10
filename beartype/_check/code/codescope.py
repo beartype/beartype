@@ -49,14 +49,11 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintNonpepException
 from beartype.typing import (
+    Dict,
     Optional,
     Tuple,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.forward.fwdcache import (
-    TYPISTRY_HINT_NAME_TUPLE_PREFIX,
-    bear_typistry,
-)
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_indexable_subtype)
 from beartype._check.code.codesnip import (
@@ -69,6 +66,7 @@ from beartype._data.hint.datahinttyping import (
     Pep484585ForwardRef,
     SetOrTupleTypes,
     TypeOrTupleTypes,
+    TupleTypes,
 )
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_isinstanceable,
@@ -442,18 +440,16 @@ def add_func_scope_types(
         types = tuple(set(types))
     # In either case, this container is now guaranteed to be a tuple
     # containing only duplicate-free classes.
-    assert isinstance(types, tuple), f'{exception_prefix}{repr(types)} not tuple.'
+    assert isinstance(types, tuple), (
+        f'{exception_prefix}{repr(types)} not tuple.')
 
-    # Name uniquely identifying this tuple as a beartypistry key.
-    tuple_types_name = f'{TYPISTRY_HINT_NAME_TUPLE_PREFIX}{hash(types)}'
-
-    # If this tuple has *NOT* already been cached with the beartypistry, do so.
-    if tuple_types_name not in bear_typistry:
-        bear_typistry[tuple_types_name] = types
-    # Else, this tuple has already been cached with the beartypistry. In this
-    # case, reuse the previously cached tuple.
+    # If this tuple has *NOT* already been cached, do so.
+    if types not in _tuple_union_to_tuple_union:
+        _tuple_union_to_tuple_union[types] = types
+    # Else, this tuple has already been cached. In this case, deduplicate this
+    # tuple by reusing the previously cached tuple.
     else:
-        types = bear_typistry[tuple_types_name]
+        types = _tuple_union_to_tuple_union[types]
 
     # Return the name of a new parameter passing this tuple.
     return add_func_scope_attr(
@@ -567,3 +563,20 @@ def express_func_scope_type_ref(
 
     # Return a 2-tuple of this expression and set of unqualified classnames.
     return ref_expr, forwardrefs_class_basename
+
+# ....................{ PRIVATE ~ globals                  }....................
+_tuple_union_to_tuple_union: Dict[TupleTypes, TupleTypes] = {}
+'''
+**Tuple union cache** (i.e., dictionary mapping from each tuple union passed to
+the :func:`.add_func_scope_types` adder to that same union, preventing tuple
+unions from being duplicated across calls to that adder).
+
+This cache serves a dual purpose. Notably, this cache both enables:
+
+* External callers to iterate over all previously instantiated forward reference
+  proxies. This is particularly useful when responding to module reloading,
+  which requires that *all* previously cached types be uncached.
+* A minor reduction in space complexity by de-duplicating duplicating tuple
+  unions. Since the existing ``callable_cached`` decorator could trivially do so
+  as well, however, this is only a negligible side effect.
+'''

@@ -19,8 +19,7 @@ from beartype.typing import (
     Set,
 )
 from beartype._cave._cavemap import NoneTypeOr
-from beartype._check.convert.convcoerce import clear_coerce_hint_caches
-from beartype._check.forward.fwdcache import clear_forwardref_caches
+from beartype._check.checkcache import clear_checker_caches
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.cls.datacls import TYPES_BEARTYPEABLE
 from beartype._data.hint.datahinttyping import (
@@ -395,37 +394,30 @@ def _uncache_beartype_if_type_redefined(cls: type) -> None:
             # efficiency in the common case of module redefinition.
             _BEARTYPED_MODULE_TO_TYPE_NAME.clear()
 
-            # Clear *ALL* type hint coercion caches. The forward reference
-            # referee cache (i.e.,
-            # "beartype._check.forward.reference.fwdrefmeta._forwardref_to_referee"
-            # dictionary) is particularly problematic, due to mapping from
-            # forward reference proxies (which are themselves classes) to
-            # arbitrary (and thus usually user-defined) classes -- one or more
-            # of which might be this class or other similarly redefined classes;
-            # if so, there now exists a discrepancy between the current
-            # definition of this class and existing forward references referring
+            # Clear *ALL* type-checking caches. Notably:
+            # * The forward reference referee cache (i.e., private
+            #   "beartype._check.forward.reference.fwdrefmeta._forwardref_to_referee"
+            #   dictionary) is problematic, due to mapping from forward
+            #   reference proxies (which are themselves classes) to arbitrary
+            #   (and thus usually user-defined) classes -- one or more of which
+            #   might be this class or other similarly redefined classes.
+            # * The type hint coercion cache (i.e., private
+            #   "beartype._check.convert.convcoerce._hint_repr_to_hint"
+            #   dictionary) is problematic, due to mapping from the
+            #   machine-readable representations of previously seen
+            #   non-self-cached type hints (e.g., "list[MuhClass]") to the first
+            #   seen instance of those hints (e.g., list[MuhClass]). Since this
+            #   class has been redefined, the first seen instance of those hints
+            #   could contain a reference to the first definition of this class.
+            #
+            # If any of these caches contain such desynchronized key-value
+            # pairs, there now exists a discrepancy between the current
+            # definition of this class and existing references in these caches
             # to the prior definition of this class. For safety, all caches
             # possibly containing those references must now be assumed to be
             # invalid. Failing to clear these caches causes @beartype-decorated
             # wrapper functions to raise erroneous type-checking violations.
-            clear_forwardref_caches()
-
-            # Clear *ALL* type hint coercion caches, which map from the
-            # machine-readable representations of previously seen
-            # non-self-cached type hints (e.g., "list[MuhClass]") to the first
-            # seen instance of those hints (e.g., list[MuhClass]). Since this
-            # class has been redefined, the first seen instance of those hints
-            # could contain a reference to the first definition of this class;
-            # if so, there now exists a discrepancy between the current
-            # definition of this class and cached hints containing the prior
-            # definition of this class. For safety, all caches possibly
-            # containing those hints must now be assumed to be invalid. Failing
-            # to clear these caches causes @beartype-decorated wrapper functions
-            # to raise erroneous type-checking violations. See also:
-            #     https://github.com/beartype/beartype/issues/288
-            clear_coerce_hint_caches()
-
-            #FIXME: Clear the beartypistry as well, please.
+            clear_checker_caches()
         # Else, this is the first decoration of this class by this decorator.
         # In this case...
         else:
