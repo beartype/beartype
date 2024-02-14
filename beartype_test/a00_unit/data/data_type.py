@@ -201,16 +201,7 @@ class NonIssubclassableClass(object, metaclass=NonIssubclassableMetaclass):
     pass
 
 # ....................{ CLASSES ~ with : module name       }....................
-class ClassWithModuleNameNone(object):
-    '''
-    Arbitrary pure-Python class with a **missing module name** (i.e., whose
-    ``__module__`` dunder attribute is :data:`None`).
-    '''
-
-    pass
-
-
-class ClassWithModuleNameNonexistent(object):
+class ClassModuleNameFake(object):
     '''
     Arbitrary pure-Python class with a **non-existent module name** (i.e., whose
     ``__module__`` dunder attribute refers to a file that is guaranteed to *not*
@@ -220,10 +211,18 @@ class ClassWithModuleNameNonexistent(object):
     pass
 
 
+class ClassModuleNameNone(object):
+    '''
+    Arbitrary pure-Python class with a **missing module name** (i.e., whose
+    ``__module__`` dunder attribute is :data:`None`).
+    '''
+
+    pass
+
+
 # Monkey-patch the above classes with "bad" module names.
-ClassWithModuleNameNone.__module__ = None
-ClassWithModuleNameNonexistent.__module__ = (
-    'If_I.were.a_dead_leaf.thou_mightest.bear')
+ClassModuleNameFake.__module__ = 'If_I.were.a_dead_leaf.thou_mightest.bear'
+ClassModuleNameNone.__module__ = None
 
 # ....................{ CALLABLES ~ async : factory        }....................
 # Note that we intentionally avoid declaring a factory function for deprecated
@@ -448,7 +447,7 @@ sync_generator = sync_generator_factory()
 Arbitrary pure-Python synchronous generator.
 '''
 
-# ....................{ CALLABLES ~ sync : module          }....................
+# ....................{ CALLABLES ~ sync : library         }....................
 @contextmanager
 def context_manager_factory(obj: object) -> Iterator[object]:
     '''
@@ -468,6 +467,30 @@ def lru_cache_func(n: int) -> int:
     '''
 
     return n + 1
+
+# ....................{ CALLABLES ~ sync : module          }....................
+def function_module_name_fake() -> None:
+    '''
+    Arbitrary pure-Python class with a **non-existent module name** (i.e., whose
+    ``__module__`` dunder attribute refers to a file that is guaranteed to *not*
+    exist on the local filesystem).
+    '''
+
+    pass
+
+
+def function_module_name_none() -> None:
+    '''
+    Arbitrary pure-Python function with a **missing module name** (i.e., whose
+    ``__module__`` dunder attribute is :data:`None`).
+    '''
+
+    pass
+
+
+# Monkey-patch the above callables with "bad" module names.
+function_module_name_fake.__module__ = 'He_had.a_mask.like_Castlereagh'
+function_module_name_none.__module__ = None
 
 # ....................{ CONSTANTS                          }....................
 CALLABLE_CODE_OBJECT = function.__code__

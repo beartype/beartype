@@ -31,7 +31,7 @@ def test_get_hint_pep484585_ref_names() -> None:
     from beartype.typing import ForwardRef
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
         get_hint_pep484585_ref_names)
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -59,12 +59,12 @@ def test_get_hint_pep484585_ref_names() -> None:
     # object defines the "__module__" dunder attribute.
     assert get_hint_pep484585_ref_names(BEING_INTERTWINED) == (None, BREATH_AND)
 
-    # If the active Python interpreter targets >= Python 3.9, then this
+    # If the active Python interpreter targets >= Python 3.10, then this
     # typing.ForwardRef.__init__() method accepts an additional optional
     # "module: Optional[str] = None" parameter preserving the fully-qualified
     # names of the module to which the passed unqualified basenames is relative.
     # In this case...
-    if IS_PYTHON_AT_LEAST_3_9:
+    if IS_PYTHON_AT_LEAST_3_10:
         # Arbitrary relative forward reference defined as a non-string relative
         # to the fully-qualified names of a hypothetical module.
         BEAUTIFUL_SHAPE = ForwardRef(THUS_TREACHEROUSLY, module=OF_DIM_SLEEP)
@@ -112,8 +112,13 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     from beartype.typing import ForwardRef
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
         get_hint_pep484585_ref_names_relative_to)
-    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-    from beartype_test.a00_unit.data.data_type import function
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
+    from beartype_test.a00_unit.data.data_type import (
+        ClassModuleNameFake,
+        ClassModuleNameNone,
+        function_module_name_fake,
+        function_module_name_none,
+    )
     from pytest import raises
 
     # ....................{ LOCALS                         }....................
@@ -145,33 +150,6 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
 
         pass
 
-
-    def thy_mysterious_paradise() -> None:
-        '''
-        Arbitrary function to be monkey-patched with a ``__module__`` dunder
-        attribute whose value is the fully-qualified name of an imaginary and
-        thus unimportable module that does *not* physically exist.
-        '''
-
-        pass
-
-    # Monkey-patch this function with a "__module__" dunder attribute referring
-    # to an imaginary module.
-    thy_mysterious_paradise.__module__ = CASTLEREAGH
-
-
-    def does_the_bright_arch(cls) -> None:
-        '''
-        Arbitrary function to be monkey-patched with a ``__module__`` dunder
-        attribute whose value is :data:`None`.
-        '''
-
-        pass
-
-    # Monkey-patch this function with a "__module__" dunder attribute that is
-    # "None".
-    does_the_bright_arch.__module__ = None
-
     # ....................{ CLASSES                        }....................
     class OfRainbowClouds(object):
         '''
@@ -180,32 +158,6 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
         '''
 
         pass
-
-
-    class IMetMurderOnTheWay(object):
-        '''
-        Arbitrary class to be monkey-patched with a ``__module__`` dunder
-        attribute whose value is the fully-qualified name of an imaginary and
-        thus unimportable module that does *not* physically exist.
-        '''
-
-        pass
-
-    # Monkey-patch this class with a "__module__" dunder attribute referring to
-    # an imaginary module.
-    IMetMurderOnTheWay.__module__ = CASTLEREAGH
-
-
-    class OSleep(object):
-        '''
-        Arbitrary class to be monkey-patched with a ``__module__`` dunder
-        attribute whose value is :data:`None`.
-        '''
-
-        pass
-
-    # Monkey-patch this class with a "__module__" dunder attribute that is none.
-    OSleep.__module__ = None
 
     # ....................{ PASS                           }....................
     # Assert that this getter preserves an absolute forward reference in string
@@ -225,10 +177,12 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
         THIS_MODULE_NAME, VERY_SMOOTH)
 
     # Assert that this getter canonicalizes a relative forward reference against
-    # the "__module__" dunder attribute of a function to the expected string.
+    # the "__module__" dunder attribute of a type stack to the expected string.
     assert get_hint_pep484585_ref_names_relative_to(
-        hint=VERY_SMOOTH, func=and_pendent_mountains) == (
-        THIS_MODULE_NAME, VERY_SMOOTH)
+        hint=VERY_SMOOTH,
+        cls_stack=[OfRainbowClouds],
+        func=and_pendent_mountains,
+    ) == (THIS_MODULE_NAME, VERY_SMOOTH)
 
     # Assert that this getter preserves the passed relative forward reference as
     # is when this reference is the name of a builtin type, even when passed
@@ -243,16 +197,16 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     # do *NOT* physically exist.
     assert get_hint_pep484585_ref_names_relative_to(
         hint='int',
-        cls_stack=(IMetMurderOnTheWay,),
-        func=thy_mysterious_paradise,
+        cls_stack=(ClassModuleNameFake,),
+        func=function_module_name_fake,
     ) == ('builtins', 'int')
 
-    # If the active Python interpreter targets >= Python 3.9, then this
+    # If the active Python interpreter targets >= Python 3.10, then this
     # typing.ForwardRef.__init__() method accepts an additional optional
     # "module: Optional[str] = None" parameter preserving the fully-qualified
     # name of the module to which the passed unqualified basename is relative.
     # In this case...
-    if IS_PYTHON_AT_LEAST_3_9:
+    if IS_PYTHON_AT_LEAST_3_10:
         # Arbitrary relative forward reference defined as a non-string relative
         # to the fully-qualified name of a hypothetical module.
         BEAUTIFUL_SHAPE = ForwardRef(THUS_TREACHEROUSLY, module=OF_DIM_SLEEP)
@@ -292,8 +246,8 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     with raises(BeartypeDecorHintForwardRefException):
         get_hint_pep484585_ref_names_relative_to(
             hint=VERY_SMOOTH,
-            cls_stack=(IMetMurderOnTheWay,),
-            func=thy_mysterious_paradise,
+            cls_stack=(ClassModuleNameFake,),
+            func=function_module_name_fake,
         )
 
     # Assert that this getter raises the expected exception when passed a
@@ -302,8 +256,8 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     with raises(BeartypeDecorHintForwardRefException):
         get_hint_pep484585_ref_names_relative_to(
             hint=VERY_SMOOTH,
-            cls_stack=(OSleep,),
-            func=does_the_bright_arch,
+            cls_stack=(ClassModuleNameNone,),
+            func=function_module_name_none,
         )
 
     # Assert that this getter raises the expected exception when passed a
@@ -312,11 +266,11 @@ def test_get_hint_pep484585_ref_names_relative_to() -> None:
     # imaginary and thus unimportable module that does *NOT* physically exist.
     with raises(BeartypeDecorHintForwardRefException):
         get_hint_pep484585_ref_names_relative_to(
-            hint=VERY_SMOOTH, func=thy_mysterious_paradise)
+            hint=VERY_SMOOTH, func=function_module_name_fake)
 
     # Assert that this getter raises the expected exception when passed a
     # relative forward reference and *ONLY* a callable defining the
     # "__module__" dunder attribute to be "None".
     with raises(BeartypeDecorHintForwardRefException):
         get_hint_pep484585_ref_names_relative_to(
-            hint=VERY_SMOOTH, func=does_the_bright_arch)
+            hint=VERY_SMOOTH, func=function_module_name_none)

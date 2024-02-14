@@ -300,7 +300,6 @@ def import_module_attr(
 
 
 #FIXME: Fix up all tests of this function, please.
-#FIXME: Fix up docstring, please.
 def import_module_attr_or_sentinel(
     # Mandatory parameters.
     attr_name: str,
@@ -340,8 +339,8 @@ def import_module_attr_or_sentinel(
           attribute.
         * Else, this parameter is silently ignored.
 
-        Defaults to :data:`None`, in which case this attribute name must be
-        either fully-qualified *or* the unqualified name of a builtin type.
+        Defaults to :data:`None`, in which case ``attr_name`` must be either
+        fully-qualified *or* the unqualified name of a builtin type.
     exception_cls : Type[Exception]
         Type of exception to be raised by this function. Defaults to
         :class:`._BeartypeUtilModuleException`.

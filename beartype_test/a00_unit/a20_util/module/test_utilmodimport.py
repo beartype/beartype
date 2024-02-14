@@ -56,36 +56,100 @@ def test_import_module_or_none() -> None:
 # ....................{ TESTS ~ attr                       }....................
 def test_import_module_attr() -> None:
     '''
-    Test the
-    :func:`beartype._util.module.utilmodget.import_module_attr` function.
+    Test the :func:`beartype._util.module.utilmodget.import_module_attr`
+    importer.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilModuleException
     from beartype._util.module.utilmodimport import import_module_attr
     from pytest import raises
 
-    # Attribute dynamically imported from a module.
-    module_attr = import_module_attr(
-        'beartype_test.a00_unit.data.util.mod.data_utilmodule_good.attrgood')
+    # ....................{ LOCALS                         }....................
+    # Fully-qualified name of an importable module defining attributes intended
+    # to be dynamically imported below.
+    MODULE_IMPORTABLE_NAME = (
+        'beartype_test.a00_unit.data.util.mod.data_utilmodule_good')
 
-    # Assert this to be the expected attribute.
-    assert isinstance(module_attr, str)
-    assert module_attr.startswith('I started to see human beings as little')
+    # Fully-qualified name of an unimportable module.
+    MODULE_UNIMPORTABLE_NAME = 'to.thy_delightful.realms'
 
-    # Assert this function raises the expected exception when passed the
-    # syntactically valid fully-qualified name of a non-existent attribute of
-    # an importable module.
+    # ....................{ PASS                           }....................
+    # Assert that passing this importer the fully-qualified name of an
+    # existing attribute of an importable module returns that attribute as is.
+    attr_good = import_module_attr(f'{MODULE_IMPORTABLE_NAME}.attrgood')
+    assert isinstance(attr_good, str)
+    assert attr_good.startswith('I started to see human beings as little')
+
+    # ....................{ FAIL                           }....................
+    # Assert that passing this importer the unqualified basename of a
+    # non-existent attribute and *NO* module raises the expected exception.
+    with raises(_BeartypeUtilModuleException):
+        import_module_attr('Conduct_O_Sleep')
+
+    # Assert that passing this importer the unqualified basename of a
+    # non-existent attribute of an importable module raises the expected
+    # exception.
+    with raises(_BeartypeUtilModuleException):
+        import_module_attr('This_doubt', module_name=MODULE_IMPORTABLE_NAME)
+
+    # Assert that passing this importer the unqualified basename of a
+    # non-existent attribute of an unimportable module raises the expected
+    # exception.
     with raises(_BeartypeUtilModuleException):
         import_module_attr(
-            'beartype_test.a00_unit.data.util.mod.data_utilmodule_good.attrbad')
+            'with_sudden_tide', module_name=MODULE_UNIMPORTABLE_NAME)
+
+    # Assert that passing this importer the fully-qualified basename of a
+    # non-existent attribute of an importable module raises the expected
+    # exception.
+    with raises(_BeartypeUtilModuleException):
+        import_module_attr(
+            'flowed_on_his_heart', module_name=MODULE_IMPORTABLE_NAME)
+
+    # Assert that passing this importer the fully-qualified basename of a
+    # non-existent attribute of an unimportable module raises the expected
+    # exception.
+    with raises(_BeartypeUtilModuleException):
+        import_module_attr(
+            'The_insatiate_hope', module_name=MODULE_UNIMPORTABLE_NAME)
+
+
+def test_import_module_attr_or_none() -> None:
+    '''
+    Test the
+    :func:`beartype._util.module.utilmodget.import_module_attr_or_none`
+    importer.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype.roar._roarexc import _BeartypeUtilModuleException
+    from beartype._util.module.utilmodimport import import_module_attr_or_none
+
+    # ....................{ LOCALS                         }....................
+    # Fully-qualified name of an importable module defining attributes intended
+    # to be dynamically imported below.
+    MODULE_NAME = 'beartype_test.a00_unit.data.util.mod.data_utilmodule_good'
+
+    # ....................{ PASS                           }....................
+    # Assert that passing this importer the fully-qualified name of an
+    # existing attribute of an importable module returns that attribute as is.
+    attr_good = import_module_attr_or_none(f'{MODULE_NAME}.attrgood')
+    assert isinstance(attr_good, str)
+    assert attr_good.startswith('I started to see human beings as little')
+
+    # Assert that passing this importer the fully-qualified name of a
+    # non-existent attribute of an importable module returns "None".
+    assert import_module_attr_or_none(f'{MODULE_NAME}.attrbad') is None
 
 
 def test_import_module_attr_or_sentinel() -> None:
     '''
     Test the
     :func:`beartype._util.module.utilmodget.import_module_attr_or_sentinel`
-    function.
+    importer.
     '''
 
     # ....................{ IMPORTS                        }....................
@@ -100,24 +164,45 @@ def test_import_module_attr_or_sentinel() -> None:
         warns,
     )
 
+    # ....................{ LOCALS                         }....................
+    # Fully-qualified name of a test-specific module defining attributes
+    # intended to be dynamically imported below.
+    MODULE_NAME = 'beartype_test.a00_unit.data.util.mod.data_utilmodule_good'
+
     # ....................{ PASS                           }....................
-    # Attribute declared by an importable module.
-    module_attr_good = import_module_attr_or_sentinel(
-        'beartype_test.a00_unit.data.util.mod.data_utilmodule_good.attrgood')
+    # Assert that passing this importer an arbitrary attribute name of an
+    # unimportable module returns the sentinel.
+    assert import_module_attr_or_sentinel(
+        attr_name='Hides_its_dead_eye', module_name='from.the_detested.day',
+    ) is SENTINEL
 
-    # Attribute *NOT* declared by an importable module.
-    module_attr_bad = import_module_attr_or_sentinel(
-        'beartype_test.a00_unit.data.util.mod.data_utilmodule_good.attrbad')
+    # Assert that passing this importer the unqualified name of an existing
+    # builtin type returns that type as is.
+    assert import_module_attr_or_sentinel('int') is int
 
-    # Assert this to be the expected attribute.
-    assert isinstance(module_attr_good, str)
-    assert module_attr_good.startswith(
+    # Assert that passing this importer the unqualified name of a non-existent
+    # builtin type returns the sentinel.
+    assert import_module_attr_or_sentinel(
+        'Where_every_shade_which_the_foul_grave_exhales') is SENTINEL
+
+    # Assert that passing this importer the fully-qualified name of an
+    # existing attribute of an importable module returns that attribute as is.
+    attr_good = import_module_attr_or_sentinel(f'{MODULE_NAME}.attrgood')
+    assert isinstance(attr_good, str)
+    assert attr_good.startswith(
         'I started to see human beings as little')
 
-    # Assert this importer returns the sentinel when passed the syntactically
-    # valid fully-qualified name of a non-existent attribute of an importable
-    # module.
-    assert module_attr_bad is SENTINEL
+    # Assert that passing this importer the fully-qualified name of a
+    # non-existent attribute of an importable module which is also the
+    # unqualified name of a builtin type returns that type.
+    assert import_module_attr_or_sentinel(
+        'str', module_name=MODULE_NAME) is str
+
+    # Assert that passing this importer the fully-qualified name of a
+    # non-existent attribute of an importable module which is *NOT* also the
+    # unqualified name of a builtin type returns the sentinel.
+    assert import_module_attr_or_sentinel(
+        'attrbad', module_name=MODULE_NAME) is SENTINEL
 
     # ....................{ FAIL                           }....................
     # Assert this function emits the expected warning when passed the

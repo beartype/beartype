@@ -30,7 +30,7 @@ from beartype._data.hint.datahinttyping import (
 from beartype._data.module.datamodpy import BUILTINS_MODULE_NAME
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.module.utilmodtest import is_module
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from beartype._util.text.utiltextlabel import label_callable
 from collections.abc import (
     Callable,
@@ -209,7 +209,7 @@ def get_hint_pep484585_ref_names(
         # Forward reference classname referred to by this reference.
         hint_name = hint.__forward_arg__
 
-        # If the active Python interpreter targets >= Python 3.9, then this
+        # If the active Python interpreter targets >= Python 3.10, then this
         # "typing.ForwardRef" object defines an optional "__forward_module__:
         # Optional[str] = None" dunder attribute whose value is either:
         # * If Python passed the "module" parameter when instantiating this
@@ -226,9 +226,14 @@ def get_hint_pep484585_ref_names(
         #   to enable the blatantly useless typing.get_type_hints() function to
         #   avoid repeatedly (and thus inefficiently) reevaluating the same
         #   forward reference. *sigh*
+        # * Technically, this dunder attribute has been defined since at least
+        #   Python >= 3.9.18. Sadly, one or more unknown earlier patch releases
+        #   of the Python 3.9 development cycle do *NOT* support this. This is
+        #   currently only safely usable under Python >= 3.10 -- all patch
+        #   releases of which are known to define this dunder attribute.
         #
         # In this case...
-        if IS_PYTHON_AT_LEAST_3_9:
+        if IS_PYTHON_AT_LEAST_3_10:
             # Fully-qualified name of the module to which this presumably
             # relative forward reference is relative to if any *OR* "None"
             # otherwise (i.e., if *NO* such name was passed at forward reference

@@ -27,8 +27,8 @@ def test_get_type_filename_or_none() -> None:
     from beartype._util.cls.utilclsget import get_type_filename_or_none
     from beartype_test.a00_unit.data.data_type import (
         Class,
-        ClassWithModuleNameNone,
-        ClassWithModuleNameNonexistent,
+        ClassModuleNameNone,
+        ClassModuleNameFake,
     )
 
     # Filename of a class declared on-disk.
@@ -40,5 +40,5 @@ def test_get_type_filename_or_none() -> None:
 
     # Assert this getter returns "None" for classes with either missing or
     # non-existent module names.
-    assert get_type_filename_or_none(ClassWithModuleNameNone) is None
-    assert get_type_filename_or_none(ClassWithModuleNameNonexistent) is None
+    assert get_type_filename_or_none(ClassModuleNameNone) is None
+    assert get_type_filename_or_none(ClassModuleNameFake) is None
