@@ -1208,7 +1208,7 @@ How do I \*ONLY\* type-check while running my test suite?
 *********************************************************
 
 If you use pytest_, you're in luck!
-Check out the `aptly-named pytest-beartype<pytest-beartype_>`__ package.
+Check out the `aptly-named pytest-beartype<pytest-beartype PyPI_>`__ package.
 
 **************************************
 How do I \*NOT\* type-check something?
