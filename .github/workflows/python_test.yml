@@ -222,7 +222,7 @@ jobs:
       # Type-check this package with "pyright". See also:
       #     https://github.com/jakebailey/pyright-action
       - name: 'Type-checking package with "pyright"...'
-        uses: 'jakebailey/pyright-action@v1'
+        uses: 'jakebailey/pyright-action@v2'
         with:
           python-version: "${{ matrix.python-version }}"
 
