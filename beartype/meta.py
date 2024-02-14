@@ -209,7 +209,7 @@ if _PYTHON_VERSION_PARTS < PYTHON_VERSION_MIN_PARTS:
 # For further details, see http://semver.org.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-VERSION = '0.17.2'
+VERSION = '0.17.3'
 '''
 Human-readable package version as a ``.``-delimited string.
 '''
