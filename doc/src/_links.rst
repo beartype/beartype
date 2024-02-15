@@ -109,6 +109,8 @@
    https://ports.macports.org/port/py-beartype
 .. _beartype PyPI:
    https://pypi.org/project/beartype
+.. _pytest-beartype PyPI:
+   https://pypi.org/project/pytest-beartype
 
 .. # ------------------( LINKS ~ beartype : package : meta   )------------------
 .. _Libraries.io:

@@ -1203,6 +1203,13 @@ your GigaChad IDE of choice.
 .. #
 .. # Beartype: *because you no longer care what static type-checkers think.*
 
+*********************************************************
+How do I \*ONLY\* type-check while running my test suite?
+*********************************************************
+
+If you use pytest_, you're in luck!
+Check out the `aptly-named pytest-beartype<pytest-beartype PyPI_>`__ package.
+
 **************************************
 How do I \*NOT\* type-check something?
 **************************************
