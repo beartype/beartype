@@ -56,7 +56,7 @@ from beartype.typing import (
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_indexable_subtype)
-from beartype._check.code.codesnip import (
+from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
 )

@@ -68,6 +68,7 @@ If seeing is believing, prepare to do both those things.
 
    # Install beartype.
    $ pip3 install beartype
+
    # Edit the "{your_package}.__init__" submodule with your favourite IDE.
    $ vim {your_package}/__init__.py      # <-- so, i see that you too vim
 

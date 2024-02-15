@@ -1207,8 +1207,36 @@ your GigaChad IDE of choice.
 How do I \*ONLY\* type-check while running my test suite?
 *********************************************************
 
-If you use pytest_, you're in luck!
-Check out the `aptly-named pytest-beartype<pytest-beartype PyPI_>`__ package.
+Your test suite uses pytest_, of course. You are sane. Therefore, you're lucky!
+The aptly-named `pytest-beartype <pytest-beartype PyPI_>`__ package officially
+supports your valid use case.
+
+Isolate :mod:`beartype` to tests today. If everything blows up, at least you can
+say you tried:
+
+#. Install `pytest-beartype <pytest-beartype PyPI_>`__:
+
+   .. code-block:: bash
+
+      pip3 install pytest-beartype
+
+#. Enable ``pytest-beartype`` by explicitly listing the names of all packages
+   and modules to be type-checked by :mod:`beartype` at test time. Either:
+
+   * Pass the ``--beartype-packages`` option to the ``pytest`` command:
+
+     .. code-block:: bash
+
+        pytest --beartype-packages='{your_package},...,{another_package}'``
+
+   * Add the ``beartype_packages`` option to your ``pytest.ini`` file:
+
+     .. code-block:: ini
+
+        [pytest]
+        beartype_packages='{your_package},...,{another_package}'
+
+Beartype: *because you like your job.*
 
 **************************************
 How do I \*NOT\* type-check something?

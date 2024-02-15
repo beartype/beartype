@@ -58,6 +58,10 @@
 .. _beartype tests:
    https://github.com/beartype/beartype/actions?workflow=tests
 
+.. # ------------------( LINKS ~ beartype : github : related )------------------
+.. _pytest-beartype:
+   https://github.com/beartype/pytest-beartype
+
 .. # ------------------( LINKS ~ beartype : github : time    )------------------
 .. _beartype profiler:
    https://github.com/beartype/beartype/blob/main/bin/profile.bash

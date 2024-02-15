@@ -116,6 +116,36 @@ snippet type-checking the current pith against *all* subscripted arguments of
 this parent type has been generated.
 '''
 
+# ....................{ HINT ~ pep : (484|585) : mapping  }....................
+PEP484585_CODE_HINT_MAPPING = '''(
+{indent_curr}    # True only if this pith is of this mapping type.
+{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
+{indent_curr}    # True only if either this pith is empty *OR* this pith is
+{indent_curr}    # both non-empty and a random item deeply satisfies this hint.
+{indent_curr}    (not {pith_curr_var_name} or {hint_child_placeholder})
+{indent_curr})'''
+'''
+:pep:`484`- and :pep:`585`-compliant code snippet type-checking the current pith
+against a parent **standard mapping type** (i.e., type hint subscripted by
+exactly two child type hints constraining *all* key-value pairs of this pith,
+which necessarily satisfies the :class:`collections.abc.Mapping` protocol with
+guaranteed :math:`O(1)` indexation of at least the first pair).
+
+Caveats
+-------
+**This snippet cannot contain ternary conditionals.** See
+:data:`.PEP484585_CODE_HINT_SEQUENCE_ARGS_1` for further commentary.
+'''
+
+
+PEP484585_CODE_HINT_MAPPING_KEY_FIRST_PITH_CHILD_EXPR = (
+    f'''next(iter({{pith_curr_var_name}}.keys()))''')
+'''
+:pep:`484`- and :pep:`585`-compliant Python expression yielding the value of the
+first key of the current pith (which, by definition, *must* be a standard
+mapping).
+'''
+
 # ....................{ HINT ~ pep : (484|585) : sequence  }....................
 PEP484585_CODE_HINT_SEQUENCE_ARGS_1 = '''(
 {indent_curr}    # True only if this pith is of this sequence type.
@@ -126,11 +156,10 @@ PEP484585_CODE_HINT_SEQUENCE_ARGS_1 = '''(
 {indent_curr})'''
 '''
 :pep:`484`- and :pep:`585`-compliant code snippet type-checking the current pith
-against a parent **standard sequence type** (i.e., PEP-compliant type hint
-accepting exactly one subscripted type hint unconditionally constraining *all*
-items of this pith, which necessarily satisfies the
-:class:`collections.abc.Sequence` protocol with guaranteed ``O(1)`` indexation
-across all sequence items).
+against a parent **standard sequence type** (i.e., type hint subscripted by
+exactly one child type hint constraining *all* items of this pith, which
+necessarily satisfies the :class:`collections.abc.Sequence` protocol with
+guaranteed :math:`O(1)` indexation across all sequence items).
 
 Caveats
 -------

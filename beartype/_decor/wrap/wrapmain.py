@@ -43,7 +43,7 @@ from beartype._check.checkmake import (
     make_code_raiser_func_pep484_noreturn_check,
 )
 from beartype._check.code.codescope import add_func_scope_ref
-from beartype._check.code.codesnip import (
+from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
 )

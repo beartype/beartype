@@ -179,6 +179,22 @@ This set necessarily excludes:
 '''
 
 
+HINT_SIGNS_MAPPING = frozenset((
+    # ..................{ PEP (484|585)                      }..................
+    HintSignDict,
+    HintSignMapping,
+    HintSignMutableMapping,
+))
+'''
+Frozen set of all **standard mapping signs** (i.e., arbitrary objects uniquely
+identifying :pep:`484`- and :pep:`585`-compliant type hints subscripted by
+exactly two child type hints constraining *all* key-value pairs of compliant
+mappings, which necessarily satisfy the :class:`collections.abc.Mapping`
+protocol with guaranteed :math:`O(1)` indexation of at least the first key-value
+pair).
+'''
+
+
 HINT_SIGNS_SEQUENCE_ARGS_1 = frozenset((
     # ..................{ PEP (484|585)                      }..................
     HintSignByteString,
@@ -188,10 +204,10 @@ HINT_SIGNS_SEQUENCE_ARGS_1 = frozenset((
 ))
 '''
 Frozen set of all **standard sequence signs** (i.e., arbitrary objects uniquely
-identifying PEP-compliant type hints accepting exactly one subscripted type
-hint argument constraining *all* items of compliant sequences, which
-necessarily satisfy the :class:`collections.abc.Sequence` protocol with
-guaranteed ``O(1)`` indexation across all sequence items).
+identifying :pep:`484`- and :pep:`585`-compliant type hints subscripted by
+exactly one child type hint constraining *all* items of compliant sequences,
+which necessarily satisfy the :class:`collections.abc.Sequence` protocol with
+guaranteed :math:`O(1)` indexation across all sequence items).
 
 This set intentionally excludes the:
 
@@ -230,8 +246,8 @@ HINT_SIGNS_UNION = frozenset((
 ))
 '''
 Frozen set of all **union signs** (i.e., arbitrary objects uniquely identifying
-:pep:`484`-compliant type hints unifying one or more subscripted type hint
-arguments into a disjunctive set union of these arguments).
+:pep:`484`- and :pep:`604`-compliant type hints unifying one or more subscripted
+type hint arguments into a disjunctive set union of these arguments).
 
 If the active Python interpreter targets:
 
@@ -240,8 +256,8 @@ If the active Python interpreter targets:
 * Python < 3.9, the :obj:`typing.Optional` attribute reduces to the
   :obj:`typing.Union` attribute, in which case this set is technically
   semantically redundant. Since tests of both object identity and set
-  membership are ``O(1)``, this set incurs no significant performance penalty
-  versus direct usage of the :obj:`typing.Union` attribute and is thus
+  membership are :math:`O(1)`, this set incurs no significant performance
+  penalty versus direct usage of the :obj:`typing.Union` attribute and is thus
   unconditionally used as is irrespective of Python version.
 '''
 
@@ -390,8 +406,8 @@ generator return type hints** (i.e., hints permissible as the return
 annotations of asynchronous generators).
 
 See Also
-----------
-:data:`HINT_SIGNS_RETURN_GENERATOR_SYNC`
+--------
+:data:`.HINT_SIGNS_RETURN_GENERATOR_SYNC`
     Further discussion.
 '''
 
@@ -434,7 +450,7 @@ callables may be annotated as also returning a subscription of either the
     ``Iterable[YieldType]`` or ``Iterator[YieldType]``:
 
 See Also
-----------
+--------
 https://github.com/beartype/beartype/issues/65#issuecomment-954468111
     Further discussion.
 '''
