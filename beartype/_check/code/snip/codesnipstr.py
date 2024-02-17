@@ -4,10 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype decorator **type-checking expression snippets** (i.e., triple-quoted
-pure-Python string constants formatted and concatenated together to dynamically
-generate boolean expressions type-checking arbitrary objects against arbitrary
-PEP-compliant type hints).
+Beartype **type-checking expression snippets** (i.e., triple-quoted pure-Python
+string constants formatted and concatenated together to dynamically generate
+boolean expressions type-checking arbitrary objects against various type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

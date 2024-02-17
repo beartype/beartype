@@ -72,23 +72,21 @@ from beartype._check.code.snip.codesnipstr import (
     PEP593_CODE_HINT_VALIDATOR_PREFIX,
     PEP593_CODE_HINT_VALIDATOR_SUFFIX,
 )
+from beartype._check.convert.convsanify import sanify_hint_any
 from beartype._conf.confcls import BeartypeConf
+from beartype._data.code.datacodeindent import (
+    CODE_INDENT_1,
+    CODE_INDENT_2,
+)
+from beartype._data.code.datacodemagic import (
+    LINE_RSTRIP_INDEX_AND,
+    LINE_RSTRIP_INDEX_OR,
+)
 from beartype._data.hint.datahinttyping import (
     CodeGenerated,
+    LexicalScope,
     TypeStack,
 )
-from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.cache.pool.utilcachepoollistfixed import (
-    FIXED_LIST_SIZE_MEDIUM,
-    acquire_fixed_list,
-    release_fixed_list,
-)
-from beartype._util.cache.pool.utilcachepoolobjecttyped import (
-    acquire_object_typed,
-    release_object_typed,
-)
-from beartype._data.hint.datahinttyping import LexicalScope
-from beartype._util.error.utilerrorraise import EXCEPTION_PLACEHOLDER
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
     HintSignForwardRef,
@@ -105,6 +103,17 @@ from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
     HINT_SIGNS_UNION,
 )
+from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.cache.pool.utilcachepoollistfixed import (
+    FIXED_LIST_SIZE_MEDIUM,
+    acquire_fixed_list,
+    release_fixed_list,
+)
+from beartype._util.cache.pool.utilcachepoolobjecttyped import (
+    acquire_object_typed,
+    release_object_typed,
+)
+from beartype._util.error.utilerrorraise import EXCEPTION_PLACEHOLDER
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
@@ -136,27 +145,14 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep_args,
     warn_if_hint_pep_deprecated,
 )
-from beartype._check.convert.convsanify import sanify_hint_any
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.map.utilmapset import update_mapping
-from beartype._util.text.utiltextmagic import (
-    CODE_INDENT_1,
-    CODE_INDENT_2,
-    LINE_RSTRIP_INDEX_AND,
-    LINE_RSTRIP_INDEX_OR,
-)
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
 from random import getrandbits
 
 # ....................{ MAKERS                             }....................
-#FIXME: Attempt to JIT this function with Numba at some point. This will almost
-#certainly either immediately blow up or improve nothing, but we're curious to
-#see what happens. Make it so, Ensign Numba!
-# from numba import jit
-# @jit
-
 @callable_cached
 def make_check_expr(
     # ..................{ ARGS ~ mandatory                   }..................

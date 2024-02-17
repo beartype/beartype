@@ -20,7 +20,7 @@ from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
 )
-from beartype._util.text.utiltextmagic import CODE_INDENT_1
+from beartype._data.code.datacodeindent import CODE_INDENT_1
 
 # ....................{ GETTERS                            }....................
 def find_cause_annotated(cause: ViolationCause) -> ViolationCause:

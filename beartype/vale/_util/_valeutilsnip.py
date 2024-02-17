@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._util.text.utiltextmagic import CODE_INDENT_1
+from beartype._data.code.datacodeindent import CODE_INDENT_1
 
 # ....................{ INDENTATION                        }....................
 VALE_CODE_INDENT_1 = f'{{indent}}{CODE_INDENT_1}'

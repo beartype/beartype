@@ -16,7 +16,7 @@ from beartype.roar import BeartypeValeSubscriptionException
 from beartype.vale._core._valecore import BeartypeValidator
 from beartype.vale._util._valeutiltext import format_diagnosis_line
 from beartype._util.kind.map.utilmapset import merge_mappings_two
-from beartype._util.text.utiltextmagic import CODE_INDENT_1
+from beartype._data.code.datacodeindent import CODE_INDENT_1
 from beartype._util.text.utiltextrepr import represent_object
 
 # ....................{ SUPERCLASSES                       }....................

@@ -40,7 +40,7 @@ def get_interpreter_command_words() -> CommandWords:
     This getter is memoized for efficiency.
 
     Caveats
-    ----------
+    -------
     **This high-level getter should always be called in lieu of the low-level**
     :func:`.get_interpreter_filename` **getter** when attempting to rerun this
     interpreter as a subprocess of the active Python process. Why? Because the
@@ -54,7 +54,7 @@ def get_interpreter_command_words() -> CommandWords:
       passing this interpreter to a prefixing macOS-specific command: ``arch``.
 
     Returns
-    ----------
+    -------
     CommandWords
         Iterable of one or more shell words unambiguously running this binary.
     '''
@@ -106,14 +106,14 @@ def get_interpreter_filename() -> str:
     This getter is memoized for efficiency.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilPathException
         If Python successfully queried this filename but no such file exists.
     _BeartypeUtilPythonInterpreterException
         If Python failed to query this filename.
 
     Returns
-    ----------
+    -------
     str
         Absolute filename of this binary.
     '''

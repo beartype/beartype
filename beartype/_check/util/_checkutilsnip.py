@@ -17,7 +17,7 @@ from beartype._check.checkmagic import (
     ARG_NAME_GETRANDBITS,
     VAR_NAME_RANDOM_INT,
 )
-from beartype._util.text.utiltextmagic import CODE_INDENT_1
+from beartype._data.code.datacodeindent import CODE_INDENT_1
 
 # ....................{ CODE                               }....................
 CODE_SIGNATURE_ARG = (

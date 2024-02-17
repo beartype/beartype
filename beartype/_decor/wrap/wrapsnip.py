@@ -25,7 +25,7 @@ from beartype._check.checkmagic import (
 )
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN_REPR
 from beartype._util.func.arg.utilfuncargiter import ArgKind
-from beartype._util.text.utiltextmagic import CODE_INDENT_1
+from beartype._data.code.datacodeindent import CODE_INDENT_1
 
 # ....................{ CODE                               }....................
 CODE_SIGNATURE = f'''{{code_signature_prefix}}def {{func_name}}(

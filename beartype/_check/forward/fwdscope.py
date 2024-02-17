@@ -21,7 +21,6 @@ from beartype._check.forward.reference.fwdrefabc import (
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_indexable_subtype)
 from beartype._util.text.utiltextidentifier import die_unless_identifier
-# from sys import modules as sys_modules
 
 # ....................{ SUBCLASSES                         }....................
 #FIXME: Unit test us up, please.
@@ -108,7 +107,7 @@ class BeartypeForwardScope(LexicalScope):
               to resolve a nested class or callable against this scope).
 
         Raises
-        ----------
+        ------
         BeartypeDecorHintForwardRefException
             If this scope name is *not* a valid Python attribute name.
         '''
@@ -162,13 +161,13 @@ class BeartypeForwardScope(LexicalScope):
             name of this unresolved type hint.
 
         Returns
-        ----------
+        -------
         Type[_BeartypeForwardRefIndexableABC]
             Forward reference proxy deferring the resolution of this unresolved
             type hint.
 
         Raises
-        ----------
+        ------
         BeartypeDecorHintForwardRefException
             If this type hint name is *not* a valid Python attribute name.
         '''
@@ -186,8 +185,8 @@ class BeartypeForwardScope(LexicalScope):
         forwardref_subtype = make_forwardref_indexable_subtype(
             self._scope_name, hint_name)
 
-        # Return this proxy. The superclass dict.__getitem__() dunder method
-        # then implicitly maps the passed unresolved type hint name to this
-        # proxy by effectively assigning this name to this proxy: e.g.,
-        #     self[hint_name] = forwardref_subtype
+        # Cache this proxy.
+        self[hint_name] = forwardref_subtype
+
+        # Return this proxy.
         return forwardref_subtype

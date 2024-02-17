@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype type hint sign set unit tests.**
+Beartype **type hint sign set unit tests.**
 
 This submodule unit tests the public API of the public
 :mod:`beartype._data.hint.pep.sign.datapepsignset` submodule.
