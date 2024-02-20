@@ -768,16 +768,30 @@ class BeartypeClawException(BeartypeException):
 
     pass
 
-
+# ....................{ API ~ claw : hook                  }....................
 class BeartypeClawHookException(BeartypeClawException):
     '''
     **Beartype import hook-time exception.**
 
     This exception is raised at **beartype import hook-time** (i.e., the early
-    time encompassing the call to a public beartype import hook published
-    by the :mod:`beartype.claw` subpackage by a downstream third-party codebase)
-    on various fatal errors (e.g., when that codebase calls that hook with
-    invalid parameters).
+    time encompassing the call to a public beartype import hook published by the
+    :mod:`beartype.claw` subpackage by a downstream third-party codebase) on
+    various fatal errors (e.g., when that codebase calls that hook with invalid
+    parameters).
+    '''
+
+    pass
+
+
+class BeartypeClawHookUnpackagedException(BeartypeClawHookException):
+    '''
+    **Beartype import hook-time unpackaged exception.**
+
+    This exception is raised at **beartype import hook-time** (i.e., the early
+    time encompassing the call to a public beartype import hook published by the
+    :mod:`beartype.claw` subpackage by a downstream third-party codebase) when
+    the :func:`beartype.claw.beartype_this_package` function is called from
+    outside any package structure (e.g., top-level module or executable script).
     '''
 
     pass

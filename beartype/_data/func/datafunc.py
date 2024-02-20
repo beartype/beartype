@@ -10,8 +10,6 @@ well-known functions and methods).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ IMPORTS                            }....................
-
 # ....................{ SETS                               }....................
 METHOD_NAMES_DUNDER_BINARY = frozenset((
     '__add__',

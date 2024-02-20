@@ -18,7 +18,7 @@ from beartype.typing import (
 from beartype._data.hint.datahintfactory import TypeGuard
 from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj_or_none,
-    get_func_codeobj_name,
+    get_func_codeobj_basename,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_MOST_3_10
 from collections.abc import (
@@ -91,7 +91,7 @@ def is_func_contextlib_contextmanager(func: Any) -> TypeGuard[Callable]:
         CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME)
 
     # Fully-qualified name of that code object.
-    func_codeobj_name = get_func_codeobj_name(func_codeobj)
+    func_codeobj_name = get_func_codeobj_basename(func_codeobj)
 
     # Return true only if the fully-qualified name of that code object is that
     # of the isomorphic decorator closure created and returned by the standard

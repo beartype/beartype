@@ -30,15 +30,6 @@ from types import (
     MethodType,
 )
 
-# ....................{ CONSTANTS                          }....................
-#FIXME: Shift into the "beartype._date" subpackage somewhere, please.
-#FIXME: Unit test us up, please.
-FUNC_CODEOBJ_NAME_MODULE = '<module>'
-'''
-String constant unconditionally assigned to the ``co_name`` instance variables
-of the code objects of all pure-Python modules.
-'''
-
 # ....................{ GETTERS                            }....................
 def get_func_codeobj(
     # Mandatory parameters.
@@ -109,12 +100,12 @@ def get_func_codeobj(
         the event of a fatal error. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     CodeType
         Code object underlying this codeobjable.
 
     Raises
-    ----------
+    ------
     exception_cls
          If this codeobjable has *no* code object and is thus *not* pure-Python.
     '''
@@ -193,7 +184,7 @@ def get_func_codeobj_or_none(
         for both efficiency and disambiguity.
 
     Returns
-    ----------
+    -------
     Optional[CodeType]
         Either:
 
@@ -202,7 +193,7 @@ def get_func_codeobj_or_none(
         * Else, :data:`None`.
 
     See Also
-    ----------
+    --------
     :func:`.get_func_codeobj`
         Further details.
     '''
@@ -292,21 +283,18 @@ def get_func_codeobj_or_none(
 
 # ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
-def get_func_codeobj_name(func: Codeobjable, **kwargs) -> str:
+def get_func_codeobj_basename(func: Codeobjable, **kwargs) -> str:
     '''
-    Fully-qualified name or unqualified basename (contextually depending on the
-    version of the active Python interpreter) of the passed **codeobjable**
-    (i.e., pure-Python object directly associated with a code object) if this
-    object is codeobjable *or* raise an exception otherwise (e.g., if this
-    object is *not* codeobjable).
+    Unqualified basename (contextually depending on the version of the active
+    Python interpreter) of the passed **codeobjable** (i.e., pure-Python object
+    directly associated with a code object) if this object is codeobjable *or*
+    raise an exception otherwise (e.g., if this object is *not* codeobjable).
 
     Specifically, this getter returns:
 
-    * If the active Python interpreter targets Python >= 3.11 and thus defines
-      the ``co_qualname`` attribute on code objects, the value of that attribute
-      on the code object providing the fully-qualified name of this codeobjable.
-    * Else, the value of the ``co_name`` attribute on the code object providing
-      the unqualified basename of this codeobjable.
+    * If the active Python interpreter targets Python >= 3.11, the value of the
+      the ``co_qualname`` attribute on this code object.
+    * Else, the value of the ``co_name`` attribute on this code object.
 
     Parameters
     ----------
@@ -317,7 +305,7 @@ def get_func_codeobj_name(func: Codeobjable, **kwargs) -> str:
     :func:`.get_func_codeobj` getter.
 
     Raises
-    ----------
+    ------
     exception_cls
          If this codeobjable has *no* code object and is thus *not* pure-Python.
     '''

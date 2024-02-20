@@ -1229,6 +1229,13 @@ say you tried:
 
         pytest --beartype-packages='{your_package},...,{another_package}'``
 
+   * Add the ``beartype_packages`` option to your ``pyproject.toml`` file:
+
+     .. code-block:: ini
+
+        [tool.pytest.ini_options]
+        beartype_packages='{your_package},...,{another_package}'
+
    * Add the ``beartype_packages`` option to your ``pytest.ini`` file:
 
      .. code-block:: ini

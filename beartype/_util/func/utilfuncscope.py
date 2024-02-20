@@ -215,10 +215,8 @@ def get_func_locals(
 
     # ..................{ IMPORTS                            }..................
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfunccodeobj import (
-        FUNC_CODEOBJ_NAME_MODULE,
-        get_func_codeobj_or_none,
-    )
+    from beartype._data.func.datafunccodeobj import FUNC_CODEOBJ_NAME_MODULE
+    from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
     from beartype._util.func.utilfuncframe import iter_frames
     from beartype._util.func.utilfunctest import is_func_nested
 

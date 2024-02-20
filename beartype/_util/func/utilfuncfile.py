@@ -36,12 +36,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Optional
+from beartype._data.hint.datahinttyping import Codeobjable
 from beartype._util.func.utilfunccodeobj import get_func_codeobj_or_none
-from collections.abc import Callable
 from linecache import cache as linecache_cache
 
 # ....................{ TESTERS                            }....................
-def is_func_file(func: Callable) -> bool:
+def is_func_file(func: Codeobjable) -> bool:
     '''
     :data:`True` only if the passed callable is defined **on-disk** (e.g., by a
     script or module whose pure-Python source code is accessible to the active
@@ -53,11 +53,11 @@ def is_func_file(func: Callable) -> bool:
 
     Parameters
     ----------
-    func : Callable
-        Callable to be inspected.
+    func : Codeobjable
+        Codeobjable to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if the passed callable is defined on-disk.
     '''
@@ -66,13 +66,7 @@ def is_func_file(func: Callable) -> bool:
     return get_func_filename_or_none(func) is not None
 
 # ....................{ GETTERS                            }....................
-def get_func_filename_or_none(
-    # Mandatory parameters.
-    func: Callable,
-
-    # Optional parameters.
-    # exception_cls: TypeException = _BeartypeUtilCallableException,
-) -> Optional[str]:
+def get_func_filename_or_none(func: Codeobjable, **kwargs) -> Optional[str]:
     '''
     Absolute filename of the file on the local filesystem containing the
     pure-Python source code for the script or module defining the passed
@@ -82,11 +76,14 @@ def get_func_filename_or_none(
 
     Parameters
     ----------
-    func : Callable
-        Callable to be inspected.
+    func : Codeobjable
+        Codeobjable to be inspected.
+
+    All remaining keyword parameters are passed as is to the
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
 
     Returns
-    ----------
+    -------
     Optional[str]
         Either:
 
@@ -122,7 +119,7 @@ def get_func_filename_or_none(
     # approach would unconditionally return the C-specific placeholder string
     # for all callables -- including those originally declared as pure-Python in
     # a Python module. So it goes.
-    func_codeobj = get_func_codeobj_or_none(func)
+    func_codeobj = get_func_codeobj_or_none(func, **kwargs)
 
     # If the passed callable has *NO* code object and is thus *NOT* pure-Python,
     # that callable was *NOT* defined by a pure-Python source code file. In this

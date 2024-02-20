@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import Iterator
-from beartype._util.func.utilfunccodeobj import get_func_codeobj_name
+from beartype._util.func.utilfunccodeobj import get_func_codeobj_basename
 from contextlib import contextmanager
 
 # ....................{ STRINGS                            }....................
@@ -26,7 +26,7 @@ def _noop_context_manager() -> Iterator[None]:
     yield
 
 
-CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME = get_func_codeobj_name(
+CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME = get_func_codeobj_basename(
     _noop_context_manager)
 '''
 Fully-qualified name of the code object underlying the isomorphic decorator

@@ -67,12 +67,12 @@ depth : int
     directly calling this getter.
 
 Returns
-----------
+-------
 CallableFrameType
     Stack frame with the passed index on the current call stack.
 
 Raises
-----------
+------
 ValueError
      If this index exceeds the **height** (i.e., total number of stack frames)
      of the current call stack.
@@ -88,42 +88,6 @@ ValueError
 #    return get_frame_or_none(ignore_frames=2)
 
 # ....................{ GETTERS ~ name                     }....................
-def get_frame_basename(
-    # Mandatory parameters.
-    frame: CallableFrameType,
-
-    # Optional parameters.
-    exception_cls: TypeException = _BeartypeUtilCallFrameException,
-) -> str:
-    '''
-    **Unqualified basename** (e.g., function name, method name excluding parent
-    classname) of the callable whose code object is that of the passed **stack
-    frame** (i.e., :class:`types.CallableFrameType` instance encapsulating all
-    metadata describing a single call on the current call stack).
-
-    Parameters
-    ----------
-    frame : CallableFrameType
-        Stack frame to be inspected.
-
-    Raises
-    ----------
-    exception_cls
-         If that callable has *no* code object and is thus *not* pure-Python.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.func.utilfunccodeobj import get_func_codeobj
-
-    # Code object underlying the callable encapsulated by this frame if that
-    # callable is pure-Python *OR* raise an exception otherwise (i.e., if that
-    # callable is C-based).
-    func_codeobj = get_func_codeobj(func=frame, exception_cls=exception_cls)
-
-    # Return the unqualified basename of that callable.
-    return func_codeobj.co_name
-
-
 #FIXME: Unit test us up, please.
 def get_frame_package_name(
     # Mandatory parameters.
@@ -131,13 +95,14 @@ def get_frame_package_name(
 
     # Optional parameters.
     exception_cls: TypeException = _BeartypeUtilCallFrameException,
-) -> str:
+) -> Optional[str]:
     '''
-    **Fully-qualified name** (i.e., ``.``-delimited name prefixed by the
-    declaring package) of the parent package of the child module declaring the
+    Fully-qualified name of the parent package of the child module declaring the
     callable whose code object is that of the passed **stack frame** (i.e.,
     :class:`types.CallableFrameType` instance encapsulating all metadata
-    describing a single call on the current call stack).
+    describing a single call on the current call stack) if module has a parent
+    package *or* the empty string otherwise (e.g., if that module is either a
+    top-level module or script residing outside any parent package structure).
 
     Parameters
     ----------
@@ -148,16 +113,26 @@ def get_frame_package_name(
         to :class:`._BeartypeUtilCallFrameException`.
 
     Returns
-    ----------
-    str
-        Fully-qualified name of the parent package of the child module declaring
-        that callable.
+    -------
+    Optional[str]
+        Either:
+
+        * If the callable described by this frame resides in a package, the
+          fully-qualified name of that package.
+        * Else, :data:`None`.
 
     Raises
-    ----------
+    ------
     exception_cls
          If that callable has *no* code object and is thus *not* pure-Python.
+
+    See Also
+    --------
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj_basename`
+        Related getter getting the unqualified basename of that callable.
     '''
+    assert isinstance(frame, CallableFrameType), (
+        f'{repr(frame)} not stack frame.')
 
     # Fully-qualified name of the parent package of the child module declaring
     # the callable whose code object is that of this stack frame's if that
@@ -166,27 +141,108 @@ def get_frame_package_name(
     # package structure).
     frame_package_name = frame.f_globals.get('__package__')
 
-    #FIXME: Is "pragma: no cover" accurate here? Is this condition untestable?
-    # If that module has *NO* parent package...
-    if not frame_package_name:  # pragma: no cover
-        # Fully-qualified name of that child module.
-        frame_module_name = frame.f_globals.get('__name__')
-
-        # Unqualified basename of that callable.
-        frame_basename = get_frame_basename(
-            frame=frame, exception_cls=exception_cls)
-
-        # Raise an exception.
-        raise exception_cls(
-            f'Callable "{frame_module_name}.{frame_basename}()" '
-            f'package not found '
-            f'(i.e., top-level module or script "{frame_module_name}" '
-            f'resides outside any parent package).'
-        )
-    # Else, that module has a parent package.
-
     # Return the name of this parent package.
     return frame_package_name
+
+
+#FIXME: Unit test us up, please.
+def get_frame_module_name(
+    # Mandatory parameters.
+    frame: CallableFrameType,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallFrameException,
+) -> Optional[str]:
+    '''
+    Fully-qualified name of the module declaring the callable whose code object
+    is that of the passed **stack frame** (i.e.,
+    :class:`types.CallableFrameType` instance encapsulating all metadata
+    describing a single call on the current call stack).
+
+    Parameters
+    ----------
+    frame : CallableFrameType
+        Stack frame to be inspected.
+
+    Returns
+    -------
+    Optional[str]
+        Either:
+
+        * If the callable described by this frame resides in a module, the
+          fully-qualified name of that module.
+        * Else, :data:`None`.
+
+    See Also
+    --------
+    :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj_basename`
+        Related getter getting the unqualified basename of that callable.
+    '''
+    assert isinstance(frame, CallableFrameType), (
+        f'{repr(frame)} not stack frame.')
+
+    # Fully-qualified name of the module declaring the callable described by
+    # this frame.
+    frame_module_name = frame.f_globals.get('__name__')
+
+    # Return this name.
+    return frame_module_name
+
+
+#FIXME: Preserved for posterity. Currently unused, but potentially useful.
+# from beartype._data.func.datafunccodeobj import FUNC_CODEOBJ_NAME_MODULE
+# #FIXME: Unit test us up, please.
+# def get_frame_name(
+#     # Mandatory parameters.
+#     frame: CallableFrameType,
+#
+#     # Optional parameters.
+#     exception_cls: TypeException = _BeartypeUtilCallFrameException,
+# ) -> str:
+#     '''
+#     Fully-qualified name of the callable whose code object is that of the passed
+#     **stack frame** (i.e., :class:`types.CallableFrameType` instance
+#     encapsulating all metadata describing a single call on the current call
+#     stack).
+#
+#     Parameters
+#     ----------
+#     frame : CallableFrameType
+#         Stack frame to be inspected.
+#
+#     Returns
+#     -------
+#     str
+#         Fully-qualified name of the callable described by this frame.
+#     '''
+#
+#     # Avoid circular import dependencies.
+#     from beartype._util.func.utilfunccodeobj import get_func_codeobj_basename
+#
+#     # Fully-qualified name of the module declaring the callable described by
+#     # this frame.
+#     frame_module_name = get_frame_module_name(
+#         frame=frame, exception_cls=exception_cls)
+#
+#     # Unqualified basename of that callable.
+#     frame_basename = get_func_codeobj_basename(
+#         func=frame, exception_cls=exception_cls)
+#
+#     # Possibly fully-qualified name of that callable, defined as either...
+#     frame_name = (
+#         # If that callable is *NOT* actually a callable but instead the
+#         # top-level lexical scope of a module, omit the prefixing module name
+#         # (which is, in any case, the meaningless magic string "<module>");
+#         frame_basename
+#         if frame_module_name == FUNC_CODEOBJ_NAME_MODULE else
+#         # Else, that callable is actually a callable. In this case, prefix the
+#         # unqualified basename of that callable by the fully-qualified name of
+#         # the module declaring that callable.
+#         f'{frame_module_name}.{frame_basename}'
+#     )
+#
+#     # Return this name.
+#     return frame_name
 
 # ....................{ ITERATORS                          }....................
 def iter_frames(
@@ -227,7 +283,7 @@ def iter_frames(
     standard logic handling this edge case.
 
     Caveats
-    ----------
+    -------
     **This high-level iterator requires the private low-level**
     :func:`sys._getframe` **getter.** If that getter is undefined, this iterator
     reduces to the empty generator yielding nothing rather than raising an
@@ -241,17 +297,17 @@ def iter_frames(
         incremented past). Defaults to 0.
 
     Returns
-    ----------
+    -------
     Iterable[CallableFrameType]
         Generator yielding one frame for each call on the current call stack.
 
     See Also
-    ----------
-    :func:`get_frame`
+    --------
+    :func:`.get_frame`
         Further details on stack frame objects.
 
     Examples
-    ----------
+    --------
         >>> from beartype._util.func.utilfunccodeobj import (
         ...     get_func_codeobj_or_none)
         >>> from beartype._util.func.utilfuncframe import iter_frames
