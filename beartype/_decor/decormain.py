@@ -19,13 +19,12 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import TYPE_CHECKING
+from beartype.typing import TYPE_CHECKING, Callable
 from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
 from beartype._data.hint.datahinttyping import (
-    BeartypeConfedDecorator,
     BeartypeReturn,
     BeartypeableT,
 )
@@ -45,7 +44,7 @@ from typing import overload
 @overload  # type: ignore[misc,no-overload-impl]
 def beartype(obj: BeartypeableT) -> BeartypeableT: ...
 @overload
-def beartype(*, conf: BeartypeConf) -> BeartypeConfedDecorator: ...
+def beartype(*, conf: BeartypeConf) -> Callable[[BeartypeableT], BeartypeableT]: ...
 
 # ....................{ DECORATORS                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

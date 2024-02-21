@@ -143,15 +143,6 @@ checkers (e.g., :mod:`mypy`) and type-aware IDEs (e.g., VSCode) that the
 # ....................{ CALLABLE                           }....................
 # Callable-specific type hints *NOT* required by subsequent type hints below.
 
-BeartypeDecorator = Callable[[BeartypeableT], BeartypeableT]
-'''
-PEP-compliant type hint matching a **beartype-like decorator** (i.e., callable
-presumably decorating a passed object by the :func:`beartype.beartype` decorator
-under a possibly non-default beartype configuration and returning the resulting
-decorated object).
-'''
-
-
 CallableRaiser = Callable[[object], None]
 '''
 PEP-compliant type hint matching a **raiser callable** (i.e., arbitrary callable
