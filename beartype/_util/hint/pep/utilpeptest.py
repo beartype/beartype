@@ -18,10 +18,24 @@ from beartype.roar import (
     BeartypeDecorHintPep484Exception,
     BeartypeDecorHintPep585DeprecationWarning,
 )
-from beartype.typing import NoReturn
+from beartype.typing import (
+    Dict,
+    NoReturn,
+)
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.datapeprepr import (
     HINTS_PEP484_REPR_PREFIX_DEPRECATED)
+from beartype._data.hint.pep.sign.datapepsigncls import HintSign
+from beartype._data.hint.pep.sign.datapepsigns import (
+    HintSignAnnotated,
+    HintSignGeneric,
+    HintSignOptional,
+    HintSignNewType,
+    HintSignPep695TypeAlias,
+    HintSignProtocol,
+    HintSignTypeVar,
+    HintSignUnion,
+)
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SUPPORTED,
     HINT_SIGNS_TYPE_MIMIC,
@@ -29,13 +43,18 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
-    is_hint_pep484_ignorable_or_none)
-from beartype._util.hint.pep.proposal.utilpep544 import (
-    is_hint_pep544_ignorable_or_none)
-from beartype._util.hint.pep.proposal.utilpep593 import (
-    is_hint_pep593_ignorable_or_none)
+    is_hint_pep484_typevar_ignorable,
+    is_hint_pep484585_generic_ignorable,
+    is_hint_pep484604_union_ignorable,
+)
+from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
+    is_hint_pep484_newtype_ignorable)
+from beartype._util.hint.pep.proposal.utilpep544 import is_hint_pep544_ignorable
+from beartype._util.hint.pep.proposal.utilpep593 import is_hint_pep593_ignorable
+from beartype._util.hint.pep.proposal.utilpep695 import is_hint_pep695_ignorable
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.utilobject import get_object_type_unless_type
+from collections.abc import Callable
 from warnings import warn
 
 # ....................{ EXCEPTIONS                         }....................
@@ -488,7 +507,6 @@ def is_hint_pep_deprecated(hint: object) -> bool:
     return hint_repr_bare in HINTS_PEP484_REPR_PREFIX_DEPRECATED
 
 # ....................{ TESTERS ~ ignorable                }....................
-#FIXME: *EXTREMELY INEFFICIENT.* See commentary below, please.
 def is_hint_pep_ignorable(hint: object) -> bool:
     '''
     :data:`True` only if the passed object is a **deeply ignorable PEP-compliant
@@ -530,55 +548,21 @@ def is_hint_pep_ignorable(hint: object) -> bool:
     # Sign uniquely identifying this hint.
     hint_sign = get_hint_pep_sign(hint)
 
-    #FIXME: *EXTREMELY INEFFICIENT*. What were we thinking? Honestly. This is an
-    #O(N) operation when this should instead be an O(1) operation. Refactor
-    #this immediately to instead resemble the
-    #beartype._check.convert.checkreduce._reduce_hint_cached() function.
-    #Notably:
-    #* Define a new "_HINT_SIGN_TO_IS_HINT_PEP_IGNORABLE_TESTER" private global
-    #  dictionary, refactored from the "_IS_HINT_PEP_IGNORABLE_TESTERS"
-    #  iterable.
-    #* Remove the "_IS_HINT_PEP_IGNORABLE_TESTERS" iterable.
-    #* Refactor this logic to perform a simple lookup into this dictionary.
-    #
-    #We are facepalming ourselves as we speak.
+    # Ignorer (i.e., callable testing whether this hint is ignorable) if an
+    # ignorer for hints of this sign was registered *OR* "None" otherwise (i.e.,
+    # if *NO* ignorer was registered, in which case this hint is unignorable).
+    is_hint_ignorable = _HINT_SIGN_TO_IS_HINT_IGNORABLE.get(hint_sign)
 
-    # For each PEP-specific function testing whether this hint is an ignorable
-    # type hint fully compliant with that PEP...
-    for is_hint_pep_ignorable_tester in _IS_HINT_PEP_IGNORABLE_TESTERS:
-        # True only if this hint is a ignorable under this PEP, False only if
-        # this hint is unignorable under this PEP, and None if this hint is
-        # *NOT* compliant with this PEP.
-        is_hint_pep_ignorable_or_none = is_hint_pep_ignorable_tester(
-            hint, hint_sign)
-
-        # If this hint is compliant with this PEP...
-        # print(f'{is_hint_pep_ignorable_or_none} = {is_hint_pep_ignorable_tester}({hint}, {hint_sign})')
-        if is_hint_pep_ignorable_or_none is not None:
-            #FIXME: Uncomment *AFTER* we properly support type variables. Since
-            #we currently ignore type variables, uncommenting this now would
-            #raise spurious warnings for otherwise unignorable and absolutely
-            #unsuspicious generics and protocols parametrized by type
-            #variables, which would be worse than the existing situation.
-
-            # # If this hint is ignorable under this PEP, warn the user this hint
-            # # is deeply ignorable. (See the docstring for justification.)
-            # if is_hint_pep_ignorable_or_none:
-            #     warn(
-            #         (
-            #             f'Ignorable PEP type hint {repr(hint)} '
-            #             f'typically not intended to be ignored.'
-            #         ),
-            #         BeartypeDecorHintPepIgnorableDeepWarning,
-            #     )
-
-            # Return this boolean.
-            return is_hint_pep_ignorable_or_none
-        # Else, this hint is *NOT* compliant with this PEP. In this case,
-        # silently continue to the next such tester.
-
-    # Else, this hint is *NOT* deeply ignorable. In this case, return false.
-    return False
+    # Return either...
+    return (
+        # If an ignorer for hints of this sign was registered, the boolean
+        # returned when passing this ignorer this hint);
+        is_hint_ignorable(hint)
+        if is_hint_ignorable else
+        # Else, *NO* ignorer for hints of this sign was registered, implying
+        # this hint to be unignorable. Return false.
+        False
+    )
 
 # ....................{ TESTERS ~ supported                }....................
 @callable_cached
@@ -821,22 +805,26 @@ def is_hint_pep_typevars(hint: object) -> bool:
     more public :mod:`typing` pseudo-superclasses) are often but *not* always
     typevared. For example, consider the untypevared generic:
 
-        >>> from typing import List
-        >>> class UntypevaredGeneric(List[int]): pass
-        >>> UntypevaredGeneric.__mro__
-        (__main__.UntypevaredGeneric, list, typing.Generic, object)
-        >>> UntypevaredGeneric.__parameters__
-        ()
+    .. code-block:: pycon
+
+       >>> from typing import List
+       >>> class UntypevaredGeneric(List[int]): pass
+       >>> UntypevaredGeneric.__mro__
+       (__main__.UntypevaredGeneric, list, typing.Generic, object)
+       >>> UntypevaredGeneric.__parameters__
+       ()
 
     Likewise, typevared hints are often but *not* always generic. For example,
     consider the typevared non-generic:
 
-        >>> from typing import List, TypeVar
-        >>> TypevaredNongeneric = List[TypeVar('T')]
-        >>> type(TypevaredNongeneric).__mro__
-        (typing._GenericAlias, typing._Final, object)
-        >>> TypevaredNongeneric.__parameters__
-        (~T,)
+    .. code-block:: pycon
+
+       >>> from typing import List, TypeVar
+       >>> TypevaredNongeneric = List[TypeVar('T')]
+       >>> type(TypevaredNongeneric).__mro__
+       (typing._GenericAlias, typing._Final, object)
+       >>> TypevaredNongeneric.__parameters__
+       (~T,)
 
     Parameters
     ----------
@@ -851,20 +839,22 @@ def is_hint_pep_typevars(hint: object) -> bool:
 
     Examples
     --------
-        >>> import typing
-        >>> from beartype._util.hint.pep.utilpeptest import (
-        ...     is_hint_pep_typevars)
-        >>> T = typing.TypeVar('T')
-        >>> class UserList(typing.List[T]): pass
-        # Unparametrized type hint.
-        >>> is_hint_pep_typevars(typing.List[int])
-        False
-        # Directly parametrized type hint.
-        >>> is_hint_pep_typevars(typing.List[T])
-        True
-        # Superclass-parametrized type hint.
-        >>> is_hint_pep_typevars(UserList)
-        True
+    .. code-block:: pycon
+
+       >>> import typing
+       >>> from beartype._util.hint.pep.utilpeptest import (
+       ...     is_hint_pep_typevars)
+       >>> T = typing.TypeVar('T')
+       >>> class UserList(typing.List[T]): pass
+       # Unparametrized type hint.
+       >>> is_hint_pep_typevars(typing.List[int])
+       False
+       # Directly parametrized type hint.
+       >>> is_hint_pep_typevars(typing.List[T])
+       True
+       # Superclass-parametrized type hint.
+       >>> is_hint_pep_typevars(UserList)
+       True
     '''
 
     # Avoid circular import dependencies.
@@ -875,30 +865,70 @@ def is_hint_pep_typevars(hint: object) -> bool:
     # variables parametrizing this hint is non-empty.
     return bool(get_hint_pep_typevars(hint))
 
-# ....................{ PRIVATE ~ tuples                   }....................
-_IS_HINT_PEP_IGNORABLE_TESTERS = (
-    is_hint_pep484_ignorable_or_none,
-    is_hint_pep544_ignorable_or_none,
-    is_hint_pep593_ignorable_or_none,
-)
-'''
-Tuple of all PEP-specific functions testing whether the passed object is an
-ignorable type hint fully compliant with a specific PEP.
+# ....................{ PRIVATE ~ dicts                    }....................
+# Note that this type hints would ideally be defined with the mypy-specific
+# "callback protocol" pseudostandard, documented here:
+#     https://mypy.readthedocs.io/en/stable/protocols.html#callback-protocols
+#
+# Doing so would enable static type-checkers to type-check that the values of
+# this dictionary are valid ignorer functions. Sadly, that pseudostandard is
+# absurdly strict to the point of practical uselessness. Attempting to conform
+# to that pseudostandard would require refactoring *ALL* ignorer functions to
+# explicitly define the same signature. However, we have intentionally *NOT*
+# done that. Why? Doing so would substantially increase the fragility of this
+# API by preventing us from readily adding and removing infrequently required
+# parameters (e.g., "cls_stack", "pith_name"). Callback protocols suck, frankly.
+_HINT_SIGN_TO_IS_HINT_IGNORABLE: Dict[HintSign, Callable] = {
+    # ..................{ PEP 484                            }..................
+    # Ignore *ALL* PEP 484-compliant "NewType"-style type aliases aliasing
+    # ignorable type hints.
+    HintSignNewType: is_hint_pep484_newtype_ignorable,
 
-Each such function is expected to have a signature resembling:
+    # Ignore *ALL* PEP 484-compliant type variables.
+    HintSignTypeVar: is_hint_pep484_typevar_ignorable,
+
+    # ..................{ PEP (484|585)                      }..................
+    # Ignore *ALL* PEP 484- and 585-compliant "Generic[...]" subscriptions.
+    HintSignGeneric: is_hint_pep484585_generic_ignorable,
+
+    # ..................{ PEP (484|604)                      }..................
+    # Ignore *ALL* PEP 484- and 604-compliant unions subscripted by one or more
+    # ignorable type hints.
+    HintSignOptional: is_hint_pep484604_union_ignorable,
+    HintSignUnion:    is_hint_pep484604_union_ignorable,
+
+    # ..................{ PEP 544                            }..................
+    # Ignore *ALL* PEP 544-compliant "typing.Protocol[...]" subscriptions.
+    HintSignProtocol: is_hint_pep544_ignorable,
+
+    # ..................{ PEP 593                            }..................
+    # Ignore *ALL* PEP 593-compliant "typing.Annotated[...]" type hints except
+    # those indexed by one or more beartype validators.
+    HintSignAnnotated: is_hint_pep593_ignorable,
+
+    # ..................{ PEP 695                            }..................
+    # Ignore *ALL* PEP 695-compliant type aliases aliasing ignorable type hints.
+    HintSignPep695TypeAlias: is_hint_pep695_ignorable,
+}
+'''
+Dictionary mapping from each sign uniquely identifying PEP-compliant type hints
+to that sign's **ignorer** (i.e., low-level function testing whether the passed
+type hint identified by that sign is deeply ignorable).
+
+Each value of this dictionary is expected to have a signature resembling:
 
 .. code-block:: python
 
-    def is_hint_pep{PEP_NUMBER}_ignorable_or_none(
-        hint: object, hint_sign: HintSign) -> Optional[bool]:
-        ...
+   def is_hint_pep{pep_number}_ignorable(hint: object) -> bool: ...
 
-Each such function is expected to return either:
+Note that:
 
-* If the passed object is fully compliant with that PEP:
-
-    * If this object is ignorable, :data:`True`.
-    * Else, :data:`False`.
-
-* If this object is *not* fully compliant with that PEP, :data:`None`.
+* Ignorers do *not* need to validate the passed type hint as being of the
+  expected sign. By design, an ignorer is only ever passed a type hint of the
+  expected sign.
+* Ignorers should *not* be memoized (e.g., by the
+  `callable_cached`` decorator). Since the higher-level
+  :func:`.is_hint_pep_ignorable` function that is the sole entry point to
+  calling all lower-level ignorers is itself effectively memoized, ignorers
+  themselves neither require nor benefit from memoization.
 '''

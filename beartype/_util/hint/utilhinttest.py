@@ -168,8 +168,11 @@ def is_hint_ignorable(hint: object) -> bool:
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhintget import get_hint_repr
 
+    # Machine-readable representation of this hint.
+    hint_repr = get_hint_repr(hint)
+
     # If this hint is shallowly ignorable, return true.
-    if get_hint_repr(hint) in HINTS_REPR_IGNORABLE_SHALLOW:
+    if hint_repr in HINTS_REPR_IGNORABLE_SHALLOW:
         return True
     # Else, this hint is *NOT* shallowly ignorable.
     #

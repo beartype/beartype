@@ -1231,10 +1231,10 @@ say you tried:
 
    * Add the ``beartype_packages`` option to your ``pyproject.toml`` file:
 
-     .. code-block:: ini
+     .. code-block:: toml
 
         [tool.pytest.ini_options]
-        beartype_packages='{your_package},...,{another_package}'
+        beartype_packages = '{your_package},...,{another_package}'
 
    * Add the ``beartype_packages`` option to your ``pytest.ini`` file:
 

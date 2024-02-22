@@ -219,9 +219,9 @@ def _reduce_hint_uncached(
 
     # If a callable reducing hints of this sign was previously registered,
     # reduce this hint to another hint via this callable.
-    if hint_reducer is not None:
+    if hint_reducer is not None:  # type: ignore[call-arg]
         # print(f'Reducing hint {repr(hint)} to...')
-        hint = hint_reducer(  # type: ignore[call-arg]
+        hint = hint_reducer(
             hint=hint,  # pyright: ignore[reportGeneralTypeIssues]
             conf=conf,
             cls_stack=cls_stack,
@@ -308,22 +308,35 @@ def _reduce_hint_cached(
     return hint
 
 # ....................{ PRIVATE ~ hints                    }....................
-_DictReducer = Dict[Optional[HintSign], Callable]
+# Note that these type hints would ideally be defined with the mypy-specific
+# "callback protocol" pseudostandard, documented here:
+#     https://mypy.readthedocs.io/en/stable/protocols.html#callback-protocols
+#
+# Doing so would enable static type-checkers to type-check that the values of
+# these dictionaries are valid reducer functions. Sadly, that pseudostandard is
+# absurdly strict to the point of practical uselessness. Attempting to conform
+# to that pseudostandard would require refactoring *ALL* reducer functions to
+# explicitly define the same signature. However, we have intentionally *NOT*
+# done that. Why? Doing so would substantially increase the fragility of this
+# API by preventing us from readily adding and removing infrequently required
+# parameters (e.g., "cls_stack", "pith_name"). Callback protocols suck, frankly.
+_HintSignToReduceHintCached = Dict[Optional[HintSign], Callable]
 '''
-PEP-compliant type hint matching a **reducer dictionary** (i.e., dictionary
-mapping from each sign uniquely identifying various type hints to a callable
-reducing those higher- to lower-level hints).
+PEP-compliant type hint matching a **cached reducer dictionary** (i.e.,
+mapping from each sign uniquely identifying various type hints to a memoized
+callable reducing those higher- to lower-level hints).
+'''
+
+
+_HintSignToReduceHintUncached = _HintSignToReduceHintCached
+'''
+PEP-compliant type hint matching an **uncached reducer dictionary** (i.e.,
+mapping from each sign uniquely identifying various type hints to an unmemoized
+callable reducing those higher- to lower-level hints).
 '''
 
 # ....................{ PRIVATE ~ dicts                    }....................
-#FIXME: After dropping Python 3.7 support:
-#* Replace "Callable[[object, str], object]" here with a callback protocol:
-#      https://mypy.readthedocs.io/en/stable/protocols.html#callback-protocols
-#  Why? Because the current approach forces positional arguments. But we call
-#  these callables with keyword arguments above! Chaos ensues.
-#* Remove the "# type: ignore[call-arg]" pragmas above, which are horrible.
-#* Remove the "# type: ignore[dict-item]" pragmas above, which are horrible.
-_HINT_SIGN_TO_REDUCE_HINT_CACHED: _DictReducer = {
+_HINT_SIGN_TO_REDUCE_HINT_CACHED: _HintSignToReduceHintCached = {
     # ..................{ NON-PEP                            }..................
     # If this hint is identified by *NO* sign, this hint is either an
     # isinstanceable type *OR* a hint unrecognized by beartype. In either case,
@@ -466,8 +479,7 @@ to that sign's **cached reducer** (i.e., low-level function efficiently memoized
 by the :func:`.callable_cached` decorator reducing those higher- to lower-level
 hints).
 
-Each value of this dictionary should be a valid reducer, defined as a function
-with signature resembling:
+Each value of this dictionary is expected to have a signature resembling:
 
 .. code-block:: python
 
@@ -488,19 +500,18 @@ Note that:
   expected sign. By design, a reducer is only ever passed a type hint of the
   expected sign.
 * Reducers should *not* be memoized (e.g., by the
-  :func:`.callable_cached` decorator). Since the higher-level
-  :func:`.reduce_hint` function that is the sole entry point to calling all
-  lower-level reducers is itself memoized, reducers themselves do neither
-  require nor benefit from memoization. Moreover, even if they did either
-  require or benefit from memoization, they couldn't be -- at least, not
-  directly. Why? Because :func:`.reduce_hint` necessarily passes keyword
-  arguments to all reducers. But memoized functions *cannot* receive keyword
-  arguments (without destroying efficiency and thus the entire impetus for
-  memoization). Ergo, reducers *cannot* be memoized.
+  ``callable_cached`` decorator). Since the higher-level :func:`.reduce_hint`
+  function that is the sole entry point to calling all lower-level reducers is
+  itself memoized, reducers themselves neither require nor benefit from
+  memoization. Moreover, even if they did either require or benefit from
+  memoization, they couldn't be -- at least, not directly. Why? Because
+  :func:`.reduce_hint` necessarily passes keyword arguments to all reducers. But
+  memoized functions *cannot* receive keyword arguments (without destroying
+  efficiency and thus the entire point of memoization).
 '''
 
 
-_HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _DictReducer = {
+_HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
     # ..................{ PEP 647                            }..................
     # If this hint is a PEP 647-compliant "typing.TypeGuard[...]" type hint,
     # either:

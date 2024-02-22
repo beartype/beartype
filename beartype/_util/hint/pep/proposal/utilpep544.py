@@ -20,59 +20,42 @@ from beartype.typing import (
     Optional,
     TextIO,
 )
-from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cls.utilclstest import is_type_builtin_or_fake
 from typing import Protocol as typing_Protocol  # <-- unoptimized protocol
 
 # ....................{ TESTERS                            }....................
-def is_hint_pep544_ignorable_or_none(
-    hint: object, hint_sign: HintSign) -> Optional[bool]:
+def is_hint_pep544_ignorable(hint: object) -> bool:
     '''
-    :data:`True` only if the passed object is a :pep:`544`-compliant **ignorable
-    type hint,** :data:`False` only if this object is a :pep:`544`-compliant
-    unignorable type hint, and :data:`None` if this object is *not*
-    :pep:`544`-compliant.
+    :data:`True` only if the passed :pep:`484`-compliant type hint is ignorable.
 
-    Specifically, this tester function returns :data:`True` only if this object
-    is a deeply ignorable :pep:`544`-compliant type hint, including:
+    Specifically, this tester returns :data:`True` only if this hint is a
+    parametrization of the :class:`typing.Protocol` abstract base class (ABC) by
+    one or more type variables. As the name implies, this ABC is generic and
+    thus fails to impose any meaningful constraints. Since a type variable in
+    and of itself also fails to impose any meaningful constraints, these
+    parametrizations are safely ignorable in all possible contexts: e.g.,
 
-    * A parametrization of the :class:`typing.Protocol` abstract base class
-      (ABC) by one or more type variables. As the name implies, this ABC is
-      generic and thus fails to impose any meaningful constraints. Since a type
-      variable in and of itself also fails to impose any meaningful
-      constraints, these parametrizations are safely ignorable in all possible
-      contexts: e.g.,
+    .. code-block:: python
 
-      .. code-block:: python
-
-         from typing import Protocol, TypeVar
-         T = TypeVar('T')
-         def noop(param_hint_ignorable: Protocol[T]) -> T: pass
+       from typing import Protocol, TypeVar
+       T = TypeVar('T')
+       def noop(param_hint_ignorable: Protocol[T]) -> T: pass
 
     This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as this tester is only safely callable
-    by the memoized parent
+    ``callable_cached`` decorator), as this tester is only safely callable by
+    the memoized parent
     :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
 
     Parameters
     ----------
     hint : object
         Type hint to be inspected.
-    hint_sign : HintSign
-        **Sign** (i.e., arbitrary object uniquely identifying this hint).
 
     Returns
-    ----------
-    Optional[bool]
-        Either:
-
-        * If this object is :pep:`544`-compliant:
-
-          * If this object is a ignorable, :data:`True`.
-          * Else, :data:`False`.
-
-        * If this object is *not* :pep:`544`-compliant, :data:`None`.
+    -------
+    bool
+        :data:`True` only if this :pep:`544`-compliant type hint is ignorable.
     '''
 
     # Avoid circular import dependencies.
@@ -81,36 +64,32 @@ def is_hint_pep544_ignorable_or_none(
     # Machine-readable representation of this hint.
     hint_repr = get_hint_repr(hint)
 
-    # If this representation does *NOT* contain a relevant substring
-    # suggesting that this hint might be the "Protocol" superclass directly
-    # parametrized by type variables (e.g., "typing.Protocol[S, T]"),
-    # continue testing this hint for other kinds of ignorability by
-    # returning "None".
-    if 'Protocol[' not in hint_repr:
-        return None
-    # Else, this representation contains such a relevant substring. Sus af!
+    # If this representation contains a relevant substring suggesting that this
+    # hint might be the "Protocol" superclass directly parametrized by type
+    # variables (e.g., "typing.Protocol[S, T]")...
+    if 'Protocol[' in hint_repr:
+        # For the fully-qualified name of each typing module...
+        for typing_module_name in TYPING_MODULE_NAMES:
+            # If this hint is the "Protocol" superclass defined by this module
+            # directly parametrized by one or more type variables (e.g.,
+            # "typing.Protocol[S, T]"), ignore this superclass by returning
+            # true. This superclass can *ONLY* be parametrized by type
+            # variables; a string test thus suffices.
+            #
+            # For unknown and uninteresting reasons, *ALL* possible objects
+            # satisfy the "Protocol" superclass. Ergo, this superclass and *ALL*
+            # parametrizations of this superclass are synonymous with the
+            # "object" root superclass.
+            if hint_repr.startswith(f'{typing_module_name}.Protocol['):
+                return True
+            # Else, this hint is *NOT* such a "Protocol" superclass. In this
+            # case, continue to the next typing module.
+        # Else, this hint is *NOT* the "Protocol" superclass directly
+        # parametrized by one or more type variables.
+    # Else, this representation contains such *NO* such substring.
 
-    # For the fully-qualified name of each typing module...
-    for typing_module_name in TYPING_MODULE_NAMES:
-        # If this hint is the "Protocol" superclass defined by this module
-        # directly parametrized by one or more type variables (e.g.,
-        # "typing.Protocol[S, T]"), ignore this superclass by returning
-        # true. This superclass can *ONLY* be parametrized by type
-        # variables; a string test thus suffices.
-        #
-        # For unknown and uninteresting reasons, *ALL* possible objects
-        # satisfy the "Protocol" superclass. Ergo, this superclass and
-        # *ALL* parametrizations of this superclass are synonymous with the
-        # "object" root superclass.
-        if hint_repr.startswith(f'{typing_module_name}.Protocol['):
-            return True
-        # Else, this hint is *NOT* such a "Protocol" superclass. In this
-        # case, continue to the next typing module.
-
-    # Else, this hint is *NOT* the "Protocol" superclass directly
-    # parametrized by one or more type variables. In this case, continue
-    # testing this hint for other kinds of ignorability by returning "None".
-    return None
+    # Return false, as *ALL* other "Protocol" subclasses are unignorable.
+    return False
 
 
 def is_hint_pep484_generic_io(hint: object) -> bool:
@@ -134,13 +113,13 @@ def is_hint_pep484_generic_io(hint: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a :pep:`484`-compliant IO generic
         base class.
 
     See Also
-    ----------
+    --------
     :class:`_Pep544IO`
         Further commentary.
     '''
@@ -175,7 +154,7 @@ def is_hint_pep544_protocol(hint: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a :pep:`544`-compliant protocol.
     '''
@@ -231,13 +210,13 @@ def reduce_hint_pep484_generic_io_to_pep544_protocol(
         exception message.
 
     Returns
-    ----------
+    -------
     Protocol
         :pep:`544`-compliant :mod:`beartype` IO protocol corresponding to this
         :pep:`484`-compliant :mod:`typing` IO generic base class.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep544Exception
         If this object is *not* a :pep:`484`-compliant IO generic base class.
     '''
@@ -342,7 +321,7 @@ which is pervasive in the interface; however we currently do not offer a way to
 track the other distinctions in the type system.
 
 Design
-----------
+------
 This base class intentionally duplicates the contents of the existing
 :class:`typing.IO` generic base class by substituting the useless
 :class:`typing.Generic` superclass of the latter with the useful
@@ -383,14 +362,14 @@ advertised (or at all)... *and no one ever will.*
 # Conditionally initialized by the _init() function below.
 _Pep544BinaryIO: Any = None  # type: ignore[assignment]
 '''
-Typed version of the return of open() in binary mode.
+Typed version of the return of :func:`open` in binary mode.
 '''
 
 
 # Conditionally initialized by the _init() function below.
 _Pep544TextIO: Any = None  # type: ignore[assignment]
 '''
-Typed version of the return of open() in text mode.
+Typed version of the return of :func:`open` in text mode.
 '''
 
 # ....................{ INITIALIZERS                       }....................

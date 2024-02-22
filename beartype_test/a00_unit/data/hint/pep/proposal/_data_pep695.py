@@ -134,8 +134,6 @@ def hints_pep695_meta() -> 'List[HintPepMetadata]':
     return hints_pep_meta
 
 
-#FIXME: Actually call this list factory *AFTER* implementing the appropriate PEP
-#695-specific ignorer, please.
 def hints_pep695_ignorable_deep() -> list:
     '''
     List of :pep:`695`-compliant **deeply ignorable type hints** (i.e.,

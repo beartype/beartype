@@ -24,7 +24,7 @@ def reduce_hint_pep_unsigned(
     hint: object,
     conf: BeartypeConf,
     exception_prefix: str,
-    *args, **kwargs
+    **kwargs
 ) -> object:
     '''
     Reduce the passed **unsigned PEP-compliant type hint** (i.e., type hint
@@ -57,7 +57,7 @@ def reduce_hint_pep_unsigned(
     All remaining passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     object
         PEP-compliant type hint reduced from this... PEP-compliant type hint.
     '''

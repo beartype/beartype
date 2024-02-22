@@ -199,6 +199,9 @@ class BeartypeDecorHintPepDeprecationWarning(BeartypeDecorHintPepWarning):
     pass
 
 
+#FIXME: This should *REALLY* have been called
+#"BeartypeDecorHintPep484DeprecationWarning". Oh well. Let's preserve backward
+#compatibility by just accepting this as is. This goes away in 2026, anyway.
 class BeartypeDecorHintPep585DeprecationWarning(
     BeartypeDecorHintPepDeprecationWarning):
     '''
@@ -213,9 +216,26 @@ class BeartypeDecorHintPep585DeprecationWarning(
     interpreter targets at least Python >= 3.9 and thus supports :pep:`585`.
 
     See Also
-    ----------
+    --------
     https://github.com/beartype/beartype#pep-585-deprecations
         Further discussion
+    '''
+
+    pass
+
+
+class BeartypeDecorHintPep613DeprecationWarning(
+    BeartypeDecorHintPepDeprecationWarning):
+    '''
+    **Beartype decorator** :pep:`613`-compliant **type hint warning.**
+
+    This warning is emitted at decoration time from the
+    :func:`beartype.beartype` decorator on receiving a callable annotated by
+    one or more outdated :pep:`613`-compliant type hint singletons (i.e.,
+    :obj:`typing.TypeAlias`) that have since been obsoleted by the equivalent
+    :pep:`695`-compliant type aliases (e.g., ``type alias = list[int]``) if the
+    active Python interpreter targets at least Python >= 3.10 and thus supports
+    :pep:`613`.
     '''
 
     pass

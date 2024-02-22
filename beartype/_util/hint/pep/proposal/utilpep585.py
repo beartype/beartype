@@ -32,7 +32,7 @@ placeholder object otherwise to guarantee failure when comparing arbitrary
 objects against this object via equality tests.
 '''
 
-# ....................{ VALIDATORS                         }....................
+# ....................{ RAISERS                            }....................
 def die_unless_hint_pep585_generic(
     # Mandatory parameters.
     hint: object,

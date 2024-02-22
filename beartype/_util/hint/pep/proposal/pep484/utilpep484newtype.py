@@ -14,10 +14,53 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep484Exception
 from beartype.typing import Any
 from beartype._data.hint.pep.sign.datapepsigns import HintSignNewType
+from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
 from types import FunctionType
 
 # ....................{ TESTERS                            }....................
+def is_hint_pep484_newtype_ignorable(hint: object) -> bool:
+    '''
+    :data:`True` only if the passed :pep:`484`-compliant
+    :obj:`typing.NewType`-style type alias is ignorable.
+
+    Specifically, this tester ignores the :obj:`typing.NewType` factory passed
+    an ignorable child type hint. Unlike most :mod:`typing` constructs, that
+    factory does *not* cache the objects it returns: e.g.,
+
+    .. code-block:: python
+
+       >>> from typing import NewType
+       >>> NewType('TotallyNotAStr', str) is NewType('TotallyNotAStr', str)
+       False
+
+    Since this implies every call to ``NewType({same_name}, object)`` returns a
+    new closure, the *only* means of ignoring ignorable new type aliases is
+    dynamically within this function.
+
+    This tester is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as this tester is only safely callable by
+    the memoized parent
+    :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
+
+    Parameters
+    ----------
+    hint : object
+        Type hint to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this :pep:`484`-compliant type hint is ignorable.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.utilhinttest import is_hint_ignorable
+
+    # Return true only if this hint aliases an ignorable child type hint.
+    return is_hint_ignorable(get_hint_pep484_newtype_alias(hint))
+
+
 # If the active Python interpreter targets Python >= 3.10 and thus defines
 # "typing.NewType" type hints as instances of that class, implement this tester
 # unique to prior Python versions to raise an exception.
@@ -71,15 +114,15 @@ else:
 
 is_hint_pep484_newtype_pre_python310.__doc__ = '''
     :data:`True` only if the passed object is a Python < 3.10-specific
-    :pep:`484`-compliant **new type** (i.e., closure created and returned by
-    the :func:`typing.NewType` closure factory function).
+    :pep:`484`-compliant **new type** (i.e., closure created and returned by the
+    :func:`typing.NewType` closure factory function).
 
     This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    ``callable_cached`` decorator), as the implementation trivially reduces to
+    an efficient one-liner.
 
     Caveats
-    ----------
+    -------
     **New type aliases are a complete farce and thus best avoided.**
     Specifically, these PEP-compliant type hints are *not* actually types but
     rather **identity closures** that return their passed parameters as is.
@@ -98,24 +141,23 @@ is_hint_pep484_newtype_pre_python310.__doc__ = '''
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a Python < 3.10-specific
         :pep:`484`-compliant new type.
     '''
 
 # ....................{ GETTERS                            }....................
+#FIXME: Unit test us up, please.
+@callable_cached
 def get_hint_pep484_newtype_alias(
     hint: Any, exception_prefix: str = '') -> object:
     '''
-    **Non-new type type hint** (i.e., PEP-compliant type hint that is *not* a
-    new type) encapsulated by the passed **new type** (i.e., object created and
-    returned by the :pep:`484`-compliant :func:`typing.NewType` type hint
-    factory).
+    Unaliased type hint (i.e., type hint that is *not* a :obj:`typing.NewType`)
+    encapsulated by the passed **newtype** (i.e., object created and returned by
+    the :pep:`484`-compliant :obj:`typing.NewType` type hint factory).
 
-    This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    This getter is memoized for efficiency.
 
     Parameters
     ----------
@@ -126,19 +168,14 @@ def get_hint_pep484_newtype_alias(
         exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     object
-        Non-new type type hint encapsulated by this new type.
+        Unaliased type hint encapsulated by this newtype.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep484Exception
         If this object is *not* a new type.
-
-    See Also
-    ----------
-    :func:`is_hint_pep484_newtype`
-        Further commentary.
     '''
 
     # Avoid circular import dependencies.
@@ -150,7 +187,9 @@ def get_hint_pep484_newtype_alias(
     # If this object is *NOT* a new type, raise an exception.
     if get_hint_pep_sign(hint) is not HintSignNewType:
         raise BeartypeDecorHintPep484Exception(
-            f'{exception_prefix}type hint {repr(hint)} not "typing.NewType".')
+            f'{exception_prefix}type hint {repr(hint)} not '
+            f'PEP 484 "typing.NewType(...)" object.'
+        )
     # Else, this object is a new type.
 
     # While the Universe continues infinitely expanding...
@@ -165,7 +204,7 @@ def get_hint_pep484_newtype_alias(
         # Else, this type hint is a nested new type. In this case, continue
         # iteratively unwrapping this nested new type.
 
-    # Return this non-new type type hint.
+    # Return this unaliased type hint.
     return hint
 
 # ....................{ REDUCERS                           }....................
@@ -182,7 +221,7 @@ def reduce_hint_pep484_newtype(
     to an efficient one-liner.
 
     Caveats
-    ----------
+    -------
     **This reducer has worst-case linear time complexity** :math:`O(k)` for
     :math:`k` the number of **nested new types** (e.g., :math:`k = 2` for the
     doubly nested new type ``NewType('a', NewType('b', int))``) embedded within
@@ -202,7 +241,7 @@ def reduce_hint_pep484_newtype(
     All remaining passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     type
         Non-new type type hint encapsulated by this new type.
     '''
@@ -210,8 +249,10 @@ def reduce_hint_pep484_newtype(
     # Reduce this new type to the non-new type type hint encapsulated by this
     # new type.
     #
-    # Note that this reducer *CANNOT* be reduced to an efficient alias of the
-    # get_hint_pep484_newtype_alias() getter, as this reducer accepts ignorable
-    # arguments *NOT* accepted by that getter.
-    return get_hint_pep484_newtype_alias(
-        hint=hint, exception_prefix=exception_prefix)
+    # Note that:
+    # * This reducer *CANNOT* be reduced to an efficient alias of the
+    #   get_hint_pep484_newtype_alias() getter, as this reducer accepts
+    #   ignorable arguments *NOT* accepted by that getter.
+    # * get_hint_pep484_newtype_alias() is memoized and thus intentionally
+    #   called with positional arguments.
+    return get_hint_pep484_newtype_alias(hint, exception_prefix)

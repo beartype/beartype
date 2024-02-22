@@ -79,9 +79,9 @@ def unit_test_iter_hint_pep695_forwardrefs() -> None:
         next(and_saw_by)
 
     # ....................{ ASSERTS ~ multiple             }....................
-    # Assert that this iterator first yields a forward reference proxy
-    # referring to the first unquoted forward reference embedded in a
-    # passed type alias containing only that reference.
+    # Assert that this iterator first yields a forward reference proxy referring
+    # to the first unquoted forward reference embedded in a passed type alias
+    # containing only that reference.
     her_glowing_limbs = iter_hint_pep695_forwardrefs(as_if_her_heart)
     beneath_the_sinuous_veil = next(her_glowing_limbs)
     assert isinstance(beneath_the_sinuous_veil, BeartypeForwardRefMeta)

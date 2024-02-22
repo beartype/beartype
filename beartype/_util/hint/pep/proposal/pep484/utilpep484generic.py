@@ -23,11 +23,11 @@ from beartype._util.cls.utilclstest import is_type_subclass
 # ....................{ TESTERS                            }....................
 def is_hint_pep484_generic(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is a :pep:`484`-compliant **generic**
+    :data:`True` only if the passed object is a :pep:`484`-compliant **generic**
     (i.e., object that may *not* actually be a class originally subclassing at
     least one PEP-compliant type hint defined by the :mod:`typing` module).
 
-    Specifically, this tester returns ``True`` only if this object was
+    Specifically, this tester returns :data:`True` only if this object was
     originally defined as a class subclassing a combination of:
 
     * At least one of:
@@ -40,8 +40,8 @@ def is_hint_pep484_generic(hint: object) -> bool:
     * Zero or more other standard superclasses.
 
     This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    ``callable_cached`` decorator), as the implementation trivially reduces to
+    an efficient one-liner.
 
     Parameters
     ----------
@@ -49,9 +49,9 @@ def is_hint_pep484_generic(hint: object) -> bool:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
-        ``True`` only if this object is a :mod:`typing` generic.
+        :data:`True` only if this object is a :mod:`typing` generic.
     '''
 
     # Avoid circular import dependencies.
@@ -117,8 +117,8 @@ def get_hint_pep484_generic_base_erased_from_unerased(hint: Any) -> type:
     superclass prior to its implicit type erasure by the :mod:`typing` module).
 
     This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
+    ``callable_cached`` decorator), as the implementation trivially reduces to
+    an efficient one-liner.
 
     Parameters
     ----------
@@ -127,13 +127,13 @@ def get_hint_pep484_generic_base_erased_from_unerased(hint: Any) -> type:
         erased superclass.
 
     Returns
-    ----------
+    -------
     type
         Erased superclass originating this :pep:`484`-compliant unerased
         pseudo-superclass.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep484Exception
         if this object is *not* a :pep:`484`-compliant unerased
         pseudo-superclass.
@@ -188,7 +188,7 @@ def get_hint_pep484_generic_bases_unerased(
         the exception message. Defaults to the empty string.
 
     Returns
-    ----------
+    -------
     tuple
         Tuple of the one or more unerased pseudo-superclasses of this
         :mod:`typing` generic. Specifically:
@@ -202,8 +202,8 @@ def get_hint_pep484_generic_bases_unerased(
           * The :class:`object` root superclass.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If this hint is either:
 
         * *Not* a :mod:`typing` generic.
@@ -221,7 +221,7 @@ def get_hint_pep484_generic_bases_unerased(
           #. The :class:`object` root superclass.
 
     See Also
-    ----------
+    --------
     :func:`beartype._util.hint.pep.proposal.pep484585.utilpep484585generic.get_hint_pep484585_generic_bases_unerased`
         Further details.
     '''
@@ -428,7 +428,7 @@ def get_hint_pep484_generic_bases_unerased(
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep484_generic(
-    hint: object, exception_prefix: str, *args, **kwargs) -> object:
+    hint: object, exception_prefix: str, **kwargs) -> object:
     '''
     Reduce the passed :pep:`484`-compliant **generic** (i.e., object that may
     *not* actually be a class originally subclassing at least one PEP-compliant
@@ -450,7 +450,7 @@ def reduce_hint_pep484_generic(
     All remaining passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     object
         More suitable type hint better supported by :mod:`beartype`.
     '''

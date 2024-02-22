@@ -90,55 +90,36 @@ def is_hint_pep593(hint: Any) -> bool:
     return get_hint_pep_sign_or_none(hint) is HintSignAnnotated
 
 
-def is_hint_pep593_ignorable_or_none(
-    hint: object, hint_sign: HintSign) -> Optional[bool]:
+def is_hint_pep593_ignorable(hint: object) -> bool:
     '''
-    :data:`True` only if the passed object is a :pep:`593`-compliant ignorable
-    type hint, :data:`False` only if this object is a :pep:`593`-compliant
-    unignorable type hint, and :data:`None` if this object is *not*
-    :pep:`593`-compliant.
+    :data:`True` only if the passed :pep:`593`-compliant type hint is ignorable.
 
-    Specifically, this tester function returns :data:True` only if this object
-    is the :data:`Annotated` singleton whose:
+    Specifically, this tester returns :data:`True` only if either:
 
-    * First subscripted argument is an ignorable type hint (e.g.,
-      :obj:`typing.Any`).
-    * Second subscripted argument is *not* a beartype validator (e.g.,
+    * The first subscripted argument of this hint is an ignorable type hint
+      (e.g., :obj:`typing.Any`).
+    * The second subscripted argument is *not* a beartype validator (e.g.,
       ``typing.Annotated[typing.Any, bool]``).
 
     This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as this tester is only safely callable
-    by the memoized parent
+    ``callable_cached`` decorator), as this tester is only safely callable by
+    the memoized parent
     :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
 
     Parameters
     ----------
     hint : object
         Type hint to be inspected.
-    hint_sign : HintSign
-        **Sign** (i.e., arbitrary object uniquely identifying this hint).
 
     Returns
     -------
-    Optional[bool]
-        Either:
-
-        * If this object is :pep:`593`-compliant:
-
-          * If this object is a ignorable, :data:`True`.
-          * Else, :data:`False`.
-
-        * If this object is *not* :pep:`593`-compliant, :data:`None`.
+    bool
+        :data:`True` only if this :pep:`593`-compliant type hint is ignorable.
     '''
 
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhinttest import is_hint_ignorable
     # print(f'!!!!!!!Received 593 hint: {repr(hint)} [{repr(hint_sign)}]')
-
-    # If this hint *NOT* PEP 593-compliant, return "None".
-    if hint_sign is not HintSignAnnotated:
-        return None
-    # Else, this hint is PEP 593-compliant.
 
     # Return true only if...
     return (
