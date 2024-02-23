@@ -19,7 +19,10 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import TYPE_CHECKING, Callable
+from beartype.typing import (
+    TYPE_CHECKING,
+    Callable,
+)
 from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
@@ -40,11 +43,19 @@ from typing import overload
 # @beartype decorator declared below is permissively annotated as returning a
 # union of multiple types desynchronized from the types of the passed arguments
 # and thus fails to accurately convey the actual public API of that decorator.
-# See also: https://www.python.org/dev/peps/pep-0484/#function-method-overloading
+# See also:
+#     https://www.python.org/dev/peps/pep-0484/#function-method-overloading
+#
+# Note that the "Callable[[BeartypeableT], BeartypeableT]" type hint should
+# ideally instead be a reference to our "BeartypeConfedDecorator" type hint.
+# Indeed, it used to be. Unfortunately, a significant regression in mypy
+# required us to inline that type hint away. See also this issue:
+#     https://github.com/beartype/beartype/issues/332
 @overload  # type: ignore[misc,no-overload-impl]
 def beartype(obj: BeartypeableT) -> BeartypeableT: ...
 @overload
-def beartype(*, conf: BeartypeConf) -> Callable[[BeartypeableT], BeartypeableT]: ...
+def beartype(*, conf: BeartypeConf) -> Callable[
+    [BeartypeableT], BeartypeableT]: ...
 
 # ....................{ DECORATORS                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

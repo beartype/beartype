@@ -73,6 +73,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignParamSpec,
     # HintSignParamSpecArgs,
     HintSignPep557DataclassInitVar,
+    HintSignTypeAlias,
     HintSignPep695TypeAlias,
     # HintSignProtocol,
     HintSignReversible,
@@ -613,6 +614,7 @@ def _init() -> None:
             # case, silently continue to the next sign.
             if not hint_sign_name.startswith('HintSign'):
                 continue
+            # Else, this name is that of a sign.
 
             # Sign with this name.
             hint_sign = getattr(datapepsigns, hint_sign_name)

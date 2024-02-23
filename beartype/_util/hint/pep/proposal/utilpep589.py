@@ -4,7 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide :pep:`589`-compliant type hint utilities.
+Project-wide :pep:`589`-compliant **typed dictionary** (i.e.,
+:class:`typing.TypedDict` subclass) utilities.
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -22,13 +23,13 @@ from beartype._util.py.utilpyversion import IS_PYTHON_3_8
 #   setting the subversive "__mro_entries__" dunder attribute to a tuple
 #   containing a private "typing._TypedDict" superclass. This superclass
 #   necessarily defines the three requisite dunder attributes.
-# * The "typing_extensions.TypedDict" attribute under Python < 3.8 is actually
-#   a superclass also necessarily defining the three requisite dunder
-#   attributes.
-# * The "typing.TypedDict" attribute under *ONLY* Python 3.8 is also actually
-#   a superclass that *ONLY* defines the requisite "__annotations__" dunder
+# * The "typing_extensions.TypedDict" attribute under Python < 3.8 is actually a
+#   superclass also necessarily defining the three requisite dunder attributes.
+# * The "typing.TypedDict" attribute under *ONLY* Python 3.8 is also actually a
+#   superclass that *ONLY* defines the requisite "__annotations__" dunder
 #   attribute. The two remaining dunder attributes are only conditionally
 #   defined and thus *CANNOT* be unconditionally assumed to exist.
+#
 # In all three cases, passing the passed hint and that superclass to the
 # issubclass() builtin fails, as the metaclass of that superclass prohibits
 # issubclass() checks. I am throwing up in my mouth as I write this.
@@ -40,15 +41,15 @@ from beartype._util.py.utilpyversion import IS_PYTHON_3_8
 # bug, we have little choice but to at least temporarily support this insanity.
 def is_hint_pep589(hint: object) -> bool:
     '''
-    ``True`` only if the passed object is a :pep:`589`-compliant **typed
+    :data:`True` only if the passed object is a :pep:`589`-compliant **typed
     dictionary** (i.e., :class:`typing.TypedDict` subclass).
 
     This getter is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator). Although the implementation
-    inefficiently performs three calls to the :func:`hasattr` builtin (which
-    inefficiently calls the :func:`getattr` builtin and catches the
-    :exc:`AttributeError` exception to detect false cases), callers are
-    expected to instead (in order):
+    ``callable_cached`` decorator). Although the implementation inefficiently
+    performs three calls to the :func:`hasattr` builtin (which inefficiently
+    calls the :func:`getattr` builtin and catches the :exc:`AttributeError`
+    exception to detect false cases), callers are expected to instead (in
+    order):
 
     #. Call the memoized
        :func:`beartype._util.hint.pep.utilpepget.get_hint_pep_sign_or_none`
@@ -63,9 +64,9 @@ def is_hint_pep589(hint: object) -> bool:
         Object to be tested.
 
     Returns
-    ----------
+    -------
     bool
-        ``True`` only if this object is a typed dictionary.
+        :data:`True` only if this object is a typed dictionary.
     '''
 
     # If this hint is *NOT* a "dict" subclass, this hint *CANNOT* be a typed
@@ -153,20 +154,19 @@ def reduce_hint_pep589(
     supported by :mod:`beartype`.
 
     This reducer is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as reducers cannot be memoized.
+    ``callable_cached`` decorator), as reducers cannot be memoized.
 
     Parameters
     ----------
     hint : object
         Typed dictionary to be reduced.
     exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message.
+        Substring prefixing exception messages raised by this reducer.
 
     All remaining passed arguments are silently ignored.
 
     Returns
-    ----------
+    -------
     object
         Lower-level type hint currently supported by :mod:`beartype`.
     '''

@@ -240,6 +240,25 @@ def die_if_hint_pep_unsupported(
     )
 
 # ....................{ WARNINGS                           }....................
+#FIXME: This and the related is_hint_pep_deprecated() tester are rather odd.
+#They're both PEP 585-specific and thus:
+#* More correctly belong in the "beartype._util.hint.pep.proposal.utilpep585"
+#  submodule rather than here.
+#* Should be renamed as follows:
+#  * From warn_if_hint_pep_deprecated() to warn_if_hint_pep585_deprecated().
+#  * From is_hint_pep_deprecated() to is_hint_pep585_deprecated().
+#FIXME: Moreover, this warn_if_hint_pep585_deprecated() should ideally be called
+#from a different location. Currently, we call warn_if_hint_pep585_deprecated()
+#from our "beartype._check.code.codemake" submodule, which is all manner of
+#weird. Instead, we should consider calling warn_if_hint_pep585_deprecated()
+#from either:
+#* get_hint_pep_sign_or_none().
+#* Somewhere within the "beartype._check.convert" subpackage.
+#
+#Indeed, we currently emit similar deprecation warnings for PEP 613 from within
+#the reduce_hint_pep613() reducer. Ergo, somewhere within the
+#"beartype._check.convert" subpackage might be suitable.
+
 #FIXME: Resurrect support for the passed "warning_prefix" parameter. We've
 #currently disabled this parameter as it's typically just a non-human-readable
 #placeholder substring *NOT* intended to be exposed to end users (e.g.,

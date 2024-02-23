@@ -36,6 +36,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignPanderaAny,
     HintSignPep557DataclassInitVar,
     HintSignPep585BuiltinSubscriptedUnknown,
+    HintSignTypeAlias,
     HintSignPep695TypeAlias,
     HintSignSelf,
     HintSignType,
@@ -66,6 +67,7 @@ from beartype._util.hint.pep.proposal.utilpep585 import (
 from beartype._util.hint.pep.proposal.utilpep589 import reduce_hint_pep589
 from beartype._util.hint.pep.proposal.utilpep591 import reduce_hint_pep591
 from beartype._util.hint.pep.proposal.utilpep593 import reduce_hint_pep593
+from beartype._util.hint.pep.proposal.utilpep613 import reduce_hint_pep613
 from beartype._util.hint.pep.proposal.utilpep647 import reduce_hint_pep647
 from beartype._util.hint.pep.proposal.utilpep673 import reduce_hint_pep673
 from beartype._util.hint.pep.proposal.utilpep675 import reduce_hint_pep675
@@ -512,18 +514,24 @@ Note that:
 
 
 _HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
+    # ..................{ PEP 613                            }..................
+    # Reduce PEP 613-compliant "typing.TypeAlias" type hints to an arbitrary
+    # ignorable type hint *AND* emit a non-fatal deprecation warning.
+    #
+    # Note that, to ensure that one such warning is emitted for each such hint,
+    # this reducer is intentionally uncached rather than cached.
+    HintSignTypeAlias: reduce_hint_pep613,
+
     # ..................{ PEP 647                            }..................
-    # If this hint is a PEP 647-compliant "typing.TypeGuard[...]" type hint,
-    # either:
-    # * If this hint annotates the return of some callable, reduce this hint to
-    #   the standard "bool" type.
+    # Reduce PEP 647-compliant "typing.TypeGuard[...]" type hints to either:
+    # * If this hint annotates the return of some callable, the "bool" type.
     # * Else, raise an exception.
     HintSignTypeGuard: reduce_hint_pep647,
 
     # ..................{ PEP 673                            }..................
-    # If this hint is a PEP 673-compliant "typing.Self" type hint, either:
-    # * If @beartype is currently decorating a class, reduce this hint to the
-    #   most deeply nested class on the passed type stack.
+    # Reduce PEP 673-compliant "typing.Self" type hints to either:
+    # * If @beartype is currently decorating a class, the most deeply nested
+    #   class on the passed type stack.
     # * Else, raise an exception.
     HintSignSelf: reduce_hint_pep673,
 }
@@ -534,7 +542,7 @@ decision contextually depends on the currently decorated callable and thus
 *cannot* be efficiently memoized by the :func:`.callable_cached` decorator).
 
 See Also
-----------
+--------
 :data:`._HINT_SIGN_TO_REDUCE_HINT_CACHED`
     Further details.
 '''

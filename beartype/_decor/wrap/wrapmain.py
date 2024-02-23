@@ -20,6 +20,15 @@ This private submodule is *not* intended for importation by downstream callers.
 # All "FIXME:" comments for this submodule reside in this package's "__init__"
 # submodule to improve maintainability and readability here.
 
+#FIXME: Handle "{exception_prefix}" in warnings similar to how we handle that
+#for exceptions. Sadly, Python's warning management is considerably more
+#cumbersome than its exception management. Still, this is feasible. Moreover, we
+#have *NO* choice. Just do it. See also the first solution in this StackOverflow
+#answer, which seems quite reasonable:
+#    https://stackoverflow.com/a/77516994
+#FIXME: Perform similar handling in the _make_func_checker() factory defined
+#elsewhere, please.
+
 #FIXME: Split this large submodule into smaller submodules for maintainability.
 #A useful approach might be:
 #* Define a new private "_codearg" submodule and shift the _code_check_args()
@@ -336,11 +345,11 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
     # ..................{ LOCALS ~ hint                      }..................
     # Type hint annotating the current parameter if any *OR* "_PARAM_HINT_EMPTY"
     # otherwise (i.e., if this parameter is unannotated).
-    hint = None
+    hint_insane = None
 
     # This type hint sanitized into a possibly different type hint more readily
     # consumable by @beartype's code generator.
-    hint_sane = None
+    hint = None
 
     # ..................{ GENERATE                           }..................
     #FIXME: Locally remove the "arg_index" local variable (and thus avoid
@@ -370,10 +379,10 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
         # Note that "None" is a semantically meaningful PEP 484-compliant type
         # hint equivalent to "type(None)". Ergo, we *MUST* explicitly
         # distinguish between that type hint and unannotated parameters.
-        hint = bear_call.func_arg_name_to_hint_get(arg_name, SENTINEL)
+        hint_insane = bear_call.func_arg_name_to_hint_get(arg_name, SENTINEL)
 
         # If this parameter is unannotated, continue to the next parameter.
-        if hint is SENTINEL:
+        if hint_insane is SENTINEL:
             continue
         # Else, this parameter is annotated.
 
@@ -390,22 +399,18 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 continue
             # Else, this parameter is non-ignorable.
 
-            #FIXME: Definitely the wrong way around. This should simply be
-            #"hint" -- *NOT* "hint_sane". Define a new "hint_insane = hint"
-            #alias preserving the original insane hint, please.
-
             # Sanitize this hint into a possibly different type hint more
             # readily consumable by @beartype's code generator *BEFORE* passing
             # this hint to any further callables.
-            hint_sane = sanify_hint_root_func(
-                hint=hint, pith_name=arg_name, bear_call=bear_call)
+            hint = sanify_hint_root_func(
+                hint=hint_insane, pith_name=arg_name, bear_call=bear_call)
 
             # If this hint is ignorable, continue to the next parameter.
             #
             # Note that this is intentionally tested *AFTER* this hint has been
             # coerced into a PEP-compliant type hint to implicitly ignore
             # PEP-noncompliant type hints as well (e.g., "(object, int, str)").
-            if is_hint_ignorable(hint_sane):
+            if is_hint_ignorable(hint):
                 # print(f'Ignoring {bear_call.func_name} parameter {arg_name} hint {repr(hint)}...')
                 continue
             # Else, this hint is unignorable.
@@ -447,15 +452,18 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # Type stack if required by this hint *OR* "None" otherwise. See the
             # is_hint_needs_cls_stack() tester for further discussion.
             #
-            # Note that the original unsanitized "hint" (e.g., "typing.Self")
-            # rather than the new sanitized "hint_sane" (e.g., the class
-            # currently being decorated by @beartype) is passed to that tester.
-            # Why? Because the latter may already have been reduced above to a
-            # different and seemingly innocuous type hint that does *NOT* appear
-            # to require a type stack but actually does. Only the original
-            # unsanitized "hint" can tell the truth.
+            # Note that the original unsanitized "hint_insane" (e.g.,
+            # "typing.Self") rather than the new sanitized "hint" (e.g., the
+            # class currently being decorated by @beartype) is passed to that
+            # tester. Why? Because the latter may already have been reduced
+            # above to a different and seemingly innocuous type hint that does
+            # *NOT* appear to require a type stack but actually does. Only the
+            # original unsanitized "hint_insane" can tell the truth.
             cls_stack = (
-                 bear_call.cls_stack if is_hint_needs_cls_stack(hint) else None)
+                bear_call.cls_stack
+                if is_hint_needs_cls_stack(hint_insane) else
+                None
+            )
             # print(f'arg "{arg_name}" hint {repr(hint)} cls_stack: {repr(cls_stack)}')
 
             # Code snippet type-checking any parameter with an arbitrary name.
@@ -464,7 +472,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 func_scope,
                 hint_refs_type_basename,
             ) = make_code_raiser_func_pith_check(
-                hint_sane,
+                hint,
                 bear_call.conf,
                 cls_stack,
                 True,  # <-- True only for parameters

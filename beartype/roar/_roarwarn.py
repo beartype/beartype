@@ -231,11 +231,11 @@ class BeartypeDecorHintPep613DeprecationWarning(
 
     This warning is emitted at decoration time from the
     :func:`beartype.beartype` decorator on receiving a callable annotated by
-    one or more outdated :pep:`613`-compliant type hint singletons (i.e.,
-    :obj:`typing.TypeAlias`) that have since been obsoleted by the equivalent
-    :pep:`695`-compliant type aliases (e.g., ``type alias = list[int]``) if the
-    active Python interpreter targets at least Python >= 3.10 and thus supports
-    :pep:`613`.
+    one or more outdated :pep:`613`-compliant **type aliases** (i.e.,
+    :obj:`typing.TypeAlias` type hint singletons) that have since been obsoleted
+    by the equivalent :pep:`695`-compliant type aliases (e.g., ``type alias =
+    list[int]``) if the active Python interpreter targets at least Python >=
+    3.10 and thus supports :pep:`613`.
     '''
 
     pass

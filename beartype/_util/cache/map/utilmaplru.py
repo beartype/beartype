@@ -125,10 +125,10 @@ class CacheLruStrong(dict):
         key: Hashable,
 
         # Superclass methods efficiently localized as default parameters.
-        __contains=dict.__contains__,
-        __getitem=dict.__getitem__,
-        __delitem=dict.__delitem__,
-        __pushitem=dict.__setitem__,
+        __contains = dict.__contains__,  # pyright: ignore
+        __getitem = dict.__getitem__,  # pyright: ignore
+        __delitem = dict.__delitem__,  # pyright: ignore
+        __pushitem = dict.__setitem__,  # pyright: ignore
     ) -> object:
         '''
         Return an item previously cached under the passed key *or* raise an
@@ -144,12 +144,12 @@ class CacheLruStrong(dict):
             Arbitrary hashable key to retrieve the cached value of.
 
         Returns
-        ----------
+        -------
         object
             Arbitrary value cached under this key.
 
         Raises
-        ----------
+        ------
         TypeError
             If this key is not hashable.
         KeyError
@@ -173,11 +173,11 @@ class CacheLruStrong(dict):
         value: object,
 
         # Superclass methods efficiently localized as default parameters.
-        __contains=dict.__contains__,
-        __delitem=dict.__delitem__,
-        __pushitem=dict.__setitem__,
-        __iter=dict.__iter__,
-        __len=dict.__len__,
+        __contains = dict.__contains__,  # pyright: ignore
+        __delitem = dict.__delitem__,  # pyright: ignore
+        __pushitem = dict.__setitem__,  # pyright: ignore
+        __iter = dict.__iter__,  # pyright: ignore
+        __len = dict.__len__,  # pyright: ignore
     ) -> None:
         '''
         Cache this key-value pair while preserving size constraints.
@@ -190,7 +190,7 @@ class CacheLruStrong(dict):
             Arbitrary value to be cached under this key.
 
         Raises
-        ----------
+        ------
         TypeError
             If this key is not hashable.
         '''
@@ -207,13 +207,13 @@ class CacheLruStrong(dict):
 
     def __contains__(
         self,
-         key: Hashable,
+        key: Hashable,
 
-         # Superclass methods efficiently localized as default parameters.
-         __contains=dict.__contains__,
-         __getitem=dict.__getitem__,
-         __delitem=dict.__delitem__,
-         __pushitem=dict.__setitem__,
+        # Superclass methods efficiently localized as default parameters.
+        __contains = dict.__contains__,  # pyright: ignore
+        __getitem = dict.__getitem__,  # pyright: ignore
+        __delitem = dict.__delitem__,  # pyright: ignore
+        __pushitem = dict.__setitem__,  # pyright: ignore
      ) -> bool:
         '''
         Return a boolean indicating whether this key is cached.
@@ -227,9 +227,9 @@ class CacheLruStrong(dict):
             Arbitrary hashable key to detect the existence of.
 
         Returns
-        ----------
+        -------
         bool
-            ``True`` only if this key is cached.
+            :data:`True` only if this key is cached.
 
         Raises
         ----------
