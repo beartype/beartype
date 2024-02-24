@@ -62,12 +62,15 @@ from beartype.typing import (
     Optional,
 )
 from beartype._data.hint.datahinttyping import TypeWarning
+from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 from collections.abc import Callable
-from inspect import findsource, getsource
+from inspect import (
+    findsource,
+    getsource,
+)
 from traceback import format_exc
-from warnings import warn
 
 # ....................{ GETTERS ~ code : lines             }....................
 #FIXME: Unit test us up.
@@ -140,9 +143,9 @@ def get_func_code_lines_or_none(
         except Exception:
             # Reduce this fatal error to a non-fatal warning embedding a full
             # exception traceback as a formatted string.
-            warn(
-                f'{label_callable(func)} not parsable:\n{format_exc()}',
-                warning_cls,
+            issue_warning(
+                cls=warning_cls,
+                message=f'{label_callable(func)} not parsable:\n{format_exc()}',
             )
     # Else, the passed callable only exists in-memory.
 
@@ -240,9 +243,9 @@ def get_func_file_code_lines_or_none(
         except Exception:
             # Reduce this fatal error to a non-fatal warning embedding a full
             # exception traceback as a formatted string.
-            warn(
-                f'{label_callable(func)} not parsable:\n{format_exc()}',
-                warning_cls,
+            issue_warning(
+                cls=warning_cls,
+                message=f'{label_callable(func)} not parsable:\n{format_exc()}',
             )
     # Else, the passed callable only exists in-memory.
 
@@ -315,13 +318,13 @@ if IS_PYTHON_AT_LEAST_3_9:
                     # If this file exceeds a sane maximum file size, emit a
                     # non-fatal warning and safely ignore this file.
                     if len(lambda_file_code) >= _LAMBDA_CODE_FILESIZE_MAX:
-                        warn(
-                            (
+                        issue_warning(
+                            cls=warning_cls,
+                            message=(
                                 f'{label_callable(func)} not parsable, '
                                 f'as file size exceeds safe maximum '
                                 f'{_LAMBDA_CODE_FILESIZE_MAX}MB.'
                             ),
-                            warning_cls,
                         )
                     # Else, this file *SHOULD* be safely parsable by the
                     # standard "ast" module without inducing a fatal
@@ -360,15 +363,15 @@ if IS_PYTHON_AT_LEAST_3_9:
                                 lambdas_code_str = '\n    '.join(lambdas_code)
 
                                 # Emit this warning.
-                                warn(
-                                    (
+                                issue_warning(
+                                    cls=warning_cls,
+                                    message=(
                                         f'{label_callable(func)} ambiguous, '
                                         f'as that line defines '
                                         f'{len(lambdas_code)} lambdas; '
                                         f'arbitrarily selecting first '
                                         f'lambda:\n{lambdas_code_str}'
                                     ),
-                                    warning_cls,
                                 )
                             # Else, that line number defines one lambda.
 
@@ -386,9 +389,9 @@ if IS_PYTHON_AT_LEAST_3_9:
                         # functions. If it does not, raising an exception seems
                         # superficially reasonable. Yet, we don't. See above.
                         else:
-                            warn(
-                                f'{label_callable(func)} not found.',
-                                warning_cls,
+                            issue_warning(
+                                cls=warning_cls,
+                                message=f'{label_callable(func)} not found.',
                             )
                 # Else, that lambda is dynamically defined in-memory.
             # If *ANY* of the dodgy stdlib callables (e.g., ast.parse(),
@@ -402,9 +405,12 @@ if IS_PYTHON_AT_LEAST_3_9:
             #     Warning: Trying to unparse a highly complex expression would
             #     result with RecursionError.
             except Exception:
-                warn(
-                    f'{label_callable(func)} not parsable:\n{format_exc()}',
-                    warning_cls,
+                issue_warning(
+                    cls=warning_cls,
+                    message=(
+                        f'{label_callable(func)} not parsable:\n'
+                        f'{format_exc()}'
+                    ),
                 )
         # Else, the passed callable is *NOT* a pure-Python lambda function.
 

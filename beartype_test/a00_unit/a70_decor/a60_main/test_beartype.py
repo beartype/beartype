@@ -58,10 +58,10 @@ def test_beartype(iter_hints_piths_meta) -> None:
         BeartypeCallHintViolation,
         # BeartypeDecorHintPep585DeprecationWarning,
     )
-    from beartype._util.hint.pep.utilpeptest import is_hint_pep_deprecated
+    # from beartype._util.hint.pep.utilpeptest import is_hint_pep_deprecated
     from beartype._util.text.utiltextansi import strip_str_ansi
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
-        HintPepMetadata,
+        # HintPepMetadata,
         HintPithUnsatisfiedMetadata,
     )
     from beartype_test._util.pytroar import raises_uncached
@@ -95,48 +95,49 @@ def test_beartype(iter_hints_piths_meta) -> None:
         def func_untyped(hint_param: hint) -> hint:
             return hint_param
 
-        # @beartype-generated wrapper function type-checking this callable.
-        func_typed = None
-
-        # If...
-        if (
-            # This hint is PEP-compliant (rather than PEP-noncompliant) *AND*...
-            isinstance(hint_meta, HintPepMetadata) and
-            # This hint is deprecated (e.g., by PEP 585)...
-            is_hint_pep_deprecated(hint)
-        ):
-            #FIXME: For unknown and probably uninteresting reasons, the
-            #pytest.warns() context manager appears to be broken on our
-            #local machine. We have no recourse but to unconditionally
-            #ignore this warning at the module level. So much rage!
-            #FIXME: It's likely this has something to do with the fact that
-            #Python filters deprecation warnings by default. This is almost
-            #certainly a pytest issue. Since this has become fairly
-            #unctuous, we should probably submit a pytest issue report.
-            #FIXME: Actually, pytest now appears to have explicit support for
-            #testing that a code block emits a deprecation warning:
-            #    with pytest.deprecated_call():
-            #        myfunction(17)
-            #See also: https://docs.pytest.org/en/6.2.x/warnings.html#ensuring-code-triggers-a-deprecation-warning
-            #FIXME: Fascinatingly, warns() still refuses to capture warnings.
-            #Although we certainly could call deprecated_call(), doing so is
-            #stymied by the fact that
-            #"BeartypeDecorHintPep585DeprecationWarning" does *NOT* subclass the
-            #standard "DeprecationWarning" class. *sigh*
-            func_typed = beartype_confed(func_untyped)
-
-            #FIXME: Pass the "match" parameter to deprecated_call() to assert
-            #that @beartype emits the expected deprecation warning.
-            # Decorate thes callable under a context manager asserting this
-            # declaration to emit non-fatal deprecation warnings.
-            # with warns(BeartypeDecorHintPep585DeprecationWarning):
-            # with warns():
-            # with deprecated_call():
-            #     func_typed = beartype_confed(func_untyped)
-        # Else, this is *NOT* a deprecated PEP-compliant type hint. In this
-        # case, decorated this callable as is.
-        else:
-            func_typed = beartype_confed(func_untyped)
+        #FIXME: For unknown and probably uninteresting reasons, the
+        #pytest.warns() context manager appears to be broken on our
+        #local machine. We have no recourse but to unconditionally
+        #ignore this warning at the module level. So much rage!
+        #FIXME: It's likely this has something to do with the fact that
+        #Python filters deprecation warnings by default. This is almost
+        #certainly a pytest issue. Since this has become fairly
+        #unctuous, we should probably submit a pytest issue report.
+        #FIXME: Actually, pytest now appears to have explicit support for
+        #testing that a code block emits a deprecation warning:
+        #    with pytest.deprecated_call():
+        #        myfunction(17)
+        #See also: https://docs.pytest.org/en/6.2.x/warnings.html#ensuring-code-triggers-a-deprecation-warning
+        #FIXME: Fascinatingly, warns() still refuses to capture warnings.
+        #Although we certainly could call deprecated_call(), doing so is
+        #stymied by the fact that
+        #"BeartypeDecorHintPep585DeprecationWarning" does *NOT* subclass the
+        #standard "DeprecationWarning" class. *sigh*
+        # # @beartype-generated wrapper function type-checking this callable.
+        # func_typed = None
+        #
+        # # If...
+        # if (
+        #     # This hint is PEP-compliant (rather than PEP-noncompliant) *AND*...
+        #     isinstance(hint_meta, HintPepMetadata) and
+        #     # This hint is deprecated (e.g., by PEP 585)...
+        #     is_hint_pep_deprecated(hint)
+        # ):
+        #     func_typed = beartype_confed(func_untyped)
+        #
+        #     #FIXME: Pass the "match" parameter to deprecated_call() to assert
+        #     #that @beartype emits the expected deprecation warning.
+        #     # Decorate thes callable under a context manager asserting this
+        #     # declaration to emit non-fatal deprecation warnings.
+        #     # with warns(BeartypeDecorHintPep585DeprecationWarning):
+        #     # with warns():
+        #     # with deprecated_call():
+        #     #     func_typed = beartype_confed(func_untyped)
+        # # Else, this is *NOT* a deprecated PEP-compliant type hint. In this
+        # # case, decorated this callable as is.
+        # else:
+        #     func_typed = beartype_confed(func_untyped)
+        func_typed = beartype_confed(func_untyped)
 
         # # @beartype-generated wrapper function type-checking this callable.
         # func_typed = (func_untyped)

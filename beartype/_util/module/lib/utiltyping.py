@@ -22,9 +22,9 @@ from beartype.typing import (
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.module.datamodtyping import TYPING_MODULE_NAMES
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.module.utilmodimport import import_module_attr_or_none
 from collections.abc import Iterable as IterableABC
-from warnings import warn
 
 # ....................{ TESTERS                            }....................
 #FIXME: Unit test us up, please.
@@ -477,10 +477,12 @@ def iter_typing_attrs(
             if typing_attr is None:
                 # If emitting non-fatal warnings, do so.
                 if is_warn:
-                    warn(
-                        f'Ignoring undefined typing attribute '
-                        f'"{typing_attr_name}"...',
-                        BeartypeModuleAttributeNotFoundWarning,
+                    issue_warning(
+                        cls=BeartypeModuleAttributeNotFoundWarning,
+                        message=(
+                            f'Ignoring undefined typing attribute '
+                            f'"{typing_attr_name}"...'
+                        ),
                     )
                 # Else, silently reduce to a noop.
 

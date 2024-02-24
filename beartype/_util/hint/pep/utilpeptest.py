@@ -11,20 +11,16 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.meta import URL_PEP585_DEPRECATIONS
 from beartype.roar import (
     BeartypeDecorHintPepException,
     BeartypeDecorHintPepUnsupportedException,
     BeartypeDecorHintPep484Exception,
-    BeartypeDecorHintPep585DeprecationWarning,
 )
 from beartype.typing import (
     Dict,
     NoReturn,
 )
 from beartype._data.hint.datahinttyping import TypeException
-from beartype._data.hint.pep.datapeprepr import (
-    HINTS_PEP484_REPR_PREFIX_DEPRECATED)
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignAnnotated,
@@ -55,7 +51,6 @@ from beartype._util.hint.pep.proposal.utilpep695 import is_hint_pep695_ignorable
 from beartype._util.module.utilmodget import get_object_module_name_or_none
 from beartype._util.utilobject import get_object_type_unless_type
 from collections.abc import Callable
-from warnings import warn
 
 # ....................{ EXCEPTIONS                         }....................
 def die_if_hint_pep(
@@ -240,126 +235,6 @@ def die_if_hint_pep_unsupported(
     )
 
 # ....................{ WARNINGS                           }....................
-#FIXME: This and the related is_hint_pep_deprecated() tester are rather odd.
-#They're both PEP 585-specific and thus:
-#* More correctly belong in the "beartype._util.hint.pep.proposal.utilpep585"
-#  submodule rather than here.
-#* Should be renamed as follows:
-#  * From warn_if_hint_pep_deprecated() to warn_if_hint_pep585_deprecated().
-#  * From is_hint_pep_deprecated() to is_hint_pep585_deprecated().
-#FIXME: Moreover, this warn_if_hint_pep585_deprecated() should ideally be called
-#from a different location. Currently, we call warn_if_hint_pep585_deprecated()
-#from our "beartype._check.code.codemake" submodule, which is all manner of
-#weird. Instead, we should consider calling warn_if_hint_pep585_deprecated()
-#from either:
-#* get_hint_pep_sign_or_none().
-#* Somewhere within the "beartype._check.convert" subpackage.
-#
-#Indeed, we currently emit similar deprecation warnings for PEP 613 from within
-#the reduce_hint_pep613() reducer. Ergo, somewhere within the
-#"beartype._check.convert" subpackage might be suitable.
-
-#FIXME: Resurrect support for the passed "warning_prefix" parameter. We've
-#currently disabled this parameter as it's typically just a non-human-readable
-#placeholder substring *NOT* intended to be exposed to end users (e.g.,
-#"$%ROOT_PITH_LABEL/~"). For exceptions, we simply catch raised exceptions and
-#replace such substrings with human-readable equivalents. Can we perform a
-#similar replacement for warnings?
-
-def warn_if_hint_pep_deprecated(
-    # Mandatory parameters.
-    hint: object,
-
-    # Optional parameters.
-    warning_prefix: str = '',
-) -> None:
-    '''
-    Emit a non-fatal warning if the passed PEP-compliant type hint is
-    **deprecated** (i.e., obsoleted by an equivalent type hint or set of type
-    hints standardized under one or more recent PEPs).
-
-    This validator is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : object
-        PEP-compliant type hint to be inspected.
-    warning_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        warning message. Defaults to the empty string.
-
-    Warns
-    -----
-    BeartypeDecorHintPep585DeprecationWarning
-        If this hint is a :pep:`484`-compliant type hint deprecated by
-        :pep:`585` *and* the active Python interpreter targets Python >= 3.9.
-    '''
-
-    #FIXME: Uncomment *AFTER* resolving the "FIXME:" above.
-    #FIXME: Unit test that this string contains *NO* non-human-readable
-    #placeholder substrings. Note that the existing
-    #"beartype_test.a00_unit.decor.code.test_codemain" submodule contains
-    #relevant logic currently disabled for reasons that hopefully no longer
-    #apply. *Urgh!*
-    # assert isinstance(exception_prefix, str), f'{repr(exception_prefix)} not string.'
-
-    # If this hint is a PEP 484-compliant type hint originating from an origin
-    # type (e.g., "typing.List[int]"), this hint has been deprecated by the
-    # equivalent PEP 585-compliant type hint (e.g., "list[int]"). In this case,
-    # emit a non-fatal PEP 585-specific deprecation warning.
-    if is_hint_pep_deprecated(hint):
-        #FIXME: Resolve issue #73 by additionally passing the "stacklevel"
-        #keyword parameter. Doing so will probably require:
-        #* Refactoring this function to accept an *OPTIONAL*
-        #  "warning_stack_level" parameter. Why optional? Because this
-        #  parameter is only reliably decidable under Python interpreters
-        #  defining the implementation-specific sys._getframe() function, which
-        #  is admittedly all of them everyone cares about. Nonetheless, do this
-        #  right. If non-"None", conditionally pass this level below as:
-        #      stacklevel=(
-        #          warning_stack_level
-        #          if warning_stack_level is not None else
-        #          1  # <-- the official default value for this parameter
-        #      ),
-        #* Refactoring all callers of this function to pass that parameter.
-        #  Here's where things get dicey, however. Passing this parameter
-        #  reliably (so, *NOT* just hard-coding a magic number somewhere and
-        #  praying devoutly for the best) will require computing the distance
-        #  between the current function and the first external third-party
-        #  non-@beartype scope on the call stack. So, maybe we want to actually
-        #  *NOT* refactor this function to accept an *OPTIONAL*
-        #  "warning_stack_level" parameter but instead locally define
-        #  "warning_stack_level" based on an iterative O(n) search up the
-        #  stack? That's obviously non-ideal -- but still absolutely preferable
-        #  to the current untenable situation of emitting unreadable warnings.
-        #
-        #Okay. So, scrap everything above. Let's instead:
-        #* Define a new warn_safe() wrapper function (somewhere in
-        #  "beartype._util", clearly) that automatically decides the
-        #  appropriate "stacklevel" by iterating up the call stack to compute
-        #  the distance between the current function and the first external
-        #  third-party non-@beartype scope. We perform similar iteration when
-        #  resolving PEP 563-based deferred annotations, so that would probably
-        #  be the first place to clean inspiration. That code is rock solid and
-        #  well-tested. Things get non-trivial fast here, sadly. *sigh*
-        #
-        #See also: https://docs.python.org/3/library/warnings.html#warnings.warn
-        warn(
-            (
-                f'PEP 484 type hint {repr(hint)} deprecated by PEP 585. '
-                f'This hint is scheduled for removal in the first Python '
-                f'version released after October 5th, 2025. To resolve this, '
-                f'import this hint from "beartype.typing" rather than "typing". '
-                f'For further commentary and alternatives, see also:\n'
-                f'    {URL_PEP585_DEPRECATIONS}'
-            ),
-            BeartypeDecorHintPep585DeprecationWarning,
-        )
-    # Else, this hint is *NOT* deprecated. In this case, reduce to a noop.
-
-
 #FIXME: Unit test us up.
 #FIXME: Actually use us in place of die_if_hint_pep_unsupported().
 #FIXME: Actually, it's unclear whether we still require or desire this. See
@@ -483,47 +358,6 @@ def is_hint_pep(hint: object) -> bool:
     # Return true *ONLY* if this hint is uniquely identified by a sign and thus
     # PEP-compliant.
     return hint_sign is not None
-
-
-def is_hint_pep_deprecated(hint: object) -> bool:
-    '''
-    :data:`True` only if the passed object is a **PEP-compliant deprecated type
-    hint** (i.e., obsoleted by an equivalent type hint or set of type hints
-    standardized under one or more recent PEPs).
-
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
-    to an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : object
-        Object to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this object is a PEP-compliant deprecated type
-        hint.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.utilhintget import get_hint_repr
-
-    # Machine-readable representation of this hint.
-    hint_repr = get_hint_repr(hint)
-
-    # Substring of the machine-readable representation of this hint preceding
-    # the first "[" delimiter if this representation contains that delimiter
-    # *OR* this representation as is otherwise.
-    #
-    # Note that the str.partition() method has been profiled to be the
-    # optimally efficient means of parsing trivial prefixes.
-    hint_repr_bare, _, _ = hint_repr.partition('[')
-
-    # Return true only if this hint is a PEP 484-compliant type hint originating
-    # from an origin type (e.g., "typing.List[int]").
-    return hint_repr_bare in HINTS_PEP484_REPR_PREFIX_DEPRECATED
 
 # ....................{ TESTERS ~ ignorable                }....................
 def is_hint_pep_ignorable(hint: object) -> bool:

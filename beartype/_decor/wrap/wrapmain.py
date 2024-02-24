@@ -28,6 +28,17 @@ This private submodule is *not* intended for importation by downstream callers.
 #    https://stackoverflow.com/a/77516994
 #FIXME: Perform similar handling in the _make_func_checker() factory defined
 #elsewhere, please.
+#FIXME: *WAIT.* Heh. We just thought of something absurd. But... *IT WILL ALMOST
+#CERTAINLY WORK.* Guess what? Warnings are exceptions. Thus, we:
+#* Refactor most warn()-style warnings into "raise"-style exceptions. That is,
+#  we raise rather than emit warnings.
+#* Refactor the reraise_exception_placeholder() raiser to:
+#  * Detect when the passed exception is actually a warning.
+#  * Emit that warning as a warning. To do so in a manner that preserves the
+#    original context, we can still leverage the warnings.warn_explicit() call
+#    from the above StackOverflow answer.
+#
+#Clever, huh? Yeah. We know.
 
 #FIXME: Split this large submodule into smaller submodules for maintainability.
 #A useful approach might be:
@@ -58,6 +69,7 @@ from beartype._check.code.snip.codesnipstr import (
 )
 from beartype._check.convert.convsanify import sanify_hint_root_func
 from beartype._check.util.checkutilmake import make_func_signature
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import (
     ARG_NAME_RETURN,
     ARG_NAME_RETURN_REPR,
@@ -74,10 +86,8 @@ from beartype._decor.wrap.wrapsnip import (
     PARAM_KIND_TO_CODE_LOCALIZE,
     PEP484_CODE_CHECK_NORETURN,
 )
-from beartype._util.error.utilerrorraise import (
-    EXCEPTION_PLACEHOLDER,
-    reraise_exception_placeholder,
-)
+from beartype._util.error.utilerrraise import reraise_exception_placeholder
+from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.arg.utilfuncargiter import (
     ARG_META_INDEX_KIND,
     ARG_META_INDEX_NAME,
@@ -101,6 +111,7 @@ from collections.abc import (
     Callable,
     Iterable,
 )
+from warnings import catch_warnings
 
 # ....................{ GENERATORS                         }....................
 def generate_code(
@@ -388,114 +399,125 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
 
         # Attempt to...
         try:
-            # If this parameter's name is reserved for use by the @beartype
-            # decorator, raise an exception.
-            if arg_name.startswith('__bear'):
-                raise BeartypeDecorParamNameException(
-                    f'{EXCEPTION_PLACEHOLDER}reserved by @beartype.')
-            # If either the type of this parameter is silently ignorable, continue
-            # to the next parameter.
-            elif arg_kind in _PARAM_KINDS_IGNORABLE:
-                continue
-            # Else, this parameter is non-ignorable.
+            # With a context manager "catching" *ALL* non-fatal warnings emitted
+            # during this logic for subsequent "playrback" below...
+            with catch_warnings(record=True) as warnings_issued:
+                # If this parameter's name is reserved for use by the @beartype
+                # decorator, raise an exception.
+                if arg_name.startswith('__bear'):
+                    raise BeartypeDecorParamNameException(
+                        f'{EXCEPTION_PLACEHOLDER}reserved by @beartype.')
+                # If either the type of this parameter is silently ignorable,
+                # continue to the next parameter.
+                elif arg_kind in _PARAM_KINDS_IGNORABLE:
+                    continue
+                # Else, this parameter is non-ignorable.
 
-            # Sanitize this hint into a possibly different type hint more
-            # readily consumable by @beartype's code generator *BEFORE* passing
-            # this hint to any further callables.
-            hint = sanify_hint_root_func(
-                hint=hint_insane, pith_name=arg_name, bear_call=bear_call)
+                # Sanitize this hint into a possibly different type hint more
+                # readily consumable by @beartype's code generator *BEFORE*
+                # passing this hint to any further callables.
+                hint = sanify_hint_root_func(
+                    hint=hint_insane, pith_name=arg_name, bear_call=bear_call)
 
-            # If this hint is ignorable, continue to the next parameter.
-            #
-            # Note that this is intentionally tested *AFTER* this hint has been
-            # coerced into a PEP-compliant type hint to implicitly ignore
-            # PEP-noncompliant type hints as well (e.g., "(object, int, str)").
-            if is_hint_ignorable(hint):
-                # print(f'Ignoring {bear_call.func_name} parameter {arg_name} hint {repr(hint)}...')
-                continue
-            # Else, this hint is unignorable.
-            #
-            # If this unignorable parameter either may *OR* must be passed
-            # positionally, record this fact. Note this conditional branch must
-            # be tested after validating this parameter to be unignorable; if
-            # this branch were instead nested *BEFORE* validating this
-            # parameter to be unignorable, @beartype would fail to reduce to a
-            # noop for otherwise ignorable callables -- which would be rather
-            # bad, really.
-            elif arg_kind in _PARAM_KINDS_POSITIONAL:
-                is_args_positional = True
+                # If this hint is ignorable, continue to the next parameter.
+                #
+                # Note that this is intentionally tested *AFTER* this hint has
+                # been coerced into a PEP-compliant type hint to implicitly
+                # ignore PEP-noncompliant type hints as well (e.g., "(object,
+                # int, str)").
+                if is_hint_ignorable(hint):
+                    # print(f'Ignoring {bear_call.func_name} parameter {arg_name} hint {repr(hint)}...')
+                    continue
+                # Else, this hint is unignorable.
+                #
+                # If this unignorable parameter either may *OR* must be passed
+                # positionally, record this fact. Note this conditional branch
+                # must be tested after validating this parameter to be
+                # unignorable; if this branch were instead nested *BEFORE*
+                # validating this parameter to be unignorable, @beartype would
+                # fail to reduce to a noop for otherwise ignorable callables --
+                # which would be rather bad, really.
+                elif arg_kind in _PARAM_KINDS_POSITIONAL:
+                    is_args_positional = True
 
-            # Python code template localizing this parameter.
-            #
-            # Since @beartype now supports *ALL* parameter kinds, we safely
-            # assume this behaves as expected without additional validation.
-            # PARAM_LOCALIZE_TEMPLATE = PARAM_KIND_TO_CODE_LOCALIZE[arg_kind]
+                # Python code template localizing this parameter if this kind of
+                # parameter is supported *OR* "None" otherwise.
+                PARAM_LOCALIZE_TEMPLATE = PARAM_KIND_TO_CODE_LOCALIZE.get(  # type: ignore
+                    arg_kind, None)
 
-            #FIXME: Preserved in the event of a new future unsupported parameter kind.
-            # Python code template localizing this parameter if this kind of
-            # parameter is supported *OR* "None" otherwise.
-            PARAM_LOCALIZE_TEMPLATE = PARAM_KIND_TO_CODE_LOCALIZE.get(  # type: ignore
-                arg_kind, None)
+                # If this kind of parameter is unsupported, raise an exception.
+                #
+                # Note this edge case should *NEVER* occur, as the parent
+                # function should have simply ignored this parameter.
+                if PARAM_LOCALIZE_TEMPLATE is None:
+                    raise BeartypeDecorHintPepException(
+                        f'{EXCEPTION_PLACEHOLDER}kind {repr(arg_kind)} '
+                        f'currently unsupported by @beartype.'
+                    )
+                # Else, this kind of parameter is supported. Ergo, this code is
+                # non-"None".
 
-            # If this kind of parameter is unsupported, raise an exception.
-            #
-            # Note this edge case should *NEVER* occur, as the parent function
-            # should have simply ignored this parameter.
-            if PARAM_LOCALIZE_TEMPLATE is None:
-                raise BeartypeDecorHintPepException(
-                    f'{EXCEPTION_PLACEHOLDER}kind {repr(arg_kind)} '
-                    f'currently unsupported by @beartype.'
+                # Type stack if required by this hint *OR* "None" otherwise. See
+                # the is_hint_needs_cls_stack() tester for further discussion.
+                #
+                # Note that the original unsanitized "hint_insane" (e.g.,
+                # "typing.Self") rather than the new sanitized "hint" (e.g., the
+                # class currently being decorated by @beartype) is passed to
+                # that tester. Why? Because the latter may already have been
+                # reduced above to a different and seemingly innocuous type hint
+                # that does *NOT* appear to require a type stack but actually
+                # does. Only the original unsanitized "hint_insane" is truth.
+                cls_stack = (
+                    bear_call.cls_stack
+                    if is_hint_needs_cls_stack(hint_insane) else
+                    None
                 )
-            # Else, this kind of parameter is supported. Ergo, this code is
-            # non-"None".
+                # print(f'arg "{arg_name}" hint {repr(hint)} cls_stack: {repr(cls_stack)}')
 
-            # Type stack if required by this hint *OR* "None" otherwise. See the
-            # is_hint_needs_cls_stack() tester for further discussion.
-            #
-            # Note that the original unsanitized "hint_insane" (e.g.,
-            # "typing.Self") rather than the new sanitized "hint" (e.g., the
-            # class currently being decorated by @beartype) is passed to that
-            # tester. Why? Because the latter may already have been reduced
-            # above to a different and seemingly innocuous type hint that does
-            # *NOT* appear to require a type stack but actually does. Only the
-            # original unsanitized "hint_insane" can tell the truth.
-            cls_stack = (
-                bear_call.cls_stack
-                if is_hint_needs_cls_stack(hint_insane) else
-                None
-            )
-            # print(f'arg "{arg_name}" hint {repr(hint)} cls_stack: {repr(cls_stack)}')
+                # Code snippet type-checking *ANY* parameter with *ANY*
+                # arbitrary name.
+                (
+                    code_param_check_pith,
+                    func_scope,
+                    hint_refs_type_basename,
+                ) = make_code_raiser_func_pith_check(
+                    hint,
+                    bear_call.conf,
+                    cls_stack,
+                    True,  # <-- True only for parameters
+                )
 
-            # Code snippet type-checking any parameter with an arbitrary name.
-            (
-                code_param_check_pith,
-                func_scope,
-                hint_refs_type_basename,
-            ) = make_code_raiser_func_pith_check(
-                hint,
-                bear_call.conf,
-                cls_stack,
-                True,  # <-- True only for parameters
-            )
+                # Merge the local scope required to check this parameter into
+                # the local scope currently required by the current wrapper
+                # function.
+                update_mapping(bear_call.func_wrapper_scope, func_scope)
 
-            # Merge the local scope required to check this parameter into the
-            # local scope currently required by the current wrapper function.
-            update_mapping(bear_call.func_wrapper_scope, func_scope)
+                # Python code snippet localizing this parameter.
+                code_param_localize = PARAM_LOCALIZE_TEMPLATE.format(
+                    arg_name=arg_name, arg_index=arg_index)
 
-            # Python code snippet localizing this parameter.
-            code_param_localize = PARAM_LOCALIZE_TEMPLATE.format(
-                arg_name=arg_name, arg_index=arg_index)
+                # Unmemoize this snippet against the current parameter.
+                code_param_check = _unmemoize_func_wrapper_code(
+                    bear_call=bear_call,
+                    func_wrapper_code=code_param_check_pith,
+                    pith_repr=repr(arg_name),
+                    hint_refs_type_basename=hint_refs_type_basename,
+                )
 
-            # Unmemoize this snippet against the current parameter.
-            code_param_check = _unmemoize_func_wrapper_code(
-                bear_call=bear_call,
-                func_wrapper_code=code_param_check_pith,
-                pith_repr=repr(arg_name),
-                hint_refs_type_basename=hint_refs_type_basename,
-            )
+                # Append code type-checking this parameter against this hint.
+                func_wrapper_code += f'{code_param_localize}{code_param_check}'
 
-            # Append code type-checking this parameter against this hint.
-            func_wrapper_code += f'{code_param_localize}{code_param_check}'
+            # If one or more warnings were issued, reissue these warnings with
+            # each placeholder substring (i.e., "EXCEPTION_PLACEHOLDER"
+            # instance) replaced by a human-readable description of this
+            # callable and annotated parameter.
+            if warnings_issued:
+                reissue_warnings_placeholder(
+                    warnings=warnings_issued,
+                    target_str=prefix_beartypeable_arg(
+                        func=bear_call.func_wrappee, arg_name=arg_name),
+                )
+            # Else, *NO* warnings were issued.
         # If any exception was raised, reraise this exception with each
         # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
         # replaced by a human-readable description of this callable and
@@ -503,10 +525,11 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
         except Exception as exception:
             reraise_exception_placeholder(
                 exception=exception,
-                #FIXME: Embed the kind of parameter as well (e.g.,
-                #"positional-only", "keyword-only", "variadic positional"),
-                #ideally by improving the existing prefix_beartypeable_arg()
-                #function to introspect this kind from the callable code object.
+                #FIXME: Embed the kind of parameter both here and above as well
+                #(e.g., "positional-only", "keyword-only", "variadic
+                #positional"), ideally by improving the existing
+                #prefix_beartypeable_arg() function to introspect this kind from
+                #the callable code object.
                 target_str=prefix_beartypeable_arg(
                     func=bear_call.func_wrappee, arg_name=arg_name),
             )
@@ -584,113 +607,127 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
 
     # Attempt to...
     try:
-        # Preserve the original unsanitized type hint for subsequent reference
-        # *BEFORE* sanitizing this type hint.
-        hint_insane = hint
+        # With a context manager "catching" *ALL* non-fatal warnings emitted
+        # during this logic for subsequent "playrback" below...
+        with catch_warnings(record=True) as warnings_issued:
+            # Preserve the original unsanitized type hint for subsequent
+            # reference *BEFORE* sanitizing this type hint.
+            hint_insane = hint
 
-        # Sanitize this hint to either:
-        # * If this hint is PEP-noncompliant, the PEP-compliant type hint
-        #   converted from this PEP-noncompliant type hint.
-        # * If this hint is both PEP-compliant and supported, this hint as is.
-        # * Else, raise an exception.
-        #
-        # Do this first *BEFORE* passing this hint to any further callables.
-        hint = sanify_hint_root_func(
-            hint=hint, pith_name=ARG_NAME_RETURN, bear_call=bear_call)
+            # Sanitize this hint to either:
+            # * If this hint is PEP-noncompliant, the PEP-compliant type hint
+            #   converted from this PEP-noncompliant type hint.
+            # * If this hint is PEP-compliant and supported, this hint as is.
+            # * Else, raise an exception.
+            #
+            # Do this first *BEFORE* passing this hint to any further callables.
+            hint = sanify_hint_root_func(
+                hint=hint, pith_name=ARG_NAME_RETURN, bear_call=bear_call)
 
-        # If this is the PEP 484-compliant "typing.NoReturn" type hint permitted
-        # *ONLY* as a return annotation...
-        if hint is NoReturn:
-            # Pre-generated code snippet validating this callable to *NEVER*
-            # successfully return by unconditionally generating a violation.
-            code_noreturn_check = PEP484_CODE_CHECK_NORETURN.format(
-                func_call_prefix=bear_call.func_wrapper_code_call_prefix)
-
-            # Code snippet handling the previously generated violation by either
-            # raising that violation as a fatal exception or emitting that
-            # violation as a non-fatal warning.
-            (
-                code_noreturn_violation,
-                func_scope,
-                _
-            ) = make_code_raiser_func_pep484_noreturn_check(bear_call.conf)
-
-            # Full code snippet to be returned.
-            func_wrapper_code = (
-                f'{code_noreturn_check}{code_noreturn_violation}')
-        # Else, this is *NOT* "typing.NoReturn". In this case...
-        else:
-            # If this PEP-compliant hint is unignorable, generate and return a
-            # snippet type-checking this return against this hint.
-            if not is_hint_ignorable(hint):
-                # Type stack if required by this hint *OR* "None" otherwise. See
-                # the is_hint_needs_cls_stack() tester for further discussion.
-                #
-                # Note that the original unsanitized "hint_insane" (e.g.,
-                # "typing.Self") rather than the new sanitized "hint" (e.g., the
-                # class currently being decorated by @beartype) is passed to
-                # that tester. See _code_check_args() for details.
-                cls_stack = (
-                    bear_call.cls_stack
-                    if is_hint_needs_cls_stack(hint_insane) else
-                    None
-                )
-                # print(f'return hint {repr(hint)} cls_stack: {repr(cls_stack)}')
-
-                # Empty tuple, passed below to satisfy the
-                # _unmemoize_func_wrapper_code() API.
-                hint_refs_type_basename = ()
-
-                # Code snippet type-checking any arbitrary return.
-                (
-                    code_return_check_pith,
-                    func_scope,
-                    hint_refs_type_basename,
-                ) = make_code_raiser_func_pith_check(  # type: ignore[assignment]
-                    hint,
-                    bear_call.conf,
-                    cls_stack,
-                    False,  # <-- True only for parameters
-                )
-
-                # Unmemoize this snippet against this return.
-                code_return_check = _unmemoize_func_wrapper_code(
-                    bear_call=bear_call,
-                    func_wrapper_code=code_return_check_pith,
-                    pith_repr=ARG_NAME_RETURN_REPR,
-                    hint_refs_type_basename=hint_refs_type_basename,
-                )
-
-                #FIXME: [SPEED] Optimize the following two string munging
-                #operations into a single string-munging operation resembling:
-                #    func_wrapper_code = CODE_RETURN_CHECK.format(
-                #        func_call_prefix=bear_call.func_wrapper_code_call_prefix,
-                #        check_expr=code_return_check_pith_unmemoized,
-                #    )
-                #
-                #Then define "CODE_RETURN_CHECK" in the "wrapsnip" submodule to
-                #resemble:
-                #    CODE_RETURN_CHECK = (
-                #        f'{CODE_RETURN_CHECK_PREFIX}{{check_expr}}'
-                #        f'{CODE_RETURN_CHECK_SUFFIX}'
-                #    )
-
-                # Code snippet type-checking this return.
-                code_return_check_prefix = CODE_RETURN_CHECK_PREFIX.format(
+            # If this is the PEP 484-compliant "typing.NoReturn" type hint
+            # permitted *ONLY* as a return annotation...
+            if hint is NoReturn:
+                # Pre-generated code snippet validating this callable to *NEVER*
+                # successfully return by unconditionally generating a violation.
+                code_noreturn_check = PEP484_CODE_CHECK_NORETURN.format(
                     func_call_prefix=bear_call.func_wrapper_code_call_prefix)
 
-                # Full code snippet to be returned, consisting of:
-                # * Calling the decorated callable and localize its return
-                #   *AND*...
-                # * Type-checking this return *AND*...
-                # * Returning this return from this wrapper function.
+                # Code snippet handling the previously generated violation by
+                # either raising that violation as a fatal exception or emitting
+                # that violation as a non-fatal warning.
+                (
+                    code_noreturn_violation,
+                    func_scope,
+                    _
+                ) = make_code_raiser_func_pep484_noreturn_check(bear_call.conf)
+
+                # Full code snippet to be returned.
                 func_wrapper_code = (
-                    f'{code_return_check_prefix}'
-                    f'{code_return_check}'
-                    f'{CODE_RETURN_CHECK_SUFFIX}'
-                )
-            # Else, this hint is ignorable.
-            # if not func_wrapper_code: print(f'Ignoring {bear_call.func_name} return hint {repr(hint)}...')
+                    f'{code_noreturn_check}{code_noreturn_violation}')
+            # Else, this is *NOT* "typing.NoReturn". In this case...
+            else:
+                # If this PEP-compliant hint is unignorable, generate and return
+                # a snippet type-checking this return against this hint.
+                if not is_hint_ignorable(hint):
+                    # Type stack if required by this hint *OR* "None" otherwise.
+                    # See is_hint_needs_cls_stack() for details.
+                    #
+                    # Note that the original unsanitized "hint_insane" (e.g.,
+                    # "typing.Self") rather than the new sanitized "hint" (e.g.,
+                    # the class currently being decorated by @beartype) is
+                    # passed to that tester. See _code_check_args() for details.
+                    cls_stack = (
+                        bear_call.cls_stack
+                        if is_hint_needs_cls_stack(hint_insane) else
+                        None
+                    )
+                    # print(f'return hint {repr(hint)} cls_stack: {repr(cls_stack)}')
+
+                    # Empty tuple, passed below to satisfy the
+                    # _unmemoize_func_wrapper_code() API.
+                    hint_refs_type_basename = ()
+
+                    # Code snippet type-checking any arbitrary return.
+                    (
+                        code_return_check_pith,
+                        func_scope,
+                        hint_refs_type_basename,
+                    ) = make_code_raiser_func_pith_check(  # type: ignore[assignment]
+                        hint,
+                        bear_call.conf,
+                        cls_stack,
+                        False,  # <-- True only for parameters
+                    )
+
+                    # Unmemoize this snippet against this return.
+                    code_return_check = _unmemoize_func_wrapper_code(
+                        bear_call=bear_call,
+                        func_wrapper_code=code_return_check_pith,
+                        pith_repr=ARG_NAME_RETURN_REPR,
+                        hint_refs_type_basename=hint_refs_type_basename,
+                    )
+
+                    #FIXME: [SPEED] Optimize the following two string munging
+                    #operations into a single string-munging operation resembling:
+                    #    func_wrapper_code = CODE_RETURN_CHECK.format(
+                    #        func_call_prefix=bear_call.func_wrapper_code_call_prefix,
+                    #        check_expr=code_return_check_pith_unmemoized,
+                    #    )
+                    #
+                    #Then define "CODE_RETURN_CHECK" in the "wrapsnip" submodule to
+                    #resemble:
+                    #    CODE_RETURN_CHECK = (
+                    #        f'{CODE_RETURN_CHECK_PREFIX}{{check_expr}}'
+                    #        f'{CODE_RETURN_CHECK_SUFFIX}'
+                    #    )
+
+                    # Code snippet type-checking this return.
+                    code_return_check_prefix = CODE_RETURN_CHECK_PREFIX.format(
+                        func_call_prefix=(
+                            bear_call.func_wrapper_code_call_prefix))
+
+                    # Full code snippet to be returned, consisting of:
+                    # * Calling the decorated callable and localize its return
+                    #   *AND*...
+                    # * Type-checking this return *AND*...
+                    # * Returning this return from this wrapper function.
+                    func_wrapper_code = (
+                        f'{code_return_check_prefix}'
+                        f'{code_return_check}'
+                        f'{CODE_RETURN_CHECK_SUFFIX}'
+                    )
+                # Else, this hint is ignorable.
+                # if not func_wrapper_code: print(f'Ignoring {bear_call.func_name} return hint {repr(hint)}...')
+        # If one or more warnings were issued, reissue these warnings with each
+        # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
+        # replaced by a human-readable description of this callable and
+        # annotated return.
+        if warnings_issued:
+            reissue_warnings_placeholder(
+                warnings=warnings_issued,
+                target_str=prefix_beartypeable_return(bear_call.func_wrappee),
+            )
+        # Else, *NO* warnings were issued.
     # If any exception was raised, reraise this exception with each placeholder
     # substring (i.e., "EXCEPTION_PLACEHOLDER" instance) replaced by a
     # human-readable description of this callable and annotated return.

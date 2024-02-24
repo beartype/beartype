@@ -12,7 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep613DeprecationWarning
-from warnings import warn
+from beartype._util.error.utilerrwarn import issue_warning
 
 # ....................{ REDUCERS                           }....................
 def reduce_hint_pep613(
@@ -52,8 +52,9 @@ def reduce_hint_pep613(
     '''
 
     # Emit a non-fatal deprecation warning.
-    warn(
-        (
+    issue_warning(
+        cls=BeartypeDecorHintPep613DeprecationWarning,
+        message=(
             f'{exception_prefix}PEP 613 type hint {repr(hint)} '
             f'deprecated by PEP 695. Consider either:\n'
             f'* Requiring Python >= 3.12 and refactoring PEP 613 type aliases '
@@ -95,7 +96,6 @@ def reduce_hint_pep613(
             f'    else:  # <-- if Python < 3.12, then PEP 484\n'
             f'        alias_name = NewType("alias_name", alias_value)  # <-- coworker gives up here\n'
         ),
-        BeartypeDecorHintPep613DeprecationWarning,
     )
 
     # Reduce *ALL* PEP 613 type hints to an arbitrary ignorable type hint.

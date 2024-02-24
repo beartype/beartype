@@ -7,7 +7,7 @@
 **Beartype exception getter utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.error.utilerrorget` submodule.
+:mod:`beartype._util.error.utilerrget` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,12 +20,12 @@ This submodule unit tests the public API of the private
 def test_get_name_error_attr_name() -> None:
     '''
     Test the
-    :func:`beartype._util.error.utilerrorget.get_name_error_attr_name` getter.
+    :func:`beartype._util.error.utilerrget.get_name_error_attr_name` getter.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from beartype._util.error.utilerrorget import get_name_error_attr_name
+    from beartype._util.error.utilerrget import get_name_error_attr_name
 
     # ....................{ ASSERT                         }....................
     # Attempt to access an attribute *NEVER* defined in either the global or

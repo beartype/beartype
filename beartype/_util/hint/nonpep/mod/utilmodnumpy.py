@@ -27,10 +27,10 @@ from beartype.typing import (
     FrozenSet,
 )
 from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
 from beartype._util.module.lib.utiltyping import import_typing_attr_or_none
 from beartype._util.utilobject import is_object_hashable
-from warnings import warn
 
 # ....................{ REDUCERS                           }....................
 #FIXME: Refactor this function to make this function *EFFECTIVELY* cached. How?
@@ -208,14 +208,14 @@ def reduce_hint_numpy_ndarray(
     # equivalent beartype validators. In this case...
     if typing_annotated is None:
         # Emit a non-fatal warning informing the user of this issue.
-        warn(
-            (
+        issue_warning(
+            cls=BeartypeDecorHintNonpepNumpyWarning,
+            message=(
                 f'{exception_prefix}typed NumPy array {repr(hint)} '
                 f'reduced to untyped NumPy array {repr(ndarray)} '
                 f'(i.e., as neither "typing.Annotated" nor '
                 f'"typing_extensions.Annotated" importable).'
             ),
-            BeartypeDecorHintNonpepNumpyWarning,
         )
 
         # Reduce this hint to the untyped "ndarray" class with apologies.

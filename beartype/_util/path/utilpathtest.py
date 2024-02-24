@@ -46,8 +46,8 @@ def die_unless_dir(
         to :exc:`._BeartypeUtilPathException`.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If *no* directory with the passed dirname exists.
     '''
 
@@ -92,8 +92,8 @@ def die_unless_file(
         to :exc:`._BeartypeUtilPathException`.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    exception_cls
         If *no* file with the passed filename exists.
     '''
 
@@ -139,8 +139,8 @@ def die_unless_file_executable(
         to :exc:`._BeartypeUtilPathException`.
 
     Raises
-    ----------
-    :exc:`exception_cls`
+    ------
+    :exception_cls
         If either:
 
         * No file with the passed filename exists.

@@ -51,6 +51,7 @@ from beartype._conf.confcls import (
     BeartypeConf,
 )
 from beartype._conf.conftest import die_unless_conf
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN_REPR
 from beartype._data.hint.datahinttyping import (
     CallableRaiser,
@@ -61,16 +62,17 @@ from beartype._data.hint.datahinttyping import (
     TypeStack,
 )
 from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.error.utilerrorraise import (
-    EXCEPTION_PLACEHOLDER,
-    reraise_exception_placeholder,
+from beartype._util.error.utilerrraise import reraise_exception_placeholder
+from beartype._util.error.utilerrwarn import (
+    issue_warning,
+    reissue_warnings_placeholder,
 )
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     get_hint_pep484585_ref_names_relative_to)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from itertools import count
-from warnings import warn
+from warnings import catch_warnings
 
 # ....................{ FACTORIES ~ func                   }....................
 @callable_cached
@@ -510,9 +512,13 @@ def _func_checker_ignorable(obj: object) -> bool:
 # ....................{ PRIVATE ~ factories : func         }....................
 #FIXME: Unit test us up, please.
 def _make_func_checker(
+    # Mandatory parameters.
     hint: object,
     conf: BeartypeConf,
     make_code_check: Callable[..., CodeGenerated],
+
+    # Optional parameters.
+    exception_prefix: str = 'die_if_unbearable() or is_bearable() ',
 ) -> CallableRaiserOrTester:
     '''
     **Type-checking function factory** (i.e., low-level callable dynamically
@@ -527,19 +533,6 @@ def _make_func_checker(
 
     Caveats
     -------
-    **This factory intentionally accepts no** ``exception_prefix``
-    **parameter.** Why? Since that parameter is typically specific to the
-    context-sensitive use case of the caller, accepting that parameter would
-    prevent this factory from memoizing the passed hint with the returned code,
-    which would rather defeat the point. Instead, this factory only:
-
-    * Raises generic non-human-readable exceptions containing the placeholder
-      :attr:`beartype._util.error.utilerrorraise.EXCEPTION_PLACEHOLDER`
-      substring that the caller is required to explicitly catch and raise
-      non-generic human-readable exceptions from by calling the
-      :func:`beartype._util.error.utilerrorraise.reraise_exception_placeholder`
-      function.
-
     **This factory intentionally accepts no** ``exception_cls`` **parameter.**
     Doing so would only ambiguously obscure context-sensitive exceptions raised
     by lower-level utility functions called by this higher-level factory.
@@ -548,14 +541,16 @@ def _make_func_checker(
     ----------
     hint : object
         Type hint to be type-checked.
-    conf : BeartypeConf, optional
+    conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object). Defaults
-        to ``BeartypeConf()``, the default :math:`O(1)` configuration.
+        all settings configuring type-checking for the passed object).
     make_code_check : Callable[..., CodeGenerated]
         **Type-checking code factory** (i.e., function dynamically generating a
         code snippet of a function type-checking an arbitrary object against the
         passed type hint under the passed beartype configuration).
+    exception_prefix : str, optional
+        Human-readable substring prefixing the representation of this object in
+        the exception message. Defaults to a reasonably sensible string.
 
     Returns
     -------
@@ -586,111 +581,123 @@ def _make_func_checker(
 
     # Attempt to...
     try:
-        # ....................{ VALIDATION                 }....................
-        # Else, this configuration is actually a configuration.
-        # If this configuration is *NOT* a configuration, raise an exception.
-        die_unless_conf(conf)
+        # With a context manager "catching" *ALL* non-fatal warnings emitted
+        # during this logic for subsequent "playrback" below...
+        with catch_warnings(record=True) as warnings_issued:
+            # ....................{ VALIDATION             }....................
+            # If "conf" is *NOT* a configuration, raise an exception.
+            die_unless_conf(conf)
+            # Else, "conf" is a configuration.
 
-        # Either:
-        # * If this hint is PEP-noncompliant, the PEP-compliant type hint
-        #   converted from this PEP-noncompliant type hint.
-        # * Else if this hint is PEP-compliant and supported, this hint as is.
-        # * Else, raise an exception (i.e., if this hint is neither
-        #   PEP-noncompliant nor a supported PEP-compliant hint).
-        #
-        # Do this first *BEFORE* passing this hint to any further callables.
-        hint = sanify_hint_root_statement(
-            hint=hint, conf=conf, exception_prefix=EXCEPTION_PLACEHOLDER)
+            # Either:
+            # * If this hint is PEP-noncompliant, the PEP-compliant type hint
+            #   converted from this PEP-noncompliant type hint.
+            # * If this hint is PEP-compliant and supported, this hint as is.
+            # * Else, raise an exception (i.e., if this hint is neither
+            #   PEP-noncompliant nor a supported PEP-compliant hint).
+            #
+            # Do this first *BEFORE* passing this hint to any further callables.
+            hint = sanify_hint_root_statement(
+                hint=hint, conf=conf, exception_prefix=EXCEPTION_PLACEHOLDER)
 
-        # If this hint is ignorable, all objects satisfy this hint. In this
-        # case, return a trivial tester function unconditionally returning true.
-        if is_hint_ignorable(hint):
-            return _func_checker_ignorable
-        # Else, this hint is unignorable.
+            # If this hint is ignorable, all objects satisfy this hint. In this
+            # case, return a trivial function unconditionally returning true.
+            if is_hint_ignorable(hint):
+                return _func_checker_ignorable
+            # Else, this hint is unignorable.
 
-        # ....................{ CODE                       }....................
-        # Python code snippet comprising a single boolean expression
-        # type-checking an arbitrary object against this hint.
-        (
-            code_check,
-            func_scope,
-            hint_refs_type_basename,
-        ) = make_code_check(hint, conf)
+            # ....................{ CODE                   }....................
+            # Python code snippet comprising a single boolean expression
+            # type-checking an arbitrary object against this hint.
+            (
+                code_check,
+                func_scope,
+                hint_refs_type_basename,
+            ) = make_code_check(hint, conf)
 
-        # If this hint contains one or more relative forward references, this
-        # hint is non-portable across lexical scopes. In this case, raise an
-        # exception. Why? Because this hint is relative to and thus valid only
-        # with respect to the caller's current lexical scope. However, there is
-        # *NO* guarantee that the type-checking function created and returned by
-        # this factory resides in the same lexical scope.
-        #
-        # Suppose that type-checking function does, however. Even in that best
-        # case, *ALL* calls to that tester would still be non-portable. Why?
-        # Because those calls would now tacitly assume the original lexical
-        # scope that they were called in. Those calls are now
-        # lexically-dependent and thus could *NOT* be trivially copy-and-pasted
-        # into different lexical scopes (e.g., submodules, classes, or
-        # callables); doing so would raise exceptions at call time, due to being
-        # unable to resolve those references. Preventing users from doing
-        # something that will blow up in their test suites commits after the
-        # fact is not simply a good thing; it's really the only sane thing left.
-        #
-        # Suppose that we didn't particularly care about end user sanity,
-        # however. Even in that worst case, resolving these references would
-        # still be non-trivial, non-portable, and (perhaps most importantly)
-        # incredibly slow. Why? Because doing so would require iteratively
-        # introspecting the call stack for the first callable *NOT* residing in
-        # the "beartype" codebase. These references would then be resolved
-        # against the global and local lexical scope of that callable. While
-        # technically feasible, doing so would render higher-level "beartype"
-        # functions calling this lower-level factory (e.g., our increasingly
-        # popular public beartype.door.is_bearable() and die_if_unbearable()
-        # type-checkers) sufficiently slow as to be pragmatically infeasible.
-        if hint_refs_type_basename:
-            # Defer to a low-level getter to raise a human-readable exception.
-            get_hint_pep484585_ref_names_relative_to(
-                # First relative forward reference in this type hint,
-                # arbitrarily chosen for convenience.
-                hint=hint_refs_type_basename[0],
-                exception_prefix=(
-                    f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '),
+            # If this hint contains one or more relative forward references,
+            # this hint is non-portable across lexical scopes. In this case,
+            # raise an exception. Why? Because this hint is relative to and thus
+            # valid only with respect to the caller's current lexical scope.
+            # However, there is *NO* guarantee that the type-checking function
+            # created and returned by this factory resides in the same lexical
+            # scope.
+            #
+            # Suppose that type-checking function does, however. Even in that
+            # best case, *ALL* calls to that tester would still be non-portable.
+            # Why? Because those calls would now tacitly assume the original
+            # lexical scope that they were called in. Those calls are now
+            # lexically-dependent and thus could *NOT* be trivially
+            # copy-and-pasted into different lexical scopes (e.g., submodules,
+            # classes, or callables); doing so would raise exceptions at call
+            # time, due to being unable to resolve those references. Preventing
+            # users from doing something that will blow up in their test suites
+            # commits after the fact is not simply a good thing; it's really the
+            # only sane thing left.
+            #
+            # Suppose that we didn't particularly care about end user sanity,
+            # however. Even in that worst case, resolving these references would
+            # still be non-trivial, non-portable, and (perhaps most importantly)
+            # incredibly slow. Why? Because doing so would require iteratively
+            # introspecting the call stack for the first callable *NOT* residing
+            # in the "beartype" codebase. These references would then be
+            # resolved against the global and local lexical scope of that
+            # callable. While technically feasible, doing so would render
+            # higher-level "beartype" functions calling this lower-level factory
+            # (e.g., our increasingly popular public beartype.door.is_bearable()
+            # and die_if_unbearable() type-checkers) sufficiently slow as to be
+            # pragmatically infeasible.
+            if hint_refs_type_basename:
+                # Defer to a low-level getter to raise a reasonable exception.
+                get_hint_pep484585_ref_names_relative_to(
+                    # First relative forward reference in this type hint,
+                    # arbitrarily chosen for convenience.
+                    hint=hint_refs_type_basename[0],
+                    exception_prefix=(
+                        f'{EXCEPTION_PLACEHOLDER}type hint {repr(hint)} '),
+                )
+            # Else, this hint contains *NO* relative forward references.
+
+            # Unqualified basename of this type-checking function, uniquified by
+            # suffixing an arbitrary integer unique to this function.
+            func_checker_name = (
+                f'{FUNC_CHECKER_NAME_PREFIX}{next(_func_checker_name_counter)}')
+
+            # Python code snippet declaring the signature of the type-checking
+            # function function to be defined and returned by this factory.
+            code_signature = make_func_signature(
+                func_name=func_checker_name,
+                func_scope=func_scope,
+                code_signature_format=CODE_CHECKER_SIGNATURE,
+                conf=conf,
             )
-        # Else, this hint contains *NO* relative forward references.
 
-        # Unqualified basename of this type-checking function, uniquified by
-        # suffixing an arbitrary integer unique to this function.
-        func_checker_name = (
-            f'{FUNC_CHECKER_NAME_PREFIX}{next(_func_checker_name_counter)}')
+            # Python code snippet defining this type-checking function in full.
+            func_checker_code = f'{code_signature}{code_check}'
 
-        # Python code snippet declaring the signature of the type-checking
-        # function function to be defined and returned by this factory.
-        code_signature = make_func_signature(
-            func_name=func_checker_name,
-            func_scope=func_scope,
-            code_signature_format=CODE_CHECKER_SIGNATURE,
-            conf=conf,
-        )
-
-        # Python code snippet defining this type-checking function in entirety.
-        func_checker_code = f'{code_signature}{code_check}'
-
-        # ....................{ FUNCTION                   }....................
-        # Type-checking tester function to be returned.
-        func_tester = make_func(
-            func_name=func_checker_name,
-            func_code=func_checker_code,
-            func_locals=func_scope,
-            func_label='die_if_unbearable() or is_bearable() type-checker',
-            is_debug=conf.is_debug,
-        )
+            # ....................{ FUNCTION               }....................
+            # Type-checking tester function to be returned.
+            func_tester = make_func(
+                func_name=func_checker_name,
+                func_code=func_checker_code,
+                func_locals=func_scope,
+                func_label='die_if_unbearable() or is_bearable() type-checker',
+                is_debug=conf.is_debug,
+            )
+        # If one or more warnings were issued, reissue these warnings with each
+        # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
+        # replaced by a human-readable description of this callable and
+        # annotated return.
+        if warnings_issued:
+            reissue_warnings_placeholder(
+                warnings=warnings_issued, target_str=exception_prefix)
+        # Else, *NO* warnings were issued.
     # If doing so raises *ANY* exception, reraise this exception with each
     # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance) replaced by
     # an explanatory prefix.
     except Exception as exception:
         reraise_exception_placeholder(
-            exception=exception,
-            target_str='die_if_unbearable() or is_bearable() ',
-        )
+            exception=exception, target_str=exception_prefix)
 
     # Return this tester function.
     return func_tester  # type: ignore[return-value]
@@ -799,7 +806,7 @@ def _make_code_raiser_violation(
 
         # Pass the warnings.warn() function required to emit this warning to
         # this wrapper function as an optional hidden parameter.
-        func_scope[ARG_NAME_WARN] = warn
+        func_scope[ARG_NAME_WARN] = issue_warning
     # Else...
     else:
         # Raise a fatal exception.
@@ -807,4 +814,3 @@ def _make_code_raiser_violation(
 
     # Return this code snippet.
     return code_violation
-

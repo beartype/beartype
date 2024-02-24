@@ -19,10 +19,14 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeException
 from beartype._conf.confcls import BeartypeConf
-from beartype._data.hint.datahinttyping import BeartypeableT
+from beartype._data.hint.datahinttyping import (
+    BeartypeableT,
+    TypeWarning,
+)
 from beartype._decor._decornontype import beartype_nontype
 from beartype._decor._decortype import beartype_type
 from beartype._util.cls.utilclstest import is_type_subclass
+from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.text.utiltextlabel import (
     label_exception,
     label_object_context,
@@ -212,7 +216,7 @@ def _beartype_object_nonfatal(
     # into a non-fatal warning for nebulous safety.
     except Exception as exception:
         # Category of warning to be emitted.
-        warning_category = conf.warning_cls_on_decorator_exception
+        warning_category: TypeWarning = conf.warning_cls_on_decorator_exception  # type: ignore[assignment]
         assert is_type_subclass(warning_category, Warning), (
             f'{repr(warning_category)} not warning category.')
 
@@ -251,7 +255,7 @@ def _beartype_object_nonfatal(
         )
 
         # Emit this message under this category.
-        warn(warning_message, warning_category)
+        issue_warning(cls=warning_category, message=warning_message)
 
     # Return this object unmodified, as @beartype failed to successfully wrap
     # this object with a type-checking class or callable. So it goes, fam.

@@ -20,11 +20,11 @@ from beartype.typing import (
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.cls.datacls import TYPE_BUILTIN_NAME_TO_TYPE
 from beartype._data.hint.datahinttyping import TypeException
+from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 from beartype._util.utilobject import SENTINEL
 from importlib import import_module as importlib_import_module
 from types import ModuleType
-from warnings import warn
 
 # ....................{ IMPORTERS                          }....................
 #FIXME: Preserved until requisite, which shouldn't be long.
@@ -153,12 +153,12 @@ def import_module_or_none(
     # If this module exists but raises unexpected exceptions from module scope,
     # first emit a non-fatal warning notifying the user and then return "None".
     except Exception as exception:
-        warn(
-            (
+        issue_warning(
+            cls=BeartypeModuleUnimportableWarning,
+            message=(
                 f'Ignoring module "{module_name}" importation exception:\n'
-                f'\t{exception.__class__.__name__}: {exception}'
+                f'    {exception.__class__.__name__}: {exception}'
             ),
-            BeartypeModuleUnimportableWarning,
         )
 
     # Inform the caller that this module is unimportable.

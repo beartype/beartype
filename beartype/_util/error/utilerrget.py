@@ -40,7 +40,7 @@ def get_name_error_attr_name(name_error: NameError) -> str:
     --------
     .. code-block:: pycon
 
-       >>> from beartype._util.error.utilerrorget import (
+       >>> from beartype._util.error.utilerrget import (
        ...     get_name_error_attr_name)
        >>> try:
        ...     undefined_attr

@@ -7,7 +7,7 @@
 **Beartype exception raiser utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.error.utilerrorraise` submodule.
+:mod:`beartype._util.error.utilerrraise` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,14 +20,14 @@ This submodule unit tests the public API of the private
 def test_reraise_exception_cached() -> None:
     '''
     Test the
-    :func:`beartype._util.error.utilerrorraise.reraise_exception_placeholder`
+    :func:`beartype._util.error.utilerrraise.reraise_exception_placeholder`
     function.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.cache.utilcachecall import callable_cached
-    from beartype._util.error.utilerrorraise import reraise_exception_placeholder
+    from beartype._util.error.utilerrraise import reraise_exception_placeholder
     from pytest import raises
     from random import getrandbits
 
@@ -35,7 +35,7 @@ def test_reraise_exception_cached() -> None:
     class CachedException(ValueError):
         '''
         Test-specific exception raised by unit tests exercising the
-        :func:`beartype._util.error.utilerrorraise.reraise_exception_placeholder`
+        :func:`beartype._util.error.utilerrraise.reraise_exception_placeholder`
         function.
         '''
 

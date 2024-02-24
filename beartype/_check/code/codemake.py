@@ -82,6 +82,7 @@ from beartype._data.code.datacodemagic import (
     LINE_RSTRIP_INDEX_AND,
     LINE_RSTRIP_INDEX_OR,
 )
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.hint.datahinttyping import (
     CodeGenerated,
     LexicalScope,
@@ -113,8 +114,9 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
 )
-from beartype._util.error.utilerrorraise import EXCEPTION_PLACEHOLDER
 from beartype._util.func.utilfuncscope import add_func_scope_attr
+from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
+    warn_if_hint_pep484_deprecated)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
@@ -143,7 +145,6 @@ from beartype._util.hint.pep.utilpeptest import (
     die_if_hint_pep_unsupported,
     is_hint_pep,
     is_hint_pep_args,
-    warn_if_hint_pep_deprecated,
 )
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.map.utilmapset import update_mapping
@@ -251,10 +252,10 @@ def make_check_expr(
       :meth:`str.replace` method) to generate the desired non-generic working
       code type-checking that parameter or return value.
     * Raises generic non-human-readable exceptions containing the placeholder
-      :attr:`beartype._util.error.utilerrorraise.EXCEPTION_PLACEHOLDER` substring
+      :attr:`beartype._util.error.utilerrraise.EXCEPTION_PLACEHOLDER` substring
       that the caller is required to explicitly catch and raise non-generic
       human-readable exceptions from by calling the
-      :func:`beartype._util.error.utilerrorraise.reraise_exception_placeholder`
+      :func:`beartype._util.error.utilerrraise.reraise_exception_placeholder`
       function.
 
     Parameters
@@ -718,10 +719,13 @@ def make_check_expr(
             hint_curr_sign = get_hint_pep_sign(hint_curr)
             # print(f'Visiting PEP type hint {repr(hint_curr)} sign {repr(hint_curr_sign)}...')
 
-            # If this hint is deprecated, emit a non-fatal warning.
+            #FIXME: Non-ideal. Shift elsewhere, please. See this function for
+            #"FIXME:" comments pertaining to this.
+            # If this is a PEP 484-compliant type hint deprecated by an
+            # equivalent PEP 585-compliant type hint, emit a non-fatal warning.
             # print(f'Testing {hint_curr_exception_prefix} hint {repr(hint_curr)} for deprecation...')
-            warn_if_hint_pep_deprecated(
-                hint=hint_curr, warning_prefix=_EXCEPTION_PREFIX)
+            warn_if_hint_pep484_deprecated(
+                hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
 
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # NOTE: Whenever adding support for (i.e., when generating code

@@ -23,9 +23,9 @@ from beartype._data.os.dataosshell import (
     SHELL_VAR_CONF_IS_COLOR_NAME,
     SHELL_VAR_CONF_IS_COLOR_VALUE_TO_OBJ,
 )
+from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.os.utilosshell import get_shell_var_value_or_none
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
-from warnings import warn
 
 # ....................{ GETTERS                            }....................
 def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:
@@ -115,15 +115,15 @@ def get_is_color(is_color: BoolTristateUnpassable) -> BoolTristate:
         ):
             # Warn the caller that @beartype non-fatally resolved this conflict
             # by ignoring this parameter in favour of this environment variable.
-            warn(
-                (
+            issue_warning(
+                cls=BeartypeConfShellVarWarning,
+                message=(
                     f'Beartype configuration parameter "is_color" '
                     f'value {repr(is_color)} ignored in favour of '
                     f'environment variable '
                     f'"${{{SHELL_VAR_CONF_IS_COLOR_NAME}}}" '
                     f'value {repr(is_color_override)}.'
                 ),
-                BeartypeConfShellVarWarning,
             )
 
         # Override the value of the passed "is_color" parameter with
