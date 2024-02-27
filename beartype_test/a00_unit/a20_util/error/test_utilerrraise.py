@@ -17,7 +17,7 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_reraise_exception_cached() -> None:
+def test_reraise_exception_placeholder() -> None:
     '''
     Test the
     :func:`beartype._util.error.utilerrraise.reraise_exception_placeholder`
@@ -34,9 +34,9 @@ def test_reraise_exception_cached() -> None:
     # ....................{ CLASSES                        }....................
     class CachedException(ValueError):
         '''
-        Test-specific exception raised by unit tests exercising the
-        :func:`beartype._util.error.utilerrraise.reraise_exception_placeholder`
-        function.
+        Test-specific exception intended to be raised below with messages
+        containing placeholder substrings replaced by the
+        :func:`.reraise_exception_placeholder` re-raiser.
         '''
 
         pass
@@ -47,20 +47,27 @@ def test_reraise_exception_cached() -> None:
     TEST_SOURCE_STR = '{its_got_bro}'
 
     # ....................{ CALLABLES                      }....................
-    # Low-level memoized callable raising non-human-readable exceptions
-    # conditionally depending on the value of passed parameters.
     @callable_cached
     def portend_low_level_winter(is_winter_coming: bool) -> str:
+        '''
+        Low-level memoized callable raising unreadable exceptions conditionally
+        depending on the value of the passed parameter.
+        '''
+
         if is_winter_coming:
             raise CachedException(
                 f'{TEST_SOURCE_STR} intimates that winter is coming.')
         else:
             return 'PRAISE THE SUN'
 
-    # High-level non-memoized callable calling the low-level memoized callable
-    # and reraising non-human-readable exceptions raised by the latter with
-    # equivalent human-readable exceptions.
+
     def portend_high_level_winter() -> None:
+        '''
+        High-level non-memoized callable calling the low-level memoized callable
+        and reraising unreadable exceptions raised by the latter with equivalent
+        readable exceptions.
+        '''
+
         try:
             # Call the low-level memoized callable without raising exceptions.
             print(portend_low_level_winter(False))
@@ -85,12 +92,12 @@ def test_reraise_exception_cached() -> None:
     with raises(CachedException) as exception_info:
         portend_high_level_winter()
 
-    # Assert this exception's message does *NOT* contain the non-human-readable
+    # Assert that this exception message does *NOT* contain the unreadable
     # source substring hard-coded into the messages of all exceptions raised by
     # this low-level memoized callable.
     assert TEST_SOURCE_STR not in str(exception_info.value)
 
-    # Assert that exceptions messages may contain *NO* source substrings.
+    # Assert that exception messages may also contain *NO* source substrings.
     try:
         raise CachedException(
             "What's bravery without a dash of recklessness?")

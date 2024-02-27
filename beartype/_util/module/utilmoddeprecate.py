@@ -155,9 +155,13 @@ def deprecate_module_attr(
         # Emit a non-fatal warning of the standard "DeprecationWarning"
         # category, which CPython filters (ignores) by default.
         #
-        # Note that we intentionally do *NOT* emit a non-fatal warning of our
-        # non-standard "BeartypeDecorHintPepDeprecationWarning" category, which
-        # applies *ONLY* to PEP-compliant type hint deprecations.
+        # Note that we intentionally:
+        # * Do *NOT* emit a non-fatal warning of our non-standard
+        #   "BeartypeDecorHintPepDeprecationWarning" category, which applies
+        #   *ONLY* to PEP-compliant type hint deprecations.
+        # * Do *NOT* call the higher-level issue_warning() function, which would
+        #   erroneously declare that this deprecation originates from the
+        #   external caller rather than this codebase itself.
         warn(
             (
                 f'Deprecated attribute '

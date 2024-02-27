@@ -12,9 +12,13 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Iterable
+from beartype.typing import (
+    Any,
+    Iterable,
+)
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.hint.datahinttyping import TypeWarning
+from beartype._util.error.utilerrtest import is_exception_message_str
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
 from beartype._util.text.utiltextmunge import uppercase_str_char_first
 from collections.abc import Iterable as IterableABC
@@ -25,10 +29,6 @@ from warnings import (
 )
 
 # ....................{ WARNERS                            }....................
-#FIXME: Unit test us up, please.
-#FIXME: Globally replace all direct calls to the warn() function with calls to
-#this utility function instead, please.
-
 # If the active Python interpreter targets Python >= 3.12, the standard
 # warnings.warn() function supports the optional "skip_file_prefixes" parameter
 # critical for emitting more useful warnings. In this case, define the
@@ -43,6 +43,7 @@ if IS_PYTHON_AT_LEAST_3_12:
     def issue_warning(cls: TypeWarning, message: str) -> None:
         # The warning you gave us is surely our last!
         warn(message, cls, skip_file_prefixes=_ISSUE_WARNING_IGNORE_DIRNAMES)  # type: ignore[call-overload]
+        # warn(message, cls)  # type: ignore[call-overload]
 
     # ....................{ PRIVATE ~ globals              }....................
     _ISSUE_WARNING_IGNORE_DIRNAMES = (dirname(beartype.__file__),)
@@ -88,7 +89,7 @@ issue_warning.__doc__ = (
     '''
 )
 
-
+# ....................{ REWARNERS                          }....................
 def reissue_warnings_placeholder(
     # Mandatory parameters.
     warnings: Iterable[WarningMessage],
@@ -136,36 +137,74 @@ def reissue_warnings_placeholder(
     assert isinstance(source_str, str), f'{repr(source_str)} not string.'
     assert isinstance(target_str, str), f'{repr(target_str)} not string.'
 
-    # For each warning in this iterable of zero or more warnings...
-    for warning in warnings:
-        assert isinstance(warning, WarningMessage), (
-           f'{repr(warning)} not "WarningMessage" instance.')
+    # For each warning descriptor in this iterable of zero or more warning
+    # descriptors...
+    for warning_info in warnings:
+        assert isinstance(warning_info, WarningMessage), (  # <-- terrible name!
+           f'{repr(warning_info)} not "WarningMessage" instance.')
 
-        # Original warning message, localized as a negligible optimization.
-        warning_message_old: str = warning.message  # type: ignore[assignment]
+        # Original warning wrapped by this warning descriptor, localized both
+        # for readability *AND* negligible speed. *sigh*
+        warning = warning_info.message
 
-        # Munged warning message globally replacing all instances of this source
-        # substring with this target substring.
+        # Munged warning message to be issued below.
+        warning_message_new: Any = None
+
+        # If this warning is... *ALREADY A STRING!?* What is going on here?
+        # Look. Not even we know. But mypy claims that warnings recorded by
+        # calls to the standard "warnings.catch_warnings(record=True)" function
+        # satisfy the union "Warning | str". Technically, that makes no sense.
+        # Pragmatically, that makes no sense. But mypy says it's true. We are
+        # too tired to argue with static type-checkers at 4:11AM in the morning.
+        if isinstance(warning, str):  # pragma: no cover
+            warning_message_new = warning
+        # Else, this warning is actually a warning.
         #
-        # Note that we intentionally call the lower-level str.replace() method
-        # rather than the higher-level
-        # beartype._util.text.utiltextmunge.replace_str_substrs() function here,
-        # as the latter unnecessarily requires this warning message to contain
-        # one or more instances of this source substring.
-        warning_message_new = warning_message_old.replace(
-            source_str, target_str)
+        # If this is an conventional warning...
+        elif is_exception_message_str(warning):
+            # Original warning message, coerced from the original warning.
+            #
+            # Note that the poorly named "message" attribute is the original warning
+            # rather warning message. Just as with exceptions, coercing this warning
+            # into a string reliably retrieves its message.
+            warning_message_old = str(warning)
 
-        # If doing so actually changed this message...
-        if warning_message_new != warning_message_old:
-            # Uppercase the first character of this message if needed.
-            warning_message_new = uppercase_str_char_first(warning_message_new)
-        # Else, this message remains preserved as is.
+            # Munged warning message globally replacing all instances of this source
+            # substring with this target substring.
+            #
+            # Note that we intentionally call the lower-level str.replace() method
+            # rather than the higher-level
+            # beartype._util.text.utiltextmunge.replace_str_substrs() function here,
+            # as the latter unnecessarily requires this warning message to contain
+            # one or more instances of this source substring.
+            warning_message_new = warning_message_old.replace(
+                source_str, target_str)
+
+            # If doing so actually changed this message...
+            if warning_message_new != warning_message_old:
+                # Uppercase the first character of this message if needed.
+                warning_message_new = uppercase_str_char_first(
+                    warning_message_new)
+            # Else, this message remains preserved as is.
+        # Else, this is an unconventional warning. In this case...
+        else:
+            # Tuple of the zero or more arguments with which this warning was
+            # originally issued.
+            warning_args = warning.args
+
+            # Assert that this warning was issued with exactly one argument.
+            # Since the warnings.warn() signature accepts only a single
+            # "message" parameter, this assertion *SHOULD* always hold. *sigh*
+            assert len(warning_args) == 1
+
+            # Preserve this warning as is.
+            warning_message_new = warning_args[0]
 
         # Reissue this warning with a possibly modified message.
         warn_explicit(
             message=warning_message_new,
-            category=warning.category,
-            filename=warning.filename,
-            lineno=warning.lineno,
-            source=warning.source,
+            category=warning_info.category,
+            filename=warning_info.filename,
+            lineno=warning_info.lineno,
+            source=warning_info.source,
         )

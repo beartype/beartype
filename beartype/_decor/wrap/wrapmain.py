@@ -512,6 +512,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
             # instance) replaced by a human-readable description of this
             # callable and annotated parameter.
             if warnings_issued:
+                # print(f'warnings_issued: {warnings_issued}')
                 reissue_warnings_placeholder(
                     warnings=warnings_issued,
                     target_str=prefix_beartypeable_arg(

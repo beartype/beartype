@@ -12,6 +12,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._util.error.utilerrtest import is_exception_message_str
 from beartype._util.text.utiltextmunge import uppercase_str_char_first
 
 # ....................{ RAISERS                            }....................
@@ -106,19 +107,9 @@ def reraise_exception_placeholder(
     assert isinstance(source_str, str), f'{repr(source_str)} not string.'
     assert isinstance(target_str, str), f'{repr(target_str)} not string.'
 
-    # If...
-    if (
-        # Exception arguments are a tuple (as is typically but not necessarily
-        # the case) *AND*...
-        isinstance(exception.args, tuple) and
-        # This tuple is non-empty (as is typically but not necessarily the
-        # case) *AND*...
-        exception.args and
-        # The first item of this tuple is a string providing this exception's
-        # message (as is typically but not necessarily the case)...
-        isinstance(exception.args[0], str)
-    # Then this is a conventional exception. In this case...
-    ):
+
+    # If this is a conventional exception...
+    if is_exception_message_str(exception):
         # Munged exception message globally replacing all instances of this
         # source substring with this target substring.
         #
