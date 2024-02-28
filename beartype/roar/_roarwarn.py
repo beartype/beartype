@@ -180,15 +180,16 @@ class BeartypeDecorHintPepWarning(BeartypeDecorHintWarning):
 #     pass
 
 # ....................{ DECORATOR ~ hint : pep : deprecate }....................
-class BeartypeDecorHintPepDeprecationWarning(BeartypeDecorHintPepWarning):
+class BeartypeDecorHintPepDeprecationWarning(
+    BeartypeDecorHintPepWarning, DeprecationWarning):
     '''
     **Beartype decorator PEP-compliant type hint deprecation warning.**
 
     This warning is emitted at decoration time from the
-    :func:`beartype.beartype` decorator on receiving a callable annotated by
-    one or more **deprecated PEP-compliant type hints** (i.e., type hints
-    compliant with outdated PEPs that have since been obsoleted by recent
-    PEPs), including:
+    :func:`beartype.beartype` decorator on receiving a callable annotated by one
+    or more **deprecated PEP-compliant type hints** (i.e., type hints compliant
+    with outdated PEPs that have since been obsoleted by recent PEPs),
+    including:
 
     * If the active Python interpreter targets at least Python >= 3.9 and thus
       supports :pep:`585`, outdated :pep:`484`-compliant type hints (e.g.,

@@ -30,78 +30,6 @@ HINT_PEP484_TUPLE_EMPTY = Tuple[()]
 :pep:`484`-compliant empty fixed-length tuple type hint.
 '''
 
-# ....................{ WARNERS                            }....................
-#FIXME: Moreover, this warn_if_hint_pep585_deprecated() should ideally be called
-#from a different location. Currently, we call warn_if_hint_pep585_deprecated()
-#from our "beartype._check.code.codemake" submodule, which is all manner of
-#weird. Instead, we should consider calling warn_if_hint_pep585_deprecated()
-#from either:
-#* get_hint_pep_sign_or_none().
-#* Somewhere within the "beartype._check.convert" subpackage.
-#
-#Indeed, we currently emit similar deprecation warnings for PEP 613 from within
-#the reduce_hint_pep613() reducer. Ergo, somewhere within the
-#"beartype._check.convert" subpackage might be suitable.
-
-#FIXME: Resurrect support for the passed "warning_prefix" parameter. We've
-#currently disabled this parameter as it's typically just a non-human-readable
-#placeholder substring *NOT* intended to be exposed to end users (e.g.,
-#"$%ROOT_PITH_LABEL/~"). For exceptions, we simply catch raised exceptions and
-#replace such substrings with human-readable equivalents. Can we perform a
-#similar replacement for warnings?
-
-def warn_if_hint_pep484_deprecated(
-    # Mandatory parameters.
-    hint: object,
-
-    # Optional parameters.
-    exception_prefix: str = '',
-) -> None:
-    '''
-    Emit a non-fatal warning if the passed :pep:`484`-compliant type hint is
-    **deprecated** (i.e., obsoleted by an equivalent :pep:`585`-compliant type
-    hint *and* the active Python interpreter targets Python >= 3.9).
-
-    This warning is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as the implementation trivially reduces to
-    an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : object
-        :pep:`484`-compliant type hint to be inspected.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        warning message. Defaults to the empty string.
-
-    Warns
-    -----
-    BeartypeDecorHintPep585DeprecationWarning
-        If this :pep:`484`-compliant type hint is deprecated by :pep:`585` *and*
-        the active Python interpreter targets Python >= 3.9.
-    '''
-    assert isinstance(exception_prefix, str), (
-        f'{repr(exception_prefix)} not string.')
-
-    # If this hint is a PEP 484-compliant type hint originating from an origin
-    # type (e.g., "typing.List[int]"), this hint has been deprecated by the
-    # equivalent PEP 585-compliant type hint (e.g., "list[int]"). In this case,
-    # emit a non-fatal PEP 585-specific deprecation warning.
-    if _is_hint_pep484_deprecated(hint):
-        issue_warning(
-            cls=BeartypeDecorHintPep585DeprecationWarning,
-            message=(
-                f'{exception_prefix}PEP 484 type hint {repr(hint)} '
-                f'deprecated by PEP 585. '
-                f'This hint is scheduled for removal in the first Python '
-                f'version released after October 5th, 2025. To resolve this, '
-                f'import this hint from "beartype.typing" rather than "typing". '
-                f'For further commentary and alternatives, see also:\n'
-                f'    {URL_PEP585_DEPRECATIONS}'
-            ),
-        )
-    # Else, this hint is *NOT* deprecated. In this case, reduce to a noop.
-
 # ....................{ TESTERS ~ ignorable                }....................
 #FIXME: Shift into a more appropriate submodule, please.
 def is_hint_pep484585_generic_ignorable(hint: object) -> bool:
@@ -245,9 +173,84 @@ def is_hint_pep484604_union_ignorable(hint: object) -> bool:
         is_hint_ignorable(hint_child) for hint_child in get_hint_pep_args(hint))
 
 # ....................{ REDUCERS                           }....................
-#FIXME: Replace the ambiguous parameter:
-#* "hint: object" with the unambiguous parameter "hint: Literal[None]" *AFTER*
-#  we drop support for Python 3.7. *sigh*
+def reduce_hint_pep484_deprecated(
+    hint: object, exception_prefix : str, *args, **kwargs) -> object:
+    '''
+    Preserve the passed :pep:`484`-compliant type hint as is while emitting one
+    non-fatal deprecation warning for this type hint if **deprecated** (i.e.,
+    obsoleted by an equivalent :pep:`585`-compliant type hint *and* the active
+    Python interpreter targets Python >= 3.9).
+
+    While *not* explicitly defined by the :mod:`typing` module, :pep:`484`
+    explicitly supports this singleton:
+
+        When used in a type hint, the expression :data:`None` is considered
+        equivalent to ``type(None)``.
+
+    This reducer is intentionally *not* memoized (e.g., by the
+    ``callable_cached`` decorator), as the implementation trivially reduces
+    to an efficient one-liner.
+
+    Parameters
+    ----------
+    hint : object
+        Type hint to be reduced.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        warning message. Defaults to the empty string.
+
+    All remaining passed arguments are silently ignored.
+
+    Returns
+    -------
+    object
+        This hint unmodified.
+
+    Warns
+    -----
+    BeartypeDecorHintPep585DeprecationWarning
+        If this :pep:`484`-compliant type hint is deprecated by :pep:`585` *and*
+        the active Python interpreter targets Python >= 3.9.
+    '''
+    assert isinstance(exception_prefix, str), (
+        f'{repr(exception_prefix)} not string.')
+
+    # Avoid circular import dependencies.
+    from beartype._util.hint.utilhintget import get_hint_repr
+
+    # Machine-readable representation of this hint.
+    hint_repr = get_hint_repr(hint)
+
+    # Substring of the machine-readable representation of this hint preceding
+    # the first "[" delimiter if this representation contains that delimiter
+    # *OR* this representation as is otherwise.
+    #
+    # Note that the str.partition() method has been profiled to be the optimally
+    # efficient means of parsing trivial prefixes.
+    hint_repr_bare, _, _ = hint_repr.partition('[')
+
+    # If this hint is a PEP 484-compliant type hint originating from an origin
+    # type (e.g., "typing.List[int]"), this hint has been deprecated by the
+    # equivalent PEP 585-compliant type hint (e.g., "list[int]"). In this case,
+    # emit a non-fatal PEP 585-specific deprecation warning.
+    if hint_repr_bare in HINTS_PEP484_REPR_PREFIX_DEPRECATED:
+        issue_warning(
+            cls=BeartypeDecorHintPep585DeprecationWarning,
+            message=(
+                f'{exception_prefix}PEP 484 type hint {repr(hint)} '
+                f'deprecated by PEP 585. '
+                f'This hint is scheduled for removal in the first Python '
+                f'version released after October 5th, 2025. To resolve this, '
+                f'import this hint from "beartype.typing" rather than "typing". '
+                f'For further commentary and alternatives, see also:\n'
+                f'    {URL_PEP585_DEPRECATIONS}'
+            ),
+        )
+    # Else, this hint is *NOT* deprecated. In this case, reduce to a noop.
+
+    # Preserve this hint as is, regardless of deprecation.
+    return hint
+
 
 # Note that this reducer is intentionally typed as returning "type" rather than
 # "NoneType". While the former would certainly be preferable, mypy erroneously
@@ -266,7 +269,7 @@ def reduce_hint_pep484_none(hint: object, *args, **kwargs) -> type:
         equivalent to ``type(None)``.
 
     This reducer is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as the implementation trivially reduces
+    ``callable_cached`` decorator), as the implementation trivially reduces
     to an efficient one-liner.
 
     Parameters
@@ -285,44 +288,3 @@ def reduce_hint_pep484_none(hint: object, *args, **kwargs) -> type:
 
     # Unconditionally return the type of the "None" singleton.
     return NoneType
-
-# ....................{ PRIVATE ~ testers                  }....................
-def _is_hint_pep484_deprecated(hint: object) -> bool:
-    '''
-    :data:`True` only if the passed :pep:`484`-compliant type hint is
-    **deprecated** (i.e., obsoleted by an equivalent :pep:`585`-compliant type
-    hint *and* the active Python interpreter targets Python >= 3.9).
-
-    This tester is intentionally *not* memoized (e.g., by the
-    ``callable_cached`` decorator), as the implementation trivially reduces to
-    an efficient one-liner.
-
-    Parameters
-    ----------
-    hint : object
-        :pep:`484`-compliant type hint to be inspected.
-
-    Returns
-    -------
-    bool
-        :data:`True` only if this :pep:`484`-compliant type hint is deprecated
-        by :pep:`585` *and* the active Python interpreter targets Python >= 3.9.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.hint.utilhintget import get_hint_repr
-
-    # Machine-readable representation of this hint.
-    hint_repr = get_hint_repr(hint)
-
-    # Substring of the machine-readable representation of this hint preceding
-    # the first "[" delimiter if this representation contains that delimiter
-    # *OR* this representation as is otherwise.
-    #
-    # Note that the str.partition() method has been profiled to be the optimally
-    # efficient means of parsing trivial prefixes.
-    hint_repr_bare, _, _ = hint_repr.partition('[')
-
-    # Return true only if this hint is a PEP 484-compliant type hint originating
-    # from a deprecated origin type (e.g., "typing.List[int]").
-    return hint_repr_bare in HINTS_PEP484_REPR_PREFIX_DEPRECATED

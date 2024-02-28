@@ -14,17 +14,21 @@ classes encapsulating sample type hints instantiated by the
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype.typing import (
+    Iterable,
+    Optional,
+    Type,
+)
 from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
-from typing import Optional
-from collections.abc import Iterable
+from collections.abc import Iterable as IterableABC
 
 # ....................{ CLASSES ~ hint : [un]satisfied     }....................
 class HintPithSatisfiedMetadata(object):
     '''
-    **Type hint-satisfying pith metadata** (i.e., dataclass whose instance
+    **Type hint satisfied pith metadata** (i.e., dataclass whose instance
     variables describe an object satisfying a type hint when either passed as a
     parameter *or* returned as a value annotated by that hint).
 
@@ -38,14 +42,14 @@ class HintPithSatisfiedMetadata(object):
         ``__exit__`` and ``__enter__`` dunder methods required to satisfy the
         context manager protocol), this boolean is either:
 
-        * ``True`` if callers should preserve this context manager as is (e.g.,
-          by passing this context manager to the decorated callable).
-        * ``False`` if callers should safely open and close this context
+        * :data:`True` if callers should preserve this context manager as is
+          (e.g., by passing this context manager to the decorated callable).
+        * :data:`False` if callers should safely open and close this context
           manager to its context *and* replace this context manager with that
           context (e.g., by passing this context to the decorated callable).
 
         If this pith is *not* a context manager, this boolean is ignored.
-        Defaults to ``False``.
+        Defaults to :data:`False`.
     is_pith_factory : bool
         :data:`True` only if this pith is actually a **pith factory** (i.e.,
         callable accepting *no* parameters and dynamically creating and
@@ -88,7 +92,7 @@ class HintPithSatisfiedMetadata(object):
 
 class HintPithUnsatisfiedMetadata(HintPithSatisfiedMetadata):
     '''
-    **Type hint-unsatisfying pith metadata** (i.e., dataclass whose instance
+    **Type hint unsatisfied pith metadata** (i.e., dataclass whose instance
     variables describe an object *not* satisfying a type hint when either
     passed as a parameter *or* returned as a value annotated by that hint).
 
@@ -112,13 +116,13 @@ class HintPithUnsatisfiedMetadata(HintPithSatisfiedMetadata):
         *args,
 
         # Optional parameters.
-        exception_str_match_regexes: 'Iterable[str]' = (),
-        exception_str_not_match_regexes: 'Iterable[str]' = (),
+        exception_str_match_regexes: Iterable[str] = (),
+        exception_str_not_match_regexes: Iterable[str] = (),
         **kwargs
     ) -> None:
-        assert isinstance(exception_str_match_regexes, Iterable), (
+        assert isinstance(exception_str_match_regexes, IterableABC), (
             f'{repr(exception_str_match_regexes)} not iterable.')
-        assert isinstance(exception_str_not_match_regexes, Iterable), (
+        assert isinstance(exception_str_not_match_regexes, IterableABC), (
             f'{repr(exception_str_not_match_regexes)} not iterable.')
         assert all(
             isinstance(exception_str_match_regex, str)
@@ -179,6 +183,13 @@ class HintNonpepMetadata(object):
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for this type hint).
+    warning_type : Optional[Type[Warning]]
+        Either:
+
+        * If the :func:`beartype.beartype` decorator unconditionally emits a
+          non-fatal warning when this type hint annotates *any* parameter or
+          return of *any* callable, the type of that warning.
+        * Else, :data:`None`.
     is_ignorable : bool
         :data:`True` only if this hint is safely ignorable by the
         :func:`beartype.beartype` decorator. Defaults to :data:`False`.
@@ -209,22 +220,25 @@ class HintNonpepMetadata(object):
 
         # Optional keyword-only parameters.
         conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+        warning_type: Optional[Type[Warning]] = None,
         is_ignorable: bool = False,
         is_needs_cls_stack: bool = False,
         is_supported: bool = True,
-        piths_meta: 'Iterable[HintPithSatisfiedMetadata]' = (),
+        piths_meta: Iterable[HintPithSatisfiedMetadata] = (),
     ) -> None:
 
         # Validate passed non-variadic parameters.
         assert isinstance(conf, BeartypeConf), (
             f'{repr(conf)} not configuration.')
+        assert isinstance(warning_type, _NoneTypeOrType), (
+            f'{repr(warning_type)} neither class nor "None".')
         assert isinstance(is_ignorable, bool), (
             f'{repr(is_ignorable)} not bool.')
         assert isinstance(is_needs_cls_stack, bool), (
             f'{repr(is_needs_cls_stack)} not bool.')
         assert isinstance(is_supported, bool), (
             f'{repr(is_supported)} not bool.')
-        assert isinstance(piths_meta, Iterable), (
+        assert isinstance(piths_meta, IterableABC), (
             f'{repr(piths_meta)} not iterable.')
         assert all(
             isinstance(piths_meta, HintPithSatisfiedMetadata)
@@ -237,6 +251,7 @@ class HintNonpepMetadata(object):
         # Classify all passed parameters.
         self.hint = hint
         self.conf = conf
+        self.warning_type = warning_type
         self.is_ignorable = is_ignorable
         self.is_needs_cls_stack = is_needs_cls_stack
         self.is_supported = is_supported
@@ -248,6 +263,7 @@ class HintNonpepMetadata(object):
             f'{self.__class__.__name__}(',
             f'    hint={repr(self.hint)},',
             f'    conf={repr(self.conf)},',
+            f'    warning_type={repr(self.warning_type)},',
             f'    is_ignorable={repr(self.is_ignorable)},',
             f'    is_needs_cls_stack={repr(self.is_needs_cls_stack)},',
             f'    is_supported={repr(self.is_supported)},',
@@ -274,53 +290,53 @@ class HintPepMetadata(HintNonpepMetadata):
         * :class:`typing.NamedTuple` reducing to :class:`tuple`.
         * :class:`typing.TypedDict` reducing to :class:`dict`.
     is_args : bool, optional
-        ``True`` only if this hint is subscripted by one or more **arguments**
-        (i.e., PEP-compliant type hints that are *not* type variables) and/or
-        **type variables** (i.e., :class:`typing.TypeVar` instances). Defaults
-        to ``True`` only if the machine-readable representation of this hint
-        contains one or more "[" delimiters.
+        :data:`True` only if this hint is subscripted by one or more
+        **arguments** (i.e., PEP-compliant type hints that are *not* type
+        variables) and/or **type variables** (i.e., :class:`typing.TypeVar`
+        instances). Defaults to :data:`True` only if the machine-readable
+        representation of this hint contains one or more ``[`` delimiters.
     is_pep585_builtin_subscripted : bool, optional
-        ``True`` only if this hint is a `PEP 585`-compliant builtin. If
-        ``True``, then :attr:`is_type_typing` *must* be ``False``. Defaults to
-        the negation of :attr:`is_pep585_generic` if non-``None`` *or*
-        ``False`` otherwise (i.e., if :attr:`is_pep585_generic` is ``None``).
+        :data:`True` only if this hint is a :pep:`585`-compliant builtin. If
+        :data:`True`, then :attr:`is_type_typing` *must* be :data:`False`.
+        Defaults to the negation of :attr:`is_pep585_generic` if
+        non-:data:`None` *or* :data:`False` otherwise (i.e., if
+        :attr:`is_pep585_generic` is :data:`None`).
     is_pep585_generic : bool, optional
-        ``True`` only if this hint is a `PEP 585`-compliant generic. If
-        ``True``, then :attr:`is_type_typing` *must* be ``False``. Defaults to
-        the negation of :attr:`is_pep585_generic` if non-``None`` *or*
-        ``False`` otherwise (i.e., if :attr:`is_pep585_generic` is ``None``).
+        :data:`True` only if this hint is a :pep:`585`-compliant generic. If
+        :data:`True`, then :attr:`is_type_typing` *must* be :data:`False`.
+        Defaults to :data:`False`.
     is_typevars : bool, optional
-        ``True`` only if this hint is subscripted by one or more **type
+        :data:`True` only if this hint is subscripted by one or more **type
         variables** (i.e., :class:`typing.TypeVar` instances). Defaults to
-        ``False``.
+        :data:`False`.
     is_type_typing : bool, optional
-        ``True`` only if this hint's class is defined by the :mod:`typing`
+        :data:`True` only if this hint's class is defined by the :mod:`typing`
         module. If ``True``, then :attr:`is_pep585_builtin_subscripted` and
         :attr:`is_pep585_generic` *must* both be ``False``. Defaults to
         either:
 
-        * If either :attr:`is_pep585_builtin_subscripted` *or* :attr:`is_pep585_generic`
-          are ``True``, ``False``.
-        * Else, ``True``.
+        * If either :attr:`is_pep585_builtin_subscripted` *or*
+          :attr:`is_pep585_generic` are :data:`True`, :data:`False`.
+        * Else, :data:`True`.
     is_typing : bool, optional
-        ``True`` only if this hint itself is defined by the :mod:`typing`
+        :data:`True` only if this hint itself is defined by the :mod:`typing`
         module. Defaults to :attr:`is_type_typing`.
     isinstanceable_type : Optional[type]
         **Origin type** (i.e., non-:mod:`typing` class such that *all* objects
         satisfying this hint are instances of this class) originating this hint
-        if this hint originates from a non-:mod:`typing` class *or* ``None``
+        if this hint originates from a non-:mod:`typing` class *or* :data:`None`
         otherwise (i.e., if this hint does *not* originate from such a class).
-        Defaults to ``None``.
+        Defaults to :data:`None`.
     generic_type : Optional[type]
-        Subscripted origin type associated with this hint if any *or* ``None``
-        otherwise (i.e., if this hint is associated with *no* such type).
-        Defaults to either:
+        Subscripted origin type associated with this hint if any *or*
+        :data:`None` otherwise (i.e., if this hint is associated with *no* such
+        type). Defaults to either:
 
         * If this hint is subscripted, :attr:`isinstanceable_type`.
-        * Else, ``None``.
+        * Else, :data:`None`.
     typehint_cls : Optional[Type[beartype.door.TypeHint]]
         Concrete :class:`beartype.door.TypeHint` subclass responsible for
-        handling this hint if any *or* ``None`` otherwise (e.g., if the
+        handling this hint if any *or* :data:`None` otherwise (e.g., if the
         :mod:`beartype.door` submodule has yet to support this hint).
 
     All remaining keyword arguments are passed as is to the superclass
@@ -344,7 +360,7 @@ class HintPepMetadata(HintNonpepMetadata):
         is_typing: Optional[bool] = None,
         isinstanceable_type: Optional[type] = None,
         generic_type: Optional[type] = None,
-        typehint_cls: 'Optional[Type[beartype.door.TypeHint]]' = None,
+        typehint_cls: Optional[Type['beartype.door.TypeHint']] = None,
         **kwargs
     ) -> None:
 
@@ -392,7 +408,8 @@ class HintPepMetadata(HintNonpepMetadata):
             # Default this parameter to the negation of all PEP 585-compliant
             # boolean parameters. By definition, PEP 585-compliant type hints
             # are *NOT* defined by the "typing" module and vice versa.
-            is_type_typing = not (is_pep585_builtin_subscripted or is_pep585_generic)
+            is_type_typing = not (
+                is_pep585_builtin_subscripted or is_pep585_generic)
         if is_typing is None:
             # Default this parameter to true only if this hint's class is
             # defined by the "typing" module.

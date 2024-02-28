@@ -43,6 +43,46 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignTypeGuard,
     HintSignTypeVar,
     HintSignTypedDict,
+    HintSignAbstractSet,
+    HintSignAsyncContextManager,
+    HintSignAsyncGenerator,
+    HintSignAsyncIterable,
+    HintSignAsyncIterator,
+    HintSignAwaitable,
+    HintSignByteString,
+    HintSignCallable,
+    HintSignChainMap,
+    HintSignCollection,
+    HintSignContainer,
+    HintSignContextManager,
+    HintSignCoroutine,
+    HintSignCounter,
+    HintSignDefaultDict,
+    HintSignDeque,
+    HintSignDict,
+    HintSignFrozenSet,
+    HintSignGenerator,
+    HintSignHashable,
+    HintSignItemsView,
+    HintSignIterable,
+    HintSignIterator,
+    HintSignKeysView,
+    HintSignList,
+    HintSignMappingView,
+    HintSignMapping,
+    HintSignMatch,
+    HintSignMutableMapping,
+    HintSignMutableSequence,
+    HintSignMutableSet,
+    HintSignOrderedDict,
+    HintSignPattern,
+    HintSignReversible,
+    HintSignSequence,
+    HintSignSet,
+    HintSignSized,
+    HintSignTuple,
+    HintSignType,
+    HintSignValuesView,
 )
 from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.utilcachecall import callable_cached
@@ -51,7 +91,9 @@ from beartype._util.hint.nonpep.mod.utilmodnumpy import (
 from beartype._util.hint.nonpep.mod.utilmodpandera import (
     reduce_hint_pandera)
 from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
-    reduce_hint_pep484_none)
+    reduce_hint_pep484_deprecated,
+    reduce_hint_pep484_none,
+)
 from beartype._util.hint.pep.proposal.pep484.utilpep484generic import (
     reduce_hint_pep484_generic)
 from beartype._util.hint.pep.proposal.pep484.utilpep484newtype import (
@@ -514,6 +556,53 @@ Note that:
 
 
 _HINT_SIGN_TO_REDUCE_HINT_UNCACHED: _HintSignToReduceHintUncached = {
+    # ..................{ PEP 484                            }..................
+    # Preserve deprecated PEP 484-compliant type hints as is while emitting one
+    # non-fatal deprecation warning for each.
+    #
+    # Note that, to ensure that one such warning is emitted for each such hint,
+    # these reducers are intentionally uncached rather than cached.
+    HintSignAbstractSet: reduce_hint_pep484_deprecated,
+    HintSignAsyncContextManager: reduce_hint_pep484_deprecated,
+    HintSignAsyncGenerator: reduce_hint_pep484_deprecated,
+    HintSignAsyncIterable: reduce_hint_pep484_deprecated,
+    HintSignAsyncIterator: reduce_hint_pep484_deprecated,
+    HintSignAwaitable: reduce_hint_pep484_deprecated,
+    HintSignByteString: reduce_hint_pep484_deprecated,
+    HintSignCallable: reduce_hint_pep484_deprecated,
+    HintSignChainMap: reduce_hint_pep484_deprecated,
+    HintSignCollection: reduce_hint_pep484_deprecated,
+    HintSignContainer: reduce_hint_pep484_deprecated,
+    HintSignContextManager: reduce_hint_pep484_deprecated,
+    HintSignCoroutine: reduce_hint_pep484_deprecated,
+    HintSignCounter: reduce_hint_pep484_deprecated,
+    HintSignDefaultDict: reduce_hint_pep484_deprecated,
+    HintSignDeque: reduce_hint_pep484_deprecated,
+    HintSignDict: reduce_hint_pep484_deprecated,
+    HintSignFrozenSet: reduce_hint_pep484_deprecated,
+    HintSignGenerator: reduce_hint_pep484_deprecated,
+    HintSignHashable: reduce_hint_pep484_deprecated,
+    HintSignItemsView: reduce_hint_pep484_deprecated,
+    HintSignIterable: reduce_hint_pep484_deprecated,
+    HintSignIterator: reduce_hint_pep484_deprecated,
+    HintSignKeysView: reduce_hint_pep484_deprecated,
+    HintSignList: reduce_hint_pep484_deprecated,
+    HintSignMappingView: reduce_hint_pep484_deprecated,
+    HintSignMapping: reduce_hint_pep484_deprecated,
+    HintSignMatch: reduce_hint_pep484_deprecated,
+    HintSignMutableMapping: reduce_hint_pep484_deprecated,
+    HintSignMutableSequence: reduce_hint_pep484_deprecated,
+    HintSignMutableSet: reduce_hint_pep484_deprecated,
+    HintSignOrderedDict: reduce_hint_pep484_deprecated,
+    HintSignPattern: reduce_hint_pep484_deprecated,
+    HintSignReversible: reduce_hint_pep484_deprecated,
+    HintSignSequence: reduce_hint_pep484_deprecated,
+    HintSignSet: reduce_hint_pep484_deprecated,
+    HintSignSized: reduce_hint_pep484_deprecated,
+    HintSignTuple: reduce_hint_pep484_deprecated,
+    HintSignType: reduce_hint_pep484_deprecated,
+    HintSignValuesView: reduce_hint_pep484_deprecated,
+
     # ..................{ PEP 613                            }..................
     # Reduce PEP 613-compliant "typing.TypeAlias" type hints to an arbitrary
     # ignorable type hint *AND* emit a non-fatal deprecation warning.

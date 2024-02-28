@@ -7,7 +7,7 @@
 Project-wide :pep:`484`-compliant **type hint test data.**
 
 Caveats
-----------
+-------
 Note that:
 
 * The :pep:`484`-compliant annotated builtin containers created and returned by
@@ -273,6 +273,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         TypeVarTypeHint,
         UnionTypeHint,
     )
+    from beartype.roar import BeartypeDecorHintPep585DeprecationWarning
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignAny,
         HintSignByteString,
@@ -311,6 +312,18 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     # List of all PEP-specific type hint metadata to be returned.
     hints_pep_meta = []
 
+    # Type of warning emitted by the @beartype decorator for PEP 484-compliant
+    # type hints obsoleted by PEP 585, defined as either...
+    PEP585_DEPRECATION_WARNING = (
+        # If the active Python interpreter targets Python >= 3.9 and thus
+        # supports PEP 585 deprecating these hints, this warning type;
+        BeartypeDecorHintPep585DeprecationWarning
+        if IS_PYTHON_AT_LEAST_3_9 else
+        # Else, the active Python interpreter targets Python < 3.9 and thus
+        # fails to support PEP 585. In this case, "None".
+        None
+    )
+
     # True only if unsubscripted typing attributes (i.e., public attributes of
     # the "typing" module without arguments) are parametrized by one or more
     # type variables under the active Python interpreter.
@@ -348,6 +361,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Hashable,
             pep_sign=HintSignHashable,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=HashableABC,
             piths_meta=(
                 # String constant.
@@ -370,6 +384,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Sized,
             pep_sign=HintSignSized,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=SizedABC,
             piths_meta=(
                 # String constant.
@@ -529,6 +544,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Callable[[], str],
             pep_sign=HintSignCallable,
+            warning_type=PEP585_DEPRECATION_WARNING,
             typehint_cls=CallableTypeHint,
             isinstanceable_type=CallableABC,
             piths_meta=(
@@ -544,6 +560,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=ContextManager[str],
             pep_sign=HintSignContextManager,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=contextlib.AbstractContextManager,
             piths_meta=(
                 # Context manager.
@@ -563,6 +580,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Dict,
             pep_sign=HintSignDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
             is_args=_IS_ARGS_HIDDEN,
             is_typevars=_IS_TYPEVARS_HIDDEN,
             isinstanceable_type=dict,
@@ -584,6 +602,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Dict[int, str],
             pep_sign=HintSignDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=dict,
             piths_meta=(
                 # Dictionary mapping integer keys to string values.
@@ -601,6 +620,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Dict[S, T],
             pep_sign=HintSignDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=dict,
             is_typevars=True,
             piths_meta=(
@@ -624,6 +644,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=_Pep484GenericUnsubscriptedSingle,
             pep_sign=HintSignGeneric,
+            warning_type=PEP585_DEPRECATION_WARNING,
             generic_type=_Pep484GenericUnsubscriptedSingle,
             is_type_typing=False,
             piths_meta=(
@@ -647,6 +668,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=_Pep484GenericUntypevaredShallowSingle,
             pep_sign=HintSignGeneric,
+            warning_type=PEP585_DEPRECATION_WARNING,
             generic_type=_Pep484GenericUntypevaredShallowSingle,
             is_type_typing=False,
             piths_meta=(
@@ -672,6 +694,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=_Pep484GenericUntypevaredDeepSingle,
             pep_sign=HintSignGeneric,
+            warning_type=PEP585_DEPRECATION_WARNING,
             generic_type=_Pep484GenericUntypevaredDeepSingle,
             is_type_typing=False,
             piths_meta=(
@@ -748,6 +771,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=_Pep484GenericUntypevaredMultiple,
             pep_sign=HintSignGeneric,
+            warning_type=PEP585_DEPRECATION_WARNING,
             generic_type=_Pep484GenericUntypevaredMultiple,
             is_type_typing=False,
             piths_meta=(
@@ -770,6 +794,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=_Pep484GenericTypevaredShallowMultiple,
             pep_sign=HintSignGeneric,
+            warning_type=PEP585_DEPRECATION_WARNING,
             generic_type=_Pep484GenericTypevaredShallowMultiple,
             # is_args=False,
             is_typevars=True,
@@ -792,6 +817,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=_Pep484GenericTypevaredDeepMultiple,
             pep_sign=HintSignGeneric,
+            warning_type=PEP585_DEPRECATION_WARNING,
             generic_type=_Pep484GenericTypevaredDeepMultiple,
             # is_args=False,
             is_typevars=True,
@@ -820,6 +846,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List[_Pep484GenericUntypevaredMultiple],
             pep_sign=HintSignList,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=list,
             piths_meta=(
                 # List of subclass-specific generic 2-tuples of string
@@ -852,6 +879,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List,
             pep_sign=HintSignList,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=list,
             is_args=_IS_ARGS_HIDDEN,
             is_typevars=_IS_TYPEVARS_HIDDEN,
@@ -879,6 +907,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List[object],
             pep_sign=HintSignList,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=list,
             piths_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
@@ -899,6 +928,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List[str],
             pep_sign=HintSignList,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=list,
             piths_meta=(
                 # Empty list, which satisfies all hint arguments by definition.
@@ -932,6 +962,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List[T],
             pep_sign=HintSignList,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=list,
             is_typevars=True,
             piths_meta=(
@@ -1006,6 +1037,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Match,
             pep_sign=HintSignMatch,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=RegexMatchType,
             is_args=_IS_ARGS_HIDDEN,
             is_typevars=_IS_TYPEVARS_HIDDEN,
@@ -1025,6 +1057,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Match[str],
             pep_sign=HintSignMatch,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=RegexMatchType,
             piths_meta=(
                 # Regular expression match of one or more string constants.
@@ -1042,6 +1075,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Pattern,
             pep_sign=HintSignPattern,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=RegexCompiledType,
             is_args=_IS_ARGS_HIDDEN,
             is_typevars=_IS_TYPEVARS_HIDDEN,
@@ -1058,6 +1092,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Pattern[str],
             pep_sign=HintSignPattern,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=RegexCompiledType,
             piths_meta=(
                 # Regular expression string pattern.
@@ -1065,113 +1100,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                     re.compile(r'\b[A-Z]+ITIAT[A-Z]+\b')),
                 # String constant.
                 HintPithUnsatisfiedMetadata('Obsessing men'),
-            ),
-        ),
-
-        # ................{ SUBCLASS                           }................
-        # Unsubscripted "Type" singleton.
-        HintPepMetadata(
-            hint=Type,
-            pep_sign=HintSignType,
-            isinstanceable_type=type,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
-            piths_meta=(
-                # Transitive superclass of all superclasses.
-                HintPithSatisfiedMetadata(object),
-                # Arbitrary class.
-                HintPithSatisfiedMetadata(str),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Samely:'),
-            ),
-        ),
-
-        # Any type, semantically equivalent under PEP 484 to the unsubscripted
-        # "Type" singleton.
-        HintPepMetadata(
-            hint=Type[Any],
-            pep_sign=HintSignType,
-            isinstanceable_type=type,
-            piths_meta=(
-                # Arbitrary class.
-                HintPithSatisfiedMetadata(bool),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Coulomb‐lobed lobbyist’s Ģom'),
-            ),
-        ),
-
-        # "type" superclass, semantically equivalent to the unsubscripted
-        # "Type" singleton.
-        HintPepMetadata(
-            hint=Type[type],
-            pep_sign=HintSignType,
-            isinstanceable_type=type,
-            piths_meta=(
-                # Arbitrary class.
-                HintPithSatisfiedMetadata(complex),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Had al-'),
-            ),
-        ),
-
-        # Specific class.
-        HintPepMetadata(
-            hint=Type[Class],
-            pep_sign=HintSignType,
-            isinstanceable_type=type,
-            piths_meta=(
-                # Subclass of this class.
-                HintPithSatisfiedMetadata(Subclass),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Namely,'),
-                # Non-subclass of this class.
-                HintPithUnsatisfiedMetadata(str),
-            ),
-        ),
-
-        # Specific class deferred with a forward reference.
-        HintPepMetadata(
-            hint=Type[_TEST_PEP484_FORWARDREF_CLASSNAME],
-            pep_sign=HintSignType,
-            isinstanceable_type=type,
-            piths_meta=(
-                # Subclass of this class.
-                HintPithSatisfiedMetadata(SubclassSubclass),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Jabbar‐disbarred'),
-                # Non-subclass of this class.
-                HintPithUnsatisfiedMetadata(dict),
-            ),
-        ),
-
-        # Two or more specific classes.
-        HintPepMetadata(
-            hint=Type[Union[Class, OtherClass,]],
-            pep_sign=HintSignType,
-            isinstanceable_type=type,
-            piths_meta=(
-                # Arbitrary subclass of one class subscripting this hint.
-                HintPithSatisfiedMetadata(Subclass),
-                # Arbitrary subclass of another class subscripting this hint.
-                HintPithSatisfiedMetadata(OtherSubclass),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Jabberings'),
-                # Non-subclass of any classes subscripting this hint.
-                HintPithUnsatisfiedMetadata(set),
-            ),
-        ),
-
-        # Generic class.
-        HintPepMetadata(
-            hint=Type[T],
-            pep_sign=HintSignType,
-            isinstanceable_type=type,
-            is_typevars=True,
-            piths_meta=(
-                # Arbitrary class.
-                HintPithSatisfiedMetadata(int),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Obligation, and'),
             ),
         ),
 
@@ -1183,6 +1111,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple,
             pep_sign=HintSignTuple,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=tuple,
             piths_meta=(
                 # Tuple containing arbitrary items.
@@ -1210,6 +1139,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple[()],
             pep_sign=HintSignTuple,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=tuple,
             piths_meta=(
                 # Empty tuple.
@@ -1233,6 +1163,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple[Any, object,],
             pep_sign=HintSignTuple,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=tuple,
             piths_meta=(
                 # Tuple containing arbitrary items.
@@ -1256,6 +1187,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple[float, Any, str,],
             pep_sign=HintSignTuple,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=tuple,
             piths_meta=(
                 # Tuple containing a floating-point number, string, and integer
@@ -1303,6 +1235,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple[Tuple[float, Any, str,], ...],
             pep_sign=HintSignTuple,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=tuple,
             piths_meta=(
                 # Tuple containing tuples containing a floating-point number,
@@ -1354,6 +1287,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple[S, T],
             pep_sign=HintSignTuple,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=tuple,
             is_typevars=True,
             piths_meta=(
@@ -1377,6 +1311,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple[str, ...],
             pep_sign=HintSignTuple,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=tuple,
             piths_meta=(
                 # Tuple containing arbitrarily many string constants.
@@ -1408,6 +1343,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Tuple[T, ...],
             pep_sign=HintSignTuple,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=tuple,
             is_typevars=True,
             piths_meta=(
@@ -1419,6 +1355,120 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Concubine enthralling contractually novel'),
+            ),
+        ),
+
+        # ................{ TYPE                               }................
+        # Unsubscripted "Type" singleton.
+        HintPepMetadata(
+            hint=Type,
+            pep_sign=HintSignType,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=type,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
+            piths_meta=(
+                # Transitive superclass of all superclasses.
+                HintPithSatisfiedMetadata(object),
+                # Arbitrary class.
+                HintPithSatisfiedMetadata(str),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Samely:'),
+            ),
+        ),
+
+        # Any type, semantically equivalent under PEP 484 to the unsubscripted
+        # "Type" singleton.
+        HintPepMetadata(
+            hint=Type[Any],
+            pep_sign=HintSignType,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=type,
+            piths_meta=(
+                # Arbitrary class.
+                HintPithSatisfiedMetadata(bool),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Coulomb‐lobed lobbyist’s Ģom'),
+            ),
+        ),
+
+        # "type" superclass, semantically equivalent to the unsubscripted
+        # "Type" singleton.
+        HintPepMetadata(
+            hint=Type[type],
+            pep_sign=HintSignType,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=type,
+            piths_meta=(
+                # Arbitrary class.
+                HintPithSatisfiedMetadata(complex),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Had al-'),
+            ),
+        ),
+
+        # Specific class.
+        HintPepMetadata(
+            hint=Type[Class],
+            pep_sign=HintSignType,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=type,
+            piths_meta=(
+                # Subclass of this class.
+                HintPithSatisfiedMetadata(Subclass),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Namely,'),
+                # Non-subclass of this class.
+                HintPithUnsatisfiedMetadata(str),
+            ),
+        ),
+
+        # Specific class deferred with a forward reference.
+        HintPepMetadata(
+            hint=Type[_TEST_PEP484_FORWARDREF_CLASSNAME],
+            pep_sign=HintSignType,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=type,
+            piths_meta=(
+                # Subclass of this class.
+                HintPithSatisfiedMetadata(SubclassSubclass),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Jabbar‐disbarred'),
+                # Non-subclass of this class.
+                HintPithUnsatisfiedMetadata(dict),
+            ),
+        ),
+
+        # Two or more specific classes.
+        HintPepMetadata(
+            hint=Type[Union[Class, OtherClass,]],
+            pep_sign=HintSignType,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=type,
+            piths_meta=(
+                # Arbitrary subclass of one class subscripting this hint.
+                HintPithSatisfiedMetadata(Subclass),
+                # Arbitrary subclass of another class subscripting this hint.
+                HintPithSatisfiedMetadata(OtherSubclass),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Jabberings'),
+                # Non-subclass of any classes subscripting this hint.
+                HintPithUnsatisfiedMetadata(set),
+            ),
+        ),
+
+        # Generic class.
+        HintPepMetadata(
+            hint=Type[T],
+            pep_sign=HintSignType,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=type,
+            is_typevars=True,
+            piths_meta=(
+                # Arbitrary class.
+                HintPithSatisfiedMetadata(int),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Obligation, and'),
             ),
         ),
 
@@ -1456,6 +1506,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Union[int, Sequence[str]],
             pep_sign=HintSignUnion,
+            warning_type=PEP585_DEPRECATION_WARNING,
             typehint_cls=UnionTypeHint,
             piths_meta=(
                 # Integer constant.
@@ -1513,6 +1564,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=Union[dict, float, int,
                 Sequence[Union[dict, float, int, MutableSequence[str]]]],
             pep_sign=HintSignUnion,
+            warning_type=PEP585_DEPRECATION_WARNING,
             typehint_cls=UnionTypeHint,
             piths_meta=(
                 # Empty dictionary.
@@ -1614,6 +1666,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=List[Union[int, str,]],
             pep_sign=HintSignList,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=list,
             piths_meta=(
                 # List containing a mixture of integer and string constants.
@@ -1663,6 +1716,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Sequence[Union[str, bytes]],
             pep_sign=HintSignSequence,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=SequenceABC,
             piths_meta=(
                 # Sequence of string and bytestring constants.
@@ -1709,6 +1763,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=MutableSequence[Union[bytes, Callable]],
             pep_sign=HintSignMutableSequence,
+            warning_type=PEP585_DEPRECATION_WARNING,
             isinstanceable_type=MutableSequenceABC,
             piths_meta=(
                 # Mutable sequence of string and bytestring constants.
@@ -1779,6 +1834,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             #   "Optional" attribute under older Python versions.
             pep_sign=(
                 HintSignOptional if IS_PYTHON_AT_LEAST_3_9 else HintSignUnion),
+            warning_type=PEP585_DEPRECATION_WARNING,
             typehint_cls=UnionTypeHint,
             piths_meta=(
                 # None singleton.
@@ -1830,6 +1886,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Union[float, Sequence[str]],
             pep_sign=HintSignUnion,
+            warning_type=PEP585_DEPRECATION_WARNING,
             typehint_cls=UnionTypeHint,
             piths_meta=(
                 # Floating-point constant.
@@ -1864,6 +1921,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             hint=Union[float, Sequence[str]],
             conf=BeartypeConf(is_pep484_tower=True),
             pep_sign=HintSignUnion,
+            warning_type=PEP585_DEPRECATION_WARNING,
             typehint_cls=UnionTypeHint,
             piths_meta=(
                 # Floating-point constant.
@@ -1911,6 +1969,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             HintPepMetadata(
                 hint=_Pep484GenericUnsubscriptedSingle[str],
                 pep_sign=HintSignGeneric,
+                warning_type=PEP585_DEPRECATION_WARNING,
                 generic_type=_Pep484GenericUnsubscriptedSingle,
                 is_type_typing=False,
                 piths_meta=(
@@ -1955,6 +2014,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 HintPepMetadata(
                     hint=ByteString,
                     pep_sign=HintSignByteString,
+                    warning_type=PEP585_DEPRECATION_WARNING,
                     isinstanceable_type=ByteStringABC,
                     piths_meta=(
                         # Byte string constant.

@@ -116,18 +116,18 @@ def iter_hints_piths_meta(hints_meta) -> (
         both PEP-compliant and -noncompliant type hints).
         '''
 
-        # For each predefined PEP-compliant type hint and associated metadata...
+        # For each predefined type hint and associated metadata...
         for hint_meta in hints_meta:
-            # print(f'Type-checking PEP type hint {repr(hint_meta.hint)}...')
+            # print(f'Type-checking type hint {repr(hint_meta.hint)}...')
 
             # If this hint is currently unsupported, continue to the next.
             if not hint_meta.is_supported:
                 continue
             # Else, this hint is currently supported.
 
-            # Repeat the following logic twice. Why? To exercise memoization across
-            # repeated @beartype decorations on different callables annotated by
-            # the same hints.
+            # Repeat the following logic twice. Why? To exercise memoization
+            # across repeated @beartype decorations on different callables
+            # annotated by the same hints.
             for _ in RANGE_2:
                 # For each pith either satisfying or violating this hint...
                 for pith_meta in hint_meta.piths_meta:

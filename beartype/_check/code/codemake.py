@@ -115,8 +115,6 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     release_object_typed,
 )
 from beartype._util.func.utilfuncscope import add_func_scope_attr
-from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
-    warn_if_hint_pep484_deprecated)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
@@ -719,23 +717,15 @@ def make_check_expr(
             hint_curr_sign = get_hint_pep_sign(hint_curr)
             # print(f'Visiting PEP type hint {repr(hint_curr)} sign {repr(hint_curr_sign)}...')
 
-            #FIXME: Non-ideal. Shift elsewhere, please. See this function for
-            #"FIXME:" comments pertaining to this.
-            # If this is a PEP 484-compliant type hint deprecated by an
-            # equivalent PEP 585-compliant type hint, emit a non-fatal warning.
-            # print(f'Testing {hint_curr_exception_prefix} hint {repr(hint_curr)} for deprecation...')
-            warn_if_hint_pep484_deprecated(
-                hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
-
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # NOTE: Whenever adding support for (i.e., when generating code
             # type-checking) a new "typing" attribute below, similar support
             # for that attribute *MUST* also be added to the parallel:
-            # * "beartype._util.hint.pep.errorget" submodule, which
-            #   raises exceptions on the current pith failing this check.
+            # * "beartype._check.error" subpackage, which raises exceptions on
+            #   the current pith failing this check.
             # * "beartype._data.hint.pep.sign.datapepsignset.HINT_SIGNS_SUPPORTED_DEEP"
-            #   frozen set of all signs for which this function generates
-            #   deeply type-checking code.
+            #   frozen set of all signs for which this function generates deeply
+            #   type-checking code.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             #FIXME: Python 3.10 provides proper syntactic support for "case"
@@ -745,7 +735,9 @@ def make_check_expr(
             #have to preserve this for basically forever. What you gonna do?
             #FIXME: Actually, we should probably just leverage a hypothetical
             #"beartype.vale.IsInline[...]" validator to coerce this slow O(n)
-            #procedural logic into fast O(1) object-oriented logic.
+            #procedural logic into fast O(1) object-oriented logic. Of course,
+            #object-oriented logic is itself slow -- so we only do this if we
+            #can sufficiently memoize that logic. Consideration!
 
             # Switch on (as in, pretend Python provides a "case" statement)
             # the sign identifying this hint to decide which type of code to

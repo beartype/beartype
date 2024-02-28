@@ -150,33 +150,35 @@ def reissue_warnings_placeholder(
         # Munged warning message to be issued below.
         warning_message_new: Any = None
 
-        # If this warning is... *ALREADY A STRING!?* What is going on here?
-        # Look. Not even we know. But mypy claims that warnings recorded by
-        # calls to the standard "warnings.catch_warnings(record=True)" function
-        # satisfy the union "Warning | str". Technically, that makes no sense.
-        # Pragmatically, that makes no sense. But mypy says it's true. We are
-        # too tired to argue with static type-checkers at 4:11AM in the morning.
-        if isinstance(warning, str):  # pragma: no cover
-            warning_message_new = warning
-        # Else, this warning is actually a warning.
-        #
-        # If this is an conventional warning...
-        elif is_exception_message_str(warning):
+        # If either...
+        if (
+            # This warning is... *ALREADY A STRING!?* What is going on here?
+            # Look. Not even we know. But mypy claims that warnings recorded by
+            # calls to the standard "warnings.catch_warnings(record=True)"
+            # function satisfy the union "Warning | str". Technically, that
+            # makes no sense. Pragmatically, that makes no sense. But mypy says
+            # it's true. We are too tired to argue with static type-checkers at
+            # 4:11AM in the morning.
+            isinstance(warning, str) or
+            # This warning is conventional...
+            is_exception_message_str(warning)
+        # Then this warning is or has a standard message. In this case...
+        ):
             # Original warning message, coerced from the original warning.
             #
-            # Note that the poorly named "message" attribute is the original warning
-            # rather warning message. Just as with exceptions, coercing this warning
-            # into a string reliably retrieves its message.
+            # Note that the poorly named "message" attribute is the original
+            # warning rather warning message. Just as with exceptions, coercing
+            # this warning into a string reliably retrieves its message.
             warning_message_old = str(warning)
 
-            # Munged warning message globally replacing all instances of this source
-            # substring with this target substring.
+            # Munged warning message globally replacing all instances of this
+            # source substring with this target substring.
             #
-            # Note that we intentionally call the lower-level str.replace() method
-            # rather than the higher-level
-            # beartype._util.text.utiltextmunge.replace_str_substrs() function here,
-            # as the latter unnecessarily requires this warning message to contain
-            # one or more instances of this source substring.
+            # Note that we intentionally call the lower-level str.replace()
+            # method rather than the higher-level
+            # beartype._util.text.utiltextmunge.replace_str_substrs() function
+            # here, as the latter unnecessarily requires this warning message to
+            # contain one or more instances of this source substring.
             warning_message_new = warning_message_old.replace(
                 source_str, target_str)
 

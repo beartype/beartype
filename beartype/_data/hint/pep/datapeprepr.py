@@ -697,6 +697,7 @@ def _init() -> None:
     # Uncomment as needed to display the contents of these objects.
 
     # from pprint import pformat
+    # print(f'HINTS_PEP484_REPR_PREFIX_DEPRECATED: {pformat(HINTS_PEP484_REPR_PREFIX_DEPRECATED)}')
     # print(f'HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN: {pformat(HINT_REPR_PREFIX_ARGS_0_OR_MORE_TO_SIGN)}')
     # print(f'HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN: {pformat(HINT_REPR_PREFIX_ARGS_1_OR_MORE_TO_SIGN)}')
     # print(f'HINT_TYPE_NAME_TO_SIGN: {pformat(HINT_TYPE_NAME_TO_SIGN)}')

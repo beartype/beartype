@@ -359,28 +359,72 @@ def is_hint_pep(hint: object) -> bool:
     # PEP-compliant.
     return hint_sign is not None
 
-# ....................{ TESTERS ~ ignorable                }....................
+
+#FIXME: Currently unused but preserved for posterity. *shrug*
+# def is_hint_pep_deprecated(hint: object) -> bool:
+#     '''
+#     :data:`True` only if the passed PEP-compliant type hint is **deprecated**
+#     (i.e., obsoleted by an equivalent PEP-compliant type hint standardized by a
+#     more recently released PEP).
+#
+#     This tester is intentionally *not* memoized (e.g., by the
+#     ``callable_cached`` decorator), as this tester is currently *only* called at
+#     test time from our test suite.
+#
+#     Parameters
+#     ----------
+#     hint : object
+#         PEP-compliant type hint to be inspected.
+#
+#     Returns
+#     -------
+#     bool
+#         :data:`True` only if this PEP-compliant type hint is deprecated.
+#     '''
+#
+#     # Avoid circular import dependencies.
+#     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign
+#
+#     # Sign uniquely identifying this hint.
+#     hint_sign = get_hint_pep_sign(hint)
+#
+#     # Return true only if either...
+#     return (
+#         # This sign is that of an unconditionally deprecated type hint *OR*...
+#         hint_sign in HINT_SIGNS_DEPRECATED or
+#         # This is a PEP 484-compliant type hint (e.g., "typing.List[str]")
+#         # conditionally deprecated by an equivalent PEP 585-compliant type hint
+#         # (e.g., "list[str]") under Python >= 3.9.
+#         #
+#         # Note that, in this case, the sign of this hint does *NOT* convey
+#         # enough metadata to ascertain whether this hint is deprecated. Ergo, a
+#         # non-trivial tester dedicated to this discernment is required: e.g.,
+#         # * "list[str]" has the sign "HintSignList" but is *NOT* deprecated.
+#         # * "typing.List[str]" has the sign "HintSignList" but is deprecated.
+#         is_hint_pep484_deprecated(hint)
+#     )
+
+
 def is_hint_pep_ignorable(hint: object) -> bool:
     '''
-    :data:`True` only if the passed object is a **deeply ignorable PEP-compliant
-    type hint** (i.e., PEP-compliant type hint shown to be ignorable only after
-    recursively inspecting the contents of this hint).
+    :data:`True` only if the passed PEP-compliant type hint is **deeply
+    ignorable** (i.e., shown to be ignorable only after recursively inspecting
+    the contents of this hint).
 
     This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator), as this tester is only safely callable
-    by the memoized parent
+    ``callable_cached`` decorator), as this tester is only safely callable by
+    the memoized parent
     :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester.
 
     Parameters
     ----------
     hint : object
-        Object to be inspected.
+        PEP-compliant type hint to be inspected.
 
     Returns
     -------
     bool
-        :data:`True` only if this object is a deeply ignorable PEP-compliant
-        type hint.
+        :data:`True` only if this PEP-compliant type hint is deeply ignorable.
 
     Warns
     -----
@@ -417,7 +461,7 @@ def is_hint_pep_ignorable(hint: object) -> bool:
         False
     )
 
-# ....................{ TESTERS ~ supported                }....................
+
 @callable_cached
 def is_hint_pep_supported(hint: object) -> bool:
     '''

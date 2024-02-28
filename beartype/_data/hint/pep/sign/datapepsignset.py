@@ -83,7 +83,21 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignValuesView,
 )
 
-# ....................{ SIGNS ~ bare                       }....................
+# ....................{ SETS ~ deprecated                  }....................
+#FIXME: Currently unused but preserved for posterity. *shrug*
+# HINT_SIGNS_DEPRECATED = frozenset((
+#     # ..................{ PEP 613                            }..................
+#     # PEP 613-compliant "typing.TypeAlias" type hint singletons have been
+#     # deprecated by PEP 695-compliant type aliases under Python >= 3.12.
+#     HintSignTypeAlias,
+# ))
+# '''
+# Frozen set of all **deprecated signs** (i.e., arbitrary objects uniquely
+# identifying PEP-compliant type hints unconditionally obsoleted by equivalent
+# PEP-compliant type hints standardized by more recently released PEPs).
+# '''
+
+# ....................{ SIGNS ~ ignorable                  }....................
 HINT_SIGNS_BARE_IGNORABLE = frozenset((
     # ..................{ PEP 484                            }..................
     # The "Any" singleton is semantically synonymous with the ignorable

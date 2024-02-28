@@ -82,9 +82,9 @@ def test_claw_extraprocess_executable_submodule(
 def test_claw_extraprocess_executable_package(
     monkeypatch: 'MonkeyPatch') -> None:
     '''
-    Test an arbitrary :mod:`beartype.claw` import hook against a data package
-    in this test suite run as a script within a Python subprocess forked from
-    the active Python process via the standard command-line option ``-m``.
+    Test an arbitrary :mod:`beartype.claw` import hook against a data package in
+    this test suite run as a script within a Python subprocess forked from the
+    active Python process via the standard command-line option ``-m``.
 
     Parameters
     ----------
