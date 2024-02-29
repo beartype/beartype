@@ -57,7 +57,7 @@ from beartype.claw._ast.pep.clawastpep526 import (
     BeartypeNodeTransformerPep526Mixin)
 from beartype.claw._ast.pep.clawastpep695 import (
     BeartypeNodeTransformerPep695Mixin)
-from beartype.claw._ast._clawastmunge import decorate_node
+from beartype.claw._ast._clawastutil import BeartypeNodeTransformerUtilityMixin
 from beartype.claw._clawtyping import (
     NodeCallable,
     NodeT,
@@ -67,7 +67,7 @@ from beartype.typing import (
     Optional,
     Type,
 )
-from beartype._data.cls.datacls import TYPES_AST_SCOPE
+from beartype._data.ast.dataast import TYPES_NODE_LEXICAL_SCOPE
 from beartype._conf.confcls import BeartypeConf
 # from beartype._util.ast.utilastget import get_node_repr_indented
 from beartype._util.ast.utilastmake import make_node_importfrom
@@ -84,6 +84,10 @@ from beartype._util.ast.utilasttest import is_node_callable_typed
 class BeartypeNodeTransformer(
     # PEP-agnostic superclass defining "core" AST node transformation logic.
     NodeTransformer,
+
+    # PEP-agnostic mixins defining supplementary AST node functionality in a
+    # PEP-agnostic manner.
+    BeartypeNodeTransformerUtilityMixin,
 
     # PEP-specific mixins defining additional AST node transformations in a
     # PEP-specific manner.
@@ -132,6 +136,13 @@ class BeartypeNodeTransformer(
         **Beartype configuration** (i.e., dataclass configuring the
         :mod:`beartype.beartype` decorator for *all* decoratable objects
         recursively decorated by this node transformer).
+    _module_name_beartype : str
+        Fully-qualified name of the current module being transformed.
+    _scope_name_beartype : str
+        Fully-qualified name of the current lexical scope (i.e., ``.``-delimited
+        absolute name of the module containing this scope followed by the
+        relative basenames of zero or more classes and/or callables). This name
+        is guaranteed to be prefixed by :attr:`._module_name_beartype`.
     _scope_stack_beartype : list[type[AST]]
         **Current lexical scope stack** (i.e., list of the zero or more types of
         parent nodes of the node being recursively visited by this node
@@ -166,12 +177,28 @@ class BeartypeNodeTransformer(
         in this burgeoning field! Our AST transformer is for you, @agronholm.
     '''
 
+    # ..................{ CLASS VARIABLES                    }..................
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # CAUTION: Subclasses declaring uniquely subclass-specific instance
+    # variables *MUST* additionally slot those variables. Subclasses violating
+    # this constraint will be usable but unslotted, which defeats the purpose.
+    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # Slot all instance variables defined on this object to reduce the costs of
+    # both reading and writing these variables by approximately ~10%.
+    __slots__ = (
+        '_conf_beartype',
+        '_module_name_beartype',
+        '_scope_name_beartype',
+        '_scope_stack_beartype',
+    )
+
     # ..................{ INITIALIZERS                       }..................
     def __init__(
         self,
 
         # Mandatory keyword-only parameters.
         *,
+        module_name_beartype : str,
         conf_beartype: BeartypeConf,
     ) -> None:
         '''
@@ -179,11 +206,16 @@ class BeartypeNodeTransformer(
 
         Parameters
         ----------
+        module_name_beartype : str
+            Fully-qualified name of the external third-party module being
+            transformed by this node transformer.
         conf_beartype : BeartypeConf
             **Beartype configuration** (i.e., dataclass configuring the
             :mod:`beartype.beartype` decorator for *all* decoratable objects
             recursively decorated by this node transformer).
         '''
+        assert isinstance(module_name_beartype, str), (
+            f'{repr(module_name_beartype)} not string.')
         assert isinstance(conf_beartype, BeartypeConf), (
             f'{repr(conf_beartype)} not beartype configuration.')
 
@@ -192,6 +224,8 @@ class BeartypeNodeTransformer(
 
         # Classify all passed parameters.
         self._conf_beartype = conf_beartype
+        self._module_name_beartype = self._scope_name_beartype = (
+            module_name_beartype)
 
         # Nullify all remaining instance variables for safety.
         self._scope_stack_beartype: List[Type[AST]] = []
@@ -218,8 +252,20 @@ class BeartypeNodeTransformer(
         # Type of this parent node.
         node_type = type(node)
 
-        # If this parent node declares a new lexical scope...
-        if node_type in TYPES_AST_SCOPE:
+        # If this parent node declares a new lexical scope (i.e., by defining a
+        # new class or callable)...
+        if node_type in TYPES_NODE_LEXICAL_SCOPE:
+            # Fully-qualified name of the current lexical scope *BEFORE*
+            # visiting this new lexical scope.
+            scope_name_old = self._scope_name_beartype
+
+            # Append to this fully-qualified name the unqualified basename of
+            # this new class or callable declaring this new lexical scope.
+            #
+            # Note that both the "ast.ClassDef" *AND* "ast.FunctionDef" node
+            # types define the "name" instance variable accessed here.
+            self._scope_name_beartype += f'.{node.name}'  # type: ignore[attr-defined]
+
             # Add the type of this parent node to the top of the stack of all
             # current lexical scopes *BEFORE* visiting any child nodes of this
             # parent node.
@@ -227,6 +273,9 @@ class BeartypeNodeTransformer(
 
             # Recursively visit *ALL* child nodes of this parent node.
             super().generic_visit(node)
+
+            # Restore the fully-qualified name of the prior lexical scope.
+            self._scope_name_beartype = scope_name_old
 
             # Remove the type of this parent node from the top of the stack of
             # all current lexical scopes *AFTER* visiting all child nodes of
@@ -436,7 +485,7 @@ class BeartypeNodeTransformer(
 
         # Add a new child decoration node to this parent class node decorating
         # this class by @beartype under this configuration.
-        decorate_node(node=node, conf=self._conf_beartype)
+        self._decorate_node_beartype(node=node, conf=self._conf_beartype)
 
         # Recursively transform *ALL* child nodes of this parent class node.
         # Note that doing so implicitly calls the visit_FunctionDef() method
@@ -493,49 +542,9 @@ class BeartypeNodeTransformer(
         ):
             # Add a new child decoration node to this parent callable node
             # decorating this callable by @beartype under this configuration.
-            decorate_node(node=node, conf=self._conf_beartype)
+            self._decorate_node_beartype(node=node, conf=self._conf_beartype)
         # Else, that callable is ignorable. In this case, avoid needlessly
         # decorating that callable by @beartype for efficiency.
 
         # Recursively transform *ALL* child nodes of this parent callable node.
         return self.generic_visit(node)
-
-    # ..................{ PRIVATE ~ properties               }..................
-    @property
-    def _is_scope_module_beartype(self) -> bool:
-        '''
-        :data:`True` only if the lexical scope of the currently visited node is
-        the **module scope** (i.e., this node is declared directly in the body
-        of the current user-defined module, implying this node to be a global).
-
-        Returns
-        -------
-        bool
-            :data:`True` only if the current lexical scope is a module scope.
-        '''
-
-        # Return true only if the stack of all lexical nodes is currently empty,
-        # implying the current node resides directly in the body of a module.
-        return not self._scope_stack_beartype
-
-
-    @property
-    def _is_scope_class_beartype(self) -> bool:
-        '''
-        :data:`True` only if the lexical scope of the currently visited node is
-        a **class scope** (i.e., this node resides directly in the body of a
-        user-defined class).
-
-        Returns
-        -------
-        bool
-            :data:`True` only if the current lexical scope is a class scope.
-        '''
-
-        # Return true only if...
-        return (
-            # The stack of all lexical scope is currently non-empty *AND*...
-            bool(self._scope_stack_beartype) and
-            # The current node resides directly in the body of a class.
-            self._scope_stack_beartype[-1] is ClassDef
-        )

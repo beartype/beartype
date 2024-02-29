@@ -63,10 +63,7 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
-from beartype._util.error.utilerrwarn import (
-    issue_warning,
-    reissue_warnings_placeholder,
-)
+from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585ref import (
     get_hint_pep484585_ref_names_relative_to)
@@ -91,6 +88,7 @@ def make_func_raiser(
 
     # Optional parameters.
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+    exception_prefix: str = 'die_if_unbearable() ',
 ) -> CallableRaiser:
     '''
     **Type-checking raiser function factory** (i.e., low-level callable
@@ -109,6 +107,9 @@ def make_func_raiser(
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
         to ``BeartypeConf()``, the default :math:`O(1)` configuration.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to a reasonably sensible string.
 
     Returns
     -------
@@ -126,6 +127,7 @@ def make_func_raiser(
         hint=hint,
         conf=conf,
         make_code_check=make_code_raiser_hint_object_check,
+        exception_prefix=exception_prefix,
     )
 
 
@@ -142,6 +144,7 @@ def make_func_tester(
 
     # Optional parameters.
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+    exception_prefix: str = 'is_bearable() ',
 ) -> CallableTester:
     '''
     **Type-checking tester function factory** (i.e., low-level callable
@@ -173,7 +176,11 @@ def make_func_tester(
 
     # Defer to this lower-level factory function for great convenience.
     return _make_func_checker(  # type: ignore[return-value]
-        hint=hint, conf=conf, make_code_check=make_code_tester_check)
+        hint=hint,
+        conf=conf,
+        make_code_check=make_code_tester_check,
+        exception_prefix=exception_prefix,
+    )
 
 # ....................{ FACTORIES ~ code                   }....................
 #FIXME: Unit test us up, please.
@@ -552,8 +559,8 @@ def _make_func_checker(
         code snippet of a function type-checking an arbitrary object against the
         passed type hint under the passed beartype configuration).
     exception_prefix : str, optional
-        Human-readable substring prefixing the representation of this object in
-        the exception message. Defaults to a reasonably sensible string.
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to a reasonably sensible string.
 
     Returns
     -------

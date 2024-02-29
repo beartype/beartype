@@ -81,12 +81,10 @@ class BeartypeValidator(object):
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Subclasses declaring uniquely subclass-specific instance
     # variables *MUST* additionally slot those variables. Subclasses violating
-    # this constraint will be usable but unslotted, which defeats our purposes.
+    # this constraint will be usable but unslotted, which defeats the purpose.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # Slot all instance variables defined on this object to minimize the time
-    # complexity of both reading and writing variables across frequently called
-    # cache dunder methods. Slotting has been shown to reduce read and write
-    # costs by approximately ~10%, which is non-trivial.
+    # Slot all instance variables defined on this object to reduce the costs of
+    # both reading and writing these variables by approximately ~10%.
     __slots__ = (
         '_get_repr',
         '_is_valid',

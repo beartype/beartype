@@ -14,93 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype._conf.confcls import BeartypeConf
 from beartype._util.os.utilostty import is_stdout_terminal
-from beartype._util.text.utiltextansi import (
-    ANSI_RESET,
-    COLOR_GREEN,
-    COLOR_RED,
-    COLOR_BLUE,
-    COLOR_YELLOW,
-    STYLE_BOLD,
-    strip_str_ansi,
-)
-
-# ....................{ COLOURIZERS                        }....................
-def color_error(text: str) -> str:
-    '''
-    Colour the passed substring as an error.
-
-    Parameters
-    ----------
-    text : str
-        Text to be coloured as an error.
-
-    Returns
-    ----------
-    str
-        This text coloured as an error.
-    '''
-
-    assert isinstance(text, str), f'{repr(text)} not string.'
-
-    return f'{STYLE_BOLD}{COLOR_RED}{text}{ANSI_RESET}'
-
-
-def color_hint(text: str) -> str:
-    '''
-    Colour the passed substring as a PEP-compliant type hint.
-
-    Parameters
-    ----------
-    text : str
-        Text to be coloured as a type hint.
-
-    Returns
-    ----------
-    str
-        This text coloured as a type hint.
-    '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
-
-    return f'{STYLE_BOLD}{COLOR_BLUE}{text}{ANSI_RESET}'
-
-
-def color_repr(text: str) -> str:
-    '''
-    Colour the passed substring as a **representation** (i.e., machine-readable
-    string returned by the :func:`repr` builtin).
-
-    Parameters
-    ----------
-    text : str
-        Text to be coloured as a representation.
-
-    Returns
-    ----------
-    str
-        This text coloured as a representation.
-    '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
-
-    return f'{COLOR_YELLOW}{text}{ANSI_RESET}'
-
-
-def color_type(text: str) -> str:
-    '''
-    Colour the passed substring as a simple class.
-
-    Parameters
-    ----------
-    text : str
-        Text to be coloured as a simple class.
-
-    Returns
-    ----------
-    str
-        This text coloured as a simple class.
-    '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
-
-    return f'{STYLE_BOLD}{COLOR_GREEN}{text}{ANSI_RESET}'
+from beartype._util.text.utiltextansi import strip_str_ansi
 
 # ....................{ STRIPPERS                          }....................
 #FIXME: Unit test us up, please.
@@ -168,7 +82,7 @@ def strip_text_ansi_if_configured(text: str, conf: BeartypeConf) -> str:
         current decoration of the decorated callable or class).
 
     Returns
-    ----------
+    -------
     str
         This text stripped of ANSI.
     '''

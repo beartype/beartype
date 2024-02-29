@@ -74,24 +74,26 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     **Type hint wrappers are not totally ordered,** however. Like unordered
     sets, type hint wrappers do *not* satisfy **totality** (i.e., either ``a ≤
     b`` or ``b ≤ a``, which is *not* necessarily the case for incommensurable
-    type hint wrappers).
+    type hint wrappers that *cannot* reasonably be compared with one another).
 
     Type hint wrappers are thus usable in algorithms and data structures
     requiring at most a partial ordering over their input.
 
     Examples
     --------
-        >>> from beartype.door import TypeHint
-        >>> hint_a = TypeHint(Callable[[str], list])
-        >>> hint_b = TypeHint(Callable[Union[int, str], Sequence[Any]])
-        >>> hint_a <= hint_b
-        True
-        >>> hint_a > hint_b
-        False
-        >>> hint_a.is_subhint(hint_b)
-        True
-        >>> list(hint_b)
-        [TypeHint(typing.Union[int, str]), TypeHint(typing.Sequence[typing.Any])]
+    .. code-block:: pycon
+
+       >>> from beartype.door import TypeHint
+       >>> hint_a = TypeHint(Callable[[str], list])
+       >>> hint_b = TypeHint(Callable[Union[int, str], Sequence[Any]])
+       >>> hint_a <= hint_b
+       True
+       >>> hint_a > hint_b
+       False
+       >>> hint_a.is_subhint(hint_b)
+       True
+       >>> list(hint_b)
+       [TypeHint(typing.Union[int, str]), TypeHint(typing.Sequence[typing.Any])]
 
     Attributes
     ----------
@@ -501,6 +503,7 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         # Optional keyword-only parameters.
         *,
         conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+        exception_prefix: str = 'die_if_unbearable() ',
     ) -> None:
         '''
         Raise an exception if the passed arbitrary object violates this type
@@ -515,6 +518,9 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
             encapsulating all settings configuring type-checking for the passed
             object). Defaults to ``BeartypeConf()``, the default ``O(1)``
             constant-time configuration.
+        exception_prefix : str, optional
+            Human-readable label prefixing the representation of this object in
+            the exception message. Defaults to a reasonably sensible string.
 
         Raises
         ------
@@ -523,18 +529,25 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         Examples
         --------
-            >>> from beartype.door import TypeHint
-            >>> TypeHint(list[str]).die_if_unbearable(
-            ...     ['And', 'what', 'rough', 'beast,'], )
-            >>> TypeHint(list[str]).die_if_unbearable(
-            ...     ['its', 'hour', 'come', 'round'], list[int])
-            beartype.roar.BeartypeDoorHintViolation: Object ['its', 'hour',
-            'come', 'round'] violates type hint list[int], as list index 0 item
-            'its' not instance of int.
+        .. code-block:: pycon
+
+           >>> from beartype.door import TypeHint
+           >>> TypeHint(list[str]).die_if_unbearable(
+           ...     ['And', 'what', 'rough', 'beast,'], )
+           >>> TypeHint(list[str]).die_if_unbearable(
+           ...     ['its', 'hour', 'come', 'round'], list[int])
+           beartype.roar.BeartypeDoorHintViolation: Object ['its', 'hour',
+           'come', 'round'] violates type hint list[int], as list index 0 item
+           'its' not instance of int.
         '''
 
         # One-liner, one love, one heart. Let's get together and code alright.
-        die_if_unbearable(obj=obj, hint=self._hint, conf=conf)
+        die_if_unbearable(
+            obj=obj,
+            hint=self._hint,
+            conf=conf,
+            exception_prefix=exception_prefix,
+        )
 
 
     #FIXME: Submit an upstream mypy issue. Since mypy correctly accepts our

@@ -21,10 +21,6 @@ from beartype._cave._cavefast import (
     FunctionType,
     MethodDecoratorBuiltinTypes,
 )
-from ast import (
-    ClassDef,
-    FunctionDef,
-)
 from collections.abc import (
     Set as SetABC,
 )
@@ -59,16 +55,6 @@ Note that the :class:`Set` abstract base class (ABC) rather than the concrete
    True
    >>> issubclass(frozenset, set)
    False
-'''
-
-# ....................{ TYPES ~ ast                        }....................
-TYPES_AST_SCOPE = frozenset((
-    ClassDef,
-    FunctionDef,
-))
-'''
-Frozen set of all **lexically scoping abstract syntax tree (AST) node types**
-(i.e., types of all AST nodes whose declaration defines a new lexical scope).
 '''
 
 # ....................{ TYPES ~ beartype                   }....................

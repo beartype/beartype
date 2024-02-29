@@ -136,6 +136,7 @@ def label_callable(
     func: Callable,
 
     # Optional parameters.
+    is_color: bool = False,
     is_context: Optional[bool] = None,
 ) -> str:
     '''
@@ -146,6 +147,9 @@ def label_callable(
     ----------
     func : Callable
         Callable to be labelled.
+    is_color : bool, optional
+        :data:`True` only if embellishing this label with colour. Defaults to
+        :data:`False`.
     is_context : Optional[bool] = None
         Either:
 
@@ -170,16 +174,23 @@ def label_callable(
         Human-readable label describing this callable.
     '''
     assert callable(func), f'{repr(func)} uncallable.'
+    assert isinstance(is_color, bool), f'{repr(is_color)} not boolean.'
+    assert isinstance(is_context, bool) or is_context is None, (  # <-- "NoneTypeOr" is unavailable here
+        f'{repr(is_context)} neither boolean nor "None".')
 
     # Avoid circular import dependencies.
     from beartype._util.func.arg.utilfuncargget import (
         get_func_args_flexible_len)
     from beartype._util.func.utilfunccodeobj import get_func_codeobj
     from beartype._util.func.utilfunctest import is_func_lambda
+    from beartype._util.text.utiltextansi import color_error
 
     # Substring prefixing the string to be returned, typically identifying the
     # specialized type of that callable if that callable has a specialized type.
     func_label_prefix = ''
+
+    # Fully-qualified name of that callable.
+    func_label = f' {get_object_name(func)}()'
 
     # Substring suffixing the string to be returned, typically contextualizing
     # that callable with respect to its on-disk code module file.
@@ -213,12 +224,18 @@ def label_callable(
     else:
         func_label_prefix = label_beartypeable_kind(func)
 
+    # If colouring that callable, do so.
+    if is_color:
+        func_label = color_error(func_label)
+    # Else, we are *NOT* colouring that callable.
+
     # If contextualizing that callable, just do it already. Go, @beartype! Go!
     if is_context:
         func_label_suffix = f' {label_object_context(func)}'
+    # Else, we are *NOT* contextualizing that callable.
 
     # Return that prefix followed by the fully-qualified name of that callable.
-    return f'{func_label_prefix} {get_object_name(func)}(){func_label_suffix}'
+    return f'{func_label_prefix}{func_label}{func_label_suffix}'
 
 # ....................{ LABELLERS ~ context                }....................
 #FIXME: Unit test us up, please.
@@ -294,7 +311,13 @@ def label_exception(exception: Exception) -> str:
     return f'{get_object_type_name(exception)}: {str(exception)}'
 
 # ....................{ LABELLERS ~ type                   }....................
-def label_type(cls: type) -> str:
+def label_type(
+    # Mandatory parameters.
+    cls: type,
+
+    # Optional parameters.
+    is_color: bool = False,
+) -> str:
     '''
     Human-readable label describing the passed class.
 
@@ -302,6 +325,9 @@ def label_type(cls: type) -> str:
     ----------
     cls : type
         Class to be labelled.
+    is_color : bool, optional
+        :data:`True` only if embellishing this label with colour. Defaults to
+        :data:`False`.
 
     Returns
     -------
@@ -309,11 +335,13 @@ def label_type(cls: type) -> str:
         Human-readable label describing this class.
     '''
     assert isinstance(cls, type), f'{repr(cls)} not class.'
+    assert isinstance(is_color, bool), f'{repr(is_color)} not boolean.'
 
     # Avoid circular import dependencies.
     from beartype._util.cls.utilclstest import is_type_builtin
     from beartype._util.hint.pep.proposal.utilpep544 import (
         is_hint_pep544_protocol)
+    from beartype._util.text.utiltextansi import color_error
 
     # Label to be returned, initialized to this class' fully-qualified name.
     classname = get_object_type_name(cls)
@@ -360,6 +388,11 @@ def label_type(cls: type) -> str:
     # Else, this is a standard class. In this case, label this class as such.
     else:
         classname = f'<class "{classname}">'
+
+    # If colouring this class, do so.
+    if is_color:
+        classname = color_error(classname)
+    # Else, we are *NOT* colouring this class.
 
     # Return this labelled classname.
     return classname

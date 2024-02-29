@@ -47,7 +47,7 @@ def copy_node_metadata(
       :class:`BeartypeNodeTransformer` above.
 
     Caveats
-    ----------
+    -------
     **This function should only be passed nodes that support code metadata.**
     Although *most* nodes do, some nodes do not. Why? Because they are *not*
     actually nodes; they simply masquerade as nodes in documentation for the
@@ -84,7 +84,7 @@ def copy_node_metadata(
           metadata onto.
 
     See Also
-    ----------
+    --------
     :func:`ast.copy_location`
         Less efficient analogue of this function running in ``O(k)`` time
         complexity for ``k`` the number of types of source code metadata.

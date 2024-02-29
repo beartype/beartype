@@ -13,11 +13,13 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from ast import (
+    ClassDef,
+    FunctionDef,
     Load,
     Store,
 )
 
-# ....................{ AST                                }....................
+# ....................{ NODES                              }....................
 NODE_CONTEXT_LOAD = Load()
 '''
 **Node context load singleton** (i.e., object suitable for passing as the
@@ -31,4 +33,14 @@ NODE_CONTEXT_STORE = Store()
 **Node context store singleton** (i.e., object suitable for passing as the
 ``ctx`` keyword parameter accepted by the ``__init__()`` method of various
 abstract syntax tree (AST) node classes).
+'''
+
+# ....................{ TYPES                              }....................
+TYPES_NODE_LEXICAL_SCOPE = frozenset((
+    ClassDef,
+    FunctionDef,
+))
+'''
+Frozen set of all **lexically scoping abstract syntax tree (AST) node types**
+(i.e., types of all AST nodes whose declaration defines a new lexical scope).
 '''

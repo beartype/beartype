@@ -24,7 +24,6 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignType,
 )
 from beartype._check.error._errorcause import ViolationCause
-from beartype._check.error._util.errorutilcolor import color_hint
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_isinstanceable,
@@ -40,6 +39,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
     get_hint_pep484585_type_superclass)
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
+from beartype._util.text.utiltextansi import color_hint
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextlabel import label_type
 from beartype._check.error._util.errorutiltext import represent_pith

@@ -24,7 +24,11 @@ from collections.abc import Callable
 # ....................{ PREFIXERS ~ beartypeable           }....................
 #FIXME: Unit test this function with respect to classes, please.
 def prefix_beartypeable(
+    # Mandatory parameters.
     obj: BeartypeableT,  # pyright: ignore[reportInvalidTypeVarUse]
+
+    # Optional parameters.
+    is_color: bool = False,
 ) -> str:
     '''
     Human-readable label describing the passed **beartypeable** (i.e., object
@@ -35,13 +39,12 @@ def prefix_beartypeable(
     ----------
     obj : BeartypeableT
         Beartypeable to be labelled.
-
-    All remaining keyword parameters are passed as is to the lower-level
-    :func:`.label_beartypeable_kind` function transitively called by this
-    higher-level function.
+    is_color : bool, optional
+        :data:`True` only if embellishing this label with colour. Defaults to
+        :data:`False`.
 
     Returns
-    ----------
+    -------
     str
         Human-readable label describing this beartypeable.
     '''
@@ -49,11 +52,11 @@ def prefix_beartypeable(
     # Return either...
     return (
         # If this beartypeable is a class, a label describing this class;
-        f'{label_type(obj)} '
+        f'{label_type(cls=obj, is_color=is_color)} '
         if isinstance(obj, type) else
         # Else, this beartypeable is a callable. In this case, a label
         # describing this callable.
-        f'{label_callable(obj)} '  # type: ignore[arg-type]
+        f'{label_callable(func=obj, is_color=is_color)} '  # type: ignore[arg-type]
     )
 
 # ....................{ PREFIXERS ~ beartypeable : pith    }....................
@@ -73,7 +76,7 @@ def prefix_beartypeable_pith(func: Callable, pith_name: str) -> str:
         Name of the parameter or return value of this callable to be labelled.
 
     Returns
-    ----------
+    -------
     str
         Human-readable label describing either the name of this parameter *or*
         this return value.
@@ -83,14 +86,14 @@ def prefix_beartypeable_pith(func: Callable, pith_name: str) -> str:
     # Return a human-readable label describing either...
     return (
         # If this name is "return", the return value of this callable.
-        prefix_beartypeable_return(func)
+        prefix_callable_return(func)
         if pith_name == ARG_NAME_RETURN else
         # Else, the parameter with this name of this callable.
-        prefix_beartypeable_arg(func=func, arg_name=pith_name)
+        prefix_callable_arg(func=func, arg_name=pith_name)
     )
 
 
-def prefix_beartypeable_arg(func: Callable, arg_name: str) -> str:
+def prefix_callable_arg(func: Callable, arg_name: str) -> str:
     '''
     Human-readable label describing the parameter with the passed name of the
     passed **beartypeable callable** (i.e., callable wrapped by the
@@ -105,7 +108,7 @@ def prefix_beartypeable_arg(func: Callable, arg_name: str) -> str:
         Name of the parameter of this callable to be labelled.
 
     Returns
-    ----------
+    -------
     str
         Human-readable label describing this parameter's name.
     '''
@@ -115,7 +118,7 @@ def prefix_beartypeable_arg(func: Callable, arg_name: str) -> str:
     return f'{prefix_beartypeable(func)}parameter "{arg_name}" '
 
 
-def prefix_beartypeable_return(func: Callable) -> str:
+def prefix_callable_return(func: Callable) -> str:
     '''
     Human-readable label describing the return of the passed **decorated
     callable** (i.e., callable wrapped by the :func:`beartype.beartype`
@@ -128,7 +131,7 @@ def prefix_beartypeable_return(func: Callable) -> str:
         Decorated callable to be labelled.
 
     Returns
-    ----------
+    -------
     str
         Human-readable label describing this return.
     '''

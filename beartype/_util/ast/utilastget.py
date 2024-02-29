@@ -17,7 +17,7 @@ from ast import (
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
 
-# ....................{ TESTERS                            }....................
+# ....................{ GETTERS                            }....................
 #FIXME: Unit test us up, please.
 def get_node_repr_indented(node: AST) -> str:
     '''
@@ -30,7 +30,7 @@ def get_node_repr_indented(node: AST) -> str:
         AST to be pretty-printed.
 
     Returns
-    ----------
+    -------
     str
         Human-readable string pretty-printing the contents of this AST.
     '''

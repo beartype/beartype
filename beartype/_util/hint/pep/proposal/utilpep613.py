@@ -81,7 +81,7 @@ def reduce_hint_pep613(
             f'Combine the above two approaches via The Ultimate Type Alias '
             f'(TUTA), a hidden ninja technique that supports all Python '
             f'versions and static type-checkers but may cause coworker heads '
-            f'to pop off like in that one jolly Kingsman scene:\n'
+            f'to pop off like in that one Kingsman scene:\n'
             f'    # Instead of this...\n'
             f'    from typing import TypeAlias\n'
             f'    alias_name: TypeAlias = alias_value\n'

@@ -27,7 +27,7 @@ from beartype._util.func.utilfunctest import (
     is_func_async_generator,
     is_func_sync_generator,
 )
-from beartype._util.text.utiltextprefix import prefix_beartypeable_return
+from beartype._util.text.utiltextprefix import prefix_callable_return
 from collections.abc import (
     AsyncGenerator,
     Callable,
@@ -214,6 +214,6 @@ def _die_of_hint_return_invalid(
 
     # Raise an exception of this type with a message suffixed by this suffix.
     raise exception_cls(
-        f'{prefix_beartypeable_return(func)}type hint '
+        f'{prefix_callable_return(func)}type hint '
         f'{repr(hint)} contextually invalid{exception_suffix}'
     )

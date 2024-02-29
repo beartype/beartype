@@ -20,7 +20,6 @@ from ast import (
     Name,
 )
 from beartype.claw._clawmagic import BEARTYPE_RAISER_FUNC_NAME
-from beartype.claw._ast._clawastmunge import make_node_keyword_conf
 from beartype.claw._clawtyping import NodeVisitResult
 from beartype._conf.confcls import BEARTYPE_CONF_DEFAULT
 from beartype._util.ast.utilastmake import (
@@ -140,24 +139,19 @@ class BeartypeNodeTransformerPep526Mixin(object):
 
         # If either...
         if (
-            # This beartype configuration disables type-checking of PEP
-            # 526-compliant annotated variable assignments *OR*...
-            not self._conf_beartype.claw_is_pep526 or  # type: ignore[attr-defined]
-            # This beartype configuration enables type-checking of PEP
-            # 526-compliant annotated variable assignments *BUT*...
-
-            #FIXME: Excise us up, please.
-            #FIXME: Can and/or should we also support "node.target" child nodes
-            #that are instances of "ast.Attribute" and "ast.Subscript"?
-            # # This assignment is *NOT* simple (in which case this assignment is
-            # # *NOT* assigning to an attribute name) *OR*...
-            # not node.simple or
-
-            # This assignment is simple *BUT*...
-            #
-            # This assignment is *NOT* actually an assignment but simply an
-            # unassigned annotation of an attribute (e.g., "var: int") *OR*...
-            not node.value or
+            # It is *NOT* the case that...
+            not (
+                # This beartype configuration enables type-checking of PEP
+                # 526-compliant annotated variable assignments *AND*...
+                self._conf_beartype.claw_is_pep526 and  # type: ignore[attr-defined]
+                # This statement is an assignment (e.g., "muh_var: int = 2")
+                # rather than just an unassigned annotation of an attribute
+                # (e.g., "muh_var: int").
+                node.value
+            # Then either this beartype configuration disables type-checking of
+            # PEP 526-compliant annotated variable assignments *OR* this
+            # statement is just an unassigned annotation of an attribute *OR*...
+            ) or
             # This assignment node has one or more parent nodes previously
             # visited by this node transformer *AND* the immediate parent node
             # of this assignment node is a class node, then this assignment node
@@ -264,9 +258,10 @@ class BeartypeNodeTransformerPep526Mixin(object):
         # configuration, this configuration is a user-defined beartype
         # configuration which *MUST* be passed as well. In this case...
         if self._conf_beartype != BEARTYPE_CONF_DEFAULT:  # type: ignore[attr-defined]
-            # Node encapsulating the passing of this configuration as
-            # the "conf" keyword argument to die_if_unbearable().
-            node_func_kwarg_conf = make_node_keyword_conf(node_sibling=node)
+            # Node encapsulating the passing of this configuration as the "conf"
+            # keyword argument to die_if_unbearable().
+            node_func_kwarg_conf = self._make_node_keyword_conf_beartype(  # type: ignore[attr-defined]
+                node_sibling=node)
 
             # Append this node to the list of all keyword arguments passed to
             # die_if_unbearable().

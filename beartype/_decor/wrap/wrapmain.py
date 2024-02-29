@@ -103,8 +103,8 @@ from beartype._util.hint.utilhinttest import (
 from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextprefix import (
-    prefix_beartypeable_arg,
-    prefix_beartypeable_return,
+    prefix_callable_arg,
+    prefix_callable_return,
 )
 from beartype._util.utilobject import SENTINEL
 from collections.abc import (
@@ -515,7 +515,7 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 # print(f'warnings_issued: {warnings_issued}')
                 reissue_warnings_placeholder(
                     warnings=warnings_issued,
-                    target_str=prefix_beartypeable_arg(
+                    target_str=prefix_callable_arg(
                         func=bear_call.func_wrappee, arg_name=arg_name),
                 )
             # Else, *NO* warnings were issued.
@@ -529,9 +529,9 @@ def _code_check_args(bear_call: BeartypeCall) -> str:
                 #FIXME: Embed the kind of parameter both here and above as well
                 #(e.g., "positional-only", "keyword-only", "variadic
                 #positional"), ideally by improving the existing
-                #prefix_beartypeable_arg() function to introspect this kind from
+                #prefix_callable_arg() function to introspect this kind from
                 #the callable code object.
-                target_str=prefix_beartypeable_arg(
+                target_str=prefix_callable_arg(
                     func=bear_call.func_wrappee, arg_name=arg_name),
             )
 
@@ -726,7 +726,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
         if warnings_issued:
             reissue_warnings_placeholder(
                 warnings=warnings_issued,
-                target_str=prefix_beartypeable_return(bear_call.func_wrappee),
+                target_str=prefix_callable_return(bear_call.func_wrappee),
             )
         # Else, *NO* warnings were issued.
     # If any exception was raised, reraise this exception with each placeholder
@@ -735,7 +735,7 @@ def _code_check_return(bear_call: BeartypeCall) -> str:
     except Exception as exception:
         reraise_exception_placeholder(
             exception=exception,
-            target_str=prefix_beartypeable_return(bear_call.func_wrappee),
+            target_str=prefix_callable_return(bear_call.func_wrappee),
         )
 
     # If a local scope is required to type-check this return, merge this scope

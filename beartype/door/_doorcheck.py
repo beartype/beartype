@@ -27,18 +27,6 @@ from beartype._conf.confcls import (
     BeartypeConf,
 )
 
-#FIXME: Consider:
-#* Once we've gone that far, though, *EVERYBODY* (including us) will then
-#  want us to define a new
-#  "BeartypeConf.violation_type: Optional[Type[Exception]] = None" option
-#  conveniently controlling the three distinct
-#  "violation_door_type", "violation_param_type", and
-#  "violation_return_type" options. *sigh*
-#* To preserve backward compatibility, if we notice that a user has
-#  explicitly passed "violation_param_type" and "violation_return_type" but
-#  *NOT* "violation_door_type", we can then emit a non-fatal warning
-#  encouraging them to instead pass "violation_type".
-
 # ....................{ VALIDATORS                         }....................
 def die_if_unbearable(
     # Mandatory flexible parameters.
@@ -48,6 +36,7 @@ def die_if_unbearable(
     # Optional keyword-only parameters.
     *,
     conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+    exception_prefix: str = 'die_if_unbearable() ',
 ) -> None:
     '''
     Raise an exception if the passed arbitrary object violates the passed type
@@ -64,6 +53,9 @@ def die_if_unbearable(
         all settings configuring type-checking for the passed object). Defaults
         to ``BeartypeConf()``, the default :math:`O(1)` constant-time
         configuration.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to a reasonably sensible string.
 
     Raises
     ------
@@ -77,12 +69,14 @@ def die_if_unbearable(
 
     Examples
     --------
-        >>> from beartype.door import die_if_unbearable
-        >>> die_if_unbearable(['And', 'what', 'rough', 'beast,'], list[str])
-        >>> die_if_unbearable(['its', 'hour', 'come', 'round'], list[int])
-        beartype.roar.BeartypeDoorHintViolation: Object ['its', 'hour', 'come',
-        'round'] violates type hint list[int], as list index 0 item 'its' not
-        instance of int.
+    .. code-block:: pycon
+
+       >>> from beartype.door import die_if_unbearable
+       >>> die_if_unbearable(['And', 'what', 'rough', 'beast,'], list[str])
+       >>> die_if_unbearable(['its', 'hour', 'come', 'round'], list[int])
+       beartype.roar.BeartypeDoorHintViolation: Object ['its', 'hour', 'come',
+       'round'] violates type hint list[int], as list index 0 item 'its' not
+       instance of int.
     '''
     # conf._is_debug = True
 
@@ -94,7 +88,7 @@ def die_if_unbearable(
     # Since make_func_raiser() is memoized, passing parameters by keyword would
     # raise a non-fatal
     # "_BeartypeUtilCallableCachedKwargsWarning" warning.
-    func_raiser = make_func_raiser(hint, conf)
+    func_raiser = make_func_raiser(hint, conf, exception_prefix)
 
     # Either raise an exception or emit a warning only if the passed object
     # violates this hint.

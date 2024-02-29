@@ -19,11 +19,11 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 from beartype._check.error._errorcause import ViolationCause
 from beartype._check.error._errortype import (
     find_cause_type_instance_origin)
-from beartype._check.error._util.errorutilcolor import color_type
 from beartype._check.error._util.errorutiltext import represent_pith
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._util.text.utiltextansi import color_type
 from beartype._util.text.utiltextlabel import label_object_type
 
 # ....................{ GETTERS ~ sequence                 }....................

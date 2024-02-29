@@ -14,9 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from ast import (
-    PyCF_ONLY_AST,
-)
+from ast import PyCF_ONLY_AST
 from beartype.claw._ast.clawastmain import BeartypeNodeTransformer
 from beartype.claw._importlib.clawimpcache import (  # type: ignore[attr-defined]
     cache_from_source_beartype,
@@ -125,26 +123,26 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         * Else, :data:`None`.
 
         This instance variable enables our override of the parent
-        :meth:`get_code` method to communicate this configuration to the child
-        :meth:`source_to_code` method, which fails to accept and thus has *no*
+        :meth:`.get_code` method to communicate this configuration to the child
+        :meth:`.source_to_code` method, which fails to accept and thus has *no*
         access to this module name. The superclass implementation of the
-        :meth:`get_code` method then internally calls our override of the
-        :meth:`source_to_code` method, which accesses this instance variable to
+        :meth:`.get_code` method then internally calls our override of the
+        :meth:`.source_to_code` method, which accesses this instance variable to
         decide whether and how to type-check that module.
 
         Ordinarily, this approach would be fraught with fragility. For example,
         what if something *other* than the :meth:`get_code` method called the
-        :meth:`source_to_code` method? Thankfully, that is *not* a concern here.
-        :meth:`source_to_code` is only called by :meth:`get_code` in the
+        :meth:`.source_to_code` method? Thankfully, that is *not* a concern here.
+        :meth:`.source_to_code` is only called by :meth:`get_code` in the
         :mod:`importlib` codebase. Ergo, :meth:`source_to_code` should ideally
         have been privatized (e.g., as ``_source_to_code()``).
     _module_name_beartype : str
         Fully-qualified name of the module currently being imported by the
-        :meth:`get_code` method for subsequent reference in the lower-level
-        :meth:`source_to_code` method transitively called by the former.
+        :meth:`.get_code` method for subsequent reference in the lower-level
+        :meth:`.source_to_code` method transitively called by the former.
 
     See Also
-    ----------
+    --------
     * The `comparable "typeguard.importhook" submodule <typeguard import
       hook_>`__ implemented by the incomparable `@agronholm (Alex Grönholm)
       <agronholm_>`__, whose intrepid solutions strongly inspired this
@@ -174,7 +172,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
         # Nullify all subclass-specific instance variables for safety.
         self._module_conf_beartype: Optional[BeartypeConf] = None
-        self._module_name_beartype: str = ''
+        self._module_name_beartype: str = None  # type: ignore[assignment]
 
     # ..................{ LOADER API                         }..................
     # The importlib._bootstrap_external.*Loader API declares the low-level
@@ -273,7 +271,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         that really bears repeating. May the name of Alex Grönholm live eternal!
 
         Caveats
-        ----------
+        -------
         This getter intentionally avoids all dangerous attempts to recursively
         type-check the :mod:`beartype` package by the :func:`beartype.beartype`
         decorator. Doing so would be:
@@ -308,7 +306,7 @@ class BeartypeSourceFileLoader(SourceFileLoader):
             Fully-qualified name of the module currently being imported.
 
         Returns
-        ----------
+        -------
         Optional[CodeType]
             Code object underlying that module.
         '''
@@ -354,30 +352,30 @@ class BeartypeSourceFileLoader(SourceFileLoader):
         # Note that the logic below requires inefficient exception handling (as
         # well as a potentially risky monkey-patch) and is thus performed *ONLY*
         # when absolutely necessary.
-        else:
-            # Classify local attributes as instance variables for subsequent
-            # reference in the lower-level source_to_code() method transitively
-            # called by this higher-level method.
-            self._module_conf_beartype = conf
-            self._module_name_beartype = fullname
 
-            # Expose this configuration to the "beartype.claw._ast" subpackage.
-            claw_state.module_name_to_beartype_conf[fullname] = conf
+        # Classify local attributes as instance variables for subsequent
+        # reference in the lower-level source_to_code() method transitively
+        # called by this higher-level method.
+        self._module_conf_beartype = conf
+        self._module_name_beartype = fullname
 
-            # Temporarily monkey-patch away the cache_from_source() function.
-            #
-            # Note that @agronholm (Alex Grönholm) claims that "the import lock
-            # should make this monkey patch safe." We're trusting you here, man!
-            _bootstrap_external.cache_from_source = cache_from_source_beartype
+        # Expose this configuration to the "beartype.claw._ast" subpackage.
+        claw_state.module_name_to_beartype_conf[fullname] = conf
 
-            # Attempt to defer to the superclass method.
-            try:
-                return super().get_code(fullname)
-            # After doing so (and regardless of whether doing so raises an
-            # exception), restore the original cache_from_source() function.
-            finally:
-                _bootstrap_external.cache_from_source = (
-                    cache_from_source_original)
+        # Temporarily monkey-patch away the cache_from_source() function.
+        #
+        # Note that @agronholm (Alex Grönholm) claims that "the import lock
+        # should make this monkey patch safe." We're trusting you here, man!
+        _bootstrap_external.cache_from_source = cache_from_source_beartype
+
+        # Attempt to defer to the superclass method.
+        try:
+            return super().get_code(fullname)
+        # After doing so (and regardless of whether doing so raises an
+        # exception), restore the original cache_from_source() function.
+        finally:
+            _bootstrap_external.cache_from_source = (
+                cache_from_source_original)
 
 
     # Note that we explicitly ignore mypy override complaints here. For unknown
@@ -422,12 +420,12 @@ class BeartypeSourceFileLoader(SourceFileLoader):
             initially invoked (e.g., via the ``-o`` command-line option).
 
         Returns
-        ----------
+        -------
         CodeType
             Code object dynamically compiled from that Python package or module.
 
         Raises
-        ----------
+        ------
         BeartypeClawImportAstException
             If our **beartype node transformer** (i.e.,
             :class:`.BeartypeNodeTransformer` instance) dynamically transforms
@@ -459,7 +457,9 @@ class BeartypeSourceFileLoader(SourceFileLoader):
 
         # AST transformer decorating typed callables and classes by @beartype.
         ast_beartyper = BeartypeNodeTransformer(
-            conf_beartype=self._module_conf_beartype)
+            module_name_beartype=self._module_name_beartype,
+            conf_beartype=self._module_conf_beartype,
+        )
 
         # Abstract syntax tree (AST) modified by this transformer.
         module_ast_beartyped = ast_beartyper.visit(module_ast)

@@ -16,6 +16,7 @@ from ast import (
     AST,
     Attribute,
     Call,
+    Constant,
     Expr,
     FormattedValue,
     ImportFrom,
@@ -255,7 +256,38 @@ def make_node_call(
     # Return this call node.
     return node_func_call
 
-# ....................{ FACTORIES ~ f-string               }....................
+# ....................{ FACTORIES ~ literal : string       }....................
+#FIXME: Unit test us up, please.
+def make_node_str(text: str, node_sibling: AST) -> Constant:
+    '''
+    Create and return a new **string literal abstract syntax tree
+    (AST) node** (i.e., node encapsulating the passed string).
+
+    Parameters
+    ----------
+    text : str
+        String literal to be encapsulated in a new node.
+    node_sibling : AST
+        Sibling node to copy source code metadata from.
+
+    Returns
+    -------
+    Constant
+        String literal node encapsulating this string.
+    '''
+    assert isinstance(text, str), f'{repr(text)} not string.'
+
+    # Child node encapsulating this string.
+    node_str = Constant(value=text)
+
+    # Copy source code metadata from this sibling node onto this new node.
+    copy_node_metadata(node_src=node_sibling, node_trg=node_str)
+
+    # Return this string literal node.
+    return node_str
+
+# ....................{ FACTORIES ~ literal : f-string     }....................
+#FIXME: Unit test us up, please.
 def make_node_fstr_field(node_expr: AST, node_sibling: AST) -> FormattedValue:
     '''
     Create and return a new **f-string formatting field abstract syntax tree

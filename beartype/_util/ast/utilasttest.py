@@ -31,7 +31,7 @@ def is_node_callable_typed(node: NodeCallable) -> bool:
         Callable node to be tested.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this callable node is typed.
     '''

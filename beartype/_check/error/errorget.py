@@ -85,14 +85,12 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._check.error._errorcause import ViolationCause
 from beartype._check.error._util.errorutilcolor import (
-    color_hint,
-    color_repr,
-    strip_text_ansi_if_configured,
-)
+    strip_text_ansi_if_configured)
 from beartype._check.error._util.errorutiltext import (
-    prefix_beartypeable_arg_value,
-    prefix_beartypeable_return_value,
+    prefix_callable_arg_value,
+    prefix_callable_return_value,
 )
+from beartype._util.text.utiltextansi import color_hint
 from beartype._util.text.utiltextmunge import (
     suffix_str_unless_suffixed,
     uppercase_str_char_first,
@@ -346,13 +344,13 @@ def get_hint_object_violation(
     # object to be a return value, set the above local variables appropriately.
     elif pith_name == ARG_NAME_RETURN:
         exception_cls = conf.violation_return_type
-        exception_prefix = prefix_beartypeable_return_value(
+        exception_prefix = prefix_callable_return_value(
             func=func, return_value=obj)  # type: ignore[arg-type]
     # Else, the passed object is a parameter. In this case, set the above local
     # variables appropriately.
     else:
         exception_cls = conf.violation_param_type
-        exception_prefix = prefix_beartypeable_arg_value(
+        exception_prefix = prefix_callable_arg_value(
             func=func, arg_name=pith_name, arg_value=obj)  # type: ignore[arg-type]
 
     # Uppercase the first character of this violation prefix for readability.
@@ -382,14 +380,14 @@ def get_hint_object_violation(
         pith_value_repr = represent_object(
             obj=obj, max_len=_CAUSE_TRIM_OBJECT_REPR_MAX_LEN)
         raise _BeartypeCallHintPepRaiseDesynchronizationException(
-            f'{exception_prefix}violates type hint {color_hint(repr(hint))}, '
+            f'{exception_prefix}violates type hint {repr(hint)}, '
             f'but violation factory get_hint_object_violation() '
             f'erroneously suggests this object satisfies this hint. '
             f'Please report this desynchronization failure to '
             f'the beartype issue tracker ({URL_ISSUES}) with '
             f'the accompanying exception traceback and '
             f'the representation of this object:\n'
-            f'{color_repr(pith_value_repr)}'
+            f'    {pith_value_repr}'
         )
     # Else, this pith violates this hint as expected and as required for sanity.
 
@@ -415,15 +413,16 @@ def get_hint_object_violation(
     # Violation verbosity, localized for negligible efficiency. *vomits*
     violation_verbosity = conf.violation_verbosity
 
+    # Machine-readable representation of this hint embellished with colour.
+    hint_repr = f'{color_hint(repr(hint))}'
+
     # Dictionary mapping from each possibly violation verbosity to a
     # corresponding substring prepending this exception message.
     VIOLATION_VERBOSITY_TO_PREFIX = {
         BeartypeViolationVerbosity.MINIMAL: (
-            f'{exception_prefix}was expected to be of type '
-            f'{color_hint(repr(hint))}'
-        ),
+            f'{exception_prefix}was expected to be of type {hint_repr}'),
         BeartypeViolationVerbosity.DEFAULT: (
-            f'{exception_prefix}violates type hint {color_hint(repr(hint))}'),
+            f'{exception_prefix}violates type hint {hint_repr}'),
     }
     VIOLATION_VERBOSITY_TO_PREFIX[BeartypeViolationVerbosity.MAXIMAL] = (  # <-- alias!
         VIOLATION_VERBOSITY_TO_PREFIX[BeartypeViolationVerbosity.DEFAULT])

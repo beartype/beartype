@@ -29,7 +29,11 @@ from beartype_test._util.mark.pytmark import ignore_warnings
 #internally clears all relevant beartype caches *BEFORE* performing any work. To
 #the best of our understanding, the only relevant beartype cache is that of our
 #core beartype._check.code.codemake.make_check_expr() function. Let us consider
-#how to sanitize this, please. *sigh*
+#how to sanitize this, please. Hmm... Actually, we're pretty sure there are more
+#than one relevant caches. This is probably extremely non-trivial. The only
+#other alternative would be for the @callable_cached decorator to append each
+#cache it creates to a giant global private list somewhere, which this unit test
+#would then iterate over and clear each item of. Yeah. *sigh*
 #
 #Incidentally, this also explains why the iter_hints_piths_meta() closure fails.
 #Why? Because that closure internally iterates *TWICE* over each hint. Clearly,
