@@ -333,6 +333,12 @@ def get_hint_object_violation(
     # Substring prefixing the message of the violation to be raised below.
     exception_prefix: str = None  # type: ignore[assignment]
 
+    #FIXME: Refactor this function to accept a new "exception_prefix" parameter.
+    #FIXME: Refactor the first "if" branch below to instead resemble:
+    #else:
+    #    exception_cls = conf.violation_door_type
+    #    exception_prefix = f'{exception_prefix}value '
+
     # If the passed object is neither a parameter or return of a decorated
     # callable, this object was directly passed to either the
     # beartype.door.is_bearable() or beartype.door.die_if_unbearable()

@@ -19,7 +19,7 @@ this submodule.
 '''
 
 # ....................{ NAMES ~ func                       }....................
-FUNC_CHECKER_NAME_PREFIX = f'{NAME_PREFIX}tester_'
+FUNC_CHECKER_NAME_PREFIX = f'{NAME_PREFIX}checker_'
 '''
 Substring prefixing the unqualified basenames of all type-checking raiser and
 tester functions created by the

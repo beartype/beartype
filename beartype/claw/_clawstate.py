@@ -90,7 +90,7 @@ class BeartypeClawState(object):
     def _reinit_safe(self) -> None:
         '''
         Reinitialize *all* beartype import hook state encapsulated by this data
-        class back to its initial defaults, trivially clearing *all* metadata
+        class back to their initial defaults, trivially clearing *all* metadata
         pertaining to previously hooked packages and configurations installed by
         previously called beartype import hooks.
 
@@ -106,7 +106,7 @@ class BeartypeClawState(object):
     def reinit(self) -> None:
         '''
         Reinitialize *all* beartype import hook state encapsulated by this data
-        class back to its initial defaults, trivially clearing *all* metadata
+        class back to their initial defaults, trivially clearing *all* metadata
         pertaining to previously hooked packages and configurations installed by
         previously called beartype import hooks.
         '''
@@ -131,10 +131,10 @@ class BeartypeClawState(object):
     def __repr__(self) -> str:
 
         return '\n'.join((
-            f'{self.__class__.__name__}(',
-            f'    beartype_pathhook={repr(self.beartype_pathhook)},',
-            f'    packages_trie={repr(self.packages_trie)},',
-            f'    module_name_to_beartype_conf={self.module_name_to_beartype_conf},',
+            f'{self.__class__.__name__}(\n',
+            f'    beartype_pathhook={repr(self.beartype_pathhook)},\n',
+            f'    module_name_to_beartype_conf={repr(self.module_name_to_beartype_conf)},\n',
+            f'    packages_trie={repr(self.packages_trie)},\n',
             f')',
         ))
 

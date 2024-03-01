@@ -24,6 +24,7 @@ from ast import (
     alias,
     keyword,
 )
+from beartype.roar import BeartypeClawImportAstException
 from beartype.typing import (
     List,
     Optional,
@@ -115,38 +116,97 @@ def make_node_importfrom(
 
 # ....................{ FACTORIES ~ attribute              }....................
 #FIXME: Unit test us up, please.
-def make_node_attribute_load(
+def make_node_object_attr_load(
     # Mandatory parameters.
-    node_name_load: AST,
     attr_name: str,
     node_sibling: AST,
+
+    # Optional parameters.
+    node_obj: Optional[AST] = None,
+    obj_name: Optional[str] = None,
 ) -> Attribute:
     '''
     Create and return a new **object attribute access abstract syntax tree (AST)
     node** (i.e., node encapsulating an access of an object attribute) of the
     passed object with the passed attribute name.
 
+    Note that exactly one of the ``node_obj`` and ``obj_name`` parameters *must*
+    be passed. If neither or both of these parameters are passed, an exception
+    is raised.
+
     Parameters
     ----------
-    node_name_load : AST
-        Name node accessing the parent object to access this attribute from.
     attr_name : str
         Unqualified basename of the attribute of this object to be accessed.
     node_sibling : AST
         Sibling node to copy source code metadata from.
+    node_obj : Optional[AST]
+        Either:
+
+        * If the caller prefers supplying the name node accessing the parent
+          object to load this attribute from, that node.
+        * Else, :data:`None`. In this case, the caller *must* pass the
+          ``obj_name`` parameter.
+
+        Defaults to :data:`None`.
+    obj_name : Optional[str]
+        Either:
+
+        * If the caller prefers supplying the unqualified basename of the parent
+          object to load this attribute from in the current lexical scope,
+          that basename.
+        * Else, :data:`None`. In this case, the caller *must* pass the
+          ``node_obj`` parameter.
+
+        Defaults to :data:`None`.
 
     Returns
     -------
     Attribute
         Object attribute node accessing this attribute of this object.
+
+    Raises
+    ------
+    BeartypeClawImportAstException
+        If either:
+
+        * Neither the ``node_obj`` nor ``obj_name`` parameters are passed.
+        * Both of the ``node_obj`` and ``obj_name`` parameters are passed.
     '''
-    assert isinstance(node_name_load, AST), (
-        f'{repr(node_name_load)} not AST node.')
     assert isinstance(attr_name, str), f'{repr(attr_name)} not string.'
+
+    # If the caller passed *NO* name node accessing the parent object to load
+    # this attribute from...
+    if not node_obj:
+        # If the caller also passed *NO* unqualified basename of that object,
+        # raise an exception.
+        if not obj_name:
+            raise BeartypeClawImportAstException(
+                f'Attribute "{attr_name}" parent object undefined '
+                f'(i.e., neither "node_obj" nor "obj_name" parameters passed).'
+            )
+        # Else, the caller also passed the unqualified basename of that object.
+
+        # Child node accessing that object with this basename.
+        node_obj = make_node_name_load(name=obj_name, node_sibling=node_sibling)
+    # Else, the caller passed a name node accessing that object.
+    #
+    # If the caller also passed the unqualified basename of that object, raise
+    # an exception.
+    elif obj_name:
+        raise BeartypeClawImportAstException(
+            f'Attribute "{attr_name}" parent object overly defined '
+            f'(i.e., both "node_obj" and "obj_name" parameters passed).'
+        )
+    # Else, the caller passed *NO* unqualified basename of that object.
+    #
+    # In any case, the "node_obj" variable is now the desired object node.
+    assert isinstance(node_obj, AST), (
+        f'{repr(node_obj)} not AST node.')
 
     # Object attribute node accessing this attribute of this object.
     node_attribute_load = Attribute(
-        value=node_name_load, attr=attr_name, ctx=NODE_CONTEXT_LOAD)
+        value=node_obj, attr=attr_name, ctx=NODE_CONTEXT_LOAD)
 
     # Copy source code metadata from this sibling node onto this new node.
     copy_node_metadata(node_src=node_sibling, node_trg=node_attribute_load)
@@ -156,11 +216,7 @@ def make_node_attribute_load(
 
 # ....................{ FACTORIES ~ call                   }....................
 #FIXME: Unit test us up, please.
-def make_node_call_expr(
-    *args,
-    node_sibling: AST,
-    **kwargs
-) -> Expr:
+def make_node_call_expr(*args, node_sibling: AST, **kwargs) -> Expr:
     '''
     Create and return a new **callable call expression abstract syntax tree
     (AST) node** (i.e., node encapsulating a Python expression expressing a call
@@ -255,6 +311,42 @@ def make_node_call(
 
     # Return this call node.
     return node_func_call
+
+# ....................{ FACTORIES ~ call : arg             }....................
+#FIXME: Unit test us up, please.
+def make_node_kwarg(
+    kwarg_name: str, kwarg_value: AST, node_sibling: AST) -> keyword:
+    '''
+    Create and return a new **keyword argument abstract syntax tree (AST) node**
+    (i.e., node encapsulating a keyword argument of a call to an arbitrary
+    function or method) passing the keyword argument with the passed name and
+    value to some parent node encapsulating a call to some function or method.
+
+    Parameters
+    ----------
+    kwarg_name : str
+        Name of this keyword argument.
+    kwarg_value : AST
+        Node passing the value of this keyword argument.
+    node_sibling : AST
+        Sibling node to copy source code metadata from.
+
+    Returns
+    -------
+    keyword
+        Keyword node passing a keyword argument with this name and value.
+    '''
+    assert isinstance(kwarg_name, str), f'{repr(kwarg_name)} not string.'
+    assert isinstance(kwarg_value, AST), f'{repr(kwarg_value)} not AST node.'
+
+    # Child node encapsulating this keyword argument.
+    node_kwarg = keyword(arg=kwarg_name, value=kwarg_value)
+
+    # Copy source code metadata from this sibling node onto this new node.
+    copy_node_metadata(node_src=node_sibling, node_trg=node_kwarg)
+
+    # Return this expression node.
+    return node_kwarg
 
 # ....................{ FACTORIES ~ literal : string       }....................
 #FIXME: Unit test us up, please.

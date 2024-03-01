@@ -23,10 +23,14 @@ from beartype.claw._clawmagic import BEARTYPE_RAISER_FUNC_NAME
 from beartype.claw._clawtyping import NodeVisitResult
 from beartype._conf.confcls import BEARTYPE_CONF_DEFAULT
 from beartype._util.ast.utilastmake import (
-    make_node_attribute_load,
     make_node_call_expr,
+    make_node_kwarg,
     make_node_name_load,
+    make_node_object_attr_load,
+    make_node_str,
 )
+from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
+from beartype._util.text.utiltextansi import color_error
 
 # ....................{ SUBCLASSES                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -200,6 +204,15 @@ class BeartypeNodeTransformerPep526Mixin(object):
         #   526-compliant annotated variable assignments.
         # * This assignment is simple and assigning to an attribute name.
 
+        # Human-readable label prefixing the exception message raised by our
+        # die_if_unbearable() type-checker called below when the value assigned
+        # to this variable violates the type hint annotating this variable. For
+        # efficiency, we precompute this label at import hook time.
+        exception_prefix: str = None  # type: ignore[assignment]
+
+        # Unqualified basename of this variable in the current lexical scope.
+        var_basename: str = None  # type: ignore[assignment]
+
         # Child node passing the value newly assigned to this attribute by this
         # assignment as the first parameter to die_if_unbearable().
         node_func_arg_pith: AST = None  # type: ignore[assignment]
@@ -210,9 +223,12 @@ class BeartypeNodeTransformerPep526Mixin(object):
 
         # If this target variable is a simple local or global variable...
         if isinstance(node_target, Name):
+            # Unqualified basename of this variable in this lexical scope.
+            var_basename = node_target.id
+
             # Child node accessing this local or global variable.
             node_func_arg_pith = make_node_name_load(
-                name=node_target.id, node_sibling=node)
+                name=var_basename, node_sibling=node)
         # Else, this target variable is *NOT* a simple local or global variable.
         #
         # If this target variable is an instance or class variable...
@@ -230,11 +246,35 @@ class BeartypeNodeTransformerPep526Mixin(object):
             # copy_node_metadata(node_src=node, node_trg=node_func_arg_pith_obj)
 
             # Child node referencing this instance or class variable.
-            node_func_arg_pith = make_node_attribute_load(
-                node_name_load=node_target.value,
+            node_func_arg_pith = make_node_object_attr_load(
+                node_obj=node_target.value,
                 attr_name=node_target.attr,
                 node_sibling=node,
             )
+
+            # If the Python interpreter targets Python >= 3.9, the standard
+            # "ast" module provides the unparse() function "unparsing" (i.e.,
+            # obtaining the machine-readable representations of) arbitrary
+            # nodes. In this case...
+            if IS_PYTHON_AT_LEAST_3_9:
+                # Defer version-specific imports.
+                from ast import unparse  # type: ignore[attr-defined]
+
+                # Unqualified basename of this variable in this lexical scope,
+                # defined by "unparsing" this child node.
+                #
+                # Note that the parent object of this attribute is described by
+                # the external node "node_target.value", encapsulating an
+                # arbitrarily complex Python expression. "Unparsing" this
+                # expression manually is *ABSOLUTELY* infeasible.
+                var_basename = unparse(node_target.value)
+            # Else, the Python interpreter targets Python 3.8. In this case,
+            # "ast" fails to provides the unparse() function. Therefore...
+            else:
+                # Unqualified basename of this variable in this lexical scope,
+                # defined by trivially ignoring the arbitrarily complex Python
+                # expression providing the parent object of this attribute.
+                var_basename = node_target.attr
         # Else, this target variable is *NOT* an instance or class variable. In
         # this case, this target variable is currently unsupported by this node
         # transformer for automated type-checking. Simply preserve and return
@@ -258,20 +298,61 @@ class BeartypeNodeTransformerPep526Mixin(object):
         # configuration, this configuration is a user-defined beartype
         # configuration which *MUST* be passed as well. In this case...
         if self._conf_beartype != BEARTYPE_CONF_DEFAULT:  # type: ignore[attr-defined]
-            # Node encapsulating the passing of this configuration as the "conf"
-            # keyword argument to die_if_unbearable().
+            # Child node encapsulating the passing of this configuration as the
+            # "conf" keyword argument to die_if_unbearable().
             node_func_kwarg_conf = self._make_node_keyword_conf_beartype(  # type: ignore[attr-defined]
                 node_sibling=node)
 
             # Append this node to the list of all keyword arguments passed to
             # die_if_unbearable().
             node_func_kwargs.append(node_func_kwarg_conf)
-        # Else, this configuration is simply the default beartype
-        # configuration. In this case, avoid passing that configuration to
-        # the beartype decorator for both efficiency and simplicity.
+        # Else, this configuration is simply the default beartype configuration.
+        # In this case, avoid passing that configuration to the beartype
+        # decorator for both efficiency and simplicity.
+
+        # If the lexical scope of this parent node is module scope, this node
+        # encapsulates a global variable assignment. In this case...
+        if self._is_scope_module_beartype:  # type: ignore[attr-defined]
+            # Fully-qualified name of this global variable.
+            var_name = f'{self._module_name_beartype}.{var_basename}'  # type: ignore[attr-defined]
+
+            # Human-readable label prefixing this exception message.
+            exception_prefix = (
+                f'Global variable "{color_error(var_name)}" ')
+        # Else, the lexical scope of this parent node is *NOT* module scope.
+        # However, by above, this scope is also *NOT* class scope. By
+        # elimination, this scope *MUST* thus be a callable scope. In this
+        # case...
+        else:
+            # Fully-qualified name of the callable defining this local variable.
+            callable_name = f'{self._scope_name_beartype}()'  # type: ignore[attr-defined]
+
+            # Human-readable label prefixing this exception message.
+            exception_prefix = (
+                f'Callable {color_error(callable_name)} '
+                f'local variable "{color_error(var_basename)}" '
+            )
+        # print(f'PEP 526 exception_prefix: {exception_prefix}')
+
+        # Child node encapsulating this label as a string literal.
+        node_exception_prefix = make_node_str(
+            text=exception_prefix, node_sibling=node)
+
+        # Child node encapsulating the passing of this exception prefix as the
+        # "exception_prefix" keyword argument to die_if_unbearable().
+        node_func_kwarg_exception_prefix = make_node_kwarg(
+            kwarg_name='exception_prefix',
+            kwarg_value=node_exception_prefix,
+            node_sibling=node,
+        )
+
+        # Append this node to the list of all keyword arguments passed to
+        # die_if_unbearable().
+        node_func_kwargs.append(node_func_kwarg_exception_prefix)
 
         # Child node type-checking this newly assigned attribute against the
-        # type hint annotating this assignment via our die_if_unbearable().
+        # type hint annotating this assignment via our die_if_unbearable()
+        # type-checker.
         node_func = make_node_call_expr(
             func_name=BEARTYPE_RAISER_FUNC_NAME,
             nodes_args=[

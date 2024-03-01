@@ -36,7 +36,9 @@ from beartype._conf.confcls import (
     BeartypeConf,
 )
 from beartype._util.ast.utilastmake import (
+    make_node_kwarg,
     make_node_name_load,
+    make_node_object_attr_load,
     make_node_str,
 )
 from beartype._util.ast.utilastmunge import copy_node_metadata
@@ -159,11 +161,6 @@ class BeartypeNodeTransformerUtilityMixin(object):
             Keyword node passing this configuration to an arbitrary function.
         '''
 
-        # Node encapsulating a reference to the beartype import hook state
-        # global.
-        node_claw_state = make_node_name_load(
-            name=BEARTYPE_CLAW_STATE_OBJ_NAME, node_sibling=node_sibling)
-
         # Node encapsulating the fully-qualified name of the current module.
         node_module_name = make_node_str(
             text=self._module_name_beartype, node_sibling=node_sibling)  # type: ignore[attr-defined]
@@ -171,14 +168,14 @@ class BeartypeNodeTransformerUtilityMixin(object):
         # Node encapsulating a reference to the beartype configuration object
         # cache (i.e., dictionary mapping from fully-qualified module names to
         # the beartype configurations associated with those modules).
-        node_module_name_to_conf = Attribute(
-            value=node_claw_state,
-            attr=BEARTYPE_CLAW_STATE_CONF_CACHE_VAR_NAME,
-            ctx=NODE_CONTEXT_LOAD,
+        node_module_name_to_conf = make_node_object_attr_load(
+            obj_name=BEARTYPE_CLAW_STATE_OBJ_NAME,
+            attr_name='module_name_to_beartype_conf',
+            node_sibling=node_sibling,
         )
 
         # Node encapsulating the indexation of a dictionary by the
-        # fully-qualified name of that module of the currently visited module.
+        # fully-qualified name of the current module.
         node_module_name_index: AST = None  # type: ignore[assignment]
 
         # If the active Python interpreter targets Python >= 3.9...
@@ -211,22 +208,15 @@ class BeartypeNodeTransformerUtilityMixin(object):
             ctx=NODE_CONTEXT_LOAD,
         )
 
-        # Node encapsulating the passing of this beartype configuration by the
+        # Node encapsulating the passing of this beartype configuration as the
         # "conf" keyword argument to an arbitrary function call of some suitable
         # "beartype" function orchestrated by the caller.
-        node_keyword_conf = keyword(arg='conf', value=node_conf)
+        node_keyword_conf = make_node_kwarg(
+            kwarg_name='conf', kwarg_value=node_conf, node_sibling=node_sibling)
 
         # Copy all source code metadata (e.g., line numbers) from this sibling
         # node onto these new nodes.
-        copy_node_metadata(
-            node_src=node_sibling,
-            node_trg=(
-                node_module_name,
-                node_module_name_to_conf,
-                node_conf,
-                node_keyword_conf,
-            )
-        )
+        copy_node_metadata(node_src=node_sibling, node_trg=node_conf)
 
         # Return this "conf" keyword node.
         return node_keyword_conf

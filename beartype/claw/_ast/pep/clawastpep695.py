@@ -109,7 +109,7 @@ from beartype.claw._clawtyping import NodeVisitResult
 from beartype._data.ast.dataast import NODE_CONTEXT_STORE
 from beartype._util.ast.utilastmunge import copy_node_metadata
 from beartype._util.ast.utilastmake import (
-    make_node_attribute_load,
+    make_node_object_attr_load,
     make_node_call,
     # make_node_call_expr,
     # make_node_fstr_field,
@@ -221,10 +221,10 @@ class BeartypeNodeTransformerPep695Mixin(object):
         # Child node accessing the unqualified basename of the current forward
         # reference proxy to be defined in the current lexical scope via the
         # "BeartypeForwardRefABC.__name_beartype__" class variable of this
-        # proxy, which is currently stored in the scratch variable. Notably,
-        # "_" is a subclass of the "BeartypeForwardRefABC" superclass.
-        node_forwardref_name_load = make_node_attribute_load(
-            node_name_load=node_scratch_var_name_load,
+        # proxy, which is currently stored in the "_" scratch local variable.
+        # Notably, "_" is a subclass of the "BeartypeForwardRefABC" superclass.
+        node_forwardref_name_load = make_node_object_attr_load(
+            node_obj=node_scratch_var_name_load,
             attr_name='__name_beartype__',
             node_sibling=node,
         )

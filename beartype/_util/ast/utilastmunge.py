@@ -20,9 +20,7 @@ from beartype.typing import (
 # ....................{ COPIERS                            }....................
 #FIXME: Unit test us up, please.
 def copy_node_metadata(
-    node_src: AST,
-    node_trg: Union[AST, Iterable[AST]],
-) -> None:
+    node_src: AST, node_trg: Union[AST, Iterable[AST]]) -> None:
     '''
     Copy all **source code metadata** (i.e., beginning and ending line and
     column numbers) from the passed source abstract syntax tree (AST) node onto
@@ -37,13 +35,13 @@ def copy_node_metadata(
 
     The tradeoffs are as follows:
 
-    * :func:`ast.fix_missing_locations` is ``O(n)`` time complexity for ``n``
-      the number of AST nodes across the entire AST tree, but requires only a
-      single trivial call and is thus considerably more "plug-and-play" than
-      this function.
-    * This function is ``O(1)`` time complexity irrespective of the size of the
-      AST tree, but requires one still mostly trivial call for each synthetic
-      AST node inserted into the AST tree by the
+    * :func:`ast.fix_missing_locations` is :math:`O(n)` time complexity for
+      :math:`n` the number of AST nodes across the entire AST tree, but requires
+      only a single trivial call and is thus considerably more "plug-and-play"
+      than this function.
+    * This function is :math:`O(1)` time complexity irrespective of the size of
+      the AST tree, but requires one still mostly trivial call for each
+      synthetic AST node inserted into the AST tree by the
       :class:`BeartypeNodeTransformer` above.
 
     Caveats
@@ -86,9 +84,9 @@ def copy_node_metadata(
     See Also
     --------
     :func:`ast.copy_location`
-        Less efficient analogue of this function running in ``O(k)`` time
-        complexity for ``k`` the number of types of source code metadata.
-        Typically, ``k == 4``.
+        Less efficient analogue of this function running in :math:`O(k)` time
+        complexity for :math:`k` the number of types of source code metadata.
+        Typically, :math:`k == 4`.
     '''
     assert isinstance(node_src, AST), f'{repr(node_src)} not AST node.'
 
