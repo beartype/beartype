@@ -149,7 +149,10 @@ def get_func_pith_violation(
     Raises
     ------
     All exceptions raised by the lower-level :func:`.get_hint_object_violation`
-    getter.
+    getter as well as:
+
+    _BeartypeCallHintPepRaiseException
+        If the parameter or return with the passed name is unannotated.
 
     See Also
     --------
@@ -195,8 +198,9 @@ def get_hint_object_violation(
 
     # Optional parameters.
     func: Optional[CallableABC] = None,
-    pith_name: Optional[str] = None,
     cls_stack: TypeStack = None,
+    exception_prefix: Optional[str] = None,
+    pith_name: Optional[str] = None,
     random_int: Optional[int] = None,
 ) -> Exception:
     '''
@@ -256,6 +260,24 @@ def get_hint_object_violation(
         * Else, :data:`None`.
 
         Defaults to :data:`None`.
+    cls_stack : TypeStack, optional
+        **Type stack** (i.e., either a tuple of the one or more
+        :func:`beartype.beartype`-decorated classes lexically containing the
+        class variable or method annotated by this hint *or* :data:`None`).
+        Defaults to :data:`None`.
+    exception_prefix : Optional[str]
+        Either:
+
+        * If the caller prefers specifying an explicit human-readable label
+          prefixing the representation of this object in the exception message,
+          that labal.
+        * Else, :data:`None`. In this case, this getter automatically
+          synthesizes this label from the other passed parameters that are
+          required to be non-:data:`None`. If any such parameter is
+          :data:`None`, an exception is raised. These parameters include:
+
+          * The passed ``func`` parameter, required to be non-:data:`None`.
+          * The passed ``pith_name`` parameter, required to be non-:data:`None`.
     pith_name : Optional[str]
         Either:
 
@@ -264,11 +286,6 @@ def get_hint_object_violation(
         * If this hint annotates the return of some callable, ``"return"``.
         * Else, :data:`None`.
 
-        Defaults to :data:`None`.
-    cls_stack : TypeStack, optional
-        **Type stack** (i.e., either a tuple of the one or more
-        :func:`beartype.beartype`-decorated classes lexically containing the
-        class variable or method annotated by this hint *or* :data:`None`).
         Defaults to :data:`None`.
     random_int: Optional[int], optional
         **Pseudo-random integer** (i.e., unsigned 32-bit integer
@@ -307,7 +324,8 @@ def get_hint_object_violation(
     BeartypeDecorHintPepException
         If the type hint annotating this object is *not* PEP-compliant.
     _BeartypeCallHintPepRaiseException
-        If the parameter or return value with the passed name is unannotated.
+        If all three of the ``exception_prefix``,``func``, and ``pith_name``
+        parameters are :data:`None`.
     _BeartypeCallHintPepRaiseDesynchronizationException
         If this pith actually satisfies this hint, implying either:
 
@@ -330,34 +348,47 @@ def get_hint_object_violation(
     # Type of violation to be raised.
     exception_cls: TypeException = None  # type: ignore[assignment]
 
-    # Substring prefixing the message of the violation to be raised below.
-    exception_prefix: str = None  # type: ignore[assignment]
-
-    #FIXME: Refactor this function to accept a new "exception_prefix" parameter.
-    #FIXME: Refactor the first "if" branch below to instead resemble:
-    #else:
-    #    exception_cls = conf.violation_door_type
-    #    exception_prefix = f'{exception_prefix}value '
-
-    # If the passed object is neither a parameter or return of a decorated
-    # callable, this object was directly passed to either the
-    # beartype.door.is_bearable() or beartype.door.die_if_unbearable()
-    # functions. In either case, set the above local variables appropriately.
+    # If the caller passed *NO* parameter name, the passed object is neither a
+    # parameter nor return of a decorated callable. By elimination, this object
+    # *MUST* have been directly passed to the beartype.door.die_if_unbearable()
+    # type-checker. In this case...
     if pith_name is None:
+        # If the caller also passed *NO* exception prefix, raise an exception.
+        if exception_prefix is None:
+            raise _BeartypeCallHintPepRaiseException(
+                'get_hint_object_violation() passed neither '
+                '"exception_prefix" nor "pith_name" parameters.'
+            )
+        # Else, the caller passed an exception prefix.
+
+        # Default the exception class appropriately.
         exception_cls = conf.violation_door_type
-        exception_prefix = 'Object '
-    # If the name of this parameter is the magic string implying the passed
-    # object to be a return value, set the above local variables appropriately.
-    elif pith_name == ARG_NAME_RETURN:
-        exception_cls = conf.violation_return_type
-        exception_prefix = prefix_callable_return_value(
-            func=func, return_value=obj)  # type: ignore[arg-type]
-    # Else, the passed object is a parameter. In this case, set the above local
-    # variables appropriately.
+
+        # Suffix this exception prefix with an additional noun for disambiguity.
+        exception_prefix = f'{exception_prefix}value '
+    # Else, the caller passed a parameter name. In this case...
     else:
-        exception_cls = conf.violation_param_type
-        exception_prefix = prefix_callable_arg_value(
-            func=func, arg_name=pith_name, arg_value=obj)  # type: ignore[arg-type]
+        # If the caller also passed an exception prefix, raise an exception.
+        if exception_prefix is not None:
+            raise _BeartypeCallHintPepRaiseException(
+                'get_hint_object_violation() passed both '
+                '"exception_prefix" and "pith_name" parameters.'
+            )
+        # Else, the caller passed *NO* exception prefix.
+
+        # If the name of this parameter is the magic string implying the passed
+        # object to be a return value...
+        if pith_name == ARG_NAME_RETURN:
+            # Default these exception locals appropriately
+            exception_cls = conf.violation_return_type
+            exception_prefix = prefix_callable_return_value(
+                func=func, return_value=obj)  # type: ignore[arg-type]
+        # Else, the passed object is a parameter. In this case...
+        else:
+            # Default these exception locals appropriately
+            exception_cls = conf.violation_param_type
+            exception_prefix = prefix_callable_arg_value(
+                func=func, arg_name=pith_name, arg_value=obj)  # type: ignore[arg-type]
 
     # Uppercase the first character of this violation prefix for readability.
     exception_prefix = uppercase_str_char_first(exception_prefix)

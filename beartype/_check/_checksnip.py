@@ -17,6 +17,7 @@ from beartype._check.checkmagic import (
     ARG_NAME_CONF,
     ARG_NAME_CLS_STACK,
     ARG_NAME_FUNC,
+    ARG_NAME_EXCEPTION_PREFIX,
     ARG_NAME_GET_VIOLATION,
     ARG_NAME_HINT,
     ARG_NAME_WARN,
@@ -97,7 +98,8 @@ CODE_GET_HINT_OBJECT_VIOLATION = f''':
             {VAR_NAME_VIOLATION} = {ARG_NAME_GET_VIOLATION}(
                 obj={VAR_NAME_PITH_ROOT},
                 hint={ARG_NAME_HINT},
-                conf={ARG_NAME_CONF},{{arg_random_int}}
+                conf={ARG_NAME_CONF},
+                exception_prefix={ARG_NAME_EXCEPTION_PREFIX},{{arg_random_int}}
             )
 '''
 '''

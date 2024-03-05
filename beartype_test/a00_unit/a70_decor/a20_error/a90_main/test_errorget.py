@@ -16,7 +16,7 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                              }....................
+# ....................{ TESTS ~ pith                       }....................
 def test_get_func_pith_violation() -> None:
     '''
     Test the
@@ -54,8 +54,7 @@ def test_get_func_pith_violation() -> None:
 
         return achromatic_voice
 
-    # Keyword arguments to be unconditionally passed to *ALL* calls of the
-    # get_func_pith_violation() getter below.
+    # Keyword arguments to be unconditionally passed to all getter calls below.
     kwargs = dict(
         func=forest_unknown,
         conf=BeartypeConf(),
@@ -145,7 +144,7 @@ def test_get_func_pith_violation() -> None:
             **kwargs
         )
 
-# ....................{ TESTS ~ conf                       }....................
+# ....................{ TESTS ~ pith : conf                }....................
 def test_get_func_pith_violation_conf_is_color() -> None:
     '''
     Test the
@@ -209,7 +208,7 @@ def test_get_func_pith_violation_conf_is_color() -> None:
     # standard output is attached to an interactive terminal.
     assert is_str_ansi(str(violation)) is is_stdout_terminal()
 
-# ....................{ TESTS ~ conf : violation_*         }....................
+# ....................{ TESTS ~ pith : conf : violation_*  }....................
 def test_get_func_pith_violation_conf_violation_types() -> None:
     '''
     Test the
@@ -346,3 +345,41 @@ def test_get_func_pith_violation_conf_violation_verbosity() -> None:
 
         # Store the previously iterated violation for subsequent reference.
         violation_prev = violation
+
+# ....................{ TESTS ~ pith                       }....................
+def test_get_hint_object_violation() -> None:
+    '''
+    Test the
+    :func:`beartype._check.error.errorget.get_hint_object_violation` getter.
+    '''
+
+    # ..................{ IMPORTS                            }..................
+    # Defer test-specific imports.
+    from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
+    from beartype._data.func.datafuncarg import ARG_NAME_RETURN
+    from beartype._check.error.errorget import get_hint_object_violation
+    from beartype._conf.confcls import BEARTYPE_CONF_DEFAULT
+    from pytest import raises
+
+    # ..................{ LOCALS                             }..................
+    # Keyword arguments to be unconditionally passed to all getter calls below.
+    kwargs = dict(
+        obj='Frantic with dizzying anguish, her blind flight',
+        hint=str,
+        conf=BEARTYPE_CONF_DEFAULT,
+    )
+
+    # ..................{ FAIL                               }..................
+    # Assert that this getter raises the expected exception when passed neither
+    # an exception prefix *NOR* parameter name.
+    with raises(_BeartypeCallHintPepRaiseException):
+        get_hint_object_violation(**kwargs)
+
+    # Assert that this getter raises the expected exception when passed both an
+    # exception prefix *AND* parameter name.
+    with raises(_BeartypeCallHintPepRaiseException):
+        get_hint_object_violation(
+            exception_prefix="O'er the wide aëry wilderness: thus driven",
+            pith_name=ARG_NAME_RETURN,
+            **kwargs
+        )

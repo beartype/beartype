@@ -20,6 +20,7 @@ from beartype.typing import (
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.checkmagic import (
     ARG_NAME_CONF,
+    ARG_NAME_EXCEPTION_PREFIX,
     ARG_NAME_GETRANDBITS,
     ARG_NAME_GET_VIOLATION,
     ARG_NAME_HINT,
@@ -475,19 +476,12 @@ def make_code_raiser_hint_object_check(
         ''
     )
 
-    #FIXME: Refactor as follows, please:
-    #* Define a new "ARG_NAME_EXCEPTION_PREFIX" global in "checkmagic".
-    #* Import that above.
-    #* Assign here:
-    #      func_scope[ARG_NAME_EXCEPTION_PREFIX] = exception_prefix
-    #* Refactor the "CODE_GET_HINT_OBJECT_VIOLATION" global to additionally pass
-    #  the following keyword parameter:
-    #      exception_prefix={ARG_NAME_EXCEPTION_PREFIX},
-
     # Pass hidden parameters to this raiser function exposing:
+    # * The passed exception prefix accessed by this snippet.
     # * The get_hint_object_violation() getter called by the
     #   "CODE_GET_HINT_OBJECT_VIOLATION" snippet.
     # * The passed type hint accessed by this snippet.
+    func_scope[ARG_NAME_EXCEPTION_PREFIX] = exception_prefix
     func_scope[ARG_NAME_GET_VIOLATION] = get_hint_object_violation
     func_scope[ARG_NAME_HINT] = hint
 

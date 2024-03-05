@@ -176,7 +176,7 @@ def test_door_die_if_unbearable(iter_hints_piths_meta) -> None:
 
             # Assert this raiser successfully replaced the irrelevant substring
             # previously prefixing this message.
-            assert exception_str.startswith('Object ')
+            assert exception_str.startswith('Die_if_unbearable() value ')
             assert ' violates type hint ' in exception_str
         # Else, this raiser satisfies this hint. In this case...
         else:
