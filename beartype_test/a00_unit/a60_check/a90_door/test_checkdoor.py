@@ -148,6 +148,7 @@ def test_door_die_if_unbearable(iter_hints_piths_meta) -> None:
         BeartypeDecorHintNonpepException,
         BeartypeDoorHintViolation,
     )
+    from beartype._util.text.utiltextrepr import represent_object
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPithUnsatisfiedMetadata)
     from pytest import raises
@@ -172,12 +173,19 @@ def test_door_die_if_unbearable(iter_hints_piths_meta) -> None:
                 die_if_unbearable(pith, hint, conf=conf)
 
             # Exception message raised by this wrapper function.
-            exception_str = str(exception_info.value)
+            exception_message = str(exception_info.value)
 
-            # Assert this raiser successfully replaced the irrelevant substring
-            # previously prefixing this message.
-            assert exception_str.startswith('Die_if_unbearable() value ')
-            assert ' violates type hint ' in exception_str
+            # Truncated representation of this pith.
+            pith_repr = represent_object(pith)
+
+            # Assert that this message contains a truncated representation of
+            # this pith.
+            assert pith_repr in exception_message
+
+            # Assert that this raiser successfully replaced the temporary
+            # placeholder previously prefixing this message.
+            assert 'die_if_unbearable() value ' in exception_message.lower()
+            assert ' violates type hint ' in exception_message
         # Else, this raiser satisfies this hint. In this case...
         else:
             # Assert this validator raises *NO* exception when passed this pith

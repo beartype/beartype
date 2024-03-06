@@ -12,17 +12,35 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._util.text.utiltextansi import (
-    color_error,
-    color_repr,
+    color_arg_name,
+    color_pith,
     color_type,
 )
 from beartype._util.text.utiltextlabel import label_type
-from beartype._util.text.utiltextprefix import (
-    prefix_beartypeable,
-    prefix_callable_return,
-)
+from beartype._util.text.utiltextprefix import prefix_beartypeable
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
+
+# ....................{ LABELLERS                          }....................
+def label_pith_value(pith: object) -> str:
+    '''
+    Human-readable label describing the passed value of the **current pith**
+    (i.e., arbitrary object violating the current type check) *not* suffixed by
+    delimiting whitespace.
+
+    Parameters
+    ----------
+    pith : object
+        Arbitrary object violating the current type check.
+
+    Returns
+    -------
+    str
+        Human-readable label describing this pith value.
+    '''
+
+    # Create and return this label.
+    return f'{color_pith(represent_object(pith))}'
 
 # ....................{ PREFIXERS                          }....................
 def prefix_callable_arg_value(
@@ -52,13 +70,12 @@ def prefix_callable_arg_value(
     # Create and return this label.
     return (
         f'{prefix_beartypeable(obj=func, is_color=True)}parameter '
-        f'{color_error(arg_name)}='
-        f'{color_repr(represent_object(arg_value))} '
+        f'{color_arg_name(arg_name)}='
+        f'{prefix_pith_value(arg_value)}'
     )
 
 
-def prefix_callable_return_value(
-    func: Callable, return_value: object) -> str:
+def prefix_callable_return_value(func: Callable, return_value: object) -> str:
     '''
     Human-readable label describing the passed trimmed return value of the
     passed **decorated callable** (i.e., callable wrapped by the
@@ -81,8 +98,29 @@ def prefix_callable_return_value(
     # Create and return this label.
     return (
         f'{prefix_beartypeable(obj=func, is_color=True)}return '
-        f'{color_repr(represent_object(return_value))} '
+        f'{prefix_pith_value(return_value)}'
     )
+
+
+def prefix_pith_value(pith: object) -> str:
+    '''
+    Human-readable label describing the passed value of the **current pith**
+    (i.e., arbitrary object violating the current type check) suffixed by
+    delimiting whitespace.
+
+    Parameters
+    ----------
+    pith : object
+        Arbitrary object violating the current type check.
+
+    Returns
+    -------
+    str
+        Human-readable label describing this pith value.
+    '''
+
+    # Create and return this label.
+    return f'{label_pith_value(pith)} '
 
 # ....................{ REPRESENTERS                       }....................
 def represent_pith(pith: object) -> str:
@@ -105,5 +143,5 @@ def represent_pith(pith: object) -> str:
     # Create and return this representation.
     return (
         f'{color_type(label_type(type(pith)))} '
-        f'{color_repr(represent_object(pith))}'
+        f'{label_pith_value(pith)}'
     )

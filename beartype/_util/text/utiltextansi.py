@@ -20,27 +20,41 @@ effectively "undoing" all colors and styles applied by those sequences.
 '''
 
 # ....................{ CONSTANTS ~ color                  }....................
-COLOR_GREEN = '\033[92m'
-'''
-ANSI escape sequence colouring all subsequent characters as green.
-'''
-
-
-COLOR_RED = '\033[31m'
-'''
-ANSI escape sequence colouring all subsequent characters as red.
-'''
-
-
 COLOR_BLUE = '\033[34m'
 '''
 ANSI escape sequence colouring all subsequent characters as blue.
 '''
 
 
+COLOR_CYAN = '\033[36m'
+'''
+ANSI escape sequence colouring all subsequent characters as **cyan** (i.e.,
+light blue).
+'''
+
+
+COLOR_GREEN = '\033[32m'
+'''
+ANSI escape sequence colouring all subsequent characters as **green**.
+'''
+
+
+COLOR_MAGENTA = '\033[35m'
+'''
+ANSI escape sequence colouring all subsequent characters as **magenta** (i.e.,
+purple, dark blue).
+'''
+
+
+COLOR_RED = '\033[31m'
+'''
+ANSI escape sequence colouring all subsequent characters as **red**.
+'''
+
+
 COLOR_YELLOW = '\033[33m'
 '''
-ANSI escape sequence colouring all subsequent characters as yellow.
+ANSI escape sequence colouring all subsequent characters as **yellow**.
 '''
 
 # ....................{ CONSTANTS ~ style                  }....................
@@ -73,29 +87,9 @@ def is_str_ansi(text: str) -> bool:
     return _ANSI_REGEX.search(text) is not None
 
 # ....................{ COLOURIZERS                        }....................
-def color_error(text: str) -> str:
-    '''
-    Colour the passed substring as an error.
-
-    Parameters
-    ----------
-    text : str
-        Text to be coloured as an error.
-
-    Returns
-    -------
-    str
-        This text coloured as an error.
-    '''
-    assert isinstance(text, str), f'{repr(text)} not string.'
-
-    # Infinite one-liner. Infinite possibility.
-    return f'{STYLE_BOLD}{COLOR_RED}{text}{ANSI_RESET}'
-
-
 def color_hint(text: str) -> str:
     '''
-    Colour the passed substring as a PEP-compliant type hint.
+    Colour the passed substring as a type hint.
 
     Parameters
     ----------
@@ -110,13 +104,15 @@ def color_hint(text: str) -> str:
     assert isinstance(text, str), f'{repr(text)} not string.'
 
     # To boldly go where no one-liner has gone before.
-    return f'{STYLE_BOLD}{COLOR_BLUE}{text}{ANSI_RESET}'
+    return f'{STYLE_BOLD}{COLOR_GREEN}{text}{ANSI_RESET}'
 
 
-def color_repr(text: str) -> str:
+def color_pith(text: str) -> str:
     '''
-    Colour the passed substring as a **representation** (i.e., machine-readable
-    string returned by the :func:`repr` builtin).
+    Colour the passed substring as a **pith representation** (i.e.,
+    machine-readable string describing the value of the object currently being
+    type-checked, typically created by the
+    :func:`beartype._util.text.utiltextrepr.represent_object` function).
 
     Parameters
     ----------
@@ -131,7 +127,7 @@ def color_repr(text: str) -> str:
     assert isinstance(text, str), f'{repr(text)} not string.'
 
     # Victory fanfare! One-liner enters the chat.
-    return f'{COLOR_YELLOW}{text}{ANSI_RESET}'
+    return f'{STYLE_BOLD}{COLOR_RED}{text}{ANSI_RESET}'
 
 
 def color_type(text: str) -> str:
@@ -151,7 +147,50 @@ def color_type(text: str) -> str:
     assert isinstance(text, str), f'{repr(text)} not string.'
 
     # One-liner gonna one-liner. Ya, it's been a long night.
-    return f'{STYLE_BOLD}{COLOR_GREEN}{text}{ANSI_RESET}'
+    return f'{STYLE_BOLD}{COLOR_YELLOW}{text}{ANSI_RESET}'
+
+# ....................{ COLOURIZERS ~ name                 }....................
+def color_attr_name(text: str) -> str:
+    '''
+    Colour the passed substring as a **Python identifier** (e.g., possibly
+    fully-qualified name of a module, class, callable, or variable name).
+
+    Parameters
+    ----------
+    text : str
+        Text to be coloured as a Python identifier.
+
+    Returns
+    -------
+    str
+        This text coloured as a Python identifier.
+    '''
+    assert isinstance(text, str), f'{repr(text)} not string.'
+
+    # Dope af one-liner: "You rock!"
+    return f'{STYLE_BOLD}{COLOR_MAGENTA}{text}{ANSI_RESET}'
+
+
+def color_arg_name(text: str) -> str:
+    '''
+    Colour the passed substring as an **argument name** (i.e., of the parameter
+    of a :func:`beartype.beartype`-decorated callable currently being
+    type-checked).
+
+    Parameters
+    ----------
+    text : str
+        Text to be coloured as an argument name.
+
+    Returns
+    -------
+    str
+        This text coloured as an argument name.
+    '''
+    assert isinstance(text, str), f'{repr(text)} not string.'
+
+    # Blue one-liner needs food badly.
+    return f'{STYLE_BOLD}{COLOR_MAGENTA}{text}{ANSI_RESET}'
 
 # ....................{ STRIPPERS                          }....................
 def strip_str_ansi(text: str) -> str:

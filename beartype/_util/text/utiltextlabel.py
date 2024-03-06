@@ -183,7 +183,7 @@ def label_callable(
         get_func_args_flexible_len)
     from beartype._util.func.utilfunccodeobj import get_func_codeobj
     from beartype._util.func.utilfunctest import is_func_lambda
-    from beartype._util.text.utiltextansi import color_error
+    from beartype._util.text.utiltextansi import color_attr_name
 
     # Substring prefixing the string to be returned, typically identifying the
     # specialized type of that callable if that callable has a specialized type.
@@ -226,7 +226,7 @@ def label_callable(
 
     # If colouring that callable, do so.
     if is_color:
-        func_label = color_error(func_label)
+        func_label = color_attr_name(func_label)
     # Else, we are *NOT* colouring that callable.
 
     # If contextualizing that callable, just do it already. Go, @beartype! Go!
@@ -341,7 +341,7 @@ def label_type(
     from beartype._util.cls.utilclstest import is_type_builtin
     from beartype._util.hint.pep.proposal.utilpep544 import (
         is_hint_pep544_protocol)
-    from beartype._util.text.utiltextansi import color_error
+    from beartype._util.text.utiltextansi import color_attr_name
 
     # Label to be returned, initialized to this class' fully-qualified name.
     classname = get_object_type_name(cls)
@@ -391,7 +391,7 @@ def label_type(
 
     # If colouring this class, do so.
     if is_color:
-        classname = color_error(classname)
+        classname = color_attr_name(classname)
     # Else, we are *NOT* colouring this class.
 
     # Return this labelled classname.

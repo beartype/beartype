@@ -89,6 +89,7 @@ from beartype._check.error._util.errorutilcolor import (
 from beartype._check.error._util.errorutiltext import (
     prefix_callable_arg_value,
     prefix_callable_return_value,
+    prefix_pith_value,
 )
 from beartype._util.text.utiltextansi import color_hint
 from beartype._util.text.utiltextmunge import (
@@ -365,7 +366,7 @@ def get_hint_object_violation(
         exception_cls = conf.violation_door_type
 
         # Suffix this exception prefix with an additional noun for disambiguity.
-        exception_prefix = f'{exception_prefix}value '
+        exception_prefix = f'{exception_prefix}value {prefix_pith_value(obj)}'
     # Else, the caller passed a parameter name. In this case...
     else:
         # If the caller also passed an exception prefix, raise an exception.

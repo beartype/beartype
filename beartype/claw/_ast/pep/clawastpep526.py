@@ -30,7 +30,7 @@ from beartype._util.ast.utilastmake import (
     make_node_str,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_9
-from beartype._util.text.utiltextansi import color_error
+from beartype._util.text.utiltextansi import color_attr_name
 
 # ....................{ SUBCLASSES                         }....................
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -317,8 +317,7 @@ class BeartypeNodeTransformerPep526Mixin(object):
             var_name = f'{self._module_name_beartype}.{var_basename}'  # type: ignore[attr-defined]
 
             # Human-readable label prefixing this exception message.
-            exception_prefix = (
-                f'Global variable "{color_error(var_name)}" ')
+            exception_prefix = f'Global variable "{color_attr_name(var_name)}" '
         # Else, the lexical scope of this parent node is *NOT* module scope.
         # However, by above, this scope is also *NOT* class scope. By
         # elimination, this scope *MUST* thus be a callable scope. In this
@@ -329,8 +328,8 @@ class BeartypeNodeTransformerPep526Mixin(object):
 
             # Human-readable label prefixing this exception message.
             exception_prefix = (
-                f'Callable {color_error(callable_name)} '
-                f'local variable "{color_error(var_basename)}" '
+                f'Callable {color_attr_name(callable_name)} '
+                f'local variable "{color_attr_name(var_basename)}" '
             )
         # print(f'PEP 526 exception_prefix: {exception_prefix}')
 
