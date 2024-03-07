@@ -36,7 +36,7 @@ from beartype._check.code.codemagic import (
     HINT_META_INDEX_PLACEHOLDER,
     HINT_META_INDEX_PITH_EXPR,
     HINT_META_INDEX_PITH_VAR_NAME,
-    HINT_META_INDEX_INDENT,
+    HINT_META_INDEX_INDENT_LEVEL,
 )
 from beartype._check.code.codescope import (
     add_func_scope_type,
@@ -74,10 +74,7 @@ from beartype._check.code.snip.codesnipstr import (
 )
 from beartype._check.convert.convsanify import sanify_hint_any
 from beartype._conf.confcls import BeartypeConf
-from beartype._data.code.datacodeindent import (
-    CODE_INDENT_1,
-    CODE_INDENT_2,
-)
+from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.code.datacodemagic import (
     LINE_RSTRIP_INDEX_AND,
     LINE_RSTRIP_INDEX_OR,
@@ -167,8 +164,6 @@ def make_check_expr(
     # *fight me, github developer community*
 
     # "beartype._check.checkmagic" globals.
-    _CODE_INDENT_1=CODE_INDENT_1,
-    _CODE_INDENT_2=CODE_INDENT_2,
     _EXCEPTION_PREFIX=EXCEPTION_PLACEHOLDER,
     _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     _EXCEPTION_PREFIX_HINT=EXCEPTION_PREFIX_HINT,
@@ -178,9 +173,7 @@ def make_check_expr(
     _HINT_META_INDEX_PLACEHOLDER=HINT_META_INDEX_PLACEHOLDER,
     _HINT_META_INDEX_PITH_EXPR=HINT_META_INDEX_PITH_EXPR,
     _HINT_META_INDEX_PITH_VAR_NAME=HINT_META_INDEX_PITH_VAR_NAME,
-    _HINT_META_INDEX_INDENT=HINT_META_INDEX_INDENT,
-    _LINE_RSTRIP_INDEX_AND=LINE_RSTRIP_INDEX_AND,
-    _LINE_RSTRIP_INDEX_OR=LINE_RSTRIP_INDEX_OR,
+    _HINT_META_INDEX_INDENT_LEVEL=HINT_META_INDEX_INDENT_LEVEL,
 
     # "beartype._check.code.snip.codesnipstr" string globals required only for their
     # bound str.format() methods.
@@ -218,6 +211,13 @@ def make_check_expr(
         PEP593_CODE_HINT_VALIDATOR_SUFFIX.format),
     PEP593_CODE_HINT_VALIDATOR_CHILD_format: Callable = (
         PEP593_CODE_HINT_VALIDATOR_CHILD.format),
+
+    # "beartype._data.code.datacodeindent" globals.
+    _INDENT_LEVEL_TO_CODE=INDENT_LEVEL_TO_CODE,
+
+    # "beartype._data.code.datacodemagic" globals.
+    _LINE_RSTRIP_INDEX_AND=LINE_RSTRIP_INDEX_AND,
+    _LINE_RSTRIP_INDEX_OR=LINE_RSTRIP_INDEX_OR,
 ) -> CodeGenerated:
     '''
     **Type-checking expression factory** (i.e., low-level callable dynamically
@@ -304,7 +304,7 @@ def make_check_expr(
         object have been deprecated by :pep:`585`.
     '''
 
-    # ..................{ HINT ~ root                        }..................
+    # ..................{ LOCALS ~ hint : root               }..................
     # Top-level hint relocalized for disambiguity.
     hint_root = hint
 
@@ -312,7 +312,7 @@ def make_check_expr(
     # this function for similar disambiguity.
     del hint
 
-    # ..................{ HINT ~ current                     }..................
+    # ..................{ LOCALS ~ hint : current            }..................
     # Currently visited hint.
     hint_curr = None
 
@@ -350,11 +350,7 @@ def make_check_expr(
     #   the left-hand side (LHS) of that assignment expression).
     pith_curr_var_name = VAR_NAME_PITH_ROOT
 
-    # Python code snippet expanding to the current level of indentation
-    # appropriate for the currently visited hint.
-    indent_curr = _CODE_INDENT_2
-
-    # ..................{ HINT ~ child                       }..................
+    # ..................{ LOCALS ~ hint : child              }..................
     # Currently iterated PEP-compliant child hint subscripting the currently
     # visited hint, initialized to the root hint to enable the subsequently
     # called _enqueue_hint_child() function to enqueue the root hint.
@@ -364,114 +360,27 @@ def make_check_expr(
     # (e.g., "Union" if "hint_child == Union[int, str]").
     hint_child_sign = None
 
-    # Python code snippet expanding to the current level of indentation
-    # appropriate for the currently iterated child hint, initialized to the
-    # root hint indentation to enable the subsequently called
-    # _enqueue_hint_child() function to enqueue the root hint.
-    indent_child = indent_curr
-
-    # ..................{ HINT ~ childs                      }..................
-    # Current tuple of all PEP-compliant child hints subscripting the currently
-    # visited hint (e.g., "(int, str)" if "hint_curr == Union[int, str]").
+    # ..................{ LOCALS ~ hint : childs             }..................
+    # Current tuple of all child hints subscripting the currently visited hint
+    # (e.g., "(int, str)" if "hint_curr == Union[int, str]").
     hint_childs: tuple = None  # type: ignore[assignment]
 
-    # Current list of all output PEP-compliant child hints to replace the
-    # Current tuple of all input PEP-compliant child hints subscripting the
-    # currently visited hint with.
+    # Current list of all output child hints to replace the Current tuple of all
+    # input child hints subscripting the currently visited hint with.
     hint_childs_new: list = None  # type: ignore[assignment]
 
-    # Number of PEP-compliant child hints subscripting the currently visited
-    # hint.
+    # Number of child hints subscripting the currently visited hint.
     hint_childs_len: int = None  # type: ignore[assignment]
 
-    # 0-based index of the currently iterated PEP-compliant child hint of the
-    # "hint_childs" tuple.
+    # 0-based index of the currently iterated child hint of the "hint_childs"
+    # tuple.
     hint_childs_index: int = None  # type: ignore[assignment]
 
-    # Current tuple of all PEP-compliant child child hints subscripting the
-    # currently visited child hint (e.g., "(int, str)" if "hint_child ==
-    # Union[int, str]").
+    # Current tuple of all child child hints subscripting the currently visited
+    # child hint (e.g., "(int, str)" if "hint_child == Union[int, str]").
     hint_child_childs: tuple = None  # type: ignore[assignment]
 
-    # ..................{ HINT ~ pep 484 : forwardref        }..................
-    # Set of the unqualified classnames referred to by all relative forward
-    # references visitable from this root hint if any *OR* "None" otherwise
-    # (i.e., if no such forward references are visitable).
-    hint_refs_type_basename: Optional[set] = None
-
-    # ..................{ HINT ~ pep 572                     }..................
-    # The following local variables isolated to this subsection are only
-    # relevant when these conditions hold:
-    # * The active Python interpreter targets at least Python 3.8, the first
-    #   major Python version to introduce support for "PEP 572 -- Assignment
-    #   Expressions."
-    # * The currently visited hint is *NOT* the root hint (i.e., "hint_root").
-    #   If the currently visited hint is the root hint, the current pith has
-    #   already been localized to a local variable whose name is the value of
-    #   the "VAR_NAME_PITH_ROOT" string global and thus need *NOT* be
-    #   relocalized to another local variable using an assignment expression.
-    #
-    # This is a necessary and sufficient condition for deciding whether a
-    # Python >= 3.8-specific assignment expression localizing the current pith
-    # should be embedded in the code generated to type-check this pith against
-    # this hint. This is a non-trivial runtime optimization eliminating
-    # repeated computations to obtain this pith from PEP-compliant child hints.
-    # For example, if this hint constrains this pith to be a standard sequence,
-    # the child pith of this parent pith is a random item selected from this
-    # sequence; since obtaining this child pith is non-trivial, the computation
-    # required to do so is performed only once by assigning this child pith to
-    # a unique local variable during runtime type-checking and then repeatedly
-    # type-checking that variable rather than the computation required to
-    # continually reacquire this child pith: e.g.,
-    #
-    #     # Type-checking conditional for "List[List[str]]" under Python < 3.8.
-    #     if not (
-    #         isinstance(__beartype_pith_0, list) and
-    #         (
-    #             isinstance(__beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)], list) and
-    #             isinstance(__beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)][__beartype_random_int % len(__beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)])], str) if __beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)] else True
-    #         ) if __beartype_pith_0 else True
-    #     ):
-    #
-    #     # The same conditional under Python >= 3.8.
-    #     if not (
-    #         isinstance(__beartype_pith_0, list) and
-    #         (
-    #             isinstance(__beartype_pith_1 := __beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)], list) and
-    #             isinstance(__beartype_pith_1[__beartype_random_int % len(__beartype_pith_1)], str) if __beartype_pith_1 else True
-    #         ) if __beartype_pith_0 else True
-    #     ):
-    #
-    # Note that:
-    # * The random item selected from the root pith (i.e., "__beartype_pith_1
-    #   := __beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)")
-    #   only occurs once under Python >= 3.8 but repeatedly under Python < 3.8.
-    #   In both cases, the same semantic type-checking is performed regardless
-    #   of optimization.
-    # * This optimization implicitly "bottoms out" when the currently visited
-    #   hint is *NOT* subscripted by unignorable PEP-compliant child hint
-    #   arguments. If all child hints of the currently visited hint are either
-    #   ignorable (e.g., "object", "Any") *OR* are unignorable isinstanceable
-    #   types (e.g., "int", "str"), the currently visited hint has *NO*
-    #   meaningful PEP-compliant child hints and is thus effectively a leaf
-    #   node with respect to performing this optimization.
-    #is_pith_curr_assign_expr = None
-
-    # Integer suffixing the name of each local variable assigned the value of
-    # the current pith in a Python >= 3.8-specific assignment expression, thus
-    # uniquifying this variable in the body of the current wrapper function.
-    #
-    # Note that this integer is intentionally incremented as an efficient
-    # low-level scalar rather than as an inefficient high-level
-    # "itertools.Counter" object. Since both are equally thread-safe in the
-    # internal context of this function body, the former is preferable.
-    pith_curr_assign_expr_name_counter = 0
-
-    # Python >= 3.8-specific assignment expression assigning this full Python
-    # expression to the local variable assigned the value of this expression.
-    pith_curr_assign_expr: str = None  # type: ignore[assignment]
-
-    # ..................{ METADATA                           }..................
+    # ..................{ LOCALS ~ hint : metadata           }..................
     # Tuple of metadata describing the currently visited hint, appended by
     # the previously visited parent hint to the "hints_meta" stack.
     hint_curr_meta: tuple = None  # type: ignore[assignment]
@@ -506,12 +415,12 @@ def make_check_expr(
     # PEP-compliant type hint.
     hints_meta_index_last = -1
 
-    # ..................{ FUNC ~ code                        }..................
+    # ..................{ LOCALS ~ func : code               }..................
     # Python code snippet type-checking the current pith against the currently
     # visited hint (to be appended to the "func_wrapper_code" string).
     func_curr_code: str = None  # type: ignore[assignment]
 
-    # ..................{ FUNC ~ code : locals               }..................
+    # ..................{ LOCALS ~ func : code : locals      }..................
     # Local scope (i.e., dictionary mapping from the name to value of each
     # attribute referenced in the signature) of this wrapper function required
     # by this Python code snippet.
@@ -522,6 +431,90 @@ def make_check_expr(
     # beartype._decor.wrap.wrapmain.generate_code() function prefixes the body
     # of this wrapper function with code generating such an integer.
     is_var_random_int_needed = False
+
+    # ..................{ LOCALS ~ indentation               }..................
+    # Python code snippet expanding to the current level of indentation
+    # appropriate for the currently visited hint.
+    indent_curr: str = None  # type: ignore[assignment]
+
+    # 1-based indentation level describing the current level of indentation
+    # appropriate for the currently visited hint.
+    indent_level_curr = 2
+
+    # 1-based indentation level describing the current level of indentation
+    # appropriate for the currently iterated child hint, initialized to the
+    # root hint indentation level to enable the subsequently called
+    # _enqueue_hint_child() function to enqueue the root hint.
+    indent_level_child = indent_level_curr
+
+    # ..................{ LOCALS ~ pep : 484                 }..................
+    # Set of the unqualified classnames referred to by all relative forward
+    # references visitable from this root hint if any *OR* "None" otherwise
+    # (i.e., if no such forward references are visitable).
+    hint_refs_type_basename: Optional[set] = None
+
+    # ..................{ LOCALS ~ pep : 572                 }..................
+    # The following local variables isolated to this subsection are only
+    # relevant when the currently visited hint is *NOT* the root hint (i.e.,
+    # "hint_root"). If the currently visited hint is the root hint, the current
+    # pith has already been localized to a local variable whose name is the
+    # value of the "VAR_NAME_PITH_ROOT" string global and thus need *NOT* be
+    # relocalized to another local variable using an assignment expression.
+    #
+    # These variables enable a non-trivial runtime optimization eliminating
+    # repeated computations to obtain the child pith needed to type-check child
+    # hints. For example, if the current hint constrains the current pith to be
+    # a standard sequence, the child pith of that parent pith is a random item
+    # selected from this sequence; since obtaining this child pith is
+    # non-trivial, the computation required to do so is performed only once by
+    # assigning this child pith to a unique local variable during type-checking
+    # and then repeatedly type-checking that variable rather than the logic
+    # required to continually reacquire this child pith: e.g.,
+    #
+    #     # Type-checking conditional for "List[List[str]]" under Python < 3.8.
+    #     if not (
+    #         isinstance(__beartype_pith_0, list) and
+    #         (
+    #             isinstance(__beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)], list) and
+    #             isinstance(__beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)][__beartype_random_int % len(__beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)])], str) if __beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)] else True
+    #         ) if __beartype_pith_0 else True
+    #     ):
+    #
+    #     # The same conditional under Python >= 3.8.
+    #     if not (
+    #         isinstance(__beartype_pith_0, list) and
+    #         (
+    #             isinstance(__beartype_pith_1 := __beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)], list) and
+    #             isinstance(__beartype_pith_1[__beartype_random_int % len(__beartype_pith_1)], str) if __beartype_pith_1 else True
+    #         ) if __beartype_pith_0 else True
+    #     ):
+    #
+    # Note that:
+    # * The random item selected from the root pith (i.e., "__beartype_pith_1
+    #   := __beartype_pith_0[__beartype_random_int % len(__beartype_pith_0)")
+    #   only occurs once under Python >= 3.8 but repeatedly under Python < 3.8.
+    #   In both cases, the same semantic type-checking is performed regardless
+    #   of optimization.
+    # * This optimization implicitly "bottoms out" when the currently visited
+    #   hint is *NOT* subscripted by unignorable child hints. If all child hints
+    #   of the currently visited hint are either ignorable (e.g., "object",
+    #   "Any") *OR* are unignorable isinstanceable types (e.g., "int", "str"),
+    #   the currently visited hint has *NO* meaningful child hints and is thus
+    #   effectively a leaf node with respect to performing this optimization.
+
+    # Integer suffixing the name of each local variable assigned the value of
+    # the current pith in a Python >= 3.8-specific assignment expression, thus
+    # uniquifying this variable in the body of the current wrapper function.
+    #
+    # Note that this integer is intentionally incremented as an efficient
+    # low-level scalar rather than as an inefficient high-level
+    # "itertools.Counter" object. Since both are equally thread-safe in the
+    # internal context of this function body, the former is preferable.
+    pith_curr_assign_expr_name_counter = 0
+
+    # Python >= 3.8-specific assignment expression assigning this full Python
+    # expression to the local variable assigned the value of this expression.
+    pith_curr_assign_expr: str = None  # type: ignore[assignment]
 
     # ..................{ CLOSURES                           }..................
     # Closures centralizing frequently repeated logic, addressing Don't Repeat
@@ -598,13 +591,13 @@ def make_check_expr(
             hint_child_placeholder,
             pith_child_expr,
             pith_curr_var_name,
-            indent_child,
+            indent_level_child,
         )
 
         # Return this placeholder string.
         return hint_child_placeholder
 
-    # ..................{ CLOSURES ~ locals                  }..................
+    # ..................{ LOCALS ~ closure                   }..................
     # Local variables calling one or more closures declared above and thus
     # deferred until after declaring those closures.
 
@@ -648,7 +641,7 @@ def make_check_expr(
         hint_curr_placeholder = hint_curr_meta[_HINT_META_INDEX_PLACEHOLDER]
         pith_curr_expr        = hint_curr_meta[_HINT_META_INDEX_PITH_EXPR]
         pith_curr_var_name    = hint_curr_meta[_HINT_META_INDEX_PITH_VAR_NAME]
-        indent_curr           = hint_curr_meta[_HINT_META_INDEX_INDENT]
+        indent_level_curr     = hint_curr_meta[_HINT_META_INDEX_INDENT_LEVEL]
         # print(f'Visiting type hint {repr(hint_curr)}...')
 
         # If this is a child hint rather than the root hint, sanify (i.e.,
@@ -862,39 +855,24 @@ def make_check_expr(
             # Perform deep type-checking logic (i.e., logic that is guaranteed
             # to recurse and thus *NOT* "bottom out" at this hint).
             else:
-                #FIXME: Horribly inefficient. Performing this string formatting
-                #over and over again is needlessly awful. Instead:
-                #* Define a new "INDENT_INDEX_TO_STR" dictionary global in the
-                #  "codesnip" submodule. Implement this dictionary dynamically
-                #  via the __missing__() method to dynamically generate
-                #  indentation prefixes as needed: e.g.,
-                #      class IndentIndexToStr(dict):
-                #          def __missing__(self, indent_index: int) -> str:
-                #              assert isinstance(indent_index, int)
-                #              assert indent_index > 0
-                #              return '    ' * indent_index
+                # Tuple of all arguments subscripting this hint if any *OR* the
+                # empty tuple otherwise (e.g., if this hint is its own
+                # unsubscripted "typing" attribute).
                 #
-                #      #FIXME: Unit test us up, please.
-                #      INDENT_INDEX_TO_STR = IndentIndexToStr()
-                #* Define a new "indent_index_curr" local above as a positive
-                #  integer, defaulting to:
-                #      indent_index_curr = 2
-                #* Preserve "indent_child" as is.
-                #* Set "indent_child" here as follows:
-                #      index_child = INDENT_INDEX_TO_STR[indent_index_curr + 1]
-                #
-                #Cool, huh? Yeah. We thought so, too. We've literally replaced
-                #inefficient string formatting with efficient dictionary
-                #lookups, which are themselves efficiently cached. \o/
+                # Note that the "__args__" dunder attribute is *NOT* guaranteed
+                # to exist for arbitrary PEP-compliant type hints. Ergo, we
+                # obtain this attribute via a higher-level utility getter
+                # instead.
+                hint_childs = get_hint_pep_args(hint_curr)
+                hint_childs_len = len(hint_childs)
 
                 # Python code snippet expanding to the current level of
-                # indentation appropriate for the current child hint.
-                #
-                # Note that this is almost always but technically *NOT* always
-                # required below by logic generating code type-checking the
-                # currently visited parent hint. Naturally, unconditionally
-                # setting this string here trivially optimizes the common case.
-                indent_child = f'{indent_curr}{_CODE_INDENT_1}'
+                # indentation appropriate for the current hint.
+                indent_curr = _INDENT_LEVEL_TO_CODE[indent_level_curr]
+
+                # 1-based indentation level describing the current level of
+                # indentation appropriate for the currently iterated child hint.
+                indent_level_child = indent_level_curr + 1
 
                 # ............{ DEEP ~ expression                  }............
                 #FIXME: Unit test that this is behaving as expected. Doing so
@@ -1092,7 +1070,7 @@ def make_check_expr(
 
                     #FIXME: Optimize away this inefficient string formatting
                     #with an efficient dictionary lookup implemented similarly
-                    #to that of the "indent_child" assignment, above.
+                    #to that of the "indent_curr" assignment, above.
                     # Reduce the current pith expression to the name of this
                     # local variable.
                     pith_curr_var_name = (
@@ -1111,17 +1089,6 @@ def make_check_expr(
                 # evaluating to the current pith as is.
                 else:
                     pith_curr_assign_expr = pith_curr_expr
-
-                # Tuple of all arguments subscripting this hint if any *OR* the
-                # empty tuple otherwise (e.g., if this hint is its own
-                # unsubscripted "typing" attribute).
-                #
-                # Note that the "__args__" dunder attribute is *NOT* guaranteed
-                # to exist for arbitrary PEP-compliant type hints. Ergo, we
-                # obtain this attribute via a higher-level utility getter
-                # instead.
-                hint_childs = get_hint_pep_args(hint_curr)
-                hint_childs_len = len(hint_childs)
 
                 # ............{ UNION                              }............
                 # If this hint is a union (e.g., "typing.Union[bool, str]",
@@ -1420,8 +1387,7 @@ def make_check_expr(
                     # subscripted by one or more unignorable child hints and
                     # the above logic generated code type-checking these child
                     # hints. In this case...
-                    if func_curr_code is not (
-                        PEP484_CODE_HINT_UNION_PREFIX):
+                    if func_curr_code is not PEP484_CODE_HINT_UNION_PREFIX:
                         # Munge this code to...
                         func_curr_code = (
                             # Strip the erroneous " or" suffix appended by the
@@ -1430,8 +1396,8 @@ def make_check_expr(
                             # Suffix this code by the substring suffixing all
                             # such code.
                             f'{PEP484_CODE_HINT_UNION_SUFFIX}'
-                        # Format the "indent_curr" prefix into this code
-                            # deferred above for efficiency.
+                        # Format the "indent_curr" prefix into this code,
+                        # deferred above for efficiency.
                         ).format(indent_curr=indent_curr)
                     # Else, this snippet is its initial value and thus
                     # ignorable.
@@ -1578,17 +1544,14 @@ def make_check_expr(
                     if is_hint_pep484585_tuple_empty(hint_curr):
                         func_curr_code += (
                             PEP484585_CODE_HINT_TUPLE_FIXED_EMPTY_format(
-                                pith_curr_var_name=(
-                                    pith_curr_var_name),
-                            ))
+                                pith_curr_var_name=pith_curr_var_name))
                     # Else, that ridiculous edge case does *NOT* apply. In this
                     # case...
                     else:
                         # Append code type-checking the length of this pith.
                         func_curr_code += (
                             PEP484585_CODE_HINT_TUPLE_FIXED_LEN_format(
-                                pith_curr_var_name=(
-                                    pith_curr_var_name),
+                                pith_curr_var_name=pith_curr_var_name,
                                 hint_childs_len=hint_childs_len,
                             ))
 
@@ -1609,8 +1572,7 @@ def make_check_expr(
                                     # to be type-checked against this child
                                     # hint.
                                     PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format(
-                                        pith_curr_var_name=(
-                                            pith_curr_var_name),
+                                        pith_curr_var_name=pith_curr_var_name,
                                         pith_child_index=hint_child_index,
                                     )
                                 ),
@@ -1626,7 +1588,6 @@ def make_check_expr(
                         f'{PEP484585_CODE_HINT_TUPLE_FIXED_SUFFIX}'
                     # Format...
                     ).format(
-                        # Indentation deferred above for efficiency.
                         indent_curr=indent_curr,
                         pith_curr_assign_expr=pith_curr_assign_expr,
                     )
@@ -1665,24 +1626,22 @@ def make_check_expr(
                     # matching these variable names, we safely (but
                     # inefficiently) format these variables into the exact
                     # strings known to embed them.
-                    func_curr_code = (
-                        PEP593_CODE_HINT_VALIDATOR_PREFIX_format(
-                            indent_curr=indent_curr,
-                            hint_child_placeholder=_enqueue_hint_child(
-                                # Python expression yielding the value of the
-                                # current pith assigned to a local variable
-                                # efficiently reused by code generated by the
-                                # following iteration.
-                                #
-                                # Note this child hint is guaranteed to be
-                                # followed by at least one more test expression
-                                # referencing this local variable. Why? Because
-                                # the "typing" module forces metahints to be
-                                # subscripted by one child hint and one or more
-                                # arbitrary objects. Ergo, we needn't
-                                # explicitly validate that here.
-                                pith_curr_assign_expr),
-                        ))
+                    func_curr_code = PEP593_CODE_HINT_VALIDATOR_PREFIX_format(
+                        indent_curr=indent_curr,
+                        hint_child_placeholder=_enqueue_hint_child(
+                            # Python expression yielding the value of the
+                            # current pith assigned to a local variable
+                            # efficiently reused by code generated by the
+                            # following iteration.
+                            #
+                            # Note this child hint is guaranteed to be followed
+                            # by at least one more test expression referencing
+                            # this local variable. Why? Because the "typing"
+                            # module forces metahints to be subscripted by one
+                            # child hint and one or more arbitrary objects.
+                            # Ergo, we needn't explicitly validate that here.
+                            pith_curr_assign_expr),
+                    )
 
                     # For each beartype validator annotating this metahint...
                     for hint_child in get_hint_pep593_metadata(hint_curr):
@@ -1715,7 +1674,8 @@ def make_check_expr(
                                 # that class into this code.
                                 hint_child_expr=(
                                     hint_child._is_valid_code.format(
-                                        indent=indent_child,
+                                        # Indentation unique to this child hint.
+                                        indent=_INDENT_LEVEL_TO_CODE[indent_level_child],
                                         obj=pith_curr_var_name,
                                     )),
                             ))

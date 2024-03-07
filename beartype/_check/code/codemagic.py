@@ -141,12 +141,13 @@ the current pith either by a prior assignment statement or expression).
 '''
 
 
-HINT_META_INDEX_INDENT = next(__hint_meta_index_counter)
+HINT_META_INDEX_INDENT_LEVEL = next(__hint_meta_index_counter)
 '''
-0-based index into each tuple of hint metadata providing **current
-indentation** (i.e., Python code snippet expanding to the current level of
-indentation appropriate for the currently visited hint).
+0-based index into each tuple of hint metadata providing the **current
+indentation level** (i.e., 1-based positive integer describing the current level
+of indentation appropriate for the currently visited hint).
 '''
+
 
 # Delete the above counter for safety and sanity in equal measure.
 del __hint_meta_index_counter
