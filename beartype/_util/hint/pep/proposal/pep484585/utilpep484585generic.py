@@ -805,7 +805,7 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
             # effectively ignorable. Why? Because the caller already type-checks
             # this pith against the generic subclassing this superclass and thus
             # this superclass as well in an isinstance() call (e.g., in the
-            # "PEP484585_CODE_HINT_GENERIC_PREFIX" snippet leveraged by the
+            # "CODE_PEP484585_GENERIC_PREFIX" snippet leveraged by the
             # "beartype._check.code.codemake" submodule).
             hint_base_sign is None or
             # An ignorable PEP-compliant type hint...

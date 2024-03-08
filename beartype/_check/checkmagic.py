@@ -148,7 +148,7 @@ the :attr:`beartype.BeartypeConf.violation_param_type` and
 '''
 
 # ....................{ NAMES ~ var : pith                 }....................
-VAR_NAME_PREFIX_PITH = f'{NAME_PREFIX}pith_'
+VAR_NAME_PITH_PREFIX = f'{NAME_PREFIX}pith_'
 '''
 Substring prefixing all local variables providing a **pith** (i.e., either the
 current parameter or return value *or* item contained in the current parameter
@@ -156,7 +156,7 @@ or return value being type-checked by the current call).
 '''
 
 
-VAR_NAME_PITH_ROOT = f'{VAR_NAME_PREFIX_PITH}0'
+VAR_NAME_PITH_ROOT = f'{VAR_NAME_PITH_PREFIX}0'
 '''
 Name of the local variable providing the **root pith** (i.e., value of the
 current parameter or return value being type-checked by the current call).

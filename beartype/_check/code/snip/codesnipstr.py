@@ -16,17 +16,8 @@ from beartype._check.checkmagic import (
     VAR_NAME_RANDOM_INT,
 )
 
-# ....................{ PITH                               }....................
-PEP_CODE_PITH_ASSIGN_EXPR = '''{pith_curr_var_name} := {pith_curr_expr}'''
-'''
-Python >= 3.8-specific assignment expression assigning the full Python
-expression yielding the value of the current pith to a unique local variable,
-enabling PEP-compliant child hints to obtain this pith via this efficient
-variable rather than via this inefficient full Python expression.
-'''
-
 # ....................{ HINT ~ placeholder : child         }....................
-PEP_CODE_HINT_CHILD_PLACEHOLDER_PREFIX = '@['
+CODE_HINT_CHILD_PLACEHOLDER_PREFIX = '@['
 '''
 Prefix of each **placeholder hint child type-checking substring** (i.e.,
 placeholder to be globally replaced by a Python code snippet type-checking the
@@ -35,7 +26,7 @@ currently visited parent hint).
 '''
 
 
-PEP_CODE_HINT_CHILD_PLACEHOLDER_SUFFIX = ')!'
+CODE_HINT_CHILD_PLACEHOLDER_SUFFIX = ')!'
 '''
 Suffix of each **placeholder hint child type-checking substring** (i.e.,
 placeholder to be globally replaced by a Python code snippet type-checking the
@@ -63,8 +54,42 @@ canonicalized into a fully-qualified classname relative to the external
 caller-defined module declaring the currently decorated callable).
 '''
 
+# ....................{ HINT ~ pep : 572                   }....................
+CODE_PEP572_PITH_ASSIGN_EXPR = '''{pith_curr_var_name} := {pith_curr_expr}'''
+'''
+Assignment expression assigning the full Python expression yielding the value of
+the current pith to a unique local variable, enabling child type hints to obtain
+this pith via this efficient variable rather than via this inefficient full
+Python expression.
+'''
+
+
+CODE_PEP572_PITH_ASSIGN_AND = '''
+{indent_curr}    # Expression assigning this pith and always evaluating to true.
+{indent_curr}    ({pith_curr_assign_expr}) is {pith_curr_var_name} and'''
+'''
+Code snippet embedding an assignment expression assigning the full Python
+expression yielding the value of the current pith to a unique local variable.
+
+This snippet is itself intended to be embedded in higher-level code snippets as
+the first child expression of those snippets, enabling subsequent expressions in
+those snippets to efficiently obtain this pith via this efficient variable
+rather than via this inefficient full Python expression.
+
+This snippet is a tautology that is guaranteed to evaluate to :data:`True` whose
+side effect is this assignment expression. Note that there exist numerous less
+efficient alternatives, including:
+
+* ``({pith_curr_assign_expr}).__class__``, which is also guaranteed to evaluate
+  to :data:`True` but which implicitly triggers the ``__getattr__()`` dunder
+  method and thus incurs a performance penalty for user-defined objects
+  inefficiently overriding that method.
+* ``isinstance({pith_curr_assign_expr}, object)``, which is also guaranteed to
+  evaluate :data:`True` but which is surprisingly inefficient in all cases.
+'''
+
 # ....................{ HINT ~ pep : (484|585) : generic   }....................
-PEP484585_CODE_HINT_GENERIC_PREFIX = '''(
+CODE_PEP484585_GENERIC_PREFIX = '''(
 {indent_curr}    # True only if this pith is of this generic type.
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and'''
 '''
@@ -84,7 +109,7 @@ this parent type has been generated.
 '''
 
 
-PEP484585_CODE_HINT_GENERIC_SUFFIX = '''
+CODE_PEP484585_GENERIC_SUFFIX = '''
 {indent_curr})'''
 '''
 :pep:`484`- and :pep:`585`-compliant code snippet suffixing all code
@@ -93,7 +118,7 @@ subclassed by a :pep:`484`-compliant generic.
 '''
 
 
-PEP484585_CODE_HINT_GENERIC_CHILD = '''
+CODE_PEP484585_GENERIC_CHILD = '''
 {{indent_curr}}    # True only if this pith deeply satisfies this unerased
 {{indent_curr}}    # pseudo-superclass of this generic.
 {{indent_curr}}    {hint_child_placeholder} and'''
@@ -116,7 +141,7 @@ this parent type has been generated.
 '''
 
 # ....................{ HINT ~ pep : (484|585) : mapping  }....................
-PEP484585_CODE_HINT_MAPPING = '''(
+CODE_PEP484585_MAPPING = '''(
 {indent_curr}    # True only if this pith is of this mapping type.
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
 {indent_curr}    # True only if either this pith is empty *OR* this pith is
@@ -133,12 +158,12 @@ guaranteed :math:`O(1)` indexation of at least the first pair).
 Caveats
 -------
 **This snippet cannot contain ternary conditionals.** See
-:data:`.PEP484585_CODE_HINT_SEQUENCE_ARGS_1` for further commentary.
+:data:`.CODE_PEP484585_SEQUENCE_ARGS_1` for further commentary.
 '''
 
 
-PEP484585_CODE_HINT_MAPPING_KEY_FIRST_PITH_CHILD_EXPR = (
-    f'''next(iter({{pith_curr_var_name}}.keys()))''')
+CODE_PEP484585_MAPPING_KEY_FIRST_PITH_CHILD_EXPR = (
+    '''next(iter({{pith_curr_var_name}}.keys()))''')
 '''
 :pep:`484`- and :pep:`585`-compliant Python expression yielding the value of the
 first key of the current pith (which, by definition, *must* be a standard
@@ -146,7 +171,7 @@ mapping).
 '''
 
 # ....................{ HINT ~ pep : (484|585) : sequence  }....................
-PEP484585_CODE_HINT_SEQUENCE_ARGS_1 = '''(
+CODE_PEP484585_SEQUENCE_ARGS_1 = '''(
 {indent_curr}    # True only if this pith is of this sequence type.
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
 {indent_curr}    # True only if either this pith is empty *OR* this pith is
@@ -175,7 +200,7 @@ sequences with a seemingly reasonable ternary conditional:
 
 .. code-block:: python
 
-   PEP484585_CODE_HINT_SEQUENCE_ARGS_1 = \'\'\'(
+   CODE_PEP484585_SEQUENCE_ARGS_1 = \'\'\'(
    {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
    {indent_curr}    {hint_child_placeholder} if {pith_curr_var_name} else True
    {indent_curr})\'\'\'
@@ -189,7 +214,7 @@ based on ternary conditional (albeit slightly less intuitive).
 '''
 
 
-PEP484585_CODE_HINT_SEQUENCE_ARGS_1_PITH_CHILD_EXPR = (
+CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR = (
     f'''{{pith_curr_var_name}}[{VAR_NAME_RANDOM_INT} % len({{pith_curr_var_name}})]''')
 '''
 :pep:`484`- and :pep:`585`-compliant Python expression yielding the value of a
@@ -198,7 +223,7 @@ standard sequence).
 '''
 
 # ....................{ HINT ~ pep : (484|585) : tuple     }....................
-PEP484585_CODE_HINT_TUPLE_FIXED_PREFIX = '''(
+CODE_PEP484585_TUPLE_FIXED_PREFIX = '''(
 {indent_curr}    # True only if this pith is a tuple.
 {indent_curr}    isinstance({pith_curr_assign_expr}, tuple) and'''
 '''
@@ -209,7 +234,7 @@ itemized :class:`typing.Tuple` type of the form ``typing.Tuple[{typename1},
 '''
 
 
-PEP484585_CODE_HINT_TUPLE_FIXED_SUFFIX = '''
+CODE_PEP484585_TUPLE_FIXED_SUFFIX = '''
 {indent_curr})'''
 '''
 :pep:`484`- and :pep:`585`-compliant code snippet suffixing all code
@@ -219,7 +244,7 @@ itemized :class:`typing.Tuple` type of the form ``typing.Tuple[{typename1},
 '''
 
 
-PEP484585_CODE_HINT_TUPLE_FIXED_EMPTY = '''
+CODE_PEP484585_TUPLE_FIXED_EMPTY = '''
 {{indent_curr}}    # True only if this tuple is empty.
 {{indent_curr}}    not {pith_curr_var_name} and'''
 '''
@@ -229,12 +254,12 @@ type-checking the current pith to be empty against an itemized
 
 See Also
 --------
-:data:`PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_CHILD`
+:data:`CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD`
     Further details.
 '''
 
 
-PEP484585_CODE_HINT_TUPLE_FIXED_LEN = '''
+CODE_PEP484585_TUPLE_FIXED_LEN = '''
 {{indent_curr}}    # True only if this tuple is of the expected length.
 {{indent_curr}}    len({pith_curr_var_name}) == {hint_childs_len} and'''
 '''
@@ -244,12 +269,12 @@ type-checking the current pith to be of the expected length against an itemized
 
 See Also
 --------
-:data:`PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_CHILD`
+:data:`CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD`
     Further details.
 '''
 
 
-PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_CHILD = '''
+CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD = '''
 {{indent_curr}}    # True only if this item of this non-empty tuple deeply
 {{indent_curr}}    # satisfies this child hint.
 {{indent_curr}}    {hint_child_placeholder} and'''
@@ -272,7 +297,7 @@ this parent type has been generated.
 '''
 
 
-PEP484585_CODE_HINT_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR = (
+CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR = (
     '''{pith_curr_var_name}[{pith_child_index}]''')
 '''
 :pep:`484`- and :pep:`585`-compliant Python expression yielding the value of the
@@ -281,7 +306,7 @@ tuple).
 '''
 
 # ....................{ HINT ~ pep : (484|585) : subclass  }....................
-PEP484585_CODE_HINT_SUBCLASS = '''(
+CODE_PEP484585_SUBCLASS = '''(
 {indent_curr}    # True only if this pith is a class *AND*...
 {indent_curr}    isinstance({pith_curr_assign_expr}, type) and
 {indent_curr}    # True only if this class subclasses this superclass.
@@ -295,7 +320,7 @@ to be a subclass of the subscripted child hint of a :pep:`484`- or
 '''
 
 # ....................{ HINT ~ pep : 484 : instance        }....................
-PEP484_CODE_HINT_INSTANCE = (
+CODE_PEP484_INSTANCE = (
     '''isinstance({pith_curr_expr}, {hint_curr_expr})''')
 '''
 :pep:`484`-compliant code snippet type-checking the current pith against the
@@ -304,14 +329,14 @@ type (e.g., :class:`int`, :class:`str`).
 '''
 
 # ....................{ HINT ~ pep : 484 : union           }....................
-PEP484_CODE_HINT_UNION_PREFIX = '''('''
+CODE_PEP484604_UNION_PREFIX = '''('''
 '''
 :pep:`484`-compliant code snippet prefixing all code type-checking the current
 pith against each subscripted argument of a :class:`typing.Union` type hint.
 '''
 
 
-PEP484_CODE_HINT_UNION_SUFFIX = '''
+CODE_PEP484604_UNION_SUFFIX = '''
 {indent_curr})'''
 '''
 :pep:`484`-compliant code snippet suffixing all code type-checking the current
@@ -319,7 +344,22 @@ pith against each subscripted argument of a :class:`typing.Union` type hint.
 '''
 
 
-PEP484_CODE_HINT_UNION_CHILD_PEP = '''
+CODE_PEP484604_UNION_CHILD_NONPEP = '''
+{{indent_curr}}    # True only if this pith is of one of these types.
+{{indent_curr}}    isinstance({pith_curr_expr}, {hint_curr_expr}) or'''
+'''
+:pep:`484`-compliant code snippet type-checking the current pith against the
+current PEP-noncompliant child argument subscripting a parent
+:class:`typing.Union` type hint.
+
+See Also
+--------
+:data:`CODE_PEP484604_UNION_CHILD_PEP`
+    Further details.
+'''
+
+
+CODE_PEP484604_UNION_CHILD_PEP = '''
 {{indent_curr}}    {hint_child_placeholder} or'''
 '''
 :pep:`484`-compliant code snippet type-checking the current pith against the
@@ -339,23 +379,8 @@ snippet type-checking the current pith against *all* subscripted arguments of
 this parent hint has been generated.
 '''
 
-
-PEP484_CODE_HINT_UNION_CHILD_NONPEP = '''
-{{indent_curr}}    # True only if this pith is of one of these types.
-{{indent_curr}}    isinstance({pith_curr_expr}, {hint_curr_expr}) or'''
-'''
-:pep:`484`-compliant code snippet type-checking the current pith against the
-current PEP-noncompliant child argument subscripting a parent
-:class:`typing.Union` type hint.
-
-See Also
---------
-:data:`PEP484_CODE_HINT_UNION_CHILD_PEP`
-    Further details.
-'''
-
 # ....................{ HINT ~ pep : 586                   }....................
-PEP586_CODE_HINT_PREFIX = '''(
+CODE_PEP586_PREFIX = '''(
 {{indent_curr}}    # True only if this pith is of one of these literal types.
 {{indent_curr}}    isinstance({pith_curr_assign_expr}, {hint_child_types_expr}) and ('''
 '''
@@ -365,7 +390,7 @@ subscripted by one or more literal objects.
 '''
 
 
-PEP586_CODE_HINT_SUFFIX = '''
+CODE_PEP586_SUFFIX = '''
 {indent_curr}))'''
 '''
 :pep:`586`-compliant code snippet suffixing all code type-checking the current
@@ -374,7 +399,7 @@ subscripted by one or more literal objects.
 '''
 
 
-PEP586_CODE_HINT_LITERAL = '''
+CODE_PEP586_LITERAL = '''
 {{indent_curr}}        # True only if this pith is equal to this literal.
 {{indent_curr}}        {pith_curr_var_name} == {hint_child_expr} or'''
 '''
@@ -396,25 +421,33 @@ this parent hint has been generated.
 '''
 
 # ....................{ HINT ~ pep : 593                   }....................
-PEP593_CODE_HINT_VALIDATOR_PREFIX = '''(
-{indent_curr}    {hint_child_placeholder} and'''
+CODE_PEP593_VALIDATOR_PREFIX = '''('''
 '''
 :pep:`593`-compliant code snippet prefixing all code type-checking the current
-pith against a :pep:`593`-compliant :class:`typing.Annotated` type hint
-subscripted by one or more :class:`beartype.vale.BeartypeValidator` objects.
+pith against a :pep:`593`-compliant :obj:`typing.Annotated` type hint
+subscripted by one or more :mod:`beartype.vale` validators.
 '''
 
 
-PEP593_CODE_HINT_VALIDATOR_SUFFIX = '''
+CODE_PEP593_VALIDATOR_SUFFIX = '''
 {indent_curr})'''
 '''
 :pep:`593`-compliant code snippet suffixing all code type-checking the current
 pith against each a :pep:`593`-compliant :class:`typing.Annotated` type hint
-subscripted by one or more :class:`beartype.vale.BeartypeValidator` objects.
+subscripted by one or more :mod:`beartype.vale` validators.
 '''
 
 
-PEP593_CODE_HINT_VALIDATOR_CHILD = '''
+CODE_PEP593_VALIDATOR_METAHINT = '''
+{indent_curr}    {hint_child_placeholder} and'''
+'''
+:pep:`593`-compliant code snippet type-checking the current pith against the
+**metahint** (i.e., first child type hint) subscripting a obj:`typing.Annotated`
+type hint subscripted by one or more :mod:`beartype.vale` validators.
+'''
+
+
+CODE_PEP593_VALIDATOR_IS = '''
 {indent_curr}    # True only if this pith satisfies this caller-defined
 {indent_curr}    # validator of this annotated.
 {indent_curr}    {hint_child_expr} and'''
@@ -422,8 +455,8 @@ PEP593_CODE_HINT_VALIDATOR_CHILD = '''
 :pep:`593`-compliant code snippet type-checking the current pith against
 :mod:`beartype`-specific **data validator code** (i.e., caller-defined
 :meth:`beartype.vale.BeartypeValidator._is_valid_code` string) of the current
-child :class:`beartype.vale.BeartypeValidator` argument subscripting a parent `PEP
-593`_-compliant :class:`typing.Annotated` type hint.
+child :mod:`beartype.vale` validator subscripting a parent :pep:`593`-compliant
+:class:`typing.Annotated` type hint.
 
 Caveats
 -------

@@ -1506,8 +1506,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata(
             hint=Union[int, Sequence[str]],
             pep_sign=HintSignUnion,
-            warning_type=PEP585_DEPRECATION_WARNING,
             typehint_cls=UnionTypeHint,
+            warning_type=PEP585_DEPRECATION_WARNING,
             piths_meta=(
                 # Integer constant.
                 HintPithSatisfiedMetadata(21),
@@ -1649,13 +1649,71 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        #FIXME: Actually list two or more "piths_meta" here, please.
         # Union of one non-"typing" type and one concrete generic.
         HintPepMetadata(
             hint=Union[str, Iterable[Tuple[S, T]]],
             pep_sign=HintSignUnion,
             typehint_cls=UnionTypeHint,
             is_typevars=True,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            piths_meta=(
+                # String constant.
+                HintPithSatisfiedMetadata(
+                    "O'er the wide aëry wilderness: thus driven"),
+                # Iterable of 2-tuples of arbitrary items.
+                HintPithSatisfiedMetadata([
+                    ('By the bright shadow', 'of that lovely dream,',),
+                    (b'Beneath the cold glare', b'of the desolate night,'),
+                ]),
+                # Integer constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=0xCAFEFEED,
+                    # Match that the exception message raised for this object
+                    # declares the types *NOT* satisfied by this object.
+                    exception_str_match_regexes=(
+                        r'\bstr\b',
+                        r'\bIterable\b',
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* contain a newline or bullet delimiter.
+                    exception_str_not_match_regexes=(
+                        r'\n',
+                        r'\*',
+                    ),
+                ),
+            ),
+        ),
+
+        # Union of *ONLY* subscripted type hints, exercising an edge case.
+        HintPepMetadata(
+            hint=Union[List[str], Tuple[bytes, ...]],
+            pep_sign=HintSignUnion,
+            typehint_cls=UnionTypeHint,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            piths_meta=(
+                # List of string items.
+                HintPithSatisfiedMetadata(
+                    ['Through tangled swamps', 'and deep precipitous dells,']),
+                # Tuples of bytestring items.
+                HintPithSatisfiedMetadata(
+                    (b'Startling with careless step', b'the moonlight snake,')),
+                # Integer constant.
+                HintPithUnsatisfiedMetadata(
+                    pith=0xFEEDBEEF,
+                    # Match that the exception message raised for this object
+                    # declares the types *NOT* satisfied by this object.
+                    exception_str_match_regexes=(
+                        r'\blist\b',
+                        r'\btuple\b',
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* contain a newline or bullet delimiter.
+                    exception_str_not_match_regexes=(
+                        r'\n',
+                        r'\*',
+                    ),
+                ),
+            ),
         ),
 
         # ................{ UNION ~ nested                     }................
