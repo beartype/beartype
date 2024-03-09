@@ -50,6 +50,7 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484585_GENERIC_CHILD,
     CODE_PEP484585_GENERIC_PREFIX,
     CODE_PEP484585_GENERIC_SUFFIX,
+    CODE_PEP484585_MAPPING,
     CODE_PEP484585_SEQUENCE_ARGS_1,
     CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR,
     CODE_PEP484585_SUBCLASS,
@@ -116,8 +117,8 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
-    get_hint_pep484585_args_1)
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
+    get_hint_pep484585_args)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
     get_hint_pep484585_generic_type,
     iter_hint_pep484585_generic_bases_unerased_tree,
@@ -183,6 +184,8 @@ def make_check_expr(
         CODE_PEP484_INSTANCE.format),
     CODE_PEP484585_GENERIC_CHILD_format: Callable = (
         CODE_PEP484585_GENERIC_CHILD.format),
+    CODE_PEP484585_MAPPING_format: Callable = (
+        CODE_PEP484585_MAPPING.format),
     CODE_PEP484585_SEQUENCE_ARGS_1_format: Callable = (
         CODE_PEP484585_SEQUENCE_ARGS_1.format),
     CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format: Callable = (
@@ -1403,17 +1406,17 @@ def make_check_expr(
                 # ignorable arguments. In this case...
                 ):
                     # Python expression evaluating to the origin type of this
-                    # sequence type hint.
+                    # sequence hint.
                     hint_curr_expr = add_func_scope_type(
-                        # Origin type of this sequence.
+                        # Origin type of this sequence hint.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         func_scope=func_wrapper_scope,
                         exception_prefix=_EXCEPTION_PREFIX_HINT,
                     )
                     # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
 
-                    # Child type hint subscripting this sequence type hint,
-                    # defined as either...
+                    # Child hint subscripting this sequence hint, defined as
+                    # either...
                     hint_child = (
                         # If this hint is a variadic tuple, the parent "if"
                         # statement above has already validated the contents of
@@ -1425,8 +1428,11 @@ def make_check_expr(
                         # which case the contents of this sequence have yet to
                         # be validated. In this case, inefficiently get the lone
                         # child hint of this parent hint *WITH* validation.
-                        get_hint_pep484585_args_1(
-                            hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
+                        get_hint_pep484585_args(
+                            hint=hint_curr,
+                            args_len=1,
+                            exception_prefix=_EXCEPTION_PREFIX,
+                        )
                     )
 
                     # If this child hint is *NOT* ignorable, deeply type-check
@@ -1563,11 +1569,58 @@ def make_check_expr(
                 # Else, this hint is *NOT* a tuple.
                 #
                 # ..........{ MAPPINGS                             }............
-                #FIXME: Implement us up, please.
-                # # If this hint is a standard mapping (e.g.,
-                # # "typing.Dict[str, int]")...
+                # # If this hint is a standard mapping (e.g., "dict[str, int]")...
                 # elif hint_curr_sign in HINT_SIGNS_MAPPING:
-                #     pass
+                #     # Python expression evaluating to the origin type of this
+                #     # mapping hint.
+                #     hint_curr_expr = add_func_scope_type(
+                #         # Origin type of this sequence.
+                #         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
+                #         func_scope=func_wrapper_scope,
+                #         exception_prefix=_EXCEPTION_PREFIX_HINT,
+                #     )
+                #
+                #     # Child key and value hints subscripting this mapping hint.
+                #     hint_child_key, hint_child_value = get_hint_pep484585_args(
+                #         hint=hint_curr,
+                #         args_len=2,
+                #         exception_prefix=_EXCEPTION_PREFIX,
+                #     )
+                #
+                #     #FIXME: Start here tomorrow, please. A good place would be
+                #     #generating the "pith_curr_key_var_name" and
+                #     #"pith_curr_value_var_name" variables as is done above for
+                #     #the "pith_curr_var_name" variable. *sigh*
+                #     # If this child hint is *NOT* ignorable, deeply type-check
+                #     # both the type of the current pith *AND* a randomly indexed
+                #     # item of this pith. Specifically...
+                #     if not is_hint_ignorable(hint_child):
+                #         # Record that a pseudo-random integer is now required.
+                #         is_var_random_int_needed = True
+                #
+                #         # Code type-checking this pith against this type.
+                #         func_curr_code = CODE_PEP484585_SEQUENCE_ARGS_1_format(
+                #             indent_curr=indent_curr,
+                #             pith_curr_assign_expr=pith_curr_assign_expr,
+                #             pith_curr_var_name=pith_curr_var_name,
+                #             hint_curr_expr=hint_curr_expr,
+                #             hint_child_placeholder=_enqueue_hint_child(
+                #                 # Python expression yielding the value of a
+                #                 # randomly indexed item of the current pith
+                #                 # (i.e., standard sequence) to be
+                #                 # type-checked against this child hint.
+                #                 CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format(
+                #                     pith_curr_var_name=pith_curr_var_name)),
+                #         )
+                #     # Else, this child hint is ignorable. In this case, fallback
+                #     # to trivial code shallowly type-checking this pith as an
+                #     # instance of this origin type.
+                #     else:
+                #         func_curr_code = CODE_PEP484_INSTANCE_format(
+                #             pith_curr_expr=pith_curr_expr,
+                #             hint_curr_expr=hint_curr_expr,
+                #         )
+                # Else, this hint is *NOT* a mapping.
                 #
                 # ............{ ANNOTATED                          }............
                 # If this hint is a PEP 593-compliant type metahint, this

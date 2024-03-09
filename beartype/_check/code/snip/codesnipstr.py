@@ -65,7 +65,7 @@ Python expression.
 
 
 CODE_PEP572_PITH_ASSIGN_AND = '''
-{indent_curr}    # Expression assigning this pith and always evaluating to true.
+{indent_curr}    # Localize this pith as a stupidly fast assignment expression.
 {indent_curr}    ({pith_curr_assign_expr}) is {pith_curr_var_name} and'''
 '''
 Code snippet embedding an assignment expression assigning the full Python
@@ -140,13 +140,28 @@ snippet type-checking the current pith against *all* subscripted arguments of
 this parent type has been generated.
 '''
 
-# ....................{ HINT ~ pep : (484|585) : mapping  }....................
+# ....................{ HINT ~ pep : (484|585) : mapping   }....................
 CODE_PEP484585_MAPPING = '''(
-{indent_curr}    # True only if this pith is of this mapping type.
+{indent_curr}    # True only if this pith is of this mapping type *AND*...
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
-{indent_curr}    # True only if either this pith is empty *OR* this pith is
-{indent_curr}    # both non-empty and a random item deeply satisfies this hint.
-{indent_curr}    (not {pith_curr_var_name} or {hint_child_placeholder})
+{indent_curr}    # True only if either...
+{indent_curr}    (
+{indent_curr}        # This mapping is empty *OR*...
+{indent_curr}        not {pith_curr_var_name} or
+{indent_curr}        # This mapping is non-empty. In this case...
+{indent_curr}        (
+{indent_curr}            # Localize the first key of this mapping.
+{indent_curr}            ({pith_curr_key_var_name} := next(iter(
+{indent_curr}                {pith_curr_var_name}))) is {pith_curr_key_var_name} and
+{indent_curr}            # True only if this key satisfies this hint *AND*...
+{indent_curr}            {hint_key_placeholder} and
+{indent_curr}            # Localize the first value of this mapping.
+{indent_curr}            ({pith_curr_value_var_name} := {pith_curr_var_name}[
+{indent_curr}                {pith_curr_key_var_name}]) is {pith_curr_value_var_name} and
+{indent_curr}            # True only if this value satisfies this hint.
+{indent_curr}            {hint_value_placeholder}
+{indent_curr}        )
+{indent_curr}    )
 {indent_curr})'''
 '''
 :pep:`484`- and :pep:`585`-compliant code snippet type-checking the current pith
@@ -159,23 +174,21 @@ Caveats
 -------
 **This snippet cannot contain ternary conditionals.** See
 :data:`.CODE_PEP484585_SEQUENCE_ARGS_1` for further commentary.
-'''
 
+There exist numerous means of accessing the first key-value pair of a
+dictionary. The approach taken here is well-known to be the fastest, as
+documented at this `StackOverflow answer`_.
 
-CODE_PEP484585_MAPPING_KEY_FIRST_PITH_CHILD_EXPR = (
-    '''next(iter({{pith_curr_var_name}}.keys()))''')
-'''
-:pep:`484`- and :pep:`585`-compliant Python expression yielding the value of the
-first key of the current pith (which, by definition, *must* be a standard
-mapping).
+.. _StackOverflow answer:
+   https://stackoverflow.com/a/70490285/2809027
 '''
 
 # ....................{ HINT ~ pep : (484|585) : sequence  }....................
 CODE_PEP484585_SEQUENCE_ARGS_1 = '''(
-{indent_curr}    # True only if this pith is of this sequence type.
+{indent_curr}    # True only if this pith is of this sequence type *AND*...
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
-{indent_curr}    # True only if either this pith is empty *OR* this pith is
-{indent_curr}    # both non-empty and a random item deeply satisfies this hint.
+{indent_curr}    # True only if either this sequence is empty *OR* this sequence
+{indent_curr}    # is both non-empty and a random item satisfies this hint.
 {indent_curr}    (not {pith_curr_var_name} or {hint_child_placeholder})
 {indent_curr})'''
 '''

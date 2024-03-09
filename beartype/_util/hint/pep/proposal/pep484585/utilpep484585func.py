@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep484585Exception
+from beartype.typing import Tuple
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignCoroutine
@@ -69,8 +70,8 @@ def reduce_hint_pep484585_func_return(
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
-        get_hint_pep484585_args_3)
+    from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
+        get_hint_pep484585_args)
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 
     # Type hint annotating this callable's return, which the caller has already
@@ -85,11 +86,10 @@ def reduce_hint_pep484585_func_return(
     if is_func_coro(func):
         # If this hint is "Coroutine[...]"...
         if hint_sign is HintSignCoroutine:
-
             # 3-tuple of all child type hints subscripting this hint if
             # subscripted by three such hints *OR* raise an exception.
-            hint_args = get_hint_pep484585_args_3(
-                hint=hint, exception_prefix=exception_prefix)
+            hint_args: Tuple[object, object, object] = get_hint_pep484585_args(  # type: ignore[assignment]
+                hint=hint, args_len=3, exception_prefix=exception_prefix)
 
             # Reduce this hint to the last child type hint subscripting this
             # hint, whose value is the return type hint for this coroutine.

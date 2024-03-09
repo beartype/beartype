@@ -26,24 +26,8 @@ from beartype.typing import (
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.hint.pep.sign.datapepsigns import (
-    HintSignAnnotated,
-    HintSignFinal,
-    HintSignGeneric,
-    HintSignLiteralString,
-    HintSignNewType,
-    HintSignNone,
-    HintSignNumpyArray,
-    HintSignPanderaAny,
-    HintSignPep557DataclassInitVar,
-    HintSignPep585BuiltinSubscriptedUnknown,
-    HintSignTypeAlias,
-    HintSignPep695TypeAlias,
-    HintSignSelf,
-    HintSignType,
-    HintSignTypeGuard,
-    HintSignTypeVar,
-    HintSignTypedDict,
     HintSignAbstractSet,
+    HintSignAnnotated,
     HintSignAsyncContextManager,
     HintSignAsyncGenerator,
     HintSignAsyncIterable,
@@ -60,28 +44,43 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignDefaultDict,
     HintSignDeque,
     HintSignDict,
+    HintSignFinal,
     HintSignFrozenSet,
     HintSignGenerator,
+    HintSignGeneric,
     HintSignHashable,
     HintSignItemsView,
     HintSignIterable,
     HintSignIterator,
     HintSignKeysView,
     HintSignList,
+    HintSignLiteralString,
     HintSignMappingView,
     HintSignMapping,
     HintSignMatch,
     HintSignMutableMapping,
     HintSignMutableSequence,
     HintSignMutableSet,
+    HintSignNewType,
+    HintSignNone,
+    HintSignNumpyArray,
     HintSignOrderedDict,
+    HintSignPanderaAny,
     HintSignPattern,
+    HintSignPep557DataclassInitVar,
+    HintSignPep585BuiltinSubscriptedUnknown,
+    HintSignPep695TypeAlias,
     HintSignReversible,
+    HintSignSelf,
     HintSignSequence,
     HintSignSet,
     HintSignSized,
     HintSignTuple,
     HintSignType,
+    HintSignTypeAlias,
+    HintSignTypeGuard,
+    HintSignTypeVar,
+    HintSignTypedDict,
     HintSignValuesView,
 )
 from beartype._data.hint.datahinttyping import TypeStack
@@ -116,6 +115,7 @@ from beartype._util.hint.pep.proposal.utilpep675 import reduce_hint_pep675
 from beartype._util.hint.pep.proposal.utilpep695 import reduce_hint_pep695
 from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
 from beartype._util.hint.pep.utilpepreduce import reduce_hint_pep_unsigned
+from beartype._util.utilobject import SENTINEL
 from collections.abc import Callable
 
 # ....................{ REDUCERS                           }....................
@@ -181,23 +181,46 @@ def reduce_hint(
         * Else, this hint as is unmodified.
     '''
 
-    # This possibly contextual hint inefficiently reduced to another hint.
-    #
-    # Note that we intentionally reduce lower-level contextual hints *BEFORE*
-    # higher-level context-free hints. In theory, order of reduction *SHOULD* be
-    # insignificant; in practice, we suspect unforeseen and unpredictable
-    # interactions between these two reductions. To reduce the likelihood of
-    # fire-breathing dragons, we reduce lower-level hints first.
-    hint = _reduce_hint_uncached(
-        hint=hint,
-        conf=conf,
-        pith_name=pith_name,
-        cls_stack=cls_stack,
-        exception_prefix=exception_prefix,
-    )
+    # Previously reduced instance of this hint, initialized to the sentinel to
+    # guarantee that the passed hint is *NEVER* equal to the previously reduced
+    # instance of this hint unless actually reduced below. This is necessary, as
+    # "None" is a valid type hint reduced to "type(None)" below.
+    hint_prev: object = SENTINEL
 
-    # This possibly context-free hint efficiently reduced to another hint.
-    hint = _reduce_hint_cached(hint, conf, exception_prefix)
+    # Repeatedly reduce this hint to increasingly irreducible hints until this
+    # hint is no longer reducible.
+    while True:
+        # This possibly contextual hint inefficiently reduced to another hint.
+        #
+        # Note that we intentionally reduce lower-level contextual hints
+        # *BEFORE* reducing higher-level context-free hints. In theory, order of
+        # reduction *SHOULD* be insignificant; in practice, we suspect
+        # unforeseen and unpredictable interactions between these two
+        # reductions. To reduce the likelihood of fire-breathing dragons here,
+        # we reduce lower-level hints first.
+        hint = _reduce_hint_uncached(
+            hint=hint,
+            conf=conf,
+            pith_name=pith_name,
+            cls_stack=cls_stack,
+            exception_prefix=exception_prefix,
+        )
+
+        # This possibly context-free hint efficiently reduced to another hint.
+        hint = _reduce_hint_cached(hint, conf, exception_prefix)
+
+        # If the current and previously reduced instances of this hint are
+        # identical, the above reductions preserved this hint as is rather than
+        # reducing this hint, implying this hint to irreducible. In this case,
+        # stop reducing.
+        if hint is hint_prev:
+            break
+        # Else, the current and previously reduced instances of this hint
+        # differ, implying this hint to still be reducible. In this case,
+        # continue reducing.
+
+        # Previously reduced instance of this hint.
+        hint_prev = hint
 
     # Return this possibly reduced hint.
     return hint
@@ -253,7 +276,7 @@ def _reduce_hint_uncached(
     '''
 
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
-    # "None" otherwise.
+    # "None" otherwise (e.g., if this hint is merely an isinstanceable class).
     hint_sign = get_hint_pep_sign_or_none(hint)
 
     # Callable reducing this hint if a callable reducing hints of this sign was
@@ -330,7 +353,7 @@ def _reduce_hint_cached(
         pass
 
     # Sign uniquely identifying this hint if this hint is identifiable *OR*
-    # "None" otherwise.
+    # "None" otherwise (e.g., if this hint is merely an isinstanceable class).
     hint_sign = get_hint_pep_sign_or_none(hint)
 
     # Callable reducing this hint if a callable reducing hints of this sign was

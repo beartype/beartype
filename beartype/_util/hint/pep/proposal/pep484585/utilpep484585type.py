@@ -28,8 +28,8 @@ from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_issubclassable,
     die_unless_type_or_types_issubclassable,
 )
-from beartype._util.hint.pep.proposal.pep484585.utilpep484585arg import (
-    get_hint_pep484585_args_1)
+from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
+    get_hint_pep484585_args)
 from typing import (
     Type as typing_Type,  # <-- intentional to distinguish from "type" below
 )
@@ -122,8 +122,8 @@ def get_hint_pep484585_type_superclass(
     # Else, this is a subclass type hint.
 
     # Superclass subscripting this hint.
-    hint_superclass = get_hint_pep484585_args_1(
-        hint=hint, exception_prefix=exception_prefix)
+    hint_superclass = get_hint_pep484585_args(
+        hint=hint, args_len=1, exception_prefix=exception_prefix)
 
     # Sign identifying this superclass.
     hint_superclass_sign = get_hint_pep_sign_or_none(hint_superclass)
@@ -219,7 +219,7 @@ def reduce_hint_pep484585_type(
     # supported Python versions (notably, Python 3.7 and 3.8), the "typing"
     # module subversively subscripts this hint by a type variable; under all
     # others, this hint remains unsubscripted. In the latter case, passing this
-    # hint to the subsequent get_hint_pep484585_args_1() would erroneously
+    # hint to the subsequent get_hint_pep484585_args() call would erroneously
     # raise an exception.
     if hint is typing_Type:
         return type
@@ -233,8 +233,8 @@ def reduce_hint_pep484585_type(
     # validation performed by that function would raise exceptions for
     # various child type hints that are otherwise permissible (e.g.,
     # "typing.Any").
-    hint_superclass = get_hint_pep484585_args_1(
-        hint=hint, exception_prefix=exception_prefix)
+    hint_superclass = get_hint_pep484585_args(
+        hint=hint, args_len=1, exception_prefix=exception_prefix)
 
     # If this argument is either...
     if (
