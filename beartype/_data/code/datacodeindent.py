@@ -50,8 +50,9 @@ class IndentLevelToCode(dict):
             * ``indent_level`` is a **non-positive integer** (i.e., is less than
               or equal to 0).
         '''
-        assert isinstance(indent_level, int)
-        assert indent_level > 0
+        assert isinstance(indent_level, int), (
+            f'{repr(indent_level)} not integer.')
+        assert indent_level > 0, f'{indent_level} <= 0.'
         # print(f'Generating indentation level {indent_level}...')
 
         # String constant indented to this level of indentation.
@@ -67,8 +68,7 @@ class IndentLevelToCode(dict):
         # Return this string constant.
         return indent_code
 
-# ....................{ DICTS                              }....................
-#FIXME: Unit test us up, please.
+# ....................{ MAPPINGS                           }....................
 INDENT_LEVEL_TO_CODE = IndentLevelToCode()
 '''
 **Indentation cache singleton** (i.e., global dictionary efficiently mapping
@@ -93,7 +93,7 @@ Examples
    '        '
 '''
 
-# ....................{ CODE ~ indent                      }....................
+# ....................{ STRINGS                            }....................
 CODE_INDENT_1 = INDENT_LEVEL_TO_CODE[1]
 '''
 Code snippet expanding to a single level of indentation.

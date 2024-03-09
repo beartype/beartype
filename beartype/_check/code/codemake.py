@@ -26,7 +26,6 @@ from beartype._cave._cavefast import TestableTypes
 from beartype._check.checkmagic import (
     ARG_NAME_CLS_STACK,
     ARG_NAME_GETRANDBITS,
-    VAR_NAME_PITH_PREFIX,
     VAR_NAME_PITH_ROOT,
 )
 from beartype._check.code.codemagic import (
@@ -44,6 +43,7 @@ from beartype._check.code.codescope import (
     add_func_scope_type_or_types,
     express_func_scope_type_ref,
 )
+from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_CHILD_PLACEHOLDER_PREFIX,
     CODE_HINT_CHILD_PLACEHOLDER_SUFFIX,
@@ -507,14 +507,14 @@ def make_check_expr(
     #   effectively a leaf node with respect to performing this optimization.
 
     # Integer suffixing the name of each local variable assigned the value of
-    # the current pith in a Python >= 3.8-specific assignment expression, thus
-    # uniquifying this variable in the body of the current wrapper function.
+    # the current pith in a assignment expression, thus uniquifying this
+    # variable in the body of the current wrapper function.
     #
     # Note that this integer is intentionally incremented as an efficient
     # low-level scalar rather than as an inefficient high-level
     # "itertools.Counter" object. Since both are equally thread-safe in the
     # internal context of this function body, the former is preferable.
-    pith_curr_assign_expr_name_counter = 0
+    pith_curr_var_name_index = 0
 
     # Python >= 3.8-specific assignment expression assigning this full Python
     # expression to the local variable assigned the value of this expression.
@@ -1034,18 +1034,12 @@ def make_check_expr(
                 # and thus unnecessarily inefficient code.
                 if pith_curr_expr is not VAR_NAME_PITH_ROOT:
                     # Increment the integer suffixing the name of this variable
-                    # *BEFORE* defining this local variable.
-                    pith_curr_assign_expr_name_counter += 1
+                    # *BEFORE* defining this variable.
+                    pith_curr_var_name_index += 1
 
-                    #FIXME: Optimize away this inefficient string formatting
-                    #with an efficient dictionary lookup implemented similarly
-                    #to that of the "indent_curr" assignment, above.
-                    # Reduce the current pith expression to the name of this
-                    # local variable.
-                    pith_curr_var_name = (
-                        f'{VAR_NAME_PITH_PREFIX}'
-                        f'{pith_curr_assign_expr_name_counter}'
-                    )
+                    # Name of this local variable.
+                    pith_curr_var_name = PITH_INDEX_TO_VAR_NAME[
+                        pith_curr_var_name_index]
 
                     # Assignment expression assigning this full expression to
                     # this variable.

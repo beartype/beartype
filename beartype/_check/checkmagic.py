@@ -152,7 +152,7 @@ VAR_NAME_PITH_PREFIX = f'{NAME_PREFIX}pith_'
 '''
 Substring prefixing all local variables providing a **pith** (i.e., either the
 current parameter or return value *or* item contained in the current parameter
-or return value being type-checked by the current call).
+or return value type-checked by the current call).
 '''
 
 
