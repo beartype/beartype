@@ -75,7 +75,10 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP593_VALIDATOR_PREFIX,
     CODE_PEP593_VALIDATOR_SUFFIX,
 )
-from beartype._check.convert.convsanify import sanify_hint_any
+from beartype._check.convert.convsanify import (
+    sanify_hint_child_if_unignorable_or_none,
+    sanify_hint_child,
+)
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.code.datacodeindent import INDENT_LEVEL_TO_CODE
 from beartype._data.code.datacodemagic import (
@@ -573,18 +576,23 @@ def make_check_expr(
         #     >>> (a :=  b := "Mother's Illumination")   # <-- not fine
         #     SyntaxError: invalid syntax
         #
-        # Note that the root type hint is intentionally ignored, as that hint is
-        # guaranteed to be an identifier rather than an assignment expression.
-        if (
-            pith_child_expr is not VAR_NAME_PITH_ROOT and
+        # Specifically, if it is *NOT* the case that...
+        assert not (
+            # If this is a child hint rather than the root hint *AND*...
+            #
+            # The root hint is intentionally ignored, as that hint is already
+            # guaranteed to be an identifier rather than assignment expression.
+            hints_meta_index_curr and  # pith_child_expr is not VAR_NAME_PITH_ROOT and
+            # This child pith expression duplicates the current pith assignment
+            # expression...
             pith_child_expr is pith_curr_assign_expr
-        ):
-            raise BeartypeDecorHintPepException(
-                f'{_EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
-                f'child pith expression {repr(pith_child_expr)} duplicates '
-                f'current pith assignment expression '
-                f'{repr(pith_curr_assign_expr)}.'
-            )
+        # Then raise an "AssertionError" exception.
+        ), (
+            f'{_EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
+            f'child pith expression {repr(pith_child_expr)} duplicates '
+            f'current pith assignment expression '
+            f'{repr(pith_curr_assign_expr)}.'
+        )
         # Else, the current child pith expression does *NOT* duplicate the
         # current pith assignment expression.
 
@@ -671,7 +679,8 @@ def make_check_expr(
         # an unused item of this list is initialized to "None" by default.
         assert hint_curr_meta.__class__ is tuple, (
             f'Current hint metadata {repr(hint_curr_meta)} at '
-            f'index {hints_meta_index_curr} not tuple.')
+            f'index {hints_meta_index_curr} not tuple.'
+        )
 
         #FIXME: [SPEED] Optimize by reducing to a single tuple unpacking.
         # Localize metadatum for both efficiency and f-string purposes.
@@ -681,22 +690,6 @@ def make_check_expr(
         pith_curr_var_name    = hint_curr_meta[_HINT_META_INDEX_PITH_VAR_NAME]
         indent_level_curr     = hint_curr_meta[_HINT_META_INDEX_INDENT_LEVEL]
         # print(f'Visiting type hint {repr(hint_curr)}...')
-
-        # If this is a child hint rather than the root hint, sanify (i.e.,
-        # sanitize) this hint if this hint is reducible *OR* preserve this hint
-        # otherwise (i.e., if this hint is irreducible).
-        #
-        # Note that the root hint has already been permanently sanified by the
-        # calling "beartype._decor.wrap.wrapmain" submodule and thus need
-        # *NOT* be inefficiently resanified here.
-        if hints_meta_index_curr:
-            hint_curr = sanify_hint_any(
-                hint=hint_curr,
-                conf=conf,
-                cls_stack=cls_stack,
-                exception_prefix=_EXCEPTION_PREFIX,
-            )
-        # Else, this is the already sanified root hint.
 
         #FIXME: Comment this sanity check out after we're sufficiently
         #convinced this algorithm behaves as expected. While useful, this check
@@ -742,7 +735,8 @@ def make_check_expr(
             # search *SHOULD* be unignorable. Naturally, we validate that here.
             assert not is_hint_ignorable(hint_curr), (
                 f'{_EXCEPTION_PREFIX}ignorable type hint '
-                f'{repr(hint_curr)} not ignored.')
+                f'{repr(hint_curr)} not ignored.'
+            )
 
             # Sign uniquely identifying this hint.
             hint_curr_sign = get_hint_pep_sign(hint_curr)
@@ -1068,9 +1062,9 @@ def make_check_expr(
                 # types represent physical types to be type-checked. Ergo,
                 # unions themselves impose no narrowing of the current pith
                 # expression and thus *CANNOT* by definition benefit from
-                # Python >= 3.8-specific assignment expressions. This differs
-                # from "typing" pseudo-containers, which narrow the current
-                # pith expression and thus do benefit from these expressions.
+                # assignment expressions. This differs from "typing"
+                # pseudo-containers, which narrow the current pith expression
+                # and thus do benefit from assignment expressions.
                 if hint_curr_sign in HINT_SIGNS_UNION:
                     # Assert this union to be subscripted by one or more child
                     # hints. Note this should *ALWAYS* be the case, as:
@@ -1085,7 +1079,8 @@ def make_check_expr(
                     #       TypeError: Cannot take a Union of no types.
                     assert hint_childs, (
                         f'{_EXCEPTION_PREFIX}union type hint '
-                        f'{repr(hint_curr)} unsubscripted.')
+                        f'{repr(hint_curr)} unsubscripted.'
+                    )
                     # Else, this union is subscripted by two or more arguments.
                     # Why two rather than one? Because the "typing" module
                     # reduces unions of one argument to that argument: e.g.,
@@ -1124,20 +1119,34 @@ def make_check_expr(
                         # preserved as is otherwise (i.e., if this child hint is
                         # irreducible).
                         #
-                        # Note that this sanification is intentionally performed
-                        # *BEFORE* this child hint is tested as being either
-                        # PEP-compliant or -noncompliant. Why? Because a small
-                        # subset of low-level reduction routines performed by
-                        # this high-level sanification actually expand a
-                        # PEP-noncompliant type into a PEP-compliant type hint.
-                        # This includes:
-                        # * The PEP-noncompliant "float' and "complex" types,
-                        #   implicitly expanded to the PEP 484-compliant "float
-                        #   | int" and "complex | float | int" type hints
-                        #   (respectively) when the non-default
-                        #   "conf.is_pep484_tower=True" parameter is enabled.
+                        # Note that:
+                        # * This sanification is intentionally performed
+                        #   *BEFORE* this child hint is tested as being either
+                        #   PEP-compliant or -noncompliant. Why? Because a small
+                        #   subset of low-level reduction routines performed by
+                        #   this high-level sanification actually expand a
+                        #   PEP-noncompliant type into a PEP-compliant type
+                        #   hint. This includes:
+                        #   * The PEP-noncompliant "float' and "complex" types,
+                        #     implicitly expanded to the PEP 484-compliant
+                        #     "float | int" and "complex | float | int" type
+                        #     hints (respectively) when the non-default
+                        #     "conf.is_pep484_tower=True" parameter is enabled.
+                        # * This sanification intentionally calls the
+                        #   lower-level sanify_hint_child() rather than the
+                        #   higher-level
+                        #   sanify_hint_child_if_unignorable_or_none() sanifier.
+                        #   Technically, the latter would suffice as well.
+                        #   Pragmatically, both are semantically equivalent here
+                        #   but the former is faster. Why? By definition, this
+                        #   union is unignorable. If this union were ignorable,
+                        #   the parent hint containing this union would already
+                        #   have ignored this union. Moreover, *ALL* child
+                        #   hints subscripting an unignorable union are
+                        #   necessarily also unignorable. It follows that this
+                        #   child hint need *NOT* be tested for ignorability.
                         # print(f'Sanifying union child hint {repr(hint_child)} under {repr(conf)}...')
-                        hint_child = sanify_hint_any(
+                        hint_child = sanify_hint_child(
                             hint=hint_child,
                             conf=conf,
                             cls_stack=cls_stack,
@@ -1157,7 +1166,7 @@ def make_check_expr(
                         #
                         # Note that this edge case currently *ONLY* arises when
                         # this child hint has been expanded by the above call to
-                        # the sanify_hint_any() function from a non-union (e.g.,
+                        # the sanify_hint_child() function from a non-union (e.g.,
                         # "float") into a union (e.g., "float | int"). The
                         # standard PEP 484-compliant "typing.Union" factory
                         # already implicitly flattens nested unions: e.g.,
@@ -1413,10 +1422,11 @@ def make_check_expr(
                         func_scope=func_wrapper_scope,
                         exception_prefix=_EXCEPTION_PREFIX_HINT,
                     )
+
                     # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
 
-                    # Child hint subscripting this sequence hint, defined as
-                    # either...
+                    # Possibly ignorable insane child hint subscripting this
+                    # sequence hint, defined as either...
                     hint_child = (
                         # If this hint is a variadic tuple, the parent "if"
                         # statement above has already validated the contents of
@@ -1435,10 +1445,20 @@ def make_check_expr(
                         )
                     )
 
-                    # If this child hint is *NOT* ignorable, deeply type-check
-                    # both the type of the current pith *AND* a randomly indexed
-                    # item of this pith. Specifically...
-                    if not is_hint_ignorable(hint_child):
+                    # Unignorable sane child hint sanified from this possibly
+                    # ignorable insane child hint *OR* "None" otherwise (i.e.,
+                    # if this child hint is ignorable).
+                    hint_child = sanify_hint_child_if_unignorable_or_none(
+                        hint=hint_child,
+                        conf=conf,
+                        cls_stack=cls_stack,
+                        exception_prefix=_EXCEPTION_PREFIX,
+                    )
+
+                    # If this child hint is unignorable, deeply type-check both
+                    # the type of the current pith *AND* a randomly indexed item
+                    # of this pith. Specifically...
+                    if hint_child is not None:
                         # Record that a pseudo-random integer is now required.
                         is_var_random_int_needed = True
 
@@ -1530,28 +1550,37 @@ def make_check_expr(
                                 hint_childs_len=hint_childs_len,
                             ))
 
-                        # For each child hint of this tuple...
+                        # For each possibly ignorable insane child hint of this
+                        # parent tuple...
                         for hint_child_index, hint_child in enumerate(
                             hint_childs):
-                            # If this child hint is ignorable, skip to the
-                            # next.
-                            if is_hint_ignorable(hint_child):
-                                continue
-                            # Else, this child hint is unignorable.
+                            # Unignorable sane child hint sanified from this
+                            # possibly ignorable insane child hint *OR* "None"
+                            # otherwise (i.e., if this child hint is ignorable).
+                            hint_child = (
+                                sanify_hint_child_if_unignorable_or_none(
+                                    hint=hint_child,
+                                    conf=conf,
+                                    cls_stack=cls_stack,
+                                    exception_prefix=_EXCEPTION_PREFIX,
+                                ))
 
-                            # Append code type-checking this child pith.
-                            func_curr_code += CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD_format(
-                                hint_child_placeholder=_enqueue_hint_child(
-                                    # Python expression yielding the value of
-                                    # the currently indexed item of this tuple
-                                    # to be type-checked against this child
-                                    # hint.
-                                    CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format(
-                                        pith_curr_var_name=pith_curr_var_name,
-                                        pith_child_index=hint_child_index,
-                                    )
-                                ),
-                            )
+                            # If this child hint is unignorable, deeply
+                            # type-check this child pith.
+                            if hint_child is not None:
+                                func_curr_code += CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD_format(
+                                    hint_child_placeholder=_enqueue_hint_child(
+                                        # Python expression yielding the value
+                                        # of the currently indexed item of this
+                                        # tuple to be type-checked against this
+                                        # child hint.
+                                        CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format(
+                                            pith_curr_var_name=pith_curr_var_name,
+                                            pith_child_index=hint_child_index,
+                                        )
+                                    ),
+                                )
+                            # Else, this child hint is ignorable.
 
                     # Munge this code to...
                     func_curr_code = (
@@ -1636,10 +1665,15 @@ def make_check_expr(
                     # metahint to the substring prefixing all such code.
                     func_curr_code = CODE_PEP593_VALIDATOR_PREFIX
 
-                    # Type hint annotated by this metahint, localized to the
-                    # "hint_child" local variable to satisfy the public API of
-                    # the _enqueue_hint_child() closure called below.
-                    hint_child = get_hint_pep593_metahint(hint_curr)
+                    # Unignorable sane metahint annotating this parent hint
+                    # sanified from this possibly ignorable insane metahint *OR*
+                    # "None" otherwise (i.e., if this metahint is ignorable).
+                    hint_child = sanify_hint_child_if_unignorable_or_none(
+                        hint=get_hint_pep593_metahint(hint_curr),
+                        conf=conf,
+                        cls_stack=cls_stack,
+                        exception_prefix=_EXCEPTION_PREFIX,
+                    )
 
                     # If the expression assigning the current pith expression to
                     # a local variable is *NOT* the current pith expression,
@@ -1656,9 +1690,9 @@ def make_check_expr(
                     # Else, the current pith expression does *NOT* require
                     # assignment access.
 
-                    # If this metahint is *NOT* ignorable, deeply type-check
+                    # If this metahint is unignorable, deeply type-check
                     # this metahint. Specifically...
-                    if not is_hint_ignorable(hint_child):
+                    if hint_child is not None:
                         # Code deeply type-checking this metahint.
                         func_curr_code += CODE_PEP593_VALIDATOR_METAHINT_format(
                             indent_curr=indent_curr,
@@ -1684,7 +1718,7 @@ def make_check_expr(
                         # If this is *NOT* a beartype validator, raise an
                         # exception.
                         #
-                        # Note that the previously called sanify_hint_any()
+                        # Note that the previously called sanify_hint_child()
                         # function validated only the first such to be a
                         # beartype validator. All remaining arguments have yet
                         # to be validated, so we do so now for consistency and
@@ -1846,6 +1880,7 @@ def make_check_expr(
                     for hint_child in (
                         iter_hint_pep484585_generic_bases_unerased_tree(
                             hint=hint_curr,
+                            conf=conf,
                             exception_prefix=_EXCEPTION_PREFIX,
                     )):
                         # print(f'Visiting generic type hint {repr(hint_curr)} unerased base {repr(hint_child)}...')

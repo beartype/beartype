@@ -141,6 +141,7 @@ this parent type has been generated.
 '''
 
 # ....................{ HINT ~ pep : (484|585) : mapping   }....................
+#FIXME: Refactor us up, please.
 CODE_PEP484585_MAPPING = '''(
 {indent_curr}    # True only if this pith is of this mapping type *AND*...
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
@@ -149,18 +150,7 @@ CODE_PEP484585_MAPPING = '''(
 {indent_curr}        # This mapping is empty *OR*...
 {indent_curr}        not {pith_curr_var_name} or
 {indent_curr}        # This mapping is non-empty. In this case...
-{indent_curr}        (
-{indent_curr}            # Localize the first key of this mapping.
-{indent_curr}            ({pith_curr_key_var_name} := next(iter(
-{indent_curr}                {pith_curr_var_name}))) is {pith_curr_key_var_name} and
-{indent_curr}            # True only if this key satisfies this hint *AND*...
-{indent_curr}            {hint_key_placeholder} and
-{indent_curr}            # Localize the first value of this mapping.
-{indent_curr}            ({pith_curr_value_var_name} := {pith_curr_var_name}[
-{indent_curr}                {pith_curr_key_var_name}]) is {pith_curr_value_var_name} and
-{indent_curr}            # True only if this value satisfies this hint.
-{indent_curr}            {hint_value_placeholder}
-{indent_curr}        )
+{indent_curr}        ({hint_key_and_or_value})
 {indent_curr}    )
 {indent_curr})'''
 '''
@@ -181,6 +171,57 @@ documented at this `StackOverflow answer`_.
 
 .. _StackOverflow answer:
    https://stackoverflow.com/a/70490285/2809027
+'''
+
+
+CODE_PEP484585_MAPPING_KEY_ONLY = '''
+{indent_curr}            # Localize the first key of this mapping.
+{indent_curr}            ({pith_curr_key_var_name} := next(iter(
+{indent_curr}                {pith_curr_var_name}))) is {pith_curr_key_var_name} and
+{indent_curr}            # True only if this key satisfies this hint.
+{indent_curr}            {hint_key_placeholder}'''
+'''
+:pep:`484`- and :pep:`585`-compliant code snippet type-checking *only* the first
+key of the current pith against *only* the key child type hint subscripting a
+parent standard mapping type.
+
+This snippet intentionally avoids type-checking values and is thus suitable for
+type-checking mappings with ignorable value child type hints (e.g.,
+``dict[str, object]``).
+'''
+
+
+CODE_PEP484585_MAPPING_VALUE_ONLY = '''
+{indent_curr}            # Localize the first value of this mapping.
+{indent_curr}            ({pith_curr_value_var_name} := next(iter(
+{indent_curr}                {pith_curr_var_name}.values()))) is {pith_curr_value_var_name} and
+{indent_curr}            # True only if this value satisfies this hint.
+{indent_curr}            {hint_value_placeholder}'''
+'''
+:pep:`484`- and :pep:`585`-compliant code snippet type-checking *only* the first
+value of the current pith against *only* the value child type hint subscripting
+a parent standard mapping type.
+
+This snippet intentionally avoids type-checking keys and is thus suitable for
+type-checking mappings with ignorable key child type hints (e.g.,
+``dict[object, str]``).
+'''
+
+
+CODE_PEP484585_MAPPING_KEY_AND_VALUE = CODE_PEP484585_MAPPING_KEY_ONLY + ''' and
+{indent_curr}            # Localize the first value of this mapping.
+{indent_curr}            ({pith_curr_value_var_name} := {pith_curr_var_name}[
+{indent_curr}                {pith_curr_key_var_name}]) is {pith_curr_value_var_name} and
+{indent_curr}            # True only if this value satisfies this hint.
+{indent_curr}            {hint_value_placeholder}'''
+'''
+:pep:`484`- and :pep:`585`-compliant code snippet type-checking *only* the first
+key-value pair of the current pith against *only* the key and value child type
+hints subscripting a parent standard mapping type.
+
+This snippet intentionally type-checks both keys and values is thus unsuitable
+for type-checking mappings with ignorable key or value child type hints (e.g.,
+``dict[object, str]``, ``dict[str, object]``).
 '''
 
 # ....................{ HINT ~ pep : (484|585) : sequence  }....................

@@ -30,6 +30,7 @@ from beartype._data.hint.datahinttyping import TypeStack
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585func import (
     reduce_hint_pep484585_func_return)
+from beartype._util.hint.utilhinttest import is_hint_ignorable
 
 # ....................{ SANIFIERS ~ root                   }....................
 #FIXME: Unit test us up, please.
@@ -263,7 +264,52 @@ def sanify_hint_root_statement(
     return hint
 
 # ....................{ SANIFIERS ~ any                    }....................
-def sanify_hint_any(
+#FIXME: Unit test us up, please.
+def sanify_hint_child_if_unignorable_or_none(*args, **kwargs) -> Any:
+    '''
+    Type hint sanified (i.e., sanitized) from the passed **possibly insane child
+    type hint** (i.e., hint transitively subscripting the root type hint
+    annotating a parameter or return of the currently decorated callable) if
+    this hint is both reducible and ignorable, this hint unmodified if this hint
+    is both irreducible and ignorable, and :data:`None` otherwise (i.e., if this
+    hint is ignorable).
+
+    This high-level sanifier effectively chains the lower-level
+    :func:`sanify_hilt_child` sanifier and
+    :func:`beartype._util.hint.utilhinttest.is_hint_ignorable` tester into a
+    single unified function, streamlining sanification and ignorability
+    detection throughout the codebase.
+
+    Note that a :data:`None` return unambiguously implies this hint to be
+    ignorable, even if the passed hint is itself :data:`None`. Why? Because if
+    the passed hint were :data:`None`, then a :pep:`484`-compliant reducer will
+    internally reduce this hint to ``type(None)``. After reduction, *all* hints
+    are guaranteed to be non-:data:`None`.
+
+    Parameters
+    ----------
+    All passed arguments are passed as is to the lower-level
+    :func:`sanify_hilt_child` sanifier.
+
+    Returns
+    -------
+    object
+        Either:
+
+        * If the passed possibly insane child type hint is ignorable after
+          reduction to a sane child type hint, :data:`None`.
+        * Else, the sane child type hint to which this hint reduces.
+    '''
+
+    # Sane child hint sanified from this possibly insane child hint if this hint
+    # is reducible *OR* this hint as is otherwise (i.e., if irreducible).
+    hint_child = sanify_hint_child(*args, **kwargs)
+
+    # Return either "None" if this hint is ignorable or this hint otherwise.
+    return None if is_hint_ignorable(hint_child) else hint_child
+
+
+def sanify_hint_child(
     # Mandatory parameters.
     hint: object,
     conf: BeartypeConf,
@@ -274,16 +320,16 @@ def sanify_hint_any(
     pith_name: Optional[str] = None,
 ) -> Any:
     '''
-    PEP-compliant type hint sanified (i.e., sanitized) from the passed
-    **PEP-compliant child type hint** (i.e., hint transitively subscripting the
-    root type hint annotating a parameter or return of the currently decorated
-    callable) if this hint is reducible *or* this hint as is otherwise (i.e., if
-    this hint is *not* irreducible).
+    Type hint sanified (i.e., sanitized) from the passed **possibly insane child
+    type hint** (i.e., hint transitively subscripting the root type hint
+    annotating a parameter or return of the currently decorated callable) if
+    this hint is reducible *or* this hint unmodified otherwise (i.e., if this
+    hint is irreducible).
 
     Parameters
     ----------
     hint : object
-        PEP-compliant type hint to be sanified.
+        Type hint to be sanified.
     conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
@@ -308,7 +354,7 @@ def sanify_hint_any(
     Returns
     -------
     object
-        PEP-compliant type hint sanified from this hint.
+        Type hint sanified from this possibly insane child type hint.
     '''
 
     # This sanifier covers the proper subset of logic performed by the

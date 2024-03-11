@@ -17,6 +17,7 @@ from beartype.typing import (
     Optional,
     Tuple,
 )
+from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.hint.pep.sign.datapepsigns import HintSignGeneric
 from beartype._util.cache.utilcachecall import callable_cached
@@ -634,6 +635,7 @@ def find_hint_pep484585_generic_module_base_first(
 def iter_hint_pep484585_generic_bases_unerased_tree(
     # Mandatory parameters.
     hint: object,
+    conf: BeartypeConf,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep484585Exception,
@@ -685,31 +687,35 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
 
     Consider this example :pep:`544`-compliant subprotocol:
 
-        >>> import typing as t
-        >>> class UserProtocol(t.Protocol[t.AnyStr]): pass
-        >>> class UserSubprotocol(UserProtocol[str], t.Protocol): pass
-        >>> UserSubprotocol.__orig_bases__
-        (UserProtocol[str], typing.Protocol)  # <-- good
-        >>> UserProtocolUnerased = UserSubprotocol.__orig_bases__[0]
-        >>> UserProtocolUnerased is UserProtocol
-        False
-        >>> isinstance(UserProtocolUnerased, type)
-        False  # <-- bad
+    .. code-block:: pycon
+
+       >>> import typing as t
+       >>> class UserProtocol(t.Protocol[t.AnyStr]): pass
+       >>> class UserSubprotocol(UserProtocol[str], t.Protocol): pass
+       >>> UserSubprotocol.__orig_bases__
+       (UserProtocol[str], typing.Protocol)  # <-- good
+       >>> UserProtocolUnerased = UserSubprotocol.__orig_bases__[0]
+       >>> UserProtocolUnerased is UserProtocol
+       False
+       >>> isinstance(UserProtocolUnerased, type)
+       False  # <-- bad
 
     :pep:`585`-compliant generics suffer no such issues:
 
-        >>> from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin_subscripted
-        >>> class UserGeneric(list[int]): pass
-        >>> class UserSubgeneric(UserGeneric[int]): pass
-        >>> UserSubgeneric.__orig_bases__
-        (UserGeneric[int],)
-        >>> UserGenericUnerased = UserSubgeneric.__orig_bases__[0]
-        >>> isinstance(UserGenericUnerased, type)
-        True  # <-- good
-        >>> UserGenericUnerased.__mro__
-        (UserGeneric, list, object)
-        >>> is_hint_pep585_builtin_subscripted(UserGenericUnerased)
-        True
+    .. code-block:: pycon
+
+       >>> from beartype._util.hint.pep.proposal.utilpep585 import is_hint_pep585_builtin_subscripted
+       >>> class UserGeneric(list[int]): pass
+       >>> class UserSubgeneric(UserGeneric[int]): pass
+       >>> UserSubgeneric.__orig_bases__
+       (UserGeneric[int],)
+       >>> UserGenericUnerased = UserSubgeneric.__orig_bases__[0]
+       >>> isinstance(UserGenericUnerased, type)
+       True  # <-- good
+       >>> UserGenericUnerased.__mro__
+       (UserGeneric, list, object)
+       >>> is_hint_pep585_builtin_subscripted(UserGenericUnerased)
+       True
 
     Iteratively walking up the unerased inheritance hierarchy for any such
     paradoxical generic or protocol subclass (e.g., ``UserSubprotocol`` but
@@ -729,6 +735,9 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
     ----------
     hint : object
         Generic type hint to be inspected.
+    conf : BeartypeConf
+        **Beartype configuration** (i.e., self-caching dataclass encapsulating
+        all settings configuring type-checking for the passed object).
     exception_cls : TypeException
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep484585Exception`.
@@ -755,11 +764,12 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
     '''
 
     # Avoid circular import dependencies.
+    from beartype._check.convert.convsanify import (
+        sanify_hint_child_if_unignorable_or_none)
     from beartype._util.hint.pep.proposal.utilpep585 import (
         is_hint_pep585_builtin_subscripted)
     from beartype._util.hint.pep.utilpepget import get_hint_pep_sign_or_none
     from beartype._util.hint.pep.utilpeptest import is_hint_pep_typing
-    from beartype._util.hint.utilhinttest import is_hint_ignorable
 
     # Tuple of the one or more unerased pseudo-superclasses originally listed as
     # superclasses prior to their type erasure by this generic.
@@ -790,28 +800,23 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
     # exceed that of the last pseudo-superclass in this list, there remains one
     # or more pseudo-superclasses to be visited in this BFS.
     while hint_bases_index_curr < hint_bases_index_past_last:
-        # Currently visited pseudo-superclass.
-        hint_base = hint_bases[hint_bases_index_curr]
+        # Unignorable sane pseudo-superclass sanified from this possibly
+        # ignorable insane pseudo-superclass *OR* "None" otherwise (i.e.,
+        # if this pseudo-superclass is ignorable).
+        hint_base = sanify_hint_child_if_unignorable_or_none(
+            hint=hint_bases[hint_bases_index_curr],
+            conf=conf,
+            #FIXME: Possibly also pass this, please. Ignorable for now. *shrug*
+            # cls_stack=cls_stack,
+            exception_prefix=exception_prefix,
+        )
         # print(f'generic {hint} base: {repr(hint_base)}')
 
-        # Sign uniquely identifying this pseudo-superclass if any *OR* "None".
-        hint_base_sign = get_hint_pep_sign_or_none(hint_base)
+        # If this pseudo-superclass is unignorable...
+        if hint_base is not None:
+            # Sign identifying this pseudo-superclass if any *OR* "None".
+            hint_base_sign = get_hint_pep_sign_or_none(hint_base)
 
-        # If this pseudo-superclass is neither...
-        if not (
-            # A type conveying no meaningful typing semantics *NOR*...
-            #
-            # Note that types conveying no meaningful typing semantics are
-            # effectively ignorable. Why? Because the caller already type-checks
-            # this pith against the generic subclassing this superclass and thus
-            # this superclass as well in an isinstance() call (e.g., in the
-            # "CODE_PEP484585_GENERIC_PREFIX" snippet leveraged by the
-            # "beartype._check.code.codemake" submodule).
-            hint_base_sign is None or
-            # An ignorable PEP-compliant type hint...
-            is_hint_ignorable(hint_base)
-        # Then this pseudo-superclass is unignorable. In this case...
-        ):
             #FIXME: Unit test up this branch, please.
             # If this pseudo-superclass is...
             if (
@@ -835,20 +840,18 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
             # See "hints_bases" for explanatory commentary.
                 # Tuple of the one or more parent pseudo-superclasses of this
                 # child pseudo-superclass.
-                hint_base_bases = (
-                    get_hint_pep484585_generic_bases_unerased(
-                        hint=hint_base,
-                        exception_cls=exception_cls,
-                        exception_prefix=exception_prefix,
-                    ))
+                hint_base_bases = get_hint_pep484585_generic_bases_unerased(
+                    hint=hint_base,
+                    exception_cls=exception_cls,
+                    exception_prefix=exception_prefix,
+                )
 
-                # 0-based index of the last pseudo-superclass
-                # of this list *BEFORE* adding onto this list.
-                hint_bases_index_past_last_prev = (
-                    hint_bases_index_past_last)
+                # 0-based index of the last pseudo-superclass of this list
+                # *BEFORE* adding onto this list.
+                hint_bases_index_past_last_prev = hint_bases_index_past_last
 
-                # 0-based index of the last pseudo-superclass
-                # of this list *AFTER* adding onto this list.
+                # 0-based index of the last pseudo-superclass of this list
+                # *AFTER* adding onto this list.
                 hint_bases_index_past_last += len(hint_base_bases)
 
                 # Enqueue these superclasses onto this list.
@@ -858,9 +861,20 @@ def iter_hint_pep484585_generic_bases_unerased_tree(
                 ] = hint_base_bases
             # Else, this pseudo-superclass is neither an ignorable user-defined
             # PEP 484-compliant generic *NOR* an ignorable 544-compliant
-            # protocol. In this case, yield this unignorable pseudo-superclass.
-            else:
+            # protocol.
+            #
+            # If this pseudo-superclass is *NOT* an isinstanceable type
+            # conveying *NO* meaningful semantics, this pseudo-superclass is
+            # unignorable. Yield this unignorable pseudo-superclass.
+            elif hint_base_sign is not None:
                 yield hint_base
+            # Else, this pseudo-superclass is an isinstanceable type conveying
+            # *NO* meaningful semantics and is thus effectively ignorable. Why?
+            # Because the caller already type-checks this pith against the
+            # generic subclassing this superclass and thus this superclass as
+            # well in an isinstance() call (e.g., in the
+            # "CODE_PEP484585_GENERIC_PREFIX" snippet leveraged by the
+            # "beartype._check.code.codemake" submodule).
         # Else, this pseudo-superclass is ignorable.
         # else:
         #     print(f'Ignoring generic {repr(hint)} base {repr(hint_base)}...')

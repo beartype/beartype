@@ -67,7 +67,7 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep,
     is_hint_pep_args,
 )
-from beartype._check.convert.convsanify import sanify_hint_any
+from beartype._check.convert.convsanify import sanify_hint_child
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 
 # ....................{ CLASSES                            }....................
@@ -266,7 +266,7 @@ class ViolationCause(object):
         # Sanitize this hint if unsupported by @beartype in its current form
         # (e.g., "numpy.typing.NDArray[...]") to another form supported by
         # @beartype (e.g., "typing.Annotated[numpy.ndarray, beartype.vale.*]").
-        hint = sanify_hint_any(
+        hint = sanify_hint_child(
             hint=hint,
             conf=self.conf,
             exception_prefix=self.exception_prefix,

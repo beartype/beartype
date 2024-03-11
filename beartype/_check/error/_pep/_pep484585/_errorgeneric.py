@@ -65,7 +65,10 @@ def find_cause_generic(cause: ViolationCause) -> ViolationCause:
     # For each unignorable unerased transitive pseudo-superclass originally
     # declared as an erased superclass of this generic...
     for hint_child in iter_hint_pep484585_generic_bases_unerased_tree(
-        hint=cause.hint, exception_prefix=cause.exception_prefix):
+        hint=cause.hint,
+        conf=cause.conf,
+        exception_prefix=cause.exception_prefix,
+    ):
         # Deep output cause to be returned, permuted from this input cause.
         cause_deep = cause.permute(hint=hint_child).find_cause()
         # print(f'tuple pith: {pith_item}\ntuple hint child: {hint_child}')
