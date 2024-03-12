@@ -16,11 +16,6 @@ from beartype.typing import (
     Dict,
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
-from beartype._data.hint.pep.sign.datapepsignset import (
-    HINT_SIGNS_SEQUENCE_ARGS_1,
-    HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
-    HINT_SIGNS_UNION,
-)
 from beartype._check.error._errorcause import ViolationCause
 
 # ....................{ GLOBALS                            }....................
@@ -51,25 +46,33 @@ def _init() -> None:
         HintSignTuple,
         HintSignType,
     )
+    from beartype._data.hint.pep.sign.datapepsignset import (
+        HINT_SIGNS_MAPPING,
+        HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
+        HINT_SIGNS_SEQUENCE_ARGS_1,
+        HINT_SIGNS_UNION,
+    )
     from beartype._check.error._errortype import (
         find_cause_instance_type_forwardref,
         find_cause_subclass_type,
         find_cause_type_instance_origin,
     )
-    from beartype._check.error._pep._pep484._errornoreturn import (
-        find_cause_noreturn)
-    from beartype._check.error._pep._errorpep484604union import (
+    from beartype._check.error._pep.errorpep484604union import (
         find_cause_union)
-    from beartype._check.error._pep._pep484585._errorgeneric import (
+    from beartype._check.error._pep.errorpep586 import (
+        find_cause_literal)
+    from beartype._check.error._pep.errorpep593 import (
+        find_cause_annotated)
+    from beartype._check.error._pep.pep484.errornoreturn import (
+        find_cause_noreturn)
+    from beartype._check.error._pep.pep484585.errorgeneric import (
         find_cause_generic)
-    from beartype._check.error._pep._pep484585._errorsequence import (
+    from beartype._check.error._pep.pep484585.errormapping import (
+        find_cause_mapping)
+    from beartype._check.error._pep.pep484585.errorsequence import (
         find_cause_sequence_args_1,
         find_cause_tuple,
     )
-    from beartype._check.error._pep._errorpep586 import (
-        find_cause_literal)
-    from beartype._check.error._pep._errorpep593 import (
-        find_cause_annotated)
 
     # Map each originative sign to the appropriate getter *BEFORE* any other
     # mappings. This is merely a generalized fallback subsequently replaced by
@@ -77,6 +80,10 @@ def _init() -> None:
     for pep_sign_origin_isinstanceable in HINT_SIGNS_ORIGIN_ISINSTANCEABLE:
         HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_origin_isinstanceable] = (
             find_cause_type_instance_origin)
+
+    # Map each mapping sign to its corresponding getter.
+    for pep_sign_mapping in HINT_SIGNS_MAPPING:
+        HINT_SIGN_TO_GET_CAUSE_FUNC[pep_sign_mapping] = find_cause_mapping
 
     # Map each 1-argument sequence sign to its corresponding getter.
     for pep_sign_sequence_args_1 in HINT_SIGNS_SEQUENCE_ARGS_1:

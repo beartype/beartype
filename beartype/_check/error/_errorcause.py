@@ -269,9 +269,9 @@ class ViolationCause(object):
         hint = sanify_hint_child(
             hint=hint,
             conf=self.conf,
-            exception_prefix=self.exception_prefix,
             cls_stack=self.cls_stack,
             pith_name=self.pith_name,
+            exception_prefix=self.exception_prefix,
         )
 
         # If this hint is PEP-compliant...
@@ -457,17 +457,19 @@ class ViolationCause(object):
 
         Examples
         --------
-            >>> sleuth = ViolationCause(
-            ...     pith=[42,]
-            ...     hint=typing.List[int],
-            ...     cause_indent='',
-            ...     exception_prefix='List of integers',
-            ... )
-            >>> sleuth_copy = sleuth.permute(pith=[24,])
-            >>> sleuth_copy.pith
-            [24,]
-            >>> sleuth_copy.hint
-            typing.List[int]
+        .. code-block:: pycon
+
+           >>> sleuth = ViolationCause(
+           ...     pith=[42,]
+           ...     hint=typing.List[int],
+           ...     cause_indent='',
+           ...     exception_prefix='List of integers',
+           ... )
+           >>> sleuth_copy = sleuth.permute(pith=[24,])
+           >>> sleuth_copy.pith
+           [24,]
+           >>> sleuth_copy.hint
+           typing.List[int]
         '''
 
         # For the name of each passed keyword argument...

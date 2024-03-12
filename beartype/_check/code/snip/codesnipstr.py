@@ -15,6 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._check.checkmagic import (
     VAR_NAME_RANDOM_INT,
 )
+from collections.abc import Callable
 
 # ....................{ HINT ~ placeholder : child         }....................
 CODE_HINT_CHILD_PLACEHOLDER_PREFIX = '@['
@@ -141,7 +142,6 @@ this parent type has been generated.
 '''
 
 # ....................{ HINT ~ pep : (484|585) : mapping   }....................
-#FIXME: Refactor us up, please.
 CODE_PEP484585_MAPPING = '''(
 {indent_curr}    # True only if this pith is of this mapping type *AND*...
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
@@ -150,7 +150,7 @@ CODE_PEP484585_MAPPING = '''(
 {indent_curr}        # This mapping is empty *OR*...
 {indent_curr}        not {pith_curr_var_name} or
 {indent_curr}        # This mapping is non-empty. In this case...
-{indent_curr}        ({hint_key_and_or_value})
+{indent_curr}        ({func_curr_code_key_value})
 {indent_curr}    )
 {indent_curr})'''
 '''
@@ -208,7 +208,7 @@ type-checking mappings with ignorable key child type hints (e.g.,
 '''
 
 
-CODE_PEP484585_MAPPING_KEY_AND_VALUE = CODE_PEP484585_MAPPING_KEY_ONLY + ''' and
+CODE_PEP484585_MAPPING_KEY_VALUE = CODE_PEP484585_MAPPING_KEY_ONLY + ''' and
 {indent_curr}            # Localize the first value of this mapping.
 {indent_curr}            ({pith_curr_value_var_name} := {pith_curr_var_name}[
 {indent_curr}                {pith_curr_key_var_name}]) is {pith_curr_value_var_name} and
@@ -519,3 +519,51 @@ applying this snippet to the last subscripted argument of such a
 :class:`typing.Annotated` type. While there exist alternate and more readable
 means of accomplishing this, this approach is the optimally efficient.
 '''
+
+# ..................{ FORMATTERS                             }..................
+# str.format() methods, globalized to avoid inefficient dot lookups elsewhere.
+# This is an absurd micro-optimization. *fight me, github developer community*
+CODE_PEP484_INSTANCE_format: Callable = (
+    CODE_PEP484_INSTANCE.format)
+CODE_PEP484585_GENERIC_CHILD_format: Callable = (
+    CODE_PEP484585_GENERIC_CHILD.format)
+CODE_PEP484585_MAPPING_format: Callable = (
+    CODE_PEP484585_MAPPING.format)
+CODE_PEP484585_MAPPING_KEY_ONLY_format: Callable = (
+    CODE_PEP484585_MAPPING_KEY_ONLY.format)
+CODE_PEP484585_MAPPING_KEY_VALUE_format: Callable = (
+    CODE_PEP484585_MAPPING_KEY_VALUE.format)
+CODE_PEP484585_MAPPING_VALUE_ONLY_format: Callable = (
+    CODE_PEP484585_MAPPING_VALUE_ONLY.format)
+CODE_PEP484585_SEQUENCE_ARGS_1_format: Callable = (
+    CODE_PEP484585_SEQUENCE_ARGS_1.format)
+CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format: Callable = (
+    CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR.format)
+CODE_PEP484585_SUBCLASS_format: Callable = (
+    CODE_PEP484585_SUBCLASS.format)
+CODE_PEP484585_TUPLE_FIXED_EMPTY_format: Callable = (
+    CODE_PEP484585_TUPLE_FIXED_EMPTY.format)
+CODE_PEP484585_TUPLE_FIXED_LEN_format: Callable = (
+    CODE_PEP484585_TUPLE_FIXED_LEN.format)
+CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD_format: Callable = (
+    CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD.format)
+CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format: Callable = (
+    CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR.format)
+CODE_PEP484604_UNION_CHILD_PEP_format: Callable = (
+    CODE_PEP484604_UNION_CHILD_PEP.format)
+CODE_PEP484604_UNION_CHILD_NONPEP_format: Callable = (
+    CODE_PEP484604_UNION_CHILD_NONPEP.format)
+CODE_PEP572_PITH_ASSIGN_AND_format: Callable = (
+    CODE_PEP572_PITH_ASSIGN_AND.format)
+CODE_PEP572_PITH_ASSIGN_EXPR_format: Callable = (
+    CODE_PEP572_PITH_ASSIGN_EXPR.format)
+CODE_PEP586_LITERAL_format: Callable = (
+    CODE_PEP586_LITERAL.format)
+CODE_PEP586_PREFIX_format: Callable = (
+    CODE_PEP586_PREFIX.format)
+CODE_PEP593_VALIDATOR_IS_format: Callable = (
+    CODE_PEP593_VALIDATOR_IS.format)
+CODE_PEP593_VALIDATOR_METAHINT_format: Callable = (
+    CODE_PEP593_VALIDATOR_METAHINT.format)
+CODE_PEP593_VALIDATOR_SUFFIX_format: Callable = (
+    CODE_PEP593_VALIDATOR_SUFFIX.format)

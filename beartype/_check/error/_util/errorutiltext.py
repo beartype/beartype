@@ -16,7 +16,10 @@ from beartype._util.text.utiltextansi import (
     color_pith,
     color_type,
 )
-from beartype._util.text.utiltextlabel import label_type
+from beartype._util.text.utiltextlabel import (
+    label_object_type,
+    label_type,
+)
 from beartype._util.text.utiltextprefix import prefix_beartypeable
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
@@ -42,7 +45,7 @@ def label_pith_value(pith: object) -> str:
     # Create and return this label.
     return f'{color_pith(represent_object(pith))}'
 
-# ....................{ PREFIXERS                          }....................
+# ....................{ PREFIXERS : callable               }....................
 def prefix_callable_arg_value(
     func: Callable, arg_name: str, arg_value: object) -> str:
     '''
@@ -101,6 +104,27 @@ def prefix_callable_return_value(func: Callable, return_value: object) -> str:
         f'{prefix_pith_value(return_value)}'
     )
 
+# ....................{ PREFIXERS : pith                   }....................
+def prefix_pith_type(pith: object) -> str:
+    '''
+    Human-readable label describing the passed type of the **current pith**
+    (i.e., arbitrary object violating the current type check) suffixed by
+    delimiting whitespace.
+
+    Parameters
+    ----------
+    pith : object
+        Arbitrary object violating the current type check.
+
+    Returns
+    -------
+    str
+        Human-readable label describing this pith type.
+    '''
+
+    # Create and return this label.
+    return f'{color_type(label_object_type(pith))} '
+
 
 def prefix_pith_value(pith: object) -> str:
     '''
@@ -142,6 +166,6 @@ def represent_pith(pith: object) -> str:
 
     # Create and return this representation.
     return (
-        f'{color_type(label_type(type(pith)))} '
+        f'{prefix_pith_type(pith)}'
         f'{label_pith_value(pith)}'
     )

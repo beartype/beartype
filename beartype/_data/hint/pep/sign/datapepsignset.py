@@ -61,7 +61,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignNone,
     HintSignOptional,
     HintSignOrderedDict,
-    HintSignPanderaAny,
+    # HintSignPanderaAny,
     HintSignParamSpec,
     HintSignPattern,
     HintSignPep585BuiltinSubscriptedUnknown,
@@ -196,9 +196,11 @@ This set necessarily excludes:
 
 HINT_SIGNS_MAPPING = frozenset((
     # ..................{ PEP (484|585)                      }..................
+    HintSignDefaultDict,
     HintSignDict,
     HintSignMapping,
     HintSignMutableMapping,
+    HintSignOrderedDict,
 ))
 '''
 Frozen set of all **standard mapping signs** (i.e., arbitrary objects uniquely
@@ -545,7 +547,10 @@ shallow type-checking code).
 '''
 
 
-HINT_SIGNS_SUPPORTED_DEEP = frozenset((
+HINT_SIGNS_SUPPORTED_DEEP = (
+    HINT_SIGNS_MAPPING |
+    HINT_SIGNS_SEQUENCE_ARGS_1 |
+    frozenset((
     # ..................{ PEP 484                            }..................
     # Note that the "NoReturn" type hint is invalid in almost all possible
     # syntactic contexts and thus intentionally omitted here. See the
@@ -567,11 +572,7 @@ HINT_SIGNS_SUPPORTED_DEEP = frozenset((
     HintSignUnion,
 
     # ..................{ PEP (484|585)                      }..................
-    HintSignByteString,
     HintSignGeneric,
-    HintSignList,
-    HintSignMutableSequence,
-    HintSignSequence,
     HintSignTuple,
     HintSignType,
 
@@ -590,7 +591,7 @@ HINT_SIGNS_SUPPORTED_DEEP = frozenset((
     # ..................{ NON-PEP ~ package : numpy          }..................
     #FIXME: This should probably be in "HINT_SIGNS_SUPPORTED_SHALLOW", instead.
     HintSignNumpyArray,
-))
+)))
 '''
 Frozen set of all **deeply supported signs** (i.e., arbitrary objects uniquely
 identifying PEP-compliant type hints for which the :func:`beartype.beartype`

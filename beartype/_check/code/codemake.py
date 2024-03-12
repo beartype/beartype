@@ -47,33 +47,36 @@ from beartype._check.code.snip.codesnipcls import PITH_INDEX_TO_VAR_NAME
 from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_CHILD_PLACEHOLDER_PREFIX,
     CODE_HINT_CHILD_PLACEHOLDER_SUFFIX,
-    CODE_PEP484585_GENERIC_CHILD,
+    CODE_PEP484_INSTANCE_format,
+    CODE_PEP484585_GENERIC_CHILD_format,
     CODE_PEP484585_GENERIC_PREFIX,
     CODE_PEP484585_GENERIC_SUFFIX,
-    CODE_PEP484585_MAPPING,
-    CODE_PEP484585_SEQUENCE_ARGS_1,
-    CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR,
-    CODE_PEP484585_SUBCLASS,
-    CODE_PEP484585_TUPLE_FIXED_EMPTY,
-    CODE_PEP484585_TUPLE_FIXED_LEN,
-    CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD,
-    CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR,
+    CODE_PEP484585_MAPPING_format,
+    CODE_PEP484585_MAPPING_KEY_ONLY_format,
+    CODE_PEP484585_MAPPING_KEY_VALUE_format,
+    CODE_PEP484585_MAPPING_VALUE_ONLY_format,
+    CODE_PEP484585_SEQUENCE_ARGS_1_format,
+    CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format,
+    CODE_PEP484585_SUBCLASS_format,
+    CODE_PEP484585_TUPLE_FIXED_EMPTY_format,
+    CODE_PEP484585_TUPLE_FIXED_LEN_format,
+    CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD_format,
+    CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format,
     CODE_PEP484585_TUPLE_FIXED_PREFIX,
     CODE_PEP484585_TUPLE_FIXED_SUFFIX,
-    CODE_PEP484_INSTANCE,
-    CODE_PEP484604_UNION_CHILD_PEP,
-    CODE_PEP484604_UNION_CHILD_NONPEP,
+    CODE_PEP484604_UNION_CHILD_PEP_format,
+    CODE_PEP484604_UNION_CHILD_NONPEP_format,
     CODE_PEP484604_UNION_PREFIX,
     CODE_PEP484604_UNION_SUFFIX,
-    CODE_PEP572_PITH_ASSIGN_EXPR,
-    CODE_PEP572_PITH_ASSIGN_AND,
-    CODE_PEP586_LITERAL,
-    CODE_PEP586_PREFIX,
+    CODE_PEP586_LITERAL_format,
+    CODE_PEP586_PREFIX_format,
     CODE_PEP586_SUFFIX,
-    CODE_PEP593_VALIDATOR_IS,
-    CODE_PEP593_VALIDATOR_METAHINT,
+    CODE_PEP593_VALIDATOR_IS_format,
+    CODE_PEP593_VALIDATOR_METAHINT_format,
     CODE_PEP593_VALIDATOR_PREFIX,
-    CODE_PEP593_VALIDATOR_SUFFIX,
+    CODE_PEP593_VALIDATOR_SUFFIX_format,
+    CODE_PEP572_PITH_ASSIGN_AND_format,
+    CODE_PEP572_PITH_ASSIGN_EXPR_format,
 )
 from beartype._check.convert.convsanify import (
     sanify_hint_child_if_unignorable_or_none,
@@ -85,7 +88,8 @@ from beartype._data.code.datacodemagic import (
     LINE_RSTRIP_INDEX_AND,
     LINE_RSTRIP_INDEX_OR,
 )
-from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
+from beartype._data.error.dataerrmagic import (
+    EXCEPTION_PLACEHOLDER as EXCEPTION_PREFIX)
 from beartype._data.hint.datahinttyping import (
     CodeGenerated,
     LexicalScope,
@@ -102,9 +106,9 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_MAPPING,
+    HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
     HINT_SIGNS_SEQUENCE_ARGS_1,
     HINT_SIGNS_SUPPORTED_DEEP,
-    HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
     HINT_SIGNS_UNION,
 )
 from beartype._util.cache.utilcachecall import callable_cached
@@ -151,7 +155,6 @@ from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.kind.map.utilmapset import update_mapping
 from beartype._util.text.utiltextmunge import replace_str_substrs
 from beartype._util.text.utiltextrepr import represent_object
-from collections.abc import Callable
 from random import getrandbits
 
 # ....................{ MAKERS                             }....................
@@ -163,71 +166,6 @@ def make_check_expr(
 
     # ..................{ ARGS ~ optional                    }..................
     cls_stack: TypeStack = None,
-
-    # ..................{ ARGS ~ optional : speed            }..................
-    # Globals defined above, declared as optional parameters for efficient
-    # lookup as local attributes. Yes, this is an absurd microoptimization.
-    # *fight me, github developer community*
-
-    # "beartype._check.checkmagic" globals.
-    _EXCEPTION_PREFIX=EXCEPTION_PLACEHOLDER,
-    _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
-    _EXCEPTION_PREFIX_HINT=EXCEPTION_PREFIX_HINT,
-
-    # "beartype._check.code.codemagic" globals.
-    _HINT_META_INDEX_HINT=HINT_META_INDEX_HINT,
-    _HINT_META_INDEX_PLACEHOLDER=HINT_META_INDEX_PLACEHOLDER,
-    _HINT_META_INDEX_PITH_EXPR=HINT_META_INDEX_PITH_EXPR,
-    _HINT_META_INDEX_PITH_VAR_NAME=HINT_META_INDEX_PITH_VAR_NAME,
-    _HINT_META_INDEX_INDENT_LEVEL=HINT_META_INDEX_INDENT_LEVEL,
-
-    # "beartype._check.code.snip.codesnipstr" string globals required only for their
-    # bound str.format() methods.
-    CODE_PEP484_INSTANCE_format: Callable = (
-        CODE_PEP484_INSTANCE.format),
-    CODE_PEP484585_GENERIC_CHILD_format: Callable = (
-        CODE_PEP484585_GENERIC_CHILD.format),
-    CODE_PEP484585_MAPPING_format: Callable = (
-        CODE_PEP484585_MAPPING.format),
-    CODE_PEP484585_SEQUENCE_ARGS_1_format: Callable = (
-        CODE_PEP484585_SEQUENCE_ARGS_1.format),
-    CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format: Callable = (
-        CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR.format),
-    CODE_PEP484585_SUBCLASS_format: Callable = (
-        CODE_PEP484585_SUBCLASS.format),
-    CODE_PEP484585_TUPLE_FIXED_EMPTY_format: Callable = (
-        CODE_PEP484585_TUPLE_FIXED_EMPTY.format),
-    CODE_PEP484585_TUPLE_FIXED_LEN_format: Callable = (
-        CODE_PEP484585_TUPLE_FIXED_LEN.format),
-    CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD_format: Callable = (
-        CODE_PEP484585_TUPLE_FIXED_NONEMPTY_CHILD.format),
-    CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR_format: Callable = (
-        CODE_PEP484585_TUPLE_FIXED_NONEMPTY_PITH_CHILD_EXPR.format),
-    CODE_PEP484604_UNION_CHILD_PEP_format: Callable = (
-        CODE_PEP484604_UNION_CHILD_PEP.format),
-    CODE_PEP484604_UNION_CHILD_NONPEP_format: Callable = (
-        CODE_PEP484604_UNION_CHILD_NONPEP.format),
-    CODE_PEP572_PITH_ASSIGN_AND_format: Callable = (
-        CODE_PEP572_PITH_ASSIGN_AND.format),
-    CODE_PEP572_PITH_ASSIGN_EXPR_format: Callable = (
-        CODE_PEP572_PITH_ASSIGN_EXPR.format),
-    CODE_PEP586_LITERAL_format: Callable = (
-        CODE_PEP586_LITERAL.format),
-    CODE_PEP586_PREFIX_format: Callable = (
-        CODE_PEP586_PREFIX.format),
-    CODE_PEP593_VALIDATOR_IS_format: Callable = (
-        CODE_PEP593_VALIDATOR_IS.format),
-    CODE_PEP593_VALIDATOR_METAHINT_format: Callable = (
-        CODE_PEP593_VALIDATOR_METAHINT.format),
-    CODE_PEP593_VALIDATOR_SUFFIX_format: Callable = (
-        CODE_PEP593_VALIDATOR_SUFFIX.format),
-
-    # "beartype._data.code.datacodeindent" globals.
-    _INDENT_LEVEL_TO_CODE=INDENT_LEVEL_TO_CODE,
-
-    # "beartype._data.code.datacodemagic" globals.
-    _LINE_RSTRIP_INDEX_AND=LINE_RSTRIP_INDEX_AND,
-    _LINE_RSTRIP_INDEX_OR=LINE_RSTRIP_INDEX_OR,
 ) -> CodeGenerated:
     '''
     **Type-checking expression factory** (i.e., low-level callable dynamically
@@ -588,7 +526,7 @@ def make_check_expr(
             pith_child_expr is pith_curr_assign_expr
         # Then raise an "AssertionError" exception.
         ), (
-            f'{_EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
+            f'{EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
             f'child pith expression {repr(pith_child_expr)} duplicates '
             f'current pith assignment expression '
             f'{repr(pith_curr_assign_expr)}.'
@@ -684,11 +622,11 @@ def make_check_expr(
 
         #FIXME: [SPEED] Optimize by reducing to a single tuple unpacking.
         # Localize metadatum for both efficiency and f-string purposes.
-        hint_curr             = hint_curr_meta[_HINT_META_INDEX_HINT]
-        hint_curr_placeholder = hint_curr_meta[_HINT_META_INDEX_PLACEHOLDER]
-        pith_curr_expr        = hint_curr_meta[_HINT_META_INDEX_PITH_EXPR]
-        pith_curr_var_name    = hint_curr_meta[_HINT_META_INDEX_PITH_VAR_NAME]
-        indent_level_curr     = hint_curr_meta[_HINT_META_INDEX_INDENT_LEVEL]
+        hint_curr             = hint_curr_meta[HINT_META_INDEX_HINT]
+        hint_curr_placeholder = hint_curr_meta[HINT_META_INDEX_PLACEHOLDER]
+        pith_curr_expr        = hint_curr_meta[HINT_META_INDEX_PITH_EXPR]
+        pith_curr_var_name    = hint_curr_meta[HINT_META_INDEX_PITH_VAR_NAME]
+        indent_level_curr     = hint_curr_meta[HINT_META_INDEX_INDENT_LEVEL]
         # print(f'Visiting type hint {repr(hint_curr)}...')
 
         #FIXME: Comment this sanity check out after we're sufficiently
@@ -724,7 +662,7 @@ def make_check_expr(
             # the above call to the same function, this call is guaranteed to
             # *NEVER* raise an exception for that hint.
             die_if_hint_pep_unsupported(
-                hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
+                hint=hint_curr, exception_prefix=EXCEPTION_PREFIX)
             # Else, this hint is supported.
 
             # Assert that this hint is unignorable. Iteration below generating
@@ -734,7 +672,7 @@ def make_check_expr(
             # together ensure that all hints visited by this breadth-first
             # search *SHOULD* be unignorable. Naturally, we validate that here.
             assert not is_hint_ignorable(hint_curr), (
-                f'{_EXCEPTION_PREFIX}ignorable type hint '
+                f'{EXCEPTION_PREFIX}ignorable type hint '
                 f'{repr(hint_curr)} not ignored.'
             )
 
@@ -845,7 +783,7 @@ def make_check_expr(
                         # was validated above to be supported.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         func_scope=func_wrapper_scope,
-                        exception_prefix=_EXCEPTION_PREFIX_HINT,
+                        exception_prefix=EXCEPTION_PREFIX_HINT,
                     ),
                 )
             # Else, this hint is either subscripted, not shallowly
@@ -870,7 +808,7 @@ def make_check_expr(
                         forwardref=hint_curr,
                         forwardrefs_class_basename=hint_refs_type_basename,
                         func_scope=func_wrapper_scope,
-                        exception_prefix=_EXCEPTION_PREFIX,
+                        exception_prefix=EXCEPTION_PREFIX,
                     ))
 
                 # Code type-checking the current pith against this class.
@@ -900,7 +838,7 @@ def make_check_expr(
 
                 # Python code snippet expanding to the current level of
                 # indentation appropriate for the current hint.
-                indent_curr = _INDENT_LEVEL_TO_CODE[indent_level_curr]
+                indent_curr = INDENT_LEVEL_TO_CODE[indent_level_curr]
 
                 # 1-based indentation level describing the current level of
                 # indentation appropriate for the currently iterated child hint.
@@ -1039,7 +977,7 @@ def make_check_expr(
                         pith_curr_var_name_index]
 
                     # Assignment expression assigning this full expression to
-                    # this variable.
+                    # this local variable.
                     pith_curr_assign_expr = CODE_PEP572_PITH_ASSIGN_EXPR_format(
                         pith_curr_var_name=pith_curr_var_name,
                         pith_curr_expr=pith_curr_expr,
@@ -1078,7 +1016,7 @@ def make_check_expr(
                     #       >>> typing.Union[()]
                     #       TypeError: Cannot take a Union of no types.
                     assert hint_childs, (
-                        f'{_EXCEPTION_PREFIX}union type hint '
+                        f'{EXCEPTION_PREFIX}union type hint '
                         f'{repr(hint_curr)} unsubscripted.'
                     )
                     # Else, this union is subscripted by two or more arguments.
@@ -1150,7 +1088,7 @@ def make_check_expr(
                             hint=hint_child,
                             conf=conf,
                             cls_stack=cls_stack,
-                            exception_prefix=_EXCEPTION_PREFIX,
+                            exception_prefix=EXCEPTION_PREFIX,
                         )
                         # print(f'Sanified union child hint to {repr(hint_child)}...')
 
@@ -1310,7 +1248,7 @@ def make_check_expr(
                                 hint_curr_expr=add_func_scope_types(
                                     types=hint_childs_nonpep,
                                     func_scope=func_wrapper_scope,
-                                    exception_prefix=_EXCEPTION_PREFIX_HINT,
+                                    exception_prefix=EXCEPTION_PREFIX_HINT,
                                 ),
                             ))
 
@@ -1374,7 +1312,7 @@ def make_check_expr(
                         func_curr_code = (
                             # Strip the erroneous " or" suffix appended by the
                             # last child hint from this code.
-                            f'{func_curr_code[:_LINE_RSTRIP_INDEX_OR]}'
+                            f'{func_curr_code[:LINE_RSTRIP_INDEX_OR]}'
                             # Suffix this code by the substring suffixing all
                             # such code.
                             f'{CODE_PEP484604_UNION_SUFFIX}'
@@ -1420,7 +1358,7 @@ def make_check_expr(
                         # Origin type of this sequence hint.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         func_scope=func_wrapper_scope,
-                        exception_prefix=_EXCEPTION_PREFIX_HINT,
+                        exception_prefix=EXCEPTION_PREFIX_HINT,
                     )
 
                     # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
@@ -1441,7 +1379,7 @@ def make_check_expr(
                         get_hint_pep484585_args(
                             hint=hint_curr,
                             args_len=1,
-                            exception_prefix=_EXCEPTION_PREFIX,
+                            exception_prefix=EXCEPTION_PREFIX,
                         )
                     )
 
@@ -1452,7 +1390,7 @@ def make_check_expr(
                         hint=hint_child,
                         conf=conf,
                         cls_stack=cls_stack,
-                        exception_prefix=_EXCEPTION_PREFIX,
+                        exception_prefix=EXCEPTION_PREFIX,
                     )
 
                     # If this child hint is unignorable, deeply type-check both
@@ -1526,7 +1464,7 @@ def make_check_expr(
                     assert (
                         hint_childs_len <= 1 or
                         hint_childs[1] is not Ellipsis
-                    ), (f'{_EXCEPTION_PREFIX}variadic tuple type hint '
+                    ), (f'{EXCEPTION_PREFIX}variadic tuple type hint '
                         f'{repr(hint_curr)} unhandled.')
 
                     # Initialize the code type-checking this pith against this
@@ -1562,7 +1500,7 @@ def make_check_expr(
                                     hint=hint_child,
                                     conf=conf,
                                     cls_stack=cls_stack,
-                                    exception_prefix=_EXCEPTION_PREFIX,
+                                    exception_prefix=EXCEPTION_PREFIX,
                                 ))
 
                             # If this child hint is unignorable, deeply
@@ -1586,7 +1524,7 @@ def make_check_expr(
                     func_curr_code = (
                         # Strip the erroneous " and" suffix appended by the
                         # last child hint from this code.
-                        f'{func_curr_code[:_LINE_RSTRIP_INDEX_AND]}'
+                        f'{func_curr_code[:LINE_RSTRIP_INDEX_AND]}'
                         # Suffix this code by the substring suffixing all such
                         # code.
                         f'{CODE_PEP484585_TUPLE_FIXED_SUFFIX}'
@@ -1598,57 +1536,161 @@ def make_check_expr(
                 # Else, this hint is *NOT* a tuple.
                 #
                 # ..........{ MAPPINGS                             }............
-                # # If this hint is a standard mapping (e.g., "dict[str, int]")...
-                # elif hint_curr_sign in HINT_SIGNS_MAPPING:
-                #     # Python expression evaluating to the origin type of this
-                #     # mapping hint.
-                #     hint_curr_expr = add_func_scope_type(
-                #         # Origin type of this sequence.
-                #         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
-                #         func_scope=func_wrapper_scope,
-                #         exception_prefix=_EXCEPTION_PREFIX_HINT,
-                #     )
-                #
-                #     # Child key and value hints subscripting this mapping hint.
-                #     hint_child_key, hint_child_value = get_hint_pep484585_args(
-                #         hint=hint_curr,
-                #         args_len=2,
-                #         exception_prefix=_EXCEPTION_PREFIX,
-                #     )
-                #
-                #     #FIXME: Start here tomorrow, please. A good place would be
-                #     #generating the "pith_curr_key_var_name" and
-                #     #"pith_curr_value_var_name" variables as is done above for
-                #     #the "pith_curr_var_name" variable. *sigh*
-                #     # If this child hint is *NOT* ignorable, deeply type-check
-                #     # both the type of the current pith *AND* a randomly indexed
-                #     # item of this pith. Specifically...
-                #     if not is_hint_ignorable(hint_child):
-                #         # Record that a pseudo-random integer is now required.
-                #         is_var_random_int_needed = True
-                #
-                #         # Code type-checking this pith against this type.
-                #         func_curr_code = CODE_PEP484585_SEQUENCE_ARGS_1_format(
-                #             indent_curr=indent_curr,
-                #             pith_curr_assign_expr=pith_curr_assign_expr,
-                #             pith_curr_var_name=pith_curr_var_name,
-                #             hint_curr_expr=hint_curr_expr,
-                #             hint_child_placeholder=_enqueue_hint_child(
-                #                 # Python expression yielding the value of a
-                #                 # randomly indexed item of the current pith
-                #                 # (i.e., standard sequence) to be
-                #                 # type-checked against this child hint.
-                #                 CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format(
-                #                     pith_curr_var_name=pith_curr_var_name)),
-                #         )
-                #     # Else, this child hint is ignorable. In this case, fallback
-                #     # to trivial code shallowly type-checking this pith as an
-                #     # instance of this origin type.
-                #     else:
-                #         func_curr_code = CODE_PEP484_INSTANCE_format(
-                #             pith_curr_expr=pith_curr_expr,
-                #             hint_curr_expr=hint_curr_expr,
-                #         )
+                # If this hint is a standard mapping (e.g., "dict[str, int]")...
+                elif hint_curr_sign in HINT_SIGNS_MAPPING:
+                    # Python expression evaluating to the origin type of this
+                    # mapping hint.
+                    hint_curr_expr = add_func_scope_type(
+                        # Origin type of this sequence.
+                        cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
+                        func_scope=func_wrapper_scope,
+                        exception_prefix=EXCEPTION_PREFIX_HINT,
+                    )
+
+                    # 2-tuple of the possibly ignorable insane child key and
+                    # value hints subscripting this mapping hint.
+                    hint_childs = get_hint_pep484585_args(  # type: ignore[assignment]
+                        hint=hint_curr,
+                        args_len=2,
+                        exception_prefix=EXCEPTION_PREFIX,
+                    )
+
+                    #FIXME: Consider also contextually considering child key
+                    #hints that reduce to "Hashable" to be ignorable. This
+                    #includes complex type hints like "Union[Hashable, str]",
+                    #which reduces to "Hashable". We can't particularly be
+                    #bothered at the moment. This is a microoptimization and
+                    #will probably require a non-trivial amount of work. *sigh*
+                    # Unignorable sane child key hint sanified from this
+                    # possibly ignorable insane child key hint *OR* "None"
+                    # otherwise (i.e., if this child key hint is ignorable).
+                    hint_child = sanify_hint_child_if_unignorable_or_none(
+                        hint=hint_childs[0],
+                        conf=conf,
+                        cls_stack=cls_stack,
+                        exception_prefix=EXCEPTION_PREFIX,
+                    )
+
+                    # If this child key hint is unignorable...
+                    if hint_child is not None:
+                        # Increment the integer suffixing the name of a unique
+                        # local variable storing the value of this child key
+                        # pith *BEFORE* defining this variable.
+                        pith_curr_var_name_index += 1
+
+                        # Name of this local variable.
+                        pith_curr_key_var_name = PITH_INDEX_TO_VAR_NAME[
+                            pith_curr_var_name_index]
+
+                        # Placeholder string to be subsequently replaced by code
+                        # type-checking this child key pith against this hint.
+                        hint_key_placeholder: Optional[str] = (
+                            _enqueue_hint_child(pith_curr_key_var_name))
+                    # Else, this child key hint is ignorable. In this case,
+                    # disable this placeholder for detection below.
+                    else:
+                        hint_key_placeholder = None
+
+                    # Unignorable sane child value hint sanified from this
+                    # possibly ignorable insane child value hint *OR* "None"
+                    # otherwise (i.e., if this child value hint is ignorable).
+                    hint_child = sanify_hint_child_if_unignorable_or_none(
+                        hint=hint_childs[1],  # type: ignore[has-type]
+                        conf=conf,
+                        cls_stack=cls_stack,
+                        exception_prefix=EXCEPTION_PREFIX,
+                    )
+
+                    # If this child value hint is unignorable...
+                    if hint_child is not None:
+                        # Increment the integer suffixing the name of a unique
+                        # local variable storing the value of this child value
+                        # pith *BEFORE* defining this variable.
+                        pith_curr_var_name_index += 1
+
+                        # Name of this local variable.
+                        pith_curr_value_var_name = PITH_INDEX_TO_VAR_NAME[
+                            pith_curr_var_name_index]
+
+                        # Placeholder string to be subsequently replaced by code
+                        # type-checking this child value pith against this hint.
+                        hint_value_placeholder: Optional[str] = (
+                            _enqueue_hint_child(pith_curr_value_var_name))
+                    # Else, this child value hint is ignorable. In this case,
+                    # disable this placeholder for detection below.
+                    else:
+                        hint_value_placeholder = None
+
+                    # If at least one of either of these child key *AND* value
+                    # hints are unignorable...
+                    if hint_key_placeholder or hint_value_placeholder:
+                        # If this child key hint is unignorable...
+                        if hint_key_placeholder:
+                            # If this child value hint is also unignorable...
+                            if hint_value_placeholder:
+                                # Code deeply type-checking these child key and
+                                # value piths against these hints.
+                                func_curr_code_key_value = (
+                                    CODE_PEP484585_MAPPING_KEY_VALUE_format(
+                                        indent_curr=indent_curr,
+                                        pith_curr_key_var_name=(  # pyright: ignore
+                                            pith_curr_key_var_name),
+                                        pith_curr_value_var_name=(  # pyright: ignore
+                                            pith_curr_value_var_name),
+                                        pith_curr_var_name=pith_curr_var_name,
+                                        hint_key_placeholder=(
+                                            hint_key_placeholder),
+                                        hint_value_placeholder=(
+                                            hint_value_placeholder),
+                                    ))
+                            # Else, this child value hint is ignorable. In this
+                            # case...
+                            else:
+                                # Code deeply type-checking only this child key
+                                # pith against this hint.
+                                func_curr_code_key_value = (
+                                    CODE_PEP484585_MAPPING_KEY_ONLY_format(
+                                        indent_curr=indent_curr,
+                                        pith_curr_key_var_name=(  # pyright: ignore
+                                            pith_curr_key_var_name),
+                                        pith_curr_var_name=pith_curr_var_name,
+                                        hint_key_placeholder=(
+                                            hint_key_placeholder),
+                                    ))
+                        # Else, this child key hint is ignorable. By process
+                        # of elimination, this child value hint *MUST* be
+                        # unignorable. In this case...
+                        else:
+                            # Code deeply type-checking only this child value
+                            # pith against this hint.
+                            func_curr_code_key_value = (
+                                CODE_PEP484585_MAPPING_VALUE_ONLY_format(
+                                    indent_curr=indent_curr,
+                                    pith_curr_value_var_name=(  # pyright: ignore
+                                        pith_curr_value_var_name),
+                                    pith_curr_var_name=pith_curr_var_name,
+                                    hint_value_placeholder=(
+                                        hint_value_placeholder),
+                                ))
+
+                        # Code deeply type-checking this pith as well as at
+                        # least one of these child key and value piths.
+                        func_curr_code = CODE_PEP484585_MAPPING_format(
+                            indent_curr=indent_curr,
+                            pith_curr_assign_expr=pith_curr_assign_expr,
+                            pith_curr_var_name=pith_curr_var_name,
+                            hint_curr_expr=hint_curr_expr,
+                            func_curr_code_key_value=func_curr_code_key_value,
+                        )
+                    # Else, these child key *AND* value hints are both
+                    # ignorable. In this case, fallback to trivial code
+                    # shallowly type-checking this pith as an instance of this
+                    # origin type.
+                    else:
+                        func_curr_code = CODE_PEP484_INSTANCE_format(
+                            pith_curr_expr=pith_curr_expr,
+                            hint_curr_expr=hint_curr_expr,
+                        )
                 # Else, this hint is *NOT* a mapping.
                 #
                 # ............{ ANNOTATED                          }............
@@ -1672,7 +1714,7 @@ def make_check_expr(
                         hint=get_hint_pep593_metahint(hint_curr),
                         conf=conf,
                         cls_stack=cls_stack,
-                        exception_prefix=_EXCEPTION_PREFIX,
+                        exception_prefix=EXCEPTION_PREFIX,
                     )
 
                     # If the expression assigning the current pith expression to
@@ -1725,7 +1767,7 @@ def make_check_expr(
                         # safety.
                         if not isinstance(hint_child, BeartypeValidator):
                             raise BeartypeDecorHintPep593Exception(
-                                f'{_EXCEPTION_PREFIX}PEP 593 type hint '
+                                f'{EXCEPTION_PREFIX}PEP 593 type hint '
                                 f'{repr(hint_curr)} subscripted by both '
                                 f'@beartype-specific and -agnostic metadata '
                                 f'(i.e., {represent_object(hint_child)} not '
@@ -1742,7 +1784,7 @@ def make_check_expr(
                             # class into this code.
                             hint_child_expr=hint_child._is_valid_code.format(
                                 # Indentation unique to this child hint.
-                                indent=_INDENT_LEVEL_TO_CODE[indent_level_child],
+                                indent=INDENT_LEVEL_TO_CODE[indent_level_child],
                                 obj=pith_curr_var_name,
                             ),
                         )
@@ -1759,7 +1801,7 @@ def make_check_expr(
                     func_curr_code = (
                         # Strip the erroneous " and" suffix appended by the
                         # last child hint from this code.
-                        f'{func_curr_code[:_LINE_RSTRIP_INDEX_AND]}'
+                        f'{func_curr_code[:LINE_RSTRIP_INDEX_AND]}'
                         # Suffix this code by the substring suffixing all such
                         # code.
                         f'{CODE_PEP593_VALIDATOR_SUFFIX_format(indent_curr=indent_curr)}'
@@ -1782,7 +1824,7 @@ def make_check_expr(
                     # Superclass this pith is required to be a subclass of.
                     hint_child = get_hint_pep484585_type_superclass(
                         hint=hint_curr,
-                        exception_prefix=_EXCEPTION_PREFIX,
+                        exception_prefix=EXCEPTION_PREFIX,
                     )
 
                     # If this superclass is either a class *OR* tuple of
@@ -1792,7 +1834,7 @@ def make_check_expr(
                         hint_curr_expr = add_func_scope_type_or_types(
                             type_or_types=hint_child,  # type: ignore[arg-type]
                             func_scope=func_wrapper_scope,
-                            exception_prefix=_EXCEPTION_PREFIX_HINT,
+                            exception_prefix=EXCEPTION_PREFIX_HINT,
                         )
                     # Else, this superclass is *NOT* actually a class. By
                     # process of elimination and the validation already
@@ -1808,7 +1850,7 @@ def make_check_expr(
                                 forwardrefs_class_basename=(
                                     hint_refs_type_basename),
                                 func_scope=func_wrapper_scope,
-                                exception_prefix=_EXCEPTION_PREFIX,
+                                exception_prefix=EXCEPTION_PREFIX,
                             ))
 
                     # Code type-checking this pith against this superclass.
@@ -1868,7 +1910,7 @@ def make_check_expr(
                     #   "typing.IO[str]"), reduce this hint to the object
                     #   originating this generic (e.g., "typing.IO").
                     hint_curr = get_hint_pep484585_generic_type(
-                        hint=hint_curr, exception_prefix=_EXCEPTION_PREFIX)
+                        hint=hint_curr, exception_prefix=EXCEPTION_PREFIX)
                     # print(f'Visiting generic type {repr(hint_curr)}...')
 
                     # Initialize the code type-checking this pith against this
@@ -1881,7 +1923,7 @@ def make_check_expr(
                         iter_hint_pep484585_generic_bases_unerased_tree(
                             hint=hint_curr,
                             conf=conf,
-                            exception_prefix=_EXCEPTION_PREFIX,
+                            exception_prefix=EXCEPTION_PREFIX,
                     )):
                         # print(f'Visiting generic type hint {repr(hint_curr)} unerased base {repr(hint_child)}...')
 
@@ -1898,7 +1940,7 @@ def make_check_expr(
                     func_curr_code = (
                         # Strip the erroneous " and" suffix appended by the
                         # last child hint from this code.
-                        f'{func_curr_code[:_LINE_RSTRIP_INDEX_AND]}'
+                        f'{func_curr_code[:LINE_RSTRIP_INDEX_AND]}'
                         # Suffix this code by the substring suffixing all such
                         # code.
                         f'{CODE_PEP484585_GENERIC_SUFFIX}'
@@ -1911,7 +1953,7 @@ def make_check_expr(
                         hint_curr_expr=add_func_scope_type(
                             cls=hint_curr,
                             func_scope=func_wrapper_scope,
-                            exception_prefix=_EXCEPTION_PREFIX_HINT,
+                            exception_prefix=EXCEPTION_PREFIX_HINT,
                         ),
                     )
                     # print(f'{hint_curr_exception_prefix} PEP generic {repr(hint)} handled.')
@@ -1931,7 +1973,7 @@ def make_check_expr(
                     # a "typing.Literal" subscription, raise an exception.
                     die_unless_hint_pep586(
                         hint=hint_curr,
-                        exception_prefix=_EXCEPTION_PREFIX,
+                        exception_prefix=EXCEPTION_PREFIX,
                     )
                     # Else, this hint complies with PEP 586 and is thus
                     # subscripted by one or more compliant literal objects.
@@ -1942,7 +1984,7 @@ def make_check_expr(
                     # "typing_extensions.Literal" type hint factory.
                     hint_childs = get_hint_pep586_literals(
                         hint=hint_curr,
-                        exception_prefix=_EXCEPTION_PREFIX,
+                        exception_prefix=EXCEPTION_PREFIX,
                     )
 
                     # Initialize the code type-checking this pith against this
@@ -1968,7 +2010,7 @@ def make_check_expr(
                                 for hint_child in hint_childs
                             },
                             func_scope=func_wrapper_scope,
-                            exception_prefix=_EXCEPTION_PREFIX_HINT,
+                            exception_prefix=EXCEPTION_PREFIX_HINT,
                         ),
                     )
 
@@ -1983,7 +2025,7 @@ def make_check_expr(
                                 attr=hint_child,
                                 func_scope=func_wrapper_scope,
                                 exception_prefix=(
-                                    _EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
+                                    EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
                             ),
                         )
 
@@ -1991,7 +2033,7 @@ def make_check_expr(
                     func_curr_code = (
                         # Strip the erroneous " or" suffix appended by the last
                         # child hint from this code.
-                        f'{func_curr_code[:_LINE_RSTRIP_INDEX_OR]}'
+                        f'{func_curr_code[:LINE_RSTRIP_INDEX_OR]}'
                         # Suffix this code by the appropriate substring.
                         f'{CODE_PEP586_SUFFIX}'
                     ).format(indent_curr=indent_curr)
@@ -2004,7 +2046,7 @@ def make_check_expr(
                 # *NEVER* be triggered. Nonetheless, raise an exception.
                 else:
                     raise BeartypeDecorHintPepUnsupportedException(
-                        f'{_EXCEPTION_PREFIX_HINT}'
+                        f'{EXCEPTION_PREFIX_HINT}'
                         f'{repr(hint_curr)} unsupported but '
                         f'erroneously detected as supported with '
                         f'beartype sign {hint_curr_sign}.'
@@ -2040,7 +2082,7 @@ def make_check_expr(
                 hint_curr_expr=add_func_scope_type(
                     cls=hint_curr,
                     func_scope=func_wrapper_scope,
-                    exception_prefix=_EXCEPTION_PREFIX_HINT,
+                    exception_prefix=EXCEPTION_PREFIX_HINT,
                 ),
             )
         # ................{ NON-PEP ~ bad                      }................
@@ -2057,7 +2099,7 @@ def make_check_expr(
         #     disabled by passing such an option to that call.
         else:
             raise BeartypeDecorHintPepException(
-                f'{_EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
+                f'{EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
                 f'not PEP-compliant.'
             )
 
@@ -2092,7 +2134,7 @@ def make_check_expr(
     # which it should have... but may not have, which is why we're testing.
     if func_wrapper_code == func_root_code:
         raise BeartypeDecorHintPepException(
-            f'{_EXCEPTION_PREFIX_HINT}{repr(hint_root)} unchecked.')
+            f'{EXCEPTION_PREFIX_HINT}{repr(hint_root)} unchecked.')
     # Else, the breadth-first search above successfully generated code.
 
     # ..................{ CODE ~ scope                       }..................

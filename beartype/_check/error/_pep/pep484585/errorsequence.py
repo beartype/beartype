@@ -4,10 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype** :pep:`484`- and :pep:`585`-compliant **sequence type hint
-violation describers** (i.e., functions returning human-readable strings
-explaining violations of :pep:`484`- and :pep:`585`-compliant sequence type
-hints).
+Beartype :pep:`484`- and :pep:`585`-compliant **sequence type hint violation
+describers** (i.e., functions returning human-readable strings explaining
+violations of :pep:`484`- and :pep:`585`-compliant sequence type hints).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -19,21 +18,23 @@ from beartype._data.hint.pep.sign.datapepsignset import (
 from beartype._check.error._errorcause import ViolationCause
 from beartype._check.error._errortype import (
     find_cause_type_instance_origin)
-from beartype._check.error._util.errorutiltext import represent_pith
+from beartype._check.error._util.errorutiltext import (
+    prefix_pith_type,
+    represent_pith,
+)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextansi import color_type
-from beartype._util.text.utiltextlabel import label_object_type
 
-# ....................{ GETTERS ~ sequence                 }....................
+# ....................{ FINDERS                            }....................
 def find_cause_sequence_args_1(cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing whether the pith of the passed input cause either
     satisfies or violates the **single-argument variadic sequence type hint**
     (i.e., PEP-compliant type hint accepting exactly one subscripted argument
-    constraining *all* items of this object, which necessarily satisfies the
-    :class:`collections.abc.Sequence` protocol with guaranteed ``O(1)``
+    constraining *all* items of this pith, which necessarily satisfies the
+    :class:`collections.abc.Sequence` protocol with guaranteed :math:`O(1)`
     indexation across all sequence items) of that cause.
 
     Parameters
@@ -42,7 +43,7 @@ def find_cause_sequence_args_1(cause: ViolationCause) -> ViolationCause:
         Input cause providing this data.
 
     Returns
-    ----------
+    -------
     ViolationCause
         Output cause type-checking this data.
     '''
@@ -86,7 +87,7 @@ def find_cause_tuple(cause: ViolationCause) -> ViolationCause:
         Input cause providing this data.
 
     Returns
-    ----------
+    -------
     ViolationCause
         Output cause type-checking this data.
     '''
@@ -175,8 +176,9 @@ def find_cause_tuple(cause: ViolationCause) -> ViolationCause:
                 # Human-readable substring prefixing this failure with metadata
                 # describing this item.
                 cause_deep.cause_str_or_none = (
-                    f'tuple index {pith_item_index} item '
-                    f'{cause_deep.cause_str_or_none}'
+                    f'{prefix_pith_type(cause.pith)}'
+                    f'index {color_type(str(pith_item_index))} '
+                    f'item {cause_deep.cause_str_or_none}'
                 )
 
                 # Return this cause.
@@ -188,7 +190,7 @@ def find_cause_tuple(cause: ViolationCause) -> ViolationCause:
     # implying this pith to deeply satisfy this hint.
     return cause
 
-# ....................{ GETTERS ~ private                  }....................
+# ....................{ PRIVATE ~ finders                  }....................
 def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
     '''
     Output cause describing whether the pith of the passed input cause either
@@ -204,7 +206,7 @@ def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
         Input cause providing this data.
 
     Returns
-    ----------
+    -------
     ViolationCause
         Output cause type-checking this data.
     '''
@@ -226,8 +228,8 @@ def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
 
     # If this sequence is non-empty...
     if cause.pith:
-        # First child hint of this hint. All remaining child hints if any are
-        # ignorable. Specifically, if this hint is:
+        # First child hint subscripting this sequence hint. All remaining child
+        # hints if any are ignorable. Specifically, if this hint is:
         # * A standard sequence (e.g., "typing.List[str]"), this hint is
         #   subscripted by only one child hint.
         # * A variadic tuple (e.g., "typing.Tuple[str, ...]"), this hint is
@@ -235,7 +237,7 @@ def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
         #   ignorable syntactic chuff.
         hint_child = cause.hint_childs[0]
 
-        # If this child hint is *NOT* ignorable...
+        # If this child hint is unignorable...
         if not is_hint_ignorable(hint_child):
             # Arbitrary iterator satisfying the enumerate() protocol, yielding
             # zero or more 2-tuples of the form "(item_index, item)", where:
@@ -275,7 +277,7 @@ def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
                 pith_enumerator = enumerate(cause.pith)
                 # print('Checking sequence in O(n) time!')
 
-            # For each enumerated item of this (sub)sequence...
+            # For each enumerated item of this sequence...
             for pith_item_index, pith_item in pith_enumerator:
                 # Deep output cause, type-checking whether this item satisfies
                 # this child hint.
@@ -287,9 +289,9 @@ def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
                     # Human-readable substring prefixing this failure with
                     # metadata describing this item.
                     cause_deep.cause_str_or_none = (
-                        f'{color_type(label_object_type(cause.pith))} '
-                        f'index {pith_item_index} item '
-                        f'{cause_deep.cause_str_or_none}'
+                        f'{prefix_pith_type(cause.pith)}'
+                        f'index {color_type(str(pith_item_index))} '
+                        f'item {cause_deep.cause_str_or_none}'
                     )
 
                     # Return this cause.

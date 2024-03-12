@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep585Exception
-from beartype.typing import Tuple
+from beartype.typing import Union
 from beartype._util.hint.pep.proposal.pep484.utilpep484 import (
     HINT_PEP484_TUPLE_EMPTY)
 from beartype._util.hint.pep.proposal.utilpep585 import (
@@ -130,8 +130,9 @@ def get_hint_pep484585_args(
 
     Returns
     -------
-    Tuple[object, object, object]
-        3-tuple of the three arguments subscripting this hint.
+    Union[object, tuple]
+        Either the single argument or tuple of all arguments subscripting this
+        type hint.
 
     Raises
     ------
