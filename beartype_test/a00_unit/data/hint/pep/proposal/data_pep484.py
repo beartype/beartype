@@ -43,6 +43,8 @@ from beartype_test.a00_unit.data.data_type import (
 from collections.abc import (
     Callable as CallableABC,
     Hashable as HashableABC,
+    Mapping as MappingABC,
+    MutableMapping as MutableMappingABC,
     MutableSequence as MutableSequenceABC,
     Sequence as SequenceABC,
     Sized as SizedABC,
@@ -54,6 +56,7 @@ from typing import (
     Callable,
     Container,
     ContextManager,
+    DefaultDict,
     Dict,
     ForwardRef,
     Generic,
@@ -62,8 +65,11 @@ from typing import (
     Iterable,
     List,
     Match,
+    Mapping,
+    MutableMapping,
     MutableSequence,
     NewType,
+    OrderedDict,
     Pattern,
     Sequence,
     Sized,
@@ -279,16 +285,20 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintSignByteString,
         HintSignCallable,
         HintSignContextManager,
+        HintSignDefaultDict,
         HintSignDict,
         HintSignForwardRef,
         HintSignGeneric,
         HintSignHashable,
         HintSignList,
+        HintSignMapping,
         HintSignMatch,
+        HintSignMutableMapping,
         HintSignMutableSequence,
         HintSignNewType,
         HintSignNone,
         HintSignOptional,
+        HintSignOrderedDict,
         HintSignPattern,
         HintSignSequence,
         HintSignSized,
@@ -306,6 +316,10 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
         HintPepMetadata,
         HintPithSatisfiedMetadata,
         HintPithUnsatisfiedMetadata,
+    )
+    from collections import (
+        OrderedDict as OrderedDictType,
+        defaultdict,
     )
 
     # ..................{ LOCALS                             }..................
@@ -341,6 +355,26 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     # This boolean is true for Python interpreters targeting 3.6 < Python <
     # 3.9, oddly. (We don't make the rules. We simply complain about them.)
     _IS_ARGS_HIDDEN = False
+
+    # ..................{ LOCALS ~ defaultdict               }..................
+    def default_dict_str_factory() -> str:
+        '''
+        Arbitrary factory function returning arbitrary strings.
+        '''
+
+        return 'His steps to the sea-shore. A swan was there,'
+
+    # Non-empty default dictionary mapping integers to strings, initialized with
+    # an arbitrary factory function returning arbitrary strings.
+    default_dict_int_to_str = defaultdict(default_dict_str_factory)
+    default_dict_int_to_str[0] = 'Beside a sluggish stream among the reeds.'
+    default_dict_int_to_str[1] # == 'His steps to the sea-shore. A swan was there,'
+
+    # Non-empty default dictionary mapping strings to strings, initialized with
+    # an arbitrary factory function returning arbitrary strings.
+    default_dict_str_to_str = defaultdict(default_dict_str_factory)
+    default_dict_str_to_str['His eyes pursued its flight.'] = (
+        'Thou hast a home,')
 
     # ..................{ LISTS                              }..................
     # Add PEP-specific type hint metadata to this list.
@@ -575,65 +609,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # ................{ DICT                               }................
-        # Unsubscripted "Dict" attribute.
-        HintPepMetadata(
-            hint=Dict,
-            pep_sign=HintSignDict,
-            warning_type=PEP585_DEPRECATION_WARNING,
-            is_args=_IS_ARGS_HIDDEN,
-            is_typevars=_IS_TYPEVARS_HIDDEN,
-            isinstanceable_type=dict,
-            piths_meta=(
-                # Dictionary containing arbitrary key-value pairs.
-                HintPithSatisfiedMetadata({
-                    'Of':         'our disappointment’s purse‐anointed ire',
-                    'Offloading': '1. Coffer‐bursed statehood ointments;',
-                }),
-                # Set containing arbitrary items.
-                HintPithUnsatisfiedMetadata({
-                    '2. Disjointly jade‐ and Syndicate‐disbursed retirement funds,',
-                    'Untiringly,'
-                }),
-            ),
-        ),
-
-        # Flat dictionary.
-        HintPepMetadata(
-            hint=Dict[int, str],
-            pep_sign=HintSignDict,
-            warning_type=PEP585_DEPRECATION_WARNING,
-            isinstanceable_type=dict,
-            piths_meta=(
-                # Dictionary mapping integer keys to string values.
-                HintPithSatisfiedMetadata({
-                    1: 'For taxing',
-                    2: "To a lax and golden‐rendered crucifixion, affix'd",
-                }),
-                # String constant.
-                HintPithUnsatisfiedMetadata(
-                    'To that beep‐prattling, LED‐ and lead-rattling crux'),
-            ),
-        ),
-
-        # Generic dictionary.
-        HintPepMetadata(
-            hint=Dict[S, T],
-            pep_sign=HintSignDict,
-            warning_type=PEP585_DEPRECATION_WARNING,
-            isinstanceable_type=dict,
-            is_typevars=True,
-            piths_meta=(
-                # Dictionary mapping string keys to integer values.
-                HintPithSatisfiedMetadata({
-                    'Less-ons"-chastened': 2,
-                    'Chanson': 1,
-                }),
-                # String constant.
-                HintPithUnsatisfiedMetadata('Swansong.'),
-            ),
-        ),
-
         # ................{ GENERATOR                          }................
         # Note that testing generators requires creating generators, which
         # require a different syntax to that of standard callables; ergo,
@@ -842,7 +817,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # Nested list of PEP 484-compliant generics.
+        # Nested list of generics.
         HintPepMetadata(
             hint=List[_Pep484GenericUntypevaredMultiple],
             pep_sign=HintSignList,
@@ -903,7 +878,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # List of ignorable objects.
+        # List of ignorable items.
         HintPepMetadata(
             hint=List[object],
             pep_sign=HintSignList,
@@ -924,7 +899,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # List of non-"typing" objects.
+        # List of unignorable items.
         HintPepMetadata(
             hint=List[str],
             pep_sign=HintSignList,
@@ -945,11 +920,10 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 # enables us to match the explicit index at fault below.
                 HintPithUnsatisfiedMetadata(
                     pith=[1010011010,],  # <-- oh, we've done it now
-                    # Match that the exception message raised for this
-                    # object...
+                    # Match that the exception message raised for this object...
                     exception_str_match_regexes=(
-                        # Declares the index of the random list item *NOT*
-                        # satisfying this hint.
+                        # Declares the index of the random list item violating
+                        # this hint.
                         r'\b[Ll]ist index \d+ item\b',
                         # Preserves the value of this item as is.
                         r'\s1010011010\s',
@@ -976,6 +950,429 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
                 # String constant.
                 HintPithUnsatisfiedMetadata(
                     'Lest we succumb, indelicately, to'),
+            ),
+        ),
+
+        # ................{ MAPPING ~ dict                     }................
+        # Unsubscripted "Dict" attribute.
+        HintPepMetadata(
+            hint=Dict,
+            pep_sign=HintSignDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
+            isinstanceable_type=dict,
+            piths_meta=(
+                # Dictionary containing arbitrary key-value pairs.
+                HintPithSatisfiedMetadata({
+                    'Of':         'our disappointment’s purse‐anointed ire',
+                    'Offloading': '1. Coffer‐bursed statehood ointments;',
+                }),
+                # Set containing arbitrary items.
+                HintPithUnsatisfiedMetadata({
+                    '2. Disjointly jade‐ and Syndicate‐disbursed retirement funds,',
+                    'Untiringly,'
+                }),
+            ),
+        ),
+
+        # Dictionary of unignorable key-value pairs.
+        HintPepMetadata(
+            hint=Dict[int, str],
+            pep_sign=HintSignDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=dict,
+            piths_meta=(
+                # Dictionary mapping integers to strings.
+                HintPithSatisfiedMetadata({
+                    1: 'For taxing',
+                    2: "To a lax and golden‐rendered crucifixion, affix'd",
+                }),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'To that beep‐prattling, LED‐ and lead-rattling crux'),
+                # Dictionary mapping strings to strings. Since only the first
+                # key-value pair of dictionaries are type-checked, a
+                # dictionary of one key-value pair suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith={'Upon his cheek of death.': 'He wandered on'},
+                    # Match that the exception message raised for this object
+                    # declares the key violating this hint.
+                    exception_str_match_regexes=(
+                        r"\bkey str 'Upon his cheek of death\.' ",
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* declare the value of this key.
+                    exception_str_not_match_regexes=(
+                        r"\bvalue str 'He wandered on' ",
+                    ),
+                ),
+            ),
+        ),
+
+        # Dictionary of unignorable keys and ignorable values.
+        HintPepMetadata(
+            hint=Dict[str, object],
+            pep_sign=HintSignDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=dict,
+            piths_meta=(
+                # Dictionary mapping strings to arbitrary objects.
+                HintPithSatisfiedMetadata({
+                    'Till vast Aornos,': b"seen from Petra's steep",
+                    "Hung o'er the low horizon": b'like a cloud;',
+                }),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Through Balk, and where the desolated tombs'),
+                # Dictionary mapping bytestrings to arbitrary objects. Since
+                # only the first key-value pair of dictionaries are
+                # type-checked, a dictionary of one key-value pair suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith={b'Of Parthian kings': 'scatter to every wind'},
+                    # Match that the exception message raised for this object
+                    # declares the key violating this hint.
+                    exception_str_match_regexes=(
+                        r"\bkey bytes b'Of Parthian kings' ",
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* declare the value of this key.
+                    exception_str_not_match_regexes=(
+                        r"\bvalue str 'scatter to every wind' ",
+                    ),
+                ),
+            ),
+        ),
+
+        # Dictionary of ignorable keys and unignorable values.
+        HintPepMetadata(
+            hint=Dict[object, str],
+            pep_sign=HintSignDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=dict,
+            piths_meta=(
+                # Dictionary mapping arbitrary hashables to strings.
+                HintPithSatisfiedMetadata({
+                    0xBEEFFADE: 'Their wasting dust, wildly he wandered on',
+                    0xCAFEDEAF: 'Day after day a weary waste of hours,',
+                }),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Bearing within his life the brooding care'),
+                # Dictionary mapping arbitrary hashables to bytestrings. Since
+                # only the first key-value pair of dictionaries are
+                # type-checked, a dictionary of one key-value pair suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith={'That ever fed on': b'its decaying flame.'},
+                    # Match that the exception message raised for this object
+                    # declares both the key *AND* value violating this hint.
+                    exception_str_match_regexes=(
+                        r"\bkey str 'That ever fed on' ",
+                        r"\bvalue bytes b'its decaying flame\.' ",
+                    ),
+                ),
+            ),
+        ),
+
+        # Dictionary of ignorable key-value pairs.
+        HintPepMetadata(
+            hint=Dict[object, object],
+            pep_sign=HintSignDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=dict,
+            piths_meta=(
+                # Dictionary mapping arbitrary hashables to arbitrary objects.
+                HintPithSatisfiedMetadata({
+                    'And now his limbs were lean;': b'his scattered hair',
+                    'Sered by the autumn of': b'strange suffering',
+                }),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Sung dirges in the wind; his listless hand'),
+            ),
+        ),
+
+        # Generic dictionary.
+        HintPepMetadata(
+            hint=Dict[S, T],
+            pep_sign=HintSignDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=dict,
+            is_typevars=True,
+            piths_meta=(
+                # Dictionary mapping string keys to integer values.
+                HintPithSatisfiedMetadata({
+                    'Less-ons"-chastened': 2,
+                    'Chanson': 1,
+                }),
+                # String constant.
+                HintPithUnsatisfiedMetadata('Swansong.'),
+            ),
+        ),
+
+        # Nested dictionaries of various kinds.
+        HintPepMetadata(
+            hint=Dict[int, Mapping[str, MutableMapping[bytes, bool]]],
+            pep_sign=HintSignDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=dict,
+            piths_meta=(
+                # Dictionary mapping integers to dictionaries mapping strings to
+                # dictionaries mapping bytes to booleans.
+                HintPithSatisfiedMetadata({
+                    1: {
+                        'Beautiful bird;': {
+                            b'thou voyagest to thine home,': False,
+                        },
+                    },
+                }),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Where thy sweet mate will twine her downy neck'),
+                # Dictionary mapping integers to dictionaries mapping strings to
+                # dictionaries mapping bytes to integers. Since only the first
+                # key-value pair of dictionaries are type-checked, dictionaries
+                # of one key-value pairs suffice.
+                HintPithUnsatisfiedMetadata(
+                    pith={
+                        1: {
+                            'With thine,': {
+                                b'and welcome thy return with eyes': 1,
+                            },
+                        },
+                    },
+                    # Match that the exception message raised for this object
+                    # declares all key-value pairs on the path to the value
+                    # violating this hint.
+                    exception_str_match_regexes=(
+                        r'\bkey int 1\b',
+                        r"\bkey str 'With thine,' ",
+                        r"\bkey bytes b'and welcome thy return with eyes' ",
+                        r"\bvalue int 1\b",
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ MAPPING ~ defaultdict              }................
+        # Unsubscripted "DefaultDict" attribute.
+        HintPepMetadata(
+            hint=DefaultDict,
+            pep_sign=HintSignDefaultDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
+            isinstanceable_type=defaultdict,
+            piths_meta=(
+                # Default dictionary containing arbitrary key-value pairs.
+                HintPithSatisfiedMetadata(default_dict_int_to_str),
+                # Set containing arbitrary items.
+                HintPithUnsatisfiedMetadata({
+                    'It rose as he approached, and with strong wings',
+                    'Scaling the upward sky, bent its bright course',
+                }),
+            ),
+        ),
+
+        # Default dictionary of unignorable key-value pairs.
+        HintPepMetadata(
+            hint=DefaultDict[int, str],
+            pep_sign=HintSignDefaultDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=defaultdict,
+            piths_meta=(
+                # Default dictionary mapping integers to strings.
+                HintPithSatisfiedMetadata(default_dict_int_to_str),
+                # String constant.
+                HintPithUnsatisfiedMetadata('High over the immeasurable main.'),
+                # Ordered dictionary mapping strings to strings. Since only the
+                # first key-value pair of dictionaries are type-checked, a
+                # dictionary of one key-value pair suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith=default_dict_str_to_str,
+                    # Match that the exception message raised for this object
+                    # declares the key violating this hint.
+                    exception_str_match_regexes=(
+                        r"\bkey str 'His eyes pursued its flight\.' ",
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* declare the value of this key.
+                    exception_str_not_match_regexes=(
+                        r"\bvalue str 'Thou hast a home,' ",
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ MAPPING ~ mapping                  }................
+        # Unsubscripted "Mapping" attribute.
+        HintPepMetadata(
+            hint=Mapping,
+            pep_sign=HintSignMapping,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
+            isinstanceable_type=MappingABC,
+            piths_meta=(
+                # Dictionary containing arbitrary key-value pairs.
+                HintPithSatisfiedMetadata({
+                    'Hung like dead bone': b'within its withered skin;',
+                    b'Life, and the lustre': 'that consumed it, shone',
+                }),
+                # Set containing arbitrary items.
+                HintPithUnsatisfiedMetadata({
+                    'As in a furnace burning secretly',
+                    'From his dark eyes alone. The cottagers,',
+                }),
+            ),
+        ),
+
+        # Mapping of unignorable key-value pairs.
+        HintPepMetadata(
+            hint=Mapping[int, str],
+            pep_sign=HintSignMapping,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=MappingABC,
+            piths_meta=(
+                # Dictionary mapping integers to strings.
+                HintPithSatisfiedMetadata({
+                    1: 'Who ministered with human charity',
+                    2: 'His human wants, beheld with wondering awe',
+                }),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Their fleeting visitant. The mountaineer,'),
+                # Dictionary mapping strings to strings. Since only the first
+                # key-value pair of dictionaries are type-checked, a
+                # dictionary of one key-value pair suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith={'Encountering on': 'some dizzy precipice'},
+                    # Match that the exception message raised for this object
+                    # declares the key violating this hint.
+                    exception_str_match_regexes=(
+                        r"\bkey str 'Encountering on' ",
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* declare the value of this key.
+                    exception_str_not_match_regexes=(
+                        r"\bvalue str 'some dizzy precipice' ",
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ MAPPING ~ mutablemapping           }................
+        # Unsubscripted "MutableMapping" attribute.
+        HintPepMetadata(
+            hint=MutableMapping,
+            pep_sign=HintSignMutableMapping,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
+            isinstanceable_type=MutableMappingABC,
+            piths_meta=(
+                # Dictionary containing arbitrary key-value pairs.
+                HintPithSatisfiedMetadata({
+                    'That spectral form,': b'deemed that the Spirit of wind',
+                    b'With lightning eyes,': 'and eager breath, and feet',
+                }),
+                # Set containing arbitrary items.
+                HintPithUnsatisfiedMetadata({
+                    'Disturbing not the drifted snow, had paused',
+                    'In its career: the infant would conceal',
+                }),
+            ),
+        ),
+
+        # Mapping of unignorable key-value pairs.
+        HintPepMetadata(
+            hint=MutableMapping[int, str],
+            pep_sign=HintSignMutableMapping,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=MutableMappingABC,
+            piths_meta=(
+                # Dictionary mapping integers to strings.
+                HintPithSatisfiedMetadata({
+                    1: "His troubled visage in his mother's robe",
+                    2: 'In terror at the glare of those wild eyes,',
+                }),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'To remember their strange light in many a dream'),
+                # Dictionary mapping strings to strings. Since only the first
+                # key-value pair of dictionaries are type-checked, a
+                # dictionary of one key-value pair suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith={'Of after-times;': 'but youthful maidens, taught'},
+                    # Match that the exception message raised for this object
+                    # declares the key violating this hint.
+                    exception_str_match_regexes=(
+                        r"\bkey str 'Of after-times;' ",
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* declare the value of this key.
+                    exception_str_not_match_regexes=(
+                        r"\bvalue str 'but youthful maidens, taught' ",
+                    ),
+                ),
+            ),
+        ),
+
+        # ................{ MAPPING ~ ordereddict              }................
+        # Unsubscripted "OrderedDict" attribute.
+        HintPepMetadata(
+            hint=OrderedDict,
+            pep_sign=HintSignOrderedDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            is_args=_IS_ARGS_HIDDEN,
+            is_typevars=_IS_TYPEVARS_HIDDEN,
+            isinstanceable_type=OrderedDictType,
+            piths_meta=(
+                # Ordered dictionary containing arbitrary key-value pairs.
+                HintPithSatisfiedMetadata(OrderedDictType({
+                    'By nature,': b' would interpret half the woe',
+                    b'That wasted him,': 'would call him with false names',
+                })),
+                # Set containing arbitrary items.
+                HintPithUnsatisfiedMetadata({
+                    'Brother, and friend, would press his pallid hand',
+                    'At parting, and watch, dim through tears, the path',
+                }),
+            ),
+        ),
+
+        # Ordered dictionary of unignorable key-value pairs.
+        HintPepMetadata(
+            hint=OrderedDict[int, str],
+            pep_sign=HintSignOrderedDict,
+            warning_type=PEP585_DEPRECATION_WARNING,
+            isinstanceable_type=OrderedDictType,
+            piths_meta=(
+                # Ordered dictionary mapping integers to strings.
+                HintPithSatisfiedMetadata(OrderedDictType({
+                    1: "Of his departure from their father's door.",
+                    2: 'At length upon the lone Chorasmian shore',
+                })),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'He paused, a wide and melancholy waste'),
+                # Ordered dictionary mapping strings to strings. Since only the
+                # first key-value pair of dictionaries are type-checked, a
+                # dictionary of one key-value pair suffices.
+                HintPithUnsatisfiedMetadata(
+                    pith=OrderedDictType({
+                        'Of putrid marshes.': 'A strong impulse urged'}),
+                    # Match that the exception message raised for this object
+                    # declares the key violating this hint.
+                    exception_str_match_regexes=(
+                        r"\bkey str 'Of putrid marshes\.' ",
+                    ),
+                    # Match that the exception message raised for this object
+                    # does *NOT* declare the value of this key.
+                    exception_str_not_match_regexes=(
+                        r"\bvalue str 'A strong impulse urged' ",
+                    ),
+                ),
             ),
         ),
 
@@ -1007,8 +1404,7 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
 
         # New type encapsulating a new type encapsulating a non-ignorable type.
         HintPepMetadata(
-            hint=NewType(
-                'NewTypeBytes', NewType('TotallyNotABytes', bytes)),
+            hint=NewType('NewTypeBytes', NewType('TotallyNotABytes', bytes)),
             pep_sign=HintSignNewType,
             typehint_cls=NewTypeTypeHint,
             # "typing.NewType" type hints are always declared by that module.
@@ -2057,8 +2453,8 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
             from collections.abc import ByteString as ByteStringABC
             from typing import ByteString
 
-            # ..................{ MAPPINGS                   }..................
-            # Add PEP 484-specific test type hints to this dictionary global.
+            # ..................{ LISTS                      }..................
+            # Add Python <= 3.11-specific type hint metadata to this list.
             hints_pep_meta.append(
                 # ................{ UNSUBSCRIPTED              }................
                 # Unsubscripted "ByteString" singleton. Bizarrely, note that:
