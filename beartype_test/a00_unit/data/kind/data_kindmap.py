@@ -39,7 +39,7 @@ THE_SONG_OF_HIAWATHA_SINGING_IN_THE_SUNSHINE = {
 }
 '''
 Arbitrary dictionary to be merged, intentionally containing two key-value
-collisions with the :data:`THE_SONG_OF_HIAWATHA` dictionary *and* unhashable
+collisions with the :data:`.THE_SONG_OF_HIAWATHA` dictionary *and* unhashable
 values.
 '''
 
@@ -68,7 +68,7 @@ Arbitrary dictionary to be merged, intentionally containing:
 
 * No key-value collisions with the :data:`THE_SONG_OF_HIAWATHA` dictionary.
 * Two key collisions but *no* key-value collisions with the
-  :data:`FAREWELL_O_HIAWATHA` dictionary.
+  :data:`.FAREWELL_O_HIAWATHA` dictionary.
 '''
 
 
@@ -82,7 +82,7 @@ FAREWELL_O_HIAWATHA = {
 }
 '''
 Arbitrary dictionary to be merged, intentionally containing two key-value
-collisions with the :data:`THE_SONG_OF_HIAWATHA` dictionary.
+collisions with the :data:`.THE_SONG_OF_HIAWATHA` dictionary.
 '''
 
 
@@ -100,7 +100,7 @@ THE_SONG_OF_HIAWATHA_IN_THE_LODGE_OF_HIAWATHA = {
 }
 '''
 Dictionary produced by merging the :data:`THE_SONG_OF_HIAWATHA` and
-:data:`IN_THE_LODGE_OF_HIAWATHA` dictionaries.
+:data:`.IN_THE_LODGE_OF_HIAWATHA` dictionaries.
 '''
 
 
@@ -116,8 +116,8 @@ IN_THE_LODGE_OF_HIAWATHA_FAREWELL_O_HIAWATHA = {
     'In the purple': 'mists of evening,',
 }
 '''
-Dictionary produced by merging the :data:`IN_THE_LODGE_OF_HIAWATHA` and
-:data:`FAREWELL_O_HIAWATHA` dictionaries.
+Dictionary produced by merging the :data:`.IN_THE_LODGE_OF_HIAWATHA` and
+:data:`.FAREWELL_O_HIAWATHA` dictionaries.
 '''
 
 
@@ -137,7 +137,7 @@ FROM_THE_BROW_OF_HIAWATHA_IN_THE_LODGE_OF_HIAWATHA_FAREWELL_O_HIAWATHA = {
     'In the purple': 'mists of evening,',
 }
 '''
-Dictionary produced by merging the :data:`FROM_THE_BROW_OF_HIAWATHA`,
-:data:`IN_THE_LODGE_OF_HIAWATHA`, and :data:`FAREWELL_O_HIAWATHA` dictionaries.
+Dictionary produced by merging the :data:`.FROM_THE_BROW_OF_HIAWATHA`,
+:data:`.IN_THE_LODGE_OF_HIAWATHA`, and :data:`.FAREWELL_O_HIAWATHA`
+dictionaries.
 '''
-

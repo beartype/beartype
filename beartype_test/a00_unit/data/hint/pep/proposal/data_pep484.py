@@ -37,8 +37,9 @@ from beartype_test.a00_unit.data.data_type import (
     SubclassSubclass,
     OtherClass,
     OtherSubclass,
-    # OtherSubclassSubclass,
     context_manager_factory,
+    default_dict_int_to_str,
+    default_dict_str_to_str,
 )
 from collections.abc import (
     Callable as CallableABC,
@@ -355,26 +356,6 @@ def hints_pep484_meta() -> 'List[HintPepMetadata]':
     # This boolean is true for Python interpreters targeting 3.6 < Python <
     # 3.9, oddly. (We don't make the rules. We simply complain about them.)
     _IS_ARGS_HIDDEN = False
-
-    # ..................{ LOCALS ~ defaultdict               }..................
-    def default_dict_str_factory() -> str:
-        '''
-        Arbitrary factory function returning arbitrary strings.
-        '''
-
-        return 'His steps to the sea-shore. A swan was there,'
-
-    # Non-empty default dictionary mapping integers to strings, initialized with
-    # an arbitrary factory function returning arbitrary strings.
-    default_dict_int_to_str = defaultdict(default_dict_str_factory)
-    default_dict_int_to_str[0] = 'Beside a sluggish stream among the reeds.'
-    default_dict_int_to_str[1] # == 'His steps to the sea-shore. A swan was there,'
-
-    # Non-empty default dictionary mapping strings to strings, initialized with
-    # an arbitrary factory function returning arbitrary strings.
-    default_dict_str_to_str = defaultdict(default_dict_str_factory)
-    default_dict_str_to_str['His eyes pursued its flight.'] = (
-        'Thou hast a home,')
 
     # ..................{ LISTS                              }..................
     # Add PEP-specific type hint metadata to this list.

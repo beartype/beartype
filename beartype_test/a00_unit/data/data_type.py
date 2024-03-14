@@ -19,6 +19,7 @@ from beartype.typing import (
     Iterator,
 )
 from beartype._util.func.utilfuncmake import make_func
+from collections import defaultdict
 from contextlib import contextmanager
 from enum import Enum
 from functools import (
@@ -516,6 +517,32 @@ MODULE_FILENAME = __file__
 '''
 Absolute filename of the current submodule, declared purely for convenience.
 '''
+
+# ....................{ DICTS                              }....................
+def _default_dict_str_factory() -> str:
+    '''
+    Arbitrary factory function returning arbitrary strings.
+    '''
+
+    return 'His steps to the sea-shore. A swan was there,'
+
+
+default_dict_int_to_str = defaultdict(_default_dict_str_factory)
+'''
+Non-empty default dictionary mapping integers to strings, initialized with an
+arbitrary factory function returning arbitrary strings.
+'''
+default_dict_int_to_str[0] = 'Beside a sluggish stream among the reeds.'
+default_dict_int_to_str[1] # == 'His steps to the sea-shore. A swan was there,'
+
+
+default_dict_str_to_str = defaultdict(_default_dict_str_factory)
+'''
+Non-empty default dictionary mapping strings to strings, initialized with an
+arbitrary factory function returning arbitrary strings.
+'''
+default_dict_str_to_str['His eyes pursued its flight.'] = (
+    'Thou hast a home,')
 
 # ....................{ SETS ~ callable                    }....................
 CALLABLES_PYTHON = frozenset((
