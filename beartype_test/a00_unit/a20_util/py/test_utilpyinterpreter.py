@@ -17,17 +17,61 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS ~ testers                    }....................
-def test_is_py_pypy() -> None:
+def test_is_python_pypy() -> None:
     '''
-    Test the :func:`beartype._util.py.utilpyinterpreter.is_py_pypy` tester.
+    Test the :func:`beartype._util.py.utilpyinterpreter.is_python_pypy` tester.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.py.utilpyinterpreter import is_py_pypy
+    from beartype._util.py.utilpyinterpreter import is_python_pypy
 
     # Assert this tester returns a boolean.
-    IS_PY_PYPY = is_py_pypy()
+    IS_PY_PYPY = is_python_pypy()
     assert isinstance(IS_PY_PYPY, bool)
+
+
+def test_is_python_optimized(monkeypatch: 'pytest.MonkeyPatch') -> None:
+    '''
+    Test the :func:`beartype._util.py.utilpyinterpreter.is_python_optimized`
+    tester.
+
+    Parameters
+    ----------
+    monkeypatch : MonkeyPatch
+        :mod:`pytest` fixture allowing various state associated with the active
+        Python process to be temporarily changed for the duration of this test.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.py.utilpyinterpreter import is_python_optimized
+
+    # ....................{ ASSERT                         }....................
+    # Assert that the active Python interpreter is currently unoptimized. In
+    # theory, tests should *ALWAYS* be run unoptimized. Why? Because
+    # optimization destructively elides away (i.e., silently reduces to noops)
+    # all "assert" statements, obstructing testing.
+    assert is_python_optimized() is False
+
+    # Temporarily zero the ${PYTHONOPTIMIZE} environment variable.
+    monkeypatch.setenv('PYTHONOPTIMIZE', '0')
+
+    # Assert that the active Python interpreter remains unoptimized.
+    assert is_python_optimized() is False
+
+    # Temporarily set this variable to an arbitrary positive integer.
+    monkeypatch.setenv('PYTHONOPTIMIZE', '1')
+
+    # Assert that the active Python interpreter is now kinda "optimized."
+    assert is_python_optimized() is True
+
+    # Temporarily set this variable to an arbitrary string that *CANNOT* be
+    # coerced into an integer.
+    monkeypatch.setenv('PYTHONOPTIMIZE', (
+        'Bright in the lustre of their own fond joy.'))
+
+    # Assert that the active Python interpreter is yet again unoptimized.
+    assert is_python_optimized() is False
 
 # ....................{ TESTS ~ getters                    }....................
 def test_get_interpreter_command() -> None:

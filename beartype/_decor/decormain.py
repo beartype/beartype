@@ -31,6 +31,7 @@ from beartype._data.hint.datahinttyping import (
     BeartypeReturn,
     BeartypeableT,
 )
+from beartype._util.py.utilpyinterpreter import is_python_optimized
 
 # Intentionally import the standard mypy-friendly @typing.overload decorator
 # rather than a possibly mypy-unfriendly @beartype.typing.overload decorator --
@@ -77,8 +78,12 @@ if (
     # runtime context under which @beartype is only ever run. Nonetheless, this
     # test is only performed once per process and is thus effectively free.
     TYPE_CHECKING or
-    # Optimized (e.g., option "-O" was passed to this interpreter) *OR*...
-    not __debug__
+    # Optimized at process invocation time (e.g., at least one "-O" command-line
+    # option was set when this interpreter forked) *OR*...
+    not __debug__ or
+    # Optimized *AFTER* process invocation time (e.g., in an interactive REPL by
+    # the external user). Yes, our awesome userbase actually requested this.
+    is_python_optimized()
 ):
 # Then unconditionally disable @beartype-based type-checking across the entire
 # codebase by reducing the @beartype decorator to the identity decorator.

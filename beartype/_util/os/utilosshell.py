@@ -22,16 +22,16 @@ parent shell defines this variable *or* :data:`None` otherwise (i.e., if the
 parent shell does *not* define this variable).
 
 Caveats
-----------
+-------
 **This getter is a human-readable alias of the comparable**
 :func:`os.getenv` **function and** :meth:`os.environ.get` **method.** This
 getter exists only for disambiguity and clarity. This getter is *not* an alias
 of the :meth:`os.environ.__getitem__` dunder method, which raises a
 :exc:`KeyError` exception rather than returns :data:`None` if the parent shell
-does *not* define this variable.
+fails to define this variable.
 
 See Also
-----------
+--------
 https://stackoverflow.com/a/41626355/2809027
     StackOverflow answer strongly inspiring this alias.
 '''

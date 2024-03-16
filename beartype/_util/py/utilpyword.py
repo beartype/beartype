@@ -27,13 +27,13 @@ value of such variables under the active Python interpreter.
 # ....................{ BOOLEANS                           }....................
 IS_WORD_SIZE_64 = maxsize > SHORT_MAX_32_BIT
 '''
-``True`` only if the active Python interpreter is **64-bit** (i.e., was
+:data:`True` only if the active Python interpreter is **64-bit** (i.e., was
 compiled with a 64-bit toolchain into a 64-bit executable).
 
-Equivalently, this is ``True`` only if the maximum value of Python shorts under
-this interpreter is larger than the maximum value of 32-bit Python shorts.
-While obtuse, this test is well-recognized by the Python community as the
-best means of testing this portably. Valid but worse alternatives include:
+Equivalently, this is :data:`True` only if the maximum value of Python shorts
+under this interpreter is larger than the maximum value of 32-bit Python shorts.
+While obtuse, this test is well-recognized by the Python community as the best
+means of testing this portably. Valid but worse alternatives include:
 
 * ``'PROCESSOR_ARCHITEW6432' in os.environ``, which depends upon optional
   environment variables and hence is clearly unreliable.

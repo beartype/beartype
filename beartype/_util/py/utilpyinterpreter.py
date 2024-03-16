@@ -20,7 +20,7 @@ from sys import executable as sys_executable
 
 # ....................{ TESTERS                            }....................
 @callable_cached
-def is_py_pypy() -> bool:
+def is_python_pypy() -> bool:
     '''
     :data:`True` only if the active Python interpreter is **PyPy**.
 
@@ -28,6 +28,67 @@ def is_py_pypy() -> bool:
     '''
 
     return python_implementation() == 'PyPy'
+
+
+
+def is_python_optimized() -> bool:
+    '''
+    :data:`True` only if the active Python interpreter is currently
+    **optimized** (i.e., either the current Python process was invoked with at
+    least one ``-O`` command-line option *or* the ``${PYTHONOPTIMIZE}``
+    environment variable is currently set to a non-zero integer).
+
+    This tester is intentionally *not* memoized (e.g., by the
+    ``@callable_cached`` decorator), as doing so would prevent this tester from
+    detecting dynamic changes to the ``PYTHONOPTIMIZE`` environment variable
+    manually applied by the external user. Technically, Python itself detects
+    *no* such changes. Pragmatically, there's *no* demonstrable justification
+    for :mod:`beartype` itself to behave similarly; since testing environment
+    variable values is both trivial *and* yields a better outcome for users,
+    this tester does so. Indeed, our userbase `explicitly requested that we do
+    so <beartype issue_>`__.
+
+    .. _beartype issue:
+       https://github.com/beartype/beartype/issues/341
+    '''
+
+    # If Python disabled the "__debug__" dunder global, either the current
+    # Python process was invoked with at least one ``-O`` command-line option
+    # *OR* the "${PYTHONOPTIMIZE}" environment variable was set to a non-zero
+    # integer at process invocation time. In either case, return true.
+    if not __debug__:  # pragma: no cover
+        return True
+    # Else, Python enabled the "__debug__" dunder global. Although the
+    # "${PYTHONOPTIMIZE}" environment variable was *NOT* set to a non-zero
+    # integer at process invocation time, that variable *COULD* have since been
+    # set by the external user (e.g., in an interactive REPL). Let's decide.
+
+    # Avoid circular import dependencies.
+    from beartype._util.os.utilosshell import get_shell_var_value_or_none
+
+    # String value of this environment variable if set *OR* "None" otherwise.
+    PYTHONOPTIMIZE_str = get_shell_var_value_or_none('PYTHONOPTIMIZE')
+
+    # If this environment variable is set...
+    if PYTHONOPTIMIZE_str is not None:
+        # print(f'Detecting ${{PYTHONOPTIMIZE}} value {PYTHONOPTIMIZE_str}...')
+
+        # Attempt to coerce this string into an integer.
+        try:
+            PYTHONOPTIMIZE_int = int(PYTHONOPTIMIZE_str)
+        # If doing so raises *ANY* exception whatsoever, return false.
+        except:
+            return False
+
+        # If this integer is non-zero, this environment variable has since been
+        # set to a non-zero integer by the user. In this case, return true.
+        if PYTHONOPTIMIZE_int > 0:
+            return True
+        # Else, this environment variable remains zeroed and thus disabled.
+    # Else, this environment variable is unset.
+
+    # Return false as a fallback.
+    return False
 
 # ....................{ GETTERS ~ path                     }....................
 @callable_cached

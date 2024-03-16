@@ -16,6 +16,60 @@ efficiently reducing to a noop.
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+# ....................{ TESTS                              }....................
+def test_decor_noop_python_optimized(monkeypatch: 'pytest.MonkeyPatch') -> None:
+    '''
+    Test that the :func:`beartype.beartype` decorator efficiently reduces to a
+    noop for **optimized Python processes** (i.e., optimized *after* process
+    invocation time, typically by the user setting the ``${PYTHONOPTIMIZED}``
+    environment variable to a non-zero integer from an interactive REPL).
+
+    Parameters
+    ----------
+    monkeypatch : MonkeyPatch
+        :mod:`pytest` fixture allowing various state associated with the active
+        Python process to be temporarily changed for the duration of this test.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import BeartypeCallHintParamViolation
+    from pytest import raises
+
+    # ....................{ CALLABLES                      }....................
+    def and_what_am_I(that_I: str, should_linger_here: str) -> str:
+        '''
+        Arbitrary annotated function.
+        '''
+
+        return that_I + should_linger_here
+
+    # ....................{ ASSERTS ~ unoptimized          }....................
+    # This function decorated by @beartype.
+    and_what_am_I_typed = beartype(and_what_am_I)
+
+    # Assert that @beartype actually decorated this function rather than
+    # reducing to a noop.
+    assert and_what_am_I_typed is not and_what_am_I
+
+    # Assert that @beartype decorated this function with type-checking by
+    # raising the expected exception when passed invalid parameters.
+    with raises(BeartypeCallHintParamViolation):
+        and_what_am_I_typed(b'With voice far sweeter', b'than thy dying notes,')
+
+    # ....................{ ASSERTS ~ optimized            }....................
+    # Temporarily set the ${PYTHONOPTIMIZE} environment variable governing
+    # Python optimization to an arbitrary positive integer.
+    monkeypatch.setenv('PYTHONOPTIMIZE', '1')
+
+    # This function decorated by @beartype yet again.
+    and_what_am_I_typed = beartype(and_what_am_I)
+
+    # Assert that @beartype efficiently reduces to a noop (i.e., the identity
+    # decorator) when the current Python process is "optimized."
+    assert and_what_am_I_typed is and_what_am_I
+
 # ....................{ TESTS ~ sync                       }....................
 def test_decor_noop_unhinted_sync() -> None:
     '''
@@ -27,8 +81,11 @@ def test_decor_noop_unhinted_sync() -> None:
     # Defer test-specific imports.
     from beartype import beartype
 
-    # Undecorated unannotated function.
     def khorne(gork, mork):
+        '''
+        Undecorated unannotated function.
+        '''
+
         return gork + mork
 
     # Decorated unannotated function.
@@ -53,9 +110,12 @@ def test_decor_noop_redecorated_sync() -> None:
     # Defer test-specific imports.
     from beartype import beartype
 
-    # Arbitrary function.
     @beartype
     def xenos(interex: str, diasporex: str):
+        '''
+        Arbitrary function.
+        '''
+
         return None if interex and diasporex else interex + diasporex
 
     # Assert that attempting to redecorate this function yields the same

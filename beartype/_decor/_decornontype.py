@@ -34,11 +34,11 @@ from beartype._data.hint.datahinttyping import (
 from beartype._decor.wrap.wrapmain import generate_code
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     release_object_typed)
-from beartype._util.func.mod.utilbeartypefunc import (
+from beartype._util.func.module.utilfuncmodbear import (
     is_func_unbeartypeable,
     set_func_beartyped,
 )
-from beartype._util.func.mod.utilfuncmodtest import (
+from beartype._util.func.module.utilfuncmodtest import (
     is_func_contextlib_contextmanager,
     is_func_functools_lru_cache,
 )

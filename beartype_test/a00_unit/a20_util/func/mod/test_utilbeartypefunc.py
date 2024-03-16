@@ -7,7 +7,7 @@
 **Beartype-generated wrapper function utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.utilfunc.lib.utilbeartypefunc` submodule.
+:mod:`beartype._util.utilfunc.lib.utilfuncmodbear` submodule.
 '''
 
 # ....................{ IMPORTS                           }....................
@@ -20,12 +20,12 @@ This submodule unit tests the public API of the private
 def test_is_func_beartyped() -> None:
     '''
     Test the
-    :func:`beartype._util.func.mod.utilbeartypefunc.is_func_beartyped` tester.
+    :func:`beartype._util.func.module.utilfuncmodbear.is_func_beartyped` tester.
     '''
 
     # Defer test-specific imports.
     from beartype import beartype
-    from beartype._util.func.mod.utilbeartypefunc import is_func_beartyped
+    from beartype._util.func.module.utilfuncmodbear import is_func_beartyped
 
     @beartype
     def where_that_or() -> str:
@@ -54,11 +54,11 @@ def test_is_func_beartyped() -> None:
 def test_set_func_beartyped() -> None:
     '''
     Test the
-    :func:`beartype._util.func.mod.utilbeartypefunc.set_func_beartyped` tester.
+    :func:`beartype._util.func.module.utilfuncmodbear.set_func_beartyped` tester.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.func.mod.utilbeartypefunc import (
+    from beartype._util.func.module.utilfuncmodbear import (
         is_func_beartyped,
         set_func_beartyped,
     )

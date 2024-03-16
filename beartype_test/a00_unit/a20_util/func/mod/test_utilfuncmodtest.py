@@ -20,12 +20,12 @@ This submodule unit tests the public API of the private
 def test_is_func_contextlib_contextmanager() -> None:
     '''
     Test the
-    :func:`beartype._util.func.mod.utilfuncmodtest.is_func_contextlib_contextmanager`
+    :func:`beartype._util.func.module.utilfuncmodtest.is_func_contextlib_contextmanager`
     tester.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.func.mod.utilfuncmodtest import (
+    from beartype._util.func.module.utilfuncmodtest import (
         is_func_contextlib_contextmanager)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
     from beartype_test.a00_unit.data.data_type import (
@@ -62,12 +62,12 @@ def test_is_func_contextlib_contextmanager() -> None:
 def test_is_func_functools_lru_cache() -> None:
     '''
     Test the
-    :func:`beartype._util.func.mod.utilfuncmodtest.is_func_functools_lru_cache`
+    :func:`beartype._util.func.module.utilfuncmodtest.is_func_functools_lru_cache`
     tester.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.func.mod.utilfuncmodtest import (
+    from beartype._util.func.module.utilfuncmodtest import (
         is_func_functools_lru_cache)
     from beartype_test.a00_unit.data.data_type import (
         lru_cache_func,

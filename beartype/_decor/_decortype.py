@@ -238,12 +238,12 @@ def beartype_type(
             # concrete "enum.Enum" subclasses with @beartype once provoked
             # infinite recursion. Why? Because:
             #
-            # * *All* :class:`enum.Enum` subclasses define a private
-            #   "_member_type_" attribute whose value is the "object"
-            #   superclass, which @beartype then decorated.
-            # * However, the :class:`object` superclass defines the "__class__"
-            #   dunder attribute whose value is the "type" superclass, which
+            # * *ALL* "enum.Enum" subclasses define a private "_member_type_"
+            #   attribute whose value is the "object" superclass, which
             #   @beartype then decorated.
+            # * However, the "object" superclass defines the "__class__" dunder
+            #   attribute whose value is the "type" superclass, which @beartype
+            #   then decorated.
             # * However, the "type" superclass defines the "__base__" dunder
             #   attribute whose value is the "object" superclass, which
             #   @beartype then decorated.
@@ -271,6 +271,8 @@ def beartype_type(
 
             # Replace this undecorated attribute with this decorated attribute.
             set_type_attr(cls, attr_name, attr_value_beartyped)
+            # print(f'Decorating {repr(cls)} attribute "{attr_name}"...')
+            # print(f'type: {type(attr_value)}; dir: {dir(attr_value)}')
         # Else, this attribute is *NOT* beartypeable. In this case, silently
         # ignore this attribute.
 

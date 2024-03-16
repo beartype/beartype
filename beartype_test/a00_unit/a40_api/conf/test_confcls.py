@@ -357,7 +357,7 @@ def test_conf_dataclass() -> None:
 # ....................{ TESTS ~ arg                        }....................
 def test_conf_is_color(monkeypatch: 'pytest.MonkeyPatch') -> None:
     '''
-    Test the``is_color`` parameter accepted by the
+    Test the ``is_color`` parameter accepted by the
     :class:`beartype.BeartypeConf` class with respect to the external
     ``${BEARTYPE_IS_COLOR}`` shell environment variable also respected by that
     class, which interact in non-trivial ways.
