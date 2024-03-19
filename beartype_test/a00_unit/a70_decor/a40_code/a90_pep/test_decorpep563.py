@@ -28,6 +28,7 @@ This submodule unit tests :pep:`563` support implemented in the
 from beartype_test._util.mark.pytskip import (
     # skip,
     skip_if_pypy,
+    skip_if_python_version_less_than,
     skip_if_python_version_greater_than_or_equal_to,
 )
 
@@ -326,7 +327,7 @@ def test_pep563_closure_nested() -> None:
     assert minecraft_end_txt_inner[0] == (
         'It is reading our thoughts as though they were words on a screen.')
 
-# .....................{ TESTS ~ pep 484                   }....................
+# .....................{ TESTS ~ pep : 484                 }....................
 def test_pep563_hint_pep484_namedtuple() -> None:
     '''
     Test module-scoped :pep:`563` support implemented in the
@@ -373,6 +374,46 @@ def test_pep563_hint_pep484_noreturn() -> None:
     # exception.
     with raises(HeWouldLingerLong):
         to_love_and_wonder()
+
+# .....................{ TESTS ~ pep : 604                 }....................
+@skip_if_python_version_less_than('3.10.0')
+def test_pep563_hint_pep604() -> None:
+    '''
+    Test module-scoped :pep:`563` support implemented in the
+    :func:`beartype.beartype` decorator with respect to :pep:`604`-compliant
+    unions annotating :pep:`557`-compliant
+    :obj:`dataclasses.dataclass`-decorated subclasses also decorated by this
+    decorator if the active Python interpreter targets Python >= 3.10 and thus
+    supports :pep:`604`.
+    '''
+
+    # .....................{ IMPORTS                       }....................
+    # Defer test-specific imports.
+    from beartype.roar import BeartypeCallHintParamViolation
+    from beartype_test.a00_unit.data.pep.pep563.pep604.data_pep563_pep604 import (
+        FrameMoreAttuned,
+        WithVoiceFarSweeter,
+    )
+    from pytest import raises
+
+    # .....................{ LOCALS                        }....................
+    # Arbitrary instance of a problematic dataclass subclass annotated by a
+    # problematic PEP 604-compliant union that had yet to be defined at the time
+    # that subclass was defined.
+    wasting_these_surpassing_powers = WithVoiceFarSweeter(
+        than_thy_dying_notes=FrameMoreAttuned())
+
+    # .....................{ PASS                          }....................
+    # Assert that this instance exposes the expected fields.
+    isinstance(
+        wasting_these_surpassing_powers.than_thy_dying_notes, FrameMoreAttuned)
+
+    # .....................{ FAIL                          }....................
+    # Assert that instantiating this subclass with one or more invalid fields
+    # raises the expected exception.
+    with raises(BeartypeCallHintParamViolation):
+        WithVoiceFarSweeter(than_thy_dying_notes=(
+            'In the deaf air, to the blind earth, and heaven'))
 
 # ....................{ TESTS ~ limit                      }....................
 #FIXME: Hilariously, we can't even unit test whether the

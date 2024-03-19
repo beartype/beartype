@@ -28,9 +28,9 @@ from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.cls.utilclstest import is_type_subclass
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_isinstanceable,
-    die_unless_type_or_types_isinstanceable,
+    die_unless_object_isinstanceable,
     die_unless_type_issubclassable,
-    die_unless_type_or_types_issubclassable,
+    die_unless_object_issubclassable,
 )
 from beartype._util.func.utilfuncscope import add_func_scope_attr
 from beartype._util.utilobject import get_object_name
@@ -74,7 +74,7 @@ class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
     calling any callables and thus incurs *no* time performance penalties.
 
     Examples
-    ----------
+    --------
     .. code-block:: python
 
        # Import the requisite machinery.
@@ -112,7 +112,7 @@ class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
        validator ~IsInstance[builtins.bool]:
 
     See Also
-    ----------
+    --------
     :class:`beartype.vale.Is`
         Further commentary.
     '''
@@ -133,12 +133,12 @@ class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
             One or more arbitrary classes to validate type instancing against.
 
         Returns
-        ----------
+        -------
         BeartypeValidator
             Beartype validator encapsulating this validation.
 
         Raises
-        ----------
+        ------
         BeartypeValeSubscriptionException
             If this factory was subscripted by either:
 
@@ -148,7 +148,7 @@ class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
               `isinstance` builtin).
 
         See Also
-        ----------
+        --------
         :class:`_IsAttrFactory`
             Usage instructions.
         '''
@@ -168,8 +168,8 @@ class _IsInstanceFactory(_BeartypeValidatorFactoryABC):
 
             # If any such argument is *NOT* an isinstanceable type, raise an
             # exception.
-            die_unless_type_or_types_isinstanceable(
-                type_or_types=types,
+            die_unless_object_isinstanceable(
+                obj=types,
                 exception_cls=BeartypeValeSubscriptionException,
                 exception_prefix=self._getitem_exception_prefix,
             )
@@ -264,7 +264,7 @@ class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
     calling any callables and thus incurs *no* time performance penalties.
 
     Examples
-    ----------
+    --------
     .. code-block:: python
 
        # Import the requisite machinery.
@@ -336,12 +336,12 @@ class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
             One or more arbitrary classes to validate type inheritance against.
 
         Returns
-        ----------
+        -------
         BeartypeValidator
             Beartype validator encapsulating this validation.
 
         Raises
-        ----------
+        ------
         BeartypeValeSubscriptionException
             If this factory was subscripted by either:
 
@@ -351,7 +351,7 @@ class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
               `issubclass` builtin).
 
         See Also
-        ----------
+        --------
         :class:`_IsAttrFactory`
             Usage instructions.
         '''
@@ -371,8 +371,8 @@ class _IsSubclassFactory(_BeartypeValidatorFactoryABC):
 
             # If any such argument is *NOT* an issubclassable type, raise an
             # exception.
-            die_unless_type_or_types_issubclassable(
-                type_or_types=types,
+            die_unless_object_issubclassable(
+                obj=types,
                 exception_cls=BeartypeValeSubscriptionException,
                 exception_prefix=self._getitem_exception_prefix,
             )

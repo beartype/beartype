@@ -16,7 +16,8 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeCallHintForwardRefException
 from beartype.typing import Dict
 from beartype._data.hint.datahinttyping import BeartypeForwardRef
-from beartype._util.cls.pep.utilpep3119 import die_unless_type_isinstanceable
+from beartype._util.cls.pep.utilpep3119 import (
+    die_unless_object_isinstanceable)
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
     is_hint_pep484585_generic,
     get_hint_pep484585_generic_type,
@@ -306,8 +307,8 @@ class BeartypeForwardRefMeta(type):
 
             # If this referee is *NOT* an isinstanceable class, raise an
             # exception.
-            die_unless_type_isinstanceable(
-                cls=referee,
+            die_unless_object_isinstanceable(
+                obj=referee,
                 exception_cls=BeartypeCallHintForwardRefException,
                 exception_prefix='Forward reference ',
             )

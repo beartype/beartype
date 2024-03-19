@@ -26,7 +26,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
 from beartype._data.hint.datahinttyping import Pep484585ForwardRef
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_issubclassable,
-    die_unless_type_or_types_issubclassable,
+    die_unless_object_issubclassable,
 )
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     get_hint_pep484585_args)
@@ -137,8 +137,8 @@ def get_hint_pep484585_type_superclass(
         # If any item of this tuple is *NOT* an issubclassable class, raise an
         # exception.
         # print(f'hint_superclass union arg: {hint_superclass}')
-        die_unless_type_or_types_issubclassable(
-            type_or_types=hint_superclass, exception_prefix=exception_prefix)  # type: ignore[arg-type]
+        die_unless_object_issubclassable(
+            obj=hint_superclass, exception_prefix=exception_prefix)  # type: ignore[arg-type]
     # Else, this superclass is *NOT* a union of superclasses.
     #
     # If this superclass is actually a forward reference to a superclass,

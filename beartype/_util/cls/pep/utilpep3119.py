@@ -13,12 +13,69 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep3119Exception
+from beartype.typing import Callable
 from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeOrTupleTypes,
 )
 
 # ....................{ RAISERS ~ instance                 }....................
+def die_unless_object_isinstanceable(
+    # Mandatory parameters.
+    obj: TypeOrTupleTypes,
+
+    # Optional parameters.
+    exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception of the passed type unless the passed object is
+    **isinstanceable** (i.e., valid as the second parameter to the
+    :func:`isinstance` builtin).
+
+    Specifically, this function raises an exception unless this object is
+    either:
+
+    * An **isinstanceable class** (i.e., class whose metaclass does *not* define
+      an ``__instancecheck__()`` dunder method that raises a :exc:`TypeError`
+      exception).
+    * Tuple of one or more isinstanceable classes.
+    * A :pep:`604`-compliant **new union** (i.e., objects created by expressions
+      of the form ``{type1} | {type2} | ... | {typeN}``) under Python >= 3.10.
+      By definition, *all* new unions are isinstanceable.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be validated.
+    exception_cls : TypeException, optional
+        Type of exception to be raised. Defaults to
+        :exc:`.BeartypeDecorHintPep3119Exception`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Raises
+    ------
+    BeartypeDecorHintPep3119Exception
+        If this object is neither:
+
+        * An isinstanceable class.
+        * A tuple containing only isinstanceable classes.
+        * A :pep:`604`-compliant new union.
+    '''
+
+    # Defer to this lower-level general-purpose raiser.
+    _die_if_object_uncheckable(
+        obj=obj,
+        obj_pith=None,
+        obj_raiser=die_unless_type_isinstanceable,
+        obj_tester=isinstance,  # type: ignore[arg-type]
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+
+
 def die_unless_type_isinstanceable(
     # Mandatory parameters.
     cls: type,
@@ -227,25 +284,34 @@ def die_unless_type_isinstanceable(
     except Exception:
         pass
 
-
-#FIXME: Unit test us up.
-def die_unless_type_or_types_isinstanceable(
+# ....................{ RAISERS ~ subclass                 }....................
+def die_unless_object_issubclassable(
     # Mandatory parameters.
-    type_or_types: TypeOrTupleTypes,
+    obj: TypeOrTupleTypes,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
     '''
-    Raise an exception of the passed type unless the passed object is either an
-    **isinstanceable class** (i.e., class whose metaclass does *not* define an
-    ``__instancecheck__()`` dunder method that raises a :exc:`TypeError`
-    exception) *or* tuple of one or more isinstanceable classes.
+    Raise an exception of the passed type unless the passed object is
+    **issubclassable** (i.e., valid as the second parameter to the
+    :func:`issubclass` builtin).
+
+    Specifically, this function raises an exception unless this object is
+    either:
+
+    * An **issubclassable class** (i.e., class whose metaclass does *not* define
+      an ``__subclasscheck__()`` dunder method that raises a :exc:`TypeError`
+      exception).
+    * Tuple of one or more issubclassable classes.
+    * A :pep:`604`-compliant **new union** (i.e., objects created by expressions
+      of the form ``{type1} | {type2} | ... | {typeN}``) under Python >= 3.10.
+      By definition, *all* new unions are issubclassable.
 
     Parameters
     ----------
-    type_or_types : object
+    obj : object
         Object to be validated.
     exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
@@ -259,80 +325,22 @@ def die_unless_type_or_types_isinstanceable(
     BeartypeDecorHintPep3119Exception
         If this object is neither:
 
-        * An isinstanceable class.
-        * A tuple containing only isinstanceable classes.
+        * An issubclassable class.
+        * A tuple containing only issubclassable classes.
+        * A :pep:`604`-compliant new union.
     '''
 
-    # Avoid circular import dependencies.
-    from beartype._util.cls.utilclstest import die_unless_type_or_types
-
-    # If this object is neither a class nor tuple of classes, raise an
-    # exception.
-    die_unless_type_or_types(
-        type_or_types=type_or_types,
+    # Defer to this lower-level general-purpose raiser.
+    _die_if_object_uncheckable(
+        obj=obj,
+        obj_pith=type,
+        obj_raiser=die_unless_type_issubclassable,
+        obj_tester=issubclass,  # type: ignore[arg-type]
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
-    # Else, this object is either a class or tuple of classes.
 
-    # If this object is a class...
-    if isinstance(type_or_types, type):
-        # If this class is *NOT* isinstanceable, raise an exception.
-        die_unless_type_isinstanceable(
-            cls=type_or_types,
-            exception_cls=exception_cls,
-            exception_prefix=exception_prefix,
-        )
-        # Else, this class is isinstanceable.
-    # Else, this object *MUST* (by process of elimination and the above
-    # validation) be a tuple of classes. In this case...
-    else:
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize with the is_type_isinstanceable() tester.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # Attempt to pass this tuple of classes as the second parameter to
-        # isinstance().
-        try:
-            isinstance(None, type_or_types)  # type: ignore[arg-type]
-        # If doing so raised a "TypeError" exception, this class is *NOT*
-        # isinstanceable. In this case, raise a human-readable exception.
-        #
-        # See the die_unless_type_isinstanceable() docstring for details.
-        except TypeError as exception:
-            assert isinstance(exception_cls, type), (
-                f'{repr(exception_cls)} not exception class.')
-            assert isinstance(exception_prefix, str), (
-                f'{repr(exception_prefix)} not string.')
 
-            # Exception message to be raised.
-            exception_message = (
-                f'{exception_prefix}{repr(type_or_types)} '
-                f'uncheckable at runtime'
-            )
-
-            # For the 0-based index of each tuple class and that class...
-            for cls_index, cls in enumerate(type_or_types):
-                # If this class is *NOT* isinstanceable, raise an exception.
-                die_unless_type_isinstanceable(
-                    cls=cls,
-                    exception_cls=exception_cls,
-                    exception_prefix=(
-                        f'{exception_message}, as tuple item {cls_index} '),
-                )
-                # Else, this class is isinstanceable. Continue to the next.
-
-            # Raise this exception chained onto this lower-level exception.
-            # Although this should *NEVER* happen (as we should have already
-            # raised an exception above), we nonetheless do so for safety.
-            raise exception_cls(f'{exception_message}.') from exception
-        # If doing so raised any exception *OTHER* than a "TypeError" exception,
-        # this class may or may not be isinstanceable. Since we have no means of
-        # differentiating the two, we err on the side of caution. Avoid
-        # returning a false negative by quietly ignoring this exception.
-        except Exception:
-            pass
-
-# ....................{ RAISERS ~ subclass                 }....................
 def die_unless_type_issubclassable(
     # Mandatory parameters.
     cls: type,
@@ -435,118 +443,12 @@ def die_unless_type_issubclassable(
     except Exception:
         pass
 
-
-#FIXME: Unit test us up.
-def die_unless_type_or_types_issubclassable(
-    # Mandatory parameters.
-    type_or_types: TypeOrTupleTypes,
-
-    # Optional parameters.
-    exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
-    exception_prefix: str = '',
-) -> None:
-    '''
-    Raise an exception of the passed type unless the passed object is either an
-    **issubclassable class** (i.e., class whose metaclass does *not* define an
-    ``__subclasscheck__()`` dunder method that raises a :exc:`TypeError`
-    exception) *or* tuple of one or more issubclassable classes.
-
-    Parameters
-    ----------
-    type_or_types : object
-        Object to be validated.
-    exception_cls : TypeException, optional
-        Type of exception to be raised. Defaults to
-        :exc:`.BeartypeDecorHintPep3119Exception`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
-
-    Raises
-    ------
-    BeartypeDecorHintPep3119Exception
-        If this object is neither:
-
-        * An issubclassable class.
-        * A tuple containing only issubclassable classes.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.cls.utilclstest import die_unless_type_or_types
-
-    # If this object is neither a class nor tuple of classes, raise an
-    # exception.
-    die_unless_type_or_types(
-        type_or_types=type_or_types,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
-    # Else, this object is either a class or tuple of classes.
-
-    # If this object is a class...
-    if isinstance(type_or_types, type):
-        # If this class is *NOT* issubclassable, raise an exception.
-        die_unless_type_issubclassable(
-            cls=type_or_types,
-            exception_cls=exception_cls,
-            exception_prefix=exception_prefix,
-        )
-        # Else, this class is issubclassable.
-    # Else, this object *MUST* (by process of elimination and the above
-    # validation) be a tuple of classes. In this case...
-    else:
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize with the is_type_issubclassable() tester.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # Attempt to pass this tuple of classes as the second parameter to
-        # issubclass().
-        try:
-            issubclass(type, type_or_types)  # type: ignore[arg-type]
-        # If doing so raised a "TypeError" exception, this class is *NOT*
-        # issubclassable. In this case, raise a human-readable exception.
-        #
-        # See the die_unless_type_isinstanceable() docstring for details.
-        except TypeError as exception:
-            assert isinstance(exception_cls, type), (
-                f'{repr(exception_cls)} not exception class.')
-            assert isinstance(exception_prefix, str), (
-                f'{repr(exception_prefix)} not string.')
-
-            # Exception message to be raised.
-            exception_message = (
-                f'{exception_prefix}{repr(type_or_types)} '
-                f'uncheckable at runtime'
-            )
-
-            # For the 0-based index of each tuple class and that class...
-            for cls_index, cls in enumerate(type_or_types):
-                # If this class is *NOT* issubclassable, raise an exception.
-                die_unless_type_issubclassable(
-                    cls=cls,
-                    exception_cls=exception_cls,
-                    exception_prefix=(
-                        f'{exception_message}, as tuple item {cls_index} '),
-                )
-                # Else, this class is issubclassable. Continue to the next.
-
-            # Raise this exception chained onto this lower-level exception.
-            # Although this should *NEVER* happen (as we should have already
-            # raised an exception above), we nonetheless do so for safety.
-            raise exception_cls(f'{exception_message}.') from exception
-        # If doing so raised any exception *OTHER* than a "TypeError" exception,
-        # this class may or may not be issubclassable. Since we have no means of
-        # differentiating the two, we err on the side of caution. Avoid
-        # returning a false negative by quietly ignoring this exception.
-        except Exception:
-            pass
-
 # ....................{ TESTERS                            }....................
 def is_type_isinstanceable(cls: object) -> bool:
     '''
-    :data:`True` only if the passed object is either an **isinstanceable class**
-    (i.e., class whose metaclass does *not* define an ``__instancecheck__()``
-    dunder method that raises a :exc:`TypeError` exception) *or* tuple
-    containing only isinstanceable classes.
+    :data:`True` only if the passed object is an **isinstanceable class** (i.e.,
+    class whose metaclass does *not* define an ``__instancecheck__()`` dunder
+    method that raises a :exc:`TypeError` exception).
 
     This tester is intentionally *not* memoized (e.g., by the
     :func:`callable_cached` decorator). Although the implementation does *not*
@@ -558,13 +460,13 @@ def is_type_isinstanceable(cls: object) -> bool:
     -------
     **This tester may return false positives in unlikely edge cases.**
     Internally, this tester tests whether this class is isinstanceable by
-    detecting whether passing the ``None`` singleton and this class to the
+    detecting whether passing the :data:`None` singleton and this class to the
     :func:`isinstance` builtin raises a :exc:`TypeError` exception. If that call
     raises *no* exception, this class is probably but *not* necessarily
     isinstanceable. Since the metaclass of this class could define an
     ``__instancecheck__()`` dunder method to conditionally raise exceptions
-    *except* when passed the ``None`` singleton, there exists *no* perfect means
-    of deciding whether an arbitrary class is fully isinstanceable in the
+    *except* when passed the :data:`None` singleton, there exists *no* perfect
+    means of deciding whether an arbitrary class is fully isinstanceable in the
     general sense. Since most classes that are *not* isinstanceable are
     unconditionally isinstanceable (i.e., the metaclasses of those classes
     define an ``__instancecheck__()`` dunder method to unconditionally raise
@@ -579,10 +481,7 @@ def is_type_isinstanceable(cls: object) -> bool:
     Returns
     -------
     bool
-        :data:`True` only if this object is either:
-
-        * An isinstanceable class.
-        * A tuple containing only isinstanceable classes.
+        :data:`True` only if this object is an isinstanceable class.
 
     See Also
     --------
@@ -707,3 +606,149 @@ def is_type_issubclassable(cls: object) -> bool:
 
     # Look. Just do it. *sigh*
     return True
+
+# ....................{ PRIVATE ~ raisers                  }....................
+def _die_if_object_uncheckable(
+    obj: TypeOrTupleTypes,
+    obj_pith: object,
+    obj_raiser: Callable,
+    obj_tester: Callable[[object, TypeOrTupleTypes], bool],
+    exception_cls: TypeException,
+    exception_prefix: str,
+) -> None:
+    '''
+    Raise an exception of the passed type unless the passed object is
+    **runtime-checkable** (i.e., valid as the second parameter to either the
+    :func:`isinstance` or :func:`issubclass` builtins) according to the passed
+    object tester and raiser.
+
+    Parameters
+    ----------
+    obj : object
+        Object to be validated.
+    obj_pith : object
+        Object guaranteed to satisfy the ``obj_tester`` callable when ``obj`` is
+        runtime-typecheckable (i.e., when ``obj_tester`` is called as
+        ``obj_tester(obj_pith, obj)``).
+    obj_raiser : Callable
+        Callable raising an exception unless this object is runtime-checkable
+        according to this predicate, which should be either:
+
+        * :func:`.die_unless_type_isinstanceable`.
+        * :func:`.die_unless_type_issubclassable`.
+    obj_tester : Callable[[object, TypeOrTupleTypes], bool]
+        Callable returning :data:`True` only if this object is runtime-checkable
+        according to this predicate, which should be either:
+
+        * :func:`isinstance`.
+        * :func:`issubclass`.
+    exception_cls : TypeException
+        Type of exception to be raised.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message.
+
+    Raises
+    ------
+    BeartypeDecorHintPep3119Exception
+        If this object is *not* runtime-checkable according to the passed
+        object tester and raiser.
+    '''
+    assert callable(obj_raiser), f'{repr(obj_raiser)} uncallable.'
+    assert callable(obj_tester), f'{repr(obj_tester)} uncallable.'
+
+    # Avoid circular import dependencies.
+    from beartype._util.cls.utilclstest import die_unless_type_or_types
+    from beartype._util.hint.pep.proposal.utilpep604 import is_hint_pep604
+    from beartype._util.hint.pep.utilpepget import get_hint_pep_args
+
+    # If this object is *NOT* a PEP 604-compliant new union...
+    if not is_hint_pep604(obj):
+        # If this object is neither a class nor tuple of classes, raise an
+        # exception.
+        die_unless_type_or_types(
+            type_or_types=obj,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        )
+        # Else, this object is either a class or tuple of classes.
+    # Else, this object is a PEP 604-compliant new union. In either case, this
+    # object now *COULD* be runtime-checkable. To decide whether this object is
+    # actually instanceable, further introspection is needed.
+
+    # If this object is a class...
+    if isinstance(obj, type):
+        # If this class is *NOT* runtime-checkable, raise an exception.
+        obj_raiser(
+            cls=obj,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        )
+        # Else, this class is runtime-checkable.
+    # Else, this object *MUST* (by process of elimination and validation
+    # above) be either a tuple of classes *OR* new union. In either case...
+    else:
+        # Attempt to pass this object as the second parameter to isinstance().
+        try:
+            obj_tester(obj_pith, obj)  # type: ignore[arg-type]
+        # If doing so raises a "TypeError" exception, this object is *NOT*
+        # runtime-checkable. In this case, raise a human-readable exception.
+        #
+        # See the die_unless_type_runtime-checkable() docstring for details.
+        except TypeError as exception:
+            assert isinstance(exception_cls, type), (
+                f'{repr(exception_cls)} not exception class.')
+            assert isinstance(exception_prefix, str), (
+                f'{repr(exception_prefix)} not string.')
+
+            # Tuple of all items of this iterable object.
+            obj_items: tuple = None  # type: ignore[assignment]
+
+            # Human-readable label describing this object in this exception
+            # message.
+            obj_label: str = None  # type: ignore[assignment]
+
+            # Human-readable label describing the first non-runtime-checkable
+            # item of this object in this exception message.
+            obj_item_label: str = None  # type: ignore[assignment]
+
+            # If this object is a tuple, define these locals accordingly.
+            if isinstance(obj, tuple):
+                obj_items = obj
+                obj_label = 'tuple union'
+                obj_item_label = 'tuple union item'
+            # Else, this object is a new union. Define these locals accordingly.
+            else:
+                obj_items = get_hint_pep_args(obj)
+                obj_label = 'PEP 604 new union'
+                obj_item_label = 'new union child type'
+
+            # Exception message to be raised.
+            exception_message = (
+                f'{exception_prefix} {obj_label} {repr(obj)} '
+                f'uncheckable at runtime'
+            )
+
+            # For the 0-based index of each tuple class and that class...
+            for cls_index, cls in enumerate(obj_items):
+                # If this class is *NOT* runtime-checkable, raise an exception.
+                obj_raiser(
+                    cls=cls,
+                    exception_cls=exception_cls,
+                    exception_prefix=(
+                        f'{exception_message}, as '
+                        f'{obj_item_label} {cls_index} '
+                    ),
+                )
+                # Else, this class is runtime-checkable. Continue to the next.
+
+            # Raise this exception chained onto this lower-level exception.
+            # Although this should *NEVER* happen (as we should have already
+            # raised an exception above), we nonetheless do so for safety.
+            raise exception_cls(f'{exception_message}.') from exception
+        # If doing so raised any exception *OTHER* than a "TypeError" exception,
+        # this class may or may not be runtime-checkable. Since we have no means
+        # of differentiating the two, we err on the side of caution. Avoid
+        # returning a false negative by quietly ignoring this exception.
+        except Exception:
+            pass

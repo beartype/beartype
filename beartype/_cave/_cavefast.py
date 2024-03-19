@@ -41,11 +41,13 @@ requiring those imports. Until resolved, that subpackage is considered tainted.
 import functools as _functools
 import numbers as _numbers
 import re as _re
+import types as _types
 import typing as _typing
 from beartype.roar import BeartypeCallUnavailableTypeException
 from beartype._cave._caveabc import BoolType
 from beartype._util.py.utilpyversion import (
     IS_PYTHON_AT_LEAST_3_12,
+    IS_PYTHON_AT_LEAST_3_10,
     IS_PYTHON_AT_LEAST_3_9,
 )
 from collections import deque as _deque
@@ -960,6 +962,33 @@ These include:
 '''
 
 # ....................{ TYPES ~ hint : pep : 604           }....................
+# If this submodule is currently being statically type-checked by a pure static
+# type-checker, ignore false positives complaining that this type is not a type.
+if TYPE_CHECKING:
+    class HintPep604Type(object): pass
+# Else, this submodule is *NOT* currently being statically type-checked by a
+# pure static type-checker. In this case, define this type properly. *sigh*
+else:
+    # Define this type as either...
+    HintPep604Type = (
+        # If the active Python interpreter targets at least Python >= 3.10 and
+        # thus supports PEP 604, this type;
+        _types.UnionType
+        if IS_PYTHON_AT_LEAST_3_10 else
+        # Else, a placeholder type.
+        UnavailableType
+    )
+    '''
+    C-based type of all :pep:`604`-compliant **new unions** (i.e., objects
+    created by expressions of the form ``{type1} | {type2} | ... | {typeN}``) if
+    the active Python interpreter targets Python >= 3.10 *or*
+    :class:`.UnavailableType` otherwise.
+
+    This type is a version-agnostic generalization of the standard
+    :class:`types.UnionType` type available only under Python >= 3.10.
+    '''
+
+
 HintPep604Types: _TupleTyping[type, ...] = (type, HintGenericSubscriptedType)
 '''
 Tuple of all :pep:`604`-compliant **new union item types** (i.e., types of all
@@ -987,7 +1016,7 @@ if TYPE_CHECKING:
 # pure static type-checker. In this case, define this type properly. *sigh*
 else:
     # Define this type as either...
-    HintPep695Type: type = (
+    HintPep695Type = (
         # If the active Python interpreter targets at least Python >= 3.12 and
         # thus supports PEP 695, this type;
         _typing.TypeAliasType

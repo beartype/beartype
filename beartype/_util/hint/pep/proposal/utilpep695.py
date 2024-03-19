@@ -291,6 +291,19 @@ def iter_hint_pep695_forwardrefs(
             hint_module_name = hint.__module__
             # print(f'hint_module_name: {hint_module_name}')
 
+            # If this alias defines *NO* module name, raise an exception.
+            #
+            # Note that this should *NEVER* happen. Nonetheless, static
+            # type-checkers like mypy insist this can happen. It almost
+            # certainly can't. Nonetheless, let's dot our i's and cross our t's.
+            if not hint_module_name:
+                raise BeartypeDecorHintPep695Exception(
+                    f'{exception_prefix}PEP 695 type alias "{hint_name}" '
+                    f'module undefined (i.e., "__module__" attribute '
+                    f'either "None" or the empty string).'
+                ) from exception
+            # Else, this alias defines a module name.
+
             # That module as its previously imported object.
             hint_module = get_module_imported_or_none(hint_module_name)
 

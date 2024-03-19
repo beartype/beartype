@@ -70,7 +70,7 @@ from beartype._data.hint.datahinttyping import (
 )
 from beartype._util.cls.pep.utilpep3119 import (
     die_unless_type_isinstanceable,
-    die_unless_type_or_types_isinstanceable,
+    die_unless_object_isinstanceable,
 )
 from beartype._util.cls.utilclstest import is_type_builtin
 from beartype._util.func.utilfuncscope import add_func_scope_attr
@@ -428,8 +428,8 @@ def add_func_scope_types(
 
     # If either this container is *NOT* a tuple or is a tuple containing one or
     # more items that are *NOT* isinstanceable classes, raise an exception.
-    die_unless_type_or_types_isinstanceable(
-        type_or_types=types, exception_prefix=exception_prefix)
+    die_unless_object_isinstanceable(
+        obj=types, exception_prefix=exception_prefix)
     # Else, this container is a tuple containing only isinstanceable classes.
 
     # If this container is a tuple *AND* the caller failed to guarantee this

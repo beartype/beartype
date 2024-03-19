@@ -19,8 +19,10 @@ if IS_PYTHON_AT_LEAST_3_10:
     # ....................{ IMPORTS                        }....................
     # Defer version-specific imports.
     from beartype.roar import BeartypeDecorHintPep604Exception
-    from beartype._cave._cavefast import HintPep604Types
-    from types import UnionType  # type: ignore[attr-defined]
+    from beartype._cave._cavefast import (
+        HintPep604Type,
+        HintPep604Types,
+    )
 
     # ....................{ RAISERS                        }....................
     #FIXME: Unit test us up, please.
@@ -87,11 +89,10 @@ if IS_PYTHON_AT_LEAST_3_10:
         # representation of this hint as expected.
 
     # ....................{ TESTERS                        }....................
-    #FIXME: Unit test us up.
     def is_hint_pep604(hint: object) -> bool:
 
         # Release the werecars, Bender!
-        return isinstance(hint, UnionType)
+        return isinstance(hint, HintPep604Type)
 # Else, the active Python interpreter targets Python < 3.10 and thus fails to
 # support PEP 604. In this case, define fallback functions.
 #
@@ -183,7 +184,7 @@ die_if_hint_pep604_inconsistent.__doc__ = (
         Type hint to be inspected.
 
     Raises
-    ----------
+    ------
     bool
         :data:`True` only if this object is a :pep:`604`-compliant union.
     ''')
