@@ -38,12 +38,12 @@ def unwrap_func_once(func: Any) -> Callable:
         Wrapper callable to be unwrapped.
 
     Returns
-    ----------
+    -------
     Callable
         The immediate wrappee callable wrapped by the passed wrapper callable.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilCallableWrapperException
         If the passed callable is *not* a wrapper.
     '''
@@ -86,7 +86,7 @@ def unwrap_func_all(func: Any) -> Callable:
         Wrapper callable to be unwrapped.
 
     Returns
-    ----------
+    -------
     Callable
         Either:
 
@@ -133,7 +133,7 @@ def unwrap_func_all_isomorphic(func: Any) -> Callable:
         Wrapper callable to be unwrapped.
 
     Returns
-    ----------
+    -------
     Callable
         Either:
 
@@ -143,14 +143,53 @@ def unwrap_func_all_isomorphic(func: Any) -> Callable:
     '''
 
     # Avoid circular import dependencies.
-    from beartype._util.func.utilfunctest import is_func_wrapper_isomorphic
+    from beartype._util.func.utilfunctest import (
+        is_func_python,
+        is_func_wrapper_isomorphic,
+    )
 
-    # While that callable wraps a lower-level callable with a higher-level
-    # isomorphic wrapper...
+    # While that callable is a higher-level isomorphic wrapper wrapping a
+    # lower-level callable...
     while is_func_wrapper_isomorphic(func):
         # Undo one layer of wrapping by reducing the former to the latter.
         # print(f'Unwrapping isomorphic closure wrapper {func} to wrappee {func.__wrapped__}...')
-        func = func.__wrapped__  # type: ignore[attr-defined]
+        func_wrapped = func.__wrapped__  # type: ignore[attr-defined]
+
+        # If the lower-level object wrapped by this higher-level isomorphic
+        # wrapper is *NOT* a pure-Python callable, this object is something
+        # uselessly pathological like a class or C-based callable. Silently
+        # ignore this useless object by halting iteration. Doing so preserves
+        # this useful higher-level isomorphic wrapper as is.
+        #
+        # Note that this insane edge case arises due to the standard
+        # @functools.wraps() decorator, which passively accepts possibly C-based
+        # classes by wrapping those classes with pure-Python functions: e.g.,
+        #     from beartype import beartype
+        #     from functools import wraps
+        #     from typing import Any
+        #
+        #     @beartype
+        #     @wraps(list)
+        #     def wrapper(*args: Any, **kwargs: Any):
+        #         return list(*args, **kwargs)
+        #
+        # In the above example, the higher-level isomorphic wrapper wrapper()
+        # wraps the lower-level C-based class "list".
+        #
+        # Unwrapping this wrapper to this class would induce insanity throughout
+        # the codebase, which sanely expects wrappers to be callables rather
+        # than classes. Clearly, classes have *NO* signatures. Technically, a
+        # pure-Python class may define __new__() and/or __init__() dunder
+        # methods that could be considered to be the signatures of those
+        # classes. Nonetheless, C-based classes like "list" have *NO* such
+        # analogues. The *ONLY* sane approach here is to pretend that we never
+        # saw this pathological edge case.
+        if not is_func_python(func_wrapped):
+            break
+        # Else, this lower-level callable is pure-Python.
+
+        # Reduce this higher-level wrapper to this lower-level wrappee.
+        func = func_wrapped
 
     # Return this wrappee, which is now guaranteed to *NOT* be an isomorphic
     # wrapper but might very well still be a wrapper, which is fine.

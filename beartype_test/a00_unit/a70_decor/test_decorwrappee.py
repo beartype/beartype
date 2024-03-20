@@ -428,6 +428,40 @@ def test_wrappee_wrapper_isomorphic() -> None:
     with raises(BeartypeCallHintParamViolation):
         when_the_moon(b"Filled the mysterious halls with floating shades")
 
+
+def test_wrappee_wrapper_type() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator on **type wrappers**
+    (i.e., types decorated by the standard :func:`functools.wraps` decorator
+    for wrapping arbitrary types with additional functionality defined by
+    higher-level decorators, despite the fact that wrapping types does *not*
+    necessarily make as much coherent sense as one would think it does).
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.typing import Any
+    from functools import wraps
+
+    # ....................{ WRAPPERS                       }....................
+    @beartype
+    @wraps(list)
+    def that_echoes_not_my_thoughts(*args: Any, **kwargs: Any):
+        '''
+        Arbitrary **decorated type non-closure wrapper** (i.e., wrapper defined
+        as a function wrapped by an arbitrary type decorated by the
+        :func:`.beartype` decorator).
+        '''
+
+        return list(*args, **kwargs)
+
+    # ....................{ ASSERTS                        }....................
+    # Assert that this wrapper passed valid parameters returns the expected
+    # value.
+    assert that_echoes_not_my_thoughts(('A', 'gloomy', 'smile',)) == [
+        'A', 'gloomy', 'smile']
+
 # ....................{ TESTS ~ fail : wrappee             }....................
 def test_wrappee_type_fail() -> None:
     '''
