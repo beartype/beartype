@@ -85,29 +85,29 @@ class ArgKind(Enum):
 # ....................{ SINGLETONS                         }....................
 ArgMandatory = object()
 '''
-Arbitrary sentinel singleton assigned by the
-:func:`iter_func_args` generator to the :data:`ARG_META_INDEX_DEFAULT` fields
-of all :data:`ArgMeta` instances describing **mandatory parameters** (i.e.,
-parameters that *must* be explicitly passed to their callables).
+Arbitrary sentinel singleton assigned by the :func:`.iter_func_args` generator
+to the :data:`.ARG_META_INDEX_DEFAULT` fields of all :class:`.ArgMeta` instances
+describing **mandatory parameters** (i.e., parameters that *must* be explicitly
+passed to their callables).
 '''
 
 # ....................{ HINTS                              }....................
 ArgMeta = Tuple[ArgKind, str, object]
 '''
 PEP-compliant type hint matching each 3-tuple ``(arg_kind, arg_name,
-default_value_or_mandatory)`` iteratively yielded by the :func:`iter_func_args`
+default_value_or_mandatory)`` iteratively yielded by the :func:`.iter_func_args`
 generator for each parameter accepted by the passed pure-Python callable, where:
 
-* ``arg_kind`` is this parameter's **kind** (i.e., :class:`ArgKind` enumeration
-  member conveying this parameter's syntactic class, constraining how the
-  callable declaring this parameter requires this parameter to be passed).
+* ``arg_kind`` is this parameter's **kind** (i.e., ".ArgKind" enumeration member
+  conveying the syntactic class of this parameter, constraining how the callable
+  declaring this parameter requires this parameter to be passed).
 * ``name`` is this parameter's **name** (i.e., syntactically valid Python
   identifier uniquely identifying this parameter in its parameter list).
 * ``default_value_or_mandatory`` is either:
 
-    * If this parameter is mandatory, the magic constant :data:`ArgMandatory`.
-    * Else, this parameter is optional and thus defaults to a default value
-      when unpassed. In this case, this is that default value.
+    * If this parameter is mandatory, the magic constant :data:`.ArgMandatory`.
+    * Else, this parameter is optional and thus defaults to a default value when
+      unpassed. In this case, this is that default value.
 '''
 
 # ....................{ CONSTANTS ~ index                  }....................
@@ -118,18 +118,18 @@ __arg_meta_index_counter = count(start=0, step=1)
 
 ARG_META_INDEX_KIND = next(__arg_meta_index_counter)
 '''
-0-based index into each 4-tuple iteratively yielded by the generator returned
-by the :func:`iter_func_args` generator function of the currently iterated
-parameter's **kind** (i.e., :class:`ArgKind` enumeration member conveying
-this parameter's syntactic class, constraining how the callable declaring this
+0-based index into each 4-tuple iteratively yielded by the generator returned by
+the :func:`.iter_func_args` generator function of the currently iterated
+parameter's **kind** (i.e., :class:`ArgKind` enumeration member conveying this
+parameter's syntactic class, constraining how the callable declaring this
 parameter requires this parameter to be passed).
 '''
 
 
 ARG_META_INDEX_NAME = next(__arg_meta_index_counter)
 '''
-0-based index into each 4-tuple iteratively yielded by the generator returned
-by the :func:`iter_func_args` generator function of the currently iterated
+0-based index into each 4-tuple iteratively yielded by the generator returned by
+the :func:`.iter_func_args` generator function of the currently iterated
 parameter's **name** (i.e., syntactically valid Python identifier uniquely
 identifying this parameter in its parameter list).
 '''
@@ -137,11 +137,11 @@ identifying this parameter in its parameter list).
 
 ARG_META_INDEX_DEFAULT = next(__arg_meta_index_counter)
 '''
-0-based index into each 4-tuple iteratively yielded by the generator returned
-by the :func:`iter_func_args` generator function of the currently iterated
+0-based index into each 4-tuple iteratively yielded by the generator returned by
+the :func:`.iter_func_args` generator function of the currently iterated
 parameter's **default value** specified as either:
 
-* If this parameter is mandatory, the magic constant :data:`ArgMandatory`.
+* If this parameter is mandatory, the magic constant :data:`.ArgMandatory`.
 * Else, this parameter is optional and thus defaults to a default value when
   unpassed. In this case, this is that default value.
 '''
@@ -317,8 +317,8 @@ def iter_func_args(
     # ..................{ LOCALS ~ defaults                  }..................
     # Tuple of the default values assigned to all optional non-keyword-only
     # parameters (i.e., all optional positional-only *AND* optional flexible
-    # (i.e., positional or keyword) parameters) accepted by that callable if
-    # any *OR* the empty tuple otherwise.
+    # (i.e., positional or keyword) parameters) accepted by that callable if any
+    # *OR* the empty tuple otherwise.
     args_defaults_posonly_or_flex = func.__defaults__ or ()  # type: ignore[attr-defined]
     # print(f'args_defaults_posonly_or_flex: {args_defaults_posonly_or_flex}')
 
@@ -327,9 +327,9 @@ def iter_func_args(
     # if any *OR* the empty dictionary otherwise.
     #
     # For both space and time efficiency, the empty dictionary is intentionally
-    # *NOT* accessed here as "{}". Whereas each instantiation of the empty
-    # tuple efficiently reduces to the same empty tuple, each instantiation of
-    # the empty dictionary inefficiently creates a new empty dictionary: e.g.,
+    # *NOT* accessed here as "{}". Whereas each instantiation of the empty tuple
+    # efficiently reduces to the same empty tuple, each instantiation of the
+    # empty dictionary inefficiently creates a new empty dictionary: e.g.,
     #     >>> () is ()
     #     True
     #     >>> {} is {}
@@ -547,11 +547,3 @@ def iter_func_args(
             args_name[args_index_kind_last_after],
             ArgMandatory,
         )
-
-# ....................{ PRIVATE ~ constants                }....................
-_ARGS_DEFAULTS_KWONLY_EMPTY: Dict[str, object] = {}
-'''
-Empty dictionary suitable for use as the default dictionary mapping the name of
-each optional keyword-only parameter accepted by a callable to the default
-value assigned to that parameter.
-'''

@@ -55,7 +55,7 @@ class WithVoiceFarSweeter(object):
     '''
 
     # ....................{ FIELDS                         }....................
-    than_thy_dying_notes: SpiritMoreVastOrFrameMoreAttuned | None = None
+    than_thy_dying_notes: SpiritMoreVastOrFrameMoreAttuned | None  # = None
     '''
     Arbitrary field annotated by an undefined :pep:`604`-compliant union,
     exercising a well-known edge case in :pep:`563` integration.

@@ -14,18 +14,14 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.checkmagic import (
-    ARG_NAME_CONF,
-    ARG_NAME_CLS_STACK,
     ARG_NAME_FUNC,
     ARG_NAME_GET_VIOLATION,
     VAR_NAME_ARGS_LEN,
     VAR_NAME_PITH_ROOT,
-    VAR_NAME_RANDOM_INT,
-    VAR_NAME_VIOLATION,
 )
-from beartype._data.func.datafuncarg import ARG_NAME_RETURN_REPR
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._data.code.datacodeindent import CODE_INDENT_1
+from collections.abc import Callable
 
 # ....................{ CODE                               }....................
 CODE_SIGNATURE = f'''{{code_signature_prefix}}def {{func_name}}(
@@ -205,3 +201,8 @@ CODE_RETURN_UNCHECKED = f'''
 Code snippet calling the decorated callable *without* type-checking the value
 returned by that call (if any).
 '''
+
+# ..................{ FORMATTERS                             }..................
+# str.format() methods, globalized to avoid inefficient dot lookups elsewhere.
+# This is an absurd micro-optimization. *fight me, github developer community*
+CODE_RETURN_UNCHECKED_format: Callable = CODE_RETURN_UNCHECKED.format

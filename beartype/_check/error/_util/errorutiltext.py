@@ -16,10 +16,7 @@ from beartype._util.text.utiltextansi import (
     color_pith,
     color_type,
 )
-from beartype._util.text.utiltextlabel import (
-    label_object_type,
-    label_type,
-)
+from beartype._util.text.utiltextlabel import label_object_type
 from beartype._util.text.utiltextprefix import prefix_beartypeable
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable
