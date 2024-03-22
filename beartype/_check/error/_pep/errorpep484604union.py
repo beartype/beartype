@@ -15,7 +15,6 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_UNION
 from beartype._check.error._errorcause import ViolationCause
-from beartype._check.error._util.errorutiltext import represent_pith
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
@@ -26,6 +25,7 @@ from beartype._util.text.utiltextmunge import (
     suffix_str_unless_suffixed,
     uppercase_str_char_first,
 )
+from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ GETTERS                            }....................
 def find_cause_union(cause: ViolationCause) -> ViolationCause:

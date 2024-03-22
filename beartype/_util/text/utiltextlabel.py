@@ -237,6 +237,34 @@ def label_callable(
     # Return that prefix followed by the fully-qualified name of that callable.
     return f'{func_label_prefix}{func_label}{func_label_suffix}'
 
+# ....................{ LABELLERS ~ exception              }....................
+def label_exception(exception: Exception) -> str:
+    '''
+    Human-readable label describing the passed exception.
+
+    Caveats
+    -------
+    **The label returned by this function does not describe the traceback
+    originating this exception.** To do so, consider calling the standard
+    :func:`traceback.format_exc` function instead.
+
+    Parameters
+    ----------
+    exception : Exception
+        Exception to be labelled.
+
+    Returns
+    -------
+    str
+        Human-readable label describing this exception.
+    '''
+    assert isinstance(exception, Exception), (
+        f'{repr(exception)} not exception.')
+
+    # Return the fully-qualified name of the class of this exception followed by
+    # this exception's message.
+    return f'{get_object_type_name(exception)}: {str(exception)}'
+
 # ....................{ LABELLERS ~ context                }....................
 #FIXME: Unit test us up, please.
 def label_object_context(obj: object) -> str:
@@ -282,33 +310,48 @@ def label_object_context(obj: object) -> str:
     # Let's hear it for giving up here and going home. Yeah! Go, @beartype!
     return ''
 
-# ....................{ LABELLERS ~ exception              }....................
-def label_exception(exception: Exception) -> str:
-    '''
-    Human-readable label describing the passed exception.
+# ....................{ LABELLERS ~ pith                   }....................
+def label_pith_value(
+    # Mandatory parameters.
+    pith: object,
 
-    Caveats
-    -------
-    **The label returned by this function does not describe the traceback
-    originating this exception.** To do so, consider calling the standard
-    :func:`traceback.format_exc` function instead.
+    # Optional parameters.
+    is_color: bool = False,
+) -> str:
+    '''
+    Human-readable label describing the passed value of the **current pith**
+    (i.e., arbitrary object violating the current type check) *not* suffixed by
+    delimiting whitespace.
 
     Parameters
     ----------
-    exception : Exception
-        Exception to be labelled.
+    pith : object
+        Arbitrary object violating the current type check.
+    is_color : bool, optional
+        :data:`True` only if embellishing this label with colour. Defaults to
+        :data:`False`.
 
     Returns
     -------
     str
-        Human-readable label describing this exception.
+        Human-readable label describing this pith value.
     '''
-    assert isinstance(exception, Exception), (
-        f'{repr(exception)} not exception.')
+    assert isinstance(is_color, bool), f'{repr(is_color)} not boolean.'
 
-    # Return the fully-qualified name of the class of this exception followed by
-    # this exception's message.
-    return f'{get_object_type_name(exception)}: {str(exception)}'
+    # Avoid circular import dependencies.
+    from beartype._util.text.utiltextansi import color_pith
+    from beartype._util.text.utiltextrepr import represent_object
+
+    # Label describing the value of this pith.
+    pith_value_label = represent_object(pith)
+
+    # If colouring this label, do so.
+    if is_color:
+        pith_value_label = color_pith(pith_value_label)
+    # Else, we are *NOT* colouring this label.
+
+    # Return this label.
+    return pith_value_label
 
 # ....................{ LABELLERS ~ type                   }....................
 def label_type(

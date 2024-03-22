@@ -18,16 +18,12 @@ from beartype.typing import (
     Tuple,
     Hashable,
 )
-from beartype._data.hint.pep.sign.datapepsignset import (
-    HINT_SIGNS_MAPPING)
+from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_MAPPING
 from beartype._check.error._errorcause import ViolationCause
-from beartype._check.error._errortype import (
-    find_cause_type_instance_origin)
-from beartype._check.error._util.errorutiltext import (
-    prefix_pith_type,
-    represent_pith,
-)
+from beartype._check.error._errortype import find_cause_type_instance_origin
 from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._util.text.utiltextprefix import prefix_pith_type
+from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ FINDERS                            }....................
 def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
@@ -118,7 +114,7 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
                     # Human-readable substring prefixing this failure with
                     # metadata describing this key.
                     cause_deep.cause_str_or_none = (
-                        f'{prefix_pith_type(cause.pith)}'
+                        f'{prefix_pith_type(pith=cause.pith, is_color=True)}'
                         f'key {cause_deep.cause_str_or_none}'
                     )
 
@@ -140,7 +136,7 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
                     # Human-readable substring prefixing this failure with
                     # metadata describing this value.
                     cause_deep.cause_str_or_none = (
-                        f'{prefix_pith_type(cause.pith)}'
+                        f'{prefix_pith_type(pith=cause.pith, is_color=True)}'
                         f'key {represent_pith(pith_key)} '
                         f'value {cause_deep.cause_str_or_none}'
                     )

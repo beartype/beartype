@@ -86,15 +86,15 @@ from beartype._data.hint.datahinttyping import (
 from beartype._check.error._errorcause import ViolationCause
 from beartype._check.error._util.errorutilcolor import (
     strip_text_ansi_if_configured)
-from beartype._check.error._util.errorutiltext import (
-    prefix_callable_arg_value,
-    prefix_callable_return_value,
-    prefix_pith_value,
-)
 from beartype._util.text.utiltextansi import color_hint
 from beartype._util.text.utiltextmunge import (
     suffix_str_unless_suffixed,
     uppercase_str_char_first,
+)
+from beartype._util.text.utiltextprefix import (
+    prefix_callable_return_value,
+    prefix_callable_arg_value,
+    prefix_pith_value,
 )
 from beartype._util.text.utiltextrepr import represent_object
 from collections.abc import Callable as CallableABC
@@ -366,7 +366,10 @@ def get_hint_object_violation(
         exception_cls = conf.violation_door_type
 
         # Suffix this exception prefix with an additional noun for disambiguity.
-        exception_prefix = f'{exception_prefix}value {prefix_pith_value(obj)}'
+        exception_prefix = (
+            f'{exception_prefix}value '
+            f'{prefix_pith_value(pith=obj, is_color=True)}'
+        )
     # Else, the caller passed a parameter name. In this case...
     else:
         # If the caller also passed an exception prefix, raise an exception.
@@ -383,13 +386,20 @@ def get_hint_object_violation(
             # Default these exception locals appropriately
             exception_cls = conf.violation_return_type
             exception_prefix = prefix_callable_return_value(
-                func=func, return_value=obj)  # type: ignore[arg-type]
+                func=func,  # type: ignore[arg-type]
+                return_value=obj,
+                is_color=True,
+            )
         # Else, the passed object is a parameter. In this case...
         else:
             # Default these exception locals appropriately
             exception_cls = conf.violation_param_type
             exception_prefix = prefix_callable_arg_value(
-                func=func, arg_name=pith_name, arg_value=obj)  # type: ignore[arg-type]
+                func=func,  # type: ignore[arg-type]
+                arg_name=pith_name,
+                arg_value=obj,
+                is_color=True,
+            )
 
     # Uppercase the first character of this violation prefix for readability.
     exception_prefix = uppercase_str_char_first(exception_prefix)

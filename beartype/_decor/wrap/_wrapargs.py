@@ -28,6 +28,7 @@ from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._decor.wrap.wrapsnip import (
     CODE_INIT_ARGS_LEN,
+    EXCEPTION_PREFIX_DEFAULT_VALUE,
     PARAM_KIND_TO_CODE_LOCALIZE,
 )
 from beartype._decor.wrap._wraputil import unmemoize_func_wrapper_code
@@ -200,7 +201,7 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                     die_if_unbearable(
                         obj=arg_default,
                         hint=hint,
-                        exception_prefix=EXCEPTION_PLACEHOLDER,
+                        exception_prefix=EXCEPTION_PREFIX_DEFAULT_VALUE,
                     )
                     # Else, this default value satisfies this hint.
                 # Else, this parameter is mandatory.

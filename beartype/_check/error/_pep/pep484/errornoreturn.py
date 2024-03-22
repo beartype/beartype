@@ -15,8 +15,8 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import Callable
 from beartype._data.hint.pep.sign.datapepsigns import HintSignNoReturn
 from beartype._check.error._errorcause import ViolationCause
-from beartype._check.error._util.errorutiltext import represent_pith
 from beartype._util.text.utiltextlabel import label_callable
+from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ GETTERS                            }....................
 def find_cause_noreturn(cause: ViolationCause) -> ViolationCause:

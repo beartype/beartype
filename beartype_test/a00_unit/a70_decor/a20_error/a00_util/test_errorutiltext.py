@@ -17,26 +17,3 @@ This submodule unit tests the public API of the private
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_represent_pith() -> None:
-    '''
-    Test the
-    :func:`beartype._check.error._util.errorutiltext.represent_pith` function.
-    '''
-
-    # Defer test-specific imports.
-    from beartype._check.error._util.errorutiltext import represent_pith
-
-    # Custom type to be represented below.
-    class CustomType(object):
-        def __repr__(self) -> str: return (
-            'Collaborator‐ily brambling unspiritually')
-
-    # Assert this representer represents builtin types in the expected way.
-    repr_builtin = represent_pith(42)
-    assert 'int' in repr_builtin
-    assert '42' in repr_builtin
-
-    # Assert this representer represents custom types in the expected way.
-    repr_nonbuiltin = represent_pith(CustomType())
-    assert 'CustomType' in repr_nonbuiltin
-    assert 'Collaborator‐ily brambling unspiritually' in repr_nonbuiltin

@@ -13,14 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeCallHintPepRaiseException
-from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
 from beartype._check.error._errorcause import ViolationCause
-from beartype._check.error._util.errorutiltext import represent_pith
+from beartype._data.hint.pep.sign.datapepsigns import HintSignAnnotated
 from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
 )
 from beartype._data.code.datacodeindent import CODE_INDENT_1
+from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ GETTERS                            }....................
 def find_cause_annotated(cause: ViolationCause) -> ViolationCause:

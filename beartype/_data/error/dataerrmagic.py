@@ -11,7 +11,7 @@ and warnings).
 This private submodule is *not* intended for importation by downstream callers.
 '''
 
-# ....................{ CODE ~ operator                    }....................
+# ....................{ STRINGS                            }....................
 EXCEPTION_PLACEHOLDER = '$%ROOT_PITH_LABEL/~'
 '''
 Non-human-readable source substring to be globally replaced by a human-readable

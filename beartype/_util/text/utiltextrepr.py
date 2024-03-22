@@ -58,7 +58,7 @@ def represent_object(
        (i.e., ``"..."`` substring).
 
     Caveats
-    ----------
+    -------
     **This function is unavoidably slow and should thus not be called from
     optimized performance-critical code.** This function internally performs
     mildly expensive operations, including iterating-based string munging.
@@ -79,7 +79,7 @@ def represent_object(
         line length of 100 characters minus output indentation of 4 characters.
 
     Returns
-    ----------
+    -------
     str
         Pretty-printed quasi-human-readable variant of this object's
         non-pretty-printed machine-readable representation.
@@ -179,7 +179,7 @@ def represent_func(
     Machine-readable representation of the passed callable.
 
     Caveats
-    ----------
+    -------
     **This function is unavoidably slow and should thus not be called from
     optimized performance-critical code.** This function internally performs
     extremely expensive operations, including abstract syntax tree (AST)-based
@@ -196,13 +196,13 @@ def represent_func(
         Defaults to :class:`_BeartypeUtilCallableWarning`.
 
     Warns
-    ----------
+    -----
     :class:`warning_cls`
         If this callable is a pure-Python lambda function whose definition is
         *not* parsable from the script or module defining that lambda.
 
     Returns
-    ----------
+    -------
     str
         Machine-readable representation of that callable.
     '''
@@ -227,6 +227,43 @@ def represent_func(
     # Return the fully-qualified name of this non-lambda function.
     return get_object_basename_scoped(func)
 
+# ....................{ REPRESENTERS ~ pith                }....................
+def represent_pith(
+    # Mandatory parameters.
+    pith: object,
+
+    # Optional parameters.
+    is_color: bool = True,
+) -> str:
+    '''
+    Human-readable description of the passed **pith** (i.e., arbitrary object
+    violating the current type check) intended to be embedded in an exception
+    message explaining this violation.
+
+    Parameters
+    ----------
+    pith : object
+        Arbitrary object violating the current type check.
+    is_color : bool, optional
+        :data:`True` only if embellishing this label with colour. Defaults to
+        :data:`True` for convenience.
+
+    Returns
+    -------
+    str
+        Human-readable description of this object.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.text.utiltextlabel import label_pith_value
+    from beartype._util.text.utiltextprefix import prefix_pith_type
+
+    # Create and return this representation.
+    return (
+        f'{prefix_pith_type(pith=pith, is_color=is_color)}'
+        f'{label_pith_value(pith=pith, is_color=is_color)}'
+    )
+
 # ....................{ PRIVATE ~ globals                  }....................
 _TYPES_UNQUOTABLE = (
     # Byte strings, whose representations are already quoted as "b'...'".
@@ -242,24 +279,3 @@ machine-readable representations all instances of these classes, typically due
 to these representations either being effectively quoted already *or*
 sufficiently terse as to not benefit from being quoted).
 '''
-
-
-#FIXME: Temporarily preserved for posterity.
-# _MAX_LEN_TO_MAX_CHARS_REGEX: Dict[int, str] = {}
-# '''
-# Non-thread-safe global dictionary cache mapping from each **maximum length**
-# (i.e., ``max_len`` parameter previously passed to the :func:`represent_object`
-# function) to a compiled regular expression grouping zero or more leading
-# characters preceding this maximum length *and* zero or more trailing
-# delimiters.
-#
-# Caveats
-# ----------
-# **This cache is intentionally non-thread-safe.** Although rendering this cache
-# thread-safe would be trivial (e.g., via the
-# :class:`beartype._util.cache.map.utilmapbig.CacheUnboundedStrong` class), doing
-# so would both reduce efficiency *and* be ineffectual. Since this cache is
-# *only* used to amortize the costs of regular expression compilation, violating
-# thread-safety has *no* harmful side effects (aside from recompiling a
-# previously compiled regular expression in unlikely edge cases).
-# '''

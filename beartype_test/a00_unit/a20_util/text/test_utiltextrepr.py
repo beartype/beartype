@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# --------------------( LICENSE                           )--------------------
+# --------------------( LICENSE                            )--------------------
 # Copyright (c) 2014-2024 Beartype authors.
 # See "LICENSE" for further details.
 
@@ -10,22 +10,24 @@ This submodule unit tests the public API of the private
 :mod:`beartype._util.text.utiltextmunge` submodule.
 '''
 
-# ....................{ IMPORTS                           }....................
+# ....................{ IMPORTS                            }....................
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # WARNING: To raise human-readable test errors, avoid importing from
 # package-specific submodules at module scope.
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS                             }....................
+# ....................{ TESTS                              }....................
 def test_represent_object():
     '''
     Test the :func:`beartype._util.text.utiltextrepr.represent_object`
     function.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.text.utiltextrepr import represent_object
 
+    # ....................{ CLASSES                        }....................
     # Arbitrary class defining an unpunctuated representation (i.e.,
     # representation *NOT* already suffixed by punctuation).
     class ToASkylark(object):
@@ -37,6 +39,13 @@ def test_represent_object():
         def __repr__(self):
             return ''
 
+    # ....................{ LOCALS                         }....................
+    # Arbitrary object whose representation is both length *AND* contains one
+    # or more newlines.
+    THE_EVERLASTING_UNIVERSE_OF_THINGS = (
+        'And singing still dost soar,\nand soaring ever singest.')
+
+    # ....................{ ASSERTS                        }....................
     # Assert this representer preserves the representations of terse objects
     # already suffixed by punctuation as is.
     assert represent_object(b'Higher still and higher') == repr(
@@ -51,11 +60,6 @@ def test_represent_object():
 
     # Assert this representer double-quotes empty representations.
     assert represent_object(ThouDostFloatAndRun()) == '""'
-
-    # Arbitrary object whose representation is both length *AND* contains one
-    # or more newlines.
-    THE_EVERLASTING_UNIVERSE_OF_THINGS = (
-        'And singing still dost soar,\nand soaring ever singest.')
 
     # Representation of this object.
     the_blue_deep_thou_wingest = represent_object(
@@ -80,3 +84,28 @@ def test_represent_object():
     like_a_star_of_heaven = represent_object(
         obj='In the golden lightning\nOf the sunken sun,', max_len=2)
     assert len(like_a_star_of_heaven) == 2
+
+
+def test_represent_pith() -> None:
+    '''
+    Test the
+    Test the :func:`beartype._util.text.utiltextrepr.represent_pith` function.
+    '''
+
+    # Defer test-specific imports.
+    from beartype._util.text.utiltextrepr import represent_pith
+
+    # Custom type to be represented below.
+    class CustomType(object):
+        def __repr__(self) -> str: return (
+            'Collaborator‐ily brambling unspiritually')
+
+    # Assert this representer represents builtin types in the expected way.
+    repr_builtin = represent_pith(42)
+    assert 'int' in repr_builtin
+    assert '42' in repr_builtin
+
+    # Assert this representer represents custom types in the expected way.
+    repr_nonbuiltin = represent_pith(CustomType())
+    assert 'CustomType' in repr_nonbuiltin
+    assert 'Collaborator‐ily brambling unspiritually' in repr_nonbuiltin

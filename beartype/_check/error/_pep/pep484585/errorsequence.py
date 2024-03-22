@@ -16,16 +16,13 @@ from beartype._data.hint.pep.sign.datapepsigns import HintSignTuple
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_SEQUENCE_ARGS_1)
 from beartype._check.error._errorcause import ViolationCause
-from beartype._check.error._errortype import (
-    find_cause_type_instance_origin)
-from beartype._check.error._util.errorutiltext import (
-    prefix_pith_type,
-    represent_pith,
-)
+from beartype._check.error._errortype import find_cause_type_instance_origin
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
     is_hint_pep484585_tuple_empty)
 from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextansi import color_type
+from beartype._util.text.utiltextprefix import prefix_pith_type
+from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ FINDERS                            }....................
 def find_cause_sequence_args_1(cause: ViolationCause) -> ViolationCause:
@@ -176,7 +173,7 @@ def find_cause_tuple(cause: ViolationCause) -> ViolationCause:
                 # Human-readable substring prefixing this failure with metadata
                 # describing this item.
                 cause_deep.cause_str_or_none = (
-                    f'{prefix_pith_type(cause.pith)}'
+                    f'{prefix_pith_type(pith=cause.pith, is_color=True)}'
                     f'index {color_type(str(pith_item_index))} '
                     f'item {cause_deep.cause_str_or_none}'
                 )
@@ -289,7 +286,7 @@ def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
                     # Human-readable substring prefixing this failure with
                     # metadata describing this item.
                     cause_deep.cause_str_or_none = (
-                        f'{prefix_pith_type(cause.pith)}'
+                        f'{prefix_pith_type(pith=cause.pith, is_color=True)}'
                         f'index {color_type(str(pith_item_index))} '
                         f'item {cause_deep.cause_str_or_none}'
                     )

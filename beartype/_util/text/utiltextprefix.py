@@ -59,7 +59,7 @@ def prefix_beartypeable(
         f'{label_callable(func=obj, is_color=is_color)} '  # type: ignore[arg-type]
     )
 
-# ....................{ PREFIXERS ~ beartypeable : pith    }....................
+
 def prefix_beartypeable_pith(func: Callable, pith_name: str) -> str:
     '''
     Human-readable label describing either the parameter with the passed name
@@ -92,7 +92,7 @@ def prefix_beartypeable_pith(func: Callable, pith_name: str) -> str:
         prefix_callable_arg(func=func, arg_name=pith_name)
     )
 
-
+# ....................{ PREFIXERS ~ callable               }....................
 def prefix_callable_arg(func: Callable, arg_name: str) -> str:
     '''
     Human-readable label describing the parameter with the passed name of the
@@ -138,3 +138,167 @@ def prefix_callable_return(func: Callable) -> str:
 
     # Create and return this label.
     return f'{prefix_beartypeable(func)}return '
+
+# ....................{ PREFIXERS : callable : value       }....................
+def prefix_callable_arg_value(
+    # Mandatory parameters.
+    func: Callable,
+    arg_name: str,
+    arg_value: object,
+
+    # Optional parameters.
+    is_color: bool = False,
+) -> str:
+    '''
+    Human-readable label describing the parameter with the passed name and
+    trimmed value of the passed **decorated callable** (i.e., callable wrapped
+    by the :func:`beartype.beartype` decorator with a wrapper function
+    type-checking that callable) suffixed by delimiting whitespace.
+
+    Parameters
+    ----------
+    func : Callable
+        Decorated callable to be labelled.
+    arg_name : str
+        Name of the parameter of this callable to be labelled.
+    arg_value : object
+        Value of the parameter of this callable to be labelled.
+    is_color : bool, optional
+        :data:`True` only if embellishing this label with colour. Defaults to
+        :data:`False`.
+
+    Returns
+    -------
+    str
+        Human-readable label describing this parameter's name and value.
+    '''
+    assert isinstance(arg_name, str), f'{repr(arg_name)} not string.'
+    assert isinstance(is_color, bool), f'{repr(is_color)} not boolean.'
+
+    # Avoid circular import dependencies.
+    from beartype._util.text.utiltextansi import color_arg_name
+
+    # If colouring this argument name, do so.
+    if is_color:
+        arg_name = color_arg_name(arg_name)
+    # Else, we are *NOT* colouring this argument name.
+
+    # Create and return this label.
+    return (
+        f'{prefix_beartypeable(obj=func, is_color=is_color)}'
+        f'parameter {arg_name}='
+        f'{prefix_pith_value(pith=arg_value, is_color=is_color)}'
+    )
+
+
+def prefix_callable_return_value(
+    # Mandatory parameters.
+    func: Callable,
+    return_value: object,
+
+    # Optional parameters.
+    is_color: bool = False,
+) -> str:
+    '''
+    Human-readable label describing the passed trimmed return value of the
+    passed **decorated callable** (i.e., callable wrapped by the
+    :func:`beartype.beartype` decorator with a wrapper function type-checking
+    that callable) suffixed by delimiting whitespace.
+
+    Parameters
+    ----------
+    func : Callable
+        Decorated callable to be labelled.
+    return_value : object
+        Value returned by this callable to be labelled.
+    is_color : bool, optional
+        :data:`True` only if embellishing this label with colour. Defaults to
+        :data:`False`.
+
+    Returns
+    -------
+    str
+        Human-readable label describing this return value.
+    '''
+
+    # Create and return this label.
+    return (
+        f'{prefix_beartypeable(obj=func, is_color=is_color)}return '
+        f'{prefix_pith_value(pith=return_value, is_color=is_color)}'
+    )
+
+# ....................{ PREFIXERS ~ pith                   }....................
+def prefix_pith_type(
+    # Mandatory parameters.
+    pith: object,
+
+    # Optional parameters.
+    is_color: bool = False,
+) -> str:
+    '''
+    Human-readable label describing the passed type of the **current pith**
+    (i.e., arbitrary object violating the current type check) suffixed by
+    delimiting whitespace.
+
+    Parameters
+    ----------
+    pith : object
+        Arbitrary object violating the current type check.
+    is_color : bool, optional
+        :data:`True` only if embellishing this label with colour. Defaults to
+        :data:`False`.
+
+    Returns
+    -------
+    str
+        Human-readable label describing this pith type.
+    '''
+    assert isinstance(is_color, bool), f'{repr(is_color)} not boolean.'
+
+    # Avoid circular import dependencies.
+    from beartype._util.text.utiltextansi import color_type
+    from beartype._util.text.utiltextlabel import label_object_type
+
+    # Label describing this pith type.
+    pith_type_prefix = f'{label_object_type(pith)} '
+
+    # If colouring this label, do so.
+    if is_color:
+        pith_type_prefix = color_type(pith_type_prefix)
+    # Else, we are *NOT* colouring this label.
+
+    # Return this label.
+    return pith_type_prefix
+
+
+def prefix_pith_value(
+    # Mandatory parameters.
+    pith: object,
+
+    # Optional parameters.
+    is_color: bool = False,
+) -> str:
+    '''
+    Human-readable label describing the passed value of the **current pith**
+    (i.e., arbitrary object violating the current type check) suffixed by
+    delimiting whitespace.
+
+    Parameters
+    ----------
+    pith : object
+        Arbitrary object violating the current type check.
+    is_color : bool, optional
+        :data:`True` only if embellishing this label with colour. Defaults to
+        :data:`False`.
+
+    Returns
+    -------
+    str
+        Human-readable label describing this pith value.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.text.utiltextlabel import label_pith_value
+
+    # Create and return this label.
+    return f'{label_pith_value(pith=pith, is_color=is_color)} '

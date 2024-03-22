@@ -17,7 +17,7 @@ from beartype._data.hint.pep.sign.datapepsigns import HintSignLiteral
 from beartype._util.hint.pep.proposal.utilpep586 import (
     get_hint_pep586_literals)
 from beartype._util.text.utiltextjoin import join_delimited_disjunction
-from beartype._check.error._util.errorutiltext import represent_pith
+from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ GETTERS                            }....................
 def find_cause_literal(cause: ViolationCause) -> ViolationCause:

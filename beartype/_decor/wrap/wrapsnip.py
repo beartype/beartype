@@ -21,7 +21,18 @@ from beartype._check.checkmagic import (
 )
 from beartype._util.func.arg.utilfuncargiter import ArgKind
 from beartype._data.code.datacodeindent import CODE_INDENT_1
+from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from collections.abc import Callable
+
+# ....................{ STRINGS                            }....................
+EXCEPTION_PREFIX_DEFAULT_VALUE = f'{EXCEPTION_PLACEHOLDER}default '
+'''
+Non-human-readable source substring to be globally replaced by a human-readable
+target substring in the messages of memoized exceptions passed to the
+:func:`reraise_exception` function caused by violations raised when
+type-checking the default values of optional parameters for
+:func:`beartype.beartype`-decorated callables.
+'''
 
 # ....................{ CODE                               }....................
 CODE_SIGNATURE = f'''{{code_signature_prefix}}def {{func_name}}(

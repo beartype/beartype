@@ -42,7 +42,7 @@ from beartype._util.hint.pep.utilpepget import (
 from beartype._util.text.utiltextansi import color_hint
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextlabel import label_type
-from beartype._check.error._util.errorutiltext import represent_pith
+from beartype._util.text.utiltextrepr import represent_pith
 
 # ....................{ GETTERS ~ instance : type          }....................
 def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
