@@ -12,8 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Optional
-from beartype._data.hint.datahinttyping import BeartypeableT
+from beartype._data.hint.datahinttyping import (
+    BeartypeableT,
+    BoolTristate,
+)
 from beartype._util.utilobject import (
     get_object_name,
     get_object_type_name,
@@ -136,8 +138,8 @@ def label_callable(
     func: Callable,
 
     # Optional parameters.
-    is_color: bool = False,
-    is_context: Optional[bool] = None,
+    is_color: BoolTristate = False,
+    is_context: BoolTristate = None,
 ) -> str:
     '''
     Human-readable label describing the passed **callable** (e.g., function,
@@ -147,10 +149,11 @@ def label_callable(
     ----------
     func : Callable
         Callable to be labelled.
-    is_color : bool, optional
-        :data:`True` only if embellishing this label with colour. Defaults to
-        :data:`False`.
-    is_context : Optional[bool] = None
+    is_color : BoolTristate
+        Tri-state colouring boolean governing ANSI usage. See the
+        :attr:`beartype.BeartypeConf.is_color` attribute for further details.
+        Defaults to :data:`False`.
+    is_context : BoolTristate
         Either:
 
         * :data:`True`, in which case this label is suffixed by additional
@@ -174,9 +177,8 @@ def label_callable(
         Human-readable label describing this callable.
     '''
     assert callable(func), f'{repr(func)} uncallable.'
-    assert isinstance(is_color, bool), f'{repr(is_color)} not boolean.'
     assert isinstance(is_context, bool) or is_context is None, (  # <-- "NoneTypeOr" is unavailable here
-        f'{repr(is_context)} neither boolean nor "None".')
+        f'{repr(is_context)} not tri-state boolean.')
 
     # Avoid circular import dependencies.
     from beartype._util.func.arg.utilfuncargget import (
@@ -189,8 +191,9 @@ def label_callable(
     # specialized type of that callable if that callable has a specialized type.
     func_label_prefix = ''
 
-    # Fully-qualified name of that callable.
-    func_label = f' {get_object_name(func)}()'
+    # Fully-qualified name of that callable, coloured if requested.
+    func_label = color_attr_name(
+        text=f' {get_object_name(func)}()', is_color=is_color)
 
     # Substring suffixing the string to be returned, typically contextualizing
     # that callable with respect to its on-disk code module file.
@@ -223,11 +226,6 @@ def label_callable(
     # substring describing the kind of that callable.
     else:
         func_label_prefix = label_beartypeable_kind(func)
-
-    # If colouring that callable, do so.
-    if is_color:
-        func_label = color_attr_name(func_label)
-    # Else, we are *NOT* colouring that callable.
 
     # If contextualizing that callable, just do it already. Go, @beartype! Go!
     if is_context:
@@ -316,7 +314,7 @@ def label_pith_value(
     pith: object,
 
     # Optional parameters.
-    is_color: bool = False,
+    is_color: BoolTristate = False,
 ) -> str:
     '''
     Human-readable label describing the passed value of the **current pith**
@@ -327,31 +325,23 @@ def label_pith_value(
     ----------
     pith : object
         Arbitrary object violating the current type check.
-    is_color : bool, optional
-        :data:`True` only if embellishing this label with colour. Defaults to
-        :data:`False`.
+    is_color : BoolTristate
+        Tri-state colouring boolean governing ANSI usage. See the
+        :attr:`beartype.BeartypeConf.is_color` attribute for further details.
+        Defaults to :data:`False`.
 
     Returns
     -------
     str
         Human-readable label describing this pith value.
     '''
-    assert isinstance(is_color, bool), f'{repr(is_color)} not boolean.'
 
     # Avoid circular import dependencies.
     from beartype._util.text.utiltextansi import color_pith
     from beartype._util.text.utiltextrepr import represent_object
 
-    # Label describing the value of this pith.
-    pith_value_label = represent_object(pith)
-
-    # If colouring this label, do so.
-    if is_color:
-        pith_value_label = color_pith(pith_value_label)
-    # Else, we are *NOT* colouring this label.
-
-    # Return this label.
-    return pith_value_label
+    # Glory be to the one liner that you are about to read.
+    return color_pith(text=represent_object(pith), is_color=is_color)
 
 # ....................{ LABELLERS ~ type                   }....................
 def label_type(
@@ -359,7 +349,7 @@ def label_type(
     cls: type,
 
     # Optional parameters.
-    is_color: bool = False,
+    is_color: BoolTristate = False,
 ) -> str:
     '''
     Human-readable label describing the passed class.
@@ -368,9 +358,10 @@ def label_type(
     ----------
     cls : type
         Class to be labelled.
-    is_color : bool, optional
-        :data:`True` only if embellishing this label with colour. Defaults to
-        :data:`False`.
+    is_color : BoolTristate
+        Tri-state colouring boolean governing ANSI usage. See the
+        :attr:`beartype.BeartypeConf.is_color` attribute for further details.
+        Defaults to :data:`False`.
 
     Returns
     -------
@@ -378,7 +369,6 @@ def label_type(
         Human-readable label describing this class.
     '''
     assert isinstance(cls, type), f'{repr(cls)} not class.'
-    assert isinstance(is_color, bool), f'{repr(is_color)} not boolean.'
 
     # Avoid circular import dependencies.
     from beartype._util.cls.utilclstest import is_type_builtin
@@ -432,13 +422,8 @@ def label_type(
     else:
         classname = f'<class "{classname}">'
 
-    # If colouring this class, do so.
-    if is_color:
-        classname = color_attr_name(classname)
-    # Else, we are *NOT* colouring this class.
-
-    # Return this labelled classname.
-    return classname
+    # Return this labelled classname, possibly coloured.
+    return color_attr_name(text=classname, is_color=is_color)
 
 
 def label_object_type(obj: object) -> str:

@@ -12,12 +12,12 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ TODO                               }....................
-#FIXME: Generalizing the "random_int" concept (i.e., the optional "random_int"
-#parameter accepted by the get_func_pith_violation() function) that enables
-#O(1) rather than O(n) exception handling to containers that do *NOT* provide
-#efficient random access like mappings and sets will be highly non-trivial.
-#While there exist a number of alternative means of implementing that
-#generalization, the most reasonable *BY FAR* is probably to:
+#FIXME: [ACCESS] Generalizing the "random_int" concept (i.e., the optional
+#"random_int" parameter accepted by the get_func_pith_violation() function) that
+#enables O(1) exception handling to containers that do *NOT* provide efficient
+#random access like mappings and sets will be highly non-trivial. While there
+#exist a number of alternative means of implementing that generalization, the
+#most reasonable *BY FAR* is probably to:
 #
 #* Embed additional assignment expressions in the type-checking tests generated
 #  by the make_func_pith_code() function that uniquely store the value of
@@ -64,6 +64,47 @@ This private submodule is *not* intended for importation by downstream callers.
 #  must be taken here to ensure that this exception handling algorithm visits
 #  containers in the exact same order as visited by our testing algorithm.
 
+#FIXME: [COLOR] The call to the strip_text_ansi() function below is inefficient
+#and thus non-ideal. Since efficiency isn't a pressing concern in an exception
+#raiser, this is more a matter of design purity than anything. Still, it would
+#be preferable to avoid embedding ANSI escape sequences when the user requests
+#that rather than forcibly stripping those sequences out after the fact via an
+#inefficient regex. To do so, we'll want to:
+#* Augment the color_*() family of functions with a mandatory "conf:
+#  BeartypeConf" parameter.
+#* Pass that parameter to *EVERY* call to one of those functions.
+#* Refactor those functions to respect that parameter. The ideal means of
+#  doing so would probably be define in the
+#  "beartype._util.text.utiltextansi" submodule:
+#  * A new "_BeartypeTheme" dataclass mapping from style names to format
+#    strings embedding the ANSI escape sequences styling those styles.
+#  * A new pair of private "_THEME_MONOCHROME" and "_THEME_PRISMATIC"
+#    instances of that dataclass. The values of the "_THEME_MONOCHROME"
+#    dictionary should all just be the default format string: e.g.,
+#    _THEME_MONOCHROME = _BeartypeTheme(
+#        format_error='{text}',
+#        ...
+#    )
+#
+#    _THEME_PRISMATIC = _BeartypeTheme(
+#        format_error=f'{_STYLE_BOLD}{_COLOUR_RED}{{text}}{_COLOUR_RESET}',
+#        ...
+#    )
+#  * A new "_THEME_DEFAULT" instance of that dataclass conditionally defined
+#    as either "_THEME_MONOCHROME" or "_THEME_PRISMATIC" depending on
+#    whether stdout is attached to a TTY or not. Alternately, to avoid
+#    performing that somewhat expensive logic at module scope (and thus on
+#    initial beartype importation), it might be preferable to instead define
+#    a new cached private getter resembling:
+#
+#    @callable_cached
+#    def _get_theme_default() -> _BeartypeTheme:
+#        return (
+#            _THEME_PRISMATIC
+#            if is_stdout_terminal() else
+#            _THEME_MONOCHROME
+#        )
+
 # ....................{ IMPORTS                            }....................
 from beartype.meta import URL_ISSUES
 from beartype.roar._roarexc import (
@@ -84,9 +125,10 @@ from beartype._data.hint.datahinttyping import (
     TypeStack,
 )
 from beartype._check.error._errorcause import ViolationCause
-from beartype._check.error._util.errorutilcolor import (
-    strip_text_ansi_if_configured)
-from beartype._util.text.utiltextansi import color_hint
+from beartype._util.text.utiltextansi import (
+    color_hint,
+    strip_str_ansi,
+)
 from beartype._util.text.utiltextmunge import (
     suffix_str_unless_suffixed,
     uppercase_str_char_first,
@@ -462,7 +504,7 @@ def get_hint_object_violation(
     violation_verbosity = conf.violation_verbosity
 
     # Machine-readable representation of this hint embellished with colour.
-    hint_repr = f'{color_hint(repr(hint))}'
+    hint_repr = f'{color_hint(text=repr(hint), is_color=conf.is_color)}'
 
     # Dictionary mapping from each possibly violation verbosity to a
     # corresponding substring prepending this exception message.
@@ -510,11 +552,19 @@ def get_hint_object_violation(
         f'{VIOLATION_VERBOSITY_TO_SUFFIX[violation_verbosity]}'
     )
 
-    #FIXME: Unit test us up, please.
+    #FIXME: In theory, this should no longer be needed. Consider:
+    #* Refactoring all instances of "is_color=True" throughout this subpackage
+    #  to instead read "is_color=cause.conf.is_color".
+    #* Refactoring all calls to the represent_pith() function throughout this
+    #  subpackage to additionally pass a new optional
+    #  "is_color=cause.conf.is_color" parameter.
+    #* Refactoring this call away.
+    #* Validating with unit tests that violation messages contain *NO* ANSI when
+    #  configured such that "BeartypeConf(is_color=False)".
     # Strip all ANSI escape sequences from this message if requested by this
     # external user-defined configuration.
-    exception_message = strip_text_ansi_if_configured(
-        text=exception_message, conf=conf)
+    exception_message = strip_str_ansi(
+        text=exception_message, is_color=conf.is_color)
 
     # Exception of the desired class embedding this cause. By default, attempt
     # to pass @beartype-specific parameters to this exception subclass.

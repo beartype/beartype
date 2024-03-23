@@ -424,10 +424,10 @@ class BeartypeConf(object):
             enabling end users to enforce a global colour policy across their
             full app stack. If ``${BEARTYPE_IS_COLOR}`` is set to a different
             value than that of this parameter, this constructor emits a
-            non-fatal :class:`.BeartypeConfShellVarWarning` warning informing
-            the caller of this configuration conflict. To avoid this conflict,
-            open-source libraries are recommended to *not* pass this parameter;
-            ideally, *only* end user apps should pass this parameter.
+            non-fatal :class:`beartype.roar.BeartypeConfShellVarWarning` warning
+            informing the caller of this configuration conflict. To avoid this
+            conflict, open-source libraries are recommended to *not* pass this
+            parameter; ideally, *only* end user apps should pass this parameter.
 
             Effectively defaults to :data:`None`. Technically, this parameter
             defaults to a private magic constant *not* intended to be passed by

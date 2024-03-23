@@ -156,7 +156,7 @@ def find_cause_instance_type(cause: ViolationCause) -> ViolationCause:
         else:
             cause_str_or_none = (
                 f'{represent_pith(pith)} not instance of '
-                f'{color_hint(label_type(hint))}'
+                f'{color_hint(text=label_type(hint), is_color=cause.conf.is_color)}'
             )
     # Else, this pith is an instance of this class.
 
@@ -278,7 +278,7 @@ def find_cause_instance_types_tuple(cause: ViolationCause) -> ViolationCause:
         # longer string.
         (
             f'{represent_pith(cause.pith)} not instance of '
-            f'{color_hint(join_delimited_disjunction_types(cause.hint))}'
+            f'{color_hint(text=join_delimited_disjunction_types(cause.hint), is_color=cause.conf.is_color)}'
         )
     ))
 

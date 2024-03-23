@@ -34,7 +34,7 @@ def test_is_text_ansi() -> None:
         True)
 
 # ....................{ TESTS ~ stripper                   }....................
-def test_strip_text_ansi() -> None:
+def test_strip_str_ansi() -> None:
     '''
     Test the :func:`beartype._util.text.utiltextansi.strip_str_ansi` stripper.
     '''

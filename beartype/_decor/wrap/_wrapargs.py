@@ -29,7 +29,7 @@ from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._decor.wrap.wrapsnip import (
     CODE_INIT_ARGS_LEN,
     EXCEPTION_PREFIX_DEFAULT_VALUE,
-    PARAM_KIND_TO_CODE_LOCALIZE,
+    ARG_KIND_TO_CODE_LOCALIZE,
 )
 from beartype._decor.wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
@@ -47,7 +47,7 @@ from beartype._util.hint.utilhinttest import (
     is_hint_needs_cls_stack,
 )
 from beartype._util.kind.map.utilmapset import update_mapping
-from beartype._util.text.utiltextprefix import prefix_callable_arg
+from beartype._util.text.utiltextprefix import prefix_callable_arg_name
 from beartype._util.utilobject import SENTINEL
 from warnings import catch_warnings
 
@@ -172,7 +172,7 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                         f'{EXCEPTION_PLACEHOLDER}reserved by @beartype.')
                 # If either the type of this parameter is silently ignorable,
                 # continue to the next parameter.
-                elif arg_kind in _PARAM_KINDS_IGNORABLE:
+                elif arg_kind in _ARG_KINDS_IGNORABLE:
                     continue
                 # Else, this parameter is non-ignorable.
 
@@ -214,20 +214,20 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                 # nested *BEFORE* validating this parameter to be unignorable,
                 # beartype would fail to reduce to a noop for otherwise
                 # ignorable callables -- which would be rather bad, really.
-                if arg_kind in _PARAM_KINDS_POSITIONAL:
+                if arg_kind in _ARG_KINDS_POSITIONAL:
                     is_args_positional = True
                 # Else, this parameter *CANNOT* be passed positionally.
 
                 # Python code template localizing this parameter if this kind of
                 # parameter is supported *OR* "None" otherwise.
-                PARAM_LOCALIZE_TEMPLATE = PARAM_KIND_TO_CODE_LOCALIZE.get(  # type: ignore
+                ARG_LOCALIZE_TEMPLATE = ARG_KIND_TO_CODE_LOCALIZE.get(  # type: ignore
                     arg_kind, None)
 
                 # If this kind of parameter is unsupported, raise an exception.
                 #
                 # Note this edge case should *NEVER* occur, as the parent
                 # function should have simply ignored this parameter.
-                if PARAM_LOCALIZE_TEMPLATE is None:
+                if ARG_LOCALIZE_TEMPLATE is None:
                     raise BeartypeDecorHintPepException(
                         f'{EXCEPTION_PLACEHOLDER}kind {repr(arg_kind)} '
                         f'currently unsupported by @beartype.'
@@ -255,7 +255,7 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                 # Code snippet type-checking *ANY* parameter with *ANY*
                 # arbitrary name.
                 (
-                    code_param_check_pith,
+                    code_arg_check_pith,
                     func_scope,
                     hint_refs_type_basename,
                 ) = make_code_raiser_func_pith_check(
@@ -271,19 +271,19 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                 update_mapping(bear_call.func_wrapper_scope, func_scope)
 
                 # Python code snippet localizing this parameter.
-                code_param_localize = PARAM_LOCALIZE_TEMPLATE.format(
+                code_arg_localize = ARG_LOCALIZE_TEMPLATE.format(
                     arg_name=arg_name, arg_index=arg_index)
 
                 # Unmemoize this snippet against the current parameter.
-                code_param_check = unmemoize_func_wrapper_code(
+                code_arg_check = unmemoize_func_wrapper_code(
                     bear_call=bear_call,
-                    func_wrapper_code=code_param_check_pith,
+                    func_wrapper_code=code_arg_check_pith,
                     pith_repr=repr(arg_name),
                     hint_refs_type_basename=hint_refs_type_basename,
                 )
 
                 # Append code type-checking this parameter against this hint.
-                func_wrapper_code += f'{code_param_localize}{code_param_check}'
+                func_wrapper_code += f'{code_arg_localize}{code_arg_check}'
 
             # If one or more warnings were issued, reissue these warnings with
             # each placeholder substring (i.e., "EXCEPTION_PLACEHOLDER"
@@ -293,8 +293,11 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                 # print(f'warnings_issued: {warnings_issued}')
                 reissue_warnings_placeholder(
                     warnings=warnings_issued,
-                    target_str=prefix_callable_arg(
-                        func=bear_call.func_wrappee, arg_name=arg_name),
+                    target_str=prefix_callable_arg_name(
+                        func=bear_call.func_wrappee,
+                        arg_name=arg_name,
+                        is_color=bear_call.conf.is_color,
+                    ),
                 )
             # Else, *NO* warnings were issued.
         # If any exception was raised, reraise this exception with each
@@ -307,10 +310,13 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                 #FIXME: Embed the kind of parameter both here and above as well
                 #(e.g., "positional-only", "keyword-only", "variadic
                 #positional"), ideally by improving the existing
-                #prefix_callable_arg() function to introspect this kind from
+                #prefix_callable_arg_name() function to introspect this kind from
                 #the callable code object.
-                target_str=prefix_callable_arg(
-                    func=bear_call.func_wrappee, arg_name=arg_name),
+                target_str=prefix_callable_arg_name(
+                    func=bear_call.func_wrappee,
+                    arg_name=arg_name,
+                    is_color=bear_call.conf.is_color,
+                ),
             )
 
     # If this callable accepts one or more positional type-checked parameters,
@@ -325,7 +331,7 @@ def code_check_args(bear_call: BeartypeCall) -> str:
 
 # ....................{ PRIVATE ~ constants                }....................
 #FIXME: Remove this set *AFTER* handling these kinds of parameters.
-_PARAM_KINDS_IGNORABLE = frozenset((
+_ARG_KINDS_IGNORABLE = frozenset((
     ArgKind.VAR_KEYWORD,
 ))
 '''
@@ -344,7 +350,7 @@ This includes:
 '''
 
 
-_PARAM_KINDS_POSITIONAL = frozenset((
+_ARG_KINDS_POSITIONAL = frozenset((
     ArgKind.POSITIONAL_ONLY,
     ArgKind.POSITIONAL_OR_KEYWORD,
 ))

@@ -223,7 +223,10 @@ def code_check_return(bear_call: BeartypeCall) -> str:
         if warnings_issued:
             reissue_warnings_placeholder(
                 warnings=warnings_issued,
-                target_str=prefix_callable_return(bear_call.func_wrappee),
+                target_str=prefix_callable_return(
+                    func=bear_call.func_wrappee,
+                    is_color=bear_call.conf.is_color,
+                ),
             )
         # Else, *NO* warnings were issued.
     # If any exception was raised, reraise this exception with each placeholder
@@ -232,7 +235,10 @@ def code_check_return(bear_call: BeartypeCall) -> str:
     except Exception as exception:
         reraise_exception_placeholder(
             exception=exception,
-            target_str=prefix_callable_return(bear_call.func_wrappee),
+            target_str=prefix_callable_return(
+                func=bear_call.func_wrappee,
+                is_color=bear_call.conf.is_color,
+            ),
         )
 
     # If a local scope is required to type-check this return, merge this scope

@@ -61,7 +61,7 @@ accepting one or more such arguments.
 '''
 
 # ....................{ CODE ~ arg                         }....................
-PARAM_KIND_TO_CODE_LOCALIZE = {
+ARG_KIND_TO_CODE_LOCALIZE = {
     # Snippet localizing any positional-only parameter (e.g.,
     # "{posonlyarg}, /") by lookup in the wrapper's "*args" dictionary.
     ArgKind.POSITIONAL_ONLY: f'''

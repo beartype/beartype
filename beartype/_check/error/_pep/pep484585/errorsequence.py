@@ -173,8 +173,8 @@ def find_cause_tuple(cause: ViolationCause) -> ViolationCause:
                 # Human-readable substring prefixing this failure with metadata
                 # describing this item.
                 cause_deep.cause_str_or_none = (
-                    f'{prefix_pith_type(pith=cause.pith, is_color=True)}'
-                    f'index {color_type(str(pith_item_index))} '
+                    f'{prefix_pith_type(pith=cause.pith, is_color=cause.conf.is_color)}'
+                    f'index {color_type(text=str(pith_item_index), is_color=cause.conf.is_color)} '
                     f'item {cause_deep.cause_str_or_none}'
                 )
 
@@ -286,8 +286,8 @@ def _find_cause_sequence(cause: ViolationCause) -> ViolationCause:
                     # Human-readable substring prefixing this failure with
                     # metadata describing this item.
                     cause_deep.cause_str_or_none = (
-                        f'{prefix_pith_type(pith=cause.pith, is_color=True)}'
-                        f'index {color_type(str(pith_item_index))} '
+                        f'{prefix_pith_type(pith=cause.pith, is_color=cause.conf.is_color)}'
+                        f'index {color_type(text=str(pith_item_index), is_color=cause.conf.is_color)} '
                         f'item {cause_deep.cause_str_or_none}'
                     )
 

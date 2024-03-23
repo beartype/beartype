@@ -192,7 +192,9 @@ def find_cause_union(cause: ViolationCause) -> ViolationCause:
         # child hints of the average "typing.Union" in general *AND* due to the
         # fact that this function is only called when a catastrophic type-check
         # failure has already occurred.
-        cause_strs.insert(0, f'not {color_hint(cause_types_unsatisfied)}')
+        cause_strs.insert(0, (
+            f'not {color_hint(text=cause_types_unsatisfied, is_color=cause.conf.is_color)}'
+        ))
     # Else, this pith shallowly satisfies *ALL* the types of this union.
 
     # If prior logic appended *NO* causes, raise an exception.
