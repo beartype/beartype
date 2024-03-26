@@ -58,7 +58,7 @@ from beartype.claw._ast.pep.clawastpep526 import (
 from beartype.claw._ast.pep.clawastpep695 import (
     BeartypeNodeTransformerPep695Mixin)
 from beartype.claw._ast._clawastutil import BeartypeNodeTransformerUtilityMixin
-from beartype.claw._clawtyping import (
+from beartype._data.hint.datahinttyping import (
     NodeCallable,
     NodeT,
 )

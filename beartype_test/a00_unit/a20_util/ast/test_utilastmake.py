@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **object utility unit tests.**
+Project-wide **abstract syntax tree (AST) factory utility unit tests.**
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.utilobject` submodule.
+:mod:`beartype._util.ast.utilastmake` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................

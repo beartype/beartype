@@ -14,7 +14,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 import beartype #  <-- satisfy mypy [note to self: i can't stand you, mypy]
-from ast import AST
+from ast import (
+    AST,
+    AsyncFunctionDef,
+    ClassDef,
+    FunctionDef,
+)
 from beartype.typing import (
     AbstractSet,
     Any,
@@ -48,7 +53,47 @@ from types import (
 )
 
 # ....................{ AST                                }....................
-ListNodes = List[AST]
+NodeCallable = Union[FunctionDef, AsyncFunctionDef]
+'''
+PEP-compliant type hint matching a **callable node** (i.e., abstract syntax tree
+(AST) node encapsulating the definition of a pure-Python function or method that
+is either synchronous or asynchronous).
+'''
+
+
+NodeDecoratable = Union[NodeCallable, ClassDef]
+'''
+PEP-compliant type hint matching a **decoratable node** (i.e., abstract syntax
+tree (AST) node encapsulating the definition of a pure-Python object supporting
+decoration by one or more ``"@"``-prefixed decorations, including both
+pure-Python classes *and* callables).
+'''
+
+
+NodeT = TypeVar('NodeT', bound=AST)
+'''
+**Node type variable** (i.e., type variable constrained to match *only* abstract
+syntax tree (AST) nodes).
+'''
+
+
+NodeVisitResult = Optional[Union[AST, List[AST]]]
+'''
+PEP-compliant type hint matching a **node visitation result** (i.e., object
+returned by any visitor method of an :class:`ast.NodeVisitor` subclass).
+
+Specifically, this hint matches either:
+
+* A single node, in which case a visitor method has effectively preserved the
+  currently visited node passed to that method in the AST.
+* A list of zero or more nodes, in which case a visitor method has replaced the
+  currently visited node passed to that method with those nodes in the AST.
+* :data:`None`, in which case a visitor method has effectively destroyed the
+  currently visited node passed to that method from the AST.
+'''
+
+
+NodesList = List[AST]
 '''
 PEP-compliant type hint matching an **abstract syntax tree (AST) node list**
 (i.e., list of zero or more AST nodes).

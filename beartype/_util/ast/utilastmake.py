@@ -34,7 +34,7 @@ from beartype._data.ast.dataast import (
     NODE_CONTEXT_LOAD,
     NODE_CONTEXT_STORE,
 )
-from beartype._data.hint.datahinttyping import ListNodes
+from beartype._data.hint.datahinttyping import NodesList
 from beartype._data.kind.datakindsequence import LIST_EMPTY
 from beartype._util.ast.utilastmunge import copy_node_metadata
 
@@ -257,7 +257,7 @@ def make_node_call(
     node_sibling: AST,
 
     # Optional parameters.
-    nodes_args: ListNodes = LIST_EMPTY,
+    nodes_args: NodesList = LIST_EMPTY,
     nodes_kwargs: List[keyword] = LIST_EMPTY,
 ) -> Call:
     '''
@@ -272,11 +272,11 @@ def make_node_call(
         Fully-qualified name of the module to import this attribute from.
     node_sibling : AST
         Sibling node to copy source code metadata from.
-    nodes_args : ListNodes, optional
+    nodes_args : NodesList, optional
         List of zero or more **positional parameter AST nodes** comprising the
         tuple of all positional parameters to be passed to this call. Defaults
         to the empty list.
-    nodes_kwargs : ListNodes, optional
+    nodes_kwargs : NodesList, optional
         List of zero or more **keyword parameter AST nodes** comprising the
         dictionary of all keyword parameters to be passed to this call. Defaults
         to the empty list.

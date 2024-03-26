@@ -32,7 +32,6 @@ from pytest import raises
 #guarding against regressions in this functionality. For now, the *ONLY* means
 #of testing this is to do so manually in an external module subject to a
 #beartype import hook that performs this import. Gag me with a spork.
-
 # Intentionally import a pure-Python module from the standard library that
 # internally imports a C extension -- in this case, "_struct". Doing so ensures
 # that beartype import hooks properly support loading of C extensions, which our
@@ -74,11 +73,11 @@ with raises(BeartypeDoorHintViolation):
 
 def nothing_in_the_world(is_single: Union[float, bytes]) -> Optional[complex]:
     '''
-    Arbitrary method either returning the passed integer first doubled and then
-    coerced into a complex number with imaginary component ``1`` if this integer
-    is non-zero *or* raising a :exc:`.BeartypeCallHintParamViolation` exception
-    otherwise (i.e., if this integer is zero), exercising that beartype import
-    hooks decorate global functions as expected.
+    Arbitrary function either returning the passed integer first doubled and
+    then coerced into a complex number with imaginary component ``1`` if this
+    integer is non-zero *or* raising a :exc:`.BeartypeCallHintParamViolation`
+    exception otherwise (i.e., if this integer is zero), exercising that
+    beartype import hooks decorate global functions as expected.
     '''
 
     def in_one_spirit(meet_and_mingle: Optional[float]) -> Union[complex, str]:
@@ -144,7 +143,7 @@ with raises(BeartypeCallHintReturnViolation):
 def alastor_or(the_spirit_of_solitude: Union[float, bytes]) -> (
     Optional[complex]):
     '''
-    Arbitrary method either returning the passed float first doubled and then
+    Arbitrary function either returning the passed float first doubled and then
     coerced into a complex number with imaginary component ``1`` if this float
     is non-zero *or* raising a :exc:`.BeartypeCallHintParamViolation` exception
     otherwise (i.e., if this float is zero), exercising that beartype import
@@ -202,6 +201,47 @@ with raises(BeartypeCallHintParamViolation):
 # from the closure defined and called by this function.
 with raises(BeartypeCallHintReturnViolation):
     alastor_or(len('quid amarem') - len('amans amare') + 0.0)
+
+# ....................{ FUNCTIONS ~ signature              }....................
+# Functions whose signatures exhibit various uncommon edge cases preventing
+# regressions in the "beartype.claw" API.
+
+def of_desperate_hope(*, wrinkled_his, quivering_lips: str):
+    '''
+    Arbitrary function annotated *only* by a single keyword-only parameter.
+    Yes, this previously blew up. It's best *not* to ask why. We shudder.
+    '''
+
+    return wrinkled_his + quivering_lips
+
+
+def for_sleep(he_knew, /, kept_most_relentlessly: str):
+    '''
+    Arbitrary function annotated *only* by a single positional-only parameter.
+    Yes, this previously blew up. It's best *not* to ask why. We shudder.
+    '''
+
+    return he_knew + kept_most_relentlessly
+
+
+# Assert these functions return the expected values when passed the expected
+# parameters.
+assert of_desperate_hope(
+    wrinkled_his='Of desperate hope ',
+    quivering_lips='wrinkled his quivering lips.',
+) == 'Of desperate hope wrinkled his quivering lips.'
+assert for_sleep('For sleep, he knew, ', 'kept most relentlessly') == (
+    'For sleep, he knew, kept most relentlessly')
+
+# Assert these functions raise the expected exceptions when passed unexpected
+# parameters.
+with raises(BeartypeCallHintParamViolation):
+    of_desperate_hope(
+        wrinkled_his=b'Its precious charge, ',
+        quivering_lips=b'and silent death exposed,',
+    )
+with raises(BeartypeCallHintParamViolation):
+    for_sleep(b'Faithless perhaps as sleep, ', b'a shadowy lure,')
 
 # ....................{ CLASSES                            }....................
 class ConfessStAugust(object):

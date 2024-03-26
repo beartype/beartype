@@ -28,7 +28,7 @@ from beartype.claw._clawmagic import (
     BEARTYPE_CLAW_STATE_OBJ_NAME,
     BEARTYPE_DECORATOR_FUNC_NAME,
 )
-from beartype.claw._clawtyping import (
+from beartype._data.hint.datahinttyping import (
     NodeDecoratable,
 )
 from beartype._conf.confcls import (

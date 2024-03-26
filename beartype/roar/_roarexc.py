@@ -1109,6 +1109,20 @@ class _BeartypeUtilExceptionException(_BeartypeUtilException):
 
     pass
 
+# ....................{ PRIVATE ~ util : ast                 }..................
+class _BeartypeUtilAstException(_BeartypeUtilException):
+    '''
+    **Beartype abstract syntax tree (AST) utility exception.**
+
+    This exception is raised by various functions of the private
+    :mod:`beartype._util.ast` subpackage.
+
+    This exception denotes a critical internal issue and should thus *never* be
+    raised -- let alone allowed to percolate up the call stack to end users.
+    '''
+
+    pass
+
 # ....................{ PRIVATE ~ util : cache               }..................
 class _BeartypeUtilCachedException(_BeartypeUtilException):
     '''
