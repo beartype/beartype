@@ -25,7 +25,7 @@ from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from collections.abc import Callable
 
 # ....................{ STRINGS                            }....................
-EXCEPTION_PREFIX_DEFAULT_VALUE = f'{EXCEPTION_PLACEHOLDER}default '
+EXCEPTION_PREFIX_DEFAULT = f'{EXCEPTION_PLACEHOLDER}default '
 '''
 Non-human-readable source substring to be globally replaced by a human-readable
 target substring in the messages of memoized exceptions passed to the

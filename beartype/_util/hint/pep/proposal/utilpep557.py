@@ -37,8 +37,8 @@ def get_hint_pep557_initvar_arg(
     hint : object
         Type hint to be inspected.
     exception_cls : TypeException, optional
-        Type of exception to be raised. Defaults to
-        :exc:`BeartypeDecorHintPep557Exception`.
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`.BeartypeDecorHintPep557Exception`.
     exception_prefix : str, optional
         Human-readable substring prefixing the representation of this object in
         the exception message. Defaults to the empty string.

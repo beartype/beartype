@@ -42,12 +42,16 @@ def die_if_unbearable(
     Raise an exception if the passed arbitrary object violates the passed type
     hint under the passed beartype configuration.
 
+    To configure the type of violation exception raised by this function, set
+    the :attr:`.BeartypeConf.violation_door_type` option of the passed ``conf``
+    parameter accordingly.
+
     Parameters
     ----------
     obj : object
-        Arbitrary object to be tested against this hint.
+        Arbitrary object to be type-checked against this hint.
     hint : object
-        Type hint to test this object against.
+        Type hint to type-check this object against.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object). Defaults
@@ -59,13 +63,13 @@ def die_if_unbearable(
 
     Raises
     ------
+    ``conf.violation_door_type``
+        If this object violates this hint.
     beartype.roar.BeartypeDecorHintNonpepException
         If this hint is *not* PEP-compliant (i.e., complies with *no* Python
         Enhancement Proposals (PEPs) currently supported by :mod:`beartype`).
     beartype.roar.BeartypeDecorHintPepUnsupportedException
         If this hint is currently unsupported by :mod:`beartype`.
-    beartype.roar.BeartypeDoorHintViolation
-        If this object violates this hint.
 
     Examples
     --------

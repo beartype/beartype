@@ -63,7 +63,7 @@ def test_beartype(iter_hints_piths_meta) -> None:
     )
     from beartype_test._util.pytroar import raises_uncached
     # from pytest import warns
-    from pytest import deprecated_call
+    # from pytest import deprecated_call
     from re import search
     # from warnings import simplefilter
 

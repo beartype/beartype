@@ -100,8 +100,8 @@ def reissue_warnings_placeholder(
 ) -> None:
     '''
     Reissue (i.e., re-emit) the passed warning in a safe manner preserving both
-    this warning object *and* **associated context (e.g., filename, line
-    number)** associated with this warning object, but globally replacing all
+    this warning object *and* **associated context** (e.g., filename, line
+    number) associated with this warning object, but globally replacing all
     instances of the passed source substring hard-coded into this warning's
     message with the passed target substring.
 

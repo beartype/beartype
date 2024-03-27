@@ -105,6 +105,7 @@ from beartype.roar._roarexc import (
     BeartypeCallHintViolation as BeartypeCallHintViolation,
     BeartypeCallHintParamViolation as BeartypeCallHintParamViolation,
     BeartypeCallHintReturnViolation as BeartypeCallHintReturnViolation,
+    BeartypeDecorHintParamDefaultViolation as BeartypeDecorHintParamDefaultViolation,
     BeartypeDoorHintViolation as BeartypeDoorHintViolation,
 )
 
@@ -116,7 +117,7 @@ from beartype.roar._roarwarn import (
     BeartypeConfWarning as BeartypeConfWarning,
     BeartypeConfShellVarWarning as BeartypeConfShellVarWarning,
     BeartypeDecorHintWarning as BeartypeDecorHintWarning,
-    # BeartypeDecorHintForwardRefWarning as BeartypeDecorHintForwardRefWarning,
+    BeartypeDecorHintParamDefaultForwardRefWarning as BeartypeDecorHintParamDefaultForwardRefWarning,
     BeartypeDecorHintPepWarning as BeartypeDecorHintPepWarning,
     BeartypeDecorHintPepDeprecationWarning as BeartypeDecorHintPepDeprecationWarning,
     BeartypeDecorHintPep585DeprecationWarning as BeartypeDecorHintPep585DeprecationWarning,

@@ -77,8 +77,8 @@ def code_check_return(bear_call: BeartypeCall) -> str:
         * **PEP-noncompliant** (i.e., :mod:`beartype`-specific type hint *not*
           compliant with annotation-centric PEPs)).
     '''
-    assert bear_call.__class__ is BeartypeCall, (
-        f'{repr(bear_call)} not @beartype call.')
+    assert isinstance(bear_call, BeartypeCall), (
+        f'{repr(bear_call)} not beartype call.')
 
     # Type hint annotating this callable's return if any *OR* "SENTINEL"
     # otherwise (i.e., if this return is unannotated).

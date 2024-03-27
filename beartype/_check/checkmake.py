@@ -83,34 +83,35 @@ def make_func_raiser(
     # rather than by keyword. Care should be taken when refactoring parameters,
     # particularly with respect to parameter position.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    # Mandatory parameters.
     hint: object,
-
-    # Optional parameters.
-    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-    exception_prefix: str = 'die_if_unbearable() ',
+    conf: BeartypeConf,
+    exception_prefix: str,
 ) -> CallableRaiser:
     '''
     **Type-checking raiser function factory** (i.e., low-level callable
     dynamically generating a pure-Python raiser function testing whether an
-    arbitrary object passed to that tester satisfies the type hint passed to
+    arbitrary object passed to that raiser satisfies the type hint passed to
     this factory and either raising an exception or emitting a warning when that
     object violates that hint).
 
     This factory is memoized for efficiency.
 
+    Caveats
+    -------
+    **This factory intentionally accepts no** ``exception_cls`` **parameter.**
+    Instead, simply set the :attr:`.BeartypeConf.violation_door_type` option of
+    the passed ``conf`` parameter accordingly.
+
     Parameters
     ----------
     hint : object
         Type hint to be type-checked.
-    conf : BeartypeConf, optional
+    conf : BeartypeConf
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all settings configuring type-checking for the passed object). Defaults
-        to ``BeartypeConf()``, the default :math:`O(1)` configuration.
-    exception_prefix : str, optional
+        all settings configuring type-checking for the passed object).
+    exception_prefix : str
         Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to a reasonably sensible string.
+        exception message.
 
     Returns
     -------
@@ -596,8 +597,8 @@ def _make_func_checker(
         portability of calls by users to the resulting type-checker.
     _BeartypeUtilCallableException
         If this function erroneously generates a syntactically invalid
-        type-checking tester function. That should *never* happen, but let's
-        admit that you're still reading this for a reason.
+        type-checking function. That should *never* happen, but let's admit that
+        you're still reading this for a reason.
 
     Warns
     -----
@@ -608,7 +609,7 @@ def _make_func_checker(
     # Attempt to...
     try:
         # With a context manager "catching" *ALL* non-fatal warnings emitted
-        # during this logic for subsequent "playrback" below...
+        # during this logic for subsequent "playback" below...
         with catch_warnings(record=True) as warnings_issued:
             # ....................{ VALIDATION             }....................
             # If "conf" is *NOT* a configuration, raise an exception.

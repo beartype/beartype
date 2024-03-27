@@ -402,6 +402,7 @@ def test_pep563_hint_pep604() -> None:
     # that subclass was defined.
     wasting_these_surpassing_powers = WithVoiceFarSweeter(
         than_thy_dying_notes=FrameMoreAttuned())
+    # wasting_these_surpassing_powers = WithVoiceFarSweeter()
 
     # .....................{ PASS                          }....................
     # Assert that this instance exposes the expected fields.

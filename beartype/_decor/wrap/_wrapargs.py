@@ -18,22 +18,29 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
-    BeartypeDecorParamNameException,
+    BeartypeCallHintForwardRefException,
+    BeartypeDecorHintParamDefaultForwardRefWarning,
+    BeartypeDecorHintParamDefaultViolation,
     BeartypeDecorHintPepException,
+    BeartypeDecorParamNameException,
 )
 from beartype._check.checkcall import BeartypeCall
 from beartype._check.checkmake import make_code_raiser_func_pith_check
 from beartype._check.convert.convsanify import sanify_hint_root_func
+from beartype._conf.confcls import BeartypeConf
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._decor.wrap.wrapsnip import (
     CODE_INIT_ARGS_LEN,
-    EXCEPTION_PREFIX_DEFAULT_VALUE,
+    EXCEPTION_PREFIX_DEFAULT,
     ARG_KIND_TO_CODE_LOCALIZE,
 )
 from beartype._decor.wrap._wraputil import unmemoize_func_wrapper_code
 from beartype._util.error.utilerrraise import reraise_exception_placeholder
-from beartype._util.error.utilerrwarn import reissue_warnings_placeholder
+from beartype._util.error.utilerrwarn import (
+    issue_warning,
+    reissue_warnings_placeholder,
+)
 from beartype._util.func.arg.utilfuncargiter import (
     ARG_META_INDEX_DEFAULT,
     ARG_META_INDEX_KIND,
@@ -47,7 +54,11 @@ from beartype._util.hint.utilhinttest import (
     is_hint_needs_cls_stack,
 )
 from beartype._util.kind.map.utilmapset import update_mapping
-from beartype._util.text.utiltextprefix import prefix_callable_arg_name
+from beartype._util.text.utiltextmunge import lowercase_str_char_first
+from beartype._util.text.utiltextprefix import (
+    prefix_callable_arg_name,
+    prefix_pith_value,
+)
 from beartype._util.utilobject import SENTINEL
 from warnings import catch_warnings
 
@@ -79,8 +90,8 @@ def code_check_args(bear_call: BeartypeCall) -> str:
         * A PEP-noncompliant type hint.
         * A supported PEP-compliant type hint.
     '''
-    assert bear_call.__class__ is BeartypeCall, (
-        f'{repr(bear_call)} not @beartype call.')
+    assert isinstance(bear_call, BeartypeCall), (
+        f'{repr(bear_call)} not beartype call.')
 
     # ..................{ LOCALS ~ func                      }..................
     # If *NO* callable parameters are annotated, silently reduce to a noop.
@@ -100,10 +111,6 @@ def code_check_args(bear_call: BeartypeCall) -> str:
 
     # Python code snippet to be returned.
     func_wrapper_code = ''
-
-    # ..................{ IMPORTS                            }..................
-    # Defer heavyweight imports prohibited at global scope.
-    from beartype.door import die_if_unbearable
 
     # ..................{ LOCALS ~ parameter                 }..................
     #FIXME: Remove this *AFTER* optimizing signature generation, please.
@@ -192,19 +199,13 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                     # print(f'Ignoring {bear_call.func_name} parameter {arg_name} hint {repr(hint)}...')
                     continue
                 # Else, this hint is unignorable.
-                #
-                # If this parameter is *NOT* mandatory, this parameter is
-                # optional and thus defaults to a default value. In this case...
-                elif arg_default is not ArgMandatory:
-                    # If this default value violates this hint, raise a
-                    # decoration-time violation exception.
-                    die_if_unbearable(
-                        obj=arg_default,
-                        hint=hint,
-                        exception_prefix=EXCEPTION_PREFIX_DEFAULT_VALUE,
-                    )
-                    # Else, this default value satisfies this hint.
-                # Else, this parameter is mandatory.
+
+                # If this parameter is optional *AND* the default value of this
+                # optional parameter violates this hint, raise an exception.
+                _die_if_arg_default_unbearable(
+                    bear_call=bear_call, arg_default=arg_default, hint=hint)
+                # Else, this parameter is either optional *OR* the default value
+                # of this optional parameter satisfies this hint.
 
                 # If this parameter either may *OR* must be passed positionally,
                 # record this fact.
@@ -359,3 +360,119 @@ Frozen set of all **positional parameter kinds** (i.e.,
 :attr:`ArgKind` enumeration members signifying that a callable parameter
 either may *or* must be passed positionally).
 '''
+
+# ....................{ PRIVATE ~ raisers                  }....................
+def _die_if_arg_default_unbearable(
+    bear_call: BeartypeCall, arg_default: object, hint: object) -> None:
+    '''
+    Raise a violation exception if the annotated optional parameter of the
+    decorated callable with the passed default value violates the type hint
+    annotating that parameter at decoration time.
+
+    Parameters
+    ----------
+    bear_call : BeartypeCall
+        Decorated callable to be type-checked.
+    arg_default : object
+        Either:
+
+        * If this parameter is mandatory, the :data:`.ArgMandatory` singleton.
+        * If this parameter is optional, the default value of this optional
+          parameter to be type-checked.
+    hint : object
+        Type hint to type-check against this default value.
+
+    Warns
+    -----
+    BeartypeDecorHintParamDefaultForwardRefWarning
+        If this type hint contains one or more forward references that *cannot*
+        be resolved at decoration time. While this does *not* necessarily
+        constitute a fatal error from the end user perspective, this does
+        constitute a non-fatal issue worth informing the end user of.
+
+    Raises
+    ------
+    BeartypeDecorHintParamDefaultViolation
+        If this default value violates this type hint.
+    '''
+
+    # ..................{ PREAMBLE                           }..................
+    # If this parameter is mandatory, silently reduce to a noop.
+    if arg_default is ArgMandatory:
+        return
+    # Else, this parameter is optional and thus defaults to a default value.
+
+    assert isinstance(bear_call, BeartypeCall), (
+        f'{repr(bear_call)} not beartype call.')
+
+    # ..................{ IMPORTS                            }..................
+    # Defer heavyweight imports prohibited at global scope.
+    from beartype.door import (
+        die_if_unbearable,
+        is_bearable,
+    )
+
+    # ..................{ MAIN                               }..................
+    # Attempt to...
+    try:
+        # If this default value satisfies this hint, silently reduce to a noop.
+        #
+        # Note that this is a non-negligible optimization. Technically, this
+        # preliminary test is superfluous: only the call to the
+        # die_if_unbearable() raiser below is required. Pragmatically, this
+        # preliminary test avoids a needlessly expensive dictionary copy in the
+        # common case that this value satisfies this hint.
+        if is_bearable(
+            obj=arg_default,
+            hint=hint,
+            conf=bear_call.conf,
+        ):
+            return
+        # Else, this default value violates this hint.
+    # If doing so raises a forward hint exception, this hint contains one or
+    # more unresolvable forward references to user-defined objects that have yet
+    # to be defined. In all likelihood, these objects are subsequently defined
+    # after the definition of this decorated callable. While this does *NOT*
+    # necessarily constitute a fatal error from the end user perspective, this
+    # does constitute a non-fatal issue worth informing the end user of. In this
+    # case, we coerce this exception into a warning.
+    except BeartypeCallHintForwardRefException as exception:
+        # Forward hint exception message raised above. To readably embed this
+        # message in the longer warning message emitted below, the first
+        # character of this message is lowercased as well.
+        exception_message = lowercase_str_char_first(str(exception))
+
+        # Emit this non-fatal warning.
+        issue_warning(
+            cls=BeartypeDecorHintParamDefaultForwardRefWarning,
+            message=(
+                f'{EXCEPTION_PREFIX_DEFAULT}value '
+                f'{prefix_pith_value(pith=arg_default, is_color=bear_call.conf.is_color)} '
+                f'uncheckable at @beartype decoration time, as '
+                f'{exception_message}'
+            ),
+        )
+
+        # Loudly reduce to a noop. Since this forward reference is unresolvable,
+        # further type-checking attempts are entirely fruitless.
+        return
+
+    # Modifiable keyword dictionary encapsulating this beartype configuration.
+    conf_kwargs = bear_call.conf.kwargs.copy()
+
+    #FIXME: This should probably be configurable as well. For now, this is fine.
+    #We shrug noncommittally. We shrug, everyone! *shrug*
+    # Set the type of violation exception raised by the subsequent call to the
+    # die_if_unbearable() function to the expected type.
+    conf_kwargs['violation_door_type'] = BeartypeDecorHintParamDefaultViolation
+
+    # New beartype configuration initialized by this dictionary.
+    conf = BeartypeConf(**conf_kwargs)
+
+    # Raise this type of violation exception.
+    die_if_unbearable(
+        obj=arg_default,
+        hint=hint,
+        conf=conf,
+        exception_prefix=EXCEPTION_PREFIX_DEFAULT,
+    )

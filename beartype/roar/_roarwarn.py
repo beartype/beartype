@@ -121,19 +121,20 @@ class BeartypeDecorHintWarning(BeartypeWarning):
     pass
 
 
-#FIXME: Preserved for posterity and laziness.
-# class BeartypeDecorHintForwardRefWarning(BeartypeDecorHintWarning):
-#     '''
-#     **Beartype decorator forward reference type hint warning.**
-#
-#     This exception is raised at decoration time from the
-#     :func:`beartype.beartype` decorator on receiving a callable annotated by a
-#     suspicious (but *not* necessarily erroneous) **forward reference type hint**
-#     (i.e., string whose value is the name of a user-defined class that has yet
-#     to be declared).
-#     '''
-#
-#     pass
+
+class BeartypeDecorHintParamDefaultForwardRefWarning(BeartypeDecorHintWarning):
+    '''
+    **Beartyped decorator optional parameter default value type-checking
+    forward reference warning.**
+
+    This exception is raised at decoration time by the :func:`beartype.beartype`
+    decorator when the default value of an optional parameter of a decorated
+    callable is *not* type-checkable against the type hint annotating that
+    parameter, due to that type hint containing a forward reference to a
+    user-defined object that is undefined at that decoration time.
+    '''
+
+    pass
 
 # ....................{ DECORATOR ~ hint : pep             }....................
 class BeartypeDecorHintPepWarning(BeartypeDecorHintWarning):

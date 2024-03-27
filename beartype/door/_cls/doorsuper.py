@@ -509,6 +509,10 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         Raise an exception if the passed arbitrary object violates this type
         hint under the passed beartype configuration.
 
+        To configure the type of violation exception raised by this method, set
+        the :attr:`.BeartypeConf.violation_door_type` option of the passed
+        ``conf`` parameter accordingly.
+
         Parameters
         ----------
         obj : object
@@ -524,8 +528,14 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         Raises
         ------
-        BeartypeDoorHintViolation
+        ``conf.violation_door_type``
             If this object violates this hint.
+        beartype.roar.BeartypeDecorHintNonpepException
+            If this hint is *not* PEP-compliant (i.e., complies with *no* Python
+            Enhancement Proposals (PEPs) currently supported by
+            :mod:`beartype`).
+        beartype.roar.BeartypeDecorHintPepUnsupportedException
+            If this hint is currently unsupported by :mod:`beartype`.
 
         Examples
         --------

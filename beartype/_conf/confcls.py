@@ -788,12 +788,12 @@ class BeartypeConf(object):
            # Arbitrary input beartype configuration.
            conf = BeartypeConf(is_color=True)
 
-           # Permuted output beartype configuration keyword dictionary.
-           kwargs = conf.kwargs.copy()
-           kwargs['is_debug'] = True
+           # New keyword dictionary permuted from this input.
+           conf_kwargs = conf.kwargs.copy()
+           conf_kwargs['is_debug'] = True
 
-           # Output beartype configuration permuted from this input.
-           debug_conf = BeartypeConf(**kwargs)
+           # New beartype configuration initialized by this dictionary.
+           debug_conf = BeartypeConf(**conf_kwargs)
 
         See Also
         --------

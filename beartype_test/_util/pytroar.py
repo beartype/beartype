@@ -41,13 +41,13 @@ def raises_uncached(exception_cls: TypeException) -> 'ExceptionInfo':
         Type of cached exception expected to be raised by this block.
 
     Returns
-    ----------
+    -------
     :class:`pytest.nodes.ExceptionInfo`
         :mod:`pytest`-specific object collecting metadata on the cached
         exception of this type raised by this block.
 
     See Also
-    ----------
+    --------
     https://docs.pytest.org/en/stable/reference.html#pytest._code.ExceptionInfo
         Official :class:`pytest.nodes.ExceptionInfo` documentation.
     '''

@@ -15,6 +15,37 @@ from beartype.roar._roarexc import _BeartypeUtilTextException
 from beartype._data.kind.datakindtext import CHARS_PUNCTUATION
 
 # ....................{ CASERS                             }....................
+#FIXME: Unit test us up, please.
+def lowercase_str_char_first(text: str) -> str:
+    '''
+    Lowercase *only* the first character of the passed string.
+
+    Parameters
+    ----------
+    text : str
+        String whose first character is to be lowercased.
+
+    Returns
+    -------
+    str
+        This string with the first character lowercased.
+    '''
+    assert isinstance(text, str), f'{repr(text)} not string.'
+
+    # If...
+    if (
+        # This string contains at least two characters *AND*...
+        len(text) >= 2 and
+        # The first character of this string is uppercase...
+        text[0].isupper()
+    ):
+        # Then lowercase only this character for readability.
+        text = f'{text[0].lower()}{text[1:]}'
+
+    # Return this possibly changed string.
+    return text
+
+
 def uppercase_str_char_first(text: str) -> str:
     '''
     Uppercase *only* the first character of the passed string.
@@ -43,7 +74,7 @@ def uppercase_str_char_first(text: str) -> str:
         # The first character of this string is lowercase...
         text[0].islower()
     ):
-        # Then uppercase only this string for readability.
+        # Then uppercase only this character for readability.
         text = f'{text[0].upper()}{text[1:]}'
 
     # Return this possibly changed string.

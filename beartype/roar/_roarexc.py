@@ -554,7 +554,7 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
             safely retrieve at any time via the :meth:`culprits` property.
 
         Raises
-        ----------
+        ------
         _BeartypeUtilExceptionException
             If the culprits are either:
 
@@ -615,7 +615,7 @@ class BeartypeCallHintViolation(BeartypeCallHintException):
           non-container.
 
         Caveats
-        ----------
+        -------
         **This property is safely accessible from any context.** However, this
         property is most usefully accessed *only* from the ``except ...:`` block
         directly catching this exception. To avoid memory leaks, this property
@@ -678,6 +678,18 @@ class BeartypeCallHintReturnViolation(BeartypeCallHintViolation):
     '''
 
     pass
+
+
+class BeartypeDecorHintParamDefaultViolation(BeartypeCallHintViolation):
+    '''
+    **Beartyped decorator optional parameter default value type-checking
+    exception.**
+
+    This exception is raised at decoration time by the :func:`beartype.beartype`
+    decorator when type-checking a decorated callable accepting an optional
+    parameter whose default value violates the type hint annotating that
+    parameter.
+    '''
 
 # ....................{ PEP                                }....................
 class BeartypePepException(BeartypeDecorException):

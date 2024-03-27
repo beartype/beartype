@@ -410,7 +410,7 @@ def get_hint_object_violation(
         # Suffix this exception prefix with an additional noun for disambiguity.
         exception_prefix = (
             f'{exception_prefix}value '
-            f'{prefix_pith_value(pith=obj, is_color=True)}'
+            f'{prefix_pith_value(pith=obj, is_color=conf.is_color)}'
         )
     # Else, the caller passed a parameter name. In this case...
     else:
@@ -430,7 +430,7 @@ def get_hint_object_violation(
             exception_prefix = prefix_callable_return_value(
                 func=func,  # type: ignore[arg-type]
                 return_value=obj,
-                is_color=True,
+                is_color=conf.is_color,
             )
         # Else, the passed object is a parameter. In this case...
         else:
@@ -440,7 +440,7 @@ def get_hint_object_violation(
                 func=func,  # type: ignore[arg-type]
                 arg_name=pith_name,
                 arg_value=obj,
-                is_color=True,
+                is_color=conf.is_color,
             )
 
     # Uppercase the first character of this violation prefix for readability.

@@ -45,6 +45,8 @@ class FrameMoreAttuned(object):
     '''
 
 
+# from beartype import BeartypeConf
+# @beartype(conf=BeartypeConf(is_debug=True))
 @beartype
 @dataclass()
 class WithVoiceFarSweeter(object):

@@ -25,11 +25,13 @@ def test_decor_arg_name_fail() -> None:
     parameters whose names are reserved for internal use by this decorator).
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
     from beartype.roar import BeartypeDecorParamNameException
     from pytest import raises
 
+    # ....................{ RAISES                         }....................
     # Assert that decorating a callable accepting a reserved parameter name
     # raises the expected exception.
     with raises(BeartypeDecorParamNameException):
@@ -37,7 +39,7 @@ def test_decor_arg_name_fail() -> None:
         def jokaero(weaponsmith: str, __beartype_func: str) -> str:
             return weaponsmith + __beartype_func
 
-# ....................{ TESTS ~ flex                       }....................
+# ....................{ TESTS ~ flexible                   }....................
 def test_decor_arg_kind_flex() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on a callable passed two
@@ -45,18 +47,24 @@ def test_decor_arg_kind_flex() -> None:
     parameters) annotated with PEP-compliant type hints.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
     from typing import Union
 
-    # Decorated callable to be exercised.
+    # ....................{ CALLABLES                      }....................
     @beartype
     def special_plan(
         finally_gone: Union[list, str],
         finally_done: str,
     ) -> Union[bool, int, str]:
+        '''
+        Decorated callable to be exercised.
+        '''
+
         return ''.join(finally_gone) + finally_done
 
+    # ....................{ PASSES                         }....................
     # Assert this callable returns the expected value.
     assert special_plan(
         ['When everyone ', 'you have ever loved ', 'is finally gone,'],
@@ -66,6 +74,103 @@ def test_decor_arg_kind_flex() -> None:
         'When everyone you have ever loved is finally gone,' +
         'When everything you have ever wanted is finally done with,'
     )
+
+
+def test_decor_arg_kind_flex_optional() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator on a callable passed an
+    optional flexible parameter whose default value violates the type hint
+    annotating that parameter. Since :func:`beartype.beartype` type-checks
+    default values at decoration time (rather than call time as is the common
+    case for all other parameter types), this extremely common case warrants
+    exhaustive testing.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from beartype.roar import (
+        BeartypeDecorHintParamDefaultForwardRefWarning,
+        BeartypeDecorHintParamDefaultViolation,
+    )
+    from beartype_test._util.pytroar import raises_uncached
+    from pytest import warns
+
+    # ....................{ PASS                           }....................
+    # Assert that decorating a callable passed an optional flexible parameter
+    # annotated by a forward reference that *CANNOT* be resolved at decoration
+    # time emits the expected warning (rather than raising an exception).
+    #
+    # Note that passing nothing to warns() enables undocumented edge-case
+    # behaviour in which warns() captures warnings issued by this block
+    # *WITHOUT* validating the types of these warnings. See also:
+    #     https://docs.pytest.org/en/4.6.x/warnings.html#recwarn
+    with warns() as warnings_info:
+        @beartype
+        def startled_by(
+            # Optional parameter whose default value satisfies its type hint.
+            his_own_thoughts: str = (
+                'There was no fair fiend near him, not a sight'),
+            # Optional parameter whose default value violates its type hint,
+            # which is a forward reference that *CANNOT* be resolved at
+            # decoration time.
+            he_looked_around: 'ThereWasNoFairFiendNearHimNotASight' = (
+                'Or sound of awe but in his own deep mind.'),
+        ) -> str:
+            '''
+            Decorated callable to be exercised.
+            '''
+
+            return his_own_thoughts + str(he_looked_around)
+
+    # Assert that the above decoration emitted exactly one warning.
+    assert len(warnings_info) == 1
+
+    # Warning emitted by the above decoration.
+    warning_info = warnings_info[0]
+
+    # Assert that this warning is of the expected type.
+    assert warning_info.category is (
+        BeartypeDecorHintParamDefaultForwardRefWarning)
+
+    # Warning message.
+    warning_message = str(warning_info.message)
+
+    # Assert that this message contains the names of this function, the
+    # optional parameter whose default value is uncheckable, and the
+    # unresolvable forward reference causing this warning.
+    assert 'startled_by' in warning_message
+    assert 'he_looked_around' in warning_message
+    assert 'ThereWasNoFairFiendNearHimNotASight' in warning_message
+
+    # ....................{ FAIL                           }....................
+    # Assert that decorating a callable passed an optional flexible parameter
+    # whose default value violates the type hint annotating that parameter
+    # raises the expected exception.
+    with raises_uncached(BeartypeDecorHintParamDefaultViolation) as (
+        exception_info):
+        @beartype
+        def with_doubtful_smile(
+            # Optional parameter whose default value satisfies its type hint.
+            mocking_its_own: str = (
+                'With doubtful smile mocking its own strange charms.'),
+            # Optional parameter whose default value violates its type hint.
+            strange_charms: bytes = (
+                'Startled by his own thoughts he looked around.'),
+        ) -> str:
+            '''
+            Decorated callable to be exercised.
+            '''
+
+            return mocking_its_own + str(strange_charms)
+
+    # Exception message raised by the above decoration of this function.
+    exception_message = str(exception_info.value)
+
+    # Assert that this message contains the names of both this function *AND*
+    # the optional parameter whose default value violates its type hint.
+    assert 'with_doubtful_smile' in exception_message
+    assert 'strange_charms' in exception_message
 
 
 def test_decor_arg_kind_flex_varkw() -> None:
@@ -78,23 +183,29 @@ def test_decor_arg_kind_flex_varkw() -> None:
         https://github.com/beartype/beartype/issues/78
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import beartype
     from typing import Union
 
-    # Decorated callable to be exercised.
+    # ....................{ CALLABLES                      }....................
     @beartype
     def one_needs_to_have_a_plan(
         someone_said_who_was_turned: Union[bool, str],
         away_into_the_shadows: Union[float, str] = 'and who i had believed',
         **was_sleeping_or_dead,
     ) -> Union[list, str]:
+        '''
+        Decorated callable to be exercised.
+        '''
+
         return (
             someone_said_who_was_turned + '\n' +
             away_into_the_shadows + '\n' +
             '\n'.join(was_sleeping_or_dead.values())
         )
 
+    # ....................{ PASS                           }....................
     # Assert this callable returns the expected value.
     assert one_needs_to_have_a_plan(
         someone_said_who_was_turned='imagine he said',
@@ -105,8 +216,7 @@ def test_decor_arg_kind_flex_varkw() -> None:
         'the teeth tearing into it',
     ))
 
-
-# ....................{ TESTS ~ kw                         }....................
+# ....................{ TESTS ~ keyword                    }....................
 def test_decor_arg_kind_kw_unknown_fail() -> None:
     '''
     Test unsuccessful usage of the :func:`beartype.beartype` decorator for
@@ -134,7 +244,7 @@ def test_decor_arg_kind_kw_unknown_fail() -> None:
     assert str(exception.value).endswith(
         "tau() got an unexpected keyword argument 'nicassar'")
 
-# ....................{ TESTS ~ pep 3102                   }....................
+# ....................{ TESTS ~ keyword-only               }....................
 # Keyword-only keywords require PEP 3102 compliance, which has thankfully been
 # available since Python >= 3.0.
 
