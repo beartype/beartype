@@ -250,6 +250,11 @@ Procedural API
       >>> issubclass(bool, (str, float))
       True
 
+   :func:`.is_bearable` also performs :pep:`647`\ -compliant `type narrowing`_
+   with the standard :obj:`typing.TypeGuard` type hint, facilitating
+   communication between beartype and static type-checkers (e.g., mypy_,
+   pyright_). See :ref:`this FAQ entry for further details <faq:narrow>`.
+
 
 .. py:function::
    is_subhint(subhint: object, superhint: object) -> bool
@@ -584,7 +589,7 @@ Object-oriented API
 
    :arg hint: Type hint to be introspected.
    :type hint: object
-   
+
    **Type hint introspector,** wrapping the passed type hint ``hint`` (which, by
    design, is *mostly* unusable at runtime) with an object-oriented Pythonic API
    designed explicitly for runtime use.
@@ -594,11 +599,11 @@ Object-oriented API
    abstract base class (ABC) that magically employs exploitative metaclass
    trickery to instantiate a concrete subclass of itself appropriate for this
    particular kind of ``hint``.
-   
+
    :class:`TypeHint` is thus a **type hint introspector factory.** What you read
    next may shock you.
-   
-   .. code-block:: pycon 
+
+   .. code-block:: pycon
 
       >>> from beartype.door import TypeHint
       >>> from beartype.typing import Optional, Union
@@ -618,7 +623,7 @@ Object-oriented API
    the previously cached instance is returned. Observe and tremble in ecstasy as
    your introspection eats less space and time.
 
-   .. code-block:: pycon 
+   .. code-block:: pycon
 
       >>> from beartype.door import TypeHint
       >>> TypeHint(list[int]) is TypeHint(list[int])
@@ -635,7 +640,7 @@ Object-oriented API
       Tuple of the zero or more **original child type hints** subscripting the
       original type hint wrapped by this wrapper.
 
-      .. code-block:: pycon 
+      .. code-block:: pycon
 
          >>> from beartype.door import TypeHint
          >>> TypeHint(list).args
@@ -652,7 +657,7 @@ Object-oriented API
       methods – including ``__iter__()``, ``__getitem__()``, and ``__len__()``.
       Simply pass any :class:`TypeHint` wrapper to a standard Python container
       like :class:`list`, :class:`set`, or :class:`tuple`.
-      
+
       This makes more sense than it seems. Throw us a frickin' bone here.
 
       .. code-block:: pycon
@@ -674,7 +679,7 @@ Object-oriented API
 
       **Original type hint** wrapped by this wrapper at instantiation time.
 
-      .. code-block:: pycon 
+      .. code-block:: pycon
 
          >>> from beartype.door import TypeHint
          >>> TypeHint(list[int]).hint

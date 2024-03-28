@@ -18,6 +18,11 @@ process).
 # whereas the API defined by this submodule is expected to unconditionally
 # operate as expected regardless of the current context.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+from beartype.typing import (
+    Any,
+    Type,
+    overload,
+)
 from beartype._check.checkmake import (
     make_func_raiser,
     make_func_tester,
@@ -26,6 +31,8 @@ from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
+from beartype._data.hint.datahintfactory import TypeGuard
+from beartype._data.hint.datahinttyping import T
 
 # ....................{ VALIDATORS                         }....................
 def die_if_unbearable(
@@ -166,18 +173,78 @@ def is_subhint(subhint: object, superhint: object) -> bool:
     return TypeHint(subhint).is_subhint(TypeHint(superhint))
 
 # ....................{ TESTERS ~ is_bearable              }....................
-def is_bearable(
-    # Mandatory flexible parameters.
-    obj: object,
-    hint: object,
+#FIXME: Document this tester's conditional compliance with PEP 647 (i.e.,
+#"typing.TypeGuard") in our official documentation, please.
 
-    # Optional keyword-only parameters.
-    *,
-    conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-) -> bool:
+# Note that this PEP 484- and 647-compliant API is entirely the brain child of
+# @asford (Alex Ford). If this breaks, redirect all ~~vengeance~~ enquiries to:
+#     https://github.com/asford
+@overload
+def is_bearable(
+    obj: object, hint: Type[T], *, conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+) -> TypeGuard[T]:
+    '''
+    :pep:`647`-compliant type guard conditionally narrowing the passed object to
+    the passed type hint *only* when this hint is actually a valid **type**
+    (i.e., subclass of the builtin :class:`type` superclass).
+    '''
+
+
+@overload
+def is_bearable(
+    obj: T, hint: Any, *, conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
+) -> TypeGuard[T]:
+    '''
+    :pep:`647`-compliant fallback preserving (rather than narrowing) the type of
+    the passed object when this hint is *not* a valid type (e.g., the
+    :pep:`586`-compliant ``typing.Literal['totally', 'not', 'a', 'type']``,
+    which is clearly *not* a type).
+    '''
+
+
+# Note that the actual implementation of this overload is intentionally:
+# * *NOT* decorated by the standard @overload decorator.
+# * *NOT* annotated by type hints. By PEP 484, only the signatures of
+#   @overload-decorated callables are annotated by type hints.
+def is_bearable(obj, hint, *, conf = BEARTYPE_CONF_DEFAULT):  # pyright: ignore
     '''
     :data:`True` only if the passed arbitrary object satisfies the passed
     type hint under the passed beartype configuration.
+
+    Note that this tester is a :pep:`647`-compliant **conditional type guard**
+    (i.e., is annotated by the return type hint ``typing.TypeGuard[bool]``).
+    Specifically:
+
+    * If the passed type hint is a valid **type** (i.e., subclass of the builtin
+      :class:`type` superclass), this tester is a general-purpose type guard
+      that performs type narrowing on the passed object: e.g.,
+
+      .. code-block:: python
+
+         from beartype.door import is_bearable
+
+         def narrow_types_like_a_boss_with_beartype(lst: list[int | str]):
+             # If "lst" is a list of integers, instruct static type-checkers
+             # (e.g., mypy, pyright) that the call to munch_list_of_integers()
+             # function expecting a list of integers is valid.
+             #
+             # Note that this works only because the is_bearable() tester
+             # complies with PEP 647. If this were *NOT* the case, then static
+             # type-checkers would raise a type-checking violation here.
+             if is_bearable(lst, list[int]):
+                 munch_list_of_integers(lst)
+             # Else if "lst" is a list of strings, behave similarly as above.
+             elif is_bearable(lst, list[str]):
+                 munch_list_of_strings(lst)
+
+         def munch_list_of_strings(lst: list[str]): ...
+         def munch_list_of_integers(lst: list[int]): ....
+
+    * If the passed type hint is *not* a valid type (e.g., the
+      :pep:`586`-compliant ``typing.Literal['totally', 'not', 'a', 'type']``,
+      which is clearly *not* a type), this tester is *not* a type guard and thus
+      performs *no* type narrowing on the passed object. This is due to
+      inadequacies in :pep:`647` rather than :mod:`beartype`.
 
     Parameters
     ----------
@@ -229,4 +296,4 @@ def is_bearable(
     func_tester = make_func_tester(hint, conf)
 
     # Return true only if the passed object satisfies this hint.
-    return func_tester(obj)  # pyright: ignore[reportUnboundVariable]
+    return func_tester(obj)  # pyright: ignore

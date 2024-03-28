@@ -30,9 +30,9 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     from beartype.typing import (
         Any,
         AnyStr,
-        TypeVar,
         runtime_checkable,
     )
+    from beartype._data.hint.datahinttyping import T
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignBinaryIO,
         HintSignGeneric,
@@ -56,9 +56,6 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
     # Absolute filename of this data submodule, to be subsequently opened for
     # cross-platform IO testing purposes.
     SUBMODULE_FILENAME = __file__
-
-    # Type variables.
-    T = TypeVar('T')
 
     # ..................{ CALLABLES                          }..................
     def open_file_text():
@@ -634,15 +631,11 @@ def hints_pep544_ignorable_deep() -> list:
 
     # ..................{ IMPORTS                            }..................
     from beartype._util.module.lib.utiltyping import get_typing_attrs
-    from beartype.typing import TypeVar
+    from beartype._data.hint.datahinttyping import S, T
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific deeply ignorable type hints to be returned.
     hints_pep_ignorable_deep = []
-
-    # Type variables.
-    S = TypeVar('S')
-    T = TypeVar('T')
 
     # ..................{ LISTS                              }..................
     # For the PEP 544-specific "Protocol" superclass importable from any typing

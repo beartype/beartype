@@ -44,7 +44,7 @@ Python initializes the names of *all* lambda functions to this lambda-specific
 placeholder string on lambda definition.
 
 Caveats
-----------
+-------
 **Usage of this placeholder to differentiate lambda from non-lambda callables
 invites false positives in unlikely edge cases.** Technically, malicious third
 parties may externally change the name of any lambda function *after* defining
@@ -257,7 +257,7 @@ def die_unless_func_staticmethod(
          If the passed object is *not* a static method descriptor.
 
     See Also
-    ----------
+    --------
     :func:`.is_func_staticmethod`
         Further details.
     '''
@@ -279,7 +279,7 @@ def die_unless_func_staticmethod(
     # Else, this object is a static method descriptor.
 
 # ....................{ TESTERS                            }....................
-def is_func_lambda(func: Any) -> bool:
+def is_func_lambda(func: Any) -> TypeGuard[Callable]:
     '''
     :data:`True` only if the passed object is a **pure-Python lambda function**
     (i.e., function declared as a ``lambda`` expression embedded in a larger
@@ -520,7 +520,7 @@ def is_func_coro(func: object) -> TypeGuard[Callable]:
         :data:`True` only if this object is an asynchronous coroutine factory.
 
     See Also
-    ----------
+    --------
     :func:`inspect.iscoroutinefunction`
         Stdlib function strongly inspiring this implementation.
     '''
@@ -558,7 +558,7 @@ def is_func_async_generator(func: object) -> TypeGuard[Callable]:
         :data:`True` only if this object is an asynchronous generator.
 
     See Also
-    ----------
+    --------
     :func:`inspect.isasyncgenfunction`
         Stdlib function strongly inspiring this implementation.
     '''
@@ -595,7 +595,7 @@ def is_func_sync_generator(func: object) -> TypeGuard[Callable]:
         :data:`True` only if this object is a synchronous generator.
 
     See Also
-    ----------
+    --------
     :func:`inspect.isgeneratorfunction`
         Stdlib function strongly inspiring this implementation.
     '''

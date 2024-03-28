@@ -17,15 +17,9 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import (
     Generic,
     Type,
-    TypeVar,
 )
+from beartype._data.hint.datahinttyping import T
 from beartype._util.cache.utilcachecall import callable_cached
-
-# ....................{ PRIVATE ~ hints                    }....................
-_T = TypeVar('_T')
-'''
-PEP-compliant type variable matching any arbitrary object.
-'''
 
 # ....................{ METACLASSES                        }....................
 class _TypeHintTypeFactoryMeta(type):
@@ -66,7 +60,7 @@ class _TypeHintTypeFactoryMeta(type):
         return super().__call__(type_factory)
 
 # ....................{ CLASSES                            }....................
-class TypeHintTypeFactory(Generic[_T], metaclass=_TypeHintTypeFactoryMeta):
+class TypeHintTypeFactory(Generic[T], metaclass=_TypeHintTypeFactoryMeta):
     '''
     **Type hint type factory** (i.e., high-level object unconditionally
     returning an arbitrary type when subscripted by any arbitrary object).
@@ -81,9 +75,9 @@ class TypeHintTypeFactory(Generic[_T], metaclass=_TypeHintTypeFactoryMeta):
     negligible something.
 
     Examples
-    ----------
-    For example, the :pep:`647`-compliant :attr:`typing.TypeGuard` type hint
-    factory is only available from :mod:`typing` under  Python >= 3.10 or from
+    --------
+    Consider the :pep:`647`-compliant :attr:`typing.TypeGuard` type hint
+    factory, which is only available under Python >= 3.10 or from
     :mod:`typing_extensions` if optionally installed; if neither of those two
     conditions apply, this factory may be trivially used as a fake ``TypeGuard``
     stand-in returning the builtin :class:`bool` type when subscripted --
@@ -110,7 +104,7 @@ class TypeHintTypeFactory(Generic[_T], metaclass=_TypeHintTypeFactoryMeta):
 
     Attributes
     ----------
-    _type_factory : Type[_T]
+    _type_factory : Type[T]
         Arbitrary type to be returned from the :meth:`__getitem__` method.
     '''
 
@@ -124,13 +118,13 @@ class TypeHintTypeFactory(Generic[_T], metaclass=_TypeHintTypeFactoryMeta):
     )
 
     # ..................{ INITIALIZERS                       }..................
-    def __init__(self, type_factory: Type[_T]) -> None:
+    def __init__(self, type_factory: Type[T]) -> None:
         '''
         Initialize this type hint type factory.
 
         Parameters
         ----------
-        type_factory : Type[_T]
+        type_factory : Type[T]
             Arbitrary type to be returned from the :meth:`__getitem__` method.
         '''
         assert isinstance(type_factory, type), f'{repr(type_factory)} not type.'
@@ -139,7 +133,7 @@ class TypeHintTypeFactory(Generic[_T], metaclass=_TypeHintTypeFactoryMeta):
         self._type_factory = type_factory
 
     # ..................{ DUNDERS                            }..................
-    def __getitem__(self, index: object) -> Type[_T]:
+    def __getitem__(self, index: object) -> Type[T]:
         '''
         Return the arbitrary type against which this type hint type factory was
         originally initialized when subscripted by the passed arbitrary object.
@@ -150,9 +144,9 @@ class TypeHintTypeFactory(Generic[_T], metaclass=_TypeHintTypeFactoryMeta):
             Arbitrary object. Although this is typically a PEP-compliant type
             hint, this factory imposes *no* constraints on this object.
 
-        Parameters
-        ----------
-        Type[_T]
+        Returns
+        -------
+        Type[T]
             Arbitrary type previously passed to the :meth:`__init__` method.
         '''
 

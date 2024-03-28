@@ -22,22 +22,19 @@ from beartype.door._doorcheck import (
 )
 from beartype.door._cls.doormeta import _TypeHintMeta
 from beartype.door._doortest import die_unless_typehint
-from beartype.door._doortyping import T
 from beartype.typing import (
     Any,
     FrozenSet,
     Generic,
     Iterable,
-    # Optional,
     Tuple,
-    Union,
     overload,
 )
 from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
 )
-from beartype._data.hint.datahinttyping import CallableMethodGetitemArg
+from beartype._data.hint.datahinttyping import T
 from beartype._util.cache.utilcachecall import (
     method_cached_arg_by_id,
     property_cached,
@@ -310,8 +307,11 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
     @overload
     def __getitem__(self, index: slice) -> Tuple['TypeHint', ...]: ...
 
-    def __getitem__(self, index: CallableMethodGetitemArg) -> (
-        Union['TypeHint', Tuple['TypeHint', ...]]):
+    # Note that the actual implementation of this overload is intentionally:
+    # * *NOT* decorated by the standard @overload decorator.
+    # * *NOT* annotated by type hints. By PEP 484, only the signatures of
+    #   @overload-decorated callables are annotated by type hints.
+    def __getitem__(self, index):
         '''
         Either:
 
@@ -560,15 +560,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
         )
 
 
-    #FIXME: Submit an upstream mypy issue. Since mypy correctly accepts our
-    #comparable beartype.door.is_bearable() function, mypy should also
-    #accept this equivalent method. mypy currently fails to do so with this
-    #false positive:
-    #    error: Variable "beartype.door._cls.doorsuper.TypeHint.TypeGuard" is not
-    #    valid as a type
-    #
-    #Clearly, mypy fails to percolate the type variable "T" from our
-    #pseudo-superclass "Generic[T]" onto this return annotation. *sigh*
     def is_bearable(
         self,
 
@@ -577,9 +568,6 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         # Optional keyword-only parameters.
         *, conf: BeartypeConf = BEARTYPE_CONF_DEFAULT,
-    #FIXME: Re-enable after static type-checkers support "TypeGuard[T]". See
-    #"_doorcheck" for further details, please.
-    # ) -> TypeGuard[T]:
     ) -> bool:
         '''
         :data:`True` only if the passed arbitrary object satisfies this type
@@ -609,12 +597,14 @@ class TypeHint(Generic[T], metaclass=_TypeHintMeta):
 
         Examples
         --------
-            >>> from beartype.door import TypeHint
-            >>> TypeHint(list[str]).is_bearable(['Things', 'fall', 'apart;'])
-            True
-            >>> TypeHint(list[int]).is_bearable(
-            ...     ['the', 'centre', 'cannot', 'hold;'])
-            False
+        .. code-block:: python
+
+           >>> from beartype.door import TypeHint
+           >>> TypeHint(list[str]).is_bearable(['Things', 'fall', 'apart;'])
+           True
+           >>> TypeHint(list[int]).is_bearable(
+           ...     ['the', 'centre', 'cannot', 'hold;'])
+           False
         '''
 
         # One-liners justify their own existence.

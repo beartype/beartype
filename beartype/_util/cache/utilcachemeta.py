@@ -11,20 +11,9 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import (
-    Dict,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-)
+from beartype.typing import Type
+from beartype._data.hint.datahinttyping import T
 from beartype._util.cache.utilcachecall import callable_cached
-
-# ....................{ PRIVATE ~ hints                    }....................
-_T = TypeVar('_T')
-'''
-PEP-compliant type variable matching any arbitrary object.
-'''
 
 # ....................{ METACLASSES                        }....................
 class BeartypeCachingMeta(type):
@@ -64,7 +53,7 @@ class BeartypeCachingMeta(type):
 
     # ..................{ INITIALIZERS                       }..................
     @callable_cached
-    def __call__(cls: Type[_T], *args) -> _T:  # type: ignore[reportIncompatibleMethodOverride]
+    def __call__(cls: Type[T], *args) -> T:  # type: ignore[reportIncompatibleMethodOverride]
         '''
         Instantiate the passed class with the passed positional arguments if
         this is the first instantiation of this class passed these arguments

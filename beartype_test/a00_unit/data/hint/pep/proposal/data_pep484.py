@@ -31,6 +31,7 @@ from beartype._cave._cavefast import (
     RegexMatchType,
     RegexCompiledType,
 )
+from beartype._data.hint.datahinttyping import S, T
 from beartype_test.a00_unit.data.data_type import (
     Class,
     Subclass,
@@ -81,18 +82,6 @@ from typing import (
     Optional,
     Union,
 )
-
-# ....................{ TYPEVARS ~ unbounded               }....................
-S = TypeVar('S')
-'''
-Arbitrary unbounded (i.e., universally applicable) type variable.
-'''
-
-
-T = TypeVar('T')
-'''
-Arbitrary unbounded (i.e., universally applicable) type variable.
-'''
 
 # ....................{ TYPEVARS ~ unbounded               }....................
 T_BOUNDED = TypeVar('T_BOUNDED', bound=int)

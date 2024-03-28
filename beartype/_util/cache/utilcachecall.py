@@ -20,27 +20,18 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableCachedException
-from beartype.typing import (
-    Dict,
-    TypeVar,
-)
+from beartype.typing import Dict
+from beartype._data.hint.datahinttyping import CallableT
 from beartype._util.func.arg.utilfuncargtest import (
     die_unless_func_args_len_flexible_equal,
     is_func_arg_variadic,
 )
 from beartype._util.text.utiltextlabel import label_callable
 from beartype._util.utilobject import SENTINEL
-from collections.abc import Callable
 from functools import wraps
 
-# ....................{ PRIVATE ~ hints                    }....................
-_CallableT = TypeVar('_CallableT', bound=Callable)
-'''
-Type variable bound to match *only* callables.
-'''
-
 # ....................{ DECORATORS ~ callable              }....................
-def callable_cached(func: _CallableT) -> _CallableT:
+def callable_cached(func: CallableT) -> CallableT:
     '''
     **Memoize** (i.e., efficiently re-raise all exceptions previously raised by
     the decorated callable when passed the same parameters (i.e., parameters
@@ -82,7 +73,7 @@ def callable_cached(func: _CallableT) -> _CallableT:
              #. Returns that value.
 
     Caveats
-    ----------
+    -------
     **The decorated callable must accept no keyword parameters.** While this
     decorator previously memoized keyword parameters, doing so incurred
     significant performance penalties defeating the purpose of caching. This
@@ -144,16 +135,16 @@ def callable_cached(func: _CallableT) -> _CallableT:
 
     Parameters
     ----------
-    func : _CallableT
+    func : CallableT
         Callable to be memoized.
 
     Returns
-    ----------
-    _CallableT
+    -------
+    CallableT
         Closure wrapping this callable with memoization.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilCallableCachedException
         If this callable accepts a variadic positional parameter (e.g.,
         ``*args``).
@@ -187,7 +178,7 @@ def callable_cached(func: _CallableT) -> _CallableT:
         Memoized variant of the {func.__name__}() callable.
 
         See Also
-        ----------
+        --------
         :func:`callable_cached`
             Further details.
         '''
@@ -273,7 +264,7 @@ def callable_cached(func: _CallableT) -> _CallableT:
     return _callable_cached  # type: ignore[return-value]
 
 # ....................{ DECORATORS ~ method                }....................
-def method_cached_arg_by_id(func: _CallableT) -> _CallableT:
+def method_cached_arg_by_id(func: CallableT) -> CallableT:
     '''
     **Memoize** (i.e., efficiently re-raise all exceptions previously raised by
     the decorated method when passed the same *exact* parameters (i.e.,
@@ -282,7 +273,7 @@ def method_cached_arg_by_id(func: _CallableT) -> _CallableT:
     rather than inefficiently recalling that method) the passed method.
 
     Caveats
-    ----------
+    -------
     **This decorator is only intended to decorate bound methods** (i.e., either
     class or instance methods bound to a class or instance). This decorator is
     *not* intended to decorate functions or static methods.
@@ -333,16 +324,16 @@ def method_cached_arg_by_id(func: _CallableT) -> _CallableT:
 
     Parameters
     ----------
-    func : _CallableT
+    func : CallableT
         Callable to be memoized.
 
     Returns
-    ----------
-    _CallableT
+    -------
+    CallableT
         Closure wrapping this callable with memoization.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilCallableCachedException
         If this callable accepts either:
 
@@ -351,7 +342,7 @@ def method_cached_arg_by_id(func: _CallableT) -> _CallableT:
         * A variadic positional parameter (e.g., ``*args``).
 
     See Also
-    ----------
+    --------
     :func:`callable_cached`
         Further details.
     '''
@@ -410,7 +401,7 @@ def method_cached_arg_by_id(func: _CallableT) -> _CallableT:
         Memoized variant of the {func.__name__}() callable.
 
         See Also
-        ----------
+        --------
         :func:`callable_cached`
             Further details.
         '''
@@ -486,7 +477,7 @@ def method_cached_arg_by_id(func: _CallableT) -> _CallableT:
     return _method_cached  # type: ignore[return-value]
 
 # ....................{ DECORATORS ~ property              }....................
-def property_cached(func: _CallableT) -> _CallableT:
+def property_cached(func: CallableT) -> CallableT:
     '''
     **Memoize** (i.e., efficiently cache and return all previously returned
     values of the passed property method as well as all previously raised
@@ -507,7 +498,7 @@ def property_cached(func: _CallableT) -> _CallableT:
     called at most once for each object exposing this property.
 
     Caveats
-    ----------
+    -------
     **This decorator must be preceded by an explicit usage of the standard**
     :class:`property` **decorator.** Although this decorator could be trivially
     refactored to automatically decorate the returned property method by the
@@ -545,8 +536,13 @@ def property_cached(func: _CallableT) -> _CallableT:
 
     Parameters
     ----------
-    func : _CallableT
+    func : CallableT
         Property method to be memoized.
+
+    Returns
+    -------
+    CallableT
+        Dynamically generated function wrapping this property with memoization.
     '''
     assert callable(func), f'{repr(func)} not callable.'
 
@@ -644,7 +640,7 @@ These statements include (in order):
   function definition time as the default value of an arbitrary parameter.
 
 Design
-----------
+------
 While there exist numerous alternative implementations for caching properties,
 the approach implemented below has been profiled to be the most efficient.
 Alternatives include (in order of decreasing efficiency):

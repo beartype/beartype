@@ -40,10 +40,10 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
     import re
     from beartype.typing import (
         Any,
-        TypeVar,
         Union,
     )
     from beartype._cave._cavefast import IntType
+    from beartype._data.hint.datahinttyping import S, T
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignByteString,
         HintSignCallable,
@@ -96,11 +96,6 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
         Match,
         Pattern,
     )
-
-    # ..................{ LOCALS                             }..................
-    # User-defined generic "typing" type variables.
-    S = TypeVar('S')
-    T = TypeVar('T')
 
     # ..................{ GENERICS ~ single                  }..................
     # Note we intentionally do *NOT* declare unsubscripted PEP 585-compliant

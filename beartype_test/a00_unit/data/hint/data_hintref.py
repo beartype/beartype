@@ -35,12 +35,7 @@ from beartype.typing import (
     TypeVar,
     Union,
 )
-
-# ....................{ PRIVATE ~ hints                    }....................
-_T = TypeVar('_T')
-'''
-Arbitrary type variable reference in type hints defined below.
-'''
+from beartype._data.hint.datahinttyping import T
 
 # ....................{ FUNCTIONS ~ pep : discrete         }....................
 # Arbitrary functions annotated by PEP-compliant forward references defined as
@@ -152,14 +147,14 @@ class TheDarkestEveningOfTheYear(str):
     pass
 
 
-class WithSluggishSurge(Generic[_T]):
+class WithSluggishSurge(Generic[T]):
     '''
     Arbitrary generic declaring a method annotated by a forward reference
     referring to an instance of this same generic.
     '''
 
     @beartype
-    def or_where_the_secret_caves(self) -> 'WithSluggishSurge[_T]':
+    def or_where_the_secret_caves(self) -> 'WithSluggishSurge[T]':
         '''
         Arbitrary method annotated by a forward reference referring to an
         instance of this same generic.

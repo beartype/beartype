@@ -33,20 +33,6 @@
 #  singletons are actually a new unique category of callable-specific type
 #  variables. See also:
 #  https://www.python.org/dev/peps/pep-0612
-#* PEP 647-compliance. PEP 647 introduces a silly new subscriptable
-#  "typing.TypeGuard" attribute. With respect to runtime type-checking, *ALL*
-#  "typing.TypeGuard" subscriptions unconditionally reduce to "bool": e.g.,
-#      from typing import TypeGuard, Union
-#
-#      # This...
-#      def muh_func(muh_param: object) -> TypeGuard[str]:
-#          return isinstance(muh_param, str)  # <-- gods help us
-#
-#      # This conveys the exact same runtime semantics as this.
-#      def muh_func(muh_param: object) -> bool:
-#          return isinstance(muh_param, str)  # <-- gods help us
-#  Lastly, note that (much like "typing.NoReturn") "typing.TypeGuard"
-#  subscriptions are *ONLY* usable as return annotations. Raise exceptions, yo.
 
 #FIXME: [O(n)] Ah-ha! We now know how to implement O(log n) and O(n)
 #type-checking in a scaleable manner that preserves @beartype's strong
@@ -202,10 +188,11 @@
 #          __beartype_check_times = CHECK_TIMES,
 #          __beartype_get_time_monotonic = monotonic,
 #      ) -> None:
+#          CHECK_TIME_START = __beartype_get_time_monotonic()
+#
 #          # Constant "J" in the inequality "Lt < J" governing @beartype's
 #          # deadline scheduler for non-constant type-checking, denominated in
 #          # fractional seconds.
-#          CHECK_TIME_START = __beartype_get_time_monotonic()
 #          CHECK_TIME_MAX = (
 #              {check_time_max_multiplier}(
 #                  CHECK_TIME_START - __beartype_check_times[1]
@@ -229,9 +216,12 @@
 #                  )
 #                  for muh_item in list
 #              )
-#          # *AND* @beartype has yet to exceed its scheduled deadline for
+#          # *AND* @beartype has still yet to exceed its scheduled deadline for
 #          # non-constant type-checks...
-#          ) and ({check_time_max_multiplier - 1}*monotonic() < CHECK_TIME_MAX):
+#          ) and (
+#              {check_time_max_multiplier - 1} *
+#              __beartype_get_time_monotonic() < CHECK_TIME_MAX
+#          ):
 #              raise get_func_pith_violation(...)
 #          # Else, this pith either satisfies this hint *OR* @beartype has
 #          # exceeded its scheduled deadline for non-constant type-checks.

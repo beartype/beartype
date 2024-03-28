@@ -299,20 +299,21 @@ class BeartypeConf(object):
             total running time of the active Python interpreter exceeds this
             integer multiplied by the running time consumed by both the current
             type-check and all prior type-checks *and* the caller also passed a
-            non-default ``strategy``) *or* ``None`` if :mod:`beartype` should
-            never prematurely halt runtime type-checks.
+            non-default ``strategy``) *or* :data:`None` if :mod:`beartype`
+            should never prematurely halt runtime type-checks.
 
-            Increase this quantity to type-check more container items at a cost
-            of decreasing application responsiveness. Likewise, decrease this
-            quantity to increase application responsiveness at a cost of
-            type-checking fewer container items.
+            Increasing this integer increases the number of container items that
+            :mod:`beartype` type-checks at a cost of decreasing application
+            responsiveness. Likewise, decreasing this integer increases
+            application responsiveness at a cost of decreasing the number of
+            container items that :mod:`beartype` type-checks.
 
             Ignored when ``strategy`` is :attr:`BeartypeStrategy.O1`, as that
             strategy is already effectively instantaneous; imposing deadlines
             and thus bureaucratic bookkeeping on that strategy would only
             reduce its efficiency for no good reason, which is a bad reason.
 
-            Defaults to 1000, in which case a maximum of %0.1 of the total
+            Defaults to 1000, in which case a maximum of 0.10% of the total
             runtime of the active Python process will be devoted to performing
             non-constant :mod:`beartype` type-checks over container items. This
             default has been carefully tuned to strike a reasonable balance
@@ -320,19 +321,19 @@ class BeartypeConf(object):
             typically enabling smaller containers to be fully type-checked
             without noticeably impacting codebase performance.
 
-            *Theory time.* Let:
+            **Theory time.** Let:
 
-            * ``T`` be the total time this interpreter has been running.
-            * ``b`` be the total time :mod:`beartype` has spent type-checking in
-              this interpreter.
+            * :math:`T` be the total time this interpreter has been running.
+            * :math:``b` be the total time :mod:`beartype` has spent
+              type-checking in this interpreter.
 
-            Clearly, ``b <= T``. Generally, ``b <<<<<<< T`` (i.e., type-checks
-            consume much less time than the total time consumed by the process).
-            However, it's all too easy to exhibit worst-case behaviour of
-            ``b ~= T`` (i.e., type-checks consume most of the total time). How?
-            By passing the :func:`beartype.door.is_bearable` tester an absurdly
-            large nested container subject to the non-default ``strategy`` of
-            :attr:`BeartypeStrategy.On`.
+            Clearly, :math:`b <= T`. Generally, :math:`b <<<<<<< T` (i.e.,
+            type-checks consume much less time than the total time consumed by
+            the process). However, it's all too easy to exhibit worst-case
+            behaviour of :math:`b ~= T` (i.e., type-checks consume most of the
+            total time). How? By passing the :func:`beartype.door.is_bearable`
+            tester an absurdly large nested container subject to the non-default
+            ``strategy`` of :attr:`BeartypeStrategy.On`.
 
             This deadline multiplier mitigates that worst-case behaviour.
             Specifically, :mod:`beartype` will prematurely halt any iterative

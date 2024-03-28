@@ -44,6 +44,7 @@ from beartype._cave._cavefast import (
 )
 from beartype._data.hint.pep.sign.datapepsigncls import HintSign
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
+from collections.abc import Callable as CallableABC
 from importlib.abc import PathEntryFinder
 from pathlib import Path
 from types import (
@@ -51,6 +52,33 @@ from types import (
     FrameType,
     GeneratorType,
 )
+
+# ....................{ TYPEVARS                           }....................
+S = TypeVar('S')
+'''
+**Unbound type variable** (i.e., matching *any* arbitrary type) locally bound to
+different types than the :data:`.T` type variable.
+'''
+
+
+T = TypeVar('T')
+'''
+**Unbound type variable** (i.e., matching *any* arbitrary type) locally bound to
+different types than the :data:`.S` type variable.
+'''
+
+
+CallableT = TypeVar('CallableT', bound=CallableABC)
+'''
+**Callable type variable** (i.e., bound to match *only* callables).
+'''
+
+
+NodeT = TypeVar('NodeT', bound=AST)
+'''
+**Node type variable** (i.e., type variable constrained to match *only* abstract
+syntax tree (AST) nodes).
+'''
 
 # ....................{ AST                                }....................
 NodeCallable = Union[FunctionDef, AsyncFunctionDef]
@@ -67,13 +95,6 @@ PEP-compliant type hint matching a **decoratable node** (i.e., abstract syntax
 tree (AST) node encapsulating the definition of a pure-Python object supporting
 decoration by one or more ``"@"``-prefixed decorations, including both
 pure-Python classes *and* callables).
-'''
-
-
-NodeT = TypeVar('NodeT', bound=AST)
-'''
-**Node type variable** (i.e., type variable constrained to match *only* abstract
-syntax tree (AST) nodes).
 '''
 
 

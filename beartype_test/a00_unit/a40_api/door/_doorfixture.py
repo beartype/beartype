@@ -150,6 +150,7 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     # Defer fixture-specific imports.
     import collections.abc
     import typing
+    from beartype._data.hint.datahinttyping import S, T
     from beartype._util.hint.pep.utilpepget import get_hint_pep_typevars
     from beartype._util.py.utilpyversion import (
         IS_PYTHON_AT_LEAST_3_9,
@@ -198,10 +199,6 @@ def door_cases_subhint() -> 'Iterable[Tuple[object, object, bool]]':
     NewStr = NewType('NewStr', str)
 
     # ..................{ TYPEVARS                           }..................
-    # Arbitrary unconstrained type variables.
-    S = TypeVar('S')
-    T = TypeVar('T')
-
     # Arbitrary constrained type variables.
     T_sequence = TypeVar('T_sequence', bound=SequenceABC)
     T_int_or_str = TypeVar('T_int_or_str', int, str)

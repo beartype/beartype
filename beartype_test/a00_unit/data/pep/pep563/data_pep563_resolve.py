@@ -21,17 +21,8 @@ point of this submodule is to explicitly call and thus exercise that resolver!
 # ....................{ IMPORTS                            }....................
 from __future__ import annotations
 from beartype.door import die_if_unbearable
-from beartype.typing import (
-    Generic,
-    # NoReturn,
-    TypeVar,
-)
-
-# ....................{ GLOBALS                            }....................
-T = TypeVar('T')
-'''
-Arbitrary type variable.
-'''
+from beartype.typing import Generic
+from beartype._data.hint.datahinttyping import T
 
 # ....................{ CLASSES                            }....................
 class ToAvariceOrPride(Generic[T]):

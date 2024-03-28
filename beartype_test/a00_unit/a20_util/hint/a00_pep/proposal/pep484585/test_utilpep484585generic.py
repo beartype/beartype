@@ -154,16 +154,11 @@ def test_find_hint_pep484585_generic_module_base_first() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintPep484585Exception
-    from beartype.typing import (
-        Generic,
-        TypeVar,
-    )
+    from beartype.typing import Generic
+    from beartype._data.hint.datahinttyping import T
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
         find_hint_pep484585_generic_module_base_first)
     from pytest import raises
-
-    # Arbitrary type variable referenced below.
-    T = TypeVar('T')
 
     # ....................{ CLASSES                        }....................
     class ToWhichThisClosingNight(object):
