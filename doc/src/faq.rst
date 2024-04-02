@@ -1164,22 +1164,22 @@ of every sentence starting with "In fact."
 
 The procedural :func:`beartype.door.is_bearable` function narrows the type of
 the passed object (which can be *anything*) to the passed type hint (which can
-be *any* type). Both soft-guarantee runtime performance on the order of less
-than 1µs (i.e., less than one millionth of a second), preserving runtime
-performance and your personal sanity.
+be *any* type). Both guarantee runtime performance on the order of less than 1µs
+(i.e., less than one millionth of a second), preserving runtime performance and
+money bags.
 
 .. note::
 
    Sadly, the object-oriented :meth:`beartype.door.TypeHint.is_bearable` method
    does *not* support `type narrowing`_. Only :func:`beartype.door.is_bearable`
    supports `type narrowing`_. Why? Deficiencies in :pep:`647` beyond the
-   control of :mod:`beartype`. It's not our fault. Would @leycec_ lie publicly
-   in online documentation just to make :mod:`beartype` look better!? Surely!
-   ``</shifty_goggle_eyes>``
+   control of :mod:`beartype`. It's not our fault. Would `@leycec`_ lie publicly
+   in online documentation just to make his questionable coding style
+   superficially look better!?! Surely! ``</shifty_goggle_eyes>``
 
 Calling :func:`beartype.door.is_bearable` in your code enables beartype to
 symbiotically eliminate false positives from static type-checkers checking that
-code, reducing static type-checker chum that went rotten decades ago: e.g.,
+code, reducing static type-checker chum that went rotten decades ago:
 
 .. code-block:: python
 

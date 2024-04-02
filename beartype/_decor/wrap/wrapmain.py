@@ -57,11 +57,11 @@ def generate_code(bear_call: BeartypeCall) -> str:
         * If the decorated callable requires *no* type-checking (e.g., due to
           all type hints annotating this callable being ignorable), the empty
           string. Note this edge case is distinct from a related edge case at
-          the head of the :func:`beartype.beartype` decorator reducing to a
-          noop for unannotated callables. By compare, this boolean is ``True``
-          only for callables annotated with **ignorable type hints** (i.e.,
-          :class:`object`, :class:`beartype.cave.AnyType`,
-          :class:`typing.Any`): e.g.,
+          the head of the :func:`beartype.beartype` decorator reducing to a noop
+          for unannotated callables. By compare, this boolean is ``True`` only
+          for callables annotated with **ignorable type hints** (i.e.,
+          :class:`object`, :class:`beartype.cave.AnyType`, :class:`typing.Any`):
+          e.g.,
 
           .. code-block:: python
 
@@ -74,8 +74,8 @@ def generate_code(bear_call: BeartypeCall) -> str:
         * Else, a code snippet defining the wrapper function type-checking the
           decorated callable, including (in order):
 
-          * A signature declaring this wrapper, accepting both
-            beartype-agnostic and -specific parameters. The latter include:
+          * A signature declaring this wrapper, accepting both beartype-agnostic
+            and -specific parameters. The latter include:
 
             * A private ``__beartype_func`` parameter initialized to the
               decorated callable. In theory, this callable should be accessible

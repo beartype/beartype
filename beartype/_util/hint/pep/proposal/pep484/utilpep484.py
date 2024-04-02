@@ -214,6 +214,8 @@ def reduce_hint_pep484_deprecated(
     '''
     assert isinstance(exception_prefix, str), (
         f'{repr(exception_prefix)} not string.')
+    # print(f'Testing PEP 484 type hint {repr(hint)} for PEP 585 deprecation...')
+    # print(f'{HINTS_PEP484_REPR_PREFIX_DEPRECATED}')
 
     # Avoid circular import dependencies.
     from beartype._util.hint.utilhintget import get_hint_repr

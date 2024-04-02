@@ -447,7 +447,7 @@ def _die_if_arg_default_unbearable(
             cls=BeartypeDecorHintParamDefaultForwardRefWarning,
             message=(
                 f'{EXCEPTION_PREFIX_DEFAULT}value '
-                f'{prefix_pith_value(pith=arg_default, is_color=bear_call.conf.is_color)} '
+                f'{prefix_pith_value(pith=arg_default, is_color=bear_call.conf.is_color)}'
                 f'uncheckable at @beartype decoration time, as '
                 f'{exception_message}'
             ),
