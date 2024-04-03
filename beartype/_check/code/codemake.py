@@ -499,6 +499,20 @@ def make_check_expr(
         # Allow these local variables of the outer scope to be modified below.
         nonlocal hints_meta_index_last
 
+        #FIXME: *UGH*. This assertion turned out to be profoundly dangerous.
+        #I'm currently unclear why, but the following example triggers this:
+        #    from beartype.vale import IsInstance
+        #    from beartype import beartype
+        #    from typing import Annotated
+        #    from collections.abc import Sequence
+        #    SequenceNonstrOfStr = Annotated[Sequence[str], ~IsInstance[str]]
+        #
+        #    @beartype
+        #    def test(names: SequenceNonstrOfStr | str, / ) -> bool:
+        #        return True
+        #Until we investigate this further, the only sane approach is to
+        #temporarily disable this. Let's pretend I know what I'm talking about.
+
         # If this child pith expression duplicates the current pith assignment
         # expression, raise an exception. Why? Because there is *NO* benefit to
         # assigning that to another local variable via another assignment
@@ -515,22 +529,22 @@ def make_check_expr(
         #     SyntaxError: invalid syntax
         #
         # Specifically, if it is *NOT* the case that...
-        assert not (
-            # If this is a child hint rather than the root hint *AND*...
-            #
-            # The root hint is intentionally ignored, as that hint is already
-            # guaranteed to be an identifier rather than assignment expression.
-            hints_meta_index_curr and  # pith_child_expr is not VAR_NAME_PITH_ROOT and
-            # This child pith expression duplicates the current pith assignment
-            # expression...
-            pith_child_expr is pith_curr_assign_expr
-        # Then raise an "AssertionError" exception.
-        ), (
-            f'{EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
-            f'child pith expression {repr(pith_child_expr)} duplicates '
-            f'current pith assignment expression '
-            f'{repr(pith_curr_assign_expr)}.'
-        )
+        # assert not (
+        #     # If this is a child hint rather than the root hint *AND*...
+        #     #
+        #     # The root hint is intentionally ignored, as that hint is already
+        #     # guaranteed to be an identifier rather than assignment expression.
+        #     hints_meta_index_curr and  # pith_child_expr is not VAR_NAME_PITH_ROOT and
+        #     # This child pith expression duplicates the current pith assignment
+        #     # expression...
+        #     pith_child_expr is pith_curr_assign_expr
+        # # Then raise an "AssertionError" exception.
+        # ), (
+        #     f'{EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
+        #     f'child pith expression {repr(pith_child_expr)} duplicates '
+        #     f'current pith assignment expression '
+        #     f'{repr(pith_curr_assign_expr)}.'
+        # )
         # Else, the current child pith expression does *NOT* duplicate the
         # current pith assignment expression.
 

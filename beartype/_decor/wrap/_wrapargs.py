@@ -207,6 +207,17 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                 #obviously awful. Ideally, that tester *ABSOLUTELY* should
                 #resolve relative forward references. Until it does, however,
                 #this is verboten dark magic that is unsafe in the general case.
+                #FIXME: Note that there exist even *MORE* edge cases, however:
+                #@dataclass fields, which violate typing semantics: e.g.,
+                #    from dataclasses import dataclass, field
+                #    from typing import Dict
+                #
+                #    from beartype import beartype
+                #
+                #    @beartype
+                #    @dataclass
+                #    class A:
+                #        test_dict: Dict[str, str] = field(default_factory=dict)
                 #FIXME: Once this has been repaired, please reenable:
                 #* The "test_decor_arg_kind_flex_optional" unit test.
 
