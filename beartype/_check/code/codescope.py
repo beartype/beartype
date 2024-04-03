@@ -50,12 +50,14 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintNonpepException
 from beartype.typing import (
     Dict,
+    List,
     Optional,
     Tuple,
 )
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_indexable_subtype)
+from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
 from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
@@ -298,48 +300,9 @@ def add_func_scope_types(
     refer to the passed set or tuple of classes and whose value is that tuple)
     to the passed scope *and* return that machine-readable name.
 
-    This function additionally caches this tuple with the beartypistry
-    singleton to reduce space consumption for tuples duplicated across the
-    active Python interpreter.
-
-    Design
-    ------
-    Unlike types, tuples are commonly dynamically constructed on-the-fly by
-    various tuple factories (e.g., :attr:`beartype.cave.NoneTypeOr`,
-    :attr:`typing.Optional`) and hence have no reliable fully-qualified names.
-    Instead, this function caches this tuple into the beartypistry under a
-    string synthesized as the unique concatenation of:
-
-    * The magic substring :data:`TYPISTRY_HINT_NAME_TUPLE_PREFIX`. Since
-      fully-qualified classnames uniquely identifying types as beartypistry keys
-      are guaranteed to *never* contain this substring, this substring prevents
-      collisions between tuple and type names.
-    * This tuple's hash. Note that this tuple's object ID is intentionally *not*
-      embedded in this string. Two tuples with the same items are typically
-      different objects and thus have different object IDs, despite producing
-      identical hashes: e.g.,
-
-      >>> ('Das', 'Kapitel',) is ('Das', 'Kapitel',)
-      False
-      >>> id(('Das', 'Kapitel',)) == id(('Das', 'Kapitel',))
-      False
-      >>> hash(('Das', 'Kapitel',)) == hash(('Das', 'Kapitel',))
-      True
-
-    The exception is the empty tuple, which is a singleton and thus *always* has
-    the same object ID and hash: e.g.,
-
-        >>> () is ()
-        True
-        >>> id(()) == id(())
-        True
-        >>> hash(()) == hash(())
-        True
-
-    Identifying tuples by their hashes enables the beartypistry singleton to
-    transparently cache duplicate class tuples with distinct object IDs as the
-    same underlying object, reducing space consumption. While hashing tuples
-    does impact time performance, the gain in space is worth the cost.
+    This function additionally caches this tuple with the
+    :data:`._tuple_union_to_tuple_union` dictionary to reduce space consumption
+    for tuples duplicated across the active Python interpreter.
 
     Parameters
     ----------
@@ -393,8 +356,9 @@ def add_func_scope_types(
         generate name collisions. This exception is thus intentionally raised
         as a private rather than public exception.
     '''
-    assert is_unique.__class__ is bool, f'{repr(is_unique)} not bool.'
+    assert isinstance(is_unique, bool), f'{repr(is_unique)} not bool.'
 
+    # ....................{ VALIDATE                       }....................
     # If this container is neither a set nor tuple, raise an exception.
     if not isinstance(types, TYPES_SET_OR_TUPLE):
         raise BeartypeDecorHintNonpepException(
@@ -418,10 +382,62 @@ def add_func_scope_types(
         )
     # Else, this container either contains two or more types.
 
-    # If this container is a frozenset, coerce this frozenset into a tuple.
+    # ....................{ FORWARDREF                     }....................
+    #FIXME: Unit test this up, please.
+    # True only if this container contains one or more beartype-specific forward
+    # reference proxies. Although these proxies are technically isinstanceable
+    # classes, attempting to pass these proxies as the second parameter to the
+    # isinstance() builtin also raises exceptions when the underlying
+    # user-defined classes proxied by these proxies have yet to be declared.
+    # Since these proxies are thus *MUCH* more fragile than standard classes, we
+    # reduce the likelihood of exceptions by deprioritizing these proxies in
+    # this container (i.e., moving these proxies to the end of this container).
+    is_types_ref = False
+
+    # For each type in this container...
+    for cls in types:
+        # If this type is a beartype-specific forward reference proxy...
+        if cls.__class__ is BeartypeForwardRefMeta:
+            # Note that this container contains at least one such proxy.
+            is_types_ref = False
+
+            # Halt iteration.
+            break
+            
+    # If this container contains at least one such proxy...
+    if is_types_ref:
+        # List of all such proxies in this container.
+        #
+        # Note that we intentionally avoid instantiating this pair of lists
+        # above in the common case that this container contains no such proxies.
+        types_ref: List[type] = []
+
+        # List of all other types in this container (i.e., normal types that are
+        # *NOT* beartype-specific forward references).
+        types_nonref: List[type] = []
+
+        # For each type in this container...
+        for cls in types:
+            # If this type is such a proxy, append this proxy to the list of all
+            # such proxies.
+            if cls.__class__ is BeartypeForwardRefMeta:
+                types_ref.append(cls)
+            # Else, this type is *NOT* such a proxy. In this case, append this
+            # proxy to the list of all non-proxy types.
+            else:
+                types_nonref.append(cls)
+
+        # Reconstitute this container such that all non-proxy types appear
+        # *BEFORE* all proxy types.
+        types = tuple(types_nonref + types_ref)
+    # Else, this container contains *NO* such proxies. In this case, preserve
+    # the ordering of items in this container as is.
+
+    # ....................{ DUPLICATES                     }....................
+    # If this container is a set, coerce this frozenset into a tuple.
     if isinstance(types, Set):
         types = tuple(types)
-    # Else, this container is *NOT* a frozenset. By elimination, this container
+    # Else, this container is *NOT* a set. By elimination, this container
     # should now be a tuple.
     #
     # In either case, this container should now be a tuple.
@@ -438,11 +454,12 @@ def add_func_scope_types(
     # * Back into a duplicate-free tuple.
     if isinstance(types, tuple) and not is_unique:
         types = tuple(set(types))
-    # In either case, this container is now guaranteed to be a tuple
-    # containing only duplicate-free classes.
+    # In either case, this container is now guaranteed to be a tuple containing
+    # only duplicate-free classes.
     assert isinstance(types, tuple), (
         f'{exception_prefix}{repr(types)} not tuple.')
 
+    # ....................{ CACHE                          }....................
     # If this tuple has *NOT* already been cached, do so.
     if types not in _tuple_union_to_tuple_union:
         _tuple_union_to_tuple_union[types] = types
@@ -451,6 +468,7 @@ def add_func_scope_types(
     else:
         types = _tuple_union_to_tuple_union[types]
 
+    # ....................{ RETURN                         }....................
     # Return the name of a new parameter passing this tuple.
     return add_func_scope_attr(
         attr=types, func_scope=func_scope, exception_prefix=exception_prefix)

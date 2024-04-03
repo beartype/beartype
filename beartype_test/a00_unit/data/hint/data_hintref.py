@@ -31,8 +31,9 @@ from beartype import beartype
 from beartype.typing import (
     Generic,
     List,
-    Type,
-    TypeVar,
+    Optional,
+    Sequence,
+    Type,  # <-- intentionally imported due to being embedded in strings below
     Union,
 )
 from beartype._data.hint.datahinttyping import T
@@ -48,8 +49,8 @@ TheDarkestForwardRefOfTheYear = (
 def the_woods_are_lovely(dark_and_deep: TheDarkestForwardRefOfTheYear) -> (
     TheDarkestForwardRefOfTheYear):
     '''
-    Decorated function annotated by a fully-qualified forward reference
-    referring to a type that has yet to be declared.
+    :func:`beartype.beartype`-decorated function annotated by a fully-qualified
+    forward reference referring to a type that has yet to be declared.
     '''
 
     return dark_and_deep
@@ -59,8 +60,8 @@ def the_woods_are_lovely(dark_and_deep: TheDarkestForwardRefOfTheYear) -> (
 def stopping_by_woods_on(a_snowy_evening: 'TheDarkestEveningOfTheYear') -> (
     'TheDarkestEveningOfTheYear'):
     '''
-    Decorated function annotated by a relative forward reference referring to a
-    type that has yet to be declared.
+    :func:`beartype.beartype`-decorated function annotated by a relative forward
+    reference referring to a type that has yet to be declared.
     '''
 
     return a_snowy_evening
@@ -71,11 +72,24 @@ TheDarkestUnionOfTheYear = Union[complex, 'TheDarkestEveningOfTheYear', bytes]
 def but_i_have_promises(to_keep: TheDarkestUnionOfTheYear) -> (
     TheDarkestUnionOfTheYear):
     '''
-    Decorated function annotated by a union of arbitrary types *and* a relative
-    forward reference referring to a type that has yet to be declared.
+    :func:`beartype.beartype`-decorated function annotated by a union of
+    arbitrary types *and* a relative forward reference referring to a type that
+    has yet to be declared.
     '''
 
     return to_keep
+
+
+NearTheShore = Optional[Sequence['TheDarkestEveningOfTheYear']]
+@beartype
+def a_little_shallop(floating: NearTheShore = ()) -> NearTheShore:
+    '''
+    :func:`beartype.beartype`-decorated function accepting an optional parameter
+    annotated by a union of arbitrary types *and* a relative forward reference
+    referring to a type that has yet to be declared.
+    '''
+
+    return floating
 
 # ....................{ FUNCTIONS ~ pep : composite        }....................
 # Arbitrary functions annotated by PEP-compliant forward references defined as
@@ -94,9 +108,9 @@ def its_fields_of_snow(
     and_pinnacles_of_ice: 'List[TheDarkestForwardRefOfTheYear]') -> (
     TheDarkestForwardRefOfTheYear):
     '''
-    Decorated function annotated by a composite type hint defined as a standard
-    type hint subscripted by a relative forward reference referring to a type
-    that has yet to be declared.
+    :func:`beartype.beartype`-decorated function annotated by a composite type
+    hint defined as a standard type hint subscripted by a relative forward
+    reference referring to a type that has yet to be declared.
     '''
 
     return and_pinnacles_of_ice[0]
@@ -107,11 +121,11 @@ TheDarkestSubclassOfTheYear = 'Type[TheDarkestEveningOfTheYear]'
 def the_dry_leaf(rustles_in_the_brake: TheDarkestSubclassOfTheYear) -> (
     TheDarkestSubclassOfTheYear):
     '''
-    Decorated function annotated by a composite type hint defined as a
-    ``beartype.typing.Type[...]` hint subscripted by a relative forward
-    reference referring to a type that has yet to be declared, exercising an
-    edge case with respect to proxying of :func:`issubclass` type-checks in
-    forward reference proxies.
+    :func:`beartype.beartype`-decorated function annotated by a composite type
+    hint defined as a ``beartype.typing.Type[...]`` hint subscripted by a
+    relative forward reference referring to a type that has yet to be declared,
+    exercising an edge case with respect to proxying of :func:`issubclass`
+    type-checks in forward reference proxies.
 
     See Also
     --------

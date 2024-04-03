@@ -18,12 +18,12 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import (
-    BeartypeCallHintForwardRefException,
     BeartypeDecorHintParamDefaultForwardRefWarning,
     BeartypeDecorHintParamDefaultViolation,
     BeartypeDecorHintPepException,
     BeartypeDecorParamNameException,
 )
+from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
 from beartype._check.checkcall import BeartypeCall
 from beartype._check.checkmake import make_code_raiser_func_pith_check
 from beartype._check.convert.convsanify import sanify_hint_root_func
@@ -200,12 +200,22 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                     continue
                 # Else, this hint is unignorable.
 
-                # If this parameter is optional *AND* the default value of this
-                # optional parameter violates this hint, raise an exception.
-                _die_if_arg_default_unbearable(
-                    bear_call=bear_call, arg_default=arg_default, hint=hint)
-                # Else, this parameter is either optional *OR* the default value
-                # of this optional parameter satisfies this hint.
+                #FIXME: Fundamentally unsafe and thus temporarily disabled *FOR
+                #THE MOMENT.* The issue is that our current implementation of
+                #the is_bearable() tester internally called by this function
+                #refuses to resolve relative forward references -- which is
+                #obviously awful. Ideally, that tester *ABSOLUTELY* should
+                #resolve relative forward references. Until it does, however,
+                #this is verboten dark magic that is unsafe in the general case.
+                #FIXME: Once this has been repaired, please reenable:
+                #* The "test_decor_arg_kind_flex_optional" unit test.
+
+                # # If this parameter is optional *AND* the default value of this
+                # # optional parameter violates this hint, raise an exception.
+                # _die_if_arg_default_unbearable(
+                #     bear_call=bear_call, arg_default=arg_default, hint=hint)
+                # # Else, this parameter is either optional *OR* the default value
+                # # of this optional parameter satisfies this hint.
 
                 # If this parameter either may *OR* must be passed positionally,
                 # record this fact.
@@ -436,7 +446,7 @@ def _die_if_arg_default_unbearable(
     # necessarily constitute a fatal error from the end user perspective, this
     # does constitute a non-fatal issue worth informing the end user of. In this
     # case, we coerce this exception into a warning.
-    except BeartypeCallHintForwardRefException as exception:
+    except _BeartypeHintForwardRefExceptionMixin as exception:
         # Forward hint exception message raised above. To readably embed this
         # message in the longer warning message emitted below, the first
         # character of this message is lowercased as well.

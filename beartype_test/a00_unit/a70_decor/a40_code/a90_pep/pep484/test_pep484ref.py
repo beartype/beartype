@@ -32,12 +32,13 @@ def test_pep484_ref_data() -> None:
     from beartype_test.a00_unit.data.hint.data_hintref import (
         TheDarkestEveningOfTheYear,
         WithSluggishSurge,
+        a_little_shallop,
         but_i_have_promises,
+        its_fields_of_snow,
         of_easy_wind,
         stopping_by_woods_on,
-        the_woods_are_lovely,
-        its_fields_of_snow,
         the_dry_leaf,
+        the_woods_are_lovely,
         winding_among_the_springs,
         # between_the_woods_and_frozen_lake,
     )
@@ -56,6 +57,7 @@ def test_pep484_ref_data() -> None:
 
     # ..................{ PASS                               }..................
     # Assert these forward-referencing callables return the expected values.
+    assert a_little_shallop(WITH_BURNING_SMOKE) is WITH_BURNING_SMOKE
     assert but_i_have_promises(MILES_TO_GO) is MILES_TO_GO
     assert of_easy_wind(WOODS) is WOODS
     assert stopping_by_woods_on(LAKE) is LAKE

@@ -1234,7 +1234,7 @@ def make_check_expr(
                                 # or efficient means of retrieving the only item
                                 # of a 1-set. Indeed, the most efficient means
                                 # of doing so is to iterate over that set and
-                                # break:
+                                # immediately halt iteration:
                                 #     for first_item in muh_set: break
                                 #
                                 # While we *COULD* technically leverage that

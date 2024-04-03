@@ -19,6 +19,23 @@ This private submodule is *not* intended for importation by downstream callers.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from abc import ABCMeta as _ABCMeta
 
+# ....................{ PRIVATE ~ mixins                   }....................
+class _BeartypeHintForwardRefExceptionMixin(Exception, metaclass=_ABCMeta):
+    '''
+    Mixin of all **beartype forward reference exceptions** (i.e., exceptions
+    concerning parent type hints containing one or more forward references to
+    child type hints that have yet to be declared).
+
+    This mixin enables internal logic throughout the :mod:`beartype` codebase to
+    conveniently, efficiently, and transparently handle *all* forward reference
+    exceptions -- including:
+
+    * :exc:`.BeartypeCallHintForwardRefException`.
+    * :exc:`.BeartypeDecorHintForwardRefException`.
+    '''
+
+    pass
+
 # ....................{ SUPERCLASS                         }....................
 class BeartypeException(Exception, metaclass=_ABCMeta):
     '''
@@ -129,7 +146,8 @@ class BeartypeDecorHintException(BeartypeDecorException):
     pass
 
 
-class BeartypeDecorHintForwardRefException(BeartypeDecorHintException):
+class BeartypeDecorHintForwardRefException(
+    BeartypeDecorHintException, _BeartypeHintForwardRefExceptionMixin):
     '''
     **Beartype decorator forward reference type hint exception.**
 
@@ -488,7 +506,8 @@ class BeartypeCallHintException(BeartypeCallException):
     pass
 
 
-class BeartypeCallHintForwardRefException(BeartypeCallHintException):
+class BeartypeCallHintForwardRefException(
+    BeartypeCallHintException, _BeartypeHintForwardRefExceptionMixin):
     '''
     **Beartype type-checking forward reference exception.**
 
