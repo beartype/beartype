@@ -73,10 +73,10 @@ def when_in_the_springtime_of_the_year():
     @attach_func_locals(func_stack_frames_ignore=1)
     def when_the_trees_are_crowned_with_leaves() -> type_hint:
         '''
-        Arbitrary nested callable annotated by a PEP-compliant type hint
-        localized to the parent callable and decorated by a decorator attaching
-        the local scope of that parent callable to a new ``func_locals``
-        attribute of this nested callable.
+        Arbitrary nested callable annotated by a type hint localized to the
+        parent callable and decorated by a decorator attaching the local scope
+        of that parent callable to a new ``func_locals`` attribute of this
+        nested callable.
         '''
 
         return 'When the ash and oak, and the birch and yew'

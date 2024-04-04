@@ -100,6 +100,10 @@ def test_add_func_scope_types() -> None:
     from beartype._cave._cavemap import NoneTypeOr
     from beartype._check.code.codescope import add_func_scope_types
     from beartype._util.utilobject import get_object_type_basename
+    from beartype_test.a00_unit.data.check.forward.data_fwdref import (
+        FORWARDREF_ABSOLUTE,
+        FORWARDREF_RELATIVE,
+    )
     from beartype_test.a00_unit.data.data_type import (
         Class,
         NonIsinstanceableClass,
@@ -172,6 +176,41 @@ def test_add_func_scope_types() -> None:
     assert func_scope[types_scope_name_b] == types_b
     assert func_scope[types_scope_name_a] != func_scope[types_scope_name_b]
 
+    # ....................{ PASS ~ forwardref              }....................
+    # Assert that this function implicitly reorders tuples containing:
+    # * One or more forward reference proxies.
+    # * One or more standard classes that are *NOT* forward reference proxies.
+    #
+    # Notably, assert that this function reorders all standard classes *BEFORE*
+    # all proxies to reduce the likelihood of raising exceptions during
+    # isinstance()-based type checks whose second arguments are such tuples.
+    types = (
+        FORWARDREF_ABSOLUTE,
+        FORWARDREF_RELATIVE,
+        str,
+        int,
+    )
+    types_scope_name = add_func_scope_types(
+        types=types, func_scope=func_scope, is_unique=False)
+    added_types = func_scope[types_scope_name]
+    assert set(added_types[:2]) == {str, int}
+    assert set(added_types[2:]) == {
+        FORWARDREF_ABSOLUTE,
+        FORWARDREF_RELATIVE,
+    }
+
+    # Repeat the same operation but with the "is_unique=False" parameter.
+    types_scope_name = add_func_scope_types(
+        types=types, func_scope=func_scope, is_unique=True)
+    added_types = func_scope[types_scope_name]
+    expected_types = (
+        str,
+        int,
+        FORWARDREF_ABSOLUTE,
+        FORWARDREF_RELATIVE,
+    )
+    assert added_types == expected_types
+
     # ....................{ FAIL                           }....................
     # Arbitrary scope to be added to below.
     func_scope = {}
@@ -216,9 +255,7 @@ def test_add_func_scope_types() -> None:
     # __instancecheck__() dunder method to unconditionally raise exceptions.
     with raises(BeartypeDecorHintPep3119Exception):
         add_func_scope_types(
-            types=(bool, NonIsinstanceableClass, float,),
-            func_scope=func_scope,
-        )
+            types=(bool, NonIsinstanceableClass, float), func_scope=func_scope)
 
 # ....................{ TESTS ~ expresser : type           }....................
 def test_express_func_scope_type_ref() -> None:

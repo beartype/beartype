@@ -57,7 +57,7 @@ from beartype.typing import (
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.reference.fwdrefmake import (
     make_forwardref_indexable_subtype)
-from beartype._check.forward.reference.fwdrefmeta import BeartypeForwardRefMeta
+from beartype._check.forward.reference.fwdreftest import is_forwardref
 from beartype._check.code.snip.codesnipstr import (
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_PREFIX,
     CODE_HINT_REF_TYPE_BASENAME_PLACEHOLDER_SUFFIX,
@@ -288,7 +288,7 @@ def add_func_scope_types(
     types: SetOrTupleTypes,
 
     # Optional parameters.
-    is_unique: bool = False,
+    is_unique: Optional[bool] = None,
     exception_prefix: str = (
         'Globally or locally scoped set or tuple of classes '),
 ) -> str:
@@ -308,27 +308,38 @@ def add_func_scope_types(
     ----------
     func_scope : LexicalScope
         Local or global scope to add this object to.
-    types : _SetOrTupleOfTypes
+    types : SetOrTupleOfTypes
         Set or tuple of arbitrary types to be added to this scope.
-    is_unique : bool, optional
-        ``True`` only if the caller guarantees this tuple to contain *no*
-        duplicate types. This boolean is ignored if ``types`` is a set rather
-        than tuple. Defaults to :data:`False`. :data:`False`, this function
-        assumes this tuple to contain duplicate types by internally:
+    is_unique : Optional[bool]
+        Tri-state boolean governing whether this function attempts to
+        deduplicate types in the ``types`` iterable. Specifically, either:
 
-        #. Coercing this tuple into a set, thus implicitly ignoring both
-           duplicates and ordering of types in this tuple.
-        #. Coercing that set back into another tuple.
-        #. If these two tuples differ, the passed tuple contains one or more
-           duplicates; in this case, the duplicate-free tuple is cached and
-           passed.
-        #. Else, the passed tuple contains no duplicates; in this case, the
-           passed tuple is cached and passed.
+        * :data:`True`, in which case the caller guarantees ``types`` to contain
+          *no* duplicate types.
+        * :data:`False`, in which case this function assumes ``types`` to
+          contain duplicate types by internally (in order):
 
-        This boolean does *not* simply enable an edge-case optimization, though
-        it certainly does that; this boolean enables callers to guarantee that
-        this function caches and passes the passed tuple rather than a new
-        tuple internally created by this function.
+          #. Coercing this tuple into a set, thus implicitly ignoring both
+             duplicates and ordering of types in this tuple.
+          #. Coercing that set back into another tuple.
+          #. If these two tuples differ, the passed tuple contains one or more
+             duplicates; in this case, the duplicate-free tuple is cached and
+             passed.
+          #. Else, the passed tuple contains no duplicates; in this case, the
+             passed tuple is cached and passed.
+
+        * :data:`None`, in which case this function reduces this parameter to
+          either:
+
+          * :data:`True` if ``types`` is a :class:`tuple`.
+          * :data:`False` if ``types`` is a :class:`set`.
+
+        This tri-state boolean does *not* simply enable an edge-case
+        optimization, though it certainly does that; this boolean enables
+        callers to guarantee that this function caches and passes the passed
+        tuple rather than a new tuple internally created by this function.
+
+        Defaults to :data:`None`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to a sensible string.
@@ -356,7 +367,8 @@ def add_func_scope_types(
         generate name collisions. This exception is thus intentionally raised
         as a private rather than public exception.
     '''
-    assert isinstance(is_unique, bool), f'{repr(is_unique)} not bool.'
+    assert isinstance(is_unique, NoneTypeOr[bool]), (
+        f'{repr(is_unique)} neither bool nor "None".')
 
     # ....................{ VALIDATE                       }....................
     # If this container is neither a set nor tuple, raise an exception.
@@ -382,8 +394,16 @@ def add_func_scope_types(
         )
     # Else, this container either contains two or more types.
 
+    # If the caller did *NOT* explicitly pass the "is_unique" parameter, default
+    # this parameter to true *ONLY* if this container is a set.
+    if is_unique is None:
+        is_unique = isinstance(types, set)
+    # Else, the caller explicitly passed the "is_unique" parameter.
+    #
+    # In either case, "is_unique" is now a proper bool.
+    assert isinstance(is_unique, bool)
+
     # ....................{ FORWARDREF                     }....................
-    #FIXME: Unit test this up, please.
     # True only if this container contains one or more beartype-specific forward
     # reference proxies. Although these proxies are technically isinstanceable
     # classes, attempting to pass these proxies as the second parameter to the
@@ -397,13 +417,14 @@ def add_func_scope_types(
     # For each type in this container...
     for cls in types:
         # If this type is a beartype-specific forward reference proxy...
-        if cls.__class__ is BeartypeForwardRefMeta:
+        if is_forwardref(cls):
+            # print(f'Found forward reference proxy {repr(cls)}...')
             # Note that this container contains at least one such proxy.
-            is_types_ref = False
+            is_types_ref = True
 
             # Halt iteration.
             break
-            
+
     # If this container contains at least one such proxy...
     if is_types_ref:
         # List of all such proxies in this container.
@@ -413,47 +434,74 @@ def add_func_scope_types(
         types_ref: List[type] = []
 
         # List of all other types in this container (i.e., normal types that are
-        # *NOT* beartype-specific forward references).
+        # *NOT* beartype-specific forward reference proxies).
         types_nonref: List[type] = []
 
         # For each type in this container...
         for cls in types:
             # If this type is such a proxy, append this proxy to the list of all
             # such proxies.
-            if cls.__class__ is BeartypeForwardRefMeta:
+            if is_forwardref(cls):
                 types_ref.append(cls)
-            # Else, this type is *NOT* such a proxy. In this case, append this
-            # proxy to the list of all non-proxy types.
+            # Else, this type is *NOT* such a proxy. In this case...
             else:
+                # print(f'Appending non-forward reference proxy {repr(cls)}...')
+
+                # If this non-proxy is *NOT* an isinstanceable class, raise an
+                # exception.
+                #
+                # Note that the companion "types_ref" tuple is intentionally
+                # *NOT* validated above. Why? Because doing so would prematurely
+                # invoke the __instancecheck__() dunder method on the metaclass
+                # of the proxies in that tuple, which would then erroneously
+                # attempt to resolve the possibly undefined types to which those
+                # proxies refer. Instead, simply accept that tuple of proxies as
+                # is for now and defer validating those proxies for later.
+                die_unless_type_isinstanceable(
+                    cls=cls, exception_prefix=exception_prefix)
+
+                # Append this proxy to the list of all non-proxy types
                 types_nonref.append(cls)
 
-        # Reconstitute this container such that all non-proxy types appear
-        # *BEFORE* all proxy types.
-        types = tuple(types_nonref + types_ref)
+        # If the caller guaranteed these tuples to be duplicate-free,
+        # efficiently concatenate these lists into a tuple such that all
+        # non-proxy types appear *BEFORE* all proxy types.
+        if is_unique:
+            types = tuple(types_nonref + types_ref)
+        # Else, the caller failed to guarantee these tuples to be
+        # duplicate-free. In this case, coerce these tuples into (in order):
+        # * Sets, thus ignoring duplicates and ordering.
+        # * Back into duplicate-free tuples.
+        else:
+            types = tuple(set(types_nonref)) + tuple(set(types_ref))
+        # Else, the caller guaranteed these tuples to be duplicate-free.
     # Else, this container contains *NO* such proxies. In this case, preserve
     # the ordering of items in this container as is.
+    else:
+        # If this container is a set, coerce this frozenset into a tuple.
+        if isinstance(types, Set):
+            types = tuple(types)
+        # Else, this container is *NOT* a set. By elimination, this container
+        # should now be a tuple.
+        #
+        # In either case, this container should now be a tuple.
 
-    # ....................{ DUPLICATES                     }....................
-    # If this container is a set, coerce this frozenset into a tuple.
-    if isinstance(types, Set):
-        types = tuple(types)
-    # Else, this container is *NOT* a set. By elimination, this container
-    # should now be a tuple.
-    #
-    # In either case, this container should now be a tuple.
+        # If this container is *NOT* a tuple or is a tuple containing one or
+        # more items that are *NOT* isinstanceable classes, raise an exception.
+        die_unless_object_isinstanceable(
+            obj=types, exception_prefix=exception_prefix)
+        # Else, this container is a tuple of only isinstanceable classes.
 
-    # If either this container is *NOT* a tuple or is a tuple containing one or
-    # more items that are *NOT* isinstanceable classes, raise an exception.
-    die_unless_object_isinstanceable(
-        obj=types, exception_prefix=exception_prefix)
-    # Else, this container is a tuple containing only isinstanceable classes.
+        # If the caller failed to guarantee this tuple to be duplicate-free,
+        # coerce this tuple into (in order):
+        # * A set, thus ignoring duplicates and ordering.
+        # * Back into a duplicate-free tuple.
+        if not is_unique:
+            # print(f'Uniquifying type tuple {repr(types)} to...')
+            types = tuple(set(types))
+            # print(f'...uniquified type tuple {repr(types)}.')
+        # Else, the caller guaranteed this tuple to be duplicate-free.
 
-    # If this container is a tuple *AND* the caller failed to guarantee this
-    # tuple to be duplicate-free, coerce this tuple into (in order):
-    # * A set, thus ignoring duplicates and ordering.
-    # * Back into a duplicate-free tuple.
-    if isinstance(types, tuple) and not is_unique:
-        types = tuple(set(types))
     # In either case, this container is now guaranteed to be a tuple containing
     # only duplicate-free classes.
     assert isinstance(types, tuple), (
