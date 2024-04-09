@@ -19,7 +19,11 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
 
     # ..................{ IMPORTS                            }..................
     # Defer fixture-specific imports.
-    from beartype.typing import List
+    from beartype.typing import (
+        List,
+        Sequence,
+        Union,
+    )
     from beartype.vale import (
         Is,
         IsAttr,
@@ -30,6 +34,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
     from beartype._data.hint.pep.sign.datapepsigns import (
         HintSignAnnotated,
         HintSignList,
+        HintSignUnion,
     )
     from beartype._util.module.lib.utiltyping import get_typing_attrs
     from beartype_test.a00_unit.data.data_type import (
@@ -107,6 +112,13 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
         # Annotated of an isinstanceable type annotated by one beartype-specific
         # validator defined as a lambda function.
         AnnotatedStrIsLength = Annotated[str, IsLengthy]
+
+        # Validator matching any sequence of strings that is itself *NOT* a
+        # string. Technically, a string is itself a sequence of characters,
+        # which are themselves strings of length 1 in Python. Pragmatically, a
+        # string is rarely considered to be a "sequence of strings" in the
+        # common sense of that term. Validators, save us from the sins of Guido!
+        SequenceNonstrOfStr = Annotated[Sequence[str], ~IsInstance[str]]
 
         # ................{ TUPLES                             }................
         # Add PEP 593-specific test type hints to this tuple global.
@@ -480,6 +492,42 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                         # Match that the exception message raised for this
                         # object embeds a classname in the expected list.
                         exception_str_match_regexes=(r'\bClass\b',),
+                    ),
+                ),
+            ),
+
+            # Type hint matching *ANY* sequence of strings, defined as the union
+            # of a validator matching any sequence of strings that is *NOT*
+            # itself a string with a string. Although odd, this exercises an
+            # obscure edge case in code generation.
+            HintPepMetadata(
+                hint=Union[SequenceNonstrOfStr, str],
+                pep_sign=HintSignUnion,
+                piths_meta=(
+                    # String constant.
+                    HintPithSatisfiedMetadata(
+                        'Caught the impatient wandering of his gaze.'),
+                    # Tuple of string constants.
+                    HintPithSatisfiedMetadata((
+                        'Swayed with the undulations of the tide.',
+                        'A restless impulse urged him to embark',
+                    )),
+                    # Byte string constant.
+                    HintPithUnsatisfiedMetadata(
+                        pith=b'It had been long abandoned, for its sides',
+                        # Match that the exception message raised for this
+                        # object embeds a classname in the expected list.
+                        exception_str_match_regexes=(r'\bbytes\b',),
+                    ),
+                    # Tuple of byte string constants.
+                    HintPithUnsatisfiedMetadata(
+                        pith=(
+                            b'Gaped wide with many a rift,',
+                            b'and its frail joints',
+                        ),
+                        # Match that the exception message raised for this
+                        # object embeds a classname in the expected list.
+                        exception_str_match_regexes=(r'\btuple\b',),
                     ),
                 ),
             ),

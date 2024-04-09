@@ -145,13 +145,9 @@ this parent type has been generated.
 CODE_PEP484585_MAPPING = '''(
 {indent_curr}    # True only if this pith is of this mapping type *AND*...
 {indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
-{indent_curr}    # True only if either...
-{indent_curr}    (
-{indent_curr}        # This mapping is empty *OR*...
-{indent_curr}        not {pith_curr_var_name} or
-{indent_curr}        # This mapping is non-empty. In this case...
-{indent_curr}        ({func_curr_code_key_value})
-{indent_curr}    )
+{indent_curr}    # True only if either this mapping is empty *OR* this mapping
+{indent_curr}    # is non-empty and...
+{indent_curr}    (not {pith_curr_var_name} or ({func_curr_code_key_value}))
 {indent_curr})'''
 '''
 :pep:`484`- and :pep:`585`-compliant code snippet type-checking the current pith
@@ -174,12 +170,35 @@ documented at this `StackOverflow answer`_.
 '''
 
 
+CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR = (
+    '''next(iter({pith_curr_var_name}))''')
+'''
+:pep:`484`- and :pep:`585`-compliant Python expression efficiently yielding the
+first key of the current mapping pith.
+'''
+
+
+CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR = (
+    '''next(iter({pith_curr_var_name}.values()))''')
+'''
+:pep:`484`- and :pep:`585`-compliant Python expression efficiently yielding the
+first value of the current mapping pith when type-checking *only* the values of
+this mapping (i.e., when the keys of this mapping are ignorable).
+'''
+
+
+CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR = (
+    '''{pith_curr_var_name}[{pith_curr_key_var_name}]''')
+'''
+:pep:`484`- and :pep:`585`-compliant Python expression efficiently yielding the
+first value of the current mapping pith when type-checking both the keys *and*
+values of this mapping (i.e., when the keys of this mapping are unignorable).
+'''
+
+
 CODE_PEP484585_MAPPING_KEY_ONLY = '''
-{indent_curr}            # Localize the first key of this mapping.
-{indent_curr}            ({pith_curr_key_var_name} := next(iter(
-{indent_curr}                {pith_curr_var_name}))) is {pith_curr_key_var_name} and
-{indent_curr}            # True only if this key satisfies this hint.
-{indent_curr}            {hint_key_placeholder}'''
+{indent_curr}        # True only if this key satisfies this hint.
+{indent_curr}        {hint_key_placeholder}'''
 '''
 :pep:`484`- and :pep:`585`-compliant code snippet type-checking *only* the first
 key of the current pith against *only* the key child type hint subscripting a
@@ -192,11 +211,8 @@ type-checking mappings with ignorable value child type hints (e.g.,
 
 
 CODE_PEP484585_MAPPING_VALUE_ONLY = '''
-{indent_curr}            # Localize the first value of this mapping.
-{indent_curr}            ({pith_curr_value_var_name} := next(iter(
-{indent_curr}                {pith_curr_var_name}.values()))) is {pith_curr_value_var_name} and
-{indent_curr}            # True only if this value satisfies this hint.
-{indent_curr}            {hint_value_placeholder}'''
+{indent_curr}        # True only if this value satisfies this hint.
+{indent_curr}        {hint_value_placeholder}'''
 '''
 :pep:`484`- and :pep:`585`-compliant code snippet type-checking *only* the first
 value of the current pith against *only* the value child type hint subscripting
@@ -208,12 +224,13 @@ type-checking mappings with ignorable key child type hints (e.g.,
 '''
 
 
-CODE_PEP484585_MAPPING_KEY_VALUE = CODE_PEP484585_MAPPING_KEY_ONLY + ''' and
-{indent_curr}            # Localize the first value of this mapping.
-{indent_curr}            ({pith_curr_value_var_name} := {pith_curr_var_name}[
-{indent_curr}                {pith_curr_key_var_name}]) is {pith_curr_value_var_name} and
-{indent_curr}            # True only if this value satisfies this hint.
-{indent_curr}            {hint_value_placeholder}'''
+CODE_PEP484585_MAPPING_KEY_VALUE = f'''
+{{indent_curr}}        # Localize the first key of this mapping.
+{{indent_curr}}        ({{pith_curr_key_var_name}} := {CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR}) is {{pith_curr_key_var_name}} and
+{{indent_curr}}        # True only if this key satisfies this hint.
+{{indent_curr}}        {{hint_key_placeholder}} and
+{{indent_curr}}        # True only if this value satisfies this hint.
+{{indent_curr}}        {{hint_value_placeholder}}'''
 '''
 :pep:`484`- and :pep:`585`-compliant code snippet type-checking *only* the first
 key-value pair of the current pith against *only* the key and value child type
@@ -272,8 +289,7 @@ CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR = (
     f'''{{pith_curr_var_name}}[{VAR_NAME_RANDOM_INT} % len({{pith_curr_var_name}})]''')
 '''
 :pep:`484`- and :pep:`585`-compliant Python expression yielding the value of a
-randomly indexed item of the current pith (which, by definition, *must* be a
-standard sequence).
+randomly indexed item of the current sequence pith.
 '''
 
 # ....................{ HINT ~ pep : (484|585) : tuple     }....................
@@ -535,6 +551,12 @@ CODE_PEP484585_MAPPING_KEY_VALUE_format: Callable = (
     CODE_PEP484585_MAPPING_KEY_VALUE.format)
 CODE_PEP484585_MAPPING_VALUE_ONLY_format: Callable = (
     CODE_PEP484585_MAPPING_VALUE_ONLY.format)
+CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format: Callable = (
+    CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR.format)
+CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format: Callable = (
+    CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR.format)
+CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format: Callable = (
+    CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR.format)
 CODE_PEP484585_SEQUENCE_ARGS_1_format: Callable = (
     CODE_PEP484585_SEQUENCE_ARGS_1.format)
 CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format: Callable = (

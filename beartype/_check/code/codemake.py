@@ -55,6 +55,9 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484585_MAPPING_KEY_ONLY_format,
     CODE_PEP484585_MAPPING_KEY_VALUE_format,
     CODE_PEP484585_MAPPING_VALUE_ONLY_format,
+    CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format,
+    CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format,
+    CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format,
     CODE_PEP484585_SEQUENCE_ARGS_1_format,
     CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format,
     CODE_PEP484585_SUBCLASS_format,
@@ -292,10 +295,10 @@ def make_check_expr(
     # body of the wrapper function whose value is that of the current pith).
     # This name is either:
     # * Initially, the name of the currently type-checked parameter or return.
-    # * On subsequently type-checking nested items of the parameter or return
-    #   under Python >= 3.8, the name of the local variable uniquely assigned to
-    #   by the assignment expression defined by "pith_curr_assign_expr" (i.e.,
-    #   the left-hand side (LHS) of that assignment expression).
+    # * On subsequently type-checking nested items of the parameter or return,
+    #   the name of the local variable uniquely assigned to by the assignment
+    #   expression defined by "pith_curr_assign_expr" (i.e., the left-hand side
+    #   (LHS) of that assignment expression).
     pith_curr_var_name = VAR_NAME_PITH_ROOT
 
     # ..................{ LOCALS ~ hint : child              }..................
@@ -460,8 +463,8 @@ def make_check_expr(
     # internal context of this function body, the former is preferable.
     pith_curr_var_name_index = 0
 
-    # Python >= 3.8-specific assignment expression assigning this full Python
-    # expression to the local variable assigned the value of this expression.
+    # Assignment expression assigning this full Python expression to the unique
+    # local variable assigned the value of this expression.
     pith_curr_assign_expr: str = None  # type: ignore[assignment]
 
     # ..................{ CLOSURES                           }..................
@@ -498,55 +501,6 @@ def make_check_expr(
 
         # Allow these local variables of the outer scope to be modified below.
         nonlocal hints_meta_index_last
-
-        #FIXME: *UGH*. This assertion turned out to be profoundly dangerous.
-        #I'm currently unclear why, but the following example triggers this:
-        #    from beartype.vale import IsInstance
-        #    from beartype import beartype
-        #    from typing import Annotated
-        #    from collections.abc import Sequence
-        #    SequenceNonstrOfStr = Annotated[Sequence[str], ~IsInstance[str]]
-        #
-        #    @beartype
-        #    def test(names: SequenceNonstrOfStr | str, / ) -> bool:
-        #        return True
-        #Until we investigate this further, the only sane approach is to
-        #temporarily disable this. Let's pretend I know what I'm talking about.
-
-        # If this child pith expression duplicates the current pith assignment
-        # expression, raise an exception. Why? Because there is *NO* benefit to
-        # assigning that to another local variable via another assignment
-        # expression, which would just be an alias of the existing local
-        # variable assigned via the existing assignment expression. Moreover,
-        # whereas chained assignments are syntactically valid, chained
-        # assignment expressions are syntactically invalid unless explicitly
-        # protected by parens: e.g.,
-        #     >>> a = b =    'Mother*Teacher*Destroyer'  # <-- fine
-        #     >>> (a :=      "Mother's Abomination")     # <-- fine
-        #     >>> (a :=
-        #     ... (b := "Mother's Illumination"))        # <-- fine
-        #     >>> (a :=  b := "Mother's Illumination")   # <-- not fine
-        #     SyntaxError: invalid syntax
-        #
-        # Specifically, if it is *NOT* the case that...
-        # assert not (
-        #     # If this is a child hint rather than the root hint *AND*...
-        #     #
-        #     # The root hint is intentionally ignored, as that hint is already
-        #     # guaranteed to be an identifier rather than assignment expression.
-        #     hints_meta_index_curr and  # pith_child_expr is not VAR_NAME_PITH_ROOT and
-        #     # This child pith expression duplicates the current pith assignment
-        #     # expression...
-        #     pith_child_expr is pith_curr_assign_expr
-        # # Then raise an "AssertionError" exception.
-        # ), (
-        #     f'{EXCEPTION_PREFIX_HINT}{repr(hint_curr)} '
-        #     f'child pith expression {repr(pith_child_expr)} duplicates '
-        #     f'current pith assignment expression '
-        #     f'{repr(pith_curr_assign_expr)}.'
-        # )
-        # Else, the current child pith expression does *NOT* duplicate the
-        # current pith assignment expression.
 
         # Increment both the 0-based index of metadata describing the last
         # visitable hint in the "hints_meta" list and the unique identifier of
@@ -970,18 +924,30 @@ def make_check_expr(
                 #* In the "beartype._decor.decormain" submodule:
                 #  * Do... something? Oh, boy. Why didn't we finish this comment?
 
-                # If the current pith is not the root pith, then all conditions
-                # needed to assign the current pith to a unique local variable
-                # via an assignment expression are satisfied. In this case...
-                #
-                # Note that we explicitly test against piths rather than
-                # seemingly equivalent metadata to account for edge cases.
-                # Notably, child hints of unions (and possibly other "typing"
-                # objects) do *NOT* narrow the current pith and are *NOT* the
-                # root hint. Ergo, a seemingly equivalent test like
-                # "hints_meta_index_curr != 0" would generate false positives
-                # and thus unnecessarily inefficient code.
-                if pith_curr_expr is not VAR_NAME_PITH_ROOT:
+                # If the expression yielding the current pith is neither...
+                if not (
+                    # The root pith *NOR*...
+                    #
+                    # Note that this is merely a negligible optimization for the
+                    # common case in which the current pith is the root pith
+                    # (i.e., this is the first iteration of the outermost loop).
+                    # The subsequent call to the str.isidentifier() method is
+                    # *MUCH* more expensive than this object identity test.
+                    pith_curr_expr is VAR_NAME_PITH_ROOT or
+                    # A simple Python identifier...
+                    pith_curr_expr.isidentifier()
+                ):
+                    # Then the current pith is safely assignable to a unique
+                    # local variable via an assignment expression.
+                    #
+                    # Note that we explicitly test against piths rather than
+                    # seemingly equivalent metadata to account for edge cases.
+                    # Notably, child hints of unions (and possibly other
+                    # "typing" objects) do *NOT* narrow the current pith and are
+                    # *NOT* the root hint. Ergo, a seemingly equivalent test
+                    # like "hints_meta_index_curr != 0" would generate false
+                    # positives and thus unnecessarily inefficient code.
+
                     # Increment the integer suffixing the name of this variable
                     # *BEFORE* defining this variable.
                     pith_curr_var_name_index += 1
@@ -996,9 +962,25 @@ def make_check_expr(
                         pith_curr_var_name=pith_curr_var_name,
                         pith_curr_expr=pith_curr_expr,
                     )
-                # Else, one or more of the above conditions have *NOT* been
-                # satisfied. In this case, preserve the Python code snippet
-                # evaluating to the current pith as is.
+                # Else, the current pith is *NOT* safely assignable to a unique
+                # local variable via an assignment expression. Since the
+                # expression yielding the current pith is a simple Python
+                # identifier, there is *NO* benefit to assigning that to another
+                # local variable via another assignment expression, which would
+                # just be an alias of the existing local variable assigned via
+                # the existing assignment expression. Moreover, whereas chained
+                # assignments are syntactically valid, chained assignment
+                # expressions are syntactically invalid unless explicitly
+                # protected by parens: e.g.,
+                #     >>> a = b =    'Mother*Teacher*Destroyer'  # <-- fine
+                #     >>> (a :=      "Mother's Abomination")     # <-- fine
+                #     >>> (a :=
+                #     ... (b := "Mother's Illumination"))        # <-- fine
+                #     >>> (a := b := "Mother's Illumination")    # <-- not fine
+                #     SyntaxError: invalid syntax
+                #
+                # In this case, preserve the Python code snippet evaluating to
+                # the current pith as is.
                 else:
                     pith_curr_assign_expr = pith_curr_expr
 
@@ -1575,73 +1557,65 @@ def make_check_expr(
                     #which reduces to "Hashable". We can't particularly be
                     #bothered at the moment. This is a microoptimization and
                     #will probably require a non-trivial amount of work. *sigh*
-                    # Unignorable sane child key hint sanified from this
-                    # possibly ignorable insane child key hint *OR* "None"
-                    # otherwise (i.e., if this child key hint is ignorable).
-                    hint_child = sanify_hint_child_if_unignorable_or_none(
+                    # Unignorable sane child key and value hints sanified from
+                    # these possibly ignorable insane child key and value hints
+                    # *OR* "None" otherwise (i.e., if ignorable).
+                    hint_child_key = sanify_hint_child_if_unignorable_or_none(
                         hint=hint_childs[0],
                         conf=conf,
                         cls_stack=cls_stack,
                         exception_prefix=EXCEPTION_PREFIX,
                     )
-
-                    # If this child key hint is unignorable...
-                    if hint_child is not None:
-                        # Increment the integer suffixing the name of a unique
-                        # local variable storing the value of this child key
-                        # pith *BEFORE* defining this variable.
-                        pith_curr_var_name_index += 1
-
-                        # Name of this local variable.
-                        pith_curr_key_var_name = PITH_INDEX_TO_VAR_NAME[
-                            pith_curr_var_name_index]
-
-                        # Placeholder string to be subsequently replaced by code
-                        # type-checking this child key pith against this hint.
-                        hint_key_placeholder: Optional[str] = (
-                            _enqueue_hint_child(pith_curr_key_var_name))
-                    # Else, this child key hint is ignorable. In this case,
-                    # disable this placeholder for detection below.
-                    else:
-                        hint_key_placeholder = None
-
-                    # Unignorable sane child value hint sanified from this
-                    # possibly ignorable insane child value hint *OR* "None"
-                    # otherwise (i.e., if this child value hint is ignorable).
-                    hint_child = sanify_hint_child_if_unignorable_or_none(
+                    hint_child_value = sanify_hint_child_if_unignorable_or_none(
                         hint=hint_childs[1],  # type: ignore[has-type]
                         conf=conf,
                         cls_stack=cls_stack,
                         exception_prefix=EXCEPTION_PREFIX,
                     )
 
-                    # If this child value hint is unignorable...
-                    if hint_child is not None:
-                        # Increment the integer suffixing the name of a unique
-                        # local variable storing the value of this child value
-                        # pith *BEFORE* defining this variable.
-                        pith_curr_var_name_index += 1
-
-                        # Name of this local variable.
-                        pith_curr_value_var_name = PITH_INDEX_TO_VAR_NAME[
-                            pith_curr_var_name_index]
-
-                        # Placeholder string to be subsequently replaced by code
-                        # type-checking this child value pith against this hint.
-                        hint_value_placeholder: Optional[str] = (
-                            _enqueue_hint_child(pith_curr_value_var_name))
-                    # Else, this child value hint is ignorable. In this case,
-                    # disable this placeholder for detection below.
-                    else:
-                        hint_value_placeholder = None
-
-                    # If at least one of either of these child key *AND* value
-                    # hints are unignorable...
-                    if hint_key_placeholder or hint_value_placeholder:
+                    # If at least one of these child hints are unignorable...
+                    if hint_child_key or hint_child_value:
                         # If this child key hint is unignorable...
-                        if hint_key_placeholder:
+                        if hint_child_key:
                             # If this child value hint is also unignorable...
-                            if hint_value_placeholder:
+                            if hint_child_value:
+                                # Increment the integer suffixing the name of a
+                                # unique local variable storing the value of
+                                # this child key pith *BEFORE* defining this
+                                # variable.
+                                pith_curr_var_name_index += 1
+
+                                # Name of this local variable.
+                                pith_curr_key_var_name = PITH_INDEX_TO_VAR_NAME[
+                                    pith_curr_var_name_index]
+
+                                # Expose this hint to the subsequent call to the
+                                # _enqueue_hint_child() closure.
+                                hint_child = hint_child_key
+
+                                # Placeholder string to be subsequently replaced
+                                # by code type-checking this child key pith
+                                # against this hint.
+                                hint_key_placeholder = _enqueue_hint_child(
+                                    pith_curr_key_var_name)
+
+                                # Expose this hint to the subsequent call to the
+                                # _enqueue_hint_child() closure.
+                                hint_child = hint_child_value
+
+                                # Increase the indentation level of code
+                                # type-checking this child value pith.
+                                indent_level_child += 1
+
+                                # Placeholder string to be subsequently replaced
+                                # by code type-checking this child value pith
+                                # against this hint.
+                                hint_value_placeholder = _enqueue_hint_child(
+                                    CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format(
+                                        pith_curr_var_name=pith_curr_var_name,
+                                        pith_curr_key_var_name=pith_curr_key_var_name,
+                                    ))
+
                                 # Code deeply type-checking these child key and
                                 # value piths against these hints.
                                 func_curr_code_key_value = (
@@ -1649,8 +1623,6 @@ def make_check_expr(
                                         indent_curr=indent_curr,
                                         pith_curr_key_var_name=(  # pyright: ignore
                                             pith_curr_key_var_name),
-                                        pith_curr_value_var_name=(  # pyright: ignore
-                                            pith_curr_value_var_name),
                                         pith_curr_var_name=pith_curr_var_name,
                                         hint_key_placeholder=(
                                             hint_key_placeholder),
@@ -1660,31 +1632,43 @@ def make_check_expr(
                             # Else, this child value hint is ignorable. In this
                             # case...
                             else:
+                                # Expose this child key hint to the subsequent
+                                # call to the _enqueue_hint_child() closure.
+                                hint_child = hint_child_key
+
                                 # Code deeply type-checking only this child key
                                 # pith against this hint.
                                 func_curr_code_key_value = (
                                     CODE_PEP484585_MAPPING_KEY_ONLY_format(
                                         indent_curr=indent_curr,
-                                        pith_curr_key_var_name=(  # pyright: ignore
-                                            pith_curr_key_var_name),
-                                        pith_curr_var_name=pith_curr_var_name,
-                                        hint_key_placeholder=(
-                                            hint_key_placeholder),
+                                        # Placeholder string to be subsequently
+                                        # replaced by code type-checking this
+                                        # child key pith against this hint.
+                                        hint_key_placeholder=_enqueue_hint_child(
+                                            CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format(
+                                                pith_curr_var_name=(
+                                                    pith_curr_var_name))),
                                     ))
                         # Else, this child key hint is ignorable. By process
                         # of elimination, this child value hint *MUST* be
                         # unignorable. In this case...
                         else:
+                            # Expose this child value hint to the subsequent
+                            # call to the _enqueue_hint_child() closure.
+                            hint_child = hint_child_value
+
                             # Code deeply type-checking only this child value
                             # pith against this hint.
                             func_curr_code_key_value = (
                                 CODE_PEP484585_MAPPING_VALUE_ONLY_format(
                                     indent_curr=indent_curr,
-                                    pith_curr_value_var_name=(  # pyright: ignore
-                                        pith_curr_value_var_name),
-                                    pith_curr_var_name=pith_curr_var_name,
-                                    hint_value_placeholder=(
-                                        hint_value_placeholder),
+                                    # Placeholder string to be subsequently
+                                    # replaced by code type-checking this
+                                    # child value pith against this hint.
+                                    hint_value_placeholder=_enqueue_hint_child(
+                                        CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format(
+                                            pith_curr_var_name=(
+                                                pith_curr_var_name))),
                                 ))
 
                         # Code deeply type-checking this pith as well as at
