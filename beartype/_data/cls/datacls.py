@@ -18,8 +18,10 @@ from beartype.typing import (
 )
 from beartype._cave._cavefast import (
     ClassType,
+    EnumMemberType,
     FunctionType,
     MethodDecoratorBuiltinTypes,
+    NoneType,
 )
 from collections.abc import (
     Set as SetABC,
@@ -114,6 +116,18 @@ references as is, :mod:`typing` type hint factories coerce string-based forward
 references into higher-level objects encapsulating those strings. The latter
 approach is the demonstrably wrong approach, because encapsulating strings only
 harms space and time complexity at runtime with *no* concomitant benefits.
+'''
+
+# ....................{ PEP ~ 586                          }....................
+TYPES_PEP586_ARG = (bool, bytes, int, str, EnumMemberType, NoneType)
+'''
+Tuple of all types of objects permissible as arguments subscripting the
+:pep:`586`-compliant :attr:`typing.Literal` singleton.
+
+These types are explicitly listed by :pep:`586` as follows:
+
+    Literal may be parameterized with literal ints, byte and unicode strings,
+    bools, Enum values and None.
 '''
 
 # ....................{ PRIVATE ~ init                     }....................

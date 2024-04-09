@@ -136,9 +136,7 @@ from beartype._util.hint.pep.proposal.pep484585.utilpep484585generic import (
 from beartype._util.hint.pep.proposal.pep484585.utilpep484585type import (
     get_hint_pep484585_type_superclass)
 from beartype._util.hint.pep.proposal.utilpep586 import (
-    die_unless_hint_pep586,
-    get_hint_pep586_literals,
-)
+    get_hint_pep586_literals)
 from beartype._util.hint.pep.proposal.utilpep593 import (
     get_hint_pep593_metadata,
     get_hint_pep593_metahint,
@@ -1967,23 +1965,12 @@ def make_check_expr(
                 # patently absurd and a farce that we weep to even implement.
                 # In this case...
                 elif hint_curr_sign is HintSignLiteral:
-                    # If this hint does *NOT* comply with PEP 586 despite being
-                    # a "typing.Literal" subscription, raise an exception.
-                    die_unless_hint_pep586(
-                        hint=hint_curr,
-                        exception_prefix=EXCEPTION_PREFIX,
-                    )
-                    # Else, this hint complies with PEP 586 and is thus
-                    # subscripted by one or more compliant literal objects.
-
                     # Tuple of zero or more literal objects subscripting this
                     # hint, intentionally replacing the current such tuple due
                     # to the non-standard implementation of the third-party
                     # "typing_extensions.Literal" type hint factory.
                     hint_childs = get_hint_pep586_literals(
-                        hint=hint_curr,
-                        exception_prefix=EXCEPTION_PREFIX,
-                    )
+                        hint=hint_curr, exception_prefix=EXCEPTION_PREFIX)
 
                     # Initialize the code type-checking this pith against this
                     # hint to the substring prefixing all such code.
