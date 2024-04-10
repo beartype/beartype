@@ -30,31 +30,6 @@ from typing import (
 # Sadly, the following imports require private modules and packages.
 from _pytest.runner import Skipped
 
-# ....................{ GLOBALS ~ constants                }....................
-_PYTHON_VERSION_TUPLE = sys.version_info[:3]
-'''
-Machine-readable version of the active Python interpreter as a tuple of
-integers.
-
-See Also
-----------
-:mod:`beartype.meta`
-    Similar logic performed at :mod:`beartype` importation time.
-'''
-
-
-_PYTHON_VERSION_STR = '.'.join(
-    str(version_part) for version_part in sys.version_info[:3])
-'''
-Human-readable version of the active Python interpreter as a dot-delimited
-string.
-
-See Also
-----------
-:mod:`beartype.meta`
-    Similar logic performed at :mod:`beartype` importation time.
-'''
-
 # ....................{ SKIP                               }....................
 skip_if = pytest.mark.skipif
 '''
@@ -93,13 +68,56 @@ def skip(reason: str):
         Human-readable message justifying the skipping of this test.
 
     Returns
-    ----------
+    -------
     pytest.skipif
         Decorator skipping the decorated test with this justification.
     '''
     assert isinstance(reason, str), f'{repr(reason)} not string.'
 
     return skip_if(True, reason=reason)
+
+
+def skip_unless_godmode():
+    '''
+    Skip the decorated test or fixture unless the **current user** (i.e., as
+    identified by the POSIX-compatible ``${USER}`` shell variable) has
+    **God-mode privileges** (i.e., is the principal maintainer of this package).
+
+    An *extremely* small subset of tests and fixtures are sufficiently fragile
+    as to warrant their isolation to God-mode-endowed users, typically due to
+    making unsafe assumptions (e.g., hardware- and computational load-sensitive
+    timing thresholds) that render those tests and fixtures unsuitable for a
+    general audience. *There by God-mode dragons here.*
+
+    Returns
+    -------
+    pytest.skipif
+        Decorator describing these requirements if unmet *or* the identity
+        decorator reducing to a noop otherwise.
+    '''
+
+    # Defer heavyweight imports.
+    from beartype._util.os.utilosshell import get_shell_var_value_or_none
+
+    # Local name of the current user invoking the active Python interpreter if
+    # the current platform is POSIX-compatible *OR* "None" otherwise (e.g., if
+    # the current platform is vanilla Windows).
+    username = get_shell_var_value_or_none('USER')
+
+    # Skip this test if the current platform is POSIX-compatible *AND* the
+    # current user invoking the active Python interpreter is *NOT* a
+    # God-mode-endowed user (i.e., the principal maintainer of this package).
+    return skip_if(
+        username != 'leycec',
+        reason=(
+            (
+                f'User "{username}" lacks God-mode test privileges '
+                f"(i.e., is smart and knows what's good for them)."
+            )
+            if username else
+            'Current platform POSIX-noncompliant.'
+        ),
+    )
 
 # ....................{ SKIP ~ command                     }....................
 def skip_unless_pathable(command_basename: str):
@@ -114,7 +132,7 @@ def skip_unless_pathable(command_basename: str):
         Basename of the command to be searched for.
 
     Returns
-    ----------
+    -------
     pytest.skipif
         Decorator describing these requirements if unmet *or* the identity
         decorator reducing to a noop otherwise.
@@ -136,7 +154,7 @@ def skip_if_ci():
     running under a remote continuous integration (CI) workflow.
 
     Returns
-    ----------
+    -------
     pytest.skipif
         Decorator skipping this text or fixture if this interpreter is
         CI-hosted *or* the identity decorator reducing to a noop otherwise.
@@ -158,7 +176,7 @@ def skip_unless_os_linux():
     running under either Microsoft Windows *or* Apple macOS.
 
     Returns
-    ----------
+    -------
     pytest.skipif
         Decorator skipping this text or fixture unless this interpreter is
         running under a Linux distribution *or* the identity decorator reducing
@@ -188,7 +206,7 @@ def skip_unless_os_linux():
 #       superclass is a Python 3.7-compatible backport.
 #
 #     Returns
-#     ----------
+#     -------
 #     pytest.skipif
 #         Decorator skipping this text or fixture if this interpreter is PyPy
 #         *or* the identity decorator reducing to a noop otherwise.
@@ -226,7 +244,7 @@ def skip_if_pypy():
     optimization.
 
     Returns
-    ----------
+    -------
     pytest.skipif
         Decorator skipping this text or fixture if this interpreter is PyPy
         *or* the identity decorator reducing to a noop otherwise.
@@ -252,13 +270,13 @@ def skip_if_python_version_greater_than_or_equal_to(version: str):
         fixture as a dot-delimited string (e.g., ``3.5.0``).
 
     Returns
-    ----------
+    -------
     pytest.skipif
         Decorator describing these requirements if unmet *or* the identity
         decorator reducing to a noop otherwise.
 
     See Also
-    ----------
+    --------
     :mod:`beartype.meta`
         Similar logic performed at :mod:`beartype` importation time.
     '''
@@ -289,13 +307,13 @@ def skip_if_python_version_less_than(version: str):
         fixture as a dot-delimited string (e.g., ``3.5.0``).
 
     Returns
-    ----------
+    -------
     pytest.skipif
         Decorator describing these requirements if unmet *or* the identity
         decorator reducing to a noop otherwise.
 
     See Also
-    ----------
+    --------
     :mod:`beartype.meta`
         Similar logic performed at :mod:`beartype` importation time.
     '''
@@ -320,7 +338,7 @@ def skip_unless_package(
     '''
     Skip the decorated test or fixture if the package with the passed name is
     **unsatisfied** (i.e., either dynamically unimportable *or* importable but
-    of a version less than the passed minimum version if non-``None``).
+    of a version less than the passed minimum version if non-:data:`None`).
 
     Parameters
     ----------
@@ -328,11 +346,11 @@ def skip_unless_package(
         Fully-qualified name of the package to be skipped.
     minimum_version : Optional[str]
         Optional minimum version of this package as a dot-delimited string
-        (e.g., ``0.4.0``) to be tested for if any *or* ``None`` otherwise, in
-        which case any version is acceptable. Defaults to ``None``.
+        (e.g., ``0.4.0``) to be tested for if any *or* :data:`None` otherwise, in
+        which case any version is acceptable. Defaults to :data:`None`.
 
     Returns
-    ----------
+    -------
     pytest.skipif
         Decorator describing these requirements if unmet *or* the identity
         decorator reducing to a noop otherwise.
@@ -362,10 +380,10 @@ def skip_unless_module(
     '''
     Skip the decorated test or fixture if the module with the passed name is
     **unsatisfied** (i.e., either dynamically unimportable *or* importable but
-    of a version less than the passed minimum version if non-``None``).
+    of a version less than the passed minimum version if non-:data:`None`).
 
     Caveats
-    ----------
+    -------
     **This decorator should never be passed the fully-qualified name of a
     package.** Consider calling the :func:`skip_unless_package` decorator
     instead to skip unsatisfied packages. Calling this decorator with package
@@ -378,11 +396,11 @@ def skip_unless_module(
         Fully-qualified name of the module to be skipped.
     minimum_version : Optional[str]
         Optional minimum version of this module as a dot-delimited string
-        (e.g., ``0.4.0``) to be tested for if any *or* ``None`` otherwise, in
-        which case any version is acceptable. Defaults to ``None``.
+        (e.g., ``0.4.0``) to be tested for if any *or* :data:`None` otherwise, in
+        which case any version is acceptable. Defaults to :data:`None`.
 
     Returns
-    ----------
+    -------
     pytest.skipif
         Decorator describing these requirements if unmet *or* the identity
         decorator reducing to a noop otherwise.
@@ -427,13 +445,14 @@ def _skip_if_callable_raises_exception(
         Callable to be called.
     args : Optional[Sequence]
         Sequence of all positional arguments to unconditionally pass to the
-        passed callable if any *or* ``None`` otherwise. Defaults to ``None``.
+        passed callable if any *or* :data:`None` otherwise. Defaults to
+        :data:`None`.
     kwargs : Optional[Mapping]
         Mapping of all keyword arguments to unconditionally pass to the passed
-        callable if any *or* ``None`` otherwise. Defaults to ``None``.
+        callable if any *or* :data:`None` otherwise. Defaults to :data:`None`.
 
     Returns
-    ----------
+    -------
     pytest.skipif
         Decorator skipping this test if this callable raises this exception
         *or* the identity decorator reducing to a noop otherwise.
@@ -466,3 +485,28 @@ def _skip_if_callable_raises_exception(
 
     # Else, this callable raised no exception. Silently reduce to a noop.
     return noop
+
+# ....................{ PRIVATE ~ constants                }....................
+_PYTHON_VERSION_TUPLE = sys.version_info[:3]
+'''
+Machine-readable version of the active Python interpreter as a tuple of
+integers.
+
+See Also
+--------
+:mod:`beartype.meta`
+    Similar logic performed at :mod:`beartype` importation time.
+'''
+
+
+_PYTHON_VERSION_STR = '.'.join(
+    str(version_part) for version_part in sys.version_info[:3])
+'''
+Human-readable version of the active Python interpreter as a dot-delimited
+string.
+
+See Also
+--------
+:mod:`beartype.meta`
+    Similar logic performed at :mod:`beartype` importation time.
+'''
