@@ -4,11 +4,12 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype decorator type hint-agnostic** unit tests.
+**Beartype decorator class decoration** unit tests.
 
 This submodule unit tests high-level functionality of the
-:func:`beartype.beartype` decorator independent of lower-level type hinting
-concerns (e.g., PEP-compliance, PEP-noncompliance).
+:func:`beartype.beartype` decorator with respect to decorating **classes**
+irrespective of lower-level type hinting concerns (e.g., PEP-compliance and
+-noncompliance).
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -22,7 +23,7 @@ from beartype_test._util.mark.pytskip import (
 )
 
 # ....................{ TESTS                              }....................
-def test_wrappee_callable_pseudo() -> None:
+def test_decor_type_callable_pseudo() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on **pseudo-callables** (i.e.,
     objects defining the pure-Python ``__call__()`` dunder method).
@@ -90,7 +91,7 @@ def test_wrappee_callable_pseudo() -> None:
             b'Who chariotest to their dark wintry bed')
 
 # ....................{ TESTS ~ descriptor                 }....................
-def test_wrappee_descriptor_builtin() -> None:
+def test_decor_type_descriptor_builtin() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on **C-based unbound builtin
     method descriptors** (i.e., methods decorated by builtin method decorators).
@@ -111,12 +112,13 @@ def test_wrappee_descriptor_builtin() -> None:
         :func:`beartype.beartype` decorator.
         '''
 
+        # ....................{ CLASS VARS                 }....................
         so_much_of_life_and_joy_is_lost = 'all seems eternal now.'
         '''
         Arbitrary class variable.
         '''
 
-
+        # ....................{ DUNDERS                    }....................
         def __init__(self) -> None:
             '''
             Arbitrary constructor, defined merely to set an instance variable
@@ -126,7 +128,7 @@ def test_wrappee_descriptor_builtin() -> None:
             self._taught_her_young_ruin = (
                 'Ruin? Were these their toys? or did a sea')
 
-
+        # ....................{ CLASS METHODS              }....................
         @beartype
         @classmethod
         def envelop_once_this_silent_snow(cls) -> str:
@@ -143,7 +145,7 @@ def test_wrappee_descriptor_builtin() -> None:
 
             return f'None can reply—{cls.so_much_of_life_and_joy_is_lost}'
 
-
+        # ....................{ STATIC METHODS             }....................
         @beartype
         @staticmethod
         def the_wilderness_has_a_mysterious_tongue(
@@ -161,7 +163,7 @@ def test_wrappee_descriptor_builtin() -> None:
 
             return f'Which teaches awful doubt,{of_man_flies_far_in_dread}'
 
-
+        # ....................{ PROPERTIES                 }....................
         @beartype
         @property
         def where_the_old_earthquake_daemon(self) -> str:
@@ -296,13 +298,48 @@ def test_wrappee_descriptor_builtin() -> None:
     assert exception_message == 'And their place is not known.'
 
 
+# If the active Python interpreter targets Python < 3.9 and thus fails to
+# declare the PEP 585-compliant "types.GenericAlias" superclass, skip this test.
+@skip_if_python_version_less_than('3.9.0')
+def test_decor_type_descriptor_builtin_called() -> None:
+    '''
+    Test the :func:`beartype.beartype` decorator on **explicitly called C-based
+    unbound builtin method descriptors** (i.e., builtin method decorators that
+    are explicitly called as functions rather than implicitly called as
+    decorators).
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype import beartype
+    from types import GenericAlias
+
+    # ....................{ CLASSES                        }....................
+    @beartype
+    class AndMeetLoneDeath(object):
+        '''
+        Arbitrary :func:`beartype.beartype`-decorated class declaring methods
+        defined by explicitly calling C-based builtin method descriptors.
+        '''
+
+        # Augment this user-defined class into a type hint factory via the
+        # standard one-liner leveraged throughout both the standard library and
+        # third-party packages.
+        #
+        # Note that the @classmethod decorator explicitly supports C-based
+        # callable types. Ergo, this one-liner exercises that @beartype supports
+        # both this common idiom *AND* this decorator behaviour without raising
+        # unexpected exceptions at decoration time.
+        __class_getitem__ = classmethod(GenericAlias)
+
+
 # If the active Python interpreter targets either Python 3.9.x *OR* 3.10.x, then
 # chaining the @classmethod decorator into the @property decorator is permitted;
 # else, doing so is prohibited. To avoid non-deterministic behaviour under both
 # older and newer Python versions, avoid those versions.
 @skip_if_python_version_less_than('3.10.0')
 @skip_if_python_version_greater_than_or_equal_to('3.11.0')
-def test_wrappee_descriptor_builtin_chain() -> None:
+def test_decor_type_descriptor_builtin_chain() -> None:
     '''
     Test the :func:`beartype.beartype` decorator on chaining multiple **C-based
     unbound builtin method descriptors** (i.e., methods decorated by builtin
@@ -344,137 +381,3 @@ def test_wrappee_descriptor_builtin_chain() -> None:
         to_love_and_wonder.the_varying_roof_of_heaven ==
         'And the green earth lost in his heart its claims'
     )
-
-# ....................{ TESTS ~ wrapper                    }....................
-def test_wrappee_wrapper_isomorphic() -> None:
-    '''
-    Test the :func:`beartype.beartype` decorator on **isomorphic wrappers**
-    (i.e., callables decorated by the standard :func:`functools.wraps` decorator
-    for wrapping pure-Python callables with additional functionality defined by
-    higher-level decorators such that those wrappers isomorphically preserve
-    both the number and types of all passed parameters and returns by accepting
-    only a variadic positional argument and a variadic keyword argument).
-    '''
-
-    # ....................{ IMPORTS                        }....................
-    # Defer test-specific imports.
-    from beartype import beartype
-    from beartype.roar import BeartypeCallHintParamViolation
-    from collections.abc import Callable
-    from functools import wraps
-    from pytest import raises
-
-    # ....................{ WRAPPERS                       }....................
-    def hang_their_mute_thoughts(on_the_mute_walls_around: str) -> int:
-        '''
-        Arbitrary **undecorated wrappee** (i.e., lower-level callable wrapped by
-        the higher-level :func:`hang_their_mute_thoughts` wrapper intentionally
-        *not* decorated by the :func:`.beartype` decorator).
-        '''
-
-        return len(on_the_mute_walls_around)
-
-
-    @beartype
-    @wraps(hang_their_mute_thoughts)
-    def he_lingered(*args, **kwargs):
-        '''
-        Arbitrary **decorated isomorphic non-closure wrapper** (i.e., isomorphic
-        wrapper defined as a function rather than closure, decorated by the
-        :func:`.beartype` decorator).
-        '''
-
-        return hang_their_mute_thoughts(*args, **kwargs)
-
-
-    @beartype
-    def of_the_worlds_youth(func: Callable) -> Callable:
-        '''
-        Arbitrary **decorated isomorphic non-closure wrapper decorator** (i.e.,
-        decorator function creating and returning an isomorphic wrapper defined
-        as a closure, all decorated by the :func:`.beartype` decorator).
-        '''
-
-        @beartype
-        @wraps(func)
-        def through_the_long_burning_day(*args, **kwargs):
-            '''
-            Arbitrary **decorated isomorphic closure wrapper** (i.e., isomorphic
-            wrapper defined as a closure, decorated by the :func:`.beartype`
-            decorator).
-            '''
-
-            return func(*args, **kwargs)
-
-        # Return this wrapper.
-        return through_the_long_burning_day
-
-
-    # Isomorphic closure wrapper created and returned by the above decorator.
-    when_the_moon = of_the_worlds_youth(hang_their_mute_thoughts)
-
-    # ....................{ PASS                           }....................
-    # Assert that these wrappers passed valid parameters return the expected
-    # values.
-    assert he_lingered('He lingered, poring on memorials') == 32
-    assert when_the_moon(
-        'Gazed on those speechless shapes, nor, when the moon') == 52
-
-    # ....................{ FAIL                           }....................
-    # Assert that these wrappers passed invalid parameters raise the expected
-    # exceptions.
-    with raises(BeartypeCallHintParamViolation):
-        he_lingered(b"Of the world's youth, through the long burning day")
-    with raises(BeartypeCallHintParamViolation):
-        when_the_moon(b"Filled the mysterious halls with floating shades")
-
-
-def test_wrappee_wrapper_type() -> None:
-    '''
-    Test the :func:`beartype.beartype` decorator on **type wrappers**
-    (i.e., types decorated by the standard :func:`functools.wraps` decorator
-    for wrapping arbitrary types with additional functionality defined by
-    higher-level decorators, despite the fact that wrapping types does *not*
-    necessarily make as much coherent sense as one would think it does).
-    '''
-
-    # ....................{ IMPORTS                        }....................
-    # Defer test-specific imports.
-    from beartype import beartype
-    from beartype.typing import Any
-    from functools import wraps
-
-    # ....................{ WRAPPERS                       }....................
-    @beartype
-    @wraps(list)
-    def that_echoes_not_my_thoughts(*args: Any, **kwargs: Any):
-        '''
-        Arbitrary **decorated type non-closure wrapper** (i.e., wrapper defined
-        as a function wrapped by an arbitrary type decorated by the
-        :func:`.beartype` decorator).
-        '''
-
-        return list(*args, **kwargs)
-
-    # ....................{ ASSERTS                        }....................
-    # Assert that this wrapper passed valid parameters returns the expected
-    # value.
-    assert that_echoes_not_my_thoughts(('A', 'gloomy', 'smile',)) == [
-        'A', 'gloomy', 'smile']
-
-# ....................{ TESTS ~ fail : wrappee             }....................
-def test_wrappee_type_fail() -> None:
-    '''
-    Test unsuccessful usage of the :func:`beartype.beartype` decorator for an
-    **invalid wrappee** (i.e., object *not* decoratable by this decorator).
-    '''
-
-    # Defer test-specific imports.
-    from beartype import beartype
-    from beartype.roar import BeartypeDecorWrappeeException
-    from pytest import raises
-
-    # Assert that decorating an uncallable object raises the expected
-    # exception.
-    with raises(BeartypeDecorWrappeeException):
-        beartype(('Book of the Astronomican', 'Slaves to Darkness',))

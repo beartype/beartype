@@ -131,7 +131,6 @@ def beartype_type(
     # Else, this decorator has yet to decorate this class.
 
     # ....................{ LOCALS                         }....................
-
     # Replace the passed class stack with a new class stack appending this
     # decorated class to the top of this stack, reflecting the fact that this
     # decorated class is now the most deeply lexically nested class for the

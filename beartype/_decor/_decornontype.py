@@ -413,8 +413,45 @@ def beartype_descriptor_decorator_builtin(
     #
     # If this descriptor is a class method...
     elif descriptor_type is MethodDecoratorClassType:
-        # Pure-Python unbound function type-checking this class method.
+        # Possibly C-based callable wrappee object decorated by this descriptor.
         #
+        # Note that this wrappee is typically but *NOT* necessarily a
+        # pure-Python unbound function. This descriptor explicitly permits the
+        # decorated object to be a callable C-based type (i.e., defining the
+        # __call__() dunder method), which numerous standard and third-party
+        # pure-Python classes then leverage to augment those classes into
+        # subscriptable type hint factories via a simple one-liner: e.g.,
+        #     from abc import ABCMeta
+        #     from beartype import beartype
+        #     from types import GenericAlias
+        #
+        #     @beartype
+        #     class MuhTypeHintFactory(metaclass=ABCMeta):
+        #         # This exact one liner appears verbatim throughout the
+        #         # standard library (as well as third-party packages).
+        #         __class_getitem__ = classmethod(GenericAlias)
+        #
+        # Ergo, the name "__func__" of this dunder attribute is disingenuous.
+        # This descriptor does *NOT* merely decorate functions; this descriptor
+        # permissively decorates all callable objects.
+        descriptor_wrappee = descriptor.__func__  # type: ignore[union-attr]
+
+        # If this wrappee is *NOT* a pure-Python unbound function, this wrappee
+        # is C-based and/or a type. In either case, avoid type-checking this
+        # wrappee by silently preserving this descriptor as is. Why? If this
+        # wrappee is:
+        # * C-based, this wrappee *CANNOT* be decorated with type-checking.
+        # * A type, this wrappee *COULD* be effectively decorated with
+        #   type-checking by decorating its __call__() dunder method. However,
+        #   this type may *NOT* have been intended to be decorated by @beartype.
+        #   Indeed, this type may *NOT* even reside within the same package.
+        #   That the current class references this type is an insufficient
+        #   reason to transitively decorate external types without user consent.
+        if not is_func_python(descriptor_wrappee):
+            return descriptor
+        # Else, this wrappee is a pure-Python unbound function.
+
+        # Pure-Python unbound function type-checking this class method.
         # Note that:
         # * Python 3.8, 3.9, and 3.10 explicitly permit the @classmethod
         #   decorator to be chained into the @property decorator: e.g.,
@@ -451,7 +488,7 @@ def beartype_descriptor_decorator_builtin(
         #   * The low-level beartype_func() decorator (which requires the passed
         #     object to be callable, which the descriptor created and returned
         #     by the @property decorator is *NOT*).
-        func_checked = beartype_nontype(descriptor.__func__,  **kwargs)  # type: ignore[union-attr]
+        func_checked = beartype_nontype(descriptor_wrappee,  **kwargs)
 
         # Return a new class method descriptor decorating the pure-Python
         # unbound function wrapped by this descriptor with type-checking,
