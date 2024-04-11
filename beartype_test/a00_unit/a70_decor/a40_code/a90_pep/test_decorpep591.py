@@ -19,9 +19,8 @@ This submodule unit tests :pep:`591` support implemented in the
 # ....................{ TESTS                              }....................
 def test_decor_pep591() -> None:
     '''
-    Test :pep:`557` support implemented in the :func:`beartype.beartype`
-    decorator if the active Python interpreter targets Python >= 3.8 *or* skip
-    otherwise.
+    Test :pep:`591` support implemented in the :func:`beartype.beartype`
+    decorator.
     '''
 
     # ..................{ IMPORTS                            }..................

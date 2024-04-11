@@ -18,18 +18,6 @@ from beartype.typing import (
 )
 
 # ....................{ HINTS                              }....................
-BeartypeValidatorTester = Callable[[object], bool]
-'''
-PEP-compliant type hint matching a **beartype validator tester** (i.e.,
-caller-defined callable accepting a single arbitrary object and returning
-either ``True`` if that object satisfies an arbitrary constraint *or* ``False``
-otherwise).
-
-Beartype validator testers are suitable for subscripting functional beartype
-validator factories (e.g., :attr:`beartype.vale.Is`).
-'''
-
-
 BeartypeValidatorRepresenter = Union[str, Callable[[], str]]
 '''
 PEP-compliant type hint matching a **beartype validator representer** (i.e.,
@@ -44,12 +32,24 @@ validators that deferring their generation until required by a call to the
 builtin` on this validator is effectively mandatory. Validators whose
 representations are particularly slow to generate include:
 
-* The :class:`Is` class subscripted by a lambda rather than non-lambda
-  function. Generating the representation of that class subscripted by a
-  non-lambda function only requires introspecting the name of that function and
-  is thus trivially fast. However, lambda functions have no names and are thus
-  *only* distinguishable by their source code; generating the representation of
-  that class subscripted by a lambda function requires parsing the source code
-  of the file declaring that lambda for the exact substring of that code
-  declaring that lambda.
+* The :class:`beartype.vale.Is` class subscripted by a lambda rather than
+  non-lambda function. Generating the representation of that class subscripted
+  by a non-lambda function only requires introspecting the name of that function
+  and is thus trivially fast. However, lambda functions have no names and are
+  thus *only* distinguishable by their source code; generating the
+  representation of that class subscripted by a lambda function requires parsing
+  the source code of the file declaring that lambda for the exact substring of
+  that code declaring that lambda.
+'''
+
+
+BeartypeValidatorTester = Callable[[object], bool]
+'''
+PEP-compliant type hint matching a **beartype validator tester** (i.e.,
+caller-defined callable accepting a single arbitrary object and returning
+either :data:`True` if that object satisfies an arbitrary constraint *or*
+:data:`True` otherwise).
+
+Beartype validator testers are suitable for subscripting functional beartype
+validator factories (e.g., :attr:`beartype.vale.Is`).
 '''

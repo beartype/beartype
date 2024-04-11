@@ -52,16 +52,16 @@ def die_unless_func_args_len_flexible_equal(
         Number of flexible parameters to validate this callable as accepting.
     is_unwrap: bool, optional
         :data:`True` only if this validator implicitly calls the
-        :func:`unwrap_func_all_isomorphic` function to unwrap this possibly
-        higher-level wrapper into its possibly lowest-level wrappee *before*
-        returning the code object of that wrappee. Note that doing so incurs
-        worst-case time complexity :math:`O(n)` for :math:`n` the number of
-        lower-level wrappees wrapped by this wrapper. Defaults to :data:`True`
-        for robustness. Why? Because this validator *must* always introspect
-        lowest-level wrappees rather than higher-level wrappers. The latter
-        typically do *not* accurately replicate the signatures of the former. In
-        particular, decorator wrappers typically wrap decorated callables with
-        variadic positional and keyword parameters (e.g., ``def
+        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function to
+        unwrap this possibly higher-level wrapper into its possibly lowest-level
+        wrappee *before* returning the code object of that wrappee. Note that
+        doing so incurs worst-case time complexity :math:`O(n)` for :math:`n`
+        the number of lower-level wrappees wrapped by this wrapper. Defaults to
+        :data:`True` for robustness. Why? Because this validator *must* always
+        introspect lowest-level wrappees rather than higher-level wrappers. The
+        latter typically do *not* accurately replicate the signatures of the
+        former. In particular, decorator wrappers typically wrap decorated
+        callables with variadic positional and keyword parameters (e.g., ``def
         _decorator_wrapper(*args, **kwargs)``). Since neither constitutes a
         flexible parameter, this validator raises an exception when passed such
         a wrapper with this boolean set to :data:`False`. Only set this boolean

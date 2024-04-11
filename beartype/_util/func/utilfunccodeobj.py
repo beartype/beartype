@@ -86,12 +86,12 @@ def get_func_codeobj(
         Codeobjable to be inspected.
     is_unwrap: bool, optional
         :data:`True` only if this getter implicitly calls the
-        :func:`.unwrap_func_all` function to unwrap this possibly higher-level
-        wrapper into a possibly lower-level wrappee *before* returning the code
-        object of that wrappee. Note that doing so incurs worst-case time
-        complexity :math:``O(n)` for :math:`n` the number of lower-level
-        wrappees wrapped by this wrapper. Defaults to :data:`False` for
-        efficiency.
+        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function to
+        unwrap this possibly higher-level wrapper into a possibly lower-level
+        wrappee *before* returning the code object of that wrappee. Note that
+        doing so incurs worst-case time complexity :math:`O(n)` for :math:`n`
+        the number of lower-level wrappees wrapped by this wrapper. Defaults to
+        :data:`False` for efficiency.
     exception_cls : TypeException, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.
@@ -176,12 +176,12 @@ def get_func_codeobj_or_none(
         Codeobjable to be inspected.
     is_unwrap: bool, optional
         :data:`True` only if this getter implicitly calls the
-        :func:`.unwrap_func_all` function to unwrap this possibly
-        higher-level wrapper into a possibly lower-level wrappee *before*
-        returning the code object of that wrappee. Note that doing so incurs
-        worst-case time complexity :math:`O(n)` for :math:`n` the number of
-        lower-level wrappees wrapped by this wrapper. Defaults to :data:`False`
-        for both efficiency and disambiguity.
+        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function to
+        unwrap this possibly higher-level wrapper into a possibly lower-level
+        wrappee *before* returning the code object of that wrappee. Note that
+        doing so incurs worst-case time complexity :math:`O(n)` for :math:`n`
+        the number of lower-level wrappees wrapped by this wrapper. Defaults to
+        :data:`False` for both efficiency and disambiguity.
 
     Returns
     -------

@@ -103,7 +103,7 @@ this submodule rather than from :mod:`typing` directly: e.g.,
 #        #submodules of a new "beartype.typing._util" subpackage.
 #        # Import the requisite machinery that will make the magic happen.
 #        from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
-#        from beartype._util.module.lib.utiltyping import (
+#        from beartype._util.api.utilapityping import (
 #            import_typing_attr_or_fallback as _import_typing_attr_or_fallback)
 #
 #        # Dynamically define the "Self" type hint as follows:

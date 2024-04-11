@@ -39,7 +39,7 @@ def hints_pep544_meta() -> 'List[HintPepMetadata]':
         HintSignIO,
         HintSignTextIO,
     )
-    from beartype._util.module.lib.utiltyping import get_typing_attrs
+    from beartype._util.api.utilapityping import get_typing_attrs
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintPepMetadata,
         HintPithSatisfiedMetadata,
@@ -591,7 +591,7 @@ def hints_pep544_ignorable_shallow() -> list:
     '''
 
     # ..................{ IMPORTS                            }..................
-    from beartype._util.module.lib.utiltyping import get_typing_attrs
+    from beartype._util.api.utilapityping import get_typing_attrs
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific shallowly ignorable type hints to be returned.
@@ -630,7 +630,7 @@ def hints_pep544_ignorable_deep() -> list:
     '''
 
     # ..................{ IMPORTS                            }..................
-    from beartype._util.module.lib.utiltyping import get_typing_attrs
+    from beartype._util.api.utilapityping import get_typing_attrs
     from beartype._data.hint.datahinttyping import S, T
 
     # ..................{ LOCALS                             }..................

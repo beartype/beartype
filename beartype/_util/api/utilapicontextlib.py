@@ -4,9 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **module-specific callable testers** (i.e., utility functions
-dynamically validating and inspecting various properties of passed callables
-declared by standard modules and packages in Python's standard library).
+Project-wide :mod:`contextlib` utilities (i.e., low-level callables handling the
+standard :mod:`contextlib` module).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -48,13 +47,13 @@ def is_func_contextlib_contextmanager(func: Any) -> TypeGuard[Callable]:
         Object to be inspected.
 
     Returns
-    ----------
+    -------
     bool
         :data:`True` only if this object is a
         :func:`contextlib.contextmanager`-based isomorphic decorator closure.
 
     See Also
-    ----------
+    --------
     beartype._data.func.datafunc.CONTEXTLIB_CONTEXTMANAGER_CO_NAME_QUALNAME
         Further discussion.
     '''
@@ -101,37 +100,3 @@ def is_func_contextlib_contextmanager(func: Any) -> TypeGuard[Callable]:
     # callable satisfies the is_func_wrapper_isomorphic() tester, but that
     # there's no benefit and a minor efficiency cost  to doing so.
     return func_codeobj_name == CONTEXTLIB_CONTEXTMANAGER_CODEOBJ_NAME
-
-
-def is_func_functools_lru_cache(func: Any) -> TypeGuard[Callable]:
-    '''
-    :data:`True` only if the passed object is a
-    :func:`functools.lru_cache`-memoized **pseudo-callable** (i.e., low-level
-    C-based callable object both created and returned by the standard
-    :func:`functools.lru_cache` decorator).
-
-    This tester enables callers to detect when a user-defined callable has been
-    decorated by the :func:`functools.lru_cache` decorator, which creates
-    low-level C-based callable objects requiring special handling elsewhere.
-
-    Parameters
-    ----------
-    func : object
-        Object to be inspected.
-
-    Returns
-    ----------
-    bool
-        :data:`True` only if this object is a
-        :func:`functools.lru_cache`-memoized callable.
-    '''
-
-    # Defer heavyweight tester-specific imports with potential side effects --
-    # notably, increased costs to space and time complexity.
-    from beartype._data.module.datamodfunctools import (
-        LRU_CACHE_TYPE)
-
-    # Return true only if the type of that callable is the low-level C-based
-    # private type of all objects created and returned by the standard
-    # @functools.lru_cache decorator.
-    return type(func) is LRU_CACHE_TYPE

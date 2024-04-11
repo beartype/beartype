@@ -184,9 +184,59 @@ def get_object_basename_scoped(obj: Any) -> str:
     '''
     **Lexically scoped name** (i.e., ``.``-delimited string unambiguously
     identifying all lexical scopes encapsulating) the passed object if this
-    object defines either the ``__qualname__`` or ``__name__`` dunder
-    attributes *or* raise an exception otherwise (i.e., if this object defines
-    *no* such attributes).
+    object defines either the ``__qualname__`` or ``__name__`` dunder attributes
+    *or* raise an exception otherwise (i.e., if this object defines *no* such
+    attributes).
+
+    Parameters
+    ----------
+    obj : object
+        Object to be inspected.
+
+    Returns
+    -------
+    str
+        Lexically scoped name of this object.
+
+    Raises
+    ------
+    _BeartypeUtilObjectNameException
+        If this object defines neither ``__qualname__`` *nor* ``__name__``
+        dunder attributes.
+
+    See Also
+    --------
+    :func:`.get_object_basename_scoped_or_none`
+        Further details.
+    '''
+
+    # Fully-qualified name of this object excluding its module name.
+    object_scoped_name = get_object_basename_scoped_or_none(obj)
+
+    # If this object is unnamed, raise a human-readable exception. The default
+    # "AttributeError" exception raised by attempting to directly access either
+    # the "obj.__name__" or "obj.__qualname__" attributes is sufficiently
+    # non-explanatory to warrant replacement by our explanatory exception.
+    if object_scoped_name is None:
+        raise _BeartypeUtilObjectNameException(
+            f'{repr(obj)} unnamed '
+            f'(i.e., declares neither "__name__" nor "__qualname__" '
+            f'dunder attributes).'
+        )
+    # Else, this object is named.
+
+    # Remove all "<locals>" placeholder substrings as discussed above.
+    return object_scoped_name.replace('<locals>.', '')
+
+
+#FIXME: Unit test us up, please.
+def get_object_basename_scoped_or_none(obj: Any) -> Optional[str]:
+    '''
+    **Lexically scoped name** (i.e., ``.``-delimited string unambiguously
+    identifying all lexical scopes encapsulating) the passed object if this
+    object defines either the ``__qualname__`` or ``__name__`` dunder attributes
+    *or* :data:`None` otherwise (i.e., if this object defines *no* such
+    attributes).
 
     Specifically, this name comprises (in order):
 
@@ -234,8 +284,13 @@ def get_object_basename_scoped(obj: Any) -> str:
 
     Returns
     -------
-    str
-        Lexically scoped name of this object.
+    Optional[str]
+        Either:
+
+        * If this object defines at least one of the ``__qualname__`` or
+          ``__name__`` dunder attributes, the lexically scoped name of this
+          object.
+        * Else, :data:`None`.
 
     Raises
     ------
@@ -244,8 +299,7 @@ def get_object_basename_scoped(obj: Any) -> str:
         dunder attributes.
     '''
 
-    # Return the fully-qualified name of this object excluding its name,
-    # constructed as follows:
+    # Fully-qualified name of this object excluding its module name as follows:
     # * If this object defines the "__qualname__" dunder attribute whose value
     #   is the "."-delimited concatenation of the unqualified basenames of all
     #   parent objects transitively declaring this object, that value with all
@@ -261,20 +315,15 @@ def get_object_basename_scoped(obj: Any) -> str:
         obj, '__qualname__', getattr(
             obj, '__name__', None))
 
-    # If this object is unnamed, raise a human-readable exception. The default
-    # "AttributeError" exception raised by attempting to directly access either
-    # the "obj.__name__" or "obj.__qualname__" attributes is sufficiently
-    # non-explanatory to warrant replacement by our explanatory exception.
-    if object_scoped_name is None:
-        raise _BeartypeUtilObjectNameException(
-            f'{repr(obj)} unnamed '
-            f'(i.e., declares neither "__name__" nor "__qualname__" '
-            f'dunder attributes).'
-        )
-    # Else, this object is named.
-
-    # Remove all "<locals>" placeholder substrings as discussed above.
-    return object_scoped_name.replace('<locals>.', '')
+    # Return either...
+    return (
+        # If this name exists, all "<locals>" placeholder substrings globally
+        # removed from this name as discussed above;
+        object_scoped_name.replace('<locals>.', '')
+        if object_scoped_name else
+        # Else, either "None" or the empty string.
+        object_scoped_name
+    )
 
 # ....................{ GETTERS ~ filename                 }....................
 def get_object_filename_or_none(obj: object) -> Optional[str]:

@@ -96,7 +96,7 @@ from beartype._cave._cavefast import (
     CallableCodeObjectType as CallableCodeObjectType,
     ClassDictType as ClassDictType,
     CallableFrameType as CallableFrameType,
-    CallablePartialType as CallablePartialType,
+    CallableFunctoolsPartialType as CallableFunctoolsPartialType,
     ClassType as ClassType,
     ClosureVarCellType as ClosureVarCellType,
     CollectionType as CollectionType,

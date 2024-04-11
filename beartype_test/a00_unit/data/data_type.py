@@ -24,6 +24,7 @@ from contextlib import contextmanager
 from enum import Enum
 from functools import (
     lru_cache,
+    partial,
     wraps,
 )
 from sys import exc_info
@@ -288,6 +289,12 @@ def function():
     pass
 
 
+function_lambda = lambda: 'The day was fair and sunny: sea and sky'
+'''
+Arbitrary pure-Python lambda function physically declared by this submodule.
+'''
+
+
 function_in_memory = make_func(
     func_name='function_in_memory',
     func_code='''
@@ -448,7 +455,7 @@ sync_generator = sync_generator_factory()
 Arbitrary pure-Python synchronous generator.
 '''
 
-# ....................{ CALLABLES ~ sync : library         }....................
+# ....................{ CALLABLES ~ sync : mod : contextlib}....................
 @contextmanager
 def context_manager_factory(obj: object) -> Iterator[object]:
     '''
@@ -460,14 +467,80 @@ def context_manager_factory(obj: object) -> Iterator[object]:
 
     yield obj
 
-
+# ....................{ CALLABLES ~ sync : mod : functools }....................
 @lru_cache
-def lru_cache_func(n: int) -> int:
+def function_lru_cached(n: int) -> int:
     '''
     Arbitrary :func:`functools.lru_cache`-memoized function.
     '''
 
     return n + 1
+
+
+def function_partialized(
+    and_one_majestic_river: str,
+    that_mighty_shadow_loves: str,
+) -> str:
+    '''
+    Arbitrary pure-Python function to be wrapped by the :class:`.partial`
+    factory as the :data:`.function_partial` object, accepting both positional
+    and keyword parameters to exercise all possible edge cases.
+    '''
+
+    return and_one_majestic_river + that_mighty_shadow_loves
+
+
+FUNCTION_PARTIALIZED_ARG_VALUE = (
+    'The breath and blood of distant lands, for ever')
+'''
+Arbitrary value passed as the first and only positional parameter to the
+:func:`function_partialized` function by the :data:`.function_partial` object.
+'''
+
+
+FUNCTION_PARTIALIZED_KWARG_NAME = 'that_mighty_shadow_loves'
+'''
+Name of the first and only keyword parameter passed to the
+:func:`function_partialized` function by the :data:`.function_partial` object.
+'''
+
+
+FUNCTION_PARTIALIZED_KWARG_VALUE = 'The slimy caverns of the populous deep.'
+'''
+Arbitrary value passed as the first and only keyword parameter to the
+:func:`function_partialized` function by the :data:`.function_partial` object.
+'''
+
+
+builtin_partial = partial(divmod, 2)
+'''
+Arbitrary instance of the :class:`.partial` factory wrapping the C-based
+:func:`divmod` builtin.
+'''
+
+
+function_partial = partial(
+    function_partialized,
+    FUNCTION_PARTIALIZED_ARG_VALUE,
+    that_mighty_shadow_loves=FUNCTION_PARTIALIZED_KWARG_VALUE,
+)
+'''
+Arbitrary instance of the :class:`.partial` factory wrapping the pure-Python
+:func:`function_partialized` function.
+'''
+
+
+function_partial_bad = partial(
+    function_partialized,
+    FUNCTION_PARTIALIZED_ARG_VALUE,
+    that_mighty_shadow_loves=FUNCTION_PARTIALIZED_KWARG_VALUE,
+    the_day_was_fair_and_sunny='sea and sky',
+)
+'''
+Arbitrary instance of the :class:`.partial` factory wrapping the pure-Python
+:func:`function_partialized` function in an invalid manner by passing more
+parameters than that function actually accepts.
+'''
 
 # ....................{ CALLABLES ~ sync : module          }....................
 def function_module_name_fake() -> None:

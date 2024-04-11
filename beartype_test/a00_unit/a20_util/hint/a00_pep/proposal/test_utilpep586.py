@@ -31,7 +31,7 @@ def test_is_hint_pep586() -> None:
     from beartype.typing import Optional
     from beartype._util.hint.pep.proposal.utilpep586 import (
         die_unless_hint_pep586)
-    from beartype._util.module.lib.utiltyping import get_typing_attrs
+    from beartype._util.api.utilapityping import get_typing_attrs
     from enum import Enum
 
     # ....................{ LOCALS                         }....................

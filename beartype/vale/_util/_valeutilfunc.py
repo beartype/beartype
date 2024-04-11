@@ -22,8 +22,8 @@ def die_unless_validator_tester(
     '''
     Raise an exception unless the passed object is a **validator tester** (i.e.,
     caller-defined callable accepting a single arbitrary object and returning
-    either ``True`` if that object satisfies an arbitrary constraint *or*
-    ``False`` otherwise).
+    either :data:`True` if that object satisfies an arbitrary constraint *or*
+    :data:`False` otherwise).
 
     Parameters
     ----------
@@ -31,7 +31,7 @@ def die_unless_validator_tester(
         Object to be validated.
 
     Raises
-    ----------
+    ------
     beartype.roar.BeartypeValeSubscriptionException
         If that object is either:
 

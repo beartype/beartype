@@ -32,16 +32,15 @@ from beartype._data.hint.datahinttyping import (
     BeartypeableT,
 )
 from beartype._decor.wrap.wrapmain import generate_code
-from beartype._util.cache.pool.utilcachepoolobjecttyped import (
-    release_object_typed)
-from beartype._util.func.module.utilfuncmodbear import (
+from beartype._util.api.utilapibeartype import (
     is_func_unbeartypeable,
     set_func_beartyped,
 )
-from beartype._util.func.module.utilfuncmodtest import (
-    is_func_contextlib_contextmanager,
-    is_func_functools_lru_cache,
-)
+from beartype._util.api.utilapicontextlib import (
+    is_func_contextlib_contextmanager)
+from beartype._util.api.utilapifunctools import is_func_functools_lru_cache
+from beartype._util.cache.pool.utilcachepoolobjecttyped import (
+    release_object_typed)
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.func.utilfunctest import is_func_python
 from beartype._util.func.utilfuncwrap import unwrap_func_once
@@ -674,8 +673,8 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
         #     def muh_lru_cache() -> None: pass
         if is_func_functools_lru_cache(pseudofunc):
             # Return a new callable decorating that callable with type-checking.
-            return beartype_pseudofunc_functools_lru_cache(  # type: ignore[return-value]
-                pseudofunc=pseudofunc, **kwargs)
+            return beartype_pseudofunc_functools_lru_cache(  # type: ignore
+                pseudofunc=pseudofunc, **kwargs)  # pyright: ignore
         # Else, this is *NOT* a C-based @functools.lru_cache-memoized callable.
 
     # Replace the existing bound method descriptor to this __call__() dunder

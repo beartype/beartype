@@ -36,7 +36,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
         HintSignList,
         HintSignUnion,
     )
-    from beartype._util.module.lib.utiltyping import get_typing_attrs
+    from beartype._util.api.utilapityping import get_typing_attrs
     from beartype_test.a00_unit.data.data_type import (
         Class,
         Subclass,
@@ -47,13 +47,30 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
         HintPithSatisfiedMetadata,
         HintPithUnsatisfiedMetadata,
     )
+    from functools import partial
+
+    # ..................{ CALLABLES                          }..................
+    def is_true(ignorable_arg, obj):
+        '''
+        Tester function returning :data:`True` only if the passed object
+        evaluates to :data:`True` when coerced into a boolean and whose first
+        parameter is ignorable.
+        '''
+
+        return bool(obj)
+
+
+    # Partial of the is_true() tester defined above, effectively ignoring the
+    # "ignorable_arg" parameter accepted by that tester.
+    is_true_partial = partial(
+        is_true, 'Drank its inspiring radiance, and the wind')
 
     # ..................{ VALIDATORS ~ is                    }..................
-    # Beartype-specific validators defined as lambda functions.
+    # Beartype validators defined as lambda functions.
     IsLengthy = Is[lambda text: len(text) > 30]
     IsSentence = Is[lambda text: text and text[-1] == '.']
 
-    # Beartype-specific validators defined as non-lambda functions.
+    # Beartype validators defined as non-lambda functions.
     def _is_quoted(text):
         return '"' in text or "'" in text
     def _is_exceptional(obj):
@@ -61,8 +78,8 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
     IsQuoted = Is[_is_quoted]
     IsExceptional = Is[_is_exceptional]
 
-    # Beartype-specific validator synthesized from the above validators
-    # via the domain-specific language (DSL) implemented by those validators.
+    # Beartype validator synthesized from the above validators via the
+    # domain-specific language (DSL) implemented by those validators.
     IsLengthyOrUnquotedSentence = IsLengthy | (IsSentence & ~IsQuoted)
 
     # ..................{ VALIDATORS ~ isattr                }..................
@@ -170,8 +187,8 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
             ),
 
             # ..............{ ANNOTATED ~ beartype : is          }..............
-            # Annotated of the root "object" superclass annotated by one
-            # beartype-specific validator defined as a lambda function.
+            # Annotated of the root "object" superclass annotated by a beartype
+            # validator defined as a lambda function.
             HintPepMetadata(
                 hint=Annotated[object, Is[
                     lambda obj: hasattr(obj, 'this_mobbed_triste_of')]],
@@ -186,8 +203,23 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
 
-            # Annotated of an isinstanceable type annotated by one
-            # beartype-specific validator defined as a lambda function.
+            # Annotated of the root "object" superclass annotated by a beartype
+            # validator defined as a partial function.
+            HintPepMetadata(
+                hint=Annotated[object, Is[is_true_partial]],
+                pep_sign=HintSignAnnotated,
+                piths_meta=(
+                    # Objects evaluating to "True" when coerced into booleans.
+                    HintPithSatisfiedMetadata(True),
+                    HintPithSatisfiedMetadata(
+                        'Swept strongly from the shore, blackening the waves.'),
+                    # Empty string.
+                    HintPithUnsatisfiedMetadata(''),
+                ),
+            ),
+
+            # Annotated of an isinstanceable type annotated by a beartype
+            # validator defined as a lambda function.
             HintPepMetadata(
                 hint=AnnotatedStrIsLength,
                 pep_sign=HintSignAnnotated,
@@ -576,7 +608,7 @@ def hints_pep593_ignorable_deep() -> list:
         Optional,
         Union,
     )
-    from beartype._util.module.lib.utiltyping import get_typing_attrs
+    from beartype._util.api.utilapityping import get_typing_attrs
 
     # ..................{ LOCALS                             }..................
     # List of all PEP-specific deeply ignorable type hints to be returned.

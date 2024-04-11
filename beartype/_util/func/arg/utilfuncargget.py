@@ -46,8 +46,9 @@ def get_func_arg_first_name_or_none(
         Pure-Python callable, frame, or code object to be inspected.
     is_unwrap: bool, optional
         :data:`True` only if this getter implicitly calls the
-        :func:`.unwrap_func_all_isomorphic` function. Defaults to :data:`True` for safety. See
-        :func:`.iter_func_args` for further commentary.
+        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
+        Defaults to :data:`True` for safety. See :func:`.iter_func_args` for
+        further commentary.
     exception_cls : type, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.
@@ -97,14 +98,27 @@ def get_func_args_flexible_len(
     variadic, or other more constrained kinds of parameters) accepted by the
     passed pure-Python callable.
 
+    This getter transparently handles all of the following:
+
+    * Conventional pure-Python callables.
+    * If ``is_unwrap`` is :data:`True`:
+
+      * Pure-Python **partials** (i.e., pure-Python callable
+        :class:`functools.partial` objects directly wrapping pure-Python
+        callables). If a partial is passed, this getter transparently returns
+        the total number of flexible parameters accepted by the lower-level
+        callable wrapped by this partial minus the number of flexible parameters
+        partialized away by this partial.
+
     Parameters
     ----------
     func : Codeobjable
         Pure-Python callable, frame, or code object to be inspected.
     is_unwrap: bool, optional
         :data:`True` only if this getter implicitly calls the
-        :func:`.unwrap_func_all_isomorphic` function. Defaults to :data:`True`
-        for safety. See :func:`.iter_func_args` for further commentary.
+        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
+        Defaults to :data:`True` for safety. See :func:`.get_func_codeobj` for
+        further commentary.
     exception_cls : type, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.
@@ -122,6 +136,70 @@ def get_func_args_flexible_len(
     exception_cls
          If that callable is *not* pure-Python.
     '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.api.utilapifunctools import (
+        get_func_functools_partial_args,
+        is_func_functools_partial,
+        unwrap_func_functools_partial_once,
+    )
+
+    # If unwrapping that callable *AND* that callable is a partial (i.e.,
+    # "functools.partial" object wrapping a lower-level callable)...
+    if is_unwrap and is_func_functools_partial(func):
+        # Pure-Python wrappee callable wrapped by that partial.
+        wrappee = unwrap_func_functools_partial_once(func)
+
+        # Positional and keyword parameters implicitly passed by this partial to
+        # this wrappee.
+        partial_args, partial_kwargs = get_func_functools_partial_args(func)
+
+        # Number of flexible parameters accepted by this wrappee.
+        #
+        # Note that this recursive function call is guaranteed to immediately
+        # bottom out and thus be safe. Why? Because a partial *CANNOT* wrap
+        # itself, because a partial has yet to be defined when the
+        # functools.partial.__init__() method defining that partial is called.
+        # Technically, the caller *COULD* violate sanity by directly interfering
+        # with the "func" instance variable of this partial after instantiation.
+        # Pragmatically, a malicious edge case like that is unlikely in the
+        # extreme. You are now reading this comment because this edge case just
+        # blew up in your face, aren't you!?!? *UGH!*
+        wrappee_args_flexible_len = get_func_args_flexible_len(
+            func=wrappee,
+            is_unwrap=is_unwrap,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        )
+
+        # Number of flexible parameters passed by this partial to this wrappee.
+        partial_args_flexible_len = len(partial_args) + len(partial_kwargs)
+
+        # Number of flexible parameters accepted by this wrappee minus the
+        # number of flexible parameters passed by this partial to this wrappee.
+        func_args_flexible_len = (
+            wrappee_args_flexible_len - partial_args_flexible_len)
+
+        # If this number is negative, the caller maliciously defined an invalid
+        # partial passing more flexible parameters than this wrappee accepts. In
+        # this case, raise an exception.
+        if func_args_flexible_len < 0:
+            raise exception_cls(
+                f'{exception_prefix}{repr(func)} passes '
+                f'{partial_args_flexible_len} parameter(s) to '
+                f'{repr(wrappee)} accepting only '
+                f'{wrappee_args_flexible_len} parameter(s) '
+                f'(i.e., {partial_args_flexible_len} > '
+                f'{wrappee_args_flexible_len}).'
+            )
+        # If this number is non-negative, implying the caller correctly defined
+        # a valid partial passing no more flexible parameters than this wrappee
+        # accepts.
+
+        # Return this number.
+        return func_args_flexible_len
+    # Else, that callable is *NOT* a partial. In this case, fallback to the
+    # standard logic for pure-Python callables.
 
     # Code object underlying the passed pure-Python callable unwrapped.
     func_codeobj = get_func_codeobj(
@@ -155,8 +233,9 @@ def get_func_args_nonvariadic_len(
         Pure-Python callable, frame, or code object to be inspected.
     is_unwrap: bool, optional
         :data:`True` only if this getter implicitly calls the
-        :func:`.unwrap_func_all_isomorphic` function. Defaults to :data:`True`
-        for safety. See :func:`.iter_func_args` for further commentary.
+        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
+        Defaults to :data:`True` for safety. See :func:`.get_func_codeobj` for
+        further commentary.
     exception_cls : type, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.

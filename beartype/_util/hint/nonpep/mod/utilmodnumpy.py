@@ -29,7 +29,7 @@ from beartype.typing import (
 from beartype._util.cache.utilcachecall import callable_cached
 from beartype._util.error.utilerrwarn import issue_warning
 from beartype._util.hint.pep.utilpepget import get_hint_pep_args
-from beartype._util.module.lib.utiltyping import import_typing_attr_or_none
+from beartype._util.api.utilapityping import import_typing_attr_or_none
 from beartype._util.utilobject import is_object_hashable
 
 # ....................{ REDUCERS                           }....................

@@ -16,7 +16,7 @@ from beartype.roar._roarwarn import _BeartypeUtilCallableWarning
 from beartype._cave._cavefast import NumberType
 from beartype._data.hint.datahinttyping import TypeWarning
 from beartype._data.kind.datakindtext import CHARS_PUNCTUATION
-from beartype._util.utilobject import get_object_basename_scoped
+from beartype._util.utilobject import get_object_basename_scoped_or_none
 from collections.abc import Callable
 
 # ....................{ REPRESENTERS                       }....................
@@ -212,7 +212,7 @@ def represent_func(
     from beartype._util.func.utilfunccode import get_func_code_or_none
     from beartype._util.func.utilfunctest import is_func_lambda
 
-    # If this callable is a pure-Python lambda function, return either:
+    # If that callable is a pure-Python lambda function, return either:
     # * If this lambda is defined by an on-disk script or module source file,
     #   the exact substring of that file defining this lambda.
     # * Else (e.g., if this lambda is dynamically defined in-memory), a
@@ -222,10 +222,24 @@ def represent_func(
             get_func_code_or_none(func=func, warning_cls=warning_cls) or
             '<lambda>'
         )
-    # Else, this callable is *NOT* a pure-Python lambda function.
+    # Else, that callable is *NOT* a pure-Python lambda function.
 
-    # Return the fully-qualified name of this non-lambda function.
-    return get_object_basename_scoped(func)
+    #FIXME: Actually, we should be calling a new get_object_name_or_none()
+    #function instead -- but that function currently doesn't exist and we're
+    #lazy. The issue with get_object_basename_scoped_or_none() is that this
+    #getter fails to return the module name of this function. *shrug*
+    func_basename_scoped = get_object_basename_scoped_or_none(func)
+
+    # If that callable is named, return this name.
+    if func_basename_scoped:
+        return func_basename_scoped
+    # Else, that callable is unnamed due to failing to define both the
+    # "__qualname__" and "__name__" dunder attributes and thus have *NO* names.
+    # Although most callables are named, some are not. This includes:
+    # * Callable "functools.partial" objects.
+
+    # Return the machine-readable representation of that callable as a fallback.
+    return repr(func)
 
 # ....................{ REPRESENTERS ~ pith                }....................
 def represent_pith(

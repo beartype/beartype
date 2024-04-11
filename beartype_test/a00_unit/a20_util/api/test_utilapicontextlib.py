@@ -4,10 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **module-specific callable tester utility** unit tests.
+Project-wide :mod:`contextlib` utility unit tests.
 
 This submodule unit tests the public API of the private
-:mod:`beartype._util.utilfunc.mod.utilfuncmodtest` submodule.
+:mod:`beartype._util.api.utilapicontextlib` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -20,12 +20,12 @@ This submodule unit tests the public API of the private
 def test_is_func_contextlib_contextmanager() -> None:
     '''
     Test the
-    :func:`beartype._util.func.module.utilfuncmodtest.is_func_contextlib_contextmanager`
+    :func:`beartype._util.api.utilapicontextlib.is_func_contextlib_contextmanager`
     tester.
     '''
 
     # Defer test-specific imports.
-    from beartype._util.func.module.utilfuncmodtest import (
+    from beartype._util.api.utilapicontextlib import (
         is_func_contextlib_contextmanager)
     from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_11
     from beartype_test.a00_unit.data.data_type import (
@@ -57,29 +57,3 @@ def test_is_func_contextlib_contextmanager() -> None:
     # Assert this tester rejects non-callables.
     assert is_func_contextlib_contextmanager(
         'A lovely youth,—no mourning maiden decked') is False
-
-
-def test_is_func_functools_lru_cache() -> None:
-    '''
-    Test the
-    :func:`beartype._util.func.module.utilfuncmodtest.is_func_functools_lru_cache`
-    tester.
-    '''
-
-    # Defer test-specific imports.
-    from beartype._util.func.module.utilfuncmodtest import (
-        is_func_functools_lru_cache)
-    from beartype_test.a00_unit.data.data_type import (
-        lru_cache_func,
-        function,
-    )
-
-    # Assert this tester accepts @functools.lru_cache-memoized callables.
-    assert is_func_functools_lru_cache(lru_cache_func) is True
-
-    # Assert this tester rejects callables *NOT* decorated by that decorator.
-    assert is_func_functools_lru_cache(function) is False
-
-    # Assert this tester rejects non-callables.
-    assert is_func_functools_lru_cache(
-        'With weeping flowers, or votive cypress wreath,') is False

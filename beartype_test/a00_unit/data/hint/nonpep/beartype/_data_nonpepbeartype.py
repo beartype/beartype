@@ -29,7 +29,7 @@ def hints_nonpepbeartype_meta() -> 'List[HintNonpepMetadata]':
     # Defer test-specific imports.
     from beartype.plug import BeartypeHintable
     from beartype.vale import Is
-    from beartype._util.module.lib.utiltyping import iter_typing_attrs
+    from beartype._util.api.utilapityping import iter_typing_attrs
     from beartype_test.a00_unit.data.hint.util.data_hintmetacls import (
         HintNonpepMetadata,
         HintPithSatisfiedMetadata,

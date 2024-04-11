@@ -103,25 +103,21 @@ def test_get_object_name() -> None:
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
-    from functools import partial
     from beartype.roar._roarexc import _BeartypeUtilObjectNameException
     from beartype._util.utilobject import get_object_name
+    from beartype_test.a00_unit.data.data_type import function_partial
     from pytest import raises
 
-    # ....................{ LOCALS                         }....................
+    # ....................{ CALLABLES                      }....................
     def meet_in_the_vale(and_one_majestic_river: str) -> str:
         '''
-        Arbitrary function.
+        Arbitrary nested function.
         '''
 
         return and_one_majestic_river
 
-    # Function partial of the above function.
-    breath_and_blood = partial(
-        meet_in_the_vale, 'The breath and blood of distant lands, for ever')
-
     # ....................{ PASS                           }....................
-    # Assert this getter returns the expected name for this function partial.
+    # Assert this getter returns the expected name for a nested function.
     assert get_object_name(meet_in_the_vale) == (
         'beartype_test.a00_unit.a20_util.test_utilobject.'
         'test_get_object_name.meet_in_the_vale'
@@ -131,4 +127,4 @@ def test_get_object_name() -> None:
     # Assert this getter raises "AttributeError" exceptions when passed objects
     # declaring neither "__qualname__" nor "__name__" dunder attributes.
     with raises(_BeartypeUtilObjectNameException):
-        get_object_name(breath_and_blood)
+        get_object_name(function_partial)

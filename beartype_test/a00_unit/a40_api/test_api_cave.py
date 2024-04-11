@@ -21,7 +21,6 @@ from collections.abc import Iterable
 from decimal import Decimal
 from enum import Enum
 from fractions import Fraction
-from pytest import raises
 
 # ....................{ TODO                               }....................
 #FIXME: Unit test the following types, which remain untested for the initial
@@ -236,12 +235,15 @@ def test_api_cave_type_core() -> None:
     third-party dependencies) published by the :mod:`beartype.cave` submodule.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports. For each simple type published by the
     # beartype cave, assert below that:
     # * This type is a simple type.
     # * An object expected to be of this type is of this type.
     from beartype import cave
+    from beartype_test.a00_unit.data.data_type import builtin_partial
 
+    # ....................{ ASSERTS                        }....................
     # Test "UnavailableType". By definition, no objects of this type exist;
     # ergo, we only test that this type is actually a type.
     _assert_type_objects(cave.UnavailableType)
@@ -268,9 +270,8 @@ def test_api_cave_type_core() -> None:
     # Test "ModuleType".
     _assert_type_objects(cave.ModuleType, sys.modules[__name__])
 
-    # Test "CallablePartialType".
-    _assert_type_objects(
-        cave.CallablePartialType, functools.partial(divmod, 2))
+    # Test "CallableFunctoolsPartialType".
+    _assert_type_objects(cave.CallableFunctoolsPartialType, builtin_partial)
 
     # Test "FunctionType". Since many types not commonly thought of as
     # functions are ambiguously implemented as functions, explicitly test...

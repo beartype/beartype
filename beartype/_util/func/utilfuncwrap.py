@@ -25,7 +25,7 @@ def unwrap_func_once(func: Any) -> Callable:
     *or* that callable as is otherwise (i.e., if that callable is *not* a
     wrapper).
 
-    Specifically, this getter undoes the work performed by:
+    Specifically, this getter undoes the work performed by any of the following:
 
     * A single use of the :func:`functools.wrap` decorator on the wrappee
       callable to be returned.

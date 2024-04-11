@@ -67,6 +67,10 @@ def test_get_func_args_len_flexible() -> None:
     from beartype.roar._roarexc import _BeartypeUtilCallableException
     from beartype._util.func.arg.utilfuncargget import (
         get_func_args_flexible_len)
+    from beartype_test.a00_unit.data.data_type import (
+        function_partial,
+        function_partial_bad,
+    )
     from beartype_test.a00_unit.data.func.data_func import (
         func_args_0,
         func_args_1_flex_mandatory,
@@ -92,6 +96,9 @@ def test_get_func_args_len_flexible() -> None:
     assert get_func_args_flexible_len(func_args_1_flex_mandatory_wrapped) == 1
     assert get_func_args_flexible_len(func_args_2_flex_mandatory_wrapped) == 2
 
+    # Assert this getter returns the expected length of a partial callable.
+    assert get_func_args_flexible_len(function_partial) == 0
+
     # Assert this getter returns 0 when passed a wrapped callable and an option
     # disabling callable unwrapping.
     assert get_func_args_flexible_len(
@@ -108,3 +115,9 @@ def test_get_func_args_len_flexible() -> None:
     # callable.
     with raises(_BeartypeUtilCallableException):
         get_func_args_flexible_len(iter)
+
+    # Assert this getter raises the expected exception when passed an invalid
+    # partial callable passing more parameters than the underlying function
+    # actually accepts.
+    with raises(_BeartypeUtilCallableException):
+        get_func_args_flexible_len(function_partial_bad)

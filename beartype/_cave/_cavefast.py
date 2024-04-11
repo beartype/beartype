@@ -206,20 +206,6 @@ Type of the :data:`NotImplemented` singleton.
 '''
 
 # ....................{ TYPES ~ call                       }....................
-CallablePartialType = _functools.partial
-'''
-Type of all **pure-Python partial callables** (i.e., callables dynamically
-wrapped by the function-like :class:`functools.partial` class, implemented in
-pure Python).
-
-Caveats
-----------
-This type does *not* distinguish between whether the original callable wrapped
-by :class:`functools.partial` is C-based or pure Python -- only that some
-callable of indeterminate origin is in fact wrapped.
-'''
-
-
 CallableCodeObjectType: Any = type((lambda: None).__code__)
 '''
 Type of all **code objects** (i.e., C-based objects underlying all pure-Python
@@ -549,13 +535,68 @@ implementing the :class:`collections.abc.Iterator` protocol, the former only
 applies to generators implicitly created by Python itself.
 '''
 
+# ....................{ TYPES ~ call : module : functools  }....................
+CallableFunctoolsPartialType = _functools.partial
+'''
+Pure-Python type of all **partial callables** (i.e., possibly C-based callable
+wrapped by the pure-Python callable :class:`functools.partial` type).
+
+Caveats
+-------
+This type does *not* distinguish between whether the original callable wrapped
+by :class:`functools.partial` is C-based or pure Python -- only that some
+callable of indeterminate origin is in fact wrapped.
+'''
+
+
+@_functools.lru_cache
+def _lru_cache_func(n: int) -> int:
+    '''
+    Arbitrary :func:`functools.lru_cache`-memoized function defined solely to
+    inspect various dunder attributes common to all such functions.
+    '''
+
+    return n + 1
+
+
+# If this submodule is currently being statically type-checked by a pure static
+# type-checker, ignore false positives complaining that this type is not a type.
+if TYPE_CHECKING:
+    class CallableFunctoolsLruCacheType(object): pass
+# Else, this submodule is *NOT* currently being statically type-checked by a
+# pure static type-checker. In this case, define this type properly. *sigh*
+else:
+    CallableFunctoolsLruCacheType = type(_lru_cache_func)
+    '''
+    C-based type of all low-level private objects created and returned by the
+    :func:`functools.lru_cache` decorator (e.g.,
+    :class:`functools._lru_cache_wrapper`).
+
+    This type enables functionality elsewhere to reliably detect when a callable
+    has been decorated by that decorator.
+    '''
+# print(f'LRU_CACHE_TYPE: {LRU_CACHE_TYPE}')
+
+
+# Delete temporary private callables defined above as a negligible safety (and
+# possible space complexity) measure.
+del _lru_cache_func
+
 # ....................{ TYPES ~ class                      }....................
-ClassDictType = type(type.__dict__)
-'''
-Type of all **pure-Python class dictionaries** (i.e., immutable mappings
-officially referred to as "mapping proxies," whose keys are strictly constrained
-for both efficiency and correctness to be Python identifier strings).
-'''
+# If this submodule is currently being statically type-checked by a pure static
+# type-checker, ignore false positives complaining that this type is not a type.
+if TYPE_CHECKING:
+    class ClassDictType(object): pass
+# Else, this submodule is *NOT* currently being statically type-checked by a
+# pure static type-checker. In this case, define this type properly. *sigh*
+else:
+    ClassDictType = type(type.__dict__)
+    '''
+    Type of all **pure-Python class dictionaries** (i.e., immutable mappings
+    officially referred to as "mapping proxies," whose keys are strictly
+    constrained for both efficiency and correctness to be Python identifier
+    strings).
+    '''
 
 # ....................{ TYPES ~ data                       }....................
 ContainerType = _Container

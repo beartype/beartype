@@ -380,7 +380,7 @@ def _init() -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer Python version-specific imports.
-    from beartype._util.module.lib.utiltyping import import_typing_attr_or_none
+    from beartype._util.api.utilapityping import import_typing_attr_or_none
     from beartype.typing import (
         AnyStr,
         List,

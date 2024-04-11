@@ -24,7 +24,7 @@ from beartype.typing import (
     TYPE_CHECKING,
 )
 from beartype._util.hint.utilhintfactory import TypeHintTypeFactory
-from beartype._util.module.lib.utiltyping import import_typing_attr_or_fallback
+from beartype._util.api.utilapityping import import_typing_attr_or_fallback
 
 # ....................{ FACTORIES                          }....................
 # Portably import the PEP 647-compliant "typing.TypeGuard" type hint factory

@@ -61,10 +61,10 @@ _BoolLike = (_SupportsBool, _SupportsLen)
 class _IsFactory(_BeartypeValidatorFactoryABC):
     '''
     **Beartype callable validator factory** (i.e., class that, when subscripted
-    (indexed) by an arbitrary callable returning ``True`` when the object
+    (indexed) by an arbitrary callable returning :data:`True` when the object
     passed to that callable satisfies a caller-defined constraint, creates a
-    new :class:`BeartypeValidator` object encapsulating that callable suitable
-    for subscripting (indexing) :attr:`typing.Annotated` type hints, enforcing
+    new :class:`.BeartypeValidator` object encapsulating that callable suitable
+    for subscripting (indexing) :obj:`typing.Annotated` type hints, enforcing
     that constraint on :mod:`beartype`-decorated callable parameters and
     returns annotated by those hints).
 
@@ -77,7 +77,7 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
     data structures defined by third-party packages like NumPy arrays and
     Pandas DataFrames.
 
-    This class creates one new :class:`BeartypeValidator` object for each
+    This class creates one new :class:`.BeartypeValidator` object for each
     callable validator subscripting (indexing) this class. These objects:
 
     * Are **PEP-compliant** and thus guaranteed to *never* violate existing or
@@ -87,44 +87,44 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
     * **Less efficient** than :class:`BeartypeValidator` objects created by
       subscripting every other :mod:`beartype.vale` class. Specifically:
 
-      * Every :class:`BeartypeValidator` object created by subscripting this
+      * Every :class:`.BeartypeValidator` object created by subscripting this
         class necessarily calls a callable validator and thus incurs at least
         one additional call stack frame per :mod:`beartype`-decorated callable
         call.
-      * Every :class:`BeartypeValidator` object created by subscripting every
+      * Every :class:`.BeartypeValidator` object created by subscripting every
         other :mod:`beartype.vale` class directly calls *no* callable and thus
         incurs additional call stack frames only when the active Python
         interpreter internally calls dunder methods (e.g., ``__eq__()``) to
         satisfy their validation constraint.
 
     Usage
-    ----------
+    -----
     Any :mod:`beartype`-decorated callable parameter or return annotated by a
-    :attr:`typing.Annotated` type hint subscripted (indexed) by this class
+    :obj:`typing.Annotated` type hint subscripted (indexed) by this class
     subscripted (indexed) by a callable validator (e.g.,
     ``typing.Annotated[{cls}, beartype.vale.Is[lambda obj: {expr}]]`` for any
-    class ``{cls}``  and Python expression ``{expr}` evaluating to a boolean)
+    class ``{cls}``  and Python expression ``{expr}`` evaluating to a boolean)
     validates that parameter or return value to be an instance of that class
     satisfying that callable validator.
 
     Specifically, callers are expected to (in order):
 
     #. Annotate a callable parameter or return to be validated with a
-       :pep:`593`-compliant :attr:`typing.Annotated` type hint.
+       :pep:`593`-compliant :obj:`typing.Annotated` type hint.
     #. Subscript that hint with (in order):
 
        #. The type expected by that parameter or return.
        #. One or more subscriptions (indexations) of this class, each itself
           subscripted (indexed) by a **callable validator** (i.e., callable
-          accepting a single arbitrary object and returning either ``True`` if
-          that object satisfies an arbitrary constraint *or* ``False``
+          accepting a single arbitrary object and returning either :data:`True`
+          if that object satisfies an arbitrary constraint *or* :data:`False`
           otherwise). If that hint is subscripted by:
 
           * Only one subscription of this class, that parameter or return
             satisfies that hint when both:
 
             * That parameter or return is an instance of the expected type.
-            * That validator returns ``True`` when passed that parameter or
+            * That validator returns :data:`True` when passed that parameter or
               return.
 
           * Two or more subscriptions of this class, that parameter or return
@@ -132,7 +132,8 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
 
             * That parameter or return is an instance of the expected type.
             * *All* callable validators subscripting *all* subscriptions of
-              this class return ``True`` when passed that parameter or return.
+              this class return :data:`True` when passed that parameter or
+              return.
 
           Formally, the signature of each callable validator *must* resemble:
 
@@ -160,26 +161,27 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
 
        Annotated[str, Is[lambda text: bool(text)]]
 
-    :class:`BeartypeValidator` objects also support an expressive
+    :class:`.BeartypeValidator` objects also support an expressive
     domain-specific language (DSL) enabling callers to trivially synthesize new
     objects from existing objects with standard Pythonic math operators:
 
-    * **Negation** (i.e., ``not``). Negating an :class:`BeartypeValidator`
+    * **Negation** (i.e., ``not``). Negating an :class:`.BeartypeValidator`
       object with the ``~`` operator synthesizes a new
-      :class:`BeartypeValidator` object whose validator returns ``True`` only
-      when the validator of the original object returns ``False``. For example,
-      the following type hint only accepts strings containing *no* periods:
+      :class:`.BeartypeValidator` object whose validator returns :data:`True`
+      only when the validator of the original object returns :data:`False`. For
+      example, the following type hint only accepts strings containing *no*
+      periods:
 
       .. code-block:: python
 
          Annotated[str, ~Is[lambda text: '.' in text]]
 
     * **Conjunction** (i.e., ``and``). Conjunctively combining two or more
-      :class:`BeartypeValidator` objects with the ``&`` operator synthesizes a
-      new :class:`BeartypeValidator` object whose validator returns ``True``
-      only when all data validators of the original objects return ``True``.
-      For example, the following type hint only accepts non-empty strings
-      containing *no* periods:
+      :class:`.BeartypeValidator` objects with the ``&`` operator synthesizes a
+      new :class:`.BeartypeValidator` object whose validator returns
+      :data:`True` only when all data validators of the original objects return
+      :data:`True`. For example, the following type hint only accepts non-empty
+      strings containing *no* periods:
 
       .. code-block:: python
 
@@ -189,11 +191,11 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
          )]
 
     * **Disjunction** (i.e., ``or``). Disjunctively combining two or more
-      :class:`BeartypeValidator` objects with the ``|`` operator synthesizes a
-      new :class:`BeartypeValidator` object whose validator returns ``True``
-      only when at least one validator of the original objects returns
-      ``True``. For example, the following type hint accepts both empty strings
-      *and* non-empty strings containing at least one period:
+      :class:`.BeartypeValidator` objects with the ``|`` operator synthesizes a
+      new :class:`.BeartypeValidator` object whose validator returns
+      :data:`True` only when at least one validator of the original objects
+      returns :data:`True`. For example, the following type hint accepts both
+      empty strings *and* non-empty strings containing at least one period:
 
       .. code-block:: python
 
@@ -205,10 +207,10 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
     See also the **Examples** subsection below.
 
     Caveats
-    ----------
+    -------
     **This class is currently only supported by the** :func:`beartype.beartype`
     **decorator.** All other static and runtime type checkers silently ignore
-    subscriptions of this class subscripting :attr:`typing.Annotated` type
+    subscriptions of this class subscripting :obj:`typing.Annotated` type
     hints.
 
     **This class incurs a minor time performance penalty at call time.**
@@ -225,7 +227,7 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
     an :exc:`.BeartypeValeSubscriptionException` exception.
 
     Examples
-    ----------
+    --------
     .. code-block:: python
 
        # Import the requisite machinery.
@@ -286,9 +288,9 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
         '''
         Create and return a new beartype validator from the passed **validator
         callable** (i.e., caller-defined callable accepting a single arbitrary
-        object and returning either ``True`` if that object satisfies an
-        arbitrary constraint *or* ``False`` otherwise), suitable for
-        subscripting :pep:`593`-compliant :attr:`typing.Annotated` type hints.
+        object and returning either :data:`True` if that object satisfies an
+        arbitrary constraint *or* :data:`Falsee` otherwise), suitable for
+        subscripting :pep:`593`-compliant :obj:`typing.Annotated` type hints.
 
         This method is intentionally *not* memoized, as this method is usually
         subscripted only by subscription-specific lambda functions uniquely
@@ -300,12 +302,12 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
             Validator callable to validate parameters and returns against.
 
         Returns
-        ----------
+        -------
         BeartypeValidator
             New object encapsulating this validator callable.
 
         Raises
-        ----------
+        ------
         BeartypeValeSubscriptionException
             If either:
 
@@ -317,8 +319,8 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
               * Is a pure-Python callable accepting two or more arguments.
 
         See Also
-        ----------
-        :class:`_IsAttrFactory`
+        --------
+        :class:`._IsAttrFactory`
             Usage instructions.
         '''
 
@@ -393,8 +395,8 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
             This implies that wrapper functions dynamically generated by the
             :func:`beartype.beartype` decorator *could* implicitly coerce
             non-boolean objects returned by the passed callable into the
-            ``True`` singleton. Although non-ideal, debugging such concerns is
-            squarely the user's concern; attempting to safeguard users from
+            ;data;`True` singleton. Although non-ideal, debugging such concerns
+            is squarely the user's concern; attempting to safeguard users from
             semantic issues like this would destroy runtime performance for *no*
             tangible gain in the general case. The best :mod:`beartype` can (and
             should) do is defer validation until a type-checking violation.
@@ -405,25 +407,21 @@ class _IsFactory(_BeartypeValidatorFactoryABC):
                 Object to be validated by that validation callable.
 
             Returns
-            ----------
+            -------
             bool
                 :data:`True` only if that object satisfies that validation
                 callable.
 
             Raises
-            ----------
+            ------
             BeartypeValeValidationException
                 If that validation callable returns a **non-bool-like**, where
-                "non-bool-like" is any object that:
+                "non-bool-like" is any object that both:
 
                 * Is *not* a **boolean** (i.e., :class:`bool` instance).
                 * Is *not* **implicitly convertible** into a boolean (i.e., is
                   an object whose class defines neither the :meth:`__bool__` nor
                   :meth:`__len__` dunder methods).
-
-    * Subscript the :attr:`beartype.vale.Is` factory by a **non-bool-like
-      validator** (i.e., tester function returning an object that is neither a
-      :class:`bool` *nor* implicitly convertible into a :class:`bool`).
             '''
 
             # Object returned by validating this object against that callable.

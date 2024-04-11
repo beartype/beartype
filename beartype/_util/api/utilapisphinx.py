@@ -4,8 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **Sphinx** utilities (i.e., callables handling the third-party
-:mod:`sphinx` package as an optional runtime dependency of this project).
+Project-wide **Sphinx utilities** (i.e., low-level callables handling the
+third-party :mod:`sphinx` package as an optional runtime dependency of this
+project).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -20,17 +21,10 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._util.func.utilfuncframe import iter_frames
 from sys import modules as module_imported_names
 
-# ....................{ PRIVATE ~ magic                    }....................
-_SPHINX_AUTODOC_SUBPACKAGE_NAME = 'sphinx.ext.autodoc'
-'''
-Fully-qualified name of the subpackage providing the ``autodoc`` extension
-bundled with Sphinx.
-'''
-
 # ....................{ TESTERS                            }....................
 def is_sphinx_autodocing() -> bool:
     '''
-    ``True`` only if Sphinx is currently **autogenerating documentation**
+    :data:`True` only if Sphinx is currently **autogenerating documentation**
     (i.e., if this function has been called from a Python call stack invoked by
     the ``autodoc`` extension bundled with the optional third-party build-time
     :mod:`sphinx` package).
@@ -78,3 +72,10 @@ def is_sphinx_autodocing() -> bool:
 
     # Else, *NO* scope's module is the "autodoc" extension. Return false.
     return False
+
+# ....................{ PRIVATE ~ magic                    }....................
+_SPHINX_AUTODOC_SUBPACKAGE_NAME = 'sphinx.ext.autodoc'
+'''
+Fully-qualified name of the subpackage providing the ``autodoc`` extension
+bundled with Sphinx.
+'''

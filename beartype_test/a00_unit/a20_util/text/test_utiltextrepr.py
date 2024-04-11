@@ -17,7 +17,7 @@ This submodule unit tests the public API of the private
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_represent_object():
+def test_represent_object() -> None:
     '''
     Test the :func:`beartype._util.text.utiltextrepr.represent_object`
     function.
@@ -86,6 +86,40 @@ def test_represent_object():
     assert len(like_a_star_of_heaven) == 2
 
 
+def test_represent_func() -> None:
+    '''
+    Test the :func:`beartype._util.text.utiltextrepr.represent_func`
+    function.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.text.utiltextrepr import represent_func
+    from beartype._util.utilobject import get_object_basename_scoped
+    from beartype_test.a00_unit.data.data_type import (
+        function,
+        function_lambda,
+        function_partial,
+    )
+
+    # ....................{ ASSERTS                        }....................
+    # Assert that the representation of a pure-Python non-lambda function is
+    # simply its name.
+    assert represent_func(function) == get_object_basename_scoped(function)
+
+    # Assert that the representation of a pure-Python lambda function is the
+    # source code for that lambda. Although we *COULD* attempt to assert the
+    # actual code, doing so would be fragile across Python versions. Instead, we
+    # simply assert this representation to be a non-empty string for sanity.
+    function_lambda_repr = represent_func(function_lambda)
+    assert isinstance(function_lambda_repr, str)
+    assert function_lambda_repr
+
+    # Assert that the representation of a pure-Python "functools.partial" object
+    # is its actual repr() string.
+    assert represent_func(function_partial) == repr(function_partial)
+
+
 def test_represent_pith() -> None:
     '''
     Test the
@@ -109,3 +143,5 @@ def test_represent_pith() -> None:
     repr_nonbuiltin = represent_pith(CustomType())
     assert 'CustomType' in repr_nonbuiltin
     assert 'Collaborator‐ily brambling unspiritually' in repr_nonbuiltin
+
+

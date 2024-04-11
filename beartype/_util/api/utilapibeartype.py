@@ -15,7 +15,7 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._util.func.pep.utilpep484func import (
     is_func_pep484_notypechecked)
 from beartype._util.func.utilfuncget import get_func_annotations_or_none
-from beartype._util.module.lib.utilsphinx import is_sphinx_autodocing
+from beartype._util.api.utilapisphinx import is_sphinx_autodocing
 from beartype._util.py.utilpyinterpreter import is_python_optimized
 from collections.abc import Callable
 
