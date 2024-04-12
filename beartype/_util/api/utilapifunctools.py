@@ -27,8 +27,7 @@ from collections.abc import (
 )
 
 # ....................{ TESTERS                            }....................
-def is_func_functools_lru_cache(func: Any) -> TypeGuard[
-    CallableFunctoolsLruCacheType]:
+def is_func_functools_lru_cache(func: Any) -> TypeGuard[Callable]:
     '''
     :data:`True` only if the passed object is a
     :func:`functools.lru_cache`-memoized **pseudo-callable** (i.e., low-level

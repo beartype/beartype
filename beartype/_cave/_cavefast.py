@@ -267,7 +267,7 @@ interpreters,** including:
 
 See Also
 --------
-:class:`MethodBoundInstanceOrClassType`
+:class:`.MethodBoundInstanceOrClassType`
     Type of all pure-Python bound instance and class methods.
 '''
 
@@ -291,7 +291,7 @@ Caveats
 -------
 There exists *no* corresponding :class:`MethodUnboundInstanceType` type, as
 unbound pure-Python instance methods are ambiguously implemented as functions of
-type :class:`FunctionType` indistinguishable from conventional functions.
+type :class:`.FunctionType` indistinguishable from conventional functions.
 Indeed, `official documentation <PyInstanceMethod_Type documentation_>`__ for
 the ``PyInstanceMethod_Type`` C type explicitly admits that:
 
@@ -303,6 +303,7 @@ the ``PyInstanceMethod_Type`` C type explicitly admits that:
 '''
 
 
+#FIXME: Directly alias this to "_types.MethodWrapperType" now, please.
 # Although Python >= 3.7 now exposes an explicit method wrapper type via the
 # standard "types.MethodWrapperType" object, this is of no benefit to older
 # versions of Python. Ergo, the type of an arbitrary method wrapper guaranteed
@@ -1335,6 +1336,18 @@ associated with callable methods implemented in pure Python).
 '''
 
 
+MethodDescriptorNondataTypes = (
+    MethodDecoratorClassType,
+    MethodDecoratorStaticType,
+    MethodBoundInstanceOrClassType,
+)
+'''
+Tuple of all **builtin method non-data descriptor types** (i.e., C-based
+descriptors builtin to Python defining only the ``__get__()`` dunder method,
+encapsulating read-only access to some kind of method).
+'''
+
+
 MethodDescriptorTypes = (
     # @classmethod, @staticmethod, and @property descriptor types.
     MethodDecoratorBuiltinTypes + (
@@ -1343,16 +1356,16 @@ MethodDescriptorTypes = (
     )
 )
 '''
-Tuple of all **C-based unbound method descriptor types** (i.e., builtin types
-implemented in low-level C whose instances are typically uncallable, associated
-with callable methods implemented in pure Python).
+Tuple of all **builtin method descriptor types** (i.e., C-based descriptors
+builtin to Python, encapsulating various operations on various kinds of methods
+whose instances are typically uncallable).
 
 This tuple matches the types of all:
 
 * **Class method descriptors** (i.e., methods decorated by the builtin
   :class:`classmethod` decorator).
-* Instance method descriptors (i.e., methods *not* decorated by a builtin method
-  decorator).
+* **Instance method descriptors** (i.e., methods *not* decorated by a builtin
+  method decorator).
 * **Property method descriptors** (i.e., methods decorated by the builtin
   :class:`property` decorator).
 * **Static method descriptors** (i.e., methods decorated by the builtin

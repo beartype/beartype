@@ -4,8 +4,8 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **object utilities** (i.e., supplementary low-level functions
-handling arbitrary objects in a general-purpose manner).
+Project-wide **object utilities** (i.e., low-level callables handling arbitrary
+objects in a general-purpose manner).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

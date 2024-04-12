@@ -41,9 +41,18 @@ from beartype._util.api.utilapicontextlib import (
 from beartype._util.api.utilapifunctools import is_func_functools_lru_cache
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     release_object_typed)
+from beartype._util.func.utilfuncget import get_func_boundmethod_self
 from beartype._util.func.utilfuncmake import make_func
-from beartype._util.func.utilfunctest import is_func_python
-from beartype._util.func.utilfuncwrap import unwrap_func_once
+from beartype._util.func.utilfunctest import (
+    is_func_boundmethod,
+    is_func_python,
+)
+from beartype._util.func.utilfuncwrap import (
+    unwrap_func_once,
+    unwrap_func_boundmethod,
+    unwrap_func_classmethod,
+    unwrap_func_staticmethod,
+)
 from beartype._util.py.utilpyversion import IS_PYTHON_3_8
 from contextlib import contextmanager
 from functools import lru_cache
@@ -433,7 +442,7 @@ def beartype_descriptor_decorator_builtin(
         # Ergo, the name "__func__" of this dunder attribute is disingenuous.
         # This descriptor does *NOT* merely decorate functions; this descriptor
         # permissively decorates all callable objects.
-        descriptor_wrappee = descriptor.__func__  # type: ignore[union-attr]
+        descriptor_wrappee = unwrap_func_classmethod(descriptor)  # type: ignore[arg-type]
 
         # If this wrappee is *NOT* a pure-Python unbound function, this wrappee
         # is C-based and/or a type. In either case, avoid type-checking this
@@ -497,8 +506,11 @@ def beartype_descriptor_decorator_builtin(
     #
     # If this descriptor is a static method...
     elif descriptor_type is MethodDecoratorStaticType:
+        # Possibly C-based callable wrappee object decorated by this descriptor.
+        descriptor_wrappee = unwrap_func_staticmethod(descriptor)  # type: ignore[arg-type]
+
         # Pure-Python unbound function type-checking this static method.
-        func_checked = beartype_func(descriptor.__func__, **kwargs) # type: ignore[union-attr]
+        func_checked = beartype_func(descriptor_wrappee, **kwargs) # type: ignore[union-attr]
 
         # Return a new static method descriptor decorating the pure-Python
         # unbound function wrapped by this descriptor with type-checking,
@@ -514,7 +526,7 @@ def beartype_descriptor_decorator_builtin(
     )
 
 # ....................{ PRIVATE ~ decorators               }....................
-def _beartype_descriptor_method_bound(
+def _beartype_descriptor_boundmethod(
     descriptor: BeartypeableT, **kwargs) -> BeartypeableT:
     '''
     Decorate the passed **builtin bound method object** (i.e., C-based bound
@@ -536,11 +548,14 @@ def _beartype_descriptor_method_bound(
     BeartypeableT
         New pure-Python callable wrapping this descriptor with type-checking.
     '''
-    assert isinstance(descriptor, MethodBoundInstanceOrClassType), (
+    assert is_func_boundmethod(descriptor), (
         f'{repr(descriptor)} not builtin bound method descriptor.')
 
-    # Pure-Python unbound function encapsulated by this descriptor.
-    descriptor_func_old = descriptor.__func__
+    # Possibly C-based callable wrappee object encapsulated by this descriptor.
+    descriptor_wrappee = unwrap_func_boundmethod(descriptor)
+
+    # Instance object to which this descriptor was bound at instantiation time.
+    descriptor_self = get_func_boundmethod_self(descriptor)
 
     # Pure-Python unbound function decorating the similarly pure-Python unbound
     # function encapsulated by this descriptor with type-checking.
@@ -553,7 +568,7 @@ def _beartype_descriptor_method_bound(
     #   descriptor (created below) encapsulating this wrapper function. Bad!
     #   Thankfully, only one such attribute exists as of this time: "__doc__".
     #   We propagate this attribute manually below.
-    descriptor_func_new = beartype_func(func=descriptor_func_old, **kwargs)  # pyright: ignore
+    func_checked = beartype_func(func=descriptor_wrappee, **kwargs)  # pyright: ignore
 
     # New instance method descriptor rebinding this function to the instance of
     # the class bound to the prior descriptor.
@@ -571,7 +586,7 @@ def _beartype_descriptor_method_bound(
     #   That said, there exist *NO* benefits to doing so. Indeed, doing so only
     #   reduces the legibility and maintainability of this operation.
     descriptor_new = MethodBoundInstanceOrClassType(
-        descriptor_func_new, descriptor.__self__)  # type: ignore[return-value]
+        func_checked, descriptor_self)  # type: ignore[return-value]
 
     #FIXME: Actually, Python doesn't appear to support this at the moment.
     #Attempting to do so raises this exception:
@@ -639,7 +654,7 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
             f'(i.e., callable object defining __call__() dunder method).'
         )
     # Else, this object is a pseudo-callable.
-
+    #
     # If this method is *NOT* pure-Python, this method is C-based. In this
     # case...
     #
@@ -648,7 +663,7 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     # does *NOT* apply to C-based pseudo-callables; indeed, there exists *NO*
     # general-purpose means of safely monkey-patching the latter. Instead,
     # specific instances of the latter *MUST* be manually detected and handled.
-    if not is_func_python(pseudofunc_call_method):
+    elif not is_func_python(pseudofunc_call_method):
         # If this is a C-based @functools.lru_cache-memoized callable (i.e.,
         # low-level C-based callable object both created and returned by the
         # standard @functools.lru_cache decorator), @beartype was listed above
@@ -697,7 +712,7 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     #   harmful, @beartype prefers the former. See also official documentation
     #   on the subject:
     #       https://docs.python.org/3/reference/datamodel.html#special-method-names
-    pseudofunc.__class__.__call__ = _beartype_descriptor_method_bound(  # type: ignore[assignment,method-assign]
+    pseudofunc.__class__.__call__ = _beartype_descriptor_boundmethod(  # type: ignore[assignment,method-assign]
         descriptor=pseudofunc_call_method, **kwargs)
 
     # Return this monkey-patched object.

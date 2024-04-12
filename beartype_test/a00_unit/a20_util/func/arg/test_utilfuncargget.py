@@ -111,6 +111,11 @@ def test_get_func_args_len_flexible() -> None:
         func_args_2_flex_mandatory_wrapped, is_unwrap=False) == 0
 
     # ....................{ FAIL                           }....................
+    # Assert this getter raises the expected exception when passed an uncallable
+    # object.
+    with raises(_BeartypeUtilCallableException):
+        get_func_args_flexible_len('Following his eager soul, the wanderer')
+
     # Assert this getter raises the expected exception when passed a C-based
     # callable.
     with raises(_BeartypeUtilCallableException):

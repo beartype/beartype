@@ -22,7 +22,10 @@ from beartype._util.func.arg.utilfuncargiter import (
     ARG_META_INDEX_NAME,
     iter_func_args,
 )
-from beartype._util.func.utilfunccodeobj import get_func_codeobj
+from beartype._util.func.utilfunccodeobj import (
+    get_func_codeobj_or_none,
+    get_func_codeobj,
+)
 from collections.abc import Callable
 
 # ....................{ GETTERS ~ arg                      }....................
@@ -143,10 +146,21 @@ def get_func_args_flexible_len(
         is_func_functools_partial,
         unwrap_func_functools_partial_once,
     )
+    from beartype._util.func.utilfuncwrap import unwrap_func_boundmethod
 
+    # Code object underlying the passed pure-Python callable unwrapped if any
+    # *OR* "None" otherwise (i.e., that callable has *NO* code object).
+    func_codeobj = get_func_codeobj_or_none(func=func, is_unwrap=is_unwrap)
+
+    # If that callable has a code object, return the number of flexible
+    # parameters accepted by this callable exposed by this code object.
+    if func_codeobj:
+        return func_codeobj.co_argcount
+    # Else, that callable has *NO* code object.
+    #
     # If unwrapping that callable *AND* that callable is a partial (i.e.,
     # "functools.partial" object wrapping a lower-level callable)...
-    if is_unwrap and is_func_functools_partial(func):
+    elif is_unwrap and is_func_functools_partial(func):
         # Pure-Python wrappee callable wrapped by that partial.
         wrappee = unwrap_func_functools_partial_once(func)
 
@@ -198,19 +212,69 @@ def get_func_args_flexible_len(
 
         # Return this number.
         return func_args_flexible_len
-    # Else, that callable is *NOT* a partial. In this case, fallback to the
-    # standard logic for pure-Python callables.
+    # Else, that callable is *NOT* a partial.
+    #
+    # By process of elimination, that callable *MUST* be an otherwise uncallable
+    # object whose class has intentionally made that object callable by defining
+    # the __call__() dunder method. Fallback to introspecting that method.
 
-    # Code object underlying the passed pure-Python callable unwrapped.
-    func_codeobj = get_func_codeobj(
-        func=func,
+    # If that callable is *NOT* actually callable, raise an exception.
+    if not callable(func):
+        raise exception_cls(f'{exception_prefix}{repr(func)} uncallable.')
+    # Else, that callable is callable.
+
+    # "__call__" attribute of that callable if any *OR* "None" otherwise (i.e.,
+    # if that callable is actually uncallable).
+    func_call_attr = getattr(func, '__call__', None)
+
+    # If that callable fails to define the "__call__" attribute, that callable
+    # is actually uncallable. But the callable() builtin claimed that callable
+    # to be callable above. In this case, raise an exception.
+    #
+    # Note that this should *NEVER* happen. Nonetheless, this just happened.
+    if func_call_attr is None:  # pragma: no cover
+        raise exception_cls(
+            f'{exception_prefix}{repr(func)} uncallable '
+            f'(i.e., defines no __call__() dunder method).'
+        )
+    # Else, that callable defines the __call__() dunder method.
+
+    # Unbound pure-Python __call__() function encapsulated by this C-based bound
+    # method descriptor bound to this callable object.
+    func_call = unwrap_func_boundmethod(
+        func=func_call_attr,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+
+    # Number of flexible parameters accepted by this __call__() function.
+    #
+    # Note that this recursive function call is guaranteed to immediately bottom
+    # out and thus be safe for similar reasons as given above.
+    func_call_args_flexible_len = get_func_args_flexible_len(
+        func=func_call,
         is_unwrap=is_unwrap,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
 
-    # Return the number of flexible parameters accepted by this callable.
-    return func_codeobj.co_argcount
+    # If this number is zero, the caller maliciously defined an invalid
+    # __call__() dunder method accepting *NO* parameters. Since this
+    # paradoxically includes the mandatory first "self" parameter for a bound
+    # method descriptor, it is probably infeasible for this edge case to occur.
+    # Nonetheless, raise an exception.
+    if not func_call_args_flexible_len:  # pragma: no cover
+        raise exception_cls(
+            f'{exception_prefix}{repr(func_call_attr)} accepts no '
+            f'parameters despite being a bound instance method descriptor.'
+        )
+    # Else, this number is positive.
+
+    # Return this number minus one to account for the fact that this bound
+    # method descriptor implicitly passes the instance object to which this
+    # method descriptor is bound as the first parameter to all calls of this
+    # method descriptor.
+    return func_call_args_flexible_len - 1
 
 
 #FIXME: Unit test us up, please.

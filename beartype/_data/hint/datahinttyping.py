@@ -37,7 +37,7 @@ from beartype.typing import (
     Union,
 )
 from beartype._cave._cavefast import (
-    # MethodBoundInstanceOrClassType,
+    MethodBoundInstanceOrClassType,
     MethodDecoratorClassType,
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
@@ -247,6 +247,27 @@ Specifically, this hint matches:
 * Pure-Python callables, including generators (but *not* C-based callables,
   which lack code objects).
 * Pure-Python callable stack frames.
+'''
+
+
+MethodDescriptorNondata = Union[
+    # A C-based unbound class method descriptor (i.e., a pure-Python unbound
+    # function decorated by the builtin @classmethod decorator) *OR*...
+    MethodDecoratorClassType,
+
+    # A C-based unbound static method descriptor (i.e., a pure-Python
+    # unbound function decorated by the builtin @staticmethod decorator).
+    MethodDecoratorStaticType,
+
+    # A C-based bound method descriptor (i.e., a pure-Python unbound
+    # function bound to an object instance on Python's instantiation of that
+    # object) *OR*...
+    MethodBoundInstanceOrClassType,
+]
+'''
+PEP-compliant type hint matching any **builtin method non-data descriptor**
+(i.e., C-based descriptor builtin to Python defining only the ``__get__()``
+dunder method, encapsulating read-only access to some kind of method).
 '''
 
 # ....................{ CALLABLE ~ args                    }....................

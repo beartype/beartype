@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype.typing import Any
+from beartype._cave._cavefast import MethodBoundInstanceOrClassType
 from beartype._data.hint.datahintfactory import TypeGuard
 from beartype._data.hint.datahinttyping import (
     Codeobjable,
@@ -55,7 +56,7 @@ AST-based parsing, which comes with its own substantial caveats, concerns,
 edge cases, and false positives. If you must pick your poison, pick this one.
 '''
 
-# ....................{ VALIDATORS                         }....................
+# ....................{ RAISERS                            }....................
 def die_unless_func_python(
     # Mandatory parameters.
     func: Codeobjable,
@@ -114,7 +115,63 @@ def die_unless_func_python(
             f'{exception_prefix}{repr(func)} not pure-Python function.')
     # Else, that callable is pure-Python.
 
-# ....................{ VALIDATORS ~ descriptors           }....................
+# ....................{ RAISERS ~ descriptors              }....................
+#FIXME: Unit test us up, please.
+def die_unless_func_boundmethod(
+    # Mandatory parameters.
+    func: Any,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
+) -> None:
+    '''
+    Raise an exception unless the passed object is a **C-based bound instance
+    method descriptor** callable implicitly instantiated and assigned on the
+    instantiation of an object whose class declares an instance function (whose
+    first parameter is typically named ``self``) as an instance variable of that
+    object such that that callable unconditionally passes that object as the
+    value of that first parameter on all calls to that callable).
+
+    Parameters
+    ----------
+    func : Any
+        Object to be inspected.
+    exception_cls : TypeException, optional
+        Type of exception to be raised. Defaults to
+        :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Raises
+    ------
+    exception_cls
+         If the passed object is *not* a bound method descriptor.
+
+    See Also
+    --------
+    :func:`.is_func_boundmethod`
+        Further details.
+    '''
+
+    # If this object is *NOT* a bound method descriptor, raise an exception.
+    if not is_func_boundmethod(func):
+        assert isinstance(exception_cls, type), (
+            f'{repr(exception_cls)} not class.')
+        assert issubclass(exception_cls, Exception), (
+            f'{repr(exception_cls)} not exception subclass.')
+        assert isinstance(exception_prefix, str), (
+            f'{repr(exception_prefix)} not string.')
+
+        # Raise a human-readable exception.
+        raise exception_cls(
+            f'{exception_prefix}{repr(func)} not '
+            f'C-based bound instance method descriptor.'
+        )
+    # Else, this object is a bound method descriptor.
+
+
 def die_unless_func_classmethod(
     # Mandatory parameters.
     func: Any,
@@ -337,6 +394,42 @@ def is_func_python(func: object) -> TypeGuard[Callable]:
     return get_func_codeobj_or_none(func) is not None
 
 # ....................{ TESTERS ~ descriptor               }....................
+#FIXME: Unit test us up, please.
+def is_func_boundmethod(func: Any) -> TypeGuard[MethodBoundInstanceOrClassType]:
+    '''
+    :data:`True` only if the passed object is a **C-based bound instance method
+    descriptor** (i.e., callable implicitly instantiated and assigned on the
+    instantiation of an object whose class declares an instance function (whose
+    first parameter is typically named ``self``) as an instance variable of that
+    object such that that callable unconditionally passes that object as the
+    value of that first parameter on all calls to that callable).
+
+    Caveats
+    -------
+    Instance method objects are *only* directly accessible as instance
+    attributes. When accessed as either class attributes *or* via the low-level
+    :attr:`object.__dict__` dictionary, instance methods are only functions
+    (i.e., instances of the standard :class:`beartype.cave.FunctionType` type).
+
+    Instance method objects are callable. Indeed, the callability of instance
+    method objects is the entire point of instance method objects.
+
+    Parameters
+    ----------
+    func : object
+        Object to be inspected.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this object is a C-based bound instance method
+        descriptor.
+    '''
+
+    # Only the penitent one-liner shall pass.
+    return isinstance(func, MethodBoundInstanceOrClassType)
+
+
 def is_func_classmethod(func: Any) -> TypeGuard[classmethod]:
     '''
     :data:`True` only if the passed object is a **C-based unbound class method

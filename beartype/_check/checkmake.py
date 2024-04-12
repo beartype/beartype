@@ -642,6 +642,46 @@ def _make_func_checker(
                 hint_refs_type_basename,
             ) = make_code_check(hint, conf, exception_prefix)
 
+            #FIXME: Actually, nothing below is particularly significant. Users
+            #now basically require this. So, let's find a way to do this. The
+            #only genuinely significant blocker here from @beartype's
+            #perspective is *MEMOIZATION.* Currently, the parent factories
+            #(e.g., make_func_raiser()) transitively calling this factory are
+            #memoized by @callable_cached. Clearly, memoization breaks down in
+            #the face of relative forward references... *OR DOES IT!?* We now
+            #need to probably:
+            #* Figure out a way of replacing all relative forward references
+            #  with corresponding "ForwardRefRelativeProxy" objects.
+            #* This is a fundamentally new type of thing we currently do *NOT*
+            #  have. The idea here is that these objects should dynamically
+            #  introspect up the call stack for the first stack frame residing
+            #  in a non-"beartype" module, which these objects then resolve each
+            #  relative forward reference against.
+            #* Consider refactoring our "codemake" algorthm to unconditionally
+            #  do this for *ALL* relative forward references. Doing so would
+            #  (probably) be a lot faster than the current global string
+            #  replacement approach... maybe. Okay, maybe not. But maybe.
+            #
+            #Sounds fun! Sounds like a lot of non-trivial work, too. But that's
+            #where all the fun resides, doesn't it? *DOESN'T IT!?*
+            #FIXME: *WAIT.* That doesn't quite work. The issue, of course, that
+            #the scope in which a callable is called may no longer have access
+            #to the scope in which a callable was defined, which is where the
+            #class referred to by relative forward references actually lives.
+            #So, we absolutely should *NOT* "Consider refactoring our..." No.
+            #Don't do that. That said, the above idea *SHOULD* still behave
+            #itself for if_bearable() and die_if_unbearable(), because these
+            #statement-level type-checkers actually do run in the same scopes
+            #that their type hints are defined in. Huh. Pretty nifty, eh? This
+            #then suggests that:
+            #* We'll need to generalize our "codemake" function to accept a new
+            #  optional "is_refs_relative_proxy: bool = False" parameter. When:
+            #  * "True", code generation replaces all relative forward
+            #    references with corresponding "ForwardRefRelativeProxy" objects
+            #    as detailed above.
+            #  * "False", code generation simply returns relative forward
+            #    references as it currently does.
+
             # If this hint contains one or more relative forward references,
             # this hint is non-portable across lexical scopes. In this case,
             # raise an exception. Why? Because this hint is relative to and thus
