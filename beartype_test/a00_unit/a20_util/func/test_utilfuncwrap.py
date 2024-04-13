@@ -59,17 +59,17 @@ def test_unwrap_func_all() -> None:
         in_a_station_of_the_metro_line_two)
 
 # ....................{ TESTS ~ descriptor                 }....................
-def test_unwrap_func_classmethod() -> None:
+def test_unwrap_func_classmethod_once() -> None:
     '''
     Test the
-    :func:`beartype._util.func.utilfuncwrap.unwrap_func_classmethod`
+    :func:`beartype._util.func.utilfuncwrap.unwrap_func_classmethod_once`
     getter.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableWrapperException
-    from beartype._util.func.utilfuncwrap import unwrap_func_classmethod
+    from beartype._util.func.utilfuncwrap import unwrap_func_classmethod_once
     from beartype_test.a00_unit.data.data_type import CALLABLES
     from pytest import raises
 
@@ -100,7 +100,7 @@ def test_unwrap_func_classmethod() -> None:
     # "beartype.cave.MethodBoundInstanceOrClassType" type.
     class_method = TheLimitsOfTheDeadAndLivingWorld.__dict__[
         'of_insects_beasts_and_birds']
-    class_method_wrappee = unwrap_func_classmethod(class_method)
+    class_method_wrappee = unwrap_func_classmethod_once(class_method)
     assert class_method_wrappee is never_to_be_reclaimed
 
     # ....................{ FAIL                           }....................
@@ -108,20 +108,20 @@ def test_unwrap_func_classmethod() -> None:
     # that is *NOT* a class method descriptor.
     for some_callable in CALLABLES:
         with raises(_BeartypeUtilCallableWrapperException):
-            unwrap_func_classmethod(some_callable)
+            unwrap_func_classmethod_once(some_callable)
 
 
-def test_unwrap_func_staticmethod() -> None:
+def test_unwrap_func_staticmethod_once() -> None:
     '''
     Test the
-    :func:`beartype._util.func.utilfuncwrap.unwrap_func_staticmethod`
+    :func:`beartype._util.func.utilfuncwrap.unwrap_func_staticmethod_once`
     getter.
     '''
 
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar._roarexc import _BeartypeUtilCallableWrapperException
-    from beartype._util.func.utilfuncwrap import unwrap_func_staticmethod
+    from beartype._util.func.utilfuncwrap import unwrap_func_staticmethod_once
     from beartype_test.a00_unit.data.data_type import CALLABLES
     from pytest import raises
 
@@ -151,7 +151,7 @@ def test_unwrap_func_staticmethod() -> None:
     # "beartype.cave.MethodBoundInstanceOrClassType" type.
     static_method = TheirFoodAndTheirRetreatForEverGone.__dict__[
         'so_much_of_life_and_joy_is_lost']
-    static_method_wrappee = unwrap_func_staticmethod(static_method)
+    static_method_wrappee = unwrap_func_staticmethod_once(static_method)
     assert static_method_wrappee is becomes_its_spoil
 
     # ....................{ FAIL                           }....................
@@ -159,4 +159,4 @@ def test_unwrap_func_staticmethod() -> None:
     # that is *NOT* a static method descriptor.
     for some_callable in CALLABLES:
         with raises(_BeartypeUtilCallableWrapperException):
-            unwrap_func_staticmethod(some_callable)
+            unwrap_func_staticmethod_once(some_callable)

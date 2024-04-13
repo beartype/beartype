@@ -17,7 +17,7 @@ from beartype._cave._cavefast import MethodBoundInstanceOrClassType
 from beartype._data.hint.datahinttyping import TypeException
 from collections.abc import Callable
 
-# ....................{ UNWRAPPERS                         }....................
+# ....................{ UNWRAPPERS ~ once                  }....................
 #FIXME: Unit test us up, please.
 def unwrap_func_once(func: Any) -> Callable:
     '''
@@ -65,6 +65,181 @@ def unwrap_func_once(func: Any) -> Callable:
 
     # Return this immediate wrappee callable.
     return func_wrappee
+
+# ....................{ UNWRAPPERS ~ once : descriptor     }....................
+#FIXME: Unit test us up, please.
+def unwrap_func_boundmethod_once(
+    # Mandatory parameters.
+    func: MethodBoundInstanceOrClassType,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallableWrapperException,
+    exception_prefix: str = '',
+) -> Callable:
+    '''
+    Pure-Python unbound function wrapped by the passed **C-based bound instance
+    method descriptor** (i.e., callable implicitly instantiated and assigned on
+    the instantiation of an object whose class declares an instance function
+    (whose first parameter is typically named ``self``) as an instance variable
+    of that object such that that callable unconditionally passes that object as
+    the value of that first parameter on all calls to that callable).
+
+    Parameters
+    ----------
+    func : MethodBoundInstanceOrClassType
+        Bound method descriptor to be inspected.
+    exception_cls : TypeException, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`._BeartypeUtilCallableWrapperException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Returns
+    -------
+    Callable
+        Pure-Python unbound function wrapped by this bound method descriptor.
+
+    Raises
+    ------
+    exception_cls
+         If the passed object is *not* a bound method descriptor.
+
+    See Also
+    --------
+    :func:`beartype._util.func.utilfunctest.is_func_boundmethod`
+        Further details.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfunctest import die_unless_func_boundmethod
+
+    # If this object is *NOT* a class method descriptor, raise an exception.
+    die_unless_func_boundmethod(
+        func=func,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+    # Else, this object is a class method descriptor.
+
+    # Return the pure-Python function wrapped by this descriptor. Just do it!
+    return func.__func__
+
+
+def unwrap_func_classmethod_once(
+    # Mandatory parameters.
+    func: classmethod,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallableWrapperException,
+    exception_prefix: str = '',
+) -> Callable:
+    '''
+    Pure-Python unbound function wrapped by the passed **C-based unbound class
+    method descriptor** (i.e., method decorated by the builtin
+    :class:`classmethod` decorator, yielding a non-callable instance of that
+    :class:`classmethod` decorator class implemented in low-level C and
+    accessible via the low-level :attr:`object.__dict__` dictionary rather than
+    as class or instance attributes).
+
+    Parameters
+    ----------
+    func : classmethod
+        Class method descriptor to be inspected.
+    exception_cls : TypeException, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`._BeartypeUtilCallableWrapperException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Returns
+    -------
+    Callable
+        Pure-Python unbound function wrapped by this class method descriptor.
+
+    Raises
+    ------
+    exception_cls
+         If the passed object is *not* a class method descriptor.
+
+    See Also
+    --------
+    :func:`beartype._util.func.utilfunctest.is_func_classmethod`
+        Further details.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfunctest import die_unless_func_classmethod
+
+    # If this object is *NOT* a class method descriptor, raise an exception.
+    die_unless_func_classmethod(
+        func=func,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+    # Else, this object is a class method descriptor.
+
+    # Return the pure-Python function wrapped by this descriptor. Just do it!
+    return func.__func__
+
+
+def unwrap_func_staticmethod_once(
+    # Mandatory parameters.
+    func: staticmethod,
+
+    # Optional parameters.
+    exception_cls: TypeException = _BeartypeUtilCallableWrapperException,
+    exception_prefix: str = '',
+) -> Callable:
+    '''
+    Pure-Python unbound function wrapped by the passed **C-based unbound static
+    method descriptor** (i.e., method decorated by the builtin
+    :class:`staticmethod` decorator, yielding a non-callable instance of that
+    :class:`staticmethod` decorator class implemented in low-level C and
+    accessible via the low-level :attr:`object.__dict__` dictionary rather than
+    as class or instance attributes).
+
+    Parameters
+    ----------
+    func : staticmethod
+        Static method descriptor to be inspected.
+    exception_cls : TypeException, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :exc:`._BeartypeUtilCallableWrapperException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the representation of this object in the
+        exception message. Defaults to the empty string.
+
+    Returns
+    -------
+    Callable
+        Pure-Python unbound function wrapped by this static method descriptor.
+
+    Raises
+    ------
+    exception_cls
+         If the passed object is *not* a static method descriptor.
+
+    See Also
+    --------
+    :func:`beartype._util.func.utilfunctest.is_func_staticmethod`
+        Further details.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfunctest import die_unless_func_staticmethod
+
+    # If this object is *NOT* a static method descriptor, raise an exception.
+    die_unless_func_staticmethod(
+        func=func,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+    # Else, this object is a static method descriptor.
+
+    # Return the pure-Python function wrapped by this descriptor. Just do it!
+    return func.__func__
 
 # ....................{ UNWRAPPERS ~ all                   }....................
 def unwrap_func_all(func: Any) -> Callable:
@@ -196,178 +371,3 @@ def unwrap_func_all_isomorphic(func: Any) -> Callable:
     # Return this wrappee, which is now guaranteed to *NOT* be an isomorphic
     # wrapper but might very well still be a wrapper, which is fine.
     return func
-
-# ....................{ UNWRAPPERS ~ descriptor            }....................
-#FIXME: Unit test us up, please.
-def unwrap_func_boundmethod(
-    # Mandatory parameters.
-    func: MethodBoundInstanceOrClassType,
-
-    # Optional parameters.
-    exception_cls: TypeException = _BeartypeUtilCallableWrapperException,
-    exception_prefix: str = '',
-) -> Callable:
-    '''
-    Pure-Python unbound function wrapped by the passed **C-based bound instance
-    method descriptor** (i.e., callable implicitly instantiated and assigned on
-    the instantiation of an object whose class declares an instance function
-    (whose first parameter is typically named ``self``) as an instance variable
-    of that object such that that callable unconditionally passes that object as
-    the value of that first parameter on all calls to that callable).
-
-    Parameters
-    ----------
-    func : MethodBoundInstanceOrClassType
-        Bound method descriptor to be inspected.
-    exception_cls : TypeException, optional
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :exc:`._BeartypeUtilCallableWrapperException`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
-
-    Returns
-    -------
-    Callable
-        Pure-Python unbound function wrapped by this bound method descriptor.
-
-    Raises
-    ------
-    exception_cls
-         If the passed object is *not* a bound method descriptor.
-
-    See Also
-    --------
-    :func:`beartype._util.func.utilfunctest.is_func_boundmethod`
-        Further details.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.func.utilfunctest import die_unless_func_boundmethod
-
-    # If this object is *NOT* a class method descriptor, raise an exception.
-    die_unless_func_boundmethod(
-        func=func,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
-    # Else, this object is a class method descriptor.
-
-    # Return the pure-Python function wrapped by this descriptor. Just do it!
-    return func.__func__
-
-
-def unwrap_func_classmethod(
-    # Mandatory parameters.
-    func: classmethod,
-
-    # Optional parameters.
-    exception_cls: TypeException = _BeartypeUtilCallableWrapperException,
-    exception_prefix: str = '',
-) -> Callable:
-    '''
-    Pure-Python unbound function wrapped by the passed **C-based unbound class
-    method descriptor** (i.e., method decorated by the builtin
-    :class:`classmethod` decorator, yielding a non-callable instance of that
-    :class:`classmethod` decorator class implemented in low-level C and
-    accessible via the low-level :attr:`object.__dict__` dictionary rather than
-    as class or instance attributes).
-
-    Parameters
-    ----------
-    func : classmethod
-        Class method descriptor to be inspected.
-    exception_cls : TypeException, optional
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :exc:`._BeartypeUtilCallableWrapperException`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
-
-    Returns
-    -------
-    Callable
-        Pure-Python unbound function wrapped by this class method descriptor.
-
-    Raises
-    ------
-    exception_cls
-         If the passed object is *not* a class method descriptor.
-
-    See Also
-    --------
-    :func:`beartype._util.func.utilfunctest.is_func_classmethod`
-        Further details.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.func.utilfunctest import die_unless_func_classmethod
-
-    # If this object is *NOT* a class method descriptor, raise an exception.
-    die_unless_func_classmethod(
-        func=func,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
-    # Else, this object is a class method descriptor.
-
-    # Return the pure-Python function wrapped by this descriptor. Just do it!
-    return func.__func__
-
-
-def unwrap_func_staticmethod(
-    # Mandatory parameters.
-    func: staticmethod,
-
-    # Optional parameters.
-    exception_cls: TypeException = _BeartypeUtilCallableWrapperException,
-    exception_prefix: str = '',
-) -> Callable:
-    '''
-    Pure-Python unbound function wrapped by the passed **C-based unbound static
-    method descriptor** (i.e., method decorated by the builtin
-    :class:`staticmethod` decorator, yielding a non-callable instance of that
-    :class:`staticmethod` decorator class implemented in low-level C and
-    accessible via the low-level :attr:`object.__dict__` dictionary rather than
-    as class or instance attributes).
-
-    Parameters
-    ----------
-    func : staticmethod
-        Static method descriptor to be inspected.
-    exception_cls : TypeException, optional
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :exc:`._BeartypeUtilCallableWrapperException`.
-    exception_prefix : str, optional
-        Human-readable label prefixing the representation of this object in the
-        exception message. Defaults to the empty string.
-
-    Returns
-    -------
-    Callable
-        Pure-Python unbound function wrapped by this static method descriptor.
-
-    Raises
-    ------
-    exception_cls
-         If the passed object is *not* a static method descriptor.
-
-    See Also
-    --------
-    :func:`beartype._util.func.utilfunctest.is_func_staticmethod`
-        Further details.
-    '''
-
-    # Avoid circular import dependencies.
-    from beartype._util.func.utilfunctest import die_unless_func_staticmethod
-
-    # If this object is *NOT* a static method descriptor, raise an exception.
-    die_unless_func_staticmethod(
-        func=func,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
-    # Else, this object is a static method descriptor.
-
-    # Return the pure-Python function wrapped by this descriptor. Just do it!
-    return func.__func__

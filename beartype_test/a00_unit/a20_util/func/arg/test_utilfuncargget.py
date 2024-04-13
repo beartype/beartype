@@ -68,6 +68,7 @@ def test_get_func_args_len_flexible() -> None:
     from beartype._util.func.arg.utilfuncargget import (
         get_func_args_flexible_len)
     from beartype_test.a00_unit.data.data_type import (
+        CallableClass,
         function_partial,
         function_partial_bad,
     )
@@ -82,6 +83,10 @@ def test_get_func_args_len_flexible() -> None:
         func_args_2_flex_mandatory_wrapped,
     )
     from pytest import raises
+
+    # ....................{ LOCALS                         }....................
+    # Callable object whose class defines the __call__() dunder method.
+    callable_object = CallableClass()
 
     # ....................{ PASS                           }....................
     # Assert this getter returns the expected lengths of unwrapped callables.
@@ -98,6 +103,9 @@ def test_get_func_args_len_flexible() -> None:
 
     # Assert this getter returns the expected length of a partial callable.
     assert get_func_args_flexible_len(function_partial) == 0
+
+    # Assert this getter returns the expected length of a callable object.
+    assert get_func_args_flexible_len(callable_object) == 0
 
     # Assert this getter returns 0 when passed a wrapped callable and an option
     # disabling callable unwrapping.

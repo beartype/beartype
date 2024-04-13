@@ -55,14 +55,14 @@ def make_forwardref_indexable_subtype(
     scope_name : Optional[str]
         Possibly ignored lexical scope name. Specifically:
 
-        * If "hint_name" is absolute (i.e., contains one or more ``.``
+        * If ``hint_name`` is absolute (i.e., contains one or more ``.``
           delimiters), this parameter is silently ignored in favour of the
-          fully-qualified name of the module prefixing "hint_name".
-        * If "hint_name" is relative (i.e., contains *no* ``.`` delimiters),
+          fully-qualified name of the module prefixing ``hint_name``.
+        * If ``hint_name`` is relative (i.e., contains *no* ``.`` delimiters),
           this parameter declares the absolute (i.e., fully-qualified) name of
           the lexical scope to which this unresolved type hint is relative.
 
-        The fully-qualified name of the module prefixing "hint_name" (if any)
+        The fully-qualified name of the module prefixing ``hint_name`` (if any)
         thus *always* takes precedence over this lexical scope name, which only
         provides a fallback to resolve relative forward references. While
         unintuitive, this is needed to resolve absolute forward references.

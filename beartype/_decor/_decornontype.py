@@ -49,9 +49,9 @@ from beartype._util.func.utilfunctest import (
 )
 from beartype._util.func.utilfuncwrap import (
     unwrap_func_once,
-    unwrap_func_boundmethod,
-    unwrap_func_classmethod,
-    unwrap_func_staticmethod,
+    unwrap_func_boundmethod_once,
+    unwrap_func_classmethod_once,
+    unwrap_func_staticmethod_once,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_3_8
 from contextlib import contextmanager
@@ -442,7 +442,7 @@ def beartype_descriptor_decorator_builtin(
         # Ergo, the name "__func__" of this dunder attribute is disingenuous.
         # This descriptor does *NOT* merely decorate functions; this descriptor
         # permissively decorates all callable objects.
-        descriptor_wrappee = unwrap_func_classmethod(descriptor)  # type: ignore[arg-type]
+        descriptor_wrappee = unwrap_func_classmethod_once(descriptor)  # type: ignore[arg-type]
 
         # If this wrappee is *NOT* a pure-Python unbound function, this wrappee
         # is C-based and/or a type. In either case, avoid type-checking this
@@ -507,7 +507,7 @@ def beartype_descriptor_decorator_builtin(
     # If this descriptor is a static method...
     elif descriptor_type is MethodDecoratorStaticType:
         # Possibly C-based callable wrappee object decorated by this descriptor.
-        descriptor_wrappee = unwrap_func_staticmethod(descriptor)  # type: ignore[arg-type]
+        descriptor_wrappee = unwrap_func_staticmethod_once(descriptor)  # type: ignore[arg-type]
 
         # Pure-Python unbound function type-checking this static method.
         func_checked = beartype_func(descriptor_wrappee, **kwargs) # type: ignore[union-attr]
@@ -552,7 +552,7 @@ def _beartype_descriptor_boundmethod(
         f'{repr(descriptor)} not builtin bound method descriptor.')
 
     # Possibly C-based callable wrappee object encapsulated by this descriptor.
-    descriptor_wrappee = unwrap_func_boundmethod(descriptor)
+    descriptor_wrappee = unwrap_func_boundmethod_once(descriptor)
 
     # Instance object to which this descriptor was bound at instantiation time.
     descriptor_self = get_func_boundmethod_self(descriptor)

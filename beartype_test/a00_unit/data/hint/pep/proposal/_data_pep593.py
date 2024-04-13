@@ -49,6 +49,17 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
     )
     from functools import partial
 
+    # ..................{ CLASSES                            }..................
+    class TruthSeeker(object):
+        def __call__(self, obj: object) -> bool:
+            '''
+            Tester method returning :data:`True` only if the passed object
+            evaluates to :data:`True` when coerced into a boolean and whose
+            first parameter is ignorable.
+            '''
+
+            return bool(obj)
+
     # ..................{ CALLABLES                          }..................
     def is_true(ignorable_arg, obj):
         '''
@@ -200,6 +211,21 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                     # String constant.
                     HintPithUnsatisfiedMetadata(
                         'Her timid steps to gaze upon a form'),
+                ),
+            ),
+
+            # Annotated of the root "object" superclass annotated by a beartype
+            # validator defined as a callable object.
+            HintPepMetadata(
+                hint=Annotated[object, Is[TruthSeeker()]],
+                pep_sign=HintSignAnnotated,
+                piths_meta=(
+                    # Objects evaluating to "True" when coerced into booleans.
+                    HintPithSatisfiedMetadata(True),
+                    HintPithSatisfiedMetadata(
+                        'Leaped in the boat, he spread his cloak aloft'),
+                    # Empty string.
+                    HintPithUnsatisfiedMetadata(''),
                 ),
             ),
 

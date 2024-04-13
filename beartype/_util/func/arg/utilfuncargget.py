@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype.typing import Optional
+from beartype._cave._cavefast import MethodBoundInstanceOrClassType
 from beartype._data.hint.datahinttyping import (
     Codeobjable,
     TypeException,
@@ -142,11 +143,9 @@ def get_func_args_flexible_len(
 
     # Avoid circular import dependencies.
     from beartype._util.api.utilapifunctools import (
-        get_func_functools_partial_args,
+        get_func_functools_partial_args_flexible_len,
         is_func_functools_partial,
-        unwrap_func_functools_partial_once,
     )
-    from beartype._util.func.utilfuncwrap import unwrap_func_boundmethod
 
     # Code object underlying the passed pure-Python callable unwrapped if any
     # *OR* "None" otherwise (i.e., that callable has *NO* code object).
@@ -157,71 +156,29 @@ def get_func_args_flexible_len(
     if func_codeobj:
         return func_codeobj.co_argcount
     # Else, that callable has *NO* code object.
-    #
-    # If unwrapping that callable *AND* that callable is a partial (i.e.,
-    # "functools.partial" object wrapping a lower-level callable)...
-    elif is_unwrap and is_func_functools_partial(func):
-        # Pure-Python wrappee callable wrapped by that partial.
-        wrappee = unwrap_func_functools_partial_once(func)
-
-        # Positional and keyword parameters implicitly passed by this partial to
-        # this wrappee.
-        partial_args, partial_kwargs = get_func_functools_partial_args(func)
-
-        # Number of flexible parameters accepted by this wrappee.
-        #
-        # Note that this recursive function call is guaranteed to immediately
-        # bottom out and thus be safe. Why? Because a partial *CANNOT* wrap
-        # itself, because a partial has yet to be defined when the
-        # functools.partial.__init__() method defining that partial is called.
-        # Technically, the caller *COULD* violate sanity by directly interfering
-        # with the "func" instance variable of this partial after instantiation.
-        # Pragmatically, a malicious edge case like that is unlikely in the
-        # extreme. You are now reading this comment because this edge case just
-        # blew up in your face, aren't you!?!? *UGH!*
-        wrappee_args_flexible_len = get_func_args_flexible_len(
-            func=wrappee,
-            is_unwrap=is_unwrap,
-            exception_cls=exception_cls,
-            exception_prefix=exception_prefix,
-        )
-
-        # Number of flexible parameters passed by this partial to this wrappee.
-        partial_args_flexible_len = len(partial_args) + len(partial_kwargs)
-
-        # Number of flexible parameters accepted by this wrappee minus the
-        # number of flexible parameters passed by this partial to this wrappee.
-        func_args_flexible_len = (
-            wrappee_args_flexible_len - partial_args_flexible_len)
-
-        # If this number is negative, the caller maliciously defined an invalid
-        # partial passing more flexible parameters than this wrappee accepts. In
-        # this case, raise an exception.
-        if func_args_flexible_len < 0:
-            raise exception_cls(
-                f'{exception_prefix}{repr(func)} passes '
-                f'{partial_args_flexible_len} parameter(s) to '
-                f'{repr(wrappee)} accepting only '
-                f'{wrappee_args_flexible_len} parameter(s) '
-                f'(i.e., {partial_args_flexible_len} > '
-                f'{wrappee_args_flexible_len}).'
-            )
-        # If this number is non-negative, implying the caller correctly defined
-        # a valid partial passing no more flexible parameters than this wrappee
-        # accepts.
-
-        # Return this number.
-        return func_args_flexible_len
-    # Else, that callable is *NOT* a partial.
-    #
-    # By process of elimination, that callable *MUST* be an otherwise uncallable
-    # object whose class has intentionally made that object callable by defining
-    # the __call__() dunder method. Fallback to introspecting that method.
 
     # If that callable is *NOT* actually callable, raise an exception.
     if not callable(func):
         raise exception_cls(f'{exception_prefix}{repr(func)} uncallable.')
     # Else, that callable is callable.
+
+    # If unwrapping that callable *AND* that callable is a partial (i.e.,
+    # "functools.partial" object wrapping a lower-level callable), return the
+    # total number of flexible parameters accepted by the pure-Python wrappee
+    # callable wrapped by this partial minus the number of flexible parameters
+    # passed by this partial to this wrappee.
+    if is_unwrap and is_func_functools_partial(func):
+        return get_func_functools_partial_args_flexible_len(
+            func=func,
+            is_unwrap=is_unwrap,
+            exception_cls=exception_cls,
+            exception_prefix=exception_prefix,
+        )
+    # Else, that callable is *NOT* a partial.
+    #
+    # By process of elimination, that callable *MUST* be an otherwise uncallable
+    # object whose class has intentionally made that object callable by defining
+    # the __call__() dunder method. Fallback to introspecting that method.
 
     # "__call__" attribute of that callable if any *OR* "None" otherwise (i.e.,
     # if that callable is actually uncallable).
@@ -239,42 +196,16 @@ def get_func_args_flexible_len(
         )
     # Else, that callable defines the __call__() dunder method.
 
-    # Unbound pure-Python __call__() function encapsulated by this C-based bound
-    # method descriptor bound to this callable object.
-    func_call = unwrap_func_boundmethod(
+    # Return the total number of flexible parameters accepted by the pure-Python
+    # wrappee callable wrapped by this bound method descriptor minus one to
+    # account for the first "self" parameter implicitly
+    # passed by this descriptor to that callable.
+    return _get_func_boundmethod_args_flexible_len(
         func=func_call_attr,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
-
-    # Number of flexible parameters accepted by this __call__() function.
-    #
-    # Note that this recursive function call is guaranteed to immediately bottom
-    # out and thus be safe for similar reasons as given above.
-    func_call_args_flexible_len = get_func_args_flexible_len(
-        func=func_call,
         is_unwrap=is_unwrap,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
-
-    # If this number is zero, the caller maliciously defined an invalid
-    # __call__() dunder method accepting *NO* parameters. Since this
-    # paradoxically includes the mandatory first "self" parameter for a bound
-    # method descriptor, it is probably infeasible for this edge case to occur.
-    # Nonetheless, raise an exception.
-    if not func_call_args_flexible_len:  # pragma: no cover
-        raise exception_cls(
-            f'{exception_prefix}{repr(func_call_attr)} accepts no '
-            f'parameters despite being a bound instance method descriptor.'
-        )
-    # Else, this number is positive.
-
-    # Return this number minus one to account for the fact that this bound
-    # method descriptor implicitly passes the instance object to which this
-    # method descriptor is bound as the first parameter to all calls of this
-    # method descriptor.
-    return func_call_args_flexible_len - 1
 
 
 #FIXME: Unit test us up, please.
@@ -324,3 +255,93 @@ def get_func_args_nonvariadic_len(
 
     # Return the number of non-variadic parameters accepted by this callable.
     return func_codeobj.co_argcount + func_codeobj.co_kwonlyargcount
+
+# ....................{ PRIVATE ~ getters : args           }....................
+def _get_func_boundmethod_args_flexible_len(
+    # Mandatory parameters.
+    func: MethodBoundInstanceOrClassType,
+
+    # Optional parameters.
+    is_unwrap: bool = True,
+    exception_cls: TypeException = _BeartypeUtilCallableException,
+    exception_prefix: str = '',
+) -> int:
+    '''
+    Number of **flexible parameters** (i.e., parameters passable as either
+    positional or keyword arguments but *not* positional-only, keyword-only,
+    variadic, or other more constrained kinds of parameters) accepted by the
+    passed **C-based bound instance method descriptor** (i.e., callable
+    implicitly instantiated and assigned on the instantiation of an object whose
+    class declares an instance function (whose first parameter is typically
+    named ``self``)).
+
+    Specifically, this getter transparently returns one less than the total
+    number of flexible parameters accepted by the lower-level callable wrapped
+    by this descriptor to account for the first ``self`` parameter implicitly
+    passed by this descriptor to that callable.
+
+    Parameters
+    ----------
+    func : MethodBoundInstanceOrClassType
+        Bound method descriptor to be inspected.
+    is_unwrap: bool, optional
+        :data:`True` only if this getter implicitly calls the
+        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
+        Defaults to :data:`True` for safety. See :func:`.get_func_codeobj` for
+        further commentary.
+    exception_cls : type, optional
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilCallableException`.
+    exception_prefix : str, optional
+        Human-readable label prefixing the message of any exception raised in
+        the event of a fatal error. Defaults to the empty string.
+
+    Returns
+    -------
+    int
+        Number of flexible parameters accepted by this callable.
+
+    Raises
+    ------
+    exception_cls
+         If that callable is *not* pure-Python.
+    '''
+
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfuncwrap import unwrap_func_boundmethod_once
+
+    # Unbound pure-Python function encapsulated by this C-based bound method
+    # descriptor bound to some callable object.
+    wrappee = unwrap_func_boundmethod_once(
+        func=func,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+
+    # Number of flexible parameters accepted by that function.
+    #
+    # Note that this recursive function call is guaranteed to immediately bottom
+    # out and thus be safe for similar reasons as given above.
+    wrappee_args_flexible_len = get_func_args_flexible_len(
+        func=wrappee,
+        is_unwrap=is_unwrap,
+        exception_cls=exception_cls,
+        exception_prefix=exception_prefix,
+    )
+
+    # If this number is zero, the caller maliciously defined a non-static
+    # function accepting *NO* parameters. Since this paradoxically includes the
+    # mandatory first "self" parameter for a bound method descriptor, it is
+    # infeasible for this edge case to occur. Nonetheless, raise an exception.
+    if not wrappee_args_flexible_len:  # pragma: no cover
+        raise exception_cls(
+            f'{exception_prefix}{repr(func)} accepts no '
+            f'parameters despite being a bound instance method descriptor.'
+        )
+    # Else, this number is positive.
+
+    # Return this number minus one to account for the fact that this bound
+    # method descriptor implicitly passes the instance object to which this
+    # method descriptor is bound as the first parameter to all calls of this
+    # method descriptor.
+    return wrappee_args_flexible_len - 1
