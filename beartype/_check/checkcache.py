@@ -41,6 +41,7 @@ def clear_checker_caches() -> None:
       :data:`beartype._check.convert.convcoerce._hint_repr_to_hint`
       dictionary).
     '''
+    print('Clearing all \"beartype._check\" caches...')
 
     # Clear all relevant caches used throughout this subpackage.
     _forwardref_to_referee.clear()

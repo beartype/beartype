@@ -395,6 +395,12 @@ def _uncache_beartype_if_type_redefined(cls: type) -> None:
             # efficiency in the common case of module redefinition.
             _BEARTYPED_MODULE_TO_TYPE_NAME.clear()
 
+            # Set of the unqualified basenames of *ALL* classes in that module
+            # previously decorated by this decorator, redefined *AFTER* clearing
+            # that set above to enable the addition of this type back to this
+            # new set below. Nobody ever said type-checking was gonna be easy.
+            type_names_beartyped = _BEARTYPED_MODULE_TO_TYPE_NAME[module_name]
+
             # Clear *ALL* type-checking caches. Notably:
             # * The forward reference referee cache (i.e., private
             #   "beartype._check.forward.reference.fwdrefmeta._forwardref_to_referee"
@@ -420,11 +426,10 @@ def _uncache_beartype_if_type_redefined(cls: type) -> None:
             # wrapper functions to raise erroneous type-checking violations.
             clear_checker_caches()
         # Else, this is the first decoration of this class by this decorator.
-        # In this case...
-        else:
-            # Record that this class has now been decorated by this decorator.
-            # Technically, this should (probably) be performed *AFTER* this
-            # decorator has actually successfully decorated this class.
-            # Pragmatically, doing so here is simply faster and... simpler.
-            type_names_beartyped.add(type_name)
+
+        # Record that this class has now been decorated by this decorator.
+        # Technically, this should (probably) be performed *AFTER* this
+        # decorator has actually successfully decorated this class.
+        # Pragmatically, doing so here is simply faster and... simpler.
+        type_names_beartyped.add(type_name)
     # Else, this class is *NOT* defined by a module.

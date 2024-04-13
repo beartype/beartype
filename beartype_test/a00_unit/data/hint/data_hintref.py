@@ -176,6 +176,51 @@ class WithSluggishSurge(Generic[T]):
 
         return self
 
+# ....................{ CLASSES ~ reload                   }....................
+# Test decorating a user-defined class with the @beartype decorator where:
+# 1. That class defines a method annotated by a self-referential relative
+#    forward reference (i.e., referring to that class currently being defined).
+# 2. That method is then called.
+# 3. That logic is then repeated *THREE TIMES,* thus redefining that class and
+#    re-calling that method three times. Doing so simulates a hot reload (i.e.,
+#    external reload of the hypothetical user-defined module defining that class
+#    and that function).
+#
+# For reasons that are *NOT* particularly interesting (and would consume seven
+# volumes of fine print), it has to be 3 iterations. 2 is too few.
+#
+# See also this user-reported issue underlying this test case:
+#     https://github.com/beartype/beartype/issues/365
+for _ in range(3):
+    @beartype
+    class OnTheBareMast(object):
+        '''
+        :func:`beartype.beartype`-decorated class defining a method annotated by
+        a **self-referential relative forward reference** (i.e., referring to
+        this class currently being defined).
+        '''
+
+        def __init__(self, and_took_his_lonely_seat: int) -> None:
+            '''
+            Initialize this object with the passed arbitrary parameter.
+            '''
+
+            self.and_took_his_lonely_seat = and_took_his_lonely_seat
+
+
+        @classmethod
+        def over_the_tranquil_sea(
+            cls, and_took_his_lonely_seat: int) -> 'OnTheBareMast':
+            '''
+            Method annotated by a self-referential relative forward reference.
+            '''
+
+            return OnTheBareMast(and_took_his_lonely_seat + 0xBABECAFE)
+
+
+    # Instantiate this class by invoking this factory class method.
+    And_felt_the_boat_speed = OnTheBareMast.over_the_tranquil_sea(0xFEEDBABE)
+
 # ....................{ FUNCTIONS ~ pep : composite : moar }....................
 # Arbitrary functions annotated by PEP-compliant forward references defined as
 # non-trivial Python expressions (i.e., strings that are *NOT* reducible to
