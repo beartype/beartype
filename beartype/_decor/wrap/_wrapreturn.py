@@ -121,6 +121,7 @@ def code_check_return(bear_call: BeartypeCall) -> str:
             # Do this first *BEFORE* passing this hint to any further callables.
             hint = sanify_hint_root_func(
                 hint=hint, pith_name=ARG_NAME_RETURN, bear_call=bear_call)
+            # print(f'Sanified {repr(bear_call.func_wrappee)} return hint {repr(hint_insane)} to {repr(hint)}...')
 
             # If this is the PEP 484-compliant "typing.NoReturn" type hint
             # permitted *ONLY* as a return annotation...
@@ -159,7 +160,7 @@ def code_check_return(bear_call: BeartypeCall) -> str:
                         if is_hint_needs_cls_stack(hint_insane) else
                         None
                     )
-                    # print(f'return hint {repr(hint)} cls_stack: {repr(cls_stack)}')
+                    # print(f'return hint {repr(hint_insane)} -> {repr(hint)} cls_stack: {repr(cls_stack)}')
 
                     # Empty tuple, passed below to satisfy the
                     # _unmemoize_func_wrapper_code() API.

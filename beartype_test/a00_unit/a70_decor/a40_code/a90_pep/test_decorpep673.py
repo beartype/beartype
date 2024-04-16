@@ -50,6 +50,31 @@ def test_decor_pep673() -> None:
         Arbitrary class decorated by :func:`.beartype`.
         '''
 
+        # ...................{ DUNDERS                     }....................
+        def __add__(self: Self, other: object) -> 'Self':
+            '''
+            Arbitrary dunder method annotated by one or more
+            :pep:`673`-compliant self type hints such that the return type hint
+            is the stringified representation of a self type hint.
+
+            This edge case effectively exercises the intersection of:
+
+            * :pep:`563` (i.e., ``from __future__ import annotations``).
+            * Mypy-based **implicit dunder return expansion,** an automatic type
+              hint transformation applied by mypy (and presumably other static
+              type-checkers) in which mypy expands all type hints annotating the
+              returns of standardized dunder methods matching the form
+              ``{type}`` to ``typing.Union[{type}, types.NotImplementedType]``.
+
+            This edge case exercises this issue:
+                https://github.com/beartype/beartype/issues/367
+            '''
+
+            # One-liners in the 21st-and-a-half century!
+            return (
+                other if isinstance(other, GoodClassIsGood) else NotImplemented)
+
+        # ...................{ METHODS                     }....................
         def wonderful_method_is_wonderful(self: Self, count: int) -> List[Self]:
             '''
             Arbitrary method annotated by one or more :pep:`673`-compliant self
@@ -67,10 +92,19 @@ def test_decor_pep673() -> None:
 
             return 'Cleave themselves into chasms, while far below'
 
+
     # Do not taunt Super Happy Fun Instance.
     super_happy_fun_instance = GoodClassIsGood()
+    super_sad_unfun_instance = GoodClassIsGood()
 
     # ....................{ PASS                           }....................
+    # Assert that a dunder method of a @beartype-decorated class satisfying a
+    # PEP 673-compliant self type hint returns the expected object.
+    assert super_happy_fun_instance + super_sad_unfun_instance is (
+        super_sad_unfun_instance)
+    with raises(TypeError):
+        super_happy_fun_instance + 'Do not taunt Super Happy Fun Instance.'
+
     # Assert that a method of a @beartype-decorated class satisfying a PEP
     # 673-compliant self type hint returns the expected object.
     avoid_prolonged_exposure = (
@@ -79,9 +113,9 @@ def test_decor_pep673() -> None:
     assert avoid_prolonged_exposure[ 0] is super_happy_fun_instance
     assert avoid_prolonged_exposure[-1] is super_happy_fun_instance
 
-    # Assert that @beartype raises the expected violation when calling a
-    # method of a @beartype-decorated class erroneously violating a PEP
-    # 673-compliant self type hint.
+    # Assert that @beartype raises the expected violation when calling a method
+    # of a @beartype-decorated class erroneously violating a PEP 673-compliant
+    # self type hint.
     with raises(BeartypeCallHintReturnViolation):
         super_happy_fun_instance.horrible_method_is_horrible()
 

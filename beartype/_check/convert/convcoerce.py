@@ -193,11 +193,11 @@ def coerce_func_hint_root(
         # mypy idiosyncrasies merely to annotate an otherwise normal binary
         # dunder method is one expectation too far.
         #
-        # Ideally, official CPython developers would resolve this by declaring a
-        # new "types.NotImplementedType" type global resembling the existing
-        # "types.NoneType" type global. Since that has yet to happen, mypy has
-        # instead taken the surprisingly sensible course of silently ignoring
-        # this edge case by effectively performing the same type expansion as
+        # In theory, official CPython developers have already resolved this
+        # under Python >= 3.10 by defining the "types.NotImplementedType" type.
+        # In practice, that fails to assist older Python versions. Mypy has
+        # thus taken the surprisingly sensible course of silently ignoring this
+        # edge case by effectively performing the same type expansion as
         # performed here. *applause*
         return Union[hint, NotImplementedType]  # pyright: ignore[reportGeneralTypeIssues]
 

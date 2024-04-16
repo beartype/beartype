@@ -326,6 +326,11 @@ def is_hint_needs_cls_stack(hint: object) -> bool:
     #   *NOT* a PEP 673-compliant self type hint but erroneously matched as one
     #   by this heuristic). This is non-ideal but thankfully ignorable. See the
     #   "Motivation" section of the docstring for further commentary.
+    # * This string is intentionally *NOT* preceded by a "." delimiter (e.g., as
+    #   ".Self" rather than "Self"). Previously, this string was intentionally
+    #   preceded by a "." delimiter; doing so satisfied most edge cases while
+    #   reducing the likelihood of a false positive. Sadly, doing so also failed
+    #   to match "Self" type hints stringified by PEP 563. Grrr!
     # * That the "in" operator is known to be the fastest means of performing
     #   substring matching in Python. Indeed:
     #   * "in" is faster than the str.find() method *SUBSTANTIALLY* faster than
@@ -336,4 +341,4 @@ def is_hint_needs_cls_stack(hint: object) -> bool:
     #
     # See also the extensive timings documented at this StackOverflow question:
     #     https://stackoverflow.com/questions/4901523/whats-a-faster-operation-re-match-search-or-str-find
-    return '.Self' in hint_repr
+    return 'Self' in hint_repr

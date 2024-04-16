@@ -264,11 +264,15 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                 # "typing.Self") rather than the new sanitized "hint" (e.g., the
                 # class currently being decorated by @beartype) is passed to
                 # that tester. Why? Because the latter may already have been
-                # reduced above to a different and seemingly innocuous type hint
-                # that does *NOT* appear to require a type stack but actually
-                # does. Only the original unsanitized "hint_insane" is truth.
+                # reduced above to a different (and seemingly innocuous) type
+                # hint that does *NOT* appear to require a type stack at late
+                # *EXCEPTION RAISING TIME* (i.e., the
+                # beartype._check.error.errorget.get_func_pith_violation()
+                # function) but actually does. Only the original unsanitized
+                # "hint_insane" is truth.
                 cls_stack = (
                     bear_call.cls_stack
+                    # if is_hint_needs_cls_stack(hint) else
                     if is_hint_needs_cls_stack(hint_insane) else
                     None
                 )

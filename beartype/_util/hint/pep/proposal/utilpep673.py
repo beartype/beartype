@@ -41,7 +41,7 @@ def reduce_hint_pep673(
     cls_stack : TypeStack, optional
         **Type stack** (i.e., either tuple of zero or more arbitrary types *or*
         :data:`None`). Defaults to :data:`None`. See also the
-        :func:`.beartype_object` decorator for further commentary.
+        :func:`beartype._decor.decormain.beartype_object` decorator.
     exception_prefix : str, optional
         Human-readable substring prefixing exception messages raised by this
         reducer.

@@ -200,7 +200,15 @@ Depressingly, this type must now be manually redefined everywhere.
 '''
 
 
-NotImplementedType: type = type(NotImplemented)  # type: ignore[misc]
+# Define this type as either...
+NotImplementedType: type = (
+    # If the active Python interpreter targets at least Python >= 3.10 and thus
+    # exposes this type in the standard "types" module, this type;
+    _types.NotImplementedType  # type: ignore[assignment,attr-defined]
+    if IS_PYTHON_AT_LEAST_3_10 else
+    # Else, this type manually introspected from this builtin singleton.
+    type(NotImplemented)  # type: ignore[misc]
+)
 '''
 Type of the :data:`NotImplemented` singleton.
 '''
