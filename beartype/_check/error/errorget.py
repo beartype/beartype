@@ -111,9 +111,8 @@ from beartype.roar._roarexc import (
     _BeartypeCallHintPepRaiseDesynchronizationException,
     _BeartypeCallHintPepRaiseException,
 )
-from beartype.typing import (
-    Optional,
-)
+from beartype.typing import Optional
+from beartype._check.error._errorcause import ViolationCause
 from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
@@ -124,7 +123,6 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeStack,
 )
-from beartype._check.error._errorcause import ViolationCause
 from beartype._util.text.utiltextansi import (
     color_hint,
     strip_str_ansi,
@@ -379,13 +377,13 @@ def get_hint_object_violation(
           false positive by erroneously misdetecting this pith as satisfying
           this type check when in fact this pith fails to do so.
     '''
-
-    # print('''get_func_pith_violation(
+    # print('''get_hint_object_violation(
     #     func={!r},
+    #     hint={!r},
     #     conf={!r},
     #     pith_name={!r},
     #     pith_value={!r}',
-    # )'''.format(func, conf, pith_name, pith_value))
+    # )'''.format(func, hint, conf, pith_name, pith_value))
 
     # ....................{ LOCALS                         }....................
     # Type of violation to be raised.
@@ -477,7 +475,9 @@ def get_hint_object_violation(
             f'the beartype issue tracker ({URL_ISSUES}) with '
             f'the accompanying exception traceback and '
             f'the representation of this object:\n'
-            f'    {pith_value_repr}'
+            f'    {pith_value_repr}\n'
+            f'The bear groans in disappointment. If you feel similarly, '
+            f'know that you are not alone.'
         )
     # Else, this pith violates this hint as expected and as required for sanity.
 

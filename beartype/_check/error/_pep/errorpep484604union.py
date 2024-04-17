@@ -18,7 +18,6 @@ from beartype._check.error._errorcause import ViolationCause
 from beartype._util.hint.pep.utilpepget import (
     get_hint_pep_origin_type_isinstanceable_or_none)
 from beartype._util.hint.pep.utilpeptest import is_hint_pep
-from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextansi import color_hint
 from beartype._util.text.utiltextjoin import join_delimited_disjunction_types
 from beartype._util.text.utiltextmunge import (
@@ -72,7 +71,7 @@ def find_cause_union(cause: ViolationCause) -> ViolationCause:
     # For each subscripted argument of this union...
     for hint_child in cause.hint_childs:
         # If this child hint is ignorable, continue to the next.
-        if is_hint_ignorable(hint_child):
+        if hint_child is None:
             continue
         # Else, this child hint is unignorable.
 

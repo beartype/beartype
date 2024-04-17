@@ -33,10 +33,19 @@ from beartype.typing import (
     List,
     Optional,
     Sequence,
+    Tuple,
     Type,  # <-- intentionally imported due to being embedded in strings below
+    TypeVar,
     Union,
 )
 from beartype._data.hint.datahinttyping import T
+
+# ....................{ LOCALS                             }....................
+LikeATornCloud = TypeVar('LikeATornCloud', bound='BeforeTheHurricane')
+'''
+Type variable whose bound is expressed as a PEP-compliant relative forward
+reference to a self-referential type that has yet to be defined.
+'''
 
 # ....................{ FUNCTIONS ~ pep : discrete         }....................
 # Arbitrary functions annotated by PEP-compliant forward references defined as
@@ -176,7 +185,33 @@ class WithSluggishSurge(Generic[T]):
 
         return self
 
-# ....................{ CLASSES ~ reload                   }....................
+# ....................{ CLASSES ~ self-referential         }....................
+# @beartype-decorated classes defining methods annotated by one or more
+# self-referential type hints (i.e., hints referring to the same class via a
+# PEP-compliant relative forward reference).
+
+@beartype
+class BeforeTheHurricane(object):
+    '''
+    :func:`beartype.beartype`-decorated class defining a method annotated by
+    a **self-referential relative forward reference** (i.e., referring to
+    this class currently being defined).
+    '''
+
+    def in_a_silver_vision_floats(self) -> Tuple[
+        LikeATornCloud, LikeATornCloud]:
+        '''
+        Method annotated by a 2-tuple of type variables whose bounds are
+        expressed as PEP-compliant relative forward references to this class
+        currently being defined.
+
+        This method exercises this edge case:
+            https://github.com/beartype/beartype/issues/367
+        '''
+
+        # Return a 2-tuple intentionally violating this type variable.
+        return ('As one that', 'in a silver vision floats')
+
 # Test decorating a user-defined class with the @beartype decorator where:
 # 1. That class defines a method annotated by a self-referential relative
 #    forward reference (i.e., referring to that class currently being defined).

@@ -24,5 +24,6 @@ try:
         make_app,
         test_params,
     )
+# If doing so fails, silently ignore this failure.
 except:
     pass

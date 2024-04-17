@@ -29,7 +29,9 @@ def test_pep484_ref_data() -> None:
 
     # ..................{ IMPORTS                            }..................
     # Defer test-specific imports.
+    from beartype.roar import BeartypeCallHintReturnViolation
     from beartype_test.a00_unit.data.hint.data_hintref import (
+        BeforeTheHurricane,
         TheDarkestEveningOfTheYear,
         WithSluggishSurge,
         a_little_shallop,
@@ -42,6 +44,7 @@ def test_pep484_ref_data() -> None:
         winding_among_the_springs,
         # between_the_woods_and_frozen_lake,
     )
+    from pytest import raises
 
     # ..................{ LOCALS                             }..................
     # Objects passed below to exercise forward references.
@@ -67,6 +70,13 @@ def test_pep484_ref_data() -> None:
         TheDarkestEveningOfTheYear)
     assert RUGGED_AND_DARK.or_where_the_secret_caves() is RUGGED_AND_DARK
     assert winding_among_the_springs(RUGGED_AND_DARK) is RUGGED_AND_DARK
+
+    # ..................{ FAIL                               }..................
+    # Assert that calling a method violating its return annotated as a 2-tuple
+    # of type variables whose bounds are expressed as PEP-compliant relative
+    # forward references to the same class raises the expected violation.
+    with raises(BeartypeCallHintReturnViolation):
+        BeforeTheHurricane().in_a_silver_vision_floats()
 
     #FIXME: Disabled until we decide whether we want to bother trying to
     #resolve nested forward references or not.

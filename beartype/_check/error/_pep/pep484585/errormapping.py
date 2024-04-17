@@ -21,7 +21,6 @@ from beartype.typing import (
 from beartype._data.hint.pep.sign.datapepsignset import HINT_SIGNS_MAPPING
 from beartype._check.error._errorcause import ViolationCause
 from beartype._check.error._errortype import find_cause_type_instance_origin
-from beartype._util.hint.utilhinttest import is_hint_ignorable
 from beartype._util.text.utiltextprefix import prefix_pith_type
 from beartype._util.text.utiltextrepr import represent_pith
 
@@ -65,89 +64,91 @@ def find_cause_mapping(cause: ViolationCause) -> ViolationCause:
         return cause_shallow
     # Else, this pith is an instance of this type and is thus a mapping.
     #
-    # If this mapping is non-empty...
-    elif cause.pith:
-        # Child key and value hints subscripting this mapping hint.
-        hint_key = cause.hint_childs[0]
-        hint_value = cause.hint_childs[1]
+    # If this mapping is empty, all items of this mapping (of which there are
+    # none) are valid. This mapping satisfies this hint. Just go with it!
+    elif not cause.pith:
+        return cause
+    # Else, this mapping is non-empty.
 
-        # True only if these hints are unignorable.
-        hint_key_unignorable = not is_hint_ignorable(hint_key)
-        hint_value_unignorable = not is_hint_ignorable(hint_value)
+    # Child key and value hints subscripting this mapping hint.
+    hint_key = cause.hint_childs[0]
+    hint_value = cause.hint_childs[1]
 
-        # Arbitrary iterator vaguely satisfying the dict.items() protocol,
-        # yielding zero or more 2-tuples of the form "(key, value)", where:
-        # * "key" is the key of the current key-value pair.
-        # * "value" is the value of the current key-value pair.
-        pith_items: Iterable[Tuple[Hashable, object]] = None  # type: ignore[assignment]
+    # True only if these hints are unignorable.
+    hint_key_unignorable = hint_key is not None
+    hint_value_unignorable = hint_value is not None
 
-        # If the only the first key-value pair of this mapping was
-        # type-checked by the the parent @beartype-generated wrapper
-        # function in O(1) time, type-check only this key-value pair of this
-        # mapping in O(1) time as well.
-        if cause.conf.strategy is BeartypeStrategy.O1:
-            # First key-value pair of this mapping.
-            pith_item = next(iter(cause.pith.items()))
+    # Arbitrary iterator vaguely satisfying the dict.items() protocol,
+    # yielding zero or more 2-tuples of the form "(key, value)", where:
+    # * "key" is the key of the current key-value pair.
+    # * "value" is the value of the current key-value pair.
+    pith_items: Iterable[Tuple[Hashable, object]] = None  # type: ignore[assignment]
 
-            # Tuple containing only this pair.
-            pith_items = (pith_item,)
-            # print(f'Checking item {pith_item_index} in O(1) time!')
-        # Else, all keys of this mapping were type-checked by the parent
-        # @beartype-generated wrapper function in O(n) time. In this case,
-        # type-check *ALL* indices of this mapping in O(n) time as well.
-        else:
-            # Iterator yielding all key-value pairs of this mapping.
-            pith_items = cause.pith.items()
-            # print('Checking mapping in O(n) time!')
+    # If the only the first key-value pair of this mapping was
+    # type-checked by the the parent @beartype-generated wrapper
+    # function in O(1) time, type-check only this key-value pair of this
+    # mapping in O(1) time as well.
+    if cause.conf.strategy is BeartypeStrategy.O1:
+        # First key-value pair of this mapping.
+        pith_item = next(iter(cause.pith.items()))
 
-        # For each key-value pair of this mapping...
-        for pith_key, pith_value in pith_items:
-            # If this child key hint is unignorable...
-            if hint_key_unignorable:
-                # Deep output cause, type-checking whether this key satisfies
-                # this child key hint.
-                cause_deep = cause.permute(
-                    pith=pith_key, hint=hint_key).find_cause()
+        # Tuple containing only this pair.
+        pith_items = (pith_item,)
+        # print(f'Checking item {pith_item_index} in O(1) time!')
+    # Else, all keys of this mapping were type-checked by the parent
+    # @beartype-generated wrapper function in O(n) time. In this case,
+    # type-check *ALL* indices of this mapping in O(n) time as well.
+    else:
+        # Iterator yielding all key-value pairs of this mapping.
+        pith_items = cause.pith.items()
+        # print('Checking mapping in O(n) time!')
 
-                # If this key is the cause of this failure...
-                if cause_deep.cause_str_or_none is not None:
-                    # Human-readable substring prefixing this failure with
-                    # metadata describing this key.
-                    cause_deep.cause_str_or_none = (
-                        f'{prefix_pith_type(pith=cause.pith, is_color=True)}'
-                        f'key {cause_deep.cause_str_or_none}'
-                    )
+    # For each key-value pair of this mapping...
+    for pith_key, pith_value in pith_items:
+        # If this child key hint is unignorable...
+        if hint_key_unignorable:
+            # Deep output cause, type-checking whether this key satisfies
+            # this child key hint.
+            cause_deep = cause.permute(
+                pith=pith_key, hint=hint_key).find_cause()
 
-                    # Return this cause.
-                    return cause_deep
-                # Else, this key is *NOT* the cause of this failure. Silently
-                # continue to this value.
-            # Else, this child key hint is ignorable.
+            # If this key is the cause of this failure...
+            if cause_deep.cause_str_or_none is not None:
+                # Human-readable substring prefixing this failure with
+                # metadata describing this key.
+                cause_deep.cause_str_or_none = (
+                    f'{prefix_pith_type(pith=cause.pith, is_color=True)}'
+                    f'key {cause_deep.cause_str_or_none}'
+                )
 
-            # If this child value hint is unignorable...
-            if hint_value_unignorable:
-                # Deep output cause, type-checking whether this value satisfies
-                # this child value hint.
-                cause_deep = cause.permute(
-                    pith=pith_value, hint=hint_value).find_cause()
+                # Return this cause.
+                return cause_deep
+            # Else, this key is *NOT* the cause of this failure. Silently
+            # continue to this value.
+        # Else, this child key hint is ignorable.
 
-                # If this value is the cause of this failure...
-                if cause_deep.cause_str_or_none is not None:
-                    # Human-readable substring prefixing this failure with
-                    # metadata describing this value.
-                    cause_deep.cause_str_or_none = (
-                        f'{prefix_pith_type(pith=cause.pith, is_color=True)}'
-                        f'key {represent_pith(pith_key)} '
-                        f'value {cause_deep.cause_str_or_none}'
-                    )
+        # If this child value hint is unignorable...
+        if hint_value_unignorable:
+            # Deep output cause, type-checking whether this value satisfies
+            # this child value hint.
+            cause_deep = cause.permute(
+                pith=pith_value, hint=hint_value).find_cause()
 
-                    # Return this cause.
-                    return cause_deep
-                # Else, this value is *NOT* the cause of this failure. Silently
-                # continue to the key-value pair.
-            # Else, this child value hint is ignorable.
-    # Else, this mapping is empty, in which case all items of this mapping (of
-    # which there are none) are valid. Just go with it, people.
+            # If this value is the cause of this failure...
+            if cause_deep.cause_str_or_none is not None:
+                # Human-readable substring prefixing this failure with
+                # metadata describing this value.
+                cause_deep.cause_str_or_none = (
+                    f'{prefix_pith_type(pith=cause.pith, is_color=True)}'
+                    f'key {represent_pith(pith_key)} '
+                    f'value {cause_deep.cause_str_or_none}'
+                )
+
+                # Return this cause.
+                return cause_deep
+            # Else, this value is *NOT* the cause of this failure. Silently
+            # continue to the key-value pair.
+        # Else, this child value hint is ignorable.
 
     # Return this cause as is; all items of this mapping are valid, implying
     # this mapping to deeply satisfy this hint.

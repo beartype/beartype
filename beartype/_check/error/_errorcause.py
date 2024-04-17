@@ -67,8 +67,8 @@ from beartype._util.hint.pep.utilpeptest import (
     is_hint_pep,
     is_hint_pep_args,
 )
-from beartype._check.convert.convsanify import sanify_hint_child
-from beartype._util.hint.utilhinttest import is_hint_ignorable
+from beartype._check.convert.convsanify import (
+    sanify_hint_child_if_unignorable_or_none)
 
 # ....................{ CLASSES                            }....................
 class ViolationCause(object):
@@ -108,6 +108,8 @@ class ViolationCause(object):
         * If this violation originates from a decorated callable, that
           callable.
         * Else, :data:`None`.
+    hint : Any
+        Type hint to validate this object against.
     hint_sign : Any
         Either:
 
@@ -116,9 +118,8 @@ class ViolationCause(object):
     hint_childs : Optional[Tuple]
         Either:
 
-        * If this hint is PEP-compliant, the possibly empty tuple of all
-          arguments subscripting (indexing) this hint.
-
+        * If this hint is PEP-compliant, the possibly empty tuple of all child
+          type hints subscripting (indexing) this hint.
         * Else, :data:`None`.
     pith : Any
         Arbitrary object to be validated.
@@ -139,8 +140,6 @@ class ViolationCause(object):
         such integer). See the same parameter accepted by the higher-level
         :func:`beartype._check.error.errorget.get_func_pith_violation`
         function for further details.
-    _hint : Any
-        Type hint to validate this object against.
     '''
 
     # ..................{ CLASS VARIABLES                    }..................
@@ -154,12 +153,12 @@ class ViolationCause(object):
         'conf',
         'exception_prefix',
         'func',
+        'hint',
         'hint_sign',
         'hint_childs',
         'pith',
         'pith_name',
         'random_int',
-        '_hint',
     )
 
 
@@ -230,6 +229,7 @@ class ViolationCause(object):
         self.func = func
         self.cls_stack = cls_stack
         self.conf = conf
+        # self.hint = hint
         self.pith = pith
         self.pith_name = pith_name
         self.cause_indent = cause_indent
@@ -241,32 +241,17 @@ class ViolationCause(object):
         self.hint_sign: Any = None
         self.hint_childs: Tuple = None  # type: ignore[assignment]
 
-        # Classify this hint *AFTER* initializing all parameters above.
+        # Unignorable sane hint sanified from this possibly ignorable insane
+        # hint *OR* "None" otherwise (i.e., if this hint is ignorable).
         #
-        # Note that this assignment magically calls the "hint" property setter
-        # defined below. Don't ask. Just do it, Python! *sigh*
-        self.hint = hint
-
-    # ..................{ PROPERTIES                         }..................
-    @property
-    def hint(self) -> Any:
-        '''
-        Type hint to validate this object against.
-        '''
-
-        return self._hint
-
-
-    @hint.setter
-    def hint(self, hint: Any) -> None:
-        '''
-        Set the type hint to validate this object against.
-        '''
-
-        # Sanitize this hint if unsupported by @beartype in its current form
-        # (e.g., "numpy.typing.NDArray[...]") to another form supported by
-        # @beartype (e.g., "typing.Annotated[numpy.ndarray, beartype.vale.*]").
-        hint = sanify_hint_child(
+        # Note that this is a bit inefficient. Since child hints are already
+        # sanitized below, the sanitization performed by this assignment
+        # effectively reduces to a noop for all type hints *EXCEPT* the root
+        # type hint. Technically, this means this could be marginally optimized
+        # by externally sanitizing the root type hint in the "errorget"
+        # submodule. Pragmatically, doing so would only complicate an already
+        # overly complex workflow for little to no tangible gain.
+        self.hint = sanify_hint_child_if_unignorable_or_none(
             hint=hint,
             conf=self.conf,
             cls_stack=self.cls_stack,
@@ -274,17 +259,56 @@ class ViolationCause(object):
             exception_prefix=self.exception_prefix,
         )
 
-        # If this hint is PEP-compliant...
-        if is_hint_pep(hint):
+        # If this hint is both...
+        if (
+            # Unignorable *AND*...
+            self.hint is not None and
+            # PEP-compliant...
+            is_hint_pep(self.hint)
+        ):
             # Arbitrary object uniquely identifying this hint.
-            self.hint_sign = get_hint_pep_sign(hint)
+            self.hint_sign = get_hint_pep_sign(self.hint)
 
             # Tuple of the zero or more arguments subscripting this hint.
-            self.hint_childs = get_hint_pep_args(hint)
-        # Else, this hint is PEP-noncompliant (e.g., isinstanceable class).
+            hint_childs_insane = get_hint_pep_args(self.hint)
 
-        # Classify this hint *AFTER* all other assignments above.
-        self._hint = hint
+            # List of the zero or more possibly ignorable sane child hints
+            # subscripting this parent hint, initialized to the empty list.
+            hint_childs_sane = []
+
+            # For each possibly ignorable insane child hints subscripting this
+            # parent hint...
+            for hint_child_insane in hint_childs_insane:
+                # If this child hint is PEP-compliant...
+                #
+                # Note that arbitrary PEP-noncompliant arguments *CANNOT* be
+                # safely sanitized. Why? Because arbitrary arguments are *NOT*
+                # necessarily valid type hints. Consider the type hint
+                # "tuple[()]", where the argument "()" is invalid as a type hint
+                # but valid an argument to that type hint.
+                if is_hint_pep(hint_child_insane):
+                    # Unignorable sane child hint sanified from this possibly
+                    # ignorable insane child hint *OR* "None" otherwise (i.e.,
+                    # if this child hint is ignorable).
+                    hint_child_sane = sanify_hint_child_if_unignorable_or_none(
+                        hint=hint_child_insane,
+                        conf=self.conf,
+                        cls_stack=self.cls_stack,
+                        pith_name=self.pith_name,
+                        exception_prefix=self.exception_prefix,
+                    )
+                # Else, this child hint is PEP-noncompliant. In this case,
+                # preserve this child hint as is.
+                else:
+                    hint_child_sane = hint_child_insane
+
+                # Append this possibly ignorable sane child hint to this list.
+                hint_childs_sane.append(hint_child_sane)
+
+            # Tuple of the zero or more possibly ignorable sane child hints
+            # subscripting this parent hint, coerced from this list.
+            self.hint_childs = tuple(hint_childs_sane)
+        # Else, this hint is PEP-noncompliant (e.g., isinstanceable class).
 
     # ..................{ GETTERS                            }..................
     def find_cause(self) -> 'ViolationCause':
@@ -309,7 +333,7 @@ class ViolationCause(object):
         For example, consider the PEP-compliant type hint ``List[Union[int,
         str]]`` describing a list whose items are either integers or strings
         and the list ``list(range(256)) + [False,]`` consisting of the integers
-        0 through 255 followed by boolean ``False``. Since that list is a
+        0 through 255 followed by boolean :data:`False`. Since that list is a
         standard sequence, the
         :func:`._peperrorsequence.find_cause_sequence_args_1`
         function must decide the cause of this list's failure to comply with
@@ -318,7 +342,7 @@ class ViolationCause(object):
         :func:`._peperrorunion.find_cause_union` function. Since
         the first 256 items of this list are integers satisfying this hint,
         :func:`._peperrorunion.find_cause_union` returns a dataclass instance
-        whose :attr:`cause` field is ``None`` up to
+        whose :attr:`cause` field is :data:`None` up to
         :func:`._peperrorsequence.find_cause_sequence_args_1`
         before finally finding the non-compliant boolean item and returning the
         human-readable cause.
@@ -341,7 +365,7 @@ class ViolationCause(object):
         # If this hint is ignorable, all possible objects satisfy this hint.
         # Since this hint *CANNOT* (by definition) be the cause of this failure,
         # return the same cause as is.
-        if is_hint_ignorable(self.hint):
+        if self.hint is None:
             return self
         # Else, this hint is unignorable.
 
