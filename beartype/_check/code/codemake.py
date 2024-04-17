@@ -932,8 +932,29 @@ def make_check_expr(
                     # The subsequent call to the str.isidentifier() method is
                     # *MUCH* more expensive than this object identity test.
                     pith_curr_expr is VAR_NAME_PITH_ROOT or
-                    # A simple Python identifier...
-                    pith_curr_expr.isidentifier()
+                    # A simple Python identifier *NOR*...
+                    pith_curr_expr.isidentifier() or
+                    # A complex Python expression already containing the
+                    # assignment expression-specific "walrus" operator ":=".
+                    # Since this implies this expression to already be an
+                    # assignment expression, needlessly reassigning the local
+                    # variable to which this assignment expression was
+                    # previously assigned to yet another redundant local
+                    # variable only harms efficiency for *NO* tangible gain
+                    # (e.g., expanding the efficient assignment expression
+                    # "__beartype_pith_1 := next(iter(__beartype_pith_0))" to
+                    # the inefficient assignment expression
+                    # "__beartype_pith_2 := __beartype_pith_1 :=
+                    # next(iter(__beartype_pith_0))").
+                    #
+                    # Note that this edge case is induced by closure calls
+                    # performed below of the form:
+                    #    _enqueue_hint_child(pith_curr_assign_expr)
+                    #
+                    # As of this writing, the only such edge case is a PEP 484-
+                    # or 604-compliant union containing *ONLY* two or more
+                    # PEP-compliant type hints (e.g., "list[str] | set[bytes]").
+                    ':=' in pith_curr_expr
                 ):
                     # Then the current pith is safely assignable to a unique
                     # local variable via an assignment expression.
@@ -1199,22 +1220,21 @@ def make_check_expr(
                                 # Python expression yielding the value of the
                                 # current pith. Specifically...
                                 pith_curr_expr=(
-                                    # If this union is subscripted by one or
-                                    # more PEP-compliant child hints, prefer
+                                    # If this union is also subscripted by one
+                                    # or more PEP-compliant child hints, prefer
                                     # the expression assigning this value to a
                                     # local variable efficiently reused by
-                                    # subsequent code generated for
+                                    # subsequent code generated for those
                                     # PEP-compliant child hints.
                                     pith_curr_assign_expr
                                     if hint_childs_pep else
-                                    # Else, this union is *NOT* subscripted by
-                                    # one or more PEP-compliant child hints.
-                                    # Since this is the first and only test
-                                    # generated for this union, prefer the
-                                    # expression yielding the value of the
-                                    # current pith *WITHOUT* assigning this
-                                    # value to a local variable, which would
-                                    # otherwise pointlessly go unused.
+                                    # Else, this union is subscripted by *NO*
+                                    # PEP-compliant child hints. Since this is
+                                    # the first and only test generated for this
+                                    # union, prefer the expression yielding the
+                                    # value of the current pith *WITHOUT*
+                                    # assigning this value to a local variable,
+                                    # which would needlessly go unused.
                                     pith_curr_expr
                                 ),
                                 # Python expression evaluating to a tuple of
@@ -1250,52 +1270,42 @@ def make_check_expr(
                     # and append code type-checking this child hint.
                     for hint_child_index, hint_child in enumerate(
                         hint_childs_pep):
-                        # If it is *NOT* the case that this union is subscripted
-                        # by either...
-                        if not (
-                            # One or more PEP-noncompliant child hints *OR*...
-                            hint_childs_nonpep or
-                            # This is any PEP-compliant child hint *EXCEPT* the
-                            # first...
-                            hint_child_index
-                        # Then prefer the expression efficiently reusing
-                        # the value previously assigned to a local
-                        # variable by either the above conditional or
-                        # prior iteration of the current conditional;
-                        ):
-                        # Then this union is both subscripted by no
-                        # PEP-noncompliant child hints *AND* this is the first
-                        # PEP-compliant child hint. In this case preface this
-                        # code with an expression assigning this value to a
-                        # local variable efficiently reused by code generated by
-                        # subsequent iteration.
-                        #
-                        # Note this child hint is guaranteed to be followed by
-                        # at least one more child hint. Why? Because the
-                        # "typing" module forces unions to be subscripted by two
-                        # or more child hints. By deduction, those child hints
-                        # *MUST* be PEP-compliant. Ergo, we need *NOT*
-                        # explicitly validate that constraint here.
-                            # Code assigning the current pith expression.
-                            func_curr_code += (
-                                CODE_PEP572_PITH_ASSIGN_AND_format(
-                                    indent_curr=indent_curr,
-                                    pith_curr_assign_expr=pith_curr_assign_expr,
-                                    pith_curr_var_name=pith_curr_var_name,
-                                ))
-                        # Else, this union is subscripted by either one or more
-                        # PEP-noncompliant child hints *OR* this is any
-                        # PEP-compliant child hint *EXCEPT* the first. In either
-                        # case, prefer the expression efficiently reusing the
-                        # value previously assigned to a local variable by
-                        # either the above conditional or prior iteration of the
-                        # current conditional.
-
                         # Code deeply type-checking this child hint.
                         func_curr_code += CODE_PEP484604_UNION_CHILD_PEP_format(
                             # Expression yielding the value of this pith.
                             hint_child_placeholder=_enqueue_hint_child(
-                                pith_curr_var_name))
+                                # If either...
+                                #
+                                # Then prefer the expression efficiently reusing
+                                # the value previously assigned to a local
+                                # variable by either the above conditional or
+                                # prior iteration of the current conditional.
+                                pith_curr_var_name
+                                if (
+                                    # This union is also subscripted by one or
+                                    # more PEP-noncompliant child hints *OR*...
+                                    hint_childs_nonpep or
+                                    # This is any PEP-compliant child hint
+                                    # *EXCEPT* the first...
+                                    hint_child_index
+                                ) else
+                                # Then this union is not subscripted by any
+                                # PEP-noncompliant child hints *AND* this is the
+                                # first PEP-compliant child hint. In this case,
+                                # preface this code with an expression assigning
+                                # this value to a local variable efficiently
+                                # reused by code generated by subsequent
+                                # iteration.
+                                #
+                                # Note this child hint is guaranteed to be
+                                # followed by at least one more child hint. Why?
+                                # Because the "typing" module forces unions to
+                                # be subscripted by two or more child hints. By
+                                # deduction, those child hints *MUST* be
+                                # PEP-compliant. Ergo, we need *NOT* explicitly
+                                # validate that constraint here.
+                                pith_curr_assign_expr
+                            ))
 
                     # If this code is *NOT* its initial value, this union is
                     # subscripted by one or more unignorable child hints and
