@@ -50,7 +50,7 @@ def make_hint_pep484_union(hints: tuple) -> object:
 
     Raises
     ------
-    :exc:`TypeError`
+    TypeError
         If this tuple is empty.
     '''
     assert isinstance(hints, tuple), f'{repr(hints)} not tuple.'
