@@ -758,7 +758,41 @@ def hints_pep585_meta() -> 'List[HintPepMetadata]':
             ),
         ),
 
-        # Nested dictionaries of various kinds.
+        # Nested dictionaries of tuples.
+        HintPepMetadata(
+            hint=dict[tuple[int, float], str],
+            pep_sign=HintSignDict,
+            isinstanceable_type=dict,
+            is_pep585_builtin_subscripted=True,
+            piths_meta=(
+                # Dictionary mapping 2-tuples of integers and floating-point
+                # numbers to strings.
+                HintPithSatisfiedMetadata({
+                    (0xBEEFBABE, 42.42): (
+                        'Obedient to the sweep of odorous winds'),
+                }),
+                # String constant.
+                HintPithUnsatisfiedMetadata(
+                    'Upon resplendent clouds, so rapidly'),
+                # Dictionary mapping 2-tuples of integers and floating-point
+                # numbers to byte strings.
+                HintPithUnsatisfiedMetadata(
+                    pith={
+                        (0xBABEBEEF, 24.24): (
+                            b'Along the dark and ruffled waters fled'),
+                    },
+                    # Match that the exception message raised for this object
+                    # declares all key-value pairs on the path to the value
+                    # violating this hint.
+                    exception_str_match_regexes=(
+                        r'\bkey tuple \(3133062895, 24.24\)',
+                        r"\bvalue bytes b'Along the dark and ruffled waters fled'",
+                    ),
+                ),
+            ),
+        ),
+
+        # Nested dictionaries of nested dictionaries of... you get the idea.
         HintPepMetadata(
             hint=dict[int, Mapping[str, MutableMapping[bytes, bool]]],
             pep_sign=HintSignDict,

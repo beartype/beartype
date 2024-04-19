@@ -31,11 +31,6 @@ from beartype._check.checkmagic import (
 from beartype._check.code.codemagic import (
     EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
     EXCEPTION_PREFIX_HINT,
-    HINT_META_INDEX_HINT,
-    HINT_META_INDEX_PLACEHOLDER,
-    HINT_META_INDEX_PITH_EXPR,
-    HINT_META_INDEX_PITH_VAR_NAME,
-    HINT_META_INDEX_INDENT_LEVEL,
 )
 from beartype._check.code.codescope import (
     add_func_scope_type,
@@ -540,7 +535,7 @@ def make_check_expr(
             hint_child,
             hint_child_placeholder,
             pith_child_expr,
-            pith_curr_var_name,
+            pith_curr_var_name_index,
             indent_level_child,
         )
 
@@ -586,13 +581,36 @@ def make_check_expr(
             f'index {hints_meta_index_curr} not tuple.'
         )
 
-        #FIXME: [SPEED] Optimize by reducing to a single tuple unpacking.
-        # Localize metadatum for both efficiency and f-string purposes.
-        hint_curr             = hint_curr_meta[HINT_META_INDEX_HINT]
-        hint_curr_placeholder = hint_curr_meta[HINT_META_INDEX_PLACEHOLDER]
-        pith_curr_expr        = hint_curr_meta[HINT_META_INDEX_PITH_EXPR]
-        pith_curr_var_name    = hint_curr_meta[HINT_META_INDEX_PITH_VAR_NAME]
-        indent_level_curr     = hint_curr_meta[HINT_META_INDEX_INDENT_LEVEL]
+        #FIXME: ...heh. It's time, people. Sadly, it turns out that redefining
+        #the _enqueue_hint() closure on *EVERY* call to this function is a huge
+        #time sink -- far huger than anything else, actually. Therefore:
+        #* Define a new "HintMeta" dataclass defining one slotted field for each
+        #  of these metadata.
+        #* Refactor the _enqueue_hint() closure into a HintMeta.enqueue_hint()
+        #  method.
+        #* Replace all calls to the _enqueue_hint() closure with calls to the
+        #  HintMeta.enqueue_hint() method.
+        #* Remove the _enqueue_hint() closure.
+        #* Remove all of the following locals from this function in favour of
+        #  the "HintMeta" slotted fields of the same names:
+        #  * hint_curr.
+        #  * hint_curr_placeholder.
+        #  * pith_curr_expr.
+        #  * pith_curr_var_name_index.
+        #  * indent_level_curr.
+
+        # Localize metadata for both efficiency and f-string purposes.
+        #
+        # Note that list unpacking is substantially more efficient than
+        # manually indexing list items; the former requires only a single Python
+        # statement, whereas the latter requires "n" Python statements.
+        (
+            hint_curr,
+            hint_curr_placeholder,
+            pith_curr_expr,
+            pith_curr_var_name_index,
+            indent_level_curr,
+        ) = hint_curr_meta
         # print(f'Visiting type hint {repr(hint_curr)}...')
 
         #FIXME: Comment this sanity check out after we're sufficiently
@@ -749,7 +767,7 @@ def make_check_expr(
                         # was validated above to be supported.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         func_scope=func_wrapper_scope,
-                        exception_prefix=EXCEPTION_PREFIX_HINT,
+                        exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
                     ),
                 )
             # Else, this hint is either subscripted, not shallowly
@@ -998,9 +1016,14 @@ def make_check_expr(
                 #     >>> (a := b := "Mother's Illumination")    # <-- not fine
                 #     SyntaxError: invalid syntax
                 #
-                # In this case, preserve the Python code snippet evaluating to
-                # the current pith as is.
+                # In this case...
                 else:
+                    # Name of this local variable.
+                    pith_curr_var_name = PITH_INDEX_TO_VAR_NAME[
+                        pith_curr_var_name_index]
+
+                    # Preserve the Python code snippet evaluating to the value
+                    # of the current pith as is.
                     pith_curr_assign_expr = pith_curr_expr
 
                 # ............{ UNION                              }............
@@ -1262,7 +1285,8 @@ def make_check_expr(
                                 hint_curr_expr=add_func_scope_types(
                                     types=hint_childs_nonpep,
                                     func_scope=func_wrapper_scope,
-                                    exception_prefix=EXCEPTION_PREFIX_HINT,
+                                    exception_prefix=(
+                                        EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
                                 ),
                             ))
 
@@ -1362,7 +1386,7 @@ def make_check_expr(
                         # Origin type of this sequence hint.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         func_scope=func_wrapper_scope,
-                        exception_prefix=EXCEPTION_PREFIX_HINT,
+                        exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
                     )
 
                     # print(f'Sequence type hint {hint_curr} origin type scoped: {hint_curr_expr}')
@@ -1548,7 +1572,7 @@ def make_check_expr(
                         # Origin type of this sequence.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
                         func_scope=func_wrapper_scope,
-                        exception_prefix=EXCEPTION_PREFIX_HINT,
+                        exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
                     )
 
                     # 2-tuple of the possibly ignorable insane child key and
@@ -1587,6 +1611,10 @@ def make_check_expr(
                         if hint_child_key:
                             # If this child value hint is also unignorable...
                             if hint_child_value:
+                                # Increase the indentation level of code
+                                # type-checking this child value pith.
+                                indent_level_child += 1
+
                                 # Increment the integer suffixing the name of a
                                 # unique local variable storing the value of
                                 # this child key pith *BEFORE* defining this
@@ -1610,10 +1638,6 @@ def make_check_expr(
                                 # Expose this hint to the subsequent call to the
                                 # _enqueue_hint_child() closure.
                                 hint_child = hint_child_value
-
-                                # Increase the indentation level of code
-                                # type-checking this child value pith.
-                                indent_level_child += 1
 
                                 # Placeholder string to be subsequently replaced
                                 # by code type-checking this child value pith
@@ -1840,7 +1864,8 @@ def make_check_expr(
                         hint_curr_expr = add_func_scope_type_or_types(
                             type_or_types=hint_child,  # type: ignore[arg-type]
                             func_scope=func_wrapper_scope,
-                            exception_prefix=EXCEPTION_PREFIX_HINT,
+                            exception_prefix=(
+                                EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
                         )
                     # Else, this superclass is *NOT* actually a class. By
                     # process of elimination and the validation already
@@ -1959,7 +1984,8 @@ def make_check_expr(
                         hint_curr_expr=add_func_scope_type(
                             cls=hint_curr,
                             func_scope=func_wrapper_scope,
-                            exception_prefix=EXCEPTION_PREFIX_HINT,
+                            exception_prefix=(
+                                EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
                         ),
                     )
                     # print(f'{hint_curr_exception_prefix} PEP generic {repr(hint)} handled.')
@@ -2005,7 +2031,8 @@ def make_check_expr(
                                 for hint_child in hint_childs
                             },
                             func_scope=func_wrapper_scope,
-                            exception_prefix=EXCEPTION_PREFIX_HINT,
+                            exception_prefix=(
+                                EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL),
                         ),
                     )
 

@@ -39,13 +39,6 @@ class PithIndexToVarName(dict):
         and ``]``-delimited attempt to access a local pith variable name
         uniquely identified by the passed 1-based index.
 
-        Caveats
-        -------
-        **This method intentionally prohibits 0.** Why? Because the existing
-        :data:`beartype._check.checkmagic.VAR_NAME_PITH_ROOT` string global
-        already efficiently caches the local root pith variable name, which is
-        sufficiently common to warrant globalization.
-
         Parameters
         ----------
         pith_index : int
@@ -63,11 +56,10 @@ class PithIndexToVarName(dict):
             If either:
 
             * ``pith_level`` is *not* an integer.
-            * ``pith_level`` is a **non-positive integer** (i.e., is less than
-              or equal to 0).
+            * ``pith_level`` is a **negative integer** (i.e., less than 0).
         '''
         assert isinstance(pith_index, int), f'{repr(pith_index)} not integer.'
-        assert pith_index > 0, f'{pith_index} <= 0.'
+        assert pith_index >= 0, f'{pith_index} < 0.'
         # print(f'Generating indentation level {indent_level}...')
 
         # Prospective name of this local pith variable.

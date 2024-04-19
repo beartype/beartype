@@ -45,9 +45,7 @@ def test_pith_index_to_var_name() -> None:
     with raises(AssertionError):
         PITH_INDEX_TO_VAR_NAME[2.34]
 
-    # Assert that attempting to index this dictionary by non-positive indices
+    # Assert that attempting to index this dictionary by negative indices
     # raises the expected exception.
-    with raises(AssertionError):
-        PITH_INDEX_TO_VAR_NAME[0]
     with raises(AssertionError):
         PITH_INDEX_TO_VAR_NAME[-1]
