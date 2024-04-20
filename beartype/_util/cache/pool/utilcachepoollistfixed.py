@@ -29,7 +29,7 @@ FIXED_LIST_SIZE_MEDIUM = 256
 '''
 Reasonably large length to constrain acquired and released fixed lists to.
 
-This constant is intended to be passed to the :func:`acquire_fixed_list`
+This constant is intended to be passed to the :func:`.acquire_fixed_list`
 function, which then returns a fixed list of this length suitable for use in
 contexts requiring a "reasonably large" list -- where "reasonably" and "large"
 are both subjective but *should* cover 99.9999% of use cases in this codebase.
@@ -46,11 +46,11 @@ class FixedList(list):
     and thus *permits* changes to its contained items.
 
     Design
-    ----------
+    ------
     This list enforces this constraint by overriding *all* :class:`list` dunder
     and standard methods that would otherwise modify the length of this list
     (e.g., :meth:`list.__delitem__`, :meth:`list.append`) to instead
-    unconditionally raise an :class:`_BeartypeUtilCachedFixedListException`
+    unconditionally raise an :class:`._BeartypeUtilCachedFixedListException`
     exception.
     '''
 
@@ -62,18 +62,29 @@ class FixedList(list):
     __slots__ = ()
 
     # ..................{ INITIALIZER                        }..................
-    def __init__(self, size: int) -> None:
+    def __init__(
+        self,
+
+        # Mandatory parameters.
+        size: int,
+
+        # Optional parameters.
+        obj_init: object = None,
+    ) -> None:
         '''
         Initialize this fixed list to the passed length and all items of this
-        fixed list to ``None``.
+        fixed list to the passed initialization object.
 
         Parameters
         ----------
         size : IntType
             Length to constrain this fixed list to.
+        obj_init : object, optional
+            **Initialization object** (i.e., object to be unilaterally assigned
+            to *all* indices of this fixed list). Defaults to :data:`None`.
 
         Raises
-        ----------
+        ------
         _BeartypeUtilCachedFixedListException
             If this length is either not an integer *or* is but is
             **non-positive** (i.e., is less than or equal to 0).
@@ -84,9 +95,9 @@ class FixedList(list):
             raise _BeartypeUtilCachedFixedListException(
                 f'Fixed list length {repr(size)} not integer.')
         # Else, this length is an integer.
-
+        #
         # If this length is non-positive, raise an exception.
-        if size <= 0:
+        elif size <= 0:
             raise _BeartypeUtilCachedFixedListException(
                 f'Fixed list length {size} <= 0.')
         # Else, this length is positive.
@@ -95,7 +106,7 @@ class FixedList(list):
         # space -- which, conveniently, is also the optimally efficient means
         # of doing so. See also the timings in this StackOverflow answer:
         #     https://stackoverflow.com/a/10617221/2809027
-        super().__init__([None]*size)
+        super().__init__([obj_init]*size)
 
     # ..................{ GOOD ~ non-dunders                 }..................
     # Permit non-dunder methods preserving list length but otherwise requiring
@@ -270,13 +281,13 @@ class FixedList(list):
 # ....................{ PRIVATE ~ factories                }....................
 _fixed_list_pool = KeyPool(item_maker=FixedList)
 '''
-Thread-safe **fixed list pool** (i.e., :class:`KeyPool` singleton caching
+Thread-safe **fixed list pool** (i.e., :class:`.KeyPool` singleton caching
 previously instantiated :class:`FixedList` instances of various lengths).
 
 Caveats
-----------
+-------
 **Avoid accessing this private singleton externally.** Instead, call the public
-:func:`acquire_fixed_list` and :func:`release_fixed_list` functions, which
+:func:`.acquire_fixed_list` and :func:`.release_fixed_list` functions, which
 efficiently validate both input *and* output to conform to sane expectations.
 '''
 
@@ -287,16 +298,18 @@ def acquire_fixed_list(size: int) -> FixedList:
     fixed length defined at instantiation time) with the passed length.
 
     Caveats
-    ----------
+    -------
     **The contents of this list are arbitrary.** Callers should make *no*
-    assumptions as to this list's initial items, but should instead
-    reinitialize this list immediately after acquiring this list with standard
-    list slice syntax: e.g.,
+    assumptions as to this list's initial items, but should instead reinitialize
+    this list immediately after acquiring this list with standard list slice
+    syntax: e.g.,
 
-        >>> from beartype._util.cache.pool.utilcachepoollistfixed import (
-        ...     acquire_fixed_list)
-        >>> fixed_list = acquire_fixed_list(size=5)
-        >>> fixed_list[:] = ('Dirty', 'Deads', 'Done', 'Dirt', 'Cheap',)
+    .. code-block:: pycon
+
+       >>> from beartype._util.cache.pool.utilcachepoollistfixed import (
+       ...     acquire_fixed_list)
+       >>> fixed_list = acquire_fixed_list(size=5)
+       >>> fixed_list[:] = ('Dirty', 'Deads', 'Done', 'Dirt', 'Cheap',)
 
     Parameters
     ----------
@@ -304,15 +317,15 @@ def acquire_fixed_list(size: int) -> FixedList:
         Length to constrain the fixed list to be acquired to.
 
     Returns
-    ----------
+    -------
     FixedList
         Arbitrary fixed list with this length.
 
     Raises
-    ----------
+    ------
     _BeartypeUtilCachedFixedListException
-        If this length is either not an integer *or* is but is
-        **non-positive** (i.e., is less than or equal to 0).
+        If this length is either not an integer *or* is but is **non-positive**
+        (i.e., is less than or equal to 0).
     '''
     # Note that the FixedList.__init__() method already validates this "size"
     # parameter to be an integer.
@@ -332,22 +345,24 @@ def release_fixed_list(fixed_list: FixedList) -> None:
     :func:`acquire_fixed_list` function.
 
     Caveats
-    ----------
+    -------
     **This list is not safely accessible after calling this function.** Callers
-    should make *no* attempts to read, write, or otherwise access this list,
-    but should instead nullify *all* variables referring to this list
-    immediately after releasing this list (e.g., by setting these variables to
-    the ``None`` singleton *or* by deleting these variables): e.g.,
+    should make *no* attempts to read, write, or otherwise access this list, but
+    should instead nullify *all* variables referring to this list immediately
+    after releasing this list (e.g., by setting these variables to the
+    :data:`None` singleton *or* by deleting these variables): e.g.,
 
-        >>> from beartype._util.cache.pool.utilcachepoollistfixed import (
-        ...     acquire_fixed_list, release_fixed_list)
-        >>> fixed_list = acquire_fixed_list(size=7)
-        >>> fixed_list[:] = ('If', 'You', 'Want', 'Blood', "You've", 'Got', 'It',)
-        >>> release_fixed_list(fixed_list)
-        # Either do this...
-        >>> fixed_list = None
-        # Or do this.
-        >>> del fixed_list
+    .. code-block:: pycon
+
+       >>> from beartype._util.cache.pool.utilcachepoollistfixed import (
+       ...     acquire_fixed_list, release_fixed_list)
+       >>> fixed_list = acquire_fixed_list(size=7)
+       >>> fixed_list[:] = ('If', 'You', 'Want', 'Blood', "You've", 'Got', 'It',)
+       >>> release_fixed_list(fixed_list)
+       # Either do this...
+       >>> fixed_list = None
+       # Or do this.
+       >>> del fixed_list
 
     Parameters
     ----------

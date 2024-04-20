@@ -279,9 +279,9 @@ def make_check_expr(
     # possibly nested object of the passed parameter or return value to be
     # type-checked against the currently visited hint).
     #
-    # Note that this is intentionally *NOT* a Python >= 3.8-specific assignment
-    # expression but rather the original inefficient expression provided by the
-    # parent type hint of the currently visited hint.
+    # Note that this is intentionally *NOT* an assignment expression but rather
+    # the original inefficient expression provided by the parent type hint of
+    # the currently visited hint.
     pith_curr_expr = None
 
     # Name of the current pith variable (i.e., local Python variable in the
@@ -341,8 +341,9 @@ def make_check_expr(
     # number of hints transitively visitable from this root hint. Ergo, *ALL*
     # indexation into this list performed by this BFS is guaranteed to be safe.
     # Ergo, avoid explicitly testing below that the "hints_meta_index_last"
-    # integer maintained by this BFS is strictly less than "FIXED_LIST_SIZE_MEDIUM", as this
-    # constraint is already guaranteed to be the case.
+    # integer maintained by this BFS is strictly less than
+    # "FIXED_LIST_SIZE_MEDIUM", as this constraint is already guaranteed to be
+    # the case.
     hints_meta = acquire_fixed_list(FIXED_LIST_SIZE_MEDIUM)
 
     # 0-based index of metadata describing the currently visited hint in the
@@ -355,8 +356,7 @@ def make_check_expr(
     # below initializes index 0 of the "hints_meta" fixed list.
     #
     # For efficiency, this integer also uniquely identifies the currently
-    # iterated child PEP-compliant type hint of the currently visited parent
-    # PEP-compliant type hint.
+    # iterated child type hint of the currently visited parent type hint.
     hints_meta_index_last = -1
 
     # ..................{ LOCALS ~ func : code               }..................
