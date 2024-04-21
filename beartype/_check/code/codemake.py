@@ -66,6 +66,7 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484604_UNION_CHILD_NONPEP_format,
     CODE_PEP484604_UNION_PREFIX,
     CODE_PEP484604_UNION_SUFFIX,
+    CODE_PEP572_PITH_ASSIGN_EXPR_format,
     CODE_PEP586_LITERAL_format,
     CODE_PEP586_PREFIX_format,
     CODE_PEP586_SUFFIX,
@@ -73,8 +74,6 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP593_VALIDATOR_METAHINT_format,
     CODE_PEP593_VALIDATOR_PREFIX,
     CODE_PEP593_VALIDATOR_SUFFIX_format,
-    CODE_PEP572_PITH_ASSIGN_AND_format,
-    CODE_PEP572_PITH_ASSIGN_EXPR_format,
 )
 from beartype._check.convert.convsanify import (
     sanify_hint_child_if_unignorable_or_none,
@@ -1290,8 +1289,7 @@ def make_check_expr(
                                 ),
                             ))
 
-                    # For each PEP-compliant child hint of this union, generate
-                    # and append code type-checking this child hint.
+                    # For the 0-based index and each child hint of this union...
                     for hint_child_index, hint_child in enumerate(
                         hint_childs_pep):
                         # Code deeply type-checking this child hint.
@@ -1747,24 +1745,40 @@ def make_check_expr(
                         exception_prefix=EXCEPTION_PREFIX,
                     )
 
-                    # If the expression assigning the current pith expression to
-                    # a local variable is *NOT* the current pith expression,
-                    # then the current pith expression requires assignment
-                    # *BEFORE* access. This is the common case when this pith is
-                    # a child pith rather than the root pith. In this case...
-                    if pith_curr_assign_expr is not pith_curr_expr:
-                        # Code assigning the current pith expression.
-                        func_curr_code += CODE_PEP572_PITH_ASSIGN_AND_format(
-                            indent_curr=indent_curr,
-                            pith_curr_assign_expr=pith_curr_assign_expr,
-                            pith_curr_var_name=pith_curr_var_name,
-                        )
-                    # Else, the current pith expression does *NOT* require
-                    # assignment access.
+                    # Python expression yielding the value of the current pith,
+                    # defaulting to the name of the local variable assigned to
+                    # by the assignment expression performed below.
+                    hint_curr_expr = pith_curr_var_name
 
-                    # If this metahint is unignorable, deeply type-check
-                    # this metahint. Specifically...
-                    if hint_child is not None:
+                    # Tuple of the one or more beartype validators annotating
+                    # this metahint.
+                    hints_child = get_hint_pep593_metadata(hint_curr)
+                    # print(f'hints_child: {repr(hints_child)}')
+
+                    # If this metahint is ignorable...
+                    if hint_child is None:
+                        # If this metahint is annotated by only one beartype
+                        # validator, the most efficient expression yielding the
+                        # value of the current pith is simply the full Python
+                        # expression *WITHOUT* assigning that value to a
+                        # reusable local variable in an assignment expression.
+                        # *NO* assignment expression is needed in this case.
+                        #
+                        # Why? Because beartype validators are *NEVER* recursed
+                        # into. Each beartype validator is guaranteed to be the
+                        # leaf of a type-checking subtree, guaranteeing this
+                        # pith to be evaluated only once.
+                        if len(hints_child) == 1:
+                            hint_curr_expr = pith_curr_expr
+                        # Else, this metahint is annotated by two or more
+                        # beartype validators. In this case, the most efficient
+                        # expression yielding the value of the current pith is
+                        # the assignment expression assigning this value to a
+                        # reusable local variable.
+                        else:
+                            hint_curr_expr = pith_curr_assign_expr
+                    # Else, this metahint is unignorable. In this case...
+                    else:
                         # Code deeply type-checking this metahint.
                         func_curr_code += CODE_PEP593_VALIDATOR_METAHINT_format(
                             indent_curr=indent_curr,
@@ -1780,12 +1794,13 @@ def make_check_expr(
                             # child hint and one or more arbitrary objects.
                             # Ergo, we need *NOT* explicitly validate that here.
                             hint_child_placeholder=_enqueue_hint_child(
-                                pith_curr_var_name),
+                                pith_curr_assign_expr),
                         )
                     # Else, this metahint is ignorable.
 
-                    # For each beartype validator annotating this metahint...
-                    for hint_child in get_hint_pep593_metadata(hint_curr):
+                    # For the 0-based index and each beartype validator
+                    # annotating this metahint...
+                    for hint_child_index, hint_child in enumerate(hints_child):
                         # print(f'Type-checking PEP 593 type hint {repr(hint_curr)} argument {repr(hint_child)}...')
                         # If this is *NOT* a beartype validator, raise an
                         # exception.
@@ -1804,18 +1819,40 @@ def make_check_expr(
                                 f'beartype validator).'
                             )
                         # Else, this argument is beartype-specific.
+                        #
+                        # If this is any beartype validator *EXCEPT* the first,
+                        # set the Python expression yielding the value of the
+                        # current pith to the name of the local variable
+                        # assigned to by the prior assignment expression. By
+                        # deduction, it *MUST* be the case now that either:
+                        # * This metahint was unignorable, in which case this
+                        #   assignment uselessly reduplicates the exact same
+                        #   assignment performed above. While non-ideal, this
+                        #   assignment is sufficiently efficient to make any
+                        #   optimizations here effectively worthless.
+                        # * This metahint was ignorable, in which case this
+                        #   expression was set above to the assignment
+                        #   expression assigning this pith for the first
+                        #   beartype validator. Since this iteration has already
+                        #   processed the first beartype validator, this
+                        #   assignment expression has already been performed.
+                        #   Avoid inefficiently re-performing this assignment
+                        #   expression for each additional beartype validator by
+                        #   efficiently reusing the previously assigned local.
+                        elif hint_child_index:
+                            hint_curr_expr = pith_curr_var_name
+                        # Else, this is the first beartype validator. See above.
 
-                        # Generate and append efficient code type-checking this
-                        # validator by embedding this code as is.
+                        # Code deeply type-checking this validator.
                         func_curr_code += CODE_PEP593_VALIDATOR_IS_format(
                             indent_curr=indent_curr,
                             # Python expression formatting the current pith into
-                            # the "{obj}" variable already embedded by that
-                            # class into this code.
+                            # the "{obj}" format substring previously embedded
+                            # by this validator into this code string.
                             hint_child_expr=hint_child._is_valid_code.format(
                                 # Indentation unique to this child hint.
                                 indent=INDENT_LEVEL_TO_CODE[indent_level_child],
-                                obj=pith_curr_var_name,
+                                obj=hint_curr_expr,
                             ),
                         )
 

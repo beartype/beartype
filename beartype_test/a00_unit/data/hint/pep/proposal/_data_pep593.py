@@ -22,6 +22,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
     from beartype.typing import (
         List,
         Sequence,
+        TypeVar,
         Union,
     )
     from beartype.vale import (
@@ -37,6 +38,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
         HintSignUnion,
     )
     from beartype._util.api.utilapityping import get_typing_attrs
+    from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_10
     from beartype_test.a00_unit.data.data_type import (
         Class,
         Subclass,
@@ -77,11 +79,21 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
         is_true, 'Drank its inspiring radiance, and the wind')
 
     # ..................{ VALIDATORS ~ is                    }..................
-    # Beartype validators defined as lambda functions.
+    # PEP 484-compliant union of all builtin scalar types.
+    Number = Union[int, float, complex]
+
+    # Generic beartype validators defined as lambda functions.
+    IsNonEmpty = Is[lambda obj: bool(obj)]
+
+    # Numeric beartype validators defined as lambda functions.
+    IsNonNegative = Is[lambda number: number >= 0]
+    IsIntNonZero = Is[lambda number: isinstance(number, int) and number != 0]
+
+    # Textual beartype validators defined as lambda functions.
     IsLengthy = Is[lambda text: len(text) > 30]
     IsSentence = Is[lambda text: text and text[-1] == '.']
 
-    # Beartype validators defined as non-lambda functions.
+    # Textual beartype validators defined as non-lambda functions.
     def _is_quoted(text):
         return '"' in text or "'" in text
     def _is_exceptional(obj):
@@ -89,7 +101,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
     IsQuoted = Is[_is_quoted]
     IsExceptional = Is[_is_exceptional]
 
-    # Beartype validator synthesized from the above validators via the
+    # Textual beartype validator synthesized from the above validators via the
     # domain-specific language (DSL) implemented by those validators.
     IsLengthyOrUnquotedSentence = IsLengthy | (IsSentence & ~IsQuoted)
 
@@ -269,8 +281,8 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
             ),
 
             # Annotated of an isinstanceable type annotated by two or more
-            # beartype-specific validators all defined as functions, specified
-            # with comma-delimited list syntax.
+            # beartype validators all defined as functions, specified with
+            # comma-delimited list syntax.
             HintPepMetadata(
                 hint=Annotated[str, IsLengthy, IsSentence, IsQuoted],
                 pep_sign=HintSignAnnotated,
@@ -304,9 +316,8 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
 
-            # Annotated of an isinstanceable type annotated by one
-            # beartype-specific validator synthesized from all possible
-            # operators.
+            # Annotated of an isinstanceable type annotated by one beartype
+            # validator synthesized from all possible operators.
             HintPepMetadata(
                 hint=Annotated[str, IsLengthyOrUnquotedSentence],
                 pep_sign=HintSignAnnotated,
@@ -341,8 +352,8 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
 
             # ..............{ ANNOTATED ~ beartype : is : &      }..............
             # Annotated of an isinstanceable type annotated by two or more
-            # validators all defined as functions, specified with "&"-delimited
-            # operator syntax.
+            # beartype validators all defined as functions, specified with
+            # "&"-delimited operator syntax.
             HintPepMetadata(
                 hint=Annotated[str, IsLengthy & IsSentence & IsQuoted],
                 pep_sign=HintSignAnnotated,
@@ -377,10 +388,10 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
             ),
 
             # Annotated of an isinstanceable type annotated by two or more
-            # validators all defined as functions, specified with "&"-delimited
-            # operator syntax such that the first such validator short-circuits
-            # all subsequent such validators, which all intentionally raise
-            # exceptions to prove they are silently ignored.
+            # beartype validators all defined as functions, specified with
+            # "&"-delimited operator syntax such that the first such validator
+            # short-circuits all subsequent such validators, which all
+            # intentionally raise exceptions to prove they are silently ignored.
             #
             # Note this hint is *NOT* safely satisfiable. Ergo, we
             # intentionally do *NOT* validate this hint to be satisfied.
@@ -399,10 +410,10 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
 
             # ..............{ ANNOTATED ~ beartype : is : |      }..............
             # Annotated of an isinstanceable type annotated by two or more
-            # validators all defined as functions, specified with "|"-delimited
-            # operator syntax such that the first such validator short-circuits
-            # all subsequent such validators, which all intentionally raise
-            # exceptions to prove they are silently ignored.
+            # beartype validators all defined as functions, specified with
+            # "|"-delimited operator syntax such that the first such validator
+            # short-circuits all subsequent such validators, which all
+            # intentionally raise exceptions to prove they are silently ignored.
             #
             # Note this hint is *NOT* safely unsatisfiable. Ergo, we
             # intentionally do *NOT* validate this hint to be unsatisfied.
@@ -423,7 +434,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
 
             # ..............{ ANNOTATED ~ beartype : is : nest   }..............
             # Annotated of an annotated of an isinstanceable type, each
-            # annotated by a beartype-specific validator defined as a function.
+            # annotated by a beartype validator defined as a function.
             HintPepMetadata(
                 hint=Annotated[Annotated[str, IsLengthy], IsSentence],
                 pep_sign=HintSignAnnotated,
@@ -443,7 +454,7 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
             ),
 
             # List of annotateds of isinstanceable types annotated by one
-            # beartype-specific validator defined as a lambda function.
+            # beartype validator defined as a lambda function.
             HintPepMetadata(
                 hint=List[AnnotatedStrIsLength],
                 pep_sign=HintSignList,
@@ -473,9 +484,63 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
 
+            # List of lists of annotateds of an ignorable type hint annotated by
+            # a type variable bounded by a beartype validator defined as a
+            # lambda function.
+            HintPepMetadata(
+                hint=List[List[TypeVar('AWhirlwindSweptItOn', bound=(
+                    Annotated[object, IsIntNonZero]))]],
+                pep_sign=HintSignList,
+                isinstanceable_type=list,
+                is_pep585_builtin_subscripted=List is list,
+                is_typevars=True,
+                piths_meta=(
+                    # List of lists of non-zero integer constants.
+                    HintPithSatisfiedMetadata([[16, 17, 20], [21, 64, 65, 68]]),
+                    # String constant *NOT* an instance of the expected type.
+                    HintPithUnsatisfiedMetadata(
+                        'The waves arose. Higher and higher still'),
+                    # List of lists of non-integers and zeroes.
+                    HintPithUnsatisfiedMetadata([
+                        [
+                            'Their fierce necks writhed',
+                            "beneath the tempest's scourge",
+                        ],
+                        [0, 0, 0, 0],
+                    ]),
+                ),
+            ),
+
+            # List of lists of annotateds of an ignorable type hint annotated by
+            # a type variable bounded by two beartype validators, one defined as
+            # a lambda function and one not.
+            HintPepMetadata(
+                hint=List[List[TypeVar('WithFierceGusts', bound=(
+                    Annotated[object, IsInstance[int], IsNonEmpty]))]],
+                pep_sign=HintSignList,
+                isinstanceable_type=list,
+                is_pep585_builtin_subscripted=List is list,
+                is_typevars=True,
+                piths_meta=(
+                    # List of lists of non-zero integer constants.
+                    HintPithSatisfiedMetadata([[16, 17, 20], [21, 64, 65, 68]]),
+                    # String constant *NOT* an instance of the expected type.
+                    HintPithUnsatisfiedMetadata(
+                        'The waves arose. Higher and higher still'),
+                    # List of lists of non-integers and zeroes.
+                    HintPithUnsatisfiedMetadata([
+                        [
+                            'Their fierce necks writhed',
+                            "beneath the tempest's scourge",
+                        ],
+                        [0, 0, 0, 0],
+                    ]),
+                ),
+            ),
+
             # ..............{ ANNOTATED ~ beartype : isattr      }..............
-            # Annotated of an isinstanceable type annotated by one
-            # beartype-specific attribute validator.
+            # Annotated of an isinstanceable type annotated by one beartype
+            # attribute validator.
             HintPepMetadata(
                 hint=Annotated[
                     CathecticallyEnsconceYouIn, IsAttrThisMobbedTristeOf],
@@ -497,8 +562,8 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
             ),
 
             # ..............{ ANNOTATED ~ beartype : isequal     }..............
-            # Annotated of an isinstanceable type annotated by one
-            # beartype-specific equality validator.
+            # Annotated of an isinstanceable type annotated by one beartype
+            # equality validator.
             HintPepMetadata(
                 hint=Annotated[List[str], IsEqual[AMPLY_IMPISH]],
                 pep_sign=HintSignAnnotated,
@@ -525,8 +590,8 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
             ),
 
             # ..............{ ANNOTATED ~ beartype : isinstance  }..............
-            # Annotated of an isinstanceable type annotated by one
-            # beartype-specific type instance validator.
+            # Annotated of an isinstanceable type annotated by one beartype type
+            # instance validator.
             HintPepMetadata(
                 hint=Annotated[Class, ~IsInstance[SubclassSubclass]],
                 pep_sign=HintSignAnnotated,
@@ -555,9 +620,9 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
             ),
 
             # Type hint matching *ANY* sequence of strings, defined as the union
-            # of a validator matching any sequence of strings that is *NOT*
-            # itself a string with a string. Although odd, this exercises an
-            # obscure edge case in code generation.
+            # of a beartype validator matching any sequence of strings that is
+            # *NOT* itself a string with a string. Although odd, this exercises
+            # an obscure edge case in code generation.
             HintPepMetadata(
                 hint=Union[SequenceNonstrOfStr, str],
                 pep_sign=HintSignUnion,
@@ -591,8 +656,8 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
             ),
 
             # ..............{ ANNOTATED ~ beartype : issubclass  }..............
-            # Annotated of an isinstanceable type annotated by one
-            # beartype-specific type inheritance validator.
+            # Annotated of an isinstanceable type annotated by one beartype type
+            # inheritance validator.
             HintPepMetadata(
                 hint=Annotated[type, IsSubclass[Class]],
                 pep_sign=HintSignAnnotated,
@@ -614,6 +679,46 @@ def hints_pep593_meta() -> 'List[HintPepMetadata]':
                 ),
             ),
         ))
+
+        # ..................{ VERSION                        }..................
+        # If the active Python interpreter targets Python >= 3.10, the
+        # "typing.Annotated" type factory supports the "|" operator. In this
+        # case, defined unions of annotateds with this operator.
+        if IS_PYTHON_AT_LEAST_3_10:
+            # Add PEP 593-specific test type hints to this tuple global.
+            hints_pep_meta.extend((
+                # ..............{ ANNOTATED ~ beartype : is : nes}..............
+                # List of lists of annotateds of a union of isinstanceable types
+                # annotated by a type variable bounded by a union of beartype
+                # validators defined as lambda functions.
+                HintPepMetadata(
+                    hint=List[List[TypeVar('TheStrainingBoat', bound=(
+                        Annotated[Number, IsNonNegative] |
+                        Annotated[str, IsNonEmpty]
+                    ))]],
+                    pep_sign=HintSignList,
+                    isinstanceable_type=list,
+                    is_pep585_builtin_subscripted=List is list,
+                    is_typevars=True,
+                    piths_meta=(
+                        # List of lists of positive number constants.
+                        HintPithSatisfiedMetadata([[11, 0.11], [1, 110, 1101100]]),
+                        # List of lists of non-empty string constants.
+                        HintPithSatisfiedMetadata([
+                            ['The straining boat.', '—A whirlwind swept it on,'],
+                            ['With fierce gusts and', 'precipitating force,'],
+                        ]),
+                        # String constant *NOT* an instance of the expected type.
+                        HintPithUnsatisfiedMetadata(
+                            'Through the white ridges of the chafèd sea.'),
+                        # List of lists of negative numbers and empty strings.
+                        HintPithUnsatisfiedMetadata([[-1, '', -0.4], ['', -5, '']]),
+                    ),
+                ),
+            ))
+        # Else, the active Python interpreter targets Python < 3.10. In this
+        # case, the "typing.Annotated" type factory fails to support the "|"
+        # operator.
 
     # ..................{ RETURN                             }..................
     # Return this list of all PEP-specific type hint metadata.

@@ -82,8 +82,30 @@ class HintsMeta(FixedList):
 
             #FIXME: *NO*. We actually need these to be independent copies. Ergo,
             #there's *NO* alternative but to iteratively define one new instance
-            #of this dataclass for each index of this list.
-            obj_init=HintMeta(),
+            #of this dataclass for each index of this list. Indeed, this is
+            #actually a profound benefit. How? We can precompute the values of
+            #* "hint_curr_placeholder" *AT PYTHON STARTUP*. Just iteratively
+            #  assign each "hint_curr_placeholder" according to its index. Do so
+            #  based on the current logic of the enqueue_hint_child() method.
+            #* "pith_curr_var_name" *AT PYTHON STARTUP* in the exact same way.
+            #
+            #Indeed, this suggests we probably no longer need either:
+            #* "pith_curr_var_name_index".
+            #* The entire "codesnipcls" submodule.
+            #
+            #Well, isn't this turning out to be a significant facepalm.
+            #FIXME: Actually, the default of "None" here is fine. Let's instead:
+            #* Redefine the __getitem__() dunder method to dynamically inspect
+            #  the item at the passed index. If:
+            #    * "None", then replace this item with a new "HintMeta" instance
+            #      suitable for the passed index.
+            #    * Else, return the existing "HintMeta" instance at this index.
+            #* Refactor the enqueue_hint_child() method to then reassign the
+            #  fields of this "HintMeta" instance to the desired values.
+            #
+            #This approach avoids expensive up-front computation at app startup,
+            #instead amortizing these costs across the app lifetime. Heh.
+            # obj_init=HintMeta(),
         )
 
         # 0-based index of metadata describing the last visitable hint in this
@@ -287,56 +309,46 @@ class HintMeta(object):
         indent_level_curr: int
 
     # ..................{ INITIALIZERS                       }..................
-    def __init__(self) -> None:
+    def __init__(
+        self,
+
+        # Mandatory parameters.
+        hint_curr_placeholder: str,
+        pith_curr_var_name_index: int,
+
+        # Optional parameters.
+        hint_curr: object = None,
+        pith_curr_expr: str = '',
+        indent_level_curr: int = 2,
+    ) -> None:
         '''
         Initialize this type-checking metadata dataclass.
+
+        Parameters
+        ----------
+        hint_curr : object
+            Type hint currently visited by this BFS.
+        hint_curr_placeholder : str
+            Type-checking placeholder substring. See the class docstring.
+        pith_curr_expr : str
+            Pith expression. See the class docstring.
+        pith_curr_var_name_index : int
+            Pith variable name index. See the class docstring.
+        indent_level_curr : int
+            Indentation level. See the class docstring.
         '''
+        assert isinstance(hint_curr_placeholder, str)
+        assert isinstance(pith_curr_expr, str)
+        assert isinstance(pith_curr_var_name_index, int)
+        assert isinstance(indent_level_curr, int)
+        assert hint_curr_placeholder
+        assert pith_curr_expr
+        assert pith_curr_var_name_index >= 0
+        assert indent_level_curr > 1
 
-        # Initialize all instance variables to reasonable defaults.
-        self.hint_curr = None
-        self.hint_curr_placeholder = ''
-        self.pith_curr_expr = ''
-        self.pith_curr_var_name_index = 0
-        self.indent_level_curr = 2
-
-
-    #FIXME: Excise us up, sadly.
-    # def __init__(
-    #     self,
-    #     hint_curr: object,
-    #     hint_curr_placeholder: str,
-    #     pith_curr_expr: str,
-    #     pith_curr_var_name_index: int,
-    #     indent_level_curr: int,
-    # ) -> None:
-    #     '''
-    #     Initialize this type-checking metadata dataclass.
-    #
-    #     Parameters
-    #     ----------
-    #     hint_curr : object
-    #         Type hint currently visited by this BFS.
-    #     hint_curr_placeholder : str
-    #         Type-checking placeholder substring. See the class docstring.
-    #     pith_curr_expr : str
-    #         Pith expression. See the class docstring.
-    #     pith_curr_var_name_index : int
-    #         Pith variable name index. See the class docstring.
-    #     indent_level_curr : int
-    #         Indentation level. See the class docstring.
-    #     '''
-    #     assert isinstance(hint_curr_placeholder, str)
-    #     assert isinstance(pith_curr_expr, str)
-    #     assert isinstance(pith_curr_var_name_index, int)
-    #     assert isinstance(indent_level_curr, int)
-    #     assert hint_curr_placeholder
-    #     assert pith_curr_expr
-    #     assert pith_curr_var_name_index >= 0
-    #     assert indent_level_curr > 1
-    #
-    #     # Classify all passed parameters.
-    #     self.hint_curr = hint_curr
-    #     self.hint_curr_placeholder = hint_curr_placeholder
-    #     self.pith_curr_expr = pith_curr_expr
-    #     self.pith_curr_var_name_index = pith_curr_var_name_index
-    #     self.indent_level_curr = indent_level_curr
+        # Classify all passed parameters.
+        self.hint_curr = hint_curr
+        self.hint_curr_placeholder = hint_curr_placeholder
+        self.pith_curr_expr = pith_curr_expr
+        self.pith_curr_var_name_index = pith_curr_var_name_index
+        self.indent_level_curr = indent_level_curr

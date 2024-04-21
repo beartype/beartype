@@ -35,7 +35,7 @@ object to be equal to another arbitrary object.
 
 
 VALE_CODE_CHECK_ISINSTANCE_TEST = '''
-{{indent}}# True only if this pith is an object instancing this superclass.
+{{indent}}# True only if this pith is of this type.
 {{indent}}isinstance({{obj}}, {param_name_types})'''
 '''
 :attr:`beartype.vale.IsInstance`-specific code snippet validating an arbitrary

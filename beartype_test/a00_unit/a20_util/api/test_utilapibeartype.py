@@ -30,9 +30,9 @@ def test_is_func_beartyped() -> None:
     @beartype
     def where_that_or() -> str:
         '''
-        Arbitrary callable decorated by the :func:`beartype.beartype`
-        decorator intentionally annotated by one or more arbitrary unignorable
-        type hints to prevent that decorator from silently reducing to a noop.
+        Arbitrary callable decorated by the :func:`beartype.beartype` decorator
+        intentionally annotated by one or more arbitrary unignorable type hints
+        to prevent that decorator from silently reducing to a noop.
         '''
 
         return 'In the still cave of the witch Poesy,'
