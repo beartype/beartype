@@ -214,7 +214,7 @@ Type of the :data:`NotImplemented` singleton.
 '''
 
 # ....................{ TYPES ~ call                       }....................
-CallableCodeObjectType: Any = type((lambda: None).__code__)
+CallableCodeObjectType = _types.CodeType
 '''
 Type of all **code objects** (i.e., C-based objects underlying all pure-Python
 callables to which those callables are compiled for efficiency).

@@ -869,8 +869,13 @@ def is_func_wrapper(func: Any) -> TypeGuard[Callable]:
     return hasattr(func, '__wrapped__')
 
 
-@callable_cached
-def is_func_wrapper_isomorphic(func: Any) -> TypeGuard[Callable]:
+def is_func_wrapper_isomorphic(
+    # Mandatory parameters.
+    func: Any,
+
+    # Optional parameters.
+    wrapper: Any = None,
+) -> TypeGuard[Callable]:
     '''
     :data:`True` only if the passed object is an **isomorphic wrapper** (i.e.,
     callable decorated by the standard :func:`functools.wraps` decorator for
@@ -883,7 +888,14 @@ def is_func_wrapper_isomorphic(func: Any) -> TypeGuard[Callable]:
     decorated by an isomorphic decorator, which constitutes *most* real-world
     decorators of interest.
 
-    This tester is memoized for efficiency.
+    This tester is currently *not* memoized for efficiency, despite performing a
+    relatively non-trivial (albeit technically :math:`O(1)`) operation. Why?
+    Because this tester should typically be called at most once by the parent
+    :func:`beartype._util.func.utilfuncwrap.unwrap_func_all_isomorphic`
+    function, which is currently:
+
+    * The *only* other function calling this tester.
+    * Itself currently unmemoized.
 
     Caveats
     -------
@@ -895,6 +907,21 @@ def is_func_wrapper_isomorphic(func: Any) -> TypeGuard[Callable]:
     ----------
     func : object
         Object to be inspected.
+    wrapper : Any, optional
+        Wrapper callable to be unwrapped in the event that the callable to be
+        inspected for isomorphism differs from the callable to be unwrapped.
+        Typically, these two callables are the same. Edge cases in which these
+        two callables differ include:
+
+        * When ``wrapper`` is a **pseudo-callable** (i.e., otherwise uncallable
+          object whose type renders that object callable by defining the
+          ``__call__()`` dunder method) *and* ``func`` is that ``__call__()``
+          dunder method. If that pseudo-callable wraps a lower-level callable,
+          then that pseudo-callable (rather than ``__call__()`` dunder method)
+          defines the ``__wrapped__`` instance variable providing that callable.
+
+        Defaults to :data:`None`, in which case this parameter *actually*
+        defaults to ``func``.
 
     Returns
     -------
@@ -902,10 +929,38 @@ def is_func_wrapper_isomorphic(func: Any) -> TypeGuard[Callable]:
         :data:`True` only if this object is an isomorphic decorator wrapper.
     '''
 
-    # If the passed callable is *NOT* a wrapper, immediately return false.
-    if not is_func_wrapper(func):
+    # If the caller failed to explicitly pass a callable to be unwrapped,
+    # default the callable to be unwrapped to the passed callable.
+    if wrapper is None:
+        wrapper = func
+    # Else, the caller explicitly passed a callable to be unwrapped. In this
+    # case, preserve that callable as is.
+
+    # If that callable is *NOT* a wrapper, immediately return false.
+    if not is_func_wrapper(wrapper):
         return False
     # Else, that callable is a wrapper.
+
+    # Number of non-variadic arguments permitted for this wrapper if isomorphic,
+    # defaulting to 0.
+    func_args_nonvariadic_len = 0
+
+    # If this object is a C-based bound method descriptor...
+    if is_func_boundmethod(func):
+        # Avoid circular import dependencies.
+        from beartype._util.func.utilfuncwrap import (
+            unwrap_func_boundmethod_once)
+        # print(f'Inspecting f{repr(func)} for isomorphism...')
+
+        # Unwrap this descriptor to the pure-Python callable encapsulated by
+        # this descriptor.
+        func = unwrap_func_boundmethod_once(func)
+
+        # Permit this pure-Python callable to accept exactly one non-variadic
+        # argument, typically named "self" whose value is the object to which
+        # this bound method descriptor was bound at object instantiation time.
+        func_args_nonvariadic_len = 1
+    # Else, this object is *NOT* a C-based bound method descriptor.
 
     # Code object underlying that callable as is (rather than possibly unwrapped
     # to another code object entirely) if that callable is pure-Python *OR*
@@ -921,5 +976,5 @@ def is_func_wrapper_isomorphic(func: Any) -> TypeGuard[Callable]:
         # That callable accepts a variadic keyword argument *AND*...
         is_func_arg_variadic_keyword(func_codeobj) and
         # That callable accepts *NO* non-variadic arguments.
-        get_func_args_nonvariadic_len(func_codeobj) == 0
+        get_func_args_nonvariadic_len(func_codeobj) == func_args_nonvariadic_len
     )

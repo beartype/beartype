@@ -13,6 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorWrappeeException
 from beartype.typing import (
+    TYPE_CHECKING,
     Callable,
     Dict,
     FrozenSet,
@@ -27,7 +28,9 @@ from beartype._data.hint.datahinttyping import (
     TypeStack,
 )
 from beartype._util.cache.pool.utilcachepoolobjecttyped import (
-    acquire_object_typed)
+    acquire_object_typed,
+    release_object_typed,
+)
 from beartype._util.func.utilfunccodeobj import get_func_codeobj
 from beartype._util.func.utilfuncget import get_func_annotations
 from beartype._util.func.utilfunctest import (
@@ -217,6 +220,25 @@ class BeartypeCall(object):
         'func_wrapper_name',
     )
 
+    # Squelch false negatives from mypy. This is absurd. This is mypy. See:
+    #     https://github.com/python/mypy/issues/5941
+    if TYPE_CHECKING:
+        cls_stack: TypeStack
+        conf: BeartypeConf
+        func_arg_name_to_hint: Dict[str, object]
+        func_arg_name_to_hint_get: Callable[[str, object], object]
+        func_wrappee: Callable
+        func_wrappee_codeobj: CallableCodeObjectType
+        func_wrappee_is_nested: bool
+        func_wrappee_scope_forward: Optional[BeartypeForwardScope]
+        func_wrappee_scope_nested_names: Optional[FrozenSet[str]]
+        func_wrappee_wrappee: Callable
+        func_wrappee_wrappee_codeobj: CallableCodeObjectType
+        func_wrapper_code_call_prefix: str
+        func_wrapper_code_signature_prefix: str
+        func_wrapper_scope: LexicalScope
+        func_wrapper_name: str
+
     # Coerce instances of this class to be unhashable, preventing spurious
     # issues when accidentally passing these instances to memoized callables by
     # implicitly raising a "TypeError" exception on the first call to those
@@ -248,21 +270,40 @@ class BeartypeCall(object):
         '''
 
         # Nullify instance variables for safety.
-        self.cls_stack: TypeStack = None
-        self.conf: BeartypeConf = None  # type: ignore[assignment]
-        self.func_arg_name_to_hint: Dict[str, object] = None  # type: ignore[assignment]
-        self.func_arg_name_to_hint_get: Callable[[str, object], object] = None  # type: ignore[assignment]
-        self.func_wrappee: Callable = None  # type: ignore[assignment]
-        self.func_wrappee_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
-        self.func_wrappee_is_nested: bool = None  # type: ignore[assignment]
-        self.func_wrappee_scope_forward: Optional[BeartypeForwardScope] = None
-        self.func_wrappee_scope_nested_names: Optional[FrozenSet[str]] = None
-        self.func_wrappee_wrappee: Callable = None  # type: ignore[assignment]
-        self.func_wrappee_wrappee_codeobj: CallableCodeObjectType = None  # type: ignore[assignment]
-        self.func_wrapper_code_call_prefix: str = None  # type: ignore[assignment]
-        self.func_wrapper_code_signature_prefix: str = None  # type: ignore[assignment]
+        self.deinit()
+
+
+    def deinit(self) -> None:
+        '''
+        Deassociate this metadata from the callable passed to the most recent
+        call of the :meth:`reinit` method, typically before releasing this
+        instance of this class back to the
+        :mod:`beartype._util.cache.pool.utilcachepoolobject` submodule.
+
+        This method prevents a minor (albeit still undesirable, of course)
+        memory leak in which this instance would continue to remain accidentally
+        associated with that callable despite this instance being released back
+        to its object pool, which would then prevent that callable from being
+        garbage-collected on the finalization of the last external reference to
+        that callable.
+        '''
+
+        # Nullify instance variables for safety.
         self.func_wrapper_scope: LexicalScope = {}
-        self.func_wrapper_name: str = None  # type: ignore[assignment]
+        self.cls_stack = (  # type: ignore[assignment]
+        self.conf) = (  # type: ignore[assignment]
+        self.func_arg_name_to_hint) = (  # type: ignore[assignment]
+        self.func_arg_name_to_hint_get) = (  # type: ignore[assignment]
+        self.func_wrappee) = (  # type: ignore[assignment]
+        self.func_wrappee_codeobj) = (  # type: ignore[assignment]
+        self.func_wrappee_is_nested) = (  # type: ignore[assignment]
+        self.func_wrappee_scope_forward) = (  # type: ignore[assignment]
+        self.func_wrappee_scope_nested_names) = (  # type: ignore[assignment]
+        self.func_wrappee_wrappee) = (  # type: ignore[assignment]
+        self.func_wrappee_wrappee_codeobj) = (  # type: ignore[assignment]
+        self.func_wrapper_code_call_prefix) = (  # type: ignore[assignment]
+        self.func_wrapper_code_signature_prefix) = (  # type: ignore[assignment]
+        self.func_wrapper_name) = None  # type: ignore[assignment]
 
 
     def reinit(
@@ -274,6 +315,7 @@ class BeartypeCall(object):
 
         # Optional parameters.
         cls_stack: TypeStack = None,
+        wrapper: Optional[Callable] = None,
     ) -> None:
         '''
         Reinitialize this metadata from the passed callable, typically after
@@ -296,6 +338,22 @@ class BeartypeCall(object):
             **Type stack** (i.e., either tuple of zero or more arbitrary types
             *or* :data:`None`). See also the parameter of the same name accepted
             by the :func:`beartype._decor.decorcore.beartype_object` function.
+        wrapper : Optional[Callable]
+            Wrapper callable to be unwrapped in the event that the callable
+            currently being decorated by :func:`beartype.beartype` differs from
+            the callable to be unwrapped. Typically, these two callables are the
+            same. Edge cases in which these two callables differ include:
+
+            * When ``wrapper`` is a **pseudo-callable** (i.e., otherwise
+              uncallable object whose type renders that object callable by
+              defining the ``__call__()`` dunder method) *and* ``func`` is that
+              ``__call__()`` dunder method. If that pseudo-callable wraps a
+              lower-level callable, then that pseudo-callable (rather than
+              ``__call__()`` dunder method) defines the ``__wrapped__`` instance
+              variable providing that callable.
+
+            Defaults to :data:`None`, in which case this parameter *actually*
+            defaults to ``func``.
 
         Raises
         ------
@@ -311,7 +369,7 @@ class BeartypeCall(object):
               equivalently, if this callable is either C-based *or* a class or
               object defining the ``__call__()`` dunder method.
             * This configuration is *not* actually a configuration.
-            * ``cls_owner`` is neither a class *nor* ``None``.
+            * ``cls_owner`` is neither a class *nor* :data:`None`.
         '''
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -339,26 +397,34 @@ class BeartypeCall(object):
                 f'"cls_stack" {repr(cls_stack)} neither tuple nor "None".')
         # Else, this class stack is either a tuple *OR* "None".
 
-        # If this class stack is *NOT* "None", this class stack is a tuple. In
-        # this case, for each item of this class stack tuple...
+        # If the caller passed a non-empty class stack...
         if cls_stack:
+            # For each item of this class stack...
             for cls_stack_item in cls_stack:
                 # If this item is *NOT* a type, raise an exception.
                 if not isinstance(cls_stack_item, type):
                     raise BeartypeDecorWrappeeException(
                         f'"cls_stack" item {repr(cls_stack_item)} not type.')
-        # Else, this class stack is "None".
+                # Else, this item is a type.
+        # Else, the caller either passed no class stack *OR* an empty class
+        # stack. In either case, ignore this parameter.
+
+        # If the caller failed to explicitly pass a callable to be unwrapped,
+        # default the callable to be unwrapped to the passed callable.
+        if wrapper is None:
+            wrapper = func
+        # Else, the caller explicitly passed a callable to be unwrapped. In this
+        # case, preserve that callable as is.
 
         # Classify all passed parameters.
-        self.cls_stack = cls_stack
         self.conf = conf
+        self.cls_stack = cls_stack
 
         # Wrappee callable currently being decorated.
         self.func_wrappee = func
 
         # Possibly unwrapped callable unwrapped from this wrappee callable.
-        self.func_wrappee_wrappee = unwrap_func_all_isomorphic(func)
-        # self.func_wrappee_wrappee = unwrap_func_all(func)
+        self.func_wrappee_wrappee = unwrap_func_all_isomorphic(wrapper)
         # print(f'func_wrappee: {self.func_wrappee}')
         # print(f'func_wrappee_wrappee: {self.func_wrappee_wrappee}')
 
@@ -664,12 +730,34 @@ def make_beartype_call(
 
     '''
 
-    # Previously cached callable metadata reinitialized from that callable.
+    # Acquire previously cached beartype call metadata from its object pool.
     bear_call = acquire_object_typed(BeartypeCall)
+
+    # Reinitialize this metadata with the passed callable.
     bear_call.reinit(func, conf, **kwargs)
 
     # Return this metadata.
     return bear_call
+
+
+#FIXME: Unit test us up, please.
+def cull_beartype_call(bear_call: BeartypeCall) -> None:
+    '''
+    Deinitialize the passed **beartype call metadata** (i.e., object
+    encapsulating *all* metadata for the passed user-defined callable, typically
+    currently being decorated by the :func:`beartype.beartype` decorator).
+
+    Parameters
+    ----------
+    bear_call : BeartypeCall
+        Beartype call metadata to be deinitialized.
+    '''
+
+    # Deinitialize this beartype call metadata.
+    bear_call.deinit()
+
+    # Release this beartype call metadata back to its object pool.
+    release_object_typed(bear_call)
 
 # ....................{ GLOBALS ~ private                  }....................
 _TypeStackOrNone = NoneTypeOr[tuple]

@@ -58,6 +58,92 @@ def test_unwrap_func_all() -> None:
     assert unwrap_func_all(in_a_station_of_the_metro) is (
         in_a_station_of_the_metro_line_two)
 
+
+def test_unwrap_func_all_isomorphic() -> None:
+    '''
+    Test the
+    :func:`beartype._util.func.utilfuncwrap.unwrap_func_all_isomorphic` function.
+    '''
+
+    # ....................{ IMPORTS                        }....................
+    # Defer test-specific imports.
+    from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
+    from functools import (
+        update_wrapper,
+        wraps,
+    )
+
+    # ....................{ CALLABLES                      }....................
+    def the_waves_arose(higher_and, higher_still):
+        '''
+        Arbitrary wrappee callable.
+        '''
+
+        return higher_and + higher_still
+        # return 'The waves arose. Higher and higher still'
+
+
+    # Note that the "assigned" parameter is intentionally passed the empty
+    # tuple, preserving the original "__name__" and "__qualname__" dunder
+    # attributes of wrapper callables for debuggability.
+    @wraps(the_waves_arose, assigned=())
+    def their_fierce_necks(writhed_beneath):
+        '''
+        Arbitrary non-isomorphic wrapper callable wrapping a non-wrapper.
+        '''
+
+        return the_waves_arose(writhed_beneath[0], writhed_beneath[1:])
+
+
+    @wraps(their_fierce_necks, assigned=())
+    def the_tempests_scourge(*args, **kwargs):
+        '''
+        Arbitrary isomorphic wrapper callable wrapping a non-isomorphic wrapper.
+        '''
+
+        return their_fierce_necks(*args, **kwargs)
+
+    # ....................{ CLASSES                        }....................
+    class LikeSerpentsStruggling(object):
+        '''
+        Arbitrary isomorphic wrapper pseudo-callable wrapping an isomorphic
+        wrapper callable.
+        '''
+
+        def yamo(self): pass
+        def __call__(self, *args, **kwargs):
+            '''
+            Arbitrary isomorphic wrapper callable wrapping another isomorphic
+            wrapper callable.
+            '''
+
+            return the_tempests_scourge(*args, **kwargs)
+
+    # Instance of this class.
+    in_a_vultures_grasp = LikeSerpentsStruggling()
+    update_wrapper(
+        wrapper=in_a_vultures_grasp,
+        wrapped=the_tempests_scourge,
+        assigned=(),
+    )
+
+    # ....................{ ASSERTS                        }....................
+    # Assert this function returns unwrapped callables unmodified.
+    assert unwrap_func_all_isomorphic(the_waves_arose) is the_waves_arose
+    assert unwrap_func_all_isomorphic(iter) is iter
+
+    # Assert this function returns non-isomorphic wrapper callables unmodified.
+    assert unwrap_func_all_isomorphic(their_fierce_necks) is their_fierce_necks
+
+    # Assert this function unwraps wrapper callables.
+    assert unwrap_func_all_isomorphic(the_tempests_scourge) is (
+        their_fierce_necks)
+
+    # Assert this function unwraps wrapper pseudo-callables.
+    in_a_vultures_grasp_unwrapped = unwrap_func_all_isomorphic(
+        func=in_a_vultures_grasp.__call__, wrapper=in_a_vultures_grasp)
+    assert in_a_vultures_grasp_unwrapped is their_fierce_necks
+
 # ....................{ TESTS ~ descriptor                 }....................
 def test_unwrap_func_classmethod_once() -> None:
     '''

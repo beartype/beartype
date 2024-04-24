@@ -25,7 +25,10 @@ from beartype._cave._cavefast import (
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
 )
-from beartype._check.checkcall import make_beartype_call
+from beartype._check.checkcall import (
+    cull_beartype_call,
+    make_beartype_call,
+)
 from beartype._conf.confcls import BeartypeConf
 from beartype._conf.confenum import BeartypeStrategy
 from beartype._data.hint.datahinttyping import (
@@ -39,13 +42,12 @@ from beartype._util.api.utilapibeartype import (
 from beartype._util.api.utilapicontextlib import (
     is_func_contextlib_contextmanager)
 from beartype._util.api.utilapifunctools import is_func_functools_lru_cache
-from beartype._util.cache.pool.utilcachepoolobjecttyped import (
-    release_object_typed)
 from beartype._util.func.utilfuncget import get_func_boundmethod_self
 from beartype._util.func.utilfuncmake import make_func
 from beartype._util.func.utilfunctest import (
     is_func_boundmethod,
     is_func_python,
+    is_func_wrapper,
 )
 from beartype._util.func.utilfuncwrap import (
     unwrap_func_once,
@@ -221,7 +223,7 @@ def beartype_func(
 
     # If this configuration enables the no-time strategy performing *NO*
     # type-checking, monkey-patch that callable with the standard
-    # @typing.no_type_check decorator detected above by the call to the
+    # @typing.no_type_check decorator detected below by the call to the
     # is_func_unbeartypeable() tester on all subsequent decorations passed the
     # same callable... Doing so prevents all subsequent decorations from
     # erroneously ignoring this previously applied no-time strategy.
@@ -282,6 +284,14 @@ def beartype_func(
         #      func_label_factory=bear_call.label_func_wrapper,
         #
         #That's absolutely guaranteed to be the fastest approach.
+        #FIXME: Right. Do that -- except instead of a new unique
+        #label_func_wrapper() method name, just define the standard
+        #BeartypeCall.__repr__() dunder method: e.g.,
+        #    class BeartypeCall(object):
+        #        ...
+        #        def __repr__(self) -> str:
+        #            return f'@beartyped {self.func_wrapper_name}() wrapper'
+        #Then pass a new "func_label_obj_repr=bear_call" parameter. Win!
         func_label=f'@beartyped {bear_call.func_wrapper_name}() wrapper',
 
         func_wrapped=func,
@@ -294,8 +304,8 @@ def beartype_func(
     # already decorated by @beartype by efficiently reducing to a noop.
     set_func_beartyped(func_wrapper)
 
-    # Release this beartype call metadata back to its object pool.
-    release_object_typed(bear_call)
+    # Deinitialize this beartype call metadata.
+    cull_beartype_call(bear_call)
 
     # Return this wrapper.
     return func_wrapper  # type: ignore[return-value]
@@ -610,7 +620,7 @@ def _beartype_descriptor_boundmethod(
 def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     '''
     Monkey-patch the passed **pseudo-callable** (i.e., arbitrary pure-Python
-    *or* C-based object whose class defines the ``__call__``) dunder method
+    *or* C-based object whose class defines the ``__call__()``) dunder method
     enabling this object to be called like a standard callable) with dynamically
     generated type-checking.
 
@@ -633,11 +643,15 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     BeartypeableT
         The object monkey-patched by :func:`beartype.beartype`.
     '''
-    # print(f'@beartyping pseudo-callable {repr(obj)}...')
+    # print(f'@beartyping pseudo-callable {repr(pseudofunc)}...')
 
-    # __call__() dunder method defined by this object if this object defines
+    # Bound __call__() dunder method bound to this object if this object defines
     # this method *OR* "None" otherwise.
-    pseudofunc_call_method = getattr(pseudofunc, '__call__')
+    pseudofunc_call_boundmethod = getattr(pseudofunc, '__call__')
+
+    # Unbound __call__() dunder method defined by the type of this object if
+    # this type defines this method *OR* "None" otherwise.
+    pseudofunc_call_type_method = getattr(pseudofunc.__class__, '__call__')
 
     # If this object does *NOT* define this method, this object is *NOT* a
     # pseudo-callable. In this case, raise an exception.
@@ -648,49 +662,77 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     # is a pseudo-callable, this object *MUST* be a pseudo-callable. That said,
     # languages change; it's not inconceivable that Python could introduce yet
     # another kind of callable object under future versions.
-    if pseudofunc_call_method is None:
-        raise BeartypeDecorWrappeeException(  # pragma: no cover
-            f'Callable {repr(pseudofunc)} not pseudo-callable '
-            f'(i.e., callable object defining __call__() dunder method).'
+    if pseudofunc_call_boundmethod is None:  # pragma: no cover
+        raise BeartypeDecorWrappeeException(
+            f'Callable {repr(pseudofunc)} not pseudo-callable object '
+            f'(i.e., defines no __call__() dunder method).'
         )
     # Else, this object is a pseudo-callable.
     #
-    # If this method is *NOT* pure-Python, this method is C-based. In this
-    # case...
+    # If this object does *NOT* define this method, this object is *NOT* a
+    # pseudo-callable. In this case, raise an exception.
+    elif pseudofunc_call_type_method is None:  # pragma: no cover
+        raise BeartypeDecorWrappeeException(
+            f'Callable {repr(pseudofunc)} type {repr(pseudofunc.__class__)} '
+            f'not pseudo-callable object type '
+            f'(i.e., defines no __call__() dunder method).'
+        )
+    # Else, this object type is a pseudo-callable type.
     #
-    # Note that this is non-ideal. Whereas logic below safely monkey-patches
-    # pure-Python pseudo-callables in a general-purpose manner, that same logic
-    # does *NOT* apply to C-based pseudo-callables; indeed, there exists *NO*
-    # general-purpose means of safely monkey-patching the latter. Instead,
-    # specific instances of the latter *MUST* be manually detected and handled.
-    elif not is_func_python(pseudofunc_call_method):
-        # If this is a C-based @functools.lru_cache-memoized callable (i.e.,
-        # low-level C-based callable object both created and returned by the
-        # standard @functools.lru_cache decorator), @beartype was listed above
-        # rather than below the @functools.lru_cache decorator creating and
-        # returning this callable in the chain of decorators decorating this
-        # decorated callable.
+    # If this is a C-based @functools.lru_cache-memoized callable (i.e.,
+    # low-level C-based callable object both created and returned by the
+    # standard @functools.lru_cache decorator), @beartype was listed above
+    # rather than below the @functools.lru_cache decorator creating and
+    # returning this callable in the chain of decorators decorating this
+    # decorated callable.
+    #
+    # This conditional branch effectively reorders @beartype to be the first
+    # decorator decorating the pure-Python callable underlying this C-based
+    # pseudo-callable: e.g.,
+    #     from functools import lru_cache
+    #
+    #     # This branch detects and reorders this edge case...
+    #     @beartype
+    #     @lru_cache
+    #     def muh_lru_cache() -> None: pass
+    #
+    #     # ...to resemble this direct decoration instead.
+    #     @lru_cache
+    #     @beartype
+    #     def muh_lru_cache() -> None: pass
+    elif is_func_functools_lru_cache(pseudofunc):
+        # Return a new callable decorating that callable with type-checking.
+        return beartype_pseudofunc_functools_lru_cache(  # type: ignore
+            pseudofunc=pseudofunc, **kwargs)  # pyright: ignore
+    # Else, this is *NOT* a C-based @functools.lru_cache-memoized callable.
+
+    # If...
+    if (
+        # This pseudo-callable object is a wrapper *AND*...
+        is_func_wrapper(pseudofunc) and
+        # This unbound __call__() dunder method is *NOT* a wrapper...
+        not is_func_wrapper(pseudofunc_call_type_method)
+    ):
+        # print(f'Pseudo-callable wrapper {repr(pseudofunc)} identified!')
+
+        # Transitively pass the optional "wrapper" parameter to the
+        # BeartypeCall.reinit() method, ensuring that this pseudo-callable
+        # wrapper object is correctly unwrapped.
         #
-        # This conditional branch effectively reorders @beartype to be the first
-        # decorator decorating the pure-Python callable underlying this C-based
-        # pseudo-callable: e.g.,
+        # This edge case handles edge-case pseudo-callable wrapper objects
+        # defined by popular third-party packages, including:
+        # * The pseudo-callable wrapper objects created and returned by the
+        #   @equinox.filter_jit wrapper. Although private and extremely
+        #   non-trivial, the types of these objects vaguely resembles:
+        #       class _JitWrapper(object):
+        #           def __init__(self, func):
+        #               self.__wrapped__ = func
         #
-        #     from functools import lru_cache
-        #
-        #     # This branch detects and reorders this edge case...
-        #     @beartype
-        #     @lru_cache
-        #     def muh_lru_cache() -> None: pass
-        #
-        #     # ...to resemble this direct decoration instead.
-        #     @lru_cache
-        #     @beartype
-        #     def muh_lru_cache() -> None: pass
-        if is_func_functools_lru_cache(pseudofunc):
-            # Return a new callable decorating that callable with type-checking.
-            return beartype_pseudofunc_functools_lru_cache(  # type: ignore
-                pseudofunc=pseudofunc, **kwargs)  # pyright: ignore
-        # Else, this is *NOT* a C-based @functools.lru_cache-memoized callable.
+        #           def __call__(self, *args, **kwargs):
+        #               return self.__wrapped__(*args, **kwargs)
+        kwargs['wrapper'] = pseudofunc
+    # Else, either this pseudo-callable object is not a wrapper *OR* this
+    # unbound __call__() dunder method is already a wrapper.
 
     # Replace the existing bound method descriptor to this __call__() dunder
     # method with a new bound method descriptor to a new __call__() dunder
@@ -712,8 +754,8 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     #   harmful, @beartype prefers the former. See also official documentation
     #   on the subject:
     #       https://docs.python.org/3/reference/datamodel.html#special-method-names
-    pseudofunc.__class__.__call__ = _beartype_descriptor_boundmethod(  # type: ignore[assignment,method-assign]
-        descriptor=pseudofunc_call_method, **kwargs)
+    pseudofunc.__class__.__call__ = beartype_func(  # type: ignore[method-assign]
+        func=pseudofunc_call_type_method, **kwargs)
 
     # Return this monkey-patched object.
     return pseudofunc  # type: ignore[return-value]

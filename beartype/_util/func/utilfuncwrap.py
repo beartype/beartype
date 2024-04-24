@@ -286,8 +286,13 @@ def unwrap_func_all(func: Any) -> Callable:
     return func
 
 
-#FIXME: Unit test us up, please.
-def unwrap_func_all_isomorphic(func: Any) -> Callable:
+def unwrap_func_all_isomorphic(
+    # Mandatory parameters.
+    func: Any,
+
+    # Optional parameters.
+    wrapper: Any = None,
+) -> Callable:
     '''
     Lowest-level **non-isomorphic wrappee** (i.e., callable wrapped by the
     passed wrapper callable) of the passed higher-level **isomorphic wrapper**
@@ -306,8 +311,24 @@ def unwrap_func_all_isomorphic(func: Any) -> Callable:
 
     Parameters
     ----------
-    func : Callable
-        Wrapper callable to be unwrapped.
+    func : Any
+        Wrapper callable to be inspected for isomorphism. If ``wrapper`` is
+        :data:`None` (as is the common case), this callable is also unwrapped.
+    wrapper : Any, optional
+        Wrapper callable to be unwrapped in the event that the callable to be
+        inspected for isomorphism differs from the callable to be unwrapped.
+        Typically, these two callables are the same. Edge cases in which these
+        two callables differ include:
+
+        * When ``wrapper`` is a **pseudo-callable** (i.e., otherwise uncallable
+          object whose type renders that object callable by defining the
+          ``__call__()`` dunder method) *and* ``func`` is that ``__call__()``
+          dunder method. If that pseudo-callable wraps a lower-level callable,
+          then that pseudo-callable (rather than ``__call__()`` dunder method)
+          defines the ``__wrapped__`` instance variable providing that callable.
+
+        Defaults to :data:`None`, in which case this parameter *actually*
+        defaults to ``func``.
 
     Returns
     -------
@@ -325,12 +346,19 @@ def unwrap_func_all_isomorphic(func: Any) -> Callable:
         is_func_wrapper_isomorphic,
     )
 
+    # If the caller failed to explicitly pass a callable to be unwrapped,
+    # default the callable to be unwrapped to the passed callable.
+    if wrapper is None:
+        wrapper = func
+    # Else, the caller explicitly passed a callable to be unwrapped. In this
+    # case, preserve that callable as is.
+
     # While that callable is a higher-level isomorphic wrapper wrapping a
     # lower-level callable...
-    while is_func_wrapper_isomorphic(func):
+    while is_func_wrapper_isomorphic(func=func, wrapper=wrapper):
         # Undo one layer of wrapping by reducing the former to the latter.
-        # print(f'Unwrapping isomorphic closure wrapper {func} to wrappee {func.__wrapped__}...')
-        func_wrapped = func.__wrapped__  # type: ignore[attr-defined]
+        func_wrapped = wrapper.__wrapped__  # type: ignore[attr-defined]
+        # print(f'Unwrapped isomorphic {repr(func)} wrapper {repr(wrapper)} to {repr(func_wrapped)}.')
 
         # If the lower-level object wrapped by this higher-level isomorphic
         # wrapper is *NOT* a pure-Python callable, this object is something
@@ -366,7 +394,7 @@ def unwrap_func_all_isomorphic(func: Any) -> Callable:
         # Else, this lower-level callable is pure-Python.
 
         # Reduce this higher-level wrapper to this lower-level wrappee.
-        func = func_wrapped
+        func = wrapper = func_wrapped
 
     # Return this wrappee, which is now guaranteed to *NOT* be an isomorphic
     # wrapper but might very well still be a wrapper, which is fine.
