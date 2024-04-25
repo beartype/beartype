@@ -86,6 +86,8 @@ def get_func_boundmethod_self(
 # ....................{ GETTERS ~ hints                    }....................
 #FIXME: Refactor all unsafe access of the low-level "__annotations__" dunder
 #attribute to instead call this high-level getter, please.
+#FIXME: See "FIXME:" comments in the "beartype._check.checkcall" submodule for
+#how this needs to be refactored to support Python >= 3.13, please.
 #FIXME: Unit test us up, please.
 def get_func_annotations(
     # Mandatory parameters.
@@ -96,9 +98,13 @@ def get_func_annotations(
     exception_prefix: str = '',
 ) -> HintAnnotations:
     '''
-    **Annotations** (i.e., dictionary mapping from the name of each annotated
-    parameter or return of the passed pure-Python callable to the type hint
-    annotating that parameter or return) of that callable.
+    **Annotations** (i.e., possibly empty ``__annotations__`` dunder dictionary
+    mapping from the name of each annotated parameter or return of the passed
+    possibly C-based callable to the type hint annotating that parameter or
+    return) possibly annotating the passed callable if that callable defines the
+    ``__annotations__`` dunder dictionary *or* raise an exception otherwise
+    (i.e., if that callable fails to define the ``__annotations__`` dunder
+    dictionary).
 
     Parameters
     ----------
@@ -114,12 +120,19 @@ def get_func_annotations(
     Returns
     -------
     HintAnnotations
-        Annotations of that callable.
+        Possibly empty ``__annotations__`` dunder dictionary defined by that
+        callable.
 
     Raises
     ------
     exception_cls
-         If that callable is *not* actually a pure-Python callable.
+         If that callable fails to define the ``__annotations__`` dunder
+         dictionary. Since *all* pure-Python callables (including unannotated
+         callables) define this dictionary, this getter raises an exception only
+         if the passed callable is either uncallable *or* a **pseudo-callable
+         object** (i.e., otherwise uncallable object whose class renders all
+         instances of that class callable by defining the ``__call__()`` dunder
+         method).
 
     See Also
     --------
@@ -147,7 +160,9 @@ def get_func_annotations(
 
         # Raise a human-readable exception.
         raise exception_cls(
-            f'{exception_prefix}{repr(func)} not pure-Python function.')
+            f'{exception_prefix}{repr(func)} not annotatable by type hints '
+            f'(i.e., fails to define "__annotations__" dunder dictionary).'
+        )
     # Else, that callable is pure-Python.
 
     # Return these annotations.
@@ -159,11 +174,12 @@ def get_func_annotations(
 #FIXME: Unit test us up, please.
 def get_func_annotations_or_none(func: Callable) -> Optional[HintAnnotations]:
     '''
-    **Annotations** (i.e., dictionary mapping from the name of each annotated
-    parameter or return of the passed pure-Python callable to the type hint
-    annotating that parameter or return) of that callable if that callable is
-    actually a pure-Python callable *or* :data:`None` otherwise (i.e., if that
-    callable is *not* a pure-Python callable).
+    **Annotations** (i.e., possibly empty ``__annotations__`` dunder dictionary
+    mapping from the name of each annotated parameter or return of the passed
+    possibly C-based callable to the type hint annotating that parameter or
+    return) possibly annotating the passed callable if that callable defines the
+    ``__annotations__`` dunder dictionary *or* :data:`None` otherwise (i.e., if
+    that callable fails to define the ``__annotations__`` dunder dictionary).
 
     Parameters
     ----------
@@ -175,18 +191,20 @@ def get_func_annotations_or_none(func: Callable) -> Optional[HintAnnotations]:
     Optional[HintAnnotations]
         Either:
 
-        * If that callable is actually a pure-Python callable, the annotations
-          of that callable.
+        * If that callable is a pure-Python function, method, or object
+          transitively wrapping a pure-Python function or method, the possibly
+          empty ``__annotations__`` dunder dictionary defined by that callable.
         * Else, :data:`None`.
     '''
 
     # Demonstrable monstrosity demons!
     #
-    # Note that the "__annotations__" dunder attribute is guaranteed to exist
-    # *ONLY* for standard pure-Python callables. Various other callables of
-    # interest (e.g., functions exported by the standard "operator" module) do
-    # *NOT* necessarily declare that attribute. Since this tester is commonly
-    # called in general-purpose contexts where this guarantee does *NOT*
-    # necessarily hold, we intentionally access that attribute safely albeit
-    # somewhat more slowly via getattr().
+    # Note that:
+    # * The "__annotations__" dunder attribute is guaranteed to exist *ONLY* for
+    #   standard pure-Python callables. Various other callables of interest
+    #   (e.g., functions exported by the standard "operator" module) do *NOT*
+    #   necessarily declare that attribute. Since this getter is commonly called
+    #   in general-purpose contexts where this guarantee does *NOT*
+    #   necessarily hold, we intentionally access that attribute safely albeit
+    #   somewhat more slowly via getattr().
     return getattr(func, '__annotations__', None)

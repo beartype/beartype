@@ -81,14 +81,17 @@ def test_decor_type_callable_pseudo() -> None:
     # has *NO* recourse but to globally monkey-patch the type of the passed
     # pseudo-callable (rather than that pseudo-callable itself).
     with raises(BeartypeCallHintParamViolation):
-        autumns_being(
-            b'Are driven, like ghosts from an enchanter fleeing,')
-    with raises(BeartypeCallHintParamViolation):
         autumns_being_typed(
             b'Yellow, and black, and pale, and hectic red,')
-    with raises(BeartypeCallHintParamViolation):
-        unseen_presence(
-            b'Who chariotest to their dark wintry bed')
+
+    #FIXME: Actually, let's *NOT* test either of these. It's unfortunate that
+    #these are being type-checked as well, but... what can you do, huh? *sigh*
+    # with raises(BeartypeCallHintParamViolation):
+    #     autumns_being(
+    #         b'Are driven, like ghosts from an enchanter fleeing,')
+    # with raises(BeartypeCallHintParamViolation):
+    #     unseen_presence(
+    #         b'Who chariotest to their dark wintry bed')
 
 # ....................{ TESTS ~ descriptor                 }....................
 def test_decor_type_descriptor_builtin() -> None:

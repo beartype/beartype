@@ -121,18 +121,18 @@ def sanify_hint_root_func(
     # CAUTION: Synchronize with the sanify_hint_root_statement() sanitizer.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    # PEP-compliant type hint coerced (i.e., permanently converted in the
-    # annotations dunder dictionary of the passed callable) from this possibly
+    #FIXME: This attempt at mutating the "__annotations__" dunder dictionary is
+    #likely to fail under Python >= 3.13. Contemplate alternatives, please.
+    # PEP-compliant type hint coerced from this possibly (i.e., permanently
+    # converted in the annotations dunder dictionary of the passed callable)
     # PEP-noncompliant type hint if this hint is coercible *OR* this hint as is
     # otherwise. Since the passed hint is *NOT* necessarily PEP-compliant,
     # perform this coercion *BEFORE* validating this hint to be PEP-compliant.
-    hint = bear_call.func_wrappee.__annotations__[pith_name] = (
-        coerce_func_hint_root(
-            hint=hint,
-            pith_name=pith_name,
-            bear_call=bear_call,
-            exception_prefix=exception_prefix,
-        )
+    hint = bear_call.func_arg_name_to_hint[pith_name] = coerce_func_hint_root(
+        hint=hint,
+        pith_name=pith_name,
+        bear_call=bear_call,
+        exception_prefix=exception_prefix,
     )
 
     # If this hint annotates the return, reduce this hint to a simpler hint if

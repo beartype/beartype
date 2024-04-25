@@ -31,7 +31,10 @@ from beartype._util.cache.pool.utilcachepoolobjecttyped import (
     acquire_object_typed,
     release_object_typed,
 )
-from beartype._util.func.utilfunccodeobj import get_func_codeobj
+from beartype._util.func.utilfunccodeobj import (
+    get_func_codeobj,
+    get_func_codeobj_or_none,
+)
 from beartype._util.func.utilfuncget import get_func_annotations
 from beartype._util.func.utilfunctest import (
     is_func_coro,
@@ -101,13 +104,6 @@ class BeartypeCall(object):
         *usually* be accessed instead; although higher-level, this callable may
         only be a wrapper function and hence yield inaccurate or even erroneous
         metadata (especially the code object) for the callable being wrapped.
-    func_wrappee_codeobj : CallableCodeObjectType
-        Possibly wrapped **decorated callable wrappee code object** (i.e.,
-        code object underlying the high-level :attr:`func_wrappee` callable
-        currently being decorated by the :func:`beartype.beartype` decorator).
-        For efficiency, this code object should *always* be accessed in lieu of
-        inefficiently calling the comparatively slower
-        :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
     func_wrappee_is_nested : bool
         Either:
 
@@ -208,7 +204,6 @@ class BeartypeCall(object):
         'func_arg_name_to_hint',
         'func_arg_name_to_hint_get',
         'func_wrappee',
-        'func_wrappee_codeobj',
         'func_wrappee_is_nested',
         'func_wrappee_scope_forward',
         'func_wrappee_scope_nested_names',
@@ -228,7 +223,6 @@ class BeartypeCall(object):
         func_arg_name_to_hint: Dict[str, object]
         func_arg_name_to_hint_get: Callable[[str, object], object]
         func_wrappee: Callable
-        func_wrappee_codeobj: CallableCodeObjectType
         func_wrappee_is_nested: bool
         func_wrappee_scope_forward: Optional[BeartypeForwardScope]
         func_wrappee_scope_nested_names: Optional[FrozenSet[str]]
@@ -295,7 +289,6 @@ class BeartypeCall(object):
         self.func_arg_name_to_hint) = (  # type: ignore[assignment]
         self.func_arg_name_to_hint_get) = (  # type: ignore[assignment]
         self.func_wrappee) = (  # type: ignore[assignment]
-        self.func_wrappee_codeobj) = (  # type: ignore[assignment]
         self.func_wrappee_is_nested) = (  # type: ignore[assignment]
         self.func_wrappee_scope_forward) = (  # type: ignore[assignment]
         self.func_wrappee_scope_nested_names) = (  # type: ignore[assignment]
@@ -379,10 +372,22 @@ class BeartypeCall(object):
         # non-trivial slice of decoration time. In other words, efficiency.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        # If this callable is uncallable, raise an exception.
+        # If the caller failed to pass a callable to be unwrapped, default that
+        # to the callable to be type-checked.
+        if wrapper is None:
+            wrapper = func
+        # Else, the caller passed a callable to be unwrapped. Preserve it up!
+        # print(f'Beartyping func {repr(func)} + wrapper {repr(wrapper)}...')
+
+        # If the callable to be type-checked is uncallable, raise an exception.
         if not callable(func):
             raise BeartypeDecorWrappeeException(f'{repr(func)} uncallable.')
-        # Else, this callable is callable.
+        # Else, that callable is callable.
+        #
+        # If the callable to be unwrapped is uncallable, raise an exception.
+        elif not callable(wrapper):
+            raise BeartypeDecorWrappeeException(f'{repr(wrapper)} uncallable.')
+        # Else, that callable is callable.
         #
         # If this configuration is *NOT* a configuration, raise an exception.
         elif not isinstance(conf, BeartypeConf):
@@ -409,13 +414,6 @@ class BeartypeCall(object):
         # Else, the caller either passed no class stack *OR* an empty class
         # stack. In either case, ignore this parameter.
 
-        # If the caller failed to explicitly pass a callable to be unwrapped,
-        # default the callable to be unwrapped to the passed callable.
-        if wrapper is None:
-            wrapper = func
-        # Else, the caller explicitly passed a callable to be unwrapped. In this
-        # case, preserve that callable as is.
-
         # Classify all passed parameters.
         self.conf = conf
         self.cls_stack = cls_stack
@@ -424,9 +422,11 @@ class BeartypeCall(object):
         self.func_wrappee = func
 
         # Possibly unwrapped callable unwrapped from this wrappee callable.
-        self.func_wrappee_wrappee = unwrap_func_all_isomorphic(wrapper)
+        self.func_wrappee_wrappee = unwrap_func_all_isomorphic(
+            func=func, wrapper=wrapper)
         # print(f'func_wrappee: {self.func_wrappee}')
         # print(f'func_wrappee_wrappee: {self.func_wrappee_wrappee}')
+        # print(f'{dir(self.func_wrappee_wrappee)}')
 
         # True only if this wrappee callable is nested. As a minor efficiency
         # gain, we can avoid the slightly expensive call to is_func_nested() by
@@ -441,11 +441,16 @@ class BeartypeCall(object):
         self.func_wrappee_scope_forward = None
         self.func_wrappee_scope_nested_names = None
 
-        # Possibly wrapped callable code object.
-        self.func_wrappee_codeobj = get_func_codeobj(
-            func=func,
-            exception_cls=BeartypeDecorWrappeeException,
-        )
+        # Possibly wrapped callable wrappee code object (i.e., code object
+        # underlying the callable currently being type-checked by the
+        # @beartype.beartype decorator) if this wrappee is pure-Python *OR*
+        # "None" otherwise.
+        #
+        # Note that only the possibly unwrapped callable (i.e.,
+        # "self.func_wrappee_wrappee") need actually be pure-Python. Whereas the
+        # latter is required to have a code object, the "self.func_wrappee" is
+        # permitted to be C-based and thus *NOT* have a code object.
+        func_wrappee_codeobj = get_func_codeobj_or_none(func)
 
         # Possibly unwrapped callable code object.
         self.func_wrappee_wrappee_codeobj = get_func_codeobj(
@@ -627,15 +632,59 @@ class BeartypeCall(object):
         #inspect.get_annotations(). Until then, we genuinely do need to assume
         #that CPython devs know what they are talking about. Call that getter.
 
-        # Annotations dictionary *AFTER* resolving all postponed hints.
+        # Type hints annotating the callable to be unwrapped *AFTER* resolving
+        # all postponed type hints.
         #
-        # Note that the functools.update_wrapper() function underlying the
-        # @functools.wrap decorator underlying all sane decorators propagates
-        # this dictionary from lower-level wrappees to higher-level wrappers by
-        # default. We intentionally classify the annotations dictionary of this
-        # higher-level wrapper, which *SHOULD* be the superset of that of this
-        # lower-level wrappee (and thus more reflective of reality).
-        self.func_arg_name_to_hint = get_func_annotations(func)
+        # Note that:
+        # * The functools.update_wrapper() function underlying the
+        #   @functools.wrap decorator underlying all sane decorators propagates
+        #   this dictionary from lower-level wrappees to higher-level wrappers
+        #   by default. We intentionally classify the annotations dictionary of
+        #   this higher-level wrapper, which *SHOULD* be the superset of that of
+        #   this lower-level wrappee (and thus more reflective of reality).
+        # * The type hints annotating the callable to be unwrapped (i.e.,
+        #   "wrapper)" are preferred to those annotating the callable to be
+        #   type-checked (i.e., "func"). Why? Because the callable to be
+        #   unwrapped is either the original pure-Python function or method
+        #   defined by the user *OR* a pseudo-callable object transitively
+        #   wrapping that function or method; in either case, the type hints
+        #   annotating that callable are guaranteed to be authoritative.
+        #   However, the callable to be type-checked is in this case typically
+        #   only a thin isomorphic wrapper deferring to the callable to be
+        #   unwrapped.
+        #
+        # Consider the typical use case invoking this conditional logic:
+        #     from functools import update_wrapper, wraps
+        #
+        #     def probably_lies(lies: str, more_lies: str) -> str:
+        #         return lies + more_lies
+        #
+        #     class LyingClass(object):
+        #         def __call__(self, *args, **kwargs):
+        #             return probably_lies(*args, **kwargs)
+        #
+        #     cheating_object = LyingClass()
+        #     update_wrapper(wrapper=cheating_object, wrapped=probably_lies)
+        #     print(cheating_object.__annotations__)
+        #
+        # ...which would print:
+        #     {'lies': <class 'str'>, 'more_lies': <class 'str'>, 'return':
+        #     <class 'str'>}
+        #
+        # We thus see that this use case successfully propagated the
+        # "__annotations__" dunder dictionary from the probably_lies()
+        # function onto the pseudo-callable "cheating_object" object.
+        #
+        # In this case, the caller would have call this method as:
+        #     bear_call.reinit(
+        #         func=cheating_object.__call__, wrapper=cheating_object)
+        #
+        # Note that the callable to be type-checked "func" is only a thin
+        # isomorphic wrapper deferring to the callable to be unwrapped
+        # "wrapper". Even if "func" were annotated with type hints, those
+        # type hints would be useless for all intents and purposes.
+        self.func_arg_name_to_hint = get_func_annotations(wrapper)
+        # print(f'Beartyping func {repr(func)} + wrapper {repr(wrapper)} w/ annotations {self.func_arg_name_to_hint}...')
 
         # dict.get() method bound to this dictionary.
         self.func_arg_name_to_hint_get = self.func_arg_name_to_hint.get
@@ -668,7 +717,7 @@ class BeartypeCall(object):
         #   asynchronous generator callables *NEVER* return any awaitable
         #   value; they instead yield one or more values to external "async
         #   for" loops.
-        if is_func_coro(self.func_wrappee_codeobj):
+        if func_wrappee_codeobj and is_func_coro(func_wrappee_codeobj):
             # Code snippet prefixing all calls to this callable.
             self.func_wrapper_code_call_prefix = 'await '
 
@@ -684,14 +733,7 @@ class BeartypeCall(object):
 
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
-def make_beartype_call(
-    # Mandatory parameters.
-    func: Callable,
-    conf: BeartypeConf,
-
-    # Variadic keyword parameters.
-    **kwargs
-) -> BeartypeCall:
+def make_beartype_call(**kwargs) -> BeartypeCall:
     '''
     **Beartype call metadata** (i.e., object encapsulating *all* metadata for
     the passed user-defined callable, typically currently being decorated by the
@@ -714,27 +756,20 @@ def make_beartype_call(
 
     Parameters
     ----------
-    func : Callable
-        Callable to be described.
-    conf : BeartypeConf
-        Beartype configuration configuring :func:`beartype.beartype` uniquely
-        specific to this callable.
-
-    All remaining keyword parameters are passed as is to the
-    :meth:`.BeartypeCall.reinit` method.
+    All keyword parameters are passed as is to the :meth:`.BeartypeCall.reinit`
+    method.
 
     Returns
     -------
     BeartypeCall
         Beartype call metadata describing this callable.
-
     '''
 
     # Acquire previously cached beartype call metadata from its object pool.
     bear_call = acquire_object_typed(BeartypeCall)
 
-    # Reinitialize this metadata with the passed callable.
-    bear_call.reinit(func, conf, **kwargs)
+    # Reinitialize this metadata with the passed keyword parameters.
+    bear_call.reinit(**kwargs)
 
     # Return this metadata.
     return bear_call

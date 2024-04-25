@@ -98,10 +98,31 @@ def test_unwrap_func_all_isomorphic() -> None:
     @wraps(their_fierce_necks, assigned=())
     def the_tempests_scourge(*args, **kwargs):
         '''
-        Arbitrary isomorphic wrapper callable wrapping a non-isomorphic wrapper.
+        Arbitrary isomorphic wrapper callable wrapping a non-isomorphic wrapper
+        accepting both variadic positional and keyword parameters.
         '''
 
         return their_fierce_necks(*args, **kwargs)
+
+
+    @wraps(their_fierce_necks, assigned=())
+    def with_dark_obliterating_course(*args):
+        '''
+        Arbitrary isomorphic wrapper callable wrapping a non-isomorphic wrapper
+        accepting *only* variadic positional (but *not* keyword) parameters.
+        '''
+
+        return their_fierce_necks(*args)
+
+
+    @wraps(their_fierce_necks, assigned=())
+    def he_sate(**kwargs):
+        '''
+        Arbitrary isomorphic wrapper callable wrapping a non-isomorphic wrapper
+        accepting *only* variadic keyword (but *not* positional) parameters.
+        '''
+
+        return their_fierce_necks(**kwargs)
 
     # ....................{ CLASSES                        }....................
     class LikeSerpentsStruggling(object):
@@ -110,7 +131,6 @@ def test_unwrap_func_all_isomorphic() -> None:
         wrapper callable.
         '''
 
-        def yamo(self): pass
         def __call__(self, *args, **kwargs):
             '''
             Arbitrary isomorphic wrapper callable wrapping another isomorphic
@@ -135,9 +155,12 @@ def test_unwrap_func_all_isomorphic() -> None:
     # Assert this function returns non-isomorphic wrapper callables unmodified.
     assert unwrap_func_all_isomorphic(their_fierce_necks) is their_fierce_necks
 
-    # Assert this function unwraps wrapper callables.
+    # Assert this function unwraps isomorphic wrapper callables.
     assert unwrap_func_all_isomorphic(the_tempests_scourge) is (
         their_fierce_necks)
+    assert unwrap_func_all_isomorphic(with_dark_obliterating_course) is (
+        their_fierce_necks)
+    assert unwrap_func_all_isomorphic(he_sate) is their_fierce_necks
 
     # Assert this function unwraps wrapper pseudo-callables.
     in_a_vultures_grasp_unwrapped = unwrap_func_all_isomorphic(

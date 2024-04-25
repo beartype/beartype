@@ -363,17 +363,14 @@ def decorator_nonisomorphic(func):
     from functools import wraps
 
     @wraps(func)
-    def _closure_nonisomorphic(*args):
+    def _closure_nonisomorphic():
         '''
         **Non-isomorphic decorator closure** (i.e., closure destroying the
         positions and/or types of one or more parameters passed to the decorated
         callable).
-
-        This closure fails to accept keyword parameters and thus effectively
-        "destroys" all keyword parameters passed to the decorated callable.
         '''
 
-        return func(*args)
+        return func()
 
     # Return this closure.
     return _closure_nonisomorphic

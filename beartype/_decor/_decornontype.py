@@ -17,7 +17,10 @@ from beartype.roar import (
     BeartypeDecorWrappeeException,
     BeartypeDecorWrapperException,
 )
-from beartype.typing import no_type_check
+from beartype.typing import (
+    Optional,
+    no_type_check,
+)
 from beartype._cave._cavefast import (
     MethodBoundInstanceOrClassType,
     MethodDecoratorClassType,
@@ -56,6 +59,7 @@ from beartype._util.func.utilfuncwrap import (
     unwrap_func_staticmethod_once,
 )
 from beartype._util.py.utilpyversion import IS_PYTHON_3_8
+from collections.abc import Callable
 from contextlib import contextmanager
 from functools import lru_cache
 
@@ -190,6 +194,7 @@ def beartype_func(
     conf: BeartypeConf,
 
     # Variadic keyword parameters.
+    wrapper: Optional[Callable] = None,
     **kwargs
 ) -> BeartypeableT:
     '''
@@ -202,6 +207,21 @@ def beartype_func(
     conf : BeartypeConf
         Beartype configuration configuring :func:`beartype.beartype` uniquely
         specific to this callable.
+    wrapper : Optional[Callable]
+        Wrapper callable to be unwrapped in the event that the callable to be
+        unwrapped differs from the callable to be decorated. Typically, these
+        two callables are the same. Edge cases in which these two callables
+        differ include:
+
+        * When ``wrapper`` is a **pseudo-callable** (i.e., otherwise uncallable
+          object whose type renders that object callable by defining the
+          ``__call__()`` dunder method) *and* ``func`` is that ``__call__()``
+          dunder method. If that pseudo-callable wraps a lower-level callable,
+          then that pseudo-callable (rather than ``__call__()`` dunder method)
+          defines the ``__wrapped__`` instance variable providing that callable.
+
+        Defaults to :data:`None`, in which case this parameter *actually*
+        defaults to ``func``.
 
     All remaining keyword parameters are passed as is to the
     :meth:`beartype._check.checkcall.BeartypeCall.reinit` method.
@@ -211,12 +231,17 @@ def beartype_func(
     BeartypeableT
         New pure-Python callable wrapping this callable with type-checking.
     '''
+
+    # If the caller failed to pass a callable to be unwrapped, default that to
+    # the callable to be type-checked.
+    if wrapper is None:
+        wrapper = func  # type: ignore[assignment]
+    # Else, the caller passed a callable to be unwrapped. Preserve it up!
+
+    # Validate all explicitly passed parameters.
+    assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
     assert callable(func), f'{repr(func)} uncallable.'
-    # assert isinstance(conf, BeartypeConf), f'{repr(conf)} not configuration.'
-    # assert isinstance(cls_root, NoneTypeOr[type]), (
-    #     f'{repr(cls_root)} neither type nor "None".')
-    # assert isinstance(cls_curr, NoneTypeOr[type]), (
-    #     f'{repr(cls_curr)} neither type nor "None".')
+    assert callable(wrapper), f'{repr(wrapper)} uncallable.'
 
     #FIXME: Uncomment to display all annotations in "pytest" tracebacks.
     # func_hints = func.__annotations__
@@ -228,22 +253,23 @@ def beartype_func(
     # same callable... Doing so prevents all subsequent decorations from
     # erroneously ignoring this previously applied no-time strategy.
     if conf.strategy is BeartypeStrategy.O0:
-        no_type_check(func)  # pyright: ignore[reportGeneralTypeIssues]
+        no_type_check(func)  # pyright: ignore
     # Else, this configuration enables a positive-time strategy performing at
     # least the minimal amount of type-checking.
 
-    # If that callable is unbeartypeable (i.e., if this decorator should
-    # preserve that callable as is rather than wrap that callable with
-    # constant-time type-checking), silently reduce to the identity decorator.
+    # If the callable to be unwrapped is unbeartypeable (i.e., if this decorator
+    # should preserve that callable as is rather than wrap that callable with
+    # type-checking), silently reduce to the identity decorator.
     #
     # Note that this conditional implicitly handles the prior conditional! :O
-    if is_func_unbeartypeable(func):  # type: ignore[arg-type]
+    if is_func_unbeartypeable(wrapper):  # type: ignore[arg-type]
         # print(f'Ignoring unbeartypeable callable {repr(func)}...')
         return func  # type: ignore[return-value]
     # Else, that callable is beartypeable. Let's do this, folks.
 
     # Beartype call metadata describing that callable.
-    bear_call = make_beartype_call(func, conf, **kwargs)  # pyright: ignore[reportGeneralTypeIssues]
+    bear_call = make_beartype_call(
+        func=func, conf=conf, wrapper=wrapper, **kwargs)  # pyright: ignore
 
     # Generate the raw string of Python statements implementing this wrapper.
     func_wrapper_code = generate_code(bear_call)
@@ -339,7 +365,7 @@ def beartype_func_contextlib_contextmanager(
 
     # Original pure-Python generator factory function decorated by
     # @contextlib.contextmanager.
-    generator = unwrap_func_once(func)
+    generator = unwrap_func_once(func)  # type: ignore[arg-type]
 
     # Decorate this generator factory function with type-checking.
     generator_checked = beartype_func(func=generator, **kwargs)
@@ -620,7 +646,7 @@ def _beartype_descriptor_boundmethod(
 def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     '''
     Monkey-patch the passed **pseudo-callable** (i.e., arbitrary pure-Python
-    *or* C-based object whose class defines the ``__call__()``) dunder method
+    *or* C-based object whose class defines the ``__call__()`` dunder method
     enabling this object to be called like a standard callable) with dynamically
     generated type-checking.
 
@@ -734,6 +760,7 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     # Else, either this pseudo-callable object is not a wrapper *OR* this
     # unbound __call__() dunder method is already a wrapper.
 
+    #FIXME: Revise commentary, please. This is no longer remotely true. *sigh*
     # Replace the existing bound method descriptor to this __call__() dunder
     # method with a new bound method descriptor to a new __call__() dunder
     # method wrapping the old method with runtime type-checking.
@@ -754,11 +781,23 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     #   harmful, @beartype prefers the former. See also official documentation
     #   on the subject:
     #       https://docs.python.org/3/reference/datamodel.html#special-method-names
+
+    # #FIXME: Is this conditional actually useful? If not, excise us up, please.
+    # if is_func_boundmethod(pseudofunc_call_boundmethod):
+    #     return _beartype_descriptor_boundmethod(  # type: ignore[return-value]
+    #         descriptor=pseudofunc_call_boundmethod, **kwargs)
+
+    # return beartype_func(func=pseudofunc_call_boundmethod, **kwargs)
+    # return beartype_func(func=pseudofunc_call_boundmethod, **kwargs)
+
+    #FIXME: *sigh*
     pseudofunc.__class__.__call__ = beartype_func(  # type: ignore[method-assign]
         func=pseudofunc_call_type_method, **kwargs)
+    return pseudofunc
 
-    # Return this monkey-patched object.
-    return pseudofunc  # type: ignore[return-value]
+    # #FIXME: Revise commentary, please. This is no longer remotely true. *sigh*
+    # # Return this monkey-patched object.
+    # return pseudofunc_checked  # type: ignore[return-value]
 
 
 def beartype_pseudofunc_functools_lru_cache(

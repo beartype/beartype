@@ -144,6 +144,7 @@ def test_decor_conf_is_debug(capsys) -> None:
 
     # Assert that @bugbeartype printed as many lines of source code as that of
     # the _earthquake() function defined below.
+    # print(f'code_lines: {code_lines}\nstdout_lines: {stdout_lines}')
     assert len(code_lines) == len(stdout_lines)
 
     # For each printed and original line of source code underlying the

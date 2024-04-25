@@ -12,14 +12,17 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableWrapperException
-from beartype.typing import Any
+from beartype.typing import (
+    Any,
+    Optional,
+)
 from beartype._cave._cavefast import MethodBoundInstanceOrClassType
 from beartype._data.hint.datahinttyping import TypeException
 from collections.abc import Callable
 
 # ....................{ UNWRAPPERS ~ once                  }....................
 #FIXME: Unit test us up, please.
-def unwrap_func_once(func: Any) -> Callable:
+def unwrap_func_once(func: Callable) -> Callable:
     '''
     Immediate **wrappee** (i.e., callable wrapped by the passed wrapper
     callable) of the passed higher-level **wrapper** (i.e., callable wrapping
@@ -242,7 +245,7 @@ def unwrap_func_staticmethod_once(
     return func.__func__
 
 # ....................{ UNWRAPPERS ~ all                   }....................
-def unwrap_func_all(func: Any) -> Callable:
+def unwrap_func_all(func: Callable) -> Callable:
     '''
     Lowest-level **wrappee** (i.e., callable wrapped by the passed wrapper
     callable) of the passed higher-level **wrapper** (i.e., callable wrapping
@@ -288,10 +291,10 @@ def unwrap_func_all(func: Any) -> Callable:
 
 def unwrap_func_all_isomorphic(
     # Mandatory parameters.
-    func: Any,
+    func: Callable,
 
     # Optional parameters.
-    wrapper: Any = None,
+    wrapper: Optional[Callable] = None,
 ) -> Callable:
     '''
     Lowest-level **non-isomorphic wrappee** (i.e., callable wrapped by the
@@ -311,10 +314,10 @@ def unwrap_func_all_isomorphic(
 
     Parameters
     ----------
-    func : Any
+    func : Callable
         Wrapper callable to be inspected for isomorphism. If ``wrapper`` is
         :data:`None` (as is the common case), this callable is also unwrapped.
-    wrapper : Any, optional
+    wrapper : Optional[Callable]
         Wrapper callable to be unwrapped in the event that the callable to be
         inspected for isomorphism differs from the callable to be unwrapped.
         Typically, these two callables are the same. Edge cases in which these
