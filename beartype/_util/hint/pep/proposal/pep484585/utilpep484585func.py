@@ -16,7 +16,10 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.roar import BeartypeDecorHintPep484585Exception
 from beartype.typing import Tuple
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
-from beartype._data.hint.datahinttyping import TypeException
+from beartype._data.hint.datahinttyping import (
+    DictStrToAny,
+    TypeException,
+)
 from beartype._data.hint.pep.sign.datapepsigns import HintSignCoroutine
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_RETURN_GENERATOR_ASYNC,
@@ -38,6 +41,7 @@ from collections.abc import (
 # ....................{ REDUCERS ~ return                  }....................
 def reduce_hint_pep484585_func_return(
     func: Callable,
+    func_arg_name_to_hint : DictStrToAny,
     exception_prefix: str,
 ) -> object:
     '''
@@ -48,18 +52,24 @@ def reduce_hint_pep484585_func_return(
     Parameters
     ----------
     func : Callable
-        Currently decorated callable to be inspected.
+        Callable to be type-checked.
+    func_arg_name_to_hint : dict[str, Any]
+        Dictionary mapping from the name of each annotated parameter
+        semantically (but possibly *not* physically in the edge case in which
+        the passed callable to be type-checked differs from the callable
+        defining the type hints to type-check that callable wit ) accepted by
+        that callable to the type hint annotating that parameter.
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
         exception message.
 
     Returns
-    ----------
+    -------
     object
         Single argument subscripting this hint.
 
     Raises
-    ----------
+    ------
     BeartypeDecorHintPep484585Exception
         If this callable is either:
 
@@ -68,6 +78,8 @@ def reduce_hint_pep484585_func_return(
         * An asynchronous generator *not* annotated by a type hint identified
           by a sign in the :data:`HINT_SIGNS_RETURN_GENERATOR_ASYNC` set.
     '''
+    assert isinstance(func_arg_name_to_hint, dict), (
+        f'{repr(func_arg_name_to_hint)} not dictionary.')
 
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.proposal.pep484585.utilpep484585 import (
@@ -76,7 +88,7 @@ def reduce_hint_pep484585_func_return(
 
     # Type hint annotating this callable's return, which the caller has already
     # explicitly guaranteed to exist.
-    hint = func.__annotations__[ARG_NAME_RETURN]
+    hint = func_arg_name_to_hint[ARG_NAME_RETURN]
 
     # Sign uniquely identifying this hint if any *OR* "None" otherwise (e.g.,
     # if this hint is an isinstanceable class).
@@ -199,7 +211,7 @@ def _die_of_hint_return_invalid(
         Substring suffixing the exception message to be raised.
 
     Raises
-    ----------
+    ------
     exception_cls
         Exception explaining the invalidity of this return type hint.
     '''

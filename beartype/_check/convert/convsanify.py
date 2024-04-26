@@ -135,20 +135,23 @@ def sanify_hint_root_func(
         exception_prefix=exception_prefix,
     )
 
-    # If this hint annotates the return, reduce this hint to a simpler hint if
-    # this hint is either PEP 484- or 585-compliant *AND* requires reduction
-    # (e.g., from "Coroutine[None, None, str]" to just "str"). Raise an
-    # exception if this hint is contextually invalid for this callable (e.g.,
-    # generator whose return is *NOT* annotated as "Generator[...]").
+    # If this hint annotates the return, then (in order):
+    # * If this hint is contextually invalid for this callable (e.g., generator
+    #   whose return is not annotated as "Generator[...]"), raise an exception.
+    # * If this hint is either PEP 484- or 585-compliant *AND* requires
+    #   reduction (e.g., from "Coroutine[None, None, str]" to just "str"),
+    #   reduce this hint accordingly.
     #
     # Perform this reduction *BEFORE* performing subsequent tests (e.g., to
-    # accept "Coroutine[None, None, typing.NoReturn]" as expected).
-    #
-    # Note that this logic *ONLY* pertains to callables (rather than statements)
-    # and is thus *NOT* performed by the sanify_hint_root_statement() sanitizer.
+    # accept "Coroutine[None, None, typing.NoReturn]" as expected). Note that
+    # this logic *ONLY* pertains to callables (rather than statements) and is
+    # thus *NOT* performed by the sanify_hint_root_statement() sanitizer.
     if pith_name == ARG_NAME_RETURN:
         hint = reduce_hint_pep484585_func_return(
-            func=bear_call.func_wrappee, exception_prefix=exception_prefix)
+            func=bear_call.func_wrappee,
+            func_arg_name_to_hint=bear_call.func_arg_name_to_hint,
+            exception_prefix=exception_prefix,
+        )
     # Else, this hint annotates a parameter.
 
     # Reduce this hint to a lower-level PEP-compliant type hint if this hint is

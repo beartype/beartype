@@ -24,6 +24,7 @@ from beartype._cave._cavemap import NoneTypeOr
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahinttyping import (
+    DictStrToAny,
     LexicalScope,
     TypeStack,
 )
@@ -220,7 +221,7 @@ class BeartypeCall(object):
     if TYPE_CHECKING:
         cls_stack: TypeStack
         conf: BeartypeConf
-        func_arg_name_to_hint: Dict[str, object]
+        func_arg_name_to_hint: DictStrToAny
         func_arg_name_to_hint_get: Callable[[str, object], object]
         func_wrappee: Callable
         func_wrappee_is_nested: bool
@@ -632,8 +633,9 @@ class BeartypeCall(object):
         #inspect.get_annotations(). Until then, we genuinely do need to assume
         #that CPython devs know what they are talking about. Call that getter.
 
-        # Type hints annotating the callable to be unwrapped *AFTER* resolving
-        # all postponed type hints.
+        # Dictionary mapping from the name of each annotated parameter accepted
+        # by the unwrapped callable to the type hint annotating that parameter
+        # *AFTER* resolving all postponed type hints elsewhere.
         #
         # Note that:
         # * The functools.update_wrapper() function underlying the

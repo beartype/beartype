@@ -92,7 +92,12 @@ jobs:
         #   POSIX-compliant low-level similarities to Linux, but... what the
         #   heck. Why not? Since this is the lowest priority, we defer macOS
         #   testing until last.
-        platform: [ubuntu-latest, windows-latest, macos-latest]
+
+        #FIXME: Re-enable "macos-latest" support *AFTER* the "setup-python"
+        #GitHub Action resolves this currently outstanding issue:
+        #    https://github.com/actions/setup-python/issues/852
+        # platform: [ubuntu-latest, windows-latest, macos-latest]
+        platform: [ubuntu-latest, windows-latest]
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # WARNING: Changes to this section *MUST* be manually synchronized with:

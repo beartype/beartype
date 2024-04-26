@@ -271,6 +271,15 @@ def beartype_func(
     bear_call = make_beartype_call(
         func=func, conf=conf, wrapper=wrapper, **kwargs)  # pyright: ignore
 
+    #FIXME: "if wrapper is not func:", then we probably need to also:
+    #* Add that wrapper as a new hidden parameter named "__beartype_wrapper__"
+    #  (or something).
+    #* Pass that parameter to the get_beartype_violation() getter via a new
+    #  optional "wrapper" parameter.
+    #
+    #Note that this wrapper is *NOT* necessarily a type; it's an arbitrary
+    #object that just happens to define the "__wrapped__" dunder attribute.
+
     # Generate the raw string of Python statements implementing this wrapper.
     func_wrapper_code = generate_code(bear_call)
 
@@ -691,7 +700,7 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     if pseudofunc_call_boundmethod is None:  # pragma: no cover
         raise BeartypeDecorWrappeeException(
             f'Callable {repr(pseudofunc)} not pseudo-callable object '
-            f'(i.e., defines no __call__() dunder method).'
+            f'(i.e., defines no bound __call__() dunder method).'
         )
     # Else, this object is a pseudo-callable.
     #
@@ -701,7 +710,7 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
         raise BeartypeDecorWrappeeException(
             f'Callable {repr(pseudofunc)} type {repr(pseudofunc.__class__)} '
             f'not pseudo-callable object type '
-            f'(i.e., defines no __call__() dunder method).'
+            f'(i.e., defines no unbound __call__() dunder method).'
         )
     # Else, this object type is a pseudo-callable type.
     #
@@ -782,22 +791,30 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     #   on the subject:
     #       https://docs.python.org/3/reference/datamodel.html#special-method-names
 
-    # #FIXME: Is this conditional actually useful? If not, excise us up, please.
-    # if is_func_boundmethod(pseudofunc_call_boundmethod):
-    #     return _beartype_descriptor_boundmethod(  # type: ignore[return-value]
-    #         descriptor=pseudofunc_call_boundmethod, **kwargs)
+    #FIXME: I must confess that I don't quite get it. If you comment this "if"
+    #conditional out, the fallback fails to suffice for this case. Why? The
+    #fallback should suffice. The fallback should *ALWAYS* suffice. Why doesn't
+    #it? Let's investigate please. Why? Because the fallback would honestly be
+    #preferable to what we're doing here. Monkey-patching the class is totally
+    #non-ideal, honestly. Let's avoid that if at all possible, please.
+    if is_func_boundmethod(pseudofunc_call_boundmethod):
+        # print(f'Beartyping pseudo-callable {repr(pseudofunc)} bound method...')
+        pseudofunc.__class__.__call__ = beartype_func(  # type: ignore[method-assign,operator]
+            func=pseudofunc_call_type_method, **kwargs)
+        # pseudofunc = beartype_func(  # type: ignore[method-assign,operator]
+        #     func=pseudofunc_call_boundmethod, **kwargs)
+        # pseudofunc.__call__ = _beartype_descriptor_boundmethod(  # type: ignore[method-assign,operator]
+        #     descriptor=pseudofunc_call_boundmethod, **kwargs)
+        return pseudofunc
 
-    # return beartype_func(func=pseudofunc_call_boundmethod, **kwargs)
-    # return beartype_func(func=pseudofunc_call_boundmethod, **kwargs)
-
-    #FIXME: *sigh*
-    pseudofunc.__class__.__call__ = beartype_func(  # type: ignore[method-assign]
-        func=pseudofunc_call_type_method, **kwargs)
+    #FIXME: Comment us up, please. Note that this outlier edge case only applies
+    #to the extremely small subset of C-based pseudo-callable objects whose
+    #bound __call__() method is encapsulated by an uncommon C-based method
+    #wrapper descriptor rather a common C-based bound method descriptor. The
+    #only example we currently know of are the C-based pseudo-callable objects
+    #produced by the third-party "@jax.jit" decorator.
+    pseudofunc = beartype_func(func=pseudofunc_call_boundmethod, **kwargs)
     return pseudofunc
-
-    # #FIXME: Revise commentary, please. This is no longer remotely true. *sigh*
-    # # Return this monkey-patched object.
-    # return pseudofunc_checked  # type: ignore[return-value]
 
 
 def beartype_pseudofunc_functools_lru_cache(
