@@ -24,7 +24,7 @@ from beartype.roar import (
     BeartypeDecorParamNameException,
 )
 from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
-from beartype._check.checkcall import BeartypeCall
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.checkmake import make_code_raiser_func_pith_check
 from beartype._check.convert.convsanify import sanify_hint_root_func
 from beartype._conf.confcls import BeartypeConf
@@ -63,7 +63,7 @@ from beartype._util.utilobject import SENTINEL
 from warnings import catch_warnings
 
 # ....................{ CODERS                             }....................
-def code_check_args(bear_call: BeartypeCall) -> str:
+def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
     '''
     Generate a Python code snippet type-checking all annotated parameters of
     the decorated callable if any *or* the empty string otherwise (i.e., if
@@ -71,7 +71,7 @@ def code_check_args(bear_call: BeartypeCall) -> str:
 
     Parameters
     ----------
-    bear_call : BeartypeCall
+    decor_meta : BeartypeDecorMeta
         Decorated callable to be type-checked.
 
     Returns
@@ -90,8 +90,8 @@ def code_check_args(bear_call: BeartypeCall) -> str:
         * A PEP-noncompliant type hint.
         * A supported PEP-compliant type hint.
     '''
-    assert isinstance(bear_call, BeartypeCall), (
-        f'{repr(bear_call)} not beartype call.')
+    assert isinstance(decor_meta, BeartypeDecorMeta), (
+        f'{repr(decor_meta)} not beartype call.')
 
     # ..................{ LOCALS ~ func                      }..................
     # If *NO* callable parameters are annotated, silently reduce to a noop.
@@ -101,10 +101,10 @@ def code_check_args(bear_call: BeartypeCall) -> str:
     # parameters *OR* one or more parameters, all of which are unannotated.
     if (
         # That callable is annotated by only one type hint *AND*...
-        len(bear_call.func_arg_name_to_hint) == 1 and
+        len(decor_meta.func_arg_name_to_hint) == 1 and
         # That type hint annotates that callable's return rather than a
         # parameter accepted by that callable...
-        ARG_NAME_RETURN in bear_call.func_arg_name_to_hint
+        ARG_NAME_RETURN in decor_meta.func_arg_name_to_hint
     ):
         return ''
     # Else, one or more callable parameters are annotated.
@@ -141,8 +141,8 @@ def code_check_args(bear_call: BeartypeCall) -> str:
         # by the former -- including the names and kinds of parameters accepted
         # by the possibly unwrapped callable. This renders the latter mostly
         # useless for our purposes.
-        func=bear_call.func_wrappee_wrappee,
-        func_codeobj=bear_call.func_wrappee_wrappee_codeobj,
+        func=decor_meta.func_wrappee_wrappee,
+        func_codeobj=decor_meta.func_wrappee_wrappee_codeobj,
         is_unwrap=False,
     )):
         # Kind and name of this parameter.
@@ -160,7 +160,7 @@ def code_check_args(bear_call: BeartypeCall) -> str:
         # Note that "None" is a semantically meaningful PEP 484-compliant type
         # hint equivalent to "type(None)". Ergo, we *MUST* explicitly
         # distinguish between that type hint and unannotated parameters.
-        hint_insane = bear_call.func_arg_name_to_hint_get(arg_name, SENTINEL)
+        hint_insane = decor_meta.func_arg_name_to_hint_get(arg_name, SENTINEL)
 
         # If this parameter is unannotated, continue to the next parameter.
         if hint_insane is SENTINEL:
@@ -187,7 +187,7 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                 # readily consumable by @beartype's code generator *BEFORE*
                 # passing this hint to any further callables.
                 hint = sanify_hint_root_func(
-                    hint=hint_insane, pith_name=arg_name, bear_call=bear_call)
+                    hint=hint_insane, pith_name=arg_name, decor_meta=decor_meta)
 
                 # If this hint is ignorable, continue to the next parameter.
                 #
@@ -196,7 +196,7 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                 # ignore PEP-noncompliant type hints as well (e.g., "(object,
                 # int, str)").
                 if is_hint_ignorable(hint):
-                    # print(f'Ignoring {bear_call.func_name} parameter {arg_name} hint {repr(hint)}...')
+                    # print(f'Ignoring {decor_meta.func_name} parameter {arg_name} hint {repr(hint)}...')
                     continue
                 # Else, this hint is unignorable.
 
@@ -224,7 +224,7 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                 # # If this parameter is optional *AND* the default value of this
                 # # optional parameter violates this hint, raise an exception.
                 # _die_if_arg_default_unbearable(
-                #     bear_call=bear_call, arg_default=arg_default, hint=hint)
+                #     decor_meta=decor_meta, arg_default=arg_default, hint=hint)
                 # # Else, this parameter is either optional *OR* the default value
                 # # of this optional parameter satisfies this hint.
 
@@ -271,7 +271,7 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                 # function) but actually does. Only the original unsanitized
                 # "hint_insane" is truth.
                 cls_stack = (
-                    bear_call.cls_stack
+                    decor_meta.cls_stack
                     # if is_hint_needs_cls_stack(hint) else
                     if is_hint_needs_cls_stack(hint_insane) else
                     None
@@ -286,7 +286,7 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                     hint_refs_type_basename,
                 ) = make_code_raiser_func_pith_check(
                     hint,
-                    bear_call.conf,
+                    decor_meta.conf,
                     cls_stack,
                     True,  # <-- True only for parameters
                 )
@@ -294,7 +294,7 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                 # Merge the local scope required to check this parameter into
                 # the local scope currently required by the current wrapper
                 # function.
-                update_mapping(bear_call.func_wrapper_scope, func_scope)
+                update_mapping(decor_meta.func_wrapper_scope, func_scope)
 
                 # Python code snippet localizing this parameter.
                 code_arg_localize = ARG_LOCALIZE_TEMPLATE.format(
@@ -302,7 +302,7 @@ def code_check_args(bear_call: BeartypeCall) -> str:
 
                 # Unmemoize this snippet against the current parameter.
                 code_arg_check = unmemoize_func_wrapper_code(
-                    bear_call=bear_call,
+                    decor_meta=decor_meta,
                     func_wrapper_code=code_arg_check_pith,
                     pith_repr=repr(arg_name),
                     hint_refs_type_basename=hint_refs_type_basename,
@@ -320,9 +320,9 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                 reissue_warnings_placeholder(
                     warnings=warnings_issued,
                     target_str=prefix_callable_arg_name(
-                        func=bear_call.func_wrappee,
+                        func=decor_meta.func_wrappee,
                         arg_name=arg_name,
-                        is_color=bear_call.conf.is_color,
+                        is_color=decor_meta.conf.is_color,
                     ),
                 )
             # Else, *NO* warnings were issued.
@@ -339,9 +339,9 @@ def code_check_args(bear_call: BeartypeCall) -> str:
                 #prefix_callable_arg_name() function to introspect this kind from
                 #the callable code object.
                 target_str=prefix_callable_arg_name(
-                    func=bear_call.func_wrappee,
+                    func=decor_meta.func_wrappee,
                     arg_name=arg_name,
-                    is_color=bear_call.conf.is_color,
+                    is_color=decor_meta.conf.is_color,
                 ),
             )
 
@@ -388,7 +388,7 @@ either may *or* must be passed positionally).
 
 # ....................{ PRIVATE ~ raisers                  }....................
 def _die_if_arg_default_unbearable(
-    bear_call: BeartypeCall, arg_default: object, hint: object) -> None:
+    decor_meta: BeartypeDecorMeta, arg_default: object, hint: object) -> None:
     '''
     Raise a violation exception if the annotated optional parameter of the
     decorated callable with the passed default value violates the type hint
@@ -396,7 +396,7 @@ def _die_if_arg_default_unbearable(
 
     Parameters
     ----------
-    bear_call : BeartypeCall
+    decor_meta : BeartypeDecorMeta
         Decorated callable to be type-checked.
     arg_default : object
         Either:
@@ -427,8 +427,8 @@ def _die_if_arg_default_unbearable(
         return
     # Else, this parameter is optional and thus defaults to a default value.
 
-    assert isinstance(bear_call, BeartypeCall), (
-        f'{repr(bear_call)} not beartype call.')
+    assert isinstance(decor_meta, BeartypeDecorMeta), (
+        f'{repr(decor_meta)} not beartype call.')
 
     # ..................{ IMPORTS                            }..................
     # Defer heavyweight imports prohibited at global scope.
@@ -450,7 +450,7 @@ def _die_if_arg_default_unbearable(
         if is_bearable(
             obj=arg_default,
             hint=hint,
-            conf=bear_call.conf,
+            conf=decor_meta.conf,
         ):
             return
         # Else, this default value violates this hint.
@@ -472,7 +472,7 @@ def _die_if_arg_default_unbearable(
             cls=BeartypeDecorHintParamDefaultForwardRefWarning,
             message=(
                 f'{EXCEPTION_PREFIX_DEFAULT}value '
-                f'{prefix_pith_value(pith=arg_default, is_color=bear_call.conf.is_color)}'
+                f'{prefix_pith_value(pith=arg_default, is_color=decor_meta.conf.is_color)}'
                 f'uncheckable at @beartype decoration time, as '
                 f'{exception_message}'
             ),
@@ -483,7 +483,7 @@ def _die_if_arg_default_unbearable(
         return
 
     # Modifiable keyword dictionary encapsulating this beartype configuration.
-    conf_kwargs = bear_call.conf.kwargs.copy()
+    conf_kwargs = decor_meta.conf.kwargs.copy()
 
     #FIXME: This should probably be configurable as well. For now, this is fine.
     #We shrug noncommittally. We shrug, everyone! *shrug*

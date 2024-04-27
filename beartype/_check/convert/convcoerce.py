@@ -63,7 +63,7 @@ from beartype._cave._cavefast import NotImplementedType
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._data.func.datafuncarg import ARG_NAME_RETURN
 from beartype._data.func.datafunc import METHOD_NAMES_DUNDER_BINARY
-from beartype._check.checkcall import BeartypeCall
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.forward.fwdmain import resolve_hint
 from beartype._util.cache.map.utilmapbig import CacheUnboundedStrong
 from beartype._util.hint.utilhinttest import is_hint_uncached
@@ -75,7 +75,7 @@ from beartype._util.hint.pep.proposal.pep484.utilpep484union import (
 def coerce_func_hint_root(
     hint: object,
     pith_name: Optional[str],
-    bear_call: BeartypeCall,
+    decor_meta: BeartypeDecorMeta,
     exception_prefix: str,
 ) -> object:
     '''
@@ -111,7 +111,7 @@ def coerce_func_hint_root(
           parameter.
         * If this hint annotates the return of some callable, ``"return"``.
         * Else, :data:`None`.
-    bear_call : BeartypeCall
+    decor_meta : BeartypeDecorMeta
         Decorated callable annotated by this hint.
     exception_prefix : str
         Human-readable label prefixing the representation of this object in the
@@ -128,8 +128,8 @@ def coerce_func_hint_root(
     '''
     assert isinstance(pith_name, NoneTypeOr[str]), (
         f'{repr(pith_name)} neither string nor "None".')
-    assert bear_call.__class__ is BeartypeCall, (
-        f'{repr(bear_call)} not @beartype call.')
+    assert decor_meta.__class__ is BeartypeDecorMeta, (
+        f'{repr(decor_meta)} not @beartype call.')
     # print(f'Coercing pith "{pith_name}" annotated by type hint {repr(hint)}...')
 
     # ..................{ FORWARD REFERENCE                  }..................
@@ -140,7 +140,7 @@ def coerce_func_hint_root(
     if isinstance(hint, str):
         hint = resolve_hint(
             hint=hint,
-            bear_call=bear_call,
+            decor_meta=decor_meta,
             exception_prefix=exception_prefix,
         )
     # Else, this hint is *NOT* stringified.
@@ -153,7 +153,7 @@ def coerce_func_hint_root(
         # This hint annotates the return for the decorated callable *AND*...
         pith_name == ARG_NAME_RETURN and
         # The decorated callable is a binary dunder method (e.g., __eq__())...
-        bear_call.func_wrapper_name in METHOD_NAMES_DUNDER_BINARY
+        decor_meta.func_wrapper_name in METHOD_NAMES_DUNDER_BINARY
     ):
         # Expand this hint to accept both this hint *AND* the "NotImplemented"
         # singleton as valid returns from this method. Why? Because this

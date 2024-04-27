@@ -21,7 +21,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypePep563Exception
-from beartype._check.checkcall import make_beartype_call
+from beartype._check.metadata.metadecor import make_beartype_call
 from beartype._check.forward.fwdmain import resolve_hint
 from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
@@ -238,7 +238,7 @@ def resolve_pep563(
 
     # ..................{ LOCALS                             }..................
     # Beartype call metadata describing the passed callable.
-    bear_call = make_beartype_call(
+    decor_meta = make_beartype_call(
         func=func,
         conf=conf,
         cls_stack=cls_stack,
@@ -277,7 +277,7 @@ def resolve_pep563(
         if isinstance(hint, str):
             arg_name_to_hint[arg_name] = resolve_hint(
                 hint=hint,
-                bear_call=bear_call,
+                decor_meta=decor_meta,
                 exception_cls=BeartypePep563Exception,
             )
         # Else, this hint is *NOT* stringified. In this case, preserve this hint
@@ -285,7 +285,7 @@ def resolve_pep563(
 
     # ..................{ RETURN                             }..................
     # Release this beartype call metadata back to its object pool.
-    release_object_typed(bear_call)
+    release_object_typed(decor_meta)
 
     # Attempt to...
     try:

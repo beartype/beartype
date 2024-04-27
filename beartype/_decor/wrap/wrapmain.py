@@ -21,9 +21,9 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.checkcall import BeartypeCall
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.checkmagic import ARG_NAME_FUNC
-from beartype._check.util.checkutilmake import make_func_signature
+from beartype._check.signature.sigmake import make_func_signature
 from beartype._decor.wrap.wrapsnip import (
     CODE_RETURN_UNCHECKED_format,
     CODE_SIGNATURE,
@@ -34,7 +34,7 @@ from beartype._decor.wrap._wrapreturn import (
     code_check_return as _code_check_return)
 
 # ....................{ GENERATORS                         }....................
-def generate_code(bear_call: BeartypeCall) -> str:
+def generate_code(decor_meta: BeartypeDecorMeta) -> str:
     '''
     Generate a Python code snippet dynamically defining the wrapper function
     type-checking the passed decorated callable.
@@ -46,7 +46,7 @@ def generate_code(bear_call: BeartypeCall) -> str:
 
     Parameters
     ----------
-    bear_call : BeartypeCall
+    decor_meta : BeartypeDecorMeta
         Decorated callable to be type-checked.
 
     Returns
@@ -115,11 +115,11 @@ def generate_code(bear_call: BeartypeCall) -> str:
     # Python code snippet type-checking all callable parameters if one or more
     # such parameters are annotated with unignorable type hints *OR* the empty
     # string otherwise.
-    code_check_params = _code_check_args(bear_call)
+    code_check_params = _code_check_args(decor_meta)
 
     # Python code snippet type-checking the callable return if this return is
     # annotated with an unignorable type hint *OR* the empty string otherwise.
-    code_check_return = _code_check_return(bear_call)
+    code_check_return = _code_check_return(decor_meta)
 
     # If the callable return requires *NO* type-checking...
     #
@@ -138,25 +138,25 @@ def generate_code(bear_call: BeartypeCall) -> str:
         # Python code snippet calling this callable unchecked, returning the
         # value returned by this callable from this wrapper.
         code_check_return = CODE_RETURN_UNCHECKED_format(
-            func_call_prefix=bear_call.func_wrapper_code_call_prefix)
+            func_call_prefix=decor_meta.func_wrapper_code_call_prefix)
     # Else, the callable return requires type-checking.
 
     # Dictionary mapping from the name to value of each attribute referenced in
     # the signature of this wrapper function, localized merely for readability.
-    func_scope = bear_call.func_wrapper_scope
+    func_scope = decor_meta.func_wrapper_scope
 
     # Pass parameters unconditionally required by *ALL* wrapper functions.
-    func_scope[ARG_NAME_FUNC] = bear_call.func_wrappee
+    func_scope[ARG_NAME_FUNC] = decor_meta.func_wrappee
 
     # Python code snippet declaring the signature of this type-checking wrapper
     # function, deferred for efficiency until *AFTER* confirming that a wrapper
     # function is even required.
     code_signature = make_func_signature(
-        func_name=bear_call.func_wrapper_name,
+        func_name=decor_meta.func_wrapper_name,
         func_scope=func_scope,
         code_signature_format=CODE_SIGNATURE,
-        code_signature_prefix=bear_call.func_wrapper_code_signature_prefix,
-        conf=bear_call.conf,
+        code_signature_prefix=decor_meta.func_wrapper_code_signature_prefix,
+        conf=decor_meta.conf,
     )
 
     # Return Python code defining the wrapper type-checking this callable.

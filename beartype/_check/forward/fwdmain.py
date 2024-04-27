@@ -21,7 +21,7 @@ from beartype.roar import (
 )
 from beartype.roar._roarexc import _BeartypeUtilCallableScopeNotFoundException
 from beartype.typing import Optional
-from beartype._check.checkcall import BeartypeCall
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.forward.fwdscope import BeartypeForwardScope
 from beartype._data.hint.datahinttyping import TypeException
 from beartype._data.kind.datakinddict import DICT_EMPTY
@@ -40,7 +40,7 @@ from builtins import __dict__ as func_builtins  # type: ignore[attr-defined]
 def resolve_hint(
     # Mandatory parameters.
     hint: str,
-    bear_call: BeartypeCall,
+    decor_meta: BeartypeDecorMeta,
 
     # Optional parameters.
     exception_cls: TypeException = BeartypeDecorHintForwardRefException,
@@ -63,7 +63,7 @@ def resolve_hint(
     ----------
     hint : str
         Stringified type hint to be resolved.
-    bear_call : BeartypeCall
+    decor_meta : BeartypeDecorMeta
         Decorated callable annotated by this hint.
     exception_cls : Type[Exception], optional
         Type of exception to be raised in the event of a fatal error. Defaults
@@ -94,26 +94,26 @@ def resolve_hint(
         Python >= 3.10.
     '''
     assert isinstance(hint, str), f'{repr(hint)} not stringified type hint.'
-    assert isinstance(bear_call, BeartypeCall), (
-        f'{repr(bear_call)} not @beartype call.')
+    assert isinstance(decor_meta, BeartypeDecorMeta), (
+        f'{repr(decor_meta)} not @beartype call.')
     # print(f'Resolving stringified type hint {repr(hint)}...')
 
     # ..................{ LOCALS                             }..................
     # Decorated callable and metadata associated with that callable, localized
     # to improve both readability and negligible efficiency when accessed below.
-    func = bear_call.func_wrappee_wrappee
+    func = decor_meta.func_wrappee_wrappee
 
     # If the frozen set of the unqualified names of all parent callables
     # lexically containing this decorated callable has yet to be decided...
-    if bear_call.func_wrappee_scope_nested_names is None:
+    if decor_meta.func_wrappee_scope_nested_names is None:
         # Decide this frozen set as either...
-        bear_call.func_wrappee_scope_nested_names = (
+        decor_meta.func_wrappee_scope_nested_names = (
             # If the decorated callable is nested, the non-empty frozen set of
             # the unqualified names of all parent callables lexically containing
             # this nested decorated callable (including this nested decorated
             # callable itself);
             frozenset(func.__qualname__.rsplit(sep='.'))
-            if bear_call.func_wrappee_is_nested else
+            if decor_meta.func_wrappee_is_nested else
             # Else, the decorated callable is a global function. In this
             # case, the empty frozen set.
             FROZENSET_EMPTY
@@ -225,7 +225,7 @@ def resolve_hint(
     # * This edge case is both trivial and efficient to support.
     #
     # tl;dr: Preserve this hint for disambiguity by reducing to a noop.
-    if hint in bear_call.func_wrappee_scope_nested_names:  # type: ignore[operator]
+    if hint in decor_meta.func_wrappee_scope_nested_names:  # type: ignore[operator]
         return hint
     # Else, this hint is *NOT* the unqualified name of a parent callable or
     # class of the decorated callable. In this case, this hint *COULD* require
@@ -245,9 +245,9 @@ def resolve_hint(
     #         return 'This is hashable, yo.'
 
     # If the forward scope of the decorated callable has yet to be decided...
-    if bear_call.func_wrappee_scope_forward is None:
+    if decor_meta.func_wrappee_scope_forward is None:
         # Localize metadata for readability and efficiency. Look. Just do it.
-        cls_stack = bear_call.cls_stack
+        cls_stack = decor_meta.cls_stack
 
         # Fully-qualified name of the module declaring the decorated callable,
         # which also serves as the name of this module and thus global scope.
@@ -258,7 +258,7 @@ def resolve_hint(
 
         # If the decorated callable is nested (rather than global) and thus
         # *MAY* have a non-empty local nested scope...
-        if bear_call.func_wrappee_is_nested:
+        if decor_meta.func_wrappee_is_nested:
             # Attempt to...
             try:
                 # Local scope of the decorated callable, localized to improve
@@ -315,7 +315,7 @@ def resolve_hint(
                     # additional frames that we could technically ignore. These
                     # include:
                     # * The call to the parent
-                    #   beartype._check.checkcall.BeartypeCall.reinit() method.
+                    #   beartype._check.metadata.metadecor.BeartypeDecorMeta.reinit() method.
                     # * The call to the parent @beartype.beartype() decorator.
                     #
                     # Why? Because the @beartype codebase has been sufficiently
@@ -469,7 +469,7 @@ def resolve_hint(
         # eccentricity would be less efficient and trivial than simply
         # initializing this forward scope with all builtin attributes, we prefer
         # the current (admittedly sus af) approach. Do not squint at this.
-        bear_call.func_wrappee_scope_forward = BeartypeForwardScope(
+        decor_meta.func_wrappee_scope_forward = BeartypeForwardScope(
             scope_dict=func_builtins, scope_name=func_module_name)
 
         # Composite this global and local scope into this forward scope (in that
@@ -478,9 +478,9 @@ def resolve_hint(
         # each global and then local attribute of the same name. Since locals
         # *ALWAYS* assume precedence over globals *ALWAYS* assume precedence
         # over builtins, order of operations is *EXTREMELY* significant here.
-        bear_call.func_wrappee_scope_forward.update(func_globals)
-        bear_call.func_wrappee_scope_forward.update(func_locals)
-        # print(f'Forward scope: {bear_call.func_wrappee_scope_forward}')
+        decor_meta.func_wrappee_scope_forward.update(func_globals)
+        decor_meta.func_wrappee_scope_forward.update(func_locals)
+        # print(f'Forward scope: {decor_meta.func_wrappee_scope_forward}')
     # Else, this forward scope has already been decided.
     #
     # In either case, this forward scope should now all have been decided.
@@ -489,7 +489,7 @@ def resolve_hint(
     # Attempt to resolve this stringified type hint into a non-string type hint
     # against both the global and local scopes of the decorated callable.
     try:
-        hint_resolved = eval(hint, bear_call.func_wrappee_scope_forward)
+        hint_resolved = eval(hint, decor_meta.func_wrappee_scope_forward)
         # print(f'Resolved stringified type hint {repr(hint)} to {repr(hint_resolved)}...')
     # If doing so failed for *ANY* reason whatsoever...
     except Exception as exception:
@@ -590,10 +590,10 @@ def resolve_hint(
             # If the beartype configuration associated with the decorated
             # callable enabled debugging, append debug-specific metadata to this
             # message.
-            if bear_call.conf.is_debug:
+            if decor_meta.conf.is_debug:
                 exception_message += (
                     f' Composite global and local scope enclosing this hint:\n\n'
-                    f'{repr(bear_call.func_wrappee_scope_forward)}'
+                    f'{repr(decor_meta.func_wrappee_scope_forward)}'
                 )
             # Else, the beartype configuration associated with the decorated
             # callable disabled debugging. In this case, avoid appending

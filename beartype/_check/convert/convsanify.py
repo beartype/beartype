@@ -16,7 +16,7 @@ from beartype.typing import (
     Any,
     Optional,
 )
-from beartype._check.checkcall import BeartypeCall
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.convert.convcoerce import (
     coerce_func_hint_root,
     coerce_hint_any,
@@ -38,7 +38,7 @@ def sanify_hint_root_func(
     # Mandatory parameters.
     hint: object,
     pith_name: str,
-    bear_call: BeartypeCall,
+    decor_meta: BeartypeDecorMeta,
 
     # Optional parameters.
     exception_prefix: str = EXCEPTION_PLACEHOLDER,
@@ -93,7 +93,7 @@ def sanify_hint_root_func(
 
         * If this hint annotates a parameter, the name of that parameter.
         * If this hint annotates the return, ``"return"``.
-    bear_call : BeartypeCall
+    decor_meta : BeartypeDecorMeta
         Decorated callable directly annotated by this hint.
     exception_prefix : str, optional
         Human-readable label prefixing exception messages raised by this
@@ -128,10 +128,10 @@ def sanify_hint_root_func(
     # PEP-noncompliant type hint if this hint is coercible *OR* this hint as is
     # otherwise. Since the passed hint is *NOT* necessarily PEP-compliant,
     # perform this coercion *BEFORE* validating this hint to be PEP-compliant.
-    hint = bear_call.func_arg_name_to_hint[pith_name] = coerce_func_hint_root(
+    hint = decor_meta.func_arg_name_to_hint[pith_name] = coerce_func_hint_root(
         hint=hint,
         pith_name=pith_name,
-        bear_call=bear_call,
+        decor_meta=decor_meta,
         exception_prefix=exception_prefix,
     )
 
@@ -148,8 +148,8 @@ def sanify_hint_root_func(
     # thus *NOT* performed by the sanify_hint_root_statement() sanitizer.
     if pith_name == ARG_NAME_RETURN:
         hint = reduce_hint_pep484585_func_return(
-            func=bear_call.func_wrappee,
-            func_arg_name_to_hint=bear_call.func_arg_name_to_hint,
+            func=decor_meta.func_wrappee,
+            func_arg_name_to_hint=decor_meta.func_arg_name_to_hint,
             exception_prefix=exception_prefix,
         )
     # Else, this hint annotates a parameter.
@@ -180,8 +180,8 @@ def sanify_hint_root_func(
     # optimize memoization efficiency and circumvent memoization warnings.
     hint = reduce_hint(
         hint=hint,
-        conf=bear_call.conf,
-        cls_stack=bear_call.cls_stack,
+        conf=decor_meta.conf,
+        cls_stack=decor_meta.cls_stack,
         pith_name=pith_name,
         exception_prefix=exception_prefix,
     )

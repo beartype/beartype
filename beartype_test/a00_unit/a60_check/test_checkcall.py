@@ -6,7 +6,7 @@
 '''
 Beartype decorator **dataclass** unit tests.
 
-This submodule unit tests the :func:`beartype._check.checkcall` submodule.
+This submodule unit tests the :func:`beartype._check.metadata.metadecor` submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -18,17 +18,17 @@ This submodule unit tests the :func:`beartype._check.checkcall` submodule.
 # ....................{ TESTS                              }....................
 def test_beartypecall() -> None:
     '''
-    Test the :func:`beartype._check.checkcall.BeartypeCall` dataclass.
+    Test the :func:`beartype._check.metadata.metadecor.BeartypeDecorMeta` dataclass.
     '''
 
     # Defer test-specific imports.
     from beartype import BeartypeConf
     from beartype.roar import BeartypeDecorWrappeeException
-    from beartype._check.checkcall import BeartypeCall
+    from beartype._check.metadata.metadecor import BeartypeDecorMeta
     from pytest import raises
 
     # Arbitrary beartype metadata.
-    bear_data = BeartypeCall()
+    bear_data = BeartypeDecorMeta()
 
     # Assert this metadata to be unhashable.
     with raises(TypeError):

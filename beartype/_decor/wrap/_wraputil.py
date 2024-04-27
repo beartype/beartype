@@ -11,7 +11,7 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype._check.checkcall import BeartypeCall
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.checkmagic import CODE_PITH_ROOT_NAME_PLACEHOLDER
 from beartype._check.code.codescope import add_func_scope_ref
 from beartype._check.code.snip.codesnipstr import (
@@ -26,7 +26,7 @@ from collections.abc import Iterable
 
 # ....................{ CACHERS                            }....................
 def unmemoize_func_wrapper_code(
-    bear_call: BeartypeCall,
+    decor_meta: BeartypeDecorMeta,
     func_wrapper_code: str,
     pith_repr: str,
     hint_refs_type_basename: tuple,
@@ -49,7 +49,7 @@ def unmemoize_func_wrapper_code(
 
     Parameters
     ----------
-    bear_call : BeartypeCall
+    decor_meta : BeartypeDecorMeta
         Decorated callable to be type-checked.
     func_wrapper_code : str
         Memoized callable-agnostic code snippet type-checking any parameter or
@@ -68,8 +68,8 @@ def unmemoize_func_wrapper_code(
         forward reference placeholder substrings cached into this code relative
         to the currently decorated callable.
     '''
-    assert bear_call.__class__ is BeartypeCall, (
-        f'{repr(bear_call)} not @beartype call.')
+    assert decor_meta.__class__ is BeartypeDecorMeta, (
+        f'{repr(decor_meta)} not @beartype call.')
     assert isinstance(func_wrapper_code, str), (
         f'{repr(func_wrapper_code)} not string.')
     assert isinstance(pith_repr, str), f'{repr(pith_repr)} not string.'
@@ -92,9 +92,9 @@ def unmemoize_func_wrapper_code(
     if hint_refs_type_basename:
         # Metadata describing the callable currently being decorated by
         # beartype, localized purely as a negligible optimization.
-        func = bear_call.func_wrappee
-        func_scope = bear_call.func_wrapper_scope
-        cls_stack = bear_call.cls_stack
+        func = decor_meta.func_wrappee
+        func_scope = decor_meta.func_wrapper_scope
+        cls_stack = decor_meta.cls_stack
 
         # For each unqualified classname referred to by a relative forward
         # reference type hints visitable from the current root type hint...

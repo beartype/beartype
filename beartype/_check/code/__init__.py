@@ -1808,7 +1808,7 @@
 #"config" parameter -- which will, of course, *ALWAYS* be non-"None" by the
 #logic above. Assert this, of course. We can then trivially expose that
 #"config" to lower-level beartype functions by just stuffing it into the
-#existing "BeartypeCall" class: e.g.,
+#existing "BeartypeDecorMeta" class: e.g.,
 #    # Welp, that was trivial.
 #    func_data.config = config
 #

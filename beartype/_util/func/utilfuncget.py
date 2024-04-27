@@ -86,7 +86,7 @@ def get_func_boundmethod_self(
 # ....................{ GETTERS ~ hints                    }....................
 #FIXME: Refactor all unsafe access of the low-level "__annotations__" dunder
 #attribute to instead call this high-level getter, please.
-#FIXME: See "FIXME:" comments in the "beartype._check.checkcall" submodule for
+#FIXME: See "FIXME:" comments in the "beartype._check.metadata.metadecor" submodule for
 #how this needs to be refactored to support Python >= 3.13, please.
 #FIXME: Unit test us up, please.
 def get_func_annotations(

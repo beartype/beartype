@@ -14,7 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.typing import NoReturn
-from beartype._check.checkcall import BeartypeCall
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._check.checkmake import (
     make_code_raiser_func_pith_check,
     make_code_raiser_func_pep484_noreturn_check,
@@ -43,7 +43,7 @@ from beartype._util.utilobject import SENTINEL
 from warnings import catch_warnings
 
 # ....................{ CODERS                             }....................
-def code_check_return(bear_call: BeartypeCall) -> str:
+def code_check_return(decor_meta: BeartypeDecorMeta) -> str:
     '''
     Generate a Python code snippet type-checking the annotated return declared
     by the decorated callable if any *or* the empty string otherwise (i.e., if
@@ -51,7 +51,7 @@ def code_check_return(bear_call: BeartypeCall) -> str:
 
     Parameters
     ----------
-    bear_call : BeartypeCall
+    decor_meta : BeartypeDecorMeta
         Decorated callable to be type-checked.
 
     Returns
@@ -77,8 +77,8 @@ def code_check_return(bear_call: BeartypeCall) -> str:
         * **PEP-noncompliant** (i.e., :mod:`beartype`-specific type hint *not*
           compliant with annotation-centric PEPs)).
     '''
-    assert isinstance(bear_call, BeartypeCall), (
-        f'{repr(bear_call)} not beartype call.')
+    assert isinstance(decor_meta, BeartypeDecorMeta), (
+        f'{repr(decor_meta)} not beartype call.')
 
     # Type hint annotating this callable's return if any *OR* "SENTINEL"
     # otherwise (i.e., if this return is unannotated).
@@ -86,7 +86,7 @@ def code_check_return(bear_call: BeartypeCall) -> str:
     # Note that "None" is a semantically meaningful PEP 484-compliant type hint
     # equivalent to "type(None)". Ergo, we *MUST* explicitly distinguish
     # between that type hint and an unannotated return.
-    hint = bear_call.func_arg_name_to_hint_get(ARG_NAME_RETURN, SENTINEL)
+    hint = decor_meta.func_arg_name_to_hint_get(ARG_NAME_RETURN, SENTINEL)
 
     # If this return is unannotated, silently reduce to a noop.
     if hint is SENTINEL:
@@ -120,8 +120,8 @@ def code_check_return(bear_call: BeartypeCall) -> str:
             #
             # Do this first *BEFORE* passing this hint to any further callables.
             hint = sanify_hint_root_func(
-                hint=hint, pith_name=ARG_NAME_RETURN, bear_call=bear_call)
-            # print(f'Sanified {repr(bear_call.func_wrappee)} return hint {repr(hint_insane)} to {repr(hint)}...')
+                hint=hint, pith_name=ARG_NAME_RETURN, decor_meta=decor_meta)
+            # print(f'Sanified {repr(decor_meta.func_wrappee)} return hint {repr(hint_insane)} to {repr(hint)}...')
 
             # If this is the PEP 484-compliant "typing.NoReturn" type hint
             # permitted *ONLY* as a return annotation...
@@ -129,7 +129,7 @@ def code_check_return(bear_call: BeartypeCall) -> str:
                 # Pre-generated code snippet validating this callable to *NEVER*
                 # successfully return by unconditionally generating a violation.
                 code_noreturn_check = PEP484_CODE_CHECK_NORETURN.format(
-                    func_call_prefix=bear_call.func_wrapper_code_call_prefix)
+                    func_call_prefix=decor_meta.func_wrapper_code_call_prefix)
 
                 # Code snippet handling the previously generated violation by
                 # either raising that violation as a fatal exception or emitting
@@ -138,7 +138,7 @@ def code_check_return(bear_call: BeartypeCall) -> str:
                     code_noreturn_violation,
                     func_scope,
                     _
-                ) = make_code_raiser_func_pep484_noreturn_check(bear_call.conf)
+                ) = make_code_raiser_func_pep484_noreturn_check(decor_meta.conf)
 
                 # Full code snippet to be returned.
                 func_wrapper_code = (
@@ -156,7 +156,7 @@ def code_check_return(bear_call: BeartypeCall) -> str:
                     # the class currently being decorated by @beartype) is
                     # passed to that tester. See _code_check_args() for details.
                     cls_stack = (
-                        bear_call.cls_stack
+                        decor_meta.cls_stack
                         if is_hint_needs_cls_stack(hint_insane) else
                         None
                     )
@@ -173,14 +173,14 @@ def code_check_return(bear_call: BeartypeCall) -> str:
                         hint_refs_type_basename,
                     ) = make_code_raiser_func_pith_check(  # type: ignore[assignment]
                         hint,
-                        bear_call.conf,
+                        decor_meta.conf,
                         cls_stack,
                         False,  # <-- True only for parameters
                     )
 
                     # Unmemoize this snippet against this return.
                     code_return_check = unmemoize_func_wrapper_code(
-                        bear_call=bear_call,
+                        decor_meta=decor_meta,
                         func_wrapper_code=code_return_check_pith,
                         pith_repr=ARG_NAME_RETURN_REPR,
                         hint_refs_type_basename=hint_refs_type_basename,
@@ -189,7 +189,7 @@ def code_check_return(bear_call: BeartypeCall) -> str:
                     #FIXME: [SPEED] Optimize the following two string munging
                     #operations into a single string-munging operation resembling:
                     #    func_wrapper_code = CODE_RETURN_CHECK.format(
-                    #        func_call_prefix=bear_call.func_wrapper_code_call_prefix,
+                    #        func_call_prefix=decor_meta.func_wrapper_code_call_prefix,
                     #        check_expr=code_return_check_pith_unmemoized,
                     #    )
                     #
@@ -203,7 +203,7 @@ def code_check_return(bear_call: BeartypeCall) -> str:
                     # Code snippet type-checking this return.
                     code_return_check_prefix = CODE_RETURN_CHECK_PREFIX.format(
                         func_call_prefix=(
-                            bear_call.func_wrapper_code_call_prefix))
+                            decor_meta.func_wrapper_code_call_prefix))
 
                     # Full code snippet to be returned, consisting of:
                     # * Calling the decorated callable and localize its return
@@ -216,7 +216,7 @@ def code_check_return(bear_call: BeartypeCall) -> str:
                         f'{CODE_RETURN_CHECK_SUFFIX}'
                     )
                 # Else, this hint is ignorable.
-                # if not func_wrapper_code: print(f'Ignoring {bear_call.func_name} return hint {repr(hint)}...')
+                # if not func_wrapper_code: print(f'Ignoring {decor_meta.func_name} return hint {repr(hint)}...')
         # If one or more warnings were issued, reissue these warnings with each
         # placeholder substring (i.e., "EXCEPTION_PLACEHOLDER" instance)
         # replaced by a human-readable description of this callable and
@@ -225,8 +225,8 @@ def code_check_return(bear_call: BeartypeCall) -> str:
             reissue_warnings_placeholder(
                 warnings=warnings_issued,
                 target_str=prefix_callable_return(
-                    func=bear_call.func_wrappee,
-                    is_color=bear_call.conf.is_color,
+                    func=decor_meta.func_wrappee,
+                    is_color=decor_meta.conf.is_color,
                 ),
             )
         # Else, *NO* warnings were issued.
@@ -237,15 +237,15 @@ def code_check_return(bear_call: BeartypeCall) -> str:
         reraise_exception_placeholder(
             exception=exception,
             target_str=prefix_callable_return(
-                func=bear_call.func_wrappee,
-                is_color=bear_call.conf.is_color,
+                func=decor_meta.func_wrappee,
+                is_color=decor_meta.conf.is_color,
             ),
         )
 
     # If a local scope is required to type-check this return, merge this scope
     # into the local scope currently required by the current wrapper function.
     if func_scope:
-        update_mapping(bear_call.func_wrapper_scope, func_scope)
+        update_mapping(decor_meta.func_wrapper_scope, func_scope)
     # Else, *NO* local scope is required to type-check this return.
 
     # Return this code.

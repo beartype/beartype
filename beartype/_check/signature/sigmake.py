@@ -17,7 +17,7 @@ from beartype.typing import Callable
 from beartype._check.checkmagic import (
     ARG_NAME_GETRANDBITS,
 )
-from beartype._check.util._checkutilsnip import (
+from beartype._check.signature._sigsnip import (
     CODE_SIGNATURE_ARG,
     CODE_INIT_RANDOM_INT,
 )

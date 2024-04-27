@@ -34,7 +34,7 @@ from beartype._check.error.errorget import (
     get_func_pith_violation,
     get_hint_object_violation,
 )
-from beartype._check.util.checkutilmake import make_func_signature
+from beartype._check.signature.sigmake import make_func_signature
 from beartype._check._checksnip import (
     CODE_CHECKER_SIGNATURE,
     CODE_RAISER_FUNC_PITH_CHECK_PREFIX,

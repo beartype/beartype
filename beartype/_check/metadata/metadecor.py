@@ -15,7 +15,7 @@ from beartype.roar import BeartypeDecorWrappeeException
 from beartype.typing import (
     TYPE_CHECKING,
     Callable,
-    Dict,
+    # Dict,
     FrozenSet,
     Optional,
 )
@@ -44,10 +44,10 @@ from beartype._util.func.utilfunctest import (
 from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 
 # ....................{ CLASSES                            }....................
-class BeartypeCall(object):
+class BeartypeDecorMeta(object):
     '''
-    **Beartype call metadata** (i.e., object encapsulating *all* metadata for
-    the user-defined callable currently being decorated by the
+    **Beartype decorator call metadata** (i.e., object encapsulating *all*
+    metadata for the callable currently being decorated by the
     :func:`beartype.beartype` decorator).
 
     Design
@@ -92,15 +92,15 @@ class BeartypeCall(object):
         all flags, options, settings, and other metadata configuring the
         current decoration of the decorated callable).
     func_arg_name_to_hint : dict[str, object]
-        Dictionary mapping from the name of each annotated parameter accepted
-        by the decorated callable to the type hint annotating that parameter.
+        **Type hint dictionary** (i.e., mapping from the name of each annotated
+        parameter accepted by the decorated callable to the type hint annotating
+        that parameter).
     func_arg_name_to_hint_get : Callable[[str, object], object]
         :meth:`dict.get` method bound to the :attr:`func_arg_name_to_hint`
         dictionary, localized as a negligible microoptimization. Blame Guido.
     func_wrappee : Optional[Callable]
-        Possibly wrapped **decorated callable** (i.e., high-level callable
-        currently being decorated by the :func:`beartype.beartype` decorator)
-        if the :meth:`reinit` method has been called *or* ``None`` otherwise.
+        Possibly wrapping **decorated callable** (i.e., high-level callable
+        currently being decorated by the :func:`beartype.beartype` decorator).
         Note the lower-level :attr:`func_wrappee_wrappee` callable should
         *usually* be accessed instead; although higher-level, this callable may
         only be a wrapper function and hence yield inaccurate or even erroneous
@@ -155,8 +155,7 @@ class BeartypeCall(object):
     func_wrappee_wrappee : Optional[Callable]
         Possibly unwrapped **decorated callable wrappee** (i.e., low-level
         callable wrapped by the high-level :attr:`func_wrappee` callable
-        currently being decorated by the :func:`beartype.beartype` decorator)
-        if the :meth:`reinit` method has been called *or* ``None`` otherwise.
+        currently being decorated by the :func:`beartype.beartype` decorator).
         If the higher-level :attr:`func_wrappee` callable does *not* actually
         wrap another callable, this callable is identical to that callable.
     func_wrappee_wrappee_codeobj : CallableCodeObjectType
@@ -169,9 +168,8 @@ class BeartypeCall(object):
         :func:`beartype._util.func.utilfunccodeobj.get_func_codeobj` getter.
     func_wrapper_code_call_prefix : Optional[str]
         Code snippet prefixing all calls to the decorated callable in the body
-        of the wrapper function wrapping that callable with type checking if
-        the :meth:`reinit` method has been called *or* ``None`` otherwise. If
-        non-``None``, this string is guaranteed to be either:
+        of the wrapper function wrapping that callable with type checking. This
+        string is guaranteed to be either:
 
         * If the decorated callable is synchronous (i.e., neither a coroutine
           nor asynchronous generator), the empty string.
@@ -179,8 +177,8 @@ class BeartypeCall(object):
           nor asynchronous generator), the ``"await "`` keyword.
     func_wrapper_code_signature_prefix : Optional[str]
         Code snippet prefixing the signature declaring the wrapper function
-        wrapping the decorated callable with type checking. Specifically, this
-        string is guaranteed to be either:
+        wrapping the decorated callable with type checking. This string is
+        guaranteed to be either:
 
         * If the decorated callable is synchronous (i.e., neither a coroutine
           nor asynchronous generator), the empty string.
@@ -398,7 +396,7 @@ class BeartypeCall(object):
         #
         # If this class stack is neither a tuple *NOR* "None", raise an
         # exception.
-        elif not isinstance(cls_stack, _TypeStackOrNone):
+        elif not isinstance(cls_stack, NoneTypeOr[tuple]):
             raise BeartypeDecorWrappeeException(
                 f'"cls_stack" {repr(cls_stack)} neither tuple nor "None".')
         # Else, this class stack is either a tuple *OR* "None".
@@ -678,7 +676,7 @@ class BeartypeCall(object):
         # function onto the pseudo-callable "cheating_object" object.
         #
         # In this case, the caller would have call this method as:
-        #     bear_call.reinit(
+        #     decor_meta.reinit(
         #         func=cheating_object.__call__, wrapper=cheating_object)
         #
         # Note that the callable to be type-checked "func" is only a thin
@@ -733,9 +731,24 @@ class BeartypeCall(object):
             self.func_wrapper_code_call_prefix = ''
             self.func_wrapper_code_signature_prefix = ''
 
+    # ..................{ DUNDERS                            }..................
+    def __repr__(self) -> str:
+        '''
+        Machine-readable representation of this metadata.
+        '''
+
+        # Represent this metadata with just the minimal subset of metadata
+        # needed to reasonably describe this metadata.
+        return (
+            f'BeartypeDecorMeta('
+            f'func={repr(self.func_wrappee)}, '
+            f'conf={repr(self.conf)}'
+            f')'
+        )
+
 # ....................{ FACTORIES                          }....................
 #FIXME: Unit test us up, please.
-def make_beartype_call(**kwargs) -> BeartypeCall:
+def make_beartype_call(**kwargs) -> BeartypeDecorMeta:
     '''
     **Beartype call metadata** (i.e., object encapsulating *all* metadata for
     the passed user-defined callable, typically currently being decorated by the
@@ -744,10 +757,10 @@ def make_beartype_call(**kwargs) -> BeartypeCall:
     Caveats
     -------
     **This higher-level factory function should always be called in lieu of
-    instantiating the** :class:`.BeartypeCall` **class directly.** Why?
+    instantiating the** :class:`.BeartypeDecorMeta` **class directly.** Why?
     Brute-force efficiency. This factory efficiently reuses previously
-    instantiated :class:`.BeartypeCall` objects rather than inefficiently
-    instantiating new :class:`.BeartypeCall` objects.
+    instantiated :class:`.BeartypeDecorMeta` objects rather than inefficiently
+    instantiating new :class:`.BeartypeDecorMeta` objects.
 
     **The caller must pass the metadata returned by this factory back to the**
     :func:`beartype._util.cache.pool.utilcachepoolobjecttyped.release_object_typed`
@@ -758,27 +771,27 @@ def make_beartype_call(**kwargs) -> BeartypeCall:
 
     Parameters
     ----------
-    All keyword parameters are passed as is to the :meth:`.BeartypeCall.reinit`
+    All keyword parameters are passed as is to the :meth:`.BeartypeDecorMeta.reinit`
     method.
 
     Returns
     -------
-    BeartypeCall
+    BeartypeDecorMeta
         Beartype call metadata describing this callable.
     '''
 
     # Acquire previously cached beartype call metadata from its object pool.
-    bear_call = acquire_object_typed(BeartypeCall)
+    decor_meta = acquire_object_typed(BeartypeDecorMeta)
 
     # Reinitialize this metadata with the passed keyword parameters.
-    bear_call.reinit(**kwargs)
+    decor_meta.reinit(**kwargs)
 
     # Return this metadata.
-    return bear_call
+    return decor_meta
 
 
 #FIXME: Unit test us up, please.
-def cull_beartype_call(bear_call: BeartypeCall) -> None:
+def cull_beartype_call(decor_meta: BeartypeDecorMeta) -> None:
     '''
     Deinitialize the passed **beartype call metadata** (i.e., object
     encapsulating *all* metadata for the passed user-defined callable, typically
@@ -786,19 +799,12 @@ def cull_beartype_call(bear_call: BeartypeCall) -> None:
 
     Parameters
     ----------
-    bear_call : BeartypeCall
+    decor_meta : BeartypeDecorMeta
         Beartype call metadata to be deinitialized.
     '''
 
     # Deinitialize this beartype call metadata.
-    bear_call.deinit()
+    decor_meta.deinit()
 
     # Release this beartype call metadata back to its object pool.
-    release_object_typed(bear_call)
-
-# ....................{ GLOBALS ~ private                  }....................
-_TypeStackOrNone = NoneTypeOr[tuple]
-'''
-2-tuple ``(type, type(None)``, globally cached for negligible space and time
-efficiency gains on validating passed parameters below.
-'''
+    release_object_typed(decor_meta)

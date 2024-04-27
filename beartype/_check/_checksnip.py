@@ -127,8 +127,9 @@ CODE_GET_FUNC_PITH_VIOLATION = f''':
 '''
 '''
 Code snippet suffixing all code type-checking the **root pith** (i.e., value of
-the current parameter or return value) against the root type hint annotating
-that pith by either raising a fatal exception or emitting a non-fatal warning.
+the current parameter or return of a :func:`beartype.beartype`-decorated
+callable) against the root type hint annotating that pith by either raising a
+fatal exception or emitting a non-fatal warning.
 
 This snippet expects to be formatted with these named interpolations:
 

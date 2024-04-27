@@ -28,7 +28,7 @@ from beartype._cave._cavefast import (
     MethodDecoratorPropertyType,
     MethodDecoratorStaticType,
 )
-from beartype._check.checkcall import (
+from beartype._check.metadata.metadecor import (
     cull_beartype_call,
     make_beartype_call,
 )
@@ -224,7 +224,7 @@ def beartype_func(
         defaults to ``func``.
 
     All remaining keyword parameters are passed as is to the
-    :meth:`beartype._check.checkcall.BeartypeCall.reinit` method.
+    :meth:`beartype._check.metadata.metadecor.BeartypeDecorMeta.reinit` method.
 
     Returns
     -------
@@ -268,7 +268,7 @@ def beartype_func(
     # Else, that callable is beartypeable. Let's do this, folks.
 
     # Beartype call metadata describing that callable.
-    bear_call = make_beartype_call(
+    decor_meta = make_beartype_call(
         func=func, conf=conf, wrapper=wrapper, **kwargs)  # pyright: ignore
 
     #FIXME: "if wrapper is not func:", then we probably need to also:
@@ -279,9 +279,24 @@ def beartype_func(
     #
     #Note that this wrapper is *NOT* necessarily a type; it's an arbitrary
     #object that just happens to define the "__wrapped__" dunder attribute.
+    #FIXME: Ah-ha! The extensible solution is actually to expose not simply the
+    #wrapper but *THE ENTIRE* "decor_meta" object as a new hidden parameter
+    #named "__beartype_metadata__".
+    #FIXME: Ah-ha! Don't do that, actually. That would be terrible. Instead:
+    #* In the "beartype._check.checkmagic" submodule:
+    #  * Add a new "ARG_NAME_CHECK_META" global resembling:
+    #        ARG_NAME_CHECK_META = f'{NAME_PREFIX}check_meta'
+    #* In the beartype._decor.wrap.wrapmain.generate_code() function:
+    #  * Expose a new "BeartypeCheckMeta" instance as a new hidden parameter
+    #    named "__beartype_check_meta__".
+    #* Pass that parameter to the get_func_pith_violation() getter via a new
+    #  mandatory "check_meta: BeartypeCheckMeta" parameter.
+    #* Remove the existing "func" and "conf" parameters from that getter.
+    #* Consider also removing the existing "**kwargs" parameter from that
+    #  getter. In theory, that should no longer be required.
 
     # Generate the raw string of Python statements implementing this wrapper.
-    func_wrapper_code = generate_code(bear_call)
+    func_wrapper_code = generate_code(decor_meta)
 
     # If that callable requires *NO* type-checking, silently reduce to a noop
     # and thus the identity decorator by returning that callable as is.
@@ -297,37 +312,37 @@ def beartype_func(
     # attributes are *ALWAYS* first looked up as local attributes before falling
     # back to being looked up as global attributes.
     func_wrapper = make_func(
-        func_name=bear_call.func_wrapper_name,
+        func_name=decor_meta.func_wrapper_name,
         func_code=func_wrapper_code,
-        func_locals=bear_call.func_wrapper_scope,
+        func_locals=decor_meta.func_wrapper_scope,
 
         #FIXME: String formatting is infamously slow. As an optimization, it'd
         #be strongly preferable to instead pass a lambda function accepting *NO*
         #parameters and returning the desired string, which make_func() should
         #then internally call on an as-needed basis to make this string: e.g.,
-        #    func_label_factory=lambda: f'@beartyped {bear_call.func_wrapper_name}() wrapper',
+        #    func_label_factory=lambda: f'@beartyped {decor_meta.func_wrapper_name}() wrapper',
         #
         #This is trivial. The only question then is: "Which is actually faster?"
         #Before finalizing this refactoring, let's profile both, adopt whichever
         #outperforms the other, and then document this choice in make_func().
         #FIXME: *WAIT.* We don't need a lambda at all. All we need is to:
-        #* Define a new BeartypeCall.label_func_wrapper() method resembling:
+        #* Define a new BeartypeDecorMeta.label_func_wrapper() method resembling:
         #      def label_func_wrapper(self) -> str:
         #          return f'@beartyped {self.func_wrapper_name}() wrapper'
         #* Refactor make_func() to accept a new optional keyword-only
         #  "func_label_factory" parameter, passed here as:
-        #      func_label_factory=bear_call.label_func_wrapper,
+        #      func_label_factory=decor_meta.label_func_wrapper,
         #
         #That's absolutely guaranteed to be the fastest approach.
         #FIXME: Right. Do that -- except instead of a new unique
         #label_func_wrapper() method name, just define the standard
-        #BeartypeCall.__repr__() dunder method: e.g.,
-        #    class BeartypeCall(object):
+        #BeartypeDecorMeta.__repr__() dunder method: e.g.,
+        #    class BeartypeDecorMeta(object):
         #        ...
         #        def __repr__(self) -> str:
         #            return f'@beartyped {self.func_wrapper_name}() wrapper'
-        #Then pass a new "func_label_obj_repr=bear_call" parameter. Win!
-        func_label=f'@beartyped {bear_call.func_wrapper_name}() wrapper',
+        #Then pass a new "func_label_obj_repr=decor_meta" parameter. Win!
+        func_label=f'@beartyped {decor_meta.func_wrapper_name}() wrapper',
 
         func_wrapped=func,
         is_debug=conf.is_debug,
@@ -340,7 +355,7 @@ def beartype_func(
     set_func_beartyped(func_wrapper)
 
     # Deinitialize this beartype call metadata.
-    cull_beartype_call(bear_call)
+    cull_beartype_call(decor_meta)
 
     # Return this wrapper.
     return func_wrapper  # type: ignore[return-value]
@@ -751,7 +766,7 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
         # print(f'Pseudo-callable wrapper {repr(pseudofunc)} identified!')
 
         # Transitively pass the optional "wrapper" parameter to the
-        # BeartypeCall.reinit() method, ensuring that this pseudo-callable
+        # BeartypeDecorMeta.reinit() method, ensuring that this pseudo-callable
         # wrapper object is correctly unwrapped.
         #
         # This edge case handles edge-case pseudo-callable wrapper objects
@@ -797,6 +812,14 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     #it? Let's investigate please. Why? Because the fallback would honestly be
     #preferable to what we're doing here. Monkey-patching the class is totally
     #non-ideal, honestly. Let's avoid that if at all possible, please.
+    #FIXME: *HMM.* I still don't get it, but I admit now that it doesn't
+    #particularly matter *WHY* the fallback fails to suffice -- because, in any
+    #case, the fallback is a *TERRIBLE* idea in general. Why? Because we
+    #absolutely *DO* want to preserve this pseudo-callable as is. In all
+    #likelihood, this pseudo-callable object serves a variety of purposes. It
+    #doesn't exist merely to be called as a callable. There probably exist
+    #various methods defined on this object that might be called elsewhere.
+    #Preserving this object is the highest priority. So, this is fine and good.
     if is_func_boundmethod(pseudofunc_call_boundmethod):
         # print(f'Beartyping pseudo-callable {repr(pseudofunc)} bound method...')
         pseudofunc.__class__.__call__ = beartype_func(  # type: ignore[method-assign,operator]
