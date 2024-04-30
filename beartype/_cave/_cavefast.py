@@ -1452,10 +1452,10 @@ Tuple of all callable types as well as the string type.
 '''
 
 
-#FIXME: Define a new "CallableClassType" by copying the "BoolType" approach
+#FIXME: Define a new "ClassCallableType" by copying the "BoolType" approach
 #except for the __call__() dunder method instead.
-#FIXME: Replace "ClassType" below by "CallableClassType".
-#FIXME: Add the "CallableClassType" type to the "CallableTypes" tuple as well.
+#FIXME: Replace "ClassType" below by "ClassCallableType".
+#FIXME: Add the "ClassCallableType" type to the "CallableTypes" tuple as well.
 DecoratorTypes = CallableTypes + (ClassType,)
 '''
 Tuple of all **decorator types** (i.e., both callable classes *and* the type of

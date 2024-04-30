@@ -14,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.checkmagic import (
+    ARG_NAME_CHECK_META,
     ARG_NAME_FUNC,
     ARG_NAME_GET_VIOLATION,
     VAR_NAME_ARGS_LEN,
@@ -206,7 +207,7 @@ active Python interpreter.
 # ....................{ CODE ~ return ~ uncheck            }....................
 CODE_RETURN_UNCHECKED = f'''
     # Call this function with all passed parameters and return the value
-    # returned from this call.
+    # returned from this call as is (without being type-checked).
     return {{func_call_prefix}}{ARG_NAME_FUNC}(*args, **kwargs)'''
 '''
 Code snippet calling the decorated callable *without* type-checking the value

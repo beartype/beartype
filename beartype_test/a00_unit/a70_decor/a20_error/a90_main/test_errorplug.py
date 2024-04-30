@@ -33,6 +33,7 @@ def test_get_func_pith_violation_instancecheck_str() -> None:
     from beartype.roar import BeartypePlugInstancecheckStrException
     from beartype.typing import Any
     from beartype._check.error.errorget import get_func_pith_violation
+    from beartype._check.metadata.metacheck import BeartypeCheckMeta
     from pytest import raises
 
     # ..................{ METACLASSES                        }..................
@@ -103,9 +104,8 @@ def test_get_func_pith_violation_instancecheck_str() -> None:
     # Keyword arguments to be unconditionally passed to *ALL* calls of the
     # get_func_pith_violation() getter below.
     kwargs = dict(
-        func=of_yesternight,
-        conf=BeartypeConf(),
-    )
+        check_meta=BeartypeCheckMeta.make_from_decor_meta_kwargs(
+            func=of_yesternight, conf=BeartypeConf()))
 
     # Arbitrary non-empty string.
     HIS_WAN_EYES = 'Of yesternight? The sounds that soothed his sleep,'

@@ -42,7 +42,6 @@ from beartype._check._checksnip import (
     CODE_TESTER_CHECK_PREFIX,
     CODE_GET_FUNC_PITH_VIOLATION,
     CODE_GET_HINT_OBJECT_VIOLATION,
-    CODE_GET_VIOLATION_CLS_STACK,
     CODE_GET_VIOLATION_RANDOM_INT,
     CODE_RAISE_VIOLATION,
     CODE_WARN_VIOLATION,
@@ -319,19 +318,14 @@ def make_code_raiser_func_pith_check(
         ''
     )
 
-    # Code snippet passing the current class stack if needed to type-check this
-    # type hint, defaulting to *NOT* passing this.
-    arg_cls_stack = CODE_GET_VIOLATION_CLS_STACK if cls_stack else ''
-
-    # Pass hidden parameters to this raiser function exposing the
-    # get_func_pith_violation() getter called by the
-    # "CODE_GET_FUNC_PITH_VIOLATION" snippet.
+    # Expose the get_func_pith_violation() getter called by the
+    # "CODE_GET_FUNC_PITH_VIOLATION" snippet as a "beartype"-specific hidden
+    # parameter passed to this wrapper function.
     func_scope[ARG_NAME_GET_VIOLATION] = get_func_pith_violation
 
     # Code snippet generating a human-readable violation exception or warning
     # when the root pith violates the root type hint.
     code_get_violation = CODE_GET_FUNC_PITH_VIOLATION.format(
-        arg_cls_stack=arg_cls_stack,
         arg_random_int=arg_random_int,
         pith_name=CODE_PITH_ROOT_NAME_PLACEHOLDER,
     )
@@ -395,7 +389,6 @@ def make_code_raiser_func_pep484_noreturn_check(
     # Code snippet generating a human-readable violation exception or warning
     # when the root pith violates the root type hint.
     code_get_violation = CODE_GET_FUNC_PITH_VIOLATION.format(
-        arg_cls_stack='',
         arg_random_int='',
         pith_name=ARG_NAME_RETURN_REPR,
     )

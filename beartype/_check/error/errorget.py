@@ -113,6 +113,7 @@ from beartype.roar._roarexc import (
 )
 from beartype.typing import Optional
 from beartype._check.error._errorcause import ViolationCause
+from beartype._check.metadata.metacheck import BeartypeCheckMeta
 from beartype._conf.confcls import (
     BEARTYPE_CONF_DEFAULT,
     BeartypeConf,
@@ -137,13 +138,13 @@ from beartype._util.text.utiltextprefix import (
     prefix_pith_value,
 )
 from beartype._util.text.utiltextrepr import represent_object
+from beartype._util.utilobject import SENTINEL
 from collections.abc import Callable as CallableABC
 
 # ....................{ GETTERS                            }....................
 def get_func_pith_violation(
     # Mandatory parameters.
-    func: CallableABC,
-    conf: BeartypeConf,
+    check_meta: BeartypeCheckMeta,
     pith_name: str,
     pith_value: object,
 
@@ -158,12 +159,10 @@ def get_func_pith_violation(
 
     Parameters
     ----------
-    func : CallableTypes
-        Decorated callable to raise this exception from.
-    conf : BeartypeConf
-        **Beartype configuration** (i.e., self-caching dataclass encapsulating
-        all flags, options, settings, and other metadata configuring the
-        current decoration of the decorated callable or class).
+    check_meta : BeartypeCheckMeta
+        **Beartype type-check call metadata** (i.e., object encapsulating *all*
+        metadata required by the current call to the wrapper function
+        type-checking a :func:`beartype.beartype`-decorated callable).
     pith_name : str
         Either:
 
@@ -200,32 +199,37 @@ def get_func_pith_violation(
     :func:`.get_hint_object_violation`
         Further details.
     '''
-    assert callable(func), f'{repr(func)} uncallable.'
+    assert isinstance(check_meta, BeartypeCheckMeta), (
+        f'{repr(check_meta)} not type-checking call metadata.')
     assert isinstance(pith_name, str), f'{repr(pith_name)} not string.'
 
-    # If this parameter or return value is unannotated, raise an exception.
+    # Type hint annotating this parameter or return if this parameter or return
+    # is annotated *OR* the placeholder sentinel otherwise (i.e., if this
+    # parameter or return is unannotated).
+    hint = check_meta.func_arg_name_to_hint.get(pith_name, SENTINEL)
+
+    # If this parameter or return is unannotated, raise an exception.
     #
     # Note that this should *NEVER* occur, as the caller guarantees this
     # parameter or return to be annotated. However, since malicious callers
     # *COULD* deface the "__annotations__" dunder dictionary without our
     # knowledge or permission, precautions are warranted.
-    if pith_name not in func.__annotations__:
-        raise _BeartypeCallHintPepRaiseException(f'{repr(func)} unannotated.')
-    # Else, this parameter or return value is annotated.
-
-    # Type hint annotating this parameter or return value.
-    #
-    # Note that we intentionally avoid calling the __annotations__.get() method
-    # to obtain this hint. Since "None" is a valid type hint, calling that
-    # method gains us nothing over the current approach.
-    hint = func.__annotations__[pith_name]
+    if hint is SENTINEL:
+        raise _BeartypeCallHintPepRaiseException(
+            f'{repr(check_meta.func)} parameter "{pith_name}" unannotated '
+            f'(or originally annotated but since deleted) in '
+            f'"__annotations__" dunder dictionary:\n'
+            f'{repr(check_meta.func_arg_name_to_hint)}'
+        )
+    # Else, this parameter or return is annotated.
 
     # Defer to this lower-level violation factory.
     return get_hint_object_violation(
-        obj=pith_value,
+        cls_stack=check_meta.cls_stack,
+        conf=check_meta.conf,
+        func=check_meta.func,
         hint=hint,
-        conf=conf,
-        func=func,
+        obj=pith_value,
         pith_name=pith_name,
         **kwargs
     )

@@ -4,8 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype dataclass** (i.e., class aggregating *all* metadata for the callable
-currently being decorated by the :func:`beartype.beartype` decorator).**
+**Beartype type-check call metadata dataclass** (i.e., class aggregating *all*
+metadata required by the current call to the wrapper function type-checking a
+:func:`beartype.beartype`-decorated callable).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''
@@ -13,6 +14,7 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.typing import TYPE_CHECKING
 from beartype._cave._cavemap import NoneTypeOr
+from beartype._check.metadata.metadecor import BeartypeDecorMeta
 from beartype._conf.confcls import BeartypeConf
 from beartype._data.hint.datahinttyping import (
     DictStrToAny,
@@ -25,8 +27,9 @@ from collections.abc import Callable
 class BeartypeCheckMeta(object):
     '''
     **Beartype type-check call metadata** (i.e., object encapsulating *all*
-    metadata required by the current call to the wrapper function type-checking
-    a :func:`beartype.beartype`-decorated callable).
+    metadata required by each call to the wrapper function type-checking the
+    callable currently being decorated by the :func:`beartype.beartype`
+    decorator).
 
     Design
     ------
@@ -103,6 +106,14 @@ class BeartypeCheckMeta(object):
         '''
         Initialize this metadata with the passed parameters.
 
+        Caveats
+        -------
+        **Avoid calling this low-level initializer directly.** Instead,
+        instantiate instances of this dataclass by calling the
+        :meth:`make_from_decor_meta` class method -- reducing existing
+        instances of the parent :class:`.BeartypeDecorMeta` dataclass to
+        instances of this child dataclass.
+
         Parameters
         ----------
         cls_stack : TypeStack
@@ -135,3 +146,59 @@ class BeartypeCheckMeta(object):
         self.conf = conf
         self.func = func
         self.func_arg_name_to_hint = func_arg_name_to_hint
+
+    # ..................{ CLASS METHODS                      }..................
+    @classmethod
+    def make_from_decor_meta(
+        cls, decor_meta: BeartypeDecorMeta) -> 'BeartypeCheckMeta':
+        '''
+        **Beartype type-check call metadata** (i.e., object encapsulating *all*
+        metadata required by the current call to the wrapper function
+        type-checking the callable currently being decorated by the
+        :func:`beartype.beartype` decorator) reduced from the passed **beartype
+        decorator call metadata** (i.e., object encapsulating *all* metadata for
+        that callable).
+
+        Parameters
+        ----------
+        decor_meta : BeartypeDecorMeta
+            Beartype decorator call metadata to be reduced.
+        '''
+        assert isinstance(decor_meta, BeartypeDecorMeta)
+
+        # Create and return a new instance of this child dataclass reduced from
+        # the passed parent dataclass.
+        return BeartypeCheckMeta(
+            conf=decor_meta.conf,
+            cls_stack=decor_meta.cls_stack,
+            func=decor_meta.func_wrappee,
+            func_arg_name_to_hint=decor_meta.func_arg_name_to_hint,
+        )
+
+
+    @classmethod
+    def make_from_decor_meta_kwargs(cls, **kwargs) -> 'BeartypeCheckMeta':
+        '''
+        **Beartype type-check call metadata** (i.e., object encapsulating *all*
+        metadata required by the current call to the wrapper function
+        type-checking the callable currently being decorated by the
+        :func:`beartype.beartype` decorator) reduced from the passed **beartype
+        decorator call metadata keyword parameters** (i.e., keyword parameters
+        to be passed to the :meth:`BeartypeDecorMeta.reinit` method).
+
+        This factory method is a high-level convenience principally intended to
+        be called from unit tests.
+
+        Parameters
+        ----------
+        All passed keyword parameters are passed as is to the
+        :meth:`BeartypeDecorMeta.reinit` method.
+        '''
+
+        # Beartype decorator call metadata with which to instantiate a new
+        # instance of this dataclass.
+        decor_meta = BeartypeDecorMeta()
+        decor_meta.reinit(**kwargs)
+
+        # Beartype type-checking call metadata reduced from this metadata.
+        return cls.make_from_decor_meta(decor_meta)

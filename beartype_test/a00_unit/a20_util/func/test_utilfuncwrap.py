@@ -68,104 +68,39 @@ def test_unwrap_func_all_isomorphic() -> None:
     # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
-    from functools import (
-        update_wrapper,
-        wraps,
-    )
-
-    # ....................{ CALLABLES                      }....................
-    def the_waves_arose(higher_and, higher_still):
-        '''
-        Arbitrary wrappee callable.
-        '''
-
-        return higher_and + higher_still
-        # return 'The waves arose. Higher and higher still'
-
-
-    # Note that the "assigned" parameter is intentionally passed the empty
-    # tuple, preserving the original "__name__" and "__qualname__" dunder
-    # attributes of wrapper callables for debuggability.
-    @wraps(the_waves_arose, assigned=())
-    def their_fierce_necks(writhed_beneath):
-        '''
-        Arbitrary non-isomorphic wrapper callable wrapping a non-wrapper.
-        '''
-
-        return the_waves_arose(writhed_beneath[0], writhed_beneath[1:])
-
-
-    @wraps(their_fierce_necks, assigned=())
-    def the_tempests_scourge(*args, **kwargs):
-        '''
-        Arbitrary isomorphic wrapper callable wrapping a non-isomorphic wrapper
-        accepting both variadic positional and keyword parameters.
-        '''
-
-        return their_fierce_necks(*args, **kwargs)
-
-
-    @wraps(their_fierce_necks, assigned=())
-    def with_dark_obliterating_course(*args):
-        '''
-        Arbitrary isomorphic wrapper callable wrapping a non-isomorphic wrapper
-        accepting *only* variadic positional (but *not* keyword) parameters.
-        '''
-
-        return their_fierce_necks(*args)
-
-
-    @wraps(their_fierce_necks, assigned=())
-    def he_sate(**kwargs):
-        '''
-        Arbitrary isomorphic wrapper callable wrapping a non-isomorphic wrapper
-        accepting *only* variadic keyword (but *not* positional) parameters.
-        '''
-
-        return their_fierce_necks(**kwargs)
-
-    # ....................{ CLASSES                        }....................
-    class LikeSerpentsStruggling(object):
-        '''
-        Arbitrary isomorphic wrapper pseudo-callable wrapping an isomorphic
-        wrapper callable.
-        '''
-
-        def __call__(self, *args, **kwargs):
-            '''
-            Arbitrary isomorphic wrapper callable wrapping another isomorphic
-            wrapper callable.
-            '''
-
-            return the_tempests_scourge(*args, **kwargs)
-
-    # Instance of this class.
-    in_a_vultures_grasp = LikeSerpentsStruggling()
-    update_wrapper(
-        wrapper=in_a_vultures_grasp,
-        wrapped=the_tempests_scourge,
-        assigned=(),
+    from beartype_test.a00_unit.data.data_type import (
+        function_wrappee,
+        function_wrapper_nonisomarphic,
+        function_wrapper_isomarphic,
+        function_wrapper_isomarphic_args,
+        function_wrapper_isomarphic_kwargs,
+        object_callable_wrapper_isomorphic,
     )
 
     # ....................{ ASSERTS                        }....................
     # Assert this function returns unwrapped callables unmodified.
-    assert unwrap_func_all_isomorphic(the_waves_arose) is the_waves_arose
+    assert unwrap_func_all_isomorphic(function_wrappee) is function_wrappee
     assert unwrap_func_all_isomorphic(iter) is iter
 
     # Assert this function returns non-isomorphic wrapper callables unmodified.
-    assert unwrap_func_all_isomorphic(their_fierce_necks) is their_fierce_necks
+    assert unwrap_func_all_isomorphic(function_wrapper_nonisomarphic) is (
+        function_wrapper_nonisomarphic)
 
     # Assert this function unwraps isomorphic wrapper callables.
-    assert unwrap_func_all_isomorphic(the_tempests_scourge) is (
-        their_fierce_necks)
-    assert unwrap_func_all_isomorphic(with_dark_obliterating_course) is (
-        their_fierce_necks)
-    assert unwrap_func_all_isomorphic(he_sate) is their_fierce_necks
+    assert unwrap_func_all_isomorphic(function_wrapper_isomarphic) is (
+        function_wrapper_nonisomarphic)
+    assert unwrap_func_all_isomorphic(function_wrapper_isomarphic_args) is (
+        function_wrapper_nonisomarphic)
+    assert unwrap_func_all_isomorphic(function_wrapper_isomarphic_kwargs) is (
+        function_wrapper_nonisomarphic)
 
     # Assert this function unwraps wrapper pseudo-callables.
-    in_a_vultures_grasp_unwrapped = unwrap_func_all_isomorphic(
-        func=in_a_vultures_grasp.__call__, wrapper=in_a_vultures_grasp)
-    assert in_a_vultures_grasp_unwrapped is their_fierce_necks
+    object_callable_wrapper_isomorphic_unwrapped = unwrap_func_all_isomorphic(
+        func=object_callable_wrapper_isomorphic.__call__,
+        wrapper=object_callable_wrapper_isomorphic,
+    )
+    assert object_callable_wrapper_isomorphic_unwrapped is (
+        function_wrapper_nonisomarphic)
 
 # ....................{ TESTS ~ descriptor                 }....................
 def test_unwrap_func_classmethod_once() -> None:

@@ -475,45 +475,9 @@ def test_is_func_wrapper_isomorphic() -> None:
         decorator_isomorphic,
         decorator_nonisomorphic,
         function,
+        object_callable_wrapper_isomorphic,
         wrapper_isomorphic,
     )
-    from functools import wraps
-
-    # ....................{ CALLABLES                      }....................
-    def of_wave_ruining_on_wave(and_blast, on_blast):
-        '''
-        Arbitrary non-isomorphic non-wrapper callable.
-        '''
-
-        return and_blast + on_blast
-
-    # ....................{ CLASSES                        }....................
-    class CalmAndRejoicing(object):
-        '''
-        Arbitrary class defining a single isomorphic wrapper method.
-        '''
-
-        @wraps(of_wave_ruining_on_wave)
-        def in_the_fearful_war(self, *args, **kwargs):
-            '''
-            Arbitrary isomorphic wrapper method explicitly decorated as such via
-            the :func:`.wraps` decorator.
-            '''
-
-            return of_wave_ruining_on_wave(*args, **kwargs)
-
-
-        def and_black_flood(self, *args, **kwargs):
-            '''
-            Arbitrary isomorphic wrapper method *not* explicitly decorated as
-            such via the :func:`.wraps` decorator.
-            '''
-
-            return of_wave_ruining_on_wave(*args, **kwargs)
-
-
-    # Instance of this class.
-    descending = CalmAndRejoicing()
 
     # ....................{ PASS                           }....................
     # Assert this tester accepts isomorphic wrapper closures.
@@ -525,12 +489,15 @@ def test_is_func_wrapper_isomorphic() -> None:
 
     # Assert this tester accepts isomorphic wrapper bound methods explicitly
     # decorated as such.
-    assert is_func_wrapper_isomorphic(descending.in_the_fearful_war) is True
+    assert is_func_wrapper_isomorphic(
+        object_callable_wrapper_isomorphic.method_wrapper_isomorphic) is True
 
     # Assert this tester accepts isomorphic wrapper bound methods *NOT*
     # explicitly decorated as such when a sibling wrapper is also passed.
     assert is_func_wrapper_isomorphic(
-        descending.and_black_flood, descending.in_the_fearful_war) is True
+        object_callable_wrapper_isomorphic.method_wrapper_isomorphic_implicit,
+        object_callable_wrapper_isomorphic.method_wrapper_isomorphic,
+    ) is True
 
     # Assert this tester rejects non-isomorphic wrappers.
     assert is_func_wrapper_isomorphic(

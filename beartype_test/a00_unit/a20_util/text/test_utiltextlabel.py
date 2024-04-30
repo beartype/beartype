@@ -28,7 +28,7 @@ def test_label_beartypeable_kind() -> None:
     # Defer test-specific imports.
     from beartype._util.text.utiltextlabel import label_beartypeable_kind
     from beartype_test.a00_unit.data.data_type import (
-        CallableClass,
+        ClassCallable,
         Class,
         async_coroutine_factory,
         async_generator_factory,
@@ -77,7 +77,7 @@ def test_label_beartypeable_kind() -> None:
         # Object that is neither a pure-Python class, function, *NOR* method. In
         # this case, pass a pseudo-callable (i.e., object whose class defines
         # the __call__() dunder method) to exercise a *POSSIBLE* edge case.
-        (CallableClass(), 'object'),
+        (ClassCallable(), 'object'),
     )
 
     # ....................{ PASS                           }....................

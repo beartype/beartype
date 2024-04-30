@@ -4,8 +4,9 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype dataclass** (i.e., class aggregating *all* metadata for the callable
-currently being decorated by the :func:`beartype.beartype` decorator).**
+**Beartype decorator call metadata dataclass** (i.e., class aggregating *all*
+metadata for the callable currently being decorated by the
+:func:`beartype.beartype` decorator).
 
 This private submodule is *not* intended for importation by downstream callers.
 '''

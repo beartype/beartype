@@ -21,8 +21,12 @@ This private submodule is *not* intended for importation by downstream callers.
 # submodule to improve maintainability and readability here.
 
 # ....................{ IMPORTS                            }....................
+from beartype._check.checkmagic import (
+    ARG_NAME_CHECK_META,
+    ARG_NAME_FUNC,
+)
+from beartype._check.metadata.metacheck import BeartypeCheckMeta
 from beartype._check.metadata.metadecor import BeartypeDecorMeta
-from beartype._check.checkmagic import ARG_NAME_FUNC
 from beartype._check.signature.sigmake import make_func_signature
 from beartype._decor.wrap.wrapsnip import (
     CODE_RETURN_UNCHECKED_format,
@@ -65,11 +69,11 @@ def generate_code(decor_meta: BeartypeDecorMeta) -> str:
 
           .. code-block:: python
 
-              >>> from beartype.cave import AnyType
-              >>> from typing import Any
-              >>> def muh_func(muh_param1: AnyType, muh_param2: object) -> Any: pass
-              >>> muh_func is beartype(muh_func)
-              True
+             >>> from beartype.cave import AnyType
+             >>> from typing import Any
+             >>> def muh_func(muh_param1: AnyType, muh_param2: object) -> Any: pass
+             >>> muh_func is beartype(muh_func)
+             True
 
         * Else, a code snippet defining the wrapper function type-checking the
           decorated callable, including (in order):
@@ -145,7 +149,23 @@ def generate_code(decor_meta: BeartypeDecorMeta) -> str:
     # the signature of this wrapper function, localized merely for readability.
     func_scope = decor_meta.func_wrapper_scope
 
-    # Pass parameters unconditionally required by *ALL* wrapper functions.
+    # Expose private beartype type-checking call metadata (i.e.,
+    # "beartype"-specific hidden parameter whose default value is the
+    # "BeartypeCheckMeta" dataclass instance encapsulating *ALL* metadata
+    # required by each call to this wrapper function) to this wrapper function.
+    # Doing so dramatically simplifies calls the get_func_pith_violation()
+    # getter inside the body of this wrapper function by enabling this metadata
+    # to be passed as a single unified parameter rather than individually as
+    # many distinct parameters.
+    func_scope[ARG_NAME_CHECK_META] = BeartypeCheckMeta.make_from_decor_meta(
+        decor_meta)
+
+    # Expose the callable currently being decorated to this wrapper function.
+    # Technically, doing so is merely an optimization; this callable is also
+    # accessible as the "ARG_NAME_CHECK_META.func" instance variable in the body
+    # of this wrapper function. Pragmatically, doing so is a trivial
+    # optimization that could yield non-trivial benefits (e.g., if this wrapper
+    # function is frequently called).
     func_scope[ARG_NAME_FUNC] = decor_meta.func_wrappee
 
     # Python code snippet declaring the signature of this type-checking wrapper

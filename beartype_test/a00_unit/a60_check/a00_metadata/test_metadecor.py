@@ -4,9 +4,10 @@
 # See "LICENSE" for further details.
 
 '''
-Beartype decorator **dataclass** unit tests.
+**Beartype decorator call metadata dataclass** unit tests.
 
-This submodule unit tests the :func:`beartype._check.metadata.metadecor` submodule.
+This submodule unit tests the :func:`beartype._check.metadata.metadecor`
+submodule.
 '''
 
 # ....................{ IMPORTS                            }....................
@@ -16,30 +17,44 @@ This submodule unit tests the :func:`beartype._check.metadata.metadecor` submodu
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_beartypecall() -> None:
+def test_metadata_decor() -> None:
     '''
-    Test the :func:`beartype._check.metadata.metadecor.BeartypeDecorMeta` dataclass.
+    Test the :func:`beartype._check.metadata.metadecor.BeartypeDecorMeta`
+    dataclass.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype import BeartypeConf
     from beartype.roar import BeartypeDecorWrappeeException
     from beartype._check.metadata.metadecor import BeartypeDecorMeta
+    from beartype_test.a00_unit.data.data_type import function_lambda
     from pytest import raises
 
-    # Arbitrary beartype metadata.
+    # ....................{ LOCALS                         }....................
+    # Arbitrary beartype decorator call metadata.
     bear_data = BeartypeDecorMeta()
 
+    # ....................{ FAIL                           }....................
     # Assert this metadata to be unhashable.
     with raises(TypeError):
         hash(bear_data)
 
-    # Assert that reinitializing this metadata a non-callable raises the
-    # expected exception.
+    # Assert that reinitializing this metadata an uncallable object to be
+    # type-checked raises the expected exception.
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
             func='The fields, the lakes, the forests, and the streams,',
             conf=BeartypeConf(),
+        )
+
+    # Assert that reinitializing this metadata an uncallable object to be
+    # unwrapped raises the expected exception.
+    with raises(BeartypeDecorWrappeeException):
+        bear_data.reinit(
+            func=function_lambda,
+            conf=BeartypeConf(),
+            wrapper="Like serpents struggling in a vulture's grasp.",
         )
 
     # Assert that reinitializing this metadata with a C-based builtin function
@@ -51,7 +66,7 @@ def test_beartypecall() -> None:
     # raises the expected exception.
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
-            func=lambda: ...,
+            func=function_lambda,
             conf='Ocean, and all the living things that dwell',
         )
 
@@ -59,13 +74,13 @@ def test_beartypecall() -> None:
     # the expected exception.
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
-            func=lambda: ...,
+            func=function_lambda,
             conf=BeartypeConf(),
             cls_stack="Shine in the rushing torrents' restless gleam,",
         )
     with raises(BeartypeDecorWrappeeException):
         bear_data.reinit(
-            func=lambda: ...,
+            func=function_lambda,
             conf=BeartypeConf(),
             cls_stack=('Which from those secret chasms in tumult welling',),
         )

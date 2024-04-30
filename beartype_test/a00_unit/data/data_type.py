@@ -25,16 +25,17 @@ from enum import Enum
 from functools import (
     lru_cache,
     partial,
+    update_wrapper,
     wraps,
 )
 from sys import exc_info
 
 # ....................{ CLASSES                            }....................
-class CallableClass(object):
+class ClassCallable(object):
     '''
-    Arbitrary pure-Python **callable class** (i.e., class defining the
-    :meth:`__call__` dunder method implicitly called by Python when instances
-    of this class are called using the standard calling convention).
+    **Callable class** (i.e., pure-Python class defining the :meth:`__call__`
+    dunder method implicitly called by Python when instances of this class are
+    called using the standard calling convention).
     '''
 
     def __call__(self, *args, **kwargs) -> int:
@@ -359,9 +360,6 @@ def decorator_nonisomorphic(func):
     parameters passed to the passed callable).
     '''
 
-    # Defer decorator-specific imports.
-    from functools import wraps
-
     @wraps(func)
     def _closure_nonisomorphic():
         '''
@@ -375,38 +373,115 @@ def decorator_nonisomorphic(func):
     # Return this closure.
     return _closure_nonisomorphic
 
-# ....................{ CALLABLES ~ sync : generator       }....................
-def sync_generator_factory() -> Generator[int, None, None]:
+# ....................{ CALLABLES ~ sync : wrapper         }....................
+def function_wrappee(text_one: str, text_two: str) -> str:
     '''
-    Create and return a pure-Python generator yielding a single integer,
-    accepting nothing, and returning nothing.
-    '''
-
-    yield 1
-
-
-def sync_generator_factory_yield_int_send_float_return_str() -> (
-    Generator[int, float, str]):
-    '''
-    Create and return a pure-Python generator yielding integers, accepting
-    floating-point numbers sent to this generator by the caller, and returning
-    strings.
-
-    See Also
-    ----------
-    https://www.python.org/dev/peps/pep-0484/#id39
-        ``echo_round`` function strongly inspiring this implementation, copied
-        verbatim from this subsection of :pep:`484`.
+    **Annotated wrappee** (i.e., lower-level function annotated by one or more
+    type hints and subsequently wrapped by a higher-level wrapper function).
     '''
 
-    # Initial value externally sent to this generator.
-    res = yield
+    return text_one + text_two
 
-    while res:
-        res = yield round(res)
 
-    # Return a string constant.
-    return 'Unmarred, scarred revenant remnants'
+# Note that the "assigned" parameter is intentionally passed the empty tuple,
+# preserving the original "__name__" and "__qualname__" dunder attributes of
+# wrapper callables for debuggability.
+@wraps(function_wrappee, assigned=())
+def function_wrapper_nonisomarphic(text):
+    '''
+    **Non-isomorphic wrapper** (i.e., higher-level function destroying the
+    positions and/or types of one or more parameters passed to the lower-level
+    function wrapped by this wrapper).
+    '''
+
+    return function_wrappee(text[0], text[1:])
+
+
+@wraps(function_wrapper_nonisomarphic, assigned=())
+def function_wrapper_isomarphic(*args, **kwargs):
+    '''
+    **Isomorphic wrapper** (i.e., higher-level function preserving both the
+    positions and types of all parameters passed to the lower-level
+    non-isomarphic wrapper wrapped by this wrapper).
+    '''
+
+    return function_wrapper_nonisomarphic(*args, **kwargs)
+
+
+@wraps(function_wrapper_nonisomarphic, assigned=())
+def function_wrapper_isomarphic_args(*args):
+    '''
+    **Positionally isomorphic wrapper** (i.e., higher-level function preserving
+    both the positions and types of all parameters excluding keyword parameters
+    passed to the lower-level non-isomarphic wrapper wrapped by this wrapper).
+    '''
+
+    return function_wrapper_nonisomarphic(*args)
+
+
+@wraps(function_wrapper_nonisomarphic, assigned=())
+def function_wrapper_isomarphic_kwargs(**kwargs):
+    '''
+    **Keyword isomorphic wrapper** (i.e., higher-level function preserving both
+    the positions and types of all parameters excluding positional parameters
+    passed to the lower-level non-isomarphic wrapper wrapped by this wrapper).
+    '''
+
+    return function_wrapper_nonisomarphic(**kwargs)
+
+
+class ClassCallableWrapperIsomorphic(object):
+    '''
+    **Callable class** (i.e., pure-Python class defining the :meth:`__call__`
+    dunder method implicitly called by Python when instances of this class are
+    called using the standard calling convention such that that :meth:`__call__`
+    dunder method is defined as an isomorphic wrapper method wrapping an
+    isomorphic wrapper function).
+    '''
+
+    def __call__(self, *args, **kwargs):
+        '''
+        Arbitrary isomorphic wrapper dunder method implicitly wrapping an
+        isomorphic wrapper function.
+        '''
+
+        return function_wrapper_isomarphic(*args, **kwargs)
+
+
+    @wraps(function_wrappee)
+    def method_wrapper_isomorphic(self, *args, **kwargs):
+        '''
+        Arbitrary isomorphic wrapper method explicitly wrapping a wrappee
+        function, decorated by the :func:`.wraps` decorator.
+        '''
+
+        return function_wrappee(*args, **kwargs)
+
+
+    def method_wrapper_isomorphic_implicit(self, *args, **kwargs):
+        '''
+        Arbitrary isomorphic wrapper method implicitly wrapping a wrappee
+        function *without* being decorated by the :func:`.wraps` decorator.
+        '''
+
+        return function_wrappee(*args, **kwargs)
+
+
+object_callable_wrapper_isomorphic = ClassCallableWrapperIsomorphic()
+'''
+**Pseudo-callable object** (i.e., pure-Python object whose class defines the
+:meth:`__call__` dunder method implicitly called by Python when instances of
+this class are called using the standard calling convention such that that
+:meth:`__call__` dunder method is defined as an isomorphic wrapper method
+wrapping an isomorphic wrapper function).
+'''
+
+# Declare that this pseudo-callable object wraps this lower-level function.
+update_wrapper(
+    wrapper=object_callable_wrapper_isomorphic,
+    wrapped=function_wrapper_isomarphic,
+    assigned=(),
+)
 
 # ....................{ CALLABLES ~ sync : closure         }....................
 def closure_factory():
@@ -446,7 +521,40 @@ def closure_cell_factory():
     # Return this closure's first and only cell variable.
     return closure.__closure__[0]
 
-# ....................{ CALLABLES ~ sync : instance        }....................
+# ....................{ CALLABLES ~ sync : generator       }....................
+def sync_generator_factory() -> Generator[int, None, None]:
+    '''
+    Create and return a pure-Python generator yielding a single integer,
+    accepting nothing, and returning nothing.
+    '''
+
+    yield 1
+
+
+def sync_generator_factory_yield_int_send_float_return_str() -> (
+    Generator[int, float, str]):
+    '''
+    Create and return a pure-Python generator yielding integers, accepting
+    floating-point numbers sent to this generator by the caller, and returning
+    strings.
+
+    See Also
+    ----------
+    https://www.python.org/dev/peps/pep-0484/#id39
+        ``echo_round`` function strongly inspiring this implementation, copied
+        verbatim from this subsection of :pep:`484`.
+    '''
+
+    # Initial value externally sent to this generator.
+    res = yield
+
+    while res:
+        res = yield round(res)
+
+    # Return a string constant.
+    return 'Unmarred, scarred revenant remnants'
+
+
 sync_generator = sync_generator_factory()
 '''
 Arbitrary pure-Python synchronous generator.

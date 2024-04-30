@@ -271,30 +271,6 @@ def beartype_func(
     decor_meta = make_beartype_call(
         func=func, conf=conf, wrapper=wrapper, **kwargs)  # pyright: ignore
 
-    #FIXME: "if wrapper is not func:", then we probably need to also:
-    #* Add that wrapper as a new hidden parameter named "__beartype_wrapper__"
-    #  (or something).
-    #* Pass that parameter to the get_beartype_violation() getter via a new
-    #  optional "wrapper" parameter.
-    #
-    #Note that this wrapper is *NOT* necessarily a type; it's an arbitrary
-    #object that just happens to define the "__wrapped__" dunder attribute.
-    #FIXME: Ah-ha! The extensible solution is actually to expose not simply the
-    #wrapper but *THE ENTIRE* "decor_meta" object as a new hidden parameter
-    #named "__beartype_metadata__".
-    #FIXME: Ah-ha! Don't do that, actually. That would be terrible. Instead:
-    #* In the "beartype._check.checkmagic" submodule:
-    #  * Add a new "ARG_NAME_CHECK_META" global resembling:
-    #        ARG_NAME_CHECK_META = f'{NAME_PREFIX}check_meta'
-    #* In the beartype._decor.wrap.wrapmain.generate_code() function:
-    #  * Expose a new "BeartypeCheckMeta" instance as a new hidden parameter
-    #    named "__beartype_check_meta__".
-    #* Pass that parameter to the get_func_pith_violation() getter via a new
-    #  mandatory "check_meta: BeartypeCheckMeta" parameter.
-    #* Remove the existing "func" and "conf" parameters from that getter.
-    #* Consider also removing the existing "**kwargs" parameter from that
-    #  getter. In theory, that should no longer be required.
-
     # Generate the raw string of Python statements implementing this wrapper.
     func_wrapper_code = generate_code(decor_meta)
 

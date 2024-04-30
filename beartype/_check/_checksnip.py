@@ -14,8 +14,8 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._check.checkmagic import (
+    ARG_NAME_CHECK_META,
     ARG_NAME_CONF,
-    ARG_NAME_CLS_STACK,
     ARG_NAME_FUNC,
     ARG_NAME_EXCEPTION_PREFIX,
     ARG_NAME_GET_VIOLATION,
@@ -119,10 +119,9 @@ This snippet expects to be formatted with these named interpolations:
 
 CODE_GET_FUNC_PITH_VIOLATION = f''':
             {VAR_NAME_VIOLATION} = {ARG_NAME_GET_VIOLATION}(
-                func={ARG_NAME_FUNC},
-                conf={ARG_NAME_CONF},
+                check_meta={ARG_NAME_CHECK_META},
                 pith_name={{pith_name}},
-                pith_value={VAR_NAME_PITH_ROOT},{{arg_cls_stack}}{{arg_random_int}}
+                pith_value={VAR_NAME_PITH_ROOT},{{arg_random_int}}
             )
 '''
 '''
@@ -133,29 +132,11 @@ fatal exception or emitting a non-fatal warning.
 
 This snippet expects to be formatted with these named interpolations:
 
-* ``{arg_cls_stack}``, whose value is either:
-
-  * If type-checking for the current type hint requires the type stack,
-    :data:`.CODE_HINT_ROOT_SUFFIX_CLS_STACK`.
-  * Else, the empty substring.
-
 * ``{arg_random_int}``, whose value is either:
 
   * If type-checking for the current type hint requires a pseudo-random integer,
     :data:`.CODE_HINT_ROOT_SUFFIX_RANDOM_INT`.
   * Else, the empty substring.
-'''
-
-
-CODE_GET_VIOLATION_CLS_STACK = f'''
-                cls_stack={ARG_NAME_CLS_STACK},'''
-'''
-Code snippet passing the value of the **type stack** (i.e., either a tuple of
-the one or more :func:`beartype.beartype`-decorated classes lexically containing
-the class variable or method annotated by a type hint type-checked by the larger
-code snippet embedding this snippet *or* :data:`None`) required by the current
-call to the exception-handling function call embedded in the
-:data:`.CODE_HINT_ROOT_SUFFIX` snippet.
 '''
 
 
