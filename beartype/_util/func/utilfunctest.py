@@ -954,7 +954,7 @@ def is_func_wrapper_isomorphic(
         # Avoid circular import dependencies.
         from beartype._util.func.utilfuncwrap import (
             unwrap_func_boundmethod_once)
-        # print(f'Inspecting f{repr(func)} for isomorphism...')
+        # print(f'Detecting bound method f{repr(func)} isomorphism...')
 
         # Unwrap this descriptor to the pure-Python callable encapsulated by
         # this descriptor.
@@ -973,6 +973,7 @@ def is_func_wrapper_isomorphic(
 
     # If that callable is C-based...
     if not func_codeobj:  # pragma: no cover
+        # print(f'Detecting C-based callable {repr(func)} isomorphism...')
         # Return true only if that C-based callable is the __call__() dunder
         # method of a pseudo-callable parent object. Although this tester
         # *CANNOT* positively decide whether that object is isomorphic or not,

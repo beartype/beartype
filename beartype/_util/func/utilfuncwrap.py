@@ -345,6 +345,7 @@ def unwrap_func_all_isomorphic(
 
     # Avoid circular import dependencies.
     from beartype._util.func.utilfunctest import (
+        # is_func_boundmethod,
         is_func_python,
         is_func_wrapper_isomorphic,
     )
@@ -356,11 +357,31 @@ def unwrap_func_all_isomorphic(
     # Else, the caller explicitly passed a callable to be unwrapped. In this
     # case, preserve that callable as is.
 
-    # While that callable is a higher-level isomorphic wrapper wrapping a
-    # lower-level callable...
-    while is_func_wrapper_isomorphic(func=func, wrapper=wrapper):
-        # Undo one layer of wrapping by reducing the former to the latter.
-        func_wrapped = wrapper.__wrapped__  # type: ignore[attr-defined]
+    # While...
+    while True:
+        # This wrappee callable remains a higher-level wrapper callable
+        # isomorphically wrapping a lower-level wrappee callable, undo one layer
+        # of wrapping by reducing the former to the latter.
+        if is_func_wrapper_isomorphic(func=func, wrapper=wrapper):
+            func_wrapped = unwrap_func_once(wrapper)
+            # print(f'Unwrapped isomorphic {repr(func)} wrapper {repr(wrapper)} to {repr(func_wrapped)}.')
+        # Else, this wrappee callable is no longer a higher-level wrapper
+        # callable isomorphically wrapping a lower-level wrappee callable.
+
+        #FIXME: Unneeded at the moment, but preserved for posterity. *shrug*
+        # # If this wrappee callable remains a higher-level bound method
+        # # descriptor, this descriptor transparently proxies and thus (by
+        # # definition) isomorphically wraps a lower-level unbound method. In this
+        # # case, undo one layer of wrapping by reducing the former to the latter.
+        # elif is_func_boundmethod(func):
+        #     func_wrapped = unwrap_func_boundmethod_once(func)
+        #     # print(f'Unwrapped bound method descriptor {repr(func)} to {repr(func_wrapped)}.')
+
+        # Else, this wrappee callable is no longer a higher-level bound method
+        # descriptor either. Since this wrappee callable no longer wraps
+        # anything, halt iteration.
+        else:
+            break
         # print(f'Unwrapped isomorphic {repr(func)} wrapper {repr(wrapper)} to {repr(func_wrapped)}.')
 
         # If the lower-level object wrapped by this higher-level isomorphic

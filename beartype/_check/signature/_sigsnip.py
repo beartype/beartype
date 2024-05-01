@@ -18,9 +18,10 @@ from beartype._check.checkmagic import (
     VAR_NAME_RANDOM_INT,
 )
 from beartype._data.code.datacodeindent import CODE_INDENT_1
+from collections.abc import Callable
 
 # ....................{ CODE                               }....................
-CODE_SIGNATURE_ARG = (
+CODE_SIGNATURE_SCOPE_ARG = (
     # Indentation prefixing all wrapper parameters.
     f'{CODE_INDENT_1}'
     # Default this parameter to the current value of the module-scoped attribute
@@ -134,3 +135,9 @@ https://gist.github.com/terrdavis/1b23b7ff8023f55f627199b09cfa6b24#gistcomment-3
 https://eli.thegreenplace.net/2018/slow-and-fast-methods-for-generating-random-integers-in-python
     Authoritative article profiling various :mod:`random` callables.
 '''
+
+# ..................{ FORMATTERS                             }..................
+# str.format() methods, globalized to avoid inefficient dot lookups elsewhere.
+# This is an absurd micro-optimization. *fight me, github developer community*
+CODE_SIGNATURE_SCOPE_ARG_format: Callable = (
+    CODE_SIGNATURE_SCOPE_ARG.format)

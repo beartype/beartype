@@ -49,6 +49,7 @@ from beartype._util.func.arg.utilfuncargiter import (
     ArgMandatory,
     iter_func_args,
 )
+from beartype._util.func.utilfunctest import is_func_boundmethod
 from beartype._util.hint.utilhinttest import (
     is_hint_ignorable,
     is_hint_needs_cls_stack,
@@ -129,10 +130,38 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
 
     # ..................{ GENERATE                           }..................
     #FIXME: Locally remove the "arg_index" local variable (and thus avoid
-    #calling the enumerate() builtin here) AFTER* refactoring @beartype to
+    #calling the enumerate() builtin here) *AFTER* refactoring @beartype to
     #generate callable-specific wrapper signatures.
 
-    # For the 0-based index of each parameter accepted by this callable and the
+    #FIXME: Heh. Technically, this works -- but it's *SUPER*-awkward and not at
+    #all the correct location for this logic. Push this low-level hackery down
+    #into the iter_func_args() iterator, please.
+
+    # Arbitrary integer offset to be added to the 0-based index of each
+    # parameter accepted by the callable currently being decorated. Although
+    # typically zero, this offset is infrequently set to non-zero integers as
+    # follows:
+    # * If that callable is a bound method descriptor encapsulating the unbound
+    #   __call__() dunder method of some type, the
+    #   beartype._decor._decornontype.beartype_pseudofunc() decorator function
+    #   is (probably) currently decorating the pseudo-callable object whose type
+    #   is that type. That decorator wraps that bound method with a dynamically
+    #   generated wrapper function that does *NOT* accept a "self" parameter, as
+    #   a bound method is also guaranteed to *NOT* accept a "self" parameter.
+    #   However, the code object of a bound method descriptor is simply an alias
+    #   of the code object of the corresponding unbound method. Since the latter
+    #   accepts a "self" parameter, so too does the former. Thus, there exists
+    #   an (unfortunate) internal discrepancy in Python between:
+    #   * The code object of a bound method descriptor, which declares that
+    #     callable object to accept a "self" parameter.
+    #   * The real-world calling semantics of a bound method descriptor, which
+    #     by definition accepts *NO* "self" parameter.
+    ARG_INDEX_OFFSET = 0
+
+    if is_func_boundmethod(decor_meta.func_wrappee_wrappee):
+        ARG_INDEX_OFFSET = -1
+
+    # For the 0-based index of each parameter accepted by that callable and the
     # "ParameterMeta" object describing this parameter (in declaration order)...
     for arg_index, arg_meta in enumerate(iter_func_args(
         # Possibly lowest-level wrappee underlying the possibly higher-level
@@ -143,11 +172,27 @@ def code_check_args(decor_meta: BeartypeDecorMeta) -> str:
         # useless for our purposes.
         func=decor_meta.func_wrappee_wrappee,
         func_codeobj=decor_meta.func_wrappee_wrappee_codeobj,
+
+        # Avoid inefficiently attempting to re-unwrap this wrappee. The
+        # previously called BeartypeDecorMeta.reinit() method has already
+        # guaranteed this wrappee to be isomorphically unwrapped.
         is_unwrap=False,
     )):
+        #FIXME: Comment us up, please.
+        arg_index += ARG_INDEX_OFFSET
+
+        #FIXME: Comment us up, please. Note that this is a cute (and therefore
+        #*REALLY* dumb) optimization equivalent to detecting whether
+        #this is the first mandatory "self" parameter of a bound method
+        #descriptor.
+        if arg_index < 0:
+            continue
+
+        #FIXME: [SPEED] Optimize this by assigning all at once via tuple
+        #unpacking, please. See "codemake" for similar optimizations.
         # Kind and name of this parameter.
         arg_kind: ArgKind = arg_meta[ARG_META_INDEX_KIND]  # type: ignore[assignment]
-        arg_name: str = arg_meta[ARG_META_INDEX_NAME]  # type: ignore[assignment]
+        arg_name: str     = arg_meta[ARG_META_INDEX_NAME]  # type: ignore[assignment]
 
         # Default value of this parameter if this parameter is optional *OR* the
         # "ArgMandatory" singleton otherwise (i.e., if this parameter is

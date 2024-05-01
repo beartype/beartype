@@ -16,7 +16,6 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype._check.checkmagic import (
     ARG_NAME_CHECK_META,
     ARG_NAME_CONF,
-    ARG_NAME_FUNC,
     ARG_NAME_EXCEPTION_PREFIX,
     ARG_NAME_GET_VIOLATION,
     ARG_NAME_HINT,
@@ -29,7 +28,7 @@ from beartype._check.checkmagic import (
 # ....................{ CODE ~ signature                   }....................
 CODE_CHECKER_SIGNATURE = f'''{{code_signature_prefix}}def {{func_name}}(
     {VAR_NAME_PITH_ROOT},
-{{code_signature_args}}
+{{code_signature_scope_args}}
 ):'''
 '''
 Code snippet declaring the signature of all type-checking tester functions

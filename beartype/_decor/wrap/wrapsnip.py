@@ -38,18 +38,23 @@ type-checking the default values of optional parameters for
 # ....................{ CODE                               }....................
 CODE_SIGNATURE = f'''{{code_signature_prefix}}def {{func_name}}(
     *args,
-{{code_signature_args}}{CODE_INDENT_1}**kwargs
+{{code_signature_scope_args}}{CODE_INDENT_1}**kwargs
 ):'''
 '''
 Code snippet declaring the signature of a type-checking callable.
 
-Note that:
+Note that the :func:`beartype._check.signature.make_signature` factory function
+internally interpolates these format variables into this string as follows:
 
-* ``code_signature_prefix`` is usually either:
+* ``code_signature_prefix`` is replaced by:
 
   * For synchronous callables, the empty string.
   * For asynchronous callables (e.g., asynchronous generators, coroutines),
     the space-suffixed keyword ``"async "``.
+
+* ``code_signature_scope_args`` is replaced by a comma-delimited string listing
+  all :mod:`beartype`-specific hidden parameters internally required to
+  type-check the currently decorated callable.
 '''
 
 

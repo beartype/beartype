@@ -13,12 +13,11 @@ This private submodule is *not* intended for importation by downstream callers.
 '''
 
 # ....................{ IMPORTS                            }....................
-from beartype.typing import Callable
 from beartype._check.checkmagic import (
     ARG_NAME_GETRANDBITS,
 )
 from beartype._check.signature._sigsnip import (
-    CODE_SIGNATURE_ARG,
+    CODE_SIGNATURE_SCOPE_ARG_format,
     CODE_INIT_RANDOM_INT,
 )
 from beartype._conf.confcls import BeartypeConf
@@ -38,17 +37,12 @@ def make_func_signature(
 
     # Optional parameters.
     code_signature_prefix: str = '',
-
-    # String globals required only for their bound str.format() methods.
-    CODE_SIGNATURE_ARG_format: Callable = (
-        CODE_SIGNATURE_ARG.format),
 ) -> str:
     '''
     **Type-checking signature factory** (i.e., low-level function dynamically
     generating and returning the **signature** (i.e., callable declaration
     prefixing the body of that callable) of a callable type-checking arbitrary
-    objects against arbitrary PEP-compliant type hints to be subsequently
-    defined, described by the passed parameters.
+    objects against arbitrary type hints, described by the passed parameters.
 
     Parameters
     ----------
@@ -68,15 +62,15 @@ def make_func_signature(
         * ``{func_name}``, replaced by the value of the ``func_name`` parameter.
         * ``{code_signature_prefix}``, replaced by the value of the
           ``code_signature_prefix`` parameter.
-        * ``{code_signature_args}``, replaced by the declaration of all hidden
-          parameters in the passed ``func_scope`` parameter.
+        * ``{code_signature_scope_args}``, replaced by the declaration of all
+          hidden parameters in the passed ``func_scope`` parameter.
     conf : BeartypeConf, optional
         **Beartype configuration** (i.e., self-caching dataclass encapsulating
         all settings configuring type-checking for the passed object).
     code_signature_prefix : str, optional
         Code snippet prefixing this signature, typically either:
 
-        * For synchronous callables, the empty string.
+        * If a synchronous callables, the empty string.
         * For asynchronous callables (e.g., asynchronous generators,
           coroutines), the space-suffixed keyword ``"async "``.
 
@@ -98,7 +92,7 @@ def make_func_signature(
     # Python code snippet declaring all optional private beartype-specific
     # parameters directly derived from the local scope established by the above
     # calls to the _code_check_args() and _code_check_return() functions.
-    code_signature_args = ''
+    code_signature_scope_args = ''
 
     # For the name and value of each such parameter...
     for arg_name, arg_value in func_scope.items():
@@ -116,10 +110,8 @@ def make_func_signature(
 
         # Compose the declaration of this parameter in the signature of this
         # wrapper from...
-        code_signature_args += CODE_SIGNATURE_ARG_format(
-            arg_name=arg_name,
-            arg_comment=arg_comment,
-        )
+        code_signature_scope_args += CODE_SIGNATURE_SCOPE_ARG_format(
+            arg_name=arg_name, arg_comment=arg_comment)
 
     #FIXME: *YIKES.* We need to pass a unique tester function signature here
     #resembling:
@@ -133,7 +125,7 @@ def make_func_signature(
     code_signature = code_signature_format.format(
         func_name=func_name,
         code_signature_prefix=code_signature_prefix,
-        code_signature_args=code_signature_args,
+        code_signature_scope_args=code_signature_scope_args,
     )
 
     # Python code snippet of preliminary statements (e.g., local variable

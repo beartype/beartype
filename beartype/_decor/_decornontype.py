@@ -118,7 +118,7 @@ def beartype_nontype(obj: BeartypeableT, **kwargs) -> BeartypeableT:
     # * Under Python >= 3.10:
     #   * Descriptors created by @classmethod and @property are uncallable.
     #   * Descriptors created by @staticmethod are technically callable but
-    #     C-based and thus unsuitable for decoration.
+    #     C-based and thus unsuitable for direct decoration.
     if obj_type in MethodDecoratorBuiltinTypes:
         return beartype_descriptor_decorator_builtin(obj, **kwargs)  # type: ignore[return-value]
     # Else, this object is *NOT* an uncallable builtin method descriptor.
@@ -731,9 +731,9 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
         return beartype_pseudofunc_functools_lru_cache(  # type: ignore
             pseudofunc=pseudofunc, **kwargs)  # pyright: ignore
     # Else, this is *NOT* a C-based @functools.lru_cache-memoized callable.
-
+    #
     # If...
-    if (
+    elif (
         # This pseudo-callable object is a wrapper *AND*...
         is_func_wrapper(pseudofunc) and
         # This unbound __call__() dunder method is *NOT* a wrapper...
@@ -760,60 +760,55 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
     # Else, either this pseudo-callable object is not a wrapper *OR* this
     # unbound __call__() dunder method is already a wrapper.
 
-    #FIXME: Revise commentary, please. This is no longer remotely true. *sigh*
-    # Replace the existing bound method descriptor to this __call__() dunder
-    # method with a new bound method descriptor to a new __call__() dunder
-    # method wrapping the old method with runtime type-checking.
+    # Unbound __call__() dunder method runtime type-checking the original bound
+    # __call__() dunder method of the passed pseudo-callable object.
+    pseudofunc_call_type_method_checked = beartype_func(
+        func=pseudofunc_call_boundmethod, **kwargs)
+    return pseudofunc_call_type_method_checked
+
+    #FIXME: *OKAY.* This is a wonderful approach -- but it's still *NOT* quite
+    #there. Why? Proxying. The only truly safe way of doing what we're currently
+    #doing is to additionally proxy *ALL* attributes except dunder attributes
+    #from the original "pseudofunc" object onto a new dynamically constructed
+    #proxy object. This shouldn't be *TOO* onerous, thankfully. Let's just use
+    #our existing "BeartypeForwardRefProxy" class (...or whatevahs) as a
+    #template to copy-paste from, please. Then:
+    #* Make a new "beartype._decor.pseudofunc" subpackage.
+    #* Make a new "beartype._decor.pseudofunc._pseudocls" submodule. In this
+    #  submodule:
+    #  * Define a new "BeartypePseudoFuncProxyABC" abstract base class (ABC).
+    #    This ABC should define, in particular:
+    #    * A concrete __getattribute__() method (or whatevahs).
+    #    * An abstract __call__() method, ensuring that subclasses override this
+    #      method with a concrete implementation.
+    #* Make a new "beartype._decor.pseudofunc.pseudomake" submodule. In this
+    #  submodule:
+    #  * Make a new make_pseudofunc_proxy() factory function resembling:
+    #        def make_pseudofunc_proxy(pseudofunc: Callable) -> BeartypePseudoFuncProxy:
+    #    Just as with our forward reference proxy factory, this factory should
+    #    (in order):
+    #    * Dynamically fabricate a new concrete subclass of the
+    #      "BeartypePseudoFuncProxyABC" superclass.
+    #    * This subclass should set the __call__() method to the passed
+    #      callable. Note that this will require generalizing our usage of the
+    #      beartype_func() function below to generate a wrapper function
+    #      accepting an ignorable first "cls" parameter. Doing so will probably
+    #      necessitate adding yet another optional parameter to beartype_func().
     #
-    # Note that:
-    # * This is a monkey-patch. Since the caller is intentionally decorating
-    #   this pseudo-callable with @beartype, this is exactly what the caller
-    #   wanted. Probably. Hopefully. Okay! We're crossing our fingers here.
-    # * This monkey-patches the *CLASS* of this object rather than this object
-    #   itself. Why? Because Python. For unknown reasons (so, speed is what
-    #   we're saying), Python accesses the __call__() dunder method on the
-    #   *CLASS* of an object rather than on the object itself. Of course, this
-    #   implies that *ALL* instances of this pseudo-callable (rather than merely
-    #   the passed instance) will be monkey-patched. This may *NOT* necessarily
-    #   be what the caller wanted. Unfortunately, the only alternative would be
-    #   for @beartype to raise an exception when passed a pseudo-callable. Since
-    #   doing something beneficial is generally preferable to doing something
-    #   harmful, @beartype prefers the former. See also official documentation
-    #   on the subject:
-    #       https://docs.python.org/3/reference/datamodel.html#special-method-names
+    #      Note that defining a __call__() dunder method on the class rather
+    #      than an instance of this class is unavoidable. Why? Because Python.
+    #      For unknown reasons (so, speed is what we're saying), Python accesses
+    #      the __call__() dunder method on the *CLASS* of an object rather than
+    #      on the object itself. See also official documentation on the subject:
+    #          https://docs.python.org/3/reference/datamodel.html#special-method-names
+    #    * Instantiate and return a new instance of this subclass.
 
-    #FIXME: I must confess that I don't quite get it. If you comment this "if"
-    #conditional out, the fallback fails to suffice for this case. Why? The
-    #fallback should suffice. The fallback should *ALWAYS* suffice. Why doesn't
-    #it? Let's investigate please. Why? Because the fallback would honestly be
-    #preferable to what we're doing here. Monkey-patching the class is totally
-    #non-ideal, honestly. Let's avoid that if at all possible, please.
-    #FIXME: *HMM.* I still don't get it, but I admit now that it doesn't
-    #particularly matter *WHY* the fallback fails to suffice -- because, in any
-    #case, the fallback is a *TERRIBLE* idea in general. Why? Because we
-    #absolutely *DO* want to preserve this pseudo-callable as is. In all
-    #likelihood, this pseudo-callable object serves a variety of purposes. It
-    #doesn't exist merely to be called as a callable. There probably exist
-    #various methods defined on this object that might be called elsewhere.
-    #Preserving this object is the highest priority. So, this is fine and good.
-    if is_func_boundmethod(pseudofunc_call_boundmethod):
-        # print(f'Beartyping pseudo-callable {repr(pseudofunc)} bound method...')
-        pseudofunc.__class__.__call__ = beartype_func(  # type: ignore[method-assign,operator]
-            func=pseudofunc_call_type_method, **kwargs)
-        # pseudofunc = beartype_func(  # type: ignore[method-assign,operator]
-        #     func=pseudofunc_call_boundmethod, **kwargs)
-        # pseudofunc.__call__ = _beartype_descriptor_boundmethod(  # type: ignore[method-assign,operator]
-        #     descriptor=pseudofunc_call_boundmethod, **kwargs)
-        return pseudofunc
-
-    #FIXME: Comment us up, please. Note that this outlier edge case only applies
-    #to the extremely small subset of C-based pseudo-callable objects whose
-    #bound __call__() method is encapsulated by an uncommon C-based method
-    #wrapper descriptor rather a common C-based bound method descriptor. The
-    #only example we currently know of are the C-based pseudo-callable objects
-    #produced by the third-party "@jax.jit" decorator.
-    pseudofunc = beartype_func(func=pseudofunc_call_boundmethod, **kwargs)
-    return pseudofunc
+    # Create and return a new pseudo-callable proxy (i.e., beartype-specific
+    # object transparently proxying all attributes of the passed pseudo-callable
+    # object *EXCEPT* the __call__() dunder method of that object, which this
+    # proxy implicitly wraps with a new __call__() dunder method runtime
+    # type-checking the original __call__() dunder method).
+    # return pseudofunc
 
 
 def beartype_pseudofunc_functools_lru_cache(
