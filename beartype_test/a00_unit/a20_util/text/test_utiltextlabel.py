@@ -62,9 +62,6 @@ def test_label_beartypeable_kind() -> None:
         # Pure-Python class method.
         (Class.class_method, 'class method'),
 
-        # Pure-Python class method.
-        (Class.class_method, 'class method'),
-
         # Pure-Python coroutine factory function.
         (async_coroutine_factory, 'coroutine factory function'),
 
@@ -94,6 +91,7 @@ def test_label_callable() -> None:
     function.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.text.utiltextlabel import label_callable
     from beartype_test.a00_unit.data.data_type import (
@@ -107,6 +105,7 @@ def test_label_callable() -> None:
         which_yet_survive,
     )
 
+    # ....................{ PASS                           }....................
     # Assert this labeller labels an on-disk lambda function as expected.
     two_vast_and_trunkless_legs_of_stone = label_callable(ozymandias)
     assert isinstance(two_vast_and_trunkless_legs_of_stone, str)

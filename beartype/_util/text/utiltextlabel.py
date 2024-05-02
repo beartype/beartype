@@ -23,9 +23,7 @@ from beartype._util.utilobject import (
 from collections.abc import Callable
 
 # ....................{ LABELLERS ~ beartypeable           }....................
-def label_beartypeable_kind(
-    obj: BeartypeableT,  # pyright: ignore[reportInvalidTypeVarUse]
-) -> str:
+def label_beartypeable_kind(obj: BeartypeableT) -> str:  # pyright: ignore
     '''
     Human-readable label describing the **kind** (i.e., single concise noun
     synopsizing the category of) of the passed **beartypeable** (i.e., object
@@ -101,7 +99,21 @@ def label_beartypeable_kind(
 
         # Name of the first parameter accepted by that callable if any *OR*
         # "None" otherwise (i.e., if that callable is argumentless).
-        arg_first_name = get_func_arg_first_name_or_none(obj)
+        arg_first_name = get_func_arg_first_name_or_none(
+            func=obj,
+            # If that callable is a C-based bound method descriptor
+            # encapsulating a pure-Python instance or class method, instruct
+            # this getter to return the name of the first mandatory flexible
+            # parameter accepted by that method. In general, this parameter is
+            # semantically ignorable and indeed *MUST* be ignored. In this case,
+            # however, this name conveys (marginally) meaningful syntax under
+            # the safe assumption that author of that callable adheres to PEP 8
+            # community standards and is thus sane rather than insane. Notably,
+            # this name is then guaranteed to be either:
+            # * "self" if that descriptor encapsulates an instance method.
+            # * "cls" if that descriptor encapsulates a class method.
+            is_omit_boundmethod_arg_first=False,
+        )
 
         # If this is the canonical first "self" parameter typically accepted by
         # instance methods, assume this to be an instance method.

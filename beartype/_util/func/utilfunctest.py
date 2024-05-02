@@ -447,11 +447,12 @@ def is_func_classmethod(func: Any) -> TypeGuard[classmethod]:
     -------
     Class method objects are *only* directly accessible via the low-level
     :attr:`object.__dict__` dictionary. When accessed as class or instance
-    attributes, class methods reduce to instances of the standard
-    :class:`MethodBoundInstanceOrClassType` type.
+    attributes, class methods are indistinguishable from **bound method
+    descriptors** (i.e., :class:`MethodBoundInstanceOrClassType` instances)
+    bound to that class.
 
     Class method objects are *not* callable, as their implementations fail to
-    define the ``__call__`` dunder method.
+    define the ``__call__()`` dunder method.
 
     Parameters
     ----------

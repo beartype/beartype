@@ -14,7 +14,6 @@ This private submodule is *not* intended for importation by downstream callers.
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilCallableException
 from beartype.typing import (
-    Dict,
     Iterable,
     Optional,
     Tuple,
@@ -24,15 +23,16 @@ from beartype._data.hint.datahinttyping import (
     TypeException,
 )
 from beartype._data.kind.datakinddict import DICT_EMPTY
-from beartype._util.func.utilfunccodeobj import get_func_codeobj
-from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 from collections.abc import Callable
 from enum import (
     Enum,
     auto as next_enum_member_value,
     unique as die_unless_enum_member_values_unique,
 )
-from inspect import CO_VARARGS, CO_VARKEYWORDS
+from inspect import (
+    CO_VARARGS,
+    CO_VARKEYWORDS,
+)
 from itertools import count
 from types import CodeType
 
@@ -157,6 +157,7 @@ def iter_func_args(
 
     # Optional parameters.
     func_codeobj: Optional[CodeType] = None,
+    is_omit_boundmethod_arg_first: bool = True,
     is_unwrap: bool = True,
     exception_cls: TypeException = _BeartypeUtilCallableException,
 # Note this generator is intentionally annotated as returning a high-level
@@ -212,22 +213,66 @@ def iter_func_args(
         Code object underlying that callable unwrapped. Defaults to
         :data:`None`, in which case this iterator internally defers to the
         comparatively slower :func:`get_func_codeobj` function.
-    is_unwrap: bool, optional
+    is_omit_boundmethod_arg_first : bool, optional
+        :data:`True` only if this generator implicitly omits the first mandatory
+        flexible parameter accepted by that callable if that callable is a
+        C-based bound method descriptor encapsulating either an instance method
+        bound to an instance of a class *or* a class method bound to a class.
+        Defaults to :data:`True`, instructing this generator to transparently
+        yield the *actual* high-level parameters accepted by this bound method
+        descriptor (rather than the low-level parameters accepted by the unbound
+        method encapsulated by this bound method descriptor). While the default
+        behaviour is typically desirable, valid use cases for the non-default
+        behaviour do exist (e.g., crudely detecting that callable's kind based
+        on whether the unbound method encapsulated by this bound method
+        descriptor accepts a first parameter named ``cls`` or ``self``).
+
+        The default behaviour enables:
+
+        * This generator to transparently support bound method descriptors,
+          which then enables...
+        * The private :func:`beartype._decor._decornontype.beartype_pseudofunc`
+          decorator to type-check the bound ``__call__()`` method descriptor
+          encapsulating the unbound ``__call__()`` dunder method defined on the
+          class of pseudo-callable objects, which then enables...
+        * The public :func:`beartype.beartype` decorator to type-check
+          pseudo-callable objects.
+
+        How? In this case, the aforementioned ``beartype_pseudofunc``
+        decorator wraps this bound method descriptor with a dynamically
+        generated wrapper function that does *not* accept a ``self`` or ``cls``
+        parameter, since a bound method does *not* accept a ``self`` or ``cls``
+        parameter. After all, that's why bound methods exist; they implicitly
+        pass the instance or class to which they are bound as the value of the
+        ``self`` or ``cls`` parameter to the unbound method they encapsulate.
+        However, the code object of a bound method descriptor is only an alias
+        to the code object of the corresponding unbound method. Since the latter
+        accepts a ``self`` parameter, so too does the former.
+
+        The default behaviour resolves this internal discrepancy (contradiction)
+        that arises between:
+
+        * The code object of a bound method descriptor, which declares that
+          callable object to accept a ``self`` parameter.
+        * The real-world calling semantics of a bound method descriptor, which
+          by definition accepts *no* ``self`` parameter.
+    is_unwrap : bool, optional
         :data:`True` only if this generator implicitly calls the
-        :func:`unwrap_func_all_isomorphic` function to unwrap this possibly higher-level
-        wrapper into its possibly lowest-level wrappee *before* returning the
-        code object of that wrappee. Note that doing so incurs worst-case time
-        complexity ``O(n)`` for ``n`` the number of lower-level wrappees
-        wrapped by this wrapper. Defaults to :data:`True` for robustness. Why?
-        Because this generator *must* always introspect lowest-level wrappees
-        rather than higher-level wrappers. The latter typically do *not* wrap
-        the default values of the former, since this is the default behaviour
-        of the :func:`functools.update_wrapper` function underlying the
-        :func:`functools.wrap` decorator underlying all sane decorators. If
-        this boolean is set to :data:`False` while that callable is actually a
-        wrapper, this generator will erroneously misidentify optional as
-        mandatory parameters and fail to yield their default values. Only set
-        this boolean to :data:`False` if you pretend to know what you're doing.
+        :func:`unwrap_func_all_isomorphic` function to unwrap this possibly
+        higher-level wrapper into its possibly lowest-level wrappee *before*
+        returning the code object of that wrappee. Note that doing so incurs
+        worst-case time complexity ``O(n)`` for ``n`` the number of lower-level
+        wrappees wrapped by this wrapper. Defaults to :data:`True` for
+        robustness. Why? Because this generator *must* always introspect
+        lowest-level wrappees rather than higher-level wrappers. The latter
+        typically do *not* wrap the default values of the former, since this is
+        the default behaviour of the :func:`functools.update_wrapper` function
+        underlying the :func:`functools.wrap` decorator underlying all sane
+        decorators. If this boolean is set to :data:`False` while that callable
+        is actually a wrapper, this generator will erroneously misidentify
+        optional as mandatory parameters and fail to yield their default values.
+        Only set this boolean to :data:`False` if you pretend to know what
+        you're doing.
     exception_cls : type, optional
         Type of exception to be raised in the event of a fatal error. Defaults
         to :class:`._BeartypeUtilCallableException`.
@@ -242,6 +287,15 @@ def iter_func_args(
     exception_cls
          If that callable is *not* pure-Python.
     '''
+    assert isinstance(is_omit_boundmethod_arg_first, bool), (
+        f'{repr(is_omit_boundmethod_arg_first)} not boolean.')
+    assert isinstance(is_unwrap, bool), f'{repr(is_unwrap)} not boolean.'
+
+    # ..................{ IMPORTS                            }..................
+    # Avoid circular import dependencies.
+    from beartype._util.func.utilfunccodeobj import get_func_codeobj
+    from beartype._util.func.utilfunctest import is_func_boundmethod
+    from beartype._util.func.utilfuncwrap import unwrap_func_all_isomorphic
 
     # ..................{ LOCALS ~ noop                      }..................
     # If unwrapping that callable, do so *BEFORE* obtaining the code object of
@@ -284,9 +338,10 @@ def iter_func_args(
     # If that callable accepts *NO* parameters, silently reduce to the empty
     # generator (i.e., noop) for both space and time efficiency. Just. Do. It.
     #
-    # Note that this is a critical optimization when @beartype is
-    # unconditionally applied with import hook automation to *ALL* physical
-    # callables declared by a package, many of which will be argumentless.
+    # Note that this is a critical optimization for the common use case that
+    # @beartype is unconditionally applied with "beartype.claw"-based import
+    # hook automation to *ALL* callables physically declared by a package, many
+    # of which will inevitably be argumentless.
     if (
         args_len_posonly_or_flex +
         args_len_kwonly +
@@ -413,6 +468,7 @@ def iter_func_args(
 
         # 0-based index of the first parameter of the next iterated kind.
         args_index_kind_first = args_len_posonly_mandatory
+    # Else, that callable accepts *NO* mandatory positional-only parameters.
 
     # If that callable accepts at least one optional positional-only
     # parameter...
@@ -438,22 +494,73 @@ def iter_func_args(
 
         # 0-based index of the first parameter of the next iterated kind.
         args_index_kind_first = args_index_kind_last_after
+    # Else, that callable accepts *NO* optional positional-only parameters.
 
     # If that callable accepts at least one mandatory flexible parameter...
     if args_len_flex_mandatory:
-        # 0-based index of the parameter following the last mandatory
-        # flexible parameter in the "args_name" tuple.
+        # 0-based index of the parameter following the last mandatory flexible
+        # parameter in the "args_name" tuple.
         args_index_kind_last_after = (
             args_index_kind_first + args_len_flex_mandatory)
 
-        # For each mandatory flexible parameter accepted by that callable,
-        # yield a tuple describing this parameter.
+        # If...
+        if (
+            # Omitting the first mandatory flexible parameter accepted by that
+            # callable if that callable is a C-based bound method descriptor
+            # encapsulating either an instance method bound to an instance of a
+            # class or a class method bound to a class *AND*...
+            is_omit_boundmethod_arg_first and
+            # That callable is such a C-based bound method descriptor...
+            is_func_boundmethod(func)
+        ):
+            # print(f'Ignoring bound method {repr(func)} first argument...')
+            # Increment the 0-based index of the first mandatory flexible
+            # parameter accepted by this method in the "args_name" tuple to
+            # account for the first mandatory flexible "self" parameter
+            # implicitly passed by this bound method descriptor to this method,
+            # effectively ignoring this "self" parameter.
+            #
+            # Note that:
+            # * We intentionally increment this index *AFTER* computing the
+            #   derivative "args_index_kind_last_after" index above with the
+            #   original value of this index.
+            # * Handling this common edge case enables:
+            #   * This generator to transparently support bound method
+            #     descriptors, which then enables...
+            #   * The private @beartype._decor._decornontype.beartype_pseudofunc
+            #     decorator to type-check the bound __call__() method descriptor
+            #     encapsulating the unbound __call__() dunder method defined on
+            #     the class of pseudo-callable objects, which then enables...
+            #   * The public @beartype.beartype decorator to type-check
+            #     pseudo-callable objects.
+            #
+            #   How? In this case, the aforementioned @beartype_pseudofunc
+            #   decorator wraps this bound method descriptor with a dynamically
+            #   generated wrapper function that does *NOT* accept a "self"
+            #   parameter, since a bound method does *NOT* accept a "self"
+            #   parameter. However, the code object of a bound method descriptor
+            #   is simply an alias of the code object of the corresponding
+            #   unbound method. Since the latter accepts a "self" parameter, so
+            #   too does the former. Thus, an internal discrepancy (arguably,
+            #   contradiction) arises between:
+            #
+            #   * The code object of a bound method descriptor, which declares
+            #     that callable object to accept a "self" parameter.
+            #   * The real-world calling semantics of a bound method descriptor,
+            #     which by definition accepts *NO* "self" parameter.
+            args_index_kind_first += 1
+        # Else, that callable is *NOT* such a descriptor (and is thus almost
+        # certainly a vanilla pure-Python callable).
+
+        # For each mandatory flexible parameter accepted by that callable, yield
+        # a tuple describing this parameter.
         for arg_name in args_name[
             args_index_kind_first:args_index_kind_last_after]:
             yield (ArgKind.POSITIONAL_OR_KEYWORD, arg_name, ArgMandatory,)
 
         # 0-based index of the first parameter of the next iterated kind.
         args_index_kind_first = args_index_kind_last_after
+    # Else, that callable accepts *NO* mandatory flexible parameters.
 
     # If that callable accepts at least one optional flexible parameter...
     if args_len_flex_optional:
@@ -479,6 +586,7 @@ def iter_func_args(
 
         # 0-based index of the first parameter of the next iterated kind.
         args_index_kind_first = args_index_kind_last_after
+    # Else, that callable accepts *NO* optional flexible parameters.
 
     # 0-based index of the parameter following the last keyword-only
     # parameter in the "args_name" tuple. This index is required by multiple
@@ -506,6 +614,7 @@ def iter_func_args(
             args_name[args_index_kind_last_after],
             ArgMandatory,
         )
+    # Else, that callable accepts *NO* variadic positional parameter.
 
     # If that callable accepts at least one keyword-only parameter...
     if args_len_kwonly:
@@ -527,6 +636,7 @@ def iter_func_args(
                 #   placeholder "ArgMandatory" singleton.
                 args_defaults_kwonly_get(arg_name, ArgMandatory),
             )
+    # Else, that callable accepts *NO* keyword-only parameters.
 
     # If that callable accepts a variadic keyword parameter...
     if is_arg_var_kw:
@@ -547,3 +657,4 @@ def iter_func_args(
             args_name[args_index_kind_last_after],
             ArgMandatory,
         )
+    # Else, that callable accepts *NO* variadic keyword parameter.

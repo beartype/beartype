@@ -27,18 +27,10 @@ from beartype._util.func.utilfunccodeobj import (
     get_func_codeobj_or_none,
     get_func_codeobj,
 )
-from collections.abc import Callable
 
 # ....................{ GETTERS ~ arg                      }....................
 #FIXME: Unit test us up, please.
-def get_func_arg_first_name_or_none(
-    # Mandatory parameters.
-    func: Callable,
-
-    # Optional parameters.
-    is_unwrap: bool = True,
-    exception_cls: TypeException = _BeartypeUtilCallableException,
-) -> Optional[str]:
+def get_func_arg_first_name_or_none(*args, **kwargs) -> Optional[str]:
     '''
     Name of the first parameter listed in the signature of the passed
     pure-Python callable if any *or* :data:`None` otherwise (i.e., if that
@@ -46,16 +38,9 @@ def get_func_arg_first_name_or_none(
 
     Parameters
     ----------
-    func : Codeobjable
-        Pure-Python callable, frame, or code object to be inspected.
-    is_unwrap: bool, optional
-        :data:`True` only if this getter implicitly calls the
-        :func:`beartype._util.func.utilfuncwrap.unwrap_func_all` function.
-        Defaults to :data:`True` for safety. See :func:`.iter_func_args` for
-        further commentary.
-    exception_cls : type, optional
-        Type of exception to be raised in the event of a fatal error. Defaults
-        to :class:`._BeartypeUtilCallableException`.
+    All arguments are passed as is to the lower-level
+    :func:`beartype._util.func.arg.utilfuncargiter.iter_func_args` generator
+    internally deferred to by this higher-level getter.
 
     Returns
     -------
@@ -73,11 +58,7 @@ def get_func_arg_first_name_or_none(
     '''
 
     # For metadata describing each parameter accepted by this callable...
-    for arg_meta in iter_func_args(
-        func=func,
-        is_unwrap=is_unwrap,
-        exception_cls=exception_cls,
-    ):
+    for arg_meta in iter_func_args(*args, **kwargs):
         # Return the name of this parameter.
         return arg_meta[ARG_META_INDEX_NAME]  # type: ignore[return-value]
     # Else, the above "return" statement was *NOT* performed. In this case, this

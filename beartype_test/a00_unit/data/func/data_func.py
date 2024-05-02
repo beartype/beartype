@@ -108,6 +108,31 @@ def func_args_5_flex_mandatory_varpos_kwonly_varkw(
     thy_soul_was_like_a_star = 'and dwelt apart:'
     return thy_soul_was_like_a_star
 
+# ....................{ CALLABLES ~ pep 3102 : classes     }....................
+class ClassOfMethods(object):
+    '''
+    Arbitrary class defining various kinds of methods of interest.
+    '''
+
+    def meth_args_6_flex_mandatory_varpos_kwonly_varkw(
+        self,
+        calm_and_rejoicing,
+        in_the_fearful_war,
+        *of_wave_ruining_on_wave,
+        and_blast_on_blast='Descending,',
+        **and_black_flood,
+    ) -> str:
+        '''
+        Arbitrary instance method accepting three mandatory flexible parameters
+        (including the mandatory ``self`` parameter accepted by all instance
+        methods), one variadic positional parameter, one optional keyword-only
+        parameter (defined implicitly), and one variadic keyword parameter.
+        '''
+
+        # Arbitrary local variable declared in the body of this callable.
+        with_dark_obliterating_course = 'he sate:'
+        return with_dark_obliterating_course
+
 # ....................{ CALLABLES ~ wrapped                }....................
 # Callables wrapped by a decorator wrapper reducing their signatures to the
 # standard parameter-passing idiom for decorators trivially implemented as

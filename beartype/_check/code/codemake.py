@@ -600,7 +600,7 @@ def make_check_expr(
         # Localize metadata for both efficiency and f-string purposes.
         #
         # Note that list unpacking is substantially more efficient than
-        # manually indexing list items; the former requires only a single Python
+        # manually indexing list items. The former requires only a single Python
         # statement, whereas the latter requires "n" Python statements.
         (
             hint_curr,

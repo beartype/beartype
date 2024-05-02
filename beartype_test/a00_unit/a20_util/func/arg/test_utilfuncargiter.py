@@ -32,6 +32,7 @@ def test_iter_func_args() -> None:
         iter_func_args,
     )
     from beartype_test.a00_unit.data.func.data_func import (
+        ClassOfMethods,
         func_args_0,
         func_args_1_flex_mandatory,
         func_args_1_varpos,
@@ -47,14 +48,19 @@ def test_iter_func_args() -> None:
     )
     from pytest import raises
 
+    # ....................{ LOCALS                         }....................
+    # Instance of an arbitrary class defining various kinds of methods, which
+    # due to this instantiation have now been implicitly coerced into bound
+    # method descriptors, which this iterator explicitly supports.
+    object_of_methods = ClassOfMethods()
+
     # ....................{ PASS                           }....................
     # Assert this iterator returns the empty generator for an argumentless
     # callable, explicitly coerced into a tuple to trivialize testing.
     assert len(tuple(iter_func_args(func_args_0))) == 0
 
     # Assert this iterator returns the expected generator for argumentative
-    # callables accepting multiple kinds of parameters, explicitly coerced into
-    # tuples to trivialize testing.
+    # callables accepting multiple kinds of parameters.
     assert tuple(iter_func_args(func_args_1_flex_mandatory)) == (
         (ArgKind.POSITIONAL_OR_KEYWORD, 'had_one_fair_daughter', ArgMandatory,),
     )
@@ -83,6 +89,19 @@ def test_iter_func_args() -> None:
         (ArgKind.VAR_POSITIONAL, 'and_give_us', ArgMandatory,),
         (ArgKind.KEYWORD_ONLY, 'return_to_us_again', 'Of inward happiness.',),
         (ArgKind.VAR_KEYWORD, 'manners_virtue_freedom_power', ArgMandatory,),
+    )
+
+    # Assert this iterator returns the expected generator for argumentative
+    # bound method descriptors accepting multiple kinds of parameters. Note that
+    # this generator intentionally omits the first "self" parameters passed by
+    # these descriptors to the unbound methods they encapsulate.
+    assert tuple(iter_func_args(
+        object_of_methods.meth_args_6_flex_mandatory_varpos_kwonly_varkw)) == (
+        (ArgKind.POSITIONAL_OR_KEYWORD, 'calm_and_rejoicing', ArgMandatory,),
+        (ArgKind.POSITIONAL_OR_KEYWORD, 'in_the_fearful_war', ArgMandatory,),
+        (ArgKind.VAR_POSITIONAL, 'of_wave_ruining_on_wave', ArgMandatory,),
+        (ArgKind.KEYWORD_ONLY, 'and_blast_on_blast', 'Descending,',),
+        (ArgKind.VAR_KEYWORD, 'and_black_flood', ArgMandatory,),
     )
 
     # ....................{ PASS ~ positional-only         }....................
