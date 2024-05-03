@@ -414,26 +414,24 @@ requirements strings of the format ``{project_name}
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 LIBS_TESTTIME_OPTIONAL = (
-    # Required by optional Equinox-specific integration tests.
-    'equinox',
+    # ....................{ DOCOS                          }....................
+    # Documentation-centric optional test-time dependencies.
 
-    # Require a reasonably recent version of mypy known to behave well. Less
-    # recent versions are significantly deficient with respect to error
-    # reporting and *MUST* thus be blacklisted.
+    # Required by optional Sphinx-specific integration tests.
     #
-    # Note that PyPy currently fails to support mypy. See also this official
-    # documentation discussing this regrettable incompatibility:
-    #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
-    'mypy >=0.800; platform_python_implementation != "PyPy"',
+    # Note that Sphinx currently provokes unrelated test failures under Python
+    # 3.7 with  obscure deprecation warnings. Since *ALL* of this only applies
+    # to Python 3.7, we crudely circumvent this nonsense by simply avoiding
+    # installing Sphinx under Python 3.7. The exception resembles:
+    #     FAILED
+    #     ../../../beartype_test/a00_unit/a20_util/test_utilobject.py::test_is_object_hashable
+    #     - beartype.roar.BeartypeModuleUnimportableWarning: Ignoring module
+    #     "pkg_resources.__init__" importation exception DeprecationWarning:
+    #     Deprecated call to `pkg_resources.declare_namespace('sphinxcontrib')`.
+    'sphinx; python_version >= "3.8.0"',
 
-    #FIXME: Let's avoid attempting to remotely compile with nuitka under GitHub
-    #Actions-hosted continuous integration (CI) for the moment. Doing so is
-    #non-trivial enough under local testing workflows. *sigh*
-    # Require a reasonably recent version of nuitka if the current platform is a
-    # Linux distribution *AND* the active Python interpreter targets Python >=
-    # 3.8. For questionable reasons best ignored, nuitka fails to compile
-    # beartype under Python <= 3.7.
-    # 'nuitka >=1.2.6; sys_platform == "linux" and python_version >= "3.8.0"',
+    # ....................{ SCIENCE ~ data                 }....................
+    # Data science-centric optional test-time dependencies.
 
     #FIXME: Consider dropping the 'and platform_python_implementation != "PyPy"'
     #clause now that "tox.ini" installs NumPy wheels from a third-party vendor
@@ -470,18 +468,33 @@ LIBS_TESTTIME_OPTIONAL = (
     # Required by optional Pandera-specific integration tests.
     'pandera',
 
-    # Required by optional Sphinx-specific integration tests.
-    #
-    # Note that Sphinx currently provokes unrelated test failures under Python
-    # 3.7 with  obscure deprecation warnings. Since *ALL* of this only applies
-    # to Python 3.7, we crudely circumvent this nonsense by simply avoiding
-    # installing Sphinx under Python 3.7. The exception resembles:
-    #     FAILED
-    #     ../../../beartype_test/a00_unit/a20_util/test_utilobject.py::test_is_object_hashable
-    #     - beartype.roar.BeartypeModuleUnimportableWarning: Ignoring module
-    #     "pkg_resources.__init__" importation exception DeprecationWarning:
-    #     Deprecated call to `pkg_resources.declare_namespace('sphinxcontrib')`.
-    'sphinx; python_version >= "3.8.0"',
+    # ....................{ SCIENCE ~ data : ml            }....................
+    # Machine learning-centric optional test-time dependencies. These
+    # dependencies are well-known to be extremely non-trivial to install,
+    # typically due to conditionally depending on low-level C(++)-driven
+    # hardware GPU and TPU compute APIs (e.g., Nvidia CUDA, AMD OpenCL). To
+    # improve the likelihood of success on both local and remote workflows,
+    # these dependencies are intentionally confined to Linux.
+
+    # Required by optional Equinox-specific integration tests. Note that Equinox
+    # requires JAX.
+    'equinox; sys_platform == "linux"',
+
+    # Required by optional JAX-specific integration tests and JAX-dependent
+    # packages (e.g., Equinox). Note that JAX *MUST* be installed with one or
+    # more subscripted extras. Omitting extras installs only the high-level
+    # pure-Python "jax" package *WITHOUT* also installing a low-level
+    # hardware-specific variant of the typically C-based "jaxlib" package, which
+    # results in the "jax" package being unimportable and thus non-working.
+    # In this case, specifying the "cpu" extra also installs a low-level
+    # CPU-specific variant of the typically C-based "jaxlib" package. Since
+    # GitHub Actions-based continuous integration (CI) workflows are unlikely to
+    # reliably provide GPU or TPU compute hardware or APIs, the only safe and
+    # reliable alternative is CPU-specific.
+    'jax[cpu]; sys_platform == "linux"',
+
+    # Required by optional JAX- and Equinox-specific integration tests.
+    'jaxtyping; sys_platform == "linux"',
 
     #FIXME: Temporarily disabled for sanity.
     # Required by optional PyTorch-specific integration tests.
@@ -489,12 +502,36 @@ LIBS_TESTTIME_OPTIONAL = (
     # Note that PyTorch has yet to release a Python >= 3.12-compatible version.
     # 'torch; python_version < "3.12.0"',
 
+    # ....................{ TESTING                        }....................
+    # Testing-centric optional test-time dependencies.
+
+    # ....................{ TYPING                         }....................
+    # Typing-centric optional test-time dependencies.
+
+    # Require a reasonably recent version of mypy known to behave well. Less
+    # recent versions are significantly deficient with respect to error
+    # reporting and *MUST* thus be blacklisted.
+    #
+    # Note that PyPy currently fails to support mypy. See also this official
+    # documentation discussing this regrettable incompatibility:
+    #     https://mypy.readthedocs.io/en/stable/faq.html#does-it-run-on-pypy
+    'mypy >=0.800; platform_python_implementation != "PyPy"',
+
     # Required to exercise third-party backports of type hint factories
     # published by the standard "typing" module under newer versions of Python.
     (
         f'typing-extensions >='
         f'{_LIB_RUNTIME_OPTIONAL_VERSION_MINIMUM_TYPING_EXTENSIONS}'
     ),
+
+    #FIXME: Let's avoid attempting to remotely compile with nuitka under GitHub
+    #Actions-hosted continuous integration (CI) for the moment. Doing so is
+    #non-trivial enough under local testing workflows. *sigh*
+    # Require a reasonably recent version of nuitka if the current platform is a
+    # Linux distribution *AND* the active Python interpreter targets Python >=
+    # 3.8. For questionable reasons best ignored, nuitka fails to compile
+    # beartype under Python <= 3.7.
+    # 'nuitka >=1.2.6; sys_platform == "linux" and python_version >= "3.8.0"',
 )
 '''
 **Optional developer test-time package dependencies** (i.e., dependencies
