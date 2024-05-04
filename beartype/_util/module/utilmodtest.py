@@ -12,7 +12,10 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar._roarexc import _BeartypeUtilModuleException
+from beartype.typing import Optional
+from beartype._cave._cavefast import ModuleType
 from beartype._data.hint.datahinttyping import TypeException
+from beartype._util.error.utilerrwarn import warnings_ignored
 from beartype._util.text.utiltextidentifier import die_unless_identifier
 from beartype._util.text.utiltextversion import convert_str_version_to_tuple
 from importlib.metadata import version as get_module_version  # type: ignore[attr-defined]
@@ -100,7 +103,13 @@ def die_unless_module_attr_name(
     # attribute name.
 
 # ....................{ TESTERS                            }....................
-def is_module(module_name: str) -> bool:
+def is_module(
+    # Mandatory parameters.
+    module_name: str,
+
+    # Optional parameters.
+    is_warnings_ignore: bool = False,
+) -> bool:
     '''
     :data:`True` only if the module or C extension with the passed
     fully-qualified name is importable under the active Python interpreter.
@@ -114,6 +123,10 @@ def is_module(module_name: str) -> bool:
     ----------
     module_name : str
         Fully-qualified name of the module to be imported.
+    is_warnings_ignore : bool, optional
+        :data:`True` only if this tester ignores *all* warnings transitively
+        emitted as a side effect by the importation of this module. Defaults to
+        :data:`False` for safety.
 
     Returns
     -------
@@ -123,15 +136,25 @@ def is_module(module_name: str) -> bool:
     Warns
     -----
     BeartypeModuleUnimportableWarning
-        If a module with this name exists *but* that module is unimportable
-        due to raising module-scoped exceptions at importation time.
+        If a module with this name exists *but* that module is unimportable due
+        to raising module-scoped exceptions at importation time.
     '''
 
     # Avoid circular import dependencies.
     from beartype._util.module.utilmodimport import import_module_or_none
 
     # Module with this name if this module is importable *OR* "None" otherwise.
-    module = import_module_or_none(module_name)
+    module: Optional[ModuleType] = None
+
+    # If ignoring *ALL* warnings transitively emitted as a side effect by the
+    # importation of this module, attempt to dynamically import this module
+    # under a context manager ignoring these warnings.
+    if is_warnings_ignore:
+        with warnings_ignored():
+            module = import_module_or_none(module_name)
+    # Else, dynamically import this module *WITHOUT* ignoring these warnings.
+    else:
+        module = import_module_or_none(module_name)
 
     # Return true only if this module is importable.
     return module is not None
@@ -169,8 +192,8 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
     Warns
     -----
     BeartypeModuleUnimportableWarning
-        If a module with this name exists *but* that module is unimportable
-        due to raising module-scoped exceptions at importation time.
+        If a module with this name exists *but* that module is unimportable due
+        to raising module-scoped exceptions at importation time.
     '''
     assert isinstance(version_minimum, str), (
         f'{repr(version_minimum)} not string.')
@@ -194,7 +217,7 @@ def is_module_version_at_least(module_name: str, version_minimum: str) -> bool:
 
 # ....................{ TESTERS ~ package                  }....................
 #FIXME: Unit test us up, please.
-def is_package(package_name: str) -> bool:
+def is_package(package_name: str, **kwargs) -> bool:
     '''
     :data:`True` only if the package with the passed fully-qualified name is
     importable under the active Python interpreter.
@@ -209,6 +232,9 @@ def is_package(package_name: str) -> bool:
     package_name : str
         Fully-qualified name of the package to be imported.
 
+    All remaining keyword parameters are passed as is to the lower-level
+    :func:`.is_module` tester.
+
     Returns
     -------
     bool
@@ -218,9 +244,9 @@ def is_package(package_name: str) -> bool:
     -----
     BeartypeModuleUnimportableWarning
         If a package with this name exists *but* that package is unimportable
-        due to raising module-scoped exceptions from the top-level `__init__`
+        due to raising module-scoped exceptions from the top-level ``__init__``
         submodule of this package at importation time.
     '''
 
     # Be the one liner you want to see in the world.
-    return is_module(f'{package_name}.__init__')
+    return is_module(f'{package_name}.__init__', **kwargs)

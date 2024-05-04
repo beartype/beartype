@@ -97,8 +97,8 @@ def import_module_or_none(
     module_name : str
         Fully-qualified name of the module to be imported.
     exception_cls : Type[Exception]
-        Type of exception to be raised by this function. Defaults to
-        :class:`._BeartypeUtilModuleException`.
+        Type of exception to be raised in the event of a fatal error. Defaults
+        to :class:`._BeartypeUtilModuleException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -119,8 +119,8 @@ def import_module_or_none(
     Warns
     -----
     BeartypeModuleUnimportableWarning
-        If a module with this name exists *but* that module is unimportable
-        due to raising module-scoped exceptions at importation time.
+        If a module with this name exists *but* that module is unimportable due
+        to raising module-scoped exceptions at importation time.
     '''
 
     # Avoid circular import dependencies.

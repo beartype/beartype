@@ -15,18 +15,56 @@ This private submodule is *not* intended for importation by downstream callers.
 from beartype.typing import (
     Any,
     Iterable,
+    Iterator,
 )
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
 from beartype._data.hint.datahinttyping import TypeWarning
 from beartype._util.error.utilerrtest import is_exception_message_str
-from beartype._util.py.utilpyversion import IS_PYTHON_AT_LEAST_3_12
+from beartype._util.py.utilpyversion import (
+    IS_PYTHON_AT_LEAST_3_11,
+    IS_PYTHON_AT_LEAST_3_12,
+)
 from beartype._util.text.utiltextmunge import uppercase_str_char_first
 from collections.abc import Iterable as IterableABC
+from contextlib import contextmanager
 from warnings import (
     WarningMessage,
+    catch_warnings,
+    simplefilter,
     warn,
     warn_explicit,
 )
+
+# ....................{ CONTEXTS                           }....................
+#FIXME: Unit test us up, please.
+@contextmanager
+def warnings_ignored() -> Iterator[None]:
+    '''
+    Context manager temporarily ignoring *all* warnings transitively emitted
+    within the body of this context.
+
+    Yields
+    ------
+    None
+        This context manager yields *no* objects.
+
+    See Also
+    --------
+    https://stackoverflow.com/a/14463362/2809027
+        StackOverflow answer strongly inspiring this implementation.
+    '''
+
+    # If the active Python interpreter targets Python > 3.11, prefer an
+    # efficient one-liner yielding the desired outcome. Get it? Yielding? ...heh
+    if IS_PYTHON_AT_LEAST_3_11:
+        with catch_warnings(action='ignore'):  # type: ignore[call-overload]
+            yield
+    # Else, the active Python interpreter targets Python <= 3.10. In this case,
+    # fallback to an inefficient generator yielding the same outcome.
+    else:
+        with catch_warnings():
+            simplefilter('ignore')
+            yield
 
 # ....................{ WARNERS                            }....................
 # If the active Python interpreter targets Python >= 3.12, the standard

@@ -325,8 +325,6 @@
    https://www.sympy.org
 .. _TensorFlow:
    https://www.tensorflow.org
-.. _equinox:
-   https://github.com/patrick-kidger/equinox
 .. _nptyping:
    https://github.com/ramonhagenaars/nptyping
 .. _numerary:
@@ -344,7 +342,19 @@
 .. _mypy-boto3:
    https://mypy-boto3.readthedocs.io
 
+.. # ------------------( LINKS ~ py : package : equinox      )------------------
+.. _equinox:
+   https://docs.kidger.site/equinox
+.. _equinox.Module:
+   https://docs.kidger.site/equinox/api/module/module
+.. _equinox.filter_jit:
+   https://docs.kidger.site/equinox/api/transformations/#equinox.filter_jit
+
 .. # ------------------( LINKS ~ py : package : jax          )------------------
+.. _jax:
+   https://jax.readthedocs.io
+.. _jax.jit:
+   https://jax.readthedocs.io/en/latest/_autosummary/jax.jit.html#jax.jit
 .. _jax.numpy:
    https://jax.readthedocs.io/en/latest/notebooks/thinking_in_jax.html
 

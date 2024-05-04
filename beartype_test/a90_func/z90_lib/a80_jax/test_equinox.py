@@ -61,10 +61,21 @@ def test_equinox_filter_jit() -> None:
     #dangerous and *MUST* be isolated to a subprocess. Honestly, what a pain.
     #See similar logic in "test_jax" also requiring a similar resolution.
     # If any requisite JAX package is unimportable, silently reduce to a noop.
+    #
+    # Note that merely testing the importability of a JAX package emits warnings
+    # in unpredictably hardware-dependent edge cases. Since that then induces
+    # test failure, these tests necessarily ignore these warnings. For example,
+    # if the low-level C-based "jaxlib" package was compiled on a newer system
+    # supporting the assembly-level AVX instruction set that the current system
+    # fails to support, these tests would emit this warning:
+    #     E   RuntimeError: This version of jaxlib was built using AVX
+    #         instructions, which your CPU and/or operating system do not
+    #         support. You may be able work around this issue by building jaxlib
+    #         from source.
     if not (
-        is_package('equinox') and
-        is_package('jax') and
-        is_package('jaxtyping')
+        is_package('equinox', is_warnings_ignore=True) and
+        is_package('jax', is_warnings_ignore=True) and
+        is_package('jaxtyping', is_warnings_ignore=True)
     ):
         return
     # Else, all requisite JAX packages is importable.
@@ -158,10 +169,21 @@ def test_equinox_module_subclass() -> None:
     #dangerous and *MUST* be isolated to a subprocess. Honestly, what a pain.
     #See similar logic in "test_jax" also requiring a similar resolution.
     # If any requisite JAX package is unimportable, silently reduce to a noop.
+    #
+    # Note that merely testing the importability of a JAX package emits warnings
+    # in unpredictably hardware-dependent edge cases. Since that then induces
+    # test failure, these tests necessarily ignore these warnings. For example,
+    # if the low-level C-based "jaxlib" package was compiled on a newer system
+    # supporting the assembly-level AVX instruction set that the current system
+    # fails to support, these tests would emit this warning:
+    #     E   RuntimeError: This version of jaxlib was built using AVX
+    #         instructions, which your CPU and/or operating system do not
+    #         support. You may be able work around this issue by building jaxlib
+    #         from source.
     if not (
-        is_package('equinox') and
-        is_package('jax') and
-        is_package('jaxtyping')
+        is_package('equinox', is_warnings_ignore=True) and
+        is_package('jax', is_warnings_ignore=True) and
+        is_package('jaxtyping', is_warnings_ignore=True)
     ):
         return
     # Else, all requisite JAX packages is importable.

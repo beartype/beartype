@@ -60,10 +60,24 @@ def test_jax_jit() -> None:
     #FIXME: *EVEN THIS ISN"T SAFE.* Any importation whatsoever from JAX is
     #dangerous and *MUST* be isolated to a subprocess. Honestly, what a pain.
     #See similar logic in "test_equinox" also requiring a similar resolution.
-    # If either the "jax" or "jaxtyping" packages are unimportable, silently reduce to a noop.
-    if not (is_package('jax') and is_package('jaxtyping')):
+    # If any requisite JAX package is unimportable, silently reduce to a noop.
+    #
+    # Note that merely testing the importability of a JAX package emits warnings
+    # in unpredictably hardware-dependent edge cases. Since that then induces
+    # test failure, these tests necessarily ignore these warnings. For example,
+    # if the low-level C-based "jaxlib" package was compiled on a newer system
+    # supporting the assembly-level AVX instruction set that the current system
+    # fails to support, these tests would emit this warning:
+    #     E   RuntimeError: This version of jaxlib was built using AVX
+    #         instructions, which your CPU and/or operating system do not
+    #         support. You may be able work around this issue by building jaxlib
+    #         from source.
+    if not (
+        is_package('jax', is_warnings_ignore=True) and
+        is_package('jaxtyping', is_warnings_ignore=True)
+    ):
         return
-    # Else, the "jax" package is importable.
+    # Else, all requisite JAX packages is importable.
 
     # ....................{ IMPORTS ~ late                 }....................
     # Defer JAX-dependent imports.
