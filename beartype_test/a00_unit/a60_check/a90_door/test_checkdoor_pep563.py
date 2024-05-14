@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-**Beartype :pep:`563` **unit tests.**
+Beartype :pep:`563` **unit tests.**
 
 This submodule unit tests the public :func:`beartype.peps.resolve_pep563`
 function, which internally leverages the :mod:`beartype.door` subpackage to

@@ -766,50 +766,6 @@ def beartype_pseudofunc(pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:
         func=pseudofunc_call_boundmethod, **kwargs)
     return pseudofunc_call_type_method_checked
 
-    #FIXME: *OKAY.* This is a wonderful approach -- but it's still *NOT* quite
-    #there. Why? Proxying. The only truly safe way of doing what we're currently
-    #doing is to additionally proxy *ALL* attributes except dunder attributes
-    #from the original "pseudofunc" object onto a new dynamically constructed
-    #proxy object. This shouldn't be *TOO* onerous, thankfully. Let's just use
-    #our existing "BeartypeForwardRefProxy" class (...or whatevahs) as a
-    #template to copy-paste from, please. Then:
-    #* Make a new "beartype._decor.pseudofunc" subpackage.
-    #* Make a new "beartype._decor.pseudofunc._pseudocls" submodule. In this
-    #  submodule:
-    #  * Define a new "BeartypePseudoFuncProxyABC" abstract base class (ABC).
-    #    This ABC should define, in particular:
-    #    * A concrete __getattribute__() method (or whatevahs).
-    #    * An abstract __call__() method, ensuring that subclasses override this
-    #      method with a concrete implementation.
-    #* Make a new "beartype._decor.pseudofunc.pseudomake" submodule. In this
-    #  submodule:
-    #  * Make a new make_pseudofunc_proxy() factory function resembling:
-    #        def make_pseudofunc_proxy(pseudofunc: Callable) -> BeartypePseudoFuncProxy:
-    #    Just as with our forward reference proxy factory, this factory should
-    #    (in order):
-    #    * Dynamically fabricate a new concrete subclass of the
-    #      "BeartypePseudoFuncProxyABC" superclass.
-    #    * This subclass should set the __call__() method to the passed
-    #      callable. Note that this will require generalizing our usage of the
-    #      beartype_func() function below to generate a wrapper function
-    #      accepting an ignorable first "cls" parameter. Doing so will probably
-    #      necessitate adding yet another optional parameter to beartype_func().
-    #
-    #      Note that defining a __call__() dunder method on the class rather
-    #      than an instance of this class is unavoidable. Why? Because Python.
-    #      For unknown reasons (so, speed is what we're saying), Python accesses
-    #      the __call__() dunder method on the *CLASS* of an object rather than
-    #      on the object itself. See also official documentation on the subject:
-    #          https://docs.python.org/3/reference/datamodel.html#special-method-names
-    #    * Instantiate and return a new instance of this subclass.
-
-    # Create and return a new pseudo-callable proxy (i.e., beartype-specific
-    # object transparently proxying all attributes of the passed pseudo-callable
-    # object *EXCEPT* the __call__() dunder method of that object, which this
-    # proxy implicitly wraps with a new __call__() dunder method runtime
-    # type-checking the original __call__() dunder method).
-    # return pseudofunc
-
 
 def beartype_pseudofunc_functools_lru_cache(
     pseudofunc: BeartypeableT, **kwargs) -> BeartypeableT:

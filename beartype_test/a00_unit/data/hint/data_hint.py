@@ -197,7 +197,7 @@ HINTS_NONPEP = frozenset((
     NoneTypeOr[AnyType],
     # Non-empty tuple containing two types and a fully-qualified forward
     # reference.
-    (int, 'beartype._cave.._cavefast.NoneType', set)
+    (int, 'beartype._cave._cavefast.NoneType', set)
 ))
 '''
 Frozen set of PEP-noncompliant type hints exercising well-known edge cases.

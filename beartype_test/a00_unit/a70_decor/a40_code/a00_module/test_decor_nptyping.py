@@ -19,16 +19,33 @@ PEPs).
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 from beartype_test._util.mark.pytskip import (
-    skip_if_python_version_less_than,
-    skip_unless_package,
+    skip,
+    # skip_if_python_version_less_than,
+    # skip_unless_package,
 )
 
 # ....................{ TESTS                              }....................
+#FIXME: *WOAH.* Importing literally *ANYTHING* from "nptyping" now produces
+#extreme breakage with respect to the "abc.ABC" superclass. We don't quite
+#understand why and it probably doesn't particularly matter, since "nptyping" is
+#quite dead. That said, enabling this test currently causes the
+#test_door_is_bearable_warnings() test to fail with this unreadable exception:
+#    beartype.roar.BeartypeDecorHintNonpepException: Is_bearable() <class
+#    'abc.ABC'> uncheckable at runtime (i.e., not passable as second parameter
+#    to isinstance(), due to raising "NPTypingError: Subclass checking is not
+#    supported for nptyping.NDArray." from metaclass __instancecheck__()
+#    method).
+#
+#Consequently, this test is now unconditionally disabled for safety. O_o
+#FIXME: If "nptyping" ever revives itself, politely reconsider this.
+@skip('"nptyping" harmfully breaks unrelated unit tests.')
+
+#FIXME: We have to disable even package testing or everything breaks. *YIKES.*
 # If the active Python interpreter targets Python < 3.10.0, this interpreter
 # fails to support PEP 604-compliant new unions (e.g., "int | str") and thus the
 # entire point of this unit test. In this case, skip this test.
-@skip_if_python_version_less_than('3.10.0')
-@skip_unless_package('nptyping')
+# @skip_if_python_version_less_than('3.10.0')
+# @skip_unless_package('nptyping')
 def test_decor_nptyping() -> None:
     '''
     Test that the :func:`beartype.beartype` decorator rejects *all*

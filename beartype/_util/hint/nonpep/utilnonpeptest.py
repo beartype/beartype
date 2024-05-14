@@ -33,7 +33,7 @@ def die_if_hint_nonpep(
     hint: object,
 
     # Optional parameters.
-    is_str_valid: bool = True,
+    is_forwardref_ignorable: bool = False,
     exception_cls: TypeException = BeartypeDecorHintNonpepException,
     exception_prefix: str = '',
 ) -> None:
@@ -49,16 +49,16 @@ def die_if_hint_nonpep(
     ----------
     hint : object
         Object to be validated.
-    is_str_valid : bool, optional
-        :data:`True` only if this function permits this tuple to contain
-        strings. Defaults to :data:`False`. If this boolean is:
+    is_forwardref_ignorable : bool, optional
+        :data:`True` only if this function permits this object to contain
+        forward references. Defaults to :data:`False`. If this boolean is:
 
-        * :data:`True`, this tuple is valid only when containing classes and/or
-          classnames.
+        * :data:`True`, this object is valid only when containing classes and/or
+          forward references.
         * :data:`False`, this object is valid only when containing classes.
     exception_cls : type[Exception]
         Type of the exception to be raised by this function. Defaults to
-        :class:`BeartypeDecorHintNonpepException`.
+        :exc:`.BeartypeDecorHintNonpepException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -75,15 +75,14 @@ def die_if_hint_nonpep(
           or more:
 
           * Non-:mod:`typing` types.
-          * If ``is_str_valid``, **strings** (i.e., forward references
-            specified as either fully-qualified or unqualified classnames).
+          * If ``is_forwardref_ignorable`` is :data:`True`, forward references.
     '''
 
     # If this object is a PEP-noncompliant type hint, raise an exception.
     #
     # Note that this memoized call is intentionally passed positional rather
     # than keyword parameters to maximize efficiency.
-    if is_hint_nonpep(hint, is_str_valid):
+    if is_hint_nonpep(hint, is_forwardref_ignorable):
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
         assert isinstance(exception_cls, type), (
@@ -99,7 +98,7 @@ def die_if_hint_nonpep(
                     'isinstanceable class, forward reference, nor tuple of '
                     'isinstanceable classes and/or forward references).'
                 )
-                if is_str_valid else
+                if is_forwardref_ignorable else
                 'isinstanceable class nor tuple of isinstanceable classes).'
             )
         )
@@ -112,7 +111,7 @@ def die_unless_hint_nonpep(
     hint: object,
 
     # Optional parameters.
-    is_str_valid: bool = True,
+    is_forwardref_ignorable: bool = False,
     exception_cls: TypeException = BeartypeDecorHintNonpepException,
     exception_prefix: str = '',
 ) -> None:
@@ -128,12 +127,12 @@ def die_unless_hint_nonpep(
     ----------
     hint : object
         Object to be validated.
-    is_str_valid : bool, optional
-        :data:`True` only if this function permits this tuple to contain
-        strings. Defaults to :data:`False`. If this boolean is:
+    is_forwardref_ignorable : bool, optional
+        :data:`True` only if this function permits this object to contain
+        forward references. Defaults to :data:`False`. If this boolean is:
 
-        * :data:`True`, this tuple is valid only when containing classes and/or
-          classnames.
+        * :data:`True`, this object is valid only when containing classes and/or
+          forward references.
         * :data:`False`, this object is valid only when containing classes.
     exception_cls : type[Exception], optional
         Type of the exception to be raised by this function. Defaults to
@@ -154,15 +153,14 @@ def die_unless_hint_nonpep(
           or more:
 
           * Non-:mod:`typing` types.
-          * If ``is_str_valid``, **strings** (i.e., forward references
-            specified as either fully-qualified or unqualified classnames).
+          * If ``is_forwardref_ignorable`` is :data:`True`, forward references.
     '''
 
     # If this object is a PEP-noncompliant type hint, reduce to a noop.
     #
     # Note that this memoized call is intentionally passed positional rather
     # than keyword parameters to maximize efficiency.
-    if is_hint_nonpep(hint, is_str_valid):
+    if is_hint_nonpep(hint, is_forwardref_ignorable):
         return
     # Else, this object is *NOT* a PEP-noncompliant type hint. In this case,
     # subsequent logic raises an exception specific to the passed parameters.
@@ -177,15 +175,17 @@ def die_unless_hint_nonpep(
 
     # If this object is a class...
     if isinstance(hint, type):
-        # If this class is *NOT* PEP-noncompliant, raise an exception.
+        # If this class is *NOT* PEP-noncompliant (e.g., is either PEP-compliant
+        # *OR* not isinstanceable), raise an exception.
         die_unless_hint_nonpep_type(
             hint=hint,
+            is_forwardref_ignorable=is_forwardref_ignorable,
             exception_prefix=exception_prefix,
             exception_cls=exception_cls,
         )
+        # If this class is PEP-noncompliant and thus isinstanceable.
 
-        # Else, this class is isinstanceable. In this case, silently accept
-        # this class as is.
+        # Silently accept this isinstanceable class as is.
         return
     # Else, this object is *NOT* a class.
     #
@@ -193,7 +193,7 @@ def die_unless_hint_nonpep(
     elif isinstance(hint, tuple):
         die_unless_hint_nonpep_tuple(
             hint=hint,
-            is_str_valid=is_str_valid,
+            is_forwardref_ignorable=is_forwardref_ignorable,
             exception_prefix=exception_prefix,
             exception_cls=exception_cls,
         )
@@ -212,6 +212,7 @@ def die_unless_hint_nonpep_type(
     hint: type,
 
     # Optional parameters.
+    is_forwardref_ignorable: bool = False,
     exception_cls: TypeException = BeartypeDecorHintNonpepException,
     exception_prefix: str = '',
 ) -> None:
@@ -228,9 +229,16 @@ def die_unless_hint_nonpep_type(
     ----------
     hint : type
         Object to be validated.
+    is_forwardref_ignorable : bool, optional
+        :data:`True` only if this function permits this object to be a
+        forward reference. Defaults to :data:`False`. If this boolean is:
+
+        * :data:`True`, this object is valid only when a class and/or forward
+          reference.
+        * :data:`False`, this object is valid only when a class.
     exception_cls : Optional[type]
         Type of the exception to be raised by this function. Defaults to
-        :class:`BeartypeDecorHintNonpepException`.
+        :exc:`.BeartypeDecorHintNonpepException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -253,13 +261,14 @@ def die_unless_hint_nonpep_type(
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
-    # Else, this object is *NOT* a PEP-noncompliant type hint.
-    #
+    # Else, this object is *NOT* a PEP-compliant type hint.
+
     # If this object is *NOT* an isinstanceable class, raise an exception. Note
     # that this validation is typically slower than the prior validation and
     # thus intentionally performed last.
     die_unless_type_isinstanceable(
         cls=hint,
+        is_forwardref_ignorable=is_forwardref_ignorable,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
@@ -274,7 +283,7 @@ def die_unless_hint_nonpep_type(
 #internally raise a stop iteration exception, whereas EAFP only raises an
 #exception if this tuple is invalid, in which case efficiency is no longer a
 #concern. So, what do we do instead? Simple. We internally refactor:
-#* If "is_str_valid" is True, we continue to perform the existing
+#* If "is_forwardref_ignorable" is True, we continue to perform the existing
 #  implementation of both functions. *shrug*
 #* Else, we:
 #  * Perform a new optimized EAFP-style isinstance() check resembling that
@@ -284,7 +293,7 @@ def die_unless_hint_nonpep_type(
 #real-world use cases) that this mild inefficiency probably no longer matters.
 #FIXME: Indeed! Now that we have the die_unless_object_isinstanceable()
 #validator, this validator should reduce to efficiently calling
-#die_unless_object_isinstanceable() directly if "is_str_valid" is False.
+#die_unless_object_isinstanceable() directly if "is_forwardref_ignorable" is False.
 #die_unless_object_isinstanceable() performs the desired EAFP-style
 #isinstance() check in an optimally efficient manner.
 def die_unless_hint_nonpep_tuple(
@@ -292,7 +301,7 @@ def die_unless_hint_nonpep_tuple(
     hint: object,
 
     # Optional parameters.
-    is_str_valid: bool = False,
+    is_forwardref_ignorable: bool = False,
     exception_cls: TypeException = BeartypeDecorHintNonpepException,
     exception_prefix: str = '',
 ) -> None:
@@ -308,16 +317,16 @@ def die_unless_hint_nonpep_tuple(
     ----------
     hint : object
         Object to be validated.
-    is_str_valid : bool, optional
+    is_forwardref_ignorable : bool, optional
         :data:`True` only if this function permits this tuple to contain
-        strings. Defaults to :data:`False`. If this boolean is:
+        forward references. Defaults to :data:`False`. If this boolean is:
 
         * :data:`True`, this tuple is valid only when containing classes and/or
-          classnames.
-        * :data:`False`, this object is valid only when containing classes.
+          forward references.
+        * :data:`False`, this tuple is valid only when containing classes.
     exception_cls : type, optional
         Type of the exception to be raised by this function. Defaults to
-        :class:`BeartypeDecorHintNonpepException`.
+        :exc:`.BeartypeDecorHintNonpepException`.
     exception_prefix : str, optional
         Human-readable label prefixing the representation of this object in the
         exception message. Defaults to the empty string.
@@ -336,20 +345,21 @@ def die_unless_hint_nonpep_tuple(
           or more:
 
           * Non-:mod:`typing` types.
-          * If ``is_str_valid``, **strings** (i.e., forward references
-            specified as either fully-qualified or unqualified classnames).
+          * If ``is_forwardref_ignorable`` is :data:`True`, forward references.
     '''
 
     # If this object is a tuple union, reduce to a noop.
     #
     # Note that this memoized call is intentionally passed positional rather
     # than keyword parameters to maximize efficiency.
-    if _is_hint_nonpep_tuple(hint, is_str_valid):
+    if _is_hint_nonpep_tuple(hint, is_forwardref_ignorable):
         return
     # Else, this object is *NOT* a tuple union. In this case, subsequent logic
     # raises an exception specific to the passed parameters.
     #
-    # Note that the prior call has already validated "is_str_valid".
+    # Note that the prior call has already validated "is_forwardref_ignorable".
+    assert isinstance(is_forwardref_ignorable, bool), (
+        f'{repr(is_forwardref_ignorable)} not bool.')
     assert isinstance(exception_cls, type), f'{repr(exception_cls)} not type.'
     assert isinstance(exception_prefix, str), (
         f'{repr(exception_prefix)} not string.')
@@ -380,15 +390,17 @@ def die_unless_hint_nonpep_tuple(
             # If this class is *NOT* isinstanceable, raise an exception.
             die_unless_type_isinstanceable(
                 cls=hint_item,
+                is_forwardref_ignorable=is_forwardref_ignorable,
                 exception_prefix=exception_prefix,
                 exception_cls=exception_cls,
             )
+            # Else, this class is isinstanceable.
         # Else, this item is *NOT* a class.
         #
         # If this item is a forward reference...
         elif isinstance(hint_item, str):
             # If forward references are unsupported, raise an exception.
-            if not is_str_valid:
+            if not is_forwardref_ignorable:
                 raise exception_cls(
                     f'{exception_prefix}tuple type hint {repr(hint)} '
                     f'forward reference "{hint_item}" unsupported.'
@@ -402,7 +414,7 @@ def die_unless_hint_nonpep_tuple(
             raise exception_cls(
                 f'{exception_prefix}tuple type hint {repr(hint)} '
                 f'item {repr(hint_item)} invalid '
-                f'{"neither type nor string" if is_str_valid else "not type"}.'
+                f'{"neither type nor string" if is_forwardref_ignorable else "not type"}.'
             )
 
 # ....................{ TESTERS                            }....................
@@ -411,7 +423,7 @@ def is_hint_nonpep(
     hint: object,
 
     # Optional parameters.
-    is_str_valid: bool = False,
+    is_forwardref_ignorable: bool = False,
 ) -> bool:
     '''
     :data:`True` only if the passed object is a **PEP-noncompliant type hint**
@@ -426,12 +438,12 @@ def is_hint_nonpep(
     ----------
     hint : object
         Object to be inspected.
-    is_str_valid : bool, optional
-        :data:`True` only if this function permits this tuple to contain
-        strings. Defaults to :data:`False`. If this boolean is:
+    is_forwardref_ignorable : bool, optional
+        :data:`True` only if this function permits this object to contain
+        forward references. Defaults to :data:`False`. If this boolean is:
 
-        * :data:`True`, this tuple is valid only when containing classes and/or
-          classnames.
+        * :data:`True`, this object is valid only when containing classes and/or
+          forward references.
         * :data:`False`, this object is valid only when containing classes.
 
     Returns
@@ -448,10 +460,10 @@ def is_hint_nonpep(
           or more:
 
           * Non-:mod:`typing` types.
-          * If ``is_str_valid``, **strings** (i.e., forward references
-            specified as either fully-qualified or unqualified classnames).
+          * If ``is_forwardref_ignorable`` is :data:`True`, forward references.
     '''
-    assert isinstance(is_str_valid, bool), f'{repr(is_str_valid)} not boolean.'
+    assert isinstance(is_forwardref_ignorable, bool), (
+        f'{repr(is_forwardref_ignorable)} not bool.')
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
@@ -462,27 +474,22 @@ def is_hint_nonpep(
         # If this object is a class, return true only if this is *NOT* a
         # PEP-compliant class, in which case this *MUST* be a PEP-noncompliant
         # class by definition.
-        _is_hint_nonpep_type(hint) if isinstance(hint, type) else
+        _is_hint_nonpep_type(hint, is_forwardref_ignorable) if isinstance(hint, type) else
         # Else, this object is *NOT* a class.
         #
         # If this object is a tuple, return true only if this tuple contains
         # only one or more caller-permitted forward references and
         # PEP-noncompliant classes.
-        _is_hint_nonpep_tuple(hint, is_str_valid) if isinstance(hint, tuple)
-        # Else, this object is neither a class nor tuple. Return false, as this
-        # object *CANNOT* be PEP-noncompliant.
-        else False
+        _is_hint_nonpep_tuple(hint, is_forwardref_ignorable) if isinstance(hint, tuple) else
+        # Else, this object is neither a class nor tuple and thus *CANNOT* be
+        # PEP-noncompliant. In this case, fallback to returning false.
+        False
     )
 
 # ....................{ TESTERS ~ private                  }....................
 @callable_cached
 def _is_hint_nonpep_tuple(
-    # Mandatory parameters.
-    hint: object,
-
-    # Optional parameters.
-    is_str_valid: bool = False,
-) -> bool:
+    hint: object, is_forwardref_ignorable: bool) -> bool:
     '''
     :data:`True` only if the passed object is a PEP-noncompliant non-empty tuple
     of one or more types.
@@ -493,13 +500,13 @@ def _is_hint_nonpep_tuple(
     ----------
     hint : object
         Object to be inspected.
-    is_str_valid : bool, optional
+    is_forwardref_ignorable : bool, optional
         :data:`True` only if this function permits this tuple to contain
-        strings. Defaults to :data:`False`. If this boolean is:
+        forward references. If this boolean is:
 
         * :data:`True`, this tuple is valid only when containing classes and/or
           classnames.
-        * :data:`False`, this object is valid only when containing classes.
+        * :data:`False`, this tuple is valid only when containing classes.
 
     Returns
     -------
@@ -508,33 +515,61 @@ def _is_hint_nonpep_tuple(
         semantic union of types) containing one or more:
 
           * Non-:mod:`typing` types.
-          * If ``is_str_valid``, **strings** (i.e., forward references
-            specified as either fully-qualified or unqualified classnames).
+          * If ``is_forwardref_ignorable`` is :data:`True`, forward references.
     '''
-    assert isinstance(is_str_valid, bool), f'{repr(is_str_valid)} not boolean.'
+    assert isinstance(is_forwardref_ignorable, bool), (
+        f'{repr(is_forwardref_ignorable)} not bool.')
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    # Return true only if this object is...
-    return (
+    # If it is *NOT* the case that this object is...
+    if not (
         # A tuple *AND*...
         isinstance(hint, tuple) and
         # This tuple is non-empty *AND*...
-        len(hint) > 0 and
-        # Each item of this tuple is either a caller-permitted forward
-        # reference *OR* an isinstanceable class.
-        all(
-            is_type_isinstanceable(hint_item) if isinstance(hint_item, type) else
-            is_str_valid                               if isinstance(hint_item, str) else
-            False
-            for hint_item in hint
-        )
-    )
+        bool(hint)
+    ):
+        # This object is either not a tuple *OR* is the empty tuple. In either
+        # case, this object is *NOT* a non-empty tuple. Return false.
+        return False
+    # Else, this object is a non-empty tuple.
+
+    # For each item of this tuple...
+    for hint_item in hint:
+        # print(f'Inspecting {repr(hint)} item {repr(hint_item)}...')
+
+        # If this item is a type...
+        if isinstance(hint_item, type):
+            # If this type is *NOT* isinstanceable, return false.
+            if not _is_hint_nonpep_type(hint_item, is_forwardref_ignorable):
+                # print(f'Non-isinstanceable type {repr(hint_item)} prohibited!')
+                return False
+            # Else, this type is isinstanceable.
+        # Else, this item is *NOT* a type.
+        #
+        # If this item is a string...
+        elif isinstance(hint_item, str):
+            # If the caller prohibits forward references, return false.
+            if not is_forwardref_ignorable:
+                # print(f'Forward reference {repr(hint_item)} prohibited!')
+                return False
+            # Else, the caller permits forward references.
+        # Else, this item is *NOT* a string. In this case, this item is
+        # prohibited as a tuple item of a PEP-noncompliant tuple. Return false.
+        else:
+            # print(f'Unexpected item {repr(hint_item)} prohibited!')
+            return False
+    # Else, all items of this tuple are permitted as tuple items of a
+    # PEP-noncompliant tuple.
+
+    # Return true.
+    return True
 
 
-def _is_hint_nonpep_type(hint: object) -> bool:
+#FIXME: Unit test up the new "is_forwardref_ignorable" parameter, please.
+def _is_hint_nonpep_type(
+    hint: object, is_forwardref_ignorable: bool) -> bool:
     '''
     :data:`True` only if the passed object is a PEP-noncompliant type.
 
@@ -546,12 +581,25 @@ def _is_hint_nonpep_type(hint: object) -> bool:
     ----------
     hint : object
         Object to be inspected.
+    is_forwardref_ignorable : bool, optional
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type that may currently be undefined). If this
+        boolean is:
+
+        * :data:`True`, this object is valid only when this object is either an
+          isinstanceable classes *or* a forward reference proxy.
+        * :data:`False`, this object is valid only when this object is an
+          isinstanceable class. Note that forward reference proxies are
+          isinstanceable classes *if and only if* the external classes they
+          refer to have already been defined.
 
     Returns
     -------
     bool
         :data:`True` only if this object is a PEP-noncompliant type.
     '''
+
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # BEGIN: Synchronize changes here with die_unless_hint_nonpep() above.
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -559,7 +607,11 @@ def _is_hint_nonpep_type(hint: object) -> bool:
     # Avoid circular import dependencies.
     from beartype._util.hint.pep.utilpeptest import is_hint_pep
 
-    # Return true only if this object is isinstanceable and *NOT* a
-    # PEP-compliant class, in which case this *MUST* be a PEP-noncompliant
-    # class by definition.
-    return is_type_isinstanceable(hint) and not is_hint_pep(hint)
+    # Return true only if...
+    return (
+        # This object is an isinstanceable class *AND*...
+        is_type_isinstanceable(hint, is_forwardref_ignorable) and
+        # This object is *NOT* a PEP-compliant class, in which case this object
+        # is a PEP-noncompliant class by definition.
+        not is_hint_pep(hint)
+    )

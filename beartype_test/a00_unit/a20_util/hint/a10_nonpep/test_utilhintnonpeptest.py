@@ -16,7 +16,7 @@ This submodule unit tests the public API of the private
 # package-specific submodules at module scope.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-# ....................{ TESTS ~ validator                  }....................
+# ....................{ TESTS ~ raiser                     }....................
 def test_die_unless_hint_nonpep(not_hints_nonpep) -> None:
     '''
     Test the
@@ -30,6 +30,7 @@ def test_die_unless_hint_nonpep(not_hints_nonpep) -> None:
         exercising well-known edge cases.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype.roar import BeartypeDecorHintNonpepException
     from beartype._util.hint.nonpep.utilnonpeptest import (
@@ -40,19 +41,22 @@ def test_die_unless_hint_nonpep(not_hints_nonpep) -> None:
     )
     from pytest import raises
 
+    # ....................{ ASSERTS                        }....................
     # Assert this function accepts PEP-noncompliant type hints.
     for hint_nonpep in HINTS_NONPEP:
-        die_unless_hint_nonpep(hint_nonpep)
+        die_unless_hint_nonpep(hint_nonpep, is_forwardref_ignorable=True)
 
     # Assert this function rejects objects excepted to be rejected.
     for not_hint_nonpep in not_hints_nonpep:
         with raises(BeartypeDecorHintNonpepException):
-            die_unless_hint_nonpep(not_hint_nonpep)
+            die_unless_hint_nonpep(
+                not_hint_nonpep, is_forwardref_ignorable=True)
 
     # Assert this function rejects unhashable objects.
     for not_hint_unhashable in NOT_HINTS_UNHASHABLE:
         with raises(BeartypeDecorHintNonpepException):
-            die_unless_hint_nonpep(not_hint_unhashable)
+            die_unless_hint_nonpep(
+                not_hint_unhashable, is_forwardref_ignorable=True)
 
 # ....................{ TESTS ~ tester                     }....................
 def test_is_hint_nonpep(not_hints_nonpep) -> None:
@@ -68,6 +72,7 @@ def test_is_hint_nonpep(not_hints_nonpep) -> None:
         exercising well-known edge cases.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.hint.nonpep.utilnonpeptest import is_hint_nonpep
     from beartype_test.a00_unit.data.hint.data_hint import (
@@ -75,18 +80,21 @@ def test_is_hint_nonpep(not_hints_nonpep) -> None:
         NOT_HINTS_UNHASHABLE,
     )
 
+    # ....................{ ASSERTS                        }....................
     # Assert this function accepts PEP-noncompliant type hints.
     for hint_nonpep in HINTS_NONPEP:
-        assert is_hint_nonpep(hint=hint_nonpep, is_str_valid=True) is True
+        assert is_hint_nonpep(
+            hint=hint_nonpep, is_forwardref_ignorable=True) is True
 
     # Assert this function rejects objects excepted to be rejected.
     for not_hint_nonpep in not_hints_nonpep:
-        assert is_hint_nonpep(hint=not_hint_nonpep, is_str_valid=True) is False
+        assert is_hint_nonpep(
+            hint=not_hint_nonpep, is_forwardref_ignorable=True) is False
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
         assert is_hint_nonpep(
-            hint=non_hint_unhashable, is_str_valid=True) is False
+            hint=non_hint_unhashable, is_forwardref_ignorable=True) is False
 
 
 def test_is_hint_nonpep_tuple(not_hints_nonpep) -> None:
@@ -102,6 +110,7 @@ def test_is_hint_nonpep_tuple(not_hints_nonpep) -> None:
         exercising well-known edge cases.
     '''
 
+    # ....................{ IMPORTS                        }....................
     # Defer test-specific imports.
     from beartype._util.hint.nonpep.utilnonpeptest import _is_hint_nonpep_tuple
     from beartype_test.a00_unit.data.hint.data_hint import (
@@ -109,6 +118,7 @@ def test_is_hint_nonpep_tuple(not_hints_nonpep) -> None:
         NOT_HINTS_UNHASHABLE,
     )
 
+    # ....................{ ASSERTS                        }....................
     # Assert this function accepts PEP-noncompliant tuples.
     for hint_nonpep in HINTS_NONPEP:
         assert _is_hint_nonpep_tuple(hint_nonpep, True) is isinstance(

@@ -275,12 +275,16 @@ class BeartypeForwardRefMeta(type):
         if referee is None:  # type: ignore[has-type]
             # print(f'Importing forward ref "{cls.__name_beartype__}" from module "{cls.__scope_name_beartype__}"...')
 
+            # Exception subclass and prefix to be raised below.
+            EXCEPTION_CLS = BeartypeCallHintForwardRefException
+            EXCEPTION_PREFIX = 'Forward reference '
+
             # Forward referee dynamically imported from this module.
             referee = import_module_attr(
                 attr_name=cls.__name_beartype__,
                 module_name=cls.__scope_name_beartype__,
-                exception_cls=BeartypeCallHintForwardRefException,
-                exception_prefix='Forward reference ',
+                exception_cls=EXCEPTION_CLS,
+                exception_prefix=EXCEPTION_PREFIX,
             )
 
             # If this referee is this forward reference subclass, then this
@@ -300,22 +304,69 @@ class BeartypeForwardRefMeta(type):
             elif is_hint_pep484585_generic(referee):
                 referee = get_hint_pep484585_generic_type(
                     hint=referee,
-                    exception_cls=BeartypeCallHintForwardRefException,
-                    exception_prefix='Forward reference ',
+                    exception_cls=EXCEPTION_CLS,
+                    exception_prefix=EXCEPTION_PREFIX,
                 )
             # Else, this referee is *NOT* a subscripted generic.
 
-            # If this referee is *NOT* an isinstanceable class, raise an
-            # exception.
-            die_unless_object_isinstanceable(
-                obj=referee,
-                exception_cls=BeartypeCallHintForwardRefException,
-                exception_prefix='Forward reference ',
-            )
-            # Else, this referee is an isinstanceable class.
-
-            # Cache this referee for subsequent lookup by this property.
+            # Cache this referee for subsequent lookup by this property *BEFORE*
+            # validating this referee to be isinstanceable. If this property is
+            # validated to be *NOT* isinstanceable, this referee will be
+            # immediately uncached. Of course, this is insane. Ideally, this
+            # referee would be cached only *AFTER* validating this referee to be
+            # isinstanceable. Pragmatically, doing so invites infinite recursion
+            # as follows (in order):
+            # * This __type_beartype__() property getter calls...
+            # * die_unless_object_isinstanceable(), which calls...
+            # * "isinstance(None, cls)", which calls...
+            # * BeartypeForwardRefMeta.__subclasscheck__(), which calls...
+            # * "issubclass(obj, cls.__type_beartype__)", which calls...
+            # * This __type_beartype__() property getter, which calls...
+            # * die_unless_object_isinstanceable(). Repeat as needed for pain.
+            #
+            # Caching this referee first circumvents this recursion by ensuring
+            # that all subsequent access of this property after the first access
+            # of this property casually returns this referee rather than
+            # repeatedly (thus uselessly) calling the
+            # die_unless_object_isinstanceable() validator.
             _forwardref_to_referee[cls] = referee
+
+            #FIXME: *SUPER-AWKWARD.* Slow, too. Ideally, we should instead:
+            #* Define a new is_object_isinstanceable() tester. Note that this
+            #  will be somewhat non-trivial (well -- tedious, mostly), which is
+            #  why we haven't bothered yet. *sigh*
+            #* Refactor the following "try: ... except:" logic as follows:
+            #     if not is_object_isinstanceable(referee):
+            #         del _forwardref_to_referee[cls]
+            #         die_unless_object_isinstanceable(
+            #             obj=referee,
+            #             exception_cls=BeartypeCallHintForwardRefException,
+            #             exception_prefix='Forward reference ',
+            #         )
+
+            # Attempt to...
+            try:
+                # If this referee is *NOT* isinstanceable, raise an exception.
+                die_unless_object_isinstanceable(
+                    obj=referee,
+                    exception_cls=EXCEPTION_CLS,
+                    exception_prefix=EXCEPTION_PREFIX,
+
+                    # If this referee is itself a forward reference proxy, raise
+                    # an exception if that proxy *CANNOT* be resolved to the
+                    # referee that proxy refers to. Although an unlikely edge
+                    # case, unlikely edge cases are like million-to-one chances
+                    # in a Pratchett novel: you just know it's coming up.
+                    is_forwardref_ignorable=False,
+                )
+                # Else, this referee is isinstanceable.
+            # If doing so raised *ANY* exception whatsoever...
+            except:
+                # Uncache this referee. See above.
+                del _forwardref_to_referee[cls]
+
+                # Re-raise this exception as is.
+                raise
         # Else, this referee has already been resolved.
         #
         # In either case, this referee is now resolved.

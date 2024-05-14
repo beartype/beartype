@@ -124,13 +124,13 @@ def is_subhint(subhint: object, superhint: object) -> bool:
         Despite their differing child hints, these two hints are broadly similar
         enough to be reasonably comparable.
       * ``callable.abc.Iterable[str]`` and ``callable.abc.Callable[[], int]``
-        are *not* semantically related. Whereas the first hints conveys a
+        are *not* semantically related. Whereas the first hint conveys a
         container semantic, the second hint conveys a callable semantic. Since
         these two semantics are unrelated, these two hints are dissimilar
         enough to *not* be reasonably comparable.
 
     * The first hint is **semantically equivalent** to or **narrower** than the
-      second hint. Equivalently:
+      second hint. Formally:
 
       * The first hint matches less than or equal to the total number of all
         possible objects matched by the second hint.

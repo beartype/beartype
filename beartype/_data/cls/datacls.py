@@ -78,6 +78,22 @@ Tuple of all **beartypeable types** (i.e., types of all objects that may be
 decorated by the :func:`beartype.beartype` decorator).
 '''
 
+# ....................{ TYPES ~ exception                  }....................
+TYPES_EXCEPTION_NAMESPACE = (
+    # Standard exception raised when attempting to access a currently undefined
+    # attribute of a defined object via "." syntax (e.g., an undefined attribute
+    # "obj.attr" of a defined object "obj").
+    AttributeError,
+    # Standard exception raised when attempting to access an object defined in
+    # neither the current local or global scopes.
+    NameError,
+)
+'''
+Tuple of all **standard scope exception types** (i.e., types of all standard
+exceptions raised when a **namespace** (e.g., global or local scope, class or
+object dictionary) fails to define a given attribute or name).
+'''
+
 # ....................{ TYPES ~ module                     }....................
 # Defined below by the _init() function.
 TYPE_BUILTIN_NAME_TO_TYPE: Dict[str, type] = None  # type: ignore[assignment]

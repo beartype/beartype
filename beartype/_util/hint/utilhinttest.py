@@ -92,10 +92,10 @@ def die_unless_hint(
     if is_hint_pep(hint):
         die_if_hint_pep_unsupported(
             hint=hint, exception_prefix=exception_prefix)
-    # Else, this hint is *NOT* PEP-compliant. In this case...
+    # Else, this hint is PEP-noncompliant. In this case...
 
-    # If this PEP-noncompliant hint but still currently unsupported by
-    # @beartype, raise an exception.
+    # If this PEP-noncompliant hint is currently unsupported by @beartype, raise
+    # an exception.
     die_unless_hint_nonpep(hint=hint, exception_prefix=exception_prefix)
 
 # ....................{ TESTERS                            }....................
@@ -142,7 +142,7 @@ def is_hint(hint: object) -> bool:
         is_hint_pep_supported(hint) if is_hint_pep(hint) else
         # This is a PEP-noncompliant type hint, which by definition is
         # necessarily supported by @beartype.
-        is_hint_nonpep(hint=hint, is_str_valid=True)
+        is_hint_nonpep(hint=hint, is_forwardref_ignorable=True)
     )
 
 

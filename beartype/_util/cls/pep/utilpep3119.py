@@ -13,11 +13,14 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype.roar import BeartypeDecorHintPep3119Exception
+from beartype.roar._roarexc import _BeartypeHintForwardRefExceptionMixin
 from beartype.typing import Callable
+from beartype._data.cls.datacls import TYPES_EXCEPTION_NAMESPACE
 from beartype._data.hint.datahinttyping import (
     TypeException,
     TypeOrTupleTypes,
 )
+from beartype._util.cache.utilcachecall import callable_cached
 
 # ....................{ RAISERS ~ instance                 }....................
 def die_unless_object_isinstanceable(
@@ -25,6 +28,7 @@ def die_unless_object_isinstanceable(
     obj: TypeOrTupleTypes,
 
     # Optional parameters.
+    is_forwardref_ignorable: bool = True,
     exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
@@ -48,6 +52,18 @@ def die_unless_object_isinstanceable(
     ----------
     obj : object
         Object to be validated.
+    is_forwardref_ignorable : bool, optional
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type that may currently be undefined). Defaults to
+        :data:`True`. If this boolean is:
+
+        * :data:`True`, this object is valid only when this object is either an
+          isinstanceable classes *or* a forward reference proxy.
+        * :data:`False`, this object is valid only when this object is an
+          isinstanceable class. Note that forward reference proxies are
+          isinstanceable classes *if and only if* the external classes they
+          refer to have already been defined.
     exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
         :exc:`.BeartypeDecorHintPep3119Exception`.
@@ -71,6 +87,7 @@ def die_unless_object_isinstanceable(
         obj_pith=None,
         obj_raiser=die_unless_type_isinstanceable,
         obj_tester=isinstance,  # type: ignore[arg-type]
+        is_forwardref_ignorable=is_forwardref_ignorable,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
@@ -81,6 +98,7 @@ def die_unless_type_isinstanceable(
     cls: type,
 
     # Optional parameters.
+    is_forwardref_ignorable: bool = True,
     exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
@@ -90,14 +108,14 @@ def die_unless_type_isinstanceable(
     ``__instancecheck__()`` dunder method that raises a :exc:`TypeError`
     exception).
 
-    Classes that are *not* isinstanceable include most PEP-compliant type
-    hints, notably:
+    Classes that are *not* isinstanceable include most PEP-compliant type hints,
+    notably:
 
     * **Generic aliases** (i.e., subscriptable classes overriding the
       ``__class_getitem__()`` class dunder method standardized by :pep:`560`
-      subscripted by an arbitrary object) under Python >= 3.9, whose
-      metaclasses define an ``__instancecheck__()`` dunder method to
-      unconditionally raise an exception. Generic aliases include:
+      subscripted by an arbitrary object) under Python >= 3.9, whose metaclasses
+      define an ``__instancecheck__()`` dunder method to unconditionally raise
+      an exception. Generic aliases include:
 
       * :pep:`484`-compliant **subscripted generics.**
       * :pep:`585`-compliant type hints.
@@ -138,8 +156,8 @@ def die_unless_type_isinstanceable(
     exceptions for erroneous type hints.
 
     Thus the existence of this function, which the :func:`beartype.beartype`
-    decorator calls to validate the usability of type hints that are classes
-    *before* checking objects against those classes at call time.
+    decorator frequently calls to validate the usability of type hints that are
+    classes *before* checking objects against those classes at call time.
 
     Caveats
     -------
@@ -197,6 +215,18 @@ def die_unless_type_isinstanceable(
     ----------
     cls : object
         Object to be validated.
+    is_forwardref_ignorable : bool, optional
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type that may currently be undefined). Defaults to
+        :data:`True`. If this boolean is:
+
+        * :data:`True`, this object is valid only when this object is either an
+          isinstanceable classes *or* a forward reference proxy.
+        * :data:`False`, this object is valid only when this object is an
+          isinstanceable class. Note that forward reference proxies are
+          isinstanceable classes *if and only if* the external classes they
+          refer to have already been defined.
     exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
         :exc:`.BeartypeDecorHintPep3119Exception`.
@@ -220,11 +250,23 @@ def die_unless_type_isinstanceable(
 
     # If this object is *NOT* a class, raise an exception.
     die_unless_type(
-        cls=cls,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
+        cls=cls, exception_cls=exception_cls, exception_prefix=exception_prefix)
     # Else, this object is a class.
+
+    # If this class is isinstanceable, silently reduce to a noop.
+    #
+    # Note that this merely constitutes an optimization -- albeit a
+    # non-negligible optimization. The is_type_isinstanceable() tester is
+    # memoized against inefficiencies, including:
+    # * An inefficient implementation leveraging the EAFP (Easier to Ask for
+    #   Permission than Foregiveness) principle.
+    # * Worst-case behaviour in which the metaclass of this class defines an
+    #   inefficient __instancecheck__() method outside our control.
+    if is_type_isinstanceable(cls, is_forwardref_ignorable):
+        return
+    # Else, this class is *NOT* isinstanceable. In this case, raise a
+    # human-readable exception embedding the original (typically unreadable)
+    # "TypeError" exception implicitly raised by the metaclass of this class.
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the is_type_isinstanceable() tester.
@@ -232,15 +274,28 @@ def die_unless_type_isinstanceable(
     # Attempt to pass this class as the second parameter to isinstance().
     try:
         isinstance(None, cls)  # type: ignore[arg-type]
-    # If doing so raised a "TypeError" exception, this class is *NOT*
-    # isinstanceable. In this case, raise a human-readable exception.
+    # If doing so raised *ANY* exception, this class is *NOT* isinstanceable. In
+    # this case, raise a human-readable exception.
     #
     # See the docstring for further discussion.
-    except TypeError as exception:
+    except Exception as exception:
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not exception class.')
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
+
+        # If this exception ambiguously fails to indicate non-isinstanceability,
+        # silently reduce to a noop.
+        if _is_exception_ambiguous(exception):
+            return
+        # Else, this exception unambiguously indicates non-isinstanceability.
+        #
+        # If this exception already human-readably describes this
+        # non-isinstanceability, re-raise this exception as is.
+        elif _is_exception_sufficient(exception):
+            raise
+        # Else, this exception fails to human-readably describe this
+        # non-isinstanceability.
 
         #FIXME: Uncomment after we uncover why doing so triggers an
         #infinite circular exception chain when "hint" is a "GenericAlias".
@@ -272,17 +327,12 @@ def die_unless_type_isinstanceable(
             f'{exception_prefix}{repr(cls)} uncheckable at runtime '
             f'(i.e., not passable as second parameter to isinstance(), '
             f'due to raising "{exception.__class__.__name__}: {exception}" '
-            f'from metaclass __instancecheck__() method).'
+            f'from metaclass '
+            f'{cls.__class__.__name__}.__instancecheck__() method).'
         )
 
         # Raise this exception chained onto this lower-level exception.
         raise exception_cls(exception_message) from exception
-    # If doing so raised any exception *OTHER* than a "TypeError" exception,
-    # this class may or may not be isinstanceable. Since we have no means of
-    # differentiating the two, we err on the side of caution. Avoid returning a
-    # false negative by quietly ignoring this exception.
-    except Exception:
-        pass
 
 # ....................{ RAISERS ~ subclass                 }....................
 def die_unless_object_issubclassable(
@@ -290,6 +340,7 @@ def die_unless_object_issubclassable(
     obj: TypeOrTupleTypes,
 
     # Optional parameters.
+    is_forwardref_ignorable: bool = True,
     exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
@@ -313,6 +364,18 @@ def die_unless_object_issubclassable(
     ----------
     obj : object
         Object to be validated.
+    is_forwardref_ignorable : bool, optional
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type that may currently be undefined). Defaults to
+        :data:`True`. If this boolean is:
+
+        * :data:`True`, this object is valid only when this object is either an
+          isinstanceable classes *or* a forward reference proxy.
+        * :data:`False`, this object is valid only when this object is an
+          isinstanceable class. Note that forward reference proxies are
+          isinstanceable classes *if and only if* the external classes they
+          refer to have already been defined.
     exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
         :exc:`.BeartypeDecorHintPep3119Exception`.
@@ -336,6 +399,7 @@ def die_unless_object_issubclassable(
         obj_pith=type,
         obj_raiser=die_unless_type_issubclassable,
         obj_tester=issubclass,  # type: ignore[arg-type]
+        is_forwardref_ignorable=is_forwardref_ignorable,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
@@ -346,6 +410,7 @@ def die_unless_type_issubclassable(
     cls: type,
 
     # Optional parameters.
+    is_forwardref_ignorable: bool = True,
     exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
@@ -376,7 +441,7 @@ def die_unless_type_issubclassable(
     Motivation
     ----------
     See also the "Motivation" and "Caveats" sections of the
-    :func:`die_unless_type_isinstanceable` docstring for further discussion,
+    :func:`.die_unless_type_isinstanceable` docstring for further discussion,
     substituting:
 
     * ``__instancecheck__()`` for ``__subclasscheck__()``.
@@ -386,6 +451,18 @@ def die_unless_type_issubclassable(
     ----------
     cls : object
         Object to be validated.
+    is_forwardref_ignorable : bool, optional
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type that may currently be undefined). Defaults to
+        :data:`True`. If this boolean is:
+
+        * :data:`True`, this object is valid only when this object is either an
+          isinstanceable classes *or* a forward reference proxy.
+        * :data:`False`, this object is valid only when this object is an
+          isinstanceable class. Note that forward reference proxies are
+          isinstanceable classes *if and only if* the external classes they
+          refer to have already been defined.
     exception_cls : TypeException, optional
         Type of exception to be raised. Defaults to
         :exc:`BeartypeDecorHintPep3119Exception`.
@@ -404,11 +481,23 @@ def die_unless_type_issubclassable(
 
     # If this hint is *NOT* a class, raise an exception.
     die_unless_type(
-        cls=cls,
-        exception_cls=exception_cls,
-        exception_prefix=exception_prefix,
-    )
+        cls=cls, exception_cls=exception_cls, exception_prefix=exception_prefix)
     # Else, this hint is a class.
+
+    # If this class is issubclassable, silently reduce to a noop.
+    #
+    # Note that this merely constitutes an optimization -- albeit a
+    # non-negligible optimization. The is_type_issubclassable() tester is
+    # memoized against inefficiencies, including:
+    # * An inefficient implementation leveraging the EAFP (Easier to Ask for
+    #   Permission than Foregiveness) principle.
+    # * Worst-case behaviour in which the metaclass of this class defines an
+    #   inefficient __subclasscheck__() method outside our control.
+    if is_type_issubclassable(cls, is_forwardref_ignorable):
+        return
+    # Else, this class is *NOT* issubclassable. In this case, raise a
+    # human-readable exception embedding the original (typically unreadable)
+    # "TypeError" exception implicitly raised by the metaclass of this class.
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with the is_type_issubclassable() tester.
@@ -416,45 +505,57 @@ def die_unless_type_issubclassable(
     # Attempt to pass this class as the second parameter to issubclass().
     try:
         issubclass(type, cls)  # type: ignore[arg-type]
-    # If doing so raised a "TypeError" exception, this class is *NOT*
-    # issubclassable. In this case, raise a human-readable exception.
+    # If doing so raised *ANY* exception, this class is *NOT* issubclassable. In
+    # this case, raise a human-readable exception.
     #
     # See the die_unless_type_isinstanceable() docstring for details.
-    except TypeError as exception:
+    except Exception as exception:
         assert isinstance(exception_cls, type), (
             f'{repr(exception_cls)} not exception class.')
         assert isinstance(exception_prefix, str), (
             f'{repr(exception_prefix)} not string.')
+
+        # If this exception ambiguously fails to indicate non-issubclassability,
+        # silently reduce to a noop.
+        if _is_exception_ambiguous(exception):
+            return
+        # Else, this exception unambiguously indicates non-issubclassability.
+        #
+        # If this exception already human-readably describes this
+        # non-issubclassability, re-raise this exception as is.
+        elif _is_exception_sufficient(exception):
+            raise
+        # Else, this exception fails to human-readably describe this
+        # non-issubclassability.
 
         # Exception message to be raised.
         exception_message = (
             f'{exception_prefix}{repr(cls)} uncheckable at runtime '
             f'(i.e., not passable as second parameter to issubclass(), '
             f'due to raising "{exception.__class__.__name__}: {exception}" '
-            f'from metaclass __subclasscheck__() method).'
+            f'from metaclass '
+            f'{cls.__class__.__name__}.__subclasscheck__() method).'
         )
 
         # Raise this exception chained onto this lower-level exception.
         raise exception_cls(exception_message) from exception
-    # If doing so raised any exception *OTHER* than a "TypeError" exception,
-    # this class may or may not be issubclassable. Since we have no means of
-    # differentiating the two, we err on the side of caution. Avoid returning a
-    # false negative by quietly ignoring this exception.
-    except Exception:
-        pass
 
 # ....................{ TESTERS                            }....................
-def is_type_isinstanceable(cls: object) -> bool:
+#FIXME: Unit test up the "is_forwardref_ignorable" parameter, please.
+@callable_cached
+def is_type_isinstanceable(
+    # Mandatory parameters.
+    cls: object,
+
+    # Optional parameters.
+    is_forwardref_ignorable: bool = True,
+) -> bool:
     '''
     :data:`True` only if the passed object is an **isinstanceable class** (i.e.,
     class whose metaclass does *not* define an ``__instancecheck__()`` dunder
     method that raises a :exc:`TypeError` exception).
 
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator). Although the implementation does *not*
-    trivially reduce to an efficient one-liner, the inefficient branch of this
-    implementation *only* applies to erroneous edge cases resulting in raised
-    exceptions and is thus largely ignorable.
+    This tester is memoized for efficiency.
 
     Caveats
     -------
@@ -477,6 +578,18 @@ def is_type_isinstanceable(cls: object) -> bool:
     ----------
     cls : object
         Object to be tested.
+    is_forwardref_ignorable : bool, optional
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type that may currently be undefined). Defaults to
+        :data:`True`. If this boolean is:
+
+        * :data:`True`, this object is valid only when this object is either an
+          isinstanceable classes *or* a forward reference proxy.
+        * :data:`False`, this object is valid only when this object is an
+          isinstanceable class. Note that forward reference proxies are
+          isinstanceable classes *if and only if* the external classes they
+          refer to have already been defined.
 
     Returns
     -------
@@ -488,11 +601,31 @@ def is_type_isinstanceable(cls: object) -> bool:
     :func:`.die_unless_type_isinstanceable`
         Further details.
     '''
+    assert isinstance(is_forwardref_ignorable, bool), (
+        f'{repr(is_forwardref_ignorable)} not bool.')
+
+    # Avoid circular import dependencies.
+    from beartype._check.forward.reference.fwdreftest import is_forwardref
+    # print('Start!')
 
     # If this object is *NOT* a class, immediately return false.
     if not isinstance(cls, type):
+        # print(f'{repr(cls)} not type!')
         return False
     # Else, this object is a class.
+    #
+    # If the caller allows this class to be a forward reference proxy type
+    # regardless of whether the external type this proxy refers to has been
+    # defined yet and this class is such a type, immediately return true.
+    #
+    # Note that this test is efficient and thus tested *BEFORE*
+    # isinstanceability, which is less efficient.
+    elif is_forwardref_ignorable and is_forwardref(cls):
+        # print(f'{repr(cls)} is forward reference proxy!')
+        return True
+    # Else, either the caller prefers to disregard this distinction *OR* this
+    # class is not a forward reference proxy type.
+    # print('Going!')
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with die_unless_type_isinstanceable().
@@ -513,33 +646,33 @@ def is_type_isinstanceable(cls: object) -> bool:
 
         # If the prior function call raised *NO* exception, this class is
         # probably but *NOT* necessarily isinstanceable. Return true.
-    # If the prior function call raised a "TypeError" exception, this class is
-    # *NOT* isinstanceable. In this case, return false.
-    except TypeError:
-        return False
-    # If the prior function call raised any exception *OTHER* than a "TypeError"
-    # exception, this class may or may not be isinstanceable. Since we have no
-    # means of differentiating the two, we err on the side of caution. Avoid
-    # returning a false negative by safely returning true.
-    except Exception:
-        return True
+    # If the prior function call raised *ANY* exception, return true only if
+    # this exception ambiguously suggests that this class could still be
+    # isinstanceable.
+    except Exception as exception:
+        return _is_exception_ambiguous(exception)
 
     # Look. Just do it. *sigh*
     return True
 
 
-def is_type_issubclassable(cls: object) -> bool:
+#FIXME: Unit test up the "is_forwardref_ignorable" parameter, please.
+@callable_cached
+def is_type_issubclassable(
+    # Mandatory parameters.
+    cls: object,
+
+    # Optional parameters.
+    is_forwardref_ignorable: bool = True,
+) -> bool:
+
     '''
     :data:`True` only if the passed object is either an **issubclassable class**
     (i.e., class whose metaclass does *not* define a ``__subclasscheck__()``
     dunder method that raises a :exc:`TypeError` exception) *or* tuple
     containing only issubclassable classes.
 
-    This tester is intentionally *not* memoized (e.g., by the
-    :func:`callable_cached` decorator). Although the implementation does *not*
-    trivially reduce to an efficient one-liner, the inefficient branch of this
-    implementation *only* applies to erroneous edge cases resulting in raised
-    exceptions and is thus largely ignorable.
+    This tester is memoized for efficiency.
 
     Caveats
     -------
@@ -554,6 +687,18 @@ def is_type_issubclassable(cls: object) -> bool:
     ----------
     cls : object
         Object to be tested.
+    is_forwardref_ignorable : bool, optional
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type that may currently be undefined). Defaults to
+        :data:`True`. If this boolean is:
+
+        * :data:`True`, this object is valid only when this object is either an
+          isinstanceable classes *or* a forward reference proxy.
+        * :data:`False`, this object is valid only when this object is an
+          isinstanceable class. Note that forward reference proxies are
+          isinstanceable classes *if and only if* the external classes they
+          refer to have already been defined.
 
     Returns
     -------
@@ -568,11 +713,27 @@ def is_type_issubclassable(cls: object) -> bool:
     :func:`.die_unless_type_issubclassable`
         Further details.
     '''
+    assert isinstance(is_forwardref_ignorable, bool), (
+        f'{repr(is_forwardref_ignorable)} not bool.')
+
+    # Avoid circular import dependencies.
+    from beartype._check.forward.reference.fwdreftest import is_forwardref
 
     # If this object is *NOT* a class, immediately return false.
     if not isinstance(cls, type):
         return False
     # Else, this object is a class.
+    #
+    # If the caller allows this class to be a forward reference proxy type
+    # regardless of whether the external type this proxy refers to has been
+    # defined yet and this class is such a type, immediately return true.
+    #
+    # Note that this test is efficient and thus tested *BEFORE*
+    # isinstanceability, which is less efficient.
+    elif is_forwardref_ignorable and is_forwardref(cls):
+        return True
+    # Else, either the caller prefers to disregard this distinction *OR* this
+    # class is not a forward reference proxy type.
 
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # CAUTION: Synchronize with die_unless_type_issubclassable().
@@ -593,16 +754,11 @@ def is_type_issubclassable(cls: object) -> bool:
 
         # If the prior function call raised *NO* exception, this class is
         # probably but *NOT* necessarily issubclassable. Return true.
-    # If the prior function call raised a "TypeError" exception, this class is
-    # *NOT* issubclassable. In this case, return false.
-    except TypeError:
-        return False
-    # If the prior function call raised any exception *OTHER* than a "TypeError"
-    # exception, this class may or may not be issubclassable. Since we have no
-    # means of differentiating the two, we err on the side of caution. Avoid
-    # returning a false negative by safely returning true.
-    except Exception:
-        pass
+    # If the prior function call raised *ANY* exception, return true only if
+    # this exception ambiguously suggests that this class could still be
+    # issubclassable.
+    except Exception as exception:
+        return _is_exception_ambiguous(exception)
 
     # Look. Just do it. *sigh*
     return True
@@ -613,6 +769,7 @@ def _die_if_object_uncheckable(
     obj_pith: object,
     obj_raiser: Callable,
     obj_tester: Callable[[object, TypeOrTupleTypes], bool],
+    is_forwardref_ignorable: bool,
     exception_cls: TypeException,
     exception_prefix: str,
 ) -> None:
@@ -642,6 +799,18 @@ def _die_if_object_uncheckable(
 
         * :func:`isinstance`.
         * :func:`issubclass`.
+    is_forwardref_ignorable : bool, optional
+        :data:`True` only if this function permits this object to be a
+        **forward reference proxy** (i.e., :mod:`beartype`-specific private type
+        proxying an external type that may currently be undefined). Defaults to
+        :data:`True`. If this boolean is:
+
+        * :data:`True`, this object is valid only when this object is either an
+          isinstanceable classes *or* a forward reference proxy.
+        * :data:`False`, this object is valid only when this object is an
+          isinstanceable class. Note that forward reference proxies are
+          isinstanceable classes *if and only if* the external classes they
+          refer to have already been defined.
     exception_cls : TypeException
         Type of exception to be raised.
     exception_prefix : str, optional
@@ -672,34 +841,44 @@ def _die_if_object_uncheckable(
             exception_prefix=exception_prefix,
         )
         # Else, this object is either a class or tuple of classes.
-    # Else, this object is a PEP 604-compliant new union. In either case, this
-    # object now *COULD* be runtime-checkable. To decide whether this object is
-    # actually instanceable, further introspection is needed.
+    # Else, this object is a PEP 604-compliant new union.
+    #
+    # In any case, this object *COULD* now be runtime-checkable. To decide
+    # whether this object is runtime-checkable, further handling is warranted.
 
     # If this object is a class...
     if isinstance(obj, type):
         # If this class is *NOT* runtime-checkable, raise an exception.
         obj_raiser(
             cls=obj,
+            is_forwardref_ignorable=is_forwardref_ignorable,
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
         )
         # Else, this class is runtime-checkable.
-    # Else, this object *MUST* (by process of elimination and validation
-    # above) be either a tuple of classes *OR* new union. In either case...
+    # Else, this object *MUST* (by process of elimination and validation above)
+    # be either a tuple of classes *OR* a PEP 604-compliant new union. In either
+    # case...
     else:
         # Attempt to pass this object as the second parameter to isinstance().
         try:
             obj_tester(obj_pith, obj)  # type: ignore[arg-type]
-        # If doing so raises a "TypeError" exception, this object is *NOT*
+        # If doing so raises *ANY* exception, this object is *NOT*
         # runtime-checkable. In this case, raise a human-readable exception.
         #
-        # See the die_unless_type_runtime-checkable() docstring for details.
-        except TypeError as exception:
+        # See the die_unless_type_isinstanceable() docstring for details.
+        except Exception as exception:
             assert isinstance(exception_cls, type), (
                 f'{repr(exception_cls)} not exception class.')
             assert isinstance(exception_prefix, str), (
                 f'{repr(exception_prefix)} not string.')
+
+            # If this exception ambiguously fails to indicate
+            # non-isinstanceability, silently reduce to a noop.
+            if _is_exception_ambiguous(exception):
+                return
+            # Else, this exception unambiguously indicates
+            # non-isinstanceability.
 
             # Tuple of all items of this iterable object.
             obj_items: tuple = None  # type: ignore[assignment]
@@ -746,9 +925,110 @@ def _die_if_object_uncheckable(
             # Although this should *NEVER* happen (as we should have already
             # raised an exception above), we nonetheless do so for safety.
             raise exception_cls(f'{exception_message}.') from exception
-        # If doing so raised any exception *OTHER* than a "TypeError" exception,
-        # this class may or may not be runtime-checkable. Since we have no means
-        # of differentiating the two, we err on the side of caution. Avoid
-        # returning a false negative by quietly ignoring this exception.
-        except Exception:
-            pass
+
+# ....................{ PRIVATE ~ testers                  }....................
+#FIXME: Unit test us up, please.
+def _is_exception_ambiguous(exception: Exception) -> bool:
+    '''
+    :data:`True` only if the passed exception is **ambiguous** (i.e., an
+    instance of the standard :exc:`AttributeError` or :exc:`NameError` types).
+
+    Equivalently, this tester returns :data:`True` only if it cannot be decided
+    whether this exception unambiguously signifies the failure of an associated
+    class to be isinstanceable or issubclassable when the metaclass of this
+    class defines the ``__instancecheck__()`` or ``__subclasscheck__()`` dunder
+    method raising this exception. Why? Because this metaclass may *not*
+    necessarily be fully initialized at the early time that this tester is
+    called (typically, at :func:`beartype.beartype` decoration time). When this
+    is the case, eagerly passing this class to the :func:`isinstance` or
+    :func:`issubclass` builtins is likely to raise an :exc:`AttributeError`
+    after referencing an undefined external attribute: e.g.,
+
+    .. code-block:: python
+
+       from beartype import beartype
+
+       class MetaFoo(type):
+           def __instancecheck__(cls, other):
+               return g()
+
+       class Foo(metaclass=MetaFoo):
+           pass
+
+       # @beartype transitively calls this function to validate that "Foo" is
+       # isinstanceable. However, since g() has yet to be defined at this time,
+       # doing so raises an "AttributeError" exception despite this logic
+       # otherwise being sound.
+       @beartype
+       def f(x: Foo):
+           pass
+
+       def g():
+           return True
+
+    Parameters
+    ----------
+    exception : Exception
+        Exception previously raised by a recent call to either the
+        ``__instancecheck__()`` or ``__subclasscheck__()`` dunder method defined
+        by the metaclass of the class passed as the second parameter to the
+        :func:`isinstance` or :func:`issubclass` builtins.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this exception is ambiguous.
+    '''
+
+    # Faster than one-liner speed!
+    return isinstance(exception, TYPES_EXCEPTION_NAMESPACE)
+
+
+def _is_exception_sufficient(exception: Exception) -> bool:
+    '''
+    :data:`True` only if the passed exception is **sufficient** (i.e., an
+    instance of the :mod:`beartype`-specific
+    :exc:`._BeartypeHintForwardRefExceptionMixin` type).
+
+    Equivalently, this tester returns :data:`True` only if this exception's
+    message already suffices to human-readably describe the failure of an
+    associated class to be isinstanceable or issubclassable when the metaclass
+    of this class defines the ``__instancecheck__()`` or ``__subclasscheck__()``
+    dunder method raising this exception. Currently, this includes *all*
+    exceptions pertaining to :mod:`beartype`-specific forward references. Why?
+    Because these exceptions already convey the issue. Wrapping these exceptions
+    in additional exceptions only obfuscates the underlying issue: e.g.,
+
+    .. code-block:: python
+
+       # This original exception...
+       BeartypeCallHintForwardRefException: Forward reference "OfPearl"
+       unimportable from module
+       "beartype_test.a00_unit.data.pep.pep563.data_pep563_resolve".
+
+       # ...is considerably more useful to end users than this insane wrapper.
+       beartype.roar.BeartypeDecorHintNonpepException: Die_if_unbearable()
+       <forwardref OfPearl(__name_beartype__='OfPearl',
+       __scope_name_beartype__='beartype_test.a00_unit.data.pep.pep563.data_pep563_resolve')>
+       uncheckable at runtime (i.e., not passable as second parameter to
+       isinstance(), due to raising "BeartypeCallHintForwardRefException:
+       Forward reference "OfPearl" unimportable from module
+       "beartype_test.a00_unit.data.pep.pep563.data_pep563_resolve"." from
+       metaclass BeartypeForwardRefMeta.__instancecheck__() method).
+
+    Parameters
+    ----------
+    exception : Exception
+        Exception previously raised by a recent call to either the
+        ``__instancecheck__()`` or ``__subclasscheck__()`` dunder method defined
+        by the metaclass of the class passed as the second parameter to the
+        :func:`isinstance` or :func:`issubclass` builtins.
+
+    Returns
+    -------
+    bool
+        :data:`True` only if this exception is sufficient.
+    '''
+
+    # Fear the one-liner reaper!
+    return isinstance(exception, _BeartypeHintForwardRefExceptionMixin)
