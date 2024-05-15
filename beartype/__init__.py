@@ -63,6 +63,7 @@ if 'beartype.__is_installing__' not in _modules:
     from beartype._conf.confcls import (
         BeartypeConf as BeartypeConf)
     from beartype._conf.confenum import (
+        BeartypeDecorationPosition as BeartypeDecorationPosition,
         BeartypeStrategy as BeartypeStrategy,
         BeartypeViolationVerbosity as BeartypeViolationVerbosity,
     )

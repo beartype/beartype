@@ -17,7 +17,22 @@ package defined by the private :mod:`beartype._conf.confenum` submodule.
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # ....................{ TESTS                              }....................
-def test_conf_strategy() -> None:
+def test_conf_enum_decoration_position() -> None:
+    '''
+    Test the public :func:`beartype.BeartypeDecorationPosition` enumeration.
+    '''
+
+    # Defer test-specific imports.
+    from beartype import BeartypeDecorationPosition
+
+    # Assert this enumeration declares the expected members.
+    assert isinstance(
+        BeartypeDecorationPosition.FIRST, BeartypeDecorationPosition)
+    assert isinstance(
+        BeartypeDecorationPosition.LAST, BeartypeDecorationPosition)
+
+
+def test_conf_enum_strategy() -> None:
     '''
     Test the public :func:`beartype.BeartypeStrategy` enumeration.
     '''
@@ -32,7 +47,7 @@ def test_conf_strategy() -> None:
     assert isinstance(BeartypeStrategy.On, BeartypeStrategy)
 
 
-def test_conf_violation_verbosity() -> None:
+def test_conf_enum_violation_verbosity() -> None:
     '''
     Test the public :func:`beartype.BeartypeViolationVerbosity` enumeration.
     '''

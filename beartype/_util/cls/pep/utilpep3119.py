@@ -28,7 +28,7 @@ def die_unless_object_isinstanceable(
     obj: TypeOrTupleTypes,
 
     # Optional parameters.
-    is_forwardref_ignorable: bool = True,
+    is_forwardref_valid: bool = True,
     exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
@@ -52,7 +52,7 @@ def die_unless_object_isinstanceable(
     ----------
     obj : object
         Object to be validated.
-    is_forwardref_ignorable : bool, optional
+    is_forwardref_valid : bool, optional
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
         proxying an external type that may currently be undefined). Defaults to
@@ -87,7 +87,7 @@ def die_unless_object_isinstanceable(
         obj_pith=None,
         obj_raiser=die_unless_type_isinstanceable,
         obj_tester=isinstance,  # type: ignore[arg-type]
-        is_forwardref_ignorable=is_forwardref_ignorable,
+        is_forwardref_valid=is_forwardref_valid,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
@@ -98,7 +98,7 @@ def die_unless_type_isinstanceable(
     cls: type,
 
     # Optional parameters.
-    is_forwardref_ignorable: bool = True,
+    is_forwardref_valid: bool = True,
     exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
@@ -215,7 +215,7 @@ def die_unless_type_isinstanceable(
     ----------
     cls : object
         Object to be validated.
-    is_forwardref_ignorable : bool, optional
+    is_forwardref_valid : bool, optional
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
         proxying an external type that may currently be undefined). Defaults to
@@ -262,7 +262,7 @@ def die_unless_type_isinstanceable(
     #   Permission than Foregiveness) principle.
     # * Worst-case behaviour in which the metaclass of this class defines an
     #   inefficient __instancecheck__() method outside our control.
-    if is_type_isinstanceable(cls, is_forwardref_ignorable):
+    if is_type_isinstanceable(cls, is_forwardref_valid):
         return
     # Else, this class is *NOT* isinstanceable. In this case, raise a
     # human-readable exception embedding the original (typically unreadable)
@@ -340,7 +340,7 @@ def die_unless_object_issubclassable(
     obj: TypeOrTupleTypes,
 
     # Optional parameters.
-    is_forwardref_ignorable: bool = True,
+    is_forwardref_valid: bool = True,
     exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
@@ -364,7 +364,7 @@ def die_unless_object_issubclassable(
     ----------
     obj : object
         Object to be validated.
-    is_forwardref_ignorable : bool, optional
+    is_forwardref_valid : bool, optional
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
         proxying an external type that may currently be undefined). Defaults to
@@ -399,7 +399,7 @@ def die_unless_object_issubclassable(
         obj_pith=type,
         obj_raiser=die_unless_type_issubclassable,
         obj_tester=issubclass,  # type: ignore[arg-type]
-        is_forwardref_ignorable=is_forwardref_ignorable,
+        is_forwardref_valid=is_forwardref_valid,
         exception_cls=exception_cls,
         exception_prefix=exception_prefix,
     )
@@ -410,7 +410,7 @@ def die_unless_type_issubclassable(
     cls: type,
 
     # Optional parameters.
-    is_forwardref_ignorable: bool = True,
+    is_forwardref_valid: bool = True,
     exception_cls: TypeException = BeartypeDecorHintPep3119Exception,
     exception_prefix: str = '',
 ) -> None:
@@ -451,7 +451,7 @@ def die_unless_type_issubclassable(
     ----------
     cls : object
         Object to be validated.
-    is_forwardref_ignorable : bool, optional
+    is_forwardref_valid : bool, optional
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
         proxying an external type that may currently be undefined). Defaults to
@@ -493,7 +493,7 @@ def die_unless_type_issubclassable(
     #   Permission than Foregiveness) principle.
     # * Worst-case behaviour in which the metaclass of this class defines an
     #   inefficient __subclasscheck__() method outside our control.
-    if is_type_issubclassable(cls, is_forwardref_ignorable):
+    if is_type_issubclassable(cls, is_forwardref_valid):
         return
     # Else, this class is *NOT* issubclassable. In this case, raise a
     # human-readable exception embedding the original (typically unreadable)
@@ -541,14 +541,14 @@ def die_unless_type_issubclassable(
         raise exception_cls(exception_message) from exception
 
 # ....................{ TESTERS                            }....................
-#FIXME: Unit test up the "is_forwardref_ignorable" parameter, please.
+#FIXME: Unit test up the "is_forwardref_valid" parameter, please.
 @callable_cached
 def is_type_isinstanceable(
     # Mandatory parameters.
     cls: object,
 
     # Optional parameters.
-    is_forwardref_ignorable: bool = True,
+    is_forwardref_valid: bool = True,
 ) -> bool:
     '''
     :data:`True` only if the passed object is an **isinstanceable class** (i.e.,
@@ -578,7 +578,7 @@ def is_type_isinstanceable(
     ----------
     cls : object
         Object to be tested.
-    is_forwardref_ignorable : bool, optional
+    is_forwardref_valid : bool, optional
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
         proxying an external type that may currently be undefined). Defaults to
@@ -601,8 +601,8 @@ def is_type_isinstanceable(
     :func:`.die_unless_type_isinstanceable`
         Further details.
     '''
-    assert isinstance(is_forwardref_ignorable, bool), (
-        f'{repr(is_forwardref_ignorable)} not bool.')
+    assert isinstance(is_forwardref_valid, bool), (
+        f'{repr(is_forwardref_valid)} not bool.')
 
     # Avoid circular import dependencies.
     from beartype._check.forward.reference.fwdreftest import is_forwardref
@@ -620,7 +620,7 @@ def is_type_isinstanceable(
     #
     # Note that this test is efficient and thus tested *BEFORE*
     # isinstanceability, which is less efficient.
-    elif is_forwardref_ignorable and is_forwardref(cls):
+    elif is_forwardref_valid and is_forwardref(cls):
         # print(f'{repr(cls)} is forward reference proxy!')
         return True
     # Else, either the caller prefers to disregard this distinction *OR* this
@@ -656,14 +656,14 @@ def is_type_isinstanceable(
     return True
 
 
-#FIXME: Unit test up the "is_forwardref_ignorable" parameter, please.
+#FIXME: Unit test up the "is_forwardref_valid" parameter, please.
 @callable_cached
 def is_type_issubclassable(
     # Mandatory parameters.
     cls: object,
 
     # Optional parameters.
-    is_forwardref_ignorable: bool = True,
+    is_forwardref_valid: bool = True,
 ) -> bool:
 
     '''
@@ -687,7 +687,7 @@ def is_type_issubclassable(
     ----------
     cls : object
         Object to be tested.
-    is_forwardref_ignorable : bool, optional
+    is_forwardref_valid : bool, optional
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
         proxying an external type that may currently be undefined). Defaults to
@@ -713,8 +713,8 @@ def is_type_issubclassable(
     :func:`.die_unless_type_issubclassable`
         Further details.
     '''
-    assert isinstance(is_forwardref_ignorable, bool), (
-        f'{repr(is_forwardref_ignorable)} not bool.')
+    assert isinstance(is_forwardref_valid, bool), (
+        f'{repr(is_forwardref_valid)} not bool.')
 
     # Avoid circular import dependencies.
     from beartype._check.forward.reference.fwdreftest import is_forwardref
@@ -730,7 +730,7 @@ def is_type_issubclassable(
     #
     # Note that this test is efficient and thus tested *BEFORE*
     # isinstanceability, which is less efficient.
-    elif is_forwardref_ignorable and is_forwardref(cls):
+    elif is_forwardref_valid and is_forwardref(cls):
         return True
     # Else, either the caller prefers to disregard this distinction *OR* this
     # class is not a forward reference proxy type.
@@ -769,7 +769,7 @@ def _die_if_object_uncheckable(
     obj_pith: object,
     obj_raiser: Callable,
     obj_tester: Callable[[object, TypeOrTupleTypes], bool],
-    is_forwardref_ignorable: bool,
+    is_forwardref_valid: bool,
     exception_cls: TypeException,
     exception_prefix: str,
 ) -> None:
@@ -799,7 +799,7 @@ def _die_if_object_uncheckable(
 
         * :func:`isinstance`.
         * :func:`issubclass`.
-    is_forwardref_ignorable : bool, optional
+    is_forwardref_valid : bool, optional
         :data:`True` only if this function permits this object to be a
         **forward reference proxy** (i.e., :mod:`beartype`-specific private type
         proxying an external type that may currently be undefined). Defaults to
@@ -851,7 +851,7 @@ def _die_if_object_uncheckable(
         # If this class is *NOT* runtime-checkable, raise an exception.
         obj_raiser(
             cls=obj,
-            is_forwardref_ignorable=is_forwardref_ignorable,
+            is_forwardref_valid=is_forwardref_valid,
             exception_cls=exception_cls,
             exception_prefix=exception_prefix,
         )

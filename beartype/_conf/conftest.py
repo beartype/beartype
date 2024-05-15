@@ -23,6 +23,7 @@ from beartype.roar import (
 from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confenum import (
+    BeartypeDecorationPosition,
     BeartypeStrategy,
     BeartypeViolationVerbosity,
 )
@@ -77,8 +78,34 @@ def die_if_conf_kwargs_invalid(conf_kwargs: DictStrToAny) -> None:
     '''
 
     # ..................{ VALIDATE                           }..................
+    # If "claw_decoration_position_funcs" is *NOT* an enumeration member, raise
+    # an exception.
+    if not isinstance(
+        conf_kwargs['claw_decoration_position_funcs'],
+        BeartypeDecorationPosition
+    ):
+        raise BeartypeConfParamException(
+            f'Beartype configuration parameter "claw_decoration_position_funcs" '
+            f'value {repr(conf_kwargs["claw_decoration_position_funcs"])} not '
+            f'"beartype.BeartypeDecorationPosition" enumeration member.'
+        )
+    # Else, "claw_decoration_position_funcs" is an enumeration member.
+    #
+    # If "claw_decoration_position_types" is *NOT* an enumeration member, raise
+    # an exception.
+    elif not isinstance(
+        conf_kwargs['claw_decoration_position_types'],
+        BeartypeDecorationPosition
+    ):
+        raise BeartypeConfParamException(
+            f'Beartype configuration parameter "claw_decoration_position_types" '
+            f'value {repr(conf_kwargs["claw_decoration_position_types"])} not '
+            f'"beartype.BeartypeDecorationPosition" enumeration member.'
+        )
+    # Else, "claw_decoration_position_types" is an enumeration member.
+    #
     # If "claw_is_pep526" is *NOT* a boolean, raise an exception.
-    if not isinstance(conf_kwargs['claw_is_pep526'], bool):
+    elif not isinstance(conf_kwargs['claw_is_pep526'], bool):
         raise BeartypeConfParamException(
             f'Beartype configuration parameter "claw_is_pep526" '
             f'value {repr(conf_kwargs["claw_is_pep526"])} not boolean.'

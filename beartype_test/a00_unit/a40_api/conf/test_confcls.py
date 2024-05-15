@@ -26,6 +26,7 @@ def test_conf_dataclass() -> None:
     # Defer test-specific imports.
     from beartype import (
         BeartypeConf,
+        BeartypeDecorationPosition,
         BeartypeHintOverrides,
         BeartypeStrategy,
         BeartypeViolationVerbosity,
@@ -60,6 +61,8 @@ def test_conf_dataclass() -> None:
     # * The unqualified basenames of and all public fields of this class.
     BEAR_CONF_REPR_SUBSTRS = (
         'BeartypeConf',
+        'claw_decoration_position_funcs',
+        'claw_decoration_position_types',
         'claw_is_pep526',
         'hint_overrides',
         'is_color',
@@ -85,6 +88,8 @@ def test_conf_dataclass() -> None:
     # All possible keyword arguments initialized to non-default values with
     # which to instantiate a non-default beartype configuration.
     BEAR_CONF_NONDEFAULT_KWARGS = dict(
+        claw_decoration_position_funcs=BeartypeDecorationPosition.FIRST,
+        claw_decoration_position_types=BeartypeDecorationPosition.FIRST,
         claw_is_pep526=False,
         hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
         is_color=True,
@@ -123,12 +128,14 @@ def test_conf_dataclass() -> None:
     assert BeartypeConf() is BeartypeConf()
     assert (
         BeartypeConf(
-            strategy=BeartypeStrategy.On,
+            claw_decoration_position_funcs=BeartypeDecorationPosition.FIRST,
+            claw_decoration_position_types=BeartypeDecorationPosition.LAST,
             claw_is_pep526=False,
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
             is_debug=True,
             is_color=True,
             is_pep484_tower=True,
+            strategy=BeartypeStrategy.On,
             violation_door_type=RuntimeError,
             violation_param_type=TypeError,
             violation_return_type=ValueError,
@@ -143,17 +150,23 @@ def test_conf_dataclass() -> None:
             violation_return_type=ValueError,
             violation_param_type=TypeError,
             violation_door_type=RuntimeError,
+            strategy=BeartypeStrategy.On,
             is_pep484_tower=True,
             is_color=True,
             is_debug=True,
             hint_overrides=BEAR_HINT_OVERRIDES_NONEMPTY,
             claw_is_pep526=False,
-            strategy=BeartypeStrategy.On,
+            claw_decoration_position_types=BeartypeDecorationPosition.LAST,
+            claw_decoration_position_funcs=BeartypeDecorationPosition.FIRST,
         )
     )
 
     # ....................{ PASS ~ properties              }....................
     # Assert that the default configuration contains the expected fields.
+    assert BEAR_CONF_DEFAULT.claw_decoration_position_funcs is (
+        BeartypeDecorationPosition.LAST)
+    assert BEAR_CONF_DEFAULT.claw_decoration_position_types is (
+        BeartypeDecorationPosition.LAST)
     assert BEAR_CONF_DEFAULT.claw_is_pep526 is True
     assert BEAR_CONF_DEFAULT.hint_overrides is BEARTYPE_HINT_OVERRIDES_EMPTY
     assert BEAR_CONF_DEFAULT.is_color is None
@@ -173,6 +186,10 @@ def test_conf_dataclass() -> None:
     assert BEAR_CONF_DEFAULT._is_warning_cls_on_decorator_exception_set is False
 
     # Assert that the non-default configuration contains the expected fields.
+    assert BEAR_CONF_DEFAULT.claw_decoration_position_funcs is (
+        BeartypeDecorationPosition.LAST)
+    assert BEAR_CONF_DEFAULT.claw_decoration_position_types is (
+        BeartypeDecorationPosition.LAST)
     assert BEAR_CONF_NONDEFAULT.claw_is_pep526 is False
     assert BEAR_CONF_NONDEFAULT.hint_overrides == (
         BEAR_HINT_OVERRIDES_NONEMPTY | BEARTYPE_HINT_OVERRIDES_PEP484_TOWER)
@@ -266,6 +283,12 @@ def test_conf_dataclass() -> None:
     # Assert that instantiating a configuration with an invalid parameter raises
     # the expected exception.
     with raises(BeartypeConfParamException):
+        BeartypeConf(claw_decoration_position_funcs=(
+            "High 'mid the shifting domes of sheeted spray"))
+    with raises(BeartypeConfParamException):
+        BeartypeConf(claw_decoration_position_types=(
+            "That canopied his path o'er the waste deep;"))
+    with raises(BeartypeConfParamException):
         BeartypeConf(claw_is_pep526=(
             'The fountains mingle with the river'))
     with raises(BeartypeConfParamException):
@@ -328,6 +351,12 @@ def test_conf_dataclass() -> None:
 
     # Assert that attempting to modify any public read-only property of this
     # dataclass raises the expected exception.
+    with raises(AttributeError):
+        BEAR_CONF_DEFAULT.claw_decoration_position_funcs = (
+            BeartypeDecorationPosition.FIRST)
+    with raises(AttributeError):
+        BEAR_CONF_DEFAULT.claw_decoration_position_types = (
+            BeartypeDecorationPosition.FIRST)
     with raises(AttributeError):
         BEAR_CONF_DEFAULT.claw_is_pep526 = True
     with raises(AttributeError):

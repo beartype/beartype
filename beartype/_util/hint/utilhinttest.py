@@ -142,7 +142,7 @@ def is_hint(hint: object) -> bool:
         is_hint_pep_supported(hint) if is_hint_pep(hint) else
         # This is a PEP-noncompliant type hint, which by definition is
         # necessarily supported by @beartype.
-        is_hint_nonpep(hint=hint, is_forwardref_ignorable=True)
+        is_hint_nonpep(hint=hint, is_forwardref_valid=True)
     )
 
 

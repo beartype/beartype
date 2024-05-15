@@ -104,18 +104,17 @@ def skip_unless_godmode():
     # the current platform is vanilla Windows).
     username = get_shell_var_value_or_none('USER')
 
+    # Substring prefixing the reason given below.
+    reason_prefix = f'User "{username}" ' if username else 'Current user '
+
     # Skip this test if the current platform is POSIX-compatible *AND* the
     # current user invoking the active Python interpreter is *NOT* a
     # God-mode-endowed user (i.e., the principal maintainer of this package).
     return skip_if(
         username != 'leycec',
         reason=(
-            (
-                f'User "{username}" lacks God-mode test privileges '
-                f"(i.e., is smart and knows what's good for them)."
-            )
-            if username else
-            'Current platform POSIX-noncompliant.'
+            f'{reason_prefix}lacks God-mode test privileges '
+            f"(i.e., is smart and knows what's good for them)."
         ),
     )
 

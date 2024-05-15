@@ -357,7 +357,7 @@ class BeartypeForwardRefMeta(type):
                     # referee that proxy refers to. Although an unlikely edge
                     # case, unlikely edge cases are like million-to-one chances
                     # in a Pratchett novel: you just know it's coming up.
-                    is_forwardref_ignorable=False,
+                    is_forwardref_valid=False,
                 )
                 # Else, this referee is isinstanceable.
             # If doing so raised *ANY* exception whatsoever...

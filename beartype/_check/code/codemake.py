@@ -2152,7 +2152,7 @@ def make_check_expr(
         # * The higher-level die_unless_hint_nonpep() validator is
         #   intentionally *NOT* called here, as doing so would permit both:
         #   * PEP-noncompliant forward references, which could admittedly be
-        #     disabled by passing "is_forwardref_ignorable=False" to that call.
+        #     disabled by passing "is_forwardref_valid=False" to that call.
         #   * PEP-noncompliant tuple unions, which currently *CANNOT* be
         #     disabled by passing such an option to that call.
         else:

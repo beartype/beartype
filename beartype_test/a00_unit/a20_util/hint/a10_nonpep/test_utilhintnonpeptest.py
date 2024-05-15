@@ -44,19 +44,19 @@ def test_die_unless_hint_nonpep(not_hints_nonpep) -> None:
     # ....................{ ASSERTS                        }....................
     # Assert this function accepts PEP-noncompliant type hints.
     for hint_nonpep in HINTS_NONPEP:
-        die_unless_hint_nonpep(hint_nonpep, is_forwardref_ignorable=True)
+        die_unless_hint_nonpep(hint_nonpep, is_forwardref_valid=True)
 
     # Assert this function rejects objects excepted to be rejected.
     for not_hint_nonpep in not_hints_nonpep:
         with raises(BeartypeDecorHintNonpepException):
             die_unless_hint_nonpep(
-                not_hint_nonpep, is_forwardref_ignorable=True)
+                not_hint_nonpep, is_forwardref_valid=True)
 
     # Assert this function rejects unhashable objects.
     for not_hint_unhashable in NOT_HINTS_UNHASHABLE:
         with raises(BeartypeDecorHintNonpepException):
             die_unless_hint_nonpep(
-                not_hint_unhashable, is_forwardref_ignorable=True)
+                not_hint_unhashable, is_forwardref_valid=True)
 
 # ....................{ TESTS ~ tester                     }....................
 def test_is_hint_nonpep(not_hints_nonpep) -> None:
@@ -84,17 +84,17 @@ def test_is_hint_nonpep(not_hints_nonpep) -> None:
     # Assert this function accepts PEP-noncompliant type hints.
     for hint_nonpep in HINTS_NONPEP:
         assert is_hint_nonpep(
-            hint=hint_nonpep, is_forwardref_ignorable=True) is True
+            hint=hint_nonpep, is_forwardref_valid=True) is True
 
     # Assert this function rejects objects excepted to be rejected.
     for not_hint_nonpep in not_hints_nonpep:
         assert is_hint_nonpep(
-            hint=not_hint_nonpep, is_forwardref_ignorable=True) is False
+            hint=not_hint_nonpep, is_forwardref_valid=True) is False
 
     # Assert this function rejects unhashable objects.
     for non_hint_unhashable in NOT_HINTS_UNHASHABLE:
         assert is_hint_nonpep(
-            hint=non_hint_unhashable, is_forwardref_ignorable=True) is False
+            hint=non_hint_unhashable, is_forwardref_valid=True) is False
 
 
 def test_is_hint_nonpep_tuple(not_hints_nonpep) -> None:

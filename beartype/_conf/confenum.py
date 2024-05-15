@@ -25,6 +25,80 @@ from enum import (
 
 # ....................{ ENUMERATIONS                       }....................
 @die_unless_enum_member_values_unique
+class BeartypeDecorationPosition(Enum):
+    '''
+    Enumeration of all kinds of **import hook decorator positions** (i.e.,
+    competing locations to which the :func:`beartype.beartype` decorator will be
+    implicitly injected into existing chains of one or more decorators
+    decorating classes and callables defined by modules imported under
+    :mod:`beartype.claw` import hooks, each with concomitant tradeoffs with
+    respect to decorator interoperability and quality assurance).
+
+    Attributes
+    ----------
+    FIRST : EnumMemberType
+        **First (i.e., bottom-most) decorator position**, configuring
+        :mod:`beartype.claw` import hooks to inject the
+        :func:`beartype.beartype` decorator as the first (i.e., bottom-most)
+        decorator in relevant decorator chains: e.g.,
+
+        .. code-block:: python
+
+           # Registering this import hook...
+           from beartype import BeartypeConf, BeartypeDecorationPosition
+           from beartype.claw import beartype_this_package
+           beartype_this_package(conf=BeartypeConf(
+               claw_decoration_position_types=BeartypeDecorationPosition.FIRST))
+
+           # ...transforms chains of class decorators like this...
+           from dataclasses import dataclass
+           @dataclass
+           class ClassyData(object):
+               integral_datum: int
+
+           # ...into chains of class decorators like this.
+           from beartype import beartype
+           from dataclasses import dataclass
+           @dataclass
+           @beartype  # <-- @beartype decorates first rather than last! \\o/
+           class ClassyData(object):
+               integral_datum: int
+
+    LAST : EnumMemberType
+        **Last (i.e., top-most) decorator position**, configuring
+        :mod:`beartype.claw` import hooks to inject the
+        :func:`beartype.beartype` decorator as the last (i.e., top-most)
+        decorator in relevant decorator chains. As the default, this position
+        need *not* be explicitly passed: e.g.,
+
+        .. code-block:: python
+
+           # Registering this import hook...
+           from beartype import BeartypeConf, BeartypeDecorationPosition
+           from beartype.claw import beartype_this_package
+           beartype_this_package(conf=BeartypeConf(
+               claw_decoration_position_funcs=BeartypeDecorationPosition.FIRST))
+
+           # ...transforms chains of function decorators like this...
+           from functools import cache
+           @cache
+           def chad_func() -> int:
+               return 42
+
+           # ...into chains of function decorators like this.
+           from beartype import beartype
+           from functools import cache
+           @cache
+           @beartype  # <-- @beartype decorates first rather than last! \\o/
+           def chad_func() -> int:
+               return 42
+    '''
+
+    FIRST = next_enum_member_value()
+    LAST = next_enum_member_value()
+
+
+@die_unless_enum_member_values_unique
 class BeartypeStrategy(Enum):
     '''
     Enumeration of all kinds of **type-checking strategies** (i.e., competing
@@ -62,8 +136,8 @@ class BeartypeStrategy(Enum):
         *except* those callables explicitly decorated by this strategy.
     O1 : EnumMemberType
         **Constant-time strategy** (i.e., the default ``O(1)`` strategy,
-        type-checking a single randomly selected item of each container). As
-        the default, this strategy need *not* be explicitly enabled.
+        type-checking a single randomly selected item of each container). As the
+        default, this strategy need *not* be explicitly enabled.
     Ologn : EnumMemberType
         **Logarithmic-time strategy** (i.e., the ``O(log n)`` strategy,
         type-checking a randomly selected number of items ``log(len(obj))`` of
