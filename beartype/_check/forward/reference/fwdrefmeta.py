@@ -78,9 +78,8 @@ class BeartypeForwardRefMeta(type):
 
         Returns
         -------
-        Type['_BeartypeForwardRefIndexableABC']
-            Fully-qualified forward reference subclass concatenated as described
-            above.
+        BeartypeForwardRef
+            Fully-qualified forward reference subclass concatenated as above.
         '''
 
         # Avoid circular import dependencies.

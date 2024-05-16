@@ -40,18 +40,29 @@ class BeartypeDecorationPosition(Enum):
         **First (i.e., bottom-most) decorator position**, configuring
         :mod:`beartype.claw` import hooks to inject the
         :func:`beartype.beartype` decorator as the first (i.e., bottom-most)
-        decorator in relevant decorator chains: e.g.,
+        decorator in relevant decorator chains.
+
+        Note that this position is *not* the default (and thus need be
+        explicitly passed anywhere). Why? Various hand-wavy reasons, the most
+        compelling of which is that this position ignores explicitly configured
+        :func:`beartype.beartype` decorations (e.g.,
+        ``@beartype(conf=BeartypeConf(...))``). When this position is used,
+        implicit :func:`beartype.beartype` decorations injected by
+        :mod:`beartype.claw` import hooks assume precedence over explicit
+        :func:`beartype.beartype` decorations manually specified by users. Since
+        that is almost never what anyone wants, this is *not* the default: e.g.,
 
         .. code-block:: python
 
            # Registering this import hook...
-           from beartype import BeartypeConf, BeartypeDecorationPosition
+           from beartype import beartype, BeartypeConf, BeartypeDecorationPosition
            from beartype.claw import beartype_this_package
            beartype_this_package(conf=BeartypeConf(
                claw_decoration_position_types=BeartypeDecorationPosition.FIRST))
 
            # ...transforms chains of class decorators like this...
            from dataclasses import dataclass
+           @beartype(conf=BeartypeConf(is_debug=True))
            @dataclass
            class ClassyData(object):
                integral_datum: int
@@ -59,39 +70,84 @@ class BeartypeDecorationPosition(Enum):
            # ...into chains of class decorators like this.
            from beartype import beartype
            from dataclasses import dataclass
+           @beartype(conf=BeartypeConf(is_debug=True))
            @dataclass
            @beartype  # <-- @beartype decorates first rather than last! \\o/
            class ClassyData(object):
                integral_datum: int
 
+        In the above example, the default :func:`beartype.beartype` decorator
+        injected by the :func:`beartype.claw.beartype_this_package` silently
+        overwrites the non-default
+        ``@beartype(conf=BeartypeConf(is_debug=True))`` decorator manually
+        configured by the author of that third-party package. Consequently,
+        caveats apply to usage of this position:
+
+        * This position should only be applied to codebases that avoid
+          explicitly decorating *any* classes or callables with the
+          :func:`beartype.beartype` decorator.
+        * Equivalently, this position should only be applied to codebases that
+          implicitly decorate *all* classes and callables with
+          :mod:`beartype.claw` import hooks.
+        * Equivalently, if a codebase explicitly decorates even a single class
+          or callable with the :func:`beartype.beartype` decorator, this
+          position *cannot* be used.
+        * Consequently, this position should *not* be applied to other packages
+          outside your direct control.
+        * In particular, this position should *not* be applied to all packages
+          with the :func:`beartype.claw.beartype_all` import hook: e.g.,
+
+          .. code-block:: python
+
+             # Never do this. Srsly. Never do this. Srsly! Read this and weep.
+             from beartype import BeartypeConf, BeartypeDecorationPosition
+             from beartype.claw import beartype_all
+             beartype_all(conf=BeartypeConf(
+                 claw_decoration_position_types=BeartypeDecorationPosition.FIRST))
     LAST : EnumMemberType
         **Last (i.e., top-most) decorator position**, configuring
         :mod:`beartype.claw` import hooks to inject the
         :func:`beartype.beartype` decorator as the last (i.e., top-most)
-        decorator in relevant decorator chains. As the default, this position
-        need *not* be explicitly passed: e.g.,
+        decorator in relevant decorator chains.
+
+        Note that this position is already the default (and thus need *not* be
+        explicitly passed anywhere). Why? Various hand-wavy reasons, the most
+        compelling of which is that this position respects explicitly configured
+        :func:`beartype.beartype` decorations (e.g.,
+        ``@beartype(conf=BeartypeConf(...))``). When this position is used,
+        explicit :func:`beartype.beartype` decorations assume precedence over
+        implicit :func:`beartype.beartype` decorations injected by
+        :mod:`beartype.claw` import hooks. Since that is almost always what
+        everyone wants, this is the default position: e.g.,
 
         .. code-block:: python
 
            # Registering this import hook...
-           from beartype import BeartypeConf, BeartypeDecorationPosition
+           from beartype import beartype, BeartypeConf, BeartypeDecorationPosition
            from beartype.claw import beartype_this_package
            beartype_this_package(conf=BeartypeConf(
-               claw_decoration_position_funcs=BeartypeDecorationPosition.FIRST))
+               claw_decoration_position_funcs=BeartypeDecorationPosition.LAST))
 
            # ...transforms chains of function decorators like this...
            from functools import cache
            @cache
+           @beartype(conf=BeartypeConf(is_debug=True))
            def chad_func() -> int:
                return 42
 
            # ...into chains of function decorators like this.
-           from beartype import beartype
            from functools import cache
+           @beartype  # <-- @beartype decorates last rather than first! \\o/
            @cache
-           @beartype  # <-- @beartype decorates first rather than last! \\o/
+           @beartype(conf=BeartypeConf(is_debug=True))
            def chad_func() -> int:
                return 42
+
+        In the above example, the default :func:`beartype.beartype` decorator
+        injected by the :func:`beartype.claw.beartype_this_package` is silently
+        ignored in favour of the non-default
+        ``@beartype(conf=BeartypeConf(is_debug=True))`` decorator manually
+        configured by the author of that third-party package.
     '''
 
     FIRST = next_enum_member_value()

@@ -58,18 +58,17 @@ from beartype.claw._ast.pep.clawastpep526 import (
 from beartype.claw._ast.pep.clawastpep695 import (
     BeartypeNodeTransformerPep695Mixin)
 from beartype.claw._ast._clawastutil import BeartypeNodeTransformerUtilityMixin
-from beartype._data.hint.datahinttyping import (
-    NodeCallable,
-    NodeT,
-)
 from beartype.typing import (
     List,
     Optional,
     Type,
 )
-from beartype._data.ast.dataast import TYPES_NODE_LEXICAL_SCOPE
 from beartype._conf.confcls import BeartypeConf
-# from beartype._util.ast.utilastget import get_node_repr_indented
+from beartype._data.hint.datahinttyping import (
+    NodeCallable,
+    NodeT,
+)
+from beartype._data.ast.dataast import TYPES_NODE_LEXICAL_SCOPE
 from beartype._util.ast.utilastmake import make_node_importfrom
 from beartype._util.ast.utilasttest import is_node_callable_typed
 

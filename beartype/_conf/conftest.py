@@ -20,6 +20,8 @@ from beartype.roar import (
     BeartypeCallHintReturnViolation,
     BeartypeDoorHintViolation,
 )
+from beartype.roar._roarwarn import (
+    _BeartypeConfReduceDecoratorExceptionToWarningDefault)
 from beartype.typing import Optional
 from beartype._cave._cavemap import NoneTypeOr
 from beartype._conf.confenum import (
@@ -212,6 +214,7 @@ def default_conf_kwargs_before(conf_kwargs: DictStrToAny) -> None:
         Dictionary mapping from the names to values of *all* possible keyword
         parameters configuring this configuration.
     '''
+    assert isinstance(conf_kwargs, dict), f'{repr(conf_kwargs)} not dictionary.'
 
     # ..................{ DEFAULT ~ violation_*type          }..................
     # Default violation type if passed *OR* "None" if unpassed.
@@ -269,6 +272,7 @@ def default_conf_kwargs_after(conf_kwargs: DictStrToAny) -> None:
         Dictionary mapping from the names to values of *all* possible keyword
         parameters configuring this configuration.
     '''
+    assert isinstance(conf_kwargs, dict), f'{repr(conf_kwargs)} not dictionary.'
 
     # ..................{ DEFAULT ~ hint_overrides           }..................
     # If enabling the PEP 484-compliant implicit numeric tower...

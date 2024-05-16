@@ -21,6 +21,8 @@ callers.
 
 #FIXME: [DOCOS] Document all newly defined configuration parameters in our
 #reST-formatted docos, please -- including:
+#* "claw_decoration_position_funcs".
+#* "claw_decoration_position_types".
 #* "claw_is_pep526".
 #* "hint_overrides".
 #* "violation_door_type".
@@ -60,7 +62,11 @@ from beartype._data.hint.datahinttyping import (
     TypeWarning,
 )
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
-from beartype._util.utilobject import get_object_type_basename
+from beartype._util.cache.utilcachecall import callable_cached
+from beartype._util.utilobject import (
+    SENTINEL,
+    get_object_type_basename,
+)
 from threading import Lock
 
 # ....................{ CLASSES                            }....................
@@ -694,10 +700,6 @@ class BeartypeConf(object):
               ``"False"``, nor ``"None"``).
         '''
 
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # CAUTION: Synchronize this tuple with the similar "self._conf_kwargs"
-        # dictionary defined below.
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # In a non-reentrant thread lock specific to beartype configurations...
         #
         # Note that this lock is potentially overkill and thus unnecessary.
@@ -712,6 +714,10 @@ class BeartypeConf(object):
             # value of the ${BEARTYPE_IS_COLOR} environment variable (if set).
             is_color = get_is_color(is_color)
 
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # CAUTION: Synchronize this tuple with the similar
+            # "self._conf_kwargs" dictionary defined below.
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # Efficiently hashable tuple of these parameters in arbitrary order.
             conf_args = (
                 claw_decoration_position_funcs,
@@ -841,9 +847,17 @@ class BeartypeConf(object):
 
             # ..................{ CLASSIFY ~ more            }..................
             # If the value of the "warning_cls_on_decorator_exception" parameter
-            # is still the default private fake warning category established
-            # above, then the caller failed to explicitly pass a valid value. In
-            # this case...
+            # is the default private fake warning category established above,
+            # the caller failed to pass a valid value. In this case...
+            #
+            # Note that this default is intentionally handled manually here
+            # rather than in either the default_conf_kwargs_before() or
+            # default_conf_kwargs_after() functions called above. Why? Because
+            # the original default
+            # "_BeartypeConfReduceDecoratorExceptionToWarningDefault" *MUST* be
+            # preserved in the public "conf_kwargs" property to ensure that
+            # permutations of this configuration created via that property
+            # preserve the original default. (Look. It's complicated. I sigh!)
             if (
                 warning_cls_on_decorator_exception is
                 _BeartypeConfReduceDecoratorExceptionToWarningDefault
@@ -908,6 +922,16 @@ class BeartypeConf(object):
     # ..................{ PROPERTIES ~ options               }..................
     # Read-only public properties with which this configuration was originally
     # instantiated (as keyword-only parameters).
+    #
+    # Note that *ALL* of these properties could be automated away with a single
+    # sufficiently intelligent __getattr__() implementation. Indeed, we briefly
+    # attempted to do just that. So what happened? Static type-checkers.
+    # Although tedious and error-prone, the current approach of manually
+    # implementing one read-only public property for each keyword-only parameter
+    # has the distinct advantage of informing static type-checkers of the type
+    # hints annotating these properties. While automated and error-free, the
+    # __getattr__() approach destroyed that typing -- which then effectively
+    # broke backward compatibility with end users using static type-checkers.
 
     @property
     def hint_overrides(self) -> BeartypeHintOverrides:
