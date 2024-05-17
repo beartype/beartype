@@ -4,7 +4,7 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **beartype import hook Python enhancement proposal (PEP) subpackage
+**Beartype import hook Python enhancement proposal (PEP) subpackage
 initialization submodule** (i.e., data module mimicking real-world usage of
 various :func:`beartype.claw` import hooks on various PEPs).
 '''

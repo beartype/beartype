@@ -62,11 +62,7 @@ from beartype._data.hint.datahinttyping import (
     TypeWarning,
 )
 from beartype._data.func.datafuncarg import ARG_VALUE_UNPASSED
-from beartype._util.cache.utilcachecall import callable_cached
-from beartype._util.utilobject import (
-    SENTINEL,
-    get_object_type_basename,
-)
+from beartype._util.utilobject import get_object_type_basename
 from threading import Lock
 
 # ....................{ CLASSES                            }....................

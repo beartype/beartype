@@ -4,11 +4,11 @@
 # See "LICENSE" for further details.
 
 '''
-Project-wide **beartype import hookable** :pep:`526` **warning submodule**
-(i.e., data module containing *only* :pep:`526`-compliant annotated variable
-assignments emitting :exc:`beartype.roar.BeartypeValeLambdaWarning` violations,
-mimicking real-world usage of the :func:`beartype.claw.beartype_package` import
-hook from an external caller).
+**Beartype import hookable** :pep:`526` **warning submodule** (i.e., data module
+containing *only* :pep:`526`-compliant annotated variable assignments emitting
+:exc:`beartype.roar.BeartypeValeLambdaWarning` violations, mimicking real-world
+usage of the :func:`beartype.claw.beartype_package` import hook from external
+callers).
 '''
 
 # ....................{ IMPORTS                            }....................

@@ -44,13 +44,25 @@ class BeartypeDecorationPosition(Enum):
 
         Note that this position is *not* the default (and thus need be
         explicitly passed anywhere). Why? Various hand-wavy reasons, the most
-        compelling of which is that this position ignores explicitly configured
-        :func:`beartype.beartype` decorations (e.g.,
-        ``@beartype(conf=BeartypeConf(...))``). When this position is used,
-        implicit :func:`beartype.beartype` decorations injected by
-        :mod:`beartype.claw` import hooks assume precedence over explicit
-        :func:`beartype.beartype` decorations manually specified by users. Since
-        that is almost never what anyone wants, this is *not* the default: e.g.,
+        compelling of which is that this position ignores standard decorators
+        and **thus violates PEP standards.** Notably, this position ignores:
+
+        * The :pep:`484`-compliant :func:`typing.no_type_check` decorator, which
+          then erroneously instructs :func:`beartye.beartype` to type-check
+          classes and callables that should *not* be type-checked.
+        * The :pep:`557`-compliant :func:`dataclasses.dataclass` decorator,
+          which then prevents :func:`beartye.beartype` from type-checking
+          dataclasses.
+        * Explicitly configured :func:`beartype.beartype` decorators (e.g.,
+          ``@beartype(conf=BeartypeConf(...))``), which then instructs
+          :func:`beartye.beartype` to type-check classes and callables under
+          differing configurations.
+
+        When this position is used, implicit :func:`beartype.beartype`
+        decorators injected by :mod:`beartype.claw` import hooks assume
+        precedence over *all* other decorators (including those listed above),
+        with predictably catastrophic results. Since this is almost never what
+        anyone wants, this is *not* the default: e.g.,
 
         .. code-block:: python
 
@@ -68,30 +80,35 @@ class BeartypeDecorationPosition(Enum):
                integral_datum: int
 
            # ...into chains of class decorators like this.
-           from beartype import beartype
            from dataclasses import dataclass
-           @beartype(conf=BeartypeConf(is_debug=True))
-           @dataclass
-           @beartype  # <-- @beartype decorates first rather than last! \\o/
+           @beartype(conf=BeartypeConf(is_debug=True))  # <-- *IGNORED*
+           @dataclass  # <-- *IGNORED* by the @beartype decorator injected below
+           @beartype   # <-- @beartype now ignores all of the above decorators!!
            class ClassyData(object):
                integral_datum: int
 
         In the above example, the default :func:`beartype.beartype` decorator
         injected by the :func:`beartype.claw.beartype_this_package` silently
-        overwrites the non-default
-        ``@beartype(conf=BeartypeConf(is_debug=True))`` decorator manually
-        configured by the author of that third-party package. Consequently,
-        caveats apply to usage of this position:
+        fails to type-check the :func:`dataclasses.dataclass` decorator and then
+        overwrites the ``@beartype(conf=BeartypeConf(is_debug=True))`` decorator
+        manually configured by the author of that third-party package.
+        Consequently, caveats apply to usage of this position:
 
         * This position should only be applied to codebases that avoid
-          explicitly decorating *any* classes or callables with the
-          :func:`beartype.beartype` decorator.
+          explicitly decorating classes and/or callables with standard
+          decorators, including:
+
+          * The :pep:`484`-compliant :func:`typing.no_type_check` decorator.
+          * The :pep:`557`-compliant :func:`dataclasses.dataclass` decorator.
+          * The :func:`beartype.beartype` decorator itself.
+
         * Equivalently, this position should only be applied to codebases that
           implicitly decorate *all* classes and callables with
           :mod:`beartype.claw` import hooks.
         * Equivalently, if a codebase explicitly decorates even a single class
-          or callable with the :func:`beartype.beartype` decorator, this
-          position *cannot* be used.
+          or callable with the :func:`typing.no_type_check`,
+          :func:`dataclasses.dataclass`, or :func:`beartype.beartype`
+          decorators, this position should *not* be used.
         * Consequently, this position should *not* be applied to other packages
           outside your direct control.
         * In particular, this position should *not* be applied to all packages
@@ -144,8 +161,8 @@ class BeartypeDecorationPosition(Enum):
                return 42
 
         In the above example, the default :func:`beartype.beartype` decorator
-        injected by the :func:`beartype.claw.beartype_this_package` is silently
-        ignored in favour of the non-default
+        injected by the :func:`beartype.claw.beartype_this_package` import hook
+        is silently ignored in favour of the non-default
         ``@beartype(conf=BeartypeConf(is_debug=True))`` decorator manually
         configured by the author of that third-party package.
     '''

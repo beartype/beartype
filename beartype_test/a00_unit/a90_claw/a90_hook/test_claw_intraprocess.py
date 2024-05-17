@@ -74,7 +74,10 @@ def test_claw_intraprocess_beartype_package() -> None:
     # Import all submodules of the package hooked above, exercising that these
     # submodules are subject to that import hook.
     from beartype_test.a00_unit.data.claw.intraprocess.hookable_package import (
-        kind, pep)
+        conf,
+        kind,
+        pep,
+    )
 
     # Import an arbitrary submodule *NOT* subject to those import hooks.
     from beartype_test.a00_unit.data.claw.intraprocess import unhookable_module
@@ -148,7 +151,10 @@ def test_claw_intraprocess_beartype_packages() -> None:
     # Import all submodules of the package hooked above, exercising that these
     # submodules are subject to that import hook.
     from beartype_test.a00_unit.data.claw.intraprocess.hookable_package import (
-        kind, pep)
+        conf,
+        kind,
+        pep,
+    )
 
     # Assert that repeating the same import hook as above silently succeeds.
     beartype_packages(PACKAGE_NAMES)
@@ -225,7 +231,10 @@ def test_claw_intraprocess_beartype_all() -> None:
     # Import *ALL* "beartype.claw"-specific data submodules, exercising that
     # these submodules are subject to that import hook.
     from beartype_test.a00_unit.data.claw.intraprocess.hookable_package import (
-        kind, pep)
+        conf,
+        kind,
+        pep,
+    )
 
     # Assert that repeating the same import hook as above silently succeeds.
     beartype_all()
@@ -281,7 +290,9 @@ def test_claw_intraprocess_beartyping() -> None:
         # testing whether or not this context manager raises exceptions under a
         # different (and thus conflicting) beartype configuration.
         from beartype_test.a00_unit.data.claw.intraprocess.hookable_package import (
-            pep)
+            conf,
+            pep,
+        )
 
         # Assert that nesting a similar context manager under a non-default
         # configuration nonetheless semantically equivalent to the default
