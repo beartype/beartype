@@ -242,6 +242,34 @@ for type-checking mappings with ignorable key or value child type hints (e.g.,
 ``dict[object, str]``, ``dict[str, object]``).
 '''
 
+# ....................{ HINT ~ pep : (484|585) : reiterable  }....................
+CODE_PEP484585_REITERABLE_ARGS_1 = '''(
+{indent_curr}    # True only if this pith is of this reiterable type *AND*...
+{indent_curr}    isinstance({pith_curr_assign_expr}, {hint_curr_expr}) and
+{indent_curr}    # True only if either this reiterable is empty *OR* this reiterable
+{indent_curr}    # is both non-empty and the first item satisfies this hint.
+{indent_curr}    (not {pith_curr_var_name} or {hint_child_placeholder})
+{indent_curr})'''
+'''
+:pep:`484`- and :pep:`585`-compliant code snippet type-checking the current pith
+against a parent **standard reiterable type** (i.e., type hint subscripted by
+exactly one child type hint constraining *all* items of this pith, which
+necessarily satisfies the :class:`collections.abc.Collection` protocol with
+guaranteed :math:`O(1)` read-only access to *only* the first collection item).
+
+See the
+:data:`beartype._data.hint.pep.sign.datapepsignset.HINT_SIGNS_REITERABLE_ARGS_1`
+docstring for further commentary on reiterables.
+'''
+
+
+CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR = (
+    '''next(iter({pith_curr_var_name}))''')
+'''
+:pep:`484`- and :pep:`585`-compliant Python expression efficiently yielding the
+first item of the current reiterable pith.
+'''
+
 # ....................{ HINT ~ pep : (484|585) : sequence  }....................
 CODE_PEP484585_SEQUENCE_ARGS_1 = '''(
 {indent_curr}    # True only if this pith is of this sequence type *AND*...
@@ -572,6 +600,10 @@ CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format: Callable = (
     CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR.format)
 CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format: Callable = (
     CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR.format)
+CODE_PEP484585_REITERABLE_ARGS_1_format: Callable = (
+    CODE_PEP484585_REITERABLE_ARGS_1.format)
+CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format: Callable = (
+    CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR.format)
 CODE_PEP484585_SEQUENCE_ARGS_1_format: Callable = (
     CODE_PEP484585_SEQUENCE_ARGS_1.format)
 CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format: Callable = (

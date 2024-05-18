@@ -52,6 +52,8 @@ from beartype._check.code.snip.codesnipstr import (
     CODE_PEP484585_MAPPING_KEY_ONLY_PITH_CHILD_EXPR_format,
     CODE_PEP484585_MAPPING_VALUE_ONLY_PITH_CHILD_EXPR_format,
     CODE_PEP484585_MAPPING_KEY_VALUE_PITH_CHILD_EXPR_format,
+    CODE_PEP484585_REITERABLE_ARGS_1_format,
+    CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format,
     CODE_PEP484585_SEQUENCE_ARGS_1_format,
     CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format,
     CODE_PEP484585_SUBCLASS_format,
@@ -96,13 +98,13 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignForwardRef,
     HintSignGeneric,
     HintSignLiteral,
-    # HintSignNone,
     HintSignTuple,
     HintSignType,
 )
 from beartype._data.hint.pep.sign.datapepsignset import (
     HINT_SIGNS_MAPPING,
     HINT_SIGNS_ORIGIN_ISINSTANCEABLE,
+    HINT_SIGNS_REITERABLE_ARGS_1,
     HINT_SIGNS_SEQUENCE_ARGS_1,
     HINT_SIGNS_SUPPORTED_DEEP,
     HINT_SIGNS_UNION,
@@ -785,13 +787,15 @@ def make_check_expr(
                 #   "None"), this assignment initializes this local to the new
                 #   set instantiated by this call; else, this assignment
                 #   preserves this local set as is.
-                hint_curr_expr, hint_refs_type_basename = (
-                    express_func_scope_type_ref(
-                        forwardref=hint_curr,
-                        forwardrefs_class_basename=hint_refs_type_basename,
-                        func_scope=func_wrapper_scope,
-                        exception_prefix=EXCEPTION_PREFIX,
-                    ))
+                (
+                    hint_curr_expr,
+                    hint_refs_type_basename,
+                ) = express_func_scope_type_ref(
+                    forwardref=hint_curr,
+                    forwardrefs_class_basename=hint_refs_type_basename,
+                    func_scope=func_wrapper_scope,
+                    exception_prefix=EXCEPTION_PREFIX,
+                )
 
                 # Code type-checking the current pith against this class.
                 func_curr_code = CODE_PEP484_INSTANCE_format(
@@ -1378,7 +1382,8 @@ def make_check_expr(
                 # ignorable arguments. In this case...
                 ):
                     # Python expression evaluating to the origin type of this
-                    # sequence hint.
+                    # sequence hint as a hidden beartype-specific parameter
+                    # injected into the signature of this wrapper function.
                     hint_curr_expr = add_func_scope_type(
                         # Origin type of this sequence hint.
                         cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
@@ -1432,10 +1437,9 @@ def make_check_expr(
                             pith_curr_var_name=pith_curr_var_name,
                             hint_curr_expr=hint_curr_expr,
                             hint_child_placeholder=_enqueue_hint_child(
-                                # Python expression yielding the value of a
-                                # randomly indexed item of the current pith
-                                # (i.e., standard sequence) to be
-                                # type-checked against this child hint.
+                                # Python expression yielding a randomly indexed
+                                # item of this pith to be type-checked against
+                                # this child hint.
                                 CODE_PEP484585_SEQUENCE_ARGS_1_PITH_CHILD_EXPR_format(
                                     pith_curr_var_name=pith_curr_var_name)),
                         )
@@ -1719,6 +1723,75 @@ def make_check_expr(
                             hint_curr_expr=hint_curr_expr,
                         )
                 # Else, this hint is *NOT* a mapping.
+                #
+                # ..........{ REITERABLES                          }............
+                # If this hint is a single-argument reiterable (e.g.,
+                # "set[str]")...
+                elif hint_curr_sign in HINT_SIGNS_REITERABLE_ARGS_1:
+                    # Python expression evaluating to the origin type of this
+                    # reiterable hint as a hidden beartype-specific parameter
+                    # injected into the signature of this wrapper function.
+                    hint_curr_expr = add_func_scope_type(
+                        # Origin type of this reiterable hint.
+                        cls=get_hint_pep_origin_type_isinstanceable(hint_curr),
+                        func_scope=func_wrapper_scope,
+                        exception_prefix=EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL,
+                    )
+
+                    # Unignorable sane child hint sanified from this possibly
+                    # ignorable insane child hint *OR* "None" otherwise (i.e.,
+                    # if this child hint is ignorable).
+                    hint_child = sanify_hint_child_if_unignorable_or_none(
+                        # Possibly ignorable insane child hint subscripting this
+                        # parent reiterable hint, validated to be the *ONLY*
+                        # child hint subscripting this parent reiterable hint.
+                        hint=get_hint_pep484585_args(
+                            hint=hint_curr,
+                            args_len=1,
+                            exception_prefix=EXCEPTION_PREFIX,
+                        ),
+                        conf=conf,
+                        cls_stack=cls_stack,
+                        exception_prefix=EXCEPTION_PREFIX,
+                    )
+
+                    # If this child hint is unignorable, deeply type-check both
+                    # the type of the current pith *AND* the first item of this
+                    # pith. Specifically...
+                    if hint_child is not None:
+                        # Code type-checking this pith against this type.
+                        func_curr_code = CODE_PEP484585_REITERABLE_ARGS_1_format(
+                            indent_curr=indent_curr,
+                            pith_curr_assign_expr=pith_curr_assign_expr,
+                            pith_curr_var_name=pith_curr_var_name,
+                            hint_curr_expr=hint_curr_expr,
+                            hint_child_placeholder=_enqueue_hint_child(
+                                # Python expression yielding the first item of
+                                # this pith to be type-checked against this
+                                # child hint.
+                                CODE_PEP484585_REITERABLE_ARGS_1_PITH_CHILD_EXPR_format(
+                                    pith_curr_var_name=pith_curr_var_name)),
+                        )
+                    #FIXME: We're repeating this same block *OVER* and *OVER*
+                    #again, plainly violating DRY. The solution is probably to:
+                    #* Far above, initialize "func_curr_code = None" at the
+                    #  start of each iteration.
+                    #* Far below, simply define this fallback:
+                    #      if func_curr_code is None:
+                    #          func_curr_code = CODE_PEP484_INSTANCE_format(
+                    #              pith_curr_expr=pith_curr_expr,
+                    #              hint_curr_expr=hint_curr_expr,
+                    #          )
+
+                    # Else, this child hint is ignorable. In this case, fallback
+                    # to trivial code shallowly type-checking this pith as an
+                    # instance of this origin type.
+                    else:
+                        func_curr_code = CODE_PEP484_INSTANCE_format(
+                            pith_curr_expr=pith_curr_expr,
+                            hint_curr_expr=hint_curr_expr,
+                        )
+                # Else, this hint is *NOT* a single-argument reiterable.
                 #
                 # ............{ ANNOTATED                          }............
                 # If this hint is a PEP 593-compliant type metahint, this

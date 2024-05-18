@@ -194,6 +194,22 @@ This set necessarily excludes:
 '''
 
 
+#FIXME: Consider also adding the following views here:
+#    HintSignItemsView,
+#    HintSignMappingView,
+#
+#That said, we're *NOT* quite sure how these views are actually structured. One
+#or both might present data as 2-tuples of "(key, value)" pairs rather than the
+#standard "dict" API, in which case we definitely should *NOT* add these views
+#here. Instead, we'll need to unroll distinct type-checking logic for these
+#views. Of course, nobody's actually requested this yet. In fact, nobody even
+#appears to know or care about the existence of these data structures. They're
+#probably the least popular and least well-known data structures in the Python
+#pantheon. In other words, they're the ultimate high-hanging fruit. Do this only
+#if somebody complains *OR* we're outrageously bored. So.... never.
+#FIXME: Also add the "HintSignChainMap" sign here. Unlike the views listed
+#above, the "collections.ChainMap" data structure almost certainly presents a
+#similar API to that of "dict" and can thus be type-checked similarly. (Maybe.)
 HINT_SIGNS_MAPPING = frozenset((
     # ..................{ PEP (484|585)                      }..................
     HintSignDefaultDict,
@@ -209,6 +225,50 @@ exactly two child type hints constraining *all* key-value pairs of compliant
 mappings, which necessarily satisfy the :class:`collections.abc.Mapping`
 protocol with guaranteed :math:`O(1)` indexation of at least the first key-value
 pair).
+'''
+
+
+HINT_SIGNS_REITERABLE_ARGS_1 = frozenset((
+    # ..................{ PEP (484|585)                      }..................
+    HintSignAbstractSet,
+    HintSignCollection,
+    HintSignFrozenSet,
+    HintSignKeysView,
+    HintSignMutableSet,
+    HintSignSet,
+    HintSignValuesView,
+
+    #FIXME: Deques are actually somewhat more than merely single-argument
+    #reiterables. They provide efficient access to both the first *AND* last
+    #deque items. Ergo, both should be type-checked. The current approach only
+    #type-checkes the first deque item. That's certainly better than nothing,
+    #but we can (and should) do better. *sigh*
+    HintSignDeque,
+))
+'''
+Frozen set of all **standard reiterable signs** (i.e., arbitrary objects
+uniquely identifying :pep:`484`- and :pep:`585`-compliant type hints subscripted
+by exactly one child type hint constraining *all* items of compliant
+collections, which necessarily satisfy the :class:`collections.abc.Collection`
+protocol with guaranteed :math:`O(1)` read-only access to *only* the first
+collection item).
+
+For disambiguity, we prefer the :mod:`beartype`-specific term "reiterable" to
+the standard term "collection" in this context. Why? Because numerous other data
+structures (e.g., mappings, sequences) are also technically collections but
+*not* matched by this frozen set. Why? Because this frozen set only matches the
+proper subset of all collections *not* matched by any other such frozen set.
+
+Equivalently, this frozen set only matches the proper subset of all collections
+that are **reiterable** (i.e., that may be safely reiterated multiple times,
+where "safely" implies side effect-free idempotency). Each call of the:
+
+* :func:`iter` builtin passed the same reiterable effectively creates and
+  returns the same iterator.
+* :func:`next` builtin passed the same reiterable deterministically returns the
+  same items in the same order.
+
+Reiterable items are thus preserved (rather than modified) by reiteration.
 '''
 
 

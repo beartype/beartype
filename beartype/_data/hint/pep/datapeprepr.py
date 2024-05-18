@@ -73,7 +73,7 @@ from beartype._data.hint.pep.sign.datapepsigns import (
     HintSignParamSpec,
     # HintSignParamSpecArgs,
     HintSignPep557DataclassInitVar,
-    HintSignTypeAlias,
+    # HintSignTypeAlias,
     HintSignPep695TypeAlias,
     # HintSignProtocol,
     HintSignReversible,

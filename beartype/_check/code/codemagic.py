@@ -13,7 +13,7 @@ This private submodule is *not* intended for importation by downstream callers.
 
 # ....................{ IMPORTS                            }....................
 from beartype._data.error.dataerrmagic import EXCEPTION_PLACEHOLDER
-from itertools import count
+# from itertools import count
 
 # ....................{ EXCEPTION                          }....................
 EXCEPTION_PREFIX_FUNC_WRAPPER_LOCAL = (
